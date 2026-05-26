@@ -27,7 +27,7 @@ Use `-RequireLocalCore` to fail the build if `pasus_local_core.exe` cannot be in
 powershell -ExecutionPolicy Bypass -File installer\windows\build-msi.ps1 -Version 0.1.0 -RequireLocalCore
 ```
 
-ClamAV is bundled by default. Pasus also works without it, but signature scanning reports `Engine Unavailable` until ClamAV is present through the MSI, PATH, or `PASUS_CLAMAV_CLAMSCAN`. Pasus does not fake clean scan results when the engine is unavailable.
+ClamAV is bundled by default from the official Cisco-Talos GitHub release and the downloaded ZIP is SHA-256 verified by the build script. Pasus also works without it, but signature scanning reports `Engine Unavailable` until ClamAV is present through the MSI, PATH, or `PASUS_CLAMAV_CLAMSCAN`. Pasus does not fake clean scan results when the engine is unavailable.
 Use `-SkipClamAV` only for development builds where ClamAV is supplied separately:
 
 ```powershell

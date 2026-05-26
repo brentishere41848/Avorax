@@ -30,14 +30,22 @@ function Copy-Tree([string]$Source, [string]$Destination) {
   Copy-Item -Path (Join-Path $Source "*") -Destination $Destination -Recurse -Force
 }
 
-function Ensure-ClamAVPackage([string]$ZipPath, [string]$Url) {
+function Ensure-ClamAVPackage([string]$ZipPath, [string]$Url, [string]$ExpectedSha256) {
   if (Test-Path $ZipPath) {
+    $existingHash = (Get-FileHash -LiteralPath $ZipPath -Algorithm SHA256).Hash
+    if ($existingHash -ne $ExpectedSha256) {
+      throw "Cached ClamAV package hash mismatch. Expected $ExpectedSha256 but found $existingHash at $ZipPath"
+    }
     return
   }
 
   New-Item -ItemType Directory -Force -Path (Split-Path $ZipPath) | Out-Null
   Write-Host "Downloading ClamAV runtime: $Url"
   Invoke-WebRequest -Uri $Url -OutFile $ZipPath
+  $downloadedHash = (Get-FileHash -LiteralPath $ZipPath -Algorithm SHA256).Hash
+  if ($downloadedHash -ne $ExpectedSha256) {
+    throw "Downloaded ClamAV package hash mismatch. Expected $ExpectedSha256 but found $downloadedHash"
+  }
 }
 
 function Copy-ClamAVRuntime([string]$ZipPath, [string]$ExtractDir, [string]$Destination) {
@@ -124,7 +132,8 @@ $bundleWxsPath = Join-Path $distRoot "windows-msi\Pasus.Bundle.wxs"
 $msiPath = Join-Path $distRoot "Pasus-$Version-x64.msi"
 $exeInstallerPath = Join-Path $distRoot "Pasus-$Version-x64-setup.exe"
 $clamAvVersion = "1.5.2"
-$clamAvUrl = "https://www.clamav.net/downloads/production/clamav-$clamAvVersion.win.x64.zip"
+$clamAvUrl = "https://github.com/Cisco-Talos/clamav/releases/download/clamav-$clamAvVersion/clamav-$clamAvVersion.win.x64.zip"
+$clamAvSha256 = "6F868ED7A7E5A15ACED82C53A4FA9F3F42FA9D7F7DE14A606BA8DB0756518EED"
 $clamAvZipPath = Join-Path $PSScriptRoot "cache\clamav-$clamAvVersion.win.x64.zip"
 $clamAvExtractDir = Join-Path $distRoot "windows-msi\clamav-extract"
 $modelSourceDir = Join-Path $root "assets\models"
@@ -223,7 +232,7 @@ if (Test-Path $guardServiceExeDefault) {
 }
 
 if (-not $SkipClamAV) {
-  Ensure-ClamAVPackage $clamAvZipPath $clamAvUrl
+  Ensure-ClamAVPackage $clamAvZipPath $clamAvUrl $clamAvSha256
   Copy-ClamAVRuntime $clamAvZipPath $clamAvExtractDir (Join-Path $stageDir "ClamAV")
   Copy-ClamAVRuntime $clamAvZipPath $clamAvExtractDir (Join-Path $releaseDir "ClamAV")
   Write-Host "Bundled ClamAV $clamAvVersion runtime in the MSI."
