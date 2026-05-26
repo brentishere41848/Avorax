@@ -76,19 +76,19 @@ jobs:
       - name: Package Windows installers
         shell: pwsh
         run: |
-          $scriptArgs = @(
-            "-Version", "${{ steps.version.outputs.version }}",
-            "-RequireLocalCore",
-            "-SkipFlutterBuild"
-          )
+          $scriptArgs = @{
+            Version = "${{ steps.version.outputs.version }}"
+            RequireLocalCore = $true
+            SkipFlutterBuild = $true
+          }
           if ("${{ github.event_name }}" -eq "workflow_dispatch") {
             if ("${{ inputs.allow_development_model }}" -eq "true") {
-              $scriptArgs += "-AllowDevelopmentModel"
+              $scriptArgs.AllowDevelopmentModel = $true
             }
           } else {
             $metadata = Get-Content -Raw -LiteralPath "assets\models\pasus_static_malware_model.metadata.json" | ConvertFrom-Json
             if (-not $metadata.production_ready) {
-              $scriptArgs += "-AllowDevelopmentModel"
+              $scriptArgs.AllowDevelopmentModel = $true
             }
           }
           try {
