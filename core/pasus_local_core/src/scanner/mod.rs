@@ -12,6 +12,7 @@ pub mod scan_report;
 pub mod scan_result;
 pub mod scan_scope;
 pub mod threat_result;
+pub mod yara_provider;
 
 pub use clamav_provider::ClamAvProvider;
 pub use heuristic_provider::eligible_for_heuristic_auto_quarantine;
@@ -25,6 +26,7 @@ pub use threat_result::{
     DetectionType, RecommendedAction, RiskEngine, RiskReason, RiskReasonSource, RiskScore,
     RiskSeverity, RiskVerdict, ThreatCategory, ThreatConfidence, ThreatResult, ThreatResultStatus,
 };
+pub use yara_provider::YaraProvider;
 
 pub trait ScannerProvider {
     fn scan_file(&self, path: &Path) -> Result<ScanResult>;

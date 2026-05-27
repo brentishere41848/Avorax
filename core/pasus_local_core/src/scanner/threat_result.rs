@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 #[serde(rename_all = "camelCase")]
 pub enum DetectionType {
     Signature,
+    Yara,
     Heuristic,
     LocalAi,
     Behavior,
@@ -40,6 +41,7 @@ pub enum RiskSeverity {
 pub enum RiskReasonSource {
     StaticFeature,
     Signature,
+    Yara,
     Heuristic,
     AiModel,
     Behavior,
@@ -52,6 +54,7 @@ pub enum RiskReasonSource {
 #[serde(rename_all = "camelCase")]
 pub enum RiskEngine {
     Signature,
+    Yara,
     Heuristic,
     LocalAi,
     Behavior,

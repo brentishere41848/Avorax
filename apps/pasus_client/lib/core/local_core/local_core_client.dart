@@ -422,6 +422,7 @@ class LocalCoreClient {
 
   DetectionType _engineToDetectionType(String value) => switch (value) {
     'signature' => DetectionType.signature,
+    'yara' => DetectionType.yara,
     'heuristic' => DetectionType.heuristic,
     'localAi' => DetectionType.localAi,
     'behavior' => DetectionType.behavior,

@@ -23,7 +23,7 @@ use scanner::{
     DetectionType, HeuristicProvider, RecommendedAction, ReportStatus, ReputationProvider,
     RiskEngine, RiskReason, RiskReasonSource, RiskScore, RiskSeverity, RiskVerdict, ScanActionMode,
     ScanJob, ScanJobStatus, ScanKind, ScanProgress, ScanStatus, ScannerProvider, ThreatCategory,
-    ThreatConfidence, ThreatResult, ThreatResultStatus,
+    ThreatConfidence, ThreatResult, ThreatResultStatus, YaraProvider,
 };
 use uuid::Uuid;
 use watcher::WatcherState;
@@ -52,6 +52,8 @@ fn handle(command: CoreCommand) -> serde_json::Value {
             ok: true,
             body: json!({
                 "engine_status": scanner.engine_status(),
+                "yara_status": YaraProvider::default().status(),
+                "yara_rule_count": YaraProvider::default().rule_count(),
                 "ai_status": ai::ModelRunner::default().status(),
                 "ai_model": ai::ModelRunner::default().info(),
                 "guard_status": protection::GuardService::default().status(),
@@ -263,6 +265,7 @@ fn scan_paths(
     let job = ScanJob::new(kind.clone());
     let clamav = ClamAvProvider;
     let heuristic = HeuristicProvider;
+    let yara = YaraProvider::default();
     let ai_runner = ai::ModelRunner::default();
     let mut files_scanned: u64 = 0;
     let mut bytes_scanned: u64 = 0;
@@ -362,6 +365,34 @@ fn scan_paths(
                 }
             }
             threats.push(threat);
+        }
+        if let Some(mut threat) = yara.inspect_file(&path) {
+            let allowlisted = AllowlistStore::new().is_allowlisted(&path, &threat.sha256);
+            if allowlisted {
+                threat.status = ThreatResultStatus::Allowlisted;
+                threat.recommended_action = RecommendedAction::Allowlist;
+            } else if (action_mode == ScanActionMode::AutoQuarantineConfirmedOnly
+                || action_mode == ScanActionMode::AutoQuarantineAllDetections)
+                && threat.confidence == ThreatConfidence::Confirmed
+            {
+                if let Ok(record) =
+                    quarantine_selected_file(&path, &threat.threat_name, &threat.engine)
+                {
+                    threat.status = ThreatResultStatus::Quarantined;
+                    threat.path = record.original_path;
+                    quarantined_files += 1;
+                }
+            }
+            if !threats.iter().any(|existing| {
+                existing.path == threat.path
+                    && matches!(
+                        existing.detection_type,
+                        DetectionType::Signature | DetectionType::Yara
+                    )
+            }) {
+                suspicious_found += u64::from(threat.confidence != ThreatConfidence::Confirmed);
+                threats.push(threat);
+            }
         }
         if let Ok(Some(ai_result)) = ai_runner.classify_file(&path) {
             if should_surface_ai_result(&ai_result)
@@ -855,5 +886,55 @@ mod tests {
         assert_eq!(report.status, ReportStatus::CompletedWithErrors);
         assert_eq!(report.files_scanned, 0);
         assert_eq!(report.skipped_files, 1);
+    }
+
+    #[test]
+    fn safe_eicar_simulator_is_detected_and_auto_quarantined_by_confirmed_mode() {
+        let dir = tempdir().unwrap();
+        let file = dir.path().join("safe-eicar.com");
+        fs::write(&file, "PASUS-SAFE-EICAR-SIMULATOR-FILE").unwrap();
+
+        let report = scan_paths(
+            vec![file.clone()],
+            ScanActionMode::AutoQuarantineConfirmedOnly,
+            ScanKind::Custom,
+            None,
+        )
+        .unwrap();
+
+        assert_eq!(report.status, ReportStatus::ThreatsFound);
+        assert!(report.threats.iter().any(|threat| {
+            threat.confidence == ThreatConfidence::Confirmed
+                && matches!(
+                    threat.status,
+                    ThreatResultStatus::Quarantined | ThreatResultStatus::Detected
+                )
+        }));
+        assert!(report.quarantined_files >= 1);
+        assert!(!file.exists());
+    }
+
+    #[test]
+    fn normal_exe_is_not_confirmed_threat() {
+        let dir = tempdir().unwrap();
+        let downloads = dir.path().join("Downloads");
+        fs::create_dir_all(&downloads).unwrap();
+        let file = downloads.join("vpn-installer.exe");
+        fs::write(&file, "normal installer").unwrap();
+
+        let report = scan_paths(
+            vec![file.clone()],
+            ScanActionMode::AutoQuarantineAllDetections,
+            ScanKind::Custom,
+            None,
+        )
+        .unwrap();
+
+        assert!(file.exists());
+        assert!(report
+            .threats
+            .iter()
+            .all(|threat| threat.confidence != ThreatConfidence::Confirmed));
+        assert_eq!(report.quarantined_files, 0);
     }
 }

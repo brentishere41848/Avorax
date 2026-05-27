@@ -1,0 +1,40 @@
+; Pasus Minifilter INF skeleton.
+; Development/test signing only. Production distribution requires Microsoft signing.
+
+[Version]
+Signature="$WINDOWS NT$"
+Class=ActivityMonitor
+ClassGuid={b86dff51-a31e-4bac-b3cf-e8cfe75c9fc2}
+Provider=%ManufacturerName%
+DriverVer=05/27/2026,0.1.0.0
+CatalogFile=PasusMinifilter.cat
+
+[DestinationDirs]
+DefaultDestDir = 12
+
+[Manufacturer]
+%ManufacturerName%=Standard,NTamd64
+
+[Standard.NTamd64]
+%ServiceName%=Install, Root\PasusMinifilter
+
+[Install.NT]
+CopyFiles=DriverCopyFiles
+
+[DriverCopyFiles]
+PasusMinifilter.sys
+
+[Install.NT.Services]
+AddService=PasusMinifilter,0x00000002,ServiceInstall
+
+[ServiceInstall]
+DisplayName=%ServiceName%
+ServiceType=2
+StartType=3
+ErrorControl=1
+ServiceBinary=%12%\PasusMinifilter.sys
+LoadOrderGroup="FSFilter Anti-Virus"
+
+[Strings]
+ManufacturerName="Pasus"
+ServiceName="Pasus Minifilter"

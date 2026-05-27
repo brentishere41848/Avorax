@@ -137,6 +137,7 @@ $clamAvSha256 = "6F868ED7A7E5A15ACED82C53A4FA9F3F42FA9D7F7DE14A606BA8DB0756518EE
 $clamAvZipPath = Join-Path $PSScriptRoot "cache\clamav-$clamAvVersion.win.x64.zip"
 $clamAvExtractDir = Join-Path $distRoot "windows-msi\clamav-extract"
 $modelSourceDir = Join-Path $root "assets\models"
+$yaraSourceDir = Join-Path $root "assets\yara"
 $modelFile = Join-Path $modelSourceDir "pasus_static_malware_model.onnx"
 $modelMetadataFile = Join-Path $modelSourceDir "pasus_static_malware_model.metadata.json"
 
@@ -205,6 +206,14 @@ $stageModelDir = Join-Path $stageDir "assets\models"
 $releaseModelDir = Join-Path $releaseDir "assets\models"
 Copy-Tree $modelSourceDir $stageModelDir
 Copy-Tree $modelSourceDir $releaseModelDir
+
+if (-not (Test-Path (Join-Path $yaraSourceDir "pasus_core_rules.yar"))) {
+  throw "Pasus YARA rule pack is required: $(Join-Path $yaraSourceDir "pasus_core_rules.yar")"
+}
+$stageYaraDir = Join-Path $stageDir "assets\yara"
+$releaseYaraDir = Join-Path $releaseDir "assets\yara"
+Copy-Tree $yaraSourceDir $stageYaraDir
+Copy-Tree $yaraSourceDir $releaseYaraDir
 
 $coreSource = $null
 if (Test-Path $localCoreExe) {

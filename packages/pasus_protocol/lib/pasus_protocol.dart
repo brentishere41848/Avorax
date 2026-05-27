@@ -180,6 +180,7 @@ enum ScanKind {
 
 enum DetectionType {
   signature,
+  yara,
   heuristic,
   localAi,
   behavior,
@@ -190,6 +191,7 @@ enum DetectionType {
 
   String get label => switch (this) {
     DetectionType.signature => 'Signature',
+    DetectionType.yara => 'YARA',
     DetectionType.heuristic => 'Heuristic',
     DetectionType.localAi => 'Local AI',
     DetectionType.behavior => 'Behavior',
@@ -223,6 +225,7 @@ enum RiskSeverity { info, low, medium, high, critical }
 enum RiskReasonSource {
   staticFeature,
   signature,
+  yara,
   heuristic,
   aiModel,
   behavior,

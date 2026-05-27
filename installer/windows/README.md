@@ -14,6 +14,7 @@ The script:
 - Copies the Pasus Rust local core beside `Pasus.exe`.
 - Copies `pasus_guard_service.exe` beside `Pasus.exe`.
 - Copies `assets\models\pasus_static_malware_model.onnx` and metadata beside the app.
+- Copies `assets\yara\pasus_core_rules.yar` beside the app.
 - Bundles the official Windows ClamAV runtime beside the Pasus local core.
 - Copies Visual C++ runtime DLLs from `C:\Windows\System32` when present.
 - Includes local privacy/security docs.
