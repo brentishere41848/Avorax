@@ -1,0 +1,43 @@
+; PasusAvFilter development INF.
+; Test-signed development installs only. Production distribution requires
+; Microsoft driver signing and an assigned production minifilter altitude.
+
+[Version]
+Signature="$WINDOWS NT$"
+Class=ActivityMonitor
+ClassGuid={b86dff51-a31e-4bac-b3cf-e8cfe75c9fc2}
+Provider=%ManufacturerName%
+DriverVer=05/27/2026,0.1.11.0
+CatalogFile=PasusAvFilter.cat
+
+[DestinationDirs]
+DefaultDestDir = 12
+
+[DefaultInstall.NTamd64]
+CopyFiles = DriverCopyFiles
+
+[DefaultInstall.NTamd64.Services]
+AddService = PasusAvFilter, 0x00000002, ServiceInstall
+
+[DriverCopyFiles]
+PasusAvFilter.sys
+
+[ServiceInstall]
+DisplayName = %ServiceName%
+ServiceType = 2
+StartType = 3
+ErrorControl = 1
+ServiceBinary = %12%\PasusAvFilter.sys
+LoadOrderGroup = "FSFilter Anti-Virus"
+AddReg = InstanceRegistry
+
+[InstanceRegistry]
+HKR,"Instances","DefaultInstance",0x00000000,%DefaultInstance%
+HKR,"Instances\%DefaultInstance%","Altitude",0x00000000,%Altitude%
+HKR,"Instances\%DefaultInstance%","Flags",0x00010001,0
+
+[Strings]
+ManufacturerName = "Pasus"
+ServiceName = "Pasus AV Minifilter"
+DefaultInstance = "PasusAvFilter Instance"
+Altitude = "328500"

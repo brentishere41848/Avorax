@@ -83,7 +83,7 @@ class PasusSidebar extends StatelessWidget {
               border: Border.all(color: PasusColors.border),
             ),
             child: const Text(
-              'Visible protection only. Pasus v1 scans local files, quarantines confirmed detections, and does not install kernel drivers.',
+              'Visible protection only. Pasus scans local files, quarantines confirmed detections, and only uses driver protection when explicitly installed.',
               style: TextStyle(color: PasusColors.textSecondary, height: 1.45),
             ),
           ),

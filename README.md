@@ -152,7 +152,7 @@ Scan results are grouped into confirmed threats, probable malware, suspicious it
 
 ## Real-Time And Ransomware Protection
 
-Pasus Guard is offline-first. In v1 it is a visible user-mode helper with best-effort post-launch blocking where the OS allows it. It does not install a kernel driver. Full pre-execution blocking on Windows requires a future signed minifilter driver build path.
+Pasus Guard is offline-first. The default release uses a visible user-mode helper with best-effort post-launch blocking where the OS allows it. A Windows minifilter development path exists for known-threat pre-execution blocking, but Pasus must not claim that mode is active unless the driver is installed, running, communicating with the service, and passing self-test. Production distribution requires Microsoft driver signing.
 
 Ransomware Guard watches for behavior such as rapid mass file modification, suspicious renames, entropy jumps, ransom-note patterns, and backup tampering. Recovery Vault can restore protected copies when available. Pasus does not claim it can decrypt files without a backup, snapshot, or key.
 
@@ -221,7 +221,7 @@ cargo check
 
 ## Intentionally Not Implemented In v1
 
-- No kernel driver.
+- No silent kernel driver install. Driver protection is optional, user-visible, and requires explicit installation/signing.
 - No hidden process behavior.
 - No stealth startup persistence.
 - No hidden unrelated file scanning.

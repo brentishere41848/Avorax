@@ -87,6 +87,7 @@ class PasusState {
     this.errorMessage,
     this.hashProgress,
     this.currentScanPath,
+    this.protectionSelfTestResult,
   });
 
   final PasusConfig config;
@@ -113,6 +114,7 @@ class PasusState {
   final String? errorMessage;
   final double? hashProgress;
   final String? currentScanPath;
+  final String? protectionSelfTestResult;
 
   PasusState copyWith({
     PasusConfig? config,
@@ -144,6 +146,8 @@ class PasusState {
     bool clearHashProgress = false,
     String? currentScanPath,
     bool clearCurrentScanPath = false,
+    String? protectionSelfTestResult,
+    bool clearProtectionSelfTestResult = false,
   }) {
     return PasusState(
       config: config ?? this.config,
@@ -177,6 +181,9 @@ class PasusState {
       currentScanPath: clearCurrentScanPath
           ? null
           : currentScanPath ?? this.currentScanPath,
+      protectionSelfTestResult: clearProtectionSelfTestResult
+          ? null
+          : protectionSelfTestResult ?? this.protectionSelfTestResult,
     );
   }
 }
@@ -489,6 +496,25 @@ class PasusController extends StateNotifier<PasusState> {
       clearSession: true,
       protectionStatus: ProtectionStatus.idle,
       heartbeat: const HeartbeatStatus(),
+      clearError: true,
+    );
+  }
+
+  Future<void> runProtectionSelfTest() async {
+    await logEvent(
+      'protection_self_test_started',
+      'Protection self-test started',
+    );
+    state = state.copyWith(loading: true, clearError: true);
+    final result = await _localCoreClient.runProtectionSelfTest();
+    await logEvent(
+      'protection_self_test_completed',
+      'Protection self-test completed',
+      details: result,
+    );
+    state = state.copyWith(
+      loading: false,
+      protectionSelfTestResult: result,
       clearError: true,
     );
   }

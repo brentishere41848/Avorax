@@ -15,7 +15,7 @@ class PrivacyScreen extends StatelessWidget {
     'Pasus does not steal credentials.',
     'Pasus does not read browser cookies.',
     'Pasus does not hide from the user.',
-    'Pasus does not install kernel drivers in v1.',
+    'Pasus does not silently install kernel drivers. Windows driver protection is optional and user-visible.',
     'Pasus does not disable other security tools.',
     'Pasus logs local security events visibly.',
   ];

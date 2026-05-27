@@ -4,7 +4,7 @@ No antivirus can truthfully guarantee 100% detection.
 
 Current Pasus limitations:
 
-- True pre-execution blocking on Windows requires a signed driver. Without it, Pasus uses user-mode post-launch termination.
+- True production pre-execution blocking on Windows requires a signed, installed, running driver with passing self-test. Without it, Pasus uses user-mode post-launch termination.
 - macOS blocking requires Endpoint Security entitlement and user approval.
 - Linux blocking depends on fanotify permissions and kernel support.
 - The bundled AI model is currently a development model and cannot auto-quarantine by itself.

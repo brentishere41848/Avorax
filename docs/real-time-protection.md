@@ -5,7 +5,9 @@ Pasus has two protection modes:
 - Pre-execution blocking: only when a platform blocking driver/extension is installed, signed/approved, running, and returning deny verdicts before execution.
 - Post-launch fallback: user-mode Guard watches process starts and stops/quarantines confirmed threats as quickly as the OS allows.
 
-Current Windows release uses the post-launch fallback unless the driver path is separately built and installed.
+Current Windows release uses the post-launch fallback unless the minifilter driver is separately built, installed, running, connected to Pasus Guard Service, and passing the protection self-test.
+
+The first driver-backed goal is known-threat pre-execution blocking, not broad unknown-file blocking. Unknown files are allowed and monitored unless local policy returns a confirmed/high-confidence malicious verdict.
 
 Auto-stop/quarantine is allowed only for confirmed threats:
 

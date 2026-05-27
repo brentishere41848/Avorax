@@ -4,7 +4,8 @@ This project is the Windows pre-execution/on-access blocking path for Pasus.
 
 Current state:
 
-- The repository contains the driver architecture, message contract, INF skeleton, and callback design.
+- The repository contains a WDK minifilter project in `driver/` with `FltRegisterFilter`, pre-create/section synchronization callbacks, and a Filter Manager communication port named `\PasusAvFilterPort`.
+- Guard Service verdict handling is implemented in Rust and tested with harmless known-bad/EICAR fixtures.
 - The production installer does not claim the driver is active unless Windows reports the signed driver/service is installed and running.
 - Development builds require WDK, test signing, and a disposable VM.
 
@@ -14,6 +15,18 @@ Purpose:
 - Send scan requests to the visible Pasus Guard Service.
 - Deny access only when a confirmed malicious verdict is returned within policy timeout.
 - Fail open for critical system paths in normal mode.
+
+## Development Commands
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\build-driver.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\install-test-driver.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\uninstall-test-driver.ps1
+```
+
+`install-test-driver.ps1` requires Administrator rights and checks that Windows TESTSIGNING is already enabled. It does not enable TESTSIGNING automatically.
+
+If MSBuild, Visual Studio C++ tools, or the Windows Driver Kit are missing, `build-driver.ps1` fails with a clear setup error.
 
 Non-goals:
 

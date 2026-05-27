@@ -12,6 +12,13 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use uuid::Uuid;
 
+mod driver_health;
+mod driver_ipc;
+mod known_bad_cache;
+mod known_good_cache;
+mod preexecution_policy;
+mod self_test;
+
 #[derive(Debug, Deserialize)]
 struct GuardCommand {
     command: String,
@@ -20,6 +27,7 @@ struct GuardCommand {
     known_malicious_hashes: Option<Vec<String>>,
     poll_interval_ms: Option<u64>,
     max_iterations: Option<u32>,
+    scan_request: Option<driver_ipc::ScanRequest>,
 }
 
 #[derive(Debug, Serialize)]
@@ -93,7 +101,14 @@ fn handle(command: GuardCommand) -> GuardEvent {
         "health" => GuardEvent {
             ok: true,
             action: "health".to_string(),
-            message: "Pasus Guard Service ready for user-mode post-launch protection.".to_string(),
+            message: serde_json::to_string(&serde_json::json!({
+                "guard": "ready",
+                "driver": driver_health::DriverHealth::probe(),
+                "policy": preexecution_policy::PreExecutionPolicy::default(),
+                "known_bad_hashes": known_bad_cache::load_known_bad_hashes().len(),
+                "post_launch_fallback": true,
+            }))
+            .unwrap_or_else(|_| "Pasus Guard Service ready.".to_string()),
             process_id: None,
             process_path: None,
             quarantine_path: None,
@@ -101,6 +116,57 @@ fn handle(command: GuardCommand) -> GuardEvent {
             quarantine_record_path: None,
             created_at: Utc::now(),
         },
+        "driver_scan_request" => {
+            let Some(request) = command.scan_request else {
+                return error("scan_request is required");
+            };
+            let mut hashes = known_bad_cache::load_known_bad_hashes();
+            hashes.extend(command.known_malicious_hashes.unwrap_or_default());
+            match driver_ipc::evaluate_driver_request(
+                &request,
+                &driver_ipc::DriverVerdictConfig {
+                    known_bad_hashes: hashes,
+                    ..Default::default()
+                },
+            ) {
+                Ok(verdict) => GuardEvent {
+                    ok: true,
+                    action: "driverVerdict".to_string(),
+                    message: serde_json::to_string(&verdict)
+                        .unwrap_or_else(|_| "driver verdict created".to_string()),
+                    process_id: request.process_id,
+                    process_path: Some(request.file_path),
+                    quarantine_id: None,
+                    quarantine_path: None,
+                    quarantine_record_path: None,
+                    created_at: Utc::now(),
+                },
+                Err(error) => error_event(
+                    request.process_id,
+                    Some(request.file_path),
+                    error.to_string(),
+                ),
+            }
+        }
+        "driver_self_test" => {
+            let mut hashes = known_bad_cache::load_known_bad_hashes();
+            hashes.extend(command.known_malicious_hashes.unwrap_or_default());
+            match self_test::run_self_test(hashes) {
+                Ok(report) => GuardEvent {
+                    ok: report.passed,
+                    action: "driverSelfTest".to_string(),
+                    message: serde_json::to_string(&report)
+                        .unwrap_or_else(|_| "driver self-test completed".to_string()),
+                    process_id: None,
+                    process_path: None,
+                    quarantine_id: None,
+                    quarantine_path: None,
+                    quarantine_record_path: None,
+                    created_at: Utc::now(),
+                },
+                Err(error) => error_event(None, None, error.to_string()),
+            }
+        }
         "process_started" => {
             let Some(path) = command.process_path else {
                 return error("process_path is required");

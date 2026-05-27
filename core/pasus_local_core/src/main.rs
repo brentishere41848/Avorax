@@ -56,6 +56,7 @@ fn handle(command: CoreCommand) -> serde_json::Value {
                 "yara_rule_count": YaraProvider::default().rule_count(),
                 "ai_status": ai::ModelRunner::default().status(),
                 "ai_model": ai::ModelRunner::default().info(),
+                "ai_self_test": ai::ai_self_test::run_ai_self_test().is_ok(),
                 "guard_status": protection::GuardService::default().status(),
                 "driver_status": "missing",
                 "reputation_status": ReputationProvider.status(),

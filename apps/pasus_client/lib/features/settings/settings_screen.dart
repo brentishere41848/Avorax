@@ -77,6 +77,23 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             _ValueRow('Antivirus', state.protectionStatus.label),
             _ValueRow('Guard mode', _guardLabel(state.guardStatus)),
             _ValueRow('Driver status', _driverLabel(state.driverStatus)),
+            if (state.protectionSelfTestResult != null)
+              _ValueRow('Last self-test', state.protectionSelfTestResult!),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                PasusButton(
+                  label: 'Run Protection Self-Test',
+                  icon: Icons.verified_user_outlined,
+                  secondary: true,
+                  onPressed: state.loading
+                      ? null
+                      : controller.runProtectionSelfTest,
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
             _ValueRow(
               'Realtime monitoring',
               state.config.realtimeProtectionEnabled
@@ -155,7 +172,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           children: [
             const _ValueRow(
               'Policy',
-              'Visible scans only. No credential theft, hidden surveillance, or kernel driver in v1.',
+              'Visible scans only. No credential theft, hidden surveillance, or silent driver installation.',
             ),
             PasusButton(
               label: 'View privacy policy',

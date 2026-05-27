@@ -21,7 +21,7 @@ Pasus does not:
 - Steal credentials.
 - Read browser cookies.
 - Hide from the user.
-- Install kernel drivers in v1.
+- Silently install kernel drivers. Windows driver protection is optional, user-visible, and requires explicit installation.
 - Disable other security tools.
 - Claim full-system antivirus behavior on mobile.
 - Claim 100% malware detection.

@@ -3,12 +3,12 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
-use tract_onnx::prelude::*;
 
 use super::explanation::explain_static_features;
 use super::feature_extractor::{extract_static_features, filename_risk_score, StaticFeatures};
 use super::model_metadata::ModelMetadata;
-use super::thresholds::{CATEGORY_LABELS, FEATURE_COUNT};
+use super::onnx_runtime::run_static_model;
+use super::thresholds::FEATURE_COUNT;
 use super::verdict::LocalAiVerdictLabel;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -125,7 +125,7 @@ impl ModelRunner {
             return Ok(None);
         };
         let vector = features.to_feature_vector(filename_risk_score(path));
-        let (probability, category_scores) = run_onnx(model_path, &vector)?;
+        let (probability, category_scores) = run_static_model(model_path, &vector)?;
         let verdict = verdict_for(probability, &self.metadata);
         let confidence = confidence_for(probability, &self.metadata);
         let top_category = top_category(&category_scores);
@@ -149,48 +149,14 @@ impl ModelRunner {
         }))
     }
 
-    fn inference_smoke_test(&self) -> anyhow::Result<()> {
+    pub fn inference_smoke_test(&self) -> anyhow::Result<()> {
         let Some(model_path) = &self.model_path else {
             anyhow::bail!("model missing");
         };
         let vector = [0.0_f32; FEATURE_COUNT];
-        let _ = run_onnx(model_path, &vector)?;
+        let _ = run_static_model(model_path, &vector)?;
         Ok(())
     }
-}
-
-fn run_onnx(
-    model_path: &Path,
-    features: &[f32; FEATURE_COUNT],
-) -> anyhow::Result<(f32, Vec<(String, f32)>)> {
-    let model = tract_onnx::onnx()
-        .model_for_path(model_path)?
-        .with_input_fact(0, f32::fact([1, FEATURE_COUNT]).into())?
-        .into_optimized()?
-        .into_runnable()?;
-    let input = tract_ndarray::Array2::from_shape_vec((1, FEATURE_COUNT), features.to_vec())?;
-    let outputs = model.run(tvec!(input.into_tensor().into()))?;
-    let probability = *outputs[0]
-        .to_array_view::<f32>()?
-        .iter()
-        .next()
-        .unwrap_or(&0.0);
-    let category_values = outputs[1]
-        .to_array_view::<f32>()?
-        .iter()
-        .copied()
-        .collect::<Vec<_>>();
-    let categories = CATEGORY_LABELS
-        .iter()
-        .enumerate()
-        .map(|(index, label)| {
-            (
-                (*label).to_string(),
-                category_values.get(index).copied().unwrap_or_default(),
-            )
-        })
-        .collect();
-    Ok((probability, categories))
 }
 
 fn verdict_for(probability: f32, metadata: &ModelMetadata) -> LocalAiVerdictLabel {
@@ -293,8 +259,8 @@ mod tests {
     fn model_runner_loads_and_returns_deterministic_output() {
         let runner = ModelRunner::load_default().unwrap();
         let vector = [0.0_f32; FEATURE_COUNT];
-        let (left, _) = run_onnx(runner.model_path.as_ref().unwrap(), &vector).unwrap();
-        let (right, _) = run_onnx(runner.model_path.as_ref().unwrap(), &vector).unwrap();
+        let (left, _) = run_static_model(runner.model_path.as_ref().unwrap(), &vector).unwrap();
+        let (right, _) = run_static_model(runner.model_path.as_ref().unwrap(), &vector).unwrap();
         assert!((left - right).abs() < 0.0001);
     }
 

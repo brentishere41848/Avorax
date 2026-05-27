@@ -138,6 +138,8 @@ $clamAvZipPath = Join-Path $PSScriptRoot "cache\clamav-$clamAvVersion.win.x64.zi
 $clamAvExtractDir = Join-Path $distRoot "windows-msi\clamav-extract"
 $modelSourceDir = Join-Path $root "assets\models"
 $yaraSourceDir = Join-Path $root "assets\yara"
+$testAssetsSourceDir = Join-Path $root "assets\test"
+$driverToolsSourceDir = Join-Path $root "core\pasus_windows_minifilter"
 $modelFile = Join-Path $modelSourceDir "pasus_static_malware_model.onnx"
 $modelMetadataFile = Join-Path $modelSourceDir "pasus_static_malware_model.metadata.json"
 
@@ -215,6 +217,32 @@ $releaseYaraDir = Join-Path $releaseDir "assets\yara"
 Copy-Tree $yaraSourceDir $stageYaraDir
 Copy-Tree $yaraSourceDir $releaseYaraDir
 
+if (-not (Test-Path (Join-Path $testAssetsSourceDir "known_bad_test_hashes.json"))) {
+  throw "Known-bad test hash asset is required: $(Join-Path $testAssetsSourceDir "known_bad_test_hashes.json")"
+}
+$stageTestDir = Join-Path $stageDir "assets\test"
+$releaseTestDir = Join-Path $releaseDir "assets\test"
+Copy-Tree $testAssetsSourceDir $stageTestDir
+Copy-Tree $testAssetsSourceDir $releaseTestDir
+
+foreach ($requiredDriverFile in @(
+  "driver\PasusAvFilter.vcxproj",
+  "driver\PasusAvFilter.inf",
+  "driver\Driver.c",
+  "driver\Communication.c",
+  "driver\Filter.c",
+  "scripts\build-driver.ps1",
+  "scripts\install-test-driver.ps1",
+  "scripts\uninstall-test-driver.ps1"
+)) {
+  $driverFilePath = Join-Path $driverToolsSourceDir $requiredDriverFile
+  if (-not (Test-Path $driverFilePath)) {
+    throw "Pasus Windows driver development file is missing: $driverFilePath"
+  }
+}
+$stageDriverToolsDir = Join-Path $stageDir "driver-tools\pasus_windows_minifilter"
+Copy-Tree $driverToolsSourceDir $stageDriverToolsDir
+
 $coreSource = $null
 if (Test-Path $localCoreExe) {
   $coreSource = $localCoreExe
@@ -268,6 +296,8 @@ Copy-Item -LiteralPath (Join-Path $root "README.md") -Destination $docsStage -Fo
 Copy-Item -LiteralPath (Join-Path $root "docs\privacy.md") -Destination $docsStage -Force
 Copy-Item -LiteralPath (Join-Path $root "docs\malware-protection.md") -Destination $docsStage -Force
 Copy-Item -LiteralPath (Join-Path $root "docs\quarantine.md") -Destination $docsStage -Force
+Copy-Item -LiteralPath (Join-Path $root "docs\windows-driver.md") -Destination $docsStage -Force
+Copy-Item -LiteralPath (Join-Path $root "docs\real-time-protection.md") -Destination $docsStage -Force
 
 $files = Get-ChildItem -LiteralPath $stageDir -Recurse -File |
   Where-Object { $_.Extension -ne ".pdb" } |

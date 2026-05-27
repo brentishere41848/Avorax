@@ -4,7 +4,9 @@ This project is the Windows process creation protection path.
 
 Current state:
 
-- Architecture and driver skeleton are present.
+- A WDK process callback project is present in `driver/`.
+- The callback registration path is implemented with `PsSetCreateProcessNotifyRoutineEx`.
+- The first process guard driver is monitor-only; it does not claim pre-execution denial until a signed-driver verdict cache is implemented and tested.
 - Production UI must show `Post-launch blocking active` unless this driver is installed, signed, running, and returning pre-execution deny verdicts.
 
 Design:

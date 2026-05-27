@@ -155,6 +155,52 @@ class LocalCoreClient {
     return response?['ok'] == true;
   }
 
+  Future<String> runProtectionSelfTest() async {
+    if (!isDesktop) {
+      return 'Protection self-test is only available on desktop platforms.';
+    }
+    final executable = _guardServiceExecutable();
+    if (executable == null || !File(executable).existsSync()) {
+      return 'Pasus Guard Service executable was not found. Post-launch fallback cannot be self-tested.';
+    }
+    try {
+      final process = await Process.start(executable, []);
+      process.stdin.writeln(jsonEncode({'command': 'driver_self_test'}));
+      await process.stdin.close();
+      String? lastLine;
+      await for (final line
+          in process.stdout
+              .transform(utf8.decoder)
+              .transform(const LineSplitter())) {
+        if (line.trim().isNotEmpty) lastLine = line.trim();
+      }
+      await process.stderr.drain<void>();
+      await process.exitCode.timeout(const Duration(seconds: 30));
+      if (lastLine == null) return 'Protection self-test produced no output.';
+      final decoded = jsonDecode(lastLine);
+      if (decoded is! Map) return lastLine;
+      final message = decoded['message'];
+      if (message is String && message.trim().startsWith('{')) {
+        final report = jsonDecode(message);
+        if (report is Map) {
+          final steps = report['steps'];
+          if (steps is List) {
+            return steps
+                .whereType<Map>()
+                .map((step) {
+                  final passed = step['passed'] == true ? 'PASS' : 'FAIL';
+                  return '$passed ${step['name']}: ${step['reason']}';
+                })
+                .join('\n');
+          }
+        }
+      }
+      return message is String ? message : lastLine;
+    } on Object catch (error) {
+      return 'Protection self-test failed: $error';
+    }
+  }
+
   Future<void> cancelActiveScan() async {
     _activeScanProcess?.kill();
   }
@@ -245,6 +291,29 @@ class LocalCoreClient {
       '${Directory.current.path}${Platform.pathSeparator}$name',
       'core${Platform.pathSeparator}pasus_local_core${Platform.pathSeparator}target${Platform.pathSeparator}release${Platform.pathSeparator}$name',
       '..${Platform.pathSeparator}..${Platform.pathSeparator}core${Platform.pathSeparator}pasus_local_core${Platform.pathSeparator}target${Platform.pathSeparator}release${Platform.pathSeparator}$name',
+    ];
+    for (final candidate in candidates) {
+      final file = File(candidate);
+      if (file.existsSync()) return file.absolute.path;
+    }
+    return candidates.first;
+  }
+
+  String? _guardServiceExecutable() {
+    final override = Platform.environment['PASUS_GUARD_SERVICE'];
+    if (override != null &&
+        override.isNotEmpty &&
+        File(override).existsSync()) {
+      return override;
+    }
+    final name = Platform.isWindows
+        ? 'pasus_guard_service.exe'
+        : 'pasus_guard_service';
+    final candidates = [
+      '${File(Platform.resolvedExecutable).parent.path}${Platform.pathSeparator}$name',
+      '${Directory.current.path}${Platform.pathSeparator}$name',
+      'core${Platform.pathSeparator}pasus_guard_service${Platform.pathSeparator}target${Platform.pathSeparator}release${Platform.pathSeparator}$name',
+      '..${Platform.pathSeparator}..${Platform.pathSeparator}core${Platform.pathSeparator}pasus_guard_service${Platform.pathSeparator}target${Platform.pathSeparator}release${Platform.pathSeparator}$name',
     ];
     for (final candidate in candidates) {
       final file = File(candidate);
