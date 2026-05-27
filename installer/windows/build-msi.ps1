@@ -140,6 +140,7 @@ $modelSourceDir = Join-Path $root "assets\models"
 $yaraSourceDir = Join-Path $root "assets\yara"
 $testAssetsSourceDir = Join-Path $root "assets\test"
 $driverToolsSourceDir = Join-Path $root "core\pasus_windows_minifilter"
+$processGuardToolsSourceDir = Join-Path $root "core\pasus_windows_process_guard"
 $modelFile = Join-Path $modelSourceDir "pasus_static_malware_model.onnx"
 $modelMetadataFile = Join-Path $modelSourceDir "pasus_static_malware_model.metadata.json"
 
@@ -242,6 +243,8 @@ foreach ($requiredDriverFile in @(
 }
 $stageDriverToolsDir = Join-Path $stageDir "driver-tools\pasus_windows_minifilter"
 Copy-Tree $driverToolsSourceDir $stageDriverToolsDir
+$stageProcessGuardToolsDir = Join-Path $stageDir "driver-tools\pasus_windows_process_guard"
+Copy-Tree $processGuardToolsSourceDir $stageProcessGuardToolsDir
 
 $coreSource = $null
 if (Test-Path $localCoreExe) {
@@ -298,6 +301,8 @@ Copy-Item -LiteralPath (Join-Path $root "docs\malware-protection.md") -Destinati
 Copy-Item -LiteralPath (Join-Path $root "docs\quarantine.md") -Destination $docsStage -Force
 Copy-Item -LiteralPath (Join-Path $root "docs\windows-driver.md") -Destination $docsStage -Force
 Copy-Item -LiteralPath (Join-Path $root "docs\real-time-protection.md") -Destination $docsStage -Force
+Copy-Item -LiteralPath (Join-Path $root "docs\protection-self-test.md") -Destination $docsStage -Force
+Copy-Item -LiteralPath (Join-Path $root "docs\testing-eicar.md") -Destination $docsStage -Force
 
 $files = Get-ChildItem -LiteralPath $stageDir -Recurse -File |
   Where-Object { $_.Extension -ne ".pdb" } |

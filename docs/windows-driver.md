@@ -19,3 +19,11 @@ Driver requirements:
 - Never disable Windows Defender or other security products.
 
 Development install scripts live in `core/pasus_windows_minifilter/scripts`. They require Administrator rights and Windows TESTSIGNING to already be enabled in a development VM. Pasus does not enable TESTSIGNING automatically.
+
+Validation workflow:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\windows\pasus-protection-selftest.ps1 -BuildDriver -InstallDriver
+```
+
+The workflow writes `dist\windows-driver-validation\selftest_report.json`. Driver-enabled release gates must fail if this report is missing or failing.

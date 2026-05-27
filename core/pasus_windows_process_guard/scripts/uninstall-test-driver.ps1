@@ -1,14 +1,13 @@
 param(
-  [string]$ReportPath = $(Join-Path (Resolve-Path (Join-Path $PSScriptRoot "..\..\..")) "dist\windows-driver-validation\uninstall_report.json")
+  [string]$ReportPath = $(Join-Path (Resolve-Path (Join-Path $PSScriptRoot "..\..\..")) "dist\windows-process-guard-validation\uninstall_report.json")
 )
 
 $ErrorActionPreference = "Stop"
 New-Item -ItemType Directory -Force -Path (Split-Path $ReportPath) | Out-Null
-
 try {
   & (Join-Path $PSScriptRoot "setup-dev-env-check.ps1") -RequireAdmin -ReportPath (Join-Path (Split-Path $ReportPath) "setup_report.json")
-  fltmc unload PasusAvFilter 2>$null
-  sc.exe delete PasusAvFilter | Out-Host
+  sc.exe stop PasusProcessGuard 2>$null | Out-Host
+  sc.exe delete PasusProcessGuard 2>$null | Out-Host
   [ordered]@{
     pasus_version = "0.1.12"
     timestamp_utc = (Get-Date).ToUniversalTime().ToString("o")
@@ -26,5 +25,3 @@ try {
   } | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $ReportPath -Encoding UTF8
   throw
 }
-
-Write-Host "PasusAvFilter test driver was stopped/removed if it was installed. User quarantine data was not deleted."

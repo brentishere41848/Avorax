@@ -10,5 +10,6 @@ Current Pasus limitations:
 - The bundled AI model is currently a development model and cannot auto-quarantine by itself.
 - Encrypted files cannot always be restored without a Recovery Vault copy, OS snapshot, backup, or decryption key.
 - Pasus uses EICAR and benign simulators for tests, not real malware samples.
+- v0.1.12 driver validation requires a Windows VM with Visual Studio Build Tools or EWDK, WDK tools, Administrator rights, and manual TESTSIGNING configuration.
 
 Pasus must not claim a protection layer is active unless its health check proves it is active.

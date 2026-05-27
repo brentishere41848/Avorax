@@ -61,10 +61,13 @@ struct GuardQuarantineRecord {
     detection_name: String,
     engine: String,
     action_taken: String,
-    process_id: Option<u32>,
     quarantined_at: DateTime<Utc>,
     status: QuarantineStatus,
     user_note: Option<String>,
+    source: String,
+    blocked_before_execution: bool,
+    process_started: bool,
+    process_id: Option<u32>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -506,10 +509,13 @@ fn quarantine_file(
                     detection_name: threat_match.reason.clone(),
                     engine: threat_match.engine.clone(),
                     action_taken: "process_stopped_and_file_quarantined".to_string(),
-                    process_id,
                     quarantined_at: Utc::now(),
                     status: QuarantineStatus::Quarantined,
                     user_note: None,
+                    source: "guard_service".to_string(),
+                    blocked_before_execution: false,
+                    process_started: process_id.is_some(),
+                    process_id,
                 };
                 write_quarantine_record(&record)?;
                 return Ok(record);

@@ -79,6 +79,23 @@ class QuarantineScreen extends ConsumerWidget {
                       trailing: Text(item.status.label),
                     ),
                     Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _MetaChip('Source', _sourceLabel(item.source)),
+                        _MetaChip('Action', item.actionTaken),
+                        _MetaChip(
+                          'Pre-exec',
+                          item.blockedBeforeExecution ? 'yes' : 'no',
+                        ),
+                        _MetaChip(
+                          'Process',
+                          item.processStarted ? 'started' : 'not started',
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
                       spacing: 10,
                       runSpacing: 10,
                       children: [
@@ -123,3 +140,33 @@ class QuarantineScreen extends ConsumerWidget {
     );
   }
 }
+
+class _MetaChip extends StatelessWidget {
+  const _MetaChip(this.label, this.value);
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: PasusColors.surface,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: PasusColors.border),
+      ),
+      child: Text(
+        '$label: $value',
+        style: const TextStyle(color: PasusColors.textSecondary, fontSize: 12),
+      ),
+    );
+  }
+}
+
+String _sourceLabel(String source) => switch (source) {
+  'guard_service' => 'Guard Service',
+  'minifilter_driver' => 'Minifilter Driver',
+  'process_guard' => 'Process Guard',
+  _ => 'Scanner',
+};

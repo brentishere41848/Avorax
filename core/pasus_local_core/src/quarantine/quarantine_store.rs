@@ -45,6 +45,11 @@ impl QuarantineStore {
             quarantined_at: Utc::now(),
             status: QuarantineStatus::Quarantined,
             user_note: None,
+            source: "scanner".to_string(),
+            blocked_before_execution: false,
+            process_started: false,
+            action_taken: "quarantined".to_string(),
+            process_id: None,
         };
         self.write_record(&record)?;
         Ok(record)

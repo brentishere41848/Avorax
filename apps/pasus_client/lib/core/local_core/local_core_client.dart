@@ -100,6 +100,11 @@ class LocalCoreClient {
           orElse: () => QuarantineItemStatus.quarantined,
         ),
         userNote: map['user_note'] as String?,
+        source: map['source'] as String? ?? 'scanner',
+        blockedBeforeExecution:
+            map['blocked_before_execution'] as bool? ?? false,
+        processStarted: map['process_started'] as bool? ?? false,
+        actionTaken: map['action_taken'] as String? ?? 'quarantined',
       );
     }).toList();
   }

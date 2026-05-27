@@ -21,4 +21,22 @@ pub struct QuarantineRecord {
     pub quarantined_at: DateTime<Utc>,
     pub status: QuarantineStatus,
     pub user_note: Option<String>,
+    #[serde(default = "default_source")]
+    pub source: String,
+    #[serde(default)]
+    pub blocked_before_execution: bool,
+    #[serde(default)]
+    pub process_started: bool,
+    #[serde(default = "default_action_taken")]
+    pub action_taken: String,
+    #[serde(default)]
+    pub process_id: Option<u32>,
+}
+
+fn default_source() -> String {
+    "scanner".to_string()
+}
+
+fn default_action_taken() -> String {
+    "quarantined".to_string()
 }

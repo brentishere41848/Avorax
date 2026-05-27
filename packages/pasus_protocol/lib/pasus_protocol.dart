@@ -844,6 +844,10 @@ class QuarantineRecord {
     required this.quarantinedAt,
     required this.status,
     this.userNote,
+    this.source = 'scanner',
+    this.blockedBeforeExecution = false,
+    this.processStarted = false,
+    this.actionTaken = 'quarantined',
   });
 
   final String quarantineId;
@@ -856,6 +860,10 @@ class QuarantineRecord {
   final DateTime quarantinedAt;
   final QuarantineItemStatus status;
   final String? userNote;
+  final String source;
+  final bool blockedBeforeExecution;
+  final bool processStarted;
+  final String actionTaken;
 }
 
 class AllowlistEntry {

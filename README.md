@@ -201,6 +201,16 @@ The bundled runtime includes `freshclam.exe`, but signature database updates rem
 
 GitHub Releases are built by `.github/workflows/release-windows.yml`. Push a version tag such as `v0.1.0` and GitHub Actions will build and attach both the `.msi` and `.exe` installers to the release.
 
+## Windows Driver Validation
+
+On a disposable Windows driver-development VM with Visual Studio Build Tools or EWDK and WDK installed:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\windows\pasus-protection-selftest.ps1 -BuildDriver -InstallDriver
+```
+
+The workflow writes `dist\windows-driver-validation\selftest_report.json`. If the driver is missing or not running, Pasus must show post-launch fallback instead of pre-execution blocking.
+
 ## Test
 
 ```powershell
