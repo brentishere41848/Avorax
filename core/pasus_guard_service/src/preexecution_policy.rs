@@ -5,8 +5,11 @@ use serde::{Deserialize, Serialize};
 pub enum DriverProtectionMode {
     Disabled,
     ObserveOnly,
+    Balanced,
     BlockKnownBad,
     BlockConfirmedThreats,
+    Lockdown,
+    DeveloperMode,
     Aggressive,
 }
 
@@ -28,7 +31,7 @@ pub struct PreExecutionPolicy {
 impl Default for PreExecutionPolicy {
     fn default() -> Self {
         Self {
-            mode: DriverProtectionMode::BlockConfirmedThreats,
+            mode: DriverProtectionMode::Balanced,
             default_pre_execution_timeout_ms: 750,
             default_file_open_timeout_ms: 500,
             critical_system_path_policy: "fail_open".to_string(),

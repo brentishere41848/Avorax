@@ -10,6 +10,7 @@ use sha2::{Digest, Sha256};
 mod ai;
 mod allowlist;
 mod api;
+mod app_control;
 mod protection;
 mod quarantine;
 mod scanner;
@@ -812,6 +813,14 @@ fn sha256_for_file(path: &Path) -> anyhow::Result<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use app_control::known_good_store::KnownGoodStore;
+    use app_control::publisher_trust::TrustedPublisherPolicy;
+    use app_control::trust_store::is_dangerous_allowlist_path;
+    use app_control::user_approval::UserApprovalStore;
+    use app_control::{
+        ApplicationControlDecision, ApplicationControlInput, ApplicationControlPolicy,
+        ApplicationTrustLevel, ProtectionMode,
+    };
     use std::fs;
     use tempfile::tempdir;
 
@@ -938,5 +947,84 @@ mod tests {
             .iter()
             .all(|threat| threat.confidence != ThreatConfidence::Confirmed));
         assert_eq!(report.quarantined_files, 0);
+    }
+
+    #[test]
+    fn balanced_allows_unknown_benign_executable_with_monitoring() {
+        let input = ApplicationControlInput::for_path("C:\\Users\\Brent\\Downloads\\tool.exe");
+        let policy = ApplicationControlPolicy::new(ProtectionMode::Balanced);
+
+        let result = policy.evaluate(&input);
+
+        assert_eq!(result.decision, ApplicationControlDecision::AllowAndMonitor);
+        assert_eq!(result.trust_level, ApplicationTrustLevel::Unknown);
+        assert!(!result.label_as_malware);
+    }
+
+    #[test]
+    fn lockdown_blocks_unknown_unsigned_executable_without_malware_label() {
+        let input = ApplicationControlInput::for_path("C:\\Users\\Brent\\Downloads\\vpn.exe");
+        let policy = ApplicationControlPolicy::new(ProtectionMode::Lockdown);
+
+        let result = policy.evaluate(&input);
+
+        assert_eq!(result.decision, ApplicationControlDecision::Block);
+        assert_eq!(result.trust_level, ApplicationTrustLevel::Unknown);
+        assert!(result.requires_user_approval);
+        assert!(!result.label_as_malware);
+    }
+
+    #[test]
+    fn lockdown_allows_known_good_hash() {
+        let mut input = ApplicationControlInput::for_path("C:\\Tools\\trusted.exe");
+        input.sha256 = Some("sha256:abc123".to_string());
+        let mut policy = ApplicationControlPolicy::new(ProtectionMode::Lockdown);
+        policy.known_good = KnownGoodStore::from_hashes(["abc123".to_string()]);
+
+        let result = policy.evaluate(&input);
+
+        assert_eq!(result.decision, ApplicationControlDecision::Allow);
+        assert_eq!(result.trust_level, ApplicationTrustLevel::KnownGoodHash);
+    }
+
+    #[test]
+    fn lockdown_allows_trusted_publisher_signature() {
+        let mut input = ApplicationControlInput::for_path("C:\\Program Files\\Vendor\\app.exe");
+        input.signature_valid = true;
+        input.publisher = Some("Contoso Trusted Apps".to_string());
+        let mut policy = ApplicationControlPolicy::new(ProtectionMode::Lockdown);
+        policy.trusted_publishers =
+            TrustedPublisherPolicy::with_trusted(["contoso trusted apps".to_string()]);
+
+        let result = policy.evaluate(&input);
+
+        assert_eq!(result.decision, ApplicationControlDecision::Allow);
+        assert_eq!(result.trust_level, ApplicationTrustLevel::TrustedPublisher);
+    }
+
+    #[test]
+    fn lockdown_allows_exact_hash_after_user_approval() {
+        let mut input = ApplicationControlInput::for_path("C:\\Users\\Brent\\Downloads\\cli.exe");
+        input.sha256 = Some("sha256:def456".to_string());
+        let mut approvals = UserApprovalStore::default();
+        approvals.approve_hash("def456".to_string());
+        let mut policy = ApplicationControlPolicy::new(ProtectionMode::Lockdown);
+        policy.user_approvals = approvals;
+
+        let result = policy.evaluate(&input);
+
+        assert_eq!(result.decision, ApplicationControlDecision::Allow);
+        assert_eq!(result.trust_level, ApplicationTrustLevel::UserApproved);
+    }
+
+    #[test]
+    fn dangerous_root_allowlist_paths_are_blocked() {
+        assert!(is_dangerous_allowlist_path(Path::new("C:\\")));
+        assert!(is_dangerous_allowlist_path(Path::new("C:\\Windows")));
+        assert!(is_dangerous_allowlist_path(Path::new("/")));
+        assert!(is_dangerous_allowlist_path(Path::new("/usr")));
+        assert!(!is_dangerous_allowlist_path(Path::new(
+            "C:\\Users\\Brent\\Downloads\\trusted.exe"
+        )));
     }
 }

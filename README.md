@@ -154,6 +154,14 @@ Scan results are grouped into confirmed threats, probable malware, suspicious it
 
 Pasus Guard is offline-first. The default release uses a visible user-mode helper with best-effort post-launch blocking where the OS allows it. A Windows minifilter development path exists for known-threat pre-execution blocking, but Pasus must not claim that mode is active unless the driver is installed, running, communicating with the service, and passing self-test. Production distribution requires Microsoft driver signing.
 
+v0.1.13 adds prevention-first protection profiles:
+
+- Balanced Protection: confirmed threats block, suspicious items review, unknown apps allow-and-monitor.
+- Lockdown Protection: unknown apps are blocked until trusted or approved by exact hash.
+- Developer Mode: unknown developer tools are monitored/reviewed without broadly blocking normal workflows.
+
+Lockdown blocks unknown apps as unknown. It must not label a normal executable as a virus unless a signature, YARA, AI, or behavior signal supports that verdict. True before-launch Lockdown enforcement still requires the active driver path; otherwise Pasus reports post-launch fallback.
+
 Ransomware Guard watches for behavior such as rapid mass file modification, suspicious renames, entropy jumps, ransom-note patterns, and backup tampering. Recovery Vault can restore protected copies when available. Pasus does not claim it can decrypt files without a backup, snapshot, or key.
 
 ## Quarantine And Allowlist
@@ -210,6 +218,15 @@ powershell -ExecutionPolicy Bypass -File tools\windows\pasus-protection-selftest
 ```
 
 The workflow writes `dist\windows-driver-validation\selftest_report.json`. If the driver is missing or not running, Pasus must show post-launch fallback instead of pre-execution blocking.
+
+Additional release gates:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\security\pasus-false-positive-gate.ps1
+powershell -ExecutionPolicy Bypass -File tools\security\pasus-protection-gate.ps1
+powershell -ExecutionPolicy Bypass -File tools\perf\pasus-performance-gate.ps1
+powershell -ExecutionPolicy Bypass -File tools\windows\pasus-release-gate.ps1
+```
 
 ## Test
 

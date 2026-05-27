@@ -97,6 +97,14 @@ class ProtectionScreen extends ConsumerWidget {
             final report = state.lastScanReport;
             final cards = [
               PasusMetricCard(
+                title: 'Protection profile',
+                value: state.config.protectionMode.label,
+                detail: state.config.protectionMode == ProtectionMode.lockdown
+                    ? 'Unknown apps are blocked by policy until approved. Driver self-test determines whether this happens before launch.'
+                    : state.config.protectionMode.description,
+                icon: Icons.admin_panel_settings_outlined,
+              ),
+              PasusMetricCard(
                 title: 'Real-time protection',
                 value: state.protectionStatus.label,
                 detail: state.protectionStatus == ProtectionStatus.localOnly

@@ -9,6 +9,7 @@ export 'package:pasus_protocol/pasus_protocol.dart'
         HeartbeatStatus,
         MalwareEngineStatus,
         PasusConfig,
+        ProtectionMode,
         ProtectionSession,
         ProtectionStatus,
         QuarantineRecord,

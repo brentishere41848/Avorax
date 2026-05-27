@@ -62,6 +62,23 @@ try {
   Pop-Location
 }
 
+& (Join-Path $root "tools\security\pasus-false-positive-gate.ps1") -RepoRoot $root
+if ($LASTEXITCODE -ne 0) { Add-Error "False-positive gate failed." }
+
+$protectionArgs = @{
+  RepoRoot = $root
+  SelfTestReport = $SelfTestReport
+}
+if ($DriverFeatureEnabled) {
+  & (Join-Path $root "tools\security\pasus-protection-gate.ps1") @protectionArgs -DriverFeatureEnabled
+} else {
+  & (Join-Path $root "tools\security\pasus-protection-gate.ps1") @protectionArgs
+}
+if ($LASTEXITCODE -ne 0) { Add-Error "Protection gate failed." }
+
+& (Join-Path $root "tools\perf\pasus-performance-gate.ps1") -RepoRoot $root
+if ($LASTEXITCODE -ne 0) { Add-Error "Performance gate failed." }
+
 if ($errors.Count -gt 0) {
   throw "Pasus release gate failed with $($errors.Count) error(s)."
 }

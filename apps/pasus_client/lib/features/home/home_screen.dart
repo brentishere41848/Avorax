@@ -102,6 +102,14 @@ class HomeScreen extends ConsumerWidget {
     final report = state.lastScanReport;
     final cards = [
       PasusMetricCard(
+        title: 'Protection profile',
+        value: state.config.protectionMode.label,
+        detail: state.config.protectionMode == ProtectionMode.lockdown
+            ? 'Unknown app blocking is enabled by policy. True before-launch blocking still requires a running driver.'
+            : state.config.protectionMode.description,
+        icon: Icons.admin_panel_settings_outlined,
+      ),
+      PasusMetricCard(
         title: 'Real-time protection',
         value:
             state.protectionStatus == ProtectionStatus.protected ||
@@ -132,10 +140,12 @@ class HomeScreen extends ConsumerWidget {
       PasusMetricCard(
         title: 'Pre-execution Blocking',
         value: state.driverStatus == 'running'
-            ? 'Driver active'
+            ? state.config.protectionMode == ProtectionMode.lockdown
+                  ? 'Known-threat blocking'
+                  : 'Driver active'
             : 'Driver missing',
         detail: state.driverStatus == 'running'
-            ? 'Kernel driver reports active. Blocking claims depend on driver verdicts.'
+            ? 'Before-launch claims require the protection self-test to pass.'
             : 'Post-launch user-mode stopping is available; true pre-execution blocking needs the signed driver.',
         icon: Icons.block_outlined,
       ),

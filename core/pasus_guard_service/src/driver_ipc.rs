@@ -6,6 +6,8 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
+use crate::preexecution_policy::DriverProtectionMode;
+
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum DriverEventType {
@@ -28,6 +30,10 @@ pub struct ScanRequest {
     pub user_sid: Option<String>,
     pub desired_access: Option<u32>,
     pub file_size: Option<u64>,
+    pub file_attributes: Option<u32>,
+    pub signature_status: Option<String>,
+    pub publisher: Option<String>,
+    pub parent_process_path: Option<String>,
     pub sha256: Option<String>,
     pub timestamp_utc: DateTime<Utc>,
 }
@@ -73,7 +79,24 @@ pub enum VerdictEngine {
     Heuristic,
     Behavior,
     KnownBadHash,
+    KnownGoodHash,
     Allowlist,
+    AppControl,
+    TrustedPublisher,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum ApplicationTrustLevel {
+    SystemTrusted,
+    TrustedPublisher,
+    KnownGoodHash,
+    UserApproved,
+    Allowlisted,
+    Unknown,
+    Suspicious,
+    KnownBad,
+    ConfirmedMalware,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -86,11 +109,19 @@ pub struct ScanVerdict {
     pub reason_summary: String,
     pub cache_ttl_ms: u64,
     pub quarantine_after_block: bool,
+    pub trust_level: ApplicationTrustLevel,
+    pub requires_user_approval: bool,
+    pub monitor_process: bool,
+    pub label_as_malware: bool,
 }
 
 #[derive(Debug, Clone)]
 pub struct DriverVerdictConfig {
     pub known_bad_hashes: HashSet<String>,
+    pub known_good_hashes: HashSet<String>,
+    pub user_approved_hashes: HashSet<String>,
+    pub trusted_publishers: HashSet<String>,
+    pub mode: DriverProtectionMode,
     pub pre_execution_timeout_ms: u64,
 }
 
@@ -98,6 +129,17 @@ impl Default for DriverVerdictConfig {
     fn default() -> Self {
         Self {
             known_bad_hashes: HashSet::new(),
+            known_good_hashes: HashSet::new(),
+            user_approved_hashes: HashSet::new(),
+            trusted_publishers: [
+                "microsoft windows".to_string(),
+                "microsoft corporation".to_string(),
+                "pasus".to_string(),
+                "pasus security".to_string(),
+            ]
+            .into_iter()
+            .collect(),
+            mode: DriverProtectionMode::Balanced,
             pre_execution_timeout_ms: 750,
         }
     }
@@ -114,6 +156,7 @@ pub fn evaluate_driver_request(
             FinalVerdict::LikelyClean,
             "Critical system or Pasus-owned path; normal mode fails open.",
             vec![],
+            ApplicationTrustLevel::SystemTrusted,
         ));
     }
 
@@ -125,13 +168,51 @@ pub fn evaluate_driver_request(
 
     if hash
         .as_ref()
-        .map(|value| config.known_bad_hashes.contains(value))
+        .map(|value| config.known_bad_hashes.contains(&normalize_hash(value)))
         .unwrap_or(false)
     {
         return Ok(block(
             request,
             "Known bad hash matched local cache.",
             vec![VerdictEngine::KnownBadHash],
+        ));
+    }
+
+    if hash
+        .as_ref()
+        .map(|value| config.known_good_hashes.contains(&normalize_hash(value)))
+        .unwrap_or(false)
+    {
+        return Ok(allow(
+            request,
+            FinalVerdict::LikelyClean,
+            "Known-good exact hash is trusted.",
+            vec![VerdictEngine::KnownGoodHash],
+            ApplicationTrustLevel::KnownGoodHash,
+        ));
+    }
+
+    if hash
+        .as_ref()
+        .map(|value| config.user_approved_hashes.contains(&normalize_hash(value)))
+        .unwrap_or(false)
+    {
+        return Ok(allow(
+            request,
+            FinalVerdict::LikelyClean,
+            "User approved this exact file hash.",
+            vec![VerdictEngine::AppControl],
+            ApplicationTrustLevel::UserApproved,
+        ));
+    }
+
+    if trusted_publisher(request, config) {
+        return Ok(allow(
+            request,
+            FinalVerdict::LikelyClean,
+            "Valid trusted publisher signature.",
+            vec![VerdictEngine::TrustedPublisher],
+            ApplicationTrustLevel::TrustedPublisher,
         ));
     }
 
@@ -156,15 +237,48 @@ pub fn evaluate_driver_request(
             reason_summary: yara.reason,
             cache_ttl_ms: 30_000,
             quarantine_after_block: false,
+            trust_level: ApplicationTrustLevel::Suspicious,
+            requires_user_approval: false,
+            monitor_process: true,
+            label_as_malware: false,
         });
     }
 
-    Ok(allow(
-        request,
-        FinalVerdict::Unknown,
-        "No confirmed local blocking signal matched.",
-        vec![],
-    ))
+    match config.mode {
+        DriverProtectionMode::Disabled => Ok(allow(
+            request,
+            FinalVerdict::Unknown,
+            "Driver protection is disabled.",
+            vec![],
+            ApplicationTrustLevel::Unknown,
+        )),
+        DriverProtectionMode::ObserveOnly | DriverProtectionMode::DeveloperMode => Ok(monitor(
+            request,
+            "Unknown app allowed for monitoring in the selected protection profile.",
+        )),
+        DriverProtectionMode::Balanced
+        | DriverProtectionMode::BlockKnownBad
+        | DriverProtectionMode::BlockConfirmedThreats
+        | DriverProtectionMode::Aggressive => Ok(monitor(
+            request,
+            "Unknown app is not labeled malware; it is allowed with monitoring.",
+        )),
+        DriverProtectionMode::Lockdown => Ok(ScanVerdict {
+            request_id: request.request_id.clone(),
+            action: DriverVerdictAction::Block,
+            final_verdict: FinalVerdict::Unknown,
+            confidence: VerdictConfidence::Low,
+            engines_used: vec![VerdictEngine::AppControl],
+            reason_summary: "Lockdown Mode blocks unknown apps until an exact hash is approved."
+                .to_string(),
+            cache_ttl_ms: 30_000,
+            quarantine_after_block: false,
+            trust_level: ApplicationTrustLevel::Unknown,
+            requires_user_approval: true,
+            monitor_process: false,
+            label_as_malware: false,
+        }),
+    }
 }
 
 fn normalized_path(request: &ScanRequest) -> PathBuf {
@@ -181,6 +295,7 @@ fn allow(
     verdict: FinalVerdict,
     reason: &str,
     engines_used: Vec<VerdictEngine>,
+    trust_level: ApplicationTrustLevel,
 ) -> ScanVerdict {
     ScanVerdict {
         request_id: request.request_id.clone(),
@@ -191,6 +306,27 @@ fn allow(
         reason_summary: reason.to_string(),
         cache_ttl_ms: 60_000,
         quarantine_after_block: false,
+        trust_level,
+        requires_user_approval: false,
+        monitor_process: false,
+        label_as_malware: false,
+    }
+}
+
+fn monitor(request: &ScanRequest, reason: &str) -> ScanVerdict {
+    ScanVerdict {
+        request_id: request.request_id.clone(),
+        action: DriverVerdictAction::AllowAndMonitor,
+        final_verdict: FinalVerdict::Unknown,
+        confidence: VerdictConfidence::Low,
+        engines_used: vec![VerdictEngine::AppControl],
+        reason_summary: reason.to_string(),
+        cache_ttl_ms: 30_000,
+        quarantine_after_block: false,
+        trust_level: ApplicationTrustLevel::Unknown,
+        requires_user_approval: false,
+        monitor_process: true,
+        label_as_malware: false,
     }
 }
 
@@ -204,7 +340,33 @@ fn block(request: &ScanRequest, reason: &str, engines_used: Vec<VerdictEngine>) 
         reason_summary: reason.to_string(),
         cache_ttl_ms: 300_000,
         quarantine_after_block: true,
+        trust_level: ApplicationTrustLevel::ConfirmedMalware,
+        requires_user_approval: false,
+        monitor_process: false,
+        label_as_malware: true,
     }
+}
+
+fn trusted_publisher(request: &ScanRequest, config: &DriverVerdictConfig) -> bool {
+    if request.signature_status.as_deref() != Some("valid") {
+        return false;
+    }
+    let Some(publisher) = request.publisher.as_deref() else {
+        return false;
+    };
+    let publisher = publisher.to_lowercase();
+    config
+        .trusted_publishers
+        .iter()
+        .any(|trusted| publisher.contains(&trusted.to_lowercase()))
+}
+
+fn normalize_hash(value: &str) -> String {
+    value
+        .trim()
+        .strip_prefix("sha256:")
+        .unwrap_or(value.trim())
+        .to_lowercase()
 }
 
 fn sha256_file(path: &Path) -> anyhow::Result<String> {
@@ -347,6 +509,10 @@ mod tests {
             user_sid: None,
             desired_access: None,
             file_size: None,
+            file_attributes: None,
+            signature_status: None,
+            publisher: None,
+            parent_process_path: None,
             sha256: None,
             timestamp_utc: Utc::now(),
         }
@@ -357,8 +523,24 @@ mod tests {
         let dir = tempdir().unwrap();
         let file = dir.path().join("tool.exe");
         fs::write(&file, b"normal developer tool").unwrap();
-        let verdict = evaluate_driver_request(&request_for(&file), &Default::default()).unwrap();
+        let hash = sha256_file(&file).unwrap();
+        let config = DriverVerdictConfig {
+            known_good_hashes: HashSet::from([normalize_hash(&hash)]),
+            ..Default::default()
+        };
+        let verdict = evaluate_driver_request(&request_for(&file), &config).unwrap();
         assert_eq!(verdict.action, DriverVerdictAction::Allow);
+    }
+
+    #[test]
+    fn driver_request_unknown_balanced_allows_and_monitors() {
+        let dir = tempdir().unwrap();
+        let file = dir.path().join("vpn-installer.exe");
+        fs::write(&file, b"normal installer").unwrap();
+        let verdict = evaluate_driver_request(&request_for(&file), &Default::default()).unwrap();
+        assert_eq!(verdict.action, DriverVerdictAction::AllowAndMonitor);
+        assert_eq!(verdict.final_verdict, FinalVerdict::Unknown);
+        assert!(!verdict.label_as_malware);
     }
 
     #[test]
@@ -368,12 +550,78 @@ mod tests {
         fs::write(&file, b"harmless known bad test fixture").unwrap();
         let hash = sha256_file(&file).unwrap();
         let config = DriverVerdictConfig {
-            known_bad_hashes: HashSet::from([hash]),
+            known_bad_hashes: HashSet::from([normalize_hash(&hash)]),
             ..Default::default()
         };
         let verdict = evaluate_driver_request(&request_for(&file), &config).unwrap();
         assert_eq!(verdict.action, DriverVerdictAction::Block);
         assert!(verdict.quarantine_after_block);
+    }
+
+    #[test]
+    fn driver_request_unknown_lockdown_blocks_without_malware_label() {
+        let dir = tempdir().unwrap();
+        let file = dir.path().join("unknown.exe");
+        fs::write(&file, b"unknown but harmless executable").unwrap();
+        let config = DriverVerdictConfig {
+            mode: DriverProtectionMode::Lockdown,
+            ..Default::default()
+        };
+        let verdict = evaluate_driver_request(&request_for(&file), &config).unwrap();
+        assert_eq!(verdict.action, DriverVerdictAction::Block);
+        assert_eq!(verdict.final_verdict, FinalVerdict::Unknown);
+        assert!(verdict.requires_user_approval);
+        assert!(!verdict.quarantine_after_block);
+        assert!(!verdict.label_as_malware);
+    }
+
+    #[test]
+    fn driver_request_known_good_allows_in_lockdown() {
+        let dir = tempdir().unwrap();
+        let file = dir.path().join("trusted.exe");
+        fs::write(&file, b"trusted fixture").unwrap();
+        let hash = sha256_file(&file).unwrap();
+        let config = DriverVerdictConfig {
+            mode: DriverProtectionMode::Lockdown,
+            known_good_hashes: HashSet::from([normalize_hash(&hash)]),
+            ..Default::default()
+        };
+        let verdict = evaluate_driver_request(&request_for(&file), &config).unwrap();
+        assert_eq!(verdict.action, DriverVerdictAction::Allow);
+        assert_eq!(verdict.trust_level, ApplicationTrustLevel::KnownGoodHash);
+    }
+
+    #[test]
+    fn driver_request_user_approved_hash_allows_in_lockdown() {
+        let dir = tempdir().unwrap();
+        let file = dir.path().join("approved.exe");
+        fs::write(&file, b"user approved fixture").unwrap();
+        let hash = sha256_file(&file).unwrap();
+        let config = DriverVerdictConfig {
+            mode: DriverProtectionMode::Lockdown,
+            user_approved_hashes: HashSet::from([normalize_hash(&hash)]),
+            ..Default::default()
+        };
+        let verdict = evaluate_driver_request(&request_for(&file), &config).unwrap();
+        assert_eq!(verdict.action, DriverVerdictAction::Allow);
+        assert_eq!(verdict.trust_level, ApplicationTrustLevel::UserApproved);
+    }
+
+    #[test]
+    fn driver_request_trusted_publisher_allows_in_lockdown() {
+        let dir = tempdir().unwrap();
+        let file = dir.path().join("signed.exe");
+        fs::write(&file, b"signed fixture").unwrap();
+        let mut request = request_for(&file);
+        request.signature_status = Some("valid".to_string());
+        request.publisher = Some("Microsoft Corporation".to_string());
+        let config = DriverVerdictConfig {
+            mode: DriverProtectionMode::Lockdown,
+            ..Default::default()
+        };
+        let verdict = evaluate_driver_request(&request, &config).unwrap();
+        assert_eq!(verdict.action, DriverVerdictAction::Allow);
+        assert_eq!(verdict.trust_level, ApplicationTrustLevel::TrustedPublisher);
     }
 
     #[test]

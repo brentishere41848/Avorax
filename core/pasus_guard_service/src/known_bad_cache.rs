@@ -21,10 +21,10 @@ pub fn load_known_bad_hashes_from_path(path: &Path) -> anyhow::Result<HashSet<St
     let raw = fs::read_to_string(path)?;
     if raw.trim_start().starts_with('[') {
         let hashes: Vec<String> = serde_json::from_str(&raw)?;
-        return Ok(hashes.into_iter().collect());
+        return Ok(hashes.into_iter().map(normalize_hash).collect());
     }
     let parsed: KnownBadFile = serde_json::from_str(&raw)?;
-    Ok(parsed.hashes.into_iter().collect())
+    Ok(parsed.hashes.into_iter().map(normalize_hash).collect())
 }
 
 fn default_known_bad_path() -> PathBuf {
@@ -54,4 +54,12 @@ fn default_known_bad_path() -> PathBuf {
         }
     }
     PathBuf::from("assets/test/known_bad_test_hashes.json")
+}
+
+fn normalize_hash(value: String) -> String {
+    value
+        .trim()
+        .strip_prefix("sha256:")
+        .unwrap_or(value.trim())
+        .to_lowercase()
 }

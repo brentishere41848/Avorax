@@ -1,0 +1,6 @@
+{
+  "file_name": "signed-app.exe",
+  "signature_status": "valid",
+  "publisher": "Contoso Trusted Apps",
+  "expected": "trusted publisher may allow when policy trusts publisher"
+}

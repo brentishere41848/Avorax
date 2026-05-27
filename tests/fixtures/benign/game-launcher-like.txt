@@ -1,0 +1,3 @@
+Fixture: game launcher-like metadata.
+Purpose: false-positive gate. This is plain text, not an executable.
+Expected: Balanced mode must not auto-quarantine.

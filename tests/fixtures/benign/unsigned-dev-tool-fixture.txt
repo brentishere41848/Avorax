@@ -1,0 +1,2 @@
+Fixture: unsigned developer tool.
+Purpose: false-positive gate. Unsigned alone is not malware.

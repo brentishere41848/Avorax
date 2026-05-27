@@ -1,0 +1,12 @@
+{
+  "database_name": "Pasus Known Good Trust Database",
+  "version": "0.1.13",
+  "production_ready": false,
+  "description": "Development trust database. v0.1.13 includes Pasus-owned records and safe fixtures only, not a global software reputation database.",
+  "signed": false,
+  "limitations": [
+    "Does not contain a broad global allowlist.",
+    "User-approved hashes are stored locally.",
+    "Future trust packs must be signed before automatic import."
+  ]
+}

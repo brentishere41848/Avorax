@@ -25,6 +25,9 @@ struct GuardCommand {
     process_id: Option<u32>,
     process_path: Option<String>,
     known_malicious_hashes: Option<Vec<String>>,
+    known_good_hashes: Option<Vec<String>>,
+    user_approved_hashes: Option<Vec<String>>,
+    protection_mode: Option<preexecution_policy::DriverProtectionMode>,
     poll_interval_ms: Option<u64>,
     max_iterations: Option<u32>,
     scan_request: Option<driver_ipc::ScanRequest>,
@@ -129,6 +132,19 @@ fn handle(command: GuardCommand) -> GuardEvent {
                 &request,
                 &driver_ipc::DriverVerdictConfig {
                     known_bad_hashes: hashes,
+                    known_good_hashes: command
+                        .known_good_hashes
+                        .unwrap_or_default()
+                        .into_iter()
+                        .map(normalize_hash)
+                        .collect(),
+                    user_approved_hashes: command
+                        .user_approved_hashes
+                        .unwrap_or_default()
+                        .into_iter()
+                        .map(normalize_hash)
+                        .collect(),
+                    mode: command.protection_mode.unwrap_or_default(),
                     ..Default::default()
                 },
             ) {
@@ -592,6 +608,14 @@ fn sha256_file(path: &Path) -> anyhow::Result<String> {
     let mut hasher = Sha256::new();
     hasher.update(bytes);
     Ok(format!("sha256:{:x}", hasher.finalize()))
+}
+
+fn normalize_hash(value: String) -> String {
+    value
+        .trim()
+        .strip_prefix("sha256:")
+        .unwrap_or(value.trim())
+        .to_lowercase()
 }
 
 fn local_signature_match(path: &Path) -> anyhow::Result<Option<LocalThreatMatch>> {

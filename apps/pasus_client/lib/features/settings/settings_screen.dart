@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pasus_protocol/pasus_protocol.dart';
 
 import '../../app/app_state.dart';
 import '../../app/theme/pasus_colors.dart';
@@ -75,6 +76,33 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           title: 'Protection',
           children: [
             _ValueRow('Antivirus', state.protectionStatus.label),
+            _ValueRow('Profile', state.config.protectionMode.label),
+            DropdownButtonFormField<ProtectionMode>(
+              initialValue: state.config.protectionMode,
+              dropdownColor: PasusColors.elevatedSurface,
+              decoration: const InputDecoration(labelText: 'Protection mode'),
+              items: ProtectionMode.values
+                  .where((mode) => mode != ProtectionMode.off)
+                  .map(
+                    (mode) =>
+                        DropdownMenuItem(value: mode, child: Text(mode.label)),
+                  )
+                  .toList(),
+              onChanged: (mode) {
+                if (mode != null) controller.setProtectionMode(mode);
+              },
+            ),
+            const SizedBox(height: 8),
+            Text(
+              state.config.protectionMode == ProtectionMode.lockdown
+                  ? 'Lockdown blocks unknown apps until you approve an exact file hash. This gives stronger prevention but may interrupt installers, developer tools, games, and scripts.'
+                  : state.config.protectionMode.description,
+              style: const TextStyle(
+                color: PasusColors.textSecondary,
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 10),
             _ValueRow('Guard mode', _guardLabel(state.guardStatus)),
             _ValueRow('Driver status', _driverLabel(state.driverStatus)),
             if (state.protectionSelfTestResult != null)

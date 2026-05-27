@@ -139,6 +139,8 @@ $clamAvExtractDir = Join-Path $distRoot "windows-msi\clamav-extract"
 $modelSourceDir = Join-Path $root "assets\models"
 $yaraSourceDir = Join-Path $root "assets\yara"
 $testAssetsSourceDir = Join-Path $root "assets\test"
+$trustAssetsSourceDir = Join-Path $root "assets\trust"
+$threatAssetsSourceDir = Join-Path $root "assets\threats"
 $driverToolsSourceDir = Join-Path $root "core\pasus_windows_minifilter"
 $processGuardToolsSourceDir = Join-Path $root "core\pasus_windows_process_guard"
 $modelFile = Join-Path $modelSourceDir "pasus_static_malware_model.onnx"
@@ -226,6 +228,16 @@ $releaseTestDir = Join-Path $releaseDir "assets\test"
 Copy-Tree $testAssetsSourceDir $stageTestDir
 Copy-Tree $testAssetsSourceDir $releaseTestDir
 
+$stageTrustDir = Join-Path $stageDir "assets\trust"
+$releaseTrustDir = Join-Path $releaseDir "assets\trust"
+Copy-Tree $trustAssetsSourceDir $stageTrustDir
+Copy-Tree $trustAssetsSourceDir $releaseTrustDir
+
+$stageThreatsDir = Join-Path $stageDir "assets\threats"
+$releaseThreatsDir = Join-Path $releaseDir "assets\threats"
+Copy-Tree $threatAssetsSourceDir $stageThreatsDir
+Copy-Tree $threatAssetsSourceDir $releaseThreatsDir
+
 foreach ($requiredDriverFile in @(
   "driver\PasusAvFilter.vcxproj",
   "driver\PasusAvFilter.inf",
@@ -303,6 +315,11 @@ Copy-Item -LiteralPath (Join-Path $root "docs\windows-driver.md") -Destination $
 Copy-Item -LiteralPath (Join-Path $root "docs\real-time-protection.md") -Destination $docsStage -Force
 Copy-Item -LiteralPath (Join-Path $root "docs\protection-self-test.md") -Destination $docsStage -Force
 Copy-Item -LiteralPath (Join-Path $root "docs\testing-eicar.md") -Destination $docsStage -Force
+Copy-Item -LiteralPath (Join-Path $root "docs\lockdown-mode.md") -Destination $docsStage -Force
+Copy-Item -LiteralPath (Join-Path $root "docs\application-control.md") -Destination $docsStage -Force
+Copy-Item -LiteralPath (Join-Path $root "docs\external-validation.md") -Destination $docsStage -Force
+Copy-Item -LiteralPath (Join-Path $root "docs\lab-readiness.md") -Destination $docsStage -Force
+Copy-Item -LiteralPath (Join-Path $root "docs\false-positives.md") -Destination $docsStage -Force
 
 $files = Get-ChildItem -LiteralPath $stageDir -Recurse -File |
   Where-Object { $_.Extension -ne ".pdb" } |

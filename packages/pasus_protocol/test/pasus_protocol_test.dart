@@ -19,4 +19,17 @@ void main() {
     );
     expect(valid.validateCloudConfiguration(), isEmpty);
   });
+
+  test('PasusConfig defaults to Balanced protection', () {
+    const config = PasusConfig();
+    expect(config.protectionMode, ProtectionMode.balanced);
+    expect(config.protectionMode.label, 'Balanced Protection');
+
+    final lockdown = config.copyWith(protectionMode: ProtectionMode.lockdown);
+    expect(lockdown.toJson()['protectionMode'], 'lockdown');
+    expect(
+      PasusConfig.fromJson(lockdown.toJson()).protectionMode,
+      ProtectionMode.lockdown,
+    );
+  });
 }

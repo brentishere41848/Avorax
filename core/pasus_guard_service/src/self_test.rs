@@ -9,6 +9,7 @@ use crate::driver_health::DriverHealth;
 use crate::driver_ipc::{
     evaluate_driver_request, DriverEventType, DriverVerdictAction, DriverVerdictConfig, ScanRequest,
 };
+use crate::preexecution_policy::DriverProtectionMode;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -59,6 +60,11 @@ pub struct ProtectionSelfTestResults {
     pub eicar_quarantined: bool,
     pub known_bad_executable_blocked_before_launch: bool,
     pub known_bad_executable_quarantined: bool,
+    pub unknown_unsigned_lockdown_blocked_before_launch: bool,
+    pub unknown_unsigned_lockdown_policy_blocked: bool,
+    pub unknown_unsigned_allowed_after_hash_approval: bool,
+    pub known_good_executable_allowed: bool,
+    pub normal_exe_blocked_only_as_unknown: bool,
     pub post_launch_fallback_verified: bool,
     pub quarantine_ui_record_created: bool,
 }
@@ -121,7 +127,7 @@ pub fn run_self_test(known_bad_hashes: HashSet<String>) -> anyhow::Result<Protec
     fs::write(&known_bad, "harmless known bad test executable")?;
     let hash = sha256_file(&known_bad)?;
     let mut hashes = known_bad_hashes;
-    hashes.insert(hash);
+    hashes.insert(normalize_hash(&hash));
     let known_bad_verdict = evaluate_driver_request(
         &request_for(&known_bad),
         &DriverVerdictConfig {
@@ -135,10 +141,80 @@ pub fn run_self_test(known_bad_hashes: HashSet<String>) -> anyhow::Result<Protec
         &known_bad_verdict.reason_summary,
     ));
 
+    let unknown = dir.path().join("unknown-unsigned-test.exe");
+    fs::write(&unknown, "harmless unknown unsigned executable")?;
+    let unknown_hash = sha256_file(&unknown)?;
+    let lockdown_unknown_verdict = evaluate_driver_request(
+        &request_for(&unknown),
+        &DriverVerdictConfig {
+            mode: DriverProtectionMode::Lockdown,
+            ..Default::default()
+        },
+    )?;
+    steps.push(step(
+        "Lockdown unknown app policy",
+        lockdown_unknown_verdict.action == DriverVerdictAction::Block
+            && !lockdown_unknown_verdict.label_as_malware
+            && !lockdown_unknown_verdict.quarantine_after_block,
+        &lockdown_unknown_verdict.reason_summary,
+    ));
+
+    let approved_unknown_verdict = evaluate_driver_request(
+        &request_for(&unknown),
+        &DriverVerdictConfig {
+            mode: DriverProtectionMode::Lockdown,
+            user_approved_hashes: HashSet::from([normalize_hash(&unknown_hash)]),
+            ..Default::default()
+        },
+    )?;
+    steps.push(step(
+        "Exact-hash user approval allows unknown app",
+        approved_unknown_verdict.action == DriverVerdictAction::Allow,
+        &approved_unknown_verdict.reason_summary,
+    ));
+
+    let known_good = dir.path().join("known-good-test.exe");
+    fs::write(&known_good, "harmless known good executable")?;
+    let known_good_hash = sha256_file(&known_good)?;
+    let known_good_verdict = evaluate_driver_request(
+        &request_for(&known_good),
+        &DriverVerdictConfig {
+            mode: DriverProtectionMode::Lockdown,
+            known_good_hashes: HashSet::from([normalize_hash(&known_good_hash)]),
+            ..Default::default()
+        },
+    )?;
+    steps.push(step(
+        "Known-good executable allowed",
+        known_good_verdict.action == DriverVerdictAction::Allow,
+        &known_good_verdict.reason_summary,
+    ));
+
+    let normal_download_exe = dir.path().join("Downloads").join("vpn-installer.exe");
+    fs::create_dir_all(normal_download_exe.parent().unwrap())?;
+    fs::write(&normal_download_exe, "normal installer-like fixture")?;
+    let normal_lockdown_verdict = evaluate_driver_request(
+        &request_for(&normal_download_exe),
+        &DriverVerdictConfig {
+            mode: DriverProtectionMode::Lockdown,
+            ..Default::default()
+        },
+    )?;
+    steps.push(step(
+        "Normal executable is not labeled malware",
+        normal_lockdown_verdict.action == DriverVerdictAction::Block
+            && !normal_lockdown_verdict.label_as_malware
+            && normal_lockdown_verdict
+                .reason_summary
+                .contains("Lockdown Mode"),
+        &normal_lockdown_verdict.reason_summary,
+    ));
+
     let pre_execution_blocking_available = health.running
         && health.ipc_connected
         && eicar_verdict.action == DriverVerdictAction::Block
-        && known_bad_verdict.action == DriverVerdictAction::Block;
+        && known_bad_verdict.action == DriverVerdictAction::Block
+        && lockdown_unknown_verdict.action == DriverVerdictAction::Block;
     steps.push(step(
         "Pre-execution block self-test",
         pre_execution_blocking_available,
@@ -154,13 +230,22 @@ pub fn run_self_test(known_bad_hashes: HashSet<String>) -> anyhow::Result<Protec
         eicar_quarantined: false,
         known_bad_executable_blocked_before_launch: pre_execution_blocking_available,
         known_bad_executable_quarantined: false,
+        unknown_unsigned_lockdown_blocked_before_launch: pre_execution_blocking_available,
+        unknown_unsigned_lockdown_policy_blocked: lockdown_unknown_verdict.action
+            == DriverVerdictAction::Block,
+        unknown_unsigned_allowed_after_hash_approval: approved_unknown_verdict.action
+            == DriverVerdictAction::Allow,
+        known_good_executable_allowed: known_good_verdict.action == DriverVerdictAction::Allow,
+        normal_exe_blocked_only_as_unknown: normal_lockdown_verdict.action
+            == DriverVerdictAction::Block
+            && !normal_lockdown_verdict.label_as_malware,
         post_launch_fallback_verified: true,
         quarantine_ui_record_created: false,
     };
     let ai = ai_status();
     let passed = steps.iter().all(|step| step.passed);
     Ok(ProtectionSelfTest {
-        pasus_version: "0.1.12".to_string(),
+        pasus_version: "0.1.13".to_string(),
         timestamp_utc: Utc::now().to_rfc3339(),
         driver: DriverSelfTestStatus {
             built: false,
@@ -195,9 +280,21 @@ fn request_for(path: &std::path::Path) -> ScanRequest {
         user_sid: None,
         desired_access: None,
         file_size: None,
+        file_attributes: None,
+        signature_status: None,
+        publisher: None,
+        parent_process_path: None,
         sha256: None,
         timestamp_utc: Utc::now(),
     }
+}
+
+fn normalize_hash(value: &str) -> String {
+    value
+        .trim()
+        .strip_prefix("sha256:")
+        .unwrap_or(value.trim())
+        .to_lowercase()
 }
 
 fn step(name: &str, passed: bool, reason: &str) -> SelfTestStep {

@@ -34,6 +34,37 @@ enum ProtectionStatus {
   };
 }
 
+enum ProtectionMode {
+  off,
+  monitorOnly,
+  balanced,
+  blockConfirmedThreats,
+  lockdown,
+  developerMode;
+
+  String get label => switch (this) {
+    ProtectionMode.off => 'Off',
+    ProtectionMode.monitorOnly => 'Monitor Only',
+    ProtectionMode.balanced => 'Balanced Protection',
+    ProtectionMode.blockConfirmedThreats => 'Block Confirmed Threats',
+    ProtectionMode.lockdown => 'Lockdown Protection',
+    ProtectionMode.developerMode => 'Developer Mode',
+  };
+
+  String get description => switch (this) {
+    ProtectionMode.off => 'Protection decisions are disabled.',
+    ProtectionMode.monitorOnly => 'Unknown apps are logged and monitored.',
+    ProtectionMode.balanced =>
+      'Blocks confirmed threats and reviews suspicious apps.',
+    ProtectionMode.blockConfirmedThreats =>
+      'Blocks confirmed and high-confidence threats.',
+    ProtectionMode.lockdown =>
+      'Blocks unknown apps until an exact hash is approved.',
+    ProtectionMode.developerMode =>
+      'Reduces interruption for developer tools while still blocking confirmed threats.',
+  };
+}
+
 enum GameDetectionStatus {
   idle,
   scanning,
@@ -378,6 +409,7 @@ class PasusConfig {
     this.gameConfig = const GameConfig(),
     this.scanPaths = const [],
     this.realtimeProtectionEnabled = false,
+    this.protectionMode = ProtectionMode.balanced,
   });
 
   final String apiBaseUrl;
@@ -388,6 +420,7 @@ class PasusConfig {
   final GameConfig gameConfig;
   final List<String> scanPaths;
   final bool realtimeProtectionEnabled;
+  final ProtectionMode protectionMode;
 
   bool get hasCloudConfiguration =>
       apiBaseUrl.trim().isNotEmpty &&
@@ -419,6 +452,7 @@ class PasusConfig {
     GameConfig? gameConfig,
     List<String>? scanPaths,
     bool? realtimeProtectionEnabled,
+    ProtectionMode? protectionMode,
   }) {
     return PasusConfig(
       apiBaseUrl: apiBaseUrl ?? this.apiBaseUrl,
@@ -431,6 +465,7 @@ class PasusConfig {
       scanPaths: scanPaths ?? this.scanPaths,
       realtimeProtectionEnabled:
           realtimeProtectionEnabled ?? this.realtimeProtectionEnabled,
+      protectionMode: protectionMode ?? this.protectionMode,
     );
   }
 
@@ -443,6 +478,7 @@ class PasusConfig {
     'gameConfig': gameConfig.toJson(),
     'scanPaths': scanPaths,
     'realtimeProtectionEnabled': realtimeProtectionEnabled,
+    'protectionMode': protectionMode.name,
   };
 
   factory PasusConfig.fromJson(Map<String, Object?> json) {
@@ -463,6 +499,10 @@ class PasusConfig {
           : const [],
       realtimeProtectionEnabled:
           json['realtimeProtectionEnabled'] as bool? ?? false,
+      protectionMode: ProtectionMode.values.firstWhere(
+        (mode) => mode.name == json['protectionMode'],
+        orElse: () => ProtectionMode.balanced,
+      ),
     );
   }
 }

@@ -243,6 +243,7 @@ class PasusController extends StateNotifier<PasusState> {
 
   Future<void> logEvent(String type, String message, {String? details}) async {
     await _eventRepository.add(type, message, details: details);
+    if (!mounted) return;
     state = state.copyWith(events: _eventRepository.load());
   }
 
@@ -254,8 +255,10 @@ class PasusController extends StateNotifier<PasusState> {
 
   Future<void> unawaitedCheckCloud() async {
     await logEvent('cloud_health_check_started', 'Cloud health check started');
+    if (!mounted) return;
     state = state.copyWith(cloudStatus: CloudStatus.checking, clearError: true);
     final result = await _apiClient.healthCheck(state.config);
+    if (!mounted) return;
     switch (result) {
       case ApiSuccess<void>():
         await logEvent('cloud_online', 'Cloud online');
@@ -288,8 +291,10 @@ class PasusController extends StateNotifier<PasusState> {
 
   Future<void> unawaitedDetectGames() async {
     await logEvent('game_detection_started', 'Game detection started');
+    if (!mounted) return;
     state = state.copyWith(gameDetectionStatus: GameDetectionStatus.scanning);
     final games = await _gameDetector.detect();
+    if (!mounted) return;
     if (games.isEmpty) {
       await logEvent(
         'no_supported_game_detected',
@@ -311,8 +316,10 @@ class PasusController extends StateNotifier<PasusState> {
   }
 
   Future<void> unawaitedCheckMalwareEngine() async {
+    if (!mounted) return;
     state = state.copyWith(malwareEngineStatus: MalwareEngineStatus.checking);
     final health = await _localCoreClient.healthSummary();
+    if (!mounted) return;
     final status = health.malwareEngineStatus;
     await logEvent(
       status == MalwareEngineStatus.available
@@ -322,6 +329,7 @@ class PasusController extends StateNotifier<PasusState> {
           ? 'Malware engine available'
           : 'Malware engine unavailable',
     );
+    if (!mounted) return;
     state = state.copyWith(
       malwareEngineStatus: status,
       aiModelInfo: health.aiModelInfo,
@@ -333,7 +341,10 @@ class PasusController extends StateNotifier<PasusState> {
   }
 
   Future<void> unawaitedRefreshQuarantine() async {
-    state = state.copyWith(quarantine: await _localCoreClient.listQuarantine());
+    if (!mounted) return;
+    final quarantine = await _localCoreClient.listQuarantine();
+    if (!mounted) return;
+    state = state.copyWith(quarantine: quarantine);
   }
 
   Future<void> addManualGameFile() async {
@@ -462,11 +473,17 @@ class PasusController extends StateNotifier<PasusState> {
       clearError: true,
     );
     await unawaitedCheckMalwareEngine();
-    if (state.malwareEngineStatus == MalwareEngineStatus.available ||
-        state.malwareEngineStatus == MalwareEngineStatus.signaturesOutdated) {
+    final hasLocalPrevention =
+        state.malwareEngineStatus == MalwareEngineStatus.available ||
+        state.malwareEngineStatus == MalwareEngineStatus.signaturesOutdated ||
+        state.yaraStatus == 'available' ||
+        state.config.protectionMode == ProtectionMode.lockdown;
+    if (hasLocalPrevention) {
       await logEvent('protection_started', 'Protection started');
       state = state.copyWith(
-        protectionStatus: ProtectionStatus.protected,
+        protectionStatus: state.driverStatus == 'running'
+            ? ProtectionStatus.protected
+            : ProtectionStatus.partiallyProtected,
         loading: false,
         clearError: true,
       );
@@ -481,7 +498,7 @@ class PasusController extends StateNotifier<PasusState> {
       protectionStatus: ProtectionStatus.error,
       loading: false,
       errorMessage:
-          'Malware engine unavailable. Install the Pasus MSI with bundled ClamAV, or configure ClamAV for development.',
+          'No local prevention engine is ready. Install the Pasus MSI, verify YARA/model assets, or configure ClamAV for development.',
     );
   }
 
@@ -498,6 +515,17 @@ class PasusController extends StateNotifier<PasusState> {
       heartbeat: const HeartbeatStatus(),
       clearError: true,
     );
+  }
+
+  Future<void> setProtectionMode(ProtectionMode mode) async {
+    final updated = state.config.copyWith(protectionMode: mode);
+    await _configRepository.save(updated);
+    await logEvent(
+      'protection_mode_changed',
+      'Protection profile changed',
+      details: mode.label,
+    );
+    state = state.copyWith(config: updated, clearError: true);
   }
 
   Future<void> runProtectionSelfTest() async {

@@ -26,4 +26,13 @@ Validation workflow:
 powershell -ExecutionPolicy Bypass -File tools\windows\pasus-protection-selftest.ps1 -BuildDriver -InstallDriver
 ```
 
+In v0.1.13, Lockdown Mode adds unknown-app block verdicts to the Guard policy. The UI may only show pre-execution Lockdown blocking when the self-test confirms:
+
+- Driver loaded.
+- Driver IPC OK.
+- Known-bad executable blocked before launch.
+- Unknown unsigned executable blocked before launch in Lockdown.
+- Known-good executable allowed.
+- Exact-hash approval allows the same unknown executable.
+
 The workflow writes `dist\windows-driver-validation\selftest_report.json`. Driver-enabled release gates must fail if this report is missing or failing.
