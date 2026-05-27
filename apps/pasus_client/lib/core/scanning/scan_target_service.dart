@@ -28,16 +28,12 @@ class ScanTargetService {
             ? null
             : _join(appData, r'Microsoft\Windows\Start Menu\Programs\Startup'),
       );
-      addIfPresent(
-        appData == null
-            ? null
-            : _join(appData, r'Microsoft\Windows\Start Menu'),
-      );
+      final localAppData = env['LOCALAPPDATA'];
+      addIfPresent(localAppData == null ? null : _join(localAppData, 'Temp'));
     } else if (Platform.isMacOS) {
       addIfPresent('/tmp');
       addIfPresent(home == null ? null : _join(home, 'Library/LaunchAgents'));
       addIfPresent('/Library/LaunchAgents');
-      addIfPresent('/Applications');
     } else if (Platform.isLinux) {
       addIfPresent('/tmp');
       addIfPresent(home == null ? null : _join(home, '.config/autostart'));

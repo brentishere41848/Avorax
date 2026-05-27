@@ -18,6 +18,33 @@ void main() {
     expect(targets.any((path) => path.endsWith('Desktop')), isTrue);
   });
 
+  test('quick scan avoids broad launcher and applications trees', () {
+    final root = Directory.systemTemp.createTempSync('pasus-quick-scope-');
+    addTearDown(() => root.deleteSync(recursive: true));
+    final appData = Directory('${root.path}${Platform.pathSeparator}AppData');
+    final startMenu = Directory(
+      '${appData.path}${Platform.pathSeparator}Microsoft'
+      '${Platform.pathSeparator}Windows${Platform.pathSeparator}Start Menu',
+    );
+    final startup = Directory(
+      '${startMenu.path}${Platform.pathSeparator}Programs'
+      '${Platform.pathSeparator}Startup',
+    );
+    startMenu.createSync(recursive: true);
+    startup.createSync(recursive: true);
+
+    final targets = const ScanTargetService().quickScanTargets(
+      environment: {
+        'HOME': root.path,
+        'USERPROFILE': root.path,
+        'APPDATA': appData.path,
+      },
+    );
+
+    expect(targets, contains(startup.path));
+    expect(targets, isNot(contains(startMenu.path)));
+  });
+
   test('full scan roots include accessible home area', () {
     final root = Directory.systemTemp.createTempSync('pasus-full-');
     addTearDown(() => root.deleteSync(recursive: true));

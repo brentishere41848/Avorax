@@ -20,11 +20,13 @@ use allowlist::{AllowlistEntryType, AllowlistStore};
 use api::{CoreCommand, CoreResponse};
 use quarantine::QuarantineStore;
 use scanner::{
-    eligible_for_heuristic_auto_quarantine, file_walker::collect_accessible_files, ClamAvProvider,
-    DetectionType, HeuristicProvider, RecommendedAction, ReportStatus, ReputationProvider,
-    RiskEngine, RiskReason, RiskReasonSource, RiskScore, RiskSeverity, RiskVerdict, ScanActionMode,
-    ScanJob, ScanJobStatus, ScanKind, ScanProgress, ScanStatus, ScannerProvider, ThreatCategory,
-    ThreatConfidence, ThreatResult, ThreatResultStatus, YaraProvider,
+    eligible_for_heuristic_auto_quarantine,
+    file_walker::{collect_accessible_files, collect_accessible_files_with_options, WalkOptions},
+    ClamAvProvider, DetectionType, HeuristicProvider, RecommendedAction, ReportStatus,
+    ReputationProvider, RiskEngine, RiskReason, RiskReasonSource, RiskScore, RiskSeverity,
+    RiskVerdict, ScanActionMode, ScanJob, ScanJobStatus, ScanKind, ScanProgress, ScanStatus,
+    ScannerProvider, ThreatCategory, ThreatConfidence, ThreatResult, ThreatResultStatus,
+    YaraProvider,
 };
 use uuid::Uuid;
 use watcher::WatcherState;
@@ -280,7 +282,11 @@ fn scan_paths(
     let mut engine_unavailable = false;
     let mut last_path = None;
 
-    let walk = collect_accessible_files(&roots);
+    let walk = if kind == ScanKind::Quick {
+        collect_accessible_files_with_options(&roots, &WalkOptions::quick())
+    } else {
+        collect_accessible_files(&roots)
+    };
     skipped_files += walk.skipped_files;
     permission_denied_count += walk.permission_denied_count;
     let total_files = walk.files.len() as u64;
@@ -538,6 +544,11 @@ fn scan_paths(
             )
         } else if kind == ScanKind::Full {
             Some("Full Scan is optimized to finish within the scan budget by prioritizing risky files and skipping known cache/build folders.".to_string())
+        } else if kind == ScanKind::Quick {
+            Some(
+                "Quick Scan checked high-risk startup, script, installer, archive, and executable locations only. Use Full Scan for exhaustive coverage."
+                    .to_string(),
+            )
         } else {
             None
         },

@@ -138,7 +138,7 @@ Android and iOS show an honest unavailable state for full malware quarantine bec
 
 Scan types:
 
-- Quick Scan checks common high-risk locations such as Downloads, Desktop, temp folders, startup/autostart locations, and accessible running-process paths where supported.
+- Quick Scan is a targeted fast scan. It checks high-risk locations such as Downloads, Desktop, temp folders, and startup/autostart locations, but only walks a shallow depth and scans risky file types such as executables, scripts, installers, archives, shortcuts, and macro-enabled documents.
 - Full Scan checks accessible local drives or home filesystem areas, respects OS permissions, skips denied paths, and reports skipped counts.
 - Custom Scan checks only the file or folder selected by the user.
 
