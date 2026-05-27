@@ -53,6 +53,21 @@ impl ScannerProvider for ClamAvProvider {
     fn scan_file(&self, path: &Path) -> Result<ScanResult> {
         let started = Instant::now();
         let sha256 = sha256_file(path).unwrap_or_default();
+        if local_eicar_signature_match(path) {
+            return Ok(ScanResult {
+                status: ScanStatus::Infected,
+                scanned_path: path.display().to_string(),
+                sha256,
+                engine: "pasus-local-signatures".to_string(),
+                signature_name: Some("EICAR-Test-Signature".to_string()),
+                threat_name: Some("EICAR test signature".to_string()),
+                scanned_at: Utc::now(),
+                duration_ms: started.elapsed().as_millis(),
+                raw_engine_summary: Some(
+                    "Matched the standard EICAR antivirus test signature locally.".to_string(),
+                ),
+            });
+        }
         let Some(command) = self.command() else {
             return Ok(ScanResult {
                 status: ScanStatus::EngineUnavailable,
@@ -106,6 +121,22 @@ impl ScannerProvider for ClamAvProvider {
             raw_engine_summary: Some(combined),
         })
     }
+}
+
+const EICAR_TEST_SIGNATURE: &str =
+    "X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*";
+
+fn local_eicar_signature_match(path: &Path) -> bool {
+    let Ok(bytes) = std::fs::read(path) else {
+        return false;
+    };
+    local_eicar_signature_match_bytes(&bytes)
+}
+
+fn local_eicar_signature_match_bytes(bytes: &[u8]) -> bool {
+    bytes
+        .windows(EICAR_TEST_SIGNATURE.len())
+        .any(|window| window == EICAR_TEST_SIGNATURE.as_bytes())
 }
 
 pub fn sha256_file(path: &Path) -> Result<String> {
@@ -174,5 +205,18 @@ fn command_from_path(executable: PathBuf) -> ClamAvCommand {
         engine_name: executable.display().to_string(),
         executable,
         database_dir,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn local_eicar_signature_bytes_are_detected() {
+        assert!(local_eicar_signature_match_bytes(
+            EICAR_TEST_SIGNATURE.as_bytes()
+        ));
+        assert!(!local_eicar_signature_match_bytes(b"normal installer"));
     }
 }
