@@ -3,7 +3,7 @@
 Pasus is split into visible UI, local protection services, and platform-specific blocking layers.
 
 - Flutter UI: status, scans, quarantine, settings, events.
-- `pasus_local_core`: offline scanner, ClamAV integration, YARA rules, local AI runtime, risk scoring, quarantine, allowlist, recovery primitives.
+- `pasus_local_core`: offline scanner powered by Pasus Native Engine, native signatures, native rules, native ML runtime, risk scoring, quarantine, allowlist, recovery primitives.
 - `app_control`: prevention-first execution policy for Balanced, Lockdown, Developer, and Monitor profiles. It separates "unknown app blocked" from "malware detected".
 - `pasus_guard_service`: background user-mode real-time guard. It can monitor process starts, stop confirmed threats after launch, and quarantine files.
 - Windows minifilter/process guard: required for true pre-execution/on-access blocking. The project path exists, but production activation requires WDK build, testing, and signing.

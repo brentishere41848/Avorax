@@ -739,11 +739,25 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "chrono",
+ "pasus_native_engine",
  "serde",
  "serde_json",
  "sha2",
  "tempfile",
  "tract-onnx",
+ "uuid",
+ "walkdir",
+]
+
+[[package]]
+name = "pasus_native_engine"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "serde",
+ "serde_json",
+ "sha2",
  "uuid",
  "walkdir",
 ]

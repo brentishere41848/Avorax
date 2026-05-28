@@ -175,15 +175,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ],
         ),
         _Section(
-          title: 'Malware engine',
+          title: 'Pasus Native Engine',
           children: [
             _ValueRow('Engine status', state.malwareEngineStatus.label),
-            const _ValueRow('Provider', 'ClamAV through Pasus local core'),
+            _ValueRow('Native status', state.nativeEngineStatus),
             _ValueRow(
-              'YARA rules',
-              state.yaraStatus == 'available'
-                  ? '${state.yaraRuleCount} packaged rules loaded'
-                  : 'Rules unavailable',
+              'Native signatures',
+              '${state.nativeSignatureCount} packaged signatures loaded',
+            ),
+            _ValueRow(
+              'Native rules',
+              '${state.nativeRuleCount} packaged rules loaded',
+            ),
+            _ValueRow(
+              'Compatibility engines',
+              state.compatibilityEnginesEnabled ? 'Enabled' : 'Disabled',
             ),
             PasusButton(
               label: 'Check engine',
@@ -194,16 +200,22 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ],
         ),
         _Section(
-          title: 'AI Engine',
+          title: 'Native ML',
           children: [
-            _ValueRow('Model status', state.aiModelInfo.status.label),
-            _ValueRow('Model version', state.aiModelInfo.modelVersion),
-            _ValueRow('Feature schema', state.aiModelInfo.featureSchemaVersion),
+            _ValueRow('Model status', state.nativeMlStatus),
+            _ValueRow(
+              'Model version',
+              state.nativeMlModelVersion ?? 'Not loaded',
+            ),
+            const _ValueRow('Feature schema', 'pne-features-v1'),
             _ValueRow(
               'Production-ready',
-              state.aiModelInfo.productionReady ? 'Yes' : 'No',
+              state.nativeMlStatus == 'loaded' ? 'Yes' : 'No',
             ),
-            _ValueRow('Last inference test', state.aiModelInfo.message),
+            const _ValueRow(
+              'Last inference test',
+              'Native engine self-test runs EICAR matching in memory.',
+            ),
             const _ValueRow(
               'Policy',
               'Conservative. AI alone cannot permanently delete files and does not mark confirmed malware.',

@@ -3,6 +3,9 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use chrono::{DateTime, Utc};
+use pasus_native_engine::{
+    EngineConfig, PasusNativeEngine, ScanActionMode as PneScanActionMode, Verdict as PneVerdict,
+};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
@@ -216,12 +219,33 @@ pub fn evaluate_driver_request(
         ));
     }
 
-    if local_signature_match(&path)? {
-        return Ok(block(
-            request,
-            "EICAR test signature matched local scanner.",
-            vec![VerdictEngine::Signature],
-        ));
+    if let Some(native) = native_engine_verdict(&path)? {
+        if matches!(
+            native.final_verdict.verdict,
+            PneVerdict::TestThreat | PneVerdict::ConfirmedMalware | PneVerdict::ProbableMalware
+        ) {
+            return Ok(block(
+                request,
+                &native.final_verdict.user_visible_explanation,
+                native_verdict_engines(&native),
+            ));
+        }
+        if matches!(native.final_verdict.verdict, PneVerdict::Suspicious) {
+            return Ok(ScanVerdict {
+                request_id: request.request_id.clone(),
+                action: DriverVerdictAction::AllowAndMonitor,
+                final_verdict: FinalVerdict::Suspicious,
+                confidence: VerdictConfidence::Medium,
+                engines_used: native_verdict_engines(&native),
+                reason_summary: native.final_verdict.user_visible_explanation,
+                cache_ttl_ms: 30_000,
+                quarantine_after_block: false,
+                trust_level: ApplicationTrustLevel::Suspicious,
+                requires_user_approval: false,
+                monitor_process: true,
+                label_as_malware: false,
+            });
+        }
     }
 
     if let Some(yara) = yara_match(&path)? {
@@ -288,6 +312,66 @@ fn normalized_path(request: &ScanRequest) -> PathBuf {
         .filter(|value| !value.trim().is_empty())
         .unwrap_or(&request.file_path)
         .into()
+}
+
+fn native_engine_verdict(
+    path: &Path,
+) -> anyhow::Result<Option<pasus_native_engine::FileScanVerdict>> {
+    if !path.exists() || path.is_dir() {
+        return Ok(None);
+    }
+    let mut engine = PasusNativeEngine::initialize(EngineConfig::from_repo_root(native_asset_root()))?;
+    Ok(Some(engine.scan_file(path.to_path_buf(), PneScanActionMode::DetectOnly)?))
+}
+
+fn native_asset_root() -> PathBuf {
+    let current = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+    for candidate in current.ancestors() {
+        if candidate.join("assets").join("pasus_native").exists() {
+            return candidate.to_path_buf();
+        }
+    }
+    if let Ok(exe) = std::env::current_exe() {
+        if let Some(parent) = exe.parent() {
+            for candidate in [
+                parent.to_path_buf(),
+                parent.join(".."),
+                parent.join("..").join(".."),
+                parent.join("..").join("..").join(".."),
+            ] {
+                if candidate.join("assets").join("pasus_native").exists() {
+                    return candidate;
+                }
+            }
+        }
+    }
+    current
+}
+
+fn native_verdict_engines(verdict: &pasus_native_engine::FileScanVerdict) -> Vec<VerdictEngine> {
+    let mut engines = verdict
+        .final_verdict
+        .engines_used
+        .iter()
+        .map(|engine| match engine {
+            pasus_native_engine::verdict::risk_fusion::EvidenceSource::NativeSignature => {
+                VerdictEngine::Signature
+            }
+            pasus_native_engine::verdict::risk_fusion::EvidenceSource::NativeMl => {
+                VerdictEngine::LocalAi
+            }
+            pasus_native_engine::verdict::risk_fusion::EvidenceSource::NativeBehavior => {
+                VerdictEngine::Behavior
+            }
+            _ => VerdictEngine::Heuristic,
+        })
+        .collect::<Vec<_>>();
+    if engines.is_empty() {
+        engines.push(VerdictEngine::Heuristic);
+    }
+    engines.sort_by_key(|engine| format!("{engine:?}"));
+    engines.dedup();
+    engines
 }
 
 fn allow(

@@ -1,0 +1,13 @@
+{
+  "pack_name": "Pasus Native Core Rules",
+  "pack_version": "0.1.0",
+  "format": "pasus-rule-pack-v1",
+  "rule_count": 2,
+  "primary_engine": "Pasus Native Engine",
+  "compatibility_engines_required": false,
+  "limitations": [
+    "Rules are deterministic and bounded.",
+    "Medium-confidence rules are review-only.",
+    "Rules do not execute files or scripts."
+  ]
+}

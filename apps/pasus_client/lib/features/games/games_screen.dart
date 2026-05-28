@@ -23,12 +23,12 @@ class GamesScreen extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Gaming Protection',
+                'Advanced App Control',
                 style: Theme.of(context).textTheme.headlineMedium,
               ),
               const SizedBox(height: 8),
               const Text(
-                'Optional anti-cheat protection for supported games. Antivirus scanning and quarantine work without a configured game.',
+                'Optional legacy app allowlisting tools. Antivirus scanning and quarantine do not require this setup.',
                 style: TextStyle(color: PasusColors.textSecondary),
               ),
               const SizedBox(height: 18),

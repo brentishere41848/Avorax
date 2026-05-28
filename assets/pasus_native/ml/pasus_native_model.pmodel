@@ -1,0 +1,31 @@
+{
+  "model_name": "Pasus Native Development Model",
+  "model_version": "0.1.0-dev",
+  "model_format_version": "pmodel-v1",
+  "feature_schema_version": "pne-features-v1",
+  "production_ready": false,
+  "precision": 0.0,
+  "recall": 0.0,
+  "false_positive_rate": 1.0,
+  "bias": -3.0,
+  "weights": {
+    "known_bad_flag": 5.0,
+    "encoded_command_flag": 2.5,
+    "script_obfuscation_score": 1.7,
+    "suspicious_string_count": 1.4,
+    "double_extension": 1.3,
+    "startup_location_flag": 1.0,
+    "archive_contains_executable": 0.7,
+    "known_good_flag": -4.0
+  },
+  "thresholds": {
+    "suspicious": 0.65,
+    "probable_malware": 0.86,
+    "confirmed_malware": 0.98
+  },
+  "limitations": [
+    "Development fixture model; not production malware protection.",
+    "Cannot auto-quarantine by itself.",
+    "Production model requires validated external feature datasets and false-positive gates."
+  ]
+}

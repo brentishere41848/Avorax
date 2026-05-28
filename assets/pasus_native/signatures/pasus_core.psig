@@ -1,0 +1,70 @@
+{
+  "format": "pasus-signature-pack-v1",
+  "version": "0.1.0",
+  "signatures": [
+    {
+      "id": "PNE-EICAR-TEST-001",
+      "name": "EICAR safe anti-malware test file",
+      "version": "1",
+      "category": "testThreat",
+      "confidence": "confirmed",
+      "severity": "test",
+      "signature_type": "eicar_test_signature",
+      "pattern": "X5O!P%@AP[4\\\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*",
+      "file_types": ["unknown", "text"],
+      "required_context": ["Exact EICAR safe test string."],
+      "false_positive_notes": "This is the public EICAR safe anti-malware test string, not real malware.",
+      "action_policy": "quarantine_if_policy_allows",
+      "created_at": "2026-05-28T00:00:00Z",
+      "updated_at": "2026-05-28T00:00:00Z"
+    },
+    {
+      "id": "PNE-PS-ENCODED-DOWNLOAD-001",
+      "name": "PowerShell encoded downloader indicators",
+      "version": "1",
+      "category": "suspiciousScript",
+      "confidence": "medium",
+      "severity": "medium",
+      "signature_type": "powershell_encoded_command",
+      "pattern": "-encodedcommand",
+      "file_types": ["powershell_script", "text"],
+      "required_context": ["Encoded command plus downloader or execution context from native analyzers."],
+      "false_positive_notes": "Some administrator scripts use encoded commands; this signature contributes evidence and does not auto-quarantine alone.",
+      "action_policy": "review_or_block_by_policy",
+      "created_at": "2026-05-28T00:00:00Z",
+      "updated_at": "2026-05-28T00:00:00Z"
+    },
+    {
+      "id": "PNE-PASUS-SAFE-TEST-001",
+      "name": "Pasus harmless known-bad simulator file",
+      "version": "1",
+      "category": "testThreat",
+      "confidence": "confirmed",
+      "severity": "test",
+      "signature_type": "ascii_string",
+      "pattern": "PASUS-SAFE-EICAR-SIMULATOR-FILE",
+      "file_types": ["unknown", "text"],
+      "required_context": ["Pasus safe simulator string used only for local validation tests."],
+      "false_positive_notes": "This string is a harmless Pasus test fixture, not real malware.",
+      "action_policy": "quarantine_if_policy_allows",
+      "created_at": "2026-05-28T00:00:00Z",
+      "updated_at": "2026-05-28T00:00:00Z"
+    },
+    {
+      "id": "PNE-STRING-RANSOM-NOTE-001",
+      "name": "Ransom-note wording indicator",
+      "version": "1",
+      "category": "ransomware",
+      "confidence": "medium",
+      "severity": "medium",
+      "signature_type": "ascii_string",
+      "pattern": "your files have been encrypted",
+      "file_types": ["text", "unknown"],
+      "required_context": ["Ransom-note-like text; requires behavior or additional context for automatic response."],
+      "false_positive_notes": "Documentation and incident reports can contain this wording; medium confidence signatures are review-only.",
+      "action_policy": "review_only",
+      "created_at": "2026-05-28T00:00:00Z",
+      "updated_at": "2026-05-28T00:00:00Z"
+    }
+  ]
+}

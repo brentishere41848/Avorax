@@ -4,6 +4,11 @@ use std::time::Instant;
 
 use anyhow::Result;
 use chrono::Utc;
+use pasus_native_engine::{
+    Confidence as PneConfidence, EngineConfig, PasusNativeEngine,
+    ScanActionMode as PneScanActionMode, ThreatCategory as PneThreatCategory,
+    Verdict as PneVerdict,
+};
 use serde_json::json;
 use sha2::{Digest, Sha256};
 
@@ -49,24 +54,8 @@ fn main() -> Result<()> {
 }
 
 fn handle(command: CoreCommand) -> serde_json::Value {
-    let scanner = ClamAvProvider;
     match command.command.as_str() {
-        "health" => json!(CoreResponse {
-            ok: true,
-            body: json!({
-                "engine_status": scanner.engine_status(),
-                "yara_status": YaraProvider::default().status(),
-                "yara_rule_count": YaraProvider::default().rule_count(),
-                "ai_status": ai::ModelRunner::default().status(),
-                "ai_model": ai::ModelRunner::default().info(),
-                "ai_self_test": ai::ai_self_test::run_ai_self_test().is_ok(),
-                "guard_status": protection::GuardService::default().status(),
-                "driver_status": "missing",
-                "reputation_status": ReputationProvider.status(),
-                "ipc": "stdio",
-                "network_exposed": false,
-            }),
-        }),
+        "health" => health_response(),
         "scan_file" => {
             let Some(path) = command.path else {
                 return json!({"ok": false, "error": "path is required"});
@@ -192,6 +181,73 @@ fn handle(command: CoreCommand) -> serde_json::Value {
     }
 }
 
+fn health_response() -> serde_json::Value {
+    match native_engine() {
+        Ok(mut engine) => {
+            let status = engine.status();
+            let self_test_ok = engine
+                .engine_self_test()
+                .map(|report| report.overall_result == "pass")
+                .unwrap_or(false);
+            json!(CoreResponse {
+                ok: true,
+                body: json!({
+                    "engine_status": if status.native_engine_ready { "available" } else { "error" },
+                    "native_engine_status": if status.native_engine_ready { "ready" } else { "error" },
+                    "native_signature_count": status.signature_count,
+                    "native_rule_count": status.rule_count,
+                    "native_ml_status": if status.ml_model_loaded {
+                        if status.ml_model_version.as_deref().unwrap_or_default().contains("dev") {
+                            "developmentModel"
+                        } else {
+                            "loaded"
+                        }
+                    } else {
+                        "modelMissing"
+                    },
+                    "native_ml_model_version": status.ml_model_version,
+                    "native_self_test": self_test_ok,
+                    "compatibility_engines_enabled": false,
+                    "yara_status": "compatDisabled",
+                    "yara_rule_count": 0,
+                    "ai_status": ai::ModelRunner::default().status(),
+                    "ai_model": ai::ModelRunner::default().info(),
+                    "ai_self_test": ai::ai_self_test::run_ai_self_test().is_ok(),
+                    "guard_status": protection::GuardService::default().status(),
+                    "driver_status": "missing",
+                    "reputation_status": ReputationProvider.status(),
+                    "ipc": "stdio",
+                    "network_exposed": false,
+                }),
+            })
+        }
+        Err(error) => json!(CoreResponse {
+            ok: true,
+            body: json!({
+                "engine_status": "error",
+                "native_engine_status": "error",
+                "native_signature_count": 0,
+                "native_rule_count": 0,
+                "native_ml_status": "modelMissing",
+                "native_ml_model_version": null,
+                "native_self_test": false,
+                "native_error": error.to_string(),
+                "compatibility_engines_enabled": false,
+                "yara_status": "compatDisabled",
+                "yara_rule_count": 0,
+                "ai_status": ai::ModelRunner::default().status(),
+                "ai_model": ai::ModelRunner::default().info(),
+                "ai_self_test": false,
+                "guard_status": protection::GuardService::default().status(),
+                "driver_status": "missing",
+                "reputation_status": ReputationProvider.status(),
+                "ipc": "stdio",
+                "network_exposed": false,
+            }),
+        }),
+    }
+}
+
 fn save_training_label(
     path: &Path,
     raw_label: &str,
@@ -268,10 +324,7 @@ fn scan_paths(
     let started = Instant::now();
     let started_at = Utc::now();
     let job = ScanJob::new(kind.clone());
-    let clamav = ClamAvProvider;
-    let heuristic = HeuristicProvider;
-    let yara = YaraProvider::default();
-    let ai_runner = ai::ModelRunner::default();
+    let mut native_engine = native_engine()?;
     let mut files_scanned: u64 = 0;
     let mut bytes_scanned: u64 = 0;
     let mut skipped_files: u64 = 0;
@@ -279,7 +332,7 @@ fn scan_paths(
     let mut threats = Vec::new();
     let mut suspicious_found: u64 = 0;
     let mut quarantined_files: u64 = 0;
-    let mut engine_unavailable = false;
+    let engine_unavailable = false;
     let mut last_path = None;
 
     let walk = if kind == ScanKind::Quick {
@@ -328,145 +381,19 @@ fn scan_paths(
             .map(|m| m.len())
             .unwrap_or_default();
         bytes_scanned = bytes_scanned.saturating_add(file_size);
-        if let Some(threat) = heuristic.inspect_file(&path) {
-            if ai::training_labels::TrainingLabelStore::new().suppresses_hash(&threat.sha256) {
-                update_progress(
-                    &mut progress,
-                    &current,
-                    files_scanned,
-                    bytes_scanned,
-                    threats.len() as u64,
-                    suspicious_found,
-                    skipped_files,
-                    permission_denied_count,
-                    started,
-                );
-                continue;
-            }
-            suspicious_found += 1;
-            let mut threat = threat;
-            let allowlisted = AllowlistStore::new().is_allowlisted(&path, &threat.sha256);
-            if action_mode == ScanActionMode::AutoQuarantineAllDetections {
-                if eligible_for_heuristic_auto_quarantine(&threat.risk_score, allowlisted) {
-                    if let Ok(record) =
-                        quarantine_selected_file(&path, &threat.threat_name, &threat.engine)
-                    {
-                        threat.status = ThreatResultStatus::Quarantined;
-                        threat.path = record.original_path;
-                        quarantined_files += 1;
-                        threats.push(threat);
-                        update_progress(
-                            &mut progress,
-                            &current,
-                            files_scanned,
-                            bytes_scanned,
-                            threats.len() as u64,
-                            suspicious_found,
-                            skipped_files,
-                            permission_denied_count,
-                            started,
-                        );
-                        if let Some(emit) = emit_progress.as_deref_mut() {
-                            emit(&progress);
-                        }
-                        continue;
-                    }
-                }
-            }
-            threats.push(threat);
-        }
-        if let Some(mut threat) = yara.inspect_file(&path) {
-            let allowlisted = AllowlistStore::new().is_allowlisted(&path, &threat.sha256);
-            if allowlisted {
-                threat.status = ThreatResultStatus::Allowlisted;
-                threat.recommended_action = RecommendedAction::Allowlist;
-            } else if (action_mode == ScanActionMode::AutoQuarantineConfirmedOnly
-                || action_mode == ScanActionMode::AutoQuarantineAllDetections)
-                && threat.confidence == ThreatConfidence::Confirmed
-            {
-                if let Ok(record) =
-                    quarantine_selected_file(&path, &threat.threat_name, &threat.engine)
-                {
-                    threat.status = ThreatResultStatus::Quarantined;
-                    threat.path = record.original_path;
-                    quarantined_files += 1;
-                }
-            }
-            if !threats.iter().any(|existing| {
-                existing.path == threat.path
-                    && matches!(
-                        existing.detection_type,
-                        DetectionType::Signature | DetectionType::Yara
-                    )
-            }) {
-                suspicious_found += u64::from(threat.confidence != ThreatConfidence::Confirmed);
-                threats.push(threat);
-            }
-        }
-        if let Ok(Some(ai_result)) = ai_runner.classify_file(&path) {
-            if should_surface_ai_result(&ai_result)
-                && !ai::training_labels::TrainingLabelStore::new()
-                    .suppresses_hash(&sha256_for_file(&path).unwrap_or_default())
-            {
-                let has_strong_heuristic = threats.iter().any(|threat| {
-                    threat.path == path.display().to_string() && threat.risk_score.score >= 45
-                });
-                let mut threat = threat_from_ai(&path, &ai_result);
-                let allowlisted = AllowlistStore::new().is_allowlisted(&path, &threat.sha256);
-                if action_mode == ScanActionMode::AutoQuarantineAllDetections
-                    && ai_result.production_ready
-                    && has_strong_heuristic
-                    && ai_result.malware_probability >= 0.90
-                    && !allowlisted
-                {
-                    if let Ok(record) =
-                        quarantine_selected_file(&path, &threat.threat_name, &threat.engine)
-                    {
-                        threat.status = ThreatResultStatus::Quarantined;
-                        threat.path = record.original_path;
-                        quarantined_files += 1;
-                    }
-                }
-                if !threats.iter().any(|existing| {
-                    existing.path == threat.path
-                        && matches!(existing.detection_type, DetectionType::Signature)
-                }) {
-                    suspicious_found += 1;
-                    threats.push(threat);
-                }
-            }
-        }
-        if !should_signature_scan(&kind, &path, file_size, threats.last()) {
-            update_progress(
-                &mut progress,
-                &current,
-                files_scanned,
-                bytes_scanned,
-                threats.len() as u64,
-                suspicious_found,
-                skipped_files,
-                permission_denied_count,
-                started,
-            );
-            if files_scanned == total_files || files_scanned % 25 == 0 {
-                if let Some(emit) = emit_progress.as_deref_mut() {
-                    emit(&progress);
-                }
-            }
-            continue;
-        }
-        match clamav.scan_file(&path) {
-            Ok(result) => match result.status {
-                ScanStatus::Infected => {
-                    let mut threat = threat_from_signature(&path, &result);
-                    let allowlist = AllowlistStore::new();
-                    if allowlist.is_allowlisted(&path, &result.sha256) {
+        match native_engine.scan_file(path.clone(), PneScanActionMode::DetectOnly) {
+            Ok(verdict) => {
+                if should_surface_native_verdict(verdict.final_verdict.verdict) {
+                    let mut threat = threat_from_native(&path, &verdict);
+                    suspicious_found += u64::from(threat.confidence != ThreatConfidence::Confirmed);
+                    let allowlisted = AllowlistStore::new().is_allowlisted(&path, &threat.sha256);
+                    if allowlisted {
                         threat.status = ThreatResultStatus::Allowlisted;
                         threat.recommended_action = RecommendedAction::Allowlist;
-                    } else if action_mode == ScanActionMode::AutoQuarantineConfirmedOnly
-                        || action_mode == ScanActionMode::AutoQuarantineAllDetections
-                    {
-                        if let Ok(record) = QuarantineStore::new().quarantine_file(&path, &result) {
+                    } else if native_should_quarantine(action_mode.clone(), &threat) {
+                        if let Ok(record) =
+                            quarantine_selected_file(&path, &threat.threat_name, &threat.engine)
+                        {
                             threat.status = ThreatResultStatus::Quarantined;
                             threat.path = record.original_path;
                             quarantined_files += 1;
@@ -474,9 +401,7 @@ fn scan_paths(
                     }
                     threats.push(threat);
                 }
-                ScanStatus::EngineUnavailable => engine_unavailable = true,
-                ScanStatus::Clean | ScanStatus::Error => {}
-            },
+            }
             Err(_) => skipped_files += 1,
         }
         update_progress(
@@ -539,7 +464,7 @@ fn scan_paths(
         current_path: last_path,
         message: if engine_unavailable {
             Some(
-                "ClamAV is unavailable; offline heuristic checks may still flag suspicious files."
+                "Pasus Native Engine is unavailable; files were not reported clean."
                     .to_string(),
             )
         } else if kind == ScanKind::Full {
@@ -643,6 +568,226 @@ fn update_progress(
     progress.updated_at = Utc::now();
     progress.elapsed_seconds = started.elapsed().as_secs();
     progress.calculate_eta();
+}
+
+fn native_engine() -> anyhow::Result<PasusNativeEngine> {
+    let root = native_asset_root();
+    PasusNativeEngine::initialize(EngineConfig::from_repo_root(root))
+}
+
+fn native_asset_root() -> PathBuf {
+    let current = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+    for candidate in current.ancestors() {
+        if candidate.join("assets").join("pasus_native").exists() {
+            return candidate.to_path_buf();
+        }
+    }
+    if let Ok(exe) = std::env::current_exe() {
+        if let Some(parent) = exe.parent() {
+            for candidate in [
+                parent.to_path_buf(),
+                parent.join(".."),
+                parent.join("..").join(".."),
+                parent.join("..").join("..").join(".."),
+            ] {
+                if candidate.join("assets").join("pasus_native").exists() {
+                    return candidate;
+                }
+            }
+        }
+    }
+    current
+}
+
+fn should_surface_native_verdict(verdict: PneVerdict) -> bool {
+    !matches!(
+        verdict,
+        PneVerdict::Clean | PneVerdict::LikelyClean | PneVerdict::Unknown
+    )
+}
+
+fn native_should_quarantine(action_mode: ScanActionMode, threat: &ThreatResult) -> bool {
+    match action_mode {
+        ScanActionMode::DetectOnly => false,
+        ScanActionMode::AutoQuarantineConfirmedOnly => {
+            threat.confidence == ThreatConfidence::Confirmed
+                && matches!(
+                    threat.risk_score.verdict,
+                    RiskVerdict::ConfirmedMalware | RiskVerdict::ProbableMalware
+                )
+        }
+        ScanActionMode::AutoQuarantineAllDetections => {
+            matches!(
+                threat.risk_score.verdict,
+                RiskVerdict::ConfirmedMalware | RiskVerdict::ProbableMalware
+            ) && matches!(
+                threat.confidence,
+                ThreatConfidence::Confirmed | ThreatConfidence::High
+            )
+        }
+    }
+}
+
+fn threat_from_native(
+    path: &Path,
+    verdict: &pasus_native_engine::FileScanVerdict,
+) -> ThreatResult {
+    let metadata = std::fs::metadata(path).ok();
+    let confidence = native_confidence(verdict.final_verdict.confidence);
+    let risk_verdict = native_risk_verdict(verdict.final_verdict.verdict);
+    let engines_used = verdict
+        .final_verdict
+        .engines_used
+        .iter()
+        .map(native_engine_source)
+        .collect::<Vec<_>>();
+    let reasons = verdict
+        .final_verdict
+        .evidence
+        .iter()
+        .map(|evidence| RiskReason {
+            id: evidence.id.clone(),
+            title: evidence.title.clone(),
+            detail: evidence.detail.clone(),
+            weight: evidence.weight,
+            severity: if evidence.weight >= 80 {
+                RiskSeverity::Critical
+            } else if evidence.weight >= 55 {
+                RiskSeverity::High
+            } else if evidence.weight >= 25 {
+                RiskSeverity::Medium
+            } else {
+                RiskSeverity::Low
+            },
+            source: native_reason_source(&evidence.source),
+        })
+        .collect::<Vec<_>>();
+    let detection_type = if engines_used.contains(&RiskEngine::Signature) {
+        DetectionType::Signature
+    } else if engines_used.contains(&RiskEngine::LocalAi) {
+        DetectionType::LocalAi
+    } else if engines_used.contains(&RiskEngine::Behavior) {
+        DetectionType::Behavior
+    } else {
+        DetectionType::Heuristic
+    };
+    ThreatResult {
+        id: Uuid::new_v4().to_string(),
+        path: path.display().to_string(),
+        file_name: path
+            .file_name()
+            .map(|name| name.to_string_lossy().to_string())
+            .unwrap_or_default(),
+        sha256: verdict.sha256.clone(),
+        size_bytes: metadata.map(|metadata| metadata.len()).unwrap_or_default(),
+        detection_type,
+        threat_category: native_category(verdict.final_verdict.category),
+        threat_name: native_threat_name(verdict.final_verdict.verdict),
+        confidence: confidence.clone(),
+        engine: "Pasus Native Engine".to_string(),
+        detected_at: verdict.scanned_at,
+        recommended_action: if matches!(
+            risk_verdict,
+            RiskVerdict::ConfirmedMalware | RiskVerdict::ProbableMalware
+        ) {
+            RecommendedAction::Quarantine
+        } else {
+            RecommendedAction::Review
+        },
+        status: ThreatResultStatus::Detected,
+        risk_score: RiskScore {
+            score: verdict.final_verdict.risk_score,
+            verdict: risk_verdict,
+            confidence,
+            reasons,
+            recommended_action: RecommendedAction::Review,
+            engines_used,
+        },
+        reason_summary: verdict.final_verdict.user_visible_explanation.clone(),
+    }
+}
+
+fn native_confidence(value: PneConfidence) -> ThreatConfidence {
+    match value {
+        PneConfidence::Confirmed => ThreatConfidence::Confirmed,
+        PneConfidence::High => ThreatConfidence::High,
+        PneConfidence::Medium => ThreatConfidence::Medium,
+        PneConfidence::Low => ThreatConfidence::Low,
+    }
+}
+
+fn native_risk_verdict(value: PneVerdict) -> RiskVerdict {
+    match value {
+        PneVerdict::Clean => RiskVerdict::Clean,
+        PneVerdict::LikelyClean => RiskVerdict::LikelyClean,
+        PneVerdict::Unknown => RiskVerdict::Unknown,
+        PneVerdict::Observation | PneVerdict::Suspicious => RiskVerdict::Suspicious,
+        PneVerdict::ProbableMalware => RiskVerdict::ProbableMalware,
+        PneVerdict::ConfirmedMalware | PneVerdict::TestThreat => RiskVerdict::ConfirmedMalware,
+    }
+}
+
+fn native_category(value: PneThreatCategory) -> ThreatCategory {
+    match value {
+        PneThreatCategory::Trojan => ThreatCategory::Trojan,
+        PneThreatCategory::Ransomware => ThreatCategory::Ransomware,
+        PneThreatCategory::Spyware => ThreatCategory::Spyware,
+        PneThreatCategory::Adware => ThreatCategory::Adware,
+        PneThreatCategory::Worm => ThreatCategory::Worm,
+        PneThreatCategory::Keylogger => ThreatCategory::Keylogger,
+        PneThreatCategory::Miner => ThreatCategory::Miner,
+        PneThreatCategory::PotentiallyUnwantedApp => ThreatCategory::PotentiallyUnwantedApp,
+        _ => ThreatCategory::Unknown,
+    }
+}
+
+fn native_threat_name(value: PneVerdict) -> String {
+    match value {
+        PneVerdict::TestThreat => "EICAR safe anti-malware test file".to_string(),
+        PneVerdict::ConfirmedMalware => "Confirmed threat".to_string(),
+        PneVerdict::ProbableMalware => "Probable malware".to_string(),
+        PneVerdict::Suspicious => "Suspicious item".to_string(),
+        PneVerdict::Observation => "Low-priority observation".to_string(),
+        _ => "Native engine review".to_string(),
+    }
+}
+
+fn native_engine_source(source: &pasus_native_engine::verdict::risk_fusion::EvidenceSource) -> RiskEngine {
+    match source {
+        pasus_native_engine::verdict::risk_fusion::EvidenceSource::NativeSignature => {
+            RiskEngine::Signature
+        }
+        pasus_native_engine::verdict::risk_fusion::EvidenceSource::NativeRule
+        | pasus_native_engine::verdict::risk_fusion::EvidenceSource::NativeHeuristic
+        | pasus_native_engine::verdict::risk_fusion::EvidenceSource::ApplicationControl
+        | pasus_native_engine::verdict::risk_fusion::EvidenceSource::TrustStore => {
+            RiskEngine::Heuristic
+        }
+        pasus_native_engine::verdict::risk_fusion::EvidenceSource::NativeMl => RiskEngine::LocalAi,
+        pasus_native_engine::verdict::risk_fusion::EvidenceSource::NativeBehavior => {
+            RiskEngine::Behavior
+        }
+    }
+}
+
+fn native_reason_source(
+    source: &pasus_native_engine::verdict::risk_fusion::EvidenceSource,
+) -> RiskReasonSource {
+    match source {
+        pasus_native_engine::verdict::risk_fusion::EvidenceSource::NativeSignature => {
+            RiskReasonSource::Signature
+        }
+        pasus_native_engine::verdict::risk_fusion::EvidenceSource::NativeMl => {
+            RiskReasonSource::AiModel
+        }
+        pasus_native_engine::verdict::risk_fusion::EvidenceSource::NativeBehavior => {
+            RiskReasonSource::Behavior
+        }
+        pasus_native_engine::verdict::risk_fusion::EvidenceSource::TrustStore => {
+            RiskReasonSource::UserLabel
+        }
+        _ => RiskReasonSource::Heuristic,
+    }
 }
 
 fn threat_from_signature(path: &Path, result: &scanner::ScanResult) -> ThreatResult {

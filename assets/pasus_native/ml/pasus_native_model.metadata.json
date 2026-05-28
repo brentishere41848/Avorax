@@ -1,0 +1,36 @@
+{
+  "model_name": "Pasus Native Development Model",
+  "model_version": "0.1.0-dev",
+  "model_format_version": "pmodel-v1",
+  "feature_schema_version": "pne-features-v1",
+  "production_ready": false,
+  "training_dataset_name": "development-fixture-features",
+  "training_sample_count": 0,
+  "validation_sample_count": 0,
+  "precision": 0.0,
+  "recall": 0.0,
+  "false_positive_rate": 1.0,
+  "thresholds": {
+    "suspicious": 0.65,
+    "probable_malware": 0.86,
+    "confirmed_malware": 0.98
+  },
+  "categories": [
+    "trojan",
+    "ransomware",
+    "spyware",
+    "adware",
+    "worm",
+    "keylogger",
+    "miner",
+    "potentially_unwanted_app",
+    "suspicious_script",
+    "test_threat",
+    "unknown"
+  ],
+  "limitations": [
+    "Development model only.",
+    "Not production-ready.",
+    "AI-only automatic quarantine is disabled."
+  ]
+}

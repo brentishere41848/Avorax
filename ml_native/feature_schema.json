@@ -1,0 +1,29 @@
+{
+  "schema": "pne-features-v1",
+  "features": [
+    "file_size",
+    "extension_executable",
+    "file_type_executable",
+    "location_risk",
+    "filename_risk",
+    "double_extension",
+    "entropy_mean",
+    "entropy_max",
+    "section_count",
+    "high_entropy_section_count",
+    "suspicious_import_count",
+    "network_import_count",
+    "injection_import_count",
+    "persistence_import_count",
+    "crypto_import_count",
+    "embedded_url_count",
+    "embedded_ip_count",
+    "suspicious_string_count",
+    "script_obfuscation_score",
+    "encoded_command_flag",
+    "archive_contains_executable",
+    "startup_location_flag",
+    "known_good_flag",
+    "known_bad_flag"
+  ]
+}

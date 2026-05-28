@@ -8,6 +8,9 @@ use std::time::Duration;
 
 use anyhow::Context;
 use chrono::{DateTime, Utc};
+use pasus_native_engine::{
+    EngineConfig, PasusNativeEngine, ScanActionMode as PneScanActionMode, Verdict as PneVerdict,
+};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use uuid::Uuid;
@@ -226,7 +229,12 @@ fn handle_process_started(
     known_malicious_hashes: &HashSet<String>,
 ) -> anyhow::Result<GuardEvent> {
     let hash = sha256_file(process_path)?;
-    let local_match = local_signature_match(process_path)?;
+    let native_match = native_threat_match(process_path).unwrap_or(None);
+    let local_match = if native_match.is_none() {
+        local_signature_match(process_path)?
+    } else {
+        None
+    };
     let yara_match = if local_match.is_none() {
         yara_rule_match(process_path).unwrap_or(None)
     } else {
@@ -243,6 +251,8 @@ fn handle_process_started(
             engine: "pasus-known-bad-hash".to_string(),
             confidence: LocalThreatConfidence::Confirmed,
         })
+    } else if let Some(native_match) = native_match {
+        Some(native_match)
     } else if let Some(signature) = local_match {
         Some(signature)
     } else if let Some(yara_match) = yara_match {
@@ -621,6 +631,52 @@ fn normalize_hash(value: String) -> String {
 fn local_signature_match(path: &Path) -> anyhow::Result<Option<LocalThreatMatch>> {
     let bytes = fs::read(path)?;
     Ok(local_signature_match_bytes(&bytes))
+}
+
+fn native_threat_match(path: &Path) -> anyhow::Result<Option<LocalThreatMatch>> {
+    let mut engine = PasusNativeEngine::initialize(EngineConfig::from_repo_root(native_asset_root()))?;
+    let verdict = engine.scan_file(path.to_path_buf(), PneScanActionMode::DetectOnly)?;
+    let confidence = match verdict.final_verdict.confidence {
+        pasus_native_engine::Confidence::Confirmed => LocalThreatConfidence::Confirmed,
+        pasus_native_engine::Confidence::High => LocalThreatConfidence::High,
+        pasus_native_engine::Confidence::Medium => LocalThreatConfidence::Medium,
+        pasus_native_engine::Confidence::Low => LocalThreatConfidence::Low,
+    };
+    if matches!(
+        verdict.final_verdict.verdict,
+        PneVerdict::TestThreat | PneVerdict::ConfirmedMalware | PneVerdict::ProbableMalware
+    ) {
+        return Ok(Some(LocalThreatMatch {
+            reason: verdict.final_verdict.user_visible_explanation,
+            engine: "pasus-native-engine".to_string(),
+            confidence,
+        }));
+    }
+    Ok(None)
+}
+
+fn native_asset_root() -> PathBuf {
+    let current = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+    for candidate in current.ancestors() {
+        if candidate.join("assets").join("pasus_native").exists() {
+            return candidate.to_path_buf();
+        }
+    }
+    if let Ok(exe) = std::env::current_exe() {
+        if let Some(parent) = exe.parent() {
+            for candidate in [
+                parent.to_path_buf(),
+                parent.join(".."),
+                parent.join("..").join(".."),
+                parent.join("..").join("..").join(".."),
+            ] {
+                if candidate.join("assets").join("pasus_native").exists() {
+                    return candidate;
+                }
+            }
+        }
+    }
+    current
 }
 
 fn local_signature_match_bytes(bytes: &[u8]) -> Option<LocalThreatMatch> {

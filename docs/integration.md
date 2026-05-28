@@ -27,4 +27,4 @@ If the API is unreachable or returns an error, the client shows that failure and
 
 ## Local Core
 
-Desktop malware scanning requires the Rust local core and a local ClamAV engine. The Windows MSI bundles ClamAV beside the app. For development builds, install ClamAV on PATH, set `PASUS_CLAMAV_CLAMSCAN`, or set `PASUS_LOCAL_CORE` to a release folder that contains `ClamAV\clamscan.exe`.
+Desktop malware scanning requires the Rust local core and Pasus Native Engine assets under `assets/pasus_native`. ClamAV and YARA compatibility paths are optional and disabled by default. For development builds, set `PASUS_LOCAL_CORE` to a release folder that contains `pasus_local_core.exe` and the native assets.

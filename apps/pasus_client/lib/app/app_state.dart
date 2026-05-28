@@ -78,6 +78,12 @@ class PasusState {
     this.aiModelInfo = const AiModelInfo(),
     this.yaraStatus = 'rulesUnavailable',
     this.yaraRuleCount = 0,
+    this.nativeEngineStatus = 'unavailable',
+    this.nativeSignatureCount = 0,
+    this.nativeRuleCount = 0,
+    this.nativeMlStatus = 'modelMissing',
+    this.nativeMlModelVersion,
+    this.compatibilityEnginesEnabled = false,
     this.guardStatus = 'off',
     this.driverStatus = 'missing',
     this.scanStatus = ScanStatus.idle,
@@ -109,6 +115,12 @@ class PasusState {
   final AiModelInfo aiModelInfo;
   final String yaraStatus;
   final int yaraRuleCount;
+  final String nativeEngineStatus;
+  final int nativeSignatureCount;
+  final int nativeRuleCount;
+  final String nativeMlStatus;
+  final String? nativeMlModelVersion;
+  final bool compatibilityEnginesEnabled;
   final String guardStatus;
   final String driverStatus;
   final ScanStatus scanStatus;
@@ -140,6 +152,13 @@ class PasusState {
     AiModelInfo? aiModelInfo,
     String? yaraStatus,
     int? yaraRuleCount,
+    String? nativeEngineStatus,
+    int? nativeSignatureCount,
+    int? nativeRuleCount,
+    String? nativeMlStatus,
+    String? nativeMlModelVersion,
+    bool clearNativeMlModelVersion = false,
+    bool? compatibilityEnginesEnabled,
     String? guardStatus,
     String? driverStatus,
     ScanStatus? scanStatus,
@@ -180,6 +199,15 @@ class PasusState {
       aiModelInfo: aiModelInfo ?? this.aiModelInfo,
       yaraStatus: yaraStatus ?? this.yaraStatus,
       yaraRuleCount: yaraRuleCount ?? this.yaraRuleCount,
+      nativeEngineStatus: nativeEngineStatus ?? this.nativeEngineStatus,
+      nativeSignatureCount: nativeSignatureCount ?? this.nativeSignatureCount,
+      nativeRuleCount: nativeRuleCount ?? this.nativeRuleCount,
+      nativeMlStatus: nativeMlStatus ?? this.nativeMlStatus,
+      nativeMlModelVersion: clearNativeMlModelVersion
+          ? null
+          : nativeMlModelVersion ?? this.nativeMlModelVersion,
+      compatibilityEnginesEnabled:
+          compatibilityEnginesEnabled ?? this.compatibilityEnginesEnabled,
       guardStatus: guardStatus ?? this.guardStatus,
       driverStatus: driverStatus ?? this.driverStatus,
       scanStatus: scanStatus ?? this.scanStatus,
@@ -420,6 +448,12 @@ class PasusController extends StateNotifier<PasusState> {
       aiModelInfo: health.aiModelInfo,
       yaraStatus: health.yaraStatus,
       yaraRuleCount: health.yaraRuleCount,
+      nativeEngineStatus: health.nativeEngineStatus,
+      nativeSignatureCount: health.nativeSignatureCount,
+      nativeRuleCount: health.nativeRuleCount,
+      nativeMlStatus: health.nativeMlStatus,
+      nativeMlModelVersion: health.nativeMlModelVersion,
+      compatibilityEnginesEnabled: health.compatibilityEnginesEnabled,
       guardStatus: health.guardStatus,
       driverStatus: health.driverStatus,
     );
@@ -561,7 +595,7 @@ class PasusController extends StateNotifier<PasusState> {
     final hasLocalPrevention =
         state.malwareEngineStatus == MalwareEngineStatus.available ||
         state.malwareEngineStatus == MalwareEngineStatus.signaturesOutdated ||
-        state.yaraStatus == 'available' ||
+        state.nativeEngineStatus == 'ready' ||
         state.config.protectionMode == ProtectionMode.lockdown;
     if (hasLocalPrevention) {
       await logEvent('protection_started', 'Protection started');
@@ -583,7 +617,7 @@ class PasusController extends StateNotifier<PasusState> {
       protectionStatus: ProtectionStatus.error,
       loading: false,
       errorMessage:
-          'No local prevention engine is ready. Install the Pasus MSI, verify YARA/model assets, or configure ClamAV for development.',
+          'No local prevention engine is ready. Install the Pasus MSI or verify Pasus Native Engine assets.',
     );
   }
 
@@ -1051,7 +1085,7 @@ class PasusController extends StateNotifier<PasusState> {
       lastScanReport: report,
       clearCurrentScanPath: true,
       errorMessage: report.status == ScanStatus.engineUnavailable
-          ? 'Malware engine unavailable. Install the Pasus MSI with bundled ClamAV, or configure ClamAV for development.'
+          ? 'Pasus Native Engine unavailable. Install the Pasus MSI or verify native engine assets.'
           : null,
     );
     await unawaitedRefreshQuarantine();

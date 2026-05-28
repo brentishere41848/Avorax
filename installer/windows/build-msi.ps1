@@ -4,6 +4,7 @@ param(
   [switch]$SkipFlutterBuild,
   [switch]$RequireLocalCore,
   [switch]$SkipClamAV,
+  [switch]$IncludeClamAVCompatibility,
   [switch]$AllowDevelopmentModel
 )
 
@@ -145,6 +146,7 @@ $clamAvSha256 = "6F868ED7A7E5A15ACED82C53A4FA9F3F42FA9D7F7DE14A606BA8DB0756518EE
 $clamAvZipPath = Join-Path $PSScriptRoot "cache\clamav-$clamAvVersion.win.x64.zip"
 $clamAvExtractDir = Join-Path $distRoot "windows-msi\clamav-extract"
 $modelSourceDir = Join-Path $root "assets\models"
+$nativeSourceDir = Join-Path $root "assets\pasus_native"
 $yaraSourceDir = Join-Path $root "assets\yara"
 $testAssetsSourceDir = Join-Path $root "assets\test"
 $trustAssetsSourceDir = Join-Path $root "assets\trust"
@@ -221,13 +223,20 @@ $releaseModelDir = Join-Path $releaseDir "assets\models"
 Copy-Tree $modelSourceDir $stageModelDir
 Copy-Tree $modelSourceDir $releaseModelDir
 
-if (-not (Test-Path (Join-Path $yaraSourceDir "pasus_core_rules.yar"))) {
-  throw "Pasus YARA rule pack is required: $(Join-Path $yaraSourceDir "pasus_core_rules.yar")"
+if (-not (Test-Path (Join-Path $nativeSourceDir "signatures\pasus_core.psig")) -or -not (Test-Path (Join-Path $nativeSourceDir "rules\pasus_rules.prule")) -or -not (Test-Path (Join-Path $nativeSourceDir "ml\pasus_native_model.pmodel"))) {
+  throw "Pasus Native Engine assets are required under $nativeSourceDir"
 }
-$stageYaraDir = Join-Path $stageDir "assets\yara"
-$releaseYaraDir = Join-Path $releaseDir "assets\yara"
-Copy-Tree $yaraSourceDir $stageYaraDir
-Copy-Tree $yaraSourceDir $releaseYaraDir
+$stageNativeDir = Join-Path $stageDir "assets\pasus_native"
+$releaseNativeDir = Join-Path $releaseDir "assets\pasus_native"
+Copy-Tree $nativeSourceDir $stageNativeDir
+Copy-Tree $nativeSourceDir $releaseNativeDir
+
+if (Test-Path (Join-Path $yaraSourceDir "pasus_core_rules.yar")) {
+  $stageYaraDir = Join-Path $stageDir "assets\yara"
+  $releaseYaraDir = Join-Path $releaseDir "assets\yara"
+  Copy-Tree $yaraSourceDir $stageYaraDir
+  Copy-Tree $yaraSourceDir $releaseYaraDir
+}
 
 if (-not (Test-Path (Join-Path $testAssetsSourceDir "known_bad_test_hashes.json"))) {
   throw "Known-bad test hash asset is required: $(Join-Path $testAssetsSourceDir "known_bad_test_hashes.json")"
@@ -292,13 +301,13 @@ if (Test-Path $guardServiceExeDefault) {
   Write-Warning "pasus_guard_service.exe was not found. The MSI will not include the real-time Guard helper."
 }
 
-if (-not $SkipClamAV) {
+if ($IncludeClamAVCompatibility -and -not $SkipClamAV) {
   Ensure-ClamAVPackage $clamAvZipPath $clamAvUrl $clamAvSha256
   Copy-ClamAVRuntime $clamAvZipPath $clamAvExtractDir (Join-Path $stageDir "ClamAV")
   Copy-ClamAVRuntime $clamAvZipPath $clamAvExtractDir (Join-Path $releaseDir "ClamAV")
-  Write-Host "Bundled ClamAV $clamAvVersion runtime in the MSI."
+  Write-Host "Bundled optional ClamAV compatibility runtime $clamAvVersion in the MSI."
 } else {
-  Write-Warning "Skipping bundled ClamAV. Signature scanning will require clamdscan/clamscan on PATH or PASUS_CLAMAV_CLAMSCAN."
+  Write-Host "Skipping ClamAV compatibility runtime. Pasus Native Engine is the primary scanner."
 }
 
 $runtimeDlls = @(

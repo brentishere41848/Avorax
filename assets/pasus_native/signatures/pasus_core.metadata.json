@@ -1,0 +1,14 @@
+{
+  "pack_name": "Pasus Native Core Signatures",
+  "pack_version": "0.1.0",
+  "format": "pasus-signature-pack-v1",
+  "signature_count": 4,
+  "primary_engine": "Pasus Native Engine",
+  "compatibility_engines_required": false,
+  "created_at": "2026-05-28T00:00:00Z",
+  "limitations": [
+    "Contains conservative native signatures and safe test detections only.",
+    "Does not include real malware samples.",
+    "Broad signatures are review-only unless confirmed by stronger evidence."
+  ]
+}

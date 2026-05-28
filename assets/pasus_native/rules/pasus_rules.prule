@@ -1,0 +1,37 @@
+{
+  "format": "pasus-rule-pack-v1",
+  "version": "0.1.0",
+  "rules": [
+    {
+      "id": "PNE-RULE-PS-ENCODED-DOWNLOAD-EXEC",
+      "name": "Suspicious PowerShell encoded downloader execution",
+      "description": "Encoded PowerShell with downloader and execution indicators.",
+      "category": "suspiciousScript",
+      "confidence": "high",
+      "verdict": "probableMalware",
+      "false_positive_notes": "Administrator scripts may use encoded commands. This rule requires download and execution indicators.",
+      "conditions": [
+        {"type": "file_type", "equals": "powershell_script"},
+        {"type": "encoded_command"},
+        {"type": "downloader_and_execution"}
+      ],
+      "min_condition_matches": 3,
+      "action": "review_or_block_by_policy"
+    },
+    {
+      "id": "PNE-RULE-ZIP-NESTED-EXECUTABLE",
+      "name": "Archive contains executable payload",
+      "description": "ZIP archive contains executable content that needs review.",
+      "category": "exploitDropper",
+      "confidence": "medium",
+      "verdict": "suspicious",
+      "false_positive_notes": "Installers and developer packages can legitimately contain executables. This rule is review-only without stronger evidence.",
+      "conditions": [
+        {"type": "file_type", "equals": "zip"},
+        {"type": "archive_contains_executable"}
+      ],
+      "min_condition_matches": 2,
+      "action": "review_only"
+    }
+  ]
+}

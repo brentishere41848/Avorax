@@ -130,19 +130,21 @@ class HomeScreen extends ConsumerWidget {
         icon: Icons.shield_outlined,
       ),
       PasusMetricCard(
-        title: 'Malware engine',
-        value: state.malwareEngineStatus.label,
-        detail: state.malwareEngineStatus == MalwareEngineStatus.unavailable
-            ? 'Install the Pasus MSI with bundled ClamAV, or configure ClamAV for development.'
-            : 'Signature and heuristic scanning use real local results.',
+        title: 'Pasus Native Engine',
+        value: state.nativeEngineStatus == 'ready' ? 'Ready' : 'Unavailable',
+        detail: state.nativeEngineStatus == 'ready'
+            ? 'Native signatures, rules, heuristics, and ML run locally without cloud.'
+            : 'Native engine assets are missing or failed self-test.',
         icon: Icons.health_and_safety_outlined,
       ),
       PasusMetricCard(
-        title: 'Local AI Engine',
-        value: state.aiModelInfo.status.label,
-        detail: state.aiModelInfo.productionReady
-            ? 'Model ${state.aiModelInfo.modelVersion} is loaded for offline inference.'
-            : '${state.aiModelInfo.message} AI-only detections stay review-only.',
+        title: 'Native ML',
+        value: state.nativeMlStatus == 'developmentModel'
+            ? 'Development model'
+            : state.nativeMlStatus,
+        detail: state.nativeMlModelVersion == null
+            ? 'Native ML model is not loaded.'
+            : 'Model ${state.nativeMlModelVersion} is local; development ML cannot auto-quarantine by itself.',
         icon: Icons.psychology_alt_outlined,
       ),
       PasusMetricCard(
@@ -158,12 +160,10 @@ class HomeScreen extends ConsumerWidget {
         icon: Icons.block_outlined,
       ),
       PasusMetricCard(
-        title: 'YARA Rules',
-        value: state.yaraStatus == 'available'
-            ? '${state.yaraRuleCount} rules loaded'
-            : 'Rules unavailable',
+        title: 'Native Rules',
+        value: '${state.nativeRuleCount} rules loaded',
         detail:
-            'YARA detections use packaged local rules. Review-only rules do not auto-quarantine.',
+            'Pasus-owned deterministic rules are bounded and review-only unless strong evidence supports action.',
         icon: Icons.rule_folder_outlined,
       ),
       PasusMetricCard(

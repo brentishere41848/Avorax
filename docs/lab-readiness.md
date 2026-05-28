@@ -2,7 +2,7 @@
 
 Pasus release gates are aligned around the categories used by independent endpoint security testing:
 
-- Protection: EICAR, known-bad safe fixtures, YARA/signature verdicts, Guard decisions, and driver self-test.
+- Protection: EICAR, known-bad safe fixtures, native signature/rule verdicts, Guard decisions, and driver self-test.
 - Performance: decision latency, scan throughput, idle overhead, and UI responsiveness.
 - Usability: false positives on benign fixtures and clear user-facing wording.
 - Remediation: quarantine metadata, restore confirmation, and recovery vault tests.

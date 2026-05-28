@@ -123,21 +123,20 @@ class ProtectionScreen extends ConsumerWidget {
                 icon: Icons.block_outlined,
               ),
               PasusMetricCard(
-                title: 'Malware engine',
-                value: state.malwareEngineStatus.label,
-                detail:
-                    state.malwareEngineStatus == MalwareEngineStatus.unavailable
-                    ? 'Install the Pasus MSI with bundled ClamAV, or configure ClamAV for development.'
-                    : 'Ready for local scans.',
+                title: 'Pasus Native Engine',
+                value: state.nativeEngineStatus == 'ready'
+                    ? 'Ready'
+                    : 'Unavailable',
+                detail: state.nativeEngineStatus == 'ready'
+                    ? 'Primary offline scanner for native signatures, rules, ML, and heuristics.'
+                    : 'Native engine assets are missing or failed to load.',
                 icon: Icons.health_and_safety_outlined,
               ),
               PasusMetricCard(
-                title: 'YARA rules',
-                value: state.yaraStatus == 'available'
-                    ? '${state.yaraRuleCount} rules'
-                    : 'Unavailable',
+                title: 'Native rules',
+                value: '${state.nativeRuleCount} rules',
                 detail:
-                    'Conservative local rules supplement signature, AI, and heuristic analysis.',
+                    'Pasus-owned rules supplement native signatures, ML, and heuristic analysis.',
                 icon: Icons.rule_folder_outlined,
               ),
               PasusMetricCard(

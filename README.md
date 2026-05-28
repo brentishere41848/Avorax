@@ -137,17 +137,18 @@ The Flutter client talks to the local core over stdin/stdout JSON commands. The 
 
 ## Malware Scanning
 
-Desktop scanning uses ClamAV:
+Desktop scanning uses Pasus Native Engine (PNE) as the primary engine:
 
-- Prefer `clamdscan` when available.
-- Fall back to `clamscan`.
-- On Windows MSI installs, discover the bundled `ClamAV\clamscan.exe` automatically.
-- Return `Engine Unavailable` if no local ClamAV engine is available.
-- Never report a file as clean unless a real scan completed.
+- Native signatures in `assets/pasus_native/signatures/pasus_core.psig`.
+- Native deterministic rules in `assets/pasus_native/rules/pasus_rules.prule`.
+- Static analyzers for file type, strings, entropy, PE metadata, scripts, and ZIP archives.
+- Conservative heuristic scoring and false-positive controls.
+- Pure Rust native ML runtime using `assets/pasus_native/ml/pasus_native_model.pmodel`.
+- No cloud, ClamAV, or YARA dependency for Quick Scan, Full Scan, Custom Scan, EICAR detection, or quarantine.
 
-Pasus also includes a conservative score-based local heuristic engine. Weak signals do not become scary detections by themselves: a normal `.exe` in Downloads, an unknown CLI binary, a VPN installer, or an unsigned developer tool is not shown as malware unless stronger independent signals combine.
+Weak signals do not become scary detections by themselves: a normal `.exe` in Downloads, an unknown CLI binary, a VPN installer, or an unsigned developer tool is not shown as malware unless stronger independent signals combine.
 
-Local AI support is offline-first and honest. The local core loads `assets/models/pasus_static_malware_model.onnx` with a Rust ONNX runtime and parses `assets/models/pasus_static_malware_model.metadata.json`. The included model is a development model marked `production_ready=false`; it proves inference and UI plumbing but cannot auto-quarantine by itself or claim production AI protection. The `ml/` folder contains the developer training/export pipeline and schemas. User labels are saved locally as JSONL for export; the production app does not retrain itself silently.
+Native ML support is offline-first and honest. The included `.pmodel` is a development model marked `production_ready=false`; it proves deterministic local inference but cannot auto-quarantine by itself or claim production AI protection. The `ml_native/` folder contains the developer training/export pipeline and schemas. User labels are saved locally for export; the production app does not retrain itself silently.
 
 Android and iOS show an honest unavailable state for full malware quarantine because mobile OS sandboxing prevents full-device scanning.
 
@@ -175,7 +176,7 @@ v0.1.13 adds prevention-first protection profiles:
 - Lockdown Protection: unknown apps are blocked until trusted or approved by exact hash.
 - Developer Mode: unknown developer tools are monitored/reviewed without broadly blocking normal workflows.
 
-Lockdown blocks unknown apps as unknown. It must not label a normal executable as a virus unless a signature, YARA, AI, or behavior signal supports that verdict. True before-launch Lockdown enforcement still requires the active driver path; otherwise Pasus reports post-launch fallback.
+Lockdown blocks unknown apps as unknown. It must not label a normal executable as a virus unless a native signature, native rule, native ML, or behavior signal supports that verdict. True before-launch Lockdown enforcement still requires the active driver path; otherwise Pasus reports post-launch fallback.
 
 Ransomware Guard watches for behavior such as rapid mass file modification, suspicious renames, entropy jumps, ransom-note patterns, and backup tampering. Recovery Vault can restore protected copies when available. Pasus does not claim it can decrypt files without a backup, snapshot, or key.
 
@@ -226,11 +227,11 @@ dist\Pasus-0.1.0-x64.msi
 dist\Pasus-0.1.0-x64-setup.exe
 ```
 
-The installer stages the Flutter Windows release app, `pasus_local_core.exe`, `pasus_guard_service.exe`, model assets, app assets, bundled Flutter/plugin DLLs, Visual C++ runtime DLLs available on the build machine, local privacy/security docs, and the official Windows ClamAV runtime. Pasus installs ClamAV beside the app in `C:\Program Files\Pasus\ClamAV`; it does not install a hidden service or add stealth persistence. Use `-SkipClamAV` only for development builds where ClamAV is supplied separately.
+The installer stages the Flutter Windows release app, `pasus_local_core.exe`, `pasus_guard_service.exe`, Pasus Native Engine assets, app assets, bundled Flutter/plugin DLLs, Visual C++ runtime DLLs available on the build machine, and local privacy/security docs. Compatibility engines are not required for normal scanning. Pasus does not install hidden services or stealth persistence.
 
 The MSI and EXE installer builds fail if model assets are missing. They also fail when metadata says `production_ready=false` unless you pass `-AllowDevelopmentModel` for an explicitly non-production build. The EXE installer is a WiX Burn bootstrapper that contains and runs the MSI.
 
-The bundled runtime includes `freshclam.exe`, but signature database updates remain explicit. Pasus must report scan errors honestly if a local ClamAV database is unavailable instead of pretending files are clean.
+Pasus Native Engine updates use signed native packs when update infrastructure is configured. Pasus must report native engine errors honestly instead of pretending files are clean.
 
 GitHub Releases are built by `.github/workflows/release-windows.yml`. Push a version tag such as `v0.1.0` and GitHub Actions will build and attach both the `.msi` and `.exe` installers to the release.
 

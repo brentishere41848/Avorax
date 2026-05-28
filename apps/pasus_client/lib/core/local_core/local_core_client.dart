@@ -33,6 +33,14 @@ class LocalCoreClient {
           : const AiModelInfo(),
       yaraStatus: response['yara_status'] as String? ?? 'rulesUnavailable',
       yaraRuleCount: response['yara_rule_count'] as int? ?? 0,
+      nativeEngineStatus:
+          response['native_engine_status'] as String? ?? 'unavailable',
+      nativeSignatureCount: response['native_signature_count'] as int? ?? 0,
+      nativeRuleCount: response['native_rule_count'] as int? ?? 0,
+      nativeMlStatus: response['native_ml_status'] as String? ?? 'modelMissing',
+      nativeMlModelVersion: response['native_ml_model_version'] as String?,
+      compatibilityEnginesEnabled:
+          response['compatibility_engines_enabled'] as bool? ?? false,
       guardStatus: response['guard_status'] as String? ?? 'off',
       driverStatus: response['driver_status'] as String? ?? 'missing',
     );
@@ -546,6 +554,12 @@ class LocalCoreHealth {
     this.aiModelInfo = const AiModelInfo(),
     this.yaraStatus = 'rulesUnavailable',
     this.yaraRuleCount = 0,
+    this.nativeEngineStatus = 'unavailable',
+    this.nativeSignatureCount = 0,
+    this.nativeRuleCount = 0,
+    this.nativeMlStatus = 'modelMissing',
+    this.nativeMlModelVersion,
+    this.compatibilityEnginesEnabled = false,
     this.guardStatus = 'off',
     this.driverStatus = 'missing',
   });
@@ -554,6 +568,12 @@ class LocalCoreHealth {
   final AiModelInfo aiModelInfo;
   final String yaraStatus;
   final int yaraRuleCount;
+  final String nativeEngineStatus;
+  final int nativeSignatureCount;
+  final int nativeRuleCount;
+  final String nativeMlStatus;
+  final String? nativeMlModelVersion;
+  final bool compatibilityEnginesEnabled;
   final String guardStatus;
   final String driverStatus;
 }

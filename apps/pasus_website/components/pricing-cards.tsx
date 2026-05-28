@@ -16,7 +16,12 @@ const plans = [
     badge: "Planned",
     cta: "Join waitlist",
     featured: true,
-    features: ["Real-time Guard", "Ransomware Guard", "Recovery Vault", "Local AI Analysis"],
+    features: [
+      "Real-time Guard",
+      "Ransomware Guard",
+      "Recovery Vault",
+      "Native ML Analysis",
+    ],
   },
   {
     name: "Pasus Pro",
@@ -24,7 +29,12 @@ const plans = [
     badge: "Coming soon",
     cta: "Contact / Notify me",
     featured: false,
-    features: ["Lockdown Mode", "Policy controls", "Advanced logs", "Offline protection tools"],
+    features: [
+      "Lockdown Mode",
+      "Policy controls",
+      "Advanced logs",
+      "Offline protection tools",
+    ],
   },
 ] as const;
 
@@ -36,12 +46,20 @@ export function PricingCards() {
           key={plan.name}
           className={`card relative flex flex-col overflow-hidden p-7 ${plan.featured ? "border-[#126BFF]/35 shadow-[0_28px_90px_rgba(18,107,255,0.16)]" : ""}`}
         >
-          {plan.featured ? <div className="absolute inset-x-0 top-0 h-1 bg-[#126BFF]" /> : null}
+          {plan.featured ? (
+            <div className="absolute inset-x-0 top-0 h-1 bg-[#126BFF]" />
+          ) : null}
           <div className="flex items-center justify-between gap-3">
-            <StatusBadge tone={plan.featured ? "blue" : "amber"}>{plan.badge}</StatusBadge>
-            <span className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#5A6678]">Pricing not announced</span>
+            <StatusBadge tone={plan.featured ? "blue" : "amber"}>
+              {plan.badge}
+            </StatusBadge>
+            <span className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#5A6678]">
+              Pricing not announced
+            </span>
           </div>
-          <h3 className="mt-6 text-2xl font-extrabold tracking-[-0.02em]">{plan.name}</h3>
+          <h3 className="mt-6 text-2xl font-extrabold tracking-[-0.02em]">
+            {plan.name}
+          </h3>
           <p className="mt-2 text-[#5A6678]">{plan.audience}</p>
           <ul className="mt-7 flex-1 space-y-4 text-sm font-semibold text-[#334155]">
             {plan.features.map((feature) => (
@@ -51,7 +69,12 @@ export function PricingCards() {
               </li>
             ))}
           </ul>
-          <Link href="/waitlist" className={plan.featured ? "button-primary mt-8" : "button-light mt-8"}>
+          <Link
+            href="/waitlist"
+            className={
+              plan.featured ? "button-primary mt-8" : "button-light mt-8"
+            }
+          >
             {plan.cta}
           </Link>
         </article>

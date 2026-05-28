@@ -321,9 +321,9 @@ class _ScanResults extends StatelessWidget {
             )
           else if (report.status == ScanStatus.engineUnavailable)
             const PasusEmptyState(
-              title: 'Malware engine unavailable',
+              title: 'Pasus Native Engine unavailable',
               message:
-                  'Install the Pasus MSI with bundled ClamAV, or configure ClamAV for development. Pasus never reports files clean when the engine is unavailable.',
+                  'Native engine assets are missing or failed to load. Pasus never reports files clean when the engine is unavailable.',
               icon: Icons.health_and_safety_outlined,
             )
           else if (report.threats.isEmpty)
