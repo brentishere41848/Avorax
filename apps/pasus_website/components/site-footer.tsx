@@ -1,9 +1,9 @@
 import Link from "next/link";
 
-const groups: Array<[string, string[]]> = [
-  ["Product", ["Features", "Pricing", "Download", "Roadmap"]],
-  ["Security", ["Real-time Protection", "Quarantine", "Recovery", "Limitations"]],
-  ["Company", ["Privacy", "Terms", "Contact"]],
+const groups: Array<[string, Array<[string, string]>]> = [
+  ["Product", [["Features", "/product"], ["Pricing", "/pricing"], ["Download", "/download"], ["Roadmap", "/roadmap"]]],
+  ["Protection", [["Real-time Protection", "/protection"], ["Quarantine", "/protection"], ["Recovery Vault", "/protection"], ["Lockdown Mode", "/protection"]]],
+  ["Resources", [["Privacy", "/privacy"], ["Terms", "/terms"], ["Limitations", "/roadmap"], ["Release Notes", "/download"]]],
 ];
 
 export function SiteFooter() {
@@ -24,14 +24,19 @@ export function SiteFooter() {
             <div key={title}>
               <h3 className="font-bold">{title}</h3>
               <ul className="mt-4 space-y-3 text-sm text-white/66">
-                {links.map((link) => (
-                  <li key={link}>
-                    <Link href={`/${link.toLowerCase().replaceAll(" ", "-")}`}>{link}</Link>
+                {links.map(([label, href]) => (
+                  <li key={label}>
+                    <Link href={href} className="transition hover:text-white">{label}</Link>
                   </li>
                 ))}
               </ul>
             </div>
           ))}
+        </div>
+        <div className="md:col-span-2 grid gap-3 border-t border-white/10 pt-8 text-sm text-white/58 sm:grid-cols-3">
+          <span>Licenses coming soon</span>
+          <span>Preview builds only</span>
+          <span>No fake certifications</span>
         </div>
       </div>
     </footer>

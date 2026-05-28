@@ -28,11 +28,11 @@ async function getAssets(): Promise<ReleaseAsset[]> {
 export default async function DownloadPage() {
   const assets = await getAssets();
   return (
-    <section className="py-20">
+    <section className="section-pad">
       <div className="container grid gap-10 lg:grid-cols-[0.85fr_1.15fr]">
         <div>
           <div className="pill bg-[#F5A524]/12 text-[#8A5A00]">Preview build</div>
-          <h1 className="mt-6 text-5xl font-bold">Download Pasus preview.</h1>
+          <h1 className="mt-6 text-[42px] font-extrabold leading-[1.02] tracking-[-0.05em] md:text-6xl">Download Pasus preview.</h1>
           <p className="mt-5 leading-8 text-[#5B6678]">
             Preview installers are for testing. Keep Microsoft Defender or your existing antivirus enabled.
           </p>

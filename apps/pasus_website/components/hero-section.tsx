@@ -1,41 +1,45 @@
 import Link from "next/link";
+import { ProductPreview } from "./product-preview";
 
 export function HeroSection() {
   return (
-    <section className="bg-[#07111F] py-24 text-white">
-      <div className="container grid items-center gap-14 lg:grid-cols-[1.1fr_0.9fr]">
-        <div>
-          <div className="pill bg-white/10 text-[#14C8A8]">License sales: Coming soon</div>
-          <h1 className="mt-8 max-w-3xl text-5xl font-bold leading-tight tracking-tight md:text-7xl">
-            Anti-malware protection built for speed, control, and visibility.
+    <section className="relative overflow-hidden bg-[#061120] text-white">
+      <div className="absolute inset-x-0 top-0 h-px bg-white/10" aria-hidden="true" />
+      <div className="container grid min-h-[720px] items-center gap-16 py-20 lg:grid-cols-[1.02fr_0.98fr] lg:py-24">
+        <div className="max-w-3xl">
+          <div className="inline-flex rounded-full border border-white/14 bg-white/[0.07] px-4 py-2 text-sm font-extrabold text-[#16C7A7] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
+            License sales: Coming soon
+          </div>
+          <h1 className="mt-8 max-w-[350px] text-[30px] font-extrabold leading-[1.06] tracking-[-0.035em] text-white sm:max-w-none sm:text-[44px] md:text-[64px] md:leading-[0.98] md:tracking-[-0.055em]">
+            Anti-malware protection built for speed, control, and clarity.
           </h1>
-          <p className="mt-6 max-w-2xl text-lg leading-8 text-white/72">
-            Pasus helps scan, block, quarantine, and review threats locally. Real-time protection and licensing are being prepared for release.
+          <p className="mt-7 max-w-2xl text-lg leading-8 text-white/70 md:text-xl md:leading-9">
+            Pasus helps scan, block, quarantine, and review threats locally. Real-time protection, licensing, and production validation are being prepared for release.
           </p>
           <div className="mt-9 flex flex-wrap gap-4">
-            <Link href="/waitlist" className="rounded-full bg-[#126BFF] px-7 py-4 font-bold text-white">
+            <Link href="/waitlist" className="button-primary">
               Join the license waitlist
             </Link>
-            <Link href="/download" className="rounded-full border border-white/20 px-7 py-4 font-bold">
+            <Link href="/download" className="button-secondary">
               Download preview build
             </Link>
           </div>
-        </div>
-        <div className="dark-card rounded-[32px] p-7">
-          <div className="rounded-3xl bg-[#07111F] p-6">
-            <div className="flex items-center justify-between border-b border-white/10 pb-5">
-              <span className="font-bold">Pasus Protection Console</span>
-              <span className="pill bg-[#14C8A8]/10 text-[#14C8A8]">Preview</span>
-            </div>
-            {["Fast Quick Scan", "Quarantine review", "Ransomware Guard", "Lockdown Mode"].map((item) => (
-              <div key={item} className="mt-5 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                <div className="text-sm font-bold">{item}</div>
-                <div className="mt-2 h-2 rounded-full bg-white/10">
-                  <div className="h-2 rounded-full bg-[#14C8A8]" style={{ width: item === "Lockdown Mode" ? "48%" : "72%" }} />
-                </div>
+          <div className="mt-10 grid gap-3 text-sm font-semibold text-white/74 sm:grid-cols-2">
+            {[
+              "Works offline for local scans",
+              "Visible quarantine and threat review",
+              "Real-time Guard in development",
+              "No hidden surveillance",
+            ].map((item) => (
+              <div key={item} className="flex items-center gap-3">
+                <span className="h-2 w-2 rounded-full bg-[#16C7A7]" />
+                {item}
               </div>
             ))}
           </div>
+        </div>
+        <div className="lg:pl-2">
+          <ProductPreview />
         </div>
       </div>
     </section>
