@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::process::Command;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
@@ -27,6 +28,33 @@ impl GuardService {
             GuardMode::MonitorOnly => "monitorOnly",
             GuardMode::BlockConfirmedThreats => "blockConfirmedThreats",
             GuardMode::Aggressive => "aggressive",
+        }
+    }
+
+    pub fn system_status() -> &'static str {
+        #[cfg(windows)]
+        {
+            let output = Command::new("sc.exe")
+                .args(["query", "zentor_guard_service"])
+                .output();
+            let Ok(output) = output else {
+                return "off";
+            };
+            if !output.status.success() {
+                return "off";
+            }
+            let text = String::from_utf8_lossy(&output.stdout).to_uppercase();
+            if text.contains("RUNNING") {
+                return "running";
+            }
+            if text.contains("STOPPED") {
+                return "stopped";
+            }
+            return "installed";
+        }
+        #[cfg(not(windows))]
+        {
+            "off"
         }
     }
 }

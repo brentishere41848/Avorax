@@ -1,8 +1,10 @@
 use std::collections::{HashMap, HashSet};
 use std::fs;
+use std::ffi::OsString;
 use std::io::{self, BufRead};
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::sync::mpsc;
 use std::thread;
 use std::time::Duration;
 
@@ -21,6 +23,8 @@ mod known_bad_cache;
 mod known_good_cache;
 mod preexecution_policy;
 mod self_test;
+
+const SERVICE_NAME: &str = "zentor_guard_service";
 
 #[derive(Debug, Deserialize)]
 struct GuardCommand {
@@ -92,6 +96,15 @@ struct LocalThreatMatch {
 }
 
 fn main() -> anyhow::Result<()> {
+    let mut args = std::env::args().skip(1);
+    if let Some(arg) = args.next() {
+        match arg.as_str() {
+            "--service" => return run_service(),
+            "--watch" => return run_console_watch(),
+            _ => {}
+        }
+    }
+
     let stdin = io::stdin();
     for line in stdin.lock().lines() {
         let line = line?;
@@ -103,6 +116,83 @@ fn main() -> anyhow::Result<()> {
         println!("{}", serde_json::to_string(&response)?);
     }
     Ok(())
+}
+
+#[cfg(windows)]
+windows_service::define_windows_service!(ffi_service_main, windows_service_main);
+
+#[cfg(windows)]
+fn run_service() -> anyhow::Result<()> {
+    windows_service::service_dispatcher::start(SERVICE_NAME, ffi_service_main)?;
+    Ok(())
+}
+
+#[cfg(not(windows))]
+fn run_service() -> anyhow::Result<()> {
+    run_console_watch()
+}
+
+#[cfg(windows)]
+fn windows_service_main(_arguments: Vec<OsString>) {
+    if let Err(error) = run_windows_service_loop() {
+        let _ = fs::create_dir_all(event_log_base());
+        let _ = fs::write(
+            event_log_base().join("guard_service_error.log"),
+            format!("{error:#}"),
+        );
+    }
+}
+
+#[cfg(windows)]
+fn run_windows_service_loop() -> anyhow::Result<()> {
+    use windows_service::service::{
+        ServiceControl, ServiceControlAccept, ServiceExitCode, ServiceState, ServiceStatus,
+        ServiceType,
+    };
+    use windows_service::service_control_handler::{
+        self, ServiceControlHandlerResult,
+    };
+
+    let (shutdown_tx, shutdown_rx) = mpsc::channel();
+    let status_handle = service_control_handler::register(SERVICE_NAME, move |control_event| {
+        match control_event {
+            ServiceControl::Stop | ServiceControl::Shutdown => {
+                let _ = shutdown_tx.send(());
+                ServiceControlHandlerResult::NoError
+            }
+            ServiceControl::Interrogate => ServiceControlHandlerResult::NoError,
+            _ => ServiceControlHandlerResult::NotImplemented,
+        }
+    })?;
+
+    status_handle.set_service_status(ServiceStatus {
+        service_type: ServiceType::OWN_PROCESS,
+        current_state: ServiceState::Running,
+        controls_accepted: ServiceControlAccept::STOP | ServiceControlAccept::SHUTDOWN,
+        exit_code: ServiceExitCode::Win32(0),
+        checkpoint: 0,
+        wait_hint: Duration::from_secs(0),
+        process_id: None,
+    })?;
+
+    let result = watch_processes_until_shutdown(&HashSet::new(), 750, &shutdown_rx);
+
+    status_handle.set_service_status(ServiceStatus {
+        service_type: ServiceType::OWN_PROCESS,
+        current_state: ServiceState::Stopped,
+        controls_accepted: ServiceControlAccept::empty(),
+        exit_code: ServiceExitCode::Win32(0),
+        checkpoint: 0,
+        wait_hint: Duration::from_secs(0),
+        process_id: None,
+    })?;
+
+    result
+}
+
+fn run_console_watch() -> anyhow::Result<()> {
+    let (_shutdown_tx, shutdown_rx) = mpsc::channel();
+    watch_processes_until_shutdown(&HashSet::new(), 750, &shutdown_rx)
 }
 
 fn handle(command: GuardCommand) -> GuardEvent {
@@ -353,6 +443,113 @@ fn watch_processes(
         }
         thread::sleep(Duration::from_millis(poll_interval_ms.max(100)));
     }
+}
+
+fn watch_processes_until_shutdown(
+    known_malicious_hashes: &HashSet<String>,
+    poll_interval_ms: u64,
+    shutdown_rx: &mpsc::Receiver<()>,
+) -> anyhow::Result<()> {
+    let mut seen: HashSet<u32> = list_processes()?
+        .into_iter()
+        .map(|process| process.process_id)
+        .collect();
+    let mut cache: HashMap<PathBuf, String> = HashMap::new();
+
+    loop {
+        if shutdown_rx.try_recv().is_ok() {
+            return Ok(());
+        }
+
+        for process in list_processes()? {
+            if !seen.insert(process.process_id) {
+                continue;
+            }
+            if should_skip_process_path(&process.path) {
+                continue;
+            }
+
+            let hash = match cache.get(&process.path) {
+                Some(hash) => hash.clone(),
+                None => {
+                    let hash = sha256_file(&process.path).unwrap_or_default();
+                    cache.insert(process.path.clone(), hash.clone());
+                    hash
+                }
+            };
+            let native_match = native_threat_match(&process.path).ok().flatten();
+            let compat_match = if native_match.is_none() {
+                compat_threat_match(&process.path).ok().flatten()
+            } else {
+                None
+            };
+
+            if known_malicious_hashes.contains(&hash)
+                || native_match.is_some()
+                || compat_match.is_some()
+            {
+                match handle_process_started(
+                    Some(process.process_id),
+                    &process.path,
+                    known_malicious_hashes,
+                ) {
+                    Ok(event) => {
+                        let _ = write_guard_event(&event);
+                    }
+                    Err(error) => {
+                        let _ = write_guard_event(&error_event(
+                            Some(process.process_id),
+                            Some(process.path.display().to_string()),
+                            error.to_string(),
+                        ));
+                    }
+                }
+            }
+        }
+
+        thread::sleep(Duration::from_millis(poll_interval_ms.max(100)));
+    }
+}
+
+fn write_guard_event(event: &GuardEvent) -> anyhow::Result<()> {
+    let base = event_log_base();
+    fs::create_dir_all(&base)?;
+    let path = base.join("guard_events.jsonl");
+    use std::io::Write;
+    let mut file = fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(path)?;
+    writeln!(file, "{}", serde_json::to_string(event)?)?;
+    Ok(())
+}
+
+fn event_log_base() -> PathBuf {
+    if let Ok(path) = std::env::var("ZENTOR_EVENT_LOG_DIR") {
+        return PathBuf::from(path);
+    }
+    #[cfg(windows)]
+    {
+        if let Ok(program_data) =
+            std::env::var("ProgramData").or_else(|_| std::env::var("PROGRAMDATA"))
+        {
+            return PathBuf::from(program_data).join("Zentor").join("Events");
+        }
+    }
+    #[cfg(target_os = "macos")]
+    {
+        if let Ok(home) = std::env::var("HOME") {
+            return PathBuf::from(home)
+                .join("Library")
+                .join("Application Support")
+                .join("Zentor")
+                .join("Events");
+        }
+    }
+    if let Ok(home) = std::env::var("HOME") {
+        return PathBuf::from(home).join(".local/share/zentor/events");
+    }
+    PathBuf::from(".zentor/events")
 }
 
 #[derive(Debug)]

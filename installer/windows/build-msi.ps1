@@ -382,6 +382,10 @@ foreach ($file in $files) {
   [void]$componentsXml.AppendLine("    <DirectoryRef Id=`"$directoryId`">")
   [void]$componentsXml.AppendLine("      <Component Id=`"$componentId`" Guid=`"*`">")
   [void]$componentsXml.AppendLine("        <File Id=`"$fileId`" Source=`"$(XmlEscape $file.FullName)`" KeyPath=`"yes`" />")
+  if ($relativePath -eq "zentor_guard_service.exe") {
+    [void]$componentsXml.AppendLine("        <ServiceInstall Id=`"ZentorGuardServiceInstall`" Type=`"ownProcess`" Vital=`"yes`" Name=`"zentor_guard_service`" DisplayName=`"Zentor Guard Service`" Description=`"User-visible Zentor post-launch real-time protection service.`" Start=`"auto`" Account=`"LocalSystem`" ErrorControl=`"normal`" Arguments=`"--service`" />")
+    [void]$componentsXml.AppendLine("        <ServiceControl Id=`"ZentorGuardServiceControl`" Name=`"zentor_guard_service`" Start=`"install`" Stop=`"both`" Remove=`"uninstall`" Wait=`"yes`" />")
+  }
   [void]$componentsXml.AppendLine("      </Component>")
   [void]$componentsXml.AppendLine("    </DirectoryRef>")
   [void]$componentRefsXml.AppendLine("      <ComponentRef Id=`"$componentId`" />")

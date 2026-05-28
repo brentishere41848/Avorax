@@ -18,4 +18,7 @@ zentor_native_engine = { path = "../zentor_native_engine" }
 tempfile = "3.14"
 uuid = { version = "1.11", features = ["v4", "serde"] }
 
+[target.'cfg(windows)'.dependencies]
+windows-service = "0.7"
+
 [dev-dependencies]

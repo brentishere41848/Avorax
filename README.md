@@ -240,9 +240,9 @@ Install either file:
 - `Zentor-AntiVirus-0.2.0-x64-setup.exe` is the easiest option for most users.
 - `Zentor-AntiVirus-0.2.0-x64.msi` is better for clean installer testing and enterprise-style deployment checks.
 
-The MSI/EXE installs the app, local core, guard service binary, Zentor Native Engine assets, app assets, and docs. It does not replace the Windows driver-development VM workflow. Driver build/install/self-test still requires WDK or EWDK, administrator rights, test-signing in a disposable VM, and the driver validation scripts.
+The MSI/EXE installs the app, local core, Zentor Native Engine assets, app assets, and docs. On Windows it also registers `zentor_guard_service` as the visible Zentor Guard Service so confirmed/probable threats can be monitored and stopped after launch. It does not replace the Windows driver-development VM workflow. True pre-execution blocking still requires WDK or EWDK, administrator rights, test-signing in a disposable VM, the minifilter driver, and the driver validation scripts.
 
-The installer stages the Flutter Windows release app, `zentor_local_core.exe`, `zentor_guard_service.exe`, Zentor Native Engine assets, app assets, bundled Flutter/plugin DLLs, Visual C++ runtime DLLs available on the build machine, and local privacy/security docs. Compatibility engines are not required for normal scanning. Zentor does not install hidden services or stealth persistence.
+The installer stages the Flutter Windows release app, `zentor_local_core.exe`, `zentor_guard_service.exe`, Zentor Native Engine assets, app assets, bundled Flutter/plugin DLLs, Visual C++ runtime DLLs available on the build machine, and local privacy/security docs. Compatibility engines are not required for normal scanning. Zentor does not install hidden services or stealth persistence; the Guard Service is user-visible and removable through normal Windows service/app uninstall paths.
 
 The MSI and EXE installer builds fail if model assets are missing. They also fail when metadata says `production_ready=false` unless you pass `-AllowDevelopmentModel` for an explicitly non-production build. The EXE installer is a WiX Burn bootstrapper that contains and runs the MSI.
 

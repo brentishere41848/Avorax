@@ -343,6 +343,9 @@ class HomeScreen extends ConsumerWidget {
   }
 
   String _guardLabel(String status) => switch (status) {
+    'running' => 'Running',
+    'stopped' => 'Stopped',
+    'installed' => 'Installed',
     'blockConfirmedThreats' => 'Block confirmed threats',
     'monitorOnly' => 'Monitor only',
     'aggressive' => 'Aggressive',

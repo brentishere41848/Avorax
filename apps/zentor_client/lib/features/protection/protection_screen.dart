@@ -109,8 +109,18 @@ class ProtectionScreen extends ConsumerWidget {
                 value: state.protectionStatus.label,
                 detail: state.protectionStatus == ProtectionStatus.localOnly
                     ? 'Cloud is optional; local protection remains available.'
-                    : 'Visible protection only.',
+                    : state.guardStatus == 'running'
+                    ? 'Zentor Guard Service is running. Confirmed threats can be stopped after launch.'
+                    : 'Guard Service is not running. Manual scans and quarantine remain available.',
                 icon: Icons.shield_outlined,
+              ),
+              ZentorMetricCard(
+                title: 'Guard Service',
+                value: _guardLabel(state.guardStatus),
+                detail: state.guardStatus == 'running'
+                    ? 'Background post-launch monitoring is active.'
+                    : 'Install/start the MSI service for background post-launch monitoring.',
+                icon: Icons.security_outlined,
               ),
               ZentorMetricCard(
                 title: 'Pre-execution blocking',
@@ -187,3 +197,13 @@ class ProtectionScreen extends ConsumerWidget {
     );
   }
 }
+
+String _guardLabel(String status) => switch (status) {
+  'running' => 'Running',
+  'stopped' => 'Stopped',
+  'installed' => 'Installed',
+  'monitorOnly' => 'Monitor only',
+  'blockConfirmedThreats' => 'Block confirmed threats',
+  'aggressive' => 'Aggressive',
+  _ => 'Off',
+};
