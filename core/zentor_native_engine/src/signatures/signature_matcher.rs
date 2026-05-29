@@ -123,13 +123,20 @@ fn required_context_matches(signature: &NativeSignature, analysis: &StaticAnalys
                 .as_ref()
                 .map(|pe| pe.high_entropy_section_count > 0)
                 .unwrap_or(false),
-            "suspicious_import_combo" => analysis
+        "suspicious_import_combo" => analysis
                 .pe
                 .as_ref()
                 .map(|pe| {
                     pe.suspicious_imports.process_injection > 0 && pe.suspicious_imports.network > 0
                 })
                 .unwrap_or(false),
+            "credential_access_string" => {
+                let text = analysis.string_indicators.suspicious_string_count;
+                text > 0
+            }
+            "ransom_note_text" => true,
+            "miner_pool_string" => true,
+            "pup_adware_string" => true,
             value => {
                 value.starts_with("exact ")
                     || value.starts_with("zentor ")

@@ -34,7 +34,18 @@ pub enum RuleCondition {
     EncodedCommand,
     DownloaderAndExecution,
     ArchiveContainsExecutable,
+    ArchiveSuspiciousNestedNameAtLeast { value: u32 },
     PathContains { value: String },
+    ScriptObfuscationAtLeast { value: u32 },
+    ScriptPersistenceAtLeast { value: u32 },
+    ScriptSecurityTamperAtLeast { value: u32 },
+    EmbeddedUrlsAtLeast { value: u32 },
+    SuspiciousStringsAtLeast { value: u32 },
+    PeImportCategoryAtLeast { category: String, value: u32 },
+    RansomNoteText,
+    MinerPoolString,
+    CredentialAccessString,
+    AdwarePupString,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

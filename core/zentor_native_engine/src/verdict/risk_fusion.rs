@@ -82,7 +82,7 @@ impl RiskFusion {
         if has_known_bad || has_confirmed_signature {
             return final_verdict(
                 Verdict::ConfirmedMalware,
-                ThreatCategory::Unknown,
+                infer_category(&evidence).unwrap_or(ThreatCategory::Unknown),
                 Confidence::Confirmed,
                 100,
                 evidence,
@@ -140,13 +140,54 @@ impl RiskFusion {
         };
         final_verdict(
             verdict,
-            ThreatCategory::Unknown,
+            infer_category(&evidence).unwrap_or(ThreatCategory::Unknown),
             confidence,
             score,
             evidence,
             engines_used,
             action,
         )
+    }
+}
+
+fn infer_category(evidence: &[Evidence]) -> Option<ThreatCategory> {
+    let text = evidence
+        .iter()
+        .map(|item| {
+            format!(
+                "{} {} {}",
+                item.id.to_ascii_lowercase(),
+                item.title.to_ascii_lowercase(),
+                item.detail.to_ascii_lowercase()
+            )
+        })
+        .collect::<Vec<_>>()
+        .join(" ");
+    if text.contains("ransom") || text.contains("shadow") || text.contains("backup delete") {
+        Some(ThreatCategory::Ransomware)
+    } else if text.contains("infosteal")
+        || text.contains("credential")
+        || text.contains("browser data")
+        || text.contains("wallet")
+        || text.contains("token")
+    {
+        Some(ThreatCategory::Infostealer)
+    } else if text.contains("miner") || text.contains("mining") || text.contains("stratum") {
+        Some(ThreatCategory::Miner)
+    } else if text.contains("adware") || text.contains("pup") || text.contains("unwanted") {
+        Some(ThreatCategory::PotentiallyUnwantedApp)
+    } else if text.contains("downloader") || text.contains("download") {
+        Some(ThreatCategory::SuspiciousDownloader)
+    } else if text.contains("script") || text.contains("powershell") {
+        Some(ThreatCategory::SuspiciousScript)
+    } else if text.contains("persistence") || text.contains("autorun") {
+        Some(ThreatCategory::PersistenceIndicator)
+    } else if text.contains("tamper") || text.contains("defender") || text.contains("security") {
+        Some(ThreatCategory::SecurityTamperIndicator)
+    } else if text.contains("trojan") {
+        Some(ThreatCategory::Trojan)
+    } else {
+        None
     }
 }
 

@@ -1,0 +1,46 @@
+{
+  "format": "zentor-signature-pack-v1",
+  "version": "0.2.1",
+  "signatures": [
+    {
+      "id": "ZNE-RANSOM-NOTE-002",
+      "name": "Ransom note language indicator",
+      "version": "1",
+      "category": "ransomware",
+      "confidence": "medium",
+      "severity": "medium",
+      "signature_type": "ascii_string",
+      "pattern": "decrypt your files",
+      "mask": null,
+      "offset": null,
+      "file_types": ["text", "unknown"],
+      "min_file_size": null,
+      "max_file_size": null,
+      "required_context": ["review context: ransom-note wording needs behavior or additional context."],
+      "false_positive_notes": "Incident reports and documentation may contain this wording; review-only without behavior.",
+      "action_policy": "review_only",
+      "created_at": "2026-05-29T00:00:00Z",
+      "updated_at": "2026-05-29T00:00:00Z"
+    },
+    {
+      "id": "ZNE-RANSOM-BACKUP-TAMPER-001",
+      "name": "Backup deletion command indicator",
+      "version": "1",
+      "category": "ransomware",
+      "confidence": "high",
+      "severity": "high",
+      "signature_type": "ascii_string",
+      "pattern": "vssadmin delete shadows",
+      "mask": null,
+      "offset": null,
+      "file_types": ["powershell_script", "batch", "text", "unknown"],
+      "min_file_size": null,
+      "max_file_size": null,
+      "required_context": ["review context: backup deletion command indicator."],
+      "false_positive_notes": "Backup administration scripts can contain this command; require additional signals for automatic quarantine.",
+      "action_policy": "review_or_block_by_policy",
+      "created_at": "2026-05-29T00:00:00Z",
+      "updated_at": "2026-05-29T00:00:00Z"
+    }
+  ]
+}

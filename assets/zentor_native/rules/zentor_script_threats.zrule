@@ -1,0 +1,37 @@
+{
+  "format": "zentor-rule-pack-v1",
+  "version": "0.2.1",
+  "rules": [
+    {
+      "id": "ZNE-RULE-SCRIPT-DOWNLOADER-002",
+      "name": "Script downloader with process execution",
+      "description": "Script contains downloader and execution indicators with obfuscation or encoded command evidence.",
+      "category": "suspiciousDownloader",
+      "confidence": "high",
+      "verdict": "probableMalware",
+      "false_positive_notes": "Administrative scripts can download and run tools. This rule requires multiple independent script indicators.",
+      "conditions": [
+        {"type": "downloader_and_execution"},
+        {"type": "script_obfuscation_at_least", "value": 1},
+        {"type": "embedded_urls_at_least", "value": 1}
+      ],
+      "min_condition_matches": 3,
+      "action": "review_or_block_by_policy"
+    },
+    {
+      "id": "ZNE-RULE-SECURITY-TAMPER-SCRIPT-001",
+      "name": "Security tamper command in script",
+      "description": "Script contains local security or recovery tamper indicators.",
+      "category": "securityTamperIndicator",
+      "confidence": "high",
+      "verdict": "suspicious",
+      "false_positive_notes": "Enterprise administration scripts may change security settings. This rule is review/block-by-policy, not confirmed malware alone.",
+      "conditions": [
+        {"type": "script_security_tamper_at_least", "value": 1},
+        {"type": "suspicious_strings_at_least", "value": 1}
+      ],
+      "min_condition_matches": 2,
+      "action": "review_or_block_by_policy"
+    }
+  ]
+}

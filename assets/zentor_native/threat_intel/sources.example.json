@@ -1,0 +1,6 @@
+{
+  "source_name": "zentor-safe-fixture-feed",
+  "source_url": "https://example.invalid/zentor-safe-fixtures",
+  "source_type": "test_fixture",
+  "malware_family": "generic-test-threat"
+}

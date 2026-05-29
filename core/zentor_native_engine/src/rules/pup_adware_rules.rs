@@ -1,0 +1,1 @@
+pub const PUP_ADWARE_RULE_PREFIX: &str = "ZNE-RULE-PUP";

@@ -1,3 +1,7 @@
-pub fn script_pattern_name() -> &'static str {
-    "script_pattern"
-}
+pub const POWERSHELL_DOWNLOADER_TERMS: &[&str] = &[
+    "-encodedcommand",
+    "frombase64string",
+    "downloadstring",
+    "invoke-webrequest",
+    "invoke-expression",
+];

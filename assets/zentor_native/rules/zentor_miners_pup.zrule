@@ -1,0 +1,36 @@
+{
+  "format": "zentor-rule-pack-v1",
+  "version": "0.2.1",
+  "rules": [
+    {
+      "id": "ZNE-RULE-MINER-POOL-PERSISTENCE",
+      "name": "Miner pool string plus persistence indicator",
+      "description": "File contains miner pool strings combined with persistence or suspicious execution indicators.",
+      "category": "miner",
+      "confidence": "medium",
+      "verdict": "suspicious",
+      "false_positive_notes": "Security tools and documentation can contain miner strings. This rule is review-only unless behavior confirms abuse.",
+      "conditions": [
+        {"type": "miner_pool_string"},
+        {"type": "script_persistence_at_least", "value": 1}
+      ],
+      "min_condition_matches": 2,
+      "action": "review_only"
+    },
+    {
+      "id": "ZNE-RULE-PUP-BUNDLE-INDICATORS",
+      "name": "Potentially unwanted bundle indicators",
+      "description": "Installer text contains bundling or browser hijack indicators.",
+      "category": "potentiallyUnwantedApp",
+      "confidence": "low",
+      "verdict": "observation",
+      "false_positive_notes": "Installer and marketing text can contain these phrases; observation only.",
+      "conditions": [
+        {"type": "adware_pup_string"},
+        {"type": "contains_ascii", "value": "silentinstall"}
+      ],
+      "min_condition_matches": 1,
+      "action": "observe"
+    }
+  ]
+}

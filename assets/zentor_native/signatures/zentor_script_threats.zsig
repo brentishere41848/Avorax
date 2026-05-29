@@ -1,0 +1,26 @@
+{
+  "format": "zentor-signature-pack-v1",
+  "version": "0.2.1",
+  "signatures": [
+    {
+      "id": "ZNE-SCRIPT-DOWNLOADER-001",
+      "name": "PowerShell downloader cradle indicator",
+      "version": "1",
+      "category": "suspiciousDownloader",
+      "confidence": "medium",
+      "severity": "medium",
+      "signature_type": "script_pattern",
+      "pattern": "downloadstring",
+      "mask": null,
+      "offset": null,
+      "file_types": ["powershell_script", "text"],
+      "min_file_size": null,
+      "max_file_size": null,
+      "required_context": ["review context: downloader indicator requires execution or obfuscation for stronger action."],
+      "false_positive_notes": "Administrative scripts can download content; this is not confirmed malware by itself.",
+      "action_policy": "review_only",
+      "created_at": "2026-05-29T00:00:00Z",
+      "updated_at": "2026-05-29T00:00:00Z"
+    }
+  ]
+}

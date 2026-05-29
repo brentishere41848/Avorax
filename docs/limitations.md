@@ -6,6 +6,8 @@ Current Zentor limitations:
 
 - Zentor Native Engine is the primary offline scanner. ClamAV and YARA compatibility paths are optional, disabled by default, and not required for scanning or quarantine.
 - ZNE does not execute suspicious files, upload files, or include real malware samples in the repository.
+- Native real-world detection is indicator-based. It can detect curated hashes, script patterns, ransomware/infostealer/miner/PUP indicators, and behavior combinations, but it still needs continuous updates and external validation.
+- Threat-intel importers only process local metadata feeds. They do not automatically download malware or acquire samples.
 - True production pre-execution blocking on Windows requires a signed, installed, running driver with passing self-test. Without it, Zentor uses user-mode post-launch termination.
 - Lockdown Mode improves prevention by blocking unknown apps, but true before-launch enforcement requires the active driver path.
 - macOS blocking requires Endpoint Security entitlement and user approval.

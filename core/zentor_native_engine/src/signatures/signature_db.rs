@@ -43,16 +43,35 @@ impl SignatureDb {
     pub fn load_pack(path: &Path) -> Result<Self> {
         let mut db = Self::built_in();
         if path.exists() {
-            let text = fs::read_to_string(path)
-                .with_context(|| format!("failed to read signature pack {}", path.display()))?;
-            let pack: super::pack_format::SignaturePack = serde_json::from_str(&text)
-                .with_context(|| format!("failed to parse signature pack {}", path.display()))?;
-            let canonical = super::signature_compiler::canonical_pack_bytes(&pack)?;
-            super::pack_verifier::verify_pack(&pack, &canonical)?;
-            super::signature_compiler::validate_signatures(&pack.signatures)?;
-            db.signatures.extend(pack.signatures);
+            db.load_one(path)?;
+            if let Some(parent) = path.parent() {
+                let mut siblings = fs::read_dir(parent)?
+                    .filter_map(Result::ok)
+                    .map(|entry| entry.path())
+                    .filter(|candidate| {
+                        candidate.extension().and_then(|value| value.to_str()) == Some("zsig")
+                            && candidate != path
+                    })
+                    .collect::<Vec<_>>();
+                siblings.sort();
+                for sibling in siblings {
+                    db.load_one(&sibling)?;
+                }
+            }
         }
         Ok(db)
+    }
+
+    fn load_one(&mut self, path: &Path) -> Result<()> {
+        let text = fs::read_to_string(path)
+            .with_context(|| format!("failed to read signature pack {}", path.display()))?;
+        let pack: super::pack_format::SignaturePack = serde_json::from_str(&text)
+            .with_context(|| format!("failed to parse signature pack {}", path.display()))?;
+        let canonical = super::signature_compiler::canonical_pack_bytes(&pack)?;
+        super::pack_verifier::verify_pack(&pack, &canonical)?;
+        super::signature_compiler::validate_signatures(&pack.signatures)?;
+        self.signatures.extend(pack.signatures);
+        Ok(())
     }
 
     pub fn count(&self) -> usize {

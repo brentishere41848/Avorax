@@ -1,0 +1,22 @@
+{
+  "format": "zentor-rule-pack-v1",
+  "version": "0.2.1",
+  "rules": [
+    {
+      "id": "ZNE-RULE-INFOSTEALER-CREDS-ARCHIVE-NETWORK",
+      "name": "Infostealer credential access and staging indicators",
+      "description": "File references credential stores with archive or network indicators.",
+      "category": "infostealer",
+      "confidence": "high",
+      "verdict": "probableMalware",
+      "false_positive_notes": "Backup, migration, and forensic tools can reference browser stores. This rule requires multiple signals.",
+      "conditions": [
+        {"type": "credential_access_string"},
+        {"type": "embedded_urls_at_least", "value": 1},
+        {"type": "contains_ascii", "value": "zip"}
+      ],
+      "min_condition_matches": 3,
+      "action": "review_or_block_by_policy"
+    }
+  ]
+}

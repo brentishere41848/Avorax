@@ -54,9 +54,85 @@ pub fn evaluate_rule(
                 .as_ref()
                 .map(|archive| archive.contains_executable)
                 .unwrap_or(false),
+            RuleCondition::ArchiveSuspiciousNestedNameAtLeast { value } => analysis
+                .archive
+                .as_ref()
+                .map(|archive| archive.suspicious_nested_name_count >= *value)
+                .unwrap_or(false),
             RuleCondition::PathContains { value } => {
                 path_text.contains(&value.to_ascii_lowercase())
             }
+            RuleCondition::ScriptObfuscationAtLeast { value } => analysis
+                .script
+                .as_ref()
+                .map(|script| script.obfuscation_score >= *value)
+                .unwrap_or(false),
+            RuleCondition::ScriptPersistenceAtLeast { value } => analysis
+                .script
+                .as_ref()
+                .map(|script| script.persistence_patterns >= *value)
+                .unwrap_or(false),
+            RuleCondition::ScriptSecurityTamperAtLeast { value } => analysis
+                .script
+                .as_ref()
+                .map(|script| script.security_tamper_indicators >= *value)
+                .unwrap_or(false),
+            RuleCondition::EmbeddedUrlsAtLeast { value } => {
+                analysis.string_indicators.embedded_url_count >= *value
+            }
+            RuleCondition::SuspiciousStringsAtLeast { value } => {
+                analysis.string_indicators.suspicious_string_count >= *value
+            }
+            RuleCondition::PeImportCategoryAtLeast { category, value } => analysis
+                .pe
+                .as_ref()
+                .map(|pe| match category.as_str() {
+                    "process_injection" => pe.suspicious_imports.process_injection,
+                    "credential_access" => pe.suspicious_imports.credential_access,
+                    "persistence" => pe.suspicious_imports.persistence,
+                    "network" => pe.suspicious_imports.network,
+                    "crypto" => pe.suspicious_imports.crypto,
+                    "process_manipulation" => pe.suspicious_imports.process_manipulation,
+                    "service_control" => pe.suspicious_imports.service_control,
+                    "registry_autorun" => pe.suspicious_imports.registry_autorun,
+                    "anti_debugging" => pe.suspicious_imports.anti_debugging,
+                    _ => 0,
+                } >= *value)
+                .unwrap_or(false),
+            RuleCondition::RansomNoteText => contains_any(
+                &text,
+                &[
+                    "your files have been encrypted",
+                    "recover your files",
+                    "decrypt your files",
+                    "ransom note",
+                ],
+            ),
+            RuleCondition::MinerPoolString => contains_any(
+                &text,
+                &["stratum+tcp", "xmrpool", "xmrig", "mining pool", "monero"],
+            ),
+            RuleCondition::CredentialAccessString => contains_any(
+                &text,
+                &[
+                    "login data",
+                    "cookies.sqlite",
+                    "local state",
+                    "wallet.dat",
+                    "token grab",
+                    "browser credentials",
+                ],
+            ),
+            RuleCondition::AdwarePupString => contains_any(
+                &text,
+                &[
+                    "silentinstall",
+                    "browser extension install",
+                    "search hijack",
+                    "offer bundle",
+                    "unwanted toolbar",
+                ],
+            ),
         })
         .count();
     if matches < rule.min_condition_matches {
@@ -76,6 +152,10 @@ pub fn evaluate_rule(
             _ => 15,
         },
     })
+}
+
+fn contains_any(text: &str, needles: &[&str]) -> bool {
+    needles.iter().any(|needle| text.contains(needle))
 }
 
 fn file_type_name(value: FileType) -> &'static str {

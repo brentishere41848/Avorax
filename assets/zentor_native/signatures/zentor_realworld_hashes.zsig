@@ -1,0 +1,27 @@
+{
+  "format": "zentor-signature-pack-v1",
+  "version": "0.2.1",
+  "signatures": [
+    {
+      "id": "ZNE-HASH-TEST-RANSOM-001",
+      "name": "Curated ransomware known-bad hash fixture",
+      "version": "1",
+      "category": "ransomware",
+      "confidence": "confirmed",
+      "severity": "critical",
+      "signature_type": "exact_hash",
+      "pattern": "84335dd8dd5b649882212609dc875225260878ceadbca9713d4079b7112e3514",
+      "mask": null,
+      "offset": null,
+      "file_types": ["*"],
+      "min_file_size": null,
+      "max_file_size": null,
+      "required_context": ["Exact SHA-256 indicator from safe fixture threat-intel import."],
+      "false_positive_notes": "Safe fixture hash only; no malware binary is included in the repository.",
+      "action_policy": "quarantine_if_policy_allows",
+      "created_at": "2026-05-29T00:00:00Z",
+      "updated_at": "2026-05-29T00:00:00Z"
+    }
+  ]
+}
+

@@ -1,9 +1,15 @@
 pub mod byte_pattern_signatures;
 pub mod eicar_signature;
+pub mod adware_pup_signatures;
+pub mod family_signatures;
 pub mod hash_signatures;
+pub mod infostealer_signatures;
+pub mod known_bad_hashes;
+pub mod miner_signatures;
 pub mod pack_format;
 pub mod pack_verifier;
 pub mod pe_import_signatures;
+pub mod ransomware_signatures;
 pub mod script_signatures;
 pub mod signature;
 pub mod signature_compiler;

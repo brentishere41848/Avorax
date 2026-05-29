@@ -1,0 +1,21 @@
+{
+  "format": "zentor-rule-pack-v1",
+  "version": "0.2.1",
+  "rules": [
+    {
+      "id": "ZNE-RULE-PERSISTENCE-RUNKEY-SCRIPT",
+      "name": "Persistence command from script",
+      "description": "Script contains autorun persistence indicators with execution context.",
+      "category": "persistenceIndicator",
+      "confidence": "medium",
+      "verdict": "suspicious",
+      "false_positive_notes": "Installers and admin scripts may set autorun entries. This is review-only without stronger evidence.",
+      "conditions": [
+        {"type": "script_persistence_at_least", "value": 1},
+        {"type": "downloader_and_execution"}
+      ],
+      "min_condition_matches": 2,
+      "action": "review_only"
+    }
+  ]
+}
