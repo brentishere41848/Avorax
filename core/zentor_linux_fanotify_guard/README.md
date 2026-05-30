@@ -4,7 +4,7 @@ Zentor Linux on-access blocking depends on fanotify permission events and kernel
 
 Current state:
 
-- Architecture placeholder only.
+- Architecture validation state only; no fanotify permission-event service is installed by this repository yet.
 - UI modes must be honest:
   - `fanotify blocking active`
   - `monitor-only fallback`

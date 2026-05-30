@@ -4,7 +4,7 @@ Zentor will use AMSI for script/content scanning where feasible.
 
 Current state:
 
-- Design placeholder only.
+- Design validation state only; no provider is registered by this repository yet.
 - Zentor does not disable, replace, or bypass Windows Defender AMSI behavior.
 - UI must not claim AMSI protection until a registered provider is installed and self-test passes.
 

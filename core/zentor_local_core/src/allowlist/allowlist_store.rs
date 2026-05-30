@@ -152,7 +152,7 @@ mod tests {
 
     #[test]
     fn allows_normal_file_or_folder_path() {
-        assert!(validate_path("/home/player/Games/example.exe").is_ok());
-        assert!(validate_path("C:\\Games\\Example\\game.exe").is_ok());
+        assert!(validate_path("/home/user/Tools/example.exe").is_ok());
+        assert!(validate_path("C:\\Users\\Example\\Tools\\example.exe").is_ok());
     }
 }

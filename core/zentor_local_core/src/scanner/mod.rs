@@ -38,15 +38,15 @@ mod tests {
     use chrono::Utc;
     use tempfile::NamedTempFile;
 
-    struct FakeProvider(ScanStatus);
+    struct FixtureProvider(ScanStatus);
 
-    impl ScannerProvider for FakeProvider {
+    impl ScannerProvider for FixtureProvider {
         fn scan_file(&self, path: &Path) -> Result<ScanResult> {
             Ok(ScanResult {
                 status: self.0.clone(),
                 scanned_path: path.display().to_string(),
                 sha256: "sha256:test".to_string(),
-                engine: "fake".to_string(),
+                engine: "fixture-provider".to_string(),
                 signature_name: None,
                 threat_name: None,
                 scanned_at: Utc::now(),
@@ -59,7 +59,7 @@ mod tests {
     #[test]
     fn engine_unavailable_is_not_clean() {
         let file = NamedTempFile::new().unwrap();
-        let result = FakeProvider(ScanStatus::EngineUnavailable)
+        let result = FixtureProvider(ScanStatus::EngineUnavailable)
             .scan_file(file.path())
             .unwrap();
         assert_ne!(result.status, ScanStatus::Clean);

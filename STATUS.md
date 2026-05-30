@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-Phase 0: repository audit and publication readiness.
+Phase 1: product cleanup and branding.
 
 ## Completed Work
 
@@ -12,6 +12,9 @@ Phase 0: repository audit and publication readiness.
 - Project control files are present.
 - Baseline repository audit report added at `docs/reports/repo-audit.md`.
 - Windows driver setup scripts fail honestly when Visual Studio Build Tools/EWDK are missing.
+- Removed unrelated active test fixture path wording from allowlist tests.
+- Replaced test-only `fake` engine labels with explicit fixture provider labels.
+- Replaced platform `placeholder` notes with honest validation-state wording.
 
 ## Blockers
 
@@ -23,6 +26,7 @@ Phase 0: repository audit and publication readiness.
 
 - `tools/branding/branding-check.ps1`
 - `tools/security/zentor-product-copy-gate.ps1`
+- Focused cleanup search for removed terms in changed active files.
 
 ## Tests Failing
 
@@ -32,14 +36,25 @@ Phase 0: repository audit and publication readiness.
 - `tools/security/zentor-false-positive-gate.ps1` fixture checks pass, but the gate cannot complete without `cargo`.
 - `tools/windows/zentor-release-gate.ps1` cannot complete without toolchains and a driver self-test report.
 - `core/zentor_windows_minifilter/scripts/setup-dev-env-check.ps1` and `core/zentor_windows_process_guard/scripts/setup-dev-env-check.ps1` fail because Visual Studio Build Tools/EWDK are missing.
+- `cargo test --manifest-path core/zentor_local_core/Cargo.toml allowlist scanner quarantine` could not run because `cargo` is not installed or not on `PATH`.
 
 ## Current Commit
 
-`d5c778a`
+This checkpoint commit. Use `git log -1 --oneline` for the exact SHA.
 
 ## Next Exact Task
 
-Continue Phase 1 cleanup by removing active legacy/unrelated wording from test fixtures and replacing placeholder platform notes with honest validation interfaces.
+Continue Phase 1 by tightening branding/product-copy gates for remaining active product claims, then move to Phase 2/3 ZNE implementation work once cleanup gates remain stable.
+
+## Handoff
+
+- Last completed checkpoint: Phase 1 active wording cleanup in allowlist, scanner/quarantine tests, and platform validation notes.
+- Current incomplete task: Strengthen gates for stricter active product language without flagging Rust keywords such as `match` or `matches!`.
+- Files changed: `core/zentor_local_core/src/allowlist/allowlist_store.rs`, `core/zentor_local_core/src/scanner/mod.rs`, `core/zentor_local_core/src/quarantine/quarantine_store.rs`, `core/zentor_amsi_provider/README.md`, `core/zentor_linux_fanotify_guard/README.md`, `core/zentor_macos_endpoint_extension/README.md`, `core/zentor_windows_process_guard/usermode_test/test_process_block.cpp`, `STATUS.md`.
+- Tests run: branding check, product copy gate, focused `rg` cleanup search.
+- Known failures: Rust/Flutter/Dart tests are blocked by missing local toolchains; Windows driver checks are blocked by missing Visual Studio Build Tools/EWDK.
+- Next command to run: `powershell -ExecutionPolicy Bypass -File tools/branding/branding-check.ps1`.
+- Next implementation step: update gates to catch active user-facing legacy/unrelated wording while excluding code syntax and approved archival locations.
 
 ## Final Limitations
 
