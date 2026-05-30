@@ -63,11 +63,11 @@ pub async fn create_project(
     }))
 }
 
-pub async fn register_player(
+pub async fn register_device(
     State(state): State<AppState>,
     auth: ApiAuth,
-    Json(request): Json<RegisterPlayerRequest>,
-) -> ApiResult<Json<PlayerResponse>> {
+    Json(request): Json<RegisterDeviceRequest>,
+) -> ApiResult<Json<DeviceResponse>> {
     let project_id = if request.project_id == auth.project_id {
         request.project_id
     } else {
@@ -87,7 +87,7 @@ pub async fn register_player(
     .bind(request.display_name)
     .fetch_one(&state.db)
     .await?;
-    Ok(Json(PlayerResponse {
+    Ok(Json(DeviceResponse {
         device_id: row.0,
         project_id: row.1,
         external_device_id: row.2,
@@ -182,7 +182,7 @@ pub async fn ingest_events(
     State(state): State<AppState>,
     auth: ApiAuth,
     Path(session_id): Path<Uuid>,
-    Json(events): Json<Vec<MatchEventRequest>>,
+    Json(events): Json<Vec<SecurityEventRequest>>,
 ) -> ApiResult<Json<Value>> {
     let session_project = session_project(&state, session_id).await?;
     if session_project != auth.project_id {
@@ -191,11 +191,13 @@ pub async fn ingest_events(
     let mut inserted = 0usize;
     for event in events {
         let (event_type, payload) = match event {
-            MatchEventRequest::MovementEvent { payload } => ("movement_event", payload),
-            MatchEventRequest::ScoreEvent { payload } => ("score_event", payload),
-            MatchEventRequest::ActionEvent { payload } => ("action_event", payload),
-            MatchEventRequest::InventoryEvent { payload } => ("inventory_event", payload),
-            MatchEventRequest::MatchResultEvent { payload } => ("match_result_event", payload),
+            SecurityEventRequest::FileScanEvent { payload } => ("file_scan_event", payload),
+            SecurityEventRequest::ProtectionDecisionEvent { payload } => {
+                ("protection_decision_event", payload)
+            }
+            SecurityEventRequest::QuarantineEvent { payload } => ("quarantine_event", payload),
+            SecurityEventRequest::AllowlistEvent { payload } => ("allowlist_event", payload),
+            SecurityEventRequest::ServiceHealthEvent { payload } => ("service_health_event", payload),
         };
         sqlx::query(
             "insert into events (id, project_id, session_id, event_type, payload)
@@ -237,7 +239,7 @@ pub async fn end_session(
     Ok(Json(json!({"ok": true})))
 }
 
-pub async fn player_risk(
+pub async fn device_risk(
     State(state): State<AppState>,
     auth: ApiAuth,
     Path(device_id): Path<Uuid>,

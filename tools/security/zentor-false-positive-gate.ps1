@@ -18,7 +18,7 @@ if (-not (Test-Path -LiteralPath $fixtureRoot)) {
 $required = @(
   "normal-installer-like.txt",
   "cli-tool-like.txt",
-  "game-launcher-like.txt",
+  "consumer-launcher-like.txt",
   "vpn-installer-like.txt",
   "signed-looking-metadata.json",
   "unsigned-dev-tool-fixture.txt",

@@ -18,14 +18,14 @@ pub struct ProjectResponse {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct RegisterPlayerRequest {
+pub struct RegisterDeviceRequest {
     pub project_id: Uuid,
     pub external_device_id: String,
     pub display_name: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
-pub struct PlayerResponse {
+pub struct DeviceResponse {
     pub device_id: Uuid,
     pub project_id: Uuid,
     pub external_device_id: String,
@@ -62,12 +62,12 @@ pub struct HeartbeatRequest {
 
 #[derive(Debug, Deserialize)]
 #[serde(tag = "event_type", rename_all = "snake_case")]
-pub enum MatchEventRequest {
-    MovementEvent { payload: Value },
-    ScoreEvent { payload: Value },
-    ActionEvent { payload: Value },
-    InventoryEvent { payload: Value },
-    MatchResultEvent { payload: Value },
+pub enum SecurityEventRequest {
+    FileScanEvent { payload: Value },
+    ProtectionDecisionEvent { payload: Value },
+    QuarantineEvent { payload: Value },
+    AllowlistEvent { payload: Value },
+    ServiceHealthEvent { payload: Value },
 }
 
 #[derive(Debug, Deserialize)]

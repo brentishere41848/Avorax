@@ -30,7 +30,7 @@ docs/
 ## Get The Code
 
 ```powershell
-git clone https://github.com/brentishere41848/pasus_anti-virus.git Zentor
+git clone https://github.com/brentishere41848/zentor.git Zentor
 cd Zentor
 ```
 

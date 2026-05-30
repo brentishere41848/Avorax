@@ -26,7 +26,7 @@ create table if not exists devices (
     unique (project_id, external_device_id)
 );
 
-create table if not exists devices (
+create table if not exists device_fingerprints (
     id uuid primary key,
     project_id uuid not null references projects(id) on delete cascade,
     device_id uuid references devices(id) on delete set null,
@@ -50,7 +50,6 @@ create table if not exists protected_app_builds (
 create table if not exists protection_runs (
     id uuid primary key,
     project_id uuid not null references projects(id) on delete cascade,
-    device_id uuid references devices(id) on delete set null,
     device_id uuid references devices(id) on delete set null,
     platform text not null,
     client_version text,
@@ -129,7 +128,7 @@ create table if not exists audit_logs (
 );
 
 create index if not exists idx_protection_runs_project on protection_runs(project_id);
-create index if not exists idx_protection_runs_player on protection_runs(device_id);
+create index if not exists idx_protection_runs_device on protection_runs(device_id);
 create index if not exists idx_events_session on events(session_id);
 create index if not exists idx_detections_project on detections(project_id);
 create index if not exists idx_audit_project_created on audit_logs(project_id, created_at desc);

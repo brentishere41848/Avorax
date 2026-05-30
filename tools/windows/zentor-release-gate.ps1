@@ -13,8 +13,11 @@ function Add-Error([string]$Message) {
   Write-Error $Message -ErrorAction Continue
 }
 
-& (Join-Path $root "tools\branding\branding-check.ps1") -Root $root
-if ($LASTEXITCODE -ne 0) { Add-Error "Branding check failed." }
+try {
+  & (Join-Path $root "tools\branding\branding-check.ps1") -Root $root
+} catch {
+  Add-Error "Branding check failed: $($_.Exception.Message)"
+}
 
 if (-not (Test-Path -LiteralPath $SelfTestReport)) {
   Add-Error "selftest_report.json is missing: $SelfTestReport"

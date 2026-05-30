@@ -25,6 +25,7 @@ Thumbs.db
 # Logs
 *.log
 .zentor-dashboard-port
+.learnings/
 
 # Flutter/Dart
 **/.dart_tool/

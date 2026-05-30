@@ -54,7 +54,7 @@ pub fn router(state: AppState) -> Router {
     Router::new()
         .route("/v1/health", get(routes::health))
         .route("/v1/projects", post(routes::create_project))
-        .route("/v1/devices", post(routes::register_player))
+        .route("/v1/devices", post(routes::register_device))
         .route("/v1/protection_runs", post(routes::create_session))
         .route(
             "/v1/protection_runs/:session_id/heartbeat",
@@ -65,7 +65,7 @@ pub fn router(state: AppState) -> Router {
             post(routes::ingest_events),
         )
         .route("/v1/protection_runs/:session_id/end", post(routes::end_session))
-        .route("/v1/devices/:device_id/risk", get(routes::player_risk))
+        .route("/v1/devices/:device_id/risk", get(routes::device_risk))
         .route("/v1/bans", post(routes::create_ban))
         .route("/v1/detections", post(routes::report_detection))
         .route("/v1/quarantine", post(routes::upload_quarantine_metadata))
