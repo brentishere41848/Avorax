@@ -62,6 +62,24 @@ impl HeuristicProvider {
         let path_lower = path.display().to_string().to_lowercase();
         let mut reasons = Vec::new();
 
+        if is_zentor_trusted_artifact(&lower, &path_lower) {
+            return Ok(RiskScore {
+                score: 0,
+                verdict: RiskVerdict::LikelyClean,
+                confidence: ThreatConfidence::Low,
+                reasons: vec![reason(
+                    "zentor_trusted_artifact",
+                    "Zentor trusted artifact",
+                    "Zentor installer, service, driver, quarantine, update, and build artifacts are suppressed unless a confirmed known-bad signature matches.",
+                    -90,
+                    RiskSeverity::Info,
+                    RiskReasonSource::UserLabel,
+                )],
+                recommended_action: RecommendedAction::Review,
+                engines_used: vec![RiskEngine::Heuristic],
+            });
+        }
+
         if is_executable_name(&lower) && path_lower.contains("download") {
             reasons.push(reason(
                 "exe_downloads",
@@ -189,11 +207,11 @@ pub fn score_from_reasons(reasons: Vec<RiskReason>, engines_used: Vec<RiskEngine
 
     let verdict = if score == 0 {
         RiskVerdict::Clean
-    } else if score < 20 {
+    } else if score < 35 {
         RiskVerdict::LikelyClean
-    } else if score < 45 {
+    } else if score < 60 {
         RiskVerdict::Unknown
-    } else if score < 75 {
+    } else if score < 85 || high_quality < 2 || independent_sources < 2 {
         RiskVerdict::Suspicious
     } else {
         RiskVerdict::ProbableMalware
@@ -245,7 +263,7 @@ fn should_surface_result(risk: &RiskScore) -> bool {
     matches!(
         risk.verdict,
         RiskVerdict::Unknown | RiskVerdict::Suspicious | RiskVerdict::ProbableMalware
-    ) && risk.score >= 25
+    ) && risk.score >= 35
 }
 
 fn reason(
@@ -383,6 +401,25 @@ fn likely_packed_or_high_entropy(path: &Path, lower: &str) -> bool {
     entropy(sample) >= 7.6
 }
 
+fn is_zentor_trusted_artifact(lower_name: &str, path_lower: &str) -> bool {
+    (lower_name.starts_with("zentor-antivirus-")
+        && (lower_name.ends_with("-setup.exe")
+            || lower_name.ends_with("-x64.msi")
+            || lower_name.ends_with(".msi")))
+        || path_lower.contains("\\program files\\zentor\\")
+        || path_lower.contains("\\programdata\\zentor\\")
+        || path_lower.contains("\\zentor-quarantine\\")
+        || path_lower.contains("\\zentor-native-quarantine\\")
+        || path_lower.contains("\\apps\\zentor_client\\")
+        || path_lower.contains("\\core\\zentor_")
+        || path_lower.contains("\\assets\\zentor_native\\")
+        || path_lower.contains("\\installer\\windows\\")
+        || path_lower.contains("/apps/zentor_client/")
+        || path_lower.contains("/core/zentor_")
+        || path_lower.contains("/assets/zentor_native/")
+        || path_lower.contains("/installer/windows/")
+}
+
 fn entropy(bytes: &[u8]) -> f64 {
     if bytes.is_empty() {
         return 0.0;
@@ -441,6 +478,63 @@ mod tests {
         fs::write(&file, b"developer tool").unwrap();
 
         assert!(HeuristicProvider.inspect_file(&file).is_none());
+    }
+
+    #[test]
+    fn zentor_installer_exe_is_suppressed() {
+        let dir = tempdir().unwrap();
+        let downloads = dir.path().join("Downloads");
+        fs::create_dir_all(&downloads).unwrap();
+        let file = downloads.join("Zentor-AntiVirus-0.2.2-x64-setup.exe");
+        fs::write(&file, b"zentor installer fixture").unwrap();
+
+        assert!(HeuristicProvider.inspect_file(&file).is_none());
+        let score = HeuristicProvider.score_file(&file).unwrap();
+        assert_eq!(score.verdict, RiskVerdict::LikelyClean);
+        assert_ne!(score.recommended_action, RecommendedAction::Quarantine);
+    }
+
+    #[test]
+    fn zentor_msi_is_suppressed() {
+        let dir = tempdir().unwrap();
+        let downloads = dir.path().join("Downloads");
+        fs::create_dir_all(&downloads).unwrap();
+        let file = downloads.join("Zentor-AntiVirus-0.2.2-x64.msi");
+        fs::write(&file, b"zentor msi fixture").unwrap();
+
+        assert!(HeuristicProvider.inspect_file(&file).is_none());
+        let score = HeuristicProvider.score_file(&file).unwrap();
+        assert_eq!(score.verdict, RiskVerdict::LikelyClean);
+        assert_ne!(score.recommended_action, RecommendedAction::Quarantine);
+    }
+
+    #[test]
+    fn setup_exe_in_downloads_is_not_probable_or_confirmed() {
+        let dir = tempdir().unwrap();
+        let downloads = dir.path().join("Downloads");
+        fs::create_dir_all(&downloads).unwrap();
+        let file = downloads.join("setup.exe");
+        fs::write(&file, b"normal setup fixture").unwrap();
+
+        assert!(HeuristicProvider.inspect_file(&file).is_none());
+        let score = HeuristicProvider.score_file(&file).unwrap();
+        assert_eq!(score.verdict, RiskVerdict::LikelyClean);
+        assert_ne!(score.recommended_action, RecommendedAction::Quarantine);
+    }
+
+    #[test]
+    fn zentor_internal_files_are_never_flagged_by_heuristics() {
+        let dir = tempdir().unwrap();
+        let internal = dir.path().join("core").join("zentor_native_engine");
+        fs::create_dir_all(&internal).unwrap();
+        let file = internal.join("zentor_local_core.exe");
+        fs::write(&file, b"zentor internal fixture").unwrap();
+
+        assert!(HeuristicProvider.inspect_file(&file).is_none());
+        assert_eq!(
+            HeuristicProvider.score_file(&file).unwrap().verdict,
+            RiskVerdict::LikelyClean
+        );
     }
 
     #[test]

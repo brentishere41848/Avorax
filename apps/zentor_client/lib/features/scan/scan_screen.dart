@@ -356,12 +356,23 @@ class _ScanResults extends StatelessWidget {
               controller: controller,
             ),
             _ThreatSection(
-              title: 'Suspicious items',
+              title: 'Review suggested',
               threats: report.threats
                   .where(
                     (threat) =>
                         threat.riskScore.verdict == RiskVerdict.suspicious ||
                         threat.riskScore.verdict == RiskVerdict.unknown,
+                  )
+                  .toList(),
+              controller: controller,
+            ),
+            _ThreatSection(
+              title: 'Observations',
+              threats: report.threats
+                  .where(
+                    (threat) =>
+                        threat.riskScore.verdict == RiskVerdict.likelyClean &&
+                        threat.riskScore.score > 0,
                   )
                   .toList(),
               controller: controller,
@@ -434,7 +445,7 @@ class _ThreatRow extends StatelessWidget {
                 ),
               ),
               ZentorStatusPill(
-                label: threat.status.label,
+                label: _badgeLabel(threat),
                 color: _colorFor(threat),
                 icon: Icons.circle_outlined,
               ),
@@ -500,13 +511,14 @@ class _ThreatRow extends StatelessWidget {
             spacing: 10,
             runSpacing: 10,
             children: [
-              ZentorButton(
-                label: 'Quarantine',
-                icon: Icons.inventory_2_outlined,
-                onPressed: threat.status == ThreatResultStatus.detected
-                    ? () => controller.quarantineThreat(threat)
-                    : null,
-              ),
+              if (_canQuarantineByDefault(threat))
+                ZentorButton(
+                  label: 'Quarantine',
+                  icon: Icons.inventory_2_outlined,
+                  onPressed: threat.status == ThreatResultStatus.detected
+                      ? () => controller.quarantineThreat(threat)
+                      : null,
+                ),
               ZentorButton(
                 label: 'Keep / Ignore',
                 icon: Icons.visibility_outlined,
@@ -531,12 +543,13 @@ class _ThreatRow extends StatelessWidget {
                     ? () => controller.markThreatMalicious(threat)
                     : null,
               ),
-              ZentorButton(
-                label: 'Delete permanently',
-                icon: Icons.delete_outline,
-                secondary: true,
-                onPressed: () => controller.deleteThreatPermanently(threat),
-              ),
+              if (_canQuarantineByDefault(threat))
+                ZentorButton(
+                  label: 'Delete permanently',
+                  icon: Icons.delete_outline,
+                  secondary: true,
+                  onPressed: () => controller.deleteThreatPermanently(threat),
+                ),
               ZentorButton(
                 label: 'Add to allowlist',
                 icon: Icons.fact_check_outlined,
@@ -550,6 +563,27 @@ class _ThreatRow extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  bool _canQuarantineByDefault(ThreatResult threat) {
+    return threat.status == ThreatResultStatus.detected &&
+        (threat.riskScore.verdict == RiskVerdict.confirmedMalware ||
+            threat.riskScore.verdict == RiskVerdict.probableMalware) &&
+        (threat.confidence == ThreatConfidence.confirmed ||
+            threat.confidence == ThreatConfidence.high);
+  }
+
+  String _badgeLabel(ThreatResult threat) {
+    if (threat.status != ThreatResultStatus.detected) {
+      return threat.status.label;
+    }
+    return switch (threat.riskScore.verdict) {
+      RiskVerdict.confirmedMalware => 'Confirmed threat',
+      RiskVerdict.probableMalware => 'Probable malware',
+      RiskVerdict.suspicious || RiskVerdict.unknown => 'Review suggested',
+      RiskVerdict.likelyClean => 'Observation',
+      RiskVerdict.clean => 'Trusted',
+    };
   }
 
   IconData _iconFor(ThreatResult threat) =>
@@ -570,6 +604,10 @@ class _ThreatRow extends StatelessWidget {
     }
     if (threat.riskScore.verdict == RiskVerdict.probableMalware) {
       return 'Recommended action: review and quarantine if you do not recognize this file.';
+    }
+    if (threat.riskScore.verdict == RiskVerdict.unknown ||
+        threat.riskScore.verdict == RiskVerdict.suspicious) {
+      return 'Recommended action: review. This result is not eligible for automatic quarantine because the evidence is not confirmed.';
     }
     return 'Recommended action: keep unless you do not recognize this file. Unknown files are not treated as malware automatically.';
   }

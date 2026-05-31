@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-Phase 1: product cleanup and branding, with Phase 0 audit documentation refreshed.
+False-positive and protection-health UX hardening after Phase 1 product cleanup.
 
 ## Current Commit
 
@@ -25,6 +25,15 @@ Phase 1: product cleanup and branding, with Phase 0 audit documentation refreshe
 - Strengthened `tools/security/zentor-product-copy-gate.ps1` to scan broader active product-facing paths and additional unsupported claim categories while avoiding self-matching literal claim phrases.
 - Made `tools/branding/branding-check.sh` directly executable for local Unix-like validation.
 - Updated the Windows MSI packaging script to find Rust binaries produced under the root Cargo workspace target directory.
+- Added native trust helpers for Microsoft signature checks, Zentor-owned paths, Zentor installer artifacts, and publisher trust without blindly trusting unsigned system-folder files.
+- Suppressed Zentor installer/MSI/internal artifacts from weak heuristic findings unless a confirmed signature or known-bad hash matches.
+- Raised weak-signal heuristic thresholds so Downloads, Temp, setup/MSI names, unsigned/unknown publisher, and installer-like names remain observations/likely-clean unless stronger independent evidence exists.
+- Hidden native `Observation` verdicts from normal scan threat results.
+- Changed scan-result UX so low/medium heuristic-only findings show `Review suggested` or `Observation`, not `Detected`.
+- Limited default `Quarantine` and `Delete permanently` buttons to confirmed/probable high-confidence results.
+- Reworked the Protection screen explanation and checklist so `Partially Protected` states explain the missing guard/driver/self-test components and make Cloud disabled explicitly optional.
+- Reworked the Device tab into `Device & Protection Health` and removed the unprofessional `Flutter local core active` wording.
+- Extended false-positive gates and tests for Zentor installer EXE, Zentor MSI, setup.exe in Downloads, Zentor internal files, normal Downloads EXEs, and native installer trust.
 
 ## Blockers
 
@@ -43,24 +52,26 @@ Phase 1: product cleanup and branding, with Phase 0 audit documentation refreshe
 
 - GitHub Actions release run `26709325568` for `v0.2.3` failed because `build-msi.ps1` did not look in the root workspace `target\release` directory for `zentor_local_core.exe`; the script has been updated to support that output path.
 - `cargo test --workspace` is blocked in this Windows checkout because `cargo` is not installed or not on `PATH`.
+- `cargo fmt --manifest-path core\zentor_native_engine\Cargo.toml` is blocked because `cargo` is not installed or not on `PATH`.
+- `cargo fmt --manifest-path core\zentor_local_core\Cargo.toml` is blocked because `cargo` is not installed or not on `PATH`.
 - `powershell -ExecutionPolicy Bypass -File tools\security\zentor-false-positive-gate.ps1` is blocked because it requires `cargo`.
 - `flutter analyze` and `flutter test` are blocked because Flutter is not installed.
-- `dart test` is blocked because Dart is not installed.
+- `dart format ...` and `dart test` are blocked because Dart is not installed.
 - Windows driver validation is blocked by missing Windows, WDK/EWDK, signing, installation, and administrator self-test environment.
 
 ## Remaining Work
 
-- Continue Phase 1 by running the PowerShell product-copy gate in a PowerShell-capable environment and fixing any findings.
+- Run Rust, Flutter, Dart, false-positive, protection, performance, release, and installer gates in a provisioned environment with Cargo, Flutter, Dart, and driver tooling available.
+- Keep iterating on false-positive policy using signed-publisher validation and real build artifact hash metadata when those are available.
 - Continue Phase 2+ implementation in order, without marking driver or production ML features complete until their mandatory validation gates pass.
-- Run Flutter, Dart, PowerShell, performance, false-positive, protection, release, and installer gates in a provisioned environment.
 
 ## Exact Next Step
 
-Push this checkpoint to GitHub, then use the Windows release workflow to publish the next prerelease installer build if the workflow passes.
+Install/provide Cargo, Flutter, and Dart in this checkout or run CI, then execute `cargo test --workspace`, `flutter analyze`, `flutter test`, `dart test`, and `powershell -ExecutionPolicy Bypass -File tools\security\zentor-false-positive-gate.ps1`.
 
 ## Handoff
 
-This checkpoint established the root Rust workspace and refreshed audit/control documentation. PowerShell branding and product-copy gates pass locally. Rust, false-positive, Flutter, Dart, and driver gates remain environment-blocked here and are documented rather than faked.
+This checkpoint reduced false positives for weak heuristic-only results, Zentor installers/MSIs/internal files, normal Downloads/setup executables, and low/medium native observations. PowerShell branding and product-copy gates pass locally. Rust, false-positive, Flutter, Dart, and driver gates remain environment-blocked here and are documented rather than faked.
 
 ## Final Limitations
 

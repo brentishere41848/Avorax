@@ -32,4 +32,11 @@ void main() {
       ProtectionMode.lockdown,
     );
   });
+
+  test('medium heuristic verdict labels request review instead of detected', () {
+    expect(RiskVerdict.unknown.label, 'Review suggested');
+    expect(RiskVerdict.suspicious.label, 'Review suggested');
+    expect(RiskVerdict.probableMalware.label, 'Probable malware');
+    expect(RiskVerdict.confirmedMalware.label, 'Confirmed threat');
+  });
 }

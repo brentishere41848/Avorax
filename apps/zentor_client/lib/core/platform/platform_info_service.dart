@@ -18,7 +18,7 @@ class PlatformInfoService {
       osVersion: Platform.operatingSystemVersion,
       deviceIdentifierHashStatus: _deviceHashService
           .deviceIdentifierHashStatus(),
-      localCoreStatus: 'Flutter local core active',
+      localCoreStatus: 'Zentor Core Service: Running',
       permissionsStatus: 'No elevated permissions requested',
     );
   }

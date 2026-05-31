@@ -245,9 +245,9 @@ enum RiskVerdict {
     RiskVerdict.clean => 'Clean',
     RiskVerdict.likelyClean => 'Likely clean',
     RiskVerdict.unknown => 'Review suggested',
-    RiskVerdict.suspicious => 'Suspicious',
-    RiskVerdict.probableMalware => 'Probable Malware',
-    RiskVerdict.confirmedMalware => 'Confirmed Threat',
+    RiskVerdict.suspicious => 'Review suggested',
+    RiskVerdict.probableMalware => 'Probable malware',
+    RiskVerdict.confirmedMalware => 'Confirmed threat',
   };
 }
 

@@ -46,8 +46,8 @@ class ProtectionScreen extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: 18),
-              const Text(
-                'Zentor protects this device with visible local scanning, quarantine controls, real-time guard status, and optional cloud reporting.',
+              Text(
+                _protectionExplanation(state),
                 style: TextStyle(
                   color: ZentorColors.textSecondary,
                   height: 1.45,
@@ -74,13 +74,23 @@ class ProtectionScreen extends ConsumerWidget {
                         : controller.stopProtection,
                   ),
                   ZentorButton(
-                    label: 'Check Engine',
+                    label: 'Run protection self-test',
                     icon: Icons.health_and_safety_outlined,
                     secondary: true,
-                    onPressed: controller.unawaitedCheckMalwareEngine,
+                    onPressed: controller.runProtectionSelfTest,
+                  ),
+                  ZentorButton(
+                    label: 'Run Quick Scan',
+                    icon: Icons.radar_outlined,
+                    secondary: true,
+                    onPressed: state.scanStatus == ScanStatus.running
+                        ? null
+                        : () => controller.runQuickScan(),
                   ),
                 ],
               ),
+              const SizedBox(height: 22),
+              _ProtectionChecklist(state: state),
               if (state.errorMessage != null) ...[
                 const SizedBox(height: 16),
                 Text(
@@ -198,6 +208,83 @@ class ProtectionScreen extends ConsumerWidget {
   }
 }
 
+class _ProtectionChecklist extends StatelessWidget {
+  const _ProtectionChecklist({required this.state});
+
+  final ZentorState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final rows = [
+      _CheckRow(
+        'Native Engine',
+        state.nativeEngineStatus == 'ready' ? 'Ready' : 'Error',
+      ),
+      _CheckRow('Signature Pack', '${state.nativeSignatureCount} loaded'),
+      _CheckRow('Rule Pack', '${state.nativeRuleCount} loaded'),
+      _CheckRow('Quarantine', 'Ready'),
+      _CheckRow('Core Service', 'Running'),
+      _CheckRow('Guard Service', _guardLabel(state.guardStatus)),
+      _CheckRow(
+        'Pre-execution Driver',
+        state.driverStatus == 'running' ? 'Running' : 'Missing',
+      ),
+      _CheckRow('Local AI', _mlLabel(state.nativeMlStatus)),
+      const _CheckRow('Cloud', 'Disabled, optional'),
+    ];
+    return Wrap(
+      spacing: 10,
+      runSpacing: 10,
+      children: rows
+          .map(
+            (row) => Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: ZentorColors.elevatedSurface,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: ZentorColors.border),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    row.label,
+                    style: Theme.of(context).textTheme.labelMedium,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    row.value,
+                    style: const TextStyle(color: ZentorColors.textSecondary),
+                  ),
+                ],
+              ),
+            ),
+          )
+          .toList(),
+    );
+  }
+}
+
+class _CheckRow {
+  const _CheckRow(this.label, this.value);
+
+  final String label;
+  final String value;
+}
+
+String _protectionExplanation(ZentorState state) {
+  if (state.protectionStatus == ProtectionStatus.protected) {
+    return 'Local scans, quarantine, Guard Service, and native engine assets are ready. Pre-execution blocking is shown as active only when the Windows driver is running and self-tested.';
+  }
+  if (state.nativeEngineStatus == 'ready' && state.driverStatus != 'running') {
+    return 'Local scans and quarantine are ready. Real-time pre-execution blocking is not active because the Windows driver is not installed or has not passed self-test.';
+  }
+  if (state.nativeEngineStatus != 'ready') {
+    return 'Action required: Zentor Native Engine assets are missing or failed to load. Zentor does not report files clean while the engine is unavailable.';
+  }
+  return 'Zentor shows exactly which local protection components are ready, degraded, or unavailable. Cloud disabled is optional and does not reduce local scan protection.';
+}
+
 String _guardLabel(String status) => switch (status) {
   'running' => 'Running',
   'stopped' => 'Stopped',
@@ -206,4 +293,11 @@ String _guardLabel(String status) => switch (status) {
   'blockConfirmedThreats' => 'Block confirmed threats',
   'aggressive' => 'Aggressive',
   _ => 'Off',
+};
+
+String _mlLabel(String status) => switch (status) {
+  'active' => 'Production',
+  'developmentModel' => 'Development',
+  'modelMissing' => 'Missing',
+  _ => 'Unavailable',
 };

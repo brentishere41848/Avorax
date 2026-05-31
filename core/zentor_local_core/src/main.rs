@@ -606,7 +606,7 @@ fn native_asset_root() -> PathBuf {
 fn should_surface_native_verdict(verdict: PneVerdict) -> bool {
     !matches!(
         verdict,
-        PneVerdict::Clean | PneVerdict::LikelyClean | PneVerdict::Unknown
+        PneVerdict::Clean | PneVerdict::LikelyClean | PneVerdict::Unknown | PneVerdict::Observation
     )
 }
 
@@ -724,8 +724,8 @@ fn native_risk_verdict(value: PneVerdict) -> RiskVerdict {
     match value {
         PneVerdict::Clean => RiskVerdict::Clean,
         PneVerdict::LikelyClean => RiskVerdict::LikelyClean,
-        PneVerdict::Unknown => RiskVerdict::Unknown,
-        PneVerdict::Observation | PneVerdict::Suspicious => RiskVerdict::Suspicious,
+        PneVerdict::Unknown | PneVerdict::Observation => RiskVerdict::Unknown,
+        PneVerdict::Suspicious => RiskVerdict::Suspicious,
         PneVerdict::ProbableMalware => RiskVerdict::ProbableMalware,
         PneVerdict::ConfirmedMalware | PneVerdict::TestThreat => RiskVerdict::ConfirmedMalware,
     }

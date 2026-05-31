@@ -24,7 +24,9 @@ use crate::scan::{
     FileScanVerdict, ScanActionMode, ScanJobId, ScanMode, ScanProgress, ScanSummary,
 };
 use crate::signatures::SignatureDb;
-use crate::trust::{Allowlist, KnownBadStore, KnownGoodStore};
+use crate::trust::{
+    microsoft_trust, publisher_trust, zentor_trust, Allowlist, KnownBadStore, KnownGoodStore,
+};
 use crate::verdict::action_policy::should_auto_quarantine;
 use crate::verdict::risk_fusion::{Evidence, EvidenceSource, RiskFusion};
 use crate::verdict::{Confidence, FinalVerdict, Verdict};
@@ -141,6 +143,11 @@ impl ZentorNativeEngine {
         let known_good = self.known_good.contains(&sha256);
         let known_bad = self.known_bad.contains(&sha256);
         let allowlisted = self.allowlist.contains(&path, &sha256);
+        let trusted_publisher = publisher_trust::trusted_publisher_for(&path);
+        let trusted_local_artifact = zentor_trust::has_zentor_artifact_name(&path)
+            || zentor_trust::is_zentor_path(&path)
+            || (microsoft_trust::is_windows_system_path(&path)
+                && microsoft_trust::has_valid_microsoft_signature(&path));
         let mut evidence = Vec::<Evidence>::new();
         if known_bad {
             evidence.push(Evidence {
@@ -150,6 +157,34 @@ impl ZentorNativeEngine {
                 weight: 100,
                 source: EvidenceSource::ApplicationControl,
             });
+        }
+        if !known_bad {
+            if let Some(publisher) = trusted_publisher {
+                evidence.push(Evidence {
+                    id: "trusted_publisher".to_string(),
+                    title: "Trusted publisher".to_string(),
+                    detail: match publisher {
+                        publisher_trust::TrustedPublisher::Microsoft => {
+                            "The file has a valid Microsoft publisher signature."
+                        }
+                        publisher_trust::TrustedPublisher::Zentor => {
+                            "The file is a Zentor-owned path or installer artifact."
+                        }
+                    }
+                    .to_string(),
+                    weight: -80,
+                    source: EvidenceSource::TrustStore,
+                });
+            }
+            if trusted_local_artifact {
+                evidence.push(Evidence {
+                    id: "trusted_local_artifact".to_string(),
+                    title: "Trusted local artifact".to_string(),
+                    detail: "Zentor suppresses its own installer, service, driver, quarantine, update, and build artifacts unless a confirmed signature or known-bad hash matches.".to_string(),
+                    weight: -90,
+                    source: EvidenceSource::TrustStore,
+                });
+            }
         }
         evidence.extend(
             self.signatures
@@ -200,7 +235,8 @@ impl ZentorNativeEngine {
                 });
             }
         }
-        let final_verdict = RiskFusion::fuse(evidence, known_good, allowlisted);
+        let final_verdict =
+            RiskFusion::fuse(evidence, known_good || trusted_local_artifact, allowlisted);
         let quarantine_record =
             if should_auto_quarantine(mode, final_verdict.verdict, final_verdict.confidence)
                 && !allowlisted
@@ -370,7 +406,7 @@ impl ZentorNativeEngine {
                     }
                     if !matches!(
                         verdict.final_verdict.verdict,
-                        Verdict::Clean | Verdict::LikelyClean | Verdict::Unknown
+                        Verdict::Clean | Verdict::LikelyClean | Verdict::Unknown | Verdict::Observation
                     ) {
                         progress.threats_found += 1;
                         if verdict.quarantine_record.is_some() {

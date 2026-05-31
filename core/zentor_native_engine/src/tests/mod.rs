@@ -84,6 +84,40 @@ mod tests {
     }
 
     #[test]
+    fn zentor_installer_exe_is_likely_clean_not_quarantine_eligible() {
+        let (dir, mut engine) = test_engine();
+        let downloads = dir.path().join("Downloads");
+        fs::create_dir_all(&downloads).unwrap();
+        let file = downloads.join("Zentor-AntiVirus-0.2.2-x64-setup.exe");
+        fs::write(&file, b"zentor installer fixture").unwrap();
+        let verdict = engine
+            .scan_file(file, ScanActionMode::AutoQuarantineConfirmed)
+            .unwrap();
+        assert!(matches!(
+            verdict.final_verdict.verdict,
+            Verdict::LikelyClean | Verdict::Clean
+        ));
+        assert!(verdict.quarantine_record.is_none());
+    }
+
+    #[test]
+    fn zentor_msi_is_likely_clean_not_quarantine_eligible() {
+        let (dir, mut engine) = test_engine();
+        let downloads = dir.path().join("Downloads");
+        fs::create_dir_all(&downloads).unwrap();
+        let file = downloads.join("Zentor-AntiVirus-0.2.2-x64.msi");
+        fs::write(&file, b"zentor msi fixture").unwrap();
+        let verdict = engine
+            .scan_file(file, ScanActionMode::AutoQuarantineConfirmed)
+            .unwrap();
+        assert!(matches!(
+            verdict.final_verdict.verdict,
+            Verdict::LikelyClean | Verdict::Clean
+        ));
+        assert!(verdict.quarantine_record.is_none());
+    }
+
+    #[test]
     fn encoded_powershell_rule_returns_probable() {
         let (dir, mut engine) = test_engine();
         let file = dir.path().join("dropper.ps1");
