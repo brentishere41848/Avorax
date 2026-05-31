@@ -24,6 +24,7 @@ Phase 1: product cleanup and branding, with Phase 0 audit documentation refreshe
 - Updated `AGENTS.md` with active string category rules and release gate expectations without introducing blocked product language into active files.
 - Strengthened `tools/security/zentor-product-copy-gate.ps1` to scan broader active product-facing paths and additional unsupported claim categories while avoiding self-matching literal claim phrases.
 - Made `tools/branding/branding-check.sh` directly executable for local Unix-like validation.
+- Updated the Windows MSI packaging script to find Rust binaries produced under the root Cargo workspace target directory.
 
 ## Blockers
 
@@ -40,6 +41,7 @@ Phase 1: product cleanup and branding, with Phase 0 audit documentation refreshe
 
 ## Tests Failing Or Blocked
 
+- GitHub Actions release run `26709325568` for `v0.2.3` failed because `build-msi.ps1` did not look in the root workspace `target\release` directory for `zentor_local_core.exe`; the script has been updated to support that output path.
 - `cargo test --workspace` is blocked in this Windows checkout because `cargo` is not installed or not on `PATH`.
 - `powershell -ExecutionPolicy Bypass -File tools\security\zentor-false-positive-gate.ps1` is blocked because it requires `cargo`.
 - `flutter analyze` and `flutter test` are blocked because Flutter is not installed.

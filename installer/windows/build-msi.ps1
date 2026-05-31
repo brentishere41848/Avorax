@@ -130,10 +130,13 @@ function Get-FlutterBuildNumber([string]$Version) {
 $root = Resolve-Path (Join-Path $PSScriptRoot "..\..")
 $clientDir = Join-Path $root "apps\zentor_client"
 $releaseDir = Join-Path $clientDir "build\windows\x64\runner\$Configuration"
+$workspaceTargetDir = Join-Path $root "target\release"
 $localCoreExe = Join-Path $root "core\zentor_local_core\target\x86_64-pc-windows-msvc\release\zentor_local_core.exe"
 $localCoreExeGnu = Join-Path $root "core\zentor_local_core\target\x86_64-pc-windows-gnu\release\zentor_local_core.exe"
 $localCoreExeDefault = Join-Path $root "core\zentor_local_core\target\release\zentor_local_core.exe"
+$localCoreExeWorkspace = Join-Path $workspaceTargetDir "zentor_local_core.exe"
 $guardServiceExeDefault = Join-Path $root "core\zentor_guard_service\target\release\zentor_guard_service.exe"
+$guardServiceExeWorkspace = Join-Path $workspaceTargetDir "zentor_guard_service.exe"
 $distRoot = Join-Path $root "dist"
 $stageDir = Join-Path $distRoot "windows-msi\stage"
 $wxsPath = Join-Path $distRoot "windows-msi\Zentor.wxs"
@@ -176,7 +179,7 @@ if (-not (Test-Path (Join-Path $releaseDir "Zentor.exe"))) {
   throw "Flutter release output was not found at $releaseDir"
 }
 
-if (-not (Test-Path $localCoreExe) -and -not (Test-Path $localCoreExeDefault) -and -not (Test-Path $localCoreExeGnu)) {
+if (-not (Test-Path $localCoreExe) -and -not (Test-Path $localCoreExeDefault) -and -not (Test-Path $localCoreExeGnu) -and -not (Test-Path $localCoreExeWorkspace)) {
   $cargo = Get-Command "cargo" -ErrorAction SilentlyContinue
   if (-not $cargo -and (Test-Path "$env:USERPROFILE\.cargo\bin\cargo.exe")) {
     $env:PATH = "$env:USERPROFILE\.cargo\bin;$env:PATH"
@@ -283,6 +286,8 @@ if (Test-Path $localCoreExe) {
   $coreSource = $localCoreExeDefault
 } elseif (Test-Path $localCoreExeGnu) {
   $coreSource = $localCoreExeGnu
+} elseif (Test-Path $localCoreExeWorkspace) {
+  $coreSource = $localCoreExeWorkspace
 }
 
 if ($coreSource) {
@@ -297,6 +302,9 @@ if ($coreSource) {
 if (Test-Path $guardServiceExeDefault) {
   Copy-Item -LiteralPath $guardServiceExeDefault -Destination (Join-Path $stageDir "zentor_guard_service.exe") -Force
   Copy-Item -LiteralPath $guardServiceExeDefault -Destination (Join-Path $releaseDir "zentor_guard_service.exe") -Force
+} elseif (Test-Path $guardServiceExeWorkspace) {
+  Copy-Item -LiteralPath $guardServiceExeWorkspace -Destination (Join-Path $stageDir "zentor_guard_service.exe") -Force
+  Copy-Item -LiteralPath $guardServiceExeWorkspace -Destination (Join-Path $releaseDir "zentor_guard_service.exe") -Force
 } else {
   Write-Warning "zentor_guard_service.exe was not found. The MSI will not include the real-time Guard helper."
 }
