@@ -101,6 +101,7 @@ class ZentorShell extends ConsumerWidget {
     if (location.startsWith('/device')) return 'Device Integrity';
     if (location.startsWith('/logs')) return 'Security Events';
     if (location.startsWith('/settings')) return 'Settings';
+    if (location.startsWith('/updates')) return 'Updates';
     if (location.startsWith('/privacy')) return 'Privacy';
     return 'Protection Overview';
   }

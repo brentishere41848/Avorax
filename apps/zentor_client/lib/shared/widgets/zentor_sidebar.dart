@@ -24,6 +24,7 @@ const zentorDestinations = [
   ZentorNavDestination('/allowlist', 'Allowlist', Icons.fact_check_outlined),
   ZentorNavDestination('/logs', 'Security Events', Icons.receipt_long_outlined),
   ZentorNavDestination('/device', 'Device', Icons.devices_outlined),
+  ZentorNavDestination('/updates', 'Updates', Icons.system_update_alt_outlined),
   ZentorNavDestination('/settings', 'Settings', Icons.settings_outlined),
 ];
 

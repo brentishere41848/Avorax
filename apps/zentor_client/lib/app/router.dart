@@ -11,6 +11,7 @@ import '../features/protection/protection_screen.dart';
 import '../features/quarantine/quarantine_screen.dart';
 import '../features/scan/scan_screen.dart';
 import '../features/settings/settings_screen.dart';
+import '../features/update/update_screen.dart';
 import '../shared/widgets/zentor_shell.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -42,6 +43,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(path: '/device', builder: (_, _) => const DeviceScreen()),
           GoRoute(path: '/logs', builder: (_, _) => const LogsScreen()),
           GoRoute(path: '/settings', builder: (_, _) => const SettingsScreen()),
+          GoRoute(path: '/updates', builder: (_, _) => const UpdateScreen()),
           GoRoute(path: '/privacy', builder: (_, _) => const PrivacyScreen()),
         ],
       ),

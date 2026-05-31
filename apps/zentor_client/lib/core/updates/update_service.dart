@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:crypto/crypto.dart';
 import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
@@ -8,20 +9,30 @@ import 'package:path_provider/path_provider.dart';
 import '../config/build_config.dart';
 
 enum UpdateStatus {
+  notConfigured,
   notChecked,
   checking,
   upToDate,
   updateAvailable,
+  downloading,
+  downloaded,
+  verifying,
+  verified,
   installing,
   failed;
 
   String get label => switch (this) {
+    UpdateStatus.notConfigured => 'Update source not configured',
     UpdateStatus.notChecked => 'Not checked',
     UpdateStatus.checking => 'Checking',
     UpdateStatus.upToDate => 'Up to date',
     UpdateStatus.updateAvailable => 'Update available',
+    UpdateStatus.downloading => 'Downloading update',
+    UpdateStatus.downloaded => 'Update downloaded',
+    UpdateStatus.verifying => 'Verifying update',
+    UpdateStatus.verified => 'Update verified',
     UpdateStatus.installing => 'Installing update',
-    UpdateStatus.failed => 'Check failed',
+    UpdateStatus.failed => 'Update failed',
   };
 }
 
@@ -29,20 +40,50 @@ class UpdateInfo {
   const UpdateInfo({
     required this.currentVersion,
     required this.latestVersion,
-    required this.releaseUrl,
-    this.downloadUrl,
-    this.assetName,
-    this.publishedAt,
+    required this.feedUrl,
+    required this.packageUrl,
+    required this.packageSha256,
+    required this.channel,
+    required this.rollbackSupported,
+    this.packageName,
     this.releaseNotes,
+    this.publishedAt,
+    this.required = false,
+    this.critical = false,
+    this.localPackagePath,
   });
 
   final String currentVersion;
   final String latestVersion;
-  final Uri releaseUrl;
-  final Uri? downloadUrl;
-  final String? assetName;
-  final DateTime? publishedAt;
+  final Uri feedUrl;
+  final Uri packageUrl;
+  final String packageSha256;
+  final String channel;
+  final bool rollbackSupported;
+  final String? packageName;
   final String? releaseNotes;
+  final DateTime? publishedAt;
+  final bool required;
+  final bool critical;
+  final String? localPackagePath;
+
+  UpdateInfo copyWith({String? localPackagePath}) {
+    return UpdateInfo(
+      currentVersion: currentVersion,
+      latestVersion: latestVersion,
+      feedUrl: feedUrl,
+      packageUrl: packageUrl,
+      packageSha256: packageSha256,
+      channel: channel,
+      rollbackSupported: rollbackSupported,
+      packageName: packageName,
+      releaseNotes: releaseNotes,
+      publishedAt: publishedAt,
+      required: required,
+      critical: critical,
+      localPackagePath: localPackagePath ?? this.localPackagePath,
+    );
+  }
 }
 
 class UpdateCheckResult {
@@ -52,6 +93,13 @@ class UpdateCheckResult {
     this.update,
     this.error,
   });
+
+  factory UpdateCheckResult.notConfigured(String currentVersion) =>
+      UpdateCheckResult._(
+        status: UpdateStatus.notConfigured,
+        currentVersion: currentVersion,
+        error: 'Update source not configured.',
+      );
 
   factory UpdateCheckResult.upToDate(String currentVersion) =>
       UpdateCheckResult._(
@@ -89,107 +137,113 @@ class ZentorUpdateService {
 
   Future<UpdateCheckResult> checkForUpdate({String? currentVersion}) async {
     final installedVersion = currentVersion ?? await _installedVersion();
-    final releasesUri = Uri.https(
-      'api.github.com',
-      '/repos/'
-          '${buildConfig.updatesRepoOwner}/${buildConfig.updatesRepoName}'
-          '/releases',
-    );
+    final feedUrl = buildConfig.updateFeedUrl.trim();
+    if (feedUrl.isEmpty) {
+      return UpdateCheckResult.notConfigured(installedVersion);
+    }
+    final feedUri = Uri.parse(feedUrl);
+    if (!_isTrustedFeedUri(feedUri)) {
+      return UpdateCheckResult.failed(
+        installedVersion,
+        'Update source must be HTTPS or a local file feed.',
+      );
+    }
     try {
-      final response = await _client.get(
-        releasesUri,
-        headers: const {
-          'Accept': 'application/vnd.github+json',
-          'User-Agent': 'Avorax-Update-Checker',
-        },
-      );
-      if (response.statusCode != 200) {
-        return UpdateCheckResult.failed(
-          installedVersion,
-          'GitHub returned HTTP ${response.statusCode}.',
-        );
-      }
-      final decoded = jsonDecode(response.body);
-      if (decoded is! List) {
-        return UpdateCheckResult.failed(
-          installedVersion,
-          'GitHub release response was not a list.',
-        );
-      }
-      final release = _latestRelease(decoded);
-      if (release == null) {
-        return UpdateCheckResult.failed(
-          installedVersion,
-          'No Avorax GitHub releases were found.',
-        );
-      }
-      final latestVersion = _normalizeVersion(release.tagName);
-      if (_compareVersions(latestVersion, installedVersion) <= 0) {
-        return UpdateCheckResult.upToDate(installedVersion);
-      }
-      return UpdateCheckResult.available(
-        UpdateInfo(
-          currentVersion: installedVersion,
-          latestVersion: latestVersion,
-          releaseUrl: release.htmlUrl,
-          downloadUrl: release.preferredAsset?.downloadUrl,
-          assetName: release.preferredAsset?.name,
-          publishedAt: release.publishedAt,
-          releaseNotes: release.body,
-        ),
-      );
+      final feed = await _loadFeed(feedUri);
+      final update = _updateFromFeed(feed, feedUri, installedVersion);
+      if (update == null) return UpdateCheckResult.upToDate(installedVersion);
+      return UpdateCheckResult.available(update);
     } on Object catch (error) {
       return UpdateCheckResult.failed(installedVersion, '$error');
     }
   }
 
-  Future<Uri> downloadUpdatePackage(UpdateInfo update) async {
-    final downloadUrl = update.downloadUrl;
-    final assetName = update.assetName;
-    if (downloadUrl == null || assetName == null) {
-      throw StateError('No Avorax update package is available for this release.');
-    }
-    if (Platform.isWindows && !assetName.toLowerCase().endsWith('.msi')) {
-      throw StateError('Windows in-app updates require the Avorax MSI package.');
-    }
-    final response = await _client.get(
-      downloadUrl,
-      headers: const {'User-Agent': 'Avorax-In-App-Updater'},
-    );
-    if (response.statusCode != 200) {
-      throw StateError('Update download failed with HTTP ${response.statusCode}.');
+  Future<UpdateInfo> downloadUpdatePackage(UpdateInfo update) async {
+    final assetName = update.packageName ?? _fileNameFromUri(update.packageUrl);
+    if (!assetName.toLowerCase().endsWith('.aup')) {
+      throw StateError('Normal Avorax updates require a signed .aup package.');
     }
     final cacheDir = await getTemporaryDirectory();
-    final updateDir = Directory('${cacheDir.path}${Platform.pathSeparator}AvoraxUpdates');
+    final updateDir = Directory(
+      '${cacheDir.path}${Platform.pathSeparator}AvoraxUpdates',
+    );
     await updateDir.create(recursive: true);
     final packagePath = '${updateDir.path}${Platform.pathSeparator}$assetName';
     final packageFile = File(packagePath);
-    await packageFile.writeAsBytes(response.bodyBytes, flush: true);
-    return packageFile.uri;
+    if (update.packageUrl.scheme == 'file') {
+      await File(update.packageUrl.toFilePath()).copy(packagePath);
+    } else {
+      final response = await _client.get(
+        update.packageUrl,
+        headers: const {'User-Agent': 'Avorax-In-App-Updater'},
+      );
+      if (response.statusCode != 200) {
+        throw StateError(
+          'Update package download failed with HTTP ${response.statusCode}.',
+        );
+      }
+      await packageFile.writeAsBytes(response.bodyBytes, flush: true);
+    }
+    final actualHash = await _sha256File(packageFile);
+    if (actualHash.toLowerCase() != update.packageSha256.toLowerCase()) {
+      try {
+        await packageFile.delete();
+      } on Object {
+        // Keep the original verification error as the user-facing failure.
+      }
+      throw StateError('Downloaded update package SHA-256 does not match feed.');
+    }
+    return update.copyWith(localPackagePath: packageFile.path);
   }
 
-  Future<void> installDownloadedPackage(Uri packageUri) async {
-    final packagePath = packageUri.toFilePath();
-    if (!Platform.isWindows) {
-      throw UnsupportedError(
-        'In-app managed updates are currently implemented for Windows MSI packages only.',
-      );
+  Future<void> verifyDownloadedPackage(UpdateInfo update) async {
+    final packagePath = update.localPackagePath;
+    if (packagePath == null) {
+      throw StateError('No downloaded update package is available to verify.');
     }
-    final escapedPath = packagePath.replaceAll("'", "''");
-    final command =
-        "Start-Process -FilePath 'msiexec.exe' "
-        "-ArgumentList @('/i', '$escapedPath', '/passive', '/norestart') "
-        '-Verb RunAs';
-    final process = await Process.start('powershell.exe', [
-      '-NoProfile',
-      '-ExecutionPolicy',
-      'Bypass',
-      '-Command',
-      command,
+    final updater = _updateServiceExecutable();
+    if (updater == null || !File(updater).existsSync()) {
+      throw StateError('Avorax Update Service executable is missing.');
+    }
+    final result = await Process.run(updater, [
+      '--verify',
+      packagePath,
+      update.currentVersion,
     ]);
-    final exitCode = await process.exitCode;
-    if (exitCode != 0) {
-      throw StateError('Could not start the Avorax MSI update. Exit code: $exitCode.');
+    if (result.exitCode != 0) {
+      throw StateError('Update verification failed: ${result.stderr}');
+    }
+  }
+
+  Future<void> installDownloadedPackage(UpdateInfo update) async {
+    final packagePath = update.localPackagePath;
+    if (packagePath == null) {
+      throw StateError('No verified update package is available to install.');
+    }
+    final updater = _updateServiceExecutable();
+    if (updater == null || !File(updater).existsSync()) {
+      throw StateError('Avorax Update Service executable is missing.');
+    }
+    final args = ['--apply', packagePath, _installDir(), update.currentVersion];
+    if (Platform.isWindows) {
+      final escapedUpdater = updater.replaceAll("'", "''");
+      final escapedArgs = args.map((arg) => "'${arg.replaceAll("'", "''")}'").join(', ');
+      final process = await Process.start('powershell.exe', [
+        '-NoProfile',
+        '-ExecutionPolicy',
+        'Bypass',
+        '-Command',
+        "Start-Process -FilePath '$escapedUpdater' -ArgumentList @($escapedArgs) -Verb RunAs -Wait",
+      ]);
+      final exitCode = await process.exitCode;
+      if (exitCode != 0) {
+        throw StateError('Could not start Avorax Update Service. Exit code: $exitCode.');
+      }
+      return;
+    }
+    final result = await Process.run(updater, args);
+    if (result.exitCode != 0) {
+      throw StateError('Update apply failed: ${result.stderr}');
     }
   }
 
@@ -202,15 +256,128 @@ class ZentorUpdateService {
     }
   }
 
-  _GitHubRelease? _latestRelease(List<Object?> releases) {
-    final parsed = releases
-        .whereType<Map<String, Object?>>()
-        .map(_GitHubRelease.fromJson)
-        .where((release) => !release.draft)
-        .toList();
-    if (parsed.isEmpty) return null;
-    parsed.sort((a, b) => _compareVersions(b.tagName, a.tagName));
-    return parsed.first;
+  Future<Map<String, Object?>> _loadFeed(Uri feedUri) async {
+    if (feedUri.scheme == 'file') {
+      final text = await File(feedUri.toFilePath()).readAsString();
+      final decoded = jsonDecode(text);
+      if (decoded is Map<String, Object?>) return decoded;
+      throw StateError('Update feed JSON root must be an object.');
+    }
+    final response = await _client.get(
+      feedUri,
+      headers: const {
+        'Accept': 'application/json',
+        'User-Agent': 'Avorax-Update-Checker',
+      },
+    );
+    if (response.statusCode != 200) {
+      throw StateError('Update feed returned HTTP ${response.statusCode}.');
+    }
+    final decoded = jsonDecode(response.body);
+    if (decoded is Map<String, Object?>) return decoded;
+    throw StateError('Update feed JSON root must be an object.');
+  }
+
+  UpdateInfo? _updateFromFeed(
+    Map<String, Object?> feed,
+    Uri feedUri,
+    String installedVersion,
+  ) {
+    if (feed['product'] != 'Avorax Anti-Virus') {
+      throw StateError('Update feed is for the wrong product.');
+    }
+    final channel = feed['channel']?.toString() ?? buildConfig.updateChannel;
+    if (channel != buildConfig.updateChannel) {
+      throw StateError('Update feed channel does not match this build.');
+    }
+    final latestVersion = feed['latest_version']?.toString() ?? '';
+    if (latestVersion.isEmpty) {
+      throw StateError('Update feed is missing latest_version.');
+    }
+    if (_compareVersions(latestVersion, installedVersion) <= 0) {
+      return null;
+    }
+    final packages = feed['packages'];
+    if (packages is! List) {
+      throw StateError('Update feed packages must be a list.');
+    }
+    final package = packages.whereType<Map<String, Object?>>().firstWhere(
+      (item) =>
+          item['version']?.toString() == latestVersion &&
+          (item['package_url']?.toString().endsWith('.aup') ?? false),
+      orElse: () => throw StateError('No .aup package found for latest version.'),
+    );
+    final packageUrl = _resolvePackageUri(
+      feedUri,
+      package['package_url']?.toString() ?? '',
+    );
+    if (!_isTrustedPackageUri(packageUrl)) {
+      throw StateError('Update package URL must be HTTPS or local file.');
+    }
+    final packageSha256 = package['package_sha256']?.toString() ?? '';
+    if (packageSha256.isEmpty) {
+      throw StateError('Update package entry is missing package_sha256.');
+    }
+    return UpdateInfo(
+      currentVersion: installedVersion,
+      latestVersion: latestVersion,
+      feedUrl: feedUri,
+      packageUrl: packageUrl,
+      packageSha256: packageSha256,
+      channel: channel,
+      rollbackSupported: package['rollback_supported'] as bool? ?? false,
+      packageName: _fileNameFromUri(packageUrl),
+      releaseNotes: package['release_notes']?.toString(),
+      publishedAt: DateTime.tryParse(package['published_at']?.toString() ?? ''),
+      required: package['required'] as bool? ?? false,
+      critical: package['critical'] as bool? ?? false,
+    );
+  }
+
+  Uri _resolvePackageUri(Uri feedUri, String value) {
+    final uri = Uri.parse(value);
+    if (uri.hasScheme) return uri;
+    if (feedUri.scheme == 'file') {
+      final base = File(feedUri.toFilePath()).parent.uri;
+      return base.resolveUri(uri);
+    }
+    return feedUri.resolveUri(uri);
+  }
+
+  bool _isTrustedFeedUri(Uri uri) =>
+      uri.scheme == 'https' || uri.scheme == 'file';
+
+  bool _isTrustedPackageUri(Uri uri) =>
+      uri.scheme == 'https' || uri.scheme == 'file';
+
+  String _fileNameFromUri(Uri uri) {
+    final segments = uri.pathSegments;
+    return segments.isEmpty ? 'update.aup' : segments.last;
+  }
+
+  Future<String> _sha256File(File file) async {
+    final input = file.openRead();
+    final digest = await sha256.bind(input).first;
+    return digest.toString();
+  }
+
+  String? _updateServiceExecutable() {
+    final name = Platform.isWindows
+        ? 'avorax_update_service.exe'
+        : 'avorax_update_service';
+    final candidates = [
+      '${File(Platform.resolvedExecutable).parent.path}${Platform.pathSeparator}$name',
+      '${Directory.current.path}${Platform.pathSeparator}$name',
+    ];
+    for (final candidate in candidates) {
+      if (File(candidate).existsSync()) return File(candidate).absolute.path;
+    }
+    return candidates.first;
+  }
+
+  String _installDir() {
+    if (Platform.isWindows) return r'C:\Program Files\Avorax';
+    return File(Platform.resolvedExecutable).parent.path;
   }
 
   static int _compareVersions(String left, String right) {
@@ -226,86 +393,11 @@ class ZentorUpdateService {
   }
 
   static List<int> _versionParts(String value) {
-    final normalized = _normalizeVersion(value);
+    final normalized = value.trim().replaceFirst(RegExp(r'^[vV]'), '');
     final core = normalized.split(RegExp(r'[-+]')).first;
     return core
         .split('.')
         .map((part) => int.tryParse(part) ?? 0)
         .toList(growable: false);
   }
-
-  static String _normalizeVersion(String value) {
-    return value.trim().replaceFirst(RegExp(r'^[vV]'), '');
-  }
-}
-
-class _GitHubRelease {
-  const _GitHubRelease({
-    required this.tagName,
-    required this.htmlUrl,
-    required this.draft,
-    required this.assets,
-    this.publishedAt,
-    this.body,
-  });
-
-  factory _GitHubRelease.fromJson(Map<String, Object?> json) {
-    final assetsJson = json['assets'];
-    final assets = assetsJson is List
-        ? assetsJson
-              .whereType<Map<String, Object?>>()
-              .map(_GitHubAsset.fromJson)
-              .toList()
-        : <_GitHubAsset>[];
-    return _GitHubRelease(
-      tagName: json['tag_name'] as String? ?? '',
-      htmlUrl: Uri.parse(json['html_url'] as String? ?? 'https://github.com'),
-      draft: json['draft'] as bool? ?? false,
-      assets: assets,
-      publishedAt: DateTime.tryParse(json['published_at'] as String? ?? ''),
-      body: json['body'] as String?,
-    );
-  }
-
-  final String tagName;
-  final Uri htmlUrl;
-  final bool draft;
-  final List<_GitHubAsset> assets;
-  final DateTime? publishedAt;
-  final String? body;
-
-  _GitHubAsset? get preferredAsset {
-    if (assets.isEmpty) return null;
-    final lowerPriority = Platform.isWindows
-        ? ['.msi']
-        : Platform.isMacOS
-        ? ['.dmg', '.pkg', '.zip']
-        : Platform.isLinux
-        ? ['.appimage', '.deb', '.rpm', '.tar.gz']
-        : ['.apk', '.ipa'];
-    for (final suffix in lowerPriority) {
-      for (final asset in assets) {
-        if (asset.name.toLowerCase().endsWith(suffix)) {
-          return asset;
-        }
-      }
-    }
-    return assets.first;
-  }
-}
-
-class _GitHubAsset {
-  const _GitHubAsset({required this.name, required this.downloadUrl});
-
-  factory _GitHubAsset.fromJson(Map<String, Object?> json) {
-    return _GitHubAsset(
-      name: json['name'] as String? ?? '',
-      downloadUrl: Uri.parse(
-        json['browser_download_url'] as String? ?? 'https://github.com',
-      ),
-    );
-  }
-
-  final String name;
-  final Uri downloadUrl;
 }

@@ -399,18 +399,27 @@ class ZentorController extends StateNotifier<ZentorState> {
       await unawaitedCheckForUpdates();
       return;
     }
-    state = state.copyWith(
-      updateStatus: UpdateStatus.installing,
-      clearError: true,
-      clearUpdateError: true,
-    );
     try {
-      final packageUri = await _updateService.downloadUpdatePackage(update);
-      await _updateService.installDownloadedPackage(packageUri);
+      state = state.copyWith(
+        updateStatus: UpdateStatus.downloading,
+        clearError: true,
+        clearUpdateError: true,
+      );
+      final downloaded = await _updateService.downloadUpdatePackage(update);
+      state = state.copyWith(
+        updateStatus: UpdateStatus.verifying,
+        updateInfo: downloaded,
+      );
+      await _updateService.verifyDownloadedPackage(downloaded);
+      state = state.copyWith(
+        updateStatus: UpdateStatus.installing,
+        updateInfo: downloaded,
+      );
+      await _updateService.installDownloadedPackage(downloaded);
       await logEvent(
         'update_install_started',
         'Update install started',
-        details: update.assetName,
+        details: downloaded.packageName,
       );
     } on Object catch (error) {
       state = state.copyWith(

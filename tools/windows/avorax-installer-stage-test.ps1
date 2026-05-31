@@ -28,6 +28,7 @@ foreach ($required in @(
   @("Avorax.exe", "Avorax app executable"),
   @("avorax_core_service.exe", "Avorax Core Service executable"),
   @("avorax_guard_service.exe", "Avorax Guard Service executable"),
+  @("avorax_update_service.exe", "Avorax Update Service executable"),
   @("engine\config\engine.default.json", "engine default config"),
   @("engine\signatures\avorax_core.asig", "core signature pack"),
   @("engine\rules\avorax_core.arule", "core rule pack"),
@@ -42,6 +43,7 @@ foreach ($required in @(
   @("docs\safe-malware-testing.md", "safe malware testing documentation"),
   @("docs\real-time-protection.md", "real-time protection documentation"),
   @("tools\windows\avorax-installed-smoke-test.ps1", "installed smoke test"),
+  @("tools\update\avorax-build-update-package.ps1", "update package builder"),
   @("install-manifest.json", "install manifest")
 )) {
   Require-Path $required[0] $required[1]
@@ -93,6 +95,14 @@ foreach ($wxs in $wxsFiles) {
     $serviceControlPattern = "<ServiceControl[^>]+Name=`"$serviceName`"[^>]+Start=`"both`""
     if ($content -notmatch $serviceControlPattern) {
       Add-CheckError "Installer WiX source does not start $serviceName during install and repair."
+    }
+  }
+  if ($content -notmatch "Name=`"avorax_update_service`"") {
+    Add-CheckError "Installer WiX source does not register Avorax Update Service."
+  }
+  foreach ($updateDir in @("AvoraxData_updates_staging", "AvoraxData_updates_rollback", "AvoraxData_updates_logs")) {
+    if ($content -notmatch $updateDir) {
+      Add-CheckError "Installer WiX source is missing update directory $updateDir."
     }
   }
 }

@@ -88,14 +88,18 @@ class HomeScreen extends ConsumerWidget {
                     : controller.stopProtection,
               ),
               if (state.updateStatus == UpdateStatus.updateAvailable ||
+                  state.updateStatus == UpdateStatus.downloading ||
+                  state.updateStatus == UpdateStatus.verifying ||
                   state.updateStatus == UpdateStatus.installing)
                 ZentorButton(
-                  label: state.updateStatus == UpdateStatus.installing
-                      ? 'Starting update'
-                      : 'Install update',
+                  label: state.updateStatus == UpdateStatus.updateAvailable
+                      ? 'Install update'
+                      : state.updateStatus.label,
                   icon: Icons.system_update_alt_outlined,
                   secondary: true,
-                  onPressed: state.updateStatus == UpdateStatus.installing
+                  onPressed: state.updateStatus == UpdateStatus.downloading ||
+                          state.updateStatus == UpdateStatus.verifying ||
+                          state.updateStatus == UpdateStatus.installing
                       ? null
                       : controller.installUpdateInApp,
                 ),
@@ -362,15 +366,22 @@ class HomeScreen extends ConsumerWidget {
     if (state.updateStatus == UpdateStatus.updateAvailable && update != null) {
       return 'Avorax ${update.latestVersion} is available. Install it from inside Avorax.';
     }
+    if (state.updateStatus == UpdateStatus.notConfigured) {
+      return 'Update source not configured. Scanning still works offline.';
+    }
+    if (state.updateStatus == UpdateStatus.downloading ||
+        state.updateStatus == UpdateStatus.verifying) {
+      return state.updateStatus.label;
+    }
     if (state.updateStatus == UpdateStatus.installing) {
-      return 'Avorax is starting the in-app update package.';
+      return 'Avorax Update Service is applying the verified update package.';
     }
     if (state.updateStatus == UpdateStatus.upToDate) {
       return 'Avorax ${state.currentAppVersion} is installed.';
     }
     if (state.updateStatus == UpdateStatus.failed) {
-      return 'Could not check GitHub Releases. Scanning still works offline.';
+      return 'Could not check the Avorax update feed. Scanning still works offline.';
     }
-    return 'Avorax checks GitHub Releases and can install updates from inside the app.';
+    return 'Avorax installs signed .aup updates inside the app.';
   }
 }

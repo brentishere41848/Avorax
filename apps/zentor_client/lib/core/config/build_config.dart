@@ -42,6 +42,14 @@ const avoraxUpdatesRepoName = String.fromEnvironment(
   'AVORAX_UPDATES_REPO_NAME',
   defaultValue: zentorUpdatesRepoName,
 );
+const avoraxUpdateFeedUrl = String.fromEnvironment(
+  'AVORAX_UPDATE_FEED_URL',
+  defaultValue: '',
+);
+const avoraxUpdateChannel = String.fromEnvironment(
+  'AVORAX_UPDATE_CHANNEL',
+  defaultValue: 'dev',
+);
 
 const zentorAppVersion = String.fromEnvironment(
   'ZENTOR_APP_VERSION',
@@ -59,6 +67,8 @@ class BuildConfig {
     this.publicClientKey = avoraxPublicClientKey,
     this.updatesRepoOwner = avoraxUpdatesRepoOwner,
     this.updatesRepoName = avoraxUpdatesRepoName,
+    this.updateFeedUrl = avoraxUpdateFeedUrl,
+    this.updateChannel = avoraxUpdateChannel,
     this.appVersion = avoraxAppVersion,
   });
 
@@ -67,5 +77,7 @@ class BuildConfig {
   final String publicClientKey;
   final String updatesRepoOwner;
   final String updatesRepoName;
+  final String updateFeedUrl;
+  final String updateChannel;
   final String appVersion;
 }

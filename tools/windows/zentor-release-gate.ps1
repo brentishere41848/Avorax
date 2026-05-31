@@ -69,6 +69,19 @@ if (-not (Test-Path -LiteralPath $stageTest)) {
   Add-Error "Installer stage test is missing: $stageTest"
 }
 
+$appUpdateService = Join-Path $root "apps\zentor_client\lib\core\updates\update_service.dart"
+if (Test-Path -LiteralPath $appUpdateService) {
+  $updateSource = Get-Content -Raw -LiteralPath $appUpdateService
+  foreach ($blocked in @("setup.exe", ".msi", "msiexec", "launchUrl")) {
+    if ($updateSource -match [regex]::Escape($blocked)) {
+      Add-Error "Normal app update flow still references external installer behavior: $blocked"
+    }
+  }
+  if ($updateSource -notmatch "\.aup") {
+    Add-Error "Normal app update flow does not require .aup update packages."
+  }
+}
+
 $stage = Join-Path $root "dist\windows-msi\stage"
 if (-not (Test-Path -LiteralPath $stage)) {
   Add-Error "Installer stage is missing. Run installer packaging before the release gate: $stage"
@@ -77,6 +90,7 @@ if (-not (Test-Path -LiteralPath $stage)) {
     "Avorax.exe",
     "avorax_core_service.exe",
     "avorax_guard_service.exe",
+    "avorax_update_service.exe",
     "engine\config\engine.default.json",
     "engine\signatures\avorax_core.asig",
     "engine\rules\avorax_core.arule",

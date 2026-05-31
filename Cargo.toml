@@ -3,6 +3,7 @@ members = [
     "core/zentor_native_engine",
     "core/zentor_local_core",
     "core/zentor_guard_service",
+    "core/avorax_update_service",
     "services/api",
 ]
 resolver = "2"

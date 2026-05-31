@@ -68,7 +68,7 @@ jobs:
 
       - name: Build Flutter Windows app
         working-directory: apps/zentor_client
-        run: flutter build windows --release --build-name "${{ steps.version.outputs.version }}" --build-number "${{ steps.version.outputs.build_number }}" --dart-define=AVORAX_APP_VERSION="${{ steps.version.outputs.version }}" --dart-define=ZENTOR_APP_VERSION="${{ steps.version.outputs.version }}" --dart-define=AVORAX_UPDATES_REPO_OWNER=brentishere41848 --dart-define=AVORAX_UPDATES_REPO_NAME=Avorax
+        run: flutter build windows --release --build-name "${{ steps.version.outputs.version }}" --build-number "${{ steps.version.outputs.build_number }}" --dart-define=AVORAX_APP_VERSION="${{ steps.version.outputs.version }}" --dart-define=ZENTOR_APP_VERSION="${{ steps.version.outputs.version }}" --dart-define=AVORAX_UPDATE_FEED_URL=https://github.com/brentishere41848/Avorax/releases/latest/download/update-feed.json --dart-define=AVORAX_UPDATE_CHANNEL=dev --dart-define=AVORAX_UPDATES_REPO_OWNER=brentishere41848 --dart-define=AVORAX_UPDATES_REPO_NAME=Avorax
 
       - name: Build local scan core
         working-directory: core/zentor_local_core
@@ -76,6 +76,12 @@ jobs:
 
       - name: Build guard service
         working-directory: core/zentor_guard_service
+        run: cargo build --release
+
+      - name: Build update service
+        working-directory: core/avorax_update_service
+        env:
+          AVORAX_UPDATE_PUBLIC_KEY_HEX: ${{ secrets.AVORAX_UPDATE_PUBLIC_KEY_HEX }}
         run: cargo build --release
 
       - name: Package Windows installers

@@ -168,6 +168,8 @@ $localCoreExeDefault = Join-Path $root "core\zentor_local_core\target\release\ze
 $localCoreExeWorkspace = Join-Path $workspaceTargetDir "zentor_local_core.exe"
 $guardServiceExeDefault = Join-Path $root "core\zentor_guard_service\target\release\zentor_guard_service.exe"
 $guardServiceExeWorkspace = Join-Path $workspaceTargetDir "zentor_guard_service.exe"
+$updateServiceExeDefault = Join-Path $root "core\avorax_update_service\target\release\avorax_update_service.exe"
+$updateServiceExeWorkspace = Join-Path $workspaceTargetDir "avorax_update_service.exe"
 $distRoot = Join-Path $root "dist"
 $stageDir = Join-Path $distRoot "windows-msi\stage"
 $wxsPath = Join-Path $distRoot "windows-msi\Avorax.wxs"
@@ -194,6 +196,7 @@ $brandingToolsSourceDir = Join-Path $root "tools\branding"
 $zneToolsSourceDir = Join-Path $root "tools\zne"
 $intelToolsSourceDir = Join-Path $root "tools\zentor_intel"
 $simulatorsSourceDir = Join-Path $root "tools\simulators"
+$updateToolsSourceDir = Join-Path $root "tools\update"
 $docsSourceDir = Join-Path $root "docs"
 $modelFile = Join-Path $modelSourceDir "zentor_static_malware_model.onnx"
 $modelMetadataFile = Join-Path $modelSourceDir "zentor_static_malware_model.metadata.json"
@@ -208,7 +211,7 @@ if (-not $SkipFlutterBuild) {
   Push-Location $clientDir
   try {
     $buildNumber = Get-FlutterBuildNumber $Version
-    Invoke-Checked { & $flutter build windows --release --build-name $Version --build-number $buildNumber "--dart-define=AVORAX_APP_VERSION=$Version" "--dart-define=ZENTOR_APP_VERSION=$Version" "--dart-define=AVORAX_UPDATES_REPO_OWNER=brentishere41848" "--dart-define=AVORAX_UPDATES_REPO_NAME=Avorax" } "Flutter Windows release build failed."
+    Invoke-Checked { & $flutter build windows --release --build-name $Version --build-number $buildNumber "--dart-define=AVORAX_APP_VERSION=$Version" "--dart-define=ZENTOR_APP_VERSION=$Version" "--dart-define=AVORAX_UPDATE_FEED_URL=https://github.com/brentishere41848/Avorax/releases/latest/download/update-feed.json" "--dart-define=AVORAX_UPDATE_CHANNEL=dev" "--dart-define=AVORAX_UPDATES_REPO_OWNER=brentishere41848" "--dart-define=AVORAX_UPDATES_REPO_NAME=Avorax" } "Flutter Windows release build failed."
   } finally {
     Pop-Location
   }
@@ -244,6 +247,22 @@ if (-not (Test-Path $guardServiceExeDefault)) {
     Push-Location (Join-Path $root "core\zentor_guard_service")
     try {
       Invoke-Checked { cargo build --release } "zentor_guard_service release build failed."
+    } finally {
+      Pop-Location
+    }
+  }
+}
+
+if (-not (Test-Path $updateServiceExeDefault) -and -not (Test-Path $updateServiceExeWorkspace)) {
+  $cargo = Get-Command "cargo" -ErrorAction SilentlyContinue
+  if (-not $cargo -and (Test-Path "$env:USERPROFILE\.cargo\bin\cargo.exe")) {
+    $env:PATH = "$env:USERPROFILE\.cargo\bin;$env:PATH"
+    $cargo = Get-Command "cargo" -ErrorAction SilentlyContinue
+  }
+  if ($cargo) {
+    Push-Location (Join-Path $root "core\avorax_update_service")
+    try {
+      Invoke-Checked { cargo build --release } "avorax_update_service release build failed."
     } finally {
       Pop-Location
     }
@@ -379,6 +398,7 @@ Copy-RequiredTree $brandingToolsSourceDir (Join-Path $stageToolsDir "branding") 
 Copy-RequiredTree $zneToolsSourceDir (Join-Path $stageToolsDir "zne") "ZNE self-test tools"
 Copy-RequiredTree $intelToolsSourceDir (Join-Path $stageToolsDir "zentor_intel") "safe threat-intel tools"
 Copy-RequiredTree $simulatorsSourceDir (Join-Path $stageToolsDir "simulators") "safe simulator tools"
+Copy-RequiredTree $updateToolsSourceDir (Join-Path $stageToolsDir "update") "update package tools"
 
 $coreSource = $null
 if (Test-Path $localCoreExe) {
@@ -418,6 +438,18 @@ if (Test-Path $guardServiceExeDefault) {
   Write-Warning "zentor_guard_service.exe was not found. This diagnostic package will not include the real-time Guard helper."
 }
 
+if (Test-Path $updateServiceExeDefault) {
+  Copy-Item -LiteralPath $updateServiceExeDefault -Destination (Join-Path $stageDir "avorax_update_service.exe") -Force
+  Copy-Item -LiteralPath $updateServiceExeDefault -Destination (Join-Path $releaseDir "avorax_update_service.exe") -Force
+} elseif (Test-Path $updateServiceExeWorkspace) {
+  Copy-Item -LiteralPath $updateServiceExeWorkspace -Destination (Join-Path $stageDir "avorax_update_service.exe") -Force
+  Copy-Item -LiteralPath $updateServiceExeWorkspace -Destination (Join-Path $releaseDir "avorax_update_service.exe") -Force
+} elseif (-not $AllowIncompletePayload) {
+  throw "avorax_update_service.exe was not found. Avorax installers must include and register the Update Service. Build it for Windows first or pass -AllowIncompletePayload only for local packaging diagnostics."
+} else {
+  Write-Warning "avorax_update_service.exe was not found. This diagnostic package cannot apply in-app .aup updates."
+}
+
 if ($IncludeClamAVCompatibility -and -not $SkipClamAV) {
   Ensure-ClamAVPackage $clamAvZipPath $clamAvUrl $clamAvSha256
   Copy-ClamAVRuntime $clamAvZipPath $clamAvExtractDir (Join-Path $stageDir "ClamAV")
@@ -452,6 +484,7 @@ $manifest = [ordered]@{
     flutter_client = Test-Path (Join-Path $stageDir "Avorax.exe")
     local_core = Test-Path (Join-Path $stageDir "avorax_core_service.exe")
     guard_service = Test-Path (Join-Path $stageDir "avorax_guard_service.exe")
+    update_service = Test-Path (Join-Path $stageDir "avorax_update_service.exe")
     native_engine_assets = Test-Path (Join-Path $stageDir "engine")
     ai_model_assets = Test-Path (Join-Path $stageDir "assets\models")
     trust_assets = Test-Path (Join-Path $stageDir "assets\trust")
@@ -466,6 +499,7 @@ $manifest = [ordered]@{
   service_install = [ordered]@{
     core_service = "installed and started by MSI"
     guard_service = "installed and started by MSI"
+    update_service = "installed by MSI as manual-demand updater"
   }
   driver_status = "driver source and validation scripts are packaged; driver is not silently installed or enabled"
 }
@@ -497,6 +531,7 @@ foreach ($requiredPayload in @(
   @("Avorax.exe", "Flutter desktop client"),
   @("avorax_core_service.exe", "Avorax Core Service"),
   @("avorax_guard_service.exe", "Avorax Guard Service"),
+  @("avorax_update_service.exe", "Avorax Update Service"),
   @("zentor_local_core.exe", "local core scanner helper"),
   @("zentor_guard_service.exe", "Guard Service"),
   @("engine\config\engine.default.json", "installed engine config"),
@@ -525,6 +560,7 @@ foreach ($requiredPayload in @(
   @("tools\zne\zne-release-gate.ps1", "ZNE release gate"),
   @("tools\simulators", "safe simulators"),
   @("tools\zentor_intel", "safe threat-intel tools"),
+  @("tools\update\avorax-build-update-package.ps1", "update package builder"),
   @("docs\README.md", "installed README"),
   @("docs\windows-driver.md", "driver documentation"),
   @("docs\safe-malware-testing.md", "safe malware testing documentation"),
@@ -584,6 +620,10 @@ foreach ($file in $files) {
     [void]$componentsXml.AppendLine("        <ServiceInstall Id=`"AvoraxGuardServiceInstall`" Type=`"ownProcess`" Vital=`"yes`" Name=`"avorax_guard_service`" DisplayName=`"Avorax Guard Service`" Description=`"Provides real-time protection, process monitoring, driver communication, and threat response for Avorax Anti-Virus.`" Start=`"auto`" Account=`"LocalSystem`" ErrorControl=`"normal`" Arguments=`"--service`" />")
     [void]$componentsXml.AppendLine("        <ServiceControl Id=`"AvoraxGuardServiceControl`" Name=`"avorax_guard_service`" Start=`"both`" Stop=`"both`" Remove=`"uninstall`" Wait=`"yes`" />")
   }
+  if ($relativePath -eq "avorax_update_service.exe") {
+    [void]$componentsXml.AppendLine("        <ServiceInstall Id=`"AvoraxUpdateServiceInstall`" Type=`"ownProcess`" Vital=`"yes`" Name=`"avorax_update_service`" DisplayName=`"Avorax Update Service`" Description=`"Applies verified Avorax updates, manages rollback, and updates Avorax components safely.`" Start=`"demand`" Account=`"LocalSystem`" ErrorControl=`"normal`" Arguments=`"--service`" />")
+    [void]$componentsXml.AppendLine("        <ServiceControl Id=`"AvoraxUpdateServiceControl`" Name=`"avorax_update_service`" Stop=`"both`" Remove=`"uninstall`" Wait=`"yes`" />")
+  }
   [void]$componentsXml.AppendLine("      </Component>")
   [void]$componentsXml.AppendLine("    </DirectoryRef>")
   [void]$componentRefsXml.AppendLine("      <ComponentRef Id=`"$componentId`" />")
@@ -598,6 +638,8 @@ $installReport = [ordered]@{
   core_service_running = $false
   guard_service_installed = $true
   guard_service_running = $false
+  update_service_installed = $true
+  update_service_running = $false
   native_engine_assets_present = $true
   signature_pack_count = (Get-ChildItem -LiteralPath (Join-Path $stageEngineDir "signatures") -File -Filter "*.asig").Count
   rule_pack_count = (Get-ChildItem -LiteralPath (Join-Path $stageEngineDir "rules") -File -Filter "*.arule").Count
@@ -608,13 +650,22 @@ $installReport = [ordered]@{
 }
 ($installReport | ConvertTo-Json -Depth 6) | Set-Content -LiteralPath $installReportSource -Encoding UTF8
 
-$programDataSubdirs = @("config", "logs", "events", "Quarantine", "scans", "cache", "reports", "migration")
+$programDataSubdirs = @("config", "logs", "events", "Quarantine", "scans", "cache", "reports", "migration", "updates")
+$updateDataSubdirs = @("staging", "rollback", "logs")
 $programDataXml = New-Object System.Text.StringBuilder
 $programDataRefsXml = New-Object System.Text.StringBuilder
 [void]$programDataXml.AppendLine("    <StandardDirectory Id=`"CommonAppDataFolder`">")
 [void]$programDataXml.AppendLine("      <Directory Id=`"AvoraxProgramDataFolder`" Name=`"Avorax`">")
 foreach ($dir in $programDataSubdirs) {
-  [void]$programDataXml.AppendLine("        <Directory Id=`"AvoraxData_$dir`" Name=`"$dir`" />")
+  if ($dir -eq "updates") {
+    [void]$programDataXml.AppendLine("        <Directory Id=`"AvoraxData_updates`" Name=`"updates`">")
+    [void]$programDataXml.AppendLine("          <Directory Id=`"AvoraxData_updates_staging`" Name=`"staging`" />")
+    [void]$programDataXml.AppendLine("          <Directory Id=`"AvoraxData_updates_rollback`" Name=`"rollback`" />")
+    [void]$programDataXml.AppendLine("          <Directory Id=`"AvoraxData_updates_logs`" Name=`"logs`" />")
+    [void]$programDataXml.AppendLine("        </Directory>")
+  } else {
+    [void]$programDataXml.AppendLine("        <Directory Id=`"AvoraxData_$dir`" Name=`"$dir`" />")
+  }
 }
 [void]$programDataXml.AppendLine("      </Directory>")
 [void]$programDataXml.AppendLine("    </StandardDirectory>")
@@ -628,6 +679,16 @@ foreach ($dir in $programDataSubdirs) {
   } else {
     [void]$programDataXml.AppendLine("        <RegistryValue Root=`"HKLM`" Key=`"Software\Avorax\ProgramData`" Name=`"$dir`" Type=`"integer`" Value=`"1`" KeyPath=`"yes`" />")
   }
+  [void]$programDataXml.AppendLine("      </Component>")
+  [void]$programDataXml.AppendLine("    </DirectoryRef>")
+  [void]$programDataRefsXml.AppendLine("      <ComponentRef Id=`"$componentId`" />")
+}
+foreach ($dir in $updateDataSubdirs) {
+  $componentId = "AvoraxCreateData_updates_$dir"
+  [void]$programDataXml.AppendLine("    <DirectoryRef Id=`"AvoraxData_updates_$dir`">")
+  [void]$programDataXml.AppendLine("      <Component Id=`"$componentId`" Guid=`"*`">")
+  [void]$programDataXml.AppendLine("        <CreateFolder />")
+  [void]$programDataXml.AppendLine("        <RegistryValue Root=`"HKLM`" Key=`"Software\Avorax\ProgramData\updates`" Name=`"$dir`" Type=`"integer`" Value=`"1`" KeyPath=`"yes`" />")
   [void]$programDataXml.AppendLine("      </Component>")
   [void]$programDataXml.AppendLine("    </DirectoryRef>")
   [void]$programDataRefsXml.AppendLine("      <ComponentRef Id=`"$componentId`" />")

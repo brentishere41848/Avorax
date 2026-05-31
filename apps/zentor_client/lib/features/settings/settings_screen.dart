@@ -80,15 +80,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             _ValueRow('Status', state.updateStatus.label),
             if (state.updateInfo != null) ...[
               _ValueRow('Latest version', state.updateInfo!.latestVersion),
+              _ValueRow('Channel', state.updateInfo!.channel),
               _ValueRow(
                 'Update package',
-                state.updateInfo!.assetName ?? 'No package available',
+                state.updateInfo!.packageName ?? 'No package available',
+              ),
+              _ValueRow(
+                'Rollback',
+                state.updateInfo!.rollbackSupported ? 'Available' : 'Unavailable',
               ),
             ],
             if (state.updateError != null)
               _ValueRow('Last check', state.updateError!),
             const Text(
-              'Avorax checks GitHub Releases and installs Windows updates from inside the app using the signed MSI package. Windows may ask for administrator approval.',
+              'Avorax installs normal updates inside the app from signed .aup packages. '
+              'The MSI/EXE installer is for first install, repair, recovery, and offline manual install.',
               style: TextStyle(color: ZentorColors.textSecondary, height: 1.4),
             ),
             const SizedBox(height: 12),
@@ -107,13 +113,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       : controller.unawaitedCheckForUpdates,
                 ),
                 if (state.updateStatus == UpdateStatus.updateAvailable ||
+                    state.updateStatus == UpdateStatus.downloading ||
+                    state.updateStatus == UpdateStatus.verifying ||
                     state.updateStatus == UpdateStatus.installing)
                   ZentorButton(
-                    label: state.updateStatus == UpdateStatus.installing
-                        ? 'Starting update'
-                        : 'Install update',
+                    label: switch (state.updateStatus) {
+                      UpdateStatus.downloading => 'Downloading',
+                      UpdateStatus.verifying => 'Verifying',
+                      UpdateStatus.installing => 'Installing',
+                      _ => 'Download and install',
+                    },
                     icon: Icons.system_update_alt_outlined,
-                    onPressed: state.updateStatus == UpdateStatus.installing
+                    onPressed:
+                        state.updateStatus == UpdateStatus.downloading ||
+                            state.updateStatus == UpdateStatus.verifying ||
+                            state.updateStatus == UpdateStatus.installing
                         ? null
                         : controller.installUpdateInApp,
                   ),

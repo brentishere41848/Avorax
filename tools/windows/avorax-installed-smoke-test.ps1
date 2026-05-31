@@ -28,6 +28,7 @@ Require-Path $InstallPath "Install directory" | Out-Null
 Require-Path (Join-Path $InstallPath "Avorax.exe") "Avorax app executable" | Out-Null
 Require-Path (Join-Path $InstallPath "avorax_core_service.exe") "Avorax Core Service executable" | Out-Null
 Require-Path (Join-Path $InstallPath "avorax_guard_service.exe") "Avorax Guard Service executable" | Out-Null
+Require-Path (Join-Path $InstallPath "avorax_update_service.exe") "Avorax Update Service executable" | Out-Null
 Require-Path (Join-Path $InstallPath "engine") "Avorax Native Engine directory" | Out-Null
 Require-Path (Join-Path $InstallPath "engine\config\engine.default.json") "Engine default config" | Out-Null
 Require-Path (Join-Path $InstallPath "engine\ml\avorax_native_model.amodel") "Native ML model" | Out-Null
@@ -48,6 +49,9 @@ if (($rules | Measure-Object).Count -le 0) {
 foreach ($dir in @("config", "logs", "events", "Quarantine", "scans", "cache", "reports", "migration")) {
   Require-Path (Join-Path $ProgramDataPath $dir) "ProgramData $dir directory" | Out-Null
 }
+foreach ($dir in @("updates", "updates\staging", "updates\rollback", "updates\logs")) {
+  Require-Path (Join-Path $ProgramDataPath $dir) "ProgramData $dir directory" | Out-Null
+}
 Require-Path (Join-Path $ProgramDataPath "reports\install_report.json") "Install report" | Out-Null
 
 $coreService = Get-Service -Name "avorax_core_service" -ErrorAction SilentlyContinue
@@ -62,6 +66,11 @@ if (-not $guardService) {
   Add-CheckError "Avorax Guard Service is not installed."
 } elseif ($RequireGuardRunning -and $guardService.Status -ne "Running") {
   Add-CheckError "Avorax Guard Service is installed but not running. Status: $($guardService.Status)"
+}
+
+$updateService = Get-Service -Name "avorax_update_service" -ErrorAction SilentlyContinue
+if (-not $updateService) {
+  Add-CheckError "Avorax Update Service is not installed."
 }
 
 $coreExe = Join-Path $InstallPath "avorax_core_service.exe"
