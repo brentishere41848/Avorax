@@ -985,7 +985,7 @@ mod tests {
     use tempfile::tempdir;
 
     #[test]
-    fn detect_only_mode_does_not_quarantine_suspicious_file() {
+    fn detect_only_mode_hides_weak_suspicious_filename_observation() {
         let dir = tempdir().unwrap();
         let file = dir.path().join("invoice.pdf.exe");
         fs::write(&file, b"not malware, just a suspicious filename").unwrap();
@@ -998,15 +998,14 @@ mod tests {
         )
         .unwrap();
 
-        assert_eq!(report.status, ReportStatus::ThreatsFound);
-        assert_eq!(report.threats_found, 1);
+        assert_eq!(report.status, ReportStatus::Clean);
+        assert_eq!(report.threats_found, 0);
         assert!(file.exists());
-        assert_eq!(report.threats[0].status, ThreatResultStatus::Detected);
-        assert_ne!(report.threats[0].confidence, ThreatConfidence::Confirmed);
+        assert!(report.threats.is_empty());
     }
 
     #[test]
-    fn auto_quarantine_confirmed_only_ignores_heuristic_only_medium_confidence() {
+    fn auto_quarantine_confirmed_only_suppresses_heuristic_only_medium_confidence() {
         let dir = tempdir().unwrap();
         let file = dir.path().join("invoice.pdf.exe");
         fs::write(&file, b"not malware, just a suspicious filename").unwrap();
@@ -1019,10 +1018,10 @@ mod tests {
         )
         .unwrap();
 
-        assert_eq!(report.threats_found, 1);
+        assert_eq!(report.threats_found, 0);
         assert_eq!(report.quarantined_files, 0);
         assert!(file.exists());
-        assert_eq!(report.threats[0].status, ThreatResultStatus::Detected);
+        assert!(report.threats.is_empty());
     }
 
     #[test]
