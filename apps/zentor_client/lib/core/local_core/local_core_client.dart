@@ -236,26 +236,65 @@ class LocalCoreClient {
     if (!Platform.isWindows) {
       return 'Starting the Avorax Core Service is only supported on Windows.';
     }
-    final command =
-        "Start-Process -FilePath 'powershell.exe' "
-        "-ArgumentList @('-NoProfile', '-Command', "
-        "'Start-Service -Name avorax_core_service -ErrorAction Stop') "
-        '-Verb RunAs -Wait';
-    try {
-      final process = await Process.start('powershell.exe', [
-        '-NoProfile',
-        '-ExecutionPolicy',
-        'Bypass',
-        '-Command',
-        command,
-      ]);
-      final exitCode = await process.exitCode;
-      if (exitCode != 0) {
-        return 'Windows could not start Avorax Core Service. Exit code: $exitCode';
+    final result = await _runElevatedPowerShell(r'''
+$service = Get-Service -Name 'avorax_core_service' -ErrorAction Stop
+if ($service.Status -ne 'Running') {
+  Start-Service -Name 'avorax_core_service' -ErrorAction Stop
+}
+''');
+    if (result == null) return 'Avorax Core Service start was requested.';
+    return 'Avorax Core Service start failed: $result';
+  }
+
+  Future<String> repairInstallation() async {
+    if (!Platform.isWindows) {
+      return 'Repairing the Avorax service registration is only supported on Windows.';
+    }
+    final executable = _localCoreExecutable();
+    if (executable == null || !File(executable).existsSync()) {
+      return 'Avorax Core Service executable was not found. Reinstall Avorax or set AVORAX_CORE_SERVICE to the installed executable.';
+    }
+    final escapedExecutable = executable.replaceAll("'", "''");
+    final result = await _runElevatedPowerShell('''
+\$exe = '$escapedExecutable'
+\$service = Get-Service -Name 'avorax_core_service' -ErrorAction SilentlyContinue
+if (\$null -eq \$service) {
+  New-Service -Name 'avorax_core_service' -BinaryPathName "`"\$exe`" --service" -DisplayName 'Avorax Core Service' -Description 'Provides local scanning, native engine loading, quarantine, scan jobs, and local protection state for Avorax Anti-Virus.' -StartupType Automatic -ErrorAction Stop
+}
+Set-Service -Name 'avorax_core_service' -StartupType Automatic -ErrorAction Stop
+Start-Service -Name 'avorax_core_service' -ErrorAction Stop
+''');
+    if (result == null) {
+      return 'Avorax Core Service repair was requested.';
+    }
+    return 'Avorax Core Service repair failed: $result';
+  }
+
+  Future<String> openInstallReport() async {
+    if (!Platform.isWindows) {
+      return 'Install reports are only opened automatically on Windows.';
+    }
+    final candidates = [
+      r'C:\ProgramData\Avorax\reports\install_report.json',
+      r'C:\Program Files\Avorax\install-manifest.json',
+      '${File(Platform.resolvedExecutable).parent.path}${Platform.pathSeparator}install-manifest.json',
+    ];
+    File? report;
+    for (final candidate in candidates) {
+      final file = File(candidate);
+      if (file.existsSync()) {
+        report = file;
+        break;
       }
-      return 'Avorax Core Service start was requested.';
+    }
+    if (report == null) {
+      return 'No Avorax install report was found under ProgramData or the install directory.';
+    }
+    try {
+      await Process.start('explorer.exe', ['/select,${report.path}']);
+      return 'Opened Avorax install report location.';
     } on Object catch (error) {
-      return 'Avorax Core Service start failed: $error';
+      return 'Unable to open install report: $error';
     }
   }
 
@@ -392,6 +431,42 @@ class LocalCoreClient {
       if (file.existsSync()) return file.absolute.path;
     }
     return candidates.first;
+  }
+
+  Future<String?> _runElevatedPowerShell(String script) async {
+    final encoded = _powershellEncodedCommand(script);
+    final launcher =
+        r"$process = Start-Process -FilePath 'powershell.exe' "
+        "-ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-EncodedCommand','$encoded') "
+        r"-Verb RunAs -Wait -PassThru; exit $process.ExitCode";
+    try {
+      final process = await Process.start('powershell.exe', [
+        '-NoProfile',
+        '-ExecutionPolicy',
+        'Bypass',
+        '-Command',
+        launcher,
+      ]);
+      final stderr = await process.stderr.transform(utf8.decoder).join();
+      final exitCode = await process.exitCode.timeout(
+        const Duration(minutes: 2),
+      );
+      if (exitCode == 0) return null;
+      final trimmed = stderr.trim();
+      return trimmed.isEmpty ? 'PowerShell exit code $exitCode' : trimmed;
+    } on Object catch (error) {
+      return '$error';
+    }
+  }
+
+  String _powershellEncodedCommand(String script) {
+    final bytes = <int>[];
+    for (final codeUnit in script.codeUnits) {
+      bytes
+        ..add(codeUnit & 0xff)
+        ..add((codeUnit >> 8) & 0xff);
+    }
+    return base64Encode(bytes);
   }
 
   ScanReport _scanReportFromJson(

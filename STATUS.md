@@ -23,6 +23,8 @@ In-app signed updater implementation for Avorax. MSI/EXE installers remain first
 - Added installed smoke-test and installer-stage checks for the Update Service, update directories, update tools, and ML/native-engine assets.
 - Added `docs/in-app-updates.md` and `docs/reports/update-flow-audit.md`.
 - Added `packages/avorax_protocol` with shared update manifest models for future client/service protocol alignment.
+- Wired the Scan page engine-unavailable recovery actions to real local operations: elevated Avorax Core Service start, explicit service registration/start repair, and install-report opening.
+- Added audit logging for install-report open and installation-repair requests, and made scan errors distinguish stopped or missing Core Service states from generic native-engine unavailability.
 
 ## Blockers
 

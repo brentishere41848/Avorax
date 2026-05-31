@@ -537,6 +537,27 @@ class ZentorController extends StateNotifier<ZentorState> {
     await unawaitedCheckMalwareEngine();
   }
 
+  Future<void> openInstallReport() async {
+    final result = await _localCoreClient.openInstallReport();
+    await logEvent(
+      'install_report_open_requested',
+      'Install report open requested',
+      details: result,
+    );
+    state = state.copyWith(errorMessage: result);
+  }
+
+  Future<void> repairInstallation() async {
+    final result = await _localCoreClient.repairInstallation();
+    await logEvent(
+      'installation_repair_requested',
+      'Installation repair requested',
+      details: result,
+    );
+    state = state.copyWith(errorMessage: result);
+    await unawaitedCheckMalwareEngine();
+  }
+
   Future<void> addManualProtectedAppFile() async {
     if (!_hashService.supportsPathHashing) {
       state = state.copyWith(
@@ -1189,10 +1210,20 @@ class ZentorController extends StateNotifier<ZentorState> {
       lastScanReport: report,
       clearCurrentScanPath: true,
       errorMessage: report.status == ScanStatus.engineUnavailable
-          ? 'Avorax Native Engine unavailable. Install the Avorax MSI or verify native engine assets.'
+          ? _engineUnavailableMessage()
           : null,
     );
     await unawaitedRefreshQuarantine();
+  }
+
+  String _engineUnavailableMessage() {
+    if (state.coreServiceStatus == 'stopped') {
+      return 'Avorax Core Service is stopped. Start the service, then retry the scan.';
+    }
+    if (state.coreServiceStatus == 'missing') {
+      return 'Avorax Core Service is not registered. Use Repair installation or reinstall Avorax.';
+    }
+    return 'Avorax Native Engine unavailable. Install the Avorax MSI or verify native engine assets.';
   }
 
   Future<String?> exportLogs() async {
