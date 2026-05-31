@@ -51,3 +51,10 @@ dist/
 *.pdb
 *.rlib
 *.lib
+
+# Malware lab outputs must stay outside this repository. These entries prevent
+# accidental commits if a developer points a lab tool at the checkout anyway.
+malware_samples/
+lab_malware_samples/
+*.malware
+*.virus

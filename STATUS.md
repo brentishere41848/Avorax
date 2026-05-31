@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-False-positive and protection-health UX hardening after Phase 1 product cleanup.
+Safe external malware-intelligence support after `v0.2.5`.
 
 ## Current Commit
 
@@ -34,6 +34,12 @@ False-positive and protection-health UX hardening after Phase 1 product cleanup.
 - Reworked the Protection screen explanation and checklist so `Partially Protected` states explain the missing guard/driver/self-test components and make Cloud disabled explicitly optional.
 - Reworked the Device tab into `Device & Protection Health` and removed the unprofessional `Flutter local core active` wording.
 - Extended false-positive gates and tests for Zentor installer EXE, Zentor MSI, setup.exe in Downloads, Zentor internal files, normal Downloads EXEs, and native installer trust.
+- Added safe GitHub malware-repository metadata and hash-only import tools under `tools/zentor_intel/`.
+- Added disabled-by-default external source config for Pyran1 malware repositories in `assets/zentor_native/threat_intel/sources.example.json`.
+- Added empty safe `.zsig` packs for GitHub hash-only known-bad and lab known-bad indicators.
+- Added `tools/security/zentor-no-malware-binaries-gate.ps1` and `.sh`, wired into the Windows release gate.
+- Added docs for safe external malware-intel handling, metadata-only mode, hash-only mode, and disabled lab mode.
+- Added native engine tests for GitHub hash-only known-bad SHA-256 confirmation and policy quarantine.
 
 ## Blockers
 
@@ -47,6 +53,12 @@ False-positive and protection-health UX hardening after Phase 1 product cleanup.
 
 - `powershell -ExecutionPolicy Bypass -File tools\branding\branding-check.ps1`
 - `powershell -ExecutionPolicy Bypass -File tools\security\zentor-product-copy-gate.ps1`
+- `powershell -ExecutionPolicy Bypass -File tools\security\zentor-no-malware-binaries-gate.ps1`
+- `python tools\zentor_intel\import_github_malware_metadata.py --config assets\zentor_native\threat_intel\sources.example.json --output $env:TEMP\zentor_metadata.jsonl`
+- `python tools\zentor_intel\import_github_hashes_only.py ...` with a safe temporary SHA-256 fixture
+- `python tools\zentor_intel\build_known_bad_from_github.py ...` with a safe temporary SHA-256 fixture
+- `python tools\zentor_intel\validate_indicator_pack.py --input $env:TEMP\zentor_github_known_bad.zsig`
+- Lab-download rejection smoke tests for missing env/flag and repository-local output folder.
 
 ## Tests Failing Or Blocked
 
@@ -61,17 +73,17 @@ False-positive and protection-health UX hardening after Phase 1 product cleanup.
 
 ## Remaining Work
 
-- Run Rust, Flutter, Dart, false-positive, protection, performance, release, and installer gates in a provisioned environment with Cargo, Flutter, Dart, and driver tooling available.
+- Run Rust, Flutter, Dart, false-positive, protection, performance, release, no-malware-binaries, and installer gates in a provisioned environment with Cargo, Flutter, Dart, and driver tooling available.
 - Keep iterating on false-positive policy using signed-publisher validation and real build artifact hash metadata when those are available.
 - Continue Phase 2+ implementation in order, without marking driver or production ML features complete until their mandatory validation gates pass.
 
 ## Exact Next Step
 
-Install/provide Cargo, Flutter, and Dart in this checkout or run CI, then execute `cargo test --workspace`, `flutter analyze`, `flutter test`, `dart test`, and `powershell -ExecutionPolicy Bypass -File tools\security\zentor-false-positive-gate.ps1`.
+Push this checkpoint and let CI run the Rust/Flutter/Dart checks; do not tag another release unless CI and the release workflow pass.
 
 ## Handoff
 
-This checkpoint reduced false positives for weak heuristic-only results, Zentor installers/MSIs/internal files, normal Downloads/setup executables, and low/medium native observations. PowerShell branding and product-copy gates pass locally. Rust, false-positive, Flutter, Dart, and driver gates remain environment-blocked here and are documented rather than faked.
+This checkpoint adds safe metadata-only/hash-only external malware-intelligence support. It does not clone malware repos, download malware, execute samples, or ship samples. PowerShell branding, product-copy, and no-malware-binaries gates pass locally. Rust, false-positive, Flutter, Dart, and driver gates remain environment-blocked here and must run in CI or a provisioned environment.
 
 ## Final Limitations
 

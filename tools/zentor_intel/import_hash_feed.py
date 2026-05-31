@@ -19,6 +19,8 @@ def main() -> int:
     args = parser.parse_args()
 
     source = json.loads(Path(args.source).read_text(encoding="utf-8"))
+    if "source_name" not in source and isinstance(source.get("manual_hash_source_template"), dict):
+        source = source["manual_hash_source_template"]
     source_name = source.get("source_name")
     if not source_name:
         raise SystemExit("source_name is required")

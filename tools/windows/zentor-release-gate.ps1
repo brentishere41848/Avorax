@@ -19,6 +19,12 @@ try {
   Add-Error "Branding check failed: $($_.Exception.Message)"
 }
 
+try {
+  & (Join-Path $root "tools\security\zentor-no-malware-binaries-gate.ps1") -RepoRoot $root
+} catch {
+  Add-Error "No-malware-binaries gate failed: $($_.Exception.Message)"
+}
+
 if (-not (Test-Path -LiteralPath $SelfTestReport)) {
   Add-Error "selftest_report.json is missing: $SelfTestReport"
 } else {

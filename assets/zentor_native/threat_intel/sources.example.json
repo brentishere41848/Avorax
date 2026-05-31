@@ -1,6 +1,28 @@
 {
-  "source_name": "zentor-safe-fixture-feed",
-  "source_url": "https://example.invalid/zentor-safe-fixtures",
-  "source_type": "test_fixture",
-  "malware_family": "generic-test-threat"
+  "sources": [
+    {
+      "name": "Pyran1 MalwareDatabase",
+      "url": "https://github.com/Pyran1/MalwareDatabase",
+      "mode": "metadata_only",
+      "enabled": false
+    },
+    {
+      "name": "Pyran1 MalwareCollection",
+      "url": "https://github.com/Pyran1/MalwareCollection",
+      "mode": "metadata_only",
+      "enabled": false
+    },
+    {
+      "name": "Pyran1 MalwareDatabaseUnsorted",
+      "url": "https://github.com/Pyran1/MalwareDatabaseUnsorted",
+      "mode": "metadata_only",
+      "enabled": false
+    }
+  ],
+  "manual_hash_source_template": {
+    "source_name": "developer-provided-safe-hash-list",
+    "source_url": null,
+    "source_type": "developer_provided_hash_list",
+    "malware_family": null
+  }
 }

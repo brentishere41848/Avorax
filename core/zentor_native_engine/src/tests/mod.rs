@@ -28,6 +28,37 @@ mod tests {
             r#"{"format":"zentor-signature-pack-v1","version":"1","signatures":[]}"#,
         )
         .unwrap();
+        let github_known_bad_hash = sha256_bytes(b"github known bad hash-only fixture");
+        fs::write(
+            assets.join("signatures/zentor_github_known_bad.zsig"),
+            format!(
+                r#"{{
+  "format":"zentor-signature-pack-v1",
+  "version":"test",
+  "signatures":[{{
+    "id":"ZGI-HASH-UNIT-001",
+    "name":"GitHub malware-intel known-bad hash fixture",
+    "version":"1",
+    "category":"trojan",
+    "confidence":"confirmed",
+    "severity":"critical",
+    "signature_type":"exact_hash",
+    "pattern":"{github_known_bad_hash}",
+    "mask":null,
+    "offset":null,
+    "file_types":["*"],
+    "min_file_size":null,
+    "max_file_size":null,
+    "required_context":["Exact SHA-256 from GitHub malware-intel pack."],
+    "false_positive_notes":"Hash-only test fixture; no malware binary is included.",
+    "action_policy":"quarantine_if_policy_allows",
+    "created_at":"2026-05-31T00:00:00Z",
+    "updated_at":"2026-05-31T00:00:00Z"
+  }}]
+}}"#
+            ),
+        )
+        .unwrap();
         fs::write(
             assets.join("rules/zentor_rules.zrule"),
             r#"{"format":"zentor-rule-pack-v1","version":"1","rules":[{"id":"ps_encoded_download_exec","name":"Suspicious PowerShell encoded downloader execution","description":"Encoded PowerShell with download and execution indicators.","category":"suspiciousScript","confidence":"high","verdict":"probableMalware","false_positive_notes":"Admin scripts can contain encoded commands; this rule requires download and execution indicators.","conditions":[{"type":"file_type","equals":"powershell_script"},{"type":"encoded_command"},{"type":"downloader_and_execution"}],"min_condition_matches":3,"action":"review_or_block_by_policy"}]}"#,
@@ -115,6 +146,37 @@ mod tests {
             Verdict::LikelyClean | Verdict::Clean
         ));
         assert!(verdict.quarantine_record.is_none());
+    }
+
+    #[test]
+    fn github_known_bad_sha256_pack_confirms_threat() {
+        let (_dir, mut engine) = test_engine();
+        let verdict = engine
+            .scan_bytes_for_test(
+                std::path::PathBuf::from("github-known-bad.bin"),
+                b"github known bad hash-only fixture",
+                ScanActionMode::DetectOnly,
+            )
+            .unwrap();
+        assert_eq!(verdict.final_verdict.verdict, Verdict::ConfirmedMalware);
+        assert_eq!(verdict.final_verdict.confidence, Confidence::Confirmed);
+        assert_eq!(verdict.final_verdict.category, ThreatCategory::Trojan);
+        assert!(verdict.final_verdict.user_visible_explanation.contains(
+            "GitHub malware-intel known-bad hash fixture"
+        ));
+    }
+
+    #[test]
+    fn github_known_bad_sha256_can_quarantine_by_policy() {
+        let (dir, mut engine) = test_engine();
+        let file = dir.path().join("github-known-bad.bin");
+        fs::write(&file, b"github known bad hash-only fixture").unwrap();
+        let verdict = engine
+            .scan_file(file.clone(), ScanActionMode::AutoQuarantineConfirmed)
+            .unwrap();
+        assert_eq!(verdict.final_verdict.verdict, Verdict::ConfirmedMalware);
+        assert!(verdict.quarantine_record.is_some());
+        assert!(!file.exists());
     }
 
     #[test]
