@@ -15,7 +15,7 @@ Future<void> main() async {
     const options = WindowOptions(
       size: Size(1100, 720),
       minimumSize: Size(1100, 720),
-      title: 'Zentor',
+      title: 'Avorax',
       backgroundColor: Colors.transparent,
     );
     await windowManager.waitUntilReadyToShow(options, () async {

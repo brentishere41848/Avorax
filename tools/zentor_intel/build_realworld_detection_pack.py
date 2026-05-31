@@ -6,7 +6,7 @@ from pathlib import Path
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Build a real-world Zentor detection pack from local indicator files.")
+    parser = argparse.ArgumentParser(description="Build a real-world Avorax detection pack from local indicator files.")
     parser.add_argument("--source", required=True)
     parser.add_argument("--hashes", required=True)
     parser.add_argument("--output", required=True)

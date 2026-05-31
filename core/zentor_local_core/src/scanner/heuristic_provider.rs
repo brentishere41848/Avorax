@@ -69,8 +69,8 @@ impl HeuristicProvider {
                 confidence: ThreatConfidence::Low,
                 reasons: vec![reason(
                     "zentor_trusted_artifact",
-                    "Zentor trusted artifact",
-                    "Zentor installer, service, driver, quarantine, update, and build artifacts are suppressed unless a confirmed known-bad signature matches.",
+                    "Avorax trusted artifact",
+                    "Avorax installer, service, driver, quarantine, update, and build artifacts are suppressed unless a confirmed known-bad signature matches.",
                     -90,
                     RiskSeverity::Info,
                     RiskReasonSource::UserLabel,
@@ -485,7 +485,7 @@ mod tests {
         let dir = tempdir().unwrap();
         let downloads = dir.path().join("Downloads");
         fs::create_dir_all(&downloads).unwrap();
-        let file = downloads.join("Zentor-AntiVirus-0.2.2-x64-setup.exe");
+        let file = downloads.join("Avorax-AntiVirus-0.2.2-x64-setup.exe");
         fs::write(&file, b"zentor installer fixture").unwrap();
 
         assert!(HeuristicProvider.inspect_file(&file).is_none());
@@ -499,7 +499,7 @@ mod tests {
         let dir = tempdir().unwrap();
         let downloads = dir.path().join("Downloads");
         fs::create_dir_all(&downloads).unwrap();
-        let file = downloads.join("Zentor-AntiVirus-0.2.2-x64.msi");
+        let file = downloads.join("Avorax-AntiVirus-0.2.2-x64.msi");
         fs::write(&file, b"zentor msi fixture").unwrap();
 
         assert!(HeuristicProvider.inspect_file(&file).is_none());

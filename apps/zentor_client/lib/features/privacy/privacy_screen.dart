@@ -7,17 +7,17 @@ class PrivacyScreen extends StatelessWidget {
   const PrivacyScreen({super.key});
 
   static const points = [
-    'Zentor scans common high-risk locations during Quick Scan.',
-    'Zentor scans accessible local files during Full Scan and skips paths denied by the OS.',
-    'Zentor scans only the file or folder you choose during Custom Scan.',
-    'Zentor can automatically quarantine confirmed detections when scan mode allows it.',
-    'Zentor never permanently deletes files automatically.',
-    'Zentor does not steal credentials.',
-    'Zentor does not read browser cookies.',
-    'Zentor does not hide from the user.',
-    'Zentor does not silently install kernel drivers. Windows driver protection is optional and user-visible.',
-    'Zentor does not disable other security tools.',
-    'Zentor logs local security events visibly.',
+    'Avorax scans common high-risk locations during Quick Scan.',
+    'Avorax scans accessible local files during Full Scan and skips paths denied by the OS.',
+    'Avorax scans only the file or folder you choose during Custom Scan.',
+    'Avorax can automatically quarantine confirmed detections when scan mode allows it.',
+    'Avorax never permanently deletes files automatically.',
+    'Avorax does not steal credentials.',
+    'Avorax does not read browser cookies.',
+    'Avorax does not hide from the user.',
+    'Avorax does not silently install kernel drivers. Windows driver protection is optional and user-visible.',
+    'Avorax does not disable other security tools.',
+    'Avorax logs local security events visibly.',
   ];
 
   @override
@@ -32,7 +32,7 @@ class PrivacyScreen extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            'Zentor is a visible antivirus and security client. It is not a hidden system monitor and does not claim perfect detection.',
+            'Avorax is a visible antivirus and security client. It is not a hidden system monitor and does not claim perfect detection.',
             style: Theme.of(
               context,
             ).textTheme.bodyLarge?.copyWith(color: ZentorColors.textSecondary),

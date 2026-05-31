@@ -354,10 +354,10 @@ class ZentorController extends StateNotifier<ZentorState> {
       await logEvent(
         'update_available',
         'Update available',
-        details: 'Zentor ${result.update!.latestVersion}',
+        details: 'Avorax ${result.update!.latestVersion}',
       );
     } else if (!silent && result.status == UpdateStatus.upToDate) {
-      await logEvent('update_check_completed', 'Zentor is up to date');
+      await logEvent('update_check_completed', 'Avorax is up to date');
     } else if (!silent && result.status == UpdateStatus.failed) {
       await logEvent(
         'update_check_failed',
@@ -628,7 +628,7 @@ class ZentorController extends StateNotifier<ZentorState> {
       protectionStatus: ProtectionStatus.error,
       loading: false,
       errorMessage:
-          'No local prevention engine is ready. Install the Zentor MSI or verify Zentor Native Engine assets.',
+          'No local prevention engine is ready. Install the Avorax MSI or verify Avorax Native Engine assets.',
     );
   }
 
@@ -1096,7 +1096,7 @@ class ZentorController extends StateNotifier<ZentorState> {
       lastScanReport: report,
       clearCurrentScanPath: true,
       errorMessage: report.status == ScanStatus.engineUnavailable
-          ? 'Zentor Native Engine unavailable. Install the Zentor MSI or verify native engine assets.'
+          ? 'Avorax Native Engine unavailable. Install the Avorax MSI or verify native engine assets.'
           : null,
     );
     await unawaitedRefreshQuarantine();

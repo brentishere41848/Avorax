@@ -1,6 +1,6 @@
-# Zentor Offline Malware Model
+# Avorax Offline Malware Model
 
-Zentor uses a local ONNX model for static malware analysis. The production app must never fake AI detections. If `assets/models/zentor_static_malware_model.onnx` is missing, the AI engine reports `Model missing`.
+Avorax uses a local ONNX model for static malware analysis. The production app must never fake AI detections. If `assets/models/zentor_static_malware_model.onnx` is missing, the AI engine reports `Model missing`.
 
 The repository includes a development ONNX model so runtime loading, deterministic inference, and UI behavior are real. It is marked `production_ready=false` and must not auto-quarantine by itself.
 

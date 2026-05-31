@@ -15,7 +15,7 @@ TYPE_MAP = {
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Compile Zentor JSONL indicators to a .zsig JSON pack.")
+    parser = argparse.ArgumentParser(description="Compile Avorax JSONL indicators to a .zsig JSON pack.")
     parser.add_argument("--input", required=True)
     parser.add_argument("--output", required=True)
     parser.add_argument("--version", default="dev")

@@ -222,4 +222,4 @@ if ($failures.Count -gt 0) {
     exit 1
 }
 
-Write-Host "Zentor branding check passed."
+Write-Host "Avorax branding check passed."

@@ -47,7 +47,7 @@ try {
 }
 
 if ($errors.Count -gt 0) {
-  throw "Zentor protection gate failed with $($errors.Count) error(s)."
+  throw "Avorax protection gate failed with $($errors.Count) error(s)."
 }
 
-Write-Host "Zentor protection gate passed."
+Write-Host "Avorax protection gate passed."

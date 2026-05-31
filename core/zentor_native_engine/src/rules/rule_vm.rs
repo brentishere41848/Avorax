@@ -144,7 +144,7 @@ pub fn evaluate_rule(
         category: rule.category,
         confidence: rule.confidence,
         verdict: rule.verdict,
-        reason: format!("Zentor Native Rule matched: {}", rule.name),
+        reason: format!("Avorax Native Rule matched: {}", rule.name),
         weight: match (rule.verdict, rule.confidence) {
             (Verdict::ConfirmedMalware | Verdict::TestThreat, Confidence::Confirmed) => 100,
             (Verdict::ProbableMalware, Confidence::High) => 65,

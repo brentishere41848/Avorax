@@ -37,7 +37,7 @@ HKR,"Instances\%DefaultInstance%","Altitude",0x00000000,%Altitude%
 HKR,"Instances\%DefaultInstance%","Flags",0x00010001,0
 
 [Strings]
-ManufacturerName = "Zentor"
-ServiceName = "Zentor AV Minifilter"
+ManufacturerName = "Avorax"
+ServiceName = "Avorax AV Minifilter"
 DefaultInstance = "ZentorAvFilter Instance"
 Altitude = "328500"

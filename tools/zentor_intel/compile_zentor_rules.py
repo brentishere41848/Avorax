@@ -5,7 +5,7 @@ from pathlib import Path
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Merge Zentor .zrule JSON files into one rule pack.")
+    parser = argparse.ArgumentParser(description="Merge Avorax .zrule JSON files into one rule pack.")
     parser.add_argument("--input", required=True, help="Directory containing .zrule files")
     parser.add_argument("--output", required=True)
     parser.add_argument("--version", default="dev")

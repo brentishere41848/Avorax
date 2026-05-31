@@ -120,7 +120,7 @@ class ProtectionScreen extends ConsumerWidget {
                 detail: state.protectionStatus == ProtectionStatus.localOnly
                     ? 'Cloud is optional; local protection remains available.'
                     : state.guardStatus == 'running'
-                    ? 'Zentor Guard Service is running. Confirmed threats can be stopped after launch.'
+                    ? 'Avorax Guard Service is running. Confirmed threats can be stopped after launch.'
                     : 'Guard Service is not running. Manual scans and quarantine remain available.',
                 icon: Icons.shield_outlined,
               ),
@@ -143,7 +143,7 @@ class ProtectionScreen extends ConsumerWidget {
                 icon: Icons.block_outlined,
               ),
               ZentorMetricCard(
-                title: 'Zentor Native Engine',
+                title: 'Avorax Native Engine',
                 value: state.nativeEngineStatus == 'ready'
                     ? 'Ready'
                     : 'Unavailable',
@@ -156,7 +156,7 @@ class ProtectionScreen extends ConsumerWidget {
                 title: 'Native rules',
                 value: '${state.nativeRuleCount} rules',
                 detail:
-                    'Zentor-owned rules supplement native signatures, ML, and heuristic analysis.',
+                    'Avorax-owned rules supplement native signatures, ML, and heuristic analysis.',
                 icon: Icons.rule_folder_outlined,
               ),
               ZentorMetricCard(
@@ -280,9 +280,9 @@ String _protectionExplanation(ZentorState state) {
     return 'Local scans and quarantine are ready. Real-time pre-execution blocking is not active because the Windows driver is not installed or has not passed self-test.';
   }
   if (state.nativeEngineStatus != 'ready') {
-    return 'Action required: Zentor Native Engine assets are missing or failed to load. Zentor does not report files clean while the engine is unavailable.';
+    return 'Action required: Avorax Native Engine assets are missing or failed to load. Avorax does not report files clean while the engine is unavailable.';
   }
-  return 'Zentor shows exactly which local protection components are ready, degraded, or unavailable. Cloud disabled is optional and does not reduce local scan protection.';
+  return 'Avorax shows exactly which local protection components are ready, degraded, or unavailable. Cloud disabled is optional and does not reduce local scan protection.';
 }
 
 String _guardLabel(String status) => switch (status) {

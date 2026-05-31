@@ -139,10 +139,10 @@ $guardServiceExeDefault = Join-Path $root "core\zentor_guard_service\target\rele
 $guardServiceExeWorkspace = Join-Path $workspaceTargetDir "zentor_guard_service.exe"
 $distRoot = Join-Path $root "dist"
 $stageDir = Join-Path $distRoot "windows-msi\stage"
-$wxsPath = Join-Path $distRoot "windows-msi\Zentor.wxs"
-$bundleWxsPath = Join-Path $distRoot "windows-msi\Zentor.Bundle.wxs"
-$msiPath = Join-Path $distRoot "Zentor-AntiVirus-$Version-x64.msi"
-$exeInstallerPath = Join-Path $distRoot "Zentor-AntiVirus-$Version-x64-setup.exe"
+$wxsPath = Join-Path $distRoot "windows-msi\Avorax.wxs"
+$bundleWxsPath = Join-Path $distRoot "windows-msi\Avorax.Bundle.wxs"
+$msiPath = Join-Path $distRoot "Avorax-AntiVirus-$Version-x64.msi"
+$exeInstallerPath = Join-Path $distRoot "Avorax-AntiVirus-$Version-x64-setup.exe"
 $clamAvVersion = "1.5.2"
 $clamAvUrl = "https://github.com/Cisco-Talos/clamav/releases/download/clamav-$clamAvVersion/clamav-$clamAvVersion.win.x64.zip"
 $clamAvSha256 = "6F868ED7A7E5A15ACED82C53A4FA9F3F42FA9D7F7DE14A606BA8DB0756518EED"
@@ -169,13 +169,13 @@ if (-not $SkipFlutterBuild) {
   Push-Location $clientDir
   try {
     $buildNumber = Get-FlutterBuildNumber $Version
-    Invoke-Checked { & $flutter build windows --release --build-name $Version --build-number $buildNumber "--dart-define=ZENTOR_APP_VERSION=$Version" } "Flutter Windows release build failed."
+    Invoke-Checked { & $flutter build windows --release --build-name $Version --build-number $buildNumber "--dart-define=AVORAX_APP_VERSION=$Version" "--dart-define=ZENTOR_APP_VERSION=$Version" } "Flutter Windows release build failed."
   } finally {
     Pop-Location
   }
 }
 
-if (-not (Test-Path (Join-Path $releaseDir "Zentor.exe"))) {
+if (-not (Test-Path (Join-Path $releaseDir "Avorax.exe"))) {
   throw "Flutter release output was not found at $releaseDir"
 }
 
@@ -215,7 +215,7 @@ New-Item -ItemType Directory -Force -Path (Split-Path $wxsPath) | Out-Null
 Copy-Tree $releaseDir $stageDir
 
 if (-not (Test-Path $modelFile) -or -not (Test-Path $modelMetadataFile)) {
-  throw "Zentor AI model assets are required: $modelFile and $modelMetadataFile"
+  throw "Avorax AI model assets are required: $modelFile and $modelMetadataFile"
 }
 $modelMetadata = Get-Content -Raw -LiteralPath $modelMetadataFile | ConvertFrom-Json
 if (-not $modelMetadata.production_ready -and -not $AllowDevelopmentModel) {
@@ -227,7 +227,7 @@ Copy-Tree $modelSourceDir $stageModelDir
 Copy-Tree $modelSourceDir $releaseModelDir
 
 if (-not (Test-Path (Join-Path $nativeSourceDir "signatures\zentor_core.zsig")) -or -not (Test-Path (Join-Path $nativeSourceDir "rules\zentor_rules.zrule")) -or -not (Test-Path (Join-Path $nativeSourceDir "ml\zentor_native_model.zmodel"))) {
-  throw "Zentor Native Engine assets are required under $nativeSourceDir"
+  throw "Avorax Native Engine assets are required under $nativeSourceDir"
 }
 $stageNativeDir = Join-Path $stageDir "assets\zentor_native"
 $releaseNativeDir = Join-Path $releaseDir "assets\zentor_native"
@@ -271,7 +271,7 @@ foreach ($requiredDriverFile in @(
 )) {
   $driverFilePath = Join-Path $driverToolsSourceDir $requiredDriverFile
   if (-not (Test-Path $driverFilePath)) {
-    throw "Zentor Windows driver development file is missing: $driverFilePath"
+    throw "Avorax Windows driver development file is missing: $driverFilePath"
   }
 }
 $stageDriverToolsDir = Join-Path $stageDir "driver-tools\zentor_windows_minifilter"
@@ -315,7 +315,7 @@ if ($IncludeClamAVCompatibility -and -not $SkipClamAV) {
   Copy-ClamAVRuntime $clamAvZipPath $clamAvExtractDir (Join-Path $releaseDir "ClamAV")
   Write-Host "Bundled optional ClamAV compatibility runtime $clamAvVersion in the MSI."
 } else {
-  Write-Host "Skipping ClamAV compatibility runtime. Zentor Native Engine is the primary scanner."
+  Write-Host "Skipping ClamAV compatibility runtime. Avorax Native Engine is the primary scanner."
 }
 
 $runtimeDlls = @(
@@ -391,7 +391,7 @@ foreach ($file in $files) {
   [void]$componentsXml.AppendLine("      <Component Id=`"$componentId`" Guid=`"*`">")
   [void]$componentsXml.AppendLine("        <File Id=`"$fileId`" Source=`"$(XmlEscape $file.FullName)`" KeyPath=`"yes`" />")
   if ($relativePath -eq "zentor_guard_service.exe") {
-    [void]$componentsXml.AppendLine("        <ServiceInstall Id=`"ZentorGuardServiceInstall`" Type=`"ownProcess`" Vital=`"yes`" Name=`"zentor_guard_service`" DisplayName=`"Zentor Guard Service`" Description=`"User-visible Zentor post-launch real-time protection service.`" Start=`"auto`" Account=`"LocalSystem`" ErrorControl=`"normal`" Arguments=`"--service`" />")
+    [void]$componentsXml.AppendLine("        <ServiceInstall Id=`"ZentorGuardServiceInstall`" Type=`"ownProcess`" Vital=`"yes`" Name=`"zentor_guard_service`" DisplayName=`"Avorax Guard Service`" Description=`"User-visible Avorax post-launch real-time protection service.`" Start=`"auto`" Account=`"LocalSystem`" ErrorControl=`"normal`" Arguments=`"--service`" />")
     [void]$componentsXml.AppendLine("        <ServiceControl Id=`"ZentorGuardServiceControl`" Name=`"zentor_guard_service`" Start=`"install`" Stop=`"both`" Remove=`"uninstall`" Wait=`"yes`" />")
   }
   [void]$componentsXml.AppendLine("      </Component>")
@@ -403,32 +403,32 @@ $upgradeCode = "35E0D125-9699-4CFB-8E93-588D0E83F517"
 $wxs = @"
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
   <Package
-    Name="Zentor Anti-Virus"
-    Manufacturer="Zentor Security"
+    Name="Avorax Anti-Virus"
+    Manufacturer="Avorax Security"
     Version="$Version"
     UpgradeCode="$upgradeCode"
     Scope="perMachine">
-    <MajorUpgrade DowngradeErrorMessage="A newer version of Zentor is already installed." />
+    <MajorUpgrade DowngradeErrorMessage="A newer version of Avorax is already installed." />
     <MediaTemplate EmbedCab="yes" />
 
     <StandardDirectory Id="ProgramFiles64Folder">
-      <Directory Id="INSTALLFOLDER" Name="Zentor" />
+      <Directory Id="INSTALLFOLDER" Name="Avorax" />
     </StandardDirectory>
     <StandardDirectory Id="ProgramMenuFolder">
-      <Directory Id="ApplicationProgramsFolder" Name="Zentor Anti-Virus" />
+      <Directory Id="ApplicationProgramsFolder" Name="Avorax Anti-Virus" />
     </StandardDirectory>
 
 $directoryXml
 $componentsXml
     <DirectoryRef Id="ApplicationProgramsFolder">
       <Component Id="StartMenuShortcut" Guid="*">
-        <Shortcut Id="ZentorStartMenuShortcut" Name="Zentor Anti-Virus" Target="[INSTALLFOLDER]Zentor.exe" WorkingDirectory="INSTALLFOLDER" />
+        <Shortcut Id="ZentorStartMenuShortcut" Name="Avorax Anti-Virus" Target="[INSTALLFOLDER]Avorax.exe" WorkingDirectory="INSTALLFOLDER" />
         <RemoveFolder Id="RemoveApplicationProgramsFolder" On="uninstall" />
-        <RegistryValue Root="HKCU" Key="Software\Zentor\Client" Name="installed" Type="integer" Value="1" KeyPath="yes" />
+        <RegistryValue Root="HKCU" Key="Software\Avorax\Client" Name="installed" Type="integer" Value="1" KeyPath="yes" />
       </Component>
     </DirectoryRef>
 
-    <Feature Id="MainFeature" Title="Zentor Anti-Virus" Level="1">
+    <Feature Id="MainFeature" Title="Avorax Anti-Virus" Level="1">
 $componentRefsXml
       <ComponentRef Id="StartMenuShortcut" />
     </Feature>
@@ -453,8 +453,8 @@ $bundleWxs = @"
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
      xmlns:bal="http://wixtoolset.org/schemas/v4/wxs/bal">
   <Bundle
-    Name="Zentor Anti-Virus"
-    Manufacturer="Zentor Security"
+    Name="Avorax Anti-Virus"
+    Manufacturer="Avorax Security"
     Version="$Version"
     UpgradeCode="$bundleUpgradeCode">
     <BootstrapperApplication>

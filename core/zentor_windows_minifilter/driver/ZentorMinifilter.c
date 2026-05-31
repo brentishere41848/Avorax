@@ -1,5 +1,5 @@
 /*
- * Zentor Windows Minifilter skeleton.
+ * Avorax Windows Minifilter skeleton.
  *
  * This file intentionally contains the defensive driver shape only. It is not
  * wired into the production installer until it is built with the WDK, tested in
@@ -7,7 +7,7 @@
  *
  * Architecture follows the public Microsoft minifilter model:
  * - register callbacks with Filter Manager
- * - send user-mode scan requests to Zentor Guard Service
+ * - send user-mode scan requests to Avorax Guard Service
  * - deny only confirmed malicious verdicts within explicit timeout policy
  * - fail open for critical system paths in normal mode
  */
@@ -31,7 +31,7 @@ DriverEntry(_In_ PDRIVER_OBJECT DriverObject, _In_ PUNICODE_STRING RegistryPath)
 
     /*
      * Production implementation must call FltRegisterFilter, create a secure
-     * communication port for Zentor Guard Service, register pre-create and
+     * communication port for Avorax Guard Service, register pre-create and
      * section-sync callbacks, and start filtering only after initialization
      * succeeds.
      */

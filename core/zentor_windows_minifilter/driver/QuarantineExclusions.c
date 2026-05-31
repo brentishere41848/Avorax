@@ -32,7 +32,7 @@ ZentorShouldExcludePath(_In_ PUNICODE_STRING NormalizedName)
         return TRUE;
     }
 
-    return ZentorContainsInsensitive(NormalizedName, L"*\\Zentor\\Quarantine\\*") ||
+    return ZentorContainsInsensitive(NormalizedName, L"*\\Avorax\\Quarantine\\*") ||
            ZentorContainsInsensitive(NormalizedName, L"*\\zentor_local_core.exe") ||
            ZentorContainsInsensitive(NormalizedName, L"*\\zentor_guard_service.exe") ||
            ZentorContainsInsensitive(NormalizedName, L"*\\ZentorAvFilter.sys");

@@ -1,5 +1,5 @@
 param(
-  [string]$CertName = "Zentor Driver Test Certificate",
+  [string]$CertName = "Avorax Driver Test Certificate",
   [string]$CertOutputDir = $(Join-Path (Resolve-Path (Join-Path $PSScriptRoot "..\..\..")) "dist\windows-driver-validation\cert"),
   [string]$ReportPath = $(Join-Path (Resolve-Path (Join-Path $PSScriptRoot "..\..\..")) "dist\windows-driver-validation\cert_report.json")
 )
@@ -23,7 +23,7 @@ try {
     errors = @()
   }
   $report | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $ReportPath -Encoding UTF8
-  Write-Host "Created Zentor development test certificate: $($cert.Thumbprint)"
+  Write-Host "Created Avorax development test certificate: $($cert.Thumbprint)"
 } catch {
   [ordered]@{
     zentor_version = "0.1.12"

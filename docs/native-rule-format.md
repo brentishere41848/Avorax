@@ -1,6 +1,6 @@
-# Zentor Native Rule Format
+# Avorax Native Rule Format
 
-Native rules use the `.zrule` extension and replace YARA as Zentor-owned deterministic rules.
+Native rules use the `.zrule` extension and replace YARA as Avorax-owned deterministic rules.
 
 Rules support:
 

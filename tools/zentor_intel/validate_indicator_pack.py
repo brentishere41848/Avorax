@@ -5,7 +5,7 @@ from pathlib import Path
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Validate Zentor indicator/signature/rule pack metadata.")
+    parser = argparse.ArgumentParser(description="Validate Avorax indicator/signature/rule pack metadata.")
     parser.add_argument("--input", required=True)
     args = parser.parse_args()
     pack = json.loads(Path(args.input).read_text(encoding="utf-8"))

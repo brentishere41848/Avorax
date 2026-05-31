@@ -38,4 +38,4 @@ if [[ "$failed" -ne 0 ]]; then
   exit 1
 fi
 
-printf 'Zentor branding check passed.\n'
+printf 'Avorax branding check passed.\n'

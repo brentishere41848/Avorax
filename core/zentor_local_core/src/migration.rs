@@ -62,7 +62,7 @@ pub fn zentor_data_dir() -> PathBuf {
     if let Ok(path) = std::env::var("ZENTOR_DATA_DIR") {
         return PathBuf::from(path);
     }
-    platform_data_dir("Zentor", "zentor")
+    platform_data_dir("Avorax", "zentor")
 }
 
 pub fn legacy_data_dir() -> PathBuf {
@@ -74,7 +74,7 @@ pub fn legacy_data_dir() -> PathBuf {
 
 pub fn migration_event_message() -> String {
     format!(
-        "Migrated local data from {} to Zentor",
+        "Migrated local data from {} to Avorax",
         legacy_brand()
     )
 }
@@ -171,7 +171,7 @@ mod tests {
     fn migrates_legacy_data_without_deleting_source() {
         let root = tempdir().unwrap();
         let source = root.path().join(["Pa", "sus"].concat());
-        let destination = root.path().join("Zentor");
+        let destination = root.path().join("Avorax");
         fs::create_dir_all(source.join("quarantine")).unwrap();
         fs::write(source.join("quarantine").join("old.json"), "{}").unwrap();
 
@@ -183,7 +183,7 @@ mod tests {
         assert!(PathBuf::from(report.marker_path).exists());
         assert_eq!(
             report.event_message,
-            format!("Migrated local data from {} to Zentor", ["Pa", "sus"].concat())
+            format!("Migrated local data from {} to Avorax", ["Pa", "sus"].concat())
         );
     }
 
@@ -191,7 +191,7 @@ mod tests {
     fn migration_is_idempotent_after_marker() {
         let root = tempdir().unwrap();
         let source = root.path().join(["Pa", "sus"].concat());
-        let destination = root.path().join("Zentor");
+        let destination = root.path().join("Avorax");
         fs::create_dir_all(source.join("logs")).unwrap();
         fs::write(source.join("logs").join("events.jsonl"), "old").unwrap();
 

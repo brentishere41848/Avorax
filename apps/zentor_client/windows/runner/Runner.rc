@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "Zentor Security" "\0"
-            VALUE "FileDescription", "Zentor Anti-Virus" "\0"
+            VALUE "CompanyName", "Avorax Security" "\0"
+            VALUE "FileDescription", "Avorax Anti-Virus" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "Zentor" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 Zentor Security. All rights reserved." "\0"
-            VALUE "OriginalFilename", "Zentor.exe" "\0"
-            VALUE "ProductName", "Zentor Anti-Virus" "\0"
+            VALUE "InternalName", "Avorax" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 Avorax Security. All rights reserved." "\0"
+            VALUE "OriginalFilename", "Avorax.exe" "\0"
+            VALUE "ProductName", "Avorax Anti-Virus" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

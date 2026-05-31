@@ -125,12 +125,12 @@ class HomeScreen extends ConsumerWidget {
             ? 'Enabled'
             : 'Disabled',
         detail: state.protectionStatus == ProtectionStatus.localOnly
-            ? 'Local protection is active. Zentor Cloud is offline.'
+            ? 'Local protection is active. Avorax Cloud is offline.'
             : state.protectionStatus.label,
         icon: Icons.shield_outlined,
       ),
       ZentorMetricCard(
-        title: 'Zentor Native Engine',
+        title: 'Avorax Native Engine',
         value: state.nativeEngineStatus == 'ready' ? 'Ready' : 'Unavailable',
         detail: state.nativeEngineStatus == 'ready'
             ? 'Native signatures, rules, heuristics, and ML run locally without cloud.'
@@ -163,7 +163,7 @@ class HomeScreen extends ConsumerWidget {
         title: 'Native Rules',
         value: '${state.nativeRuleCount} rules loaded',
         detail:
-            'Zentor-owned deterministic rules are bounded and review-only unless strong evidence supports action.',
+            'Avorax-owned deterministic rules are bounded and review-only unless strong evidence supports action.',
         icon: Icons.rule_folder_outlined,
       ),
       ZentorMetricCard(
@@ -239,7 +239,7 @@ class HomeScreen extends ConsumerWidget {
           if (state.events.isEmpty)
             const ZentorEmptyState(
               title: 'No activity yet',
-              message: 'Events appear here when Zentor performs real work.',
+              message: 'Events appear here when Avorax performs real work.',
               icon: Icons.receipt_long_outlined,
             )
           else
@@ -304,7 +304,7 @@ class HomeScreen extends ConsumerWidget {
     if ((state.lastScanReport?.threatsFound ?? 0) > 0) return 'Threats Found';
     if (state.protectionStatus == ProtectionStatus.protected ||
         state.protectionStatus == ProtectionStatus.localOnly) {
-      return 'Protected';
+      return 'Verified Protection Active';
     }
     if (state.protectionStatus == ProtectionStatus.error ||
         state.malwareEngineStatus == MalwareEngineStatus.unavailable) {
@@ -315,7 +315,7 @@ class HomeScreen extends ConsumerWidget {
 
   String _headline(ZentorState state) {
     final status = _mainStatus(state);
-    if (status == 'Protected') return 'Your device is protected';
+    if (status == 'Verified Protection Active') return 'Verified protection active';
     if (status == 'Scan Running') return 'Scan running';
     if (status == 'Threats Found') return 'Review threats';
     return 'Run a scan';
@@ -323,20 +323,20 @@ class HomeScreen extends ConsumerWidget {
 
   String _heroCopy(ZentorState state) {
     if (state.scanStatus == ScanStatus.running) {
-      return 'Zentor is scanning accessible files and will show real results when the scan completes.';
+      return 'Avorax is scanning accessible files and will show real results when the scan completes.';
     }
     if ((state.lastScanReport?.threatsFound ?? 0) > 0) {
       return 'Review detected suspicious files before choosing quarantine, allowlist, restore, or delete actions.';
     }
     if (state.protectionStatus == ProtectionStatus.localOnly) {
-      return 'Local protection is active. Zentor Cloud is offline and does not block scanning or quarantine.';
+      return 'Local protection is active. Avorax Cloud is offline and does not block scanning or quarantine.';
     }
     return 'Anti-malware protection, quarantine, and local threat review, visible and under your control.';
   }
 
   Color _mainColor(ZentorState state) {
     final status = _mainStatus(state);
-    if (status == 'Protected') return ZentorColors.success;
+    if (status == 'Verified Protection Active') return ZentorColors.success;
     if (status == 'Threats Found') return ZentorColors.danger;
     if (status == 'Scan Running') return ZentorColors.primaryAccent;
     return ZentorColors.warning;
@@ -355,14 +355,14 @@ class HomeScreen extends ConsumerWidget {
   String _updateDetail(ZentorState state) {
     final update = state.updateInfo;
     if (state.updateStatus == UpdateStatus.updateAvailable && update != null) {
-      return 'Zentor ${update.latestVersion} is available. ${update.assetName ?? 'Open release'} to update.';
+      return 'Avorax ${update.latestVersion} is available. ${update.assetName ?? 'Open release'} to update.';
     }
     if (state.updateStatus == UpdateStatus.upToDate) {
-      return 'Zentor ${state.currentAppVersion} is installed.';
+      return 'Avorax ${state.currentAppVersion} is installed.';
     }
     if (state.updateStatus == UpdateStatus.failed) {
       return 'Could not check GitHub Releases. Scanning still works offline.';
     }
-    return 'Zentor checks GitHub Releases and asks before opening an installer.';
+    return 'Avorax checks GitHub Releases and asks before opening an installer.';
   }
 }

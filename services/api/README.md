@@ -1,11 +1,11 @@
-# Zentor API
+# Avorax API
 
-Rust Axum backend for local Zentor development.
+Rust Axum backend for local Avorax development.
 
 ## Run With Docker Compose
 
 ```powershell
-cd C:\Users\Brent\CodexProjects\Zentor
+cd C:\Users\Brent\CodexProjects\Avorax
 docker compose -f infra/docker-compose.yml up --build
 ```
 
@@ -19,21 +19,21 @@ The compose stack starts:
 
 - PostgreSQL on `localhost:15432`
 - Redis on `localhost:16379`
-- Zentor API on `localhost:18080`
+- Avorax API on `localhost:18080`
 
 ## Development Seed
 
 On startup, the API creates a local development project and API key:
 
 ```text
-ZENTOR_DEV_PROJECT_ID=zentor-default
-ZENTOR_DEV_PUBLIC_CLIENT_KEY=zentor-public-client
+AVORAX_DEV_PROJECT_ID=avorax-default
+AVORAX_DEV_PUBLIC_CLIENT_KEY=avorax-public-client
 ```
 
 Use the key as:
 
 ```text
-Authorization: Bearer zentor-public-client
+Authorization: Bearer avorax-public-client
 ```
 
 ## Run With Cargo
@@ -41,7 +41,7 @@ Authorization: Bearer zentor-public-client
 Start Postgres and Redis:
 
 ```powershell
-cd C:\Users\Brent\CodexProjects\Zentor
+cd C:\Users\Brent\CodexProjects\Avorax
 docker compose -f infra/docker-compose.yml up postgres redis
 ```
 
@@ -54,7 +54,7 @@ $env:REDIS_URL="redis://localhost:16379"
 cargo run
 ```
 
-When running with Cargo directly, the API listens on `http://localhost:8080` unless you set `ZENTOR_API_BIND_ADDR`.
+When running with Cargo directly, the API listens on `http://localhost:8080` unless you set `AVORAX_API_BIND_ADDR`.
 
 ## Endpoints
 

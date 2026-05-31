@@ -52,7 +52,7 @@ class ZentorSidebar extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Zentor',
+                    'Avorax',
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
                   ),
                   Text(
@@ -78,7 +78,7 @@ class ZentorSidebar extends StatelessWidget {
               border: Border.all(color: ZentorColors.border),
             ),
             child: const Text(
-              'Visible protection only. Zentor scans local files, quarantines confirmed detections, and only uses driver protection when explicitly installed.',
+              'Visible protection only. Avorax scans local files, quarantines confirmed detections, and only uses driver protection when explicitly installed.',
               style: TextStyle(color: ZentorColors.textSecondary, height: 1.45),
             ),
           ),

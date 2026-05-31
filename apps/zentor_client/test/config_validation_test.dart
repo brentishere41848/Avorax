@@ -6,8 +6,8 @@ void main() {
   test('build config has production defaults', () {
     const config = BuildConfig();
     expect(config.apiBaseUrl, 'http://127.0.0.1:8000');
-    expect(config.projectId, 'zentor-default');
-    expect(config.publicClientKey, 'zentor-public-client');
+    expect(config.projectId, 'avorax-default');
+    expect(config.publicClientKey, 'avorax-public-client');
   });
 
   test('config validation uses cloud wording instead of form errors', () {
@@ -15,7 +15,7 @@ void main() {
     expect(
       empty.validateCloudConfiguration().join(' '),
       contains(
-        'Cloud settings are managed by your Zentor build configuration.',
+        'Cloud settings are managed by your Avorax build configuration.',
       ),
     );
 

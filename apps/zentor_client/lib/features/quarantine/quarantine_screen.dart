@@ -45,7 +45,7 @@ class QuarantineScreen extends ConsumerWidget {
             const ZentorEmptyState(
               title: 'No quarantined files',
               message:
-                  'Zentor only lists files actually quarantined by the local core.',
+                  'Avorax only lists files actually quarantined by the local core.',
               icon: Icons.inventory_2_outlined,
             )
           else

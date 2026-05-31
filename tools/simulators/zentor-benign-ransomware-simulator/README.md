@@ -1,6 +1,6 @@
-# Zentor Benign Ransomware Simulator
+# Avorax Benign Ransomware Simulator
 
-This simulator is safe test code for Zentor Ransomware Guard.
+This simulator is safe test code for Avorax Ransomware Guard.
 
 It only operates inside a temporary directory it creates. It does not touch user documents, system folders, backups, browsers, credentials, or real data.
 
@@ -10,7 +10,7 @@ Run:
 powershell -ExecutionPolicy Bypass -File tools\simulators\zentor-benign-ransomware-simulator\run-simulator.ps1
 ```
 
-Expected Zentor behavior when Ransomware Guard is watching the temp test directory:
+Expected Avorax behavior when Ransomware Guard is watching the temp test directory:
 
 - Detect rapid modifications/renames.
 - Record affected test files.

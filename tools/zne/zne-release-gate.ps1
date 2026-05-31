@@ -56,7 +56,7 @@ $oldGamingProtection = "gaming" + " protection"
 $oldGameSetup = "game" + " setup"
 $oldPlayerSession = "player" + " session"
 $oldMatchTelemetry = "match" + " telemetry"
-$badPattern = "ClamAV through Zentor local core|YARA Rules|bundled ClamAV|$oldBrand|$oldBrandUpper|$oldBrandLower|$oldAntiCheat|$oldFairPlay|$oldGamingProtection|$oldGameSetup|$oldPlayerSession|$oldMatchTelemetry"
+$badPattern = "ClamAV through Avorax local core|YARA Rules|bundled ClamAV|$oldBrand|$oldBrandUpper|$oldBrandLower|$oldAntiCheat|$oldFairPlay|$oldGamingProtection|$oldGameSetup|$oldPlayerSession|$oldMatchTelemetry"
 $badUi = rg -n $badPattern apps/zentor_client/lib --glob "*.dart" --glob "*.tsx" --glob "*.ts"
 if ($LASTEXITCODE -eq 0) {
   Write-Host $badUi

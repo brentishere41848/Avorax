@@ -27,12 +27,12 @@ class OnboardingScreen extends ConsumerWidget {
                     const ZentorMark(size: 72),
                     const SizedBox(height: 26),
                     Text(
-                      'Zentor protects your device.',
+                      'Avorax protects your device.',
                       style: Theme.of(context).textTheme.displaySmall,
                     ),
                     const SizedBox(height: 18),
                     Text(
-                      'Zentor scans, reviews, blocks, and quarantines threats while keeping protection visible and under your control.',
+                      'Avorax scans, reviews, blocks, and quarantines threats while keeping protection visible and under your control.',
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         color: ZentorColors.textSecondary,
                       ),
@@ -40,15 +40,15 @@ class OnboardingScreen extends ConsumerWidget {
                     const SizedBox(height: 28),
                     const _OnboardingPoint(
                       icon: Icons.verified_user_outlined,
-                      text: 'Zentor checks local files and protection status.',
+                      text: 'Avorax checks local files and protection status.',
                     ),
                     const _OnboardingPoint(
                       icon: Icons.folder_off_outlined,
-                      text: 'Zentor does not scan unrelated personal files.',
+                      text: 'Avorax does not scan unrelated personal files.',
                     ),
                     const _OnboardingPoint(
                       icon: Icons.visibility_outlined,
-                      text: 'Zentor does not run hidden surveillance.',
+                      text: 'Avorax does not run hidden surveillance.',
                     ),
                     const _OnboardingPoint(
                       icon: Icons.touch_app_outlined,

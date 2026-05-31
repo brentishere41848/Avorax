@@ -1,4 +1,4 @@
-; Zentor Minifilter INF skeleton.
+; Avorax Minifilter INF skeleton.
 ; Development/test signing only. Production distribution requires Microsoft signing.
 
 [Version]
@@ -36,5 +36,5 @@ ServiceBinary=%12%\ZentorMinifilter.sys
 LoadOrderGroup="FSFilter Anti-Virus"
 
 [Strings]
-ManufacturerName="Zentor"
-ServiceName="Zentor Minifilter"
+ManufacturerName="Avorax"
+ServiceName="Avorax Minifilter"

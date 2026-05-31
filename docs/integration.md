@@ -1,10 +1,10 @@
-# Zentor Integration
+# Avorax Integration
 
 ## Local Development
 
-1. Configure Zentor Cloud with `--dart-define` values or use the defaults.
+1. Configure Avorax Cloud with `--dart-define` values or use the defaults.
 2. Run the Flutter app.
-3. Zentor silently calls `GET /v1/health`.
+3. Avorax silently calls `GET /v1/health`.
 4. Use Quick Scan, Full Scan, or Custom Scan on desktop.
 5. Choose Detect only or Auto quarantine mode.
 6. Review threats and quarantine, restore/keep, delete, or allowlist explicitly.
@@ -27,4 +27,4 @@ If the API is unreachable or returns an error, the client shows that failure and
 
 ## Local Core
 
-Desktop malware scanning requires the Rust local core and Zentor Native Engine assets under `assets/zentor_native`. ClamAV and YARA compatibility paths are optional and disabled by default. For development builds, set `ZENTOR_LOCAL_CORE` to a release folder that contains `zentor_local_core.exe` and the native assets.
+Desktop malware scanning requires the Rust local core and Avorax Native Engine assets under `assets/zentor_native`. ClamAV and YARA compatibility paths are optional and disabled by default. For development builds, set `ZENTOR_LOCAL_CORE` to a release folder that contains `zentor_local_core.exe` and the native assets.

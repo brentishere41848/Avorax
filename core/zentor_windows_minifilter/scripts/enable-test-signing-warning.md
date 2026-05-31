@@ -1,6 +1,6 @@
 # Windows Test-Signing Warning
 
-Zentor does not enable Windows test-signing automatically.
+Avorax does not enable Windows test-signing automatically.
 
 Only enable test-signing inside a development VM used for driver testing. Test-signed kernel drivers are not appropriate for normal user machines.
 
@@ -18,4 +18,4 @@ bcdedit /set testsigning off
 shutdown /r /t 0
 ```
 
-Production releases require Microsoft driver signing. Zentor must not claim production pre-execution blocking from a test-signed development driver.
+Production releases require Microsoft driver signing. Avorax must not claim production pre-execution blocking from a test-signed development driver.

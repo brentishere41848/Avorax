@@ -110,7 +110,7 @@ class ProtectedAppsScreen extends ConsumerWidget {
                 const ZentorEmptyState(
                   title: 'No supported app detected',
                   message:
-                      'Zentor found no supported apps in known launcher metadata or running processes.',
+                      'Avorax found no supported apps in known launcher metadata or running processes.',
                   icon: Icons.search_off_outlined,
                 )
               else
@@ -159,7 +159,7 @@ class _AppRow extends StatelessWidget {
       ),
       title: Text(title),
       subtitle: Text(
-        '$source • $profile\n$path',
+        '$source â€¢ $profile\n$path',
         style: const TextStyle(color: ZentorColors.textSecondary),
         maxLines: 2,
         overflow: TextOverflow.ellipsis,

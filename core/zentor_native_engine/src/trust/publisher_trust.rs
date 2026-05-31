@@ -5,7 +5,7 @@ use super::{microsoft_trust, zentor_trust};
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TrustedPublisher {
     Microsoft,
-    Zentor,
+    Avorax,
 }
 
 pub fn trusted_publisher_for(path: &Path) -> Option<TrustedPublisher> {
@@ -13,7 +13,7 @@ pub fn trusted_publisher_for(path: &Path) -> Option<TrustedPublisher> {
         return Some(TrustedPublisher::Microsoft);
     }
     if zentor_trust::is_zentor_path(path) || zentor_trust::has_zentor_artifact_name(path) {
-        return Some(TrustedPublisher::Zentor);
+        return Some(TrustedPublisher::Avorax);
     }
     None
 }

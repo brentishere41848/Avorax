@@ -1,1 +1,1 @@
-Write-Output "Safe admin script fixture for Zentor false-positive tests."
+Write-Output "Safe admin script fixture for Avorax false-positive tests."

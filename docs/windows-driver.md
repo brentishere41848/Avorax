@@ -4,7 +4,7 @@ True Windows pre-execution/on-access blocking requires a signed kernel minifilte
 
 Current implementation:
 
-- User-mode Zentor Guard Service can stop confirmed threats after launch.
+- User-mode Avorax Guard Service can stop confirmed threats after launch.
 - `core/zentor_windows_minifilter` contains a WDK minifilter project with Filter Manager communication-port code and conservative deny policy hooks.
 - `core/zentor_windows_process_guard` contains a process notification driver project that establishes the callback path but does not claim deny/blocking until a verified signed-driver cache is implemented.
 - The UI must show `Driver Missing` or `Post-launch blocking active` unless a signed driver is installed and verified running.
@@ -12,13 +12,13 @@ Current implementation:
 Driver requirements:
 
 - Use documented Microsoft Filter Manager and process notification APIs.
-- Communicate with the visible Zentor Guard Service.
-- Avoid recursive scanning of Zentor quarantine and Zentor binaries.
+- Communicate with the visible Avorax Guard Service.
+- Avoid recursive scanning of Avorax quarantine and Avorax binaries.
 - Fail open for critical system paths in normal mode.
 - Never hide files, processes, services, registry keys, or telemetry.
 - Never disable Windows Defender or other security products.
 
-Development install scripts live in `core/zentor_windows_minifilter/scripts`. They require Administrator rights and Windows TESTSIGNING to already be enabled in a development VM. Zentor does not enable TESTSIGNING automatically.
+Development install scripts live in `core/zentor_windows_minifilter/scripts`. They require Administrator rights and Windows TESTSIGNING to already be enabled in a development VM. Avorax does not enable TESTSIGNING automatically.
 
 Validation workflow:
 

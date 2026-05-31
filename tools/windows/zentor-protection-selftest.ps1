@@ -33,4 +33,4 @@ try {
 }
 
 & (Join-Path $miniScripts "run-driver-self-test.ps1") -ReportPath $ReportPath
-Write-Host "Zentor protection self-test report: $ReportPath"
+Write-Host "Avorax protection self-test report: $ReportPath"

@@ -16,7 +16,7 @@ from github_intel_common import (
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Import developer-provided hashes into Zentor JSONL without downloading malware samples."
+        description="Import developer-provided hashes into Avorax JSONL without downloading malware samples."
     )
     parser.add_argument("--input", required=True, help="TXT/CSV hash list provided by a developer")
     parser.add_argument("--output", required=True)

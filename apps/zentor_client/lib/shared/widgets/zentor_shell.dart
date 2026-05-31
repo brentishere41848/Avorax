@@ -32,7 +32,7 @@ class ZentorShell extends ConsumerWidget {
                 const ZentorMark(size: 36),
                 const SizedBox(width: 12),
                 const Text(
-                  'Zentor',
+                  'Avorax',
                   style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
                 ),
               ] else

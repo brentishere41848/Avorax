@@ -26,5 +26,5 @@ ErrorControl = 1
 ServiceBinary = %12%\ZentorProcessGuard.sys
 
 [Strings]
-ManufacturerName = "Zentor"
-ServiceName = "Zentor Process Guard"
+ManufacturerName = "Avorax"
+ServiceName = "Avorax Process Guard"

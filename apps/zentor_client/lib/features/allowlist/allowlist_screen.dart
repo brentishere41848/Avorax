@@ -23,7 +23,7 @@ class AllowlistScreen extends StatelessWidget {
           const ZentorEmptyState(
             title: 'No allowlist entries',
             message:
-                'Zentor will never silently add an allowlist entry. Unsafe root folders are blocked by the local core.',
+                'Avorax will never silently add an allowlist entry. Unsafe root folders are blocked by the local core.',
             icon: Icons.fact_check_outlined,
           ),
         ],

@@ -1,8 +1,8 @@
 # Testing With EICAR
 
-Zentor uses EICAR for safe antivirus test coverage.
+Avorax uses EICAR for safe antivirus test coverage.
 
-The EICAR test file is not real malware. Zentor treats it as a confirmed test signature so scanner, Guard, quarantine, and release gates can be tested without real malware samples.
+The EICAR test file is not real malware. Avorax treats it as a confirmed test signature so scanner, Guard, quarantine, and release gates can be tested without real malware samples.
 
 Expected behavior:
 
@@ -17,4 +17,4 @@ Driver validation command:
 powershell -ExecutionPolicy Bypass -File tools\windows\zentor-protection-selftest.ps1 -BuildDriver -InstallDriver
 ```
 
-Zentor must never include real malware samples in this repository.
+Avorax must never include real malware samples in this repository.

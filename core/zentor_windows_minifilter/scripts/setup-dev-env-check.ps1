@@ -89,7 +89,7 @@ $report = [ordered]@{
     "Install Visual Studio Build Tools with Desktop development with C++.",
     "Install Windows Driver Kit for Windows 10/11.",
     "For test driver loading, use a disposable VM and manually enable TESTSIGNING with: bcdedit /set testsigning on",
-    "Restart after changing TESTSIGNING. Zentor scripts never enable it silently."
+    "Restart after changing TESTSIGNING. Avorax scripts never enable it silently."
   )
 }
 
@@ -99,4 +99,4 @@ if ($errors.Count -gt 0) {
   exit 1
 }
 
-Write-Host "Zentor Windows driver development environment check passed."
+Write-Host "Avorax Windows driver development environment check passed."

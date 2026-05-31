@@ -17,6 +17,6 @@ Response:
 - Record an incident.
 - Start recovery from Recovery Vault or OS snapshots when available.
 
-Zentor must not claim files are recovered unless restore actually succeeds.
+Avorax must not claim files are recovered unless restore actually succeeds.
 
-The Zentor Native Engine keeps a short per-process activity window. Multiple smaller file-change events can combine into one ransomware decision, which helps avoid overreacting to one normal write while still catching rapid modification patterns.
+The Avorax Native Engine keeps a short per-process activity window. Multiple smaller file-change events can combine into one ransomware decision, which helps avoid overreacting to one normal write while still catching rapid modification patterns.

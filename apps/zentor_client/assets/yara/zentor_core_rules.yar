@@ -1,5 +1,5 @@
 /*
-  Zentor core YARA rules.
+  Avorax core YARA rules.
 
   These rules are intentionally conservative. Only the EICAR test signature is
   marked confirmed. Script and obfuscation rules are review signals and must not
@@ -9,7 +9,7 @@
 rule Zentor_EICAR_Test_File
 {
   meta:
-    name = "Zentor EICAR Test File"
+    name = "Avorax EICAR Test File"
     category = "unknown"
     confidence = "confirmed"
     description = "Matches the standard EICAR antivirus test signature."
@@ -24,11 +24,11 @@ rule Zentor_EICAR_Test_File
 rule Zentor_Obfuscated_PowerShell_Review
 {
   meta:
-    name = "Zentor Obfuscated PowerShell Review"
+    name = "Avorax Obfuscated PowerShell Review"
     category = "spyware"
     confidence = "medium"
     description = "PowerShell content contains common obfuscation indicators."
-    source = "Zentor local rule"
+    source = "Avorax local rule"
     false_positive_notes = "Administration tools can use encoded commands; review context before action."
   strings:
     $s1 = "FromBase64String"
@@ -41,11 +41,11 @@ rule Zentor_Obfuscated_PowerShell_Review
 rule Zentor_Ransom_Note_Text_Review
 {
   meta:
-    name = "Zentor Ransom Note Text Review"
+    name = "Avorax Ransom Note Text Review"
     category = "ransomware"
     confidence = "medium"
     description = "Text resembles a ransom note and should be reviewed with behavior context."
-    source = "Zentor local rule"
+    source = "Avorax local rule"
     false_positive_notes = "Training material or documentation can contain these words."
   strings:
     $r1 = "your files have been encrypted"

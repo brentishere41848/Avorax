@@ -11,7 +11,7 @@ use std::time::Duration;
 use anyhow::Context;
 use chrono::{DateTime, Utc};
 use zentor_native_engine::{
-    EngineConfig, ZentorNativeEngine, ScanActionMode as PneScanActionMode, Verdict as PneVerdict,
+    EngineConfig, ZentorNativeEngine, ScanActionMode as AneScanActionMode, Verdict as AneVerdict,
 };
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -207,7 +207,7 @@ fn handle(command: GuardCommand) -> GuardEvent {
                 "known_bad_hashes": known_bad_cache::load_known_bad_hashes().len(),
                 "post_launch_fallback": true,
             }))
-            .unwrap_or_else(|_| "Zentor Guard Service ready.".to_string()),
+            .unwrap_or_else(|_| "Avorax Guard Service ready.".to_string()),
             process_id: None,
             process_path: None,
             quarantine_path: None,
@@ -289,7 +289,12 @@ fn handle(command: GuardCommand) -> GuardEvent {
                 .unwrap_or_default()
                 .into_iter()
                 .collect::<HashSet<_>>();
-            match handle_process_started(pid, Path::new(&path), &malicious) {
+            match handle_process_started(
+                pid,
+                Path::new(&path),
+                &malicious,
+                command.protection_mode.unwrap_or_default(),
+            ) {
                 Ok(event) => event,
                 Err(error) => error_event(pid, Some(path), error.to_string()),
             }
@@ -304,6 +309,7 @@ fn handle(command: GuardCommand) -> GuardEvent {
                 &malicious,
                 command.poll_interval_ms.unwrap_or(750),
                 command.max_iterations,
+                command.protection_mode.unwrap_or_default(),
             ) {
                 Ok(event) => event,
                 Err(error) => error_event(None, None, error.to_string()),
@@ -317,6 +323,7 @@ fn handle_process_started(
     process_id: Option<u32>,
     process_path: &Path,
     known_malicious_hashes: &HashSet<String>,
+    protection_mode: preexecution_policy::DriverProtectionMode,
 ) -> anyhow::Result<GuardEvent> {
     let hash = sha256_file(process_path)?;
     let native_match = native_threat_match(process_path).unwrap_or(None);
@@ -351,6 +358,27 @@ fn handle_process_started(
         });
     };
 
+    if matches!(
+        protection_mode,
+        preexecution_policy::DriverProtectionMode::Disabled
+            | preexecution_policy::DriverProtectionMode::ObserveOnly
+    ) {
+        return Ok(GuardEvent {
+            ok: true,
+            action: "reviewOnly".to_string(),
+            message: format!(
+                "Confirmed local threat observed but automatic stop/quarantine is not enabled. Reason: {}. Confidence: {:?}.",
+                threat_match.reason, threat_match.confidence
+            ),
+            process_id,
+            process_path: Some(process_path.display().to_string()),
+            quarantine_id: None,
+            quarantine_path: None,
+            quarantine_record_path: None,
+            created_at: Utc::now(),
+        });
+    }
+
     if let Some(pid) = process_id {
         stop_process(pid);
     }
@@ -360,7 +388,7 @@ fn handle_process_started(
         ok: true,
         action: "stoppedAndQuarantined".to_string(),
         message: format!(
-            "Zentor stopped the process and moved the file to quarantine. Reason: {}. Confidence: {:?}.",
+            "Avorax stopped the process and moved the file to quarantine. Reason: {}. Confidence: {:?}.",
             threat_match.reason,
             threat_match.confidence
         ),
@@ -381,6 +409,7 @@ fn watch_processes(
     known_malicious_hashes: &HashSet<String>,
     poll_interval_ms: u64,
     max_iterations: Option<u32>,
+    protection_mode: preexecution_policy::DriverProtectionMode,
 ) -> anyhow::Result<GuardEvent> {
     let mut seen: HashSet<u32> = list_processes()?
         .into_iter()
@@ -421,6 +450,7 @@ fn watch_processes(
                     Some(process.process_id),
                     &process.path,
                     known_malicious_hashes,
+                    protection_mode.clone(),
                 );
             }
         }
@@ -492,6 +522,7 @@ fn watch_processes_until_shutdown(
                     Some(process.process_id),
                     &process.path,
                     known_malicious_hashes,
+                    preexecution_policy::DriverProtectionMode::BlockConfirmedThreats,
                 ) {
                     Ok(event) => {
                         let _ = write_guard_event(&event);
@@ -533,7 +564,7 @@ fn event_log_base() -> PathBuf {
         if let Ok(program_data) =
             std::env::var("ProgramData").or_else(|_| std::env::var("PROGRAMDATA"))
         {
-            return PathBuf::from(program_data).join("Zentor").join("Events");
+            return PathBuf::from(program_data).join("Avorax").join("Events");
         }
     }
     #[cfg(target_os = "macos")]
@@ -542,7 +573,7 @@ fn event_log_base() -> PathBuf {
             return PathBuf::from(home)
                 .join("Library")
                 .join("Application Support")
-                .join("Zentor")
+                .join("Avorax")
                 .join("Events");
         }
     }
@@ -755,7 +786,7 @@ fn quarantine_base() -> PathBuf {
         if let Ok(program_data) =
             std::env::var("ProgramData").or_else(|_| std::env::var("PROGRAMDATA"))
         {
-            return PathBuf::from(program_data).join("Zentor").join("Quarantine");
+            return PathBuf::from(program_data).join("Avorax").join("Quarantine");
         }
     }
     #[cfg(target_os = "macos")]
@@ -764,7 +795,7 @@ fn quarantine_base() -> PathBuf {
             return PathBuf::from(home)
                 .join("Library")
                 .join("Application Support")
-                .join("Zentor")
+                .join("Avorax")
                 .join("Quarantine");
         }
     }
@@ -792,7 +823,7 @@ fn normalize_hash(value: String) -> String {
 fn native_threat_match(path: &Path) -> anyhow::Result<Option<LocalThreatMatch>> {
     let mut engine =
         ZentorNativeEngine::initialize(EngineConfig::from_repo_root(native_asset_root()))?;
-    let verdict = engine.scan_file(path.to_path_buf(), PneScanActionMode::DetectOnly)?;
+    let verdict = engine.scan_file(path.to_path_buf(), AneScanActionMode::DetectOnly)?;
     let confidence = match verdict.final_verdict.confidence {
         zentor_native_engine::Confidence::Confirmed => LocalThreatConfidence::Confirmed,
         zentor_native_engine::Confidence::High => LocalThreatConfidence::High,
@@ -801,8 +832,9 @@ fn native_threat_match(path: &Path) -> anyhow::Result<Option<LocalThreatMatch>> 
     };
     if matches!(
         verdict.final_verdict.verdict,
-        PneVerdict::TestThreat | PneVerdict::ConfirmedMalware | PneVerdict::ProbableMalware
-    ) {
+        AneVerdict::TestThreat | AneVerdict::ConfirmedMalware
+    ) && matches!(verdict.final_verdict.confidence, zentor_native_engine::Confidence::Confirmed)
+    {
         return Ok(Some(LocalThreatMatch {
             reason: verdict.final_verdict.user_visible_explanation,
             engine: "zentor-native-engine".to_string(),
@@ -841,10 +873,7 @@ fn compat_threat_match(_path: &Path) -> anyhow::Result<Option<LocalThreatMatch>>
     {
         #[cfg(feature = "compat_yara")]
         if let Some(yara_match) = yara_rule_match(_path)? {
-            if matches!(
-                yara_match.confidence,
-                LocalThreatConfidence::Confirmed | LocalThreatConfidence::High
-            ) {
+            if matches!(yara_match.confidence, LocalThreatConfidence::Confirmed) {
                 return Ok(Some(yara_match));
             }
         }
@@ -1096,7 +1125,13 @@ mod tests {
         let dir = tempdir().unwrap();
         let file = dir.path().join("tool.exe");
         fs::write(&file, b"developer tool").unwrap();
-        let result = handle_process_started(None, &file, &HashSet::new()).unwrap();
+        let result = handle_process_started(
+            None,
+            &file,
+            &HashSet::new(),
+            preexecution_policy::DriverProtectionMode::BlockConfirmedThreats,
+        )
+        .unwrap();
         assert_eq!(result.action, "monitored");
         assert!(file.exists());
     }
@@ -1109,7 +1144,13 @@ mod tests {
         let file = dir.path().join("bad.exe");
         fs::write(&file, b"known bad fixture").unwrap();
         let hash = sha256_file(&file).unwrap();
-        let result = handle_process_started(None, &file, &HashSet::from([hash])).unwrap();
+        let result = handle_process_started(
+            None,
+            &file,
+            &HashSet::from([hash]),
+            preexecution_policy::DriverProtectionMode::BlockConfirmedThreats,
+        )
+        .unwrap();
         assert_eq!(result.action, "stoppedAndQuarantined");
         assert!(!file.exists());
         assert!(Path::new(result.quarantine_path.as_ref().unwrap()).exists());
@@ -1124,7 +1165,13 @@ mod tests {
 
     #[test]
     fn watch_processes_completes_without_fake_detection() {
-        let result = watch_processes(&HashSet::new(), 100, Some(1)).unwrap();
+        let result = watch_processes(
+            &HashSet::new(),
+            100,
+            Some(1),
+            preexecution_policy::DriverProtectionMode::BlockConfirmedThreats,
+        )
+        .unwrap();
         assert_eq!(result.action, "watchCompleted");
         assert!(result.ok);
     }
@@ -1135,8 +1182,34 @@ mod tests {
         let file = dir.path().join("script.ps1");
         fs::write(&file, "[Convert]::FromBase64String('AAAA')").unwrap();
 
-        let result = handle_process_started(Some(4242), &file, &HashSet::new()).unwrap();
+        let result = handle_process_started(
+            Some(4242),
+            &file,
+            &HashSet::new(),
+            preexecution_policy::DriverProtectionMode::BlockConfirmedThreats,
+        )
+        .unwrap();
         assert_eq!(result.action, "monitored");
         assert!(file.exists());
+    }
+
+    #[test]
+    fn disabled_mode_observes_confirmed_hash_without_quarantine() {
+        let dir = tempdir().unwrap();
+        let file = dir.path().join("bad.exe");
+        fs::write(&file, b"known bad fixture").unwrap();
+        let hash = sha256_file(&file).unwrap();
+
+        let result = handle_process_started(
+            None,
+            &file,
+            &HashSet::from([hash]),
+            preexecution_policy::DriverProtectionMode::Disabled,
+        )
+        .unwrap();
+
+        assert_eq!(result.action, "reviewOnly");
+        assert!(file.exists());
+        assert!(result.quarantine_path.is_none());
     }
 }

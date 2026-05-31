@@ -8,7 +8,7 @@ New-Item -ItemType Directory -Force -Path $Root | Out-Null
 
 for ($i = 0; $i -lt $FileCount; $i++) {
   $path = Join-Path $Root ("document-$i.txt")
-  Set-Content -LiteralPath $path -Value "Zentor safe ransomware simulator fixture $i" -Encoding UTF8
+  Set-Content -LiteralPath $path -Value "Avorax safe ransomware simulator fixture $i" -Encoding UTF8
 }
 
 for ($i = 0; $i -lt $FileCount; $i++) {
@@ -17,7 +17,7 @@ for ($i = 0; $i -lt $FileCount; $i++) {
   Rename-Item -LiteralPath $path -NewName ("document-$i.locked-test") -Force
 }
 
-Set-Content -LiteralPath (Join-Path $Root "READ_ME_TEST_ONLY.txt") -Value "Safe Zentor simulator note. This is not a ransom note and contains no demand." -Encoding UTF8
+Set-Content -LiteralPath (Join-Path $Root "READ_ME_TEST_ONLY.txt") -Value "Safe Avorax simulator note. This is not a ransom note and contains no demand." -Encoding UTF8
 
 [ordered]@{
   ok = $true

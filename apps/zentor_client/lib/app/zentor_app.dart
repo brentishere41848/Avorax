@@ -11,7 +11,7 @@ class ZentorApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
     return MaterialApp.router(
-      title: 'Zentor',
+      title: 'Avorax',
       debugShowCheckedModeBanner: false,
       theme: ZentorTheme.dark(),
       routerConfig: router,

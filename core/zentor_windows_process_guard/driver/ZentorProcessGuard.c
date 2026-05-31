@@ -1,5 +1,5 @@
 /*
- * Zentor Process Guard skeleton.
+ * Avorax Process Guard skeleton.
  *
  * This is a documented WDK project path for pre-execution/process creation
  * protection. The current production build must not claim this is active until
@@ -18,7 +18,7 @@ DriverEntry(_In_ PDRIVER_OBJECT DriverObject, _In_ PUNICODE_STRING RegistryPath)
 
     /*
      * Production implementation must register PsSetCreateProcessNotifyRoutineEx,
-     * query Zentor Guard Service through a safe kernel/user-mode channel or
+     * query Avorax Guard Service through a safe kernel/user-mode channel or
      * cache, and return deny only for confirmed malicious verdicts.
      */
     return STATUS_NOT_IMPLEMENTED;

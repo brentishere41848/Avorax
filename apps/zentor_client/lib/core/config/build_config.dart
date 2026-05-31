@@ -2,40 +2,64 @@ const zentorApiBaseUrl = String.fromEnvironment(
   'ZENTOR_API_BASE_URL',
   defaultValue: 'http://127.0.0.1:8000',
 );
+const avoraxApiBaseUrl = String.fromEnvironment(
+  'AVORAX_API_BASE_URL',
+  defaultValue: zentorApiBaseUrl,
+);
 
 const zentorProjectId = String.fromEnvironment(
   'ZENTOR_PROJECT_ID',
-  defaultValue: 'zentor-default',
+  defaultValue: 'avorax-default',
+);
+const avoraxProjectId = String.fromEnvironment(
+  'AVORAX_PROJECT_ID',
+  defaultValue: zentorProjectId,
 );
 
 const zentorPublicClientKey = String.fromEnvironment(
   'ZENTOR_PUBLIC_CLIENT_KEY',
-  defaultValue: 'zentor-public-client',
+  defaultValue: 'avorax-public-client',
+);
+const avoraxPublicClientKey = String.fromEnvironment(
+  'AVORAX_PUBLIC_CLIENT_KEY',
+  defaultValue: zentorPublicClientKey,
 );
 
 const zentorUpdatesRepoOwner = String.fromEnvironment(
   'ZENTOR_UPDATES_REPO_OWNER',
   defaultValue: 'brentishere41848',
 );
+const avoraxUpdatesRepoOwner = String.fromEnvironment(
+  'AVORAX_UPDATES_REPO_OWNER',
+  defaultValue: zentorUpdatesRepoOwner,
+);
 
 const zentorUpdatesRepoName = String.fromEnvironment(
   'ZENTOR_UPDATES_REPO_NAME',
   defaultValue: 'zentor_anti-virus',
+);
+const avoraxUpdatesRepoName = String.fromEnvironment(
+  'AVORAX_UPDATES_REPO_NAME',
+  defaultValue: zentorUpdatesRepoName,
 );
 
 const zentorAppVersion = String.fromEnvironment(
   'ZENTOR_APP_VERSION',
   defaultValue: '0.1.15',
 );
+const avoraxAppVersion = String.fromEnvironment(
+  'AVORAX_APP_VERSION',
+  defaultValue: zentorAppVersion,
+);
 
 class BuildConfig {
   const BuildConfig({
-    this.apiBaseUrl = zentorApiBaseUrl,
-    this.projectId = zentorProjectId,
-    this.publicClientKey = zentorPublicClientKey,
-    this.updatesRepoOwner = zentorUpdatesRepoOwner,
-    this.updatesRepoName = zentorUpdatesRepoName,
-    this.appVersion = zentorAppVersion,
+    this.apiBaseUrl = avoraxApiBaseUrl,
+    this.projectId = avoraxProjectId,
+    this.publicClientKey = avoraxPublicClientKey,
+    this.updatesRepoOwner = avoraxUpdatesRepoOwner,
+    this.updatesRepoName = avoraxUpdatesRepoName,
+    this.appVersion = avoraxAppVersion,
   });
 
   final String apiBaseUrl;

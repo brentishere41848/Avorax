@@ -1,6 +1,6 @@
 # False Positives
 
-Zentor must minimize false positives.
+Avorax must minimize false positives.
 
 The following are not malware by themselves:
 

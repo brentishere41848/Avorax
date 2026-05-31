@@ -1,6 +1,6 @@
-# Zentor Native ML Model
+# Avorax Native ML Model
 
-ZNE uses a Zentor-owned `.zmodel` format for local ML inference. The runtime is pure Rust and deterministic.
+ANE uses a Avorax-owned `.zmodel` format for local ML inference. The runtime is pure Rust and deterministic.
 
 The checked-in model is:
 

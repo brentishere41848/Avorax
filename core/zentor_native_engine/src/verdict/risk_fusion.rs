@@ -201,7 +201,7 @@ fn final_verdict(
     recommended_action: &str,
 ) -> FinalVerdict {
     let user_visible_explanation = if evidence.is_empty() {
-        "Zentor Native Engine did not find suspicious local evidence.".to_string()
+        "Avorax Native Engine did not find suspicious local evidence.".to_string()
     } else {
         evidence
             .iter()

@@ -20,6 +20,15 @@ $scanRoots = @(
 $legacy = ("pa" + "sus")
 $forbidden = @(
   $legacy,
+  ("zentor" + " anti-virus"),
+  ("zentor" + " native"),
+  ("zentor" + " cloud"),
+  ("zentor" + " guard"),
+  ("zentor" + " core"),
+  ("zentor" + " recovery"),
+  ("zentor" + " quarantine"),
+  ("zentor" + " checks"),
+  ("zentor" + " scans"),
   ("anti" + "-cheat"),
   ("fair" + " play"),
   ("gaming" + " protection"),
@@ -79,4 +88,4 @@ if ($violations.Count -gt 0) {
   exit 1
 }
 
-Write-Host "Zentor product copy gate passed."
+Write-Host "Avorax product copy gate passed."

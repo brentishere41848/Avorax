@@ -1,8 +1,8 @@
 {
-  "database_name": "Zentor Known Good Trust Database",
+  "database_name": "Avorax Known Good Trust Database",
   "version": "0.1.13",
   "production_ready": false,
-  "description": "Development trust database. v0.1.13 includes Zentor-owned records and safe fixtures only, not a global software reputation database.",
+  "description": "Development trust database. v0.1.13 includes Avorax-owned records and safe fixtures only, not a global software reputation database.",
   "signed": false,
   "limitations": [
     "Does not contain a broad global allowlist.",

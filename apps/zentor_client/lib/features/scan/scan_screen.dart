@@ -321,9 +321,9 @@ class _ScanResults extends StatelessWidget {
             )
           else if (report.status == ScanStatus.engineUnavailable)
             const ZentorEmptyState(
-              title: 'Zentor Native Engine unavailable',
+              title: 'Avorax Native Engine unavailable',
               message:
-                  'Native engine assets are missing or failed to load. Zentor never reports files clean when the engine is unavailable.',
+                  'Native engine assets are missing or failed to load. Avorax never reports files clean when the engine is unavailable.',
               icon: Icons.health_and_safety_outlined,
             )
           else if (report.threats.isEmpty)
@@ -480,7 +480,7 @@ class _ThreatRow extends StatelessWidget {
                 alignment: Alignment.centerLeft,
                 child: Text(
                   threat.reasonSummary.isEmpty
-                      ? 'Zentor found multiple local signals that need review. No cloud reputation was used.'
+                      ? 'Avorax found multiple local signals that need review. No cloud reputation was used.'
                       : threat.reasonSummary,
                   style: const TextStyle(color: ZentorColors.textSecondary),
                 ),
@@ -600,7 +600,7 @@ class _ThreatRow extends StatelessWidget {
 
   String _recommendation(ThreatResult threat) {
     if (threat.riskScore.verdict == RiskVerdict.confirmedMalware) {
-      return 'Recommended action: quarantine. Zentor never permanently deletes automatically.';
+      return 'Recommended action: quarantine. Avorax never permanently deletes automatically.';
     }
     if (threat.riskScore.verdict == RiskVerdict.probableMalware) {
       return 'Recommended action: review and quarantine if you do not recognize this file.';

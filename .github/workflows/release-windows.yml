@@ -68,7 +68,7 @@ jobs:
 
       - name: Build Flutter Windows app
         working-directory: apps/zentor_client
-        run: flutter build windows --release --build-name "${{ steps.version.outputs.version }}" --build-number "${{ steps.version.outputs.build_number }}" --dart-define=ZENTOR_APP_VERSION="${{ steps.version.outputs.version }}"
+        run: flutter build windows --release --build-name "${{ steps.version.outputs.version }}" --build-number "${{ steps.version.outputs.build_number }}" --dart-define=AVORAX_APP_VERSION="${{ steps.version.outputs.version }}" --dart-define=ZENTOR_APP_VERSION="${{ steps.version.outputs.version }}"
 
       - name: Build local scan core
         working-directory: core/zentor_local_core
@@ -101,7 +101,7 @@ jobs:
           } catch {
             $message = $_.Exception.Message
             $message = $message.Replace("%", "%25").Replace("`r", "%0D").Replace("`n", "%0A")
-            Write-Host "::error title=Zentor installer packaging failed::$message"
+            Write-Host "::error title=Avorax installer packaging failed::$message"
             throw
           }
 
@@ -110,25 +110,25 @@ jobs:
         with:
           name: zentor-windows-installers-${{ steps.version.outputs.version }}
           path: |
-            dist/Zentor-AntiVirus-${{ steps.version.outputs.version }}-x64.msi
-            dist/Zentor-AntiVirus-${{ steps.version.outputs.version }}-x64-setup.exe
+            dist/Avorax-AntiVirus-${{ steps.version.outputs.version }}-x64.msi
+            dist/Avorax-AntiVirus-${{ steps.version.outputs.version }}-x64-setup.exe
           if-no-files-found: error
 
       - name: Publish GitHub release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.tag }}
-          name: Zentor ${{ steps.version.outputs.version }}
+          name: Avorax ${{ steps.version.outputs.version }}
           prerelease: true
           fail_on_unmatched_files: true
           body: |
-            Windows installer release for Zentor.
+            Windows installer release for Avorax.
 
             Assets:
-            - Zentor-AntiVirus-${{ steps.version.outputs.version }}-x64.msi
-            - Zentor-AntiVirus-${{ steps.version.outputs.version }}-x64-setup.exe
+            - Avorax-AntiVirus-${{ steps.version.outputs.version }}-x64.msi
+            - Avorax-AntiVirus-${{ steps.version.outputs.version }}-x64-setup.exe
 
-            The current bundled AI model may be marked as a development model in its metadata. Zentor must not claim production AI protection unless `production_ready=true`.
+            The current bundled AI model may be marked as a development model in its metadata. Avorax must not claim production AI protection unless `production_ready=true`.
           files: |
-            dist/Zentor-AntiVirus-${{ steps.version.outputs.version }}-x64.msi
-            dist/Zentor-AntiVirus-${{ steps.version.outputs.version }}-x64-setup.exe
+            dist/Avorax-AntiVirus-${{ steps.version.outputs.version }}-x64.msi
+            dist/Avorax-AntiVirus-${{ steps.version.outputs.version }}-x64-setup.exe

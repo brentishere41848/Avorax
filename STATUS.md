@@ -1,13 +1,13 @@
-# Zentor Anti-Virus Status
+# Avorax Anti-Virus Status
 
 ## Current Phase
 
-Safe external malware-intelligence support after `v0.2.5`.
+Avorax rebrand and confirmed-threat Guard policy hardening after `v0.2.5`.
 
 ## Current Commit
 
 - Current checkpoint commit: this commit; run `git log -1 --oneline` for the exact SHA after checkout.
-- Base commit before this checkpoint: `44e4b55`
+- Base commit before this checkpoint: `765ba30`
 - Current tag: none detected in this environment
 
 ## Phase Progress
@@ -25,21 +25,27 @@ Safe external malware-intelligence support after `v0.2.5`.
 - Strengthened `tools/security/zentor-product-copy-gate.ps1` to scan broader active product-facing paths and additional unsupported claim categories while avoiding self-matching literal claim phrases.
 - Made `tools/branding/branding-check.sh` directly executable for local Unix-like validation.
 - Updated the Windows MSI packaging script to find Rust binaries produced under the root Cargo workspace target directory.
-- Added native trust helpers for Microsoft signature checks, Zentor-owned paths, Zentor installer artifacts, and publisher trust without blindly trusting unsigned system-folder files.
-- Suppressed Zentor installer/MSI/internal artifacts from weak heuristic findings unless a confirmed signature or known-bad hash matches.
+- Added native trust helpers for Microsoft signature checks, Avorax-owned paths, Avorax installer artifacts, and publisher trust without blindly trusting unsigned system-folder files.
+- Suppressed Avorax installer/MSI/internal artifacts from weak heuristic findings unless a confirmed signature or known-bad hash matches.
 - Raised weak-signal heuristic thresholds so Downloads, Temp, setup/MSI names, unsigned/unknown publisher, and installer-like names remain observations/likely-clean unless stronger independent evidence exists.
 - Hidden native `Observation` verdicts from normal scan threat results.
 - Changed scan-result UX so low/medium heuristic-only findings show `Review suggested` or `Observation`, not `Detected`.
 - Limited default `Quarantine` and `Delete permanently` buttons to confirmed/probable high-confidence results.
-- Reworked the Protection screen explanation and checklist so `Partially Protected` states explain the missing guard/driver/self-test components and make Cloud disabled explicitly optional.
+- Reworked the Protection screen explanation and checklist so `Driver Self-Test Required` states explain the missing guard/driver/self-test components and make Cloud disabled explicitly optional.
 - Reworked the Device tab into `Device & Protection Health` and removed the unprofessional `Flutter local core active` wording.
-- Extended false-positive gates and tests for Zentor installer EXE, Zentor MSI, setup.exe in Downloads, Zentor internal files, normal Downloads EXEs, and native installer trust.
+- Extended false-positive gates and tests for Avorax installer EXE, Avorax MSI, setup.exe in Downloads, Avorax internal files, normal Downloads EXEs, and native installer trust.
 - Added safe GitHub malware-repository metadata and hash-only import tools under `tools/zentor_intel/`.
 - Added disabled-by-default external source config for Pyran1 malware repositories in `assets/zentor_native/threat_intel/sources.example.json`.
 - Added empty safe `.zsig` packs for GitHub hash-only known-bad and lab known-bad indicators.
 - Added `tools/security/zentor-no-malware-binaries-gate.ps1` and `.sh`, wired into the Windows release gate.
 - Added docs for safe external malware-intel handling, metadata-only mode, hash-only mode, and disabled lab mode.
 - Added native engine tests for GitHub hash-only known-bad SHA-256 confirmation and policy quarantine.
+- Rebranded active product-facing UI, docs, installer metadata, CI labels, release artifact names, gates, and safe validation assets from the old product name to Avorax.
+- Changed active product naming to Avorax Anti-Virus, Avorax Security, Avorax Native Engine, Avorax Core Service, and Avorax Guard Service.
+- Added Avorax build-time configuration names while retaining internal legacy `ZENTOR_*` fallbacks where needed for compatibility.
+- Removed placeholder protected-app registry entries that looked like unrelated product-domain examples.
+- Replaced the vague partial-protection status label with `Driver Self-Test Required` and changed verified-ready UI copy to avoid unsupported absolute protection claims.
+- Hardened Guard Service post-launch response so disabled/observe-only modes do not stop or quarantine, and automatic stop/quarantine is limited to confirmed local known-bad/test-threat/native confirmed verdicts.
 
 ## Blockers
 
@@ -54,6 +60,7 @@ Safe external malware-intelligence support after `v0.2.5`.
 - `powershell -ExecutionPolicy Bypass -File tools\branding\branding-check.ps1`
 - `powershell -ExecutionPolicy Bypass -File tools\security\zentor-product-copy-gate.ps1`
 - `powershell -ExecutionPolicy Bypass -File tools\security\zentor-no-malware-binaries-gate.ps1`
+- Active-string search for old product copy, old three-letter engine aliases, vague partial-protection label, unrelated product-domain copy, and fake protection claims.
 - `python tools\zentor_intel\import_github_malware_metadata.py --config assets\zentor_native\threat_intel\sources.example.json --output $env:TEMP\zentor_metadata.jsonl`
 - `python tools\zentor_intel\import_github_hashes_only.py ...` with a safe temporary SHA-256 fixture
 - `python tools\zentor_intel\build_known_bad_from_github.py ...` with a safe temporary SHA-256 fixture
@@ -79,12 +86,12 @@ Safe external malware-intelligence support after `v0.2.5`.
 
 ## Exact Next Step
 
-Push this checkpoint and let CI run the Rust/Flutter/Dart checks; do not tag another release unless CI and the release workflow pass.
+Commit and push the Avorax checkpoint, then let CI run the Rust/Flutter/Dart checks; do not tag another release unless CI and the release workflow pass.
 
 ## Handoff
 
-This checkpoint adds safe metadata-only/hash-only external malware-intelligence support. It does not clone malware repos, download malware, execute samples, or ship samples. PowerShell branding, product-copy, and no-malware-binaries gates pass locally. Rust, false-positive, Flutter, Dart, and driver gates remain environment-blocked here and must run in CI or a provisioned environment.
+This checkpoint rebrands active product-facing surfaces to Avorax and tightens Guard response policy for confirmed threats. It does not clone malware repos, download malware, execute samples, or ship samples. PowerShell branding, product-copy, and no-malware-binaries gates pass locally. Rust, false-positive, Flutter, Dart, and driver gates remain environment-blocked here and must run in CI or a provisioned environment.
 
 ## Final Limitations
 
-Zentor must not claim kernel-level or pre-execution protection until the signed driver path is built, installed, running, and self-tested. No anti-virus can guarantee complete protection.
+Avorax must not claim kernel-level or pre-execution protection until the signed driver path is built, installed, running, and self-tested. No anti-virus can guarantee complete protection.

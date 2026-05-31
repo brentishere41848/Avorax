@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Zentor Static Malware Feature Schema",
+  "title": "Avorax Static Malware Feature Schema",
   "type": "object",
   "required": [
     "file_size",

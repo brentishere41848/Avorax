@@ -88,7 +88,7 @@ fn data_dir() -> PathBuf {
     #[cfg(windows)]
     {
         if let Ok(program_data) = std::env::var("PROGRAMDATA") {
-            return PathBuf::from(program_data).join("Zentor").join("data");
+            return PathBuf::from(program_data).join("Avorax").join("data");
         }
     }
     if let Ok(home) = std::env::var("HOME") {

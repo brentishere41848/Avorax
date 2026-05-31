@@ -8,7 +8,7 @@ New-Item -ItemType Directory -Force -Path (Split-Path $ReportPath) | Out-Null
 try {
   & (Join-Path $PSScriptRoot "setup-dev-env-check.ps1") -RequireAdmin -ReportPath (Join-Path (Split-Path $ReportPath) "setup_report.json")
   $testSigning = (& bcdedit /enum | Select-String -Pattern "testsigning\s+Yes" -Quiet)
-  if (-not $testSigning) { throw "Windows TESTSIGNING is not enabled. Zentor will not enable it automatically." }
+  if (-not $testSigning) { throw "Windows TESTSIGNING is not enabled. Avorax will not enable it automatically." }
   pnputil /add-driver $InfPath /install
   if ($LASTEXITCODE -ne 0) { throw "pnputil failed to install ZentorProcessGuard." }
   sc.exe start ZentorProcessGuard | Out-Host

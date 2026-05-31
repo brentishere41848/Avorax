@@ -1,6 +1,6 @@
-# Zentor Client
+# Avorax Client
 
-Real Flutter 3 Material 3 Zentor client application.
+Real Flutter 3 Material 3 Avorax client application.
 
 ```powershell
 flutter pub get

@@ -38,7 +38,7 @@ New-Item -ItemType Directory -Force -Path (Split-Path $out) | Out-Null
 $report | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $out -Encoding UTF8
 
 if ($errors.Count -gt 0) {
-  throw "Zentor performance gate failed with $($errors.Count) error(s)."
+  throw "Avorax performance gate failed with $($errors.Count) error(s)."
 }
 
-Write-Host "Zentor performance gate passed. Report: $out"
+Write-Host "Avorax performance gate passed. Report: $out"

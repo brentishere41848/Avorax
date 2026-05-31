@@ -174,7 +174,7 @@ class LocalCoreClient {
     }
     final executable = _guardServiceExecutable();
     if (executable == null || !File(executable).existsSync()) {
-      return 'Zentor Guard Service executable was not found. Post-launch fallback cannot be self-tested.';
+      return 'Avorax Guard Service executable was not found. Post-launch fallback cannot be self-tested.';
     }
     try {
       final process = await Process.start(executable, []);
@@ -237,7 +237,7 @@ class LocalCoreClient {
         threats: const [],
         message:
             response?['error'] as String? ??
-            'Zentor local core is not available.',
+            'Avorax local core is not available.',
       );
     }
     return _scanReportFromJson(response, kind: kind, actionMode: actionMode);

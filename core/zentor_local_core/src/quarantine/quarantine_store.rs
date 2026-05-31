@@ -129,7 +129,7 @@ fn quarantine_base() -> PathBuf {
     }
     if cfg!(windows) {
         if let Ok(program_data) = std::env::var("ProgramData") {
-            return PathBuf::from(program_data).join("Zentor").join("Quarantine");
+            return PathBuf::from(program_data).join("Avorax").join("Quarantine");
         }
     }
     if cfg!(target_os = "macos") {
@@ -137,7 +137,7 @@ fn quarantine_base() -> PathBuf {
             return PathBuf::from(home)
                 .join("Library")
                 .join("Application Support")
-                .join("Zentor")
+                .join("Avorax")
                 .join("Quarantine");
         }
     }
@@ -214,7 +214,7 @@ mod tests {
             sha256: "sha256:legacy".to_string(),
             file_size: 11,
             detection_name: "Legacy detection".to_string(),
-            engine: "Zentor Native Engine".to_string(),
+            engine: "Avorax Native Engine".to_string(),
             quarantined_at: Utc::now(),
             status: QuarantineStatus::Quarantined,
             user_note: None,

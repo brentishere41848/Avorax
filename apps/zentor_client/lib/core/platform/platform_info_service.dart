@@ -18,7 +18,7 @@ class PlatformInfoService {
       osVersion: Platform.operatingSystemVersion,
       deviceIdentifierHashStatus: _deviceHashService
           .deviceIdentifierHashStatus(),
-      localCoreStatus: 'Zentor Core Service: Running',
+      localCoreStatus: 'Avorax Core Service: Running',
       permissionsStatus: 'No elevated permissions requested',
     );
   }

@@ -27,8 +27,8 @@ enum ProtectionStatus {
     ProtectionStatus.idle => 'Protection Idle',
     ProtectionStatus.starting => 'Starting',
     ProtectionStatus.localOnly => 'Local Protection Active',
-    ProtectionStatus.protected => 'Protected',
-    ProtectionStatus.partiallyProtected => 'Partially Protected',
+    ProtectionStatus.protected => 'Verified Protection Active',
+    ProtectionStatus.partiallyProtected => 'Driver Self-Test Required',
     ProtectionStatus.stopping => 'Stopping',
     ProtectionStatus.error => 'Protection Error',
   };
@@ -432,13 +432,13 @@ class ZentorConfig {
     final parsed = Uri.tryParse(apiBaseUrl.trim());
     if (apiBaseUrl.trim().isEmpty) {
       errors.add(
-        'Cloud settings are managed by your Zentor build configuration.',
+        'Cloud settings are managed by your Avorax build configuration.',
       );
     } else if (parsed == null || !parsed.hasScheme || parsed.host.isEmpty) {
-      errors.add('Zentor Cloud endpoint must be an absolute URL.');
+      errors.add('Avorax Cloud endpoint must be an absolute URL.');
     }
     if (projectId.trim().isEmpty || publicClientKey.trim().isEmpty) {
-      errors.add('Zentor Cloud build configuration is incomplete.');
+      errors.add('Avorax Cloud build configuration is incomplete.');
     }
     return errors;
   }

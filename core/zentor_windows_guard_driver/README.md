@@ -1,11 +1,11 @@
-# Zentor Windows Guard Driver Architecture
+# Avorax Windows Guard Driver Architecture
 
-Zentor v1 does not ship a kernel driver.
+Avorax v1 does not ship a kernel driver.
 
 Future Windows on-access blocking requires a separate signed minifilter driver build path:
 
 - Signed Microsoft-compliant minifilter driver.
-- Visible user-mode Zentor Guard service.
+- Visible user-mode Avorax Guard service.
 - Driver asks user-mode scanner for allow/deny decisions.
 - Safe timeout policy with explicit fail-open/fail-closed configuration.
 - No stealth behavior, no rootkit behavior, no hidden persistence.

@@ -1,6 +1,6 @@
 # Threat Intel Import
 
-Zentor threat-intel importers convert safe metadata indicators into native Zentor packs.
+Avorax threat-intel importers convert safe metadata indicators into native Avorax packs.
 
 Supported inputs:
 

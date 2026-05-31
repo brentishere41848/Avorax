@@ -1,6 +1,6 @@
 # Native Engine Testing
 
-Run ZNE tests:
+Run ANE tests:
 
 ```powershell
 cargo test --manifest-path core/zentor_native_engine/Cargo.toml
@@ -18,7 +18,7 @@ Run Guard integration tests:
 cargo test --manifest-path core/zentor_guard_service/Cargo.toml
 ```
 
-Run the ZNE release gate:
+Run the ANE release gate:
 
 ```powershell
 tools/zne/zne-release-gate.ps1

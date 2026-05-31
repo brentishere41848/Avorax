@@ -1,6 +1,6 @@
 # Native Signature Packs
 
-Zentor Native Engine uses `.zsig` packs.
+Avorax Native Engine uses `.zsig` packs.
 
 Active packs:
 

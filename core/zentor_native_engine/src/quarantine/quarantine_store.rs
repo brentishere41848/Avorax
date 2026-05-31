@@ -51,7 +51,7 @@ impl QuarantineStore {
             quarantine_path: quarantine_path.display().to_string(),
             sha256: sha256.to_string(),
             detection_name: detection_name.to_string(),
-            engine: "Zentor Native Engine".to_string(),
+            engine: "Avorax Native Engine".to_string(),
             quarantined_at: Utc::now(),
             blocked_before_execution,
             action_taken: "quarantined".to_string(),

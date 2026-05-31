@@ -12,7 +12,7 @@ TYPE_MAP = {
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Build a Zentor known-bad .zsig pack from hash-only GitHub intelligence JSONL."
+        description="Build a Avorax known-bad .zsig pack from hash-only GitHub intelligence JSONL."
     )
     parser.add_argument("--input", required=True)
     parser.add_argument("--output", required=True)

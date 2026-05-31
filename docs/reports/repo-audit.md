@@ -1,11 +1,11 @@
-# Zentor Repository Audit
+# Avorax Repository Audit
 
 Date: 2026-05-31
 Commit audited: `d5c778a`
 
 ## Scope
 
-This audit covers the active Zentor Anti-Virus repository state, including Rust crates, Flutter/Dart packages, Windows driver validation scripts, installer/release tooling, CI workflows, branding gates, archived legacy material, and known blockers. It does not claim product readiness or driver-level protection.
+This audit covers the active Avorax Anti-Virus repository state, including Rust crates, Flutter/Dart packages, Windows driver validation scripts, installer/release tooling, CI workflows, branding gates, archived legacy material, and known blockers. It does not claim product readiness or driver-level protection.
 
 ## Inventory
 

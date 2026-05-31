@@ -1,8 +1,8 @@
-# Zentor
+# Avorax
 
-Zentor is a privacy-first desktop anti-malware and security client. It is a real Flutter application for Android, iOS, Windows, macOS, and Linux, with a Rust local core for desktop malware scanning and quarantine.
+Avorax is a privacy-first desktop anti-malware and security client. It is a real Flutter application for Android, iOS, Windows, macOS, and Linux, with a Rust local core for desktop malware scanning and quarantine.
 
-Zentor v1 runs Quick Scan, Full Scan, and Custom Scan flows fully offline. Scanning, quarantine, allowlist, logs, and scan results do not require Zentor Cloud, an account, an API, a login, or internet. Runtime data comes only from local state, local configuration, real API responses when optional cloud features are enabled, selected path hashing, local core results, and real errors.
+Avorax v1 runs Quick Scan, Full Scan, and Custom Scan flows fully offline. Scanning, quarantine, allowlist, logs, and scan results do not require Avorax Cloud, an account, an API, a login, or internet. Runtime data comes only from local state, local configuration, real API responses when optional cloud features are enabled, selected path hashing, local core results, and real errors.
 
 ## Repository Layout
 
@@ -14,7 +14,7 @@ packages/
 core/
   zentor_local_core/      Rust stdin/stdout local security core
 services/
-  api/                   Rust Axum Zentor API
+  api/                   Rust Axum Avorax API
 infra/
   docker-compose.yml     Local Postgres, Redis, and API
   migrations/            PostgreSQL schema
@@ -30,11 +30,11 @@ docs/
 ## Get The Code
 
 ```powershell
-git clone https://github.com/brentishere41848/zentor.git Zentor
-cd Zentor
+git clone https://github.com/brentishere41848/zentor.git Avorax
+cd Avorax
 ```
 
-The GitHub repository URL still contains the old repository name, but the active product is Zentor Anti-Virus.
+The GitHub repository URL still contains the old repository name, but the active product is Avorax Anti-Virus.
 
 ## Run The Flutter App
 
@@ -48,14 +48,14 @@ flutter run -d android
 flutter run -d ios
 ```
 
-Zentor opens to the native Flutter Home screen. It does not open a browser, WebView, iframe, localhost page, Electron app, Tauri app, React app, Next.js app, or Vite app.
+Avorax opens to the native Flutter Home screen. It does not open a browser, WebView, iframe, localhost page, Electron app, Tauri app, React app, Next.js app, or Vite app.
 
 ## Run The Backend API
 
 The easiest local backend path is Docker Compose:
 
 ```powershell
-cd C:\Users\Brent\CodexProjects\Zentor
+cd C:\Users\Brent\CodexProjects\Avorax
 docker compose -f infra/docker-compose.yml up --build
 ```
 
@@ -74,8 +74,8 @@ Invoke-RestMethod http://127.0.0.1:8000/v1/health
 The local compose stack seeds a development project/client key that matches the Flutter defaults:
 
 ```text
-ZENTOR_PROJECT_ID=zentor-default
-ZENTOR_PUBLIC_CLIENT_KEY=zentor-public-client
+AVORAX_PROJECT_ID=avorax-default
+AVORAX_PUBLIC_CLIENT_KEY=avorax-public-client
 ```
 
 Run the Flutter app against the local API:
@@ -83,45 +83,45 @@ Run the Flutter app against the local API:
 ```powershell
 cd apps/zentor_client
 flutter run -d windows `
-  --dart-define=ZENTOR_API_BASE_URL=http://127.0.0.1:8000 `
-  --dart-define=ZENTOR_PROJECT_ID=zentor-default `
-  --dart-define=ZENTOR_PUBLIC_CLIENT_KEY=zentor-public-client
+  --dart-define=AVORAX_API_BASE_URL=http://127.0.0.1:8000 `
+  --dart-define=AVORAX_PROJECT_ID=avorax-default `
+  --dart-define=AVORAX_PUBLIC_CLIENT_KEY=avorax-public-client
 ```
 
 To run only Postgres and Redis in Docker, then the API with Cargo:
 
 ```powershell
-cd C:\Users\Brent\CodexProjects\Zentor
+cd C:\Users\Brent\CodexProjects\Avorax
 docker compose -f infra/docker-compose.yml up postgres redis
 
 cd services/api
 $env:DATABASE_URL="postgres://zentor:zentor@localhost:15432/zentor"
 $env:REDIS_URL="redis://localhost:16379"
-$env:ZENTOR_DEV_PROJECT_ID="zentor-default"
-$env:ZENTOR_DEV_PUBLIC_CLIENT_KEY="zentor-public-client"
+$env:AVORAX_DEV_PROJECT_ID="avorax-default"
+$env:AVORAX_DEV_PUBLIC_CLIENT_KEY="avorax-public-client"
 cargo run
 ```
 
-When running with Cargo directly, the API listens on `http://127.0.0.1:8000` unless you set `ZENTOR_API_BIND_ADDR`.
+When running with Cargo directly, the API listens on `http://127.0.0.1:8000` unless you set `AVORAX_API_BIND_ADDR`.
 
-## Zentor Cloud Configuration
+## Avorax Cloud Configuration
 
-The app uses build-time Zentor Cloud settings by default. Users are not asked to paste API settings during first launch.
+The app uses build-time Avorax Cloud settings by default. Users are not asked to paste API settings during first launch.
 
 ```powershell
 flutter run -d windows `
-  --dart-define=ZENTOR_API_BASE_URL=https://YOUR_API_HERE `
-  --dart-define=ZENTOR_PROJECT_ID=YOUR_PROJECT_ID `
-  --dart-define=ZENTOR_PUBLIC_CLIENT_KEY=YOUR_PUBLIC_CLIENT_KEY
+  --dart-define=AVORAX_API_BASE_URL=https://YOUR_API_HERE `
+  --dart-define=AVORAX_PROJECT_ID=YOUR_PROJECT_ID `
+  --dart-define=AVORAX_PUBLIC_CLIENT_KEY=YOUR_PUBLIC_CLIENT_KEY
 ```
 
-Cloud is optional. The app defaults to local protection and does not call Zentor Cloud before allowing scans. Use `Settings > Cloud` or developer options to test a cloud endpoint when remote reporting, updates, or future account/license features are needed.
+Cloud is optional. The app defaults to local protection and does not call Avorax Cloud before allowing scans. Use `Settings > Cloud` or developer options to test a cloud endpoint when remote reporting, updates, or future account/license features are needed.
 
 Developer endpoint overrides are hidden under `Settings > Advanced > Developer options`.
 
 ## App Updates
 
-Zentor checks GitHub Releases for newer tagged builds and shows a visible update state in Home and `Settings > Updates`. It does not silently install updates. When a newer release exists, the user can choose `Download Update`, which opens the release installer or GitHub release page.
+Avorax checks GitHub Releases for newer tagged builds and shows a visible update state in Home and `Settings > Updates`. It does not silently install updates. When a newer release exists, the user can choose `Download Update`, which opens the release installer or GitHub release page.
 
 Release builds should be tagged with `vMAJOR.MINOR.PATCH`. The Windows release workflow builds Flutter with the tag version, publishes MSI/EXE assets, and the installed app compares that local version against the latest GitHub release.
 
@@ -129,8 +129,8 @@ Override the update repository at build time when needed:
 
 ```powershell
 flutter build windows --release `
-  --dart-define=ZENTOR_UPDATES_REPO_OWNER=YOUR_GITHUB_USER `
-  --dart-define=ZENTOR_UPDATES_REPO_NAME=YOUR_REPO
+  --dart-define=AVORAX_UPDATES_REPO_OWNER=YOUR_GITHUB_USER `
+  --dart-define=AVORAX_UPDATES_REPO_NAME=YOUR_REPO
 ```
 
 ## Desktop Local Core
@@ -145,7 +145,7 @@ The Flutter client talks to the local core over stdin/stdout JSON commands. The 
 
 ## Malware Scanning
 
-Desktop scanning uses Zentor Native Engine (ZNE) as the primary engine:
+Desktop scanning uses Avorax Native Engine (ANE) as the primary engine:
 
 - Native signatures in `assets/zentor_native/signatures/zentor_core.zsig`.
 - Native deterministic rules in `assets/zentor_native/rules/zentor_rules.zrule`.
@@ -164,7 +164,7 @@ cargo run --manifest-path core\zentor_native_engine\Cargo.toml --bin zentor-sign
   --version 0.1.1
 ```
 
-The compiler validates metadata, rejects unsafe broad signatures, emits pack metadata, and records a canonical pack hash that ZNE verifies on load.
+The compiler validates metadata, rejects unsafe broad signatures, emits pack metadata, and records a canonical pack hash that ANE verifies on load.
 
 Weak signals do not become scary detections by themselves: a normal `.exe` in Downloads, an unknown CLI binary, a VPN installer, or an unsigned developer tool is not shown as malware unless stronger independent signals combine.
 
@@ -180,15 +180,15 @@ Scan types:
 
 Scan modes:
 
-- Detect only: Zentor lists suspicious or infected files and does not quarantine or delete anything.
-- Auto-quarantine confirmed threats: Zentor quarantines confirmed signature detections when not allowlisted. Heuristic findings are shown for review.
-- Auto-quarantine all detections: Zentor may quarantine eligible non-low-confidence local detections. Low-confidence heuristic findings remain review-only.
+- Detect only: Avorax lists suspicious or infected files and does not quarantine or delete anything.
+- Auto-quarantine confirmed threats: Avorax quarantines confirmed signature detections when not allowlisted. Heuristic findings are shown for review.
+- Auto-quarantine all detections: Avorax may quarantine eligible non-low-confidence local detections. Low-confidence heuristic findings remain review-only.
 
 Scan results are grouped into confirmed threats, probable malware, suspicious items, and low-priority observations. Low-priority observations are hidden by default.
 
 ## Real-Time And Ransomware Protection
 
-Zentor Guard is offline-first. The default release uses a visible user-mode helper with best-effort post-launch blocking where the OS allows it. A Windows minifilter development path exists for known-threat pre-execution blocking, but Zentor must not claim that mode is active unless the driver is installed, running, communicating with the service, and passing self-test. Production distribution requires Microsoft driver signing.
+Avorax Guard is offline-first. The default release uses a visible user-mode helper with best-effort post-launch blocking where the OS allows it. A Windows minifilter development path exists for known-threat pre-execution blocking, but Avorax must not claim that mode is active unless the driver is installed, running, communicating with the service, and passing self-test. Production distribution requires Microsoft driver signing.
 
 v0.1.13 adds prevention-first protection profiles:
 
@@ -196,15 +196,15 @@ v0.1.13 adds prevention-first protection profiles:
 - Lockdown Protection: unknown apps are blocked until trusted or approved by exact hash.
 - Developer Mode: unknown developer tools are monitored/reviewed without broadly blocking normal workflows.
 
-Lockdown blocks unknown apps as unknown. It must not label a normal executable as a virus unless a native signature, native rule, native ML, or behavior signal supports that verdict. True before-launch Lockdown enforcement still requires the active driver path; otherwise Zentor reports post-launch fallback.
+Lockdown blocks unknown apps as unknown. It must not label a normal executable as a virus unless a native signature, native rule, native ML, or behavior signal supports that verdict. True before-launch Lockdown enforcement still requires the active driver path; otherwise Avorax reports post-launch fallback.
 
-Ransomware Guard watches for behavior such as rapid mass file modification, suspicious renames, entropy jumps, ransom-note patterns, and backup tampering. Recovery Vault can restore protected copies when available. Zentor does not claim it can decrypt files without a backup, snapshot, or key.
+Ransomware Guard watches for behavior such as rapid mass file modification, suspicious renames, entropy jumps, ransom-note patterns, and backup tampering. Recovery Vault can restore protected copies when available. Avorax does not claim it can decrypt files without a backup, snapshot, or key.
 
 ## Quarantine And Allowlist
 
-When scan mode allows quarantine and a confirmed infected file is detected, Zentor moves it to the Zentor quarantine folder, renames it with a safe `.zentorq` extension, removes executable permissions where supported, and stores JSON metadata. Zentor does not permanently delete files automatically.
+When scan mode allows quarantine and a confirmed infected file is detected, Avorax moves it to the Avorax quarantine folder, renames it with a safe `.zentorq` extension, removes executable permissions where supported, and stores JSON metadata. Avorax does not permanently delete files automatically.
 
-Allowlist entries are explicit. Zentor blocks unsafe root paths such as `C:\`, `C:\Windows`, `/`, `/usr`, `/bin`, `/sbin`, and `/etc`.
+Allowlist entries are explicit. Avorax blocks unsafe root paths such as `C:\`, `C:\Windows`, `/`, `/usr`, `/bin`, `/sbin`, and `/etc`.
 
 ## Build
 
@@ -224,29 +224,29 @@ Platform builds require the normal Flutter toolchain for that platform. iOS and 
 For normal testing, installing the MSI or EXE is easier than running the app from source. Use the installer from GitHub Releases when available, or build one locally with:
 
 ```powershell
-cd C:\Users\Brent\CodexProjects\Zentor
+cd C:\Users\Brent\CodexProjects\Avorax
 powershell -ExecutionPolicy Bypass -File installer\windows\build-msi.ps1 -Version 0.2.0 -RequireLocalCore -AllowDevelopmentModel
 ```
 
 The installers are written to:
 
 ```text
-dist\Zentor-AntiVirus-0.2.0-x64.msi
-dist\Zentor-AntiVirus-0.2.0-x64-setup.exe
+dist\Avorax-AntiVirus-0.2.0-x64.msi
+dist\Avorax-AntiVirus-0.2.0-x64-setup.exe
 ```
 
 Install either file:
 
-- `Zentor-AntiVirus-0.2.0-x64-setup.exe` is the easiest option for most users.
-- `Zentor-AntiVirus-0.2.0-x64.msi` is better for clean installer testing and enterprise-style deployment checks.
+- `Avorax-AntiVirus-0.2.0-x64-setup.exe` is the easiest option for most users.
+- `Avorax-AntiVirus-0.2.0-x64.msi` is better for clean installer testing and enterprise-style deployment checks.
 
-The MSI/EXE installs the app, local core, Zentor Native Engine assets, app assets, and docs. On Windows it also registers `zentor_guard_service` as the visible Zentor Guard Service so confirmed/probable threats can be monitored and stopped after launch. It does not replace the Windows driver-development VM workflow. True pre-execution blocking still requires WDK or EWDK, administrator rights, test-signing in a disposable VM, the minifilter driver, and the driver validation scripts.
+The MSI/EXE installs the app, local core, Avorax Native Engine assets, app assets, and docs. On Windows it also registers `zentor_guard_service` as the visible Avorax Guard Service so confirmed/probable threats can be monitored and stopped after launch. It does not replace the Windows driver-development VM workflow. True pre-execution blocking still requires WDK or EWDK, administrator rights, test-signing in a disposable VM, the minifilter driver, and the driver validation scripts.
 
-The installer stages the Flutter Windows release app, `zentor_local_core.exe`, `zentor_guard_service.exe`, Zentor Native Engine assets, app assets, bundled Flutter/plugin DLLs, Visual C++ runtime DLLs available on the build machine, and local privacy/security docs. Compatibility engines are not required for normal scanning. Zentor does not install hidden services or stealth persistence; the Guard Service is user-visible and removable through normal Windows service/app uninstall paths.
+The installer stages the Flutter Windows release app, `zentor_local_core.exe`, `zentor_guard_service.exe`, Avorax Native Engine assets, app assets, bundled Flutter/plugin DLLs, Visual C++ runtime DLLs available on the build machine, and local privacy/security docs. Compatibility engines are not required for normal scanning. Avorax does not install hidden services or stealth persistence; the Guard Service is user-visible and removable through normal Windows service/app uninstall paths.
 
 The MSI and EXE installer builds fail if model assets are missing. They also fail when metadata says `production_ready=false` unless you pass `-AllowDevelopmentModel` for an explicitly non-production build. The EXE installer is a WiX Burn bootstrapper that contains and runs the MSI.
 
-Zentor Native Engine updates use signed native packs when update infrastructure is configured. Zentor must report native engine errors honestly instead of pretending files are clean.
+Avorax Native Engine updates use signed native packs when update infrastructure is configured. Avorax must report native engine errors honestly instead of pretending files are clean.
 
 GitHub Releases are built by `.github/workflows/release-windows.yml`. Push a version tag such as `v0.1.0` and GitHub Actions will build and attach both the `.msi` and `.exe` installers to the release.
 
@@ -258,7 +258,7 @@ On a disposable Windows driver-development VM with Visual Studio Build Tools or 
 powershell -ExecutionPolicy Bypass -File tools\windows\zentor-protection-selftest.ps1 -BuildDriver -InstallDriver
 ```
 
-The workflow writes `dist\windows-driver-validation\selftest_report.json`. If the driver is missing or not running, Zentor must show post-launch fallback instead of pre-execution blocking.
+The workflow writes `dist\windows-driver-validation\selftest_report.json`. If the driver is missing or not running, Avorax must show post-launch fallback instead of pre-execution blocking.
 
 Additional release gates:
 

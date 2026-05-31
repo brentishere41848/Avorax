@@ -1,11 +1,11 @@
 # Real-Time Protection
 
-Zentor has two enforcement layers:
+Avorax has two enforcement layers:
 
 - Pre-execution blocking: only when a platform blocking driver/extension is installed, signed/approved, running, and returning deny verdicts before execution.
 - Post-launch fallback: user-mode Guard watches process starts and stops/quarantines confirmed threats as quickly as the OS allows.
 
-Current Windows release uses the post-launch fallback unless the minifilter driver is separately built, installed, running, connected to Zentor Guard Service, and passing the protection self-test.
+Current Windows release uses the post-launch fallback unless the minifilter driver is separately built, installed, running, connected to Avorax Guard Service, and passing the protection self-test.
 
 v0.1.13 adds prevention profiles:
 
@@ -14,17 +14,17 @@ v0.1.13 adds prevention profiles:
 - Lockdown Protection: unknown apps block until trusted or approved.
 - Developer Mode: unknown developer tools are monitored/reviewed instead of broadly blocked.
 
-When the driver path is active, Lockdown decisions can be enforced before launch. Without the driver, Zentor must say "post-launch fallback only".
+When the driver path is active, Lockdown decisions can be enforced before launch. Without the driver, Avorax must say "post-launch fallback only".
 
 Auto-stop/quarantine is allowed only for confirmed threats:
 
 - Known bad hash.
 - Confirmed local signature such as EICAR test.
-- Confirmed Zentor native signature.
-- Confirmed high-confidence Zentor native rule.
+- Confirmed Avorax native signature.
+- Confirmed high-confidence Avorax native rule.
 
 Suspicious or low-confidence results are review-only.
 
-When the user-mode Guard stops a process, it writes the same quarantine metadata shape used by manual scans so the file appears in the Zentor Quarantine UI and can be restored or deleted with confirmation. Medium-confidence native script rules are monitored and logged for review; they do not stop or quarantine a process by themselves.
+When the user-mode Guard stops a process, it writes the same quarantine metadata shape used by manual scans so the file appears in the Avorax Quarantine UI and can be restored or deleted with confirmation. Medium-confidence native script rules are monitored and logged for review; they do not stop or quarantine a process by themselves.
 
 Lockdown unknown-app blocking is not malware detection. It should not quarantine by default and must not call normal unknown software a virus.

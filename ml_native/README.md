@@ -1,6 +1,6 @@
-# Zentor Native ML
+# Avorax Native ML
 
-Zentor Native ML uses feature vectors only. The production app does not train itself, does not download samples, does not execute suspicious files, and does not upload user files.
+Avorax Native ML uses feature vectors only. The production app does not train itself, does not download samples, does not execute suspicious files, and does not upload user files.
 
 The checked-in model is a development `.zmodel` used to validate the pure Rust runtime path. It is marked `production_ready: false` and cannot auto-quarantine by itself.
 

@@ -6,7 +6,7 @@ import 'package:zentor_client/app/theme/zentor_colors.dart';
 import 'package:zentor_client/app/theme/zentor_theme.dart';
 
 void main() {
-  test('app background is the flat Zentor dark color', () {
+  test('app background is the flat Avorax dark color', () {
     final theme = ZentorTheme.dark();
 
     expect(theme.scaffoldBackgroundColor, ZentorColors.background);

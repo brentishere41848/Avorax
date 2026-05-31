@@ -1,6 +1,6 @@
 # Lab Readiness
 
-Zentor release gates are aligned around the categories used by independent endpoint security testing:
+Avorax release gates are aligned around the categories used by independent endpoint security testing:
 
 - Protection: EICAR, known-bad safe fixtures, native signature/rule verdicts, Guard decisions, and driver self-test.
 - Performance: decision latency, scan throughput, idle overhead, and UI responsiveness.
@@ -15,4 +15,4 @@ Current v0.1.13 status:
 - True pre-execution enforcement still requires an installed/running Windows driver and passing self-test.
 - Local AI is a development model and cannot auto-quarantine by itself.
 
-Zentor should not replace Microsoft Defender until independent validation and production signing are complete.
+Avorax should not replace Microsoft Defender until independent validation and production signing are complete.

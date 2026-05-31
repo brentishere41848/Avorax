@@ -12,8 +12,8 @@ try {
   $setup = Get-Content -Raw -LiteralPath (Join-Path (Split-Path $ReportPath) "setup_report.json") | ConvertFrom-Json
   $signtool = $setup.checks.signtool
   if (-not $CertificateThumbprint) {
-    $cert = Get-ChildItem Cert:\CurrentUser\My | Where-Object { $_.Subject -like "*Zentor Driver Test Certificate*" } | Sort-Object NotAfter -Descending | Select-Object -First 1
-    if (-not $cert) { throw "No Zentor Driver Test Certificate found. Run create-test-cert.ps1 first." }
+    $cert = Get-ChildItem Cert:\CurrentUser\My | Where-Object { $_.Subject -like "*Avorax Driver Test Certificate*" } | Sort-Object NotAfter -Descending | Select-Object -First 1
+    if (-not $cert) { throw "No Avorax Driver Test Certificate found. Run create-test-cert.ps1 first." }
     $CertificateThumbprint = $cert.Thumbprint
   }
   $targets = Get-ChildItem -LiteralPath $BuildOutputDir -Recurse -Include "*.sys","*.cat" -ErrorAction SilentlyContinue

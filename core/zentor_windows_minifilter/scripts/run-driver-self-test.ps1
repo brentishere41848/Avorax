@@ -7,7 +7,7 @@ $ErrorActionPreference = "Stop"
 New-Item -ItemType Directory -Force -Path (Split-Path $ReportPath) | Out-Null
 
 if (-not (Test-Path -LiteralPath $GuardServicePath)) {
-  throw "Zentor Guard Service executable was not found: $GuardServicePath. Build core/zentor_guard_service first."
+  throw "Avorax Guard Service executable was not found: $GuardServicePath. Build core/zentor_guard_service first."
 }
 
 $cmdFile = Join-Path (Split-Path $ReportPath) "driver_self_test_command.json"
@@ -16,10 +16,10 @@ $quotedCmd = '"' + $cmdFile + '"'
 $quotedExe = '"' + $GuardServicePath + '"'
 $raw = cmd.exe /d /c "type $quotedCmd | $quotedExe" 2>&1
 if ($LASTEXITCODE -ne 0) {
-  throw "Zentor Guard Service self-test command failed. $raw"
+  throw "Avorax Guard Service self-test command failed. $raw"
 }
 if (-not $raw) {
-  throw "Zentor Guard Service self-test produced no output."
+  throw "Avorax Guard Service self-test produced no output."
 }
 $event = $raw | ConvertFrom-Json
 $report = $event.message | ConvertFrom-Json

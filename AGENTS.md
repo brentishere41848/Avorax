@@ -1,15 +1,15 @@
-# Zentor Agent Instructions
+# Avorax Agent Instructions
 
-Build Zentor Anti-Virus as a legitimate, privacy-first anti-virus and anti-malware desktop client.
+Build Avorax Anti-Virus as a legitimate, privacy-first anti-virus and anti-malware desktop client.
 
 Product names:
 
-- Product: Zentor Anti-Virus
-- Short name: Zentor
-- Product family: Zentor Security
-- Engine: Zentor Native Engine
-- Engine short name: ZNE
-- Services: Zentor Core Service and Zentor Guard Service
+- Product: Avorax Anti-Virus
+- Short name: Avorax
+- Product family: Avorax Security
+- Engine: Avorax Native Engine
+- Engine short name: ANE
+- Services: Avorax Core Service and Avorax Guard Service
 
 Required boundaries:
 

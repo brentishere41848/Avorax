@@ -25,7 +25,7 @@ MALWARE_SAMPLE_EXTENSIONS = {
 }
 
 SAFE_BINARY_NAMES = (
-    "Zentor-AntiVirus-",
+    "Avorax-AntiVirus-",
 )
 
 
@@ -57,7 +57,7 @@ def parse_github_repo_url(url: str) -> tuple[str, str]:
 def github_api_get(url: str, token: str | None = None) -> dict:
     headers = {
         "Accept": "application/vnd.github+json",
-        "User-Agent": "Zentor-safe-metadata-importer",
+        "User-Agent": "Avorax-safe-metadata-importer",
         "X-GitHub-Api-Version": "2022-11-28",
     }
     if token:

@@ -50,7 +50,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         _Section(
           title: 'General',
           children: const [
-            _ValueRow('App', 'Zentor'),
+            _ValueRow('App', 'Avorax'),
             _ValueRow('Mode', 'Desktop antivirus and security client'),
           ],
         ),
@@ -88,7 +88,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             if (state.updateError != null)
               _ValueRow('Last check', state.updateError!),
             const Text(
-              'Zentor checks GitHub Releases for a newer tagged build. It never installs silently; you choose whether to open the installer or release page.',
+              'Avorax checks GitHub Releases for a newer tagged build. It never installs silently; you choose whether to open the installer or release page.',
               style: TextStyle(color: ZentorColors.textSecondary, height: 1.4),
             ),
             const SizedBox(height: 12),
@@ -175,7 +175,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ],
         ),
         _Section(
-          title: 'Zentor Native Engine',
+          title: 'Avorax Native Engine',
           children: [
             _ValueRow('Engine status', state.malwareEngineStatus.label),
             _ValueRow('Native status', state.nativeEngineStatus),
@@ -231,7 +231,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ),
             _ValueRow(
               'Training',
-              'Labels are saved locally for export. Zentor does not retrain itself silently.',
+              'Labels are saved locally for export. Avorax does not retrain itself silently.',
             ),
           ],
         ),
@@ -241,7 +241,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             _ValueRow('Mode', 'Block confirmed behavior'),
             _ValueRow(
               'Recovery',
-              'Restores from Zentor Recovery Vault when a protected copy exists.',
+              'Restores from Avorax Recovery Vault when a protected copy exists.',
             ),
           ],
         ),
@@ -267,7 +267,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               contentPadding: EdgeInsets.zero,
               title: const Text('Developer options'),
               subtitle: const Text(
-                'Cloud settings are normally managed by the Zentor build configuration.',
+                'Cloud settings are normally managed by the Avorax build configuration.',
                 style: TextStyle(color: ZentorColors.textSecondary),
               ),
               value: _developerOptions,

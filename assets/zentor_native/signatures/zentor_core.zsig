@@ -82,7 +82,7 @@
     },
     {
       "id": "ZNE-ZENTOR-SAFE-TEST-001",
-      "name": "Zentor harmless known-bad simulator file",
+      "name": "Avorax harmless known-bad simulator file",
       "version": "1",
       "category": "testThreat",
       "confidence": "confirmed",
@@ -98,9 +98,9 @@
       "min_file_size": null,
       "max_file_size": null,
       "required_context": [
-        "Zentor safe simulator string used only for local validation tests."
+        "Avorax safe simulator string used only for local validation tests."
       ],
-      "false_positive_notes": "This string is a harmless Zentor test fixture, not real malware.",
+      "false_positive_notes": "This string is a harmless Avorax test fixture, not real malware.",
       "action_policy": "quarantine_if_policy_allows",
       "created_at": "2026-05-28T00:00:00Z",
       "updated_at": "2026-05-28T00:00:00Z"

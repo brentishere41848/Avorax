@@ -317,7 +317,7 @@ rule Zentor_Safe_EICAR_Simulator
     category = "unknown"
     confidence = "confirmed"
     description = "Safe EICAR simulator signature."
-    false_positive_notes = "Only matches the Zentor safe test fixture."
+    false_positive_notes = "Only matches the Avorax safe test fixture."
   strings:
     $eicar = "ZENTOR-SAFE-EICAR-SIMULATOR-FILE"
   condition:

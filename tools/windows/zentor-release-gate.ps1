@@ -53,9 +53,9 @@ if ($AiFeatureEnabled) {
 $dist = Join-Path $root "dist"
 if (Test-Path -LiteralPath $dist) {
   $badArtifacts = Get-ChildItem -LiteralPath $dist -File -ErrorAction SilentlyContinue |
-    Where-Object { $_.Name -match "\.(msi|exe)$" -and $_.Name -notlike "Zentor-AntiVirus-*-x64*" }
+    Where-Object { $_.Name -match "\.(msi|exe)$" -and $_.Name -notlike "Avorax-AntiVirus-*-x64*" }
   foreach ($artifact in $badArtifacts) {
-    Add-Error "Installer artifact is not Zentor-AntiVirus named: $($artifact.Name)"
+    Add-Error "Installer artifact is not Avorax-AntiVirus named: $($artifact.Name)"
   }
 }
 
@@ -101,7 +101,7 @@ if ($LASTEXITCODE -ne 0) { Add-Error "Protection gate failed." }
 if ($LASTEXITCODE -ne 0) { Add-Error "Performance gate failed." }
 
 if ($errors.Count -gt 0) {
-  throw "Zentor release gate failed with $($errors.Count) error(s)."
+  throw "Avorax release gate failed with $($errors.Count) error(s)."
 }
 
-Write-Host "Zentor release gate passed."
+Write-Host "Avorax release gate passed."

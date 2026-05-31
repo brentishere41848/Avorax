@@ -1,6 +1,6 @@
-# Zentor Threat Intel Tools
+# Avorax Threat Intel Tools
 
-These tools import safe indicators into Zentor Native Engine packs. They do not download malware, execute samples, detonate files, or upload user files.
+These tools import safe indicators into Avorax Native Engine packs. They do not download malware, execute samples, detonate files, or upload user files.
 
 External malware repositories must be handled in metadata-only or hash-only mode by default. Do not clone malware repositories into this repo and do not download samples unless an isolated lab workflow is explicitly enabled outside the repo.
 

@@ -25,11 +25,11 @@ class ZentorApiClient {
         return const ApiSuccess(null);
       }
       return ApiFailure(
-        'Zentor Cloud returned HTTP ${response.statusCode}.',
+        'Avorax Cloud returned HTTP ${response.statusCode}.',
         statusCode: response.statusCode,
       );
     } on Object catch (error) {
-      return ApiFailure('Zentor Cloud is offline: $error');
+      return ApiFailure('Avorax Cloud is offline: $error');
     }
   }
 

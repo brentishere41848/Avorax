@@ -153,7 +153,7 @@ impl ZentorNativeEngine {
             evidence.push(Evidence {
                 id: "known_bad_hash".to_string(),
                 title: "Known-bad hash".to_string(),
-                detail: "The file hash is in the Zentor native known-bad store.".to_string(),
+                detail: "The file hash is in the Avorax native known-bad store.".to_string(),
                 weight: 100,
                 source: EvidenceSource::ApplicationControl,
             });
@@ -167,8 +167,8 @@ impl ZentorNativeEngine {
                         publisher_trust::TrustedPublisher::Microsoft => {
                             "The file has a valid Microsoft publisher signature."
                         }
-                        publisher_trust::TrustedPublisher::Zentor => {
-                            "The file is a Zentor-owned path or installer artifact."
+                        publisher_trust::TrustedPublisher::Avorax => {
+                            "The file is a Avorax-owned path or installer artifact."
                         }
                     }
                     .to_string(),
@@ -180,7 +180,7 @@ impl ZentorNativeEngine {
                 evidence.push(Evidence {
                     id: "trusted_local_artifact".to_string(),
                     title: "Trusted local artifact".to_string(),
-                    detail: "Zentor suppresses its own installer, service, driver, quarantine, update, and build artifacts unless a confirmed signature or known-bad hash matches.".to_string(),
+                    detail: "Avorax suppresses its own installer, service, driver, quarantine, update, and build artifacts unless a confirmed signature or known-bad hash matches.".to_string(),
                     weight: -90,
                     source: EvidenceSource::TrustStore,
                 });
@@ -219,7 +219,7 @@ impl ZentorNativeEngine {
             ) {
                 evidence.push(Evidence {
                     id: "native_ml".to_string(),
-                    title: "Zentor Native ML review".to_string(),
+                    title: "Avorax Native ML review".to_string(),
                     detail: format!(
                         "Native ML probability {:.1}% using model {}.",
                         ml.malware_probability * 100.0,
@@ -256,7 +256,7 @@ impl ZentorNativeEngine {
         Ok(FileScanVerdict {
             path,
             sha256,
-            engine: "Zentor Native Engine".to_string(),
+            engine: "Avorax Native Engine".to_string(),
             final_verdict,
             scanned_at: Utc::now(),
             quarantine_record,

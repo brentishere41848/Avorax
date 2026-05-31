@@ -45,7 +45,7 @@ class LogsScreen extends ConsumerWidget {
           if (state.events.isEmpty)
             const ZentorEmptyState(
               title: 'No local events',
-              message: 'Zentor records only real local app actions here.',
+              message: 'Avorax records only real local app actions here.',
               icon: Icons.receipt_long_outlined,
             )
           else
@@ -76,7 +76,7 @@ class LogsScreen extends ConsumerWidget {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            '${event.type} • ${event.createdAt.toLocal()}${event.details == null ? '' : ' • ${event.details}'}',
+                            '${event.type} â€¢ ${event.createdAt.toLocal()}${event.details == null ? '' : ' â€¢ ${event.details}'}',
                             style: const TextStyle(
                               color: ZentorColors.textSecondary,
                             ),

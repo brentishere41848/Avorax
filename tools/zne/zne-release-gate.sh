@@ -36,7 +36,7 @@ old_gaming_protection="gaming"" protection"
 old_game_setup="game"" setup"
 old_player_session="player"" session"
 old_match_telemetry="match"" telemetry"
-bad_pattern="ClamAV through Zentor local core|YARA Rules|bundled ClamAV|${old_brand}|${old_brand_upper}|${old_brand_lower}|${old_anti_cheat}|${old_fair_play}|${old_gaming_protection}|${old_game_setup}|${old_player_session}|${old_match_telemetry}"
+bad_pattern="ClamAV through Avorax local core|YARA Rules|bundled ClamAV|${old_brand}|${old_brand_upper}|${old_brand_lower}|${old_anti_cheat}|${old_fair_play}|${old_gaming_protection}|${old_game_setup}|${old_player_session}|${old_match_telemetry}"
 if rg -n "$bad_pattern" apps/zentor_client/lib --glob "*.dart" --glob "*.tsx" --glob "*.ts"; then
   echo "User-facing UI still contains old primary-engine or gaming copy." >&2
   exit 1

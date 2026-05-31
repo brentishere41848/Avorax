@@ -45,14 +45,14 @@ class DeviceScreen extends ConsumerWidget {
               icon: Icons.fingerprint,
             ),
             ZentorMetricCard(
-              title: 'Zentor Services',
+              title: 'Avorax Services',
               value: value.localCoreStatus,
               detail:
                   'Guard Service: ${_serviceLabel(state.guardStatus)}. Last heartbeat is local-only in this build.',
               icon: Icons.memory_outlined,
             ),
             ZentorMetricCard(
-              title: 'Zentor Native Engine',
+              title: 'Avorax Native Engine',
               value: state.nativeEngineStatus == 'ready'
                   ? 'Ready'
                   : 'Unavailable',
@@ -85,7 +85,7 @@ class DeviceScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'Local system details, Zentor service readiness, native engine state, real-time protection, and privacy posture.',
+                  'Local system details, Avorax service readiness, native engine state, real-time protection, and privacy posture.',
                   style: TextStyle(
                     color: ZentorColors.textSecondary,
                     height: 1.45,

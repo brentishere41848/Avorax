@@ -37,7 +37,7 @@ impl DriverHealth {
                 "Driver status is supplied by the Windows service/installer health probe."
                     .to_string()
             } else {
-                "Zentor driver is not installed. Post-launch fallback remains available.".to_string()
+                "Avorax driver is not installed. Post-launch fallback remains available.".to_string()
             },
         }
     }

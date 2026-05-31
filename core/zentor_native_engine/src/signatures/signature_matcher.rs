@@ -80,7 +80,7 @@ pub fn matches_signature(
         name: signature.name.clone(),
         category: signature.category,
         confidence: signature.confidence,
-        reason: format!("Zentor Native Signature matched: {}", signature.name),
+        reason: format!("Avorax Native Signature matched: {}", signature.name),
         weight: match signature.confidence {
             Confidence::Confirmed => 100,
             Confidence::High => 45,

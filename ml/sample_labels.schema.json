@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Zentor Training Label JSONL Record",
+  "title": "Avorax Training Label JSONL Record",
   "type": "object",
   "required": [
     "label_id",

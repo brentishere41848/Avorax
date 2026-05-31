@@ -1,4 +1,4 @@
-# Zentor Datasets
+# Avorax Datasets
 
 Do not commit malware samples to this repository.
 

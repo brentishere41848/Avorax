@@ -1,6 +1,6 @@
 # Protection Self-Test
 
-Zentor protection self-test is a Windows development validation workflow. It uses EICAR and harmless test binaries only. It does not use real malware.
+Avorax protection self-test is a Windows development validation workflow. It uses EICAR and harmless test binaries only. It does not use real malware.
 
 ## One-Command Workflow
 
@@ -26,11 +26,11 @@ dist\windows-driver-validation\selftest_report.json
 - Post-launch fallback remains available.
 - Local AI model status is reported honestly.
 
-If the driver is missing or not running, the report must fail and Zentor must show post-launch fallback instead of pre-execution blocking.
+If the driver is missing or not running, the report must fail and Avorax must show post-launch fallback instead of pre-execution blocking.
 
 ## Test Signing
 
-Zentor does not enable TESTSIGNING automatically. For a development VM only:
+Avorax does not enable TESTSIGNING automatically. For a development VM only:
 
 ```powershell
 bcdedit /set testsigning on

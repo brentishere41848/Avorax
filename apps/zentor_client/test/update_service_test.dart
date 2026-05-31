@@ -17,8 +17,8 @@ void main() {
         expect(request.url.path, '/repos/owner/repo/releases');
         return http.Response(
           jsonEncode([
-            _release('v0.1.15', assets: ['Zentor-0.1.15-x64-setup.exe']),
-            _release('v0.1.14', assets: ['Zentor-0.1.14-x64-setup.exe']),
+            _release('v0.1.15', assets: ['Avorax-0.1.15-x64-setup.exe']),
+            _release('v0.1.14', assets: ['Avorax-0.1.14-x64-setup.exe']),
           ]),
           200,
         );
@@ -29,7 +29,7 @@ void main() {
 
     expect(result.status, UpdateStatus.updateAvailable);
     expect(result.update?.latestVersion, '0.1.15');
-    expect(result.update?.assetName, 'Zentor-0.1.15-x64-setup.exe');
+    expect(result.update?.assetName, 'Avorax-0.1.15-x64-setup.exe');
   });
 
   test(

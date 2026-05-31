@@ -5,9 +5,9 @@ use std::time::Instant;
 use anyhow::Result;
 use chrono::Utc;
 use zentor_native_engine::{
-    Confidence as PneConfidence, EngineConfig, ZentorNativeEngine,
-    ScanActionMode as PneScanActionMode, ThreatCategory as PneThreatCategory,
-    Verdict as PneVerdict,
+    Confidence as AneConfidence, EngineConfig, ZentorNativeEngine,
+    ScanActionMode as AneScanActionMode, ThreatCategory as AneThreatCategory,
+    Verdict as AneVerdict,
 };
 use serde_json::json;
 use sha2::{Digest, Sha256};
@@ -314,7 +314,7 @@ fn quarantine_selected_file(
         threat_name: Some(threat_name.to_string()),
         scanned_at: Utc::now(),
         duration_ms: 0,
-        raw_engine_summary: Some("Manual quarantine from Zentor UI".to_string()),
+        raw_engine_summary: Some("Manual quarantine from Avorax UI".to_string()),
     };
     QuarantineStore::new().quarantine_file(path, &result)
 }
@@ -385,7 +385,7 @@ fn scan_paths(
             .map(|m| m.len())
             .unwrap_or_default();
         bytes_scanned = bytes_scanned.saturating_add(file_size);
-        match native_engine.scan_file(path.clone(), PneScanActionMode::DetectOnly) {
+        match native_engine.scan_file(path.clone(), AneScanActionMode::DetectOnly) {
             Ok(verdict) => {
                 if should_surface_native_verdict(verdict.final_verdict.verdict) {
                     let mut threat = threat_from_native(&path, &verdict);
@@ -468,7 +468,7 @@ fn scan_paths(
         current_path: last_path,
         message: if engine_unavailable {
             Some(
-                "Zentor Native Engine is unavailable; files were not reported clean."
+                "Avorax Native Engine is unavailable; files were not reported clean."
                     .to_string(),
             )
         } else if kind == ScanKind::Full {
@@ -603,10 +603,10 @@ fn native_asset_root() -> PathBuf {
     current
 }
 
-fn should_surface_native_verdict(verdict: PneVerdict) -> bool {
+fn should_surface_native_verdict(verdict: AneVerdict) -> bool {
     !matches!(
         verdict,
-        PneVerdict::Clean | PneVerdict::LikelyClean | PneVerdict::Unknown | PneVerdict::Observation
+        AneVerdict::Clean | AneVerdict::LikelyClean | AneVerdict::Unknown | AneVerdict::Observation
     )
 }
 
@@ -688,7 +688,7 @@ fn threat_from_native(
         threat_category: native_category(verdict.final_verdict.category),
         threat_name: native_threat_name(verdict.final_verdict.verdict),
         confidence: confidence.clone(),
-        engine: "Zentor Native Engine".to_string(),
+        engine: "Avorax Native Engine".to_string(),
         detected_at: verdict.scanned_at,
         recommended_action: if matches!(
             risk_verdict,
@@ -711,47 +711,47 @@ fn threat_from_native(
     }
 }
 
-fn native_confidence(value: PneConfidence) -> ThreatConfidence {
+fn native_confidence(value: AneConfidence) -> ThreatConfidence {
     match value {
-        PneConfidence::Confirmed => ThreatConfidence::Confirmed,
-        PneConfidence::High => ThreatConfidence::High,
-        PneConfidence::Medium => ThreatConfidence::Medium,
-        PneConfidence::Low => ThreatConfidence::Low,
+        AneConfidence::Confirmed => ThreatConfidence::Confirmed,
+        AneConfidence::High => ThreatConfidence::High,
+        AneConfidence::Medium => ThreatConfidence::Medium,
+        AneConfidence::Low => ThreatConfidence::Low,
     }
 }
 
-fn native_risk_verdict(value: PneVerdict) -> RiskVerdict {
+fn native_risk_verdict(value: AneVerdict) -> RiskVerdict {
     match value {
-        PneVerdict::Clean => RiskVerdict::Clean,
-        PneVerdict::LikelyClean => RiskVerdict::LikelyClean,
-        PneVerdict::Unknown | PneVerdict::Observation => RiskVerdict::Unknown,
-        PneVerdict::Suspicious => RiskVerdict::Suspicious,
-        PneVerdict::ProbableMalware => RiskVerdict::ProbableMalware,
-        PneVerdict::ConfirmedMalware | PneVerdict::TestThreat => RiskVerdict::ConfirmedMalware,
+        AneVerdict::Clean => RiskVerdict::Clean,
+        AneVerdict::LikelyClean => RiskVerdict::LikelyClean,
+        AneVerdict::Unknown | AneVerdict::Observation => RiskVerdict::Unknown,
+        AneVerdict::Suspicious => RiskVerdict::Suspicious,
+        AneVerdict::ProbableMalware => RiskVerdict::ProbableMalware,
+        AneVerdict::ConfirmedMalware | AneVerdict::TestThreat => RiskVerdict::ConfirmedMalware,
     }
 }
 
-fn native_category(value: PneThreatCategory) -> ThreatCategory {
+fn native_category(value: AneThreatCategory) -> ThreatCategory {
     match value {
-        PneThreatCategory::Trojan => ThreatCategory::Trojan,
-        PneThreatCategory::Ransomware => ThreatCategory::Ransomware,
-        PneThreatCategory::Spyware => ThreatCategory::Spyware,
-        PneThreatCategory::Adware => ThreatCategory::Adware,
-        PneThreatCategory::Worm => ThreatCategory::Worm,
-        PneThreatCategory::Keylogger => ThreatCategory::Keylogger,
-        PneThreatCategory::Miner => ThreatCategory::Miner,
-        PneThreatCategory::PotentiallyUnwantedApp => ThreatCategory::PotentiallyUnwantedApp,
+        AneThreatCategory::Trojan => ThreatCategory::Trojan,
+        AneThreatCategory::Ransomware => ThreatCategory::Ransomware,
+        AneThreatCategory::Spyware => ThreatCategory::Spyware,
+        AneThreatCategory::Adware => ThreatCategory::Adware,
+        AneThreatCategory::Worm => ThreatCategory::Worm,
+        AneThreatCategory::Keylogger => ThreatCategory::Keylogger,
+        AneThreatCategory::Miner => ThreatCategory::Miner,
+        AneThreatCategory::PotentiallyUnwantedApp => ThreatCategory::PotentiallyUnwantedApp,
         _ => ThreatCategory::Unknown,
     }
 }
 
-fn native_threat_name(value: PneVerdict) -> String {
+fn native_threat_name(value: AneVerdict) -> String {
     match value {
-        PneVerdict::TestThreat => "EICAR safe anti-malware test file".to_string(),
-        PneVerdict::ConfirmedMalware => "Confirmed threat".to_string(),
-        PneVerdict::ProbableMalware => "Probable malware".to_string(),
-        PneVerdict::Suspicious => "Suspicious item".to_string(),
-        PneVerdict::Observation => "Low-priority observation".to_string(),
+        AneVerdict::TestThreat => "EICAR safe anti-malware test file".to_string(),
+        AneVerdict::ConfirmedMalware => "Confirmed threat".to_string(),
+        AneVerdict::ProbableMalware => "Probable malware".to_string(),
+        AneVerdict::Suspicious => "Suspicious item".to_string(),
+        AneVerdict::Observation => "Low-priority observation".to_string(),
         _ => "Native engine review".to_string(),
     }
 }

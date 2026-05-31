@@ -1,4 +1,4 @@
-# Known Zentor Blockers
+# Known Avorax Blockers
 
 Date: 2026-05-30
 
@@ -14,13 +14,13 @@ This file tracks blockers that must be reported honestly and must not be represe
 
 - No signed Windows minifilter or process-guard driver has been built, installed, run, or self-tested in this environment.
 - WDK/EWDK, Visual Studio Build Tools, Administrator installation context, test certificate setup, and a disposable Windows validation VM are required for driver validation.
-- Zentor must not claim pre-execution or kernel-level protection until driver installation, IPC, and self-test reports pass.
+- Avorax must not claim pre-execution or kernel-level protection until driver installation, IPC, and self-test reports pass.
 
 ## Product Readiness Blockers
 
 - Production ML dataset, independent anti-virus validation, and production-ready `.zmodel` metadata are not present.
 - Development ML must remain advisory/review-only and must not auto-quarantine by itself.
-- Compatibility engines such as ClamAV/YARA must remain optional and disabled by default; Zentor Native Engine must handle core scans and EICAR without them.
+- Compatibility engines such as ClamAV/YARA must remain optional and disabled by default; Avorax Native Engine must handle core scans and EICAR without them.
 
 ## Validation Blockers
 

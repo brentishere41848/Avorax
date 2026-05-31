@@ -66,7 +66,7 @@ mod tests {
         .unwrap();
         fs::write(
             assets.join("ml/zentor_native_model.zmodel"),
-            r#"{"model_name":"Zentor Native Development Model","model_version":"0.1.0-dev","model_format_version":"zmodel-v1","feature_schema_version":"zne-features-v1","production_ready":false,"precision":0.0,"recall":0.0,"false_positive_rate":1.0,"bias":-3.0,"weights":{"encoded_command_flag":2.5,"suspicious_string_count":1.5,"double_extension":1.3,"known_bad_flag":5.0},"thresholds":{"suspicious":0.65,"probable_malware":0.86,"confirmed_malware":0.98},"limitations":["Development fixture model; not production protection."]}"#,
+            r#"{"model_name":"Avorax Native Development Model","model_version":"0.1.0-dev","model_format_version":"zmodel-v1","feature_schema_version":"zne-features-v1","production_ready":false,"precision":0.0,"recall":0.0,"false_positive_rate":1.0,"bias":-3.0,"weights":{"encoded_command_flag":2.5,"suspicious_string_count":1.5,"double_extension":1.3,"known_bad_flag":5.0},"thresholds":{"suspicious":0.65,"probable_malware":0.86,"confirmed_malware":0.98},"limitations":["Development fixture model; not production protection."]}"#,
         )
         .unwrap();
         let known_bad_hash = sha256_bytes(b"harmless-known-bad-fixture");
@@ -96,7 +96,7 @@ mod tests {
                 ScanActionMode::DetectOnly,
             )
             .unwrap();
-        assert_eq!(verdict.engine, "Zentor Native Engine");
+        assert_eq!(verdict.engine, "Avorax Native Engine");
         assert_eq!(verdict.final_verdict.verdict, Verdict::TestThreat);
     }
 
@@ -119,7 +119,7 @@ mod tests {
         let (dir, mut engine) = test_engine();
         let downloads = dir.path().join("Downloads");
         fs::create_dir_all(&downloads).unwrap();
-        let file = downloads.join("Zentor-AntiVirus-0.2.2-x64-setup.exe");
+        let file = downloads.join("Avorax-AntiVirus-0.2.2-x64-setup.exe");
         fs::write(&file, b"zentor installer fixture").unwrap();
         let verdict = engine
             .scan_file(file, ScanActionMode::AutoQuarantineConfirmed)
@@ -136,7 +136,7 @@ mod tests {
         let (dir, mut engine) = test_engine();
         let downloads = dir.path().join("Downloads");
         fs::create_dir_all(&downloads).unwrap();
-        let file = downloads.join("Zentor-AntiVirus-0.2.2-x64.msi");
+        let file = downloads.join("Avorax-AntiVirus-0.2.2-x64.msi");
         fs::write(&file, b"zentor msi fixture").unwrap();
         let verdict = engine
             .scan_file(file, ScanActionMode::AutoQuarantineConfirmed)

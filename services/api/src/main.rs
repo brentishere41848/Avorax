@@ -45,7 +45,7 @@ async fn main() -> anyhow::Result<()> {
     let state = AppState { db, redis };
     let app = router(state);
     let listener = TcpListener::bind(config.bind_addr).await?;
-    tracing::info!("Zentor API listening on {}", config.bind_addr);
+    tracing::info!("Avorax API listening on {}", config.bind_addr);
     serve(listener, app).await?;
     Ok(())
 }
@@ -108,7 +108,7 @@ async fn seed_dev_project(db: &PgPool, project_slug: &str, public_key: &str) -> 
     let key_hash = hash_api_key(public_key);
     sqlx::query(
         "insert into projects (id, name, slug)
-         values ($1, 'Zentor Local Dev', $2)
+         values ($1, 'Avorax Local Dev', $2)
          on conflict (slug) do nothing",
     )
     .bind(project_id)

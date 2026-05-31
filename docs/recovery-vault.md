@@ -9,6 +9,6 @@ Supported behavior:
 - Size limit required.
 - Incident restore from known vault copies.
 
-If no vault copy, OS snapshot, backup, or decryption key exists, Zentor must show:
+If no vault copy, OS snapshot, backup, or decryption key exists, Avorax must show:
 
-> Zentor stopped the threat, but these files cannot always be restored without a backup, snapshot, or decryption key.
+> Avorax stopped the threat, but these files cannot always be restored without a backup, snapshot, or decryption key.

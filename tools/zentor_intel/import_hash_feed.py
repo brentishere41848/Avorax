@@ -11,7 +11,7 @@ def is_sha256(value: str) -> bool:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Import SHA-256 hash indicators into Zentor JSONL.")
+    parser = argparse.ArgumentParser(description="Import SHA-256 hash indicators into Avorax JSONL.")
     parser.add_argument("--source", required=True)
     parser.add_argument("--input", required=True)
     parser.add_argument("--output", required=True)

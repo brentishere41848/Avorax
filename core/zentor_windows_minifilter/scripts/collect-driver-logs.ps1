@@ -11,7 +11,7 @@ fltmc filters 2>&1 | Add-Content -LiteralPath $OutputPath
 sc.exe query ZentorAvFilter 2>&1 | Add-Content -LiteralPath $OutputPath
 "`n=== Recent System Events ===" | Add-Content -LiteralPath $OutputPath
 Get-WinEvent -LogName System -MaxEvents 100 |
-  Where-Object { $_.ProviderName -match "Service Control Manager|FilterManager|Zentor" } |
+  Where-Object { $_.ProviderName -match "Service Control Manager|FilterManager|Avorax" } |
   Format-List TimeCreated,ProviderName,Id,LevelDisplayName,Message |
   Out-String | Add-Content -LiteralPath $OutputPath
 

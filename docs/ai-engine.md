@@ -1,6 +1,6 @@
 # AI Engine
 
-Zentor local AI runs offline through the Rust local core and packaged ONNX assets.
+Avorax local AI runs offline through the Rust local core and packaged ONNX assets.
 
 Release gates:
 

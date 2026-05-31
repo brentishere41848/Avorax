@@ -40,7 +40,7 @@ pub fn score_file(path: &Path, analysis: &StaticAnalysis) -> Vec<Evidence> {
         evidence.push(Evidence {
             id: "high_entropy".to_string(),
             title: "High entropy content".to_string(),
-            detail: "One or more regions look packed or encrypted. Zentor treats this as suspicious only with other signals.".to_string(),
+            detail: "One or more regions look packed or encrypted. Avorax treats this as suspicious only with other signals.".to_string(),
             weight: 18,
             source: EvidenceSource::NativeHeuristic,
         });

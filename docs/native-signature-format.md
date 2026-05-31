@@ -1,4 +1,4 @@
-# Zentor Native Signature Format
+# Avorax Native Signature Format
 
 Native signature packs use the `.zsig` extension. The current v1 pack is JSON for auditability and validation; the compiler path can emit a compact binary pack later without changing runtime policy.
 
@@ -37,4 +37,4 @@ Signature types include:
 
 Every signature requires metadata, confidence, false-positive notes, file type filters, and an action policy. Broad signatures must be review-only unless additional context produces a stronger fused verdict. Confirmed signatures must use an explicit blocking or quarantine policy.
 
-ZNE detects the EICAR safe anti-malware test string internally, without ClamAV or YARA.
+ANE detects the EICAR safe anti-malware test string internally, without ClamAV or YARA.

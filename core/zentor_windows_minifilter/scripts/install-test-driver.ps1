@@ -10,7 +10,7 @@ try {
   & (Join-Path $PSScriptRoot "setup-dev-env-check.ps1") -RequireAdmin -ReportPath (Join-Path (Split-Path $ReportPath) "setup_report.json")
   $testSigning = (& bcdedit /enum | Select-String -Pattern "testsigning\s+Yes" -Quiet)
   if (-not $testSigning) {
-    throw "Windows TESTSIGNING is not enabled. Zentor will not enable it automatically. Read enable-test-signing-warning.md and enable it manually only in a development VM."
+    throw "Windows TESTSIGNING is not enabled. Avorax will not enable it automatically. Read enable-test-signing-warning.md and enable it manually only in a development VM."
   }
   if (-not (Test-Path -LiteralPath $InfPath)) { throw "Driver INF not found: $InfPath" }
   pnputil /add-driver $InfPath /install

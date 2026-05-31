@@ -1,6 +1,6 @@
 # Lockdown Mode
 
-Zentor Lockdown Mode is prevention-first application control.
+Avorax Lockdown Mode is prevention-first application control.
 
 Balanced mode behaves like a normal antivirus profile: confirmed threats are blocked/quarantined, suspicious items are reviewed, and unknown apps are allowed with monitoring.
 
@@ -10,7 +10,7 @@ Lockdown Mode is stricter:
 - Known-good exact hashes are allowed.
 - User-approved exact hashes are allowed.
 - Trusted signed publishers can be allowed by policy.
-- Zentor and critical system paths use fail-open safety policy.
+- Avorax and critical system paths use fail-open safety policy.
 - Unknown app blocks are not labeled as malware.
 
 Correct wording:

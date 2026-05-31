@@ -97,7 +97,7 @@ class ZentorUpdateService {
         releasesUri,
         headers: const {
           'Accept': 'application/vnd.github+json',
-          'User-Agent': 'Zentor-Update-Checker',
+          'User-Agent': 'Avorax-Update-Checker',
         },
       );
       if (response.statusCode != 200) {
@@ -117,7 +117,7 @@ class ZentorUpdateService {
       if (release == null) {
         return UpdateCheckResult.failed(
           installedVersion,
-          'No Zentor GitHub releases were found.',
+          'No Avorax GitHub releases were found.',
         );
       }
       final latestVersion = _normalizeVersion(release.tagName);

@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 
 use chrono::{DateTime, Utc};
 use zentor_native_engine::{
-    EngineConfig, ZentorNativeEngine, ScanActionMode as PneScanActionMode, Verdict as PneVerdict,
+    EngineConfig, ZentorNativeEngine, ScanActionMode as AneScanActionMode, Verdict as AneVerdict,
 };
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -157,7 +157,7 @@ pub fn evaluate_driver_request(
         return Ok(allow(
             request,
             FinalVerdict::LikelyClean,
-            "Critical system or Zentor-owned path; normal mode fails open.",
+            "Critical system or Avorax-owned path; normal mode fails open.",
             vec![],
             ApplicationTrustLevel::SystemTrusted,
         ));
@@ -222,7 +222,7 @@ pub fn evaluate_driver_request(
     if let Some(native) = native_engine_verdict(&path)? {
         if matches!(
             native.final_verdict.verdict,
-            PneVerdict::TestThreat | PneVerdict::ConfirmedMalware | PneVerdict::ProbableMalware
+            AneVerdict::TestThreat | AneVerdict::ConfirmedMalware | AneVerdict::ProbableMalware
         ) {
             return Ok(block(
                 request,
@@ -230,7 +230,7 @@ pub fn evaluate_driver_request(
                 native_verdict_engines(&native),
             ));
         }
-        if matches!(native.final_verdict.verdict, PneVerdict::Suspicious) {
+        if matches!(native.final_verdict.verdict, AneVerdict::Suspicious) {
             return Ok(ScanVerdict {
                 request_id: request.request_id.clone(),
                 action: DriverVerdictAction::AllowAndMonitor,
@@ -327,7 +327,7 @@ fn native_engine_verdict(
         ZentorNativeEngine::initialize(EngineConfig::from_repo_root(native_asset_root()))?;
     Ok(Some(engine.scan_file(
         path.to_path_buf(),
-        PneScanActionMode::DetectOnly,
+        AneScanActionMode::DetectOnly,
     )?))
 }
 

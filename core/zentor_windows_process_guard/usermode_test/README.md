@@ -1,3 +1,3 @@
 # Process Guard User-Mode Test Harness
 
-Reserved for WDK integration tests that simulate process creation verdict requests against Zentor Guard Service.
+Reserved for WDK integration tests that simulate process creation verdict requests against Avorax Guard Service.

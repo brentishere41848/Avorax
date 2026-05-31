@@ -112,7 +112,7 @@ impl ApplicationControlPolicy {
             return result(
                 ApplicationControlDecision::Allow,
                 ApplicationTrustLevel::SystemTrusted,
-                "Critical system or Zentor-owned path is allowed by fail-open policy.",
+                "Critical system or Avorax-owned path is allowed by fail-open policy.",
                 false,
                 false,
                 false,

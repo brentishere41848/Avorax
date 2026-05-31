@@ -1,6 +1,6 @@
-# Zentor Windows Minifilter
+# Avorax Windows Minifilter
 
-This project is the Windows pre-execution/on-access blocking path for Zentor.
+This project is the Windows pre-execution/on-access blocking path for Avorax.
 
 Current state:
 
@@ -12,7 +12,7 @@ Current state:
 Purpose:
 
 - Intercept file create/open/section synchronization operations relevant to executable launch and risky writes.
-- Send scan requests to the visible Zentor Guard Service.
+- Send scan requests to the visible Avorax Guard Service.
 - Deny access only when a confirmed malicious verdict is returned within policy timeout.
 - Fail open for critical system paths in normal mode.
 

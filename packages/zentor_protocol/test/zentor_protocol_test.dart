@@ -4,7 +4,7 @@ import 'package:test/test.dart';
 void main() {
   test('ProtectionStatus maps to user-facing labels', () {
     expect(ProtectionStatus.idle.label, 'Protection Idle');
-    expect(ProtectionStatus.protected.label, 'Protected');
+    expect(ProtectionStatus.protected.label, 'Verified Protection Active');
     expect(ProtectionStatus.localOnly.label, 'Local Protection Active');
   });
 

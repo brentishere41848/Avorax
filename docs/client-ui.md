@@ -1,6 +1,6 @@
-# Zentor Client UI
+# Avorax Client UI
 
-Zentor is a native Flutter Material 3 app. The runtime UI is not a website, browser, WebView, iframe, or embedded dashboard.
+Avorax is a native Flutter Material 3 app. The runtime UI is not a website, browser, WebView, iframe, or embedded dashboard.
 
 ## First Screen
 
@@ -12,10 +12,10 @@ The app opens to Home, not an API setup form. Home shows:
 - Run Full Scan action.
 - Enable Protection action.
 - Compact cards for Real-time protection, Malware engine, Last scan, Quarantine, Updates, and recovery status.
-- Updates are based on real GitHub Release metadata. Zentor shows update available, up to date, checking, or check failed, and never installs silently.
+- Updates are based on real GitHub Release metadata. Avorax shows update available, up to date, checking, or check failed, and never installs silently.
 - Recent activity from real local events only.
 
-If Zentor Cloud is unavailable, the UI shows `Cloud Offline` without a red blocking setup form.
+If Avorax Cloud is unavailable, the UI shows `Cloud Offline` without a red blocking setup form.
 
 ## Navigation
 

@@ -1,28 +1,28 @@
 # Quarantine
 
-When scan mode allows quarantine and Zentor finds a confirmed infected file, Zentor automatically quarantines it. Detect-only scans never quarantine or delete files.
+When scan mode allows quarantine and Avorax finds a confirmed infected file, Avorax automatically quarantines it. Detect-only scans never quarantine or delete files.
 
-The same quarantine store is used by manual scans and Zentor Guard. If the Guard stops a confirmed threat after launch, it moves the executable into this store and writes a JSON record with the action taken.
+The same quarantine store is used by manual scans and Avorax Guard. If the Guard stops a confirmed threat after launch, it moves the executable into this store and writes a JSON record with the action taken.
 
 ## Behavior
 
-Zentor:
+Avorax:
 
-- Moves the file into the Zentor quarantine folder.
+- Moves the file into the Avorax quarantine folder.
 - Renames it to a safe random ID with a `.zentorq` extension.
 - Removes executable permissions where supported.
 - Stores a JSON metadata record.
 - Shows a local event in the app.
-- Reports detection metadata to Zentor Cloud if the cloud is online.
+- Reports detection metadata to Avorax Cloud if the cloud is online.
 
-Zentor does not permanently delete infected files automatically.
+Avorax does not permanently delete infected files automatically.
 
 ## Storage
 
 Default quarantine locations:
 
-- Windows: `%ProgramData%/Zentor/Quarantine` or user app data fallback.
-- macOS: `~/Library/Application Support/Zentor/Quarantine`.
+- Windows: `%ProgramData%/Avorax/Quarantine` or user app data fallback.
+- macOS: `~/Library/Application Support/Avorax/Quarantine`.
 - Linux: `~/.local/share/zentor/quarantine`.
 
 ## Metadata

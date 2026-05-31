@@ -1,6 +1,6 @@
-# Zentor Local Core
+# Avorax Local Core
 
-Zentor Local Core is the Rust desktop helper for selected-path malware scanning, quarantine metadata, allowlist validation, and future selected-path watching.
+Avorax Local Core is the Rust desktop helper for selected-path malware scanning, quarantine metadata, allowlist validation, and future selected-path watching.
 
 It communicates with Flutter through stdin/stdout JSON commands. It does not bind to the network.
 
@@ -28,7 +28,7 @@ The Windows MSI bundles the ClamAV runtime beside the app. Signature database up
 
 ## Quarantine
 
-Infected files are moved to the Zentor quarantine folder, renamed with `.zentorq`, stripped of executable bits where supported, and paired with JSON metadata.
+Infected files are moved to the Avorax quarantine folder, renamed with `.zentorq`, stripped of executable bits where supported, and paired with JSON metadata.
 
 ## Tests
 

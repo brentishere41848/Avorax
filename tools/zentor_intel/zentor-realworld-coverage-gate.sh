@@ -9,4 +9,4 @@ if find . -type f \( -name '*.vir' -o -name '*.malware' -o -name '*.sample' \) \
   echo "Forbidden malware sample-like file extension found" >&2
   exit 1
 fi
-echo "Zentor real-world coverage gate passed."
+echo "Avorax real-world coverage gate passed."

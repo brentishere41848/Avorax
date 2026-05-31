@@ -37,13 +37,13 @@ try {
   cargo test normal_exe_is_not_confirmed_threat
   if ($LASTEXITCODE -ne 0) { Add-GateError "normal_exe_is_not_confirmed_threat failed." }
   cargo test zentor_installer_exe_is_suppressed
-  if ($LASTEXITCODE -ne 0) { Add-GateError "Zentor installer EXE false-positive suppression failed." }
+  if ($LASTEXITCODE -ne 0) { Add-GateError "Avorax installer EXE false-positive suppression failed." }
   cargo test zentor_msi_is_suppressed
-  if ($LASTEXITCODE -ne 0) { Add-GateError "Zentor MSI false-positive suppression failed." }
+  if ($LASTEXITCODE -ne 0) { Add-GateError "Avorax MSI false-positive suppression failed." }
   cargo test setup_exe_in_downloads_is_not_probable_or_confirmed
   if ($LASTEXITCODE -ne 0) { Add-GateError "setup.exe weak-signal false-positive suppression failed." }
   cargo test zentor_internal_files_are_never_flagged_by_heuristics
-  if ($LASTEXITCODE -ne 0) { Add-GateError "Zentor internal file false-positive suppression failed." }
+  if ($LASTEXITCODE -ne 0) { Add-GateError "Avorax internal file false-positive suppression failed." }
   cargo test lockdown_blocks_unknown_unsigned_executable_without_malware_label
   if ($LASTEXITCODE -ne 0) { Add-GateError "Lockdown unknown-app label test failed." }
   cargo test balanced_allows_unknown_benign_executable_with_monitoring
@@ -57,9 +57,9 @@ try {
   cargo test normal_exe_in_downloads_is_not_malware
   if ($LASTEXITCODE -ne 0) { Add-GateError "Native normal EXE false-positive suppression failed." }
   cargo test zentor_installer_exe_is_likely_clean_not_quarantine_eligible
-  if ($LASTEXITCODE -ne 0) { Add-GateError "Native Zentor installer trust failed." }
+  if ($LASTEXITCODE -ne 0) { Add-GateError "Native Avorax installer trust failed." }
   cargo test zentor_msi_is_likely_clean_not_quarantine_eligible
-  if ($LASTEXITCODE -ne 0) { Add-GateError "Native Zentor MSI trust failed." }
+  if ($LASTEXITCODE -ne 0) { Add-GateError "Native Avorax MSI trust failed." }
 } finally {
   Pop-Location
 }
@@ -75,7 +75,7 @@ try {
 }
 
 if ($errors.Count -gt 0) {
-  throw "Zentor false-positive gate failed with $($errors.Count) error(s)."
+  throw "Avorax false-positive gate failed with $($errors.Count) error(s)."
 }
 
-Write-Host "Zentor false-positive gate passed."
+Write-Host "Avorax false-positive gate passed."
