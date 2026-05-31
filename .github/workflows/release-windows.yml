@@ -108,7 +108,7 @@ jobs:
       - name: Upload installer artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: zentor-windows-installers-${{ steps.version.outputs.version }}
+          name: avorax-windows-installers-${{ steps.version.outputs.version }}
           path: |
             dist/Avorax-AntiVirus-${{ steps.version.outputs.version }}-x64.msi
             dist/Avorax-AntiVirus-${{ steps.version.outputs.version }}-x64-setup.exe

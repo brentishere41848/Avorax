@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-Avorax rebrand and confirmed-threat Guard policy hardening after `v0.2.5`.
+Avorax installer completeness and `v0.2.6` release preparation after `v0.2.5`.
 
 ## Current Commit
 
@@ -55,6 +55,8 @@ Avorax rebrand and confirmed-threat Guard policy hardening after `v0.2.5`.
 - Restricted legacy "auto quarantine all detections" scan/action compatibility paths so they still quarantine only confirmed threats; probable, suspicious, high-confidence, and heuristic detections remain review-only unless a user manually chooses quarantine.
 - Added explicit Avorax Guard Service mode parsing through `AVORAX_GUARD_MODE` / `AVORAX_PROTECTION_MODE`, so background post-launch stop/quarantine honors disabled and monitor-only deployments instead of hardcoding blocking mode.
 - Added shared Guard mode config handoff: Flutter writes protection-mode changes through local-core `configure_guard_mode`, local core persists normalized mode JSON, and Guard Service reads that config when no environment override is present.
+- Hardened Windows MSI/EXE packaging so the MSI payload now requires the Flutter app, local core helper, Guard Service, Avorax Native Engine packs, AI model assets, trust/test/threat assets, Windows driver tooling, protection self-tests, branding/security/performance/ZNE release gates, safe simulator tools, safe threat-intel tooling, complete docs, and an installed `install-manifest.json`.
+- Updated Windows release artifact naming in CI from the old artifact label to `avorax-windows-installers-<version>`.
 
 ## Blockers
 

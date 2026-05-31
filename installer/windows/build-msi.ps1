@@ -31,6 +31,28 @@ function Copy-Tree([string]$Source, [string]$Destination) {
   Copy-Item -Path (Join-Path $Source "*") -Destination $Destination -Recurse -Force
 }
 
+function Copy-RequiredTree([string]$Source, [string]$Destination, [string]$Name) {
+  if (-not (Test-Path $Source)) {
+    throw "$Name source was not found: $Source"
+  }
+  Copy-Tree $Source $Destination
+}
+
+function Copy-RequiredFile([string]$Source, [string]$Destination, [string]$Name) {
+  if (-not (Test-Path $Source)) {
+    throw "$Name file was not found: $Source"
+  }
+  New-Item -ItemType Directory -Force -Path (Split-Path $Destination) | Out-Null
+  Copy-Item -LiteralPath $Source -Destination $Destination -Force
+}
+
+function Assert-StagePath([string]$RelativePath, [string]$Description) {
+  $path = Join-Path $stageDir $RelativePath
+  if (-not (Test-Path $path)) {
+    throw "Installer payload is incomplete. Missing $Description at $RelativePath"
+  }
+}
+
 function Ensure-ClamAVPackage([string]$ZipPath, [string]$Url, [string]$ExpectedSha256) {
   if (Test-Path $ZipPath) {
     $existingHash = (Get-FileHash -LiteralPath $ZipPath -Algorithm SHA256).Hash
@@ -156,6 +178,14 @@ $trustAssetsSourceDir = Join-Path $root "assets\trust"
 $threatAssetsSourceDir = Join-Path $root "assets\threats"
 $driverToolsSourceDir = Join-Path $root "core\zentor_windows_minifilter"
 $processGuardToolsSourceDir = Join-Path $root "core\zentor_windows_process_guard"
+$windowsToolsSourceDir = Join-Path $root "tools\windows"
+$securityToolsSourceDir = Join-Path $root "tools\security"
+$perfToolsSourceDir = Join-Path $root "tools\perf"
+$brandingToolsSourceDir = Join-Path $root "tools\branding"
+$zneToolsSourceDir = Join-Path $root "tools\zne"
+$intelToolsSourceDir = Join-Path $root "tools\zentor_intel"
+$simulatorsSourceDir = Join-Path $root "tools\simulators"
+$docsSourceDir = Join-Path $root "docs"
 $modelFile = Join-Path $modelSourceDir "zentor_static_malware_model.onnx"
 $modelMetadataFile = Join-Path $modelSourceDir "zentor_static_malware_model.metadata.json"
 
@@ -223,16 +253,16 @@ if (-not $modelMetadata.production_ready -and -not $AllowDevelopmentModel) {
 }
 $stageModelDir = Join-Path $stageDir "assets\models"
 $releaseModelDir = Join-Path $releaseDir "assets\models"
-Copy-Tree $modelSourceDir $stageModelDir
-Copy-Tree $modelSourceDir $releaseModelDir
+Copy-RequiredTree $modelSourceDir $stageModelDir "AI model assets"
+Copy-RequiredTree $modelSourceDir $releaseModelDir "AI model assets"
 
 if (-not (Test-Path (Join-Path $nativeSourceDir "signatures\zentor_core.zsig")) -or -not (Test-Path (Join-Path $nativeSourceDir "rules\zentor_rules.zrule")) -or -not (Test-Path (Join-Path $nativeSourceDir "ml\zentor_native_model.zmodel"))) {
   throw "Avorax Native Engine assets are required under $nativeSourceDir"
 }
 $stageNativeDir = Join-Path $stageDir "assets\zentor_native"
 $releaseNativeDir = Join-Path $releaseDir "assets\zentor_native"
-Copy-Tree $nativeSourceDir $stageNativeDir
-Copy-Tree $nativeSourceDir $releaseNativeDir
+Copy-RequiredTree $nativeSourceDir $stageNativeDir "Avorax Native Engine assets"
+Copy-RequiredTree $nativeSourceDir $releaseNativeDir "Avorax Native Engine assets"
 
 if (Test-Path (Join-Path $yaraSourceDir "zentor_core_rules.yar")) {
   $stageYaraDir = Join-Path $stageDir "assets\yara"
@@ -246,18 +276,18 @@ if (-not (Test-Path (Join-Path $testAssetsSourceDir "known_bad_test_hashes.json"
 }
 $stageTestDir = Join-Path $stageDir "assets\test"
 $releaseTestDir = Join-Path $releaseDir "assets\test"
-Copy-Tree $testAssetsSourceDir $stageTestDir
-Copy-Tree $testAssetsSourceDir $releaseTestDir
+Copy-RequiredTree $testAssetsSourceDir $stageTestDir "safe test assets"
+Copy-RequiredTree $testAssetsSourceDir $releaseTestDir "safe test assets"
 
 $stageTrustDir = Join-Path $stageDir "assets\trust"
 $releaseTrustDir = Join-Path $releaseDir "assets\trust"
-Copy-Tree $trustAssetsSourceDir $stageTrustDir
-Copy-Tree $trustAssetsSourceDir $releaseTrustDir
+Copy-RequiredTree $trustAssetsSourceDir $stageTrustDir "trust assets"
+Copy-RequiredTree $trustAssetsSourceDir $releaseTrustDir "trust assets"
 
 $stageThreatsDir = Join-Path $stageDir "assets\threats"
 $releaseThreatsDir = Join-Path $releaseDir "assets\threats"
-Copy-Tree $threatAssetsSourceDir $stageThreatsDir
-Copy-Tree $threatAssetsSourceDir $releaseThreatsDir
+Copy-RequiredTree $threatAssetsSourceDir $stageThreatsDir "known-bad test threat assets"
+Copy-RequiredTree $threatAssetsSourceDir $releaseThreatsDir "known-bad test threat assets"
 
 foreach ($requiredDriverFile in @(
   "driver\ZentorAvFilter.vcxproj",
@@ -275,9 +305,18 @@ foreach ($requiredDriverFile in @(
   }
 }
 $stageDriverToolsDir = Join-Path $stageDir "driver-tools\zentor_windows_minifilter"
-Copy-Tree $driverToolsSourceDir $stageDriverToolsDir
+Copy-RequiredTree $driverToolsSourceDir $stageDriverToolsDir "Windows minifilter driver tools"
 $stageProcessGuardToolsDir = Join-Path $stageDir "driver-tools\zentor_windows_process_guard"
-Copy-Tree $processGuardToolsSourceDir $stageProcessGuardToolsDir
+Copy-RequiredTree $processGuardToolsSourceDir $stageProcessGuardToolsDir "Windows process guard driver tools"
+
+$stageToolsDir = Join-Path $stageDir "tools"
+Copy-RequiredTree $windowsToolsSourceDir (Join-Path $stageToolsDir "windows") "Windows validation tools"
+Copy-RequiredTree $securityToolsSourceDir (Join-Path $stageToolsDir "security") "security release gates"
+Copy-RequiredTree $perfToolsSourceDir (Join-Path $stageToolsDir "perf") "performance release gate"
+Copy-RequiredTree $brandingToolsSourceDir (Join-Path $stageToolsDir "branding") "branding release gate"
+Copy-RequiredTree $zneToolsSourceDir (Join-Path $stageToolsDir "zne") "ZNE self-test tools"
+Copy-RequiredTree $intelToolsSourceDir (Join-Path $stageToolsDir "zentor_intel") "safe threat-intel tools"
+Copy-RequiredTree $simulatorsSourceDir (Join-Path $stageToolsDir "simulators") "safe simulator tools"
 
 $coreSource = $null
 if (Test-Path $localCoreExe) {
@@ -332,20 +371,65 @@ foreach ($dll in $runtimeDlls) {
 }
 
 $docsStage = Join-Path $stageDir "docs"
-New-Item -ItemType Directory -Force -Path $docsStage | Out-Null
-Copy-Item -LiteralPath (Join-Path $root "README.md") -Destination $docsStage -Force
-Copy-Item -LiteralPath (Join-Path $root "docs\privacy.md") -Destination $docsStage -Force
-Copy-Item -LiteralPath (Join-Path $root "docs\malware-protection.md") -Destination $docsStage -Force
-Copy-Item -LiteralPath (Join-Path $root "docs\quarantine.md") -Destination $docsStage -Force
-Copy-Item -LiteralPath (Join-Path $root "docs\windows-driver.md") -Destination $docsStage -Force
-Copy-Item -LiteralPath (Join-Path $root "docs\real-time-protection.md") -Destination $docsStage -Force
-Copy-Item -LiteralPath (Join-Path $root "docs\protection-self-test.md") -Destination $docsStage -Force
-Copy-Item -LiteralPath (Join-Path $root "docs\testing-eicar.md") -Destination $docsStage -Force
-Copy-Item -LiteralPath (Join-Path $root "docs\lockdown-mode.md") -Destination $docsStage -Force
-Copy-Item -LiteralPath (Join-Path $root "docs\application-control.md") -Destination $docsStage -Force
-Copy-Item -LiteralPath (Join-Path $root "docs\external-validation.md") -Destination $docsStage -Force
-Copy-Item -LiteralPath (Join-Path $root "docs\lab-readiness.md") -Destination $docsStage -Force
-Copy-Item -LiteralPath (Join-Path $root "docs\false-positives.md") -Destination $docsStage -Force
+Copy-RequiredTree $docsSourceDir $docsStage "documentation"
+Copy-RequiredFile (Join-Path $root "README.md") (Join-Path $docsStage "README.md") "README"
+
+$manifest = [ordered]@{
+  product = "Avorax Anti-Virus"
+  version = $Version
+  generated_at = (Get-Date).ToUniversalTime().ToString("o")
+  includes = [ordered]@{
+    flutter_client = Test-Path (Join-Path $stageDir "Avorax.exe")
+    local_core = Test-Path (Join-Path $stageDir "zentor_local_core.exe")
+    guard_service = Test-Path (Join-Path $stageDir "zentor_guard_service.exe")
+    native_engine_assets = Test-Path (Join-Path $stageDir "assets\zentor_native")
+    ai_model_assets = Test-Path (Join-Path $stageDir "assets\models")
+    trust_assets = Test-Path (Join-Path $stageDir "assets\trust")
+    known_bad_test_assets = Test-Path (Join-Path $stageDir "assets\threats")
+    windows_driver_tools = Test-Path (Join-Path $stageDir "driver-tools")
+    validation_tools = Test-Path (Join-Path $stageDir "tools\windows\zentor-protection-selftest.ps1")
+    release_gates = Test-Path (Join-Path $stageDir "tools\windows\zentor-release-gate.ps1")
+    safe_simulators = Test-Path (Join-Path $stageDir "tools\simulators")
+    docs = Test-Path (Join-Path $stageDir "docs\windows-driver.md")
+    clamav_compatibility = Test-Path (Join-Path $stageDir "ClamAV")
+  }
+  service_install = [ordered]@{
+    guard_service = "installed and started by MSI"
+    local_core = "packaged as Flutter stdio helper; not installed as a fake Windows service"
+  }
+  driver_status = "driver source and validation scripts are packaged; driver is not silently installed or enabled"
+}
+$manifestPath = Join-Path $stageDir "install-manifest.json"
+($manifest | ConvertTo-Json -Depth 8) | Set-Content -LiteralPath $manifestPath -Encoding UTF8
+
+foreach ($requiredPayload in @(
+  @("Avorax.exe", "Flutter desktop client"),
+  @("zentor_local_core.exe", "local core scanner helper"),
+  @("zentor_guard_service.exe", "Guard Service"),
+  @("assets\zentor_native\signatures\zentor_core.zsig", "native signature pack"),
+  @("assets\zentor_native\rules\zentor_rules.zrule", "native rule pack"),
+  @("assets\zentor_native\ml\zentor_native_model.zmodel", "native ML model"),
+  @("assets\models\zentor_static_malware_model.onnx", "AI compatibility model"),
+  @("assets\test\known_bad_test_hashes.json", "safe known-bad test hashes"),
+  @("assets\trust\zentor_known_good.db", "trust store"),
+  @("assets\threats\zentor_known_bad_test_hashes.json", "known-bad test threat asset"),
+  @("driver-tools\zentor_windows_minifilter\scripts\run-driver-self-test.ps1", "minifilter driver self-test"),
+  @("driver-tools\zentor_windows_process_guard\scripts\run-process-guard-self-test.ps1", "process guard self-test"),
+  @("tools\windows\zentor-protection-selftest.ps1", "protection self-test"),
+  @("tools\windows\zentor-release-gate.ps1", "Windows release gate"),
+  @("tools\security\zentor-false-positive-gate.ps1", "false-positive gate"),
+  @("tools\perf\zentor-performance-gate.ps1", "performance gate"),
+  @("tools\branding\branding-check.ps1", "branding gate"),
+  @("tools\zne\zne-release-gate.ps1", "ZNE release gate"),
+  @("tools\simulators", "safe simulators"),
+  @("tools\zentor_intel", "safe threat-intel tools"),
+  @("docs\README.md", "installed README"),
+  @("docs\windows-driver.md", "driver documentation"),
+  @("docs\safe-malware-testing.md", "safe malware testing documentation"),
+  @("install-manifest.json", "installed payload manifest")
+)) {
+  Assert-StagePath $requiredPayload[0] $requiredPayload[1]
+}
 
 $files = Get-ChildItem -LiteralPath $stageDir -Recurse -File |
   Where-Object { $_.Extension -ne ".pdb" } |

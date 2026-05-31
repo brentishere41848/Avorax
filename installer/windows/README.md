@@ -3,7 +3,7 @@
 Build the Windows MSI and EXE installers from the repository root:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File installer\windows\build-msi.ps1 -Version 0.2.1
+powershell -ExecutionPolicy Bypass -File installer\windows\build-msi.ps1 -Version 0.2.6
 ```
 
 The script:
@@ -15,9 +15,12 @@ The script:
 - Copies `zentor_guard_service.exe` beside `Avorax.exe`.
 - Registers the visible `zentor_guard_service` Windows service for post-launch Guard monitoring.
 - Copies Avorax Native Engine signatures, rules, ML model assets, and trust packs beside the app.
+- Copies safe validation assets, release gates, protection self-tests, performance/false-positive checks, safe simulator tools, and threat-intel import tools.
+- Copies Windows minifilter and process-guard driver source, build scripts, signing scripts, install/uninstall scripts, and self-test scripts.
+- Writes `install-manifest.json` into the install folder so a built MSI/EXE can be audited for included components.
 - Skips ClamAV compatibility by default. Avorax Native Engine is the primary scanner.
 - Copies Visual C++ runtime DLLs from `C:\Windows\System32` when present.
-- Includes local privacy/security docs.
+- Includes local privacy/security/driver/native-engine documentation.
 - Uses the local WiX .NET tool from `dotnet-tools.json`.
 - Produces `dist\Avorax-AntiVirus-<version>-x64.msi`.
 - Produces `dist\Avorax-AntiVirus-<version>-x64-setup.exe`.
@@ -25,13 +28,13 @@ The script:
 Use `-RequireLocalCore` to fail the build if `zentor_local_core.exe` cannot be included:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File installer\windows\build-msi.ps1 -Version 0.2.1 -RequireLocalCore -AllowDevelopmentModel
+powershell -ExecutionPolicy Bypass -File installer\windows\build-msi.ps1 -Version 0.2.6 -RequireLocalCore -AllowDevelopmentModel
 ```
 
 ClamAV compatibility is optional and disabled by default. Use `-IncludeClamAVCompatibility` only when explicitly testing compatibility mode:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File installer\windows\build-msi.ps1 -Version 0.2.1 -IncludeClamAVCompatibility
+powershell -ExecutionPolicy Bypass -File installer\windows\build-msi.ps1 -Version 0.2.6 -IncludeClamAVCompatibility
 ```
 
 When compatibility mode is included, the MSI places ClamAV in `C:\Program Files\Avorax\ClamAV` and the Avorax local core discovers `clamscan.exe` there automatically. Avorax does not install ClamAV as a hidden service and does not silently enable persistence.
@@ -41,10 +44,12 @@ The EXE installer is a WiX Burn bootstrapper that contains the MSI. It is useful
 The MSI build requires AI model assets. If model metadata is `production_ready=false`, pass `-AllowDevelopmentModel` for a non-production installer:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File installer\windows\build-msi.ps1 -Version 0.2.1 -RequireLocalCore -AllowDevelopmentModel
+powershell -ExecutionPolicy Bypass -File installer\windows\build-msi.ps1 -Version 0.2.6 -RequireLocalCore -AllowDevelopmentModel
 ```
 
 The Guard Service is not a kernel driver and does not provide true pre-execution blocking by itself. It monitors process starts and can stop/quarantine confirmed threats after launch when the user enables that protection mode. High-confidence non-confirmed detections remain review-only. True pre-execution blocking still requires the Windows driver validation workflow.
+
+The MSI packages driver tooling and validation scripts, but it does not silently install unsigned or test-signed drivers and does not silently enable Windows TESTSIGNING. Driver activation must go through the documented driver workflow and self-test.
 
 Set `AVORAX_GUARD_MODE` or `AVORAX_PROTECTION_MODE` to `blockConfirmedThreats`, `monitorOnly`, `disabled`, `balanced`, `lockdown`, or `developerMode` before starting the service to control post-launch behavior. If no mode is configured, the service defaults to blocking confirmed threats only.
 

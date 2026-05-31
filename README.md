@@ -225,20 +225,20 @@ For normal testing, installing the MSI or EXE is easier than running the app fro
 
 ```powershell
 cd C:\Users\Brent\CodexProjects\Avorax
-powershell -ExecutionPolicy Bypass -File installer\windows\build-msi.ps1 -Version 0.2.0 -RequireLocalCore -AllowDevelopmentModel
+powershell -ExecutionPolicy Bypass -File installer\windows\build-msi.ps1 -Version 0.2.6 -RequireLocalCore -AllowDevelopmentModel
 ```
 
 The installers are written to:
 
 ```text
-dist\Avorax-AntiVirus-0.2.0-x64.msi
-dist\Avorax-AntiVirus-0.2.0-x64-setup.exe
+dist\Avorax-AntiVirus-0.2.6-x64.msi
+dist\Avorax-AntiVirus-0.2.6-x64-setup.exe
 ```
 
 Install either file:
 
-- `Avorax-AntiVirus-0.2.0-x64-setup.exe` is the easiest option for most users.
-- `Avorax-AntiVirus-0.2.0-x64.msi` is better for clean installer testing and enterprise-style deployment checks.
+- `Avorax-AntiVirus-0.2.6-x64-setup.exe` is the easiest option for most users.
+- `Avorax-AntiVirus-0.2.6-x64.msi` is better for clean installer testing and enterprise-style deployment checks.
 
 The MSI/EXE installs the app, local core, Avorax Native Engine assets, app assets, and docs. On Windows it also registers `zentor_guard_service` as the visible Avorax Guard Service so confirmed/probable threats can be monitored and stopped after launch. It does not replace the Windows driver-development VM workflow. True pre-execution blocking still requires WDK or EWDK, administrator rights, test-signing in a disposable VM, the minifilter driver, and the driver validation scripts.
 
