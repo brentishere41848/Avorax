@@ -33,6 +33,8 @@ foreach ($required in @(
   @("engine\rules\avorax_core.arule", "core rule pack"),
   @("engine\ml\avorax_native_model.amodel", "native ML model"),
   @("engine\ml\avorax_native_model.metadata.json", "native ML metadata"),
+  @("engine\ml\zentor_native_model.zmodel", "native ML source model"),
+  @("engine\ml\zentor_native_model.metadata.json", "native ML source metadata"),
   @("engine\trust\avorax_known_good.atrust", "known-good trust pack"),
   @("engine\trust\avorax_known_bad_test.atrust", "known-bad test trust pack"),
   @("engine\trust\avorax_release_manifest.json", "release self-trust manifest"),
@@ -83,6 +85,15 @@ foreach ($wxs in $wxsFiles) {
   $content = Get-Content -Raw -LiteralPath $wxs.FullName
   if ($content -match $unrelatedDomainPattern) {
     Add-CheckError "Installer WiX source contains forbidden product copy: $($wxs.Name)"
+  }
+  if ($wxs.Name -ne "Avorax.wxs") {
+    continue
+  }
+  foreach ($serviceName in @("avorax_core_service", "avorax_guard_service")) {
+    $serviceControlPattern = "<ServiceControl[^>]+Name=`"$serviceName`"[^>]+Start=`"both`""
+    if ($content -notmatch $serviceControlPattern) {
+      Add-CheckError "Installer WiX source does not start $serviceName during install and repair."
+    }
   }
 }
 

@@ -81,14 +81,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             if (state.updateInfo != null) ...[
               _ValueRow('Latest version', state.updateInfo!.latestVersion),
               _ValueRow(
-                'Installer',
-                state.updateInfo!.assetName ?? 'GitHub release page',
+                'Update package',
+                state.updateInfo!.assetName ?? 'No package available',
               ),
             ],
             if (state.updateError != null)
               _ValueRow('Last check', state.updateError!),
             const Text(
-              'Avorax checks GitHub Releases for a newer tagged build. It never installs silently; you choose whether to open the installer or release page.',
+              'Avorax checks GitHub Releases and installs Windows updates from inside the app using the signed MSI package. Windows may ask for administrator approval.',
               style: TextStyle(color: ZentorColors.textSecondary, height: 1.4),
             ),
             const SizedBox(height: 12),
@@ -106,11 +106,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       ? null
                       : controller.unawaitedCheckForUpdates,
                 ),
-                if (state.updateStatus == UpdateStatus.updateAvailable)
+                if (state.updateStatus == UpdateStatus.updateAvailable ||
+                    state.updateStatus == UpdateStatus.installing)
                   ZentorButton(
-                    label: 'Download Update',
+                    label: state.updateStatus == UpdateStatus.installing
+                        ? 'Starting update'
+                        : 'Install update',
                     icon: Icons.system_update_alt_outlined,
-                    onPressed: controller.openUpdateDownload,
+                    onPressed: state.updateStatus == UpdateStatus.installing
+                        ? null
+                        : controller.installUpdateInApp,
                   ),
               ],
             ),

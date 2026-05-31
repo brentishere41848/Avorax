@@ -503,6 +503,7 @@ foreach ($requiredPayload in @(
   @("engine\signatures\avorax_core.asig", "installed native signature pack"),
   @("engine\rules\avorax_core.arule", "installed native rule pack"),
   @("engine\ml\avorax_native_model.amodel", "installed native ML model"),
+  @("engine\ml\zentor_native_model.zmodel", "installed native ML source model"),
   @("engine\trust\avorax_known_good.atrust", "installed trust store"),
   @("engine\trust\avorax_release_manifest.json", "Avorax release self-trust manifest"),
   @("assets\zentor_native\signatures\zentor_core.zsig", "native signature pack"),
@@ -577,11 +578,11 @@ foreach ($file in $files) {
   [void]$componentsXml.AppendLine("        <File Id=`"$fileId`" Source=`"$(XmlEscape $file.FullName)`" KeyPath=`"yes`" />")
   if ($relativePath -eq "avorax_core_service.exe") {
     [void]$componentsXml.AppendLine("        <ServiceInstall Id=`"AvoraxCoreServiceInstall`" Type=`"ownProcess`" Vital=`"yes`" Name=`"avorax_core_service`" DisplayName=`"Avorax Core Service`" Description=`"Provides local scanning, native engine loading, quarantine, scan jobs, and local protection state for Avorax Anti-Virus.`" Start=`"auto`" Account=`"LocalSystem`" ErrorControl=`"normal`" Arguments=`"--service`" />")
-    [void]$componentsXml.AppendLine("        <ServiceControl Id=`"AvoraxCoreServiceControl`" Name=`"avorax_core_service`" Start=`"install`" Stop=`"both`" Remove=`"uninstall`" Wait=`"yes`" />")
+    [void]$componentsXml.AppendLine("        <ServiceControl Id=`"AvoraxCoreServiceControl`" Name=`"avorax_core_service`" Start=`"both`" Stop=`"both`" Remove=`"uninstall`" Wait=`"yes`" />")
   }
   if ($relativePath -eq "avorax_guard_service.exe") {
     [void]$componentsXml.AppendLine("        <ServiceInstall Id=`"AvoraxGuardServiceInstall`" Type=`"ownProcess`" Vital=`"yes`" Name=`"avorax_guard_service`" DisplayName=`"Avorax Guard Service`" Description=`"Provides real-time protection, process monitoring, driver communication, and threat response for Avorax Anti-Virus.`" Start=`"auto`" Account=`"LocalSystem`" ErrorControl=`"normal`" Arguments=`"--service`" />")
-    [void]$componentsXml.AppendLine("        <ServiceControl Id=`"AvoraxGuardServiceControl`" Name=`"avorax_guard_service`" Start=`"install`" Stop=`"both`" Remove=`"uninstall`" Wait=`"yes`" />")
+    [void]$componentsXml.AppendLine("        <ServiceControl Id=`"AvoraxGuardServiceControl`" Name=`"avorax_guard_service`" Start=`"both`" Stop=`"both`" Remove=`"uninstall`" Wait=`"yes`" />")
   }
   [void]$componentsXml.AppendLine("      </Component>")
   [void]$componentsXml.AppendLine("    </DirectoryRef>")

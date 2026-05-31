@@ -72,6 +72,11 @@ Avorax installer engine-deployment repair and `v0.2.9` release preparation after
 - Extended Flutter local-core health parsing and Scan diagnostics with Core Service status and engine paths checked.
 - Added `tools\windows\avorax-installer-stage-test.ps1` and wired it into the Windows release gate so release checks fail when the MSI/EXE stage or required Avorax payload is missing.
 - Changed MSI-created ProgramData quarantine casing to `Quarantine` to match runtime quarantine paths and the installed smoke test.
+- Updated MSI service control generation so Avorax Core Service and Avorax Guard Service are started during install and repair, not only first install.
+- Tightened the installer stage test to require native ML source/alias packs and generated WiX service controls that start both services.
+- Fixed Scan diagnostics so development native ML models show as present instead of missing, and stale engine-unavailable scan cards are cleared once health reports the engine available.
+- Added a functional Start Core Service action in the app that asks Windows to start `avorax_core_service` with administrator approval.
+- Reworked update flow so Avorax selects the MSI release asset, downloads it to a local update cache, and starts the Windows MSI update from inside the app instead of opening the EXE installer or release page.
 
 ## Blockers
 
@@ -106,6 +111,7 @@ Avorax installer engine-deployment repair and `v0.2.9` release preparation after
 - `powershell -ExecutionPolicy Bypass -File tools\security\zentor-false-positive-gate.ps1` is blocked because it requires `cargo`.
 - `flutter analyze` and `flutter test` are blocked because Flutter is not installed.
 - `dart format ...` and `dart test` are blocked because Dart is not installed.
+- `flutter test apps\zentor_client\test\update_service_test.dart` is blocked because Flutter is not installed, but the test expectation was updated to require MSI update asset selection.
 - `powershell -ExecutionPolicy Bypass -File tools\windows\avorax-installer-stage-test.ps1` is blocked until installer packaging generates `dist\windows-msi\stage`; the script correctly fails when the stage is absent.
 - Windows driver validation is blocked by missing Windows, WDK/EWDK, signing, installation, and administrator self-test environment.
 

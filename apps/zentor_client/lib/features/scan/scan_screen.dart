@@ -323,6 +323,7 @@ class _ScanResults extends StatelessWidget {
             _EngineUnavailableDiagnostics(
               state: state,
               onRetry: controller.unawaitedCheckMalwareEngine,
+              onStartCoreService: controller.startCoreService,
             )
           else if (report.threats.isEmpty)
             const ZentorEmptyState(
@@ -386,10 +387,12 @@ class _EngineUnavailableDiagnostics extends StatelessWidget {
   const _EngineUnavailableDiagnostics({
     required this.state,
     required this.onRetry,
+    required this.onStartCoreService,
   });
 
   final ZentorState state;
   final Future<void> Function() onRetry;
+  final Future<void> Function() onStartCoreService;
 
   @override
   Widget build(BuildContext context) {
@@ -427,7 +430,11 @@ class _EngineUnavailableDiagnostics extends StatelessWidget {
             ),
             _DiagnosticChip(
               label: 'ML model',
-              value: state.nativeMlStatus == 'loaded' ? 'Found' : 'Missing',
+              value: switch (state.nativeMlStatus) {
+                'loaded' => 'Found',
+                'developmentModel' => 'Found (development)',
+                _ => 'Missing',
+              },
             ),
             _DiagnosticChip(
               label: 'ProgramData',
@@ -456,11 +463,13 @@ class _EngineUnavailableDiagnostics extends StatelessWidget {
               secondary: true,
               onPressed: () => onRetry(),
             ),
-            const ZentorButton(
+            ZentorButton(
               label: 'Start Core Service',
               icon: Icons.play_arrow_outlined,
               secondary: true,
-              onPressed: null,
+              onPressed: state.coreServiceStatus == 'running'
+                  ? null
+                  : () => onStartCoreService(),
             ),
             const ZentorButton(
               label: 'Open install report',

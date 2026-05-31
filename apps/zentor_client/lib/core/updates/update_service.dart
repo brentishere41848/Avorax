@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../config/build_config.dart';
 
@@ -11,6 +12,7 @@ enum UpdateStatus {
   checking,
   upToDate,
   updateAvailable,
+  installing,
   failed;
 
   String get label => switch (this) {
@@ -18,6 +20,7 @@ enum UpdateStatus {
     UpdateStatus.checking => 'Checking',
     UpdateStatus.upToDate => 'Up to date',
     UpdateStatus.updateAvailable => 'Update available',
+    UpdateStatus.installing => 'Installing update',
     UpdateStatus.failed => 'Check failed',
   };
 }
@@ -140,6 +143,56 @@ class ZentorUpdateService {
     }
   }
 
+  Future<Uri> downloadUpdatePackage(UpdateInfo update) async {
+    final downloadUrl = update.downloadUrl;
+    final assetName = update.assetName;
+    if (downloadUrl == null || assetName == null) {
+      throw StateError('No Avorax update package is available for this release.');
+    }
+    if (Platform.isWindows && !assetName.toLowerCase().endsWith('.msi')) {
+      throw StateError('Windows in-app updates require the Avorax MSI package.');
+    }
+    final response = await _client.get(
+      downloadUrl,
+      headers: const {'User-Agent': 'Avorax-In-App-Updater'},
+    );
+    if (response.statusCode != 200) {
+      throw StateError('Update download failed with HTTP ${response.statusCode}.');
+    }
+    final cacheDir = await getTemporaryDirectory();
+    final updateDir = Directory('${cacheDir.path}${Platform.pathSeparator}AvoraxUpdates');
+    await updateDir.create(recursive: true);
+    final packagePath = '${updateDir.path}${Platform.pathSeparator}$assetName';
+    final packageFile = File(packagePath);
+    await packageFile.writeAsBytes(response.bodyBytes, flush: true);
+    return packageFile.uri;
+  }
+
+  Future<void> installDownloadedPackage(Uri packageUri) async {
+    final packagePath = packageUri.toFilePath();
+    if (!Platform.isWindows) {
+      throw UnsupportedError(
+        'In-app managed updates are currently implemented for Windows MSI packages only.',
+      );
+    }
+    final escapedPath = packagePath.replaceAll("'", "''");
+    final command =
+        "Start-Process -FilePath 'msiexec.exe' "
+        "-ArgumentList @('/i', '$escapedPath', '/passive', '/norestart') "
+        '-Verb RunAs';
+    final process = await Process.start('powershell.exe', [
+      '-NoProfile',
+      '-ExecutionPolicy',
+      'Bypass',
+      '-Command',
+      command,
+    ]);
+    final exitCode = await process.exitCode;
+    if (exitCode != 0) {
+      throw StateError('Could not start the Avorax MSI update. Exit code: $exitCode.');
+    }
+  }
+
   Future<String> _installedVersion() async {
     try {
       final packageInfo = await PackageInfo.fromPlatform();
@@ -224,7 +277,7 @@ class _GitHubRelease {
   _GitHubAsset? get preferredAsset {
     if (assets.isEmpty) return null;
     final lowerPriority = Platform.isWindows
-        ? ['setup.exe', '.msi']
+        ? ['.msi']
         : Platform.isMacOS
         ? ['.dmg', '.pkg', '.zip']
         : Platform.isLinux

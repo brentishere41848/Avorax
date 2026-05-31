@@ -7,7 +7,7 @@ import 'package:zentor_client/core/config/build_config.dart';
 import 'package:zentor_client/core/updates/update_service.dart';
 
 void main() {
-  test('detects newer GitHub release and selects installer asset', () async {
+  test('detects newer GitHub release and selects MSI update package', () async {
     final service = ZentorUpdateService(
       buildConfig: const BuildConfig(
         updatesRepoOwner: 'owner',
@@ -17,8 +17,11 @@ void main() {
         expect(request.url.path, '/repos/owner/repo/releases');
         return http.Response(
           jsonEncode([
-            _release('v0.1.15', assets: ['Avorax-0.1.15-x64-setup.exe']),
-            _release('v0.1.14', assets: ['Avorax-0.1.14-x64-setup.exe']),
+            _release('v0.1.15', assets: [
+              'Avorax-AntiVirus-0.1.15-x64-setup.exe',
+              'Avorax-AntiVirus-0.1.15-x64.msi',
+            ]),
+            _release('v0.1.14', assets: ['Avorax-AntiVirus-0.1.14-x64.msi']),
           ]),
           200,
         );
@@ -29,7 +32,7 @@ void main() {
 
     expect(result.status, UpdateStatus.updateAvailable);
     expect(result.update?.latestVersion, '0.1.15');
-    expect(result.update?.assetName, 'Avorax-0.1.15-x64-setup.exe');
+    expect(result.update?.assetName, 'Avorax-AntiVirus-0.1.15-x64.msi');
   });
 
   test(

@@ -232,6 +232,33 @@ class LocalCoreClient {
     return response?['ok'] == true;
   }
 
+  Future<String> startCoreService() async {
+    if (!Platform.isWindows) {
+      return 'Starting the Avorax Core Service is only supported on Windows.';
+    }
+    final command =
+        "Start-Process -FilePath 'powershell.exe' "
+        "-ArgumentList @('-NoProfile', '-Command', "
+        "'Start-Service -Name avorax_core_service -ErrorAction Stop') "
+        '-Verb RunAs -Wait';
+    try {
+      final process = await Process.start('powershell.exe', [
+        '-NoProfile',
+        '-ExecutionPolicy',
+        'Bypass',
+        '-Command',
+        command,
+      ]);
+      final exitCode = await process.exitCode;
+      if (exitCode != 0) {
+        return 'Windows could not start Avorax Core Service. Exit code: $exitCode';
+      }
+      return 'Avorax Core Service start was requested.';
+    } on Object catch (error) {
+      return 'Avorax Core Service start failed: $error';
+    }
+  }
+
   Future<void> cancelActiveScan() async {
     _activeScanProcess?.kill();
   }

@@ -87,12 +87,17 @@ class HomeScreen extends ConsumerWidget {
                     ? controller.startProtection
                     : controller.stopProtection,
               ),
-              if (state.updateStatus == UpdateStatus.updateAvailable)
+              if (state.updateStatus == UpdateStatus.updateAvailable ||
+                  state.updateStatus == UpdateStatus.installing)
                 ZentorButton(
-                  label: 'Download Update',
+                  label: state.updateStatus == UpdateStatus.installing
+                      ? 'Starting update'
+                      : 'Install update',
                   icon: Icons.system_update_alt_outlined,
                   secondary: true,
-                  onPressed: controller.openUpdateDownload,
+                  onPressed: state.updateStatus == UpdateStatus.installing
+                      ? null
+                      : controller.installUpdateInApp,
                 ),
             ],
           ),
@@ -355,7 +360,10 @@ class HomeScreen extends ConsumerWidget {
   String _updateDetail(ZentorState state) {
     final update = state.updateInfo;
     if (state.updateStatus == UpdateStatus.updateAvailable && update != null) {
-      return 'Avorax ${update.latestVersion} is available. ${update.assetName ?? 'Open release'} to update.';
+      return 'Avorax ${update.latestVersion} is available. Install it from inside Avorax.';
+    }
+    if (state.updateStatus == UpdateStatus.installing) {
+      return 'Avorax is starting the in-app update package.';
     }
     if (state.updateStatus == UpdateStatus.upToDate) {
       return 'Avorax ${state.currentAppVersion} is installed.';
@@ -363,6 +371,6 @@ class HomeScreen extends ConsumerWidget {
     if (state.updateStatus == UpdateStatus.failed) {
       return 'Could not check GitHub Releases. Scanning still works offline.';
     }
-    return 'Avorax checks GitHub Releases and asks before opening an installer.';
+    return 'Avorax checks GitHub Releases and can install updates from inside the app.';
   }
 }

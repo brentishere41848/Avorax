@@ -4,7 +4,6 @@ import 'package:file_selector/file_selector.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zentor_protocol/zentor_protocol.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../core/config/config_repository.dart';
 import '../core/apps/app_detector.dart';
@@ -184,6 +183,7 @@ class ZentorState {
     ScanProgress? scanProgress,
     bool clearScanProgress = false,
     ScanReport? lastScanReport,
+    bool clearLastScanReport = false,
     ProtectionRun? protectionRun,
     bool clearProtectionRun = false,
     HeartbeatStatus? heartbeat,
@@ -239,7 +239,9 @@ class ZentorState {
       scanProgress: clearScanProgress
           ? null
           : scanProgress ?? this.scanProgress,
-      lastScanReport: lastScanReport ?? this.lastScanReport,
+      lastScanReport: clearLastScanReport
+          ? null
+          : lastScanReport ?? this.lastScanReport,
       protectionRun: clearProtectionRun
           ? null
           : protectionRun ?? this.protectionRun,
@@ -391,23 +393,37 @@ class ZentorController extends StateNotifier<ZentorState> {
     }
   }
 
-  Future<void> openUpdateDownload() async {
+  Future<void> installUpdateInApp() async {
     final update = state.updateInfo;
     if (update == null) {
       await unawaitedCheckForUpdates();
       return;
     }
-    final uri = update.downloadUrl ?? update.releaseUrl;
-    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    if (!opened) {
-      state = state.copyWith(errorMessage: 'Unable to open update link.');
-      return;
-    }
-    await logEvent(
-      'update_download_opened',
-      'Update download opened',
-      details: uri.toString(),
+    state = state.copyWith(
+      updateStatus: UpdateStatus.installing,
+      clearError: true,
+      clearUpdateError: true,
     );
+    try {
+      final packageUri = await _updateService.downloadUpdatePackage(update);
+      await _updateService.installDownloadedPackage(packageUri);
+      await logEvent(
+        'update_install_started',
+        'Update install started',
+        details: update.assetName,
+      );
+    } on Object catch (error) {
+      state = state.copyWith(
+        updateStatus: UpdateStatus.updateAvailable,
+        errorMessage: 'Avorax could not start the in-app update: $error',
+        updateError: '$error',
+      );
+      await logEvent(
+        'update_install_failed',
+        'Update install failed',
+        details: '$error',
+      );
+    }
   }
 
   Future<void> saveDeveloperCloudOverride({
@@ -466,6 +482,9 @@ class ZentorController extends StateNotifier<ZentorState> {
           : 'Malware engine unavailable',
     );
     if (!mounted) return;
+    final recoveredFromStaleEngineError =
+        status == MalwareEngineStatus.available &&
+        state.lastScanReport?.status == ScanStatus.engineUnavailable;
     state = state.copyWith(
       malwareEngineStatus: status,
       aiModelInfo: health.aiModelInfo,
@@ -485,6 +504,9 @@ class ZentorController extends StateNotifier<ZentorState> {
       enginePathsChecked: health.enginePathsChecked,
       programDataDirectory: health.programDataDirectory,
       lastEngineError: health.lastError,
+      scanStatus: recoveredFromStaleEngineError ? ScanStatus.idle : null,
+      clearLastScanReport: recoveredFromStaleEngineError,
+      clearError: recoveredFromStaleEngineError,
     );
   }
 
@@ -493,6 +515,17 @@ class ZentorController extends StateNotifier<ZentorState> {
     final quarantine = await _localCoreClient.listQuarantine();
     if (!mounted) return;
     state = state.copyWith(quarantine: quarantine);
+  }
+
+  Future<void> startCoreService() async {
+    final result = await _localCoreClient.startCoreService();
+    await logEvent(
+      'core_service_start_requested',
+      'Core Service start requested',
+      details: result,
+    );
+    state = state.copyWith(errorMessage: result);
+    await unawaitedCheckMalwareEngine();
   }
 
   Future<void> addManualProtectedAppFile() async {
