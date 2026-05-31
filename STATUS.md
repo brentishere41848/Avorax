@@ -68,6 +68,10 @@ Avorax installer engine-deployment repair and `v0.2.9` release preparation after
 - Added `tools\windows\avorax-installed-smoke-test.ps1` to verify installed app files, engine assets, ProgramData, services, install report, and Core health.
 - Updated release-gate staging checks so missing installed engine files or smoke-test tooling fail the release gate.
 - Updated the scan UI fallback so engine-unavailable states show concrete diagnostics and do not imply files are clean.
+- Added an explicit local-core `EngineAssetLocator` with installed-path priority, debug-only repo fallback, checked-path diagnostics, and a focused unit test.
+- Extended Flutter local-core health parsing and Scan diagnostics with Core Service status and engine paths checked.
+- Added `tools\windows\avorax-installer-stage-test.ps1` and wired it into the Windows release gate so release checks fail when the MSI/EXE stage or required Avorax payload is missing.
+- Changed MSI-created ProgramData quarantine casing to `Quarantine` to match runtime quarantine paths and the installed smoke test.
 
 ## Blockers
 
@@ -82,6 +86,7 @@ Avorax installer engine-deployment repair and `v0.2.9` release preparation after
 - `powershell -ExecutionPolicy Bypass -File tools\branding\branding-check.ps1`
 - `powershell -ExecutionPolicy Bypass -File tools\security\zentor-product-copy-gate.ps1`
 - `powershell -ExecutionPolicy Bypass -File tools\security\zentor-no-malware-binaries-gate.ps1`
+- PowerShell parser check for `installer\windows\build-msi.ps1`, `tools\windows\zentor-release-gate.ps1`, and `tools\windows\avorax-installer-stage-test.ps1`
 - `git diff --check`
 - Active-string search for old product copy, old three-letter engine aliases, vague partial-protection label, unrelated product-domain copy, and fake protection claims.
 - Active quarantine-extension search confirming new runtime writes use `.avoraxq` and old quarantine extensions only remain in migration/readback paths.
@@ -101,6 +106,7 @@ Avorax installer engine-deployment repair and `v0.2.9` release preparation after
 - `powershell -ExecutionPolicy Bypass -File tools\security\zentor-false-positive-gate.ps1` is blocked because it requires `cargo`.
 - `flutter analyze` and `flutter test` are blocked because Flutter is not installed.
 - `dart format ...` and `dart test` are blocked because Dart is not installed.
+- `powershell -ExecutionPolicy Bypass -File tools\windows\avorax-installer-stage-test.ps1` is blocked until installer packaging generates `dist\windows-msi\stage`; the script correctly fails when the stage is absent.
 - Windows driver validation is blocked by missing Windows, WDK/EWDK, signing, installation, and administrator self-test environment.
 
 ## Remaining Work

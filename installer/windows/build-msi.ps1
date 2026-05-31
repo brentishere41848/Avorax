@@ -516,6 +516,8 @@ foreach ($requiredPayload in @(
   @("driver-tools\zentor_windows_process_guard\scripts\run-process-guard-self-test.ps1", "process guard self-test"),
   @("tools\windows\zentor-protection-selftest.ps1", "protection self-test"),
   @("tools\windows\zentor-release-gate.ps1", "Windows release gate"),
+  @("tools\windows\avorax-installed-smoke-test.ps1", "installed smoke test"),
+  @("tools\windows\avorax-installer-stage-test.ps1", "installer stage test"),
   @("tools\security\zentor-false-positive-gate.ps1", "false-positive gate"),
   @("tools\perf\zentor-performance-gate.ps1", "performance gate"),
   @("tools\branding\branding-check.ps1", "branding gate"),
@@ -605,7 +607,7 @@ $installReport = [ordered]@{
 }
 ($installReport | ConvertTo-Json -Depth 6) | Set-Content -LiteralPath $installReportSource -Encoding UTF8
 
-$programDataSubdirs = @("config", "logs", "events", "quarantine", "scans", "cache", "reports", "migration")
+$programDataSubdirs = @("config", "logs", "events", "Quarantine", "scans", "cache", "reports", "migration")
 $programDataXml = New-Object System.Text.StringBuilder
 $programDataRefsXml = New-Object System.Text.StringBuilder
 [void]$programDataXml.AppendLine("    <StandardDirectory Id=`"CommonAppDataFolder`">")

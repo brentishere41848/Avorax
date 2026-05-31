@@ -87,3 +87,15 @@ The fixed installer must:
 - Write an install manifest and release hash manifest.
 - Include a smoke-test script that can validate installed files, engine assets, services, and install report.
 - Keep driver installation explicit and never silently enable Windows TESTSIGNING.
+
+## Current Implementation Notes
+
+- Local core health now uses an explicit EngineAssetLocator that checks `AVORAX_ENGINE_DIR`, `AVORAX_ENGINE_ROOT`, the installed `C:\Program Files\Avorax` layout on Windows, executable-relative paths, and development repository paths only for debug builds.
+- Health responses include `engine_paths_checked`, `signatures_dir`, `rules_dir`, `ml_dir`, `trust_dir`, and `config_dir` so the UI can show exact missing paths.
+- The Scan page fallback now distinguishes Core Service service state from generic engine availability and displays checked paths.
+- The release gate now requires a generated installer stage and both `Avorax-AntiVirus-*-x64.msi` and `Avorax-AntiVirus-*-x64-setup.exe` artifacts.
+- `tools/windows/avorax-installer-stage-test.ps1` validates the staged payload before release decisions. It checks app/service executables, engine packs, docs, smoke-test tooling, release self-trust manifest coverage, artifact naming, and forbidden installer copy.
+
+## Remaining Installer UX Gap
+
+The EXE setup is still a WiX Burn bootstrapper using the standard bootstrapper application. It has a real interactive installer surface and launch target, but a fully custom CMake-style component wizard with product-specific diagnostics and selectable service/driver options still requires either a custom Burn bootstrapper application or a supported WiX UI extension pass. This gap must stay visible until implemented and validated.

@@ -84,10 +84,12 @@ class ZentorState {
     this.nativeMlStatus = 'modelMissing',
     this.nativeMlModelVersion,
     this.compatibilityEnginesEnabled = false,
+    this.coreServiceStatus = 'unknown',
     this.guardStatus = 'off',
     this.driverStatus = 'missing',
     this.installPath,
     this.engineDirectory,
+    this.enginePathsChecked = const [],
     this.programDataDirectory,
     this.lastEngineError,
     this.scanStatus = ScanStatus.idle,
@@ -125,10 +127,12 @@ class ZentorState {
   final String nativeMlStatus;
   final String? nativeMlModelVersion;
   final bool compatibilityEnginesEnabled;
+  final String coreServiceStatus;
   final String guardStatus;
   final String driverStatus;
   final String? installPath;
   final String? engineDirectory;
+  final List<String> enginePathsChecked;
   final String? programDataDirectory;
   final String? lastEngineError;
   final ScanStatus scanStatus;
@@ -167,10 +171,12 @@ class ZentorState {
     String? nativeMlModelVersion,
     bool clearNativeMlModelVersion = false,
     bool? compatibilityEnginesEnabled,
+    String? coreServiceStatus,
     String? guardStatus,
     String? driverStatus,
     String? installPath,
     String? engineDirectory,
+    List<String>? enginePathsChecked,
     String? programDataDirectory,
     String? lastEngineError,
     ScanStatus? scanStatus,
@@ -220,10 +226,12 @@ class ZentorState {
           : nativeMlModelVersion ?? this.nativeMlModelVersion,
       compatibilityEnginesEnabled:
           compatibilityEnginesEnabled ?? this.compatibilityEnginesEnabled,
+      coreServiceStatus: coreServiceStatus ?? this.coreServiceStatus,
       guardStatus: guardStatus ?? this.guardStatus,
       driverStatus: driverStatus ?? this.driverStatus,
       installPath: installPath ?? this.installPath,
       engineDirectory: engineDirectory ?? this.engineDirectory,
+      enginePathsChecked: enginePathsChecked ?? this.enginePathsChecked,
       programDataDirectory: programDataDirectory ?? this.programDataDirectory,
       lastEngineError: lastEngineError ?? this.lastEngineError,
       scanStatus: scanStatus ?? this.scanStatus,
@@ -469,10 +477,12 @@ class ZentorController extends StateNotifier<ZentorState> {
       nativeMlStatus: health.nativeMlStatus,
       nativeMlModelVersion: health.nativeMlModelVersion,
       compatibilityEnginesEnabled: health.compatibilityEnginesEnabled,
+      coreServiceStatus: health.coreServiceStatus,
       guardStatus: health.guardStatus,
       driverStatus: health.driverStatus,
       installPath: health.installPath,
       engineDirectory: health.engineDirectory,
+      enginePathsChecked: health.enginePathsChecked,
       programDataDirectory: health.programDataDirectory,
       lastEngineError: health.lastError,
     );

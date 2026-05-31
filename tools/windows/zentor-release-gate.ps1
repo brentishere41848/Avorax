@@ -64,8 +64,15 @@ if (-not (Test-Path -LiteralPath $smokeTest)) {
   Add-Error "Installed smoke test is missing: $smokeTest"
 }
 
+$stageTest = Join-Path $root "tools\windows\avorax-installer-stage-test.ps1"
+if (-not (Test-Path -LiteralPath $stageTest)) {
+  Add-Error "Installer stage test is missing: $stageTest"
+}
+
 $stage = Join-Path $root "dist\windows-msi\stage"
-if (Test-Path -LiteralPath $stage) {
+if (-not (Test-Path -LiteralPath $stage)) {
+  Add-Error "Installer stage is missing. Run installer packaging before the release gate: $stage"
+} else {
   foreach ($required in @(
     "Avorax.exe",
     "avorax_core_service.exe",
@@ -82,6 +89,23 @@ if (Test-Path -LiteralPath $stage) {
     if (-not (Test-Path -LiteralPath (Join-Path $stage $required))) {
       Add-Error "Installer stage is missing required payload: $required"
     }
+  }
+
+  if (Test-Path -LiteralPath $stageTest) {
+    try {
+      & $stageTest -StagePath $stage
+    } catch {
+      Add-Error "Installer stage test failed: $($_.Exception.Message)"
+    }
+  }
+}
+
+foreach ($artifact in @(
+  "Avorax-AntiVirus-*-x64.msi",
+  "Avorax-AntiVirus-*-x64-setup.exe"
+)) {
+  if (-not (Get-ChildItem -LiteralPath $dist -File -Filter $artifact -ErrorAction SilentlyContinue)) {
+    Add-Error "Required installer artifact is missing from dist: $artifact"
   }
 }
 

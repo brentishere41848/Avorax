@@ -41,10 +41,16 @@ class LocalCoreClient {
       nativeMlModelVersion: response['native_ml_model_version'] as String?,
       compatibilityEnginesEnabled:
           response['compatibility_engines_enabled'] as bool? ?? false,
+      coreServiceStatus:
+          response['core_service_status'] as String? ?? 'unknown',
       guardStatus: response['guard_status'] as String? ?? 'off',
       driverStatus: response['driver_status'] as String? ?? 'missing',
       installPath: response['install_path']?.toString(),
       engineDirectory: response['engine_directory']?.toString(),
+      enginePathsChecked: (response['engine_paths_checked'] as List?)
+              ?.map((item) => item.toString())
+              .toList() ??
+          const [],
       programDataDirectory: response['program_data_dir']?.toString(),
       lastError: response['last_error']?.toString(),
     );
@@ -586,10 +592,12 @@ class LocalCoreHealth {
     this.nativeMlStatus = 'modelMissing',
     this.nativeMlModelVersion,
     this.compatibilityEnginesEnabled = false,
+    this.coreServiceStatus = 'unknown',
     this.guardStatus = 'off',
     this.driverStatus = 'missing',
     this.installPath,
     this.engineDirectory,
+    this.enginePathsChecked = const [],
     this.programDataDirectory,
     this.lastError,
   });
@@ -604,10 +612,12 @@ class LocalCoreHealth {
   final String nativeMlStatus;
   final String? nativeMlModelVersion;
   final bool compatibilityEnginesEnabled;
+  final String coreServiceStatus;
   final String guardStatus;
   final String driverStatus;
   final String? installPath;
   final String? engineDirectory;
+  final List<String> enginePathsChecked;
   final String? programDataDirectory;
   final String? lastError;
 }

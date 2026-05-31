@@ -414,9 +414,7 @@ class _EngineUnavailableDiagnostics extends StatelessWidget {
           children: [
             _DiagnosticChip(
               label: 'Core Service',
-              value: state.malwareEngineStatus == MalwareEngineStatus.available
-                  ? 'Running'
-                  : 'Missing or stopped',
+              value: _serviceStatusLabel(state.coreServiceStatus),
             ),
             _DiagnosticChip(label: 'Engine directory', value: engineDir),
             _DiagnosticChip(
@@ -435,8 +433,16 @@ class _EngineUnavailableDiagnostics extends StatelessWidget {
               label: 'ProgramData',
               value: state.programDataDirectory ?? 'Unknown',
             ),
+            if (state.enginePathsChecked.isNotEmpty)
+              _DiagnosticChip(
+                label: 'Paths checked',
+                value: state.enginePathsChecked.take(4).join(' | '),
+              ),
             if (state.lastEngineError != null)
-              _DiagnosticChip(label: 'Last error', value: state.lastEngineError!),
+              _DiagnosticChip(
+                label: 'Last error',
+                value: state.lastEngineError!,
+              ),
           ],
         ),
         const SizedBox(height: 14),
@@ -473,6 +479,15 @@ class _EngineUnavailableDiagnostics extends StatelessWidget {
       ],
     );
   }
+
+  String _serviceStatusLabel(String status) => switch (status) {
+        'running' => 'Running',
+        'stopped' => 'Stopped',
+        'missing' => 'Missing',
+        'installed' => 'Installed',
+        'unsupported' => 'Unsupported on this OS',
+        _ => 'Unknown',
+      };
 }
 
 class _DiagnosticChip extends StatelessWidget {
@@ -484,6 +499,7 @@ class _DiagnosticChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      constraints: const BoxConstraints(maxWidth: 520),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
       decoration: BoxDecoration(
         border: Border.all(color: ZentorColors.border),

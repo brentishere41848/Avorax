@@ -279,8 +279,9 @@ fn handle(command: CoreCommand) -> serde_json::Value {
 }
 
 fn health_response() -> serde_json::Value {
-    let asset_root = native_asset_root();
-    let engine_dir = asset_root.join("engine");
+    let locator = EngineAssetLocator::discover();
+    let asset_root = locator.asset_root.clone();
+    let engine_dir = locator.installed_engine_dir.clone();
     match native_engine() {
         Ok(mut engine) => {
             let status = engine.status();
@@ -312,6 +313,7 @@ fn health_response() -> serde_json::Value {
                     "ai_status": ai::ModelRunner::default().status(),
                     "ai_model": ai::ModelRunner::default().info(),
                     "ai_self_test": ai::ai_self_test::run_ai_self_test().is_ok(),
+                    "core_service_status": core_service_system_status(),
                     "guard_status": protection::GuardService::system_status(),
                     "driver_status": "missing",
                     "reputation_status": ReputationProvider.status(),
@@ -319,6 +321,12 @@ fn health_response() -> serde_json::Value {
                     "network_exposed": false,
                     "install_path": asset_root,
                     "engine_directory": engine_dir,
+                    "engine_paths_checked": locator.paths_checked,
+                    "signatures_dir": locator.signatures_dir,
+                    "rules_dir": locator.rules_dir,
+                    "ml_dir": locator.ml_dir,
+                    "trust_dir": locator.trust_dir,
+                    "config_dir": locator.config_dir,
                     "program_data_dir": avorax_program_data_dir(),
                 }),
             })
@@ -340,6 +348,7 @@ fn health_response() -> serde_json::Value {
                 "ai_status": ai::ModelRunner::default().status(),
                 "ai_model": ai::ModelRunner::default().info(),
                 "ai_self_test": false,
+                "core_service_status": core_service_system_status(),
                 "guard_status": protection::GuardService::system_status(),
                 "driver_status": "missing",
                 "reputation_status": ReputationProvider.status(),
@@ -347,6 +356,12 @@ fn health_response() -> serde_json::Value {
                 "network_exposed": false,
                 "install_path": asset_root,
                 "engine_directory": engine_dir,
+                "engine_paths_checked": locator.paths_checked,
+                "signatures_dir": locator.signatures_dir,
+                "rules_dir": locator.rules_dir,
+                "ml_dir": locator.ml_dir,
+                "trust_dir": locator.trust_dir,
+                "config_dir": locator.config_dir,
                 "program_data_dir": avorax_program_data_dir(),
                 "last_error": error.to_string(),
             }),
@@ -677,51 +692,106 @@ fn update_progress(
 }
 
 fn native_engine() -> anyhow::Result<ZentorNativeEngine> {
-    let root = native_asset_root();
+    let root = EngineAssetLocator::discover().asset_root;
     ZentorNativeEngine::initialize(EngineConfig::from_repo_root(root))
 }
 
-fn native_asset_root() -> PathBuf {
-    if let Ok(path) = std::env::var("AVORAX_ENGINE_DIR") {
-        let engine = PathBuf::from(path);
-        if engine.is_dir() {
-            return engine.parent().unwrap_or(engine.as_path()).to_path_buf();
-        }
-    }
-    if let Ok(exe) = std::env::current_exe() {
-        if let Some(parent) = exe.parent() {
-            for candidate in [
-                parent.to_path_buf(),
-                parent.join(".."),
-                parent.join("..").join(".."),
-                parent.join("..").join("..").join(".."),
-            ] {
-                if candidate.join("engine").exists() {
-                    return candidate;
-                }
-                if candidate.join("assets").join("zentor_native").exists() {
-                    return candidate;
-                }
+#[derive(Debug, Clone)]
+struct EngineAssetLocator {
+    asset_root: PathBuf,
+    installed_engine_dir: PathBuf,
+    signatures_dir: PathBuf,
+    rules_dir: PathBuf,
+    ml_dir: PathBuf,
+    trust_dir: PathBuf,
+    config_dir: PathBuf,
+    paths_checked: Vec<PathBuf>,
+}
+
+impl EngineAssetLocator {
+    fn discover() -> Self {
+        let mut candidates = Vec::new();
+
+        if let Ok(path) = std::env::var("AVORAX_ENGINE_DIR") {
+            let engine = PathBuf::from(path);
+            if engine
+                .file_name()
+                .is_some_and(|name| name.to_string_lossy().eq_ignore_ascii_case("engine"))
+            {
+                candidates.push(
+                    engine
+                        .parent()
+                        .unwrap_or(engine.as_path())
+                        .to_path_buf(),
+                );
+            } else {
+                candidates.push(engine);
             }
         }
+
+        if let Ok(path) = std::env::var("AVORAX_ENGINE_ROOT") {
+            candidates.push(PathBuf::from(path));
+        }
+
+        #[cfg(windows)]
+        {
+            candidates.push(PathBuf::from(r"C:\Program Files\Avorax"));
+        }
+
+        if let Ok(exe) = std::env::current_exe() {
+            if let Some(parent) = exe.parent() {
+                candidates.extend([
+                    parent.to_path_buf(),
+                    parent.join(".."),
+                    parent.join("..").join(".."),
+                    parent.join("..").join("..").join(".."),
+                ]);
+            }
+        }
+
+        if cfg!(debug_assertions) {
+            if let Ok(current) = std::env::current_dir() {
+                candidates.extend(current.ancestors().map(PathBuf::from));
+            }
+        }
+
+        let mut checked = Vec::new();
+        for candidate in candidates {
+            let normalized = candidate
+                .canonicalize()
+                .unwrap_or_else(|_| candidate.clone());
+            if checked.iter().any(|path| path == &normalized) {
+                continue;
+            }
+            checked.push(normalized.clone());
+            if normalized.join("engine").is_dir()
+                || (cfg!(debug_assertions)
+                    && normalized.join("assets").join("zentor_native").is_dir())
+            {
+                return Self::from_root(normalized, checked);
+            }
+        }
+
+        let fallback = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+        if !checked.iter().any(|path| path == &fallback) {
+            checked.push(fallback.clone());
+        }
+        Self::from_root(fallback, checked)
     }
-    #[cfg(windows)]
-    {
-        let installed = PathBuf::from(r"C:\Program Files\Avorax");
-        if installed.join("engine").exists() {
-            return installed;
+
+    fn from_root(asset_root: PathBuf, paths_checked: Vec<PathBuf>) -> Self {
+        let installed_engine_dir = asset_root.join("engine");
+        Self {
+            signatures_dir: installed_engine_dir.join("signatures"),
+            rules_dir: installed_engine_dir.join("rules"),
+            ml_dir: installed_engine_dir.join("ml"),
+            trust_dir: installed_engine_dir.join("trust"),
+            config_dir: installed_engine_dir.join("config"),
+            asset_root,
+            installed_engine_dir,
+            paths_checked,
         }
     }
-    let current = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
-    for candidate in current.ancestors() {
-        if candidate.join("engine").exists() {
-            return candidate.to_path_buf();
-        }
-        if candidate.join("assets").join("zentor_native").exists() {
-            return candidate.to_path_buf();
-        }
-    }
-    current
 }
 
 fn avorax_program_data_dir() -> PathBuf {
@@ -740,6 +810,33 @@ fn avorax_program_data_dir() -> PathBuf {
         return PathBuf::from(home).join(".local/share/avorax");
     }
     PathBuf::from(".avorax")
+}
+
+fn core_service_system_status() -> &'static str {
+    #[cfg(windows)]
+    {
+        let Ok(output) = std::process::Command::new("sc.exe")
+            .args(["query", "avorax_core_service"])
+            .output()
+        else {
+            return "unknown";
+        };
+        if !output.status.success() {
+            return "missing";
+        }
+        let text = String::from_utf8_lossy(&output.stdout).to_uppercase();
+        if text.contains("RUNNING") {
+            return "running";
+        }
+        if text.contains("STOPPED") {
+            return "stopped";
+        }
+        "installed"
+    }
+    #[cfg(not(windows))]
+    {
+        "unsupported"
+    }
 }
 
 fn should_surface_native_verdict(verdict: AneVerdict) -> bool {
@@ -1197,6 +1294,41 @@ mod tests {
     fn env_lock() -> std::sync::MutexGuard<'static, ()> {
         static LOCK: OnceLock<Mutex<()>> = OnceLock::new();
         LOCK.get_or_init(|| Mutex::new(())).lock().unwrap()
+    }
+
+    #[test]
+    fn engine_asset_locator_prefers_explicit_installed_engine_dir() {
+        let _guard = env_lock();
+        let previous_engine_dir = std::env::var_os("AVORAX_ENGINE_DIR");
+        let previous_engine_root = std::env::var_os("AVORAX_ENGINE_ROOT");
+        let dir = tempdir().unwrap();
+        let engine_dir = dir.path().join("engine");
+        fs::create_dir_all(engine_dir.join("signatures")).unwrap();
+        fs::create_dir_all(engine_dir.join("rules")).unwrap();
+        fs::create_dir_all(engine_dir.join("ml")).unwrap();
+        fs::create_dir_all(engine_dir.join("trust")).unwrap();
+        fs::create_dir_all(engine_dir.join("config")).unwrap();
+
+        std::env::set_var("AVORAX_ENGINE_DIR", &engine_dir);
+        std::env::remove_var("AVORAX_ENGINE_ROOT");
+
+        let locator = EngineAssetLocator::discover();
+
+        match previous_engine_dir {
+            Some(value) => std::env::set_var("AVORAX_ENGINE_DIR", value),
+            None => std::env::remove_var("AVORAX_ENGINE_DIR"),
+        }
+        match previous_engine_root {
+            Some(value) => std::env::set_var("AVORAX_ENGINE_ROOT", value),
+            None => std::env::remove_var("AVORAX_ENGINE_ROOT"),
+        }
+        assert_eq!(locator.asset_root, dir.path());
+        assert_eq!(locator.installed_engine_dir, engine_dir);
+        assert_eq!(
+            locator.signatures_dir,
+            dir.path().join("engine").join("signatures")
+        );
+        assert!(locator.paths_checked.iter().any(|path| path == dir.path()));
     }
 
     #[test]

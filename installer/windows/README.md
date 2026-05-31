@@ -58,6 +58,14 @@ After installing a built MSI or EXE, validate the deployed layout and service st
 powershell -ExecutionPolicy Bypass -File tools\windows\avorax-installed-smoke-test.ps1
 ```
 
+Before making a release decision, validate the generated MSI stage:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\windows\avorax-installer-stage-test.ps1
+```
+
+The stage test fails if the app, service executables, installed `engine\` packs, release self-trust manifest, smoke-test tooling, or Avorax-named installer artifacts are missing.
+
 The Guard Service is not a kernel driver and does not provide true pre-execution blocking by itself. It monitors process starts and can stop/quarantine confirmed threats after launch when the user enables that protection mode. High-confidence non-confirmed detections remain review-only. True pre-execution blocking still requires the Windows driver validation workflow.
 
 The MSI packages driver tooling and validation scripts, but it does not silently install unsigned or test-signed drivers and does not silently enable Windows TESTSIGNING. Driver activation must go through the documented driver workflow and self-test.
