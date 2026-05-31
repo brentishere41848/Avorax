@@ -59,6 +59,32 @@ if (Test-Path -LiteralPath $dist) {
   }
 }
 
+$smokeTest = Join-Path $root "tools\windows\avorax-installed-smoke-test.ps1"
+if (-not (Test-Path -LiteralPath $smokeTest)) {
+  Add-Error "Installed smoke test is missing: $smokeTest"
+}
+
+$stage = Join-Path $root "dist\windows-msi\stage"
+if (Test-Path -LiteralPath $stage) {
+  foreach ($required in @(
+    "Avorax.exe",
+    "avorax_core_service.exe",
+    "avorax_guard_service.exe",
+    "engine\config\engine.default.json",
+    "engine\signatures\avorax_core.asig",
+    "engine\rules\avorax_core.arule",
+    "engine\ml\avorax_native_model.amodel",
+    "engine\trust\avorax_known_good.atrust",
+    "engine\trust\avorax_release_manifest.json",
+    "tools\windows\avorax-installed-smoke-test.ps1",
+    "install-manifest.json"
+  )) {
+    if (-not (Test-Path -LiteralPath (Join-Path $stage $required))) {
+      Add-Error "Installer stage is missing required payload: $required"
+    }
+  }
+}
+
 Push-Location (Join-Path $root "core\zentor_guard_service")
 try {
   cargo test

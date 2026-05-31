@@ -35,8 +35,13 @@ impl GuardService {
         #[cfg(windows)]
         {
             let output = Command::new("sc.exe")
-                .args(["query", "zentor_guard_service"])
-                .output();
+                .args(["query", "avorax_guard_service"])
+                .output()
+                .or_else(|_| {
+                    Command::new("sc.exe")
+                        .args(["query", "zentor_guard_service"])
+                        .output()
+                });
             let Ok(output) = output else {
                 return "off";
             };

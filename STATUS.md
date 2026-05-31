@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-Avorax installer completeness and `v0.2.8` release preparation after `v0.2.6`.
+Avorax installer engine-deployment repair and `v0.2.9` release preparation after `v0.2.8`.
 
 ## Current Commit
 
@@ -59,6 +59,15 @@ Avorax installer completeness and `v0.2.8` release preparation after `v0.2.6`.
 - Updated Windows release artifact naming in CI from the old artifact label to `avorax-windows-installers-<version>`.
 - Tightened installer release packaging again so missing `zentor_local_core.exe` or `zentor_guard_service.exe` is a hard build failure by default. `-AllowIncompletePayload` is limited to local diagnostics, and normal MSI/EXE builds install the same complete payload through the MSI chain.
 - Updated the Flutter GitHub release updater defaults and Windows release build defines so Avorax checks `brentishere41848/Avorax` releases by default.
+- Added an installer audit report for the previous `Engine Unavailable` path.
+- Updated the Avorax Native Engine config and local core asset discovery so installed layouts under `C:\Program Files\Avorax\engine` are preferred over repository-only asset paths.
+- Added Avorax Core Service service-mode support so the MSI can install and start `avorax_core_service` honestly instead of only packaging a stdio helper.
+- Changed Guard Service service naming to `avorax_guard_service` while keeping legacy helper names packaged for compatibility.
+- Updated the MSI payload to install `avorax_core_service.exe`, `avorax_guard_service.exe`, `engine\config`, Avorax `.asig`, `.arule`, `.amodel`, `.atrust` aliases, and a release self-trust manifest.
+- Added ProgramData creation for Avorax config, logs, events, quarantine, scans, cache, reports, and migration data.
+- Added `tools\windows\avorax-installed-smoke-test.ps1` to verify installed app files, engine assets, ProgramData, services, install report, and Core health.
+- Updated release-gate staging checks so missing installed engine files or smoke-test tooling fail the release gate.
+- Updated the scan UI fallback so engine-unavailable states show concrete diagnostics and do not imply files are clean.
 
 ## Blockers
 
@@ -96,13 +105,13 @@ Avorax installer completeness and `v0.2.8` release preparation after `v0.2.6`.
 
 ## Remaining Work
 
-- Run Rust, Flutter, Dart, false-positive, protection, performance, release, no-malware-binaries, and installer gates in a provisioned environment with Cargo, Flutter, Dart, and driver tooling available.
+- Run Rust, Flutter, Dart, false-positive, protection, performance, release, no-malware-binaries, and installer gates in a provisioned environment with Cargo, Flutter, Dart, WiX, and driver tooling available.
 - Keep iterating on false-positive policy using signed-publisher validation and real build artifact hash metadata when those are available.
 - Continue Phase 2+ implementation in order, without marking driver or production ML features complete until their mandatory validation gates pass.
 
 ## Exact Next Step
 
-Commit and push the Avorax Guard driver-trust checkpoint, then let CI run the Rust/Flutter/Dart checks; do not tag another release unless CI and the release workflow pass.
+Commit and push the Avorax installer engine-deployment repair, then let CI build the `v0.2.9` MSI/EXE and inspect any release-workflow failures.
 
 ## Handoff
 

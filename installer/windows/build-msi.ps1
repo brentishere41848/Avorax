@@ -54,6 +54,14 @@ function Assert-StagePath([string]$RelativePath, [string]$Description) {
   }
 }
 
+function Copy-RequiredAlias([string]$Source, [string]$Destination, [string]$Name) {
+  if (-not (Test-Path $Source)) {
+    throw "$Name source was not found: $Source"
+  }
+  New-Item -ItemType Directory -Force -Path (Split-Path $Destination) | Out-Null
+  Copy-Item -LiteralPath $Source -Destination $Destination -Force
+}
+
 function Ensure-ClamAVPackage([string]$ZipPath, [string]$Url, [string]$ExpectedSha256) {
   if (Test-Path $ZipPath) {
     $existingHash = (Get-FileHash -LiteralPath $ZipPath -Algorithm SHA256).Hash
@@ -265,6 +273,59 @@ $releaseNativeDir = Join-Path $releaseDir "assets\zentor_native"
 Copy-RequiredTree $nativeSourceDir $stageNativeDir "Avorax Native Engine assets"
 Copy-RequiredTree $nativeSourceDir $releaseNativeDir "Avorax Native Engine assets"
 
+$stageEngineDir = Join-Path $stageDir "engine"
+$releaseEngineDir = Join-Path $releaseDir "engine"
+Copy-RequiredTree $nativeSourceDir $stageEngineDir "installed Avorax Native Engine assets"
+Copy-RequiredTree $nativeSourceDir $releaseEngineDir "installed Avorax Native Engine assets"
+New-Item -ItemType Directory -Force -Path (Join-Path $stageEngineDir "config") | Out-Null
+New-Item -ItemType Directory -Force -Path (Join-Path $releaseEngineDir "config") | Out-Null
+$engineDefaultConfig = @{
+  product = "Avorax Anti-Virus"
+  engine = "Avorax Native Engine"
+  installed_layout_version = 1
+  compatibility_engines_enabled = $false
+} | ConvertTo-Json -Depth 4
+Set-Content -LiteralPath (Join-Path $stageEngineDir "config\engine.default.json") -Value $engineDefaultConfig -Encoding UTF8
+Set-Content -LiteralPath (Join-Path $releaseEngineDir "config\engine.default.json") -Value $engineDefaultConfig -Encoding UTF8
+Copy-RequiredAlias (Join-Path $nativeSourceDir "signatures\zentor_core.zsig") (Join-Path $stageEngineDir "signatures\avorax_core.asig") "core native signature alias"
+Copy-RequiredAlias (Join-Path $nativeSourceDir "signatures\zentor_core.zsig") (Join-Path $releaseEngineDir "signatures\avorax_core.asig") "core native signature alias"
+foreach ($signatureAlias in @(
+  @("zentor_realworld_hashes.zsig", "avorax_realworld_hashes.asig"),
+  @("zentor_script_threats.zsig", "avorax_script_threats.asig"),
+  @("zentor_ransomware_indicators.zsig", "avorax_ransomware_indicators.asig"),
+  @("zentor_infostealer_indicators.zsig", "avorax_infostealer_indicators.asig"),
+  @("zentor_miner_pup_indicators.zsig", "avorax_miner_pup_indicators.asig")
+)) {
+  $source = Join-Path $nativeSourceDir "signatures\$($signatureAlias[0])"
+  if (Test-Path $source) {
+    Copy-RequiredAlias $source (Join-Path $stageEngineDir "signatures\$($signatureAlias[1])") "native signature alias"
+    Copy-RequiredAlias $source (Join-Path $releaseEngineDir "signatures\$($signatureAlias[1])") "native signature alias"
+  }
+}
+Copy-RequiredAlias (Join-Path $nativeSourceDir "rules\zentor_rules.zrule") (Join-Path $stageEngineDir "rules\avorax_core.arule") "core native rule alias"
+Copy-RequiredAlias (Join-Path $nativeSourceDir "rules\zentor_rules.zrule") (Join-Path $releaseEngineDir "rules\avorax_core.arule") "core native rule alias"
+foreach ($ruleAlias in @(
+  @("zentor_script_threats.zrule", "avorax_script_threats.arule"),
+  @("zentor_ransomware.zrule", "avorax_ransomware.arule"),
+  @("zentor_infostealers.zrule", "avorax_infostealers.arule"),
+  @("zentor_persistence.zrule", "avorax_persistence.arule"),
+  @("zentor_miners_pup.zrule", "avorax_miners_pup.arule")
+)) {
+  $source = Join-Path $nativeSourceDir "rules\$($ruleAlias[0])"
+  if (Test-Path $source) {
+    Copy-RequiredAlias $source (Join-Path $stageEngineDir "rules\$($ruleAlias[1])") "native rule alias"
+    Copy-RequiredAlias $source (Join-Path $releaseEngineDir "rules\$($ruleAlias[1])") "native rule alias"
+  }
+}
+Copy-RequiredAlias (Join-Path $nativeSourceDir "ml\zentor_native_model.zmodel") (Join-Path $stageEngineDir "ml\avorax_native_model.amodel") "native ML model alias"
+Copy-RequiredAlias (Join-Path $nativeSourceDir "ml\zentor_native_model.zmodel") (Join-Path $releaseEngineDir "ml\avorax_native_model.amodel") "native ML model alias"
+Copy-RequiredAlias (Join-Path $nativeSourceDir "ml\zentor_native_model.metadata.json") (Join-Path $stageEngineDir "ml\avorax_native_model.metadata.json") "native ML metadata alias"
+Copy-RequiredAlias (Join-Path $nativeSourceDir "ml\zentor_native_model.metadata.json") (Join-Path $releaseEngineDir "ml\avorax_native_model.metadata.json") "native ML metadata alias"
+Copy-RequiredAlias (Join-Path $nativeSourceDir "trust\zentor_known_good.ztrust") (Join-Path $stageEngineDir "trust\avorax_known_good.atrust") "known-good trust alias"
+Copy-RequiredAlias (Join-Path $nativeSourceDir "trust\zentor_known_good.ztrust") (Join-Path $releaseEngineDir "trust\avorax_known_good.atrust") "known-good trust alias"
+Copy-RequiredAlias (Join-Path $nativeSourceDir "trust\zentor_known_bad_test.ztrust") (Join-Path $stageEngineDir "trust\avorax_known_bad_test.atrust") "known-bad test trust alias"
+Copy-RequiredAlias (Join-Path $nativeSourceDir "trust\zentor_known_bad_test.ztrust") (Join-Path $releaseEngineDir "trust\avorax_known_bad_test.atrust") "known-bad test trust alias"
+
 if (Test-Path (Join-Path $yaraSourceDir "zentor_core_rules.yar")) {
   $stageYaraDir = Join-Path $stageDir "assets\yara"
   $releaseYaraDir = Join-Path $releaseDir "assets\yara"
@@ -331,6 +392,8 @@ if (Test-Path $localCoreExe) {
 }
 
 if ($coreSource) {
+  Copy-Item -LiteralPath $coreSource -Destination (Join-Path $stageDir "avorax_core_service.exe") -Force
+  Copy-Item -LiteralPath $coreSource -Destination (Join-Path $releaseDir "avorax_core_service.exe") -Force
   Copy-Item -LiteralPath $coreSource -Destination (Join-Path $stageDir "zentor_local_core.exe") -Force
   Copy-Item -LiteralPath $coreSource -Destination (Join-Path $releaseDir "zentor_local_core.exe") -Force
 } elseif ($RequireLocalCore -or -not $AllowIncompletePayload) {
@@ -340,9 +403,13 @@ if ($coreSource) {
 }
 
 if (Test-Path $guardServiceExeDefault) {
+  Copy-Item -LiteralPath $guardServiceExeDefault -Destination (Join-Path $stageDir "avorax_guard_service.exe") -Force
+  Copy-Item -LiteralPath $guardServiceExeDefault -Destination (Join-Path $releaseDir "avorax_guard_service.exe") -Force
   Copy-Item -LiteralPath $guardServiceExeDefault -Destination (Join-Path $stageDir "zentor_guard_service.exe") -Force
   Copy-Item -LiteralPath $guardServiceExeDefault -Destination (Join-Path $releaseDir "zentor_guard_service.exe") -Force
 } elseif (Test-Path $guardServiceExeWorkspace) {
+  Copy-Item -LiteralPath $guardServiceExeWorkspace -Destination (Join-Path $stageDir "avorax_guard_service.exe") -Force
+  Copy-Item -LiteralPath $guardServiceExeWorkspace -Destination (Join-Path $releaseDir "avorax_guard_service.exe") -Force
   Copy-Item -LiteralPath $guardServiceExeWorkspace -Destination (Join-Path $stageDir "zentor_guard_service.exe") -Force
   Copy-Item -LiteralPath $guardServiceExeWorkspace -Destination (Join-Path $releaseDir "zentor_guard_service.exe") -Force
 } elseif (-not $AllowIncompletePayload) {
@@ -383,9 +450,9 @@ $manifest = [ordered]@{
   generated_at = (Get-Date).ToUniversalTime().ToString("o")
   includes = [ordered]@{
     flutter_client = Test-Path (Join-Path $stageDir "Avorax.exe")
-    local_core = Test-Path (Join-Path $stageDir "zentor_local_core.exe")
-    guard_service = Test-Path (Join-Path $stageDir "zentor_guard_service.exe")
-    native_engine_assets = Test-Path (Join-Path $stageDir "assets\zentor_native")
+    local_core = Test-Path (Join-Path $stageDir "avorax_core_service.exe")
+    guard_service = Test-Path (Join-Path $stageDir "avorax_guard_service.exe")
+    native_engine_assets = Test-Path (Join-Path $stageDir "engine")
     ai_model_assets = Test-Path (Join-Path $stageDir "assets\models")
     trust_assets = Test-Path (Join-Path $stageDir "assets\trust")
     known_bad_test_assets = Test-Path (Join-Path $stageDir "assets\threats")
@@ -397,8 +464,8 @@ $manifest = [ordered]@{
     clamav_compatibility = Test-Path (Join-Path $stageDir "ClamAV")
   }
   service_install = [ordered]@{
+    core_service = "installed and started by MSI"
     guard_service = "installed and started by MSI"
-    local_core = "packaged as Flutter stdio helper; not installed as a fake Windows service"
   }
   driver_status = "driver source and validation scripts are packaged; driver is not silently installed or enabled"
 }
@@ -406,10 +473,38 @@ $manifestPath = Join-Path $stageDir "install-manifest.json"
 ($manifest | ConvertTo-Json -Depth 8) | Set-Content -LiteralPath $manifestPath -Encoding UTF8
 Copy-Item -LiteralPath $manifestPath -Destination (Join-Path $releaseDir "install-manifest.json") -Force
 
+$releaseManifestPath = Join-Path $stageEngineDir "trust\avorax_release_manifest.json"
+$releaseFiles = Get-ChildItem -LiteralPath $stageDir -Recurse -File |
+  Where-Object { $_.FullName -ne $releaseManifestPath } |
+  Sort-Object FullName |
+  ForEach-Object {
+    [ordered]@{
+      path = Get-RelativePath $stageDir $_.FullName
+      sha256 = (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+      bytes = $_.Length
+    }
+  }
+$releaseManifest = [ordered]@{
+  product = "Avorax Anti-Virus"
+  version = $Version
+  generated_at = (Get-Date).ToUniversalTime().ToString("o")
+  files = $releaseFiles
+}
+($releaseManifest | ConvertTo-Json -Depth 8) | Set-Content -LiteralPath $releaseManifestPath -Encoding UTF8
+Copy-Item -LiteralPath $releaseManifestPath -Destination (Join-Path $releaseEngineDir "trust\avorax_release_manifest.json") -Force
+
 foreach ($requiredPayload in @(
   @("Avorax.exe", "Flutter desktop client"),
+  @("avorax_core_service.exe", "Avorax Core Service"),
+  @("avorax_guard_service.exe", "Avorax Guard Service"),
   @("zentor_local_core.exe", "local core scanner helper"),
   @("zentor_guard_service.exe", "Guard Service"),
+  @("engine\config\engine.default.json", "installed engine config"),
+  @("engine\signatures\avorax_core.asig", "installed native signature pack"),
+  @("engine\rules\avorax_core.arule", "installed native rule pack"),
+  @("engine\ml\avorax_native_model.amodel", "installed native ML model"),
+  @("engine\trust\avorax_known_good.atrust", "installed trust store"),
+  @("engine\trust\avorax_release_manifest.json", "Avorax release self-trust manifest"),
   @("assets\zentor_native\signatures\zentor_core.zsig", "native signature pack"),
   @("assets\zentor_native\rules\zentor_rules.zrule", "native rule pack"),
   @("assets\zentor_native\ml\zentor_native_model.zmodel", "native ML model"),
@@ -478,13 +573,60 @@ foreach ($file in $files) {
   [void]$componentsXml.AppendLine("    <DirectoryRef Id=`"$directoryId`">")
   [void]$componentsXml.AppendLine("      <Component Id=`"$componentId`" Guid=`"*`">")
   [void]$componentsXml.AppendLine("        <File Id=`"$fileId`" Source=`"$(XmlEscape $file.FullName)`" KeyPath=`"yes`" />")
-  if ($relativePath -eq "zentor_guard_service.exe") {
-    [void]$componentsXml.AppendLine("        <ServiceInstall Id=`"ZentorGuardServiceInstall`" Type=`"ownProcess`" Vital=`"yes`" Name=`"zentor_guard_service`" DisplayName=`"Avorax Guard Service`" Description=`"User-visible Avorax post-launch real-time protection service.`" Start=`"auto`" Account=`"LocalSystem`" ErrorControl=`"normal`" Arguments=`"--service`" />")
-    [void]$componentsXml.AppendLine("        <ServiceControl Id=`"ZentorGuardServiceControl`" Name=`"zentor_guard_service`" Start=`"install`" Stop=`"both`" Remove=`"uninstall`" Wait=`"yes`" />")
+  if ($relativePath -eq "avorax_core_service.exe") {
+    [void]$componentsXml.AppendLine("        <ServiceInstall Id=`"AvoraxCoreServiceInstall`" Type=`"ownProcess`" Vital=`"yes`" Name=`"avorax_core_service`" DisplayName=`"Avorax Core Service`" Description=`"Provides local scanning, native engine loading, quarantine, scan jobs, and local protection state for Avorax Anti-Virus.`" Start=`"auto`" Account=`"LocalSystem`" ErrorControl=`"normal`" Arguments=`"--service`" />")
+    [void]$componentsXml.AppendLine("        <ServiceControl Id=`"AvoraxCoreServiceControl`" Name=`"avorax_core_service`" Start=`"install`" Stop=`"both`" Remove=`"uninstall`" Wait=`"yes`" />")
+  }
+  if ($relativePath -eq "avorax_guard_service.exe") {
+    [void]$componentsXml.AppendLine("        <ServiceInstall Id=`"AvoraxGuardServiceInstall`" Type=`"ownProcess`" Vital=`"yes`" Name=`"avorax_guard_service`" DisplayName=`"Avorax Guard Service`" Description=`"Provides real-time protection, process monitoring, driver communication, and threat response for Avorax Anti-Virus.`" Start=`"auto`" Account=`"LocalSystem`" ErrorControl=`"normal`" Arguments=`"--service`" />")
+    [void]$componentsXml.AppendLine("        <ServiceControl Id=`"AvoraxGuardServiceControl`" Name=`"avorax_guard_service`" Start=`"install`" Stop=`"both`" Remove=`"uninstall`" Wait=`"yes`" />")
   }
   [void]$componentsXml.AppendLine("      </Component>")
   [void]$componentsXml.AppendLine("    </DirectoryRef>")
   [void]$componentRefsXml.AppendLine("      <ComponentRef Id=`"$componentId`" />")
+}
+
+$installReportSource = Join-Path $distRoot "windows-msi\install_report.template.json"
+$installReport = [ordered]@{
+  version = $Version
+  install_path = "C:\Program Files\Avorax"
+  app_installed = $true
+  core_service_installed = $true
+  core_service_running = $false
+  guard_service_installed = $true
+  guard_service_running = $false
+  native_engine_assets_present = $true
+  signature_pack_count = (Get-ChildItem -LiteralPath (Join-Path $stageEngineDir "signatures") -File -Filter "*.asig").Count
+  rule_pack_count = (Get-ChildItem -LiteralPath (Join-Path $stageEngineDir "rules") -File -Filter "*.arule").Count
+  model_present = Test-Path (Join-Path $stageEngineDir "ml\avorax_native_model.amodel")
+  trust_pack_present = Test-Path (Join-Path $stageEngineDir "trust\avorax_known_good.atrust")
+  engine_self_test_result = "pending_post_install_validation"
+  errors = @()
+}
+($installReport | ConvertTo-Json -Depth 6) | Set-Content -LiteralPath $installReportSource -Encoding UTF8
+
+$programDataSubdirs = @("config", "logs", "events", "quarantine", "scans", "cache", "reports", "migration")
+$programDataXml = New-Object System.Text.StringBuilder
+$programDataRefsXml = New-Object System.Text.StringBuilder
+[void]$programDataXml.AppendLine("    <StandardDirectory Id=`"ProgramDataFolder`">")
+[void]$programDataXml.AppendLine("      <Directory Id=`"AvoraxProgramDataFolder`" Name=`"Avorax`">")
+foreach ($dir in $programDataSubdirs) {
+  [void]$programDataXml.AppendLine("        <Directory Id=`"AvoraxData_$dir`" Name=`"$dir`" />")
+}
+[void]$programDataXml.AppendLine("      </Directory>")
+[void]$programDataXml.AppendLine("    </StandardDirectory>")
+foreach ($dir in $programDataSubdirs) {
+  $componentId = "AvoraxCreateData_$dir"
+  [void]$programDataXml.AppendLine("    <DirectoryRef Id=`"AvoraxData_$dir`">")
+  [void]$programDataXml.AppendLine("      <Component Id=`"$componentId`" Guid=`"*`">")
+  [void]$programDataXml.AppendLine("        <CreateFolder />")
+  if ($dir -eq "reports") {
+    [void]$programDataXml.AppendLine("        <File Id=`"AvoraxInstallReportFile`" Source=`"$(XmlEscape $installReportSource)`" Name=`"install_report.json`" />")
+  }
+  [void]$programDataXml.AppendLine("        <RegistryValue Root=`"HKLM`" Key=`"Software\Avorax\ProgramData`" Name=`"$dir`" Type=`"integer`" Value=`"1`" KeyPath=`"yes`" />")
+  [void]$programDataXml.AppendLine("      </Component>")
+  [void]$programDataXml.AppendLine("    </DirectoryRef>")
+  [void]$programDataRefsXml.AppendLine("      <ComponentRef Id=`"$componentId`" />")
 }
 
 $upgradeCode = "35E0D125-9699-4CFB-8E93-588D0E83F517"
@@ -505,6 +647,7 @@ $wxs = @"
     <StandardDirectory Id="ProgramMenuFolder">
       <Directory Id="ApplicationProgramsFolder" Name="Avorax Anti-Virus" />
     </StandardDirectory>
+$programDataXml
 
 $directoryXml
 $componentsXml
@@ -518,6 +661,7 @@ $componentsXml
 
     <Feature Id="MainFeature" Title="Avorax Anti-Virus" Level="1">
 $componentRefsXml
+$programDataRefsXml
       <ComponentRef Id="StartMenuShortcut" />
     </Feature>
   </Package>
@@ -548,7 +692,9 @@ $bundleWxs = @"
     <BootstrapperApplication>
       <bal:WixStandardBootstrapperApplication
         Theme="hyperlinkLicense"
-        LicenseUrl="https://github.com/brentishere41848/Avorax/blob/main/docs/privacy.md" />
+        LicenseUrl="https://github.com/brentishere41848/Avorax/blob/main/docs/privacy.md"
+        LaunchTarget="C:\Program Files\Avorax\Avorax.exe"
+        LaunchWorkingFolder="C:\Program Files\Avorax" />
     </BootstrapperApplication>
     <Chain>
       <MsiPackage SourceFile="$(XmlEscape $msiPath)" Compressed="yes" />

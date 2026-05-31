@@ -320,11 +320,9 @@ class _ScanResults extends StatelessWidget {
               icon: Icons.search_outlined,
             )
           else if (report.status == ScanStatus.engineUnavailable)
-            const ZentorEmptyState(
-              title: 'Avorax Native Engine unavailable',
-              message:
-                  'Native engine assets are missing or failed to load. Avorax never reports files clean when the engine is unavailable.',
-              icon: Icons.health_and_safety_outlined,
+            _EngineUnavailableDiagnostics(
+              state: state,
+              onRetry: controller.unawaitedCheckMalwareEngine,
             )
           else if (report.threats.isEmpty)
             const ZentorEmptyState(
@@ -379,6 +377,122 @@ class _ScanResults extends StatelessWidget {
             ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+class _EngineUnavailableDiagnostics extends StatelessWidget {
+  const _EngineUnavailableDiagnostics({
+    required this.state,
+    required this.onRetry,
+  });
+
+  final ZentorState state;
+  final Future<void> Function() onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final engineDir =
+        state.engineDirectory ??
+        (Platform.isWindows
+            ? r'C:\Program Files\Avorax\engine'
+            : 'installed Avorax engine directory');
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const ZentorEmptyState(
+          title: 'Engine unavailable',
+          message:
+              'Avorax cannot start a scan because the native engine assets or Core Service are missing. Avorax never reports files clean when the engine is unavailable.',
+          icon: Icons.health_and_safety_outlined,
+        ),
+        const SizedBox(height: 14),
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: [
+            _DiagnosticChip(
+              label: 'Core Service',
+              value: state.malwareEngineStatus == MalwareEngineStatus.available
+                  ? 'Running'
+                  : 'Missing or stopped',
+            ),
+            _DiagnosticChip(label: 'Engine directory', value: engineDir),
+            _DiagnosticChip(
+              label: 'Signature packs',
+              value: state.nativeSignatureCount > 0 ? 'Found' : 'Missing',
+            ),
+            _DiagnosticChip(
+              label: 'Rule packs',
+              value: state.nativeRuleCount > 0 ? 'Found' : 'Missing',
+            ),
+            _DiagnosticChip(
+              label: 'ML model',
+              value: state.nativeMlStatus == 'loaded' ? 'Found' : 'Missing',
+            ),
+            _DiagnosticChip(
+              label: 'ProgramData',
+              value: state.programDataDirectory ?? 'Unknown',
+            ),
+            if (state.lastEngineError != null)
+              _DiagnosticChip(label: 'Last error', value: state.lastEngineError!),
+          ],
+        ),
+        const SizedBox(height: 14),
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: [
+            ZentorButton(
+              label: 'Retry',
+              icon: Icons.refresh_outlined,
+              secondary: true,
+              onPressed: () => onRetry(),
+            ),
+            const ZentorButton(
+              label: 'Start Core Service',
+              icon: Icons.play_arrow_outlined,
+              secondary: true,
+              onPressed: null,
+            ),
+            const ZentorButton(
+              label: 'Open install report',
+              icon: Icons.description_outlined,
+              secondary: true,
+              onPressed: null,
+            ),
+            const ZentorButton(
+              label: 'Repair installation',
+              icon: Icons.build_outlined,
+              secondary: true,
+              onPressed: null,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _DiagnosticChip extends StatelessWidget {
+  const _DiagnosticChip({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+      decoration: BoxDecoration(
+        border: Border.all(color: ZentorColors.border),
+        borderRadius: BorderRadius.circular(8),
+        color: ZentorColors.elevatedSurface,
+      ),
+      child: Text(
+        '$label: $value',
+        style: const TextStyle(color: ZentorColors.textSecondary),
       ),
     );
   }

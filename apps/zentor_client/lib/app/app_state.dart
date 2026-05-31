@@ -86,6 +86,10 @@ class ZentorState {
     this.compatibilityEnginesEnabled = false,
     this.guardStatus = 'off',
     this.driverStatus = 'missing',
+    this.installPath,
+    this.engineDirectory,
+    this.programDataDirectory,
+    this.lastEngineError,
     this.scanStatus = ScanStatus.idle,
     this.scanActionMode = ScanActionMode.detectOnly,
     this.scanProgress,
@@ -123,6 +127,10 @@ class ZentorState {
   final bool compatibilityEnginesEnabled;
   final String guardStatus;
   final String driverStatus;
+  final String? installPath;
+  final String? engineDirectory;
+  final String? programDataDirectory;
+  final String? lastEngineError;
   final ScanStatus scanStatus;
   final ScanActionMode scanActionMode;
   final ScanProgress? scanProgress;
@@ -161,6 +169,10 @@ class ZentorState {
     bool? compatibilityEnginesEnabled,
     String? guardStatus,
     String? driverStatus,
+    String? installPath,
+    String? engineDirectory,
+    String? programDataDirectory,
+    String? lastEngineError,
     ScanStatus? scanStatus,
     ScanActionMode? scanActionMode,
     ScanProgress? scanProgress,
@@ -210,6 +222,10 @@ class ZentorState {
           compatibilityEnginesEnabled ?? this.compatibilityEnginesEnabled,
       guardStatus: guardStatus ?? this.guardStatus,
       driverStatus: driverStatus ?? this.driverStatus,
+      installPath: installPath ?? this.installPath,
+      engineDirectory: engineDirectory ?? this.engineDirectory,
+      programDataDirectory: programDataDirectory ?? this.programDataDirectory,
+      lastEngineError: lastEngineError ?? this.lastEngineError,
       scanStatus: scanStatus ?? this.scanStatus,
       scanActionMode: scanActionMode ?? this.scanActionMode,
       scanProgress: clearScanProgress
@@ -455,6 +471,10 @@ class ZentorController extends StateNotifier<ZentorState> {
       compatibilityEnginesEnabled: health.compatibilityEnginesEnabled,
       guardStatus: health.guardStatus,
       driverStatus: health.driverStatus,
+      installPath: health.installPath,
+      engineDirectory: health.engineDirectory,
+      programDataDirectory: health.programDataDirectory,
+      lastEngineError: health.lastError,
     );
   }
 

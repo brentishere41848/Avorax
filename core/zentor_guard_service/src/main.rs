@@ -24,7 +24,7 @@ mod known_good_cache;
 mod preexecution_policy;
 mod self_test;
 
-const SERVICE_NAME: &str = "zentor_guard_service";
+const SERVICE_NAME: &str = "avorax_guard_service";
 const QUARANTINE_EXTENSION: &str = "avoraxq";
 
 #[derive(Debug, Deserialize)]

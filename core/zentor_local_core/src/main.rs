@@ -1,5 +1,8 @@
+use std::ffi::OsString;
 use std::io::{self, BufRead};
 use std::path::{Path, PathBuf};
+use std::sync::mpsc;
+use std::time::Duration;
 use std::time::Instant;
 
 use anyhow::Result;
@@ -39,8 +42,15 @@ use watcher::WatcherState;
 
 const FULL_SCAN_MAX_SECONDS: u64 = 3 * 60 * 60;
 const MAX_SIGNATURE_SCAN_BYTES: u64 = 512 * 1024 * 1024;
+const SERVICE_NAME: &str = "avorax_core_service";
 
 fn main() -> Result<()> {
+    let mut args = std::env::args().skip(1);
+    if let Some(arg) = args.next() {
+        if arg == "--service" {
+            return run_service();
+        }
+    }
     if let Ok(report) = migration::migrate_from_legacy_brand() {
         let _ = migration::write_migration_event_log(&migration::zentor_data_dir(), &report);
     }
@@ -54,6 +64,80 @@ fn main() -> Result<()> {
         let response = handle(command);
         println!("{}", serde_json::to_string(&response)?);
     }
+    Ok(())
+}
+
+#[cfg(windows)]
+windows_service::define_windows_service!(ffi_service_main, windows_service_main);
+
+#[cfg(windows)]
+fn run_service() -> Result<()> {
+    windows_service::service_dispatcher::start(SERVICE_NAME, ffi_service_main)?;
+    Ok(())
+}
+
+#[cfg(not(windows))]
+fn run_service() -> Result<()> {
+    loop {
+        std::thread::sleep(Duration::from_secs(60));
+    }
+}
+
+#[cfg(windows)]
+fn windows_service_main(_arguments: Vec<OsString>) {
+    if let Err(error) = run_windows_service_loop() {
+        let _ = std::fs::create_dir_all(avorax_program_data_dir().join("logs"));
+        let _ = std::fs::write(
+            avorax_program_data_dir().join("logs").join("core_service_error.log"),
+            format!("{error:#}"),
+        );
+    }
+}
+
+#[cfg(windows)]
+fn run_windows_service_loop() -> Result<()> {
+    use windows_service::service::{
+        ServiceControl, ServiceControlAccept, ServiceExitCode, ServiceState, ServiceStatus,
+        ServiceType,
+    };
+    use windows_service::service_control_handler::{
+        self, ServiceControlHandlerResult,
+    };
+
+    let (shutdown_tx, shutdown_rx) = mpsc::channel();
+    let status_handle = service_control_handler::register(SERVICE_NAME, move |control_event| {
+        match control_event {
+            ServiceControl::Stop | ServiceControl::Shutdown => {
+                let _ = shutdown_tx.send(());
+                ServiceControlHandlerResult::NoError
+            }
+            ServiceControl::Interrogate => ServiceControlHandlerResult::NoError,
+            _ => ServiceControlHandlerResult::NotImplemented,
+        }
+    })?;
+
+    status_handle.set_service_status(ServiceStatus {
+        service_type: ServiceType::OWN_PROCESS,
+        current_state: ServiceState::Running,
+        controls_accepted: ServiceControlAccept::STOP | ServiceControlAccept::SHUTDOWN,
+        exit_code: ServiceExitCode::Win32(0),
+        checkpoint: 0,
+        wait_hint: Duration::from_secs(0),
+        process_id: None,
+    })?;
+
+    let _ = native_engine();
+    let _ = shutdown_rx.recv();
+
+    status_handle.set_service_status(ServiceStatus {
+        service_type: ServiceType::OWN_PROCESS,
+        current_state: ServiceState::Stopped,
+        controls_accepted: ServiceControlAccept::empty(),
+        exit_code: ServiceExitCode::Win32(0),
+        checkpoint: 0,
+        wait_hint: Duration::from_secs(0),
+        process_id: None,
+    })?;
     Ok(())
 }
 
@@ -195,6 +279,8 @@ fn handle(command: CoreCommand) -> serde_json::Value {
 }
 
 fn health_response() -> serde_json::Value {
+    let asset_root = native_asset_root();
+    let engine_dir = asset_root.join("engine");
     match native_engine() {
         Ok(mut engine) => {
             let status = engine.status();
@@ -231,6 +317,9 @@ fn health_response() -> serde_json::Value {
                     "reputation_status": ReputationProvider.status(),
                     "ipc": "stdio",
                     "network_exposed": false,
+                    "install_path": asset_root,
+                    "engine_directory": engine_dir,
+                    "program_data_dir": avorax_program_data_dir(),
                 }),
             })
         }
@@ -256,6 +345,10 @@ fn health_response() -> serde_json::Value {
                 "reputation_status": ReputationProvider.status(),
                 "ipc": "stdio",
                 "network_exposed": false,
+                "install_path": asset_root,
+                "engine_directory": engine_dir,
+                "program_data_dir": avorax_program_data_dir(),
+                "last_error": error.to_string(),
             }),
         }),
     }
@@ -589,10 +682,10 @@ fn native_engine() -> anyhow::Result<ZentorNativeEngine> {
 }
 
 fn native_asset_root() -> PathBuf {
-    let current = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
-    for candidate in current.ancestors() {
-        if candidate.join("assets").join("zentor_native").exists() {
-            return candidate.to_path_buf();
+    if let Ok(path) = std::env::var("AVORAX_ENGINE_DIR") {
+        let engine = PathBuf::from(path);
+        if engine.is_dir() {
+            return engine.parent().unwrap_or(engine.as_path()).to_path_buf();
         }
     }
     if let Ok(exe) = std::env::current_exe() {
@@ -603,13 +696,50 @@ fn native_asset_root() -> PathBuf {
                 parent.join("..").join(".."),
                 parent.join("..").join("..").join(".."),
             ] {
+                if candidate.join("engine").exists() {
+                    return candidate;
+                }
                 if candidate.join("assets").join("zentor_native").exists() {
                     return candidate;
                 }
             }
         }
     }
+    #[cfg(windows)]
+    {
+        let installed = PathBuf::from(r"C:\Program Files\Avorax");
+        if installed.join("engine").exists() {
+            return installed;
+        }
+    }
+    let current = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+    for candidate in current.ancestors() {
+        if candidate.join("engine").exists() {
+            return candidate.to_path_buf();
+        }
+        if candidate.join("assets").join("zentor_native").exists() {
+            return candidate.to_path_buf();
+        }
+    }
     current
+}
+
+fn avorax_program_data_dir() -> PathBuf {
+    if let Ok(path) = std::env::var("AVORAX_DATA_DIR") {
+        return PathBuf::from(path);
+    }
+    #[cfg(windows)]
+    {
+        if let Ok(program_data) =
+            std::env::var("ProgramData").or_else(|_| std::env::var("PROGRAMDATA"))
+        {
+            return PathBuf::from(program_data).join("Avorax");
+        }
+    }
+    if let Ok(home) = std::env::var("HOME") {
+        return PathBuf::from(home).join(".local/share/avorax");
+    }
+    PathBuf::from(".avorax")
 }
 
 fn should_surface_native_verdict(verdict: AneVerdict) -> bool {

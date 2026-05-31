@@ -43,6 +43,10 @@ class LocalCoreClient {
           response['compatibility_engines_enabled'] as bool? ?? false,
       guardStatus: response['guard_status'] as String? ?? 'off',
       driverStatus: response['driver_status'] as String? ?? 'missing',
+      installPath: response['install_path']?.toString(),
+      engineDirectory: response['engine_directory']?.toString(),
+      programDataDirectory: response['program_data_dir']?.toString(),
+      lastError: response['last_error']?.toString(),
     );
   }
 
@@ -298,20 +302,27 @@ class LocalCoreClient {
   }
 
   String? _localCoreExecutable() {
-    final override = Platform.environment['ZENTOR_LOCAL_CORE'];
+    final override =
+        Platform.environment['AVORAX_CORE_SERVICE'] ??
+        Platform.environment['ZENTOR_LOCAL_CORE'];
     if (override != null &&
         override.isNotEmpty &&
         File(override).existsSync()) {
       return override;
     }
-    final name = Platform.isWindows
+    final primaryName = Platform.isWindows
+        ? 'avorax_core_service.exe'
+        : 'avorax_core_service';
+    final legacyName = Platform.isWindows
         ? 'zentor_local_core.exe'
         : 'zentor_local_core';
     final candidates = [
-      '${File(Platform.resolvedExecutable).parent.path}${Platform.pathSeparator}$name',
-      '${Directory.current.path}${Platform.pathSeparator}$name',
-      'core${Platform.pathSeparator}zentor_local_core${Platform.pathSeparator}target${Platform.pathSeparator}release${Platform.pathSeparator}$name',
-      '..${Platform.pathSeparator}..${Platform.pathSeparator}core${Platform.pathSeparator}zentor_local_core${Platform.pathSeparator}target${Platform.pathSeparator}release${Platform.pathSeparator}$name',
+      '${File(Platform.resolvedExecutable).parent.path}${Platform.pathSeparator}$primaryName',
+      '${File(Platform.resolvedExecutable).parent.path}${Platform.pathSeparator}$legacyName',
+      '${Directory.current.path}${Platform.pathSeparator}$primaryName',
+      '${Directory.current.path}${Platform.pathSeparator}$legacyName',
+      'core${Platform.pathSeparator}zentor_local_core${Platform.pathSeparator}target${Platform.pathSeparator}release${Platform.pathSeparator}$legacyName',
+      '..${Platform.pathSeparator}..${Platform.pathSeparator}core${Platform.pathSeparator}zentor_local_core${Platform.pathSeparator}target${Platform.pathSeparator}release${Platform.pathSeparator}$legacyName',
     ];
     for (final candidate in candidates) {
       final file = File(candidate);
@@ -321,20 +332,27 @@ class LocalCoreClient {
   }
 
   String? _guardServiceExecutable() {
-    final override = Platform.environment['ZENTOR_GUARD_SERVICE'];
+    final override =
+        Platform.environment['AVORAX_GUARD_SERVICE'] ??
+        Platform.environment['ZENTOR_GUARD_SERVICE'];
     if (override != null &&
         override.isNotEmpty &&
         File(override).existsSync()) {
       return override;
     }
-    final name = Platform.isWindows
+    final primaryName = Platform.isWindows
+        ? 'avorax_guard_service.exe'
+        : 'avorax_guard_service';
+    final legacyName = Platform.isWindows
         ? 'zentor_guard_service.exe'
         : 'zentor_guard_service';
     final candidates = [
-      '${File(Platform.resolvedExecutable).parent.path}${Platform.pathSeparator}$name',
-      '${Directory.current.path}${Platform.pathSeparator}$name',
-      'core${Platform.pathSeparator}zentor_guard_service${Platform.pathSeparator}target${Platform.pathSeparator}release${Platform.pathSeparator}$name',
-      '..${Platform.pathSeparator}..${Platform.pathSeparator}core${Platform.pathSeparator}zentor_guard_service${Platform.pathSeparator}target${Platform.pathSeparator}release${Platform.pathSeparator}$name',
+      '${File(Platform.resolvedExecutable).parent.path}${Platform.pathSeparator}$primaryName',
+      '${File(Platform.resolvedExecutable).parent.path}${Platform.pathSeparator}$legacyName',
+      '${Directory.current.path}${Platform.pathSeparator}$primaryName',
+      '${Directory.current.path}${Platform.pathSeparator}$legacyName',
+      'core${Platform.pathSeparator}zentor_guard_service${Platform.pathSeparator}target${Platform.pathSeparator}release${Platform.pathSeparator}$legacyName',
+      '..${Platform.pathSeparator}..${Platform.pathSeparator}core${Platform.pathSeparator}zentor_guard_service${Platform.pathSeparator}target${Platform.pathSeparator}release${Platform.pathSeparator}$legacyName',
     ];
     for (final candidate in candidates) {
       final file = File(candidate);
@@ -570,6 +588,10 @@ class LocalCoreHealth {
     this.compatibilityEnginesEnabled = false,
     this.guardStatus = 'off',
     this.driverStatus = 'missing',
+    this.installPath,
+    this.engineDirectory,
+    this.programDataDirectory,
+    this.lastError,
   });
 
   final MalwareEngineStatus malwareEngineStatus;
@@ -584,4 +606,8 @@ class LocalCoreHealth {
   final bool compatibilityEnginesEnabled;
   final String guardStatus;
   final String driverStatus;
+  final String? installPath;
+  final String? engineDirectory;
+  final String? programDataDirectory;
+  final String? lastError;
 }

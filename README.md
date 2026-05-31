@@ -225,24 +225,30 @@ For normal testing, installing the MSI or EXE is easier than running the app fro
 
 ```powershell
 cd C:\Users\Brent\CodexProjects\Avorax
-powershell -ExecutionPolicy Bypass -File installer\windows\build-msi.ps1 -Version 0.2.8 -RequireLocalCore -AllowDevelopmentModel
+powershell -ExecutionPolicy Bypass -File installer\windows\build-msi.ps1 -Version 0.2.9 -RequireLocalCore -AllowDevelopmentModel
 ```
 
 The installers are written to:
 
 ```text
-dist\Avorax-AntiVirus-0.2.8-x64.msi
-dist\Avorax-AntiVirus-0.2.8-x64-setup.exe
+dist\Avorax-AntiVirus-0.2.9-x64.msi
+dist\Avorax-AntiVirus-0.2.9-x64-setup.exe
 ```
 
 Install either file:
 
-- `Avorax-AntiVirus-0.2.8-x64-setup.exe` is the easiest option for most users.
-- `Avorax-AntiVirus-0.2.8-x64.msi` is better for clean installer testing and enterprise-style deployment checks.
+- `Avorax-AntiVirus-0.2.9-x64-setup.exe` is the easiest option for most users.
+- `Avorax-AntiVirus-0.2.9-x64.msi` is better for clean installer testing and enterprise-style deployment checks.
 
-The MSI/EXE installs the app, local core helper, Avorax Native Engine assets, app assets, Guard Service, safe validation assets, release gates, driver tooling, safe simulator tools, threat-intel tools, docs, and `install-manifest.json`. On Windows it also registers `zentor_guard_service` as the visible Avorax Guard Service so confirmed threats can be monitored and stopped after launch when protection is enabled. It does not replace the Windows driver-development VM workflow. True pre-execution blocking still requires WDK or EWDK, administrator rights, test-signing in a disposable VM, the minifilter/process-guard driver path, and the driver validation scripts.
+The MSI/EXE installs the app, Avorax Core Service, Avorax Guard Service, Avorax Native Engine assets under `C:\Program Files\Avorax\engine`, app assets, safe validation assets, release gates, driver tooling, safe simulator tools, threat-intel tools, docs, `install-manifest.json`, and ProgramData runtime folders. On Windows it registers `avorax_core_service` and `avorax_guard_service` as visible Windows services so local scanning and post-launch confirmed-threat monitoring can run without the UI. It does not replace the Windows driver-development VM workflow. True pre-execution blocking still requires WDK or EWDK, administrator rights, test-signing in a disposable VM, the minifilter/process-guard driver path, and the driver validation scripts.
 
-The installer stages the Flutter Windows release app, `zentor_local_core.exe`, `zentor_guard_service.exe`, Avorax Native Engine assets, app assets, bundled Flutter/plugin DLLs, Visual C++ runtime DLLs available on the build machine, local privacy/security docs, and validation tooling. Compatibility engines are not required for normal scanning. Avorax does not install hidden services or stealth persistence; the Guard Service is user-visible and removable through normal Windows service/app uninstall paths.
+The installer stages the Flutter Windows release app, `avorax_core_service.exe`, `avorax_guard_service.exe`, legacy-compatible helper names, Avorax Native Engine assets, app assets, bundled Flutter/plugin DLLs, Visual C++ runtime DLLs available on the build machine, local privacy/security docs, validation tooling, and `engine\trust\avorax_release_manifest.json` hashes for packaged Avorax files. Compatibility engines are not required for normal scanning. Avorax does not install hidden services or stealth persistence; the services are user-visible and removable through normal Windows service/app uninstall paths.
+
+After installing, validate the deployed layout and service state with:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\windows\avorax-installed-smoke-test.ps1
+```
 
 The MSI and EXE installer builds fail if the local core, Guard Service, Avorax Native Engine packs, model assets, trust/test assets, docs, or validation tooling are missing. They also fail when metadata says `production_ready=false` unless you pass `-AllowDevelopmentModel` for an explicitly non-production build. The EXE installer is a WiX Burn bootstrapper that contains and runs the MSI, so it installs the same complete payload.
 
