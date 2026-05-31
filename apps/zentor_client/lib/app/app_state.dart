@@ -609,13 +609,19 @@ class ZentorController extends StateNotifier<ZentorState> {
         state.nativeEngineStatus == 'ready' ||
         state.config.protectionMode == ProtectionMode.lockdown;
     if (hasLocalPrevention) {
+      final modeConfigured = await _localCoreClient.configureGuardMode(
+        state.config.protectionMode,
+      );
       await logEvent('protection_started', 'Protection started');
       state = state.copyWith(
         protectionStatus: state.driverStatus == 'running'
             ? ProtectionStatus.protected
             : ProtectionStatus.partiallyProtected,
         loading: false,
-        clearError: true,
+        clearError: modeConfigured,
+        errorMessage: modeConfigured
+            ? null
+            : 'Protection started, but Avorax could not write the shared Guard mode config. Existing service mode may remain active until the service is restarted or configured by installer.',
       );
       return;
     }
@@ -638,24 +644,39 @@ class ZentorController extends StateNotifier<ZentorState> {
     if (protectionRun != null) {
       await _apiClient.endProtectionRun(state.config, protectionRun);
     }
+    final modeConfigured = await _localCoreClient.configureGuardMode(
+      ProtectionMode.off,
+    );
     await logEvent('protection_stopped', 'Protection stopped');
     state = state.copyWith(
       clearProtectionRun: true,
       protectionStatus: ProtectionStatus.idle,
       heartbeat: const HeartbeatStatus(),
-      clearError: true,
+      clearError: modeConfigured,
+      errorMessage: modeConfigured
+          ? null
+          : 'Protection was stopped in the UI, but Avorax could not write the shared Guard disabled config. Stop the service from Windows Services if it is still running.',
     );
   }
 
   Future<void> setProtectionMode(ProtectionMode mode) async {
     final updated = state.config.copyWith(protectionMode: mode);
     await _configRepository.save(updated);
+    final modeConfigured = await _localCoreClient.configureGuardMode(mode);
     await logEvent(
       'protection_mode_changed',
       'Protection profile changed',
-      details: mode.label,
+      details: modeConfigured
+          ? mode.label
+          : '${mode.label}; shared Guard mode config unavailable',
     );
-    state = state.copyWith(config: updated, clearError: true);
+    state = state.copyWith(
+      config: updated,
+      clearError: modeConfigured,
+      errorMessage: modeConfigured
+          ? null
+          : 'Saved UI profile, but Avorax could not write the shared Guard mode config. The running service may keep its previous mode.',
+    );
   }
 
   Future<void> runProtectionSelfTest() async {

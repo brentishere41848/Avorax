@@ -15,6 +15,7 @@ pub struct CoreCommand {
     pub user_label: Option<String>,
     pub user_note: Option<String>,
     pub previous_verdict: Option<String>,
+    pub protection_mode: Option<String>,
 }
 
 #[derive(Debug, Serialize)]

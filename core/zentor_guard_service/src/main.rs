@@ -551,7 +551,60 @@ fn configured_guard_mode() -> preexecution_policy::DriverProtectionMode {
         .or_else(|_| std::env::var("ZENTOR_GUARD_MODE"))
         .ok()
         .and_then(|value| parse_guard_mode(&value))
+        .or_else(read_guard_mode_config)
         .unwrap_or_default()
+}
+
+fn read_guard_mode_config() -> Option<preexecution_policy::DriverProtectionMode> {
+    let path = guard_mode_config_path();
+    let text = fs::read_to_string(path).ok()?;
+    if let Ok(value) = serde_json::from_str::<serde_json::Value>(&text) {
+        if let Some(mode) = value.get("mode").and_then(|mode| mode.as_str()) {
+            return parse_guard_mode(mode);
+        }
+    }
+    parse_guard_mode(&text)
+}
+
+fn guard_mode_config_path() -> PathBuf {
+    if let Ok(path) = std::env::var("AVORAX_GUARD_MODE_CONFIG") {
+        return PathBuf::from(path);
+    }
+    if let Ok(path) = std::env::var("ZENTOR_GUARD_MODE_CONFIG") {
+        return PathBuf::from(path);
+    }
+    guard_config_base().join("guard_mode.json")
+}
+
+fn guard_config_base() -> PathBuf {
+    if let Ok(path) = std::env::var("AVORAX_CONFIG_DIR") {
+        return PathBuf::from(path);
+    }
+    if let Ok(path) = std::env::var("AVORAX_DATA_DIR") {
+        return PathBuf::from(path).join("config");
+    }
+    #[cfg(windows)]
+    {
+        if let Ok(program_data) =
+            std::env::var("ProgramData").or_else(|_| std::env::var("PROGRAMDATA"))
+        {
+            return PathBuf::from(program_data).join("Avorax").join("Config");
+        }
+    }
+    #[cfg(target_os = "macos")]
+    {
+        if let Ok(home) = std::env::var("HOME") {
+            return PathBuf::from(home)
+                .join("Library")
+                .join("Application Support")
+                .join("Avorax")
+                .join("Config");
+        }
+    }
+    if let Ok(home) = std::env::var("HOME") {
+        return PathBuf::from(home).join(".local/share/avorax/config");
+    }
+    PathBuf::from(".avorax/config")
 }
 
 fn parse_guard_mode(raw: &str) -> Option<preexecution_policy::DriverProtectionMode> {
@@ -1245,6 +1298,7 @@ mod tests {
     #[test]
     fn configured_guard_mode_uses_avorax_environment() {
         let _lock = env_lock();
+        std::env::remove_var("AVORAX_GUARD_MODE_CONFIG");
         std::env::remove_var("AVORAX_PROTECTION_MODE");
         std::env::remove_var("ZENTOR_GUARD_MODE");
         std::env::set_var("AVORAX_GUARD_MODE", "monitorOnly");
@@ -1255,7 +1309,27 @@ mod tests {
         );
 
         std::env::remove_var("AVORAX_GUARD_MODE");
+        std::env::remove_var("AVORAX_GUARD_MODE_CONFIG");
         std::env::remove_var("AVORAX_PROTECTION_MODE");
+    }
+
+    #[test]
+    fn configured_guard_mode_reads_shared_config_file() {
+        let _lock = env_lock();
+        let dir = tempdir().unwrap();
+        let config = dir.path().join("guard_mode.json");
+        std::env::remove_var("AVORAX_GUARD_MODE");
+        std::env::remove_var("AVORAX_PROTECTION_MODE");
+        std::env::remove_var("ZENTOR_GUARD_MODE");
+        std::env::set_var("AVORAX_GUARD_MODE_CONFIG", &config);
+        fs::write(&config, r#"{"mode":"disabled"}"#).unwrap();
+
+        assert_eq!(
+            configured_guard_mode(),
+            preexecution_policy::DriverProtectionMode::Disabled
+        );
+
+        std::env::remove_var("AVORAX_GUARD_MODE_CONFIG");
     }
 
     #[test]

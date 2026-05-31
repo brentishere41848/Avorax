@@ -47,3 +47,5 @@ powershell -ExecutionPolicy Bypass -File installer\windows\build-msi.ps1 -Versio
 The Guard Service is not a kernel driver and does not provide true pre-execution blocking by itself. It monitors process starts and can stop/quarantine confirmed threats after launch when the user enables that protection mode. High-confidence non-confirmed detections remain review-only. True pre-execution blocking still requires the Windows driver validation workflow.
 
 Set `AVORAX_GUARD_MODE` or `AVORAX_PROTECTION_MODE` to `blockConfirmedThreats`, `monitorOnly`, `disabled`, `balanced`, `lockdown`, or `developerMode` before starting the service to control post-launch behavior. If no mode is configured, the service defaults to blocking confirmed threats only.
+
+The Flutter app also asks local core to write the shared Guard mode file when the protection profile changes. Environment variables take precedence over the file so managed deployments can enforce a mode.

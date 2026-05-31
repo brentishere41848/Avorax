@@ -214,6 +214,14 @@ class LocalCoreClient {
     }
   }
 
+  Future<bool> configureGuardMode(ProtectionMode mode) async {
+    final response = await _call({
+      'command': 'configure_guard_mode',
+      'protection_mode': mode.name,
+    });
+    return response?['ok'] == true;
+  }
+
   Future<void> cancelActiveScan() async {
     _activeScanProcess?.kill();
   }

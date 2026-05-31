@@ -177,6 +177,15 @@ fn handle(command: CoreCommand) -> serde_json::Value {
                 Err(error) => json!({"ok": false, "error": error.to_string()}),
             }
         }
+        "configure_guard_mode" => {
+            let Some(mode) = command.protection_mode else {
+                return json!({"ok": false, "error": "protection_mode is required"});
+            };
+            match write_guard_mode_config(&mode) {
+                Ok(path) => json!({"ok": true, "guard_mode_config_path": path}),
+                Err(error) => json!({"ok": false, "error": error.to_string()}),
+            }
+        }
         "remove_allowlist_entry" => json!({
             "ok": false,
             "error": "command is defined for v1 IPC but not enabled without explicit UI support"
@@ -965,6 +974,81 @@ fn sha256_for_file(path: &Path) -> anyhow::Result<String> {
     Ok(format!("{:x}", hasher.finalize()))
 }
 
+fn write_guard_mode_config(raw_mode: &str) -> anyhow::Result<String> {
+    let mode = normalize_guard_mode(raw_mode)
+        .ok_or_else(|| anyhow::anyhow!("unsupported guard mode: {raw_mode}"))?;
+    let path = guard_mode_config_path();
+    if let Some(parent) = path.parent() {
+        std::fs::create_dir_all(parent)?;
+    }
+    std::fs::write(
+        &path,
+        serde_json::to_string_pretty(&json!({
+            "mode": mode,
+            "updated_at": Utc::now(),
+            "source": "avorax_local_core"
+        }))?,
+    )?;
+    Ok(path.display().to_string())
+}
+
+fn normalize_guard_mode(raw: &str) -> Option<&'static str> {
+    let normalized = raw
+        .trim()
+        .replace(['-', '_', ' '], "")
+        .to_ascii_lowercase();
+    match normalized.as_str() {
+        "off" | "disabled" => Some("disabled"),
+        "monitoronly" | "observeonly" => Some("monitorOnly"),
+        "balanced" => Some("balanced"),
+        "blockconfirmedthreats" | "blockconfirmed" => Some("blockConfirmedThreats"),
+        "lockdown" => Some("lockdown"),
+        "developermode" | "developer" => Some("developerMode"),
+        _ => None,
+    }
+}
+
+fn guard_mode_config_path() -> PathBuf {
+    if let Ok(path) = std::env::var("AVORAX_GUARD_MODE_CONFIG") {
+        return PathBuf::from(path);
+    }
+    if let Ok(path) = std::env::var("ZENTOR_GUARD_MODE_CONFIG") {
+        return PathBuf::from(path);
+    }
+    guard_config_base().join("guard_mode.json")
+}
+
+fn guard_config_base() -> PathBuf {
+    if let Ok(path) = std::env::var("AVORAX_CONFIG_DIR") {
+        return PathBuf::from(path);
+    }
+    if let Ok(path) = std::env::var("AVORAX_DATA_DIR") {
+        return PathBuf::from(path).join("config");
+    }
+    #[cfg(windows)]
+    {
+        if let Ok(program_data) =
+            std::env::var("ProgramData").or_else(|_| std::env::var("PROGRAMDATA"))
+        {
+            return PathBuf::from(program_data).join("Avorax").join("Config");
+        }
+    }
+    #[cfg(target_os = "macos")]
+    {
+        if let Ok(home) = std::env::var("HOME") {
+            return PathBuf::from(home)
+                .join("Library")
+                .join("Application Support")
+                .join("Avorax")
+                .join("Config");
+        }
+    }
+    if let Ok(home) = std::env::var("HOME") {
+        return PathBuf::from(home).join(".local/share/avorax/config");
+    }
+    PathBuf::from(".avorax/config")
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -977,7 +1061,13 @@ mod tests {
         ApplicationTrustLevel, ProtectionMode,
     };
     use std::fs;
+    use std::sync::{Mutex, OnceLock};
     use tempfile::tempdir;
+
+    fn env_lock() -> std::sync::MutexGuard<'static, ()> {
+        static LOCK: OnceLock<Mutex<()>> = OnceLock::new();
+        LOCK.get_or_init(|| Mutex::new(())).lock().unwrap()
+    }
 
     #[test]
     fn detect_only_mode_hides_weak_suspicious_filename_observation() {
@@ -1101,6 +1191,26 @@ mod tests {
             .iter()
             .all(|threat| threat.confidence != ThreatConfidence::Confirmed));
         assert_eq!(report.quarantined_files, 0);
+    }
+
+    #[test]
+    fn guard_mode_config_writer_normalizes_user_mode() {
+        let _lock = env_lock();
+        let dir = tempdir().unwrap();
+        let config = dir.path().join("guard_mode.json");
+        std::env::set_var("AVORAX_GUARD_MODE_CONFIG", &config);
+
+        let path = write_guard_mode_config("Block Confirmed Threats").unwrap();
+        let raw = fs::read_to_string(path).unwrap();
+        assert!(raw.contains("\"mode\": \"blockConfirmedThreats\""));
+
+        std::env::remove_var("AVORAX_GUARD_MODE_CONFIG");
+    }
+
+    #[test]
+    fn guard_mode_config_rejects_unknown_mode() {
+        let _lock = env_lock();
+        assert!(write_guard_mode_config("block everything").is_err());
     }
 
     #[test]
