@@ -137,6 +137,8 @@ impl Default for DriverVerdictConfig {
             trusted_publishers: [
                 "microsoft windows".to_string(),
                 "microsoft corporation".to_string(),
+                "avorax".to_string(),
+                "avorax security".to_string(),
                 "zentor".to_string(),
                 "zentor security".to_string(),
             ]
@@ -565,14 +567,29 @@ fn should_fail_open_path(path: &Path) -> bool {
     let lower = path.display().to_string().to_lowercase();
     lower.contains("\\windows\\system32\\")
         || lower.contains("\\windows\\syswow64\\")
+        || lower.contains("\\avorax\\quarantine\\")
+        || lower.contains("\\avorax\\guardquarantine\\")
+        || lower.contains("\\avorax-guard-quarantine\\")
+        || lower.contains("\\avorax-native-quarantine\\")
+        || lower.ends_with("\\avorax_local_core.exe")
+        || lower.ends_with("\\avorax_guard_service.exe")
         || lower.contains("\\zentor\\quarantine\\")
         || lower.contains("\\zentor\\guardquarantine\\")
+        || lower.contains("\\zentor-guard-quarantine\\")
+        || lower.contains("\\zentor-native-quarantine\\")
         || lower.ends_with("\\zentor_local_core.exe")
         || lower.ends_with("\\zentor_guard_service.exe")
         || lower.starts_with("/usr/")
         || lower.starts_with("/bin/")
         || lower.starts_with("/sbin/")
+        || lower.contains("/avorax/quarantine/")
+        || lower.contains("/avorax/guardquarantine/")
+        || lower.contains("/avorax-guard-quarantine/")
+        || lower.contains("/avorax-native-quarantine/")
         || lower.contains("/zentor/quarantine/")
+        || lower.contains("/zentor/guardquarantine/")
+        || lower.contains("/zentor-guard-quarantine/")
+        || lower.contains("/zentor-native-quarantine/")
 }
 
 #[cfg(test)]
@@ -707,6 +724,52 @@ mod tests {
         let verdict = evaluate_driver_request(&request, &config).unwrap();
         assert_eq!(verdict.action, DriverVerdictAction::Allow);
         assert_eq!(verdict.trust_level, ApplicationTrustLevel::TrustedPublisher);
+    }
+
+    #[test]
+    fn driver_request_avorax_publisher_allows_in_lockdown() {
+        let dir = tempdir().unwrap();
+        let file = dir.path().join("avorax-signed.exe");
+        fs::write(&file, b"avorax signed fixture").unwrap();
+        let mut request = request_for(&file);
+        request.signature_status = Some("valid".to_string());
+        request.publisher = Some("Avorax Security".to_string());
+        let config = DriverVerdictConfig {
+            mode: DriverProtectionMode::Lockdown,
+            ..Default::default()
+        };
+        let verdict = evaluate_driver_request(&request, &config).unwrap();
+        assert_eq!(verdict.action, DriverVerdictAction::Allow);
+        assert_eq!(verdict.trust_level, ApplicationTrustLevel::TrustedPublisher);
+    }
+
+    #[test]
+    fn driver_fails_open_for_avorax_runtime_paths() {
+        let request = ScanRequest {
+            request_id: "test-request".to_string(),
+            event_type: DriverEventType::ImageExecuteAttempt,
+            file_path: "C:\\ProgramData\\Avorax\\Quarantine\\item.avoraxq".to_string(),
+            normalized_file_path: None,
+            process_id: Some(1234),
+            parent_process_id: None,
+            user_sid: None,
+            desired_access: None,
+            file_size: None,
+            file_attributes: None,
+            signature_status: None,
+            publisher: None,
+            parent_process_path: None,
+            sha256: None,
+            timestamp_utc: Utc::now(),
+        };
+        let config = DriverVerdictConfig {
+            mode: DriverProtectionMode::Lockdown,
+            ..Default::default()
+        };
+        let verdict = evaluate_driver_request(&request, &config).unwrap();
+        assert_eq!(verdict.action, DriverVerdictAction::Allow);
+        assert_eq!(verdict.trust_level, ApplicationTrustLevel::SystemTrusted);
+        assert!(!verdict.label_as_malware);
     }
 
     #[test]

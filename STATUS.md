@@ -48,6 +48,8 @@ Avorax rebrand and confirmed-threat Guard policy hardening after `v0.2.5`.
 - Hardened Guard Service post-launch response so disabled/observe-only modes do not stop or quarantine, and automatic stop/quarantine is limited to confirmed local known-bad/test-threat/native confirmed verdicts.
 - Switched new quarantine payload filenames to `.avoraxq` across the local core, native engine, and Guard Service while keeping legacy quarantine records readable.
 - Added Avorax environment-variable aliases and default data/event/quarantine directories for new runtime data, with legacy `ZENTOR_*` fallbacks preserved for existing preview installs.
+- Added Avorax publisher trust and Avorax-owned runtime/quarantine path handling to the Guard driver verdict path so Lockdown Mode can allow verified Avorax-signed components and avoid misclassifying Avorax quarantine/runtime files.
+- Changed Guard Service detection engine identifiers for known-bad hash and native confirmed verdicts to Avorax-branded values in new quarantine records/events.
 
 ## Blockers
 
@@ -62,6 +64,7 @@ Avorax rebrand and confirmed-threat Guard policy hardening after `v0.2.5`.
 - `powershell -ExecutionPolicy Bypass -File tools\branding\branding-check.ps1`
 - `powershell -ExecutionPolicy Bypass -File tools\security\zentor-product-copy-gate.ps1`
 - `powershell -ExecutionPolicy Bypass -File tools\security\zentor-no-malware-binaries-gate.ps1`
+- `git diff --check`
 - Active-string search for old product copy, old three-letter engine aliases, vague partial-protection label, unrelated product-domain copy, and fake protection claims.
 - Active quarantine-extension search confirming new runtime writes use `.avoraxq` and old quarantine extensions only remain in migration/readback paths.
 - `python tools\zentor_intel\import_github_malware_metadata.py --config assets\zentor_native\threat_intel\sources.example.json --output $env:TEMP\zentor_metadata.jsonl`
@@ -74,6 +77,7 @@ Avorax rebrand and confirmed-threat Guard policy hardening after `v0.2.5`.
 
 - GitHub Actions release run `26709325568` for `v0.2.3` failed because `build-msi.ps1` did not look in the root workspace `target\release` directory for `zentor_local_core.exe`; the script has been updated to support that output path.
 - `cargo test --workspace` is blocked in this Windows checkout because `cargo` is not installed or not on `PATH`.
+- `cargo test --manifest-path core\zentor_guard_service\Cargo.toml` is blocked in this Windows checkout because `cargo` is not installed or not on `PATH`.
 - `cargo fmt --manifest-path core\zentor_native_engine\Cargo.toml` is blocked because `cargo` is not installed or not on `PATH`.
 - `cargo fmt --manifest-path core\zentor_local_core\Cargo.toml` is blocked because `cargo` is not installed or not on `PATH`.
 - `powershell -ExecutionPolicy Bypass -File tools\security\zentor-false-positive-gate.ps1` is blocked because it requires `cargo`.
@@ -89,7 +93,7 @@ Avorax rebrand and confirmed-threat Guard policy hardening after `v0.2.5`.
 
 ## Exact Next Step
 
-Commit and push the Avorax checkpoint, then let CI run the Rust/Flutter/Dart checks; do not tag another release unless CI and the release workflow pass.
+Commit and push the Avorax Guard driver-trust checkpoint, then let CI run the Rust/Flutter/Dart checks; do not tag another release unless CI and the release workflow pass.
 
 ## Handoff
 

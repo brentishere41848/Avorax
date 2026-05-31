@@ -336,7 +336,7 @@ fn handle_process_started(
     let confirmed_match = if known_malicious_hashes.contains(&hash) {
         Some(LocalThreatMatch {
             reason: "known malicious hash".to_string(),
-            engine: "zentor-known-bad-hash".to_string(),
+            engine: "avorax-known-bad-hash".to_string(),
             confidence: LocalThreatConfidence::Confirmed,
         })
     } else if let Some(native_match) = native_match {
@@ -847,7 +847,7 @@ fn native_threat_match(path: &Path) -> anyhow::Result<Option<LocalThreatMatch>> 
     {
         return Ok(Some(LocalThreatMatch {
             reason: verdict.final_verdict.user_visible_explanation,
-            engine: "zentor-native-engine".to_string(),
+            engine: "avorax-native-engine".to_string(),
             confidence,
         }));
     }
@@ -1150,7 +1150,7 @@ mod tests {
     fn known_malicious_hash_is_quarantined() {
         let _lock = env_lock();
         let dir = tempdir().unwrap();
-        std::env::set_var("ZENTOR_GUARD_QUARANTINE_DIR", dir.path().join("quarantine"));
+        std::env::set_var("AVORAX_GUARD_QUARANTINE_DIR", dir.path().join("quarantine"));
         let file = dir.path().join("bad.exe");
         fs::write(&file, b"known bad fixture").unwrap();
         let hash = sha256_file(&file).unwrap();
@@ -1170,8 +1170,8 @@ mod tests {
         let record: GuardQuarantineRecord =
             serde_json::from_str(&fs::read_to_string(record_path).unwrap()).unwrap();
         assert_eq!(record.status, QuarantineStatus::Quarantined);
-        assert_eq!(record.engine, "zentor-known-bad-hash");
-        std::env::remove_var("ZENTOR_GUARD_QUARANTINE_DIR");
+        assert_eq!(record.engine, "avorax-known-bad-hash");
+        std::env::remove_var("AVORAX_GUARD_QUARANTINE_DIR");
     }
 
     #[test]
