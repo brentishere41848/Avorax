@@ -630,6 +630,14 @@ foreach ($file in $files) {
 }
 
 $installReportSource = Join-Path $distRoot "windows-msi\install_report.template.json"
+$licenseRtfPath = Join-Path $distRoot "windows-msi\avorax-installer-license.rtf"
+@'
+{\rtf1\ansi\deff0
+{\b Avorax Anti-Virus Preview Installer}\par
+This installer deploys the Avorax desktop client, visible Avorax services, local Avorax Native Engine assets, documentation, and validation tools.\par
+Preview builds are for defensive local testing. Keep Microsoft Defender or your existing antivirus enabled unless you are deliberately testing Avorax in a controlled environment.\par
+}
+'@ | Set-Content -LiteralPath $licenseRtfPath -Encoding ASCII
 $installReport = [ordered]@{
   version = $Version
   install_path = "C:\Program Files\Avorax"
@@ -696,7 +704,8 @@ foreach ($dir in $updateDataSubdirs) {
 
 $upgradeCode = "35E0D125-9699-4CFB-8E93-588D0E83F517"
 $wxs = @"
-<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
   <Package
     Name="Avorax Anti-Virus"
     Manufacturer="Avorax Security"
@@ -729,6 +738,9 @@ $componentRefsXml
 $programDataRefsXml
       <ComponentRef Id="StartMenuShortcut" />
     </Feature>
+
+    <ui:WixUI Id="WixUI_Minimal" />
+    <WixVariable Id="WixUILicenseRtf" Value="$(XmlEscape $licenseRtfPath)" />
   </Package>
 </Wix>
 "@
@@ -739,7 +751,11 @@ dotnet tool restore
 if ($LASTEXITCODE -ne 0) {
   throw "WiX tool restore failed. Exit code: $LASTEXITCODE"
 }
-Invoke-Checked { dotnet wix build $wxsPath -arch x64 -o $msiPath } "MSI build failed."
+dotnet wix extension add WixToolset.UI.wixext/6.0.2
+if ($LASTEXITCODE -ne 0) {
+  throw "WiX UI extension restore failed. Exit code: $LASTEXITCODE"
+}
+Invoke-Checked { dotnet wix build $wxsPath -arch x64 -ext WixToolset.UI.wixext -o $msiPath } "MSI build failed."
 
 if (-not (Test-Path $msiPath)) {
   throw "MSI build did not produce the expected package: $msiPath"
@@ -762,7 +778,7 @@ $bundleWxs = @"
         LaunchWorkingFolder="C:\Program Files\Avorax" />
     </BootstrapperApplication>
     <Chain>
-      <MsiPackage SourceFile="$(XmlEscape $msiPath)" Compressed="yes" />
+      <MsiPackage SourceFile="$(XmlEscape $msiPath)" Compressed="yes" Visible="yes" Vital="yes" />
     </Chain>
   </Bundle>
 </Wix>

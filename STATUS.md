@@ -25,36 +25,45 @@ In-app signed updater implementation for Avorax. MSI/EXE installers remain first
 - Added `packages/avorax_protocol` with shared update manifest models for future client/service protocol alignment.
 - Wired the Scan page engine-unavailable recovery actions to real local operations: elevated Avorax Core Service start, explicit service registration/start repair, and install-report opening.
 - Added audit logging for install-report open and installation-repair requests, and made scan errors distinguish stopped or missing Core Service states from generic native-engine unavailability.
+- Generated `dist\Avorax-AntiVirus-0.2.14-x64.msi` and `dist\Avorax-AntiVirus-0.2.14-x64-setup.exe` from a local Windows toolchain provisioned with Flutter 3.44.0, Rust 1.96.0, .NET SDK 8.0.421, and WiX 6.0.2.
+- Patched Windows MSI/EXE packaging so the Avorax Native Engine installed layout (`engine\config`, `engine\signatures`, `engine\rules`, `engine\ml`, and `engine\trust`) is staged into the installer automatically for both direct MSI installs and the EXE bootstrapper.
+- Added visible installer proof UI: the MSI uses `WixUI_Minimal` with a license/proof page, and the EXE bootstrapper uses WiX Standard BA visible UI/progress while embedding the MSI.
+- Verified the staged Avorax Core Service can load the packaged installed engine layout from `dist\windows-msi\stage\engine`, with native engine status `ready`, 17 native signatures, 11 native rules, development ML loaded, and native self-test passing.
+- Preserved native signature category evidence in the risk-fusion path so confirmed hash signatures retain their declared threat category in final verdicts.
+- Tightened the installer stage gate so generated WiX validation checks visible product-facing copy, visible installer UI/progress, and native-engine assets without failing on non-visible WiX IDs or technical compatibility paths.
 
 ## Blockers
 
-- `cargo` is not installed or not on `PATH` in this Windows checkout, so Rust compilation/tests and false-positive gates that depend on Rust are blocked locally.
-- `flutter` is not installed or not on `PATH`, so Flutter analysis/tests are blocked locally.
-- `dart` is not installed or not on `PATH`, so Dart package tests are blocked locally.
-- WiX/MSI generation and full installer-stage validation require a complete Windows build stage that is not present in this checkout.
+- `cargo test --manifest-path core/avorax_update_service/Cargo.toml` builds but cannot execute the elevated update-service test binaries in this non-elevated shell: Windows returns `os error 740`.
+- Windows release and protection gates still require a driver validation/self-test report at `dist\windows-driver-validation\selftest_report.json`; this environment has not built, installed, run, or self-tested the signed driver path.
+- `packages/avorax_protocol` does not declare `package:test` as a dev dependency, so `dart test` cannot run for that package without a package metadata change.
 - No production update signing key is configured here. The package builder intentionally refuses unsigned `.aup` output.
 - No signed Windows driver has been built, installed, run, or self-tested in this environment.
 
 ## Tests Passed Locally
 
 - PowerShell parser check for `installer/windows/build-msi.ps1`, `tools/windows/avorax-installer-stage-test.ps1`, `tools/windows/zentor-release-gate.ps1`, and `tools/update/avorax-build-update-package.ps1`.
+- PowerShell parser re-check for patched `installer/windows/build-msi.ps1` and `tools/windows/avorax-installer-stage-test.ps1`.
 - `git diff --check` passed with line-ending warnings only.
 - `powershell -ExecutionPolicy Bypass -File tools/branding/branding-check.ps1`
 - `powershell -ExecutionPolicy Bypass -File tools/security/zentor-product-copy-gate.ps1`
 - `powershell -ExecutionPolicy Bypass -File tools/security/zentor-no-malware-binaries-gate.ps1`
-
-## Tests Blocked Locally
-
-- `cargo test --manifest-path core/avorax_update_service/Cargo.toml`
+- `powershell -ExecutionPolicy Bypass -File installer/windows/build-msi.ps1 -Version 0.2.14 -SkipFlutterBuild -RequireLocalCore -AllowDevelopmentModel`
+- `powershell -ExecutionPolicy Bypass -File tools/windows/avorax-installer-stage-test.ps1 -StagePath dist/windows-msi/stage`
+- Staged Core Service health command with `AVORAX_ENGINE_ROOT=dist/windows-msi/stage`; result reported `engine_status=available`, `native_engine_status=ready`, `native_signature_count=17`, `native_rule_count=11`, and `native_self_test=true`.
 - `cargo test --manifest-path core/zentor_native_engine/Cargo.toml`
 - `cargo test --manifest-path core/zentor_local_core/Cargo.toml`
 - `cargo test --manifest-path core/zentor_guard_service/Cargo.toml`
+- `cd apps/zentor_client && flutter analyze`
+- `cd apps/zentor_client && flutter test`
+- `cd packages/zentor_protocol && dart pub get && dart test` using the Dart SDK bundled with Flutter.
 - `powershell -ExecutionPolicy Bypass -File tools/security/zentor-false-positive-gate.ps1`
-- `cd apps/zentor_client && flutter pub get && flutter analyze && flutter test`
-- `cd packages/zentor_protocol && dart pub get && dart test`
-- `cd packages/avorax_protocol && dart pub get && dart test`
-- `powershell -ExecutionPolicy Bypass -File tools/windows/zentor-release-gate.ps1`
-- `powershell -ExecutionPolicy Bypass -File installer/windows/build-msi.ps1`
+
+## Tests Blocked Locally
+
+- `cargo test --manifest-path core/avorax_update_service/Cargo.toml` is blocked by Windows elevation requirement for the update-service test binaries in this shell.
+- `cd packages/avorax_protocol && dart pub get && dart test` is blocked because `package:test` is not declared.
+- `powershell -ExecutionPolicy Bypass -File tools/windows/zentor-release-gate.ps1` is blocked by the missing driver self-test report.
 
 ## Exact Next Task
 

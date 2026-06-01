@@ -193,7 +193,7 @@ impl ZentorNativeEngine {
                 .map(|matched| Evidence {
                     id: matched.signature_id,
                     title: matched.name,
-                    detail: matched.reason,
+                    detail: format!("{} Category: {:?}", matched.reason, matched.category),
                     weight: matched.weight,
                     source: EvidenceSource::NativeSignature,
                 }),

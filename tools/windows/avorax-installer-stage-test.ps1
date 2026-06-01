@@ -85,11 +85,32 @@ $wxsFiles = Get-ChildItem -LiteralPath (Split-Path $StagePath) -Filter "*.wxs" -
 $unrelatedDomainPattern = $legacyProjectPattern + "|" + ("anti" + "-cheat") + "|" + ("gam" + "ing")
 foreach ($wxs in $wxsFiles) {
   $content = Get-Content -Raw -LiteralPath $wxs.FullName
-  if ($content -match $unrelatedDomainPattern) {
+  $productFacingContent = ($content -split "`r?`n" | Where-Object {
+    $_ -match "<Package " -or
+    $_ -match "<Bundle " -or
+    $_ -match "<Shortcut " -or
+    $_ -match "<ServiceInstall " -or
+    $_ -match "<bal:WixStandardBootstrapperApplication "
+  }) -join "`n"
+  $visibleProductCopy = $productFacingContent -replace '\sId="[^"]+"', ''
+  if ($visibleProductCopy -match $unrelatedDomainPattern) {
     Add-CheckError "Installer WiX source contains forbidden product copy: $($wxs.Name)"
   }
   if ($wxs.Name -ne "Avorax.wxs") {
+    if ($wxs.Name -eq "Avorax.Bundle.wxs") {
+      $hasVisibleBootstrapper = $content -match "<bal:WixStandardBootstrapperApplication[\s\S]+Theme=`"hyperlinkLicense`""
+      $hasVisibleMsiPackage = $content -match "<MsiPackage[^>]+Visible=`"yes`""
+      if (-not $hasVisibleBootstrapper -or -not $hasVisibleMsiPackage) {
+        Add-CheckError "EXE bootstrapper does not surface visible install UI/progress for proof during install."
+      }
+    }
     continue
+  }
+  if ($content -notmatch "<ui:WixUI[^>]+Id=`"WixUI_Minimal`"") {
+    Add-CheckError "MSI WiX source does not include a visible installer UI."
+  }
+  if ($content -notmatch "<WixVariable[^>]+Id=`"WixUILicenseRtf`"") {
+    Add-CheckError "MSI WiX source does not include the installer license/proof page asset."
   }
   foreach ($serviceName in @("avorax_core_service", "avorax_guard_service")) {
     $serviceControlPattern = "<ServiceControl[^>]+Name=`"$serviceName`"[^>]+Start=`"both`""
