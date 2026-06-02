@@ -52,7 +52,11 @@ pub struct UpdateManifest {
 
 impl UpdateManifest {
     pub fn validate_static_fields(&self) -> anyhow::Result<()> {
-        anyhow::ensure!(self.product == PRODUCT_NAME, "wrong product: {}", self.product);
+        anyhow::ensure!(
+            self.product == PRODUCT_NAME,
+            "wrong product: {}",
+            self.product
+        );
         anyhow::ensure!(
             self.package_format_version == PACKAGE_FORMAT_VERSION,
             "unsupported update package format: {}",

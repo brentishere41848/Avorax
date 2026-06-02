@@ -23,13 +23,15 @@ The manifest declares product, version, channel, components, rollback support, p
 
 ## Update Flow
 
-1. App reads the configured `update-feed.json`.
-2. App downloads the referenced `.aup` package.
-3. Avorax Update Service verifies manifest signature and package metadata.
-4. Avorax Update Service stages payload files.
-5. Avorax Update Service snapshots rollback files.
-6. Services are stopped, files are replaced, and services are restarted.
-7. `C:\ProgramData\Avorax\updates\logs\update_report.json` records the result.
+1. App reads the configured `update-feed.json` from the GitHub release feed by default.
+2. The Updates page displays the version, channel, package name, release notes, and rollback availability.
+3. The user clicks the in-app install button; Avorax downloads only the referenced signed `.aup` package.
+4. The app verifies the downloaded package hash before invoking the update service.
+5. Avorax Update Service verifies manifest signature and package metadata.
+6. Avorax Update Service stages payload files.
+7. Avorax Update Service snapshots rollback files.
+8. Services are stopped, files are replaced, and services are restarted.
+9. The app reports `Ready to restart` after apply/rollback finishes; `C:\ProgramData\Avorax\updates\logs\update_report.json` records the result.
 
 ## Development Package Build
 

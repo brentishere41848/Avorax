@@ -45,6 +45,7 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
 - Wired `start_watch` to return an honest `userModeBestEffort` watcher state for existing requested paths instead of always returning stopped.
 - Improved Flutter `LocalCoreClient` IPC diagnostics for executable-missing, stderr/non-zero exit, malformed JSON, and timeout cases; health summary now exposes IPC failures through `lastError` for recovery UI messaging.
 - Wired Flutter protection startup/shutdown to `start_watch` / `stop_watch` for selected existing protected folders, keeps selected app paths in scan/watch paths, and displays `userModeBestEffort` honestly as best-effort user-mode monitoring without claiming kernel pre-execution blocking.
+- Upgraded normal updating to be fully driven from the Updates page: default GitHub release feed, in-app check/download/hash-verify/install, ready-to-restart state, in-app rollback, and Update Service `--rollback` support.
 
 ## Blockers
 
@@ -74,6 +75,16 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
 - `cd packages/zentor_protocol && dart pub get && dart test` using the Dart SDK bundled with Flutter.
 - `powershell -ExecutionPolicy Bypass -File tools/security/zentor-false-positive-gate.ps1`
 - Current hardening pass: `cd apps/zentor_client && flutter analyze` using `C:\Users\Brent\develop\flutter\bin\flutter.bat`.
+- Current in-app update pass: `cd apps/zentor_client && flutter analyze` passed with no issues.
+- Current in-app update pass: `cd apps/zentor_client && flutter test` passed 37 tests including update controller/service coverage.
+- Current in-app update pass: `cargo check --manifest-path core/avorax_update_service/Cargo.toml --bins` passed.
+- Current in-app update pass: `cargo test --manifest-path core/zentor_local_core/Cargo.toml` passed 64 tests.
+- Current in-app update pass: `cargo test --manifest-path core/zentor_guard_service/Cargo.toml` passed 19 tests.
+- Current in-app update pass: `cd packages/zentor_protocol && dart test` passed 4 tests.
+- Current in-app update pass: `cd apps/zentor_client && flutter build windows --debug` produced `build\windows\x64\runner\Debug\Avorax.exe`.
+- Current in-app update installer build: `powershell -ExecutionPolicy Bypass -File installer/windows/build-msi.ps1 -Version 0.2.16 -RequireLocalCore -AllowDevelopmentModel` produced `dist\Avorax-AntiVirus-0.2.16-x64.msi` and `dist\Avorax-AntiVirus-0.2.16-x64-setup.exe`.
+- Current in-app update installer stage verification passed, and staged core health reported native engine `ready`, 17 signatures, 11 rules, development ML loaded, and native self-test true.
+- Current in-app update artifact hashes: MSI `8e6b9101f8369ee5663c6d89754f72c1521a5c950d5ab9a8cda4f8a927196efa`; EXE `26a123cf3f9d91504a52a8ef8c05cad36174d18c8c4c70fa45bec19b7f49c9d7`.
 - Current hardening pass: `cd apps/zentor_client && flutter test` passed 34 tests after IPC diagnostics and protection watcher UI wiring.
 - Current hardening pass: `cd apps/zentor_client && flutter build windows --debug` produced `build\windows\x64\runner\Debug\Avorax.exe`.
 - Release installer build: `powershell -ExecutionPolicy Bypass -File installer/windows/build-msi.ps1 -Version 0.2.15 -RequireLocalCore -AllowDevelopmentModel` produced `dist\Avorax-AntiVirus-0.2.15-x64.msi` and `dist\Avorax-AntiVirus-0.2.15-x64-setup.exe`.

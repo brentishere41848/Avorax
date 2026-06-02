@@ -35,9 +35,13 @@ fn main() -> Result<()> {
             let current = args.next().unwrap_or_else(|| "0.0.0".to_string());
             apply_package(&package, &install_dir, &current)
         }
+        Some("--rollback") => {
+            let install_dir = PathBuf::from(args.next().unwrap_or_else(default_install_dir));
+            rollback::restore_latest_snapshot(&install_dir).map(|_| ())
+        }
         _ => {
             eprintln!(
-                "avorax_update_service --service | --verify <package.aup> [current] | --apply <package.aup> [install_dir] [current]"
+                "avorax_update_service --service | --verify <package.aup> [current] | --apply <package.aup> [install_dir] [current] | --rollback [install_dir]"
             );
             Ok(())
         }
@@ -135,7 +139,9 @@ mod tests {
         let file = std::fs::File::create(&package_path).unwrap();
         let mut archive = zip::ZipWriter::new(file);
         let options = zip::write::SimpleFileOptions::default();
-        archive.start_file("payload/app/Avorax.exe", options).unwrap();
+        archive
+            .start_file("payload/app/Avorax.exe", options)
+            .unwrap();
         archive.write_all(b"safe payload").unwrap();
         archive.finish().unwrap();
 

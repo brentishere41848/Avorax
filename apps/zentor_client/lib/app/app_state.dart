@@ -424,9 +424,19 @@ class ZentorController extends StateNotifier<ZentorState> {
         updateInfo: downloaded,
       );
       await _updateService.installDownloadedPackage(downloaded);
+      state = state.copyWith(
+        updateStatus: UpdateStatus.readyToRestart,
+        updateInfo: downloaded,
+        clearUpdateError: true,
+      );
       await logEvent(
         'update_install_started',
         'Update install started',
+        details: downloaded.packageName,
+      );
+      await logEvent(
+        'update_install_ready',
+        'Update installed; restart Avorax to finish',
         details: downloaded.packageName,
       );
     } on Object catch (error) {
@@ -438,6 +448,37 @@ class ZentorController extends StateNotifier<ZentorState> {
       await logEvent(
         'update_install_failed',
         'Update install failed',
+        details: '$error',
+      );
+    }
+  }
+
+  Future<void> rollbackUpdateInApp() async {
+    try {
+      state = state.copyWith(
+        updateStatus: UpdateStatus.rollingBack,
+        clearError: true,
+        clearUpdateError: true,
+      );
+      await logEvent('update_rollback_started', 'Update rollback started');
+      await _updateService.rollbackPreviousVersion();
+      state = state.copyWith(
+        updateStatus: UpdateStatus.readyToRestart,
+        clearUpdateError: true,
+      );
+      await logEvent(
+        'update_rollback_ready',
+        'Rollback applied; restart Avorax to finish',
+      );
+    } on Object catch (error) {
+      state = state.copyWith(
+        updateStatus: UpdateStatus.failed,
+        errorMessage: 'Avorax could not roll back the update: $error',
+        updateError: '$error',
+      );
+      await logEvent(
+        'update_rollback_failed',
+        'Update rollback failed',
         details: '$error',
       );
     }

@@ -124,10 +124,21 @@ Lead-engineer product-hardening pass across the Avorax repository. Goal is to mo
 - Added Rust tests for `start_watch` command output and watcher debounce/cache/monitor-only behavior.
 - Added Flutter IPC diagnostics tests for missing core executable, non-zero exit with stderr, malformed JSON, timeout/kill, and health-summary recovery messaging.
 - Wired Flutter protection startup/shutdown to local core `start_watch` / `stop_watch`, stores watched paths/mode in app state, keeps selected protected app paths in scan/watch paths, and labels `userModeBestEffort` as honest best-effort user-mode monitoring in the Protection screen.
+- Upgraded Updates to be fully operated from inside the app for normal update flows: default GitHub feed URL, check/download/hash-verify/install state transitions, ready-to-restart result, in-app rollback button, and Update Service `--rollback` snapshot restore.
 
 ## Final verification in this pass
 
 - `cd apps/zentor_client && C:\Users\Brent\develop\flutter\bin\flutter.bat analyze` passed with no issues.
+- Current in-app update pass: `cd apps/zentor_client && C:\Users\Brent\develop\flutter\bin\flutter.bat analyze` passed with no issues.
+- Current in-app update pass: `cd apps/zentor_client && C:\Users\Brent\develop\flutter\bin\flutter.bat test` passed 37 tests including update controller/service coverage.
+- Current in-app update pass: `cargo check --manifest-path core/avorax_update_service/Cargo.toml --bins` passed.
+- Current in-app update pass: `cargo test --manifest-path core/zentor_local_core/Cargo.toml` passed 64 tests.
+- Current in-app update pass: `cargo test --manifest-path core/zentor_guard_service/Cargo.toml` passed 19 tests.
+- Current in-app update pass: `cd packages/zentor_protocol && C:\Users\Brent\develop\flutter\bin\dart.bat test` passed 4 tests.
+- Current in-app update pass: `cd apps/zentor_client && C:\Users\Brent\develop\flutter\bin\flutter.bat build windows --debug` produced `build\windows\x64\runner\Debug\Avorax.exe`.
+- Current in-app update installer build: `powershell -ExecutionPolicy Bypass -File installer/windows/build-msi.ps1 -Version 0.2.16 -RequireLocalCore -AllowDevelopmentModel` produced `dist\Avorax-AntiVirus-0.2.16-x64.msi` and `dist\Avorax-AntiVirus-0.2.16-x64-setup.exe`.
+- Current in-app update installer stage verification passed; staged core health reported native engine `ready`, 17 signatures, 11 rules, development ML loaded, and native self-test true.
+- Current in-app update artifact hashes: MSI `8e6b9101f8369ee5663c6d89754f72c1521a5c950d5ab9a8cda4f8a927196efa`; EXE `26a123cf3f9d91504a52a8ef8c05cad36174d18c8c4c70fa45bec19b7f49c9d7`.
 - `cd apps/zentor_client && C:\Users\Brent\develop\flutter\bin\flutter.bat test` passed 34 tests after IPC diagnostics and protection watcher UI wiring.
 - `cd apps/zentor_client && C:\Users\Brent\develop\flutter\bin\flutter.bat build windows --debug` produced `build\windows\x64\runner\Debug\Avorax.exe`.
 - `powershell -ExecutionPolicy Bypass -File installer/windows/build-msi.ps1 -Version 0.2.15 -RequireLocalCore -AllowDevelopmentModel` produced `dist\Avorax-AntiVirus-0.2.15-x64.msi` and `dist\Avorax-AntiVirus-0.2.15-x64-setup.exe`.

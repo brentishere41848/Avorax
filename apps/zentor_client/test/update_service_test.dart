@@ -7,6 +7,20 @@ import 'package:zentor_client/core/config/build_config.dart';
 import 'package:zentor_client/core/updates/update_service.dart';
 
 void main() {
+  test(
+    'default build config uses GitHub release update feed for in-app updates',
+    () {
+      const config = BuildConfig();
+
+      expect(config.updateFeedUrl, isNotEmpty);
+      expect(config.updateFeedUrl, startsWith('https://'));
+      expect(
+        config.updateFeedUrl,
+        contains('/releases/latest/download/update-feed.json'),
+      );
+    },
+  );
+
   test('detects newer feed release and selects signed aup package', () async {
     final service = ZentorUpdateService(
       buildConfig: const BuildConfig(

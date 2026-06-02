@@ -44,7 +44,8 @@ const avoraxUpdatesRepoName = String.fromEnvironment(
 );
 const avoraxUpdateFeedUrl = String.fromEnvironment(
   'AVORAX_UPDATE_FEED_URL',
-  defaultValue: '',
+  defaultValue:
+      'https://github.com/brentishere41848/Avorax/releases/latest/download/update-feed.json',
 );
 const avoraxUpdateChannel = String.fromEnvironment(
   'AVORAX_UPDATE_CHANNEL',

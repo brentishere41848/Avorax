@@ -23,6 +23,7 @@ class UpdateScreen extends ConsumerWidget {
       UpdateStatus.downloading,
       UpdateStatus.verifying,
       UpdateStatus.installing,
+      UpdateStatus.rollingBack,
     }.contains(model.status);
     return ZentorPanel(
       child: Column(
@@ -37,9 +38,19 @@ class UpdateScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 18),
           UpdateStatusRows(model: model),
+          if (model.status == UpdateStatus.readyToRestart) ...[
+            const SizedBox(height: 18),
+            const Text(
+              'Update is installed. Restart Avorax to finish switching versions.',
+              style: TextStyle(color: ZentorColors.success),
+            ),
+          ],
           if (model.releaseNotes != null) ...[
             const SizedBox(height: 18),
-            Text('Release notes', style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              'Release notes',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             const SizedBox(height: 8),
             Text(
               model.releaseNotes!,
@@ -76,10 +87,12 @@ class UpdateScreen extends ConsumerWidget {
                       : controller.downloadVerifyAndInstallUpdate,
                 ),
               ZentorButton(
-                label: 'Rollback previous version',
+                label: model.status == UpdateStatus.rollingBack
+                    ? 'Rolling back'
+                    : 'Rollback previous version',
                 icon: Icons.history_outlined,
                 secondary: true,
-                onPressed: model.rollbackSupported ? null : null,
+                onPressed: busy ? null : controller.rollbackUpdateInApp,
               ),
             ],
           ),

@@ -33,16 +33,18 @@ fn run_windows_service_loop() -> Result<()> {
     use windows_service::service_control_handler::{self, ServiceControlHandlerResult};
 
     let (shutdown_tx, shutdown_rx) = std::sync::mpsc::channel();
-    let status_handle = service_control_handler::register(SERVICE_NAME, move |control_event| {
-        match control_event {
-            ServiceControl::Stop | ServiceControl::Shutdown => {
-                let _ = shutdown_tx.send(());
-                ServiceControlHandlerResult::NoError
-            }
-            ServiceControl::Interrogate => ServiceControlHandlerResult::NoError,
-            _ => ServiceControlHandlerResult::NotImplemented,
-        }
-    })?;
+    let status_handle =
+        service_control_handler::register(
+            SERVICE_NAME,
+            move |control_event| match control_event {
+                ServiceControl::Stop | ServiceControl::Shutdown => {
+                    let _ = shutdown_tx.send(());
+                    ServiceControlHandlerResult::NoError
+                }
+                ServiceControl::Interrogate => ServiceControlHandlerResult::NoError,
+                _ => ServiceControlHandlerResult::NotImplemented,
+            },
+        )?;
     status_handle.set_service_status(ServiceStatus {
         service_type: ServiceType::OWN_PROCESS,
         current_state: ServiceState::Running,

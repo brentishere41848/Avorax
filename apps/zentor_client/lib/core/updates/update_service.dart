@@ -19,6 +19,8 @@ enum UpdateStatus {
   verifying,
   verified,
   installing,
+  readyToRestart,
+  rollingBack,
   failed;
 
   String get label => switch (this) {
@@ -32,6 +34,8 @@ enum UpdateStatus {
     UpdateStatus.verifying => 'Verifying update',
     UpdateStatus.verified => 'Update verified',
     UpdateStatus.installing => 'Installing update',
+    UpdateStatus.readyToRestart => 'Ready to restart',
+    UpdateStatus.rollingBack => 'Rolling back update',
     UpdateStatus.failed => 'Update failed',
   };
 }
@@ -191,7 +195,9 @@ class ZentorUpdateService {
       } on Object {
         // Keep the original verification error as the user-facing failure.
       }
-      throw StateError('Downloaded update package SHA-256 does not match feed.');
+      throw StateError(
+        'Downloaded update package SHA-256 does not match feed.',
+      );
     }
     return update.copyWith(localPackagePath: packageFile.path);
   }
@@ -220,14 +226,37 @@ class ZentorUpdateService {
     if (packagePath == null) {
       throw StateError('No verified update package is available to install.');
     }
+    final updater = _requireUpdateServiceExecutable();
+    final args = ['--apply', packagePath, _installDir(), update.currentVersion];
+    await _runUpdater(updater, args, elevated: Platform.isWindows);
+  }
+
+  Future<void> rollbackPreviousVersion() async {
+    final updater = _requireUpdateServiceExecutable();
+    await _runUpdater(updater, [
+      '--rollback',
+      _installDir(),
+    ], elevated: Platform.isWindows);
+  }
+
+  String _requireUpdateServiceExecutable() {
     final updater = _updateServiceExecutable();
     if (updater == null || !File(updater).existsSync()) {
       throw StateError('Avorax Update Service executable is missing.');
     }
-    final args = ['--apply', packagePath, _installDir(), update.currentVersion];
-    if (Platform.isWindows) {
+    return updater;
+  }
+
+  Future<void> _runUpdater(
+    String updater,
+    List<String> args, {
+    required bool elevated,
+  }) async {
+    if (elevated) {
       final escapedUpdater = updater.replaceAll("'", "''");
-      final escapedArgs = args.map((arg) => "'${arg.replaceAll("'", "''")}'").join(', ');
+      final escapedArgs = args
+          .map((arg) => "'${arg.replaceAll("'", "''")}'")
+          .join(', ');
       final process = await Process.start('powershell.exe', [
         '-NoProfile',
         '-ExecutionPolicy',
@@ -237,13 +266,15 @@ class ZentorUpdateService {
       ]);
       final exitCode = await process.exitCode;
       if (exitCode != 0) {
-        throw StateError('Could not start Avorax Update Service. Exit code: $exitCode.');
+        throw StateError(
+          'Could not start Avorax Update Service. Exit code: $exitCode.',
+        );
       }
       return;
     }
     final result = await Process.run(updater, args);
     if (result.exitCode != 0) {
-      throw StateError('Update apply failed: ${result.stderr}');
+      throw StateError('Avorax Update Service failed: ${result.stderr}');
     }
   }
 
@@ -305,7 +336,8 @@ class ZentorUpdateService {
       (item) =>
           item['version']?.toString() == latestVersion &&
           (item['package_url']?.toString().endsWith('.aup') ?? false),
-      orElse: () => throw StateError('No .aup package found for latest version.'),
+      orElse: () =>
+          throw StateError('No .aup package found for latest version.'),
     );
     final packageUrl = _resolvePackageUri(
       feedUri,

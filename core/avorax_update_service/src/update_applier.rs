@@ -43,7 +43,10 @@ pub fn apply_package(package_path: &Path, install_dir: &Path, current_version: &
         "rollback": rollback,
         "install_dir": install_dir,
     });
-    write_update_log("update_report.json", &serde_json::to_string_pretty(&report)?)?;
+    write_update_log(
+        "update_report.json",
+        &serde_json::to_string_pretty(&report)?,
+    )?;
     Ok(())
 }
 
