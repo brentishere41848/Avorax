@@ -6,7 +6,8 @@ param(
   [switch]$AllowIncompletePayload,
   [switch]$SkipClamAV,
   [switch]$IncludeClamAVCompatibility,
-  [switch]$AllowDevelopmentModel
+  [switch]$AllowDevelopmentModel,
+  [switch]$RecoveryInstall
 )
 
 $ErrorActionPreference = "Stop"
@@ -704,6 +705,15 @@ foreach ($dir in $updateDataSubdirs) {
 }
 
 $upgradeCode = "35E0D125-9699-4CFB-8E93-588D0E83F517"
+$majorUpgradeXml = '    <MajorUpgrade DowngradeErrorMessage="A newer version of Avorax is already installed." />'
+if ($RecoveryInstall) {
+  # Broken pre-0.2.24 installers start avorax_core_service during the related-product
+  # uninstall after deleting its binary. Use a recovery UpgradeCode so Windows Installer
+  # does not invoke the stale product uninstall path; the new MSI lays down files and
+  # re-registers services in-place instead.
+  $upgradeCode = "8F98C732-0D84-42E0-9C77-9438992D2786"
+  $majorUpgradeXml = ''
+}
 $wxs = @"
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
      xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
@@ -713,7 +723,7 @@ $wxs = @"
     Version="$Version"
     UpgradeCode="$upgradeCode"
     Scope="perMachine">
-    <MajorUpgrade DowngradeErrorMessage="A newer version of Avorax is already installed." />
+$majorUpgradeXml
     <MediaTemplate EmbedCab="yes" />
 
     <StandardDirectory Id="ProgramFiles64Folder">
