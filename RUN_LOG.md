@@ -203,7 +203,8 @@ Lead-engineer product-hardening pass across the Avorax repository. Goal is to mo
 ### Known limitations
 
 - Existing tag `v0.2.2` already exists in the repository while newer tags through `v0.2.16` also exist; creating a new release with the same tag is not possible without deleting/moving an existing published tag, which should not be done casually.
-- Push to `origin/main` was attempted after the local hardening commit, but GitHub HTTPS authentication is not available in this environment (`could not read Username for https://github.com`). The local branch remains one commit ahead of origin.
+- Push to `origin/main` succeeded; remote `main` now points at commit `97bca2697cbf3b79dedaaa4d4213f934cb72aa2b`.
+- Release tag `v0.2.2` already exists remotely at `f40292ec024206e5b138fb5665f16a9a1e36bfa9`, and the GitHub release already exists at `https://github.com/brentishere41848/Avorax/releases/tag/v0.2.2` (`Zentor 0.2.2`). It was not moved/overwritten because that would rewrite an existing published release tag while newer tags through `v0.2.16` exist.
 - Build warnings remain in `zentor_local_core` for existing unused compatibility paths; tests still pass.
 - Signed Windows driver validation was not performed in this environment; kernel/pre-execution protection remains documented as developmental unless separately installed, signed, and self-tested.
 
