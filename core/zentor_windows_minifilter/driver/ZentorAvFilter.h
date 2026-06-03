@@ -7,6 +7,7 @@
 #define ZENTOR_FILTER_PORT_NAME L"\\ZentorAvFilterPort"
 #define ZENTOR_DEFAULT_TIMEOUT_MS 750
 #define ZENTOR_MAX_PATH_CHARS 1024
+#define ZENTOR_MAX_RENAME_TARGET_CHARS 512
 
 typedef enum _ZENTOR_DRIVER_PROTECTION_MODE {
     ZentorModeDisabled = 0,
@@ -58,9 +59,12 @@ typedef struct _ZENTOR_SCAN_REQUEST {
     ULONG ProcessId;
     ULONG ParentProcessId;
     ACCESS_MASK DesiredAccess;
+    ULONG CreateDisposition;
+    ULONG FileAttributes;
     LARGE_INTEGER FileSize;
     LARGE_INTEGER TimestampUtc;
     WCHAR FilePath[ZENTOR_MAX_PATH_CHARS];
+    WCHAR RenameTarget[ZENTOR_MAX_RENAME_TARGET_CHARS];
 } ZENTOR_SCAN_REQUEST, *PZENTOR_SCAN_REQUEST;
 
 typedef struct _ZENTOR_SCAN_VERDICT {
@@ -108,6 +112,20 @@ ZentorPreCreate(
 
 FLT_PREOP_CALLBACK_STATUS
 ZentorPreAcquireForSectionSync(
+    _Inout_ PFLT_CALLBACK_DATA Data,
+    _In_ PCFLT_RELATED_OBJECTS FltObjects,
+    _Flt_CompletionContext_Outptr_ PVOID *CompletionContext
+    );
+
+FLT_PREOP_CALLBACK_STATUS
+ZentorPreWrite(
+    _Inout_ PFLT_CALLBACK_DATA Data,
+    _In_ PCFLT_RELATED_OBJECTS FltObjects,
+    _Flt_CompletionContext_Outptr_ PVOID *CompletionContext
+    );
+
+FLT_PREOP_CALLBACK_STATUS
+ZentorPreSetInformation(
     _Inout_ PFLT_CALLBACK_DATA Data,
     _In_ PCFLT_RELATED_OBJECTS FltObjects,
     _Flt_CompletionContext_Outptr_ PVOID *CompletionContext

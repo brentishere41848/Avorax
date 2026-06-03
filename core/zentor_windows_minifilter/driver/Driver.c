@@ -15,6 +15,18 @@ CONST FLT_OPERATION_REGISTRATION ZentorCallbacks[] = {
         ZentorPreAcquireForSectionSync,
         NULL
     },
+    {
+        IRP_MJ_WRITE,
+        0,
+        ZentorPreWrite,
+        NULL
+    },
+    {
+        IRP_MJ_SET_INFORMATION,
+        0,
+        ZentorPreSetInformation,
+        NULL
+    },
     { IRP_MJ_OPERATION_END }
 };
 

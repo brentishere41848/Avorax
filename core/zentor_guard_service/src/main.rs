@@ -19,6 +19,8 @@ use zentor_native_engine::{
 
 mod driver_health;
 mod driver_ipc;
+#[cfg(windows)]
+mod driver_port;
 mod known_bad_cache;
 mod known_good_cache;
 mod preexecution_policy;
@@ -176,7 +178,9 @@ fn run_windows_service_loop() -> anyhow::Result<()> {
         process_id: None,
     })?;
 
+    let driver_port_stop = driver_port::start_background_worker();
     let result = watch_processes_until_shutdown(&HashSet::new(), 750, &shutdown_rx);
+    driver_port_stop.store(true, std::sync::atomic::Ordering::Relaxed);
 
     status_handle.set_service_status(ServiceStatus {
         service_type: ServiceType::OWN_PROCESS,
@@ -193,6 +197,8 @@ fn run_windows_service_loop() -> anyhow::Result<()> {
 
 fn run_console_watch() -> anyhow::Result<()> {
     let (_shutdown_tx, shutdown_rx) = mpsc::channel();
+    #[cfg(windows)]
+    let _driver_port_stop = driver_port::start_background_worker();
     watch_processes_until_shutdown(&HashSet::new(), 750, &shutdown_rx)
 }
 

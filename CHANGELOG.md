@@ -2,28 +2,41 @@
 
 All notable Avorax changes should be documented here. Version entries avoid unsupported marketing claims and focus on implemented, testable behavior.
 
-## Unreleased - In-app update flow
+## 0.2.31 - Custom driver integration and dev release
 
 ### Added
 
-- Updates page now performs the full normal update path in-app: check feed, download signed `.aup`, verify hash/package, invoke Avorax Update Service, and report `Ready to restart` when apply finishes.
+- Added live Windows Filter Manager IPC support in the guard service: it connects to `\\ZentorAvFilterPort`, receives kernel scan requests, evaluates them through the real driver verdict policy, and replies with native allow/block verdicts.
+- Added driver contract regression tests covering minifilter callback registration, driver/user-mode service naming, package inclusion, health reporting, and live Filter Manager IPC wiring.
 - Added in-app rollback action that invokes Avorax Update Service rollback and reports `Ready to restart` after rollback finishes.
 - Added controller tests for in-app check/download/verify/install and rollback state/event transitions.
 
 ### Changed
 
+- The custom minifilter now registers create/open, write, rename/set-information, and section-acquire callbacks instead of only classifying all create events as generic opens.
+- Driver requests now include richer metadata such as desired access, create disposition, file attributes, size, timestamp, and rename targets.
+- Driver health reporting now distinguishes an installed test-signed driver from a driver blocked because Windows test-signing mode is disabled.
+- The driver build script can use the repo's merged WDK target fallback and manually link a `.sys` when reduced WDK targets compile objects but do not emit the driver binary.
 - Default build config now points to the GitHub release `update-feed.json`, so installed builds do not start with updates disabled unless explicitly overridden.
 - Update Service CLI now includes `--rollback [install_dir]` for app-triggered rollback to the newest rollback snapshot.
 - Updates UI enables rollback from inside the app, shows rolling-back busy state, and displays restart guidance after apply/rollback.
 
 ### Verified
 
+- Custom driver contract tests pass: `uv run pytest tests/test_custom_driver_contract.py -q`.
+- Guard service tests pass: `cargo test --manifest-path core/zentor_guard_service/Cargo.toml`.
+- Guard service, local core, and update service release builds succeed.
 - Flutter analyze passes for `apps/zentor_client`.
 - Flutter tests pass for `apps/zentor_client`.
-- Flutter Windows debug build succeeds and produces `build\\windows\\x64\\runner\\Debug\\Avorax.exe`.
-- Rust update service compiles with `cargo check --bins`.
-- Rust local core and guard service tests pass.
-- Dart protocol tests pass.
+- Flutter Windows release build succeeds and produces `build\\windows\\x64\
+unner\\Release\\Avorax.exe`.
+- MSI, setup EXE, signed development driver package, `.aup`, and `update-feed.json` were built for 0.2.31.
+
+### Known limitations
+
+- This is a development/test-signed driver release. Windows must trust the Avorax Driver Test Certificate and have test-signing enabled before the custom driver can load; production driver distribution still requires Microsoft hardware/driver signing.
+- The packaged AI model is still explicitly marked `production_ready=false`; release artifacts were built with `-AllowDevelopmentModel`, and AI-only auto-quarantine remains disabled.
+- Non-elevated updater smoke could not execute `avorax_update_service.exe` because its manifest correctly requires administrator elevation; the UAC prompt was cancelled in this session.
 
 ## 0.2.15 - Product hardening sprint
 

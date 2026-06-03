@@ -24,6 +24,8 @@ impl DriverHealth {
             "communicationOk"
         } else if installed && running {
             "communicationFailed"
+        } else if installed && !test_signed {
+            "testSigningRequired"
         } else if installed {
             "installed"
         } else {
@@ -33,6 +35,8 @@ impl DriverHealth {
             "Windows reports the Avorax minifilter is installed/running and the driver IPC port responded."
         } else if installed && running {
             "Windows reports the Avorax minifilter is running, but driver IPC did not respond."
+        } else if installed && !test_signed {
+            "The custom Avorax minifilter is installed but not loaded. This development build is test-signed and Windows TESTSIGNING is off; run bcdedit /set testsigning on from an elevated terminal and reboot, or install a Microsoft-signed production driver."
         } else if installed {
             "Windows reports the Avorax minifilter service is installed, but the filter is not loaded."
         } else {
