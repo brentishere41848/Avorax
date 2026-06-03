@@ -35,7 +35,8 @@ $payloadDocs = Join-Path $payload "docs"
 $payloadTools = Join-Path $payload "tools"
 New-Item -ItemType Directory -Force -Path $payloadApp, $payloadServices | Out-Null
 
-$serviceFiles = @("avorax_core_service.exe", "avorax_guard_service.exe", "avorax_update_service.exe")
+$serviceFiles = @("avorax_core_service.exe", "avorax_guard_service.exe")
+$excludedAppFiles = @("avorax_core_service.exe", "avorax_guard_service.exe", "avorax_update_service.exe")
 foreach ($name in $serviceFiles) {
   $source = Join-Path $payloadSource $name
   if (Test-Path -LiteralPath $source) {
@@ -44,13 +45,13 @@ foreach ($name in $serviceFiles) {
 }
 
 Get-ChildItem -LiteralPath $payloadSource -File | Where-Object {
-  $serviceFiles -notcontains $_.Name
+  $excludedAppFiles -notcontains $_.Name
 } | ForEach-Object {
   Copy-Item -LiteralPath $_.FullName -Destination (Join-Path $payloadApp $_.Name) -Force
 }
 
 Get-ChildItem -LiteralPath $payloadSource -Directory | Where-Object {
-  $_.Name -notin @("engine", "docs", "tools")
+  $_.Name -notin @("engine", "docs", "tools", "driver", "driver-tools")
 } | ForEach-Object {
   Copy-Item -LiteralPath $_.FullName -Destination (Join-Path $payloadApp $_.Name) -Recurse -Force
 }
@@ -63,16 +64,19 @@ foreach ($dir in @("engine", "docs", "tools")) {
   }
 }
 
-if (-not (Test-Path -LiteralPath (Join-Path $payloadServices "avorax_update_service.exe"))) {
-  throw "Payload stage is missing avorax_update_service.exe; refusing to create an in-app update package."
-}
 if (-not (Test-Path -LiteralPath $payloadEngine)) {
   throw "Payload stage is missing engine assets; refusing to create an update package that would leave the engine unavailable."
+}
+if (Test-Path -LiteralPath (Join-Path $payloadServices "avorax_update_service.exe")) {
+  throw "Normal .aup update package must not include avorax_update_service.exe because the updater cannot overwrite itself while running. Ship Update Service changes through MSI/EXE."
 }
 
 $hashes = [ordered]@{}
 Get-ChildItem -LiteralPath $payload -Recurse -File | Sort-Object FullName | ForEach-Object {
   $relative = $_.FullName.Substring($payload.Length).TrimStart("\", "/").Replace("\", "/")
+  if ($relative -match '(^|/)driver($|/)' -or $relative -match '(^|/)driver-tools($|/)') {
+    throw "Normal .aup update package leaked driver payload path '$relative'. Driver packages must ship via MSI/EXE, not in-app updates."
+  }
   $hashes[$relative] = (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
 }
 
@@ -88,7 +92,7 @@ $manifest = [ordered]@{
     app = Test-Path (Join-Path $payloadApp "Avorax.exe")
     core_service = Test-Path (Join-Path $payloadServices "avorax_core_service.exe")
     guard_service = Test-Path (Join-Path $payloadServices "avorax_guard_service.exe")
-    update_service = Test-Path (Join-Path $payloadServices "avorax_update_service.exe")
+    update_service = $false
     native_engine_assets = Test-Path $payloadEngine
     signatures = Test-Path (Join-Path $payloadEngine "signatures")
     rules = Test-Path (Join-Path $payloadEngine "rules")
@@ -128,7 +132,27 @@ $packagePath = Join-Path $out "Avorax-AntiVirus-$Version.aup"
 $tempZipPath = Join-Path $out "Avorax-AntiVirus-$Version.aup.zip"
 if (Test-Path -LiteralPath $packagePath) { Remove-Item -LiteralPath $packagePath -Force }
 if (Test-Path -LiteralPath $tempZipPath) { Remove-Item -LiteralPath $tempZipPath -Force }
-Compress-Archive -Path (Join-Path $work "*") -DestinationPath $tempZipPath -Force
+Add-Type -AssemblyName System.IO.Compression
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+$zipStream = [System.IO.File]::Open($tempZipPath, [System.IO.FileMode]::CreateNew)
+try {
+  $zip = [System.IO.Compression.ZipArchive]::new($zipStream, [System.IO.Compression.ZipArchiveMode]::Create, $false)
+  try {
+    Get-ChildItem -LiteralPath $work -Recurse -File | Sort-Object FullName | ForEach-Object {
+      $entryName = $_.FullName.Substring($work.Length).TrimStart("\", "/").Replace("\", "/")
+      [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile(
+        $zip,
+        $_.FullName,
+        $entryName,
+        [System.IO.Compression.CompressionLevel]::Optimal
+      ) | Out-Null
+    }
+  } finally {
+    $zip.Dispose()
+  }
+} finally {
+  $zipStream.Dispose()
+}
 Move-Item -LiteralPath $tempZipPath -Destination $packagePath -Force
 $packageHash = (Get-FileHash -LiteralPath $packagePath -Algorithm SHA256).Hash.ToLowerInvariant()
 

@@ -97,9 +97,10 @@ void main() {
 
     expect(verifyMethod, contains('_runUpdater'));
     expect(verifyMethod, contains('elevated: Platform.isWindows'));
-    expect(verifyMethod, isNot(contains('Process.run(updater')));
+    expect(verifyMethod, isNot(contains('Process.run(updater)')));
     expect(source, contains('-Verb RunAs -Wait -PassThru'));
     expect(source, contains(r'exit \$p.ExitCode'));
+    expect(source, isNot(contains(r'\\$p')));
   });
 }
 

@@ -1,4 +1,5 @@
 use anyhow::{Context, Result};
+use serde_json::json;
 use std::path::PathBuf;
 
 mod file_replacer;
@@ -17,8 +18,26 @@ use update_applier::apply_package;
 use update_package::UpdatePackage;
 use update_verifier::{UpdateVerifier, VerificationPolicy};
 
-fn main() -> Result<()> {
-    let mut args = std::env::args().skip(1);
+fn main() {
+    let args: Vec<String> = std::env::args().skip(1).collect();
+    let command = args.first().cloned().unwrap_or_else(|| "help".to_string());
+    let result = run_cli(args);
+    match result {
+        Ok(()) => {
+            let _ = write_cli_status(&command, true, None);
+            std::process::exit(0);
+        }
+        Err(error) => {
+            let message = format!("{error:#}");
+            eprintln!("{message}");
+            let _ = write_cli_status(&command, false, Some(&message));
+            std::process::exit(1);
+        }
+    }
+}
+
+fn run_cli(args: Vec<String>) -> Result<()> {
+    let mut args = args.into_iter();
     match args.next().as_deref() {
         Some("--service") => service::run_service(),
         Some("--verify") => {
@@ -46,6 +65,20 @@ fn main() -> Result<()> {
             Ok(())
         }
     }
+}
+
+fn write_cli_status(command: &str, ok: bool, error: Option<&str>) -> Result<()> {
+    let report = json!({
+        "ok": ok,
+        "command": command,
+        "error": error,
+        "timestamp_utc": time::OffsetDateTime::now_utc().format(&time::format_description::well_known::Rfc3339)?,
+    });
+    logging::write_update_log(
+        "update_cli_status.json",
+        &serde_json::to_string_pretty(&report)?,
+    )?;
+    Ok(())
 }
 
 fn default_install_dir() -> String {

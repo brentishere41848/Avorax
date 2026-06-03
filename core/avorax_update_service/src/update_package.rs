@@ -63,10 +63,8 @@ impl UpdatePackage {
                 "payload/{}",
                 relative_path.to_string_lossy().replace('\\', "/")
             );
-            let mut entry = archive
-                .by_name(&archive_name)
+            let actual_hash = hash_archive_entry_by_normalized_name(&mut archive, &archive_name)
                 .with_context(|| format!("payload file missing from package: {archive_name}"))?;
-            let actual_hash = sha256_reader(&mut entry)?;
             anyhow::ensure!(
                 actual_hash.eq_ignore_ascii_case(expected_hash),
                 "payload hash mismatch for {archive_name}"
@@ -128,6 +126,19 @@ pub fn sha256_reader(reader: &mut impl Read) -> Result<String> {
         hasher.update(&buffer[..read]);
     }
     Ok(hex::encode(hasher.finalize()))
+}
+
+fn hash_archive_entry_by_normalized_name(
+    archive: &mut ZipArchive<File>,
+    expected_name: &str,
+) -> Result<String> {
+    for index in 0..archive.len() {
+        let mut entry = archive.by_index(index)?;
+        if entry.name().replace('\\', "/") == expected_name {
+            return sha256_reader(&mut entry);
+        }
+    }
+    anyhow::bail!("specified file not found in archive")
 }
 
 pub fn safe_relative_path(value: &str) -> Result<PathBuf> {
