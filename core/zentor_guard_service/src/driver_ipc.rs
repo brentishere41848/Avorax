@@ -3,11 +3,11 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use chrono::{DateTime, Utc};
-use zentor_native_engine::{
-    EngineConfig, ZentorNativeEngine, ScanActionMode as AneScanActionMode, Verdict as AneVerdict,
-};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
+use zentor_native_engine::{
+    EngineConfig, ScanActionMode as AneScanActionMode, Verdict as AneVerdict, ZentorNativeEngine,
+};
 
 use crate::preexecution_policy::DriverProtectionMode;
 
@@ -36,8 +36,12 @@ pub struct ScanRequest {
     pub file_attributes: Option<u32>,
     pub signature_status: Option<String>,
     pub publisher: Option<String>,
+    #[serde(default)]
+    pub signature_verified_by: Option<String>,
     pub parent_process_path: Option<String>,
     pub sha256: Option<String>,
+    #[serde(default)]
+    pub sha256_verified_by: Option<String>,
     pub timestamp_utc: DateTime<Utc>,
 }
 
@@ -165,11 +169,9 @@ pub fn evaluate_driver_request(
         ));
     }
 
-    let hash = request
-        .sha256
-        .clone()
-        .filter(|value| !value.trim().is_empty())
-        .or_else(|| sha256_file(&path).ok());
+    let hash = sha256_file(&path)
+        .ok()
+        .or_else(|| trusted_request_sha256(request));
 
     if hash
         .as_ref()
@@ -441,6 +443,9 @@ fn block(request: &ScanRequest, reason: &str, engines_used: Vec<VerdictEngine>) 
 }
 
 fn trusted_publisher(request: &ScanRequest, config: &DriverVerdictConfig) -> bool {
+    if !trusted_metadata_source(request.signature_verified_by.as_deref()) {
+        return false;
+    }
     if request.signature_status.as_deref() != Some("valid") {
         return false;
     }
@@ -452,6 +457,30 @@ fn trusted_publisher(request: &ScanRequest, config: &DriverVerdictConfig) -> boo
         .trusted_publishers
         .iter()
         .any(|trusted| publisher.contains(&trusted.to_lowercase()))
+}
+
+fn trusted_request_sha256(request: &ScanRequest) -> Option<String> {
+    if !trusted_metadata_source(request.sha256_verified_by.as_deref()) {
+        return None;
+    }
+    request
+        .sha256
+        .clone()
+        .filter(|value| !value.trim().is_empty())
+}
+
+fn trusted_metadata_source(source: Option<&str>) -> bool {
+    matches!(
+        source.map(|value| value.trim().to_ascii_lowercase()),
+        Some(source)
+            if matches!(
+                source.as_str(),
+                "avorax_kernel_driver"
+                    | "avorax_guard_service"
+                    | "windows_code_integrity"
+                    | "windows_wintrust"
+            )
+    )
 }
 
 fn normalize_hash(value: &str) -> String {
@@ -614,8 +643,10 @@ mod tests {
             file_attributes: None,
             signature_status: None,
             publisher: None,
+            signature_verified_by: None,
             parent_process_path: None,
             sha256: None,
+            sha256_verified_by: None,
             timestamp_utc: Utc::now(),
         }
     }
@@ -717,6 +748,7 @@ mod tests {
         let mut request = request_for(&file);
         request.signature_status = Some("valid".to_string());
         request.publisher = Some("Microsoft Corporation".to_string());
+        request.signature_verified_by = Some("windows_wintrust".to_string());
         let config = DriverVerdictConfig {
             mode: DriverProtectionMode::Lockdown,
             ..Default::default()
@@ -734,6 +766,7 @@ mod tests {
         let mut request = request_for(&file);
         request.signature_status = Some("valid".to_string());
         request.publisher = Some("Avorax Security".to_string());
+        request.signature_verified_by = Some("avorax_guard_service".to_string());
         let config = DriverVerdictConfig {
             mode: DriverProtectionMode::Lockdown,
             ..Default::default()
@@ -741,6 +774,66 @@ mod tests {
         let verdict = evaluate_driver_request(&request, &config).unwrap();
         assert_eq!(verdict.action, DriverVerdictAction::Allow);
         assert_eq!(verdict.trust_level, ApplicationTrustLevel::TrustedPublisher);
+    }
+
+    #[test]
+    fn driver_request_unverified_publisher_metadata_does_not_allow_in_lockdown() {
+        let dir = tempdir().unwrap();
+        let file = dir.path().join("spoofed-signed.exe");
+        fs::write(&file, b"unsigned fixture with caller-supplied publisher").unwrap();
+        let mut request = request_for(&file);
+        request.signature_status = Some("valid".to_string());
+        request.publisher = Some("Microsoft Corporation".to_string());
+        let config = DriverVerdictConfig {
+            mode: DriverProtectionMode::Lockdown,
+            ..Default::default()
+        };
+        let verdict = evaluate_driver_request(&request, &config).unwrap();
+        assert_eq!(verdict.action, DriverVerdictAction::Block);
+        assert_eq!(verdict.trust_level, ApplicationTrustLevel::Unknown);
+        assert!(verdict.requires_user_approval);
+        assert!(!verdict.label_as_malware);
+    }
+
+    #[test]
+    fn driver_request_unverified_hash_metadata_does_not_allow_in_lockdown() {
+        let dir = tempdir().unwrap();
+        let known_good = dir.path().join("known-good.exe");
+        let spoofed = dir.path().join("spoofed.exe");
+        fs::write(&known_good, b"trusted fixture").unwrap();
+        fs::write(&spoofed, b"different unknown fixture").unwrap();
+        let trusted_hash = sha256_file(&known_good).unwrap();
+        let mut request = request_for(&spoofed);
+        request.sha256 = Some(trusted_hash.clone());
+        let config = DriverVerdictConfig {
+            mode: DriverProtectionMode::Lockdown,
+            known_good_hashes: HashSet::from([normalize_hash(&trusted_hash)]),
+            ..Default::default()
+        };
+        let verdict = evaluate_driver_request(&request, &config).unwrap();
+        assert_eq!(verdict.action, DriverVerdictAction::Block);
+        assert_eq!(verdict.trust_level, ApplicationTrustLevel::Unknown);
+        assert!(verdict.requires_user_approval);
+    }
+
+    #[test]
+    fn driver_request_trusted_unreadable_hash_metadata_allows_in_lockdown() {
+        let dir = tempdir().unwrap();
+        let known_good = dir.path().join("known-good.exe");
+        let missing = dir.path().join("missing-at-evaluation.exe");
+        fs::write(&known_good, b"trusted fixture").unwrap();
+        let trusted_hash = sha256_file(&known_good).unwrap();
+        let mut request = request_for(&missing);
+        request.sha256 = Some(trusted_hash.clone());
+        request.sha256_verified_by = Some("avorax_kernel_driver".to_string());
+        let config = DriverVerdictConfig {
+            mode: DriverProtectionMode::Lockdown,
+            known_good_hashes: HashSet::from([normalize_hash(&trusted_hash)]),
+            ..Default::default()
+        };
+        let verdict = evaluate_driver_request(&request, &config).unwrap();
+        assert_eq!(verdict.action, DriverVerdictAction::Allow);
+        assert_eq!(verdict.trust_level, ApplicationTrustLevel::KnownGoodHash);
     }
 
     #[test]
@@ -758,8 +851,10 @@ mod tests {
             file_attributes: None,
             signature_status: None,
             publisher: None,
+            signature_verified_by: None,
             parent_process_path: None,
             sha256: None,
+            sha256_verified_by: None,
             timestamp_utc: Utc::now(),
         };
         let config = DriverVerdictConfig {

@@ -283,8 +283,10 @@ fn request_for(path: &std::path::Path) -> ScanRequest {
         file_attributes: None,
         signature_status: None,
         publisher: None,
+        signature_verified_by: None,
         parent_process_path: None,
         sha256: None,
+        sha256_verified_by: None,
         timestamp_utc: Utc::now(),
     }
 }

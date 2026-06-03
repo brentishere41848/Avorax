@@ -135,3 +135,7 @@ cd packages/zentor_protocol; dart test
 ```
 
 Some Windows service/update tests may require elevation. Driver gates require a signed/installed/self-tested driver report.
+
+## Guard/protection hardening notes
+
+The guard service evaluates pre-execution requests with a strict metadata provenance boundary. Publisher/signature trust requires both a trusted publisher match and a trusted verifier source; hash trust prefers locally computed SHA-256 and only falls back to supplied hashes when the supplier is explicitly trusted. Ransomware protection logic now accepts a policy object with protected roots and trusted process allowlists so future UI/settings work can configure protected folders without changing detection semantics.

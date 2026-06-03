@@ -214,3 +214,43 @@ Lead-engineer product-hardening pass across the Avorax repository. Goal is to mo
 2. Add ransomware protected-folder settings, allowlist validation, UI event history, and harmless simulation tests.
 3. Add protocol/UI surfacing for scan sample-limit metadata in exported reports.
 4. Choose a new release tag above the current latest (`v0.2.16`) or explicitly decide to move/recreate `v0.2.2` if that is truly intended.
+
+
+## 2026-06-03 hardening continuation 2
+
+### Completed changes
+
+- Hardened guard-service pre-execution metadata trust: caller-provided publisher/signature metadata no longer grants trusted-publisher allow decisions unless it includes trusted verifier provenance.
+- Hardened guard-service hash trust: readable files are hashed locally; caller-provided hashes are accepted only as a fallback for unreadable race-window files and only when supplied by a trusted verifier source.
+- Added `signature_verified_by` and `sha256_verified_by` fields to driver IPC scan requests with serde defaults for backward-compatible deserialization.
+- Added ransomware protected-root policy support and trusted-process suppression in `RansomwareGuardConfig`.
+- Added tests covering unverified publisher spoofing, unverified hash spoofing, trusted fallback hash provenance, protected-root filtering, and trusted ransomware process suppression.
+
+### Files modified
+
+- `core/zentor_guard_service/src/driver_ipc.rs`
+- `core/zentor_guard_service/src/self_test.rs`
+- `core/zentor_local_core/src/protection/ransomware_guard.rs`
+- `TODO.md`
+- `ARCHITECTURE.md`
+- `SECURITY_MODEL.md`
+- `RUN_LOG.md`
+
+### Tests/checks run
+
+- `cargo test --manifest-path core/zentor_guard_service/Cargo.toml` passed: 22 tests.
+- `cargo test --manifest-path core/zentor_local_core/Cargo.toml` passed: 67 tests.
+- `cargo test --manifest-path core/zentor_native_engine/Cargo.toml` passed: 35 tests.
+- `cd apps/zentor_client && flutter analyze` passed with no issues.
+- `cd apps/zentor_client && flutter test` passed: 37 tests.
+
+### Known limitations
+
+- The new ransomware policy object is implemented and tested in core logic, but UI/settings persistence still needs wiring so users can edit protected folders and trusted backup/sync tools.
+- Existing Rust warnings remain for developmental/compatibility modules that are intentionally present but not wired into every build path.
+
+### Next recommended tasks
+
+1. Add UI/settings persistence for ransomware protected roots and trusted process allowlists.
+2. Add recent protection/ransomware event history to the Flutter UI.
+3. Add a release tag above current latest rather than moving the already-published `v0.2.2`.

@@ -161,3 +161,11 @@ Exports should be user-initiated and should clearly identify what data is includ
 - Prefer conservative fail-safe behavior over destructive automation.
 - Add tests for hostile inputs: corrupted JSON, path traversal, permission errors, symlink loops, malformed update packages, corrupted quarantine metadata, and locked files.
 - Update `RUN_LOG.md` and `TODO.md` whenever assumptions, blockers, or major decisions change.
+
+### Guard metadata trust boundary
+
+Guard pre-execution decisions must not trust caller-provided publisher, signature, or hash metadata unless that metadata names a trusted verifier source such as the Avorax kernel driver, Avorax guard service, Windows Code Integrity, or Windows WinTrust. When a file is readable, the guard computes its own SHA-256 and prefers that over supplied metadata. Supplied hashes are accepted only as a fallback for unreadable race-window files and only with trusted verifier provenance.
+
+### Ransomware protected roots
+
+Ransomware evaluation supports explicit protected roots and trusted process allowlists. If protected roots are configured, only activity inside those roots contributes to modification thresholds; trusted backup/sync processes can be suppressed by exact normalized path. Tests use harmless temporary/path-only fixtures and do not encrypt or damage files.
