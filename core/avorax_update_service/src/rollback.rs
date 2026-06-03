@@ -47,6 +47,11 @@ pub fn restore_latest_snapshot(install_dir: &Path) -> Result<PathBuf> {
         .map(|(_, path)| path)
         .next()
         .context("No Avorax rollback snapshot is available.")?;
+    restore_snapshot(&snapshot, install_dir)?;
+    Ok(snapshot)
+}
+
+pub fn restore_snapshot(snapshot: &Path, install_dir: &Path) -> Result<()> {
     for item in [
         "Avorax.exe",
         "avorax_core_service.exe",
@@ -67,7 +72,7 @@ pub fn restore_latest_snapshot(install_dir: &Path) -> Result<PathBuf> {
             copy_dir(&source, &target)?;
         }
     }
-    Ok(snapshot)
+    Ok(())
 }
 
 fn copy_dir(source: &Path, destination: &Path) -> Result<()> {

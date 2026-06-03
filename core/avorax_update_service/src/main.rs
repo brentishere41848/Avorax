@@ -43,7 +43,11 @@ fn run_cli(args: Vec<String>) -> Result<()> {
         Some("--verify") => {
             let package = args.next().context("--verify requires a .aup path")?;
             let current = args.next().unwrap_or_else(|| "0.0.0".to_string());
-            let verifier = UpdateVerifier::new(VerificationPolicy::development(current));
+            let allow_development_updates = args.any(|arg| arg == "--allow-development-key");
+            let verifier = UpdateVerifier::new(VerificationPolicy::for_cli(
+                current,
+                allow_development_updates,
+            ));
             let verified = verifier.verify_package(&UpdatePackage::new(package))?;
             println!("{}", serde_json::to_string(&verified.manifest)?);
             Ok(())
@@ -52,7 +56,9 @@ fn run_cli(args: Vec<String>) -> Result<()> {
             let package = PathBuf::from(args.next().context("--apply requires a .aup path")?);
             let install_dir = PathBuf::from(args.next().unwrap_or_else(default_install_dir));
             let current = args.next().unwrap_or_else(|| "0.0.0".to_string());
-            apply_package(&package, &install_dir, &current)
+            let allow_development_updates = args.any(|arg| arg == "--allow-development-key");
+            let policy = VerificationPolicy::for_cli(&current, allow_development_updates);
+            apply_package(&package, &install_dir, &current, policy)
         }
         Some("--rollback") => {
             let install_dir = PathBuf::from(args.next().unwrap_or_else(default_install_dir));
@@ -60,7 +66,7 @@ fn run_cli(args: Vec<String>) -> Result<()> {
         }
         _ => {
             eprintln!(
-                "avorax_update_service --service | --verify <package.aup> [current] | --apply <package.aup> [install_dir] [current] | --rollback [install_dir]"
+                "avorax_update_service --service | --verify <package.aup> [current] [--allow-development-key] | --apply <package.aup> [install_dir] [current] [--allow-development-key] | --rollback [install_dir]"
             );
             Ok(())
         }
@@ -99,7 +105,7 @@ mod tests {
     };
     use crate::update_package::safe_relative_path;
     use crate::update_package::UpdatePackage;
-    use crate::update_verifier::compare_versions;
+    use crate::update_verifier::{compare_versions, VerificationPolicy, DEV_PUBLIC_KEY_ID};
     use std::collections::BTreeMap;
     use std::io::Write;
 
@@ -163,6 +169,25 @@ mod tests {
         assert!(compare_versions("0.2.12", "0.2.11") > 0);
         assert_eq!(compare_versions("0.2.11", "0.2.11"), 0);
         assert!(compare_versions("0.2.10", "0.2.11") < 0);
+    }
+
+    #[test]
+    fn production_policy_rejects_development_update_keys_by_default() {
+        let policy = VerificationPolicy::production("0.2.31");
+        assert_eq!(policy.channel, UpdateChannel::Stable);
+        assert!(!policy.allow_dev_key);
+        assert!(policy.public_keys.contains_key(DEV_PUBLIC_KEY_ID));
+    }
+
+    #[test]
+    fn cli_policy_allows_development_updates_only_when_explicit() {
+        let default_policy = VerificationPolicy::for_cli("0.2.31", false);
+        assert_eq!(default_policy.channel, UpdateChannel::Stable);
+        assert!(!default_policy.allow_dev_key);
+
+        let development_policy = VerificationPolicy::for_cli("0.2.31", true);
+        assert_eq!(development_policy.channel, UpdateChannel::Dev);
+        assert!(development_policy.allow_dev_key);
     }
 
     #[test]

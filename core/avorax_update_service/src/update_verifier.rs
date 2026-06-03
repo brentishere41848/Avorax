@@ -19,6 +19,15 @@ pub struct VerificationPolicy {
 }
 
 impl VerificationPolicy {
+    pub fn production(current_version: impl Into<String>) -> Self {
+        Self {
+            current_version: current_version.into(),
+            channel: UpdateChannel::Stable,
+            allow_dev_key: false,
+            public_keys: configured_public_keys(),
+        }
+    }
+
     pub fn development(current_version: impl Into<String>) -> Self {
         let public_keys = configured_public_keys();
         Self {
@@ -28,6 +37,26 @@ impl VerificationPolicy {
             public_keys,
         }
     }
+
+    pub fn for_cli(current_version: impl Into<String>, allow_development_updates: bool) -> Self {
+        if allow_development_updates || development_updates_enabled_by_environment() {
+            Self::development(current_version)
+        } else {
+            Self::production(current_version)
+        }
+    }
+}
+
+fn development_updates_enabled_by_environment() -> bool {
+    std::env::var("AVORAX_ALLOW_DEVELOPMENT_UPDATES")
+        .ok()
+        .map(|value| {
+            matches!(
+                value.trim().to_ascii_lowercase().as_str(),
+                "1" | "true" | "yes" | "on"
+            )
+        })
+        .unwrap_or(false)
 }
 
 fn configured_public_keys() -> BTreeMap<String, String> {

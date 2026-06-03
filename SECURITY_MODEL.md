@@ -66,8 +66,9 @@ Requirements:
 
 - Verify product identity, format version, target version/channel, package hash, manifest signature, and per-file payload hashes.
 - Reject path traversal, absolute paths, driver updates through normal app update flow, unsigned packages, or packages signed with development keys under production policy.
+- Normal update-service CLI verification/apply paths use production policy by default. Development-signed packages must be explicitly enabled with `--allow-development-key` or `AVORAX_ALLOW_DEVELOPMENT_UPDATES=1`.
 - Stage updates before applying.
-- Roll back on failure where possible.
+- Roll back on failure where possible. If payload copying fails after a rollback snapshot exists, the update service now attempts to restore that snapshot, restart services, and write a structured failed update report containing rollback status.
 - Do not execute downloaded installers or scripts as a normal in-app update path.
 
 ## Scan safety model
@@ -90,7 +91,7 @@ Full Scan may traverse drives or home filesystem areas but must avoid unsafe tra
 
 - Do not follow symlink/junction loops.
 - Skip quarantine, app caches, generated build outputs, and explicitly excluded directories unless configured otherwise.
-- Bound memory use; stream large files where possible. Current native file scans stream full-file hashing and analyze a bounded 64 MiB sample with explicit sample-limit metadata.
+- Bound memory use; stream large files where possible. Current native file scans stream full-file hashing and analyze a bounded 64 MiB sample with explicit sample-limit metadata. Guard pre-execution hashing also uses buffered streaming I/O, and the optional compatibility YARA fallback reads only a bounded 1 MiB sample.
 - Handle denied/locked/huge/unusual paths gracefully.
 - Support cancellation and progress reporting.
 
@@ -165,7 +166,7 @@ Exports should be user-initiated and should clearly identify what data is includ
 
 ### Guard metadata trust boundary
 
-Guard pre-execution decisions must not trust caller-provided publisher, signature, or hash metadata unless that metadata names a trusted verifier source such as the Avorax kernel driver, Avorax guard service, Windows Code Integrity, or Windows WinTrust. When a file is readable, the guard computes its own SHA-256 and prefers that over supplied metadata. Supplied hashes are accepted only as a fallback for unreadable race-window files and only with trusted verifier provenance.
+Guard pre-execution decisions must not trust caller-provided publisher, signature, or hash metadata unless that metadata names a trusted verifier source such as the Avorax kernel driver, Avorax guard service, Windows Code Integrity, or Windows WinTrust. When a file is readable, the guard computes its own SHA-256 with streaming I/O and prefers that over supplied metadata. Supplied hashes are accepted only as a fallback for unreadable race-window files and only with trusted verifier provenance. The guard caches one native engine instance behind a mutex for repeated pre-execution verdicts; this improves latency without changing the fail-open policy for critical OS/Avorax runtime paths.
 
 ### Ransomware protected roots
 

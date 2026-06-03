@@ -42,10 +42,11 @@ This backlog is the working plan for the long-horizon Avorax hardening sprint. I
 
 ## P3 - Production hardening
 
-- [ ] Cache native engine instance in guard pre-execution path instead of initializing per request.
-- [x] Replace native engine scan-file full-memory reads with streaming hashing and bounded scan samples; pre-execution guard streaming remains a follow-up.
-- [ ] Make update apply more atomic with rollback on mid-copy failures and service recovery attempts.
-- [ ] Add production update-key policy that rejects development keys unless explicitly enabled.
+- [x] Cache native engine instance in guard pre-execution path instead of initializing per request.
+- [x] Replace native engine scan-file full-memory reads with streaming hashing and bounded scan samples; guard pre-execution hashing now streams too.
+- [x] Bound optional compatibility YARA fallback reads in the guard pre-execution path to avoid whole-file memory spikes.
+- [x] Make update apply more atomic with rollback on mid-copy failures and service recovery attempts.
+- [x] Add production update-key policy that rejects development keys unless explicitly enabled.
 - [ ] Expand CI to run product-copy, no-malware-binaries, false-positive, protection, and performance gates where feasible.
 - [ ] Add `packages/avorax_protocol` test dependencies or remove stale `dart test` expectations for that package.
 
@@ -59,7 +60,7 @@ This backlog is the working plan for the long-horizon Avorax hardening sprint. I
 
 ## Current P0/P1 status
 
-- No known remaining P0/P1 hardening gaps are currently tracked after the latest verification pass. Remaining open work is P3/P4 production/release hardening or optional stretch work, not a blocker for the implemented scan/protection/settings/logging behavior.
+- No known remaining P0/P1 hardening gaps are currently tracked after the latest verification pass. Remaining open work is expanded CI/release gates, benchmarks, accessibility, and optional provider/plugin architecture.
 
 ## Operating rules
 

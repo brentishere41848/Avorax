@@ -297,6 +297,57 @@ Lead-engineer product-hardening pass across the Avorax repository. Goal is to mo
 ### Current status
 
 - No known remaining P0/P1 hardening gaps are tracked after this pass.
-- Remaining open items are P3/P4 production/release hardening or optional stretch work: native-engine guard cache, update apply rollback hardening, production update-key policy, expanded CI/release gates, protocol test-dependency cleanup, plugin/cloud-provider interfaces, accessibility, support bundles, and benchmarks.
+- Remaining open items are P3/P4 production/release hardening or optional stretch work: update apply rollback hardening, production update-key policy, expanded CI/release gates, protocol test-dependency cleanup, plugin/cloud-provider interfaces, accessibility, support bundles, and benchmarks.
 - Existing Rust warnings remain for developmental/compatibility paths, but the verification commands above passed.
 - Signed Windows driver validation still requires a signed/installed/self-tested driver report in a provisioned environment.
+
+
+## 2026-06-03 hardening continuation 4
+
+### Completed changes
+
+- Added static contract tests requiring guard pre-execution verdicts to reuse a cached native engine and requiring driver-path hashing to use streaming I/O.
+- Replaced per-request `ZentorNativeEngine::initialize` in `core/zentor_guard_service/src/driver_ipc.rs` with a shared `OnceLock` cache containing a mutex-protected native engine instance.
+- Changed guard-service SHA-256 calculation from full-file `fs::read` to buffered streaming I/O.
+- Bounded the optional compatibility YARA fallback to a buffered 1 MiB sample instead of reading the entire candidate file.
+- Updated `TODO.md`, `ARCHITECTURE.md`, `SECURITY_MODEL.md`, `TESTING.md`, and `CHANGELOG.md` for the guard cache/streaming hardening work.
+- Added explicit update-service production verification policy: normal CLI verify/apply paths reject dev signing keys unless `--allow-development-key` or `AVORAX_ALLOW_DEVELOPMENT_UPDATES=1` is present.
+- Added static contract coverage for the update-service production/dev-key policy.
+- Added update apply rollback-on-failure logic: if staged payload copying fails after a snapshot is created, the update service attempts to restore the snapshot, restart services, write a structured failed update report, and return an explicit rollback-restored error.
+- Added static contract coverage for rollback-on-apply-failure behavior.
+- Fixed a ransomware-guard configuration unit test to use harmless temporary protected folders and a temporary trusted-process fixture instead of hard-coded nonexistent Windows paths; assertions now match the product's normalized persisted path format.
+
+### Files modified
+
+- `TODO.md`
+- `RUN_LOG.md`
+- `ARCHITECTURE.md`
+- `SECURITY_MODEL.md`
+- `TESTING.md`
+- `CHANGELOG.md`
+- `tests/test_custom_driver_contract.py`
+- `core/zentor_guard_service/src/driver_ipc.rs`
+- `core/avorax_update_service/src/main.rs`
+- `core/avorax_update_service/src/update_applier.rs`
+- `core/avorax_update_service/src/update_verifier.rs`
+- `core/avorax_update_service/src/rollback.rs`
+- `core/zentor_local_core/src/main.rs`
+
+### Tests/checks run
+
+- RED check before implementation: `uv run pytest tests/test_custom_driver_contract.py -q` failed as expected on missing native-engine cache and streaming guard hashing.
+- After implementation: `uv run pytest tests/test_custom_driver_contract.py -q` passed: 9 tests.
+- After implementation: `cargo test --manifest-path core/zentor_guard_service/Cargo.toml driver_ipc -- --nocapture` passed: 14 driver IPC tests.
+- Full guard service tests passed: `cargo test --manifest-path core/zentor_guard_service/Cargo.toml` passed: 22 tests.
+- Local core tests passed: `cargo test --manifest-path core/zentor_local_core/Cargo.toml` passed: 69 tests.
+- Update service compile check passed: `cargo check --manifest-path core/avorax_update_service/Cargo.toml --bin avorax_update_service`.
+- Updated contract tests passed: `uv run pytest tests/test_custom_driver_contract.py -q` passed: 11 tests.
+- Update service unit-test execution was attempted with `cargo test --manifest-path core/avorax_update_service/Cargo.toml` and `cargo test --manifest-path core/avorax_update_service/Cargo.toml --bin avorax_update_service`; both were blocked before tests ran by Windows elevation error 740 because the update service test binaries inherit a require-administrator manifest.
+- Flutter analyze passed with no issues.
+- Flutter tests passed: 45 tests.
+- Final local-core rerun passed after fixture fix: `cargo test --manifest-path core/zentor_local_core/Cargo.toml` passed: 69 tests.
+
+### Current status
+
+- Guard pre-execution latency and memory behavior are improved without expanding security claims.
+- Remaining open items are expanded CI/release gates, protocol test-dependency cleanup, accessibility, support bundles, benchmarks, and optional provider/plugin architecture.

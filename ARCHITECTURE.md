@@ -111,7 +111,7 @@ User-mode protection monitors configured scan/protected folders where available,
 
 ## Updates
 
-Normal app updates are signed `.aup` packages, not raw installer execution from inside the app. The update service verifies product identity, version/channel, package hash, manifest signature, and payload hashes before apply. Payload sections are staged, rollback metadata is created, and app/service/engine files are replaced only after verification.
+Normal app updates are signed `.aup` packages, not raw installer execution from inside the app. The update service verifies product identity, version/channel, package hash, manifest signature, and payload hashes before apply. Payload sections are staged, rollback metadata is created, and app/service/engine files are replaced only after verification. CLI verify/apply defaults to production verification; development-signed packages require `--allow-development-key` or `AVORAX_ALLOW_DEVELOPMENT_UPDATES=1`. If payload copying fails after a rollback snapshot exists, the service attempts to restore the snapshot, restart services, and write a structured failed update report.
 
 Installer MSI/EXE remains a first-install, repair, recovery, offline, and manual-install path.
 
@@ -138,4 +138,4 @@ Some Windows service/update tests may require elevation. Driver gates require a 
 
 ## Guard/protection hardening notes
 
-The guard service evaluates pre-execution requests with a strict metadata provenance boundary. Publisher/signature trust requires both a trusted publisher match and a trusted verifier source; hash trust prefers locally computed SHA-256 and only falls back to supplied hashes when the supplier is explicitly trusted. Ransomware protection logic accepts a policy object with protected roots and trusted process allowlists, and the Flutter settings UI now persists/sends those values through local core IPC. Local event history stores category/severity metadata and the Logs screen summarizes protection events and warnings.
+The guard service evaluates pre-execution requests with a strict metadata provenance boundary. Publisher/signature trust requires both a trusted publisher match and a trusted verifier source; hash trust prefers locally computed SHA-256 and only falls back to supplied hashes when the supplier is explicitly trusted. The pre-execution path reuses a cached Avorax Native Engine instance instead of initializing ANE per file event, hashes candidate files with buffered streaming I/O, and bounds optional compatibility-rule sample reads so large files cannot cause whole-file memory spikes. Ransomware protection logic accepts a policy object with protected roots and trusted process allowlists, and the Flutter settings UI persists/sends those values through local core IPC. Local event history stores category/severity metadata and the Logs screen summarizes protection events and warnings.

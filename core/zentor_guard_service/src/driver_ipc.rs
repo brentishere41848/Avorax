@@ -1,6 +1,8 @@
 use std::collections::HashSet;
-use std::fs;
+use std::fs::{self, File};
+use std::io::BufReader;
 use std::path::{Path, PathBuf};
+use std::sync::{Mutex, OnceLock};
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -223,7 +225,7 @@ pub fn evaluate_driver_request(
         ));
     }
 
-    if let Some(native) = native_engine_verdict(&path)? {
+    if let Some(native) = cached_native_engine_verdict(&path)? {
         if matches!(
             native.final_verdict.verdict,
             AneVerdict::TestThreat | AneVerdict::ConfirmedMalware | AneVerdict::ProbableMalware
@@ -321,14 +323,32 @@ fn normalized_path(request: &ScanRequest) -> PathBuf {
         .into()
 }
 
-fn native_engine_verdict(
+struct NativeEngineCache {
+    engine: Mutex<ZentorNativeEngine>,
+}
+
+static NATIVE_ENGINE_CACHE: OnceLock<Result<NativeEngineCache, String>> = OnceLock::new();
+
+fn cached_native_engine_verdict(
     path: &Path,
 ) -> anyhow::Result<Option<zentor_native_engine::FileScanVerdict>> {
     if !path.exists() || path.is_dir() {
         return Ok(None);
     }
-    let mut engine =
-        ZentorNativeEngine::initialize(EngineConfig::from_repo_root(native_asset_root()))?;
+    let cache = NATIVE_ENGINE_CACHE
+        .get_or_init(|| {
+            ZentorNativeEngine::initialize(EngineConfig::from_repo_root(native_asset_root()))
+                .map(|engine| NativeEngineCache {
+                    engine: Mutex::new(engine),
+                })
+                .map_err(|error| format!("{error:#}"))
+        })
+        .as_ref()
+        .map_err(|error| anyhow::anyhow!(error.clone()))?;
+    let mut engine = cache
+        .engine
+        .lock()
+        .map_err(|_| anyhow::anyhow!("native engine cache lock poisoned"))?;
     Ok(Some(engine.scan_file(
         path.to_path_buf(),
         AneScanActionMode::DetectOnly,
@@ -492,9 +512,9 @@ fn normalize_hash(value: &str) -> String {
 }
 
 fn sha256_file(path: &Path) -> anyhow::Result<String> {
-    let bytes = fs::read(path)?;
     let mut hasher = Sha256::new();
-    hasher.update(bytes);
+    let mut reader = BufReader::new(File::open(path)?);
+    std::io::copy(&mut reader, &mut hasher)?;
     Ok(format!("sha256:{:x}", hasher.finalize()))
 }
 
@@ -511,7 +531,11 @@ fn yara_match(path: &Path) -> anyhow::Result<Option<YaraDecision>> {
         return Ok(None);
     }
     let rules = fs::read_to_string(rules_path)?;
-    let body = fs::read(path)?;
+    let mut body = Vec::new();
+    std::io::Read::read_to_end(
+        &mut BufReader::new(File::open(path)?).take(1_048_576),
+        &mut body,
+    )?;
     let body_text = String::from_utf8_lossy(&body).to_lowercase();
     let mut confidence = "low".to_string();
     let mut description = String::new();

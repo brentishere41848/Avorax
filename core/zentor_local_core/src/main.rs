@@ -1424,13 +1424,21 @@ mod tests {
     fn configure_ransomware_guard_persists_protected_roots_and_trusted_processes() {
         let dir = tempdir().unwrap();
         let config_path = dir.path().join("ransomware_guard.json");
+        let documents = dir.path().join("Documents");
+        let pictures = dir.path().join("Pictures");
+        let backup_dir = dir.path().join("Backup");
+        let backup_exe = backup_dir.join("backup.exe");
+        fs::create_dir_all(&documents).unwrap();
+        fs::create_dir_all(&pictures).unwrap();
+        fs::create_dir_all(&backup_dir).unwrap();
+        fs::write(&backup_exe, b"harmless backup fixture").unwrap();
         unsafe {
             std::env::set_var("AVORAX_RANSOMWARE_GUARD_CONFIG", &config_path);
         }
         let command: CoreCommand = serde_json::from_value(json!({
             "command": "configure_ransomware_guard",
-            "protected_roots": ["C:/Users/Test/Documents", " C:/Users/Test/Documents ", "C:/Users/Test/Pictures"],
-            "trusted_process_allowlist": ["C:/Program Files/Backup/backup.exe", ""]
+            "protected_roots": [documents, format!(" {} ", documents.display()), pictures],
+            "trusted_process_allowlist": [backup_exe, ""]
         }))
         .unwrap();
 
@@ -1439,13 +1447,16 @@ mod tests {
         assert_eq!(response["ok"], true);
         let persisted: serde_json::Value =
             serde_json::from_str(&fs::read_to_string(&config_path).unwrap()).unwrap();
+        let expected_documents = documents.display().to_string().replace('\\', "/");
+        let expected_pictures = pictures.display().to_string().replace('\\', "/");
+        let expected_backup = backup_exe.display().to_string().replace('\\', "/");
         assert_eq!(
             persisted["protected_roots"],
-            json!(["C:/Users/Test/Documents", "C:/Users/Test/Pictures"])
+            json!([expected_documents, expected_pictures])
         );
         assert_eq!(
             persisted["trusted_process_allowlist"],
-            json!(["C:/Program Files/Backup/backup.exe"])
+            json!([expected_backup])
         );
         unsafe {
             std::env::remove_var("AVORAX_RANSOMWARE_GUARD_CONFIG");

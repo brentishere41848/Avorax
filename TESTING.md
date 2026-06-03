@@ -43,7 +43,14 @@ Current coverage includes file walking, heuristic detection, YARA-style rule beh
 cargo test --manifest-path core/zentor_guard_service/Cargo.toml
 ```
 
-Current coverage includes configured guard modes, driver IPC verdict behavior, known-good/known-bad handling, lockdown behavior, and mock process monitoring.
+Current coverage includes configured guard modes, driver IPC verdict behavior, known-good/known-bad handling, lockdown behavior, mock process monitoring, cached native-engine reuse for pre-execution verdicts, and streaming guard-file hashing.
+
+Focused driver/guard contract checks can be run with:
+
+```bash
+uv run pytest tests/test_custom_driver_contract.py -q
+cargo test --manifest-path core/zentor_guard_service/Cargo.toml driver_ipc -- --nocapture
+```
 
 ## Rust native engine
 
@@ -72,3 +79,5 @@ powershell.exe -ExecutionPolicy Bypass -File tools/windows/zentor-release-gate.p
 ```
 
 Some service/driver/update gates may require elevation or a signed installed driver. If they cannot run, document the blocker in `RUN_LOG.md` and do not claim the gated capability as verified.
+
+Current Windows limitation: `cargo test --manifest-path core/avorax_update_service/Cargo.toml` and `--bin avorax_update_service` can fail before running tests with Windows error 740 because the update-service test binaries inherit a require-administrator manifest. In a non-elevated shell, use `cargo check --manifest-path core/avorax_update_service/Cargo.toml --bin avorax_update_service` plus `uv run pytest tests/test_custom_driver_contract.py -q`, or rerun the Rust unit tests from an elevated developer shell. The static contract test also checks that update apply attempts rollback restoration and service restart on payload-copy failure; elevated integration tests are still needed for real service stop/start/apply paths.

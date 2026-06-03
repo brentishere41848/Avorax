@@ -2,6 +2,34 @@
 
 All notable Avorax changes should be documented here. Version entries avoid unsupported marketing claims and focus on implemented, testable behavior.
 
+## Unreleased - Guard pre-execution performance hardening
+
+### Added
+
+- Added regression coverage that requires the guard pre-execution path to reuse a cached native engine and stream file hashing instead of repeatedly initializing ANE or loading whole files into memory.
+- Added update-service production verification policy coverage so normal CLI verify/apply paths reject development signing keys unless explicitly enabled.
+- Added update-apply rollback-on-copy-failure contract coverage.
+- Hardened ransomware-guard configuration tests to use temporary harmless fixtures rather than nonexistent absolute Windows paths.
+
+### Changed
+
+- Guard-service driver IPC now reuses a shared `ZentorNativeEngine` instance protected by a mutex for pre-execution verdicts.
+- Guard-service driver IPC now hashes files with buffered streaming I/O.
+- The optional compatibility YARA fallback now reads a bounded 1 MiB buffered sample instead of reading the entire candidate file.
+- Avorax Update Service CLI now defaults to production update verification; development-signed packages require `--allow-development-key` or `AVORAX_ALLOW_DEVELOPMENT_UPDATES=1`.
+- Avorax Update Service now attempts to restore the rollback snapshot and restart services if payload copying fails after services have been stopped.
+
+### Verified
+
+- Custom driver contract tests pass: `uv run pytest tests/test_custom_driver_contract.py -q`.
+- Guard driver IPC tests pass: `cargo test --manifest-path core/zentor_guard_service/Cargo.toml driver_ipc -- --nocapture`.
+- Update service compile check passes: `cargo check --manifest-path core/avorax_update_service/Cargo.toml --bin avorax_update_service`.
+- Custom driver/update contract tests now cover rollback-on-apply-failure and pass with 11 tests.
+
+### Known limitations
+
+- Update service unit-test binaries require elevation in this Windows shell because of the service manifest; use compile checks and static contract tests here, or rerun elevated for full unit execution.
+
 ## 0.2.31 - Custom driver integration and dev release
 
 ### Added

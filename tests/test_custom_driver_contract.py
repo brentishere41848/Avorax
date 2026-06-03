@@ -54,6 +54,22 @@ def test_guard_service_has_live_filter_manager_message_loop():
     assert "driver_port::start_background_worker" in main
 
 
+def test_guard_pre_execution_reuses_native_engine_instance():
+    ipc = read(ROOT / "core" / "zentor_guard_service" / "src" / "driver_ipc.rs")
+    assert "NativeEngineCache" in ipc
+    assert "OnceLock" in ipc
+    assert "cached_native_engine_verdict" in ipc
+    assert ipc.count("ZentorNativeEngine::initialize") == 1
+    assert "Mutex<ZentorNativeEngine>" in ipc
+
+
+def test_guard_hashes_driver_files_with_streaming_io():
+    ipc = read(ROOT / "core" / "zentor_guard_service" / "src" / "driver_ipc.rs")
+    assert "BufReader" in ipc
+    assert "std::io::copy" in ipc
+    assert "fs::read(path)" not in ipc
+
+
 def test_driver_name_is_consistent_across_inf_installer_and_guard_health():
     inf = read(DRIVER / "ZentorAvFilter.inf")
     installer = read(INSTALLER)
@@ -80,3 +96,32 @@ def test_update_package_excludes_driver_and_self_overwriting_update_service():
     assert "CreateEntryFromFile" in builder
     # Existing updater compatibility: do not use Compress-Archive because it writes backslash entries.
     assert "Compress-Archive" not in re.sub(r"#.*", "", builder)
+
+
+def test_update_service_rejects_development_keys_unless_explicitly_allowed():
+    verifier = read(ROOT / "core" / "avorax_update_service" / "src" / "update_verifier.rs")
+    main = read(ROOT / "core" / "avorax_update_service" / "src" / "main.rs")
+    applier = read(ROOT / "core" / "avorax_update_service" / "src" / "update_applier.rs")
+
+    assert "pub fn production" in verifier
+    assert "allow_dev_key: false" in verifier
+    assert "UpdateChannel::Stable" in verifier
+    assert "pub fn for_cli" in verifier
+    assert "AVORAX_ALLOW_DEVELOPMENT_UPDATES" in verifier
+    assert "--allow-development-key" in main
+    assert "VerificationPolicy::for_cli" in main
+    assert "VerificationPolicy::development(current_version)" not in main
+    assert "VerificationPolicy::development(current_version)" not in applier
+
+
+def test_update_apply_restores_snapshot_on_payload_failure():
+    applier = read(ROOT / "core" / "avorax_update_service" / "src" / "update_applier.rs")
+    rollback = read(ROOT / "core" / "avorax_update_service" / "src" / "rollback.rs")
+
+    assert "pub fn restore_snapshot" in rollback
+    assert "if let Err(error) = apply_payload_sections" in applier
+    assert "restore_snapshot(&rollback, install_dir)" in applier
+    assert "rollback_ok" in applier
+    assert "rollback_error" in applier
+    assert "update apply failed; rollback snapshot was restored" in applier
+    assert "let _ = start_services()" in applier
