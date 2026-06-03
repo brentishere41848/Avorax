@@ -669,6 +669,14 @@ class DeviceIntegritySummary {
     required this.deviceIdentifierHashStatus,
     required this.localCoreStatus,
     required this.permissionsStatus,
+    this.hostName = 'Unknown',
+    this.userName = 'Unknown',
+    this.executablePath = 'Unknown',
+    this.workingDirectory = 'Unknown',
+    this.systemArchitecture = 'Unknown',
+    this.processorCount = 0,
+    this.totalPhysicalMemory = 'Unknown',
+    this.serviceStates = const {},
   });
 
   final String platform;
@@ -677,6 +685,14 @@ class DeviceIntegritySummary {
   final String deviceIdentifierHashStatus;
   final String localCoreStatus;
   final String permissionsStatus;
+  final String hostName;
+  final String userName;
+  final String executablePath;
+  final String workingDirectory;
+  final String systemArchitecture;
+  final int processorCount;
+  final String totalPhysicalMemory;
+  final Map<String, String> serviceStates;
 }
 
 class LocalEvent {

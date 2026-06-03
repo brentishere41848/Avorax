@@ -206,16 +206,26 @@ class LocalCoreClient {
       final process = await Process.start(executable, []);
       process.stdin.writeln(jsonEncode({'command': 'driver_self_test'}));
       await process.stdin.close();
-      String? lastLine;
-      await for (final line
-          in process.stdout
-              .transform(utf8.decoder)
-              .transform(const LineSplitter())) {
-        if (line.trim().isNotEmpty) lastLine = line.trim();
+      final stdoutFuture = process.stdout.transform(utf8.decoder).join();
+      final stderrFuture = process.stderr.transform(utf8.decoder).join();
+      final results = await Future.wait<Object>([
+        stdoutFuture,
+        stderrFuture,
+        process.exitCode,
+      ]).timeout(const Duration(seconds: 30));
+      final stdout = (results[0] as String).trim();
+      final stderr = (results[1] as String).trim();
+      final lines = stdout
+          .split(RegExp(r'\r?\n'))
+          .map((line) => line.trim())
+          .where((line) => line.isNotEmpty)
+          .toList();
+      if (lines.isEmpty) {
+        return stderr.isEmpty
+            ? 'Protection self-test produced no output.'
+            : 'Protection self-test produced no output. stderr: $stderr';
       }
-      await process.stderr.drain<void>();
-      await process.exitCode.timeout(const Duration(seconds: 30));
-      if (lastLine == null) return 'Protection self-test produced no output.';
+      final lastLine = lines.last;
       final decoded = jsonDecode(lastLine);
       if (decoded is! Map) return lastLine;
       final message = decoded['message'];

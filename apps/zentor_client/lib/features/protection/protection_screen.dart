@@ -82,10 +82,14 @@ class ProtectionScreen extends ConsumerWidget {
                         : controller.stopProtection,
                   ),
                   ZentorButton(
-                    label: 'Run protection self-test',
+                    label: state.loading
+                        ? 'Running self-test...'
+                        : 'Run protection self-test',
                     icon: Icons.health_and_safety_outlined,
                     secondary: true,
-                    onPressed: controller.runProtectionSelfTest,
+                    onPressed: state.loading
+                        ? null
+                        : controller.runProtectionSelfTest,
                   ),
                   ZentorButton(
                     label: 'Run Quick Scan',
@@ -99,6 +103,10 @@ class ProtectionScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 22),
               _ProtectionChecklist(state: state),
+              if (state.protectionSelfTestResult != null) ...[
+                const SizedBox(height: 16),
+                _SelfTestResultPanel(result: state.protectionSelfTestResult!),
+              ],
               if (state.errorMessage != null) ...[
                 const SizedBox(height: 16),
                 Text(
@@ -222,6 +230,61 @@ class ProtectionScreen extends ConsumerWidget {
           },
         ),
       ],
+    );
+  }
+}
+
+class _SelfTestResultPanel extends StatelessWidget {
+  const _SelfTestResultPanel({required this.result});
+
+  final String result;
+
+  @override
+  Widget build(BuildContext context) {
+    final failed =
+        result.contains('FAIL') ||
+        result.toLowerCase().contains('failed') ||
+        result.toLowerCase().contains('not active');
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: failed
+            ? ZentorColors.warning.withValues(alpha: 0.08)
+            : ZentorColors.success.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: failed ? ZentorColors.warning : ZentorColors.success,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                failed ? Icons.warning_amber_rounded : Icons.check_circle,
+                color: failed ? ZentorColors.warning : ZentorColors.success,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                failed
+                    ? 'Protection self-test found issues'
+                    : 'Protection self-test passed',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          SelectableText(
+            result,
+            style: const TextStyle(
+              color: ZentorColors.textSecondary,
+              height: 1.35,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

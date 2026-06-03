@@ -941,11 +941,19 @@ class ZentorController extends StateNotifier<ZentorState> {
       'Protection self-test completed',
       details: result,
     );
+    final failed =
+        result.contains('FAIL') ||
+        result.toLowerCase().contains('failed') ||
+        result.toLowerCase().contains('not active');
     state = state.copyWith(
       loading: false,
       protectionSelfTestResult: result,
-      clearError: true,
+      clearError: !failed,
+      errorMessage: failed
+          ? 'Protection self-test completed with issues. See the self-test result panel for exact failing checks.'
+          : null,
     );
+    await unawaitedCheckMalwareEngine();
   }
 
   Future<void> sendHeartbeat() async {

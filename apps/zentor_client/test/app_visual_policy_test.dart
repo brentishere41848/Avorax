@@ -104,4 +104,32 @@ void main() {
     expect(repo, contains('Platform.localHostname'));
     expect(repo, contains('zentor.local_events.v1'));
   });
+  test('protection self-test button has visible result panel', () {
+    final protectionScreen = File(
+      'lib/features/protection/protection_screen.dart',
+    ).readAsStringSync();
+    final appState = File('lib/app/app_state.dart').readAsStringSync();
+
+    expect(protectionScreen, contains('_SelfTestResultPanel'));
+    expect(protectionScreen, contains('Protection self-test found issues'));
+    expect(protectionScreen, contains('protectionSelfTestResult'));
+    expect(appState, contains('Protection self-test completed with issues'));
+  });
+
+  test('device tab renders real local system and service fields', () {
+    final deviceScreen = File(
+      'lib/features/device/device_screen.dart',
+    ).readAsStringSync();
+    final platformInfo = File(
+      'lib/core/platform/platform_info_service.dart',
+    ).readAsStringSync();
+
+    expect(deviceScreen, contains('value.hostName'));
+    expect(deviceScreen, contains('value.serviceStates'));
+    expect(deviceScreen, contains('value.totalPhysicalMemory'));
+    expect(platformInfo, contains('Get-CimInstance Win32_Service'));
+    expect(platformInfo, contains('WindowsIdentity'));
+    expect(platformInfo, isNot(contains('Avorax Core Service: Running')));
+    expect(platformInfo, isNot(contains('No elevated permissions requested')));
+  });
 }

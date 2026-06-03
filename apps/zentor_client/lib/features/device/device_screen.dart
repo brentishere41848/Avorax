@@ -29,12 +29,20 @@ class DeviceScreen extends ConsumerWidget {
             ZentorMetricCard(
               title: 'System',
               value: value.platform,
-              detail: value.osVersion,
+              detail: '${value.osVersion}\nHost: ${value.hostName}',
               icon: Icons.devices_outlined,
+            ),
+            ZentorMetricCard(
+              title: 'Hardware',
+              value: value.systemArchitecture,
+              detail:
+                  '${value.processorCount} logical CPU(s). Memory: ${value.totalPhysicalMemory}.',
+              icon: Icons.developer_board_outlined,
             ),
             ZentorMetricCard(
               title: 'App version',
               value: value.appVersion,
+              detail: 'Executable: ${_shortPath(value.executablePath)}',
               icon: Icons.info_outline,
             ),
             ZentorMetricCard(
@@ -47,8 +55,7 @@ class DeviceScreen extends ConsumerWidget {
             ZentorMetricCard(
               title: 'Avorax Services',
               value: value.localCoreStatus,
-              detail:
-                  'Guard Service: ${_serviceLabel(state.guardStatus)}. Last heartbeat is local-only in this build.',
+              detail: _serviceDetails(value.serviceStates),
               icon: Icons.memory_outlined,
             ),
             ZentorMetricCard(
@@ -70,8 +77,7 @@ class DeviceScreen extends ConsumerWidget {
             ZentorMetricCard(
               title: 'Permissions',
               value: value.permissionsStatus,
-              detail:
-                  'Admin or elevated status is reported by service self-tests when available.',
+              detail: 'Current user: ${value.userName}',
               icon: Icons.lock_outline,
             ),
           ];
@@ -146,3 +152,19 @@ String _mlLabel(String status) => switch (status) {
   'modelMissing' => 'Missing',
   _ => 'Unavailable',
 };
+
+String _serviceDetails(Map<String, String> states) {
+  if (states.isEmpty) {
+    return 'No Avorax Windows service information was returned.';
+  }
+  return [
+    'Core: ${states['avorax_core_service'] ?? 'not installed'}',
+    'Guard: ${states['avorax_guard_service'] ?? 'not installed'}',
+    'Update: ${states['avorax_update_service'] ?? 'not installed'}',
+  ].join('\n');
+}
+
+String _shortPath(String path) {
+  if (path.length <= 80) return path;
+  return '...${path.substring(path.length - 77)}';
+}
