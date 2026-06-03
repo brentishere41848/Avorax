@@ -87,6 +87,8 @@ powershell.exe -ExecutionPolicy Bypass -File tools/perf/zentor-performance-gate.
 powershell.exe -ExecutionPolicy Bypass -File tools/windows/zentor-release-gate.ps1
 ```
 
+The performance gate also runs `tools/perf/avorax-benchmark.py`, which writes `dist/performance/benchmark_report.json`. The harness uses harmless synthetic files, existing Rust test commands, and a non-elevated update-copy simulation. It is useful for trend tracking but does not replace signed-driver latency tests or elevated update-service apply benchmarks.
+
 CI now runs the product-copy, no-malware-binaries, false-positive, protection, and performance gates. The CI protection gate uses a synthetic non-driver self-test fixture and does not claim kernel driver validation; driver-feature release gates still require a real signed/installed/self-tested driver report.
 
 Some service/driver/update gates may require elevation or a signed installed driver. If they cannot run, document the blocker in `RUN_LOG.md` and do not claim the gated capability as verified.

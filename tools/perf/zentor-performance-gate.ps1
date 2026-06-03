@@ -25,6 +25,14 @@ try {
   Pop-Location
 }
 
+$benchmarkScript = Join-Path $RepoRoot "tools\perf\avorax-benchmark.py"
+if (Test-Path -LiteralPath $benchmarkScript) {
+  & python $benchmarkScript --repo-root $RepoRoot --file-count 64 --file-size 4096
+  if ($LASTEXITCODE -ne 0) { Add-GateError "Safe performance benchmark harness failed." }
+} else {
+  Add-GateError "Safe performance benchmark harness is missing: $benchmarkScript"
+}
+
 $report = [ordered]@{
   known_good_cache_target_ms = $KnownGoodCacheTargetMs
   known_bad_cache_target_ms = $KnownBadCacheTargetMs

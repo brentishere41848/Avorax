@@ -423,3 +423,32 @@ Lead-engineer product-hardening pass across the Avorax repository. Goal is to mo
 
 - Navigation accessibility and constrained-height desktop sidebar behavior are improved without changing product capability claims.
 - Remaining open work is P4-level: broader accessibility/localization readiness, support bundle export, benchmarks, and optional provider/plugin architecture.
+
+
+## 2026-06-04 hardening continuation 7
+
+### Completed changes
+
+- Added `tools/perf/avorax-benchmark.py`, a safe benchmark harness that uses harmless synthetic files and existing test commands.
+- The benchmark report covers synthetic traversal/hashing, native signature test wall-clock timing, guard pre-execution decision test wall-clock timing, and non-elevated synthetic update-copy simulation.
+- Wired the benchmark harness into `tools/perf/zentor-performance-gate.ps1` so the existing performance gate also writes `dist/performance/benchmark_report.json`.
+- Updated `TODO.md`, `TESTING.md`, and `CHANGELOG.md` to distinguish safe trend benchmarks from future elevated/provisioned real update apply and signed-driver latency benchmarks.
+
+### Files modified
+
+- `TODO.md`
+- `TESTING.md`
+- `CHANGELOG.md`
+- `RUN_LOG.md`
+- `tools/perf/avorax-benchmark.py`
+- `tools/perf/zentor-performance-gate.ps1`
+
+### Tests/checks run
+
+- `python tools/perf/avorax-benchmark.py --file-count 32 --file-size 4096` passed and wrote `dist/performance/benchmark_report.json`.
+- `powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/perf/zentor-performance-gate.ps1 -RepoRoot .` passed and invoked the benchmark harness.
+
+### Current status
+
+- Safe performance trend benchmarking is available and integrated into the performance gate without using malware samples or claiming elevated update/driver validation.
+- Remaining open work is P4-level: broader accessibility/localization readiness, support bundle export, elevated/provisioned update/driver benchmarks, and optional provider/plugin architecture.

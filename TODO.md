@@ -57,11 +57,12 @@ This backlog is the working plan for the long-horizon Avorax hardening sprint. I
 - [x] Add explicit desktop/mobile navigation semantics and make the desktop sidebar scroll safely on constrained heights.
 - [ ] Broader accessibility pass for keyboard traversal audits, contrast review, screen-reader coverage across all feature pages, and localization-ready text extraction.
 - [x] Export local event logs with structured category/severity metadata and without file contents; broader support bundles remain optional.
-- [ ] Benchmarks for scan traversal, hashing, native signature matching, guard pre-execution latency, and update apply latency.
+- [x] Add safe benchmark harness for synthetic scan traversal/hashing, native signature test timing, guard decision timing, and non-elevated update-copy simulation.
+- [ ] Add elevated/provisioned benchmarks for real update apply latency and signed-driver pre-execution latency.
 
 ## Current P0/P1 status
 
-- No known remaining P0/P1 hardening gaps are currently tracked after the latest verification pass. Remaining open work is benchmarks, broader accessibility/localization readiness, support bundles, and optional provider/plugin architecture.
+- No known remaining P0/P1 hardening gaps are currently tracked after the latest verification pass. Remaining open work is elevated/provisioned benchmarks, broader accessibility/localization readiness, support bundles, and optional provider/plugin architecture.
 
 ## Operating rules
 

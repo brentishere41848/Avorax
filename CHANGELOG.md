@@ -13,6 +13,7 @@ All notable Avorax changes should be documented here. Version entries avoid unsu
 - Added `packages/avorax_protocol` test dependency and update-manifest schema tests covering parsing, conservative defaults, and exact wire-key serialization.
 - Added CI coverage for Avorax protocol tests plus product-copy, no-malware-binaries, false-positive, protection, and performance gates.
 - Added Flutter navigation accessibility tests for desktop/sidebar and mobile bottom navigation semantics.
+- Added `tools/perf/avorax-benchmark.py`, a safe synthetic benchmark harness for traversal/hashing, native signature test timing, guard decision timing, and non-elevated update-copy simulation.
 
 ### Changed
 
@@ -24,6 +25,7 @@ All notable Avorax changes should be documented here. Version entries avoid unsu
 - Shared Avorax update manifest models can now serialize back to the verifier/app wire format with `toJson()`.
 - Desktop sidebar navigation now exposes an explicit primary-navigation landmark, current-page labels, and scrolls instead of overflowing on constrained heights.
 - Mobile bottom navigation now exposes current-page semantics and per-destination tooltips.
+- The PowerShell performance gate now invokes the safe benchmark harness and writes `dist/performance/benchmark_report.json`.
 
 ### Verified
 
@@ -34,6 +36,7 @@ All notable Avorax changes should be documented here. Version entries avoid unsu
 - `packages/avorax_protocol` analyze and tests pass.
 - Product-copy, no-malware-binaries, false-positive, protection, and performance gates pass locally in the non-driver configuration.
 - Navigation accessibility widget tests pass.
+- Updated performance gate passes and generates the safe benchmark report.
 
 ### Known limitations
 
