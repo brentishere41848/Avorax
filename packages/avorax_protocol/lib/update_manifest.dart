@@ -54,4 +54,24 @@ class AvoraxUpdateManifest {
   final String packageSha256;
   final String signatureAlgorithm;
   final String publicKeyId;
+
+  Map<String, Object?> toJson() {
+    return {
+      'product': product,
+      'package_format_version': packageFormatVersion,
+      'version': version,
+      'previous_min_version': previousMinVersion,
+      'channel': channel,
+      'package_id': packageId,
+      'requires_restart': requiresRestart,
+      'requires_reboot': requiresReboot,
+      'requires_admin': requiresAdmin,
+      'driver_update_included': driverUpdateIncluded,
+      'rollback_supported': rollbackSupported,
+      'payload_hashes': Map<String, String>.from(payloadHashes),
+      'package_sha256': packageSha256,
+      'signature_algorithm': signatureAlgorithm,
+      'public_key_id': publicKeyId,
+    };
+  }
 }

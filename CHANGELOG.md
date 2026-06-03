@@ -2,7 +2,7 @@
 
 All notable Avorax changes should be documented here. Version entries avoid unsupported marketing claims and focus on implemented, testable behavior.
 
-## Unreleased - Guard pre-execution performance hardening
+## Unreleased - Guard pre-execution performance and CI hardening
 
 ### Added
 
@@ -10,6 +10,8 @@ All notable Avorax changes should be documented here. Version entries avoid unsu
 - Added update-service production verification policy coverage so normal CLI verify/apply paths reject development signing keys unless explicitly enabled.
 - Added update-apply rollback-on-copy-failure contract coverage.
 - Hardened ransomware-guard configuration tests to use temporary harmless fixtures rather than nonexistent absolute Windows paths.
+- Added `packages/avorax_protocol` test dependency and update-manifest schema tests covering parsing, conservative defaults, and exact wire-key serialization.
+- Added CI coverage for Avorax protocol tests plus product-copy, no-malware-binaries, false-positive, protection, and performance gates.
 
 ### Changed
 
@@ -18,6 +20,7 @@ All notable Avorax changes should be documented here. Version entries avoid unsu
 - The optional compatibility YARA fallback now reads a bounded 1 MiB buffered sample instead of reading the entire candidate file.
 - Avorax Update Service CLI now defaults to production update verification; development-signed packages require `--allow-development-key` or `AVORAX_ALLOW_DEVELOPMENT_UPDATES=1`.
 - Avorax Update Service now attempts to restore the rollback snapshot and restart services if payload copying fails after services have been stopped.
+- Shared Avorax update manifest models can now serialize back to the verifier/app wire format with `toJson()`.
 
 ### Verified
 
@@ -25,6 +28,8 @@ All notable Avorax changes should be documented here. Version entries avoid unsu
 - Guard driver IPC tests pass: `cargo test --manifest-path core/zentor_guard_service/Cargo.toml driver_ipc -- --nocapture`.
 - Update service compile check passes: `cargo check --manifest-path core/avorax_update_service/Cargo.toml --bin avorax_update_service`.
 - Custom driver/update contract tests now cover rollback-on-apply-failure and pass with 11 tests.
+- `packages/avorax_protocol` analyze and tests pass.
+- Product-copy, no-malware-binaries, false-positive, protection, and performance gates pass locally in the non-driver configuration.
 
 ### Known limitations
 

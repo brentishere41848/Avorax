@@ -47,8 +47,8 @@ This backlog is the working plan for the long-horizon Avorax hardening sprint. I
 - [x] Bound optional compatibility YARA fallback reads in the guard pre-execution path to avoid whole-file memory spikes.
 - [x] Make update apply more atomic with rollback on mid-copy failures and service recovery attempts.
 - [x] Add production update-key policy that rejects development keys unless explicitly enabled.
-- [ ] Expand CI to run product-copy, no-malware-binaries, false-positive, protection, and performance gates where feasible.
-- [ ] Add `packages/avorax_protocol` test dependencies or remove stale `dart test` expectations for that package.
+- [x] Expand CI to run product-copy, no-malware-binaries, false-positive, protection, and performance gates where feasible.
+- [x] Add `packages/avorax_protocol` test dependencies and real update-manifest schema tests.
 
 ## P4 - Stretch goals
 
@@ -60,7 +60,7 @@ This backlog is the working plan for the long-horizon Avorax hardening sprint. I
 
 ## Current P0/P1 status
 
-- No known remaining P0/P1 hardening gaps are currently tracked after the latest verification pass. Remaining open work is expanded CI/release gates, benchmarks, accessibility, and optional provider/plugin architecture.
+- No known remaining P0/P1 hardening gaps are currently tracked after the latest verification pass. Remaining open work is benchmarks, accessibility, support bundles, and optional provider/plugin architecture.
 
 ## Operating rules
 

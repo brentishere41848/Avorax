@@ -350,4 +350,46 @@ Lead-engineer product-hardening pass across the Avorax repository. Goal is to mo
 ### Current status
 
 - Guard pre-execution latency and memory behavior are improved without expanding security claims.
-- Remaining open items are expanded CI/release gates, protocol test-dependency cleanup, accessibility, support bundles, benchmarks, and optional provider/plugin architecture.
+- Remaining open items are accessibility, support bundles, benchmarks, and optional provider/plugin architecture.
+
+
+## 2026-06-04 hardening continuation 5
+
+### Completed changes
+
+- Fixed the broken `packages/avorax_protocol` Dart test target by adding a `package:test` dev dependency and a reproducible `pubspec.lock`.
+- Added `packages/avorax_protocol/test/update_manifest_test.dart` covering update manifest parsing, conservative defaults, and exact wire-key serialization.
+- Added `AvoraxUpdateManifest.toJson()` so the shared protocol model can round-trip the `.aup` manifest schema used by the verifier and app code.
+- Expanded `.github/workflows/ci.yml` to run `dart test` for `packages/avorax_protocol`.
+- Added a Windows CI security/performance gate job covering product-copy, no-malware-binaries, false-positive, protection, and performance gates.
+- The CI protection gate uses a synthetic non-driver self-test fixture and deliberately does not claim kernel-driver validation; driver-feature release validation still requires a signed/installed/self-tested driver report.
+- Updated `TODO.md`, `TESTING.md`, and `CHANGELOG.md` for the completed protocol and CI gate work.
+
+### Files modified
+
+- `.github/workflows/ci.yml`
+- `TODO.md`
+- `TESTING.md`
+- `CHANGELOG.md`
+- `RUN_LOG.md`
+- `packages/avorax_protocol/lib/update_manifest.dart`
+- `packages/avorax_protocol/pubspec.yaml`
+- `packages/avorax_protocol/pubspec.lock`
+- `packages/avorax_protocol/test/update_manifest_test.dart`
+
+### Tests/checks run
+
+- RED check before implementation: `cd packages/avorax_protocol && dart test` failed with missing `package:test` dependency.
+- `cd packages/avorax_protocol && dart test` passed after adding tests and `toJson()`.
+- `cd packages/avorax_protocol && dart analyze && dart test` passed.
+- `powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/security/zentor-product-copy-gate.ps1` passed.
+- `powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/security/zentor-no-malware-binaries-gate.ps1 -RepoRoot .` passed.
+- `powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/security/zentor-protection-gate.ps1 -RepoRoot . -SelfTestReport dist/ci-selftest-report.json` passed in non-driver configuration.
+- `powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/perf/zentor-performance-gate.ps1 -RepoRoot .` passed and wrote `dist/performance/performance_gate_report.json`.
+- `powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/security/zentor-false-positive-gate.ps1 -RepoRoot .` passed.
+
+### Current status
+
+- The highest-priority broken `avorax_protocol` test setup is fixed and covered by meaningful schema tests.
+- CI now exercises the previously open security/protection/performance gate backlog where feasible on GitHub-hosted Windows runners.
+- Remaining open work is P4-level: accessibility/localization readiness, support bundle export, benchmarks, and optional provider/plugin architecture.

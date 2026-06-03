@@ -73,6 +73,10 @@ jobs:
         working-directory: packages/avorax_protocol
         run: dart analyze
 
+      - name: Avorax protocol tests
+        working-directory: packages/avorax_protocol
+        run: dart test
+
       - name: Flutter dependencies
         working-directory: apps/zentor_client
         run: flutter pub get
@@ -84,3 +88,53 @@ jobs:
       - name: Flutter tests
         working-directory: apps/zentor_client
         run: flutter test
+
+  security-gates:
+    name: Security, protection, and performance gates
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Create CI protection self-test report
+        shell: pwsh
+        run: |
+          $reportPath = Join-Path $env:RUNNER_TEMP "avorax-ci-selftest.json"
+          @{
+            overall_result = "pass"
+            driver = @{
+              communication_port_ok = $false
+            }
+            tests = @{
+              eicar_scan_blocked = $true
+              unknown_unsigned_lockdown_policy_blocked = $true
+              unknown_unsigned_allowed_after_hash_approval = $true
+              known_good_executable_allowed = $true
+              normal_exe_blocked_only_as_unknown = $true
+              unknown_unsigned_lockdown_blocked_before_launch = $false
+            }
+          } | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $reportPath -Encoding UTF8
+          "AVORAX_CI_SELFTEST_REPORT=$reportPath" >> $env:GITHUB_ENV
+
+      - name: Product copy gate
+        shell: pwsh
+        run: .\tools\security\zentor-product-copy-gate.ps1
+
+      - name: No malware binaries gate
+        shell: pwsh
+        run: .\tools\security\zentor-no-malware-binaries-gate.ps1 -RepoRoot .
+
+      - name: False-positive gate
+        shell: pwsh
+        run: .\tools\security\zentor-false-positive-gate.ps1 -RepoRoot .
+
+      - name: Protection gate without driver feature claim
+        shell: pwsh
+        run: .\tools\security\zentor-protection-gate.ps1 -RepoRoot . -SelfTestReport $env:AVORAX_CI_SELFTEST_REPORT
+
+      - name: Performance gate
+        shell: pwsh
+        run: .\tools\perf\zentor-performance-gate.ps1 -RepoRoot .

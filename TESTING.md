@@ -7,24 +7,24 @@ This file documents the test and build checks used for the Avorax hardening spri
 On this Windows development machine, Flutter is installed at:
 
 ```text
-C:\Users\Brent\develop\flutter\bin
+C:\Users\Brent\dev\flutter\bin
 ```
 
 From Git Bash, prefer explicit `.bat` invocations:
 
 ```bash
-'/c/Users/Brent/develop/flutter/bin/flutter.bat' analyze
-'/c/Users/Brent/develop/flutter/bin/flutter.bat' test
-'/c/Users/Brent/develop/flutter/bin/dart.bat' test
+'/c/Users/Brent/dev/flutter/bin/flutter.bat' analyze
+'/c/Users/Brent/dev/flutter/bin/flutter.bat' test
+'/c/Users/Brent/dev/flutter/bin/dart.bat' test
 ```
 
 ## Flutter client
 
 ```bash
 cd apps/zentor_client
-'/c/Users/Brent/develop/flutter/bin/flutter.bat' analyze
-'/c/Users/Brent/develop/flutter/bin/flutter.bat' test
-'/c/Users/Brent/develop/flutter/bin/flutter.bat' build windows --debug
+'/c/Users/Brent/dev/flutter/bin/flutter.bat' analyze
+'/c/Users/Brent/dev/flutter/bin/flutter.bat' test
+'/c/Users/Brent/dev/flutter/bin/flutter.bat' build windows --debug
 ```
 
 Current coverage includes API failure handling, startup smoke tests, app detection empty states, scan target planning, offline scan orchestration, stale error clearing, and local event log corruption recovery.
@@ -64,8 +64,14 @@ Known environment limitation: Microsoft Defender may block the native-engine tes
 
 ```bash
 cd packages/zentor_protocol
-'/c/Users/Brent/develop/flutter/bin/dart.bat' test
+'/c/Users/Brent/dev/flutter/bin/dart.bat' test
+
+cd ../avorax_protocol
+'/c/Users/Brent/dev/flutter/bin/dart.bat' analyze
+'/c/Users/Brent/dev/flutter/bin/dart.bat' test
 ```
+
+`packages/avorax_protocol` covers shared update manifest parsing/defaults/serialization for `.aup` verifier and app compatibility.
 
 ## Release/build gates
 
@@ -74,9 +80,14 @@ Run these before tagging or shipping an installer when the required Windows/Powe
 ```bash
 powershell.exe -ExecutionPolicy Bypass -File tools/branding/branding-check.ps1
 powershell.exe -ExecutionPolicy Bypass -File tools/security/zentor-product-copy-gate.ps1
+powershell.exe -ExecutionPolicy Bypass -File tools/security/zentor-no-malware-binaries-gate.ps1 -RepoRoot .
 powershell.exe -ExecutionPolicy Bypass -File tools/security/zentor-false-positive-gate.ps1
+powershell.exe -ExecutionPolicy Bypass -File tools/security/zentor-protection-gate.ps1 -RepoRoot . -SelfTestReport <selftest_report.json>
+powershell.exe -ExecutionPolicy Bypass -File tools/perf/zentor-performance-gate.ps1 -RepoRoot .
 powershell.exe -ExecutionPolicy Bypass -File tools/windows/zentor-release-gate.ps1
 ```
+
+CI now runs the product-copy, no-malware-binaries, false-positive, protection, and performance gates. The CI protection gate uses a synthetic non-driver self-test fixture and does not claim kernel driver validation; driver-feature release gates still require a real signed/installed/self-tested driver report.
 
 Some service/driver/update gates may require elevation or a signed installed driver. If they cannot run, document the blocker in `RUN_LOG.md` and do not claim the gated capability as verified.
 
