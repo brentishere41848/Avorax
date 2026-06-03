@@ -1,4 +1,4 @@
-use std::path::{Path, PathBuf};
+use std::path::{Component, Path, PathBuf};
 
 use walkdir::WalkDir;
 
@@ -16,8 +16,12 @@ pub fn collect_files(root: &Path, max_depth: Option<usize>) -> WalkResult {
         WalkDir::new(root).max_depth(depth)
     } else {
         WalkDir::new(root)
-    };
-    for entry in walker.into_iter() {
+    }
+    .follow_links(false)
+    .into_iter()
+    .filter_entry(|entry| !is_excluded_path(entry.path()));
+
+    for entry in walker {
         match entry {
             Ok(entry) if entry.file_type().is_dir() => result.folders_scanned += 1,
             Ok(entry) if entry.file_type().is_file() => {
@@ -31,4 +35,27 @@ pub fn collect_files(root: &Path, max_depth: Option<usize>) -> WalkResult {
         }
     }
     result
+}
+
+fn is_excluded_path(path: &Path) -> bool {
+    let components: Vec<String> = path
+        .components()
+        .filter_map(|component| match component {
+            Component::Normal(value) => Some(value.to_string_lossy().to_ascii_lowercase()),
+            _ => None,
+        })
+        .collect();
+    components.iter().any(|component| {
+        matches!(
+            component.as_str(),
+            ".avorax"
+                | ".git"
+                | "node_modules"
+                | "target"
+                | "build"
+                | ".dart_tool"
+                | "quarantine"
+                | "avorax-quarantine"
+        )
+    })
 }

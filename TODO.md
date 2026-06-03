@@ -19,8 +19,10 @@ This backlog is the working plan for the long-horizon Avorax hardening sprint. I
 ## P1 - Core product quality
 
 - [x] Improve Quick Scan target planning with testable platform abstraction for Windows/macOS/Linux high-risk locations.
-- [ ] Improve Full Scan traversal exclusions for quarantine/cache/generated folders and symlink/junction loops.
+- [x] Improve Full Scan traversal exclusions for quarantine/cache/generated folders and symlink/junction loops.
 - [x] Add structured scan reports with elapsed time, current file, scanned count, detections, skipped files, and errors.
+- [x] Stream native engine file hashing while limiting detection sample reads to 64 MiB and reporting full hash/size/sample-limit metadata.
+- [x] Verify quarantine copy-fallback payload hash before deleting the original file and persist file size metadata.
 - [x] Add progress/cancellation tests for target selection and local core scan orchestration.
 - [x] Improve local core IPC diagnostics: preserve timeout, stderr, malformed JSON, and executable-missing context.
 - [x] Improve settings persistence and validation, including safe developer override disable flow.
@@ -41,7 +43,7 @@ This backlog is the working plan for the long-horizon Avorax hardening sprint. I
 ## P3 - Production hardening
 
 - [ ] Cache native engine instance in guard pre-execution path instead of initializing per request.
-- [ ] Replace full-file pre-execution hash reads with streaming hashing and documented size/time behavior.
+- [x] Replace native engine scan-file full-memory reads with streaming hashing and bounded scan samples; pre-execution guard streaming remains a follow-up.
 - [ ] Make update apply more atomic with rollback on mid-copy failures and service recovery attempts.
 - [ ] Add production update-key policy that rejects development keys unless explicitly enabled.
 - [ ] Expand CI to run product-copy, no-malware-binaries, false-positive, protection, and performance gates where feasible.

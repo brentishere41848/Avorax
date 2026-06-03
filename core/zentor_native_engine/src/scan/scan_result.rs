@@ -22,6 +22,12 @@ pub enum ScanActionMode {
 pub struct FileScanVerdict {
     pub path: PathBuf,
     pub sha256: String,
+    #[serde(default)]
+    pub file_size_bytes: u64,
+    #[serde(default)]
+    pub scanned_bytes: u64,
+    #[serde(default)]
+    pub scan_sample_limited: bool,
     pub engine: String,
     pub final_verdict: FinalVerdict,
     pub scanned_at: DateTime<Utc>,

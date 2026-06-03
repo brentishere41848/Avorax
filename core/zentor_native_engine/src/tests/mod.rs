@@ -9,6 +9,7 @@ mod tests {
     use crate::heuristics;
     use crate::ml::NativeModelRunner;
     use crate::rules::RuleDb;
+    use crate::scan::quick_scan_planner;
     use crate::scan::ScanActionMode;
     use crate::signatures::eicar_signature::EICAR_ASCII;
     use crate::signatures::{NativeSignature, SignatureDb, SignatureType};
@@ -101,6 +102,123 @@ mod tests {
     }
 
     #[test]
+    fn large_file_scan_reports_full_hash_and_sample_limit() {
+        let (dir, mut engine) = test_engine();
+        let file = dir.path().join("large-benign.bin");
+        let mut content = vec![b'A'; crate::scan::content_reader::MAX_FILE_BYTES as usize + 8192];
+        content[crate::scan::content_reader::MAX_FILE_BYTES as usize] = b'Z';
+        fs::write(&file, &content).unwrap();
+
+        let verdict = engine.scan_file(file, ScanActionMode::DetectOnly).unwrap();
+
+        assert_eq!(verdict.sha256, sha256_bytes(&content));
+        assert_eq!(verdict.file_size_bytes, content.len() as u64);
+        assert!(verdict.scan_sample_limited);
+        assert_eq!(
+            verdict.scanned_bytes,
+            crate::scan::content_reader::MAX_FILE_BYTES
+        );
+    }
+
+    #[test]
+    fn quarantine_copy_fallback_rejects_hash_mismatch_before_delete() {
+        let dir = tempfile::tempdir().unwrap();
+        let source = dir.path().join("source.exe");
+        let destination = dir.path().join("payload.avoraxq");
+        fs::write(&source, b"benign test payload").unwrap();
+
+        let error = crate::quarantine::quarantine_store::copy_then_remove_verified(
+            &source,
+            &destination,
+            "wrong-hash",
+        )
+        .unwrap_err();
+
+        assert!(source.exists());
+        assert!(!destination.exists());
+        assert!(error.to_string().contains("hash verification failed"));
+    }
+
+    #[test]
+    fn file_walker_excludes_quarantine_cache_and_generated_build_dirs() {
+        let dir = tempfile::tempdir().unwrap();
+        for relative in [
+            "safe/app.exe",
+            "quarantine/infected.exe",
+            ".avorax/cache/cached.exe",
+            "target/release/generated.exe",
+            "build/windows/generated.exe",
+        ] {
+            let path = dir.path().join(relative);
+            fs::create_dir_all(path.parent().unwrap()).unwrap();
+            fs::write(path, b"fixture").unwrap();
+        }
+
+        let walk = crate::scan::file_walker::collect_files(dir.path(), None);
+
+        assert_eq!(walk.files.len(), 1);
+        assert!(walk.files[0].ends_with("app.exe"));
+    }
+
+    #[test]
+    fn quick_scan_plan_includes_browser_downloads_startup_and_temp_without_duplicates() {
+        let dir = tempfile::tempdir().unwrap();
+        let profile = dir.path().join("User");
+        let local_appdata = profile.join("AppData").join("Local");
+        let program_data = dir.path().join("ProgramData");
+        let temp = local_appdata.join("Temp");
+        for path in [
+            profile.join("Downloads"),
+            profile.join("Desktop"),
+            profile
+                .join("AppData")
+                .join("Roaming")
+                .join("Microsoft")
+                .join("Windows")
+                .join("Start Menu")
+                .join("Programs")
+                .join("Startup"),
+            local_appdata
+                .join("Microsoft")
+                .join("Edge")
+                .join("User Data"),
+            local_appdata
+                .join("Google")
+                .join("Chrome")
+                .join("User Data"),
+            temp.clone(),
+            program_data
+                .join("Microsoft")
+                .join("Windows")
+                .join("Start Menu")
+                .join("Programs")
+                .join("Startup"),
+        ] {
+            fs::create_dir_all(path).unwrap();
+        }
+
+        let roots = quick_scan_planner::quick_scan_roots_from_env(
+            Some(profile.as_path()),
+            Some(temp.as_path()),
+            Some(local_appdata.as_path()),
+            Some(program_data.as_path()),
+        );
+
+        assert!(roots.iter().any(|path| path.ends_with("Downloads")));
+        assert!(roots.iter().any(|path| path.ends_with("Desktop")));
+        assert!(roots
+            .iter()
+            .any(|path| path.to_string_lossy().contains("Microsoft\\Edge")
+                || path.to_string_lossy().contains("Microsoft/Edge")));
+        assert!(roots
+            .iter()
+            .any(|path| path.to_string_lossy().contains("Google\\Chrome")
+                || path.to_string_lossy().contains("Google/Chrome")));
+        let unique: std::collections::BTreeSet<_> = roots.iter().collect();
+        assert_eq!(unique.len(), roots.len());
+    }
+
+    #[test]
     fn normal_exe_in_downloads_is_not_malware() {
         let (dir, mut engine) = test_engine();
         let downloads = dir.path().join("Downloads");
@@ -161,9 +279,10 @@ mod tests {
         assert_eq!(verdict.final_verdict.verdict, Verdict::ConfirmedMalware);
         assert_eq!(verdict.final_verdict.confidence, Confidence::Confirmed);
         assert_eq!(verdict.final_verdict.category, ThreatCategory::Trojan);
-        assert!(verdict.final_verdict.user_visible_explanation.contains(
-            "GitHub malware-intel known-bad hash fixture"
-        ));
+        assert!(verdict
+            .final_verdict
+            .user_visible_explanation
+            .contains("GitHub malware-intel known-bad hash fixture"));
     }
 
     #[test]
@@ -472,7 +591,10 @@ mod tests {
                 ScanActionMode::DetectOnly,
             )
             .unwrap();
-        assert_eq!(verdict.final_verdict.category, ThreatCategory::SuspiciousDownloader);
+        assert_eq!(
+            verdict.final_verdict.category,
+            ThreatCategory::SuspiciousDownloader
+        );
         assert!(matches!(
             verdict.final_verdict.verdict,
             Verdict::Suspicious | Verdict::ProbableMalware

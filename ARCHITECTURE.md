@@ -75,8 +75,8 @@ The UI must remain honest: if a service, driver, ML model, cloud provider, or pr
    - Custom Scan: selected file/folder only.
 3. `ZentorController` invokes `LocalCoreClient.scanPaths` or `scanFile`.
 4. `zentor_local_core` loads the native engine and resolves engine assets from installed paths, environment overrides, or repo assets.
-5. `zentor_native_engine` scans content using signatures, rules, heuristics, trust stores, and the development ML interface.
-6. Results are converted to protocol models and displayed with progress, detections, skipped files, and errors.
+5. `zentor_native_engine` streams file reads for SHA-256/size metadata while retaining a bounded 64 MiB content sample for signature/rule/heuristic analysis, so large files do not need to be fully loaded into memory.
+6. Results are converted to protocol models and displayed with progress, detections, skipped files, errors, full-file hash, file size, scanned-byte count, and sample-limit flags where available.
 7. Confirmed threats may be quarantined only under explicit scan policy and allowlist checks.
 
 ## Detection engine
@@ -90,7 +90,7 @@ The native engine is the source of truth for local malware verdicts. It includes
 - A development ML model interface. The bundled development model is not production-ready and must not be marketed as production AI protection.
 - Verdict fusion into clean, unknown, suspicious, probable, confirmed/test threat-style results with evidence and reason codes.
 
-Large-file and archive handling must be conservative and explicit when content is partially scanned or skipped.
+Large-file and archive handling must be conservative and explicit when content is partially scanned or skipped. Current native engine file scans compute the full-file SHA-256 via streaming I/O and analyze a bounded sample; verdict metadata marks when the analysis sample was limited.
 
 ## Quarantine
 

@@ -16,7 +16,7 @@ use crate::heuristics;
 use crate::ml::{feature_extractor, NativeModelRunner};
 use crate::quarantine::{QuarantineRecord, QuarantineStore};
 use crate::rules::RuleDb;
-use crate::scan::content_reader::read_scan_bytes;
+use crate::scan::content_reader::{read_scan_bytes, read_scan_content};
 use crate::scan::file_walker;
 use crate::scan::full_scan_planner;
 use crate::scan::quick_scan_planner;
@@ -118,8 +118,19 @@ impl ZentorNativeEngine {
     }
 
     pub fn scan_file(&mut self, path: PathBuf, mode: ScanActionMode) -> Result<FileScanVerdict> {
-        let bytes = read_scan_bytes(&path)?;
-        self.scan_bytes_at(path, &bytes, mode, true)
+        let content = read_scan_content(&path)?;
+        self.scan_bytes_at(
+            path,
+            &content.sampled_bytes,
+            mode,
+            true,
+            Some((
+                content.full_sha256,
+                content.file_size_bytes,
+                content.scanned_bytes,
+                content.sample_limited,
+            )),
+        )
     }
 
     pub fn scan_bytes_for_test(
@@ -128,7 +139,7 @@ impl ZentorNativeEngine {
         bytes: &[u8],
         mode: ScanActionMode,
     ) -> Result<FileScanVerdict> {
-        self.scan_bytes_at(path, bytes, mode, false)
+        self.scan_bytes_at(path, bytes, mode, false, None)
     }
 
     fn scan_bytes_at(
@@ -137,8 +148,17 @@ impl ZentorNativeEngine {
         bytes: &[u8],
         mode: ScanActionMode,
         allow_quarantine: bool,
+        content_metadata: Option<(String, u64, u64, bool)>,
     ) -> Result<FileScanVerdict> {
-        let sha256 = sha256_bytes(&bytes);
+        let (sha256, file_size_bytes, scanned_bytes, scan_sample_limited) = content_metadata
+            .unwrap_or_else(|| {
+                (
+                    sha256_bytes(bytes),
+                    bytes.len() as u64,
+                    bytes.len() as u64,
+                    false,
+                )
+            });
         let analysis = analyze_path(&path, bytes)?;
         let known_good = self.known_good.contains(&sha256);
         let known_bad = self.known_bad.contains(&sha256);
@@ -256,6 +276,9 @@ impl ZentorNativeEngine {
         Ok(FileScanVerdict {
             path,
             sha256,
+            file_size_bytes,
+            scanned_bytes,
+            scan_sample_limited,
             engine: "Avorax Native Engine".to_string(),
             final_verdict,
             scanned_at: Utc::now(),
@@ -406,7 +429,10 @@ impl ZentorNativeEngine {
                     }
                     if !matches!(
                         verdict.final_verdict.verdict,
-                        Verdict::Clean | Verdict::LikelyClean | Verdict::Unknown | Verdict::Observation
+                        Verdict::Clean
+                            | Verdict::LikelyClean
+                            | Verdict::Unknown
+                            | Verdict::Observation
                     ) {
                         progress.threats_found += 1;
                         if verdict.quarantine_record.is_some() {

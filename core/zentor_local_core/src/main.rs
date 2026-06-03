@@ -868,7 +868,6 @@ fn threat_from_native(
     path: &Path,
     verdict: &zentor_native_engine::FileScanVerdict,
 ) -> ThreatResult {
-    let metadata = std::fs::metadata(path).ok();
     let confidence = native_confidence(verdict.final_verdict.confidence);
     let risk_verdict = native_risk_verdict(verdict.final_verdict.verdict);
     let engines_used = verdict
@@ -915,7 +914,7 @@ fn threat_from_native(
             .map(|name| name.to_string_lossy().to_string())
             .unwrap_or_default(),
         sha256: verdict.sha256.clone(),
-        size_bytes: metadata.map(|metadata| metadata.len()).unwrap_or_default(),
+        size_bytes: verdict.file_size_bytes,
         detection_type,
         threat_category: native_category(verdict.final_verdict.category),
         threat_name: native_threat_name(verdict.final_verdict.verdict),

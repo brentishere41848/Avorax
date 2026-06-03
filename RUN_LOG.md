@@ -6,7 +6,7 @@ Lead-engineer product-hardening pass across the Avorax repository. Goal is to mo
 
 ## Professional assumptions
 
-- Current repository path is `C:\Users\Brent\Downloads\pasus_anti-virus-main\pasus_anti-virus-main`.
+- Current repository path is `C:\Users\Brent\Avorax`.
 - The active product is Avorax. Historical/internal `zentor_*` names remain in code paths and crate/package names.
 - The product must remain defensive only. No real malware samples, destructive behavior, stealth, evasion, or unsupported security claims are acceptable.
 - The signed Windows driver path is not assumed active unless a validation report proves it is installed, running, communicating, and self-tested.
@@ -88,12 +88,12 @@ Lead-engineer product-hardening pass across the Avorax repository. Goal is to mo
 - `git status --short --branch`.
 - Toolchain discovery:
   - Cargo available at `C:\Users\Brent\.cargo\bin\cargo`, version `1.96.0`.
-  - Flutter SDK exists at `C:\Users\Brent\develop\flutter\bin` but is not currently on Git Bash `PATH`.
+  - Flutter SDK exists at `C:\Users\Brent\dev\flutter\bin` and Cargo at `C:\Users\Brent\.cargo\bin`; both were used via explicit PATH in this pass.
   - PowerShell is available.
 
 ## Known limitations / blockers
 
-- Flutter is not on shell `PATH`; use `C:\Users\Brent\develop\flutter\bin\flutter.bat` when running Flutter checks from this environment.
+- Flutter is not on shell `PATH`; use `C:\Users\Brent\dev\flutter\bin\flutter` when running Flutter checks from this Git Bash environment.
 - Some Windows service/update tests may require elevation and can fail with Windows elevation error 740 in a non-elevated shell.
 - Driver validation requires a signed/installed/self-tested driver report and cannot be assumed complete.
 - `packages/avorax_protocol` currently lacks `package:test` dev dependency, so `dart test` expectations for it need cleanup or dependency additions.
@@ -158,3 +158,58 @@ Lead-engineer product-hardening pass across the Avorax repository. Goal is to mo
 1. Harden guard-service IPC trust boundary so caller-provided publisher/signature fields cannot bypass policy unless verified by a trusted driver/service path.
 2. Add ransomware protected-folder settings, allowlist validation, and harmless simulation tests.
 3. Run full release gates in a provisioned elevated Windows environment before tagging a new release.
+
+
+## 2026-06-03 hardening continuation
+
+### Completed changes
+
+- Added streaming scan-content reads in `core/zentor_native_engine`: file scans now compute the full-file SHA-256 via buffered I/O while keeping a bounded 64 MiB analysis sample, reducing memory pressure on large files.
+- Extended `FileScanVerdict` with `file_size_bytes`, `scanned_bytes`, and `scan_sample_limited` metadata so reports can distinguish full-file identity from bounded content analysis.
+- Expanded Quick Scan planning to include deduplicated high-risk Windows locations: Downloads, Desktop, user/all-users Startup folders, TEMP/LocalAppData temp, and common Edge/Chrome/Firefox profile/download areas when present.
+- Hardened Full Scan traversal by not following links and excluding quarantine, `.avorax`, `.git`, `target`, `build`, `.dart_tool`, and `node_modules` trees by default.
+- Hardened native-engine quarantine copy fallback so the copied payload hash must match the expected SHA-256 before the original file is deleted; metadata now also records file size.
+- Updated local core threat conversion to use native-engine file-size metadata instead of re-reading metadata after a possible quarantine/move.
+- Updated Scan UI copy to describe progress, hashes, skipped/error reporting, and conservative large-file handling.
+- Updated `TODO.md`, `ARCHITECTURE.md`, and `SECURITY_MODEL.md` for the implemented scan/quarantine hardening.
+
+### Files modified
+
+- `ARCHITECTURE.md`
+- `SECURITY_MODEL.md`
+- `TODO.md`
+- `apps/zentor_client/lib/features/scan/scan_screen.dart`
+- `core/zentor_local_core/src/main.rs`
+- `core/zentor_native_engine/src/engine.rs`
+- `core/zentor_native_engine/src/quarantine/quarantine_store.rs`
+- `core/zentor_native_engine/src/scan/content_reader.rs`
+- `core/zentor_native_engine/src/scan/file_walker.rs`
+- `core/zentor_native_engine/src/scan/quick_scan_planner.rs`
+- `core/zentor_native_engine/src/scan/scan_result.rs`
+- `core/zentor_native_engine/src/tests/mod.rs`
+
+### Tests/checks run
+
+- `cargo test --manifest-path core/zentor_native_engine/Cargo.toml` passed: 35 tests.
+- `cargo test --manifest-path core/zentor_local_core/Cargo.toml` passed: 64 tests.
+- `cargo test --manifest-path core/zentor_guard_service/Cargo.toml` passed: 19 tests.
+- `cargo check --manifest-path core/avorax_update_service/Cargo.toml --bins` passed.
+- `cd apps/zentor_client && flutter analyze` passed with no issues.
+- `cd apps/zentor_client && flutter test` passed: 37 tests.
+- `cd apps/zentor_client && flutter build windows --debug` produced `build\windows\x64\runner\Debug\Avorax.exe`.
+- `cargo build --release --manifest-path core/zentor_local_core/Cargo.toml` passed and the rebuilt core service was copied beside the debug app as `avorax_core_service.exe` and `zentor_local_core.exe`.
+- Local core health check passed with `ok: true` and native engine `ready`.
+
+### Known limitations
+
+- Existing tag `v0.2.2` already exists in the repository while newer tags through `v0.2.16` also exist; creating a new release with the same tag is not possible without deleting/moving an existing published tag, which should not be done casually.
+- Push to `origin/main` was attempted after the local hardening commit, but GitHub HTTPS authentication is not available in this environment (`could not read Username for https://github.com`). The local branch remains one commit ahead of origin.
+- Build warnings remain in `zentor_local_core` for existing unused compatibility paths; tests still pass.
+- Signed Windows driver validation was not performed in this environment; kernel/pre-execution protection remains documented as developmental unless separately installed, signed, and self-tested.
+
+### Next recommended tasks
+
+1. Harden guard-service IPC trust boundary so caller-provided publisher/signature fields cannot bypass policy unless verified by a trusted driver/service path.
+2. Add ransomware protected-folder settings, allowlist validation, UI event history, and harmless simulation tests.
+3. Add protocol/UI surfacing for scan sample-limit metadata in exported reports.
+4. Choose a new release tag above the current latest (`v0.2.16`) or explicitly decide to move/recreate `v0.2.2` if that is truly intended.

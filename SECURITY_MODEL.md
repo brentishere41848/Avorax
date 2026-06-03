@@ -90,7 +90,7 @@ Full Scan may traverse drives or home filesystem areas but must avoid unsafe tra
 
 - Do not follow symlink/junction loops.
 - Skip quarantine, app caches, generated build outputs, and explicitly excluded directories unless configured otherwise.
-- Bound memory use; stream large files where possible.
+- Bound memory use; stream large files where possible. Current native file scans stream full-file hashing and analyze a bounded 64 MiB sample with explicit sample-limit metadata.
 - Handle denied/locked/huge/unusual paths gracefully.
 - Support cancellation and progress reporting.
 
@@ -106,7 +106,7 @@ Verdicts should include evidence, reason codes, confidence, and recommended acti
 ## Quarantine safety model
 
 - Quarantine should move files rather than delete them.
-- Quarantine records must store original path, normalized safe quarantine path, detection/evidence, timestamp, hash, and size where available.
+- Quarantine records must store original path, normalized safe quarantine path, detection/evidence, timestamp, hash, and size where available. The copy fallback verifies the quarantined payload hash before removing the original.
 - Restore must require explicit confirmation.
 - Restore must reject path traversal and unsafe destinations.
 - Restore must not overwrite existing files without explicit separate handling.

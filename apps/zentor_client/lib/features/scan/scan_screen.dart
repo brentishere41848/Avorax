@@ -30,7 +30,7 @@ class ScanScreen extends ConsumerWidget {
               const SizedBox(height: 8),
               Text(
                 desktop
-                    ? 'Scan high-risk locations, all accessible local areas, or a file/folder you choose.'
+                    ? 'Scan high-risk locations, all accessible local areas, or a file/folder you choose. Reports include progress, skipped files, errors, hashes, and conservative large-file handling.'
                     : 'Malware quarantine is not available on this platform because mobile OS sandboxing prevents full-device scanning.',
                 style: const TextStyle(color: ZentorColors.textSecondary),
               ),
