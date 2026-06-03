@@ -207,18 +207,12 @@ class ZentorUpdateService {
     if (packagePath == null) {
       throw StateError('No downloaded update package is available to verify.');
     }
-    final updater = _updateServiceExecutable();
-    if (updater == null || !File(updater).existsSync()) {
-      throw StateError('Avorax Update Service executable is missing.');
-    }
-    final result = await Process.run(updater, [
+    final updater = _requireUpdateServiceExecutable();
+    await _runUpdater(updater, [
       '--verify',
       packagePath,
       update.currentVersion,
-    ]);
-    if (result.exitCode != 0) {
-      throw StateError('Update verification failed: ${result.stderr}');
-    }
+    ], elevated: Platform.isWindows);
   }
 
   Future<void> installDownloadedPackage(UpdateInfo update) async {
@@ -262,12 +256,13 @@ class ZentorUpdateService {
         '-ExecutionPolicy',
         'Bypass',
         '-Command',
-        "Start-Process -FilePath '$escapedUpdater' -ArgumentList @($escapedArgs) -Verb RunAs -Wait",
+        "\$p = Start-Process -FilePath '$escapedUpdater' -ArgumentList @($escapedArgs) -Verb RunAs -Wait -PassThru; exit \$p.ExitCode",
       ]);
+      final stderr = await process.stderr.transform(utf8.decoder).join();
       final exitCode = await process.exitCode;
       if (exitCode != 0) {
         throw StateError(
-          'Could not start Avorax Update Service. Exit code: $exitCode.',
+          'Avorax Update Service failed. Exit code: $exitCode. $stderr',
         );
       }
       return;

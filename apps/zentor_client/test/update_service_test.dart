@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -83,6 +84,22 @@ void main() {
 
     expect(result.status, UpdateStatus.failed);
     expect(result.error, contains('HTTP 403'));
+  });
+
+  test('Windows verification uses elevated updater path', () {
+    final source = File(
+      'lib/core/updates/update_service.dart',
+    ).readAsStringSync();
+    final verifyMethod = source.substring(
+      source.indexOf('Future<void> verifyDownloadedPackage'),
+      source.indexOf('Future<void> installDownloadedPackage'),
+    );
+
+    expect(verifyMethod, contains('_runUpdater'));
+    expect(verifyMethod, contains('elevated: Platform.isWindows'));
+    expect(verifyMethod, isNot(contains('Process.run(updater')));
+    expect(source, contains('-Verb RunAs -Wait -PassThru'));
+    expect(source, contains(r'exit \$p.ExitCode'));
   });
 }
 
