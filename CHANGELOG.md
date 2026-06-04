@@ -20,6 +20,7 @@ All notable Avorax changes should be documented here. Version entries avoid unsu
 - Added application-control regression coverage proving strong probable-malware evidence overrides stale known-good hashes, exact user hash approvals, and trusted-publisher signatures.
 - Added real-time watcher cache regression coverage proving same-size rewrites with changed file modified timestamps require a new scan.
 - Added training-label regression coverage proving a newer confirmed-malicious label revokes an older false-positive/trusted suppression for the same hash.
+- Added native detection-provider registry/interface tests for enabled-provider evaluation, disabled-provider suppression, and provider inventory exposure.
 
 ### Changed
 
@@ -40,6 +41,7 @@ All notable Avorax changes should be documented here. Version entries avoid unsu
 - Application control now evaluates strong probable-malware evidence before known-good hashes, exact user approvals, and trusted-publisher allow decisions so stale trust records cannot silently allow newly suspicious payloads.
 - Real-time watcher duplicate-scan suppression now fingerprints file size plus modified time so same-size payload replacements are rescanned instead of treated as unchanged.
 - Training-label false-positive/trusted-app suppressions now use the newest valid label for a file hash, so later confirmed-malicious labels revoke older suppressions.
+- Native engine status now exposes detection-provider inventory, including built-in signatures, rules, heuristics, ML, disabled compatibility/YARA, and disabled cloud reputation provider states, without requiring UI code to know provider internals.
 
 ### Verified
 
@@ -52,6 +54,8 @@ All notable Avorax changes should be documented here. Version entries avoid unsu
 - Navigation accessibility widget tests pass.
 - Updated performance gate passes and generates the safe benchmark report.
 - Local-core protection tests pass: `cargo test --manifest-path core/zentor_local_core/Cargo.toml -- --nocapture` with 82 tests.
+- Native-engine tests pass: `cargo test --manifest-path core/zentor_native_engine/Cargo.toml -- --nocapture` with 38 tests.
+- Guard-service tests pass: `cargo test --manifest-path core/zentor_guard_service/Cargo.toml -- --nocapture` with 22 tests.
 
 ### Known limitations
 

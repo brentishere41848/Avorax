@@ -1013,6 +1013,9 @@ fn native_engine_source(
             RiskEngine::Heuristic
         }
         zentor_native_engine::verdict::risk_fusion::EvidenceSource::NativeMl => RiskEngine::LocalAi,
+        zentor_native_engine::verdict::risk_fusion::EvidenceSource::CloudReputation => {
+            RiskEngine::ReputationOptional
+        }
         zentor_native_engine::verdict::risk_fusion::EvidenceSource::NativeBehavior => {
             RiskEngine::Behavior
         }
@@ -1031,6 +1034,9 @@ fn native_reason_source(
         }
         zentor_native_engine::verdict::risk_fusion::EvidenceSource::NativeBehavior => {
             RiskReasonSource::Behavior
+        }
+        zentor_native_engine::verdict::risk_fusion::EvidenceSource::CloudReputation => {
+            RiskReasonSource::CloudOptional
         }
         zentor_native_engine::verdict::risk_fusion::EvidenceSource::TrustStore => {
             RiskReasonSource::UserLabel

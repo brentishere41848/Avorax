@@ -56,7 +56,10 @@ cargo test --manifest-path core/zentor_guard_service/Cargo.toml driver_ipc -- --
 
 ```bash
 cargo test --manifest-path core/zentor_native_engine/Cargo.toml
+cargo test --manifest-path core/zentor_native_engine/Cargo.toml provider -- --nocapture
 ```
+
+Current coverage includes native signatures, deterministic rules, heuristics, development-model safety, threat-intel pack import, streaming large-file metadata, quarantine copy fallback, behavior/ransomware windows, and detection-provider registry/status behavior.
 
 Known environment limitation: Microsoft Defender may block the native-engine test executable with Windows error 225 because antivirus test fixtures intentionally resemble malware signatures. That is an environment/security-tool block, not a successful test run. Re-run in a trusted development folder or with an explicit developer exclusion only if appropriate.
 

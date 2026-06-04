@@ -12,6 +12,7 @@ use crate::behavior::{
     BehaviorDecision, FileActivityEvent, ProcessStartEvent, RansomwareActivityWindow,
 };
 use crate::config::EngineConfig;
+use crate::detection_provider::{builtin_provider_inventory, DetectionProviderInfo};
 use crate::heuristics;
 use crate::ml::{feature_extractor, NativeModelRunner};
 use crate::quarantine::{QuarantineRecord, QuarantineStore};
@@ -46,6 +47,8 @@ pub struct EngineStatus {
     pub known_bad_count: usize,
     pub last_error: Option<String>,
     pub compatibility_engines_disabled_by_default: bool,
+    #[serde(default)]
+    pub detection_providers: Vec<DetectionProviderInfo>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -114,6 +117,12 @@ impl ZentorNativeEngine {
             known_bad_count: self.known_bad.count(),
             last_error: None,
             compatibility_engines_disabled_by_default: !self.config.compatibility_engines_enabled,
+            detection_providers: builtin_provider_inventory(
+                self.signatures.count(),
+                self.rules.count(),
+                self.ml.is_loaded(),
+                self.config.compatibility_engines_enabled,
+            ),
         }
     }
 

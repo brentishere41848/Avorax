@@ -10,6 +10,7 @@ pub enum EvidenceSource {
     NativeHeuristic,
     NativeMl,
     NativeBehavior,
+    CloudReputation,
     ApplicationControl,
     TrustStore,
 }

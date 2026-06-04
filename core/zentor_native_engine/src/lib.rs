@@ -1,6 +1,7 @@
 pub mod analyzers;
 pub mod behavior;
 pub mod config;
+pub mod detection_provider;
 pub mod engine;
 pub mod heuristics;
 pub mod ml;
@@ -18,6 +19,7 @@ pub mod verdict;
 mod tests;
 
 pub use config::EngineConfig;
-pub use engine::{EngineStatus, ZentorNativeEngine, SelfTestReport};
+pub use detection_provider::{DetectionProviderInfo, DetectionProviderStatus};
+pub use engine::{EngineStatus, SelfTestReport, ZentorNativeEngine};
 pub use scan::{FileScanVerdict, ScanActionMode, ScanJobId, ScanMode, ScanProgress, ScanSummary};
 pub use verdict::{Confidence, ThreatCategory, Verdict};

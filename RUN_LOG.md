@@ -600,3 +600,43 @@ Lead-engineer product-hardening pass across the Avorax repository. Goal is to mo
 - A later confirmed-malicious user label can now revoke older false-positive/trusted-app suppression for the same hash.
 - Remaining work continues with further protection-quality review of scanner, guard, update, UI honesty, and elevated/provisioned driver validation paths.
 
+
+## 2026-06-04 hardening continuation 13
+
+### Completed changes
+
+- Added a native detection-provider interface and registry with provider inventory/status reporting.
+- Added regression coverage for enabled provider evaluation, disabled provider non-evaluation, and native-engine status exposing provider inventory without UI/provider coupling.
+- Added honest disabled/unavailable provider inventory entries for future compatibility/YARA and cloud-reputation sources when they are not configured/enabled.
+- Added `CloudReputation` as an evidence source and mapped it in local-core conversion to optional reputation engine/reason categories.
+- Updated `TODO.md`, `ARCHITECTURE.md`, `SECURITY_MODEL.md`, `TESTING.md`, and `CHANGELOG.md` with the provider interface and disabled cloud-reputation behavior.
+
+### Files modified
+
+- `TODO.md`
+- `ARCHITECTURE.md`
+- `SECURITY_MODEL.md`
+- `TESTING.md`
+- `CHANGELOG.md`
+- `RUN_LOG.md`
+- `core/zentor_local_core/src/main.rs`
+- `core/zentor_native_engine/src/detection_provider.rs`
+- `core/zentor_native_engine/src/engine.rs`
+- `core/zentor_native_engine/src/lib.rs`
+- `core/zentor_native_engine/src/tests/mod.rs`
+- `core/zentor_native_engine/src/verdict/risk_fusion.rs`
+
+### Tests/checks run
+
+- `cargo test --manifest-path core/zentor_native_engine/Cargo.toml provider -- --nocapture` failed before implementation because `crate::detection_provider` did not exist, proving the new provider API contract was absent.
+- `cargo test --manifest-path core/zentor_native_engine/Cargo.toml provider -- --nocapture` passed with 3 focused provider tests after implementation.
+- `cargo test --manifest-path core/zentor_native_engine/Cargo.toml -- --nocapture` passed with 38 native-engine tests.
+- `cargo test --manifest-path core/zentor_local_core/Cargo.toml -- --nocapture` passed with 82 local-core tests after adding the cloud-reputation evidence-source mapping.
+- `cargo test --manifest-path core/zentor_guard_service/Cargo.toml -- --nocapture` passed with 22 guard-service tests.
+
+### Current status
+
+- Native engine now has a provider registry/status contract for future detection sources while keeping disabled providers from contributing evidence.
+- Cloud reputation remains disabled/unavailable unless a real backend is configured; the product should surface that honestly rather than imply cloud coverage.
+- Remaining open backlog items are broader accessibility/localization readiness and elevated/provisioned benchmark/driver validation paths.
+

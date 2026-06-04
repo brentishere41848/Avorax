@@ -5,6 +5,9 @@ mod tests {
     use crate::analyzers::{analyze_path, FileType};
     use crate::behavior::{BehaviorDecision, FileActivityEvent};
     use crate::config::EngineConfig;
+    use crate::detection_provider::{
+        DetectionProvider, DetectionProviderRegistry, DetectionProviderStatus, ScanContext,
+    };
     use crate::engine::{sha256_bytes, ZentorNativeEngine};
     use crate::heuristics;
     use crate::ml::NativeModelRunner;
@@ -99,6 +102,131 @@ mod tests {
             .unwrap();
         assert_eq!(verdict.engine, "Avorax Native Engine");
         assert_eq!(verdict.final_verdict.verdict, Verdict::TestThreat);
+    }
+
+    #[test]
+    fn provider_registry_runs_enabled_provider_and_reports_inventory() {
+        struct FixtureProvider;
+
+        impl DetectionProvider for FixtureProvider {
+            fn id(&self) -> &'static str {
+                "fixture.provider"
+            }
+
+            fn display_name(&self) -> &'static str {
+                "Fixture Provider"
+            }
+
+            fn source(&self) -> crate::verdict::EvidenceSource {
+                crate::verdict::EvidenceSource::NativeRule
+            }
+
+            fn evaluate(
+                &self,
+                context: &ScanContext<'_>,
+            ) -> anyhow::Result<Vec<crate::verdict::Evidence>> {
+                assert_eq!(context.sha256, sha256_bytes(context.bytes));
+                Ok(vec![crate::verdict::Evidence {
+                    id: "fixture_provider_hit".to_string(),
+                    title: "Fixture provider hit".to_string(),
+                    detail: format!("{} bytes observed", context.bytes.len()),
+                    weight: 45,
+                    source: self.source(),
+                }])
+            }
+        }
+
+        let path = std::path::PathBuf::from("fixture.ps1");
+        let bytes = b"Write-Host fixture";
+        let analysis = analyze_path(&path, bytes).unwrap();
+        let sha256 = sha256_bytes(bytes);
+        let mut registry = DetectionProviderRegistry::default();
+        registry.register(Box::new(FixtureProvider));
+
+        let providers = registry.providers();
+        assert_eq!(providers.len(), 1);
+        assert_eq!(providers[0].id, "fixture.provider");
+        assert_eq!(providers[0].status, DetectionProviderStatus::Enabled);
+
+        let evidence = registry
+            .evaluate(&ScanContext {
+                path: &path,
+                sha256: &sha256,
+                bytes,
+                analysis: &analysis,
+            })
+            .unwrap();
+
+        assert!(evidence
+            .iter()
+            .any(|item| item.id == "fixture_provider_hit"));
+    }
+
+    #[test]
+    fn disabled_provider_is_reported_but_not_evaluated() {
+        struct DisabledFixtureProvider;
+
+        impl DetectionProvider for DisabledFixtureProvider {
+            fn id(&self) -> &'static str {
+                "fixture.disabled"
+            }
+
+            fn display_name(&self) -> &'static str {
+                "Disabled Fixture Provider"
+            }
+
+            fn source(&self) -> crate::verdict::EvidenceSource {
+                crate::verdict::EvidenceSource::NativeRule
+            }
+
+            fn status(&self) -> DetectionProviderStatus {
+                DetectionProviderStatus::Disabled
+            }
+
+            fn evaluate(
+                &self,
+                _context: &ScanContext<'_>,
+            ) -> anyhow::Result<Vec<crate::verdict::Evidence>> {
+                panic!("disabled providers must not be evaluated");
+            }
+        }
+
+        let path = std::path::PathBuf::from("fixture.ps1");
+        let bytes = b"Write-Host fixture";
+        let analysis = analyze_path(&path, bytes).unwrap();
+        let sha256 = sha256_bytes(bytes);
+        let mut registry = DetectionProviderRegistry::default();
+        registry.register(Box::new(DisabledFixtureProvider));
+
+        assert_eq!(
+            registry.providers()[0].status,
+            DetectionProviderStatus::Disabled
+        );
+        let evidence = registry
+            .evaluate(&ScanContext {
+                path: &path,
+                sha256: &sha256,
+                bytes,
+                analysis: &analysis,
+            })
+            .unwrap();
+        assert!(evidence.is_empty());
+    }
+
+    #[test]
+    fn engine_status_exposes_detection_provider_inventory_without_ui_coupling() {
+        let (_dir, engine) = test_engine();
+        let provider_ids = engine
+            .status()
+            .detection_providers
+            .into_iter()
+            .map(|provider| provider.id)
+            .collect::<Vec<_>>();
+
+        assert!(provider_ids.contains(&"native.signatures".to_string()));
+        assert!(provider_ids.contains(&"native.rules".to_string()));
+        assert!(provider_ids.contains(&"native.heuristics".to_string()));
+        assert!(provider_ids.contains(&"native.ml".to_string()));
     }
 
     #[test]

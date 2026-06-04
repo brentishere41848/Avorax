@@ -89,6 +89,7 @@ The native engine is the source of truth for local malware verdicts. It includes
 - Trust stores and known-good/known-bad inputs.
 - A development ML model interface. The bundled development model is not production-ready and must not be marketed as production AI protection.
 - Verdict fusion into clean, unknown, suspicious, probable, confirmed/test threat-style results with evidence and reason codes.
+- A native detection-provider interface and inventory model for future native, compatibility/YARA, and cloud-reputation sources. Provider status is exposed as enabled, disabled, or unavailable so UI surfaces can describe provider state without hard-coding provider-specific behavior.
 
 Large-file and archive handling must be conservative and explicit when content is partially scanned or skipped. Current native engine file scans compute the full-file SHA-256 via streaming I/O and analyze a bounded sample; verdict metadata marks when the analysis sample was limited.
 

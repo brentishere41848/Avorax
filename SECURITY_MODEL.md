@@ -164,7 +164,7 @@ Exports should be user-initiated and should clearly identify what data is includ
 - The Windows driver path is developmental unless a signed driver is installed, running, communicating with the guard service, and passing self-test.
 - User-mode monitoring cannot prevent all execution or file writes before they happen.
 - The bundled native ML model is currently a development model and cannot support production AI claims or automatic quarantine by itself.
-- Cloud reputation is optional/disabled unless a real backend is configured.
+- Cloud reputation is optional/disabled unless a real backend is configured; disabled/unavailable provider states must be represented honestly and must not contribute evidence or imply cloud coverage.
 - Some Windows service and update tests require elevation.
 - Driver validation requires Microsoft signing and a real self-test report.
 
