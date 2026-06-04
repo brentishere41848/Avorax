@@ -543,3 +543,31 @@ Lead-engineer product-hardening pass across the Avorax repository. Goal is to mo
 - Stale trust records can no longer silently allow execution when current scan/risk evidence says a payload is probably malicious.
 - Remaining work continues with further protection-quality review of scanner, guard, update, UI honesty, and elevated/provisioned driver validation paths.
 
+
+## 2026-06-04 hardening continuation 11
+
+### Completed changes
+
+- Hardened the user-mode watcher unchanged-file cache by changing duplicate suppression from size-only to a size-plus-modified-time fingerprint.
+- Added regression coverage proving a same-size rewrite with a new file modified timestamp is rescanned instead of skipped as unchanged.
+- Preserved the existing debounce/stable-file behavior for initial writes and size-growth events.
+- Updated `TODO.md`, `SECURITY_MODEL.md`, and `CHANGELOG.md` with the watcher cache behavior.
+
+### Files modified
+
+- `TODO.md`
+- `SECURITY_MODEL.md`
+- `CHANGELOG.md`
+- `RUN_LOG.md`
+- `core/zentor_local_core/src/watcher/mod.rs`
+
+### Tests/checks run
+
+- `cargo test --manifest-path core/zentor_local_core/Cargo.toml unchanged_file_cache -- --nocapture` passed with 2 focused watcher cache tests.
+- `cargo test --manifest-path core/zentor_local_core/Cargo.toml -- --nocapture` passed with 81 local-core tests.
+
+### Current status
+
+- User-mode real-time monitoring no longer suppresses a same-size payload replacement solely because the file size matches the previous scan.
+- Remaining work continues with further protection-quality review of scanner, guard, update, UI honesty, and elevated/provisioned driver validation paths.
+

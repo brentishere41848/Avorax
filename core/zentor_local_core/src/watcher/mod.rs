@@ -44,6 +44,7 @@ impl WatcherState {
 pub struct WatchEvent {
     pub path: PathBuf,
     pub size_bytes: u64,
+    pub modified_at_ms: u64,
     pub observed_at_ms: u64,
 }
 
@@ -52,6 +53,21 @@ impl WatchEvent {
         Self {
             path,
             size_bytes,
+            modified_at_ms: 0,
+            observed_at_ms,
+        }
+    }
+
+    pub fn modified_with_file_time(
+        path: PathBuf,
+        size_bytes: u64,
+        modified_at_ms: u64,
+        observed_at_ms: u64,
+    ) -> Self {
+        Self {
+            path,
+            size_bytes,
+            modified_at_ms,
             observed_at_ms,
         }
     }
@@ -77,9 +93,16 @@ pub struct MonitorObservation {
 #[derive(Debug, Clone)]
 struct FileSnapshot {
     size_bytes: u64,
+    modified_at_ms: u64,
     first_seen_ms: u64,
-    last_scanned_size_bytes: Option<u64>,
+    last_scanned_fingerprint: Option<FileFingerprint>,
     stable_observations: u8,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct FileFingerprint {
+    size_bytes: u64,
+    modified_at_ms: u64,
 }
 
 #[derive(Debug, Clone)]
@@ -106,15 +129,36 @@ impl UserModeFileMonitor {
             .entry(event.path.clone())
             .or_insert(FileSnapshot {
                 size_bytes: event.size_bytes,
+                modified_at_ms: event.modified_at_ms,
                 first_seen_ms: event.observed_at_ms,
-                last_scanned_size_bytes: None,
+                last_scanned_fingerprint: None,
                 stable_observations: 1,
             });
 
-        if snapshot.size_bytes != event.size_bytes {
+        if snapshot.size_bytes != event.size_bytes
+            || snapshot.modified_at_ms != event.modified_at_ms
+        {
+            let previous_size_bytes = snapshot.size_bytes;
+            let previous_modified_at_ms = snapshot.modified_at_ms;
+            let fingerprint = FileFingerprint {
+                size_bytes: event.size_bytes,
+                modified_at_ms: event.modified_at_ms,
+            };
+            let same_size_rewrite_after_scan = snapshot.last_scanned_fingerprint.is_some()
+                && previous_size_bytes == event.size_bytes
+                && previous_modified_at_ms != event.modified_at_ms;
+
             snapshot.size_bytes = event.size_bytes;
+            snapshot.modified_at_ms = event.modified_at_ms;
             snapshot.first_seen_ms = event.observed_at_ms;
             snapshot.stable_observations = 1;
+
+            if same_size_rewrite_after_scan {
+                snapshot.last_scanned_fingerprint = Some(fingerprint);
+                return WatchEvaluation::ScanRequired {
+                    reason: "created-or-modified".to_string(),
+                };
+            }
             return WatchEvaluation::WaitForStableFile;
         }
 
@@ -130,11 +174,15 @@ impl UserModeFileMonitor {
             return WatchEvaluation::WaitForStableFile;
         }
 
-        if snapshot.last_scanned_size_bytes == Some(event.size_bytes) {
+        let fingerprint = FileFingerprint {
+            size_bytes: event.size_bytes,
+            modified_at_ms: event.modified_at_ms,
+        };
+        if snapshot.last_scanned_fingerprint == Some(fingerprint) {
             return WatchEvaluation::AlreadyScannedUnchanged;
         }
 
-        snapshot.last_scanned_size_bytes = Some(event.size_bytes);
+        snapshot.last_scanned_fingerprint = Some(fingerprint);
         WatchEvaluation::ScanRequired {
             reason: "created-or-modified".to_string(),
         }
@@ -211,6 +259,53 @@ mod tests {
         assert_eq!(
             monitor.evaluate_event(WatchEvent::modified(path.clone(), 99, 2_100)),
             WatchEvaluation::WaitForStableFile
+        );
+    }
+
+    #[test]
+    fn unchanged_file_cache_rescans_same_size_file_when_modified_time_changes() {
+        let mut monitor = UserModeFileMonitor::new(Duration::from_millis(250), 2);
+        let path = PathBuf::from("C:/Users/Brent/Downloads/tool.exe");
+
+        assert_eq!(
+            monitor.evaluate_event(WatchEvent::modified_with_file_time(
+                path.clone(),
+                42,
+                10_000,
+                1_000
+            )),
+            WatchEvaluation::WaitForDebounce
+        );
+        assert_eq!(
+            monitor.evaluate_event(WatchEvent::modified_with_file_time(
+                path.clone(),
+                42,
+                10_000,
+                1_300
+            )),
+            WatchEvaluation::ScanRequired {
+                reason: "created-or-modified".into()
+            }
+        );
+        assert_eq!(
+            monitor.evaluate_event(WatchEvent::modified_with_file_time(
+                path.clone(),
+                42,
+                10_000,
+                1_700
+            )),
+            WatchEvaluation::AlreadyScannedUnchanged
+        );
+        assert_eq!(
+            monitor.evaluate_event(WatchEvent::modified_with_file_time(
+                path.clone(),
+                42,
+                11_000,
+                2_100
+            )),
+            WatchEvaluation::ScanRequired {
+                reason: "created-or-modified".into()
+            }
         );
     }
 

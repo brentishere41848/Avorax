@@ -94,6 +94,7 @@ Full Scan may traverse drives or home filesystem areas but must avoid unsafe tra
 - Bound memory use; stream large files where possible. Current native file scans stream full-file hashing and analyze a bounded 64 MiB sample with explicit sample-limit metadata. Guard pre-execution hashing also uses buffered streaming I/O, and the optional compatibility YARA fallback reads only a bounded 1 MiB sample.
 - Handle denied/locked/huge/unusual paths gracefully.
 - Support cancellation and progress reporting.
+- Real-time monitor duplicate suppression must not rely on size alone; the cache must include file modified time (or stronger content identity) so same-size payload replacements are scanned again.
 
 ### Detection and action policy
 

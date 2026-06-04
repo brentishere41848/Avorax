@@ -35,6 +35,7 @@ This backlog is the working plan for the long-horizon Avorax hardening sprint. I
 
 - [x] Wire best-effort user-mode real-time folder monitoring into local core `start_watch` / `stop_watch` instead of returning a stopped state.
 - [x] Add debounce, stable-file retry, unchanged-file cache, and event-evaluation tests for real-time monitoring.
+- [x] Harden real-time monitor unchanged-file cache so same-size rewrites with a new file modified timestamp are rescanned instead of skipped.
 - [x] Wire Flutter protection startup/shutdown to call `start_watch` / `stop_watch` for selected protected folders and show `userModeBestEffort` honestly in the Protection UI.
 - [x] Harden guard-service IPC trust boundary so caller-provided publisher/signature/hash fields cannot bypass policy unless verified by a trusted driver/service path.
 - [x] Harden application-control trust precedence so strong probable-malware evidence overrides known-good hash, user-approved hash, and trusted-publisher allow decisions until reviewed.

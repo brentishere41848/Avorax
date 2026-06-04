@@ -18,6 +18,7 @@ All notable Avorax changes should be documented here. Version entries avoid unsu
 - Added quarantine restore regression coverage that rejects tampered quarantined payloads before restoring.
 - Added ransomware guard regression coverage that prevents trusted backup/sync process paths from suppressing critical ransom-note or backup-tamper signals.
 - Added application-control regression coverage proving strong probable-malware evidence overrides stale known-good hashes, exact user hash approvals, and trusted-publisher signatures.
+- Added real-time watcher cache regression coverage proving same-size rewrites with changed file modified timestamps require a new scan.
 
 ### Changed
 
@@ -36,6 +37,7 @@ All notable Avorax changes should be documented here. Version entries avoid unsu
 - Quarantine restore now verifies quarantined payload size and SHA-256 before moving the payload back to the original path.
 - Ransomware trusted-process suppression now applies only to ordinary mass-modification activity; ransom-note and backup-tamper signals override trusted-process suppression.
 - Application control now evaluates strong probable-malware evidence before known-good hashes, exact user approvals, and trusted-publisher allow decisions so stale trust records cannot silently allow newly suspicious payloads.
+- Real-time watcher duplicate-scan suppression now fingerprints file size plus modified time so same-size payload replacements are rescanned instead of treated as unchanged.
 
 ### Verified
 
@@ -47,7 +49,7 @@ All notable Avorax changes should be documented here. Version entries avoid unsu
 - Product-copy, no-malware-binaries, false-positive, protection, and performance gates pass locally in the non-driver configuration.
 - Navigation accessibility widget tests pass.
 - Updated performance gate passes and generates the safe benchmark report.
-- Local-core protection tests pass: `cargo test --manifest-path core/zentor_local_core/Cargo.toml -- --nocapture` with 80 tests.
+- Local-core protection tests pass: `cargo test --manifest-path core/zentor_local_core/Cargo.toml -- --nocapture` with 81 tests.
 
 ### Known limitations
 
