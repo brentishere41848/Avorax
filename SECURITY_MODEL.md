@@ -105,6 +105,7 @@ Verdicts should include evidence, reason codes, confidence, and recommended acti
 - Confirmed signature/test-threat findings: may quarantine only when scan mode permits, path is not allowlisted/trusted, and quarantine succeeds safely.
 - Strong probable-malware findings with independent evidence must be evaluated before stale local trust records such as known-good hashes, exact user approvals, or trusted-publisher allow decisions; in Lockdown they block pending review, and in less strict modes they are allowed only with monitoring/review.
 - ML-only detections from development models must not auto-quarantine.
+- User training labels may suppress only exact-hash false-positive/trusted-app review outcomes; suppression resolution must use the newest valid label for that hash so later confirmed-malicious/unsure labels can revoke stale suppression.
 
 Allowlist decisions must not reduce protection through path-only trust for mutable files:
 

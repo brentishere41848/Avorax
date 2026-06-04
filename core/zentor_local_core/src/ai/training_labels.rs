@@ -67,16 +67,16 @@ impl TrainingLabelStore {
         let Ok(body) = fs::read_to_string(&self.path) else {
             return false;
         };
-        body.lines().any(|line| {
-            let Ok(label) = serde_json::from_str::<TrainingLabel>(line) else {
-                return false;
-            };
-            label.file_sha256 == sha256
-                && matches!(
+        body.lines()
+            .filter_map(|line| serde_json::from_str::<TrainingLabel>(line).ok())
+            .filter(|label| label.file_sha256 == sha256)
+            .max_by_key(|label| label.created_at)
+            .is_some_and(|label| {
+                matches!(
                     label.user_label,
                     UserTrainingLabel::FalsePositive | UserTrainingLabel::TrustedApp
                 )
-        })
+            })
     }
 
     pub fn path(&self) -> &Path {
@@ -138,5 +138,46 @@ mod tests {
             .unwrap();
         assert!(store.suppresses_hash("abc123"));
         assert!(!store.suppresses_hash("other"));
+    }
+
+    #[test]
+    fn confirmed_malicious_label_revokes_prior_false_positive_suppression() {
+        let dir = tempdir().unwrap();
+        let store = TrainingLabelStore::with_path(dir.path().join("labels.jsonl"));
+        store
+            .append(test_label("abc123", UserTrainingLabel::FalsePositive))
+            .unwrap();
+        store
+            .append(test_label("abc123", UserTrainingLabel::ConfirmedMalicious))
+            .unwrap();
+
+        assert!(!store.suppresses_hash("abc123"));
+    }
+
+    fn test_label(file_sha256: &str, user_label: UserTrainingLabel) -> TrainingLabel {
+        TrainingLabel {
+            label_id: String::new(),
+            file_sha256: file_sha256.to_string(),
+            file_name: "tool.exe".to_string(),
+            file_path_category: "downloads".to_string(),
+            extracted_features: StaticFeatures {
+                file_size: 10,
+                file_extension: "exe".to_string(),
+                location_category: LocationCategory::Downloads,
+                double_extension: false,
+                embedded_urls_count: 0,
+                embedded_ip_addresses_count: 0,
+                suspicious_strings_count: 0,
+                entropy: 1.0,
+                packed_likely: false,
+                macro_or_script: false,
+            },
+            previous_verdict: "unknown".to_string(),
+            user_label,
+            user_note: None,
+            created_at: Utc::now(),
+            app_version: "test".to_string(),
+            model_version: "unavailable".to_string(),
+        }
     }
 }

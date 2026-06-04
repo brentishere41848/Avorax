@@ -571,3 +571,32 @@ Lead-engineer product-hardening pass across the Avorax repository. Goal is to mo
 - User-mode real-time monitoring no longer suppresses a same-size payload replacement solely because the file size matches the previous scan.
 - Remaining work continues with further protection-quality review of scanner, guard, update, UI honesty, and elevated/provisioned driver validation paths.
 
+
+## 2026-06-04 hardening continuation 12
+
+### Completed changes
+
+- Hardened training-label suppression so suppression decisions use the newest valid label for a file hash instead of any older suppressing label.
+- Added regression coverage proving a later `ConfirmedMalicious` label revokes an older `FalsePositive` suppression for the same hash.
+- Preserved exact-hash suppression for current `FalsePositive` and `TrustedApp` labels.
+- Updated `TODO.md`, `SECURITY_MODEL.md`, and `CHANGELOG.md` with the training-label behavior.
+
+### Files modified
+
+- `TODO.md`
+- `SECURITY_MODEL.md`
+- `CHANGELOG.md`
+- `RUN_LOG.md`
+- `core/zentor_local_core/src/ai/training_labels.rs`
+
+### Tests/checks run
+
+- `cargo test --manifest-path core/zentor_local_core/Cargo.toml confirmed_malicious_label_revokes_prior_false_positive_suppression -- --nocapture` failed before the fix, proving the regression covered the stale-suppression bug.
+- `cargo test --manifest-path core/zentor_local_core/Cargo.toml training_labels -- --nocapture` passed with 2 focused label-store tests.
+- `cargo test --manifest-path core/zentor_local_core/Cargo.toml -- --nocapture` passed with 82 local-core tests.
+
+### Current status
+
+- A later confirmed-malicious user label can now revoke older false-positive/trusted-app suppression for the same hash.
+- Remaining work continues with further protection-quality review of scanner, guard, update, UI honesty, and elevated/provisioned driver validation paths.
+
