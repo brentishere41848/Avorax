@@ -1,8 +1,10 @@
 use std::fs;
+use std::io::{BufReader, Read};
 use std::path::{Path, PathBuf};
 
 use anyhow::{anyhow, Result};
 use chrono::Utc;
+use sha2::{Digest, Sha256};
 use uuid::Uuid;
 
 use crate::scanner::ScanResult;
@@ -33,11 +35,12 @@ impl QuarantineStore {
         let metadata = fs::metadata(path)?;
         fs::rename(path, &quarantine_path)?;
         remove_executable_permissions(&quarantine_path)?;
+        let quarantined_sha256 = sha256_for_file(&quarantine_path)?;
         let record = QuarantineRecord {
             quarantine_id: id.clone(),
             original_path: path.display().to_string(),
             quarantine_path: quarantine_path.display().to_string(),
-            sha256: result.sha256.clone(),
+            sha256: quarantined_sha256,
             file_size: metadata.len(),
             detection_name: result
                 .threat_name
@@ -88,6 +91,7 @@ impl QuarantineStore {
         let mut record = self.find_record(id)?;
         let quarantine_path = PathBuf::from(&record.quarantine_path);
         self.ensure_quarantine_payload_path(&quarantine_path)?;
+        self.ensure_payload_integrity(&record, &quarantine_path)?;
         let original_path = PathBuf::from(&record.original_path);
         if !original_path.is_absolute()
             || original_path
@@ -146,6 +150,18 @@ impl QuarantineStore {
         Ok(())
     }
 
+    fn ensure_payload_integrity(&self, record: &QuarantineRecord, path: &Path) -> Result<()> {
+        let metadata = fs::metadata(path)?;
+        if metadata.len() != record.file_size {
+            return Err(anyhow!("quarantine payload size mismatch"));
+        }
+        let actual_sha256 = sha256_for_file(path)?;
+        if !record.sha256.eq_ignore_ascii_case(&actual_sha256) {
+            return Err(anyhow!("quarantine payload hash mismatch"));
+        }
+        Ok(())
+    }
+
     fn write_record(&self, record: &QuarantineRecord) -> Result<()> {
         let path = self.base.join(format!("{}.json", record.quarantine_id));
         fs::write(path, serde_json::to_string_pretty(record)?)?;
@@ -180,6 +196,21 @@ fn quarantine_base() -> PathBuf {
         return PathBuf::from(home).join(".local/share/avorax/quarantine");
     }
     PathBuf::from(".avorax/quarantine")
+}
+
+fn sha256_for_file(path: &Path) -> Result<String> {
+    let file = fs::File::open(path)?;
+    let mut reader = BufReader::new(file);
+    let mut hasher = Sha256::new();
+    let mut buffer = [0_u8; 1024 * 1024];
+    loop {
+        let read = reader.read(&mut buffer)?;
+        if read == 0 {
+            break;
+        }
+        hasher.update(&buffer[..read]);
+    }
+    Ok(format!("sha256:{:x}", hasher.finalize()))
 }
 
 #[cfg(unix)]
@@ -304,6 +335,31 @@ mod tests {
         let store = QuarantineStore::with_base(base);
         assert!(store.delete("escape", true).is_err());
         assert!(outside.exists());
+    }
+
+    #[test]
+    fn restore_rejects_tampered_quarantine_payload_hash() {
+        let dir = tempdir().unwrap();
+        let base = dir.path().join("q");
+        fs::create_dir_all(&base).unwrap();
+        let restore_path = dir.path().join("restore.exe");
+        let payload = base.join("tampered.avoraxq");
+        fs::write(&payload, b"tampered payload").unwrap();
+        let mut record = fixture_record("tampered", restore_path.clone(), payload.clone());
+        record.file_size = fs::metadata(&payload).unwrap().len();
+        record.sha256 = "sha256:expected-clean-payload".to_string();
+        fs::write(
+            base.join("tampered.json"),
+            serde_json::to_string_pretty(&record).unwrap(),
+        )
+        .unwrap();
+
+        let store = QuarantineStore::with_base(base);
+        let err = store.restore("tampered", true).unwrap_err();
+
+        assert!(err.to_string().contains("quarantine payload hash mismatch"));
+        assert!(payload.exists());
+        assert!(!restore_path.exists());
     }
 
     #[test]

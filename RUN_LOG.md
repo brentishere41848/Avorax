@@ -452,3 +452,37 @@ Lead-engineer product-hardening pass across the Avorax repository. Goal is to mo
 
 - Safe performance trend benchmarking is available and integrated into the performance gate without using malware samples or claiming elevated update/driver validation.
 - Remaining open work is P4-level: broader accessibility/localization readiness, support bundle export, elevated/provisioned update/driver benchmarks, and optional provider/plugin architecture.
+
+
+## 2026-06-04 hardening continuation 8
+
+### Completed changes
+
+- Hardened allowlist evaluation so file/app/executable entries that record a hash require both the normalized path and SHA-256 to match.
+- Hardened allowlist creation so file/app/executable approvals hash the current target file and fail closed if the file cannot be hashed.
+- Hardened legacy/path-only file/app/executable entries so they fail closed instead of trusting mutable paths.
+- Preserved explicit hash-entry behavior as the only global hash trust mechanism.
+- Hardened quarantine restore so the quarantined payload must still match the recorded size and SHA-256 before Avorax moves it back to the original path.
+- Added regression tests for replaced-payload allowlist bypasses, hash-scope separation, fail-closed allowlist creation, and tampered quarantine payload restore.
+- Updated `TODO.md`, `SECURITY_MODEL.md`, and `CHANGELOG.md` with the protection boundary changes.
+
+### Files modified
+
+- `TODO.md`
+- `SECURITY_MODEL.md`
+- `CHANGELOG.md`
+- `RUN_LOG.md`
+- `core/zentor_local_core/src/allowlist/allowlist_store.rs`
+- `core/zentor_local_core/src/quarantine/quarantine_store.rs`
+
+### Tests/checks run
+
+- `cargo test --manifest-path core/zentor_local_core/Cargo.toml allowlist -- --nocapture` passed with 8 focused allowlist tests.
+- `cargo test --manifest-path core/zentor_local_core/Cargo.toml quarantine -- --nocapture` passed with 18 focused quarantine/protection tests.
+- `cargo test --manifest-path core/zentor_local_core/Cargo.toml -- --nocapture` passed with 76 local-core tests.
+
+### Current status
+
+- Two protection-reducing trust-boundary gaps are closed: mutable path-only file/app/executable allowlist approvals and restore of tampered quarantine payloads.
+- Remaining work continues with further protection-quality review of scanner, ransomware, guard, update, and UI honesty paths.
+

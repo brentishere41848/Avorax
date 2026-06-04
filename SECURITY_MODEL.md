@@ -104,12 +104,21 @@ Verdicts should include evidence, reason codes, confidence, and recommended acti
 - Confirmed signature/test-threat findings: may quarantine only when scan mode permits, path is not allowlisted/trusted, and quarantine succeeds safely.
 - ML-only detections from development models must not auto-quarantine.
 
+Allowlist decisions must not reduce protection through path-only trust for mutable files:
+
+- Explicit hash entries may trust the same SHA-256 at any path.
+- File, app, and executable entries must record the current file SHA-256 at creation time and require both the normalized path and hash to match at evaluation time.
+- Legacy/path-only file, app, and executable entries must fail closed instead of trusting mutable paths.
+- File, app, and executable allowlist creation must fail closed when the target cannot be hashed.
+- Folder entries are path-scoped and should remain reserved for explicit user-controlled folder trust decisions.
+
 ## Quarantine safety model
 
 - Quarantine should move files rather than delete them.
 - Quarantine records must store original path, normalized safe quarantine path, detection/evidence, timestamp, hash, and size where available. The copy fallback verifies the quarantined payload hash before removing the original.
 - Restore must require explicit confirmation.
 - Restore must reject path traversal and unsafe destinations.
+- Restore must verify quarantined payload size and SHA-256 before moving the payload back to the original path, so tampered quarantine files cannot be restored.
 - Restore must not overwrite existing files without explicit separate handling.
 - Permanent delete must require explicit confirmation.
 - Corrupted metadata should produce an actionable error and should not cause data loss.

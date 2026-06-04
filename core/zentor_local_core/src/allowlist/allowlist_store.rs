@@ -1,9 +1,11 @@
 use std::fs;
+use std::io::{BufReader, Read};
 use std::path::{Component, Path, PathBuf};
 
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, Context, Result};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -60,11 +62,12 @@ impl AllowlistStore {
         reason: String,
     ) -> Result<AllowlistEntry> {
         validate_path(&path)?;
+        let sha256 = hash_required_for_entry(&entry_type, Path::new(&path))?;
         let entry = AllowlistEntry {
             id: Uuid::new_v4().to_string(),
             entry_type,
             path,
-            sha256: None,
+            sha256,
             reason,
             created_at: Utc::now(),
             created_by: "local_user".to_string(),
@@ -80,18 +83,39 @@ impl AllowlistStore {
     }
 
     pub fn is_allowlisted(&self, path: &Path, sha256: &str) -> bool {
-        let normalized = path.display().to_string().replace('\\', "/");
+        let normalized_path = normalize_path_text(path);
+        let normalized_hash = normalize_hash_text(sha256);
         self.entries.iter().any(|entry| {
             if !entry.active {
                 return false;
             }
-            if let Some(entry_hash) = &entry.sha256 {
-                if entry_hash == sha256 {
-                    return true;
+
+            match entry.entry_type {
+                AllowlistEntryType::Hash => entry
+                    .sha256
+                    .as_deref()
+                    .map(normalize_hash_text)
+                    .or_else(|| Some(normalize_hash_text(&entry.path)))
+                    .is_some_and(|entry_hash| {
+                        !entry_hash.is_empty() && entry_hash == normalized_hash
+                    }),
+                AllowlistEntryType::Folder => {
+                    let entry_path = normalize_entry_path(&entry.path);
+                    path_matches_folder(&normalized_path, &entry_path)
+                }
+                AllowlistEntryType::File
+                | AllowlistEntryType::App
+                | AllowlistEntryType::Executable => {
+                    let entry_path = normalize_entry_path(&entry.path);
+                    if normalized_path != entry_path {
+                        return false;
+                    }
+                    match entry.sha256.as_deref() {
+                        Some(entry_hash) => normalize_hash_text(entry_hash) == normalized_hash,
+                        None => false,
+                    }
                 }
             }
-            let entry_path = entry.path.replace('\\', "/");
-            normalized == entry_path || normalized.starts_with(&format!("{entry_path}/"))
         })
     }
 
@@ -104,6 +128,53 @@ impl AllowlistStore {
         }
         Ok(())
     }
+}
+
+fn hash_required_for_entry(entry_type: &AllowlistEntryType, path: &Path) -> Result<Option<String>> {
+    match entry_type {
+        AllowlistEntryType::File | AllowlistEntryType::App | AllowlistEntryType::Executable => {
+            Ok(Some(sha256_file(path).with_context(|| {
+                format!(
+                    "file/app/executable allowlist entries must be hashed before allowlisting: {}",
+                    path.display()
+                )
+            })?))
+        }
+        AllowlistEntryType::Folder | AllowlistEntryType::Hash => Ok(None),
+    }
+}
+
+fn sha256_file(path: &Path) -> Result<String> {
+    let file = fs::File::open(path)?;
+    let mut reader = BufReader::new(file);
+    let mut hasher = Sha256::new();
+    let mut buffer = [0_u8; 1024 * 1024];
+    loop {
+        let read = reader.read(&mut buffer)?;
+        if read == 0 {
+            break;
+        }
+        hasher.update(&buffer[..read]);
+    }
+    Ok(format!("sha256:{:x}", hasher.finalize()))
+}
+
+fn normalize_entry_path(path: &str) -> String {
+    path.replace('\\', "/")
+        .trim_end_matches('/')
+        .to_ascii_lowercase()
+}
+
+fn normalize_path_text(path: &Path) -> String {
+    normalize_entry_path(&path.display().to_string())
+}
+
+fn normalize_hash_text(hash: &str) -> String {
+    hash.trim().to_ascii_lowercase()
+}
+
+fn path_matches_folder(path: &str, folder: &str) -> bool {
+    !folder.is_empty() && (path == folder || path.starts_with(&format!("{folder}/")))
 }
 
 pub fn validate_path(path: &str) -> Result<()> {
@@ -154,5 +225,124 @@ mod tests {
     fn allows_normal_file_or_folder_path() {
         assert!(validate_path("/home/user/Tools/example.exe").is_ok());
         assert!(validate_path("C:\\Users\\Example\\Tools\\example.exe").is_ok());
+    }
+
+    fn entry(entry_type: AllowlistEntryType, path: &str, sha256: Option<&str>) -> AllowlistEntry {
+        AllowlistEntry {
+            id: "test-entry".to_string(),
+            entry_type,
+            path: path.to_string(),
+            sha256: sha256.map(str::to_string),
+            reason: "test".to_string(),
+            created_at: Utc::now(),
+            created_by: "test".to_string(),
+            active: true,
+        }
+    }
+
+    #[test]
+    fn file_allowlist_entry_requires_matching_hash_when_hash_is_recorded() {
+        let store = AllowlistStore::in_memory(vec![entry(
+            AllowlistEntryType::File,
+            "C:/Users/Example/Downloads/trusted.exe",
+            Some("sha256:trusted"),
+        )]);
+
+        assert!(store.is_allowlisted(
+            Path::new("C:/Users/Example/Downloads/trusted.exe"),
+            "sha256:trusted"
+        ));
+        assert!(!store.is_allowlisted(
+            Path::new("C:/Users/Example/Downloads/trusted.exe"),
+            "sha256:changed"
+        ));
+    }
+
+    #[test]
+    fn file_allowlist_hash_does_not_allow_other_paths() {
+        let store = AllowlistStore::in_memory(vec![entry(
+            AllowlistEntryType::File,
+            "C:/Users/Example/Downloads/trusted.exe",
+            Some("sha256:trusted"),
+        )]);
+
+        assert!(!store.is_allowlisted(
+            Path::new("C:/Users/Example/AppData/Temp/payload.exe"),
+            "sha256:trusted"
+        ));
+    }
+
+    #[test]
+    fn legacy_path_only_file_allowlist_entry_fails_closed() {
+        let store = AllowlistStore::in_memory(vec![entry(
+            AllowlistEntryType::File,
+            "C:/Users/Example/Downloads/trusted.exe",
+            None,
+        )]);
+
+        assert!(!store.is_allowlisted(
+            Path::new("C:/Users/Example/Downloads/trusted.exe"),
+            "sha256:any-payload"
+        ));
+    }
+
+    #[test]
+    fn explicit_hash_allowlist_entry_allows_same_hash_anywhere() {
+        let store = AllowlistStore::in_memory(vec![entry(
+            AllowlistEntryType::Hash,
+            "sha256:trusted",
+            Some("sha256:trusted"),
+        )]);
+
+        assert!(store.is_allowlisted(
+            Path::new("C:/Users/Example/AppData/Temp/renamed.exe"),
+            "sha256:trusted"
+        ));
+        assert!(!store.is_allowlisted(
+            Path::new("C:/Users/Example/AppData/Temp/renamed.exe"),
+            "sha256:changed"
+        ));
+    }
+
+    #[test]
+    fn add_file_entry_records_current_file_hash() {
+        let dir = tempfile::tempdir().unwrap();
+        let trusted = dir.path().join("trusted.exe");
+        fs::write(&trusted, b"trusted-v1").unwrap();
+        let mut store = AllowlistStore::in_memory(vec![]);
+
+        let entry = store
+            .add(
+                AllowlistEntryType::File,
+                trusted.display().to_string(),
+                "test".to_string(),
+            )
+            .unwrap();
+
+        assert_eq!(
+            entry.sha256.as_deref(),
+            Some("sha256:8665eae168c977de7d2a9ccc35bca880b62d3dd69d67ec29bb27d3ca789b5938")
+        );
+        assert!(store.is_allowlisted(&trusted, entry.sha256.as_deref().unwrap()));
+    }
+
+    #[test]
+    fn add_file_entry_fails_closed_when_file_cannot_be_hashed() {
+        let dir = tempfile::tempdir().unwrap();
+        let missing = dir.path().join("missing.exe");
+        let mut store = AllowlistStore::in_memory(vec![]);
+
+        let err = store
+            .add(
+                AllowlistEntryType::Executable,
+                missing.display().to_string(),
+                "test".to_string(),
+            )
+            .unwrap_err();
+
+        assert!(err
+            .to_string()
+            .contains("must be hashed before allowlisting"));
+        assert!(store.list().is_empty());
     }
 }

@@ -37,6 +37,8 @@ This backlog is the working plan for the long-horizon Avorax hardening sprint. I
 - [x] Add debounce, stable-file retry, unchanged-file cache, and event-evaluation tests for real-time monitoring.
 - [x] Wire Flutter protection startup/shutdown to call `start_watch` / `stop_watch` for selected protected folders and show `userModeBestEffort` honestly in the Protection UI.
 - [x] Harden guard-service IPC trust boundary so caller-provided publisher/signature/hash fields cannot bypass policy unless verified by a trusted driver/service path.
+- [x] Harden file/app/executable allowlist entries so approvals are hash-bound and replaced payloads at the same path are not silently trusted.
+- [x] Harden quarantine restore so payload size and SHA-256 are verified before moving a quarantined file back to its original path.
 - [x] Add ransomware protected-folder settings, allowlist validation, and harmless simulation tests in core policy.
 - [x] Add recent ransomware/protection events to UI and logs, wired to protected-root/trusted-process policy metadata.
 
