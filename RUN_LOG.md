@@ -768,3 +768,53 @@ Protection self-test showed:
   4. Restart/replace the installed Guard Service with the newly built binary or reinstall from a rebuilt package.
 - This non-elevated Hermes shell cannot perform those live OS steps; Windows returned `Access is denied` for both boot-policy change and service control.
 
+
+## 2026-06-04 hardening continuation 17
+
+### User-reported failure
+
+Updates page showed:
+
+- `Status: Update failed`
+- `Last error: Bad state: Update feed returned HTTP 404.`
+
+### Root cause
+
+- Installed builds use `https://github.com/brentishere41848/Avorax/releases/latest/download/update-feed.json` by default.
+- GitHub's `/releases/latest` route ignores prereleases.
+- Current Avorax release assets existed on `v0.2.31`, including `update-feed.json`, but `v0.2.31` was marked prerelease, so the `/latest/download/update-feed.json` route returned 404.
+- Direct tag URL `https://github.com/brentishere41848/Avorax/releases/download/v0.2.31/update-feed.json` returned the expected feed.
+
+### Live release fix
+
+- Used GitHub API credentials from Git Credential Manager without printing secrets.
+- Updated release `v0.2.31` from prerelease to non-prerelease so GitHub's `/releases/latest/download/update-feed.json` resolves for existing installed builds.
+- Verified the live URL now returns the 0.2.31 update-feed JSON without a cache-bypass query.
+
+### Code fix
+
+- Added a Flutter update-service fallback for the trusted GitHub latest feed path.
+- If `/releases/latest/download/update-feed.json` returns 404, the app queries `https://api.github.com/repos/<owner>/<repo>/releases?per_page=20`, finds the newest non-draft release asset named `update-feed.json`, and loads that asset.
+- Dev-channel builds may use prerelease release assets through the fallback; non-dev channels skip prereleases.
+- Arbitrary feed URLs and non-404 feed errors still fail honestly instead of faking update success.
+
+### Files modified
+
+- `TODO.md`
+- `CHANGELOG.md`
+- `RUN_LOG.md`
+- `docs/in-app-updates.md`
+- `apps/zentor_client/lib/core/updates/update_service.dart`
+- `apps/zentor_client/test/update_service_test.dart`
+
+### Tests/checks run
+
+- Live 404 reproduced with `curl -I -L https://github.com/brentishere41848/Avorax/releases/latest/download/update-feed.json` before release correction.
+- GitHub REST API inspection showed `v0.2.31` had `update-feed.json` but was marked prerelease.
+- Tag-specific feed URL returned HTTP 200.
+- New regression test failed before implementation: `flutter test test/update_service_test.dart --plain-name "falls back to GitHub release asset feed when latest download 404s"`.
+- New regression test passed after implementation.
+- Live latest feed URL returned the 0.2.31 JSON.
+- `flutter test test/update_service_test.dart` passed with 7 tests.
+- `flutter analyze` passed for `apps/zentor_client`.
+

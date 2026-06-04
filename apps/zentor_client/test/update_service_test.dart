@@ -86,6 +86,60 @@ void main() {
     expect(result.error, contains('HTTP 403'));
   });
 
+  test('falls back to GitHub release asset feed when latest download 404s', () async {
+    final requests = <Uri>[];
+    final service = ZentorUpdateService(
+      buildConfig: const BuildConfig(
+        updateFeedUrl:
+            'https://github.com/brentishere41848/Avorax/releases/latest/download/update-feed.json',
+        updateChannel: 'dev',
+        updatesRepoOwner: 'brentishere41848',
+        updatesRepoName: 'Avorax',
+      ),
+      client: MockClient((request) async {
+        requests.add(request.url);
+        if (request.url.path ==
+            '/brentishere41848/Avorax/releases/latest/download/update-feed.json') {
+          return http.Response('not found', 404);
+        }
+        if (request.url.host == 'api.github.com' &&
+            request.url.path == '/repos/brentishere41848/Avorax/releases') {
+          return http.Response(
+            jsonEncode([
+              {
+                'tag_name': 'v0.1.15',
+                'draft': false,
+                'prerelease': true,
+                'assets': [
+                  {
+                    'name': 'update-feed.json',
+                    'browser_download_url':
+                        'https://github.com/brentishere41848/Avorax/releases/download/v0.1.15/update-feed.json',
+                  },
+                ],
+              },
+            ]),
+            200,
+          );
+        }
+        if (request.url.path ==
+            '/brentishere41848/Avorax/releases/download/v0.1.15/update-feed.json') {
+          return http.Response(jsonEncode(_feed('0.1.15')), 200);
+        }
+        return http.Response('unexpected ${request.url}', 500);
+      }),
+    );
+
+    final result = await service.checkForUpdate(currentVersion: '0.1.14');
+
+    expect(result.status, UpdateStatus.updateAvailable);
+    expect(result.update?.latestVersion, '0.1.15');
+    expect(
+      requests.map((uri) => uri.host),
+      containsAll(['github.com', 'api.github.com']),
+    );
+  });
+
   test('Windows verification uses elevated updater path', () {
     final source = File(
       'lib/core/updates/update_service.dart',

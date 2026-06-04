@@ -25,6 +25,7 @@ All notable Avorax changes should be documented here. Version entries avoid unsu
 - Added native detection-provider registry/interface tests for enabled-provider evaluation, disabled-provider suppression, and provider inventory exposure.
 - Added Windows driver-health regression coverage for installed-but-stopped test-signed drivers, guarded auto-load attempts, IPC failures, and explicit TESTSIGNING remediation.
 - Added `tools/windows/avorax-enable-test-signing.ps1`, an explicit elevated development helper that enables Windows TESTSIGNING only with user/admin intent and warns that a reboot is required.
+- Added Flutter update-service regression coverage for the GitHub `/releases/latest/download/update-feed.json` 404 case, verifying dev builds can recover through the GitHub releases API and still consume a signed `.aup` feed.
 
 ### Changed
 
@@ -50,6 +51,7 @@ All notable Avorax changes should be documented here. Version entries avoid unsu
 - Native engine status now exposes detection-provider inventory, including built-in signatures, rules, heuristics, ML, disabled compatibility/YARA, and disabled cloud reputation provider states, without requiring UI code to know provider internals.
 - Guard driver health now attempts to load `ZentorAvFilter` only when the service is installed and Windows TESTSIGNING is already enabled, re-probes filter/IPC state after the load attempt, and reports explicit TESTSIGNING/reboot requirements when Windows policy blocks the installed development driver.
 - The packaged driver install helper no longer silently enables TESTSIGNING; it fails with a structured `testsigning_required`/`reboot_required` report until the separate elevated helper has been run and the machine rebooted.
+- In-app update checks now fall back from the trusted GitHub `/releases/latest/download/update-feed.json` URL to the GitHub releases API when the latest-download route returns 404, allowing dev-channel builds to discover `update-feed.json` assets on prerelease/dev releases instead of leaving the Updates page stuck in a generic HTTP 404 state.
 
 ### Verified
 
@@ -68,6 +70,9 @@ All notable Avorax changes should be documented here. Version entries avoid unsu
 - Guard-service tests pass: `cargo test --manifest-path core/zentor_guard_service/Cargo.toml -- --nocapture` with 26 tests.
 - Guard-service release build passes: `cargo build --manifest-path core/zentor_guard_service/Cargo.toml --release`.
 - Live Windows host check confirmed `ZentorAvFilter` installed but stopped, `fltmc load ZentorAvFilter` blocked by access/policy, and `bcdedit /set testsigning on` blocked in the non-elevated shell with `Access is denied`.
+- Live GitHub update feed check passes: `https://github.com/brentishere41848/Avorax/releases/latest/download/update-feed.json` returns the 0.2.31 feed JSON.
+- Flutter update-service tests pass: `flutter test test/update_service_test.dart` with 7 tests.
+- Flutter client analysis passes after the update fallback change: `flutter analyze`.
 
 ### Known limitations
 

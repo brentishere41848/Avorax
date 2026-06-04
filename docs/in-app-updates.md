@@ -23,7 +23,7 @@ The manifest declares product, version, channel, components, rollback support, p
 
 ## Update Flow
 
-1. App reads the configured `update-feed.json` from the GitHub release feed by default.
+1. App reads the configured `update-feed.json` from the GitHub release feed by default. If the trusted GitHub `/releases/latest/download/update-feed.json` route returns 404, dev-channel builds query the GitHub releases API for the newest release asset named `update-feed.json` and load that asset instead. Other feed failures still fail honestly.
 2. The Updates page displays the version, channel, package name, release notes, and rollback availability.
 3. The user clicks the in-app install button; Avorax downloads only the referenced signed `.aup` package.
 4. The app verifies the downloaded package hash before invoking the update service.

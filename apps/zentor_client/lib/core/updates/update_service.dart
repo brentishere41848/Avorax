@@ -297,11 +297,80 @@ class ZentorUpdateService {
       },
     );
     if (response.statusCode != 200) {
+      if (_isGithubLatestDownloadFeed(feedUri) && response.statusCode == 404) {
+        try {
+          final releaseFeedUri = await _resolveGithubReleaseFeedAssetUri();
+          if (releaseFeedUri != null) {
+            return _loadFeed(releaseFeedUri);
+          }
+        } on Object catch (error) {
+          throw StateError(
+            'Update feed returned HTTP ${response.statusCode}; '
+            'GitHub release feed fallback failed: $error',
+          );
+        }
+      }
       throw StateError('Update feed returned HTTP ${response.statusCode}.');
     }
     final decoded = jsonDecode(response.body);
     if (decoded is Map<String, Object?>) return decoded;
     throw StateError('Update feed JSON root must be an object.');
+  }
+
+  bool _isGithubLatestDownloadFeed(Uri feedUri) {
+    final owner = buildConfig.updatesRepoOwner.toLowerCase();
+    final repo = buildConfig.updatesRepoName.toLowerCase();
+    final segments = feedUri.pathSegments
+        .map((part) => part.toLowerCase())
+        .toList();
+    return feedUri.scheme == 'https' &&
+        feedUri.host.toLowerCase() == 'github.com' &&
+        segments.length == 6 &&
+        segments[0] == owner &&
+        segments[1] == repo &&
+        segments[2] == 'releases' &&
+        segments[3] == 'latest' &&
+        segments[4] == 'download' &&
+        segments[5] == 'update-feed.json';
+  }
+
+  Future<Uri?> _resolveGithubReleaseFeedAssetUri() async {
+    final apiUri = Uri.https(
+      'api.github.com',
+      '/repos/${buildConfig.updatesRepoOwner}/${buildConfig.updatesRepoName}/releases',
+      const {'per_page': '20'},
+    );
+    final response = await _client.get(
+      apiUri,
+      headers: const {
+        'Accept': 'application/vnd.github+json',
+        'User-Agent': 'Avorax-Update-Checker',
+      },
+    );
+    if (response.statusCode != 200) {
+      throw StateError(
+        'GitHub releases lookup returned HTTP ${response.statusCode}.',
+      );
+    }
+    final decoded = jsonDecode(response.body);
+    if (decoded is! List) {
+      throw StateError('GitHub releases response JSON root must be a list.');
+    }
+    final allowPrerelease = buildConfig.updateChannel == 'dev';
+    for (final item in decoded.whereType<Map<String, Object?>>()) {
+      if (item['draft'] == true) continue;
+      if (!allowPrerelease && item['prerelease'] == true) continue;
+      final assets = item['assets'];
+      if (assets is! List) continue;
+      for (final asset in assets.whereType<Map<String, Object?>>()) {
+        if (asset['name'] != 'update-feed.json') continue;
+        final value = asset['browser_download_url']?.toString() ?? '';
+        if (value.isEmpty) continue;
+        final uri = Uri.parse(value);
+        if (_isTrustedFeedUri(uri)) return uri;
+      }
+    }
+    throw StateError('No update-feed.json asset found in GitHub releases.');
   }
 
   UpdateInfo? _updateFromFeed(

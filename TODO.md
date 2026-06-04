@@ -54,6 +54,7 @@ This backlog is the working plan for the long-horizon Avorax hardening sprint. I
 - [x] Bound optional compatibility YARA fallback reads in the guard pre-execution path to avoid whole-file memory spikes.
 - [x] Make update apply more atomic with rollback on mid-copy failures and service recovery attempts.
 - [x] Add production update-key policy that rejects development keys unless explicitly enabled.
+- [x] Keep the default GitHub release update feed available and add a dev-channel GitHub releases API fallback when `/releases/latest/download/update-feed.json` is temporarily missing or points at no stable latest release.
 - [x] Expand CI to run product-copy, no-malware-binaries, false-positive, protection, and performance gates where feasible.
 - [x] Add `packages/avorax_protocol` test dependencies and real update-manifest schema tests.
 
