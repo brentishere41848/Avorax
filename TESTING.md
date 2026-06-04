@@ -27,7 +27,7 @@ cd apps/zentor_client
 '/c/Users/Brent/dev/flutter/bin/flutter.bat' build windows --debug
 ```
 
-Current coverage includes API failure handling, startup smoke tests, app detection empty states, scan target planning, offline scan orchestration, stale error clearing, and local event log corruption recovery.
+Current coverage includes API failure handling, startup smoke tests, app detection empty states, scan target planning, offline scan orchestration, stale error clearing, local event log corruption recovery, navigation semantics, and shell page-title/main-content accessibility semantics.
 
 ## Rust local core
 

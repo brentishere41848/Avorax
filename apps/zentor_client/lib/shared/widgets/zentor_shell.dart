@@ -18,6 +18,7 @@ class ZentorShell extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(zentorControllerProvider);
     final isDesktop = MediaQuery.sizeOf(context).width >= 900;
+    final pageTitle = _titleFor(location);
     final content = Column(
       children: [
         Container(
@@ -28,17 +29,36 @@ class ZentorShell extends ConsumerWidget {
           ),
           child: Row(
             children: [
-              if (!isDesktop) ...[
-                const ZentorMark(size: 36),
-                const SizedBox(width: 12),
-                const Text(
-                  'Avorax',
-                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
-                ),
-              ] else
-                Text(
-                  _titleFor(location),
-                  style: Theme.of(context).textTheme.titleLarge,
+              if (!isDesktop)
+                Semantics(
+                  header: true,
+                  label: 'Page title, $pageTitle',
+                  child: const ExcludeSemantics(
+                    child: Row(
+                      children: [
+                        ZentorMark(size: 36),
+                        SizedBox(width: 12),
+                        Text(
+                          'Avorax',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 18,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              else
+                Semantics(
+                  header: true,
+                  label: 'Page title, $pageTitle',
+                  child: ExcludeSemantics(
+                    child: Text(
+                      pageTitle,
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                  ),
                 ),
               const Spacer(),
               Wrap(
@@ -64,9 +84,14 @@ class ZentorShell extends ConsumerWidget {
             top: false,
             child: SingleChildScrollView(
               padding: EdgeInsets.all(isDesktop ? 28 : 18),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1280),
-                child: child,
+              child: Semantics(
+                container: true,
+                explicitChildNodes: true,
+                label: 'Main content, $pageTitle',
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1280),
+                  child: child,
+                ),
               ),
             ),
           ),

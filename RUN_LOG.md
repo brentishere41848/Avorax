@@ -640,3 +640,34 @@ Lead-engineer product-hardening pass across the Avorax repository. Goal is to mo
 - Cloud reputation remains disabled/unavailable unless a real backend is configured; the product should surface that honestly rather than imply cloud coverage.
 - Remaining open backlog items are broader accessibility/localization readiness and elevated/provisioned benchmark/driver validation paths.
 
+
+## 2026-06-04 hardening continuation 14
+
+### Completed changes
+
+- Added shell-level accessibility semantics for the active route title and main content area on both mobile and desktop layouts.
+- Added a Flutter widget regression test proving `ZentorShell` exposes `Page title, <route>` and `Main content, <route>` semantics without relying on visual-only text.
+- Kept the broader accessibility/localization backlog open; this slice improves screen-reader landmarks but does not claim full per-feature accessibility or localization readiness.
+- Updated `TODO.md`, `CHANGELOG.md`, and `TESTING.md` with the focused accessibility coverage.
+
+### Files modified
+
+- `TODO.md`
+- `CHANGELOG.md`
+- `TESTING.md`
+- `RUN_LOG.md`
+- `apps/zentor_client/lib/shared/widgets/zentor_shell.dart`
+- `apps/zentor_client/test/navigation_accessibility_test.dart`
+
+### Tests/checks run
+
+- `flutter test test/navigation_accessibility_test.dart --plain-name "shell exposes page title and main content landmark"` failed before the shell semantics implementation because no page-title/main-content semantics were exposed.
+- `flutter test test/navigation_accessibility_test.dart --plain-name "shell exposes page title and main content landmark"` passed after adding the shell semantics and deterministic test provider overrides.
+- `flutter test test/navigation_accessibility_test.dart` passed with 3 navigation/accessibility widget tests.
+- `flutter analyze` passed for `apps/zentor_client` with no issues.
+
+### Current status
+
+- The Flutter shell now exposes route-aware screen-reader landmarks for the active page title and main content region.
+- Remaining open backlog items are broader per-feature accessibility/localization readiness and elevated/provisioned benchmark/driver validation paths.
+
