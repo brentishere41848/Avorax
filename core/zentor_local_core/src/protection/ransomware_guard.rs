@@ -62,16 +62,16 @@ impl RansomwareGuard {
         config: &RansomwareGuardConfig,
     ) -> Option<RansomwareSignal> {
         let process_path = process_path.into();
-        if trusted_process(&process_path, &config.trusted_process_allowlist) {
-            return None;
-        }
-
         let protected_paths = protected_modified_paths(modified_paths, &config.protected_roots);
         let modifications = protected_paths.len() as u32;
         let severe_file_activity =
             modifications >= 25 && time_window_seconds <= 120 && entropy_change_score >= 0.55;
         let ransom_note_activity = ransom_note_score >= 0.75 && modifications >= 10;
         let backup_tamper = backup_tamper_score >= 0.75 && modifications >= 1;
+        let critical_override = ransom_note_activity || backup_tamper;
+        if trusted_process(&process_path, &config.trusted_process_allowlist) && !critical_override {
+            return None;
+        }
         if !(severe_file_activity || ransom_note_activity || backup_tamper) {
             return None;
         }
@@ -236,5 +236,32 @@ mod tests {
             &config,
         );
         assert!(signal.is_none());
+    }
+
+    #[test]
+    fn trusted_process_does_not_suppress_ransom_note_or_backup_tamper() {
+        let paths = (0..30)
+            .map(|idx| PathBuf::from(format!("C:/Users/Test/Documents/file{idx}.docx")))
+            .collect::<Vec<_>>();
+        let config = RansomwareGuardConfig {
+            protected_roots: vec![PathBuf::from("C:/Users/Test/Documents")],
+            trusted_process_allowlist: vec![PathBuf::from("C:/Program Files/Backup/backup.exe")],
+        };
+
+        let signal = RansomwareGuard::evaluate_with_config(
+            42,
+            "C:/Program Files/Backup/backup.exe",
+            &paths,
+            30,
+            0.8,
+            0.9,
+            0.95,
+            60,
+            &config,
+        )
+        .expect("critical ransom-note/backup-tamper activity should not be suppressed");
+
+        assert_eq!(signal.confidence, "high");
+        assert_eq!(signal.files_modified_count, 30);
     }
 }

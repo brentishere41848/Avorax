@@ -486,3 +486,30 @@ Lead-engineer product-hardening pass across the Avorax repository. Goal is to mo
 - Two protection-reducing trust-boundary gaps are closed: mutable path-only file/app/executable allowlist approvals and restore of tampered quarantine payloads.
 - Remaining work continues with further protection-quality review of scanner, ransomware, guard, update, and UI honesty paths.
 
+
+## 2026-06-04 hardening continuation 9
+
+### Completed changes
+
+- Hardened ransomware guard trusted-process suppression so exact-path trusted backup/sync processes can still suppress ordinary mass-modification signals, but cannot suppress critical ransom-note or backup-tamper signals.
+- Added a regression test proving critical ransom-note/backup-tamper activity still produces a high-confidence signal for a trusted backup process path.
+- Updated `TODO.md`, `SECURITY_MODEL.md`, and `CHANGELOG.md` with the ransomware trust-boundary behavior.
+
+### Files modified
+
+- `TODO.md`
+- `SECURITY_MODEL.md`
+- `CHANGELOG.md`
+- `RUN_LOG.md`
+- `core/zentor_local_core/src/protection/ransomware_guard.rs`
+
+### Tests/checks run
+
+- `cargo test --manifest-path core/zentor_local_core/Cargo.toml ransomware_guard -- --nocapture` passed with 7 focused ransomware/config tests.
+- `cargo test --manifest-path core/zentor_local_core/Cargo.toml -- --nocapture` passed with 77 local-core tests.
+
+### Current status
+
+- Trusted backup/sync process policy is now less bypass-prone: compromise-like ransom-note or backup-tamper behavior remains visible even for trusted process paths.
+- Remaining work continues with further protection-quality review of scanner, guard, update, UI honesty, and elevated/provisioned driver validation paths.
+

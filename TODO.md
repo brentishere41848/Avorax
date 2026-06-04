@@ -40,6 +40,7 @@ This backlog is the working plan for the long-horizon Avorax hardening sprint. I
 - [x] Harden file/app/executable allowlist entries so approvals are hash-bound and replaced payloads at the same path are not silently trusted.
 - [x] Harden quarantine restore so payload size and SHA-256 are verified before moving a quarantined file back to its original path.
 - [x] Add ransomware protected-folder settings, allowlist validation, and harmless simulation tests in core policy.
+- [x] Harden ransomware trusted-process suppression so critical ransom-note or backup-tamper signals still surface for trusted backup/sync process paths.
 - [x] Add recent ransomware/protection events to UI and logs, wired to protected-root/trusted-process policy metadata.
 
 ## P3 - Production hardening
