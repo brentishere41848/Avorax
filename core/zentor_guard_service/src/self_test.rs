@@ -93,7 +93,7 @@ pub fn run_self_test(known_bad_hashes: HashSet<String>) -> anyhow::Result<Protec
             if health.running {
                 "Driver reports running."
             } else {
-                "Driver is not running."
+                &health.reason
             },
         ),
         step(
@@ -101,8 +101,10 @@ pub fn run_self_test(known_bad_hashes: HashSet<String>) -> anyhow::Result<Protec
             health.ipc_connected,
             if health.ipc_connected {
                 "Driver communication probe succeeded."
+            } else if !health.running {
+                "Driver IPC probe skipped because the minifilter is not loaded."
             } else {
-                "Driver communication probe did not succeed."
+                &health.reason
             },
         ),
     ];
@@ -219,10 +221,21 @@ pub fn run_self_test(known_bad_hashes: HashSet<String>) -> anyhow::Result<Protec
         "Pre-execution block self-test",
         pre_execution_blocking_available,
         if pre_execution_blocking_available {
-            "Driver and service path can return blocking verdicts."
+            "Driver and service path can return blocking verdicts.".to_string()
+        } else if !health.running {
+            format!(
+                "Pre-execution blocking is not active because the minifilter is not loaded: {} Post-launch fallback remains available.",
+                health.reason
+            )
+        } else if !health.ipc_connected {
+            format!(
+                "Pre-execution blocking is not active because driver IPC is unavailable: {} Post-launch fallback remains available.",
+                health.reason
+            )
         } else {
-            "Pre-execution blocking is not active; post-launch fallback remains available."
-        },
+            "Pre-execution blocking is not active; post-launch fallback remains available.".to_string()
+        }
+        .as_str(),
     ));
 
     let tests = ProtectionSelfTestResults {

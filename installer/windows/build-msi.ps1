@@ -437,8 +437,8 @@ param(
 $ErrorActionPreference = "Stop"
 New-Item -ItemType Directory -Force -Path (Split-Path $ReportPath) | Out-Null
 $errors = New-Object System.Collections.Generic.List[string]
+$testSigningRequired = $false
 $rebootRequired = $false
-$testSigningEnabledDuringInstall = $false
 try {
   if (-not (Test-Path -LiteralPath $DriverInf)) { throw "Driver INF not found: $DriverInf" }
   $driverDir = Split-Path $DriverInf
@@ -452,31 +452,25 @@ try {
   $testSigningText = (bcdedit.exe /enum) 2>$null | Out-String
   $testSigningOn = $testSigningText -match "(?im)^\s*testsigning\s+Yes\s*$"
   if (-not $testSigningOn) {
-    bcdedit.exe /set testsigning on | Out-Host
-    if ($LASTEXITCODE -eq 0) {
-      $testSigningEnabledDuringInstall = $true
-      $rebootRequired = $true
-    } else {
-      $errors.Add("bcdedit failed to enable TESTSIGNING: $LASTEXITCODE")
-    }
+    $testSigningRequired = $true
+    $rebootRequired = $true
+    throw "Windows TESTSIGNING is off. Avorax will not enable TESTSIGNING silently. Run 'bcdedit /set testsigning on' from an elevated terminal, reboot, then rerun this driver installer."
   }
   pnputil.exe /add-driver $DriverInf /install | Out-Host
   if ($LASTEXITCODE -ne 0) { throw "pnputil failed to install ZentorAvFilter. Exit code: $LASTEXITCODE" }
   sc.exe config ZentorAvFilter start= auto | Out-Host
   if ($LASTEXITCODE -ne 0) { $errors.Add("sc config ZentorAvFilter start=auto failed: $LASTEXITCODE") }
   $loaded = $false
-  if (-not $rebootRequired) {
-    fltmc.exe load ZentorAvFilter 2>$null
-    if ($LASTEXITCODE -ne 0) {
-      $errors.Add("fltmc failed to load ZentorAvFilter. Exit code: $LASTEXITCODE")
-    }
-    $loaded = (fltmc.exe filters | Select-String -Pattern "ZentorAvFilter" -Quiet)
+  fltmc.exe load ZentorAvFilter 2>$null
+  if ($LASTEXITCODE -ne 0) {
+    $errors.Add("fltmc failed to load ZentorAvFilter. Exit code: $LASTEXITCODE")
   }
+  $loaded = (fltmc.exe filters | Select-String -Pattern "ZentorAvFilter" -Quiet)
   [ordered]@{
     installed = $true
     running = $loaded
-    reboot_required = $rebootRequired
-    testsigning_enabled_during_install = $testSigningEnabledDuringInstall
+    reboot_required = $false
+    testsigning_required = $false
     driver_inf = $DriverInf
     timestamp_utc = (Get-Date).ToUniversalTime().ToString("o")
     errors = @($errors)
@@ -487,7 +481,7 @@ try {
     installed = $false
     running = $false
     reboot_required = $rebootRequired
-    testsigning_enabled_during_install = $testSigningEnabledDuringInstall
+    testsigning_required = $testSigningRequired
     driver_inf = $DriverInf
     timestamp_utc = (Get-Date).ToUniversalTime().ToString("o")
     errors = @($errors)

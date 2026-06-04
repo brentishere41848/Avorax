@@ -18,11 +18,18 @@ Driver requirements:
 - Never hide files, processes, services, registry keys, or telemetry.
 - Never disable Windows Defender or other security products.
 
-Development install scripts live in `core/zentor_windows_minifilter/scripts`. They require Administrator rights and Windows TESTSIGNING to already be enabled in a development VM. Avorax does not enable TESTSIGNING automatically.
+Development install scripts live in `core/zentor_windows_minifilter/scripts`. They require Administrator rights and Windows TESTSIGNING to already be enabled in a development VM. Avorax does not enable TESTSIGNING automatically from the driver installer. Packaged development builds include `tools\windows\avorax-enable-test-signing.ps1` as a separate explicit elevated helper; running it still requires a reboot before `ZentorAvFilter` can load.
+
+When the guard health probe finds `ZentorAvFilter` installed but not loaded, it attempts `fltmc load ZentorAvFilter` only if Windows TESTSIGNING is already enabled. If TESTSIGNING is off, self-test reports `testSigningRequired`/`rebootRequired` instead of pretending pre-execution blocking is available.
 
 Validation workflow:
 
 ```powershell
+# Development VM only, elevated PowerShell:
+powershell -ExecutionPolicy Bypass -File tools\windows\avorax-enable-test-signing.ps1
+shutdown /r /t 0
+
+# After reboot, elevated PowerShell:
 powershell -ExecutionPolicy Bypass -File tools\windows\zentor-protection-selftest.ps1 -BuildDriver -InstallDriver
 ```
 

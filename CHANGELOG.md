@@ -23,6 +23,8 @@ All notable Avorax changes should be documented here. Version entries avoid unsu
 - Added real-time watcher cache regression coverage proving same-size rewrites with changed file modified timestamps require a new scan.
 - Added training-label regression coverage proving a newer confirmed-malicious label revokes an older false-positive/trusted suppression for the same hash.
 - Added native detection-provider registry/interface tests for enabled-provider evaluation, disabled-provider suppression, and provider inventory exposure.
+- Added Windows driver-health regression coverage for installed-but-stopped test-signed drivers, guarded auto-load attempts, IPC failures, and explicit TESTSIGNING remediation.
+- Added `tools/windows/avorax-enable-test-signing.ps1`, an explicit elevated development helper that enables Windows TESTSIGNING only with user/admin intent and warns that a reboot is required.
 
 ### Changed
 
@@ -46,6 +48,8 @@ All notable Avorax changes should be documented here. Version entries avoid unsu
 - Real-time watcher duplicate-scan suppression now fingerprints file size plus modified time so same-size payload replacements are rescanned instead of treated as unchanged.
 - Training-label false-positive/trusted-app suppressions now use the newest valid label for a file hash, so later confirmed-malicious labels revoke older suppressions.
 - Native engine status now exposes detection-provider inventory, including built-in signatures, rules, heuristics, ML, disabled compatibility/YARA, and disabled cloud reputation provider states, without requiring UI code to know provider internals.
+- Guard driver health now attempts to load `ZentorAvFilter` only when the service is installed and Windows TESTSIGNING is already enabled, re-probes filter/IPC state after the load attempt, and reports explicit TESTSIGNING/reboot requirements when Windows policy blocks the installed development driver.
+- The packaged driver install helper no longer silently enables TESTSIGNING; it fails with a structured `testsigning_required`/`reboot_required` report until the separate elevated helper has been run and the machine rebooted.
 
 ### Verified
 
@@ -61,7 +65,9 @@ All notable Avorax changes should be documented here. Version entries avoid unsu
 - Updated performance gate passes and generates the safe benchmark report.
 - Local-core protection tests pass: `cargo test --manifest-path core/zentor_local_core/Cargo.toml -- --nocapture` with 82 tests.
 - Native-engine tests pass: `cargo test --manifest-path core/zentor_native_engine/Cargo.toml -- --nocapture` with 38 tests.
-- Guard-service tests pass: `cargo test --manifest-path core/zentor_guard_service/Cargo.toml -- --nocapture` with 22 tests.
+- Guard-service tests pass: `cargo test --manifest-path core/zentor_guard_service/Cargo.toml -- --nocapture` with 26 tests.
+- Guard-service release build passes: `cargo build --manifest-path core/zentor_guard_service/Cargo.toml --release`.
+- Live Windows host check confirmed `ZentorAvFilter` installed but stopped, `fltmc load ZentorAvFilter` blocked by access/policy, and `bcdedit /set testsigning on` blocked in the non-elevated shell with `Access is denied`.
 
 ### Known limitations
 

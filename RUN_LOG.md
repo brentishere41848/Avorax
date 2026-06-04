@@ -703,3 +703,68 @@ Lead-engineer product-hardening pass across the Avorax repository. Goal is to mo
 - Settings has route-independent screen-reader section headings and no longer emits the developer-options switch Material warning during widget tests.
 - Remaining open backlog items are broader per-feature accessibility/localization readiness and elevated/provisioned benchmark/driver validation paths.
 
+
+## 2026-06-04 hardening continuation 16
+
+### User-reported failure
+
+Protection self-test showed:
+
+- `PASS Driver installed`: `ZentorAvFilter` is installed but not loaded.
+- `FAIL Driver running`.
+- `FAIL Driver IPC alive`.
+- `FAIL Pre-execution block self-test`.
+
+### Live host diagnosis
+
+- `sc.exe query ZentorAvFilter` reports the file-system driver service is installed but `STATE: STOPPED`.
+- `fltmc filters` does not list `ZentorAvFilter`.
+- `bcdedit /enum` in this non-elevated Git Bash shell shows no TESTSIGNING entry.
+- `bcdedit.exe //set testsigning on` failed with `Access is denied`, confirming elevation is required.
+- `fltmc.exe load ZentorAvFilter` failed with `0x80070005 Access is denied`, so this session cannot activate the driver live.
+- `sc.exe stop avorax_guard_service` failed with `OpenService FAILED 5: Access is denied`, so this session cannot replace/restart the installed Guard Service binary live.
+
+### Completed code/product changes
+
+- Guard driver health now reports additional fields: `loadAttempted`, `loadSucceeded`, `loadError`, and `rebootRequired`.
+- Guard driver health now attempts `fltmc load ZentorAvFilter` only when the driver service is installed, the filter is not running, and Windows TESTSIGNING is already enabled.
+- Guard driver health now re-probes `fltmc filters` and driver IPC after a guarded load attempt.
+- Self-test failure reasons now surface the exact driver-policy blocker in `Driver running`, `Driver IPC alive`, and `Pre-execution block self-test` instead of generic text.
+- Packaged `avorax-install-driver.ps1` generation no longer silently enables TESTSIGNING; it reports `testsigning_required`/`reboot_required` and asks the user/admin to enable TESTSIGNING explicitly and reboot.
+- Added `tools/windows/avorax-enable-test-signing.ps1` as an explicit elevated development helper with a clear reboot warning.
+- Added static and Rust regression tests for TESTSIGNING policy reporting, guarded auto-load attempts, IPC failure classification, and installer/helper contracts.
+- Updated `TODO.md`, `CHANGELOG.md`, `SECURITY_MODEL.md`, and `docs/windows-driver.md`.
+
+### Files modified
+
+- `TODO.md`
+- `CHANGELOG.md`
+- `SECURITY_MODEL.md`
+- `RUN_LOG.md`
+- `docs/windows-driver.md`
+- `installer/windows/build-msi.ps1`
+- `tools/windows/avorax-enable-test-signing.ps1`
+- `tests/test_custom_driver_contract.py`
+- `core/zentor_guard_service/src/driver_health.rs`
+- `core/zentor_guard_service/src/driver_ipc.rs`
+- `core/zentor_guard_service/src/self_test.rs`
+
+### Tests/checks run
+
+- `cargo test --manifest-path core/zentor_guard_service/Cargo.toml driver_health -- --nocapture` passed with 4 tests.
+- Rebuilt guard health command reports `status=testSigningRequired` and `rebootRequired=true` on this host.
+- Rebuilt guard self-test now explains that pre-execution blocking is inactive because the minifilter is not loaded and TESTSIGNING is off.
+- `python -m pytest tests/test_custom_driver_contract.py` passed with 13 tests.
+- `cargo test --manifest-path core/zentor_guard_service/Cargo.toml -- --nocapture` passed with 26 tests.
+- `cargo build --manifest-path core/zentor_guard_service/Cargo.toml --release` passed.
+
+### Current status
+
+- The code/provisioning path is fixed and verified.
+- The live machine still requires an elevated admin terminal and reboot to load the currently installed test-signed driver:
+  1. Elevated terminal: `bcdedit /set testsigning on`
+  2. Reboot.
+  3. Elevated terminal after reboot: run the packaged driver install/load self-test or `fltmc load ZentorAvFilter`.
+  4. Restart/replace the installed Guard Service with the newly built binary or reinstall from a rebuilt package.
+- This non-elevated Hermes shell cannot perform those live OS steps; Windows returned `Access is denied` for both boot-policy change and service control.
+

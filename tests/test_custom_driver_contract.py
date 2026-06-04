@@ -5,6 +5,7 @@ ROOT = Path(__file__).resolve().parents[1]
 DRIVER = ROOT / "core" / "zentor_windows_minifilter" / "driver"
 INSTALLER = ROOT / "installer" / "windows" / "build-msi.ps1"
 GUARD_HEALTH = ROOT / "core" / "zentor_guard_service" / "src" / "driver_health.rs"
+TOOLS_WINDOWS = ROOT / "tools" / "windows"
 
 
 def read(path: Path) -> str:
@@ -84,8 +85,31 @@ def test_driver_name_is_consistent_across_inf_installer_and_guard_health():
 def test_driver_health_reports_testsigning_policy_when_installed_but_not_loaded():
     guard = read(GUARD_HEALTH)
     assert "testSigningRequired" in guard
+    assert "reboot_required" in guard
+    assert "load_attempted" in guard
+    assert "try_load_driver_filter" in guard
     assert "TESTSIGNING is off" in guard
     assert "bcdedit /set testsigning on" in guard
+
+
+def test_driver_installer_does_not_silently_enable_testsigning():
+    installer = read(INSTALLER)
+    start = installer.index("$testSigningRequired")
+    end = installer.index("'@ | Set-Content -LiteralPath $driverInstallScript", start)
+    generated_script = installer[start:end]
+    assert "bcdedit.exe /set testsigning on" not in generated_script
+    assert "testsigning_required" in generated_script
+    assert "Avorax will not enable TESTSIGNING silently" in generated_script
+    assert "pnputil.exe /add-driver" in generated_script
+    assert "fltmc.exe load ZentorAvFilter" in generated_script
+
+
+def test_separate_testsigning_helper_requires_admin_and_reboot():
+    helper = read(TOOLS_WINDOWS / "avorax-enable-test-signing.ps1")
+    assert "#Requires -RunAsAdministrator" in helper
+    assert "bcdedit.exe /set testsigning on" in helper
+    assert "Reboot is required" in helper
+    assert "development driver validation" in helper
 
 
 def test_update_package_excludes_driver_and_self_overwriting_update_service():

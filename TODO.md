@@ -15,6 +15,7 @@ This backlog is the working plan for the long-horizon Avorax hardening sprint. I
 - [x] Add quarantine lifecycle tests for metadata, restore confirmation, duplicate restore names, delete, and corrupted metadata.
 - [x] Remove or hide UI controls that imply unsupported behavior, especially disabled pause/resume controls until they are implemented.
 - [x] Ensure UI product states never claim kernel/pre-execution protection unless the signed driver path is installed, running, and self-tested.
+- [x] Guard driver health now auto-attempts minifilter load only when Windows policy allows it, and reports TESTSIGNING/reboot requirements explicitly when policy blocks the installed test driver.
 
 ## P1 - Core product quality
 

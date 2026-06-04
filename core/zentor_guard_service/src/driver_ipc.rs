@@ -1,5 +1,7 @@
 use std::collections::HashSet;
-use std::fs::{self, File};
+#[cfg(any(feature = "compat_yara", test))]
+use std::fs;
+use std::fs::File;
 use std::io::BufReader;
 use std::path::{Path, PathBuf};
 use std::sync::{Mutex, OnceLock};

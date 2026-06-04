@@ -57,6 +57,7 @@ Requirements:
 - Fail open for critical OS/Avorax runtime paths unless a confirmed known-bad result exists and policy explicitly allows blocking.
 - Document user-mode fallback limitations.
 - Do not claim kernel/pre-execution protection unless the driver is installed, running, communicating, and passing self-test.
+- For development/test-signed drivers, do not enable Windows TESTSIGNING silently. Avorax may provide an explicit elevated helper, but the user/admin must intentionally enable TESTSIGNING and reboot before the test-signed minifilter can load. Production builds require Microsoft driver signing instead.
 
 ### Update packages
 
