@@ -491,6 +491,17 @@ try {
 '@ | Set-Content -LiteralPath $driverInstallScript -Encoding UTF8
 New-Item -ItemType Directory -Force -Path (Join-Path $releaseDir "tools\windows") | Out-Null
 Copy-Item -LiteralPath $driverInstallScript -Destination (Join-Path $releaseDir "tools\windows\avorax-install-driver.ps1") -Force
+foreach ($windowsTool in @("avorax-enable-test-signing.ps1", "avorax-open-firmware-settings.ps1")) {
+  $windowsToolSource = Join-Path $root "tools\windows\$windowsTool"
+  if (Test-Path $windowsToolSource) {
+    New-Item -ItemType Directory -Force -Path (Join-Path $stageDir "tools\windows") | Out-Null
+    New-Item -ItemType Directory -Force -Path (Join-Path $releaseDir "tools\windows") | Out-Null
+    Copy-Item -LiteralPath $windowsToolSource -Destination (Join-Path $stageDir "tools\windows\$windowsTool") -Force
+    Copy-Item -LiteralPath $windowsToolSource -Destination (Join-Path $releaseDir "tools\windows\$windowsTool") -Force
+  }
+}
+Assert-StagePath "tools\windows\avorax-enable-test-signing.ps1" "explicit TESTSIGNING enablement helper"
+Assert-StagePath "tools\windows\avorax-open-firmware-settings.ps1" "Secure Boot firmware remediation helper"
 Assert-StagePath "tools\update\avorax-dev-sign-manifest.py" "development update manifest signer"
 
 $coreSource = $null

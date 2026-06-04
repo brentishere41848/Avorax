@@ -89,6 +89,8 @@ def test_driver_health_reports_testsigning_policy_when_installed_but_not_loaded(
     assert "load_attempted" in guard
     assert "try_load_driver_filter" in guard
     assert "TESTSIGNING is off" in guard
+    assert "Secure Boot blocks bcdedit /set testsigning on" in guard
+    assert "secureBootBlocksTestSigning" in guard
     assert "bcdedit /set testsigning on" in guard
 
 
@@ -110,6 +112,15 @@ def test_separate_testsigning_helper_requires_admin_and_reboot():
     assert "bcdedit.exe /set testsigning on" in helper
     assert "Reboot is required" in helper
     assert "development driver validation" in helper
+
+
+def test_firmware_helper_requires_admin_and_discloses_secure_boot_dev_policy():
+    helper = read(TOOLS_WINDOWS / "avorax-open-firmware-settings.ps1")
+    assert "#Requires -RunAsAdministrator" in helper
+    assert "Confirm-SecureBootUEFI" in helper
+    assert "shutdown.exe /r /fw" in helper
+    assert "disable Secure Boot" in helper
+    assert "Production Avorax drivers require Microsoft signing" in helper
 
 
 def test_update_package_excludes_driver_and_self_overwriting_update_service():

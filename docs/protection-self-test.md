@@ -33,9 +33,12 @@ If the driver is missing or not running, the report must fail and Avorax must sh
 Avorax does not enable TESTSIGNING automatically. For a development VM only:
 
 ```powershell
+# If Secure Boot is enabled, disable it in UEFI firmware first.
 bcdedit /set testsigning on
 shutdown /r /t 0
 ```
+
+If `bcdedit /set testsigning on` reports that the value is protected by Secure Boot policy, run the elevated helper `tools\windows\avorax-open-firmware-settings.ps1`, disable Secure Boot in firmware, boot Windows again, then rerun the TESTSIGNING command and reboot. This is only for development/test machines; production drivers require Microsoft signing.
 
 Disable it after testing:
 

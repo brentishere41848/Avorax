@@ -10,6 +10,7 @@ pub struct DriverHealth {
     pub running: bool,
     pub ipc_connected: bool,
     pub test_signed: bool,
+    pub secure_boot_enabled: bool,
     pub load_attempted: bool,
     pub load_succeeded: bool,
     pub load_error: Option<String>,
@@ -22,6 +23,7 @@ impl DriverHealth {
     pub fn probe() -> Self {
         let installed = driver_service_installed();
         let test_signed = test_signing_enabled();
+        let secure_boot_enabled = secure_boot_enabled();
         let mut running = driver_filter_running();
         let mut load_attempted = false;
         let mut load_succeeded = false;
@@ -50,6 +52,7 @@ impl DriverHealth {
             running,
             ipc_connected,
             test_signed,
+            secure_boot_enabled,
             load_attempted,
             load_succeeded,
             load_error,
@@ -62,6 +65,7 @@ fn classify_driver_health(
     running: bool,
     ipc_connected: bool,
     test_signed: bool,
+    secure_boot_enabled: bool,
     load_attempted: bool,
     load_succeeded: bool,
     load_error: Option<String>,
@@ -71,6 +75,8 @@ fn classify_driver_health(
         "communicationOk"
     } else if installed && running {
         "communicationFailed"
+    } else if installed && !test_signed && secure_boot_enabled {
+        "secureBootBlocksTestSigning"
     } else if installed && !test_signed {
         "testSigningRequired"
     } else if installed && load_attempted && !load_succeeded {
@@ -88,6 +94,9 @@ fn classify_driver_health(
         }
     } else if installed && running {
         "Windows reports the Avorax minifilter is running, but driver IPC did not respond. Ensure the Guard Service is running the driver port worker and that test_driver_ipc.exe is packaged next to the service under driver-tools."
+            .to_string()
+    } else if installed && !test_signed && secure_boot_enabled {
+        "The custom Avorax minifilter is installed but not loaded. This development build is test-signed, Windows TESTSIGNING is off, and Secure Boot is enabled. Secure Boot blocks bcdedit /set testsigning on, so this test-signed driver cannot load on this boot configuration. To use the development minifilter, disable Secure Boot in UEFI firmware, enable TESTSIGNING from an elevated terminal, reboot, then run the Avorax driver installer/load self-test again. Production builds require a Microsoft-signed driver instead."
             .to_string()
     } else if installed && !test_signed {
         "The custom Avorax minifilter is installed but not loaded. This development build is test-signed and Windows TESTSIGNING is off; run bcdedit /set testsigning on from an elevated terminal and reboot, then run the Avorax driver installer/load self-test again. Production builds require a Microsoft-signed driver instead."
@@ -110,6 +119,7 @@ fn classify_driver_health(
         running,
         ipc_connected,
         test_signed,
+        secure_boot_enabled,
         load_attempted,
         load_succeeded,
         load_error,
@@ -225,13 +235,47 @@ fn test_signing_enabled() -> bool {
     false
 }
 
+#[cfg(windows)]
+fn secure_boot_enabled() -> bool {
+    let output = Command::new("powershell.exe")
+        .args([
+            "-NoProfile",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-Command",
+            "try { if (Confirm-SecureBootUEFI) { 'true' } else { 'false' } } catch { 'unknown' }",
+        ])
+        .output();
+    output
+        .ok()
+        .and_then(|output| String::from_utf8(output.stdout).ok())
+        .map(|stdout| stdout.trim().eq_ignore_ascii_case("true"))
+        .unwrap_or(false)
+}
+
+#[cfg(not(windows))]
+fn secure_boot_enabled() -> bool {
+    false
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
+    fn installed_stopped_testsigning_off_secure_boot_on_reports_firmware_blocker() {
+        let health = classify_driver_health(true, false, false, false, true, false, false, None);
+
+        assert_eq!(health.status, "secureBootBlocksTestSigning");
+        assert!(health.reboot_required);
+        assert!(!health.load_attempted);
+        assert!(health.reason.contains("Secure Boot blocks bcdedit /set testsigning on"));
+        assert!(health.reason.contains("disable Secure Boot in UEFI firmware"));
+    }
+
+    #[test]
     fn installed_stopped_testsigning_off_requires_reboot_policy_step() {
-        let health = classify_driver_health(true, false, false, false, false, false, None);
+        let health = classify_driver_health(true, false, false, false, false, false, false, None);
 
         assert_eq!(health.status, "testSigningRequired");
         assert!(health.reboot_required);
@@ -247,6 +291,7 @@ mod tests {
             false,
             false,
             true,
+            false,
             true,
             false,
             Some("access denied".to_string()),
@@ -260,7 +305,7 @@ mod tests {
 
     #[test]
     fn running_without_ipc_is_not_reported_as_pre_execution_ready() {
-        let health = classify_driver_health(true, true, false, true, false, false, None);
+        let health = classify_driver_health(true, true, false, true, false, false, false, None);
 
         assert_eq!(health.status, "communicationFailed");
         assert!(health.reason.contains("driver IPC did not respond"));
@@ -268,7 +313,7 @@ mod tests {
 
     #[test]
     fn auto_loaded_and_ipc_alive_reports_success() {
-        let health = classify_driver_health(true, true, true, true, true, true, None);
+        let health = classify_driver_health(true, true, true, true, false, true, true, None);
 
         assert_eq!(health.status, "communicationOk");
         assert!(health.load_succeeded);

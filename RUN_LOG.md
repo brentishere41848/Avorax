@@ -720,7 +720,7 @@ Protection self-test showed:
 - `sc.exe query ZentorAvFilter` reports the file-system driver service is installed but `STATE: STOPPED`.
 - `fltmc filters` does not list `ZentorAvFilter`.
 - `bcdedit /enum` in this non-elevated Git Bash shell shows no TESTSIGNING entry.
-- `bcdedit.exe //set testsigning on` failed with `Access is denied`, confirming elevation is required.
+- `bcdedit.exe //set testsigning on` failed with `Access is denied`, confirming elevation is required. A later elevated remediation attempt failed with `The value is protected by Secure Boot policy and cannot be modified or deleted`, proving Secure Boot is the active blocker on this host.
 - `fltmc.exe load ZentorAvFilter` failed with `0x80070005 Access is denied`, so this session cannot activate the driver live.
 - `sc.exe stop avorax_guard_service` failed with `OpenService FAILED 5: Access is denied`, so this session cannot replace/restart the installed Guard Service binary live.
 
