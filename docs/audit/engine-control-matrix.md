@@ -4022,3 +4022,23 @@ Full-suite refresh: `.workflow/ultracode/avorax-hardening/results/2116-small-thr
 - Compatibility engines are optional and disabled/guarded by default.
 - User allowlist, false-positive, malicious feedback, protection mode, ransomware guard settings, update install/rollback, driver install, and quarantine restore/delete are confirmation-gated.
 - Runtime gaps are documented as blockers instead of being represented as working protection.
+
+## Cross-Platform Beta Packaging Addendum
+
+Native workflow [29086402344](https://github.com/brentishere41848/Avorax/actions/runs/29086402344)
+passed at source commit `abf256c52050ee714fd49c374671844dea51c64e`.
+
+| Control / engine | Responsibility | Classification | Native evidence / limitation |
+| --- | --- | --- | --- |
+| Windows MSI package | Install the desktop payload through Windows Installer | Verified package; installed-host behavior partial | Native build, staged smoke, administrative extraction, manifest/hash verification, and extracted local-core lifecycle passed; package is unsigned and no service was installed or started |
+| Windows setup EXE | Bootstrap the MSI through WiX Burn | Verified package; installation partial | Native bundle build and hash/signature inventory passed; artifact is unsigned and was not launched on the host |
+| Linux DEB package | Install the desktop payload under `/opt/avorax` | Verified package; desktop integration partial | Native build, dependency inventory, no setuid/setgid check, extraction, manifest verification, and local-core lifecycle passed |
+| Linux tar package | Provide a portable Linux desktop payload | Verified package | Separate extraction, manifest verification, and local-core lifecycle passed |
+| macOS arm64 DMG | Distribute an Apple Silicon app bundle | Verified package; distribution blocked | Native DMG integrity, arm64 core, ad-hoc code signature, mounted manifest, and local-core lifecycle passed; Gatekeeper rejection is expected without Developer ID signing/notarization |
+| macOS x64 DMG | Distribute an Intel app bundle | Verified package; distribution blocked | Native DMG integrity, x86_64 core, ad-hoc code signature, mounted manifest, and local-core lifecycle passed; Gatekeeper rejection is expected without Developer ID signing/notarization |
+| Package manifest verifier | Detect missing, altered, duplicate, or unexpected payload files | Verified | Staged/extracted/mounted package checks passed on native runners; consolidated hashes were independently recomputed after artifact download |
+| Packaged-core smoke | Exercise health, exact-hash detection, quarantine, list, and restore | Verified within bounded scope | Uses an isolated harmless exact-hash fixture only; no live malware, standard EICAR string, network, machine-wide state, service, GUI, or blocking proof |
+| Platform update UI | Prevent unsupported update mutation controls | Verified source/UI tests; platform delivery partial | Signed `.aup` controls remain Windows-only; Linux/macOS direct users to manual reinstall instead of exposing a dead install/rollback control |
+| Native ML signal | Supply optional static score evidence | Disabled for production verdict authority | Every packaged-core health result reports `native_ml_production_ready=false` |
+| Driver/pre-execution engine | Block execution before user-mode launch | Blocked/technical | No package or smoke proves a reviewed signed driver, authenticated installed service IPC, kernel enforcement, or pre-execution blocking |
+| OS signing/notarization | Establish trusted publisher and platform distribution acceptance | Blocked | Requires protected Windows signing credentials and Apple Developer ID/notarization credentials; unsigned/ad-hoc status is visible in artifacts and documentation |
