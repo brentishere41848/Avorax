@@ -4059,3 +4059,9 @@ passed and published the prerelease at commit
 | --- | --- | --- | --- |
 | Native package tool discovery | Resolve configured or host Linux/macOS build tools while distinguishing expected absence from unexpected script failure | Source/unit verified; native rerun required | Missing `command -v` results are handled explicitly and still fail the absolute executable validation; no `|| true` remains in either native builder |
 | macOS entitlement and emergency mount cleanup | Refuse packaging when entitlement inspection is unavailable and ensure cleanup failures are visible without erasing the original failure status | Source/unit verified; native rerun required | Entitlement inspection is fail-closed; the EXIT trap reports detach failure and preserves prior status. Bash parse, `16` packaging tests, and `591` source contracts pass; Developer ID signing/notarization and installed-host E2E remain blocked |
+
+## Checkpoint 2157 Engine-Control Matrix Addendum
+
+| Control / engine | Responsibility | Classification | Evidence / limitation |
+| --- | --- | --- | --- |
+| Lockfile CycloneDX component inventory | Produce deterministic bounded package identity/hash evidence from reviewed Cargo, pub, and Python lockfiles and deliver it beside release artifacts | Runtime/source verified; production SBOM/license review partial | Real generation records `569` deduplicated components; repeated output hashes match; official CycloneDX 1.6 schema validation passes; malformed/missing hash, duplicate field, link output, and checksum regressions pass; workflow-equivalent smoke includes the `.cdx.json` in seven checksum rows. Metadata explicitly records partial license review, false final-binary resolution, and incomplete composition. Final-binary graph, complete license/copyright notices, Android Gradle lock evidence, and artifact signing remain incomplete or blocked |

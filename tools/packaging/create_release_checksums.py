@@ -12,7 +12,7 @@ import uuid
 from pathlib import Path
 
 
-ARTIFACT_SUFFIXES = (".msi", ".exe", ".deb", ".tar.gz", ".dmg")
+ARTIFACT_SUFFIXES = (".msi", ".exe", ".deb", ".tar.gz", ".dmg", ".cdx.json")
 READ_CHUNK_BYTES = 1024 * 1024
 MAX_ARTIFACTS = 32
 

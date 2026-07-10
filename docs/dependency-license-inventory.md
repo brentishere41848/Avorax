@@ -2,11 +2,15 @@
 
 Date: 2026-07-05
 
-This inventory records dependency pinning and license evidence that affects Avorax release readiness. It is source-derived evidence for the current checkout, not a substitute for a full SBOM generated on a provisioned release host.
+This inventory records dependency pinning and license evidence that affects Avorax release readiness. It is source-derived evidence for the current checkout. The desktop release workflow now emits a deterministic CycloneDX lockfile component inventory, but that inventory is explicitly incomplete and is not a substitute for final-binary dependency resolution plus complete license review on a provisioned release host.
 
 `tools/security/avorax-dependency-evidence.ps1` verifies the source-level dependency evidence without launching ambient package managers. In release mode it fails on missing required lockfiles; use `-AllowKnownBlockers` only for partial local evidence reports that must not be treated as release approval. Reports with allowed blockers and remaining release blockers set `partial=true`.
 
 Checkpoint 2131 expands the generated dependency evidence JSON with `lockfile_summaries` and `license_inventory`. The summaries are derived from bounded local reads of Cargo, pub, and Python lockfiles and record package counts plus checksum/SHA-256/exact-pin counts. The license inventory is intentionally `source_level_partial`: it points to this document, confirms no machine-wide dependency installation and no network access are required by the gate, and keeps `full_release_sbom_required=true` until a provisioned release host generates complete SBOM/license output from final artifacts.
+
+Checkpoint 2157 adds `tools/packaging/create_dependency_sbom.py`. The dependency-free generator performs bounded UTF-8 reads of regular non-link Cargo, pub, and Python lockfiles; rejects malformed structure, missing hosted pub.dev SHA-256 evidence, duplicate pub fields, changed inputs, links/reparse paths, conflicting hashes, and unsafe output targets; deduplicates package URLs while retaining every source lockfile; and writes deterministic CycloneDX 1.6 JSON atomically. The current repository produces `569` unique components. Two independent runs produced SHA-256 `AE4006E90B35C85BE93B6D28EA4958C5AB63EF8EB71DFB08138A89457796E739`, and the result passed the official CycloneDX 1.6 JSON schema using an isolated exact-pinned validator environment that was removed afterward.
+
+The generated metadata deliberately states `avorax:license-review-status=partial`, `avorax:final-binary-resolution=false`, and `compositions.aggregate=incomplete`. The cross-platform workflow includes the `.cdx.json` beside the six native artifacts and includes it in `SHA256SUMS.txt`. This closes the missing reproducible lockfile inventory, not the production license/SBOM blocker.
 
 ## Python ML Tooling
 
@@ -93,5 +97,5 @@ repository-owned workflow code and are excluded from that external-action rule.
 - Android SDK/Gradle execution is not available in this validation shell; `flutter doctor -v` reports the Android SDK is missing. Release readiness still needs Gradle dependency-lock generation/review on an Android-capable build host, using the source-enabled dependency locking rather than a handwritten lockfile.
 - npm is not installed or not on `PATH`; this is not a release blocker while the archived legacy website stays out of runtime scope.
 - Python package metadata plus disposable Windows/Python 3.12 install/import smoke tests have passed, including a `--no-deps` install from `ml/requirements.lock.txt`. A release host still needs to regenerate/review the lock for the target Python/platform as needed and capture complete license/SBOM output.
-- A release build host should generate a complete SBOM from Rust `Cargo.lock` files, Dart `pubspec.lock` files, Gradle locks/wrapper evidence, and Python locked requirements before release-candidate tagging.
+- Cross-platform package CI now generates and checksums a CycloneDX 1.6 inventory from the current Rust, Dart, and Python lockfiles. Release-candidate approval still requires final-binary dependency resolution, complete license/copyright review, and Android Gradle lock evidence before any Android release.
 - `tools/security/avorax-dependency-evidence.ps1` treats Android Gradle lock evidence as non-blocking for the Windows antivirus release path while still reporting its presence/absence. Root Rust and update-service workspace lock evidence are present through `Cargo.lock`.

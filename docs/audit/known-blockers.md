@@ -737,3 +737,17 @@ detach failure after an otherwise successful path into a failure. Bash parsing,
 binaries gate pass locally. Native Linux/macOS package CI remains required;
 signing, notarization, installed-host, service, driver, and pre-execution
 blockers are unchanged.
+
+## Checkpoint 2157 Deterministic Lockfile Component Inventory
+
+The cross-platform package workflow now creates a deterministic CycloneDX 1.6
+lockfile inventory from five Cargo locks, three pub locks, and the exact-pinned
+Python verification lock. The real checkout produces `569` deduplicated
+components; repeated generation produced identical SHA-256 output, the official
+CycloneDX 1.6 schema accepted it, and a workflow-equivalent smoke produced seven
+checksum rows for six package fixtures plus the `.cdx.json`. Packaging tests
+pass (`22`, with three platform privilege skips on Windows) and source contracts
+pass (`591`). The file marks license review partial, final-binary resolution
+false, and composition incomplete. Complete license/copyright review, final-
+binary dependency resolution, and Android Gradle lock evidence remain blockers;
+the lockfile inventory must not be represented as a complete production SBOM.

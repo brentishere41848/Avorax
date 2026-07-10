@@ -19,12 +19,16 @@ on:
   pull_request:
     paths:
       - ".github/workflows/desktop-packages.yml"
+      - "Cargo.lock"
       - "README.md"
       - "apps/zentor_client/**"
       - "assets/**"
       - "core/**"
       - "docs/installers.md"
       - "installer/**"
+      - "ml/requirements.lock.txt"
+      - "packages/**"
+      - "services/api/Cargo.lock"
       - "tests/test_packaging_tools.py"
       - "tools/packaging/**"
   push:
@@ -33,12 +37,16 @@ on:
       - "agent/**"
     paths:
       - ".github/workflows/desktop-packages.yml"
+      - "Cargo.lock"
       - "README.md"
       - "apps/zentor_client/**"
       - "assets/**"
       - "core/**"
       - "docs/installers.md"
       - "installer/**"
+      - "ml/requirements.lock.txt"
+      - "packages/**"
+      - "services/api/Cargo.lock"
       - "tests/test_packaging_tools.py"
       - "tools/packaging/**"
 
@@ -75,7 +83,8 @@ jobs:
           python -m py_compile \
             tools/packaging/package_manifest.py \
             tools/packaging/smoke_local_core.py \
-            tools/packaging/create_release_checksums.py
+            tools/packaging/create_release_checksums.py \
+            tools/packaging/create_dependency_sbom.py
           bash -n \
             installer/common/stage-desktop-payload.sh \
             installer/linux/build-linux.sh \
@@ -433,7 +442,7 @@ jobs:
           path: release-assets
           merge-multiple: true
 
-      - name: Require six release artifacts and create checksums
+      - name: Require six release artifacts, create lockfile SBOM, and checksum all evidence
         run: |
           mapfile -t artifacts < <(
             find release-assets -type f \
@@ -445,6 +454,19 @@ jobs:
             printf '%s\n' "${artifacts[@]}" >&2
             exit 1
           fi
+          python tools/packaging/create_dependency_sbom.py \
+            --repo-root . \
+            --version "$AVORAX_PACKAGE_VERSION" \
+            --cargo-lock Cargo.lock \
+            --cargo-lock core/zentor_native_engine/Cargo.lock \
+            --cargo-lock core/zentor_local_core/Cargo.lock \
+            --cargo-lock core/zentor_guard_service/Cargo.lock \
+            --cargo-lock services/api/Cargo.lock \
+            --pub-lock apps/zentor_client/pubspec.lock \
+            --pub-lock packages/zentor_protocol/pubspec.lock \
+            --pub-lock packages/avorax_protocol/pubspec.lock \
+            --requirements-lock ml/requirements.lock.txt \
+            --output "release-assets/Avorax-AntiVirus-${AVORAX_PACKAGE_VERSION}-lockfile.cdx.json"
           python tools/packaging/create_release_checksums.py \
             --input-dir release-assets \
             --output release-assets/SHA256SUMS.txt
@@ -462,6 +484,7 @@ jobs:
             release-assets/*.deb
             release-assets/*.tar.gz
             release-assets/*.dmg
+            release-assets/*.cdx.json
             release-assets/SHA256SUMS.txt
 
   publish-prerelease:
@@ -506,11 +529,14 @@ jobs:
             This prerelease contains unsigned Windows and Linux packages plus
             ad-hoc-signed, non-notarized macOS packages. No package includes
             verified kernel or pre-execution blocking. Verify SHA256SUMS.txt
-            before opening an installer.
+            before opening an installer. The included lockfile CycloneDX file
+            is a partial dependency inventory, not a complete license review or
+            final-binary SBOM.
           files: |
             release-assets/*.msi
             release-assets/*-setup.exe
             release-assets/*.deb
             release-assets/*.tar.gz
             release-assets/*.dmg
+            release-assets/*.cdx.json
             release-assets/SHA256SUMS.txt

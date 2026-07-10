@@ -335,3 +335,15 @@ scanner package, because an unnoticed sandbox entitlement would make filesystem
 protection claims misleading. Emergency DMG detach is also security-relevant
 cleanup: failure is reported and can fail an otherwise successful build, while
 an existing build failure remains the primary nonzero status.
+
+## Checkpoint 2157 Dependency Inventory Boundary
+
+Lockfiles and their checksums are untrusted build inputs until bounded parsing
+and consistency checks pass. The release inventory rejects linked/reparse or
+changing inputs, malformed lock structures, non-exact Python requirements,
+hosted pub packages without pub.dev SHA-256 evidence, conflicting hashes,
+duplicate fields, excessive component counts, and unsafe output targets. The
+result is deterministic, atomically activated, independently schema-valid, and
+covered by the release checksum file. It describes reviewed lockfile contents,
+not reachability in final binaries, license compatibility, vulnerability status,
+or signed provenance; those distinctions remain machine-readable in the BOM.
