@@ -580,8 +580,25 @@ function Assert-DependencyRelativePathSafe {
     throw "$Description must not contain parent traversal: $RelativePath"
   }
   $candidate = Join-Path $RepositoryRoot $RelativePath
-  if ($RelativePath.IndexOfAny([char[]]@('*', '?')) -ge 0) {
-    $matches = @(Get-ChildItem -Path $candidate -File -ErrorAction SilentlyContinue)
+  $wildcardIndex = $RelativePath.IndexOfAny([char[]]@('*', '?'))
+  if ($wildcardIndex -ge 0) {
+    $fixedPrefix = $RelativePath.Substring(0, $wildcardIndex)
+    $separatorIndex = $fixedPrefix.LastIndexOfAny([char[]]@('\', '/'))
+    $wildcardAnchorRelative = if ($separatorIndex -ge 0) {
+      $fixedPrefix.Substring(0, $separatorIndex)
+    } else {
+      ""
+    }
+    $wildcardAnchor = if ([string]::IsNullOrWhiteSpace($wildcardAnchorRelative)) {
+      $RepositoryRoot
+    } else {
+      Join-Path $RepositoryRoot $wildcardAnchorRelative
+    }
+    $checkedWildcardAnchor = Assert-SmallThreatMvpRepoChildPath ([System.IO.Path]::GetFullPath($wildcardAnchor)) $RepositoryRoot "$Description wildcard anchor"
+    if (-not (Test-Path -LiteralPath $checkedWildcardAnchor -PathType Container)) {
+      return $false
+    }
+    $matches = @(Get-ChildItem -Path $candidate -File -ErrorAction Stop)
     foreach ($match in $matches) {
       [void](Assert-SmallThreatMvpRepoChildPath $match.FullName $RepositoryRoot $Description)
       Get-AvoraxGateFile $match.FullName $Description | Out-Null

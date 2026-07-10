@@ -315,3 +315,13 @@ signatures, and public network content must still pass a versioned signed Avorax
 definition package before activation. Until such a feed exists, automatic
 blocking attributed to these repositories is disabled and Microsoft Defender
 must remain enabled.
+
+## Checkpoint 2155 Failure-Visibility Boundary
+
+Local verification tooling is part of the release trust boundary: a missing
+helper, failed artifact enumeration, or failed dependency wildcard enumeration
+must not be converted into empty or successful evidence. Expected absence is
+handled narrowly, while unexpected PowerShell errors stop the verifier. macOS
+DMG verification may retry only the exact short-lived `hdiutil` resource-busy
+diagnostic, at most three times; malformed or persistently unavailable images
+still fail and cannot reach mount, manifest, signing, or packaged-core proof.

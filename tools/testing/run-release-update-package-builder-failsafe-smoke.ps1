@@ -238,7 +238,7 @@ function Invoke-FailSafeScenario {
   if (-not $diagnostic.Contains($ExpectedDiagnostic)) {
     throw "update package builder fail-safe scenario $Scenario diagnostic mismatch. Expected '$ExpectedDiagnostic', got: $(Get-BoundedText $diagnostic)"
   }
-  $packages = @(Get-ChildItem -LiteralPath $outputRoot -Filter "*.aup" -File -ErrorAction SilentlyContinue)
+  $packages = @(Get-ChildItem -LiteralPath $outputRoot -Filter "*.aup" -File -ErrorAction Stop)
   if ($packages.Count -ne 0) {
     throw "update package builder fail-safe scenario $Scenario produced an .aup package"
   }
