@@ -18264,6 +18264,15 @@ def test_build_msi_generated_driver_install_system32_root_is_checked():
     assert "return $root" not in root_source
 
 
+def test_ci_workflow_serializes_process_global_local_core_test_overrides():
+    source = read(CI_WORKFLOW)
+    local_core_start = source.index("- name: Test local core")
+    local_core_end = source.index("- name: Test guard service")
+    local_core_source = source[local_core_start:local_core_end]
+
+    assert "run: cargo test -- --test-threads=1" in local_core_source
+
+
 def test_ci_workflow_resolves_one_existing_application_path_per_tool():
     source = read(CI_WORKFLOW)
     resolve_start = source.index("- name: Resolve explicit gate tool paths")

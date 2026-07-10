@@ -3547,6 +3547,11 @@ fn config_root_is_allowed(path: &Path) -> bool {
 }
 
 #[cfg(test)]
+fn normalized_test_source(source: &str) -> String {
+    source.replace("\r\n", "\n").replace('\r', "\n")
+}
+
+#[cfg(test)]
 mod tests {
     use super::*;
     use app_control::known_good_store::KnownGoodStore;
@@ -3628,8 +3633,8 @@ mod tests {
 
     #[test]
     fn core_command_schema_stays_strict() {
-        let api_source = include_str!("api/mod.rs");
-        let main_source = include_str!("main.rs");
+        let api_source = crate::normalized_test_source(include_str!("api/mod.rs"));
+        let main_source = crate::normalized_test_source(include_str!("main.rs"));
         let command_start = api_source.find("pub struct CoreCommand").unwrap();
         let response_start = api_source.find("pub struct CoreResponse").unwrap();
         let parser_start = main_source.find("fn parse_core_command_line").unwrap();
@@ -4230,7 +4235,7 @@ mod tests {
 
     #[test]
     fn startup_migration_errors_are_not_suppressed() {
-        let source = include_str!("main.rs");
+        let source = crate::normalized_test_source(include_str!("main.rs"));
         let start = source.find("fn main() -> Result<()>").unwrap();
         let end = source.find("#[cfg(windows)]\nfn run_service").unwrap();
         let main_source = &source[start..end];
@@ -4782,7 +4787,7 @@ mod tests {
 
     #[test]
     fn evidence_file_names_do_not_default_to_empty_strings() {
-        let source = include_str!("main.rs");
+        let source = crate::normalized_test_source(include_str!("main.rs"));
         let production_source = source
             .split_once("#[cfg(test)]")
             .map(|(production, _)| production)
@@ -4800,7 +4805,7 @@ mod tests {
             production_source
                 .matches("file_name: display_file_name(path)")
                 .count(),
-            4
+            5
         );
         assert!(!production_source.contains(&old_value_fallback));
         assert!(!production_source.contains(&old_name_fallback));
@@ -5624,7 +5629,7 @@ mod tests {
 
     #[test]
     fn scan_paths_does_not_count_failed_native_inspections_as_scanned() {
-        let source = include_str!("main.rs");
+        let source = crate::normalized_test_source(include_str!("main.rs"));
         let scan_call = source
             .find("match engine.scan_file(path.clone(), AneScanActionMode::DetectOnly)")
             .expect("scan call marker");

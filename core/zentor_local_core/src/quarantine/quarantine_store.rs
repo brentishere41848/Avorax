@@ -2208,7 +2208,7 @@ mod tests {
 
     #[test]
     fn restore_cleans_restored_payload_on_metadata_write_failure() {
-        let source = include_str!("quarantine_store.rs");
+        let source = crate::normalized_test_source(include_str!("quarantine_store.rs"));
         let start = source.find("pub fn restore(&self").unwrap();
         let end = source.find("pub fn delete(&self").unwrap();
         let restore_source = &source[start..end];
@@ -3404,7 +3404,7 @@ mod tests {
     fn quarantine_acl_command_output_is_bounded() {
         let long = vec![b'a'; MAX_QUARANTINE_COMMAND_OUTPUT_BYTES + 16];
         let excerpt = command_output_excerpt(&long);
-        let source = include_str!("quarantine_store.rs");
+        let source = crate::normalized_test_source(include_str!("quarantine_store.rs"));
         let start = source.find("fn harden_quarantine_base_acl").unwrap();
         let end = source
             .find("#[cfg(windows)]\nfn current_windows_account")

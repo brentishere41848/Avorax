@@ -30,7 +30,8 @@ jobs:
 
       - name: Test local core
         working-directory: core/zentor_local_core
-        run: cargo test
+        # These tests intentionally exercise process-wide AVORAX_* path overrides.
+        run: cargo test -- --test-threads=1
 
       - name: Test guard service
         working-directory: core/zentor_guard_service

@@ -165,7 +165,7 @@ mod tests {
 
     #[test]
     fn windows_system32_tool_rejects_parent_traversal_source_marker() {
-        let source = include_str!("windows_tools.rs");
+        let source = crate::normalized_test_source(include_str!("windows_tools.rs"));
         let production_source = source.split("#[cfg(test)]").next().unwrap();
 
         assert!(source.contains(
