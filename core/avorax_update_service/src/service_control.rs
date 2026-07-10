@@ -382,7 +382,7 @@ fn is_local_windows_drive_path(path: &Path) -> bool {
 mod tests {
     #[test]
     fn service_control_uses_checked_system32_sc_path_source_marker() {
-        let source = include_str!("service_control.rs");
+        let source = crate::normalized_test_source(include_str!("service_control.rs"));
         let production = source
             .split("#[cfg(test)]")
             .next()

@@ -1327,7 +1327,7 @@ mod tests {
 
     #[test]
     fn package_metadata_enforces_size_bounds_before_open() {
-        let source = include_str!("update_package.rs");
+        let source = crate::normalized_test_source(include_str!("update_package.rs"));
         let production = &source[..source.find("#[cfg(test)]").unwrap()];
         let metadata_source = &production[production
             .find("fn checked_package_metadata")
@@ -2155,7 +2155,7 @@ mod tests {
 
     #[test]
     fn payload_extraction_revalidates_canonical_destination() {
-        let source = include_str!("update_package.rs");
+        let source = crate::normalized_test_source(include_str!("update_package.rs"));
         let start = source.find("pub fn extract_payload_to").unwrap();
         let end = source
             .find("fn ensure_existing_payload_extraction_directory")

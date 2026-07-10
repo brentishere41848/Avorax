@@ -18273,6 +18273,15 @@ def test_ci_workflow_serializes_process_global_local_core_test_overrides():
     assert "run: cargo test -- --test-threads=1" in local_core_source
 
 
+def test_ci_workflow_serializes_process_global_update_service_test_overrides():
+    source = read(CI_WORKFLOW)
+    update_start = source.index("- name: Test update service")
+    update_end = source.index("- name: Test backend API")
+    update_source = source[update_start:update_end]
+
+    assert "run: cargo test -- --test-threads=1" in update_source
+
+
 def test_ci_workflow_prebuilds_timeout_bounded_false_positive_tests():
     source = read(CI_WORKFLOW)
     prebuild_start = source.index("- name: Prebuild local core gate tests")

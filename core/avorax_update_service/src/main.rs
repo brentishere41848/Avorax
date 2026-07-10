@@ -304,6 +304,11 @@ fn ensure_absolute_local_path(path: &Path, label: &str) -> Result<()> {
 }
 
 #[cfg(test)]
+fn normalized_test_source(source: &str) -> String {
+    source.replace("\r\n", "\n").replace('\r', "\n")
+}
+
+#[cfg(test)]
 mod tests {
     use crate::update_manifest::{
         UpdateChannel, UpdateComponentSet, UpdateManifest, PACKAGE_FORMAT_VERSION, PRODUCT_NAME,

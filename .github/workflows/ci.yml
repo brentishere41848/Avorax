@@ -39,7 +39,8 @@ jobs:
 
       - name: Test update service
         working-directory: core/avorax_update_service
-        run: cargo test
+        # Update tests intentionally exercise process-wide rollback and data roots.
+        run: cargo test -- --test-threads=1
 
       - name: Test backend API
         working-directory: services/api

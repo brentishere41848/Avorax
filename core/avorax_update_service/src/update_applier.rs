@@ -1767,7 +1767,7 @@ mod tests {
 
     #[test]
     fn normal_update_apply_service_payload_is_file_allowlisted() {
-        let source = include_str!("update_applier.rs");
+        let source = crate::normalized_test_source(include_str!("update_applier.rs"));
         let start = source.find("fn copy_service_payload_section").unwrap();
         let end = source.find("fn copy_engine_payload_section").unwrap();
         let service_source = &source[start..end];
