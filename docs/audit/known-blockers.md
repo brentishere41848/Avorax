@@ -812,3 +812,27 @@ malware-binaries gate passes. This is Windows runtime fixture evidence only: no
 service was registered, installed, started, stopped, or recovered through SCM.
 Installed Core Service recovery policy, service ACLs, authenticated privileged
 IPC, and elevated-host E2E remain partial or blocked.
+
+## Checkpoint 2161 Authenticated Read-Only Core Service IPC
+
+Core Service now creates `\\.\pipe\AvoraxCoreService.v1` before reporting
+`Running`. The pipe uses a protected explicit ACL, rejects remote clients, and
+requires exclusive first-instance ownership. Each connection is restricted to
+one 16 KiB protocol-v1 message; Windows client PID and token impersonation are
+verified, and a failed `RevertToSelf` is fatal rather than recoverable. The only
+allowed command is read-only `health`; scan, quarantine, restore, delete, update,
+unknown, malformed, wrong-version, unknown-field, and oversized requests fail
+closed. The service health payload excludes filesystem paths and explicitly
+reports `healthOnly`, local named-pipe transport, no network exposure, and the
+remaining user-mode limitations.
+
+Six focused protocol/Windows transport tests pass, including a real local pipe,
+exclusive-name collision, client PID authentication, mutation denial, malformed
+input, 16 KiB rejection, post-rejection recovery, and clean stop. The complete
+local-core suite passes (`492`). Rustfmt and `git diff --check` pass. Strict
+Clippy remains non-green on pre-existing native-engine/local-core lint debt; the
+new IPC module's one reported null-comparison lint was corrected before final
+verification. No service was installed, started, stopped, or reconfigured.
+Flutter still uses per-process stdio, no mutating command crosses this service
+boundary, installed service/pipe ACL and recovery E2E remain partial, and no
+kernel or pre-execution blocking is claimed.
