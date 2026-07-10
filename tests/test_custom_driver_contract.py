@@ -18273,6 +18273,19 @@ def test_ci_workflow_serializes_process_global_local_core_test_overrides():
     assert "run: cargo test -- --test-threads=1" in local_core_source
 
 
+def test_ci_workflow_prebuilds_timeout_bounded_false_positive_tests():
+    source = read(CI_WORKFLOW)
+    prebuild_start = source.index("- name: Prebuild local core gate tests")
+    false_positive_start = source.index("- name: False-positive gate")
+    prebuild_source = source[prebuild_start:false_positive_start]
+
+    assert prebuild_start < false_positive_start
+    assert "timeout-minutes: 20" in prebuild_source
+    assert "$env:AVORAX_CI_CARGO test" in prebuild_source
+    assert ".\\core\\zentor_local_core\\Cargo.toml --no-run --locked" in prebuild_source
+    assert "if ($LASTEXITCODE -ne 0)" in prebuild_source
+
+
 def test_ci_workflow_resolves_one_existing_application_path_per_tool():
     source = read(CI_WORKFLOW)
     resolve_start = source.index("- name: Resolve explicit gate tool paths")

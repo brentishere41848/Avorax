@@ -9,6 +9,8 @@ import 'package:path_provider_platform_interface/path_provider_platform_interfac
 import 'package:zentor_client/core/config/build_config.dart';
 import 'package:zentor_client/core/updates/update_service.dart';
 
+import 'source_text.dart';
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -1710,9 +1712,7 @@ void main() {
   });
 
   test('source marker: local update feeds are regular files', () {
-    final source = File(
-      'lib/core/updates/update_service.dart',
-    ).readAsStringSync();
+    final source = readNormalizedSource('lib/core/updates/update_service.dart');
     final loadFeedMethod = source.substring(
       source.indexOf('Future<Map<String, Object?>> _loadFeed'),
       source.indexOf('bool _isGithubLatestDownloadFeed'),

@@ -4,6 +4,8 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zentor_client/core/apps/app_detector.dart';
 
+import 'source_text.dart';
+
 void main() {
   test(
     'app detector returns empty when no real supported apps are found',
@@ -149,7 +151,7 @@ void main() {
   });
 
   test('process snapshot observations parse bounded PID evidence', () {
-    final source = File('lib/core/apps/app_detector.dart').readAsStringSync();
+    final source = readNormalizedSource('lib/core/apps/app_detector.dart');
     final windowsParser = source.substring(
       source.indexOf('List<ProcessObservation> _windowsPowerShellObservations'),
       source.indexOf('List<ProcessObservation> _posixProcessObservations'),

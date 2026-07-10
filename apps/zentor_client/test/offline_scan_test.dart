@@ -17,6 +17,8 @@ import 'package:zentor_client/core/updates/update_service.dart';
 import 'package:zentor_protocol/zentor_protocol.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'source_text.dart';
+
 void main() {
   test('quick scan can run while cloud is disabled', () async {
     SharedPreferences.setMockInitialValues({});
@@ -2830,7 +2832,7 @@ void main() {
   });
 
   test('source marker: protection settings diagnostics are bounded', () {
-    final appState = File('lib/app/app_state.dart').readAsStringSync();
+    final appState = readNormalizedSource('lib/app/app_state.dart');
     final setMode = appState.substring(
       appState.indexOf('Future<bool> setProtectionMode'),
       appState.indexOf('Future<bool> updateRansomwareGuardSettings'),
@@ -2919,7 +2921,7 @@ void main() {
   });
 
   test('source marker: configuration mutations block scan busy states', () {
-    final appState = File('lib/app/app_state.dart').readAsStringSync();
+    final appState = readNormalizedSource('lib/app/app_state.dart');
     final beginSecuritySettings = appState.substring(
       appState.indexOf('Future<bool> _beginSecuritySettingsAction'),
       appState.indexOf('void _endSecuritySettingsAction'),
@@ -3945,7 +3947,7 @@ void main() {
   });
 
   test('source marker: start protection recovers persisted off profile', () {
-    final appState = File('lib/app/app_state.dart').readAsStringSync();
+    final appState = readNormalizedSource('lib/app/app_state.dart');
     final startFlow = appState.substring(
       appState.indexOf('Future<void> startProtection'),
       appState.indexOf('Future<void> stopProtection'),

@@ -179,6 +179,15 @@ jobs:
         shell: pwsh
         run: .\tools\security\zentor-no-malware-binaries-gate.ps1 -RepoRoot . -PythonPath $env:AVORAX_CI_PYTHON
 
+      - name: Prebuild local core gate tests
+        shell: pwsh
+        timeout-minutes: 20
+        run: |
+          & $env:AVORAX_CI_CARGO test --manifest-path .\core\zentor_local_core\Cargo.toml --no-run --locked
+          if ($LASTEXITCODE -ne 0) {
+            throw "Local-core gate test prebuild failed with exit code $LASTEXITCODE."
+          }
+
       - name: False-positive gate
         shell: pwsh
         run: .\tools\security\zentor-false-positive-gate.ps1 -RepoRoot . -CargoPath $env:AVORAX_CI_CARGO

@@ -11,6 +11,8 @@ import 'package:zentor_client/core/updates/update_service.dart';
 import 'package:zentor_client/features/update/update_controller.dart';
 import 'package:zentor_protocol/zentor_protocol.dart';
 
+import 'source_text.dart';
+
 void main() {
   test(
     'in-app update completes check download verify install and waits for restart',
@@ -1119,7 +1121,7 @@ void main() {
   });
 
   test('source marker: update mutations block active security work', () {
-    final source = File('lib/app/app_state.dart').readAsStringSync();
+    final source = readNormalizedSource('lib/app/app_state.dart');
     final installMethod = source.substring(
       source.indexOf('Future<void> installUpdateInApp'),
       source.indexOf('Future<void> rollbackUpdateInApp'),
@@ -1335,12 +1337,12 @@ void main() {
   });
 
   test('source marker: update actions name verification step', () {
-    final homeSource = File(
+    final homeSource = readNormalizedSource(
       'lib/features/home/home_screen.dart',
-    ).readAsStringSync();
-    final settingsSource = File(
+    );
+    final settingsSource = readNormalizedSource(
       'lib/features/settings/settings_screen.dart',
-    ).readAsStringSync();
+    );
     final homeUpdateDetail = homeSource.substring(
       homeSource.indexOf('String _updateDetail'),
       homeSource.indexOf('}\n}\n\nString _lastScanDetail'),

@@ -5,6 +5,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:zentor_client/app/theme/zentor_colors.dart';
 import 'package:zentor_client/app/theme/zentor_theme.dart';
 
+import 'source_text.dart';
+
 void main() {
   test('app background is the flat Avorax dark color', () {
     final theme = ZentorTheme.dark();
@@ -180,9 +182,9 @@ void main() {
   });
 
   test('auto-action scan starts require explicit confirmation', () {
-    final scanScreen = File(
+    final scanScreen = readNormalizedSource(
       'lib/features/scan/scan_screen.dart',
-    ).readAsStringSync();
+    );
 
     expect(scanScreen, contains('Run scan with automatic quarantine?'));
     expect(scanScreen, contains('may move confirmed threats into quarantine'));
@@ -212,9 +214,9 @@ void main() {
   test(
     'quarantine destructive actions require confirmation and no dead keep button',
     () {
-      final quarantineScreen = File(
+      final quarantineScreen = readNormalizedSource(
         'lib/features/quarantine/quarantine_screen.dart',
-      ).readAsStringSync();
+      );
 
       expect(quarantineScreen, contains('Restore quarantined file?'));
       expect(
@@ -342,9 +344,9 @@ void main() {
   });
 
   test('scan malicious feedback is disabled after quarantine recommendation', () {
-    final scanScreen = File(
+    final scanScreen = readNormalizedSource(
       'lib/features/scan/scan_screen.dart',
-    ).readAsStringSync();
+    );
 
     expect(scanScreen, contains("label: 'Mark malicious'"));
     expect(
@@ -948,7 +950,7 @@ void main() {
   });
 
   test('controller protected state requires ready engine evidence', () {
-    final appState = File('lib/app/app_state.dart').readAsStringSync();
+    final appState = readNormalizedSource('lib/app/app_state.dart');
     final startProtection = appState.substring(
       appState.indexOf('Future<void> startProtection'),
       appState.indexOf('Future<void> stopProtection'),

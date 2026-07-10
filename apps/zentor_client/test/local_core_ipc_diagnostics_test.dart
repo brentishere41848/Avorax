@@ -5,6 +5,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:zentor_client/core/local_core/local_core_client.dart';
 import 'package:zentor_protocol/zentor_protocol.dart';
 
+import 'source_text.dart';
+
 void main() {
   test('scan failure reports missing local core executable path', () async {
     final missing = Directory.systemTemp
@@ -1150,9 +1152,9 @@ void main() {
   });
 
   test('health summary parser bounds malformed IPC fields', () async {
-    final clientSource = File(
+    final clientSource = readNormalizedSource(
       'lib/core/local_core/local_core_client.dart',
-    ).readAsStringSync();
+    );
 
     expect(clientSource, contains('_maxIpcStatusTextLength'));
     expect(clientSource, contains('_maxIpcDiagnosticTextLength'));
@@ -1820,9 +1822,9 @@ void main() {
   });
 
   test('local core subprocess diagnostics are bounded', () async {
-    final clientSource = File(
+    final clientSource = readNormalizedSource(
       'lib/core/local_core/local_core_client.dart',
-    ).readAsStringSync();
+    );
     final selfTest = clientSource.substring(
       clientSource.indexOf('Future<String> runProtectionSelfTest'),
       clientSource.indexOf('Future<LocalCoreActionResult> configureGuardMode'),
