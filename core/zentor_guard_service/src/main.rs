@@ -4270,6 +4270,11 @@ fn error_event(
 }
 
 #[cfg(test)]
+fn normalized_test_source(source: &str) -> String {
+    source.replace("\r\n", "\n").replace('\r', "\n")
+}
+
+#[cfg(test)]
 mod tests {
     use super::*;
     use std::sync::{Mutex, OnceLock};
@@ -5745,7 +5750,7 @@ mod tests {
 
     #[test]
     fn guard_process_commands_use_bounded_runner() {
-        let source = include_str!("main.rs");
+        let source = crate::normalized_test_source(include_str!("main.rs"));
         let production = &source[..source.find("#[cfg(test)]").unwrap()];
         let runner_start = source.find("fn run_guard_process_command").unwrap();
         let acl_start = source
@@ -6121,7 +6126,7 @@ mod tests {
 
     #[test]
     fn guard_text_readers_are_metadata_and_actual_byte_bounded() {
-        let source = include_str!("main.rs");
+        let source = crate::normalized_test_source(include_str!("main.rs"));
         let config_start = source.find("fn read_bounded_guard_text").unwrap();
         let config_end = source.find("fn guard_config_file_present").unwrap();
         let config_source = &source[config_start..config_end];
@@ -6553,8 +6558,8 @@ mod tests {
 
     #[test]
     fn guard_command_schema_stays_strict() {
-        let source = include_str!("main.rs");
-        let driver_source = include_str!("driver_ipc.rs");
+        let source = crate::normalized_test_source(include_str!("main.rs"));
+        let driver_source = crate::normalized_test_source(include_str!("driver_ipc.rs"));
         let command_start = source.find("struct GuardCommand").unwrap();
         let config_start = source.find("struct GuardModeConfigFile").unwrap();
         let scan_request_start = driver_source.find("pub struct ScanRequest").unwrap();
@@ -6717,7 +6722,7 @@ mod tests {
 
     #[test]
     fn guard_compat_scan_targets_use_regular_file_metadata() {
-        let source = include_str!("main.rs");
+        let source = crate::normalized_test_source(include_str!("main.rs"));
         let clamav_start = source.find("fn clamav_signature_match").unwrap();
         let clamav_end = source[clamav_start..]
             .find("#[cfg(any(feature = \"compat_clamav\", test))]")
@@ -6868,7 +6873,7 @@ mod tests {
 
     #[test]
     fn guard_yara_default_rules_path_uses_non_following_presence_checks() {
-        let source = include_str!("main.rs");
+        let source = crate::normalized_test_source(include_str!("main.rs"));
         let start = source.find("fn default_yara_rules_path").unwrap();
         let end = source.find("fn metadata_value").unwrap();
         let default_path_source = &source[start..end];
@@ -6979,7 +6984,7 @@ mod tests {
             MAX_GUARD_CLAMAV_COMMAND_OUTPUT_BYTES + "...[truncated]".len()
         );
 
-        let source = include_str!("main.rs");
+        let source = crate::normalized_test_source(include_str!("main.rs"));
         let production = &source[..source.find("#[cfg(test)]").unwrap()];
         let clamav_start = source.find("fn clamav_signature_match").unwrap();
         let clamav_end = source[clamav_start..]

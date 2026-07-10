@@ -999,7 +999,7 @@ mod tests {
 
     #[test]
     fn driver_status_probe_outputs_are_bounded() {
-        let source = include_str!("driver_health.rs");
+        let source = crate::normalized_test_source(include_str!("driver_health.rs"));
         let filter_start = source.find("fn driver_filter_running").unwrap();
         let status_end = source
             .find("#[cfg(not(windows))]\nfn secure_boot_enabled")
@@ -1049,7 +1049,7 @@ mod tests {
 
     #[test]
     fn driver_probe_failures_are_not_defaulted_false() {
-        let source = include_str!("driver_health.rs");
+        let source = crate::normalized_test_source(include_str!("driver_health.rs"));
         let old_bool_default = [".unwrap_or", "(false)"].concat();
         let installed_start = source.find("fn driver_service_installed()").unwrap();
         let installed_end = source
@@ -1074,7 +1074,7 @@ mod tests {
 
     #[test]
     fn driver_health_system_commands_use_checked_system32_paths() {
-        let source = include_str!("driver_health.rs");
+        let source = crate::normalized_test_source(include_str!("driver_health.rs"));
         let production = &source[..source.find("#[cfg(test)]").unwrap()];
         let old_sc = ["Command::new(\"", "sc.exe\")"].concat();
         let old_fltmc = ["Command::new(\"", "fltmc.exe\")"].concat();
@@ -1118,7 +1118,7 @@ mod tests {
 
     #[test]
     fn secure_boot_probe_uses_encoded_powershell_command() {
-        let source = include_str!("driver_health.rs");
+        let source = crate::normalized_test_source(include_str!("driver_health.rs"));
         let secure_boot_start = source.find("fn secure_boot_enabled()").unwrap();
         let secure_boot_end = source
             .find("#[cfg(not(windows))]\nfn secure_boot_enabled")

@@ -453,7 +453,7 @@ mod tests {
 
     #[test]
     fn driver_port_worker_spawn_errors_are_reported() {
-        let source = include_str!("driver_port.rs");
+        let source = crate::normalized_test_source(include_str!("driver_port.rs"));
         let start = source.find("pub fn start_background_worker").unwrap();
         let end = source.find("fn run_message_loop").unwrap();
         let worker_source = &source[start..end];

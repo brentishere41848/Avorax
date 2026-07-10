@@ -2420,7 +2420,7 @@ mod tests {
 
     #[test]
     fn native_driver_candidate_uses_non_following_path_guard() {
-        let source = include_str!("driver_ipc.rs");
+        let source = crate::normalized_test_source(include_str!("driver_ipc.rs"));
         let start = source.find("fn cached_native_engine_verdict").unwrap();
         let end = source.find("fn native_asset_root").unwrap();
         let native_source = &source[start..end];
@@ -2630,7 +2630,7 @@ mod tests {
 
     #[test]
     fn driver_yara_default_rules_path_uses_non_following_presence_checks() {
-        let source = include_str!("driver_ipc.rs");
+        let source = crate::normalized_test_source(include_str!("driver_ipc.rs"));
         let start = source.find("fn default_yara_rules_path").unwrap();
         let end = source.find("fn metadata_value").unwrap();
         let default_path_source = &source[start..end];
