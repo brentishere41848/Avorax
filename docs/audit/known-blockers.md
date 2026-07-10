@@ -774,3 +774,25 @@ and DPAPI call style). The dependency-including variant also reports `13`
 pre-existing native-engine lints. Neither run reports the checkpoint 2158
 lifecycle additions; the existing lint debt remains visible for a separate
 reviewed cleanup instead of being represented as passing evidence.
+
+## Checkpoint 2159 Locale-Independent Service Status Queries
+
+Local Core and Guard health no longer launch or parse `sc.exe` for service
+status. A shared `windows-service` API helper opens Service Control Manager with
+`CONNECT` only, opens one of three fixed product service names with
+`QUERY_STATUS` only, classifies absence solely from Windows error `1060`, and
+maps typed service states without localized command text. Access-denied and
+other SCM failures retain their numeric Windows error in visible diagnostics;
+pending/paused states remain conservatively `installed`, not `running`.
+
+Seven focused Core/Guard/SCM tests pass, including a read-only host query and an
+unapproved-name rejection; the complete local-core suite passes (`483` in
+`147.25s`), source contracts pass (`592`), rustfmt passes, and the no-malware-
+binaries gate passes. A freshly built debug local-core health probe returns one
+successful response with `core_service_status=missing`, `guard_status=off`, null
+status errors, `ipc=stdio`, and `network_exposed=false` on this no-service host.
+This supersedes checkpoint 1639/1647 command-output status
+evidence for Local Core and Guard only; updater, driver tooling, and driver-health
+probes keep their separately bounded command paths. No service was installed,
+started, stopped, or reconfigured, and installed service recovery plus
+authenticated privilege-boundary IPC remain partial or blocked.

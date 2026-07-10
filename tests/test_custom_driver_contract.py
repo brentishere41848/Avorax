@@ -5376,7 +5376,7 @@ def test_flutter_core_service_status_accepts_local_core_unsupported_status():
     ipc_test = read(LOCAL_CORE_IPC_DIAGNOSTICS_TEST)
     status_report = core[
         core.index("fn core_service_system_status_report"):
-        core.index("fn core_service_status_output_text")
+        core.index("fn should_surface_native_verdict")
     ]
     parser = client[
         client.index("coreServiceStatus: _healthAllowedStringField"):
@@ -11890,83 +11890,54 @@ def test_guard_driver_health_cleanup_failures_are_reported():
     assert "let _ = child.wait()" not in runner
 
 
-def test_local_core_service_status_distinguishes_absent_from_probe_failure():
+def test_local_core_service_status_uses_numeric_scm_api_evidence():
     core = read(LOCAL_CORE_MAIN)
     guard = read(LOCAL_GUARD_SERVICE)
+    windows_tools = read(ROOT / "core" / "zentor_local_core" / "src" / "windows_tools.rs")
     core_status = core[core.index("fn core_service_system_status"):core.index("fn should_surface_native_verdict")]
-    guard_status = guard[guard.index("pub fn system_status"):guard.index("fn guard_service_status_from_query_text")]
+    guard_status = guard[guard.index("pub fn system_status"):guard.index("#[cfg(test)]")]
 
-    assert "fn core_service_status_query_reports_absent" in core
-    assert "core_service_status_query_distinguishes_absent_from_probe_failure" in core
-    assert "core_service_status_query_reports_absent(&output.stdout, &output.stderr)" in core_status
+    assert "const WINDOWS_ERROR_SERVICE_DOES_NOT_EXIST: i32 = 1060" in windows_tools
+    assert "pub fn query_windows_service_status(name: &str)" in windows_tools
+    assert "ServiceManagerAccess::CONNECT" in windows_tools
+    assert "ServiceAccess::QUERY_STATUS" in windows_tools
+    assert "windows_service_error_code(&error)" in windows_tools
+    assert "Some(WINDOWS_ERROR_SERVICE_DOES_NOT_EXIST)" in windows_tools
+    assert "classify_windows_service_state(status.current_state)" in windows_tools
+    assert "WindowsServiceStatus::Running" in windows_tools
+    assert "WindowsServiceStatus::Stopped" in windows_tools
+    assert "WindowsServiceStatus::Installed" in windows_tools
+    assert "Windows error {code}" in windows_tools
+
+    assert 'query_windows_service_status("avorax_core_service")' in core_status
     assert 'CoreServiceStatusReport::status("missing")' in core_status
     assert "CoreServiceStatusReport::unknown" in core_status
 
-    assert "fn guard_service_status_query_reports_absent" in guard
-    assert "guard_service_status_query_distinguishes_absent_from_probe_failure" in guard
-    assert "guard_service_status_query_reports_absent(&output.stdout, &output.stderr)" in guard_status
+    assert "query_windows_service_status(service_name)" in guard_status
     assert "let mut query_errors = Vec::new()" in guard_status
-    assert "guard_service_status_query_failure_detail" in guard_status
     assert "query_errors.join" in guard_status
     assert "GuardServiceStatusReport::unknown" in guard_status
 
 
-def test_local_core_and_guard_service_status_use_bounded_runners():
+def test_local_core_and_guard_service_status_do_not_parse_sc_output():
     core = read(LOCAL_CORE_MAIN)
     guard = read(LOCAL_GUARD_SERVICE)
     core_status = core[
-        core.index("fn core_service_system_status_report"):
-        core.index("fn core_service_status_output_text")
-    ]
-    core_runner = core[
-        core.index("fn run_core_service_status_command"):
-        core.index("fn core_service_status_query_reports_absent")
+        core.index("fn core_service_system_status"):
+        core.index("fn should_surface_native_verdict")
     ]
     guard_status = guard[
-        guard.index("pub fn system_status_report"):
-        guard.index("fn guard_service_status_from_query_text")
-    ]
-    guard_runner = guard[
-        guard.index("fn run_guard_service_status_command"):
-        guard.index("fn guard_service_status_query_reports_absent")
+        guard.index("pub fn system_status"):
+        guard.index("#[cfg(test)]")
     ]
 
-    assert "const CORE_SERVICE_STATUS_COMMAND_TIMEOUT: Duration = Duration::from_secs(30)" in core
-    assert "const GUARD_SERVICE_STATUS_COMMAND_TIMEOUT: Duration = Duration::from_secs(30)" in guard
-    assert "run_core_service_status_command(" in core_status
-    assert "run_guard_service_status_command(&mut command, &label)" in guard_status
-    assert "stdin(Stdio::null())" in core_runner
-    assert "stdin(Stdio::null())" in guard_runner
-    assert "stdout(Stdio::piped())" in core_runner
-    assert "stdout(Stdio::piped())" in guard_runner
-    assert "stderr(Stdio::piped())" in core_runner
-    assert "stderr(Stdio::piped())" in guard_runner
-    assert "child.try_wait()?" in core_runner
-    assert "child.try_wait()?" in guard_runner
-    assert "child.kill().err()" in core_runner
-    assert "child.kill().err()" in guard_runner
-    assert "child.wait().err()" in core_runner
-    assert "child.wait().err()" in guard_runner
-    assert "failed to kill timed-out Core Service status command" in core_runner
-    assert "failed to reap timed-out Core Service status command" in core_runner
-    assert "failed to kill timed-out Guard Service status command" in guard_runner
-    assert "failed to reap timed-out Guard Service status command" in guard_runner
-    assert "read_bounded_core_service_status_output(stdout)" in core_runner
-    assert "read_bounded_core_service_status_output(stderr)" in core_runner
-    assert "read_bounded_guard_service_status_output(stdout)" in guard_runner
-    assert "read_bounded_guard_service_status_output(stderr)" in guard_runner
-    assert "let mut reader = BufReader::new(reader)" in core_runner
-    assert "let mut reader = BufReader::new(reader)" in guard_runner
-    assert "MAX_CORE_SERVICE_STATUS_OUTPUT_BYTES.saturating_add(1)" in core_runner
-    assert "MAX_GUARD_SERVICE_STATUS_OUTPUT_BYTES.saturating_add(1)" in guard_runner
-    assert "read(&mut buffer)" in core_runner
-    assert "read(&mut buffer)" in guard_runner
-    assert "bytes.extend_from_slice(&buffer[..keep])" in core_runner
-    assert "bytes.extend_from_slice(&buffer[..keep])" in guard_runner
-    assert ".output()" not in core_status
-    assert ".output()" not in guard_status
-    assert ".read_to_end(&mut bytes)" not in core_runner
-    assert ".read_to_end(&mut bytes)" not in guard_runner
+    for status_source in (core_status, guard_status):
+        assert "sc.exe" not in status_source
+        assert "Command::new" not in status_source
+        assert "output.stdout" not in status_source
+        assert "output.stderr" not in status_source
+        assert "String::from_utf8_lossy" not in status_source
+        assert "DOES NOT EXIST AS AN INSTALLED SERVICE" not in status_source
 
 
 def test_guard_service_runtime_failure_is_not_reported_as_clean_stop():
