@@ -300,3 +300,18 @@ Linux/macOS update mutation controls remain unavailable because the signed
 reinstall guidance on those platforms, avoiding a dead control or false update
 success. Network update content remains untrusted and must never be activated
 without the existing signed-manifest/package verification path.
+
+## External Sample Repository Boundary
+
+The registered GitHub sample repositories are discovery/attribution surfaces,
+not definition authorities. Avorax may request bounded repository and recursive
+tree metadata, but it must not request blob contents, clone repositories, fetch
+archives/releases, execute samples, or derive active signatures by handling
+sample bytes. Git blob SHA, path, filename, extension, and inferred family are
+low-confidence observations and have `auto_quarantine_allowed=false`.
+
+Only reviewed SHA-256 rows from a hash-only feed may become confirmed exact-hash
+signatures, and public network content must still pass a versioned signed Avorax
+definition package before activation. Until such a feed exists, automatic
+blocking attributed to these repositories is disabled and Microsoft Defender
+must remain enabled.

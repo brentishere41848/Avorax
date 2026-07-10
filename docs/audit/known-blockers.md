@@ -694,3 +694,13 @@ not close the following production or installed-host blockers:
   though release lockfiles, requirement pins, and wrapper hashes pass.
 - The beta must instruct users to keep Microsoft Defender enabled and must not
   claim kernel blocking, tamper protection, or broad/advanced malware defense.
+
+## External Sample Repository Blocker
+
+The external repositories registered in `sources.example.json` expose malware
+samples, not an Avorax-authenticated SHA-256 definition feed. Their entries are
+disabled and metadata-only. The active GitHub known-bad pack currently contains
+zero signatures, so Avorax does not claim automatic blocking for those sources.
+Activation requires a reviewed hash-only feed, explicit false-positive owner,
+versioned signed package delivery, rollback evidence, and harmless-fixture
+verification. Downloading samples to fill the pack is prohibited.
