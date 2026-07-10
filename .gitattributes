@@ -1,0 +1,3 @@
+# Source-contract tests must see identical newlines on every runner.
+*.dart text eol=lf
+*.rs text eol=lf

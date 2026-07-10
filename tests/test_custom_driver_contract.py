@@ -6,6 +6,7 @@ import stat
 ROOT = Path(__file__).resolve().parents[1]
 REPARSE_POINT_ATTRIBUTE = getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
 MAX_SOURCE_CONTRACT_FILE_BYTES = 8 * 1024 * 1024
+GIT_ATTRIBUTES = ROOT / ".gitattributes"
 CI_WORKFLOW = ROOT / ".github" / "workflows" / "ci.yml"
 RELEASE_WINDOWS_WORKFLOW = ROOT / ".github" / "workflows" / "release-windows.yml"
 DRIVER = ROOT / "core" / "zentor_windows_minifilter" / "driver"
@@ -18262,6 +18263,13 @@ def test_build_msi_generated_driver_install_system32_root_is_checked():
     assert "Windows System32 tool root is unavailable" in root_source
     assert 'Get-SafeFile (Join-Path $systemRoot "System32\\$Name") "$Name system tool"' in tool_source
     assert "return $root" not in root_source
+
+
+def test_source_contract_line_endings_are_stable_across_runners():
+    source = read(GIT_ATTRIBUTES)
+
+    assert "*.dart text eol=lf" in source
+    assert "*.rs text eol=lf" in source
 
 
 def test_ci_workflow_serializes_process_global_local_core_test_overrides():
