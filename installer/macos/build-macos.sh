@@ -166,7 +166,27 @@ hdiutil create \
   -format UDZO \
   -ov \
   "$DMG"
-hdiutil verify "$DMG" | tee "$VERIFY_ROOT/hdiutil-verify.txt"
+
+verify_dmg() {
+  local attempt output status
+  : >"$VERIFY_ROOT/hdiutil-verify.txt"
+  for attempt in 1 2 3; do
+    set +e
+    output="$(hdiutil verify "$DMG" 2>&1)"
+    status=$?
+    set -e
+    printf 'Attempt %s/3\n%s\n' "$attempt" "$output" | tee -a "$VERIFY_ROOT/hdiutil-verify.txt"
+    if [[ "$status" -eq 0 ]]; then
+      return 0
+    fi
+    if [[ "$attempt" -eq 3 || "$output" != *"Resource temporarily unavailable"* ]]; then
+      return "$status"
+    fi
+    sleep "$((attempt * 2))"
+  done
+  return 1
+}
+verify_dmg
 
 mkdir -p "$MOUNT_ROOT"
 ATTACHED=0

@@ -704,3 +704,23 @@ zero signatures, so Avorax does not claim automatic blocking for those sources.
 Activation requires a reviewed hash-only feed, explicit false-positive owner,
 versioned signed package delivery, rollback evidence, and harmless-fixture
 verification. Downloading samples to fill the pack is prohibited.
+
+## Checkpoint 2155 Fail-Visible Tooling And Package Verification
+
+Three active PowerShell paths no longer suppress command-discovery or file-
+enumeration failures. The installed-core health probe handles only the expected
+missing-function exception before loading its checked helper; update-builder
+fail-safe artifact enumeration now stops on enumeration errors; and dependency
+wildcard validation checks the fixed repository anchor before fail-visible
+enumeration. Parser checks, the structured core-health smoke, all eleven update-
+builder fail-safe scenarios, `591` source contracts, and the focused 11-gate MVP
+verification passed. The self-validating report passed in `42.3s` plus `1.5s`
+for final validation.
+
+The merge package run `29094891205` exposed a transient macOS arm64 DMG verify
+failure after creation and payload verification had already passed: `hdiutil`
+returned `Resource temporarily unavailable`. The package builder now retries
+that exact transient condition at most three times with bounded delays. Other
+DMG verification failures remain immediate failures. Native macOS CI evidence
+is still required before this retry is treated as verified; signing and
+notarization blockers are unchanged.

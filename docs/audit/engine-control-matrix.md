@@ -4045,3 +4045,10 @@ passed and published the prerelease at commit
 | OS signing/notarization | Establish trusted publisher and platform distribution acceptance | Blocked | Requires protected Windows signing credentials and Apple Developer ID/notarization credentials; unsigned/ad-hoc status is visible in artifacts and documentation |
 | External GitHub sample-repository registry | Record bounded source attribution and tree metadata without handling sample bytes | Verified source policy; disabled by default | Requested repositories are exact HTTPS roots with `mode=metadata_only` and `enabled=false`; regression coverage forbids treating registration as active protection |
 | External repository automatic hash blocking | Detect an exact file SHA-256 attributed to an external source | Disabled/blocked | Git tree metadata does not provide trusted file SHA-256 values and the active GitHub known-bad pack is empty; requires reviewed hash-only intel plus signed versioned Avorax package activation |
+
+## Checkpoint 2155 Engine-Control Matrix Addendum
+
+| Control / engine | Responsibility | Classification | Evidence / limitation |
+| --- | --- | --- | --- |
+| PowerShell command and evidence enumeration | Load the checked core-health helper and enumerate update/report evidence without hiding unexpected errors | Runtime/source verified | PowerShell parser checks passed; the core-health smoke rejected seven malformed/error cases and passed real local stdio health; eleven update-builder fail-safe scenarios passed without producing `.aup` or feed output; `591` source contracts and the focused self-validating 11-gate MVP report passed |
+| macOS DMG integrity verification retry | Tolerate only a short-lived `hdiutil verify` resource-busy condition after successful DMG creation while preserving fail-closed integrity verification | Source/unit verified; native rerun required | Bash parse and packaging contracts pass. Retry is limited to three attempts with delays of 2 and 4 seconds, and only exact `Resource temporarily unavailable` failures are retried. Any other error fails immediately; native arm64/x64 package CI remains required |

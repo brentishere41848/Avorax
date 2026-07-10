@@ -206,6 +206,18 @@ class DesktopPackageWorkflowTests(unittest.TestCase):
 
         self.assertIn("root = Path(temporary).resolve(strict=True)", smoke)
 
+    def test_macos_dmg_verify_retries_only_transient_resource_busy_errors(self):
+        builder = (ROOT / "installer" / "macos" / "build-macos.sh").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("verify_dmg()", builder)
+        self.assertIn("for attempt in 1 2 3", builder)
+        self.assertIn('output="$(hdiutil verify "$DMG" 2>&1)"', builder)
+        self.assertIn('"$output" != *"Resource temporarily unavailable"*', builder)
+        self.assertIn('return "$status"', builder)
+        self.assertIn('sleep "$((attempt * 2))"', builder)
+
 
 if __name__ == "__main__":
     unittest.main()

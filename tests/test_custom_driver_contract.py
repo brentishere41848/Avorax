@@ -17477,6 +17477,9 @@ def test_installed_smoke_core_health_probe_is_bounded():
     call_start = source.index("if ($coreExe)")
     call_source = source[call_start:]
 
+    assert "SilentlyContinue" not in probe
+    assert "Get-Command Read-AvoraxGateTextFileBounded -CommandType Function -ErrorAction Stop" in probe
+    assert "catch [System.Management.Automation.CommandNotFoundException]" in probe
     assert "$script:AvoraxCoreHealthOutputByteLimit = 65536" in probe
     assert "$script:AvoraxCoreHealthTimeoutMs = 10000" in probe
     assert "function ConvertFrom-AvoraxCoreHealthOutput" in probe
@@ -19263,6 +19266,10 @@ def test_small_threat_mvp_report_validator_is_strict_and_local():
 
     assert '[switch]$RequireFullSuite' in source
     assert "$maxReportBytes = 2097152" in source
+    assert "SilentlyContinue" not in source
+    assert "$checkedWildcardAnchor = Assert-SmallThreatMvpRepoChildPath" in source
+    assert "$fixedPrefix = $RelativePath.Substring(0, $wildcardIndex)" in source
+    assert "Get-ChildItem -Path $candidate -File -ErrorAction Stop" in source
     assert "Read-AvoraxGateTextFileBounded $Path $maxReportBytes" in source
     assert "Assert-SmallThreatMvpRepoChildPath" in source
     assert "small-threat MVP verification report" in source
@@ -22788,6 +22795,8 @@ def test_release_update_package_builder_smoke_uses_builder_and_verifier_safely()
 def test_release_update_package_builder_failsafe_smoke_rejects_restricted_payloads():
     source = read(RELEASE_UPDATE_PACKAGE_BUILDER_FAILSAFE_SMOKE)
 
+    assert "SilentlyContinue" not in source
+    assert 'Get-ChildItem -LiteralPath $outputRoot -Filter "*.aup" -File -ErrorAction Stop' in source
     assert "avorax_sign_manifest.exe" in source
     assert "tools\\update\\avorax-build-update-package.ps1" in source
     assert "target\\release\\avorax_sign_manifest.exe" in source

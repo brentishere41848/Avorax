@@ -1,5 +1,11 @@
 $securityGateTools = Join-Path $PSScriptRoot "..\security\avorax-security-gate-tools.ps1"
-if (-not (Get-Command Read-AvoraxGateTextFileBounded -CommandType Function -ErrorAction SilentlyContinue)) {
+$gateReaderAvailable = $true
+try {
+  Get-Command Read-AvoraxGateTextFileBounded -CommandType Function -ErrorAction Stop | Out-Null
+} catch [System.Management.Automation.CommandNotFoundException] {
+  $gateReaderAvailable = $false
+}
+if (-not $gateReaderAvailable) {
   . $securityGateTools
 }
 
