@@ -514,7 +514,7 @@ Future<ZentorController> _controllerWithUpdate({
     appDetector: const AppDetector(),
     localCoreClient: const LocalCoreClient(),
     scanTargetService: const ScanTargetService(),
-    updateService: updateService ?? ZentorUpdateService(),
+    updateService: updateService ?? _RecordingUpdateService(),
   );
   final update =
       initialUpdate ??
