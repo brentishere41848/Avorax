@@ -6,6 +6,7 @@ import stat
 ROOT = Path(__file__).resolve().parents[1]
 REPARSE_POINT_ATTRIBUTE = getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
 MAX_SOURCE_CONTRACT_FILE_BYTES = 8 * 1024 * 1024
+CI_WORKFLOW = ROOT / ".github" / "workflows" / "ci.yml"
 RELEASE_WINDOWS_WORKFLOW = ROOT / ".github" / "workflows" / "release-windows.yml"
 DRIVER = ROOT / "core" / "zentor_windows_minifilter" / "driver"
 INSTALLER = ROOT / "installer" / "windows" / "build-msi.ps1"
@@ -18261,6 +18262,22 @@ def test_build_msi_generated_driver_install_system32_root_is_checked():
     assert "Windows System32 tool root is unavailable" in root_source
     assert 'Get-SafeFile (Join-Path $systemRoot "System32\\$Name") "$Name system tool"' in tool_source
     assert "return $root" not in root_source
+
+
+def test_ci_workflow_resolves_one_existing_application_path_per_tool():
+    source = read(CI_WORKFLOW)
+    resolve_start = source.index("- name: Resolve explicit gate tool paths")
+    resolve_end = source.index("- name: Create CI protection self-test report")
+    resolve_source = source[resolve_start:resolve_end]
+
+    assert "function Resolve-CiApplicationPath" in resolve_source
+    assert "Get-Command $Name -CommandType Application -All -ErrorAction Stop" in resolve_source
+    assert "foreach ($command in $commands)" in resolve_source
+    assert "Test-Path -LiteralPath $source -PathType Leaf" in resolve_source
+    assert "return [System.IO.Path]::GetFullPath($source)" in resolve_source
+    assert '$cargo = Resolve-CiApplicationPath -Name "cargo"' in resolve_source
+    assert '$python = Resolve-CiApplicationPath -Name "python"' in resolve_source
+    assert "(Get-Command python -CommandType Application -ErrorAction Stop).Source" not in resolve_source
 
 
 def test_release_workflow_ai_metadata_uses_bounded_handle_reader():
