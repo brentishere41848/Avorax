@@ -304,6 +304,15 @@ fn ensure_absolute_local_path(path: &Path, label: &str) -> Result<()> {
 }
 
 #[cfg(test)]
+fn test_env_lock() -> std::sync::MutexGuard<'static, ()> {
+    // Environment variables are process-wide, so every test module shares one lock.
+    static LOCK: std::sync::OnceLock<std::sync::Mutex<()>> = std::sync::OnceLock::new();
+    LOCK.get_or_init(|| std::sync::Mutex::new(()))
+        .lock()
+        .unwrap()
+}
+
+#[cfg(test)]
 fn normalized_test_source(source: &str) -> String {
     source.replace("\r\n", "\n").replace('\r', "\n")
 }

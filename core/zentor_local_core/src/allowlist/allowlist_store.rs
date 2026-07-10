@@ -759,6 +759,10 @@ fn windows_drive_absolute_rest(path: &str) -> Option<&str> {
 mod tests {
     use super::*;
 
+    fn env_lock() -> std::sync::MutexGuard<'static, ()> {
+        crate::test_env_lock()
+    }
+
     #[test]
     fn blocks_unsafe_root_paths() {
         assert!(validate_path("/").is_err());
@@ -1201,6 +1205,7 @@ mod tests {
 
     #[test]
     fn loading_allowlist_rejects_malformed_persisted_hash_entries() {
+        let _lock = env_lock();
         let dir = tempfile::tempdir().unwrap();
         let store_path = dir.path().join("allowlist.json");
         fs::write(
@@ -1220,6 +1225,7 @@ mod tests {
 
     #[test]
     fn loading_allowlist_rejects_unknown_entry_fields() {
+        let _lock = env_lock();
         let dir = tempfile::tempdir().unwrap();
         let store_path = dir.path().join("allowlist.json");
         fs::write(
@@ -1286,6 +1292,7 @@ mod tests {
 
     #[test]
     fn loading_allowlist_rejects_path_entries_without_hash() {
+        let _lock = env_lock();
         let dir = tempfile::tempdir().unwrap();
         let store_path = dir.path().join("allowlist.json");
         fs::write(

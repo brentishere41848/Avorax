@@ -889,14 +889,12 @@ mod tests {
     use std::ffi::OsString;
     use std::fs::File;
     use std::io::Write;
-    use std::sync::{Mutex, OnceLock};
     use tempfile::tempdir;
 
     const TEST_UPDATE_KEY_ID: &str = "avorax-test-apply-ed25519";
 
     fn env_lock() -> std::sync::MutexGuard<'static, ()> {
-        static LOCK: OnceLock<Mutex<()>> = OnceLock::new();
-        LOCK.get_or_init(|| Mutex::new(())).lock().unwrap()
+        crate::test_env_lock()
     }
 
     struct EnvVarGuard {

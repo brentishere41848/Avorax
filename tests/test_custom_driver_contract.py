@@ -23971,6 +23971,50 @@ def test_update_service_env_roots_reject_parent_traversal():
     assert "update_program_data_root_rejects_parent_traversal_override" in source
 
 
+def test_update_service_env_mutation_tests_share_process_lock():
+    main = read(ROOT / "core" / "avorax_update_service" / "src" / "main.rs")
+    logging = read(UPDATE_SERVICE_LOGGING)
+    rollback = read(ROOT / "core" / "avorax_update_service" / "src" / "rollback.rs")
+    update_applier = read(
+        ROOT / "core" / "avorax_update_service" / "src" / "update_applier.rs"
+    )
+
+    assert "fn test_env_lock() -> std::sync::MutexGuard<'static, ()>" in main
+    assert "static LOCK: std::sync::OnceLock<std::sync::Mutex<()>>" in main
+    for source in (logging, rollback, update_applier):
+        assert "crate::test_env_lock()" in source
+        assert "static LOCK: OnceLock<Mutex<()>>" not in source
+
+
+def test_local_core_env_mutation_tests_use_shared_lock():
+    unlocked = []
+    local_core_sources = sorted(
+        (ROOT / "core" / "zentor_local_core" / "src").rglob("*.rs")
+    )
+    for path in local_core_sources:
+        source = read(path)
+        if path != LOCAL_CORE_MAIN:
+            assert "static LOCK: OnceLock<Mutex<()>>" not in source
+        for segment in source.split("#[test]")[1:]:
+            match = re.search(r"fn\s+([A-Za-z0-9_]+)", segment)
+            if match is None:
+                continue
+            mutates_environment = (
+                "std::env::set_var" in segment or "std::env::remove_var" in segment
+            )
+            if mutates_environment and "env_lock()" not in segment:
+                unlocked.append(f"{path.relative_to(ROOT)}:{match.group(1)}")
+
+    assert unlocked == []
+    main = read(LOCAL_CORE_MAIN)
+    assert "fn test_env_lock() -> std::sync::MutexGuard<'static, ()>" in main
+    cancel_test = main[
+        main.index("fn scan_paths_honors_cancel_request_between_files"):
+        main.index("fn scan_cancellation_reports_unscanned_remainder")
+    ]
+    assert "let _lock = env_lock();" in cancel_test
+
+
 def test_local_passthrough_env_roots_reject_parent_traversal():
     source = read(LOCAL_APP_CONTROL_TRUST_STORE)
     production = source.split("#[cfg(test)]")[0]

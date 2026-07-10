@@ -1835,14 +1835,10 @@ mod tests {
     use super::*;
     use crate::scanner::{ScanResult, ScanStatus};
     use chrono::Utc;
-    use std::sync::{Mutex, OnceLock};
     use tempfile::tempdir;
 
     fn env_lock() -> std::sync::MutexGuard<'static, ()> {
-        static LOCK: OnceLock<Mutex<()>> = OnceLock::new();
-        LOCK.get_or_init(|| Mutex::new(()))
-            .lock()
-            .unwrap_or_else(|poisoned| poisoned.into_inner())
+        crate::test_env_lock()
     }
 
     #[test]
