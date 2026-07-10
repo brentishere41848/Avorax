@@ -372,3 +372,14 @@ This reduces parsing and child-process attack surface but is observation only:
 it does not authenticate commands to a privileged service, validate installed
 service ACL/recovery configuration, start or stop services, or prove persistence
 or pre-execution blocking.
+
+## Checkpoint 2160 Core Service Startup Boundary
+
+A service that reports running before its detection engine is ready, or exits
+during warmup without a failing SCM status, can create false protection health.
+Core Service now enters a bounded pending state first and becomes running only
+after native-engine warmup. Warmup and runtime failures produce a nonzero
+service-specific stop status, while failure to publish that status is retained
+alongside the primary error. This proves state mapping and failure preservation,
+not installed service supervision: recovery actions, ACLs, privileged IPC,
+restart behavior, and elevated-host lifecycle remain outside the verified scope.

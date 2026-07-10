@@ -11963,6 +11963,32 @@ def test_guard_service_runtime_failure_is_not_reported_as_clean_stop():
     assert "guard_service_preserves_runtime_and_status_failures" in guard
 
 
+def test_core_service_runtime_failure_is_not_reported_as_clean_stop():
+    core = read(LOCAL_CORE_MAIN)
+    service = core[
+        core.index("fn run_windows_service_loop"):
+        core.index("fn handle(")
+    ]
+
+    assert "ServiceState::StartPending" in service
+    assert "ServiceState::Running" in service
+    assert "ServiceState::Stopped" in service
+    assert "native_engine().context(\"native engine warmup failed\")?" in service
+    assert service.index("ServiceState::StartPending") < service.index("native_engine().context")
+    assert service.index("native_engine().context") < service.index("ServiceState::Running")
+    assert "fn core_service_status(" in service
+    assert "fn core_service_stop_exit_code(" in service
+    assert "CORE_SERVICE_RUNTIME_FAILURE_EXIT_CODE" in service
+    assert "ServiceExitCode::ServiceSpecific(" in service
+    assert "core_service_stop_exit_code(&runtime_result)" in service
+    assert "combine_core_service_runtime_and_status_results(runtime_result, stop_status_result)" in service
+    assert "additionally failed to report stopped status to Windows" in service
+    assert "current_state: ServiceState::Stopped" not in service
+    assert "exit_code: ServiceExitCode::Win32(0)" not in service
+    assert "core_service_statuses_are_fail_visible_and_state_appropriate" in core
+    assert "core_service_preserves_runtime_and_status_failures" in core
+
+
 def test_guard_clamav_compat_command_output_uses_bounded_runner():
     guard = read(ROOT / "core" / "zentor_guard_service" / "src" / "main.rs")
     clamav_start = guard.index("fn clamav_signature_match")

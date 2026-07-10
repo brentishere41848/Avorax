@@ -796,3 +796,19 @@ evidence for Local Core and Guard only; updater, driver tooling, and driver-heal
 probes keep their separately bounded command paths. No service was installed,
 started, stopped, or reconfigured, and installed service recovery plus
 authenticated privilege-boundary IPC remain partial or blocked.
+
+## Checkpoint 2160 Core Service Lifecycle Failure Visibility
+
+The Windows Core Service now reports `StartPending` before native-engine warmup
+and reports `Running` only after warmup succeeds. Warmup, running-status, or
+shutdown-channel failure is mapped to service-specific exit code `1` instead of
+a clean stop or an unreported early return. Controls are accepted only while
+running, and a secondary failure to report `Stopped` cannot hide the primary
+runtime diagnostic.
+
+Three focused lifecycle/warmup tests pass, the complete local-core suite passes
+(`485` in `101.50s`), source contracts pass (`593`), rustfmt passes, and the no-
+malware-binaries gate passes. This is Windows runtime fixture evidence only: no
+service was registered, installed, started, stopped, or recovered through SCM.
+Installed Core Service recovery policy, service ACLs, authenticated privileged
+IPC, and elevated-host E2E remain partial or blocked.
