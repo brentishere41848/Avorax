@@ -30,18 +30,23 @@ class UpdateScreen extends ConsumerWidget {
           UpdateStatus.rollingBack,
         }.contains(model.status);
     final updateMutationBlocked = updateMutationBlockedByActiveWork(state);
+    final packageMutationSupported = model.packageMutationSupported;
     final rollbackSupported = model.rollbackSupported == true;
-    final rollbackEnabled =
+    final rollbackAllowedByState =
         rollbackSupported && !busy && !updateMutationBlocked;
+    final rollbackEnabled = packageMutationSupported && rollbackAllowedByState;
     return ZentorPanel(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('Updates', style: Theme.of(context).textTheme.headlineMedium),
           const SizedBox(height: 8),
-          const Text(
-            'Normal Avorax updates use signed .aup packages and are applied by Avorax Update Service. '
-            'MSI and EXE installers are only for first install, repair, recovery, and offline manual installs.',
+          Text(
+            packageMutationSupported
+                ? 'Normal Avorax updates use signed .aup packages and are applied by Avorax Update Service. '
+                      'MSI and EXE installers are for first install, repair, recovery, and offline manual installs.'
+                : 'Avorax can check for new releases on this platform. Package verification, installation, and rollback '
+                      'require a manual reinstall with the matching macOS or Linux package.',
             style: TextStyle(color: ZentorColors.textSecondary, height: 1.4),
           ),
           const SizedBox(height: 18),
@@ -78,10 +83,11 @@ class UpdateScreen extends ConsumerWidget {
                 secondary: true,
                 onPressed: busy ? null : controller.checkForInAppUpdate,
               ),
-              if (model.status == UpdateStatus.updateAvailable ||
-                  model.status == UpdateStatus.downloading ||
-                  model.status == UpdateStatus.verifying ||
-                  model.status == UpdateStatus.installing)
+              if (packageMutationSupported &&
+                  (model.status == UpdateStatus.updateAvailable ||
+                      model.status == UpdateStatus.downloading ||
+                      model.status == UpdateStatus.verifying ||
+                      model.status == UpdateStatus.installing))
                 ZentorButton(
                   label: switch (model.status) {
                     UpdateStatus.downloading => 'Downloading',
@@ -99,23 +105,39 @@ class UpdateScreen extends ConsumerWidget {
                           );
                         },
                 ),
-              ZentorButton(
-                label: model.status == UpdateStatus.rollingBack
-                    ? 'Rolling back'
-                    : rollbackSupported
-                    ? 'Rollback previous version'
-                    : model.rollbackSupported == false
-                    ? 'Rollback unavailable'
-                    : 'Rollback status unknown',
-                icon: Icons.history_outlined,
-                secondary: true,
-                onPressed: rollbackEnabled
-                    ? () async {
-                        if (!await confirmRollbackUpdate(context)) return;
-                        await controller.rollbackUpdateInApp(confirmed: true);
-                      }
-                    : null,
-              ),
+              if (packageMutationSupported)
+                ZentorButton(
+                  label: model.status == UpdateStatus.rollingBack
+                      ? 'Rolling back'
+                      : rollbackSupported
+                      ? 'Rollback previous version'
+                      : model.rollbackSupported == false
+                      ? 'Rollback unavailable'
+                      : 'Rollback status unknown',
+                  icon: Icons.history_outlined,
+                  secondary: true,
+                  onPressed: rollbackEnabled
+                      ? () async {
+                          if (!await confirmRollbackUpdate(context)) return;
+                          await controller.rollbackUpdateInApp(confirmed: true);
+                        }
+                      : null,
+                )
+              else
+                const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.install_desktop_outlined,
+                      color: ZentorColors.textSecondary,
+                    ),
+                    SizedBox(width: 8),
+                    Text(
+                      'Manual package reinstall required',
+                      style: TextStyle(color: ZentorColors.textSecondary),
+                    ),
+                  ],
+                ),
             ],
           ),
         ],

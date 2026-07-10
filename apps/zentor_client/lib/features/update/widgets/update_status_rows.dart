@@ -16,6 +16,10 @@ class UpdateStatusRows extends StatelessWidget {
       if (model.latestVersion != null) ('Latest version', model.latestVersion!),
       if (model.channel != null) ('Channel', model.channel!),
       if (model.packageName != null) ('Package', model.packageName!),
+      (
+        'Package apply',
+        model.packageMutationSupported ? 'Available' : 'Manual reinstall only',
+      ),
       ('Rollback', _rollbackLabel(model.rollbackSupported)),
       if (model.error != null) ('Last error', model.error!),
     ];

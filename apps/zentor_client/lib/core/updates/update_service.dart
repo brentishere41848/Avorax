@@ -250,6 +250,8 @@ class ZentorUpdateService {
   final Duration _networkReadTimeout;
   final int _maxPackageBytes;
 
+  bool get packageMutationSupported => Platform.isWindows;
+
   Future<UpdateCheckResult> checkForUpdate({String? currentVersion}) async {
     String? installedVersion;
     try {

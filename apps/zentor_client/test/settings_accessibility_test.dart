@@ -156,6 +156,9 @@ class _RecordingUpdateService extends ZentorUpdateService {
   final List<String> calls = [];
 
   @override
+  bool get packageMutationSupported => true;
+
+  @override
   Future<UpdateCheckResult> checkForUpdate({String? currentVersion}) async {
     calls.add('check');
     return UpdateCheckResult.available(

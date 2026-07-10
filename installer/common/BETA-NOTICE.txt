@@ -1,0 +1,23 @@
+AVORAX DESKTOP BETA - IMPORTANT SAFETY NOTICE
+
+Avorax Desktop Beta is experimental security software. It can scan local files
+with its current signatures, deterministic rules, static analysis, and bounded
+heuristics. It can quarantine confirmed detections and restore quarantined
+files after explicit confirmation.
+
+Do not use this beta as the only antivirus on a device. It can miss advanced,
+novel, targeted, polymorphic, fileless, kernel-level, or large-scale malware
+and ransomware. Keep Microsoft Defender or another supported antivirus enabled.
+No antivirus can guarantee detection of every threat.
+
+The public beta installers are not production code-signed. The macOS disk image
+is ad-hoc signed but is not Developer ID signed or Apple-notarized. The Linux
+packages are not repository-signed. Verify release SHA-256 checksums and obtain
+packages only from the official brentishere41848/Avorax GitHub repository.
+
+Windows kernel/pre-execution blocking is not included in this beta. Linux and
+macOS packages do not install privileged background services, kernel modules,
+or Endpoint Security extensions. Their monitoring is best-effort user mode.
+
+Use only EICAR or the repository's harmless fixtures for validation. Never
+download or execute live malware to test Avorax.

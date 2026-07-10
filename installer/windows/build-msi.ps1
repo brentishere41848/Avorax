@@ -613,6 +613,7 @@ $intelToolsSourceDir = Join-Path $root "tools\zentor_intel"
 $simulatorsSourceDir = Join-Path $root "tools\simulators"
 $updateToolsSourceDir = Join-Path $root "tools\update"
 $docsSourceDir = Join-Path $root "docs"
+$betaNoticeSource = Join-Path $root "installer\common\BETA-NOTICE.txt"
 $driverPackageDefaultDir = Join-Path $distRoot "windows-driver\ZentorAvFilter"
 $modelFile = Join-Path $modelSourceDir "zentor_static_malware_model.onnx"
 $modelMetadataFile = Join-Path $modelSourceDir "zentor_static_malware_model.metadata.json"
@@ -1269,6 +1270,8 @@ foreach ($dllName in $runtimeDllNames) {
 $docsStage = Join-Path $stageDir "docs"
 Copy-RequiredTree $docsSourceDir $docsStage "documentation"
 Copy-RequiredFile (Join-Path $root "README.md") (Join-Path $docsStage "README.md") "README"
+Copy-RequiredFile $betaNoticeSource (Join-Path $stageDir "BETA-NOTICE.txt") "beta safety notice"
+Copy-RequiredFile $betaNoticeSource (Join-Path $releaseDir "BETA-NOTICE.txt") "beta safety notice"
 
 $manifest = [ordered]@{
   product = "Avorax Anti-Virus"
@@ -1360,6 +1363,7 @@ foreach ($requiredPayload in @(
   @("docs\README.md", "installed README"),
   @("docs\windows-driver.md", "driver documentation"),
   @("docs\safe-malware-testing.md", "safe malware testing documentation"),
+  @("BETA-NOTICE.txt", "beta safety notice"),
   @("install-manifest.json", "installed payload manifest")
 )) {
   Assert-StagePath $requiredPayload[0] $requiredPayload[1]

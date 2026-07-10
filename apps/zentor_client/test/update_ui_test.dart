@@ -76,6 +76,55 @@ void main() {
     expect(find.text('Rollback: Available'), findsOneWidget);
   });
 
+  testWidgets('unsupported package mutation is shown as manual reinstall', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ZentorTheme.dark(),
+        home: const Scaffold(
+          body: UpdateStatusRows(
+            model: UpdateViewModel(
+              status: UpdateStatus.updateAvailable,
+              currentVersion: '0.2.15',
+              packageMutationSupported: false,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Package apply: Manual reinstall only'), findsOneWidget);
+  });
+
+  testWidgets(
+    'update screen hides package mutation commands when unsupported',
+    (tester) async {
+      final controller = await _controllerWithUpdate(
+        rollbackSupported: true,
+        updateService: _RecordingUpdateService(mutationSupported: false),
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            zentorControllerProvider.overrideWith((ref) => controller),
+          ],
+          child: MaterialApp(
+            theme: ZentorTheme.dark(),
+            home: const Scaffold(
+              body: SingleChildScrollView(child: UpdateScreen()),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('Manual package reinstall required'), findsOneWidget);
+      expect(find.text('Download, verify, install'), findsNothing);
+      expect(find.text('Rollback previous version'), findsNothing);
+    },
+  );
+
   testWidgets('update screen disables rollback unless explicitly supported', (
     tester,
   ) async {
@@ -491,7 +540,13 @@ Future<ZentorController> _controllerWithUpdate({
 }
 
 class _RecordingUpdateService extends ZentorUpdateService {
+  _RecordingUpdateService({this.mutationSupported = true});
+
+  final bool mutationSupported;
   final List<String> calls = [];
+
+  @override
+  bool get packageMutationSupported => mutationSupported;
 
   @override
   Future<UpdateCheckResult> checkForUpdate({String? currentVersion}) async {
