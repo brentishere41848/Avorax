@@ -28,6 +28,7 @@ const MAX_NATIVE_QUARANTINE_METADATA_BYTES: usize = 256 * 1024;
 const MAX_NATIVE_QUARANTINE_METADATA_LABEL_CHARS: usize = 256;
 const MAX_NATIVE_QUARANTINE_METADATA_STATE_CHARS: usize = 64;
 const MAX_NATIVE_QUARANTINE_RECORD_PATH_CHARS: usize = 4096;
+#[cfg(windows)]
 const MAX_NATIVE_QUARANTINE_COMMAND_OUTPUT_BYTES: usize = 2048;
 #[cfg(windows)]
 const NATIVE_QUARANTINE_ACL_COMMAND_TIMEOUT: Duration = Duration::from_secs(30);
@@ -602,6 +603,7 @@ fn read_bounded_native_quarantine_command_output<R: Read>(
     Ok(bytes)
 }
 
+#[cfg(windows)]
 fn command_output_excerpt(bytes: &[u8]) -> String {
     let limit = bytes.len().min(MAX_NATIVE_QUARANTINE_COMMAND_OUTPUT_BYTES);
     let mut text = String::from_utf8_lossy(&bytes[..limit]).trim().to_string();

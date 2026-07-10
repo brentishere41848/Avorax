@@ -11708,8 +11708,11 @@ def test_guard_process_commands_use_bounded_runner():
         guard.index("fn run_guard_process_command"):
         guard.index("#[cfg(windows)]\nstruct BoundedGuardCommandOutput")
     ]
+    reader_start = guard.index("fn read_bounded_guard_command_output")
+    reader_prefix = guard[max(0, reader_start - 32):reader_start]
 
     assert "const GUARD_PROCESS_COMMAND_TIMEOUT: Duration = Duration::from_secs(30)" in production
+    assert "#[cfg(windows)]\nuse std::ffi::OsString;" in production
     assert "run_guard_process_command(" in process_query
     assert '"Windows process query"' in process_query
     assert "MAX_WINDOWS_PROCESS_QUERY_BYTES" in process_query
@@ -11732,6 +11735,7 @@ def test_guard_process_commands_use_bounded_runner():
     assert "failed to reap timed-out guard process command" in runner
     assert "join_guard_command_output_reader" in runner
     assert "failed to read bounded guard command output" in production
+    assert "#[cfg(windows)]" not in reader_prefix
     assert ".output()" not in process_query
     assert ".output()" not in stop_process
     assert ".read_to_end(&mut bytes)" not in runner
