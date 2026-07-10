@@ -10461,7 +10461,10 @@ def test_native_quarantine_removes_executable_permissions_before_hash_record():
     assert "remove_executable_permissions(&quarantine_path)?" in quarantine_source
     assert "std::os::unix::fs::PermissionsExt" in helper_source
     assert "permissions.mode() & !0o111" in helper_source
-    assert "fs::set_permissions(path, permissions)?" in helper_source
+    assert "regular_quarantine_payload_metadata(path, \"quarantine destination\")?" in helper_source
+    assert "expected.dev() == opened.dev() && expected.ino() == opened.ino()" in helper_source
+    assert "opened_file.set_permissions(permissions)?" in helper_source
+    assert "current.dev() == opened.dev() && current.ino() == opened.ino()" in helper_source
     assert "#[cfg(not(unix))]\nfn remove_executable_permissions(_path: &Path) -> Result<()> {\n    Ok(())\n}" in helper_source
     assert (
         quarantine_source.index('ensure_regular_quarantine_payload(&quarantine_path, "quarantine destination")?')
@@ -10476,6 +10479,7 @@ def test_native_quarantine_removes_executable_permissions_before_hash_record():
         < quarantine_source.index("let record = QuarantineRecord")
     )
     assert "native_quarantine_removes_executable_permissions_from_payload" in source
+    assert "native_quarantine_permission_hardening_rejects_symbolic_link" in source
 
 
 def test_native_quarantine_root_is_checked_before_payload_destination_use():
@@ -11704,8 +11708,11 @@ def test_guard_process_commands_use_bounded_runner():
         guard.index("fn run_guard_process_command"):
         guard.index("#[cfg(windows)]\nstruct BoundedGuardCommandOutput")
     ]
+    reader_start = guard.index("fn read_bounded_guard_command_output")
+    reader_prefix = guard[max(0, reader_start - 32):reader_start]
 
     assert "const GUARD_PROCESS_COMMAND_TIMEOUT: Duration = Duration::from_secs(30)" in production
+    assert "#[cfg(windows)]\nuse std::ffi::OsString;" in production
     assert "run_guard_process_command(" in process_query
     assert '"Windows process query"' in process_query
     assert "MAX_WINDOWS_PROCESS_QUERY_BYTES" in process_query
@@ -11728,6 +11735,7 @@ def test_guard_process_commands_use_bounded_runner():
     assert "failed to reap timed-out guard process command" in runner
     assert "join_guard_command_output_reader" in runner
     assert "failed to read bounded guard command output" in production
+    assert "#[cfg(windows)]" not in reader_prefix
     assert ".output()" not in process_query
     assert ".output()" not in stop_process
     assert ".read_to_end(&mut bytes)" not in runner
@@ -23969,6 +23977,50 @@ def test_update_service_env_roots_reject_parent_traversal():
     assert "PathBuf::from(text)" in root_source
     assert "PathBuf::from(value)" not in root_source
     assert "update_program_data_root_rejects_parent_traversal_override" in source
+
+
+def test_update_service_env_mutation_tests_share_process_lock():
+    main = read(ROOT / "core" / "avorax_update_service" / "src" / "main.rs")
+    logging = read(UPDATE_SERVICE_LOGGING)
+    rollback = read(ROOT / "core" / "avorax_update_service" / "src" / "rollback.rs")
+    update_applier = read(
+        ROOT / "core" / "avorax_update_service" / "src" / "update_applier.rs"
+    )
+
+    assert "fn test_env_lock() -> std::sync::MutexGuard<'static, ()>" in main
+    assert "static LOCK: std::sync::OnceLock<std::sync::Mutex<()>>" in main
+    for source in (logging, rollback, update_applier):
+        assert "crate::test_env_lock()" in source
+        assert "static LOCK: OnceLock<Mutex<()>>" not in source
+
+
+def test_local_core_env_mutation_tests_use_shared_lock():
+    unlocked = []
+    local_core_sources = sorted(
+        (ROOT / "core" / "zentor_local_core" / "src").rglob("*.rs")
+    )
+    for path in local_core_sources:
+        source = read(path)
+        if path != LOCAL_CORE_MAIN:
+            assert "static LOCK: OnceLock<Mutex<()>>" not in source
+        for segment in source.split("#[test]")[1:]:
+            match = re.search(r"fn\s+([A-Za-z0-9_]+)", segment)
+            if match is None:
+                continue
+            mutates_environment = (
+                "std::env::set_var" in segment or "std::env::remove_var" in segment
+            )
+            if mutates_environment and "env_lock()" not in segment:
+                unlocked.append(f"{path.relative_to(ROOT)}:{match.group(1)}")
+
+    assert unlocked == []
+    main = read(LOCAL_CORE_MAIN)
+    assert "fn test_env_lock() -> std::sync::MutexGuard<'static, ()>" in main
+    cancel_test = main[
+        main.index("fn scan_paths_honors_cancel_request_between_files"):
+        main.index("fn scan_cancellation_reports_unscanned_remainder")
+    ]
+    assert "let _lock = env_lock();" in cancel_test
 
 
 def test_local_passthrough_env_roots_reject_parent_traversal():

@@ -3547,6 +3547,15 @@ fn config_root_is_allowed(path: &Path) -> bool {
 }
 
 #[cfg(test)]
+fn test_env_lock() -> std::sync::MutexGuard<'static, ()> {
+    // Environment variables are process-wide, so every test module shares one lock.
+    static LOCK: std::sync::OnceLock<std::sync::Mutex<()>> = std::sync::OnceLock::new();
+    LOCK.get_or_init(|| std::sync::Mutex::new(()))
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner())
+}
+
+#[cfg(test)]
 fn normalized_test_source(source: &str) -> String {
     source.replace("\r\n", "\n").replace('\r', "\n")
 }
@@ -3563,7 +3572,6 @@ mod tests {
         ApplicationTrustLevel, ProtectionMode,
     };
     use std::fs;
-    use std::sync::{Mutex, OnceLock};
     use tempfile::tempdir;
 
     const TRUSTED_FIXTURE_HASH: &str =
@@ -4463,10 +4471,7 @@ mod tests {
     }
 
     fn env_lock() -> std::sync::MutexGuard<'static, ()> {
-        static LOCK: OnceLock<Mutex<()>> = OnceLock::new();
-        LOCK.get_or_init(|| Mutex::new(()))
-            .lock()
-            .unwrap_or_else(|poisoned| poisoned.into_inner())
+        crate::test_env_lock()
     }
 
     #[test]
@@ -4876,6 +4881,7 @@ mod tests {
 
     #[test]
     fn configure_ransomware_guard_rejects_root_protected_folder() {
+        let _lock = env_lock();
         let dir = tempdir().unwrap();
         let config_path = dir.path().join("ransomware_guard.json");
         unsafe {
@@ -4903,6 +4909,7 @@ mod tests {
 
     #[test]
     fn configure_ransomware_guard_rejects_sensitive_system_roots() {
+        let _lock = env_lock();
         let dir = tempdir().unwrap();
         let config_path = dir.path().join("ransomware_guard.json");
         unsafe {
@@ -4930,6 +4937,7 @@ mod tests {
 
     #[test]
     fn list_ransomware_guard_config_rejects_invalid_persisted_entries() {
+        let _lock = env_lock();
         let dir = tempdir().unwrap();
         let config_path = dir.path().join("ransomware_guard.json");
         fs::write(
@@ -5041,6 +5049,7 @@ mod tests {
 
     #[test]
     fn list_ransomware_guard_config_rejects_oversized_persisted_config_before_parse() {
+        let _lock = env_lock();
         let dir = tempdir().unwrap();
         let config_path = dir.path().join("ransomware_guard.json");
         fs::write(
@@ -5660,6 +5669,7 @@ mod tests {
 
     #[test]
     fn scan_paths_honors_cancel_request_between_files() {
+        let _lock = env_lock();
         let dir = tempdir().unwrap();
         for index in 0..5 {
             fs::write(

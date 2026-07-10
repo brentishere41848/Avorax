@@ -672,3 +672,25 @@ This file tracks blockers that must be reported honestly and must not be represe
 - The repository may include documentation and scripts for blocked platform workflows, but blocked features must remain marked unavailable or development-only until validated.
 - Ransomware simulator output is benign validation evidence only; checkpoint 853 limits it to isolated empty temporary roots, checkpoint 860 uses exclusive flushed fixture writes/appends, and it must not be used as independent ransomware certification.
 - Checkpoint 2154 publishes only the verified Windows portable ZIP. MSI/packaged Windows GUI remains blocked by the missing .NET SDK inventory, Visual Studio Desktop C++ components, and Windows symlink support. A standalone internal core EXE is not a verified launcher, and Linux remains blocked until a native Linux build/runtime pass exists; none of these missing artifacts may be replaced by empty, renamed, or untested files.
+
+## Cross-Platform Beta Packaging Status
+
+Native workflow `29086402344` supersedes the package-build portions of the
+checkpoint 2154 blocker: Windows MSI/setup, Linux DEB/tar, and macOS arm64/x64
+DMG artifacts now build and pass bounded native package verification. This does
+not close the following production or installed-host blockers:
+
+- Windows Authenticode signing requires an approved certificate and protected
+  signing workflow. The beta MSI and setup EXE are intentionally `NotSigned`.
+- macOS Developer ID signing and notarization require approved Apple credentials.
+  The beta app is ad-hoc signed and Gatekeeper rejection is recorded.
+- Normal installed GUI click-through, Windows service registration/start/stop,
+  privilege-boundary IPC, and uninstall behavior need isolated host E2E.
+- Driver-backed and pre-execution blocking need a reviewed signed driver,
+  authenticated service/helper boundary, and approved elevated VM evidence.
+- The ML package remains non-production because its metadata reports
+  `production_ready=false`.
+- Full production SBOM and dependency-license review remain incomplete even
+  though release lockfiles, requirement pins, and wrapper hashes pass.
+- The beta must instruct users to keep Microsoft Defender enabled and must not
+  claim kernel blocking, tamper protection, or broad/advanced malware defense.

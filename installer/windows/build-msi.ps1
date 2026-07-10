@@ -613,6 +613,7 @@ $intelToolsSourceDir = Join-Path $root "tools\zentor_intel"
 $simulatorsSourceDir = Join-Path $root "tools\simulators"
 $updateToolsSourceDir = Join-Path $root "tools\update"
 $docsSourceDir = Join-Path $root "docs"
+$betaNoticeSource = Join-Path $root "installer\common\BETA-NOTICE.txt"
 $driverPackageDefaultDir = Join-Path $distRoot "windows-driver\ZentorAvFilter"
 $modelFile = Join-Path $modelSourceDir "zentor_static_malware_model.onnx"
 $modelMetadataFile = Join-Path $modelSourceDir "zentor_static_malware_model.metadata.json"
@@ -724,6 +725,8 @@ Write-TextFileAtomic (Join-Path $stageEngineDir "config\engine.default.json") $e
 Write-TextFileAtomic (Join-Path $releaseEngineDir "config\engine.default.json") $engineDefaultConfig "UTF8" "release default engine config"
 Copy-RequiredAlias (Join-Path $nativeSourceDir "signatures\zentor_core.zsig") (Join-Path $stageEngineDir "signatures\avorax_core.asig") "core native signature alias"
 Copy-RequiredAlias (Join-Path $nativeSourceDir "signatures\zentor_core.zsig") (Join-Path $releaseEngineDir "signatures\avorax_core.asig") "core native signature alias"
+Remove-SafeRegularFileIfPresent (Join-Path $stageEngineDir "signatures\zentor_core.zsig") "duplicate staged legacy core signature pack"
+Remove-SafeRegularFileIfPresent (Join-Path $releaseEngineDir "signatures\zentor_core.zsig") "duplicate release legacy core signature pack"
 foreach ($signatureAlias in @(
   @("zentor_realworld_hashes.zsig", "avorax_realworld_hashes.asig"),
   @("zentor_script_threats.zsig", "avorax_script_threats.asig"),
@@ -739,6 +742,8 @@ foreach ($signatureAlias in @(
 }
 Copy-RequiredAlias (Join-Path $nativeSourceDir "rules\zentor_rules.zrule") (Join-Path $stageEngineDir "rules\avorax_core.arule") "core native rule alias"
 Copy-RequiredAlias (Join-Path $nativeSourceDir "rules\zentor_rules.zrule") (Join-Path $releaseEngineDir "rules\avorax_core.arule") "core native rule alias"
+Remove-SafeRegularFileIfPresent (Join-Path $stageEngineDir "rules\zentor_rules.zrule") "duplicate staged legacy core rule pack"
+Remove-SafeRegularFileIfPresent (Join-Path $releaseEngineDir "rules\zentor_rules.zrule") "duplicate release legacy core rule pack"
 foreach ($ruleAlias in @(
   @("zentor_script_threats.zrule", "avorax_script_threats.arule"),
   @("zentor_ransomware.zrule", "avorax_ransomware.arule"),
@@ -1269,6 +1274,8 @@ foreach ($dllName in $runtimeDllNames) {
 $docsStage = Join-Path $stageDir "docs"
 Copy-RequiredTree $docsSourceDir $docsStage "documentation"
 Copy-RequiredFile (Join-Path $root "README.md") (Join-Path $docsStage "README.md") "README"
+Copy-RequiredFile $betaNoticeSource (Join-Path $stageDir "BETA-NOTICE.txt") "beta safety notice"
+Copy-RequiredFile $betaNoticeSource (Join-Path $releaseDir "BETA-NOTICE.txt") "beta safety notice"
 
 $manifest = [ordered]@{
   product = "Avorax Anti-Virus"
@@ -1360,6 +1367,7 @@ foreach ($requiredPayload in @(
   @("docs\README.md", "installed README"),
   @("docs\windows-driver.md", "driver documentation"),
   @("docs\safe-malware-testing.md", "safe malware testing documentation"),
+  @("BETA-NOTICE.txt", "beta safety notice"),
   @("install-manifest.json", "installed payload manifest")
 )) {
   Assert-StagePath $requiredPayload[0] $requiredPayload[1]

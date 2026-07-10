@@ -9,6 +9,7 @@ class UpdateViewModel {
     this.packageName,
     this.releaseNotes,
     this.rollbackSupported,
+    this.packageMutationSupported = true,
     this.error,
   });
 
@@ -19,5 +20,6 @@ class UpdateViewModel {
   final String? packageName;
   final String? releaseNotes;
   final bool? rollbackSupported;
+  final bool packageMutationSupported;
   final String? error;
 }

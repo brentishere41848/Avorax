@@ -1,4 +1,5 @@
 use std::collections::{HashMap, HashSet};
+#[cfg(windows)]
 use std::ffi::OsString;
 use std::fs;
 use std::io::{self, BufRead, BufReader, Read, Write};
@@ -1997,7 +1998,6 @@ fn wait_for_guard_acl_child(child: &mut std::process::Child) -> anyhow::Result<O
     }
 }
 
-#[cfg(windows)]
 fn read_bounded_guard_command_output<R: Read>(
     reader: R,
     max_bytes: usize,

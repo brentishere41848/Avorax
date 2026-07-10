@@ -276,3 +276,27 @@ than converting those limitations into a green protection claim.
   false-positive-rate evidence.
 - Machine-wide installs, Defender exclusions, or Windows security weakening
   without explicit approval and isolated verification.
+
+## Cross-Platform Package Boundary
+
+The desktop packages are untrusted-input containers until their manifests and
+hashes pass. Native CI therefore verifies staged payloads, then verifies the
+actual administrative extraction, archive extraction, or mounted DMG payload
+before running the bounded local-core lifecycle smoke. The smoke creates only an
+isolated harmless exact-hash fixture, never executes it, and proves detect-only,
+confirmed quarantine, list, and integrity-preserving restore. It does not start
+a service, install a driver, alter Microsoft Defender, use network content, or
+claim pre-execution blocking.
+
+The Windows beta has no Authenticode publisher identity. The macOS beta uses an
+ad-hoc signature and is not notarized, so Gatekeeper rejection is expected and
+recorded instead of suppressed. These artifacts are acceptable only as an
+explicit experimental prerelease with hashes and warnings. Production release
+remains blocked on protected signing credentials, installed-host privilege/IPC
+verification, platform distribution approval, and a complete dependency review.
+
+Linux/macOS update mutation controls remain unavailable because the signed
+`.aup` activation implementation is Windows-specific. The UI exposes manual
+reinstall guidance on those platforms, avoiding a dead control or false update
+success. Network update content remains untrusted and must never be activated
+without the existing signed-manifest/package verification path.

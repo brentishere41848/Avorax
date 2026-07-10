@@ -447,12 +447,10 @@ fn training_label_root_is_allowed(path: &Path) -> bool {
 mod tests {
     use super::*;
     use crate::ai::feature_extractor::{LocationCategory, StaticFeatures};
-    use std::sync::{Mutex, OnceLock};
     use tempfile::tempdir;
 
     fn training_label_env_lock() -> std::sync::MutexGuard<'static, ()> {
-        static LOCK: OnceLock<Mutex<()>> = OnceLock::new();
-        LOCK.get_or_init(|| Mutex::new(())).lock().unwrap()
+        crate::test_env_lock()
     }
 
     #[test]

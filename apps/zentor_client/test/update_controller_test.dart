@@ -110,6 +110,40 @@ void main() {
     },
   );
 
+  test('unsupported platform blocks package install and rollback', () async {
+    SharedPreferences.setMockInitialValues({});
+    final preferences = await SharedPreferences.getInstance();
+    final updateService = _FakeUpdateService(
+      checkResult: UpdateCheckResult.available(_update(localPackagePath: null)),
+      mutationSupported: false,
+    );
+    final container = ProviderContainer(
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(preferences),
+        localCoreClientProvider.overrideWithValue(_FakeLocalCoreClient()),
+        scanTargetServiceProvider.overrideWithValue(_FakeScanTargetService()),
+        updateServiceProvider.overrideWithValue(updateService),
+      ],
+    );
+    addTearDown(container.dispose);
+    await _waitForStartupUpdateIdle(container, updateService);
+
+    final controller = container.read(zentorControllerProvider.notifier);
+    await controller.checkForInAppUpdate();
+    await controller.downloadVerifyAndInstallUpdate(confirmed: true);
+    await controller.rollbackUpdateInApp(confirmed: true);
+
+    final state = container.read(zentorControllerProvider);
+    final events = state.events.map((event) => event.type);
+    expect(updateService.calls, isNot(contains('download')));
+    expect(updateService.calls, isNot(contains('verify')));
+    expect(updateService.calls, isNot(contains('install')));
+    expect(updateService.calls, isNot(contains('rollback')));
+    expect(state.updateError, contains('unavailable on this platform'));
+    expect(events, contains('update_install_platform_unsupported'));
+    expect(events, contains('update_rollback_platform_unsupported'));
+  });
+
   test('rollback button path runs update service rollback in app', () async {
     SharedPreferences.setMockInitialValues({});
     final preferences = await SharedPreferences.getInstance();
@@ -1483,6 +1517,7 @@ class _FakeUpdateService extends ZentorUpdateService {
     this.installFailureMessage = 'simulated install failure',
     this.failRollback = false,
     this.rollbackFailureMessage = 'simulated rollback failure',
+    this.mutationSupported = true,
   });
 
   final UpdateCheckResult checkResult;
@@ -1496,8 +1531,12 @@ class _FakeUpdateService extends ZentorUpdateService {
   final String installFailureMessage;
   final bool failRollback;
   final String rollbackFailureMessage;
+  final bool mutationSupported;
   Completer<UpdateCheckResult>? pendingCheck;
   final calls = <String>[];
+
+  @override
+  bool get packageMutationSupported => mutationSupported;
 
   @override
   Future<UpdateCheckResult> checkForUpdate({String? currentVersion}) async {

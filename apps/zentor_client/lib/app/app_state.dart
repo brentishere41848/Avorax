@@ -354,6 +354,7 @@ class ZentorState {
     this.protectionSelfTestResult,
     this.updateStatus = UpdateStatus.notChecked,
     this.currentAppVersion = 'Unknown',
+    this.updatePackageMutationSupported = true,
     this.updateInfo,
     this.updateError,
   });
@@ -452,6 +453,7 @@ class ZentorState {
   final String? protectionSelfTestResult;
   final UpdateStatus updateStatus;
   final String currentAppVersion;
+  final bool updatePackageMutationSupported;
   final UpdateInfo? updateInfo;
   final String? updateError;
 
@@ -579,6 +581,7 @@ class ZentorState {
     bool clearProtectionSelfTestResult = false,
     UpdateStatus? updateStatus,
     String? currentAppVersion,
+    bool? updatePackageMutationSupported,
     UpdateInfo? updateInfo,
     bool clearUpdateInfo = false,
     String? updateError,
@@ -763,6 +766,8 @@ class ZentorState {
           : protectionSelfTestResult ?? this.protectionSelfTestResult,
       updateStatus: updateStatus ?? this.updateStatus,
       currentAppVersion: currentAppVersion ?? this.currentAppVersion,
+      updatePackageMutationSupported:
+          updatePackageMutationSupported ?? this.updatePackageMutationSupported,
       updateInfo: clearUpdateInfo ? null : updateInfo ?? this.updateInfo,
       updateError: clearUpdateError ? null : updateError ?? this.updateError,
     );
@@ -811,12 +816,18 @@ class ZentorController extends StateNotifier<ZentorState> {
     this._fileSelectionService,
     this._localCoreClient,
     this._scanTargetService,
-    this._updateService,
+    ZentorUpdateService updateService,
     this._scheduledQuickScanTimerFactory,
     this._processSnapshotTimerFactory,
     this._watchPollTimerFactory,
     this._fileSystemTypeProbe,
-  ) : super(const ZentorState());
+  ) : _updateService = updateService,
+      super(
+        ZentorState(
+          updatePackageMutationSupported:
+              updateService.packageMutationSupported,
+        ),
+      );
 
   final ConfigRepository _configRepository;
   final LocalEventRepository _eventRepository;
@@ -1252,6 +1263,19 @@ class ZentorController extends StateNotifier<ZentorState> {
       );
       return;
     }
+    if (!_updateService.packageMutationSupported) {
+      const message =
+          'In-app update package verification and installation are unavailable on this platform. Install the matching package from the official Avorax release manually.';
+      state = state.copyWith(errorMessage: message, updateError: message);
+      await logEvent(
+        'update_install_platform_unsupported',
+        'In-app update installation unavailable',
+        details: message,
+        category: 'update',
+        severity: 'warning',
+      );
+      return;
+    }
     if (!confirmed) {
       const message =
           'Update installation requires explicit confirmation before Avorax Update Service can apply a package.';
@@ -1356,6 +1380,19 @@ class ZentorController extends StateNotifier<ZentorState> {
       await logEvent(
         'update_action_busy',
         'Update action already in progress',
+        details: message,
+        category: 'update',
+        severity: 'warning',
+      );
+      return;
+    }
+    if (!_updateService.packageMutationSupported) {
+      const message =
+          'In-app update rollback is unavailable on this platform. Install the matching package from the official Avorax release manually.';
+      state = state.copyWith(errorMessage: message, updateError: message);
+      await logEvent(
+        'update_rollback_platform_unsupported',
+        'In-app update rollback unavailable',
         details: message,
         category: 'update',
         severity: 'warning',
@@ -6510,6 +6547,7 @@ class ZentorController extends StateNotifier<ZentorState> {
         events: _eventRepository.load(),
         cloudStatus: CloudStatus.disabled,
         protectionStatus: ProtectionStatus.idle,
+        updatePackageMutationSupported: _updateService.packageMutationSupported,
         appVerificationStatus: _verificationStatusFor(
           resetConfig.protectedAppConfig,
         ),

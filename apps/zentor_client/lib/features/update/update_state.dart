@@ -11,6 +11,7 @@ UpdateViewModel updateViewModelFromState(ZentorState state) {
     packageName: update?.packageName,
     releaseNotes: update?.releaseNotes,
     rollbackSupported: update?.rollbackSupported,
+    packageMutationSupported: state.updatePackageMutationSupported,
     error: state.updateError,
   );
 }

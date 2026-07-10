@@ -8,7 +8,7 @@
 PRODUCT_NAME = Avorax
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.zentor.client
+PRODUCT_BUNDLE_IDENTIFIER = com.avorax.security
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright Â© 2026 com.zentor. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright (C) 2026 Avorax Security. All rights reserved.

@@ -28,6 +28,7 @@ const MAX_NATIVE_QUARANTINE_METADATA_BYTES: usize = 256 * 1024;
 const MAX_NATIVE_QUARANTINE_METADATA_LABEL_CHARS: usize = 256;
 const MAX_NATIVE_QUARANTINE_METADATA_STATE_CHARS: usize = 64;
 const MAX_NATIVE_QUARANTINE_RECORD_PATH_CHARS: usize = 4096;
+#[cfg(windows)]
 const MAX_NATIVE_QUARANTINE_COMMAND_OUTPUT_BYTES: usize = 2048;
 #[cfg(windows)]
 const NATIVE_QUARANTINE_ACL_COMMAND_TIMEOUT: Duration = Duration::from_secs(30);
@@ -440,6 +441,10 @@ fn ensure_regular_quarantine_source(path: &Path) -> Result<u64> {
 }
 
 fn ensure_regular_quarantine_payload(path: &Path, label: &str) -> Result<u64> {
+    Ok(regular_quarantine_payload_metadata(path, label)?.len())
+}
+
+fn regular_quarantine_payload_metadata(path: &Path, label: &str) -> Result<fs::Metadata> {
     let metadata = fs::symlink_metadata(path)
         .with_context(|| format!("failed to inspect {label} {}", path.display()))?;
     if metadata.file_type().is_symlink() {
@@ -452,7 +457,7 @@ fn ensure_regular_quarantine_payload(path: &Path, label: &str) -> Result<u64> {
     if !metadata.is_file() {
         anyhow::bail!("{label} is not a regular file {}", path.display());
     }
-    Ok(metadata.len())
+    Ok(metadata)
 }
 
 fn ensure_native_quarantine_root_directory(path: &Path) -> Result<()> {
@@ -598,6 +603,7 @@ fn read_bounded_native_quarantine_command_output<R: Read>(
     Ok(bytes)
 }
 
+#[cfg(windows)]
 fn command_output_excerpt(bytes: &[u8]) -> String {
     let limit = bytes.len().min(MAX_NATIVE_QUARANTINE_COMMAND_OUTPUT_BYTES);
     let mut text = String::from_utf8_lossy(&bytes[..limit]).trim().to_string();
@@ -1030,12 +1036,32 @@ fn sha256_body(trimmed: &str) -> &str {
 
 #[cfg(unix)]
 fn remove_executable_permissions(path: &Path) -> Result<()> {
+    use std::os::unix::fs::MetadataExt;
     use std::os::unix::fs::PermissionsExt;
 
-    let mut permissions =
-        ensure_regular_quarantine_payload(path, "quarantine destination")?.permissions();
+    let expected = regular_quarantine_payload_metadata(path, "quarantine destination")?;
+    let opened_file = fs::File::open(path)
+        .with_context(|| format!("failed to open quarantine destination {}", path.display()))?;
+    let opened = opened_file.metadata().with_context(|| {
+        format!(
+            "failed to inspect opened quarantine destination {}",
+            path.display()
+        )
+    })?;
+    anyhow::ensure!(
+        opened.is_file() && expected.dev() == opened.dev() && expected.ino() == opened.ino(),
+        "quarantine destination changed before permissions were removed: {}",
+        path.display()
+    );
+    let mut permissions = opened.permissions();
     permissions.set_mode(permissions.mode() & !0o111);
-    fs::set_permissions(path, permissions)?;
+    opened_file.set_permissions(permissions)?;
+    let current = regular_quarantine_payload_metadata(path, "quarantine destination")?;
+    anyhow::ensure!(
+        current.dev() == opened.dev() && current.ino() == opened.ino(),
+        "quarantine destination changed while permissions were removed: {}",
+        path.display()
+    );
     Ok(())
 }
 
@@ -1465,6 +1491,35 @@ mod tests {
             .expect("payload metadata")
             .permissions();
         assert_eq!(payload_permissions.mode() & 0o111, 0);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn native_quarantine_permission_hardening_rejects_symbolic_link() {
+        use std::os::unix::fs::{symlink, PermissionsExt};
+
+        let temp = tempfile::tempdir().expect("tempdir");
+        let target = temp.path().join("target.exe");
+        let linked = temp.path().join("linked.avoraxq");
+        fs::write(&target, b"benign native payload").expect("target");
+        let mut permissions = fs::metadata(&target).expect("metadata").permissions();
+        permissions.set_mode(0o755);
+        fs::set_permissions(&target, permissions).expect("permissions");
+        symlink(&target, &linked).expect("symlink");
+
+        let error = remove_executable_permissions(&linked)
+            .expect_err("linked quarantine payload must be rejected")
+            .to_string();
+
+        assert!(error.contains("refusing to use symbolic link quarantine destination"));
+        assert_ne!(
+            fs::metadata(&target)
+                .expect("target metadata")
+                .permissions()
+                .mode()
+                & 0o111,
+            0
+        );
     }
 
     #[cfg(unix)]
