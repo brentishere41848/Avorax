@@ -4,13 +4,15 @@ Date: 2026-07-10
 
 Target version: `0.1.15`
 
-Source commit: `abf256c52050ee714fd49c374671844dea51c64e`
+Release commit: `7b1f8130a652e27d8750954e88b63f3b7f32de2a`
 
-Native workflow: [Desktop Packages run 29086402344](https://github.com/brentishere41848/Avorax/actions/runs/29086402344)
+Release workflow: [Desktop Packages run 29088539809](https://github.com/brentishere41848/Avorax/actions/runs/29088539809)
 
-All native package jobs and the checksum-consolidation job passed. The release
-job was intentionally skipped because this was a branch push, not an approved
-release dispatch. This report distinguishes package proof from installed UI,
+Release: [Avorax Desktop Beta v0.1.15-beta.1](https://github.com/brentishere41848/Avorax/releases/tag/v0.1.15-beta.1)
+
+All native package jobs, checksum consolidation, publication, and the separate
+`main` CI run passed. The lightweight release tag points directly to the release
+commit above. This report distinguishes package proof from installed UI,
 service, signing, and production-protection claims.
 
 ## Result Classification
@@ -18,7 +20,8 @@ service, signing, and production-protection claims.
 ### Verified
 
 - Reproducible source checks listed below pass at the source commit.
-- Six platform packages were produced by native GitHub-hosted runners.
+- Six platform packages were produced and published by native GitHub-hosted
+  runners from the tagged release commit.
 - Every package hash matches the consolidated `SHA256SUMS.txt` artifact.
 - Packaged local-core health reports `engine_status=available`, native self-test
   true, 13 active signatures, 9 local rules, and ML production readiness false.
@@ -101,16 +104,16 @@ native Linux package job provides the executable build/runtime evidence.
 
 | File | Bytes | SHA-256 |
 | --- | ---: | --- |
-| `Avorax-AntiVirus-0.1.15-x64.msi` | 17,695,083 | `44b5f8e7e9c90e780cbd3b3d560a82c2a3d90777059d5b1fa4c86b209abbe1e2` |
-| `Avorax-AntiVirus-0.1.15-x64-setup.exe` | 18,603,355 | `d31cadf242abb286da3563b65aab23439c0d8956beca9f41a8390ef76d046f08` |
-| `Avorax-AntiVirus-0.1.15-linux-x64.deb` | 14,295,268 | `26363d286aae89255e636dd7fee722da4c07d331a33ee522b2ca36fbaacaac0f` |
-| `Avorax-AntiVirus-0.1.15-linux-x64.tar.gz` | 18,491,611 | `b27b4d094f925aad88875a3420f20277e4b6f64b88915dd17d3b8da58cd1e1a2` |
-| `Avorax-AntiVirus-0.1.15-macos-arm64.dmg` | 30,975,709 | `e8fe5d14d27567b12d6caeaef6b03939c50a23bd65a1ef0df03762cc6de04165` |
-| `Avorax-AntiVirus-0.1.15-macos-x64.dmg` | 32,960,052 | `ef809fe5464f4a8359f07b500714d86b016f6673daf3046ea5668c0727fc8a80` |
+| `Avorax-AntiVirus-0.1.15-x64.msi` | 17,699,179 | `2133a13dc1e3b11d4e4c806dda658d9235b3a0a7b013da6c169ee371baf6b6a2` |
+| `Avorax-AntiVirus-0.1.15-x64-setup.exe` | 18,606,887 | `2ad574ea94801945a865b9624680c873d5fbb1522f8155645a1a83cf99e96396` |
+| `Avorax-AntiVirus-0.1.15-linux-x64.deb` | 14,295,710 | `57a6c4ad6af9873001a72bcf2020bfec234c2e795eb338692f4446ae8f64a306` |
+| `Avorax-AntiVirus-0.1.15-linux-x64.tar.gz` | 18,491,525 | `399c4952f0e3939fa79144866e0dfcb93ccc93489925a3d9e614fed8f6ba3054` |
+| `Avorax-AntiVirus-0.1.15-macos-arm64.dmg` | 31,594,161 | `e522edfa1402b3e07e42a555f739ec5c9c678427d5554ab79942a752b3e7838a` |
+| `Avorax-AntiVirus-0.1.15-macos-x64.dmg` | 32,960,048 | `ba89b69c3315fd1230322cfb64c81ac158c35e057988633836b7d43a92b05a56` |
 
-Hashes were independently recomputed after downloading all five workflow
-artifacts. Exactly six package files and six checksum entries were present, and
-every value matched the consolidated checksum file.
+Hashes were independently recomputed after downloading all seven public release
+assets. Exactly six package files and six checksum entries were present. Every
+value matched both the published checksum file and GitHub's asset digest.
 
 ## Native Workflow Results
 
@@ -122,15 +125,21 @@ every value matched the consolidated checksum file.
 | macOS arm64 DMG | Success |
 | macOS x64 DMG | Success |
 | Consolidate/checksum | Success |
-| Publish prerelease | Skipped as expected for branch push |
+| Publish prerelease | Success: tag and seven public release assets created |
 
 The downloaded Windows signatures were independently inspected on the local
 Windows host and again reported `NotSigned` with no signer certificate.
 
+The separate [main CI run 29088524971](https://github.com/brentishere41848/Avorax/actions/runs/29088524971)
+also passed at the release commit. The automatic duplicate package run was
+cancelled by the workflow's per-ref concurrency group when the explicit
+publication dispatch started; the successful dispatch is the authoritative
+release run.
+
 ## Release Gate
 
-The packages are suitable only for an explicitly labeled experimental beta
-prerelease. Publication must retain the README disclaimer, the beta notice in
-each payload, checksum file, unsigned/not-notarized warnings, and instruction to
-keep Microsoft Defender enabled. Production or broad-protection claims remain
-blocked by the limitations above.
+The packages were published only as an explicitly labeled experimental beta
+prerelease. The release retains the README disclaimer, beta notice in each
+payload, checksum file, unsigned/not-notarized warnings, and instruction to keep
+Microsoft Defender enabled. Production or broad-protection claims remain blocked
+by the limitations above.
