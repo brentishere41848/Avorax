@@ -725,6 +725,8 @@ Write-TextFileAtomic (Join-Path $stageEngineDir "config\engine.default.json") $e
 Write-TextFileAtomic (Join-Path $releaseEngineDir "config\engine.default.json") $engineDefaultConfig "UTF8" "release default engine config"
 Copy-RequiredAlias (Join-Path $nativeSourceDir "signatures\zentor_core.zsig") (Join-Path $stageEngineDir "signatures\avorax_core.asig") "core native signature alias"
 Copy-RequiredAlias (Join-Path $nativeSourceDir "signatures\zentor_core.zsig") (Join-Path $releaseEngineDir "signatures\avorax_core.asig") "core native signature alias"
+Remove-SafeRegularFileIfPresent (Join-Path $stageEngineDir "signatures\zentor_core.zsig") "duplicate staged legacy core signature pack"
+Remove-SafeRegularFileIfPresent (Join-Path $releaseEngineDir "signatures\zentor_core.zsig") "duplicate release legacy core signature pack"
 foreach ($signatureAlias in @(
   @("zentor_realworld_hashes.zsig", "avorax_realworld_hashes.asig"),
   @("zentor_script_threats.zsig", "avorax_script_threats.asig"),
@@ -740,6 +742,8 @@ foreach ($signatureAlias in @(
 }
 Copy-RequiredAlias (Join-Path $nativeSourceDir "rules\zentor_rules.zrule") (Join-Path $stageEngineDir "rules\avorax_core.arule") "core native rule alias"
 Copy-RequiredAlias (Join-Path $nativeSourceDir "rules\zentor_rules.zrule") (Join-Path $releaseEngineDir "rules\avorax_core.arule") "core native rule alias"
+Remove-SafeRegularFileIfPresent (Join-Path $stageEngineDir "rules\zentor_rules.zrule") "duplicate staged legacy core rule pack"
+Remove-SafeRegularFileIfPresent (Join-Path $releaseEngineDir "rules\zentor_rules.zrule") "duplicate release legacy core rule pack"
 foreach ($ruleAlias in @(
   @("zentor_script_threats.zrule", "avorax_script_threats.arule"),
   @("zentor_ransomware.zrule", "avorax_ransomware.arule"),

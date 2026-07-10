@@ -218,6 +218,15 @@ foreach ($required in @(
   Require-StageFile $required[0] $required[1]
 }
 
+foreach ($duplicateCorePack in @(
+  "engine\signatures\zentor_core.zsig",
+  "engine\rules\zentor_rules.zrule"
+)) {
+  if (Test-Path -LiteralPath (Join-Path $StagePath $duplicateCorePack)) {
+    Add-CheckError "Installer stage contains a duplicate legacy core pack: $duplicateCorePack"
+  }
+}
+
 $signatureCount = (Get-RegularChildFiles (Join-Path $StagePath "engine\signatures") "*.asig" | Measure-Object).Count
 $ruleCount = (Get-RegularChildFiles (Join-Path $StagePath "engine\rules") "*.arule" | Measure-Object).Count
 if ($signatureCount -le 0) { Add-CheckError "Installer stage contains no Avorax .asig signature packs." }

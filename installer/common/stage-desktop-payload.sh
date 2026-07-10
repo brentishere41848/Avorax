@@ -51,6 +51,13 @@ stage_avorax_desktop_payload() {
   cp "$repo_root/assets/zentor_native/trust/zentor_known_bad_test.ztrust" \
     "$destination/engine/trust/avorax_known_bad_test.atrust"
 
+  # The preferred Avorax core aliases and their legacy copies contain identical
+  # IDs. Keep only the aliases in the active engine tree so duplicate-ID checks
+  # remain fail-closed while optional legacy sibling packs still load.
+  rm -- \
+    "$destination/engine/signatures/zentor_core.zsig" \
+    "$destination/engine/rules/zentor_rules.zrule"
+
   printf '%s\n' \
     '{' \
     '  "compatibility_engines_enabled": false,' \

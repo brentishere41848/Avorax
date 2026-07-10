@@ -80,6 +80,13 @@ jobs:
             installer/common/stage-desktop-payload.sh \
             installer/linux/build-linux.sh \
             installer/macos/build-macos.sh
+          stage_root="$(mktemp -d)"
+          source installer/common/stage-desktop-payload.sh
+          stage_avorax_desktop_payload "$PWD" "$stage_root/payload"
+          test -f "$stage_root/payload/engine/signatures/avorax_core.asig"
+          test ! -e "$stage_root/payload/engine/signatures/zentor_core.zsig"
+          test -f "$stage_root/payload/engine/rules/avorax_core.arule"
+          test ! -e "$stage_root/payload/engine/rules/zentor_rules.zrule"
           git diff --check
 
   windows:
@@ -153,7 +160,10 @@ jobs:
 
       - name: Build Rust desktop services
         run: >-
-          cargo build --workspace --locked --release
+          cargo build --locked --release
+          --package zentor_local_core
+          --package zentor_guard_service
+          --package avorax_update_service
 
       - name: Restore pinned WiX tool
         run: dotnet tool restore
