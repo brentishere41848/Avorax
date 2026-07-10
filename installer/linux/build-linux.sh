@@ -65,6 +65,7 @@ DIST_ROOT="$REPO_ROOT/dist/linux"
 STAGE_ROOT="$DIST_ROOT/stage/Avorax"
 DEB_ROOT="$DIST_ROOT/deb-root"
 EXTRACT_ROOT="$DIST_ROOT/deb-extracted"
+TAR_EXTRACT_ROOT="$DIST_ROOT/tar-extracted"
 VERIFY_ROOT="$DIST_ROOT/verification"
 case "$DIST_ROOT" in
   "$REPO_ROOT"/dist/linux) ;;
@@ -149,6 +150,14 @@ SOURCE_EPOCH="${SOURCE_DATE_EPOCH:-$(git -C "$REPO_ROOT" log -1 --format=%ct)}"
 TARBALL="$REPO_ROOT/dist/Avorax-AntiVirus-$VERSION-linux-x64.tar.gz"
 tar --sort=name --mtime="@$SOURCE_EPOCH" --owner=0 --group=0 --numeric-owner \
   -C "$DIST_ROOT/stage" -cf - Avorax | gzip -n -9 >"$TARBALL"
+mkdir -p "$TAR_EXTRACT_ROOT"
+tar -xzf "$TARBALL" --no-same-owner --no-same-permissions -C "$TAR_EXTRACT_ROOT"
+"$PYTHON_BIN" "$REPO_ROOT/tools/packaging/package_manifest.py" verify \
+  --root "$TAR_EXTRACT_ROOT/Avorax"
+"$PYTHON_BIN" "$REPO_ROOT/tools/packaging/smoke_local_core.py" \
+  --core "$TAR_EXTRACT_ROOT/Avorax/avorax_core_service" \
+  --engine-root "$TAR_EXTRACT_ROOT/Avorax" \
+  --report "$VERIFY_ROOT/linux-tar-core-smoke.json"
 
 mkdir -p \
   "$DEB_ROOT/DEBIAN" \

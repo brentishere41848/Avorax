@@ -148,6 +148,17 @@ class DesktopPackageWorkflowTests(unittest.TestCase):
         self.assertIn("$process.ExitCode", msiexec_section)
         self.assertNotIn("$LASTEXITCODE", msiexec_section)
 
+    def test_linux_tarball_is_extracted_and_smoked(self):
+        builder = (ROOT / "installer" / "linux" / "build-linux.sh").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn('TAR_EXTRACT_ROOT="$DIST_ROOT/tar-extracted"', builder)
+        self.assertIn('tar -xzf "$TARBALL" --no-same-owner --no-same-permissions', builder)
+        self.assertIn('--root "$TAR_EXTRACT_ROOT/Avorax"', builder)
+        self.assertIn('--core "$TAR_EXTRACT_ROOT/Avorax/avorax_core_service"', builder)
+        self.assertIn('--report "$VERIFY_ROOT/linux-tar-core-smoke.json"', builder)
+
 
 if __name__ == "__main__":
     unittest.main()
