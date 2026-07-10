@@ -7,7 +7,7 @@ Supported checks:
 - EICAR safe antivirus test file.
 - AMTSO-style security feature checks where they use safe test content.
 - Avorax harmless known-bad hash fixture.
-- Avorax benign ransomware simulator in a temporary test directory only.
+- Avorax benign ransomware simulator in an isolated empty temporary test directory only; checkpoint 860 also requires exclusive flushed fixture writes/appends.
 
 Do not add real malware samples to this repository.
 

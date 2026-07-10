@@ -22,37 +22,39 @@ class PrivacyScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ZentorPanel(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Privacy-first by design',
-            style: Theme.of(context).textTheme.headlineMedium,
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Avorax is a visible antivirus and security client. It is not a hidden system monitor and does not claim perfect detection.',
-            style: Theme.of(
-              context,
-            ).textTheme.bodyLarge?.copyWith(color: ZentorColors.textSecondary),
-          ),
-          const SizedBox(height: 24),
-          for (final point in points)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 14),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.check_circle_outline,
-                    color: ZentorColors.success,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(child: Text(point)),
-                ],
+    return SingleChildScrollView(
+      child: ZentorPanel(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Privacy-first by design',
+              style: Theme.of(context).textTheme.headlineMedium,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Avorax is a visible antivirus and security client. It is not a hidden system monitor and does not claim perfect detection.',
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                color: ZentorColors.textSecondary,
               ),
             ),
-        ],
+            const SizedBox(height: 24),
+            for (final point in points)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 14),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.check_circle_outline,
+                      color: ZentorColors.success,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(child: Text(point)),
+                  ],
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

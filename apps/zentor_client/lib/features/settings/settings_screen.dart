@@ -9,6 +9,17 @@ import '../../core/updates/update_service.dart';
 import '../../shared/widgets/zentor_button.dart';
 import '../../shared/widgets/zentor_status_card.dart';
 import '../../shared/widgets/zentor_text_field.dart';
+import '../update/update_confirmation.dart';
+import '../update/update_mutation_guard.dart';
+
+const int _maxSettingsDiagnosticChars = 4096;
+
+String _boundedSettingsDiagnostic(Object error) {
+  final text = '$error'.replaceAll(RegExp(r'[\x00-\x1F\x7F]+'), ' ').trim();
+  if (text.isEmpty) return 'unknown error';
+  if (text.length <= _maxSettingsDiagnosticChars) return text;
+  return '${text.substring(0, _maxSettingsDiagnosticChars - 3)}...';
+}
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -55,6 +66,61 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(zentorControllerProvider);
     final controller = ref.read(zentorControllerProvider.notifier);
+    final engineDiagnostic = state.lastEngineError?.trim();
+    final updateBusy =
+        state.updateOperationInFlight ||
+        {
+          UpdateStatus.checking,
+          UpdateStatus.downloading,
+          UpdateStatus.verifying,
+          UpdateStatus.installing,
+          UpdateStatus.rollingBack,
+        }.contains(state.updateStatus);
+    final updateMutationBusy = updateMutationOperationInProgress(state);
+    final updateMutationBlocked = updateMutationBlockedByActiveWork(state);
+    final engineCheckBusy =
+        state.malwareEngineHealthCheckInFlight ||
+        state.malwareEngineStatus == MalwareEngineStatus.checking;
+    final cloudCheckBusy =
+        state.cloudHealthCheckInFlight ||
+        state.cloudStatus == CloudStatus.checking;
+    final protectionOperationBusy = state.protectionOperationInFlight;
+    final securitySettingsBusy = state.securitySettingsActionInFlight;
+    final protectionSelfTestBusy = state.protectionSelfTestInFlight;
+    final configurationResetBusy = state.configurationResetInFlight;
+    final manualDispositionBusy =
+        state.quarantineActionInFlight ||
+        state.allowlistActionInFlight ||
+        state.detectionFeedbackInFlight;
+    final scanOperationBusy =
+        state.scanStartInFlight ||
+        state.scanStatus == ScanStatus.running ||
+        state.scanTargetSelectionInFlight ||
+        state.scanCancelInFlight;
+    final securitySettingsControlsBusy =
+        securitySettingsBusy ||
+        configurationResetBusy ||
+        protectionOperationBusy ||
+        protectionSelfTestBusy ||
+        manualDispositionBusy ||
+        scanOperationBusy ||
+        updateMutationBusy;
+    final configurationResetControlsBusy =
+        configurationResetBusy ||
+        securitySettingsBusy ||
+        protectionOperationBusy ||
+        protectionSelfTestBusy ||
+        manualDispositionBusy ||
+        scanOperationBusy ||
+        updateMutationBusy;
+    final developerCloudOverrideBusy =
+        state.developerCloudOverrideInFlight || updateMutationBusy;
+    final logExportBusy = state.logExportInFlight;
+    final supportBundleExportBusy = state.supportBundleExportInFlight;
+    final scheduledIntervalPreset =
+        {6, 12, 24, 168}.contains(state.config.scheduledQuickScanIntervalHours)
+        ? state.config.scheduledQuickScanIntervalHours
+        : null;
     return Column(
       children: [
         _Section(
@@ -74,10 +140,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               runSpacing: 12,
               children: [
                 ZentorButton(
-                  label: 'Test Cloud Connection',
+                  label: cloudCheckBusy
+                      ? 'Checking Cloud'
+                      : 'Test Cloud Connection',
                   icon: Icons.cloud_sync_outlined,
                   secondary: true,
-                  onPressed: controller.testCloudConnection,
+                  onPressed: cloudCheckBusy
+                      ? null
+                      : controller.testCloudConnection,
                 ),
               ],
             ),
@@ -97,9 +167,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
               _ValueRow(
                 'Rollback',
-                state.updateInfo!.rollbackSupported
-                    ? 'Available'
-                    : 'Unavailable',
+                _rollbackSupportLabel(state.updateInfo!.rollbackSupported),
               ),
             ],
             if (state.updateError != null)
@@ -120,7 +188,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       : 'Check for updates',
                   icon: Icons.update_outlined,
                   secondary: true,
-                  onPressed: state.updateStatus == UpdateStatus.checking
+                  onPressed: updateBusy
                       ? null
                       : controller.unawaitedCheckForUpdates,
                 ),
@@ -133,15 +201,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       UpdateStatus.downloading => 'Downloading',
                       UpdateStatus.verifying => 'Verifying',
                       UpdateStatus.installing => 'Installing',
-                      _ => 'Download and install',
+                      _ => 'Download, verify, install',
                     },
                     icon: Icons.system_update_alt_outlined,
-                    onPressed:
-                        state.updateStatus == UpdateStatus.downloading ||
-                            state.updateStatus == UpdateStatus.verifying ||
-                            state.updateStatus == UpdateStatus.installing
+                    onPressed: updateBusy || updateMutationBlocked
                         ? null
-                        : controller.installUpdateInApp,
+                        : () async {
+                            if (!await confirmInstallUpdate(context)) return;
+                            await controller.installUpdateInApp(
+                              confirmed: true,
+                            );
+                          },
                   ),
               ],
             ),
@@ -150,10 +220,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         _Section(
           title: 'Protection',
           children: [
-            _ValueRow('Antivirus', state.protectionStatus.label),
+            _ValueRow('Antivirus', _settingsProtectionStatusLabel(state)),
             _ValueRow('Profile', state.config.protectionMode.label),
             DropdownButtonFormField<ProtectionMode>(
+              key: ValueKey(state.config.protectionMode),
               initialValue: state.config.protectionMode,
+              isExpanded: true,
               dropdownColor: ZentorColors.elevatedSurface,
               decoration: const InputDecoration(labelText: 'Protection mode'),
               items: ProtectionMode.values
@@ -163,14 +235,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         DropdownMenuItem(value: mode, child: Text(mode.label)),
                   )
                   .toList(),
-              onChanged: (mode) {
-                if (mode != null) controller.setProtectionMode(mode);
-              },
+              onChanged: securitySettingsControlsBusy
+                  ? null
+                  : (mode) {
+                      if (mode != null) {
+                        _confirmProtectionMode(controller, mode);
+                      }
+                    },
             ),
             const SizedBox(height: 8),
             Text(
               state.config.protectionMode == ProtectionMode.lockdown
-                  ? 'Lockdown blocks unknown apps until you approve an exact file hash. This gives stronger prevention but may interrupt installers, developer tools, installers and scripts.'
+                  ? 'Lockdown requests exact-hash approval for unknown apps. True before-launch blocking requires the signed driver path to be running and passing self-test; otherwise Avorax uses visible user-mode fallback.'
                   : state.config.protectionMode.description,
               style: const TextStyle(
                 color: ZentorColors.textSecondary,
@@ -178,7 +254,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
             ),
             const SizedBox(height: 10),
+            _ValueRow('Core Service', _serviceLabel(state.coreServiceStatus)),
+            if (state.coreServiceStatusError?.trim().isNotEmpty ?? false)
+              _ValueRow('Core Service detail', state.coreServiceStatusError!),
             _ValueRow('Guard mode', _guardLabel(state.guardStatus)),
+            if (state.guardStatusError?.trim().isNotEmpty ?? false)
+              _ValueRow('Guard detail', state.guardStatusError!),
             _ValueRow('Driver status', _driverLabel(state.driverStatus)),
             if (state.protectionSelfTestResult != null)
               _ValueRow('Last self-test', state.protectionSelfTestResult!),
@@ -187,10 +268,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               runSpacing: 12,
               children: [
                 ZentorButton(
-                  label: 'Run Protection Self-Test',
+                  label: protectionSelfTestBusy
+                      ? 'Running Protection Self-Test'
+                      : 'Run Protection Self-Test',
                   icon: Icons.verified_user_outlined,
                   secondary: true,
-                  onPressed: state.loading
+                  onPressed:
+                      state.loading ||
+                          protectionOperationBusy ||
+                          protectionSelfTestBusy ||
+                          updateMutationBusy
                       ? null
                       : controller.runProtectionSelfTest,
                 ),
@@ -207,6 +294,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ZentorTextField(
               controller: _ransomwareProtectedRoots,
               label: 'Ransomware protected folders',
+              enabled: !securitySettingsControlsBusy,
               hint: 'One folder per line, e.g. C:/Users/You/Documents',
               minLines: 2,
               maxLines: 4,
@@ -215,6 +303,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ZentorTextField(
               controller: _ransomwareTrustedProcesses,
               label: 'Trusted backup/sync processes',
+              enabled: !securitySettingsControlsBusy,
               hint:
                   'One executable path per line, e.g. C:/Program Files/Backup/backup.exe',
               minLines: 2,
@@ -222,19 +311,75 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ),
             const SizedBox(height: 8),
             ZentorButton(
-              label: 'Save ransomware protection settings',
+              label: securitySettingsBusy
+                  ? 'Saving security settings'
+                  : 'Save ransomware protection settings',
               icon: Icons.folder_special_outlined,
               secondary: true,
-              onPressed: state.loading
+              onPressed: state.loading || securitySettingsControlsBusy
                   ? null
-                  : () => controller.updateRansomwareGuardSettings(
-                      protectedRoots: _splitPathLines(
-                        _ransomwareProtectedRoots.text,
+                  : () => _confirmRansomwareGuardSettings(controller),
+            ),
+          ],
+        ),
+        _Section(
+          title: 'Scan scheduling',
+          children: [
+            _ValueRow(
+              'Scheduled quick scan',
+              state.config.scheduledQuickScanEnabled
+                  ? 'Every ${state.config.scheduledQuickScanIntervalHours} hour(s)'
+                  : 'Off',
+            ),
+            const Text(
+              'Runs detect-only quick scans while the Avorax app is open. It does not install a Windows scheduled task or claim background service execution.',
+              style: TextStyle(color: ZentorColors.textSecondary, height: 1.4),
+            ),
+            Material(
+              color: Colors.transparent,
+              child: SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Enable in-app scheduled quick scan'),
+                subtitle: const Text(
+                  'Best-effort app-lifetime schedule; no automatic quarantine.',
+                  style: TextStyle(color: ZentorColors.textSecondary),
+                ),
+                value: state.config.scheduledQuickScanEnabled,
+                onChanged: securitySettingsControlsBusy
+                    ? null
+                    : (enabled) => _confirmScheduledQuickScanSettings(
+                        controller,
+                        enabled: enabled,
+                        intervalHours:
+                            state.config.scheduledQuickScanIntervalHours,
                       ),
-                      trustedProcesses: _splitPathLines(
-                        _ransomwareTrustedProcesses.text,
-                      ),
-                    ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            DropdownButtonFormField<int>(
+              key: ValueKey(
+                'scheduled-${state.config.scheduledQuickScanEnabled}-$scheduledIntervalPreset',
+              ),
+              initialValue: scheduledIntervalPreset,
+              isExpanded: true,
+              dropdownColor: ZentorColors.elevatedSurface,
+              decoration: const InputDecoration(labelText: 'Scan interval'),
+              items: const [
+                DropdownMenuItem(value: 6, child: Text('Every 6 hours')),
+                DropdownMenuItem(value: 12, child: Text('Every 12 hours')),
+                DropdownMenuItem(value: 24, child: Text('Daily')),
+                DropdownMenuItem(value: 168, child: Text('Weekly')),
+              ],
+              onChanged: securitySettingsControlsBusy
+                  ? null
+                  : (intervalHours) {
+                      if (intervalHours == null) return;
+                      _confirmScheduledQuickScanSettings(
+                        controller,
+                        enabled: state.config.scheduledQuickScanEnabled,
+                        intervalHours: intervalHours,
+                      );
+                    },
             ),
           ],
         ),
@@ -242,40 +387,104 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           title: 'Avorax Native Engine',
           children: [
             _ValueRow('Engine status', state.malwareEngineStatus.label),
-            _ValueRow('Native status', state.nativeEngineStatus),
+            _ValueRow('Native status', _nativeEngineLabel(state)),
+            _ValueRow('IPC', _ipcModeLabel(state.ipcMode)),
+            _ValueRow(
+              'Network exposed',
+              _networkExposureLabel(state.networkExposed),
+            ),
+            if (engineDiagnostic?.isNotEmpty ?? false)
+              _ValueRow('Engine diagnostic', engineDiagnostic!),
+            _ValueRow(
+              'Native self-test',
+              _selfTestLabel(state.nativeSelfTestPassed),
+            ),
+            if (state.nativeEngineError?.trim().isNotEmpty ?? false)
+              _ValueRow('Native engine error', state.nativeEngineError!),
+            if (state.nativeSelfTestError?.trim().isNotEmpty ?? false)
+              _ValueRow('Native self-test error', state.nativeSelfTestError!),
+            _ValueRow('AI self-test', _selfTestLabel(state.aiSelfTestPassed)),
+            if (state.aiSelfTestError?.trim().isNotEmpty ?? false)
+              _ValueRow('AI self-test error', state.aiSelfTestError!),
+            _ValueRow(
+              'ProgramData dir',
+              _optionalPathLabel(state.programDataDirectory),
+            ),
+            if (state.programDataDirectoryError?.trim().isNotEmpty ?? false)
+              _ValueRow('ProgramData error', state.programDataDirectoryError!),
+            _ValueRow('Install root', _optionalPathLabel(state.installPath)),
+            _ValueRow(
+              'Engine directory',
+              _optionalPathLabel(state.engineDirectory),
+            ),
+            _ValueRow(
+              'Engine paths checked',
+              _enginePathsCheckedLabel(state.enginePathsChecked),
+            ),
+            _ValueRow(
+              'Signatures dir',
+              _optionalPathLabel(state.nativeSignaturesDirectory),
+            ),
+            _ValueRow(
+              'Rules dir',
+              _optionalPathLabel(state.nativeRulesDirectory),
+            ),
+            _ValueRow('ML dir', _optionalPathLabel(state.nativeMlDirectory)),
+            _ValueRow(
+              'Trust dir',
+              _optionalPathLabel(state.nativeTrustDirectory),
+            ),
+            _ValueRow(
+              'Config dir',
+              _optionalPathLabel(state.nativeConfigDirectory),
+            ),
             _ValueRow(
               'Native signatures',
-              '${state.nativeSignatureCount} packaged signatures loaded',
+              _nativePackagedCountLabel(
+                count: state.nativeSignatureCount,
+                state: state,
+                noun: 'signatures',
+              ),
             ),
             _ValueRow(
               'Native rules',
-              '${state.nativeRuleCount} packaged rules loaded',
+              _nativePackagedCountLabel(
+                count: state.nativeRuleCount,
+                state: state,
+                noun: 'rules',
+              ),
             ),
             _ValueRow(
               'Compatibility engines',
               state.compatibilityEnginesEnabled ? 'Enabled' : 'Disabled',
             ),
+            _ValueRow('Reputation', _reputationLabel(state.reputationStatus)),
+            if (state.reputationStatusReason?.trim().isNotEmpty ?? false)
+              _ValueRow('Reputation detail', state.reputationStatusReason!),
             ZentorButton(
-              label: 'Check engine',
+              label: engineCheckBusy ? 'Checking engine' : 'Check engine',
               icon: Icons.health_and_safety_outlined,
               secondary: true,
-              onPressed: controller.unawaitedCheckMalwareEngine,
+              onPressed: engineCheckBusy
+                  ? null
+                  : controller.unawaitedCheckMalwareEngine,
             ),
           ],
         ),
         _Section(
           title: 'Native ML',
           children: [
-            _ValueRow('Model status', state.nativeMlStatus),
+            _ValueRow('Local AI status', state.aiStatus.label),
+            _ValueRow('Model status', _nativeMlLabel(state.nativeMlStatus)),
             _ValueRow(
               'Model version',
               state.nativeMlModelVersion ?? 'Not loaded',
             ),
-            const _ValueRow('Feature schema', 'zne-features-v1'),
             _ValueRow(
-              'Production-ready',
-              state.nativeMlStatus == 'loaded' ? 'Yes' : 'No',
+              'Feature schema',
+              _featureSchemaLabel(state.aiModelInfo.featureSchemaVersion),
             ),
+            _ValueRow('Production-ready', _nativeMlProductionReadyLabel(state)),
             const _ValueRow(
               'Last inference test',
               'Native engine self-test runs EICAR matching in memory.',
@@ -305,7 +514,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             _ValueRow('Mode', 'Block confirmed behavior'),
             _ValueRow(
               'Recovery',
-              'Restores from Avorax Recovery Vault when a protected copy exists.',
+              'Recovery uses Avorax Recovery Vault or OS backups only when a protected copy or snapshot exists.',
             ),
           ],
         ),
@@ -337,23 +546,40 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   style: TextStyle(color: ZentorColors.textSecondary),
                 ),
                 value: _developerOptions,
-                onChanged: (value) async {
-                  setState(() => _developerOptions = value);
-                  if (!value && state.config.developerOverrideEnabled) {
-                    await _saveDeveloperOverride(controller, enabled: false);
-                  }
-                },
+                onChanged: developerCloudOverrideBusy
+                    ? null
+                    : (value) async {
+                        setState(() => _developerOptions = value);
+                        if (!value && state.config.developerOverrideEnabled) {
+                          final disabled = await _saveDeveloperOverride(
+                            controller,
+                            enabled: false,
+                          );
+                          if (!disabled && mounted) {
+                            setState(() => _developerOptions = true);
+                          }
+                        }
+                      },
               ),
             ),
             if (_developerOptions || state.config.developerOverrideEnabled) ...[
               if (_developerOptions) ...[
-                ZentorTextField(controller: _endpoint, label: 'API endpoint'),
+                ZentorTextField(
+                  controller: _endpoint,
+                  label: 'API endpoint',
+                  enabled: !developerCloudOverrideBusy,
+                ),
                 const SizedBox(height: 12),
-                ZentorTextField(controller: _projectId, label: 'Project ID'),
+                ZentorTextField(
+                  controller: _projectId,
+                  label: 'Project ID',
+                  enabled: !developerCloudOverrideBusy,
+                ),
                 const SizedBox(height: 12),
                 ZentorTextField(
                   controller: _publicKey,
                   label: 'Public Client Key',
+                  enabled: !developerCloudOverrideBusy,
                 ),
                 const SizedBox(height: 12),
               ],
@@ -364,10 +590,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 icon: _developerOptions
                     ? Icons.save_outlined
                     : Icons.cloud_off_outlined,
-                onPressed: () => _saveDeveloperOverride(
-                  controller,
-                  enabled: _developerOptions,
-                ),
+                onPressed: developerCloudOverrideBusy
+                    ? null
+                    : () => _saveDeveloperOverride(
+                        controller,
+                        enabled: _developerOptions,
+                      ),
               ),
             ],
           ],
@@ -380,16 +608,30 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               runSpacing: 12,
               children: [
                 ZentorButton(
-                  label: 'Export logs',
+                  label: logExportBusy ? 'Exporting logs' : 'Export logs',
                   icon: Icons.download_outlined,
                   secondary: true,
-                  onPressed: () => _exportLogs(controller),
+                  onPressed: logExportBusy
+                      ? null
+                      : () => _confirmExportLogs(controller),
+                ),
+                ZentorButton(
+                  label: supportBundleExportBusy
+                      ? 'Exporting bundle'
+                      : 'Export support bundle',
+                  icon: Icons.inventory_2_outlined,
+                  secondary: true,
+                  onPressed: supportBundleExportBusy
+                      ? null
+                      : () => _confirmExportSupportBundle(controller),
                 ),
                 ZentorButton(
                   label: 'Reset configuration',
                   icon: Icons.restart_alt,
                   secondary: true,
-                  onPressed: () => _confirmResetConfiguration(controller),
+                  onPressed: configurationResetControlsBusy
+                      ? null
+                      : () => _confirmResetConfiguration(controller),
                 ),
               ],
             ),
@@ -405,40 +647,282 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       .where((line) => line.isNotEmpty)
       .toList();
 
-  Future<void> _saveDeveloperOverride(
-    ZentorController controller, {
-    required bool enabled,
-  }) async {
-    await controller.saveDeveloperCloudOverride(
-      enabled: enabled,
-      apiBaseUrl: _endpoint.text,
-      projectId: _projectId.text,
-      publicClientKey: _publicKey.text,
+  Future<void> _confirmProtectionMode(
+    ZentorController controller,
+    ProtectionMode mode,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Change protection mode?'),
+        content: Text(
+          'This changes Avorax Guard behavior and local protection policy.\n\nSelected mode: ${mode.label}\n${mode.description}',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Change'),
+          ),
+        ],
+      ),
     );
+    if (confirmed != true) return;
+    final saved = await controller.setProtectionMode(mode, confirmed: true);
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          enabled
-              ? 'Developer cloud override saved.'
-              : 'Developer cloud override disabled.',
+          saved
+              ? 'Protection mode changed.'
+              : 'Unable to change protection mode. See the error banner.',
         ),
       ),
     );
   }
 
-  Future<void> _exportLogs(ZentorController controller) async {
+  Future<bool> _saveDeveloperOverride(
+    ZentorController controller, {
+    required bool enabled,
+  }) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          enabled
+              ? 'Save developer cloud override?'
+              : 'Disable developer cloud override?',
+        ),
+        content: Text(
+          enabled
+              ? 'Avorax will use these developer cloud endpoint and client credentials from local settings instead of the build configuration.'
+              : 'Avorax will stop using the locally saved developer cloud endpoint and client credentials and return to the build configuration.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(enabled ? 'Save override' : 'Disable override'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return false;
+    final saved = await controller.saveDeveloperCloudOverride(
+      enabled: enabled,
+      apiBaseUrl: _endpoint.text,
+      projectId: _projectId.text,
+      publicClientKey: _publicKey.text,
+      confirmed: true,
+    );
+    if (!mounted) return saved;
+    final message = switch ((enabled, saved)) {
+      (true, true) => 'Developer cloud override saved.',
+      (true, false) =>
+        'Unable to save developer override. See the error banner.',
+      (false, true) => 'Developer cloud override disabled.',
+      (false, false) =>
+        'Unable to disable developer override. See the error banner.',
+    };
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+    return saved;
+  }
+
+  Future<void> _confirmRansomwareGuardSettings(
+    ZentorController controller,
+  ) async {
+    final protectedRoots = _splitPathLines(_ransomwareProtectedRoots.text);
+    final trustedProcesses = _splitPathLines(_ransomwareTrustedProcesses.text);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Save ransomware protection settings?'),
+        content: const Text(
+          'This updates ransomware protected folders and the trusted process allowlist. Trusted processes can modify protected files without ransomware-guard alerts, so only add backup or sync tools you trust.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    final saved = await controller.updateRansomwareGuardSettings(
+      protectedRoots: protectedRoots,
+      trustedProcesses: trustedProcesses,
+      confirmed: true,
+    );
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          saved
+              ? 'Ransomware protection settings saved.'
+              : 'Unable to save ransomware protection settings. See the error banner.',
+        ),
+      ),
+    );
+  }
+
+  Future<void> _confirmScheduledQuickScanSettings(
+    ZentorController controller, {
+    required bool enabled,
+    required int intervalHours,
+  }) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Change scheduled quick scan?'),
+        content: Text(
+          enabled
+              ? 'Avorax will run recurring detect-only quick scans every $intervalHours hour(s) while the app is open. It will not create a Windows scheduled task or quarantine automatically.'
+              : 'Avorax will stop the recurring in-app quick scan schedule. Manual scans remain available.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Change'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    final saved = await controller.updateScheduledQuickScanSettings(
+      enabled: enabled,
+      intervalHours: intervalHours,
+      confirmed: true,
+    );
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          saved
+              ? 'Scheduled quick scan settings saved.'
+              : 'Unable to save scheduled quick scan settings. See the error banner.',
+        ),
+      ),
+    );
+  }
+
+  Future<void> _confirmExportLogs(ZentorController controller) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Export logs?'),
+        content: const Text(
+          'This writes local Avorax event history to a file. The export can include file paths, protection actions, update diagnostics, and error details.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Export'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    await _exportLogs(controller, confirmed: true);
+  }
+
+  Future<void> _confirmExportSupportBundle(ZentorController controller) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Export support bundle?'),
+        content: const Text(
+          'This writes a local diagnostic JSON file with Avorax status summaries and event history. It does not include file contents or quarantine payloads, but events can include local paths and error details.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Export'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    await _exportSupportBundle(controller, confirmed: true);
+  }
+
+  Future<void> _exportLogs(
+    ZentorController controller, {
+    bool confirmed = false,
+  }) async {
     try {
-      final path = await controller.exportLogs();
+      final path = await controller.exportLogs(confirmed: confirmed);
       if (!mounted) return;
+      if (path == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Unable to export logs. See the error banner.'),
+          ),
+        );
+        return;
+      }
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Logs exported to $path')));
     } on Object catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Unable to export logs: $error')));
+      final details = _boundedSettingsDiagnostic(error);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Unable to export logs: $details')),
+      );
+    }
+  }
+
+  Future<void> _exportSupportBundle(
+    ZentorController controller, {
+    bool confirmed = false,
+  }) async {
+    try {
+      final path = await controller.exportSupportBundle(confirmed: confirmed);
+      if (!mounted) return;
+      if (path == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Unable to export support bundle. See the error banner.',
+            ),
+          ),
+        );
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Support bundle exported to $path')),
+      );
+    } on Object catch (error) {
+      if (!mounted) return;
+      final details = _boundedSettingsDiagnostic(error);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Unable to export support bundle: $details')),
+      );
     }
   }
 
@@ -463,30 +947,166 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       ),
     );
     if (confirmed != true) return;
-    await controller.resetConfiguration();
+    final reset = await controller.resetConfiguration(confirmed: true);
     if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Configuration reset.')));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          reset
+              ? 'Configuration reset.'
+              : 'Unable to reset configuration. See the error banner.',
+        ),
+      ),
+    );
   }
 }
+
+String _settingsProtectionStatusLabel(ZentorState state) {
+  if (_settingsEngineNeedsAttention(state)) return 'Attention needed';
+  return state.protectionStatus.label;
+}
+
+bool _settingsEngineNeedsAttention(ZentorState state) {
+  return state.malwareEngineStatus != MalwareEngineStatus.available ||
+      state.nativeEngineStatus != 'ready' ||
+      (state.lastEngineError?.trim().isNotEmpty ?? false);
+}
+
+String _nativeEngineLabel(ZentorState state) {
+  if (state.lastEngineError?.trim().isNotEmpty ?? false) {
+    return 'Attention needed';
+  }
+  return switch (state.nativeEngineStatus) {
+    'ready' => 'Ready',
+    'error' => 'Error',
+    'unavailable' => 'Unavailable',
+    _ => 'Unknown',
+  };
+}
+
+String _ipcModeLabel(String ipcMode) => switch (ipcMode) {
+  'stdio' => 'Local stdio',
+  'unknown' => 'Unknown',
+  _ => 'Unknown',
+};
+
+String _networkExposureLabel(bool? networkExposed) => switch (networkExposed) {
+  true => 'Yes',
+  false => 'No',
+  null => 'Unknown',
+};
+
+String _selfTestLabel(bool? passed) => switch (passed) {
+  true => 'Passed',
+  false => 'Failed',
+  null => 'Unknown',
+};
+
+String _optionalPathLabel(String? value) {
+  final trimmed = value?.trim();
+  if (trimmed == null || trimmed.isEmpty) return 'Unknown';
+  return trimmed;
+}
+
+String _enginePathsCheckedLabel(List<String> paths) {
+  final reportedPaths = paths
+      .map((path) => path.trim())
+      .where((path) => path.isNotEmpty)
+      .toList(growable: false);
+  final visiblePaths = reportedPaths.take(4).toList(growable: false);
+  if (visiblePaths.isEmpty) return 'Unknown';
+  final hiddenCount = reportedPaths.length - visiblePaths.length;
+  final suffix = hiddenCount > 0 ? ' (+$hiddenCount more)' : '';
+  return '${visiblePaths.join(' | ')}$suffix';
+}
+
+String _nativePackagedCountLabel({
+  required int count,
+  required ZentorState state,
+  required String noun,
+}) {
+  final engineDiagnosticVisible =
+      state.lastEngineError?.trim().isNotEmpty ?? false;
+  if (count > 0 ||
+      (state.nativeEngineStatus == 'ready' && !engineDiagnosticVisible)) {
+    return '$count packaged $noun loaded';
+  }
+  return 'Unknown';
+}
+
+String _featureSchemaLabel(String value) {
+  final trimmed = value.trim();
+  if (trimmed.isEmpty || trimmed.toLowerCase() == 'unavailable') {
+    return 'Unavailable';
+  }
+  return trimmed;
+}
+
+String _rollbackSupportLabel(bool? supported) {
+  if (supported == true) return 'Available';
+  if (supported == false) return 'Unavailable';
+  return 'Unknown';
+}
+
+String _nativeMlLabel(String status) => switch (status) {
+  'loaded' => 'Loaded',
+  'developmentModel' => 'Development model',
+  'modelMissing' => 'Missing',
+  'error' => 'Error',
+  _ => 'Unavailable',
+};
+
+String _nativeMlProductionReadyLabel(ZentorState state) {
+  if (state.nativeMlProductionReady) return 'Yes';
+  if (state.nativeMlStatus == 'developmentModel') {
+    return 'Development model loaded; not production-ready';
+  }
+  if (state.nativeMlStatus == 'loaded') return 'Loaded; not production-ready';
+  return 'No';
+}
+
+String _reputationLabel(String status) => switch (status) {
+  'available' => 'Available',
+  'unavailable' => 'Unavailable',
+  'disabled' => 'Disabled',
+  'unknown' => 'Unknown',
+  'error' => 'Error',
+  _ => 'Unavailable',
+};
+
+String _serviceLabel(String status) => switch (status) {
+  'running' => 'Running',
+  'stopped' => 'Stopped',
+  'missing' => 'Missing',
+  'installed' => 'Installed',
+  'unsupported' => 'Unsupported',
+  'unknown' => 'Unknown',
+  'error' => 'Error',
+  _ => 'Unavailable',
+};
 
 String _guardLabel(String status) => switch (status) {
   'running' => 'Running',
   'stopped' => 'Stopped',
+  'missing' => 'Missing',
   'installed' => 'Installed',
+  'unknown' => 'Unknown',
+  'off' => 'Off',
   'blockConfirmedThreats' => 'Block confirmed threats',
   'monitorOnly' => 'Monitor only',
   'aggressive' => 'Aggressive',
-  _ => 'Off',
+  _ => 'Unavailable',
 };
 
 String _driverLabel(String status) => switch (status) {
   'running' => 'Running',
+  'stopped' => 'Stopped',
   'installed' => 'Installed',
+  'missing' => 'Missing',
+  'unknown' => 'Unknown',
   'testSigned' => 'Test-signed',
   'blockedByOs' => 'Blocked by OS',
-  _ => 'Missing',
+  _ => 'Unavailable',
 };
 
 class _Section extends StatelessWidget {

@@ -16,6 +16,9 @@ This backlog is the working plan for the long-horizon Avorax hardening sprint. I
 - [x] Remove or hide UI controls that imply unsupported behavior, especially disabled pause/resume controls until they are implemented.
 - [x] Ensure UI product states never claim kernel/pre-execution protection unless the signed driver path is installed, running, and self-tested.
 - [x] Guard driver health now auto-attempts minifilter load only when Windows policy allows it, and reports TESTSIGNING/reboot requirements explicitly when policy blocks the installed test driver.
+- [x] Replace installed-smoke health substring acceptance with bounded structured JSON parsing, canonical service-binary validation, and release-binary parser/runtime regressions.
+- [x] Add an installed-smoke lifecycle gate that proves canonical-core scan, quarantine, list, hash-checked restore, confirmed delete, and cleanup postconditions with harmless isolated fixtures.
+- [x] Produce and safely re-extract a manifest-hashed portable small-threat beta with real status/scan/quarantine/allowlist controls while the installed Windows GUI/MSI toolchain is blocked.
 
 ## P1 - Core product quality
 
@@ -65,14 +68,14 @@ This backlog is the working plan for the long-horizon Avorax hardening sprint. I
 - [x] Add explicit desktop/mobile navigation semantics and make the desktop sidebar scroll safely on constrained heights.
 - [x] Add shell-level screen-reader landmarks for current page title and main content on desktop and mobile layouts.
 - [x] Add settings section heading semantics and fix developer-options switch Material accessibility warnings.
-- [ ] Broader accessibility pass for keyboard traversal audits, contrast review, per-feature screen-reader coverage, and localization-ready text extraction.
-- [x] Export local event logs with structured category/severity metadata and without file contents; broader support bundles remain optional.
+- [ ] Broader accessibility pass for keyboard traversal audits, per-feature screen-reader coverage, and localization-ready text extraction. Shared dark-theme contrast is guarded by checkpoint 2038; checkpoint 2154 adds app-wide labeled-target, Android target-size, live-region, and 200% mobile-text coverage. Explicit keyboard traversal and full localization extraction remain open.
+- [x] Export local event logs and safe diagnostic support bundles with structured category/severity metadata and without file contents, quarantine payloads, credentials, live malware, or fake success.
 - [x] Add safe benchmark harness for synthetic scan traversal/hashing, native signature test timing, guard decision timing, and non-elevated update-copy simulation.
 - [ ] Add elevated/provisioned benchmarks for real update apply latency and signed-driver pre-execution latency.
 
 ## Current P0/P1 status
 
-- No known remaining P0/P1 hardening gaps are currently tracked after the latest verification pass. Remaining open work is elevated/provisioned benchmarks, broader accessibility/localization readiness, and optional broader support bundles.
+- No known remaining P0/P1 hardening gaps are currently tracked after the latest verification pass. Remaining open work is elevated/provisioned benchmarks and broader accessibility/localization readiness.
 
 ## Operating rules
 

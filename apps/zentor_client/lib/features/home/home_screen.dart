@@ -10,6 +10,9 @@ import '../../shared/widgets/zentor_button.dart';
 import '../../shared/widgets/zentor_empty_state.dart';
 import '../../shared/widgets/zentor_metric_card.dart';
 import '../../shared/widgets/zentor_status_card.dart';
+import '../protection/protection_confirmation.dart';
+import '../update/update_confirmation.dart';
+import '../update/update_mutation_guard.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -18,16 +21,37 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(zentorControllerProvider);
     final controller = ref.read(zentorControllerProvider.notifier);
+    final protectionOperationBusy = state.protectionOperationInFlight;
+    final protectionSelfTestBusy = state.protectionSelfTestInFlight;
+    final updateMutationBusy = updateMutationOperationInProgress(state);
+    final scanStartBusy =
+        state.scanStartInFlight ||
+        state.scanTargetSelectionInFlight ||
+        state.securitySettingsActionInFlight ||
+        state.configurationResetInFlight ||
+        state.scanStatus == ScanStatus.running ||
+        updateMutationBusy;
+    final updateBusy =
+        state.updateOperationInFlight ||
+        state.updateStatus == UpdateStatus.checking ||
+        state.updateStatus == UpdateStatus.downloading ||
+        state.updateStatus == UpdateStatus.verifying ||
+        state.updateStatus == UpdateStatus.installing ||
+        state.updateStatus == UpdateStatus.rollingBack;
+    final updateMutationBlocked = updateMutationBlockedByActiveWork(state);
     final isDesktop = MediaQuery.sizeOf(context).width >= 1000;
     final hero = ZentorPanel(
       padding: const EdgeInsets.all(28),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 16,
+            runSpacing: 12,
             children: [
               const ZentorMark(size: 72),
-              const Spacer(),
               ZentorStatusPill(
                 label: _mainStatus(state),
                 color: _mainColor(state),
@@ -56,17 +80,21 @@ class HomeScreen extends ConsumerWidget {
               ZentorButton(
                 label: 'Run Quick Scan',
                 icon: Icons.radar_outlined,
-                onPressed: state.scanStatus == ScanStatus.running
+                onPressed: scanStartBusy
                     ? null
-                    : controller.runQuickScan,
+                    : () => controller.runQuickScan(
+                        actionMode: ScanActionMode.detectOnly,
+                      ),
               ),
               ZentorButton(
                 label: 'Run Full Scan',
                 icon: Icons.travel_explore_outlined,
                 secondary: true,
-                onPressed: state.scanStatus == ScanStatus.running
+                onPressed: scanStartBusy
                     ? null
-                    : controller.runFullScan,
+                    : () => controller.runFullScan(
+                        actionMode: ScanActionMode.detectOnly,
+                      ),
               ),
               ZentorButton(
                 label:
@@ -80,12 +108,22 @@ class HomeScreen extends ConsumerWidget {
                     ? Icons.shield_outlined
                     : Icons.stop_rounded,
                 secondary: true,
-                onPressed: state.loading
+                onPressed:
+                    state.loading ||
+                        protectionOperationBusy ||
+                        protectionSelfTestBusy ||
+                        updateMutationBusy
                     ? null
                     : state.protectionStatus == ProtectionStatus.idle ||
                           state.protectionStatus == ProtectionStatus.error
-                    ? controller.startProtection
-                    : controller.stopProtection,
+                    ? () async {
+                        if (!await confirmStartProtection(context)) return;
+                        await controller.startProtection(confirmed: true);
+                      }
+                    : () async {
+                        if (!await confirmStopProtection(context)) return;
+                        await controller.stopProtection(confirmed: true);
+                      },
               ),
               if (state.updateStatus == UpdateStatus.updateAvailable ||
                   state.updateStatus == UpdateStatus.downloading ||
@@ -93,16 +131,16 @@ class HomeScreen extends ConsumerWidget {
                   state.updateStatus == UpdateStatus.installing)
                 ZentorButton(
                   label: state.updateStatus == UpdateStatus.updateAvailable
-                      ? 'Install update'
+                      ? 'Download, verify, install'
                       : state.updateStatus.label,
                   icon: Icons.system_update_alt_outlined,
                   secondary: true,
-                  onPressed:
-                      state.updateStatus == UpdateStatus.downloading ||
-                          state.updateStatus == UpdateStatus.verifying ||
-                          state.updateStatus == UpdateStatus.installing
+                  onPressed: updateBusy || updateMutationBlocked
                       ? null
-                      : controller.installUpdateInApp,
+                      : () async {
+                          if (!await confirmInstallUpdate(context)) return;
+                          await controller.installUpdateInApp(confirmed: true);
+                        },
                 ),
             ],
           ),
@@ -129,41 +167,25 @@ class HomeScreen extends ConsumerWidget {
       ),
       ZentorMetricCard(
         title: 'Real-time protection',
-        value:
-            state.protectionStatus == ProtectionStatus.protected ||
-                state.protectionStatus == ProtectionStatus.localOnly
-            ? 'Enabled'
-            : 'Disabled',
-        detail: state.protectionStatus == ProtectionStatus.localOnly
-            ? 'Local protection is active. Avorax Cloud is offline.'
-            : state.protectionStatus.label,
+        value: _realTimeProtectionValue(state),
+        detail: _realTimeProtectionDetail(state),
         icon: Icons.shield_outlined,
       ),
       ZentorMetricCard(
         title: 'Avorax Native Engine',
-        value: state.nativeEngineStatus == 'ready' ? 'Ready' : 'Unavailable',
-        detail: state.nativeEngineStatus == 'ready'
-            ? 'Native signatures, rules, heuristics, and ML run locally without cloud.'
-            : 'Native engine assets are missing or failed self-test.',
+        value: _nativeEngineLabel(state),
+        detail: _nativeEngineDetail(state),
         icon: Icons.health_and_safety_outlined,
       ),
       ZentorMetricCard(
         title: 'Native ML',
-        value: state.nativeMlStatus == 'developmentModel'
-            ? 'Development model'
-            : state.nativeMlStatus,
-        detail: state.nativeMlModelVersion == null
-            ? 'Native ML model is not loaded.'
-            : 'Model ${state.nativeMlModelVersion} is local; development ML cannot auto-quarantine by itself.',
+        value: _nativeMlLabel(state.nativeMlStatus),
+        detail: _nativeMlDetail(state),
         icon: Icons.psychology_alt_outlined,
       ),
       ZentorMetricCard(
         title: 'Pre-execution Blocking',
-        value: state.driverStatus == 'running'
-            ? state.config.protectionMode == ProtectionMode.lockdown
-                  ? 'Known-threat blocking'
-                  : 'Driver active'
-            : 'Driver missing',
+        value: _preExecutionDriverValue(state),
         detail: state.driverStatus == 'running'
             ? 'Before-launch claims require the protection self-test to pass.'
             : 'Post-launch user-mode stopping is available; true pre-execution blocking needs the signed driver.',
@@ -171,7 +193,7 @@ class HomeScreen extends ConsumerWidget {
       ),
       ZentorMetricCard(
         title: 'Native Rules',
-        value: '${state.nativeRuleCount} rules loaded',
+        value: _nativeRuleCountLabel(state),
         detail:
             'Avorax-owned deterministic rules are bounded and review-only unless strong evidence supports action.',
         icon: Icons.rule_folder_outlined,
@@ -207,7 +229,7 @@ class HomeScreen extends ConsumerWidget {
             : report.status.label,
         detail: report == null
             ? 'Run a scan to check this device.'
-            : '${report.filesScanned} files scanned, ${report.skippedFiles} skipped.',
+            : _lastScanDetail(report),
         icon: Icons.fact_check_outlined,
       ),
       ZentorMetricCard(
@@ -234,11 +256,15 @@ class HomeScreen extends ConsumerWidget {
         children: [
           Row(
             children: [
-              Text(
-                'Security events',
-                style: Theme.of(context).textTheme.titleLarge,
+              Expanded(
+                child: Text(
+                  'Security events',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
               ),
-              const Spacer(),
+              const SizedBox(width: 12),
               TextButton(
                 onPressed: () => context.go('/logs'),
                 child: const Text('View all'),
@@ -311,9 +337,12 @@ class HomeScreen extends ConsumerWidget {
 
   String _mainStatus(ZentorState state) {
     if (state.scanStatus == ScanStatus.running) return 'Scan running';
-    if ((state.lastScanReport?.threatsFound ?? 0) > 0) return 'Threats found';
+    if (_hasThreatFindings(state)) return 'Threats found';
     if (state.updateStatus == UpdateStatus.updateAvailable) {
       return 'Update required';
+    }
+    if (_engineNeedsAttention(state)) {
+      return 'Attention needed';
     }
     if (state.protectionStatus == ProtectionStatus.protected ||
         state.protectionStatus == ProtectionStatus.localOnly) {
@@ -322,11 +351,49 @@ class HomeScreen extends ConsumerWidget {
     if (state.protectionStatus == ProtectionStatus.idle) {
       return 'Protection disabled';
     }
-    if (state.protectionStatus == ProtectionStatus.error ||
-        state.malwareEngineStatus == MalwareEngineStatus.unavailable) {
+    if (state.protectionStatus == ProtectionStatus.error) {
       return 'Attention needed';
     }
     return 'Attention needed';
+  }
+
+  bool _hasThreatFindings(ZentorState state) {
+    final report = state.lastScanReport;
+    return report != null && report.threatsFound > 0;
+  }
+
+  bool _engineNeedsAttention(ZentorState state) {
+    return state.malwareEngineStatus != MalwareEngineStatus.available ||
+        state.nativeEngineStatus != 'ready' ||
+        (state.lastEngineError?.trim().isNotEmpty ?? false);
+  }
+
+  String _realTimeProtectionValue(ZentorState state) {
+    if (_engineNeedsAttention(state)) return 'Attention needed';
+    if (state.protectionStatus == ProtectionStatus.protected ||
+        state.protectionStatus == ProtectionStatus.localOnly) {
+      return 'Enabled';
+    }
+    if (state.protectionStatus == ProtectionStatus.partiallyProtected) {
+      return 'Limited';
+    }
+    if (state.protectionStatus == ProtectionStatus.starting) return 'Starting';
+    if (state.protectionStatus == ProtectionStatus.stopping) return 'Stopping';
+    if (state.protectionStatus == ProtectionStatus.error) return 'Error';
+    return 'Disabled';
+  }
+
+  String _realTimeProtectionDetail(ZentorState state) {
+    if (_engineNeedsAttention(state)) {
+      return 'Engine evidence is not ready, so Avorax cannot report this device as protected.';
+    }
+    if (state.protectionStatus == ProtectionStatus.localOnly) {
+      return 'Local protection is active. Avorax Cloud is offline.';
+    }
+    if (state.protectionStatus == ProtectionStatus.partiallyProtected) {
+      return 'Local protection is available, but driver self-test is required before pre-execution claims.';
+    }
+    return state.protectionStatus.label;
   }
 
   String _headline(ZentorState state) {
@@ -348,16 +415,16 @@ class HomeScreen extends ConsumerWidget {
       return 'Review detected suspicious files before choosing quarantine, allowlist, restore, or delete actions.';
     }
     if (status == 'Update required') {
-      return 'A verified update is available. Install it to receive current app and protection improvements.';
+      return 'An update is available. Download and verify it before installation to receive current app and protection improvements.';
     }
     if (status == 'Protection disabled') {
       return 'Real-time protection is off. Run a scan or enable protection to improve this device status.';
     }
-    if (state.protectionStatus == ProtectionStatus.localOnly) {
-      return 'Local protection is active. Avorax Cloud is offline and does not block scanning or quarantine.';
-    }
     if (status == 'Attention needed') {
       return 'Avorax needs attention before it can report this device as protected. Check engine and protection status.';
+    }
+    if (state.protectionStatus == ProtectionStatus.localOnly) {
+      return 'Local protection is active. Avorax Cloud is offline and does not block scanning or quarantine.';
     }
     return 'Anti-malware protection, quarantine, and local threat review, visible and under your control.';
   }
@@ -370,20 +437,90 @@ class HomeScreen extends ConsumerWidget {
     return ZentorColors.warning;
   }
 
+  String _nativeMlLabel(String status) => switch (status) {
+    'loaded' => 'Loaded',
+    'developmentModel' => 'Development model',
+    'modelMissing' => 'Missing',
+    'error' => 'Error',
+    _ => 'Unavailable',
+  };
+
+  String _nativeMlDetail(ZentorState state) {
+    final version = state.nativeMlModelVersion;
+    if (version == null) return 'Native ML model is not loaded.';
+    if (state.nativeMlProductionReady) {
+      return 'Model $version is production-ready according to native metadata.';
+    }
+    return 'Model $version is local; development ML cannot auto-quarantine by itself.';
+  }
+
+  String _nativeEngineLabel(ZentorState state) {
+    if (state.lastEngineError?.trim().isNotEmpty ?? false) {
+      return 'Attention needed';
+    }
+    return switch (state.nativeEngineStatus) {
+      'ready' => 'Ready',
+      'error' => 'Error',
+      'unavailable' => 'Unavailable',
+      _ => 'Unknown',
+    };
+  }
+
+  String _nativeEngineDetail(ZentorState state) {
+    final diagnostic = state.lastEngineError?.trim();
+    if (diagnostic != null && diagnostic.isNotEmpty) {
+      return 'Engine diagnostic: $diagnostic';
+    }
+    if (state.nativeEngineStatus == 'ready') {
+      return 'Native signatures, rules, heuristics, and ML run locally without cloud.';
+    }
+    return 'Native engine assets are missing or failed self-test.';
+  }
+
   String _guardLabel(String status) => switch (status) {
     'running' => 'Running',
     'stopped' => 'Stopped',
+    'missing' => 'Missing',
     'installed' => 'Installed',
+    'unknown' => 'Unknown',
+    'off' => 'Off',
     'blockConfirmedThreats' => 'Block confirmed threats',
     'monitorOnly' => 'Monitor only',
     'aggressive' => 'Aggressive',
-    _ => 'Off',
+    _ => 'Unavailable',
+  };
+
+  String _nativeRuleCountLabel(ZentorState state) {
+    final engineDiagnosticVisible =
+        state.lastEngineError?.trim().isNotEmpty ?? false;
+    if (state.nativeRuleCount > 0 ||
+        (state.nativeEngineStatus == 'ready' && !engineDiagnosticVisible)) {
+      return '${state.nativeRuleCount} rules loaded';
+    }
+    return 'Unknown';
+  }
+
+  String _preExecutionDriverValue(ZentorState state) {
+    if (state.driverStatus == 'running') {
+      return state.config.protectionMode == ProtectionMode.lockdown
+          ? 'Known-threat blocking'
+          : 'Driver active';
+    }
+    return _driverStatusLabel(state.driverStatus);
+  }
+
+  String _driverStatusLabel(String status) => switch (status) {
+    'stopped' => 'Driver stopped',
+    'installed' => 'Driver installed',
+    'missing' => 'Driver missing',
+    'unknown' => 'Driver status unknown',
+    _ => 'Driver unavailable',
   };
 
   String _updateDetail(ZentorState state) {
     final update = state.updateInfo;
     if (state.updateStatus == UpdateStatus.updateAvailable && update != null) {
-      return 'Avorax ${update.latestVersion} is available. Install it from inside Avorax.';
+      return 'Avorax ${update.latestVersion} is available. Download, verify, and install it from inside Avorax.';
     }
     if (state.updateStatus == UpdateStatus.notConfigured) {
       return 'Update source not configured. Scanning still works offline.';
@@ -403,4 +540,17 @@ class HomeScreen extends ConsumerWidget {
     }
     return 'Avorax installs signed .aup updates inside the app.';
   }
+}
+
+String _lastScanDetail(ScanReport report) {
+  final base =
+      '${report.filesScanned} files scanned, ${report.skippedFiles} skipped.';
+  final message = report.message?.trim();
+  if (message != null && message.isNotEmpty) {
+    return '$base\n$message';
+  }
+  if (report.scanErrors.isNotEmpty) {
+    return '$base\nScan completed with ${report.scanErrors.length} file error(s); skipped files were not reported clean.';
+  }
+  return base;
 }

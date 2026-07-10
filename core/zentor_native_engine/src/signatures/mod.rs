@@ -1,6 +1,6 @@
+pub mod adware_pup_signatures;
 pub mod byte_pattern_signatures;
 pub mod eicar_signature;
-pub mod adware_pup_signatures;
 pub mod family_signatures;
 pub mod hash_signatures;
 pub mod infostealer_signatures;

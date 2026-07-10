@@ -66,6 +66,34 @@ jobs:
       - name: Restore WiX tool
         run: dotnet tool restore
 
+      - name: Release prerequisite preflight
+        shell: pwsh
+        run: |
+          $dotnet = (Get-Command dotnet -CommandType Application -ErrorAction Stop).Source
+          $cargo = (Get-Command cargo -CommandType Application -ErrorAction Stop).Source
+          $flutter = (Get-Command flutter -CommandType Application -ErrorAction Stop).Source
+          .\tools\windows\avorax-release-prereq-check.ps1 -RepoRoot . -DotnetPath $dotnet -CargoPath $cargo -FlutterPath $flutter -ReportPath dist\release-prereq\release_prereq_report.json -HostOnly
+
+      - name: Upload release prerequisite report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: avorax-release-prereq-${{ steps.version.outputs.version }}
+          path: dist/release-prereq/release_prereq_report.json
+          if-no-files-found: error
+
+      - name: Dependency evidence gate
+        shell: pwsh
+        run: .\tools\security\avorax-dependency-evidence.ps1 -RepoRoot . -ReportPath dist\dependency-evidence\dependency_evidence.json
+
+      - name: Upload dependency evidence report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: avorax-dependency-evidence-${{ steps.version.outputs.version }}
+          path: dist/dependency-evidence/dependency_evidence.json
+          if-no-files-found: error
+
       - name: Validate update signing configuration
         shell: pwsh
         env:
@@ -110,8 +138,76 @@ jobs:
               $scriptArgs.AllowDevelopmentModel = $true
             }
           } else {
-            $metadata = Get-Content -Raw -LiteralPath "assets\models\zentor_static_malware_model.metadata.json" | ConvertFrom-Json
-            if (-not $metadata.production_ready) {
+            function Get-BoundedJsonDiagnostic([object]$Value) {
+              if ($null -eq $Value) { return "" }
+              $text = [string]$Value
+              if ($text.Length -le 4096) { return $text }
+              return $text.Substring(0, 4096) + "...[truncated]"
+            }
+            function Read-TextFileBounded([System.IO.FileInfo]$Item, [int]$MaxBytes, [string]$Description) {
+              if ($MaxBytes -le 0) {
+                throw "$Description maximum byte count must be positive."
+              }
+              $stream = [System.IO.File]::Open(
+                $Item.FullName,
+                [System.IO.FileMode]::Open,
+                [System.IO.FileAccess]::Read,
+                [System.IO.FileShare]::Read
+              )
+              try {
+                if ($stream.Length -gt $MaxBytes) {
+                  throw "$Description exceeds $MaxBytes bytes: $($Item.FullName)"
+                }
+                $length = [int]$stream.Length
+                if ($length -eq 0) { return "" }
+                $buffer = [byte[]]::new($length)
+                $offset = 0
+                while ($offset -lt $length) {
+                  $read = $stream.Read($buffer, $offset, $length - $offset)
+                  if ($read -le 0) {
+                    throw "$Description could not be read completely: $($Item.FullName)"
+                  }
+                  $offset += $read
+                }
+                if ($length -ge 3 -and $buffer[0] -eq 0xEF -and $buffer[1] -eq 0xBB -and $buffer[2] -eq 0xBF) {
+                  return [System.Text.Encoding]::UTF8.GetString($buffer, 3, $length - 3)
+                }
+                if ($length -ge 2 -and $buffer[0] -eq 0xFF -and $buffer[1] -eq 0xFE) {
+                  return [System.Text.Encoding]::Unicode.GetString($buffer, 2, $length - 2)
+                }
+                if ($length -ge 2 -and $buffer[0] -eq 0xFE -and $buffer[1] -eq 0xFF) {
+                  return [System.Text.Encoding]::BigEndianUnicode.GetString($buffer, 2, $length - 2)
+                }
+                $utf8 = New-Object System.Text.UTF8Encoding($false, $true)
+                return $utf8.GetString($buffer)
+              } finally {
+                $stream.Dispose()
+              }
+            }
+            function Read-JsonFile([string]$Path, [string]$Description) {
+              $item = Get-Item -LiteralPath $Path -Force -ErrorAction Stop
+              if (($item.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0) {
+                throw "$Description must not be a reparse point: $Path"
+              }
+              if (-not ($item -is [System.IO.FileInfo])) {
+                throw "$Description is not a regular file: $Path"
+              }
+              if ($item.Length -gt 1048576) {
+                throw "$Description exceeds 1048576 bytes: $Path"
+              }
+              try {
+                $json = Read-TextFileBounded $item 1048576 $Description
+                return ConvertFrom-Json -InputObject $json -ErrorAction Stop
+              } catch {
+                throw "$Description is not valid bounded JSON: $(Get-BoundedJsonDiagnostic $_.Exception.Message)"
+              }
+            }
+            $metadata = Read-JsonFile "assets\models\zentor_static_malware_model.metadata.json" "AI model metadata"
+            $productionReadyProperty = $metadata.PSObject.Properties["production_ready"]
+            if ($null -eq $productionReadyProperty -or -not ($productionReadyProperty.Value -is [bool])) {
+              throw "AI model metadata production_ready must be a JSON boolean."
+            }
+            if (-not $productionReadyProperty.Value) {
               $scriptArgs.AllowDevelopmentModel = $true
             }
           }
@@ -130,16 +226,52 @@ jobs:
           AVORAX_UPDATE_PUBLIC_KEY_ID: avorax-prod-ed25519
           AVORAX_UPDATE_SIGNING_PRIVATE_KEY_HEX: ${{ secrets.AVORAX_UPDATE_SIGNING_PRIVATE_KEY_HEX }}
         run: |
+          $cargo = (Get-Command cargo -CommandType Application -ErrorAction Stop).Source
+          if ([string]::IsNullOrWhiteSpace($cargo) -or -not (Test-Path -LiteralPath $cargo -PathType Leaf)) {
+            throw "Unable to resolve a concrete Cargo executable path for update manifest signing."
+          }
+          $cargoLiteral = $cargo.Replace("'", "''")
           $signer = Join-Path $PWD "dist\sign-update-manifest.ps1"
-          @'
+          $signerDirectory = Split-Path $signer
+          [System.IO.Directory]::CreateDirectory($signerDirectory) | Out-Null
+          if (Test-Path -LiteralPath $signer) {
+            $signerItem = Get-Item -LiteralPath $signer -Force -ErrorAction Stop
+            if (($signerItem.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0 -or -not ($signerItem -is [System.IO.FileInfo])) {
+              throw "Update signer helper target must be a regular non-reparse file: $signer"
+            }
+          }
+          $signerScript = @"
           param(
             [Parameter(Mandatory = $true)][string]$ManifestPath,
             [Parameter(Mandatory = $true)][string]$SignaturePath
           )
-          cargo run --manifest-path core/avorax_update_service/Cargo.toml --bin avorax_sign_manifest -- $ManifestPath $SignaturePath
-          exit $LASTEXITCODE
-          '@ | Set-Content -LiteralPath $signer -Encoding UTF8
-          $env:AVORAX_UPDATE_SIGNER = $signer
+          `$CargoPath = '$cargoLiteral'
+          & `$CargoPath run --manifest-path core/avorax_update_service/Cargo.toml --bin avorax_sign_manifest -- `$ManifestPath `$SignaturePath
+          exit `$LASTEXITCODE
+          "@
+          $tempSigner = Join-Path $signerDirectory (".sign-update-manifest." + [System.Guid]::NewGuid().ToString("N") + ".ps1.tmp")
+          $backupSigner = Join-Path $signerDirectory (".sign-update-manifest." + [System.Guid]::NewGuid().ToString("N") + ".ps1.bak")
+          $encoding = New-Object System.Text.UTF8Encoding($false)
+          try {
+            [System.IO.File]::WriteAllText($tempSigner, $signerScript, $encoding)
+            $tempSignerItem = Get-Item -LiteralPath $tempSigner -Force -ErrorAction Stop
+            if (($tempSignerItem.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0 -or -not ($tempSignerItem -is [System.IO.FileInfo])) {
+              throw "Temporary update signer helper must be a regular non-reparse file: $tempSigner"
+            }
+            if (Test-Path -LiteralPath $signer) {
+              [System.IO.File]::Replace($tempSigner, $signer, $backupSigner)
+            } else {
+              [System.IO.File]::Move($tempSigner, $signer)
+            }
+          } finally {
+            if (Test-Path -LiteralPath $tempSigner) {
+              Remove-Item -LiteralPath $tempSigner -Force
+            }
+            if (Test-Path -LiteralPath $backupSigner) {
+              Remove-Item -LiteralPath $backupSigner -Force
+            }
+          }
+          $env:AVORAX_UPDATE_SIGNER = '"' + $signer + '"'
           .\tools\update\avorax-build-update-package.ps1 -Version "${{ steps.version.outputs.version }}" -Channel "dev"
 
       - name: Upload installer artifacts

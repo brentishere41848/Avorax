@@ -15,6 +15,7 @@ pub enum ScanJobStatus {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ScanProgress {
     pub job_id: String,
     pub scan_type: ScanKind,

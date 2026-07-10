@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::verdict::{Confidence, ThreatCategory};
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum SignatureType {
     ExactHash,
@@ -22,6 +22,7 @@ pub enum SignatureType {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct NativeSignature {
     pub id: String,
     pub name: String,
@@ -50,6 +51,7 @@ pub struct NativeSignature {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct SignatureMatch {
     pub signature_id: String,
     pub name: String,

@@ -1,6 +1,9 @@
 {
   "format": "zentor-rule-pack-v1",
   "version": "0.2.1",
+  "compiler_version": null,
+  "created_at": null,
+  "pack_sha256": "4594248cc31f20d565e2ae6c56a5c80cda248384cc07ed0ab173d0be5626cfba",
   "rules": [
     {
       "id": "ZNE-RULE-INFOSTEALER-CREDS-ARCHIVE-NETWORK",
@@ -11,9 +14,17 @@
       "verdict": "probableMalware",
       "false_positive_notes": "Backup, migration, and forensic tools can reference browser stores. This rule requires multiple signals.",
       "conditions": [
-        {"type": "credential_access_string"},
-        {"type": "embedded_urls_at_least", "value": 1},
-        {"type": "contains_ascii", "value": "zip"}
+        {
+          "type": "credential_access_string"
+        },
+        {
+          "type": "embedded_urls_at_least",
+          "value": 1
+        },
+        {
+          "type": "contains_ascii",
+          "value": "zip"
+        }
       ],
       "min_condition_matches": 3,
       "action": "review_or_block_by_policy"

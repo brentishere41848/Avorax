@@ -99,11 +99,30 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Resolve explicit gate tool paths
+        shell: pwsh
+        run: |
+          $cargo = (Get-Command cargo -CommandType Application -ErrorAction Stop).Source
+          $python = (Get-Command python -CommandType Application -ErrorAction Stop).Source
+          if ([string]::IsNullOrWhiteSpace($cargo) -or -not (Test-Path -LiteralPath $cargo -PathType Leaf)) {
+            throw "Unable to resolve a concrete Cargo executable path."
+          }
+          if ([string]::IsNullOrWhiteSpace($python) -or -not (Test-Path -LiteralPath $python -PathType Leaf)) {
+            throw "Unable to resolve a concrete Python executable path."
+          }
+          "AVORAX_CI_CARGO=$cargo" >> $env:GITHUB_ENV
+          "AVORAX_CI_PYTHON=$python" >> $env:GITHUB_ENV
+
       - name: Create CI protection self-test report
         shell: pwsh
         run: |
           $reportPath = Join-Path $env:RUNNER_TEMP "avorax-ci-selftest.json"
-          @{
+          $report = @{
             overall_result = "pass"
             driver = @{
               communication_port_ok = $false
@@ -116,7 +135,34 @@ jobs:
               normal_exe_blocked_only_as_unknown = $true
               unknown_unsigned_lockdown_blocked_before_launch = $false
             }
-          } | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $reportPath -Encoding UTF8
+          }
+          $json = $report | ConvertTo-Json -Depth 5
+          $tempReport = Join-Path (Split-Path $reportPath) (".avorax-ci-selftest." + [System.Guid]::NewGuid().ToString("N") + ".json.tmp")
+          $backupReport = Join-Path (Split-Path $reportPath) (".avorax-ci-selftest." + [System.Guid]::NewGuid().ToString("N") + ".json.bak")
+          $encoding = New-Object System.Text.UTF8Encoding($false)
+          try {
+            [System.IO.File]::WriteAllText($tempReport, $json, $encoding)
+            $tempItem = Get-Item -LiteralPath $tempReport -Force -ErrorAction Stop
+            if (($tempItem.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0 -or -not ($tempItem -is [System.IO.FileInfo])) {
+              throw "Temporary CI self-test report must be a regular non-reparse file: $tempReport"
+            }
+            if (Test-Path -LiteralPath $reportPath) {
+              $reportItem = Get-Item -LiteralPath $reportPath -Force -ErrorAction Stop
+              if (($reportItem.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0 -or -not ($reportItem -is [System.IO.FileInfo])) {
+                throw "CI self-test report target must be a regular non-reparse file: $reportPath"
+              }
+              [System.IO.File]::Replace($tempReport, $reportPath, $backupReport)
+            } else {
+              [System.IO.File]::Move($tempReport, $reportPath)
+            }
+          } finally {
+            if (Test-Path -LiteralPath $tempReport) {
+              Remove-Item -LiteralPath $tempReport -Force
+            }
+            if (Test-Path -LiteralPath $backupReport) {
+              Remove-Item -LiteralPath $backupReport -Force
+            }
+          }
           "AVORAX_CI_SELFTEST_REPORT=$reportPath" >> $env:GITHUB_ENV
 
       - name: Product copy gate
@@ -125,16 +171,16 @@ jobs:
 
       - name: No malware binaries gate
         shell: pwsh
-        run: .\tools\security\zentor-no-malware-binaries-gate.ps1 -RepoRoot .
+        run: .\tools\security\zentor-no-malware-binaries-gate.ps1 -RepoRoot . -PythonPath $env:AVORAX_CI_PYTHON
 
       - name: False-positive gate
         shell: pwsh
-        run: .\tools\security\zentor-false-positive-gate.ps1 -RepoRoot .
+        run: .\tools\security\zentor-false-positive-gate.ps1 -RepoRoot . -CargoPath $env:AVORAX_CI_CARGO
 
       - name: Protection gate without driver feature claim
         shell: pwsh
-        run: .\tools\security\zentor-protection-gate.ps1 -RepoRoot . -SelfTestReport $env:AVORAX_CI_SELFTEST_REPORT
+        run: .\tools\security\zentor-protection-gate.ps1 -RepoRoot . -SelfTestReport $env:AVORAX_CI_SELFTEST_REPORT -CargoPath $env:AVORAX_CI_CARGO
 
       - name: Performance gate
         shell: pwsh
-        run: .\tools\perf\zentor-performance-gate.ps1 -RepoRoot .
+        run: .\tools\perf\zentor-performance-gate.ps1 -RepoRoot . -CargoPath $env:AVORAX_CI_CARGO -PythonPath $env:AVORAX_CI_PYTHON

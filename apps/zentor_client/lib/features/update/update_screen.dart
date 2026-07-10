@@ -6,7 +6,9 @@ import '../../app/theme/zentor_colors.dart';
 import '../../core/updates/update_service.dart';
 import '../../shared/widgets/zentor_button.dart';
 import '../../shared/widgets/zentor_status_card.dart';
+import 'update_confirmation.dart';
 import 'update_controller.dart';
+import 'update_mutation_guard.dart';
 import 'update_state.dart';
 import 'widgets/update_status_rows.dart';
 
@@ -18,13 +20,19 @@ class UpdateScreen extends ConsumerWidget {
     final state = ref.watch(zentorControllerProvider);
     final controller = ref.read(zentorControllerProvider.notifier);
     final model = updateViewModelFromState(state);
-    final busy = {
-      UpdateStatus.checking,
-      UpdateStatus.downloading,
-      UpdateStatus.verifying,
-      UpdateStatus.installing,
-      UpdateStatus.rollingBack,
-    }.contains(model.status);
+    final busy =
+        state.updateOperationInFlight ||
+        {
+          UpdateStatus.checking,
+          UpdateStatus.downloading,
+          UpdateStatus.verifying,
+          UpdateStatus.installing,
+          UpdateStatus.rollingBack,
+        }.contains(model.status);
+    final updateMutationBlocked = updateMutationBlockedByActiveWork(state);
+    final rollbackSupported = model.rollbackSupported == true;
+    final rollbackEnabled =
+        rollbackSupported && !busy && !updateMutationBlocked;
     return ZentorPanel(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -82,17 +90,31 @@ class UpdateScreen extends ConsumerWidget {
                     _ => 'Download, verify, install',
                   },
                   icon: Icons.system_update_alt_outlined,
-                  onPressed: busy
+                  onPressed: busy || updateMutationBlocked
                       ? null
-                      : controller.downloadVerifyAndInstallUpdate,
+                      : () async {
+                          if (!await confirmInstallUpdate(context)) return;
+                          await controller.downloadVerifyAndInstallUpdate(
+                            confirmed: true,
+                          );
+                        },
                 ),
               ZentorButton(
                 label: model.status == UpdateStatus.rollingBack
                     ? 'Rolling back'
-                    : 'Rollback previous version',
+                    : rollbackSupported
+                    ? 'Rollback previous version'
+                    : model.rollbackSupported == false
+                    ? 'Rollback unavailable'
+                    : 'Rollback status unknown',
                 icon: Icons.history_outlined,
                 secondary: true,
-                onPressed: busy ? null : controller.rollbackUpdateInApp,
+                onPressed: rollbackEnabled
+                    ? () async {
+                        if (!await confirmRollbackUpdate(context)) return;
+                        await controller.rollbackUpdateInApp(confirmed: true);
+                      }
+                    : null,
               ),
             ],
           ),

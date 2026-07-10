@@ -1,6 +1,9 @@
 {
   "format": "zentor-rule-pack-v1",
   "version": "0.2.1",
+  "compiler_version": null,
+  "created_at": null,
+  "pack_sha256": "5a4416520b5b985fe82968cd6b84b99c5bab6b2260aae3525f0d4a0d625f0b04",
   "rules": [
     {
       "id": "ZNE-RULE-MINER-POOL-PERSISTENCE",
@@ -11,8 +14,13 @@
       "verdict": "suspicious",
       "false_positive_notes": "Security tools and documentation can contain miner strings. This rule is review-only unless behavior confirms abuse.",
       "conditions": [
-        {"type": "miner_pool_string"},
-        {"type": "script_persistence_at_least", "value": 1}
+        {
+          "type": "miner_pool_string"
+        },
+        {
+          "type": "script_persistence_at_least",
+          "value": 1
+        }
       ],
       "min_condition_matches": 2,
       "action": "review_only"
@@ -26,8 +34,13 @@
       "verdict": "observation",
       "false_positive_notes": "Installer and marketing text can contain these phrases; observation only.",
       "conditions": [
-        {"type": "adware_pup_string"},
-        {"type": "contains_ascii", "value": "silentinstall"}
+        {
+          "type": "adware_pup_string"
+        },
+        {
+          "type": "contains_ascii",
+          "value": "silentinstall"
+        }
       ],
       "min_condition_matches": 1,
       "action": "observe"

@@ -88,11 +88,20 @@ pub enum ThreatCategory {
     Trojan,
     Ransomware,
     Spyware,
+    Infostealer,
     Adware,
     Worm,
     Keylogger,
     Miner,
+    RootkitIndicator,
     PotentiallyUnwantedApp,
+    SuspiciousDownloader,
+    SuspiciousScript,
+    MaliciousMacro,
+    ExploitDropper,
+    CredentialTheftIndicator,
+    PersistenceIndicator,
+    SecurityTamperIndicator,
     Unknown,
 }
 
@@ -140,6 +149,12 @@ pub struct ThreatResult {
     pub detected_at: DateTime<Utc>,
     pub recommended_action: RecommendedAction,
     pub status: ThreatResultStatus,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub quarantine_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub quarantine_path: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub quarantine_action_taken: Option<String>,
     pub risk_score: RiskScore,
     pub reason_summary: String,
 }

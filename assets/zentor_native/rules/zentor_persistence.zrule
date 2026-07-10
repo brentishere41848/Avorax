@@ -1,6 +1,9 @@
 {
   "format": "zentor-rule-pack-v1",
   "version": "0.2.1",
+  "compiler_version": null,
+  "created_at": null,
+  "pack_sha256": "c1a21dcda46e9311d745bb7c3cfe569f3b9587cf49c775b9a0ddd01552ee7226",
   "rules": [
     {
       "id": "ZNE-RULE-PERSISTENCE-RUNKEY-SCRIPT",
@@ -11,8 +14,13 @@
       "verdict": "suspicious",
       "false_positive_notes": "Installers and admin scripts may set autorun entries. This is review-only without stronger evidence.",
       "conditions": [
-        {"type": "script_persistence_at_least", "value": 1},
-        {"type": "downloader_and_execution"}
+        {
+          "type": "script_persistence_at_least",
+          "value": 1
+        },
+        {
+          "type": "downloader_and_execution"
+        }
       ],
       "min_condition_matches": 2,
       "action": "review_only"

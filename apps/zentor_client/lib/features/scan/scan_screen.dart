@@ -10,15 +10,57 @@ import '../../shared/widgets/zentor_button.dart';
 import '../../shared/widgets/zentor_empty_state.dart';
 import '../../shared/widgets/zentor_metric_card.dart';
 import '../../shared/widgets/zentor_status_card.dart';
+import '../update/update_mutation_guard.dart';
 
 class ScanScreen extends ConsumerWidget {
   const ScanScreen({super.key});
+
+  bool _scanModeMayQuarantine(ScanActionMode actionMode) {
+    return actionMode != ScanActionMode.detectOnly;
+  }
+
+  Future<bool> _confirmScanAutoAction(
+    BuildContext context,
+    ScanActionMode actionMode,
+  ) async {
+    if (!_scanModeMayQuarantine(actionMode)) return true;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Run scan with automatic quarantine?'),
+        content: Text(
+          'Avorax may move confirmed threats into quarantine during this scan (${actionMode.label}). Non-confirmed detections remain visible for review.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Run scan'),
+          ),
+        ],
+      ),
+    );
+    return confirmed == true;
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(zentorControllerProvider);
     final controller = ref.read(zentorControllerProvider.notifier);
     final desktop = Platform.isWindows || Platform.isLinux || Platform.isMacOS;
+    final updateMutationBusy = updateMutationOperationInProgress(state);
+    final scanStartBusy =
+        state.scanStartInFlight ||
+        state.securitySettingsActionInFlight ||
+        state.configurationResetInFlight ||
+        state.scanStatus == ScanStatus.running ||
+        updateMutationBusy;
+    final scanOperationBusy =
+        scanStartBusy || state.scanTargetSelectionInFlight;
+    final scanStartAvailable = desktop && !scanOperationBusy;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -49,13 +91,15 @@ class ScanScreen extends ConsumerWidget {
                   ),
                   ButtonSegment(
                     value: ScanActionMode.autoQuarantineAllDetections,
-                    label: Text('Review non-confirmed'),
-                    icon: Icon(Icons.rate_review_outlined),
+                    label: Text('Legacy confirmed-only'),
+                    icon: Icon(Icons.lock_clock_outlined),
                   ),
                 ],
                 selected: {state.scanActionMode},
-                onSelectionChanged: (selection) =>
-                    controller.setScanActionMode(selection.first),
+                onSelectionChanged: scanOperationBusy
+                    ? null
+                    : (selection) =>
+                          controller.setScanActionMode(selection.first),
               ),
               const SizedBox(height: 18),
               Wrap(
@@ -65,35 +109,80 @@ class ScanScreen extends ConsumerWidget {
                   ZentorButton(
                     label: 'Quick Scan',
                     icon: Icons.radar_outlined,
-                    onPressed: desktop && state.scanStatus != ScanStatus.running
-                        ? () => controller.runQuickScan(
-                            actionMode:
-                                ScanActionMode.autoQuarantineConfirmedOnly,
-                          )
+                    onPressed: scanStartAvailable
+                        ? () async {
+                            if (!await _confirmScanAutoAction(
+                              context,
+                              state.scanActionMode,
+                            )) {
+                              return;
+                            }
+                            await controller.runQuickScan(
+                              confirmedAutoAction: _scanModeMayQuarantine(
+                                state.scanActionMode,
+                              ),
+                            );
+                          }
                         : null,
                   ),
                   ZentorButton(
                     label: 'Full Scan',
                     icon: Icons.travel_explore_outlined,
                     secondary: true,
-                    onPressed: desktop && state.scanStatus != ScanStatus.running
-                        ? controller.runFullScan
+                    onPressed: scanStartAvailable
+                        ? () async {
+                            if (!await _confirmScanAutoAction(
+                              context,
+                              state.scanActionMode,
+                            )) {
+                              return;
+                            }
+                            await controller.runFullScan(
+                              confirmedAutoAction: _scanModeMayQuarantine(
+                                state.scanActionMode,
+                              ),
+                            );
+                          }
                         : null,
                   ),
                   ZentorButton(
                     label: 'Custom File',
                     icon: Icons.file_open_outlined,
                     secondary: true,
-                    onPressed: desktop && state.scanStatus != ScanStatus.running
-                        ? controller.scanSelectedFile
+                    onPressed: scanStartAvailable
+                        ? () async {
+                            if (!await _confirmScanAutoAction(
+                              context,
+                              state.scanActionMode,
+                            )) {
+                              return;
+                            }
+                            await controller.scanSelectedFile(
+                              confirmedAutoAction: _scanModeMayQuarantine(
+                                state.scanActionMode,
+                              ),
+                            );
+                          }
                         : null,
                   ),
                   ZentorButton(
                     label: 'Custom Folder',
                     icon: Icons.folder_open_outlined,
                     secondary: true,
-                    onPressed: desktop && state.scanStatus != ScanStatus.running
-                        ? controller.scanSelectedFolder
+                    onPressed: scanStartAvailable
+                        ? () async {
+                            if (!await _confirmScanAutoAction(
+                              context,
+                              state.scanActionMode,
+                            )) {
+                              return;
+                            }
+                            await controller.scanSelectedFolder(
+                              confirmedAutoAction: _scanModeMayQuarantine(
+                                state.scanActionMode,
+                              ),
+                            );
+                          }
                         : null,
                   ),
                 ],
@@ -105,6 +194,7 @@ class ScanScreen extends ConsumerWidget {
         if (state.scanStatus == ScanStatus.running) ...[
           _LiveProgress(
             progress: state.scanProgress,
+            cancelBusy: state.scanCancelInFlight,
             onCancel: controller.cancelScan,
           ),
           const SizedBox(height: 16),
@@ -127,13 +217,19 @@ class ScanScreen extends ConsumerWidget {
 }
 
 class _LiveProgress extends StatelessWidget {
-  const _LiveProgress({required this.progress, required this.onCancel});
+  const _LiveProgress({
+    required this.progress,
+    required this.cancelBusy,
+    required this.onCancel,
+  });
 
   final ScanProgress? progress;
+  final bool cancelBusy;
   final VoidCallback onCancel;
 
   @override
   Widget build(BuildContext context) {
+    final snapshot = progress;
     final value = progress?.progressPercent == null
         ? null
         : (progress!.progressPercent! / 100).clamp(0.0, 1.0);
@@ -169,27 +265,39 @@ class _LiveProgress extends StatelessWidget {
             children: [
               _ProgressFact(
                 label: 'Files',
-                value: '${progress?.filesScanned ?? 0}',
+                value: snapshot == null
+                    ? 'Pending'
+                    : '${snapshot.filesScanned}',
               ),
               _ProgressFact(
                 label: 'Bytes',
-                value: _formatBytes(progress?.bytesScanned ?? 0),
+                value: snapshot == null
+                    ? 'Pending'
+                    : _formatBytes(snapshot.bytesScanned),
               ),
               _ProgressFact(
                 label: 'Threats',
-                value: '${progress?.threatsFound ?? 0}',
+                value: snapshot == null
+                    ? 'Pending'
+                    : '${snapshot.threatsFound}',
               ),
               _ProgressFact(
                 label: 'Suspicious',
-                value: '${progress?.suspiciousFound ?? 0}',
+                value: snapshot == null
+                    ? 'Pending'
+                    : '${snapshot.suspiciousFound}',
               ),
               _ProgressFact(
                 label: 'Skipped',
-                value: '${progress?.skippedFiles ?? 0}',
+                value: snapshot == null
+                    ? 'Pending'
+                    : '${snapshot.skippedFiles}',
               ),
               _ProgressFact(
                 label: 'Elapsed',
-                value: _formatSeconds(progress?.elapsedSeconds ?? 0),
+                value: snapshot == null
+                    ? 'Pending'
+                    : _formatSeconds(snapshot.elapsedSeconds),
               ),
             ],
           ),
@@ -201,7 +309,7 @@ class _LiveProgress extends StatelessWidget {
                 label: 'Cancel',
                 icon: Icons.close_outlined,
                 secondary: true,
-                onPressed: onCancel,
+                onPressed: cancelBusy ? null : onCancel,
               ),
             ],
           ),
@@ -245,19 +353,21 @@ class _ScanProgress extends StatelessWidget {
       ),
       ZentorMetricCard(
         title: 'Files scanned',
-        value: '${report?.filesScanned ?? 0}',
-        detail: 'Skipped: ${report?.skippedFiles ?? 0}',
+        value: report == null ? 'No report' : '${report.filesScanned}',
+        detail: report == null
+            ? 'No scan report yet'
+            : 'Skipped: ${report.skippedFiles}',
         icon: Icons.article_outlined,
       ),
       ZentorMetricCard(
         title: 'Threats found',
-        value: '${report?.threatsFound ?? 0}',
-        detail: report?.actionMode.label ?? state.scanActionMode.label,
+        value: report == null ? 'No report' : '${report.threatsFound}',
+        detail: report == null ? 'No scan report yet' : report.actionMode.label,
         icon: Icons.warning_amber_outlined,
       ),
       ZentorMetricCard(
         title: 'Elapsed',
-        value: _elapsed(report?.elapsedMs ?? 0),
+        value: report == null ? 'No report' : _elapsed(report.elapsedMs),
         detail: report?.currentPath ?? 'Waiting for scan',
         icon: Icons.timer_outlined,
       ),
@@ -301,6 +411,11 @@ class _ScanResults extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final report = state.lastScanReport;
+    final updateMutationBusy = updateMutationOperationInProgress(state);
+    final configurationActionBusy =
+        state.securitySettingsActionInFlight ||
+        state.configurationResetInFlight ||
+        updateMutationBusy;
     return ZentorPanel(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -321,6 +436,8 @@ class _ScanResults extends StatelessWidget {
               onOpenInstallReport: controller.openInstallReport,
               onRepairInstallation: controller.repairInstallation,
             )
+          else if (report.threats.isEmpty && report.scanErrors.isNotEmpty)
+            _ScanErrorDiagnostics(report: report)
           else if (report.threats.isEmpty)
             const ZentorEmptyState(
               title: 'No threats found',
@@ -328,6 +445,10 @@ class _ScanResults extends StatelessWidget {
               icon: Icons.check_circle_outline,
             )
           else ...[
+            if (report.scanErrors.isNotEmpty) ...[
+              _ScanErrorDiagnostics(report: report),
+              const SizedBox(height: 16),
+            ],
             _ThreatSection(
               title: 'Confirmed threats',
               threats: report.threats
@@ -339,6 +460,14 @@ class _ScanResults extends StatelessWidget {
                   )
                   .toList(),
               controller: controller,
+              quarantineActionBusy:
+                  state.quarantineActionInFlight || configurationActionBusy,
+              allowlistActionBusy:
+                  state.allowlistActionInFlight || configurationActionBusy,
+              detectionFeedbackBusy:
+                  state.detectionFeedbackInFlight || configurationActionBusy,
+              threatIgnoreBusy:
+                  state.threatIgnoreActionInFlight || configurationActionBusy,
             ),
             _ThreatSection(
               title: 'Probable malware',
@@ -349,6 +478,14 @@ class _ScanResults extends StatelessWidget {
                   )
                   .toList(),
               controller: controller,
+              quarantineActionBusy:
+                  state.quarantineActionInFlight || configurationActionBusy,
+              allowlistActionBusy:
+                  state.allowlistActionInFlight || configurationActionBusy,
+              detectionFeedbackBusy:
+                  state.detectionFeedbackInFlight || configurationActionBusy,
+              threatIgnoreBusy:
+                  state.threatIgnoreActionInFlight || configurationActionBusy,
             ),
             _ThreatSection(
               title: 'Review suggested',
@@ -360,6 +497,14 @@ class _ScanResults extends StatelessWidget {
                   )
                   .toList(),
               controller: controller,
+              quarantineActionBusy:
+                  state.quarantineActionInFlight || configurationActionBusy,
+              allowlistActionBusy:
+                  state.allowlistActionInFlight || configurationActionBusy,
+              detectionFeedbackBusy:
+                  state.detectionFeedbackInFlight || configurationActionBusy,
+              threatIgnoreBusy:
+                  state.threatIgnoreActionInFlight || configurationActionBusy,
             ),
             _ThreatSection(
               title: 'Observations',
@@ -371,10 +516,52 @@ class _ScanResults extends StatelessWidget {
                   )
                   .toList(),
               controller: controller,
+              quarantineActionBusy:
+                  state.quarantineActionInFlight || configurationActionBusy,
+              allowlistActionBusy:
+                  state.allowlistActionInFlight || configurationActionBusy,
+              detectionFeedbackBusy:
+                  state.detectionFeedbackInFlight || configurationActionBusy,
+              threatIgnoreBusy:
+                  state.threatIgnoreActionInFlight || configurationActionBusy,
             ),
           ],
         ],
       ),
+    );
+  }
+}
+
+class _ScanErrorDiagnostics extends StatelessWidget {
+  const _ScanErrorDiagnostics({required this.report});
+
+  final ScanReport report;
+
+  @override
+  Widget build(BuildContext context) {
+    final errors = report.scanErrors.take(5).toList();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ZentorEmptyState(
+          title: 'Scan completed with errors',
+          message:
+              report.message ??
+              'Some files were skipped because Avorax could not scan them. Skipped files were not reported clean.',
+          icon: Icons.error_outline,
+        ),
+        const SizedBox(height: 14),
+        for (final error in errors) ...[
+          _DiagnosticChip(label: 'Scan error', value: error),
+          const SizedBox(height: 8),
+        ],
+        if (report.scanErrors.length > errors.length)
+          _DiagnosticChip(
+            label: 'More errors',
+            value:
+                '${report.scanErrors.length - errors.length} additional error(s)',
+          ),
+      ],
     );
   }
 }
@@ -390,17 +577,16 @@ class _EngineUnavailableDiagnostics extends StatelessWidget {
 
   final ZentorState state;
   final Future<void> Function() onRetry;
-  final Future<void> Function() onStartCoreService;
-  final Future<void> Function() onOpenInstallReport;
-  final Future<void> Function() onRepairInstallation;
+  final Future<void> Function({bool confirmed}) onStartCoreService;
+  final Future<void> Function({bool confirmed}) onOpenInstallReport;
+  final Future<void> Function({bool confirmed}) onRepairInstallation;
 
   @override
   Widget build(BuildContext context) {
-    final engineDir =
-        state.engineDirectory ??
-        (Platform.isWindows
-            ? r'C:\Program Files\Avorax\engine'
-            : 'installed Avorax engine directory');
+    final engineDir = _engineDirectoryLabel(state);
+    final scanEngineDiagnostic = state.lastEngineError?.trim();
+    final serviceActionBusy =
+        state.serviceActionInFlight || updateMutationOperationInProgress(state);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -422,19 +608,25 @@ class _EngineUnavailableDiagnostics extends StatelessWidget {
             _DiagnosticChip(label: 'Engine directory', value: engineDir),
             _DiagnosticChip(
               label: 'Signature packs',
-              value: state.nativeSignatureCount > 0 ? 'Found' : 'Missing',
+              value: _assetPackStatusLabel(
+                count: state.nativeSignatureCount,
+                nativeEngineStatus: state.nativeEngineStatus,
+                engineDiagnosticVisible:
+                    scanEngineDiagnostic?.isNotEmpty ?? false,
+              ),
             ),
             _DiagnosticChip(
               label: 'Rule packs',
-              value: state.nativeRuleCount > 0 ? 'Found' : 'Missing',
+              value: _assetPackStatusLabel(
+                count: state.nativeRuleCount,
+                nativeEngineStatus: state.nativeEngineStatus,
+                engineDiagnosticVisible:
+                    scanEngineDiagnostic?.isNotEmpty ?? false,
+              ),
             ),
             _DiagnosticChip(
               label: 'ML model',
-              value: switch (state.nativeMlStatus) {
-                'loaded' => 'Found',
-                'developmentModel' => 'Found (development)',
-                _ => 'Missing',
-              },
+              value: _nativeMlAssetLabel(state.nativeMlStatus),
             ),
             _DiagnosticChip(
               label: 'ProgramData',
@@ -445,10 +637,10 @@ class _EngineUnavailableDiagnostics extends StatelessWidget {
                 label: 'Paths checked',
                 value: state.enginePathsChecked.take(4).join(' | '),
               ),
-            if (state.lastEngineError != null)
+            if (scanEngineDiagnostic?.isNotEmpty ?? false)
               _DiagnosticChip(
                 label: 'Last error',
-                value: state.lastEngineError!,
+                value: scanEngineDiagnostic!,
               ),
           ],
         ),
@@ -467,21 +659,26 @@ class _EngineUnavailableDiagnostics extends StatelessWidget {
               label: 'Start Core Service',
               icon: Icons.play_arrow_outlined,
               secondary: true,
-              onPressed: state.coreServiceStatus == 'running'
+              onPressed:
+                  serviceActionBusy || state.coreServiceStatus == 'running'
                   ? null
-                  : () => onStartCoreService(),
+                  : () => _confirmStartCoreService(context),
             ),
             ZentorButton(
               label: 'Open install report',
               icon: Icons.description_outlined,
               secondary: true,
-              onPressed: () => onOpenInstallReport(),
+              onPressed: serviceActionBusy
+                  ? null
+                  : () => _confirmOpenInstallReport(context),
             ),
             ZentorButton(
               label: 'Repair installation',
               icon: Icons.build_outlined,
               secondary: true,
-              onPressed: () => onRepairInstallation(),
+              onPressed: serviceActionBusy
+                  ? null
+                  : () => _confirmRepairInstallation(context),
             ),
           ],
         ),
@@ -489,12 +686,115 @@ class _EngineUnavailableDiagnostics extends StatelessWidget {
     );
   }
 
+  Future<void> _confirmStartCoreService(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Start Core Service?'),
+        content: const Text(
+          'This asks Windows to start the Avorax Core Service and may show a Windows administrator prompt. It does not install or reconfigure the service. Continue only if you trust this installed Avorax build.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Start'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    await onStartCoreService(confirmed: true);
+  }
+
+  Future<void> _confirmOpenInstallReport(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Open install report?'),
+        content: const Text(
+          'This opens Windows Explorer to show local Avorax installation metadata such as install_report.json or install-manifest.json. Continue only if you trust this installed Avorax build.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Open'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    await onOpenInstallReport(confirmed: true);
+  }
+
+  Future<void> _confirmRepairInstallation(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Repair installation?'),
+        content: const Text(
+          'This can register or reconfigure the Avorax Core Service as a Windows service, set it to start automatically, and show a Windows administrator prompt. Continue only if you trust this installed Avorax build.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Repair'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    await onRepairInstallation(confirmed: true);
+  }
+
+  String _engineDirectoryLabel(ZentorState state) {
+    final reported = state.engineDirectory?.trim();
+    if (reported != null && reported.isNotEmpty) return reported;
+    if (state.enginePathsChecked.isNotEmpty) {
+      return 'Not reported by Core Service';
+    }
+    return 'Unknown';
+  }
+
   String _serviceStatusLabel(String status) => switch (status) {
     'running' => 'Running',
     'stopped' => 'Stopped',
     'missing' => 'Missing',
     'installed' => 'Installed',
+    'unknown' => 'Unknown',
     'unsupported' => 'Unsupported on this OS',
+    'error' => 'Error',
+    _ => 'Unavailable',
+  };
+
+  String _assetPackStatusLabel({
+    required int count,
+    required String nativeEngineStatus,
+    required bool engineDiagnosticVisible,
+  }) {
+    if (count > 0) return 'Found';
+    if (nativeEngineStatus == 'ready' && !engineDiagnosticVisible) {
+      return 'Missing';
+    }
+    return 'Unknown';
+  }
+
+  String _nativeMlAssetLabel(String status) => switch (status) {
+    'loaded' => 'Found',
+    'developmentModel' => 'Found (development)',
+    'modelMissing' => 'Missing',
+    'error' => 'Error',
     _ => 'Unknown',
   };
 }
@@ -528,11 +828,19 @@ class _ThreatSection extends StatelessWidget {
     required this.title,
     required this.threats,
     required this.controller,
+    required this.quarantineActionBusy,
+    required this.allowlistActionBusy,
+    required this.detectionFeedbackBusy,
+    required this.threatIgnoreBusy,
   });
 
   final String title;
   final List<ThreatResult> threats;
   final ZentorController controller;
+  final bool quarantineActionBusy;
+  final bool allowlistActionBusy;
+  final bool detectionFeedbackBusy;
+  final bool threatIgnoreBusy;
 
   @override
   Widget build(BuildContext context) {
@@ -545,7 +853,14 @@ class _ThreatSection extends StatelessWidget {
           Text(title, style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 10),
           for (final threat in threats)
-            _ThreatRow(threat: threat, controller: controller),
+            _ThreatRow(
+              threat: threat,
+              controller: controller,
+              quarantineActionBusy: quarantineActionBusy,
+              allowlistActionBusy: allowlistActionBusy,
+              detectionFeedbackBusy: detectionFeedbackBusy,
+              threatIgnoreBusy: threatIgnoreBusy,
+            ),
         ],
       ),
     );
@@ -553,10 +868,21 @@ class _ThreatSection extends StatelessWidget {
 }
 
 class _ThreatRow extends StatelessWidget {
-  const _ThreatRow({required this.threat, required this.controller});
+  const _ThreatRow({
+    required this.threat,
+    required this.controller,
+    required this.quarantineActionBusy,
+    required this.allowlistActionBusy,
+    required this.detectionFeedbackBusy,
+    required this.threatIgnoreBusy,
+  });
 
   final ThreatResult threat;
   final ZentorController controller;
+  final bool quarantineActionBusy;
+  final bool allowlistActionBusy;
+  final bool detectionFeedbackBusy;
+  final bool threatIgnoreBusy;
 
   @override
   Widget build(BuildContext context) {
@@ -602,6 +928,7 @@ class _ThreatRow extends StatelessWidget {
             runSpacing: 8,
             children: [
               _Chip(label: threat.riskScore.verdict.label),
+              _Chip(label: threat.threatCategory.label),
               _Chip(label: '${threat.confidence.label} confidence'),
               _Chip(label: 'Risk ${threat.riskScore.score}/100'),
               _Chip(label: _engines(threat)),
@@ -609,43 +936,54 @@ class _ThreatRow extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          ExpansionTile(
-            tilePadding: EdgeInsets.zero,
-            collapsedIconColor: ZentorColors.textSecondary,
-            iconColor: ZentorColors.primaryAccent,
-            title: const Text('Why was this flagged?'),
-            children: [
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  threat.reasonSummary.isEmpty
-                      ? 'Avorax found multiple local signals that need review. No cloud reputation was used.'
-                      : threat.reasonSummary,
-                  style: const TextStyle(color: ZentorColors.textSecondary),
-                ),
-              ),
-              const SizedBox(height: 8),
-              for (final reason in threat.riskScore.reasons)
+          Material(
+            type: MaterialType.transparency,
+            child: ExpansionTile(
+              tilePadding: EdgeInsets.zero,
+              collapsedIconColor: ZentorColors.textSecondary,
+              iconColor: ZentorColors.primaryAccent,
+              title: const Text('Why was this flagged?'),
+              children: [
                 Align(
                   alignment: Alignment.centerLeft,
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 6),
-                    child: Text(
-                      '${reason.title}: ${reason.detail}',
-                      style: const TextStyle(color: ZentorColors.textSecondary),
-                    ),
+                  child: Text(
+                    threat.reasonSummary,
+                    style: const TextStyle(color: ZentorColors.textSecondary),
                   ),
                 ),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  _recommendation(threat),
-                  style: const TextStyle(color: ZentorColors.textSecondary),
+                const SizedBox(height: 8),
+                for (final reason in threat.riskScore.reasons)
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: Text(
+                        '${reason.title}: ${reason.detail}',
+                        style: const TextStyle(
+                          color: ZentorColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                  ),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    _recommendation(threat),
+                    style: const TextStyle(color: ZentorColors.textSecondary),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           const SizedBox(height: 14),
+          if (_isReviewOnly(threat)) ...[
+            _ReviewOnlyNotice(path: threat.path),
+            const SizedBox(height: 14),
+          ],
+          if (threat.status == ThreatResultStatus.quarantined) ...[
+            _QuarantinedNotice(threat: threat),
+            const SizedBox(height: 14),
+          ],
           Wrap(
             spacing: 10,
             runSpacing: 10,
@@ -654,47 +992,52 @@ class _ThreatRow extends StatelessWidget {
                 ZentorButton(
                   label: 'Quarantine',
                   icon: Icons.inventory_2_outlined,
-                  onPressed: threat.status == ThreatResultStatus.detected
-                      ? () => controller.quarantineThreat(threat)
+                  onPressed:
+                      threat.status == ThreatResultStatus.detected &&
+                          !quarantineActionBusy
+                      ? () => _confirmQuarantine(context)
                       : null,
                 ),
               ZentorButton(
                 label: 'Keep / Ignore',
                 icon: Icons.visibility_outlined,
                 secondary: true,
-                onPressed: threat.status == ThreatResultStatus.detected
-                    ? () => controller.ignoreThreat(threat)
+                onPressed:
+                    threat.status == ThreatResultStatus.detected &&
+                        !threatIgnoreBusy
+                    ? () => _confirmIgnoreThreat(context)
                     : null,
               ),
               ZentorButton(
                 label: 'Mark false positive',
                 icon: Icons.thumb_up_alt_outlined,
                 secondary: true,
-                onPressed: threat.status == ThreatResultStatus.detected
-                    ? () => controller.markThreatFalsePositive(threat)
+                onPressed:
+                    threat.status == ThreatResultStatus.detected &&
+                        !detectionFeedbackBusy
+                    ? () => _confirmFalsePositive(context)
                     : null,
               ),
               ZentorButton(
                 label: 'Mark malicious',
                 icon: Icons.report_outlined,
                 secondary: true,
-                onPressed: threat.status == ThreatResultStatus.detected
-                    ? () => controller.markThreatMalicious(threat)
+                onPressed:
+                    threat.status == ThreatResultStatus.detected &&
+                        threat.recommendedAction !=
+                            RecommendedAction.quarantine &&
+                        !detectionFeedbackBusy
+                    ? () => _confirmMaliciousFeedback(context)
                     : null,
               ),
-              if (_canQuarantineByDefault(threat))
-                ZentorButton(
-                  label: 'Delete permanently',
-                  icon: Icons.delete_outline,
-                  secondary: true,
-                  onPressed: () => controller.deleteThreatPermanently(threat),
-                ),
               ZentorButton(
                 label: 'Add to allowlist',
                 icon: Icons.fact_check_outlined,
                 secondary: true,
-                onPressed: threat.status == ThreatResultStatus.detected
-                    ? () => controller.addThreatToAllowlist(threat)
+                onPressed:
+                    threat.status == ThreatResultStatus.detected &&
+                        !allowlistActionBusy
+                    ? () => _confirmAddToAllowlist(context)
                     : null,
               ),
             ],
@@ -704,12 +1047,141 @@ class _ThreatRow extends StatelessWidget {
     );
   }
 
+  Future<void> _confirmAddToAllowlist(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Add to allowlist?'),
+        content: Text(
+          'Avorax will stop automatically quarantining this path if it is detected again. Only continue if you trust this file:\n${threat.path}',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Allowlist'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    await controller.addThreatToAllowlist(threat, confirmed: true);
+  }
+
+  Future<void> _confirmQuarantine(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Quarantine this file?'),
+        content: Text(
+          'Avorax will move this file into isolated quarantine storage and keep a record for restore or deletion review:\n${threat.path}',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Quarantine'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    await controller.quarantineThreat(threat, confirmed: true);
+  }
+
+  Future<void> _confirmFalsePositive(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Mark false positive?'),
+        content: Text(
+          'Avorax may use this feedback to suppress future detections for the same file hash. Only continue if you trust this file:\n${threat.path}',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Mark false positive'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    await controller.markThreatFalsePositive(threat, confirmed: true);
+  }
+
+  Future<void> _confirmIgnoreThreat(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Keep and ignore this detection?'),
+        content: Text(
+          'Avorax will leave this file in place and hide this detection in the current scan results. Only continue if you trust this file:\n${threat.path}',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Keep / Ignore'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    await controller.ignoreThreat(threat, confirmed: true);
+  }
+
+  Future<void> _confirmMaliciousFeedback(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Submit malicious feedback?'),
+        content: Text(
+          'This saves local feedback for future detection decisions only. It does not quarantine, delete, execute, or change the current file. Use Quarantine separately if that action is available and you want to isolate the file:\n${threat.path}',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Submit feedback'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    await controller.markThreatMalicious(threat, confirmed: true);
+  }
+
   bool _canQuarantineByDefault(ThreatResult threat) {
     return threat.status == ThreatResultStatus.detected &&
         (threat.riskScore.verdict == RiskVerdict.confirmedMalware ||
             threat.riskScore.verdict == RiskVerdict.probableMalware) &&
         (threat.confidence == ThreatConfidence.confirmed ||
             threat.confidence == ThreatConfidence.high);
+  }
+
+  bool _isReviewOnly(ThreatResult threat) {
+    return threat.status == ThreatResultStatus.detected &&
+        (threat.riskScore.verdict == RiskVerdict.suspicious ||
+            threat.riskScore.verdict == RiskVerdict.unknown ||
+            threat.confidence == ThreatConfidence.low ||
+            threat.confidence == ThreatConfidence.medium) &&
+        !_canQuarantineByDefault(threat);
   }
 
   String _badgeLabel(ThreatResult threat) {
@@ -759,6 +1231,63 @@ class _ThreatRow extends StatelessWidget {
       return ZentorColors.danger;
     }
     return ZentorColors.warning;
+  }
+}
+
+class _ReviewOnlyNotice extends StatelessWidget {
+  const _ReviewOnlyNotice({required this.path});
+
+  final String path;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: ZentorColors.surface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: ZentorColors.warning.withValues(alpha: 0.5)),
+      ),
+      child: Text(
+        'Review-only evidence. Avorax will not automatically quarantine this file; inspect it before choosing an action: $path',
+        style: Theme.of(
+          context,
+        ).textTheme.bodySmall?.copyWith(color: ZentorColors.textSecondary),
+      ),
+    );
+  }
+}
+
+class _QuarantinedNotice extends StatelessWidget {
+  const _QuarantinedNotice({required this.threat});
+
+  final ThreatResult threat;
+
+  @override
+  Widget build(BuildContext context) {
+    final id = threat.quarantineId?.trim();
+    final path = threat.quarantinePath?.trim();
+    final detail = [
+      'This file was moved into isolated quarantine storage.',
+      if (id != null && id.isNotEmpty) 'Record: $id',
+      if (path != null && path.isNotEmpty) 'Payload: $path',
+    ].join('\n');
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: ZentorColors.surface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: ZentorColors.success.withValues(alpha: 0.5)),
+      ),
+      child: Text(
+        detail,
+        style: Theme.of(
+          context,
+        ).textTheme.bodySmall?.copyWith(color: ZentorColors.textSecondary),
+      ),
+    );
   }
 }
 

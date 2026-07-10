@@ -1,4 +1,32 @@
+use anyhow::{bail, Result};
 use serde::{Deserialize, Serialize};
+
+pub const FEATURE_NAMES: [&str; 24] = [
+    "file_size",
+    "extension_executable",
+    "file_type_executable",
+    "location_risk",
+    "filename_risk",
+    "double_extension",
+    "entropy_mean",
+    "entropy_max",
+    "section_count",
+    "high_entropy_section_count",
+    "suspicious_import_count",
+    "network_import_count",
+    "injection_import_count",
+    "persistence_import_count",
+    "crypto_import_count",
+    "embedded_url_count",
+    "embedded_ip_count",
+    "suspicious_string_count",
+    "script_obfuscation_score",
+    "encoded_command_flag",
+    "archive_contains_executable",
+    "startup_location_flag",
+    "known_good_flag",
+    "known_bad_flag",
+];
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct FeatureVector {
@@ -29,8 +57,47 @@ pub struct FeatureVector {
 }
 
 impl FeatureVector {
-    pub fn get(&self, name: &str) -> f64 {
-        match name {
+    pub fn is_known_feature(name: &str) -> bool {
+        FEATURE_NAMES.contains(&name)
+    }
+
+    pub fn named_values(&self) -> [(&'static str, f64); 24] {
+        [
+            ("file_size", self.file_size),
+            ("extension_executable", self.extension_executable),
+            ("file_type_executable", self.file_type_executable),
+            ("location_risk", self.location_risk),
+            ("filename_risk", self.filename_risk),
+            ("double_extension", self.double_extension),
+            ("entropy_mean", self.entropy_mean),
+            ("entropy_max", self.entropy_max),
+            ("section_count", self.section_count),
+            (
+                "high_entropy_section_count",
+                self.high_entropy_section_count,
+            ),
+            ("suspicious_import_count", self.suspicious_import_count),
+            ("network_import_count", self.network_import_count),
+            ("injection_import_count", self.injection_import_count),
+            ("persistence_import_count", self.persistence_import_count),
+            ("crypto_import_count", self.crypto_import_count),
+            ("embedded_url_count", self.embedded_url_count),
+            ("embedded_ip_count", self.embedded_ip_count),
+            ("suspicious_string_count", self.suspicious_string_count),
+            ("script_obfuscation_score", self.script_obfuscation_score),
+            ("encoded_command_flag", self.encoded_command_flag),
+            (
+                "archive_contains_executable",
+                self.archive_contains_executable,
+            ),
+            ("startup_location_flag", self.startup_location_flag),
+            ("known_good_flag", self.known_good_flag),
+            ("known_bad_flag", self.known_bad_flag),
+        ]
+    }
+
+    pub fn get(&self, name: &str) -> Result<f64> {
+        Ok(match name {
             "file_size" => self.file_size,
             "extension_executable" => self.extension_executable,
             "file_type_executable" => self.file_type_executable,
@@ -55,7 +122,32 @@ impl FeatureVector {
             "startup_location_flag" => self.startup_location_flag,
             "known_good_flag" => self.known_good_flag,
             "known_bad_flag" => self.known_bad_flag,
-            _ => 0.0,
-        }
+            _ => bail!("unknown native ML feature {name}"),
+        })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn feature_vector_get_rejects_unknown_features() {
+        let error = FeatureVector::default()
+            .get("ghost_feature")
+            .unwrap_err()
+            .to_string();
+
+        assert!(error.contains("unknown native ML feature ghost_feature"));
+    }
+
+    #[test]
+    fn feature_vector_get_has_no_unknown_zero_default() {
+        let source = include_str!("feature_vector.rs");
+        let production = source.split("#[cfg(test)]").next().unwrap();
+
+        assert!(production.contains("pub fn get(&self, name: &str) -> Result<f64>"));
+        assert!(production.contains("unknown native ML feature {name}"));
+        assert!(!production.contains("_ => 0.0"));
     }
 }

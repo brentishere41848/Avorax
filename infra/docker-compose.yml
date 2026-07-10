@@ -32,9 +32,10 @@ services:
     environment:
       DATABASE_URL: postgres://zentor:zentor@postgres:5432/zentor
       REDIS_URL: redis://redis:6379
-      ZENTOR_API_BIND_ADDR: 0.0.0.0:8000
-      ZENTOR_DEV_PROJECT_ID: zentor-default
-      ZENTOR_DEV_PUBLIC_CLIENT_KEY: zentor-public-client
+      AVORAX_API_BIND_ADDR: 0.0.0.0:8000
+      AVORAX_ENABLE_DEV_SEED: "true"
+      AVORAX_DEV_PROJECT_ID: avorax-default
+      AVORAX_DEV_PUBLIC_CLIENT_KEY: avorax-public-client
       RUST_LOG: zentor_api=info,tower_http=info
     ports:
       - "8000:8000"

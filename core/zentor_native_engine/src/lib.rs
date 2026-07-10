@@ -12,7 +12,6 @@ pub mod signatures;
 pub mod telemetry;
 pub mod threat_intel;
 pub mod trust;
-pub mod updates;
 pub mod verdict;
 
 #[cfg(test)]

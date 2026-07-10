@@ -1,6 +1,9 @@
 {
   "format": "zentor-rule-pack-v1",
   "version": "0.2.1",
+  "compiler_version": null,
+  "created_at": null,
+  "pack_sha256": "4247f2152e5c26a1dd049f815d63279ccc1410c0b6c156beff3fd8ee5d9040db",
   "rules": [
     {
       "id": "ZNE-RULE-RANSOM-BACKUP-DELETE-NOTE",
@@ -11,9 +14,17 @@
       "verdict": "probableMalware",
       "false_positive_notes": "Incident reports can contain these strings. Automatic response requires scan mode policy or live behavior.",
       "conditions": [
-        {"type": "ransom_note_text"},
-        {"type": "contains_ascii", "value": "vssadmin delete shadows"},
-        {"type": "suspicious_strings_at_least", "value": 1}
+        {
+          "type": "ransom_note_text"
+        },
+        {
+          "type": "contains_ascii",
+          "value": "vssadmin delete shadows"
+        },
+        {
+          "type": "suspicious_strings_at_least",
+          "value": 1
+        }
       ],
       "min_condition_matches": 3,
       "action": "review_or_block_by_policy"

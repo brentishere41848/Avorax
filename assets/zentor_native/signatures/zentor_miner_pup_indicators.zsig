@@ -1,6 +1,9 @@
 {
   "format": "zentor-signature-pack-v1",
   "version": "0.2.1",
+  "compiler_version": null,
+  "created_at": null,
+  "pack_sha256": "2146945afc73ebdc4da2746e831f29d47512dad88225d2b20b9ff15f4143e270",
   "signatures": [
     {
       "id": "ZNE-MINER-POOL-001",
@@ -13,10 +16,14 @@
       "pattern": "stratum+tcp",
       "mask": null,
       "offset": null,
-      "file_types": ["text", "unknown", "pe"],
+      "file_types": [
+        "text",
+        "unknown",
+        "pe"
+      ],
       "min_file_size": null,
       "max_file_size": null,
-      "required_context": ["review context: miner pool string requires persistence or resource-use context."],
+      "required_context": [],
       "false_positive_notes": "Security research tools and documentation may contain pool strings; review-only without more evidence.",
       "action_policy": "review_only",
       "created_at": "2026-05-29T00:00:00Z",
@@ -33,10 +40,13 @@
       "pattern": "offer bundle",
       "mask": null,
       "offset": null,
-      "file_types": ["text", "unknown"],
+      "file_types": [
+        "text",
+        "unknown"
+      ],
       "min_file_size": null,
       "max_file_size": null,
-      "required_context": ["review context: PUP/adware wording indicator."],
+      "required_context": [],
       "false_positive_notes": "Marketing or installer text may contain this phrase; low-confidence observation only.",
       "action_policy": "observe",
       "created_at": "2026-05-29T00:00:00Z",
@@ -44,4 +54,3 @@
     }
   ]
 }
-

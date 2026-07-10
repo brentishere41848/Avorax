@@ -29,9 +29,11 @@ class ZentorStatusPill extends StatelessWidget {
             Icon(icon, size: 15, color: color),
             const SizedBox(width: 7),
           ],
-          Text(
-            label,
-            style: TextStyle(color: color, fontWeight: FontWeight.w700),
+          Flexible(
+            child: Text(
+              label,
+              style: TextStyle(color: color, fontWeight: FontWeight.w700),
+            ),
           ),
         ],
       ),

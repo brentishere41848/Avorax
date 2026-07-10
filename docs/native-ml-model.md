@@ -9,3 +9,5 @@ The checked-in model is:
 - `production_ready: false`
 
 Development ML can participate in explanations and review verdicts, but it cannot auto-quarantine by itself. A production model requires real feature datasets, false-positive evaluation, metrics, metadata, and release-gate approval. No malware samples are stored in this repository.
+
+Runtime `.zmodel` JSON is treated as an untrusted engine asset. The native model runner rejects model files larger than 256 KiB before JSON parsing.

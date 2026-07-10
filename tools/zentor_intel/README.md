@@ -4,12 +4,22 @@ These tools import safe indicators into Avorax Native Engine packs. They do not 
 
 External malware repositories must be handled in metadata-only or hash-only mode by default. Do not clone malware repositories into this repo and do not download samples unless an isolated lab workflow is explicitly enabled outside the repo.
 
+Hash-only imports require an explicit `--category` and only accept supported Avorax threat categories. Manual IOC import, signature compilation, known-bad pack building, rule compilation, and pack validation use the same allowlist. CamelCase, snake_case, kebab-case, and compact aliases are normalized before JSONL or pack output; unsupported text fails instead of being written into or accepted from a pack. Pack validation of already-built `.zsig` and `.zrule` files is stricter: the file must contain canonical output spelling, not an alias. Supported canonical output values are `trojan`, `ransomware`, `spyware`, `infostealer`, `adware`, `worm`, `keylogger`, `miner`, `rootkitIndicator`, `potentiallyUnwantedApp`, `suspiciousDownloader`, `suspiciousScript`, `maliciousMacro`, `exploitDropper`, `credentialTheftIndicator`, `persistenceIndicator`, `securityTamperIndicator`, `testThreat`, and `unknown`.
+
+Action-policy input also normalizes common aliases before JSONL or pack output. For example, `review` becomes `review_only` and `observation_only` becomes `observe`. Pack validation requires canonical action-policy, confidence, signature type, severity, rule verdict/action, file-type, condition-type, and PE import-category values.
+
 Example:
 
 ```powershell
 python tools\zentor_intel\import_hash_feed.py --source assets\zentor_native\threat_intel\sources.example.json --input hashes.txt --output indicators.jsonl --category trojan
 python tools\zentor_intel\compile_zentor_signatures.py --input indicators.jsonl --output assets\zentor_native\signatures\zentor_realworld_hashes.zsig --version 0.2.1
 python tools\zentor_intel\validate_indicator_pack.py --input assets\zentor_native\signatures\zentor_realworld_hashes.zsig
+```
+
+The wrapper version of that local hash-only workflow requires explicit release metadata and cleans its temporary JSONL after success or failure:
+
+```powershell
+python tools\zentor_intel\build_realworld_detection_pack.py --source assets\zentor_native\threat_intel\sources.example.json --hashes hashes.txt --output assets\zentor_native\signatures\zentor_realworld_hashes.zsig --category trojan --version 0.2.1
 ```
 
 GitHub malware-repository metadata import:

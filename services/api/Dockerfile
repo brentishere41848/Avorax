@@ -13,5 +13,5 @@ RUN apt-get update \
 WORKDIR /workspace/services/api
 COPY --from=builder /workspace/services/api/target/release/zentor_api /usr/local/bin/zentor_api
 COPY --from=builder /workspace/infra /workspace/infra
-EXPOSE 8080
+EXPOSE 8000
 CMD ["zentor_api"]

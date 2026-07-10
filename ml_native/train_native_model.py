@@ -1,38 +1,48 @@
 import argparse
 import json
-import math
 from pathlib import Path
 
-
-def load_jsonl(path: Path):
-    rows = []
-    with path.open("r", encoding="utf-8") as handle:
-        for line in handle:
-            if line.strip():
-                rows.append(json.loads(line))
-    return rows
+from evaluate_native_model import (
+    NEGATIVE_LABELS,
+    POSITIVE_LABELS,
+    load_feature_schema,
+    load_jsonl,
+    validate_fixture_row,
+)
+from native_ml_io import write_json_atomic
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Train a conservative Zentor Native .zmodel from feature JSONL.")
+    parser = argparse.ArgumentParser(
+        description="Train a conservative Zentor Native .zmodel from feature JSONL."
+    )
     parser.add_argument("--input", required=True)
     parser.add_argument("--output", required=True)
+    parser.add_argument(
+        "--feature-schema",
+        default=str(Path(__file__).with_name("feature_schema.json")),
+    )
     args = parser.parse_args()
 
-    rows = load_jsonl(Path(args.input))
+    schema_features = load_feature_schema(Path(args.feature_schema))
+    rows = [
+        validate_fixture_row(row, schema_features, f"{args.input}:{index}")
+        for index, row in enumerate(load_jsonl(Path(args.input)), 1)
+    ]
     if not rows:
         raise SystemExit("No training rows supplied.")
 
-    feature_names = sorted(rows[0]["features"].keys())
-    weights = {name: 0.0 for name in feature_names}
-    positives = [row for row in rows if row.get("label") in {"malicious", "test_threat", "suspicious"}]
-    negatives = [row for row in rows if row.get("label") in {"benign", "trusted"}]
+    positives = [(label, features) for label, features in rows if label in POSITIVE_LABELS]
+    negatives = [(label, features) for label, features in rows if label in NEGATIVE_LABELS]
     if not positives or not negatives:
         raise SystemExit("Training requires positive and negative feature rows.")
 
+    feature_names = sorted(schema_features)
+    weights = {name: 0.0 for name in feature_names}
     for name in feature_names:
-        pos_avg = sum(row["features"].get(name, 0.0) for row in positives) / len(positives)
-        neg_avg = sum(row["features"].get(name, 0.0) for row in negatives) / len(negatives)
+        # Training rows are sparse; absent schema-valid features are explicit zeroes.
+        pos_avg = sum(features.get(name, 0.0) for _, features in positives) / len(positives)
+        neg_avg = sum(features.get(name, 0.0) for _, features in negatives) / len(negatives)
         weights[name] = max(-4.0, min(4.0, (pos_avg - neg_avg) * 2.0))
 
     model = {
@@ -46,10 +56,14 @@ def main():
         "false_positive_rate": 1.0,
         "bias": -3.0,
         "weights": weights,
-        "thresholds": {"suspicious": 0.65, "probable_malware": 0.86, "confirmed_malware": 0.98},
+        "thresholds": {
+            "suspicious": 0.65,
+            "probable_malware": 0.86,
+            "confirmed_malware": 0.98,
+        },
         "limitations": ["Candidate model; run evaluate_native_model.py before export."],
     }
-    Path(args.output).write_text(json.dumps(model, indent=2), encoding="utf-8")
+    write_json_atomic(Path(args.output), model, description="Native model output")
     print(f"wrote {args.output}; production_ready remains false until evaluation passes")
 
 

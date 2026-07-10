@@ -1,6 +1,9 @@
 {
   "format": "zentor-signature-pack-v1",
   "version": "0.2.1",
+  "compiler_version": null,
+  "created_at": null,
+  "pack_sha256": "ac2fa32f593e67b93ca0a4fa659c44f9a06d60cdae2318f61050ab7ab22c145d",
   "signatures": [
     {
       "id": "ZNE-INFOSTEALER-BROWSER-001",
@@ -13,10 +16,15 @@
       "pattern": "login data",
       "mask": null,
       "offset": null,
-      "file_types": ["text", "unknown", "powershell_script", "javascript"],
+      "file_types": [
+        "text",
+        "unknown",
+        "powershell_script",
+        "javascript"
+      ],
       "min_file_size": null,
       "max_file_size": null,
-      "required_context": ["review context: credential-store path indicator."],
+      "required_context": [],
       "false_positive_notes": "Backup and forensic tools can reference browser data paths; this is review-only without exfiltration context.",
       "action_policy": "review_only",
       "created_at": "2026-05-29T00:00:00Z",
@@ -33,10 +41,15 @@
       "pattern": "wallet.dat",
       "mask": null,
       "offset": null,
-      "file_types": ["text", "unknown", "powershell_script", "javascript"],
+      "file_types": [
+        "text",
+        "unknown",
+        "powershell_script",
+        "javascript"
+      ],
       "min_file_size": null,
       "max_file_size": null,
-      "required_context": ["review context: wallet file indicator."],
+      "required_context": [],
       "false_positive_notes": "Wallet backup tools can reference this filename; require multi-signal behavior for automatic action.",
       "action_policy": "review_only",
       "created_at": "2026-05-29T00:00:00Z",
@@ -44,4 +57,3 @@
     }
   ]
 }
-

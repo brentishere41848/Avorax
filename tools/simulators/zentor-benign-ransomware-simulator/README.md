@@ -3,6 +3,7 @@
 This simulator is safe test code for Avorax Ransomware Guard.
 
 It only operates inside a temporary directory it creates. It does not touch user documents, system folders, backups, browsers, credentials, or real data.
+If `-Root` is supplied, it must be an empty child directory under the system temp path and must not use symlinks or reparse points.
 
 Run:
 

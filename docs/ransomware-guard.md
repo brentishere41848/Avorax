@@ -20,3 +20,5 @@ Response:
 Avorax must not claim files are recovered unless restore actually succeeds.
 
 The Avorax Native Engine keeps a short per-process activity window. Multiple smaller file-change events can combine into one ransomware decision, which helps avoid overreacting to one normal write while still catching rapid modification patterns.
+
+The benign ransomware simulator is safe validation tooling only. Since checkpoint 860 it must run only in an isolated empty temp child directory and create/append its harmless fixture files through exclusive flushed file streams.

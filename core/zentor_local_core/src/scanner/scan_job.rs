@@ -5,6 +5,7 @@ use super::{ScanJobStatus, ScanKind};
 #[derive(Debug, Clone)]
 pub struct ScanJob {
     pub id: String,
+    #[allow(dead_code)]
     pub kind: ScanKind,
     pub status: ScanJobStatus,
 }

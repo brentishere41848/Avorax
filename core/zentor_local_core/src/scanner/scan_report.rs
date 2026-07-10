@@ -25,6 +25,7 @@ pub enum ReportStatus {
     ThreatsFound,
     CompletedWithErrors,
     EngineUnavailable,
+    Cancelled,
     Failed,
 }
 
@@ -46,6 +47,8 @@ pub struct ScanReport {
     pub elapsed_ms: u128,
     pub current_path: Option<String>,
     pub message: Option<String>,
+    #[serde(default)]
+    pub scan_errors: Vec<String>,
     pub threats: Vec<ThreatResult>,
     pub progress: Option<ScanProgress>,
 }

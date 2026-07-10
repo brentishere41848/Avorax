@@ -12,6 +12,9 @@ class OnboardingScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(zentorControllerProvider);
+    final controller = ref.read(zentorControllerProvider.notifier);
+    final onboardingCompletionBusy = state.onboardingCompletionInFlight;
     return Scaffold(
       body: SafeArea(
         child: Center(
@@ -60,14 +63,28 @@ class OnboardingScreen extends ConsumerWidget {
                       runSpacing: 12,
                       children: [
                         ZentorButton(
-                          label: 'Continue',
+                          label: onboardingCompletionBusy
+                              ? 'Saving setup'
+                              : 'Continue',
                           icon: Icons.arrow_forward,
-                          onPressed: () async {
-                            await ref
-                                .read(zentorControllerProvider.notifier)
-                                .completeOnboarding();
-                            if (context.mounted) context.go('/home');
-                          },
+                          onPressed: onboardingCompletionBusy
+                              ? null
+                              : () async {
+                                  final saved = await controller
+                                      .completeOnboarding();
+                                  if (!context.mounted) return;
+                                  if (saved) {
+                                    context.go('/home');
+                                    return;
+                                  }
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Unable to save setup. See the error banner.',
+                                      ),
+                                    ),
+                                  );
+                                },
                         ),
                         ZentorButton(
                           label: 'Privacy details',

@@ -1,3 +1,7 @@
-onnx-weekly
-numpy
-jsonschema
+# Direct offline ML tooling dependencies are pinned for model export and schema
+# validation. Use requirements.lock.txt for the Windows/Python 3.12 verification
+# lock that also pins transitive packages.
+# See docs/dependency-license-inventory.md for license notes.
+onnx==1.22.0
+numpy==2.2.6
+jsonschema==4.26.0

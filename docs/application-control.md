@@ -28,6 +28,7 @@ Policy rules:
 
 - Known bad hashes, EICAR/test signatures, confirmed native signatures, and high-confidence native rules are block eligible.
 - Known-good hashes, exact user approvals, and trusted signed publishers are allow eligible.
+- Trusted-publisher configuration is fail-visible: empty or NUL-containing configured publisher names are rejected instead of silently dropped. Observed malformed publisher evidence remains `unknown`.
 - Normal `.exe` files, developer tools, VPN installers, CLI tools, and consumer launchers are not malware simply because they are unknown or unsigned.
 - Lockdown may block unknown apps as unknown, not as confirmed threats.
 - Folder/root allowlisting is restricted. Avorax must not allowlist `C:\`, `C:\Windows`, `C:\Program Files`, `/`, `/System`, `/usr`, `/bin`, `/sbin`, or `/etc`.

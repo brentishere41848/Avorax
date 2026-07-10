@@ -21,6 +21,8 @@ walkdir = "2.5"
 
 [target.'cfg(windows)'.dependencies]
 windows-service = "0.7"
+windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_Security_Cryptography", "Win32_System_Memory"] }
 
 [dev-dependencies]
+flate2 = "1.1"
 tempfile = "3.14"

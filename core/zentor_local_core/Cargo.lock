@@ -1735,6 +1735,7 @@ dependencies = [
  "tract-onnx",
  "uuid",
  "walkdir",
+ "windows-sys",
  "zentor_native_engine",
 ]
 

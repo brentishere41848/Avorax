@@ -14,8 +14,11 @@ pub mod scan_scope;
 pub mod threat_result;
 pub mod yara_provider;
 
+#[allow(unused_imports)]
 pub use clamav_provider::ClamAvProvider;
+#[allow(unused_imports)]
 pub use heuristic_provider::eligible_for_heuristic_auto_quarantine;
+#[allow(unused_imports)]
 pub use heuristic_provider::HeuristicProvider;
 pub use reputation_provider::ReputationProvider;
 pub use scan_job::ScanJob;
@@ -26,6 +29,7 @@ pub use threat_result::{
     DetectionType, RecommendedAction, RiskEngine, RiskReason, RiskReasonSource, RiskScore,
     RiskSeverity, RiskVerdict, ThreatCategory, ThreatConfidence, ThreatResult, ThreatResultStatus,
 };
+#[allow(unused_imports)]
 pub use yara_provider::YaraProvider;
 
 pub trait ScannerProvider {
