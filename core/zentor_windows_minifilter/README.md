@@ -20,11 +20,11 @@ Purpose:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\build-driver.ps1
-powershell -ExecutionPolicy Bypass -File .\scripts\install-test-driver.ps1
-powershell -ExecutionPolicy Bypass -File .\scripts\uninstall-test-driver.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\install-test-driver.ps1 -ConfirmDriverInstall
+powershell -ExecutionPolicy Bypass -File .\scripts\uninstall-test-driver.ps1 -ConfirmDriverUninstall
 ```
 
-`install-test-driver.ps1` requires Administrator rights and checks that Windows TESTSIGNING is already enabled. It does not enable TESTSIGNING automatically.
+`install-test-driver.ps1` requires Administrator rights, explicit `-ConfirmDriverInstall`, and Windows TESTSIGNING to already be enabled. It does not enable TESTSIGNING automatically. `uninstall-test-driver.ps1` requires explicit `-ConfirmDriverUninstall`.
 
 If MSBuild, Visual Studio C++ tools, or the Windows Driver Kit are missing, `build-driver.ps1` fails with a clear setup error.
 

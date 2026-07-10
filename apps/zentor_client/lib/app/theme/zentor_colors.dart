@@ -6,7 +6,7 @@ abstract final class ZentorColors {
   static const elevatedSurface = Color(0xFF111A2B);
   static const border = Color(0xFF223047);
   static const primaryAccent = Color(0xFF26D9FF);
-  static const secondaryAccent = Color(0xFF6C5CFF);
+  static const secondaryAccent = Color(0xFF8E82FF);
   static const success = Color(0xFF35F29A);
   static const warning = Color(0xFFFFD166);
   static const danger = Color(0xFFFF4D6D);

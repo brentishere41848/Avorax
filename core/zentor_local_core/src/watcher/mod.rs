@@ -1,8 +1,9 @@
 use std::collections::HashMap;
-use std::path::PathBuf;
-use std::time::Duration;
+use std::path::{Path, PathBuf};
+use std::time::{Duration, UNIX_EPOCH};
 
 use serde::Serialize;
+use walkdir::WalkDir;
 
 #[derive(Debug, Clone, Serialize)]
 pub struct WatcherState {
@@ -23,21 +24,85 @@ impl WatcherState {
     }
 
     pub fn from_requested_paths(paths: Vec<PathBuf>) -> Self {
-        let mut watched_paths: Vec<String> = paths
-            .into_iter()
-            .filter(|path| path.is_dir())
-            .map(|path| path.display().to_string())
-            .collect();
+        let mut requested_any_paths = false;
+        let mut rejected_unsafe_paths = false;
+        let mut watched_paths: Vec<String> = Vec::new();
+        for path in paths {
+            requested_any_paths = true;
+            match watcher_path_decision(&path) {
+                WatchPathDecision::Watch => watched_paths.push(path.display().to_string()),
+                WatchPathDecision::Missing => {}
+                WatchPathDecision::RejectUnsafe => rejected_unsafe_paths = true,
+            }
+        }
         watched_paths.sort();
         watched_paths.dedup();
+        let mut limitations = vec![
+            "existing-accessible-paths-only",
+            "one-shot-watch-plan-only",
+            "no-persistent-service-monitor",
+            "no-kernel-pre-execution-blocking",
+        ];
+        if rejected_unsafe_paths {
+            limitations.push("unsafe-or-uninspectable-paths-ignored");
+        }
+        if watched_paths.is_empty() {
+            limitations.push(if requested_any_paths {
+                "no-accessible-watch-paths"
+            } else {
+                "no-watch-paths-requested"
+            });
+        }
+        let active = !watched_paths.is_empty();
 
         Self {
-            active: !watched_paths.is_empty(),
+            active,
             watched_paths,
-            mode: "userModeBestEffort",
-            limitations: vec!["existing-accessible-paths-only"],
+            mode: if active {
+                "userModeBestEffort"
+            } else {
+                "stopped"
+            },
+            limitations,
         }
     }
+}
+
+enum WatchPathDecision {
+    Watch,
+    Missing,
+    RejectUnsafe,
+}
+
+fn watcher_path_decision(path: &Path) -> WatchPathDecision {
+    match std::fs::symlink_metadata(path) {
+        Ok(metadata) => {
+            if metadata.file_type().is_symlink()
+                || watcher_metadata_is_windows_reparse_point(&metadata)
+            {
+                return WatchPathDecision::RejectUnsafe;
+            }
+            if metadata.file_type().is_dir() {
+                WatchPathDecision::Watch
+            } else {
+                WatchPathDecision::RejectUnsafe
+            }
+        }
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => WatchPathDecision::Missing,
+        Err(_) => WatchPathDecision::RejectUnsafe,
+    }
+}
+
+#[cfg(windows)]
+fn watcher_metadata_is_windows_reparse_point(metadata: &std::fs::Metadata) -> bool {
+    use std::os::windows::fs::MetadataExt;
+    const FILE_ATTRIBUTE_REPARSE_POINT: u32 = 0x400;
+    metadata.file_attributes() & FILE_ATTRIBUTE_REPARSE_POINT != 0
+}
+
+#[cfg(not(windows))]
+fn watcher_metadata_is_windows_reparse_point(_metadata: &std::fs::Metadata) -> bool {
+    false
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -70,6 +135,106 @@ impl WatchEvent {
             modified_at_ms,
             observed_at_ms,
         }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct WatchCandidate {
+    pub path: PathBuf,
+    pub size_bytes: u64,
+    pub modified_at_ms: u64,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct WatchCandidateSnapshot {
+    pub candidates: Vec<WatchCandidate>,
+    pub scan_errors: Vec<String>,
+    pub limit_reached: bool,
+}
+
+pub fn collect_watch_candidates(
+    roots: &[PathBuf],
+    max_files: usize,
+    max_depth: usize,
+) -> WatchCandidateSnapshot {
+    let mut candidates = Vec::new();
+    let mut scan_errors = Vec::new();
+    let mut limit_reached = false;
+
+    for root in roots {
+        for entry in WalkDir::new(root).follow_links(false).max_depth(max_depth) {
+            let entry = match entry {
+                Ok(entry) => entry,
+                Err(error) => {
+                    push_watch_scan_error(&mut scan_errors, format!("{error}"));
+                    continue;
+                }
+            };
+            if entry.file_type().is_dir() {
+                continue;
+            }
+            if entry.file_type().is_symlink() {
+                continue;
+            }
+            if !entry.file_type().is_file() {
+                continue;
+            }
+            let path = entry.path().to_path_buf();
+            let metadata = match std::fs::symlink_metadata(&path) {
+                Ok(metadata) => metadata,
+                Err(error) => {
+                    push_watch_scan_error(
+                        &mut scan_errors,
+                        format!("{}: metadata failed: {error}", path.display()),
+                    );
+                    continue;
+                }
+            };
+            if metadata.file_type().is_symlink()
+                || watcher_metadata_is_windows_reparse_point(&metadata)
+            {
+                continue;
+            }
+            if !metadata.file_type().is_file() {
+                continue;
+            }
+            candidates.push(WatchCandidate {
+                path,
+                size_bytes: metadata.len(),
+                modified_at_ms: metadata_modified_at_ms(&metadata),
+            });
+            if candidates.len() >= max_files {
+                limit_reached = true;
+                break;
+            }
+        }
+        if limit_reached {
+            break;
+        }
+    }
+
+    candidates.sort_by(|left, right| left.path.cmp(&right.path));
+    WatchCandidateSnapshot {
+        candidates,
+        scan_errors,
+        limit_reached,
+    }
+}
+
+fn metadata_modified_at_ms(metadata: &std::fs::Metadata) -> u64 {
+    metadata
+        .modified()
+        .ok()
+        .and_then(|modified| modified.duration_since(UNIX_EPOCH).ok())
+        .map(|duration| duration.as_millis().min(u128::from(u64::MAX)) as u64)
+        .unwrap_or(0)
+}
+
+fn push_watch_scan_error(scan_errors: &mut Vec<String>, detail: String) {
+    if scan_errors.len() < 20 {
+        scan_errors.push(detail);
+    } else if let Some(last) = scan_errors.last_mut() {
+        *last = "additional watch-poll scan errors omitted".to_string();
     }
 }
 
@@ -213,7 +378,95 @@ mod tests {
         assert!(state.active);
         assert_eq!(state.watched_paths, vec![dir.path().display().to_string()]);
         assert_eq!(state.mode, "userModeBestEffort");
-        assert_eq!(state.limitations, vec!["existing-accessible-paths-only"]);
+        assert_eq!(
+            state.limitations,
+            vec![
+                "existing-accessible-paths-only",
+                "one-shot-watch-plan-only",
+                "no-persistent-service-monitor",
+                "no-kernel-pre-execution-blocking",
+            ]
+        );
+    }
+
+    #[test]
+    fn watch_plan_reports_stopped_when_no_accessible_paths_remain() {
+        let dir = tempdir().unwrap();
+        let missing = dir.path().join("missing");
+        let file = dir.path().join("file.txt");
+        std::fs::write(&file, b"not a directory").unwrap();
+
+        let state = WatcherState::from_requested_paths(vec![missing, file]);
+
+        assert!(!state.active);
+        assert!(state.watched_paths.is_empty());
+        assert_eq!(state.mode, "stopped");
+        assert_eq!(
+            state.limitations,
+            vec![
+                "existing-accessible-paths-only",
+                "one-shot-watch-plan-only",
+                "no-persistent-service-monitor",
+                "no-kernel-pre-execution-blocking",
+                "unsafe-or-uninspectable-paths-ignored",
+                "no-accessible-watch-paths",
+            ]
+        );
+    }
+
+    #[test]
+    fn watch_plan_reports_stopped_when_no_paths_are_requested() {
+        let state = WatcherState::from_requested_paths(Vec::new());
+
+        assert!(!state.active);
+        assert!(state.watched_paths.is_empty());
+        assert_eq!(state.mode, "stopped");
+        assert_eq!(
+            state.limitations,
+            vec![
+                "existing-accessible-paths-only",
+                "one-shot-watch-plan-only",
+                "no-persistent-service-monitor",
+                "no-kernel-pre-execution-blocking",
+                "no-watch-paths-requested",
+            ]
+        );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn watch_plan_rejects_linked_directories_without_following() {
+        use std::os::unix::fs::symlink;
+
+        let dir = tempdir().unwrap();
+        let target = dir.path().join("target");
+        let link = dir.path().join("linked");
+        std::fs::create_dir(&target).unwrap();
+        symlink(&target, &link).unwrap();
+
+        let state = WatcherState::from_requested_paths(vec![target.clone(), link.clone()]);
+
+        assert!(state.active);
+        assert_eq!(state.watched_paths, vec![target.display().to_string()]);
+        assert!(state
+            .limitations
+            .contains(&"unsafe-or-uninspectable-paths-ignored"));
+    }
+
+    #[test]
+    fn watch_plan_uses_non_following_path_checks() {
+        let source = include_str!("mod.rs");
+
+        assert!(source.contains("std::fs::symlink_metadata(path)"));
+        assert!(source.contains("watcher_metadata_is_windows_reparse_point"));
+        assert!(source.contains("unsafe-or-uninspectable-paths-ignored"));
+        assert!(source.contains("one-shot-watch-plan-only"));
+        assert!(source.contains("no-persistent-service-monitor"));
+        assert!(source.contains("no-kernel-pre-execution-blocking"));
+        assert!(source.contains("no-accessible-watch-paths"));
+        assert!(source.contains("no-watch-paths-requested"));
+        let old_following_filter = [".filter(|path| path", ".is_dir())"].concat();
+        assert!(!source.contains(&old_following_filter));
     }
 
     #[test]
@@ -320,5 +573,19 @@ mod tests {
         assert_eq!(event.reason, "medium-confidence heuristic");
         assert!(!event.label_as_malware);
         assert!(!event.blocked);
+    }
+
+    #[test]
+    fn watch_candidate_collection_is_bounded_and_non_following() {
+        let dir = tempdir().unwrap();
+        std::fs::write(dir.path().join("a.bin"), b"a").unwrap();
+        std::fs::write(dir.path().join("b.bin"), b"b").unwrap();
+
+        let snapshot = collect_watch_candidates(&[dir.path().to_path_buf()], 1, 4);
+
+        assert_eq!(snapshot.candidates.len(), 1);
+        assert!(snapshot.limit_reached);
+        assert!(snapshot.scan_errors.is_empty());
+        assert_eq!(snapshot.candidates[0].size_bytes, 1);
     }
 }

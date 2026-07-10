@@ -41,6 +41,8 @@ pub struct ScanSummary {
     pub scan_mode: ScanMode,
     pub files_scanned: u64,
     pub skipped_files: u64,
+    #[serde(default)]
+    pub scan_errors: Vec<String>,
     pub threats_found: u64,
     pub quarantined_files: u64,
     pub results: Vec<FileScanVerdict>,

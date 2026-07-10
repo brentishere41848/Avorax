@@ -17,6 +17,10 @@ impl Default for ScriptPolicy {
 }
 
 impl ScriptPolicy {
+    pub fn new(mode: ProtectionMode) -> Self {
+        Self { mode }
+    }
+
     pub fn evaluate(&self, input: &ApplicationControlInput) -> ApplicationControlResult {
         if !input.is_script {
             return monitor("Not a script.");

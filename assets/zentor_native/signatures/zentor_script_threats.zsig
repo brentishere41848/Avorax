@@ -1,6 +1,9 @@
 {
   "format": "zentor-signature-pack-v1",
   "version": "0.2.1",
+  "compiler_version": null,
+  "created_at": null,
+  "pack_sha256": "70a9469472dd83d09dc7d264992cf5273778138a02f0ba628cb1b6425fa39ae4",
   "signatures": [
     {
       "id": "ZNE-SCRIPT-DOWNLOADER-001",
@@ -13,10 +16,13 @@
       "pattern": "downloadstring",
       "mask": null,
       "offset": null,
-      "file_types": ["powershell_script", "text"],
+      "file_types": [
+        "powershell_script",
+        "text"
+      ],
       "min_file_size": null,
       "max_file_size": null,
-      "required_context": ["review context: downloader indicator requires execution or obfuscation for stronger action."],
+      "required_context": [],
       "false_positive_notes": "Administrative scripts can download content; this is not confirmed malware by itself.",
       "action_policy": "review_only",
       "created_at": "2026-05-29T00:00:00Z",

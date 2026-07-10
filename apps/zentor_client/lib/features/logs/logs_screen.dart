@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:zentor_protocol/zentor_protocol.dart';
 
 import '../../app/app_state.dart';
 import '../../app/theme/zentor_colors.dart';
@@ -14,30 +15,72 @@ class LogsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(zentorControllerProvider);
     final controller = ref.read(zentorControllerProvider.notifier);
+    final logExportBusy = state.logExportInFlight;
+    final supportBundleExportBusy = state.supportBundleExportInFlight;
     return ZentorPanel(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              Expanded(
-                child: Text(
-                  'Local events',
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
+              Text(
+                'Local events',
+                style: Theme.of(context).textTheme.headlineMedium,
               ),
-              ZentorButton(
-                label: 'Export logs',
-                icon: Icons.download_outlined,
-                secondary: true,
-                onPressed: () async {
-                  final path = await controller.exportLogs();
-                  if (context.mounted && path != null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Logs exported to $path')),
-                    );
-                  }
-                },
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  ZentorButton(
+                    label: logExportBusy ? 'Exporting logs' : 'Export logs',
+                    icon: Icons.download_outlined,
+                    secondary: true,
+                    onPressed: logExportBusy
+                        ? null
+                        : () async {
+                            if (!await _confirmExportLogs(context)) return;
+                            final path = await controller.exportLogs(
+                              confirmed: true,
+                            );
+                            if (context.mounted && path != null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Logs exported to $path'),
+                                ),
+                              );
+                            }
+                          },
+                  ),
+                  ZentorButton(
+                    label: supportBundleExportBusy
+                        ? 'Exporting bundle'
+                        : 'Export support bundle',
+                    icon: Icons.inventory_2_outlined,
+                    secondary: true,
+                    onPressed: supportBundleExportBusy
+                        ? null
+                        : () async {
+                            if (!await _confirmExportSupportBundle(context)) {
+                              return;
+                            }
+                            final path = await controller.exportSupportBundle(
+                              confirmed: true,
+                            );
+                            if (context.mounted && path != null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Support bundle exported to $path',
+                                  ),
+                                ),
+                              );
+                            }
+                          },
+                  ),
+                ],
               ),
             ],
           ),
@@ -99,7 +142,7 @@ class LogsScreen extends ConsumerWidget {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            '${event.category}/${event.severity} • ${event.type} • ${event.createdAt.toLocal()}${event.details == null ? '' : ' • ${event.details}'}',
+                            _eventDetail(event),
                             style: const TextStyle(
                               color: ZentorColors.textSecondary,
                             ),
@@ -114,6 +157,57 @@ class LogsScreen extends ConsumerWidget {
       ),
     );
   }
+}
+
+Future<bool> _confirmExportLogs(BuildContext context) async {
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text('Export logs?'),
+      content: const Text(
+        'This writes local Avorax event history to a file. The export can include file paths, protection actions, update diagnostics, and error details.',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(false),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(true),
+          child: const Text('Export'),
+        ),
+      ],
+    ),
+  );
+  return confirmed == true;
+}
+
+Future<bool> _confirmExportSupportBundle(BuildContext context) async {
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text('Export support bundle?'),
+      content: const Text(
+        'This writes a local diagnostic JSON file with Avorax status summaries and event history. It does not include file contents or quarantine payloads, but events can include local paths and error details.',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(false),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(true),
+          child: const Text('Export'),
+        ),
+      ],
+    ),
+  );
+  return confirmed == true;
+}
+
+String _eventDetail(LocalEvent event) {
+  final details = event.details == null ? '' : ' | ${event.details}';
+  return '${event.category}/${event.severity} | ${event.type} | ${event.createdAt.toLocal()}$details';
 }
 
 class _EventSummaryCard extends StatelessWidget {
@@ -138,24 +232,25 @@ class _EventSummaryCard extends StatelessWidget {
         border: Border.all(color: ZentorColors.border),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, color: ZentorColors.primaryAccent),
           const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                value,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
-              ),
-              Text(
-                label,
-                style: const TextStyle(color: ZentorColors.textSecondary),
-              ),
-            ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  value,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+                ),
+                Text(
+                  label,
+                  style: const TextStyle(color: ZentorColors.textSecondary),
+                ),
+              ],
+            ),
           ),
         ],
       ),

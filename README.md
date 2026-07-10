@@ -2,7 +2,7 @@
 
 Avorax is a privacy-first desktop anti-malware and security client. It is a real Flutter application for Android, iOS, Windows, macOS, and Linux, with a Rust local core for desktop malware scanning and quarantine.
 
-Avorax v1 runs Quick Scan, Full Scan, and Custom Scan flows fully offline. Scanning, quarantine, allowlist, logs, and scan results do not require Avorax Cloud, an account, an API, a login, or internet. Runtime data comes only from local state, local configuration, real API responses when optional cloud features are enabled, selected path hashing, local core results, and real errors.
+Avorax v1 runs Quick Scan, Full Scan, and Custom Scan flows fully offline. Scanning, quarantine, allowlist, logs, diagnostic support bundles, and scan results do not require Avorax Cloud, an account, an API, a login, or internet. Runtime data comes only from local state, local configuration, real API responses when optional cloud features are enabled, selected path hashing, local core results, and real errors.
 
 ## Engineering docs
 
@@ -12,6 +12,30 @@ Avorax v1 runs Quick Scan, Full Scan, and Custom Scan flows fully offline. Scann
 - `TODO.md` tracks the prioritized P0-P4 hardening backlog.
 - `RUN_LOG.md` records hardening-session assumptions, completed changes, verification, and blockers.
 - `CHANGELOG.md` records implemented product changes without unsupported security claims.
+- `docs/portable-beta.md` documents the interim portable Windows scanner, commands, verification, and explicit protection limits.
+
+## Portable Windows Scanner Beta
+
+> **Beta safety disclaimer:** Avorax Portable Scanner Beta is experimental and
+> must not be used as the only antivirus on a device. It can scan common local
+> threats covered by its current signatures, rules, static analysis, and
+> conservative heuristics, but it may miss advanced, novel, targeted,
+> polymorphic, fileless, kernel-level, or large-scale malware and ransomware.
+> Keep Microsoft Defender or another supported antivirus enabled. No antivirus
+> can guarantee detection of every threat.
+
+The currently verified small-threat artifact is
+`dist\Avorax-Portable-Beta-0.1.0-beta.1.zip` (SHA-256
+`a80155373a869576dad6d015c21221a18815bf3318a253a11c19477af128240b`).
+Extract it to a local folder, run `Avorax-Status.cmd`, and then run
+`Avorax-Quick-Scan.cmd`. The package contains the canonical local core and
+local engine assets; it needs no account or network service.
+
+This unsigned portable beta provides manual scans and a finite explicit-folder
+user-mode watch only. It does not install a service or driver, start with
+Windows, replace Microsoft Defender, provide persistent background protection,
+or block files before execution. Do not disable Defender. See
+`docs/portable-beta.md` for the PowerShell actions and verified limits.
 
 ## Repository Layout
 
@@ -106,6 +130,7 @@ docker compose -f infra/docker-compose.yml up postgres redis
 cd services/api
 $env:DATABASE_URL="postgres://zentor:zentor@localhost:15432/zentor"
 $env:REDIS_URL="redis://localhost:16379"
+$env:AVORAX_ENABLE_DEV_SEED="true"
 $env:AVORAX_DEV_PROJECT_ID="avorax-default"
 $env:AVORAX_DEV_PUBLIC_CLIENT_KEY="avorax-public-client"
 cargo run
@@ -130,9 +155,13 @@ Developer endpoint overrides are hidden under `Settings > Advanced > Developer o
 
 ## App Updates
 
-Avorax checks GitHub Releases from `brentishere41848/Avorax` for newer tagged builds and shows a visible update state in Home and `Settings > Updates`. It does not silently install updates. When a newer release exists, the user can choose `Download Update`, which opens the release installer or GitHub release page.
+Avorax checks the configured GitHub release feed from `brentishere41848/Avorax` for newer tagged builds and shows visible update state in Home, Settings, and Updates. It does not silently install updates. Normal in-app updates use signed `.aup` packages: the user chooses `Download, verify, install`, Avorax downloads only the referenced `.aup`, verifies the feed SHA-256, asks Avorax Update Service to verify the signed manifest/package metadata, then applies the staged update and reports `Ready to restart` when the service finishes.
 
-Release builds should be tagged with `vMAJOR.MINOR.PATCH`. The Windows release workflow builds Flutter with the tag version, publishes MSI/EXE assets, and the installed app compares that local version against the latest GitHub release.
+MSI/EXE installers remain first-install, repair, recovery, offline, and manual-install paths. They are not the normal in-app update target, and Avorax must not execute downloaded EXE installers for normal updates.
+
+Release builds should be tagged with `vMAJOR.MINOR.PATCH`. Release automation must publish a versioned `update-feed.json` and signed `.aup` package for normal in-app updates; MSI/EXE artifacts remain installer and recovery assets.
+
+Normal `.aup` engine payloads update only runtime packs under `engine\signatures`, `engine\rules`, `engine\ml`, and `engine\trust`; broader engine layout changes require MSI/EXE packaging or a separate explicit workflow.
 
 Override the update repository at build time when needed:
 
@@ -183,7 +212,7 @@ Android and iOS show an honest unavailable state for full malware quarantine bec
 
 Scan types:
 
-- Quick Scan is a targeted fast scan. It checks high-risk locations such as Downloads, Desktop, temp folders, and startup/autostart locations, but only walks a shallow depth and scans risky file types such as executables, scripts, installers, archives, shortcuts, and macro-enabled documents.
+- Quick Scan is a targeted fast scan. It checks high-risk locations such as Downloads, Desktop, temp folders, and startup/autostart locations, but only walks a shallow depth and scans risky file types such as executables, scripts, installers, Windows App Installer/AppInstaller manifests, archives, shortcuts, macro-enabled documents, PowerShell module/data files, registry/URL/SCF/CHM carriers, Office add-ins/query files, and OneNote packages.
 - Full Scan checks accessible local drives or home filesystem areas, respects OS permissions, skips denied paths, and reports skipped counts.
 - Custom Scan checks only the file or folder selected by the user.
 
@@ -194,6 +223,35 @@ Scan modes:
 - Review non-confirmed detections: compatibility mode name retained for older clients, but automatic quarantine is still limited to confirmed threats. Probable, suspicious, and heuristic findings remain review-only unless the user chooses an action.
 
 Scan results are grouped into confirmed threats, probable malware, suspicious items, and low-priority observations. Low-priority observations are hidden by default.
+
+### Safe Validation Without Defender EICAR Alerts
+
+Microsoft Defender may block the standard EICAR test string before Avorax can scan it. Do not disable Defender just to test Avorax. For a no-EICAR local proof, build the release local core and run the harmless exact-hash validation smoke:
+
+```powershell
+cargo build --release --manifest-path core\zentor_local_core\Cargo.toml
+powershell.exe -NoProfile -ExecutionPolicy Bypass `
+  -File tools\testing\run-no-eicar-local-core-harmless-threat-smoke.ps1 `
+  -LocalCorePath target\release\zentor_local_core.exe
+```
+
+The smoke creates only temporary harmless bytes, a temporary exact-hash rule, and isolated data/quarantine roots. It verifies detect-only reporting, confirmed-only quarantine, listing, and restore without writing the standard EICAR string, weakening Defender, using live malware, or changing machine-wide settings.
+
+Quick Scan also reviews `.appinstaller` manifests that point to remote Windows app packages (`.appx`, `.msix`, `.appxbundle`, or `.msixbundle`). This is static manifest review only: Avorax does not invoke App Installer, download package URLs, install/register packages, or auto-quarantine those review-only findings in confirmed-only mode.
+
+The full small-threat MVP verifier also records the no-EICAR report as `generated_reports.no_eicar_harmless_threat` and validates that report's safety flags during `-RequireFullSuite`.
+
+For a stricter release-core lifecycle proof, run
+`tools\windows\avorax-installed-core-lifecycle-probe.ps1` with an explicit
+`-LocalCorePath`, `-EvidenceRoot`, and repo-contained `-ReportPath`. It uses the
+real scan and quarantine wrappers to verify `.avoraxq` creation, list, restore
+with the original SHA-256, and confirmed deletion. It creates no standard EICAR
+file, requires no Defender exclusion, makes no machine-wide changes, and does
+not claim installed service mediation or pre-execution blocking.
+
+### Diagnostic Log Exports And Support Bundles
+
+Logs and Settings can export explicitly confirmed local JSON diagnostics for troubleshooting. Normal event-log export writes `zentor-local-events.json`; support-bundle export writes app/engine/service/update diagnostics plus local event history. Neither export includes file contents, quarantine payloads, live malware, hidden network upload, or credential collection. Credential-like values in exported event details and support-bundle diagnostics are redacted before writing shareable JSON, including authorization headers, cookie/session values, API keys, bearer tokens, URL userinfo, and common token-shaped values, while raw in-app local event history is preserved for local audit. Event details can still include local paths and errors, so review exported files before sharing them.
 
 ## Real-Time And Ransomware Protection
 
@@ -227,6 +285,25 @@ flutter build linux
 ```
 
 Platform builds require the normal Flutter toolchain for that platform. iOS and macOS require Xcode on macOS.
+
+Before relying on a Windows release build, run the host-only prerequisite check
+with explicit local tool paths:
+
+```powershell
+powershell -ExecutionPolicy Bypass `
+  -File tools\windows\avorax-release-prereq-check.ps1 `
+  -RepoRoot C:\Users\Brent\Documents\Avorax-main `
+  -DotnetPath 'C:\Program Files\dotnet\dotnet.exe' `
+  -CargoPath 'C:\Users\Brent\.cargo\bin\cargo.exe' `
+  -FlutterPath 'C:\Users\Brent\develop\flutter\bin\flutter.bat' `
+  -HostOnly `
+  -ReportPath .workflow\ultracode\avorax-hardening\results\release-prereq-host-refresh.json
+```
+
+This check does not install components or change Windows settings. A Windows
+desktop build requires Flutter Windows desktop support, Developer Mode or other
+symlink support for plugin builds, Visual Studio Desktop C++ build components,
+and a .NET SDK for installer tooling.
 
 ## Windows Installers
 
@@ -270,18 +347,18 @@ GitHub Releases are built by `.github/workflows/release-windows.yml`. Push a ver
 On a disposable Windows driver-development VM with Visual Studio Build Tools or EWDK and WDK installed:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File tools\windows\zentor-protection-selftest.ps1 -BuildDriver -InstallDriver
+powershell -ExecutionPolicy Bypass -File tools\windows\zentor-protection-selftest.ps1 -BuildDriver -InstallDriver -CargoPath C:\Path\To\cargo.exe
 ```
 
-The workflow writes `dist\windows-driver-validation\selftest_report.json`. If the driver is missing or not running, Avorax must show post-launch fallback instead of pre-execution blocking.
+The workflow writes `dist\windows-driver-validation\selftest_report.json`. It refuses ambient Cargo lookup; pass `-CargoPath` or set `CARGO` to an absolute local Cargo executable path. If the driver is missing or not running, Avorax must show post-launch fallback instead of pre-execution blocking.
 
 Additional release gates:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File tools\security\zentor-false-positive-gate.ps1
-powershell -ExecutionPolicy Bypass -File tools\security\zentor-protection-gate.ps1
-powershell -ExecutionPolicy Bypass -File tools\perf\zentor-performance-gate.ps1
-powershell -ExecutionPolicy Bypass -File tools\windows\zentor-release-gate.ps1
+powershell -ExecutionPolicy Bypass -File tools\security\zentor-false-positive-gate.ps1 -CargoPath C:\Path\To\cargo.exe
+powershell -ExecutionPolicy Bypass -File tools\security\zentor-protection-gate.ps1 -CargoPath C:\Path\To\cargo.exe
+powershell -ExecutionPolicy Bypass -File tools\perf\zentor-performance-gate.ps1 -CargoPath C:\Path\To\cargo.exe -PythonPath C:\Path\To\python.exe
+powershell -ExecutionPolicy Bypass -File tools\windows\zentor-release-gate.ps1 -CargoPath C:\Path\To\cargo.exe -PythonPath C:\Path\To\python.exe -FlutterPath C:\Path\To\flutter.bat
 ```
 
 ## Test

@@ -3,13 +3,22 @@
 Build the Windows MSI and EXE installers from the repository root:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File installer\windows\build-msi.ps1 -Version 0.2.9
+powershell -ExecutionPolicy Bypass -File installer\windows\build-msi.ps1 -Version 0.2.9 -DotnetPath C:\Path\To\dotnet.exe -CargoPath C:\Path\To\cargo.exe -FlutterPath C:\Path\To\flutter.bat
 ```
+
+Before attempting a release build, run the non-mutating prerequisite preflight:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\windows\avorax-release-prereq-check.ps1 -DotnetPath C:\Path\To\dotnet.exe -CargoPath C:\Path\To\cargo.exe -FlutterPath C:\Path\To\flutter.bat
+```
+
+The preflight does not install tools, download packages, enable Developer Mode, or change machine security settings. It fails visibly when Android Gradle lock evidence, Windows symlink support, Visual Studio C++ build components, Rust release services, Flutter `Avorax.exe`, or the installer stage are missing.
 
 The script:
 
 - Builds the Flutter Windows release app unless `-SkipFlutterBuild` is passed.
-- Builds the Avorax Core Service with Cargo when Cargo is available, and fails release packaging if it is still missing.
+- Requires explicit tool paths through `-DotnetPath`, `-CargoPath`, and `-FlutterPath` or `AVORAX_DOTNET`, `CARGO`, and `AVORAX_FLUTTER`; it refuses ambient PATH lookups for release tools.
+- Builds the Avorax Core Service with the checked Cargo executable when service binaries are missing, and fails release packaging if they are still missing.
 - Stages the Flutter runtime DLLs and app assets.
 - Copies `avorax_core_service.exe` and legacy-compatible `zentor_local_core.exe` beside `Avorax.exe`; this is the local Avorax Native Engine command surface used by the Flutter app.
 - Copies `avorax_guard_service.exe` and legacy-compatible `zentor_guard_service.exe` beside `Avorax.exe` and fails release packaging if the Guard Service is missing.
@@ -22,7 +31,8 @@ The script:
 - Copies Windows minifilter and process-guard driver source, build scripts, signing scripts, install/uninstall scripts, and self-test scripts.
 - Writes `install-manifest.json` into the install folder and Flutter release folder so a built MSI/EXE can be audited for included components.
 - Skips ClamAV compatibility by default. Avorax Native Engine is the primary scanner.
-- Copies Visual C++ runtime DLLs from `C:\Windows\System32` when present.
+- Refuses to download the optional ClamAV compatibility runtime unless `-AllowClamAVDownload` is passed; cached packages are still SHA-256 verified before safe extraction.
+- Copies Visual C++ runtime DLLs from the checked `SystemRoot`/`WINDIR` `System32` directory when present.
 - Includes local privacy/security/driver/native-engine documentation.
 - Uses the local WiX .NET tool from `dotnet-tools.json`.
 - Produces `dist\Avorax-AntiVirus-<version>-x64.msi`.
@@ -31,7 +41,7 @@ The script:
 Release packaging fails if `avorax_core_service.exe`, `avorax_guard_service.exe`, or required engine assets cannot be included:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File installer\windows\build-msi.ps1 -Version 0.2.9 -RequireLocalCore -AllowDevelopmentModel
+powershell -ExecutionPolicy Bypass -File installer\windows\build-msi.ps1 -Version 0.2.9 -RequireLocalCore -AllowDevelopmentModel -DotnetPath C:\Path\To\dotnet.exe -CargoPath C:\Path\To\cargo.exe -FlutterPath C:\Path\To\flutter.bat
 ```
 
 `-AllowIncompletePayload` exists only for local packaging diagnostics and must not be used for release installers. A normal MSI/EXE build installs the app, local core, Guard Service, assets, engine packs, validation tools, docs, and manifest together.
@@ -39,17 +49,17 @@ powershell -ExecutionPolicy Bypass -File installer\windows\build-msi.ps1 -Versio
 ClamAV compatibility is optional and disabled by default. Use `-IncludeClamAVCompatibility` only when explicitly testing compatibility mode:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File installer\windows\build-msi.ps1 -Version 0.2.9 -IncludeClamAVCompatibility
+powershell -ExecutionPolicy Bypass -File installer\windows\build-msi.ps1 -Version 0.2.9 -IncludeClamAVCompatibility -AllowClamAVDownload -DotnetPath C:\Path\To\dotnet.exe -CargoPath C:\Path\To\cargo.exe -FlutterPath C:\Path\To\flutter.bat
 ```
 
-When compatibility mode is included, the MSI places ClamAV in `C:\Program Files\Avorax\ClamAV` and the Avorax local core discovers `clamscan.exe` there automatically. Avorax does not install ClamAV as a hidden service and does not silently enable persistence.
+When compatibility mode is included, the MSI places ClamAV in `C:\Program Files\Avorax\ClamAV` and the Avorax local core discovers `clamscan.exe` there automatically. If the pinned ClamAV zip is not already cached under `installer\windows\cache`, add `-AllowClamAVDownload` to permit the HTTPS download; the script stages the download to a temporary file, verifies the pinned SHA-256, and rejects unsafe zip entry paths before extraction. Avorax does not install ClamAV as a hidden service and does not silently enable persistence.
 
 The EXE installer is a WiX Burn bootstrapper that contains the MSI. It is useful for GitHub Releases and users who expect a single setup executable. It installs the same files and follows the same privacy and visibility rules as the MSI.
 
 The MSI build requires AI model assets. If model metadata is `production_ready=false`, pass `-AllowDevelopmentModel` for a non-production installer:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File installer\windows\build-msi.ps1 -Version 0.2.9 -RequireLocalCore -AllowDevelopmentModel
+powershell -ExecutionPolicy Bypass -File installer\windows\build-msi.ps1 -Version 0.2.9 -RequireLocalCore -AllowDevelopmentModel -DotnetPath C:\Path\To\dotnet.exe -CargoPath C:\Path\To\cargo.exe -FlutterPath C:\Path\To\flutter.bat
 ```
 
 After installing a built MSI or EXE, validate the deployed layout and service state:
@@ -57,6 +67,23 @@ After installing a built MSI or EXE, validate the deployed layout and service st
 ```powershell
 powershell -ExecutionPolicy Bypass -File tools\windows\avorax-installed-smoke-test.ps1
 ```
+
+The installed smoke test does not accept a textual `"ok":true` substring as
+health proof. It launches the canonical installed `zentor_local_core.exe` with
+bounded stdin/stdout/stderr, parses exactly one structured health response,
+checks the local stdio/no-network boundary, verifies the installed
+`avorax_core_service.exe` alias has the same SHA-256, and requires loaded
+signatures/rules plus a passing native self-test. Any malformed, ambiguous,
+degraded, or stderr-producing result fails visibly.
+
+After those checks pass, the installed smoke runs the packaged
+`avorax-installed-core-lifecycle-probe.ps1` against the canonical installed
+core. The probe uses isolated harmless exact-hash fixtures and must prove scan,
+`.avoraxq` quarantine, list, SHA-256-verified restore, confirmed delete, and
+temporary-data cleanup. Its report is written to
+`C:\ProgramData\Avorax\reports\installed_core_lifecycle_report.json`. This is a
+direct executable/wrapper stdio validation and does not claim that the Windows
+service mediated the scan or that a driver blocked execution.
 
 Before making a release decision, validate the generated MSI stage:
 

@@ -1,5 +1,6 @@
 pub mod archive_scanner;
 pub mod content_reader;
+pub mod env_roots;
 pub mod file_walker;
 pub mod full_scan_planner;
 pub mod quick_scan_planner;

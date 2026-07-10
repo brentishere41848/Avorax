@@ -29,6 +29,14 @@ pub struct StaticAnalysis {
 }
 
 pub fn analyze_path(path: &Path, bytes: &[u8]) -> Result<StaticAnalysis> {
+    analyze_path_with_size(path, bytes, bytes.len() as u64)
+}
+
+pub fn analyze_path_with_size(
+    path: &Path,
+    bytes: &[u8],
+    file_size_bytes: u64,
+) -> Result<StaticAnalysis> {
     let file_type = detect_file_type(path, bytes);
     let chunks = bytes.chunks(4096).map(entropy).collect::<Vec<_>>();
     let entropy_mean = mean_entropy(&chunks);
@@ -38,7 +46,7 @@ pub fn analyze_path(path: &Path, bytes: &[u8]) -> Result<StaticAnalysis> {
         .fold(0.0_f64, |acc, value| acc.max(value));
     let string_indicators = strings::extract_indicators(bytes);
     let pe = if file_type == FileType::Pe {
-        Some(pe::parse_pe(bytes))
+        Some(pe::parse_pe(bytes)?)
     } else {
         None
     };
@@ -46,7 +54,7 @@ pub fn analyze_path(path: &Path, bytes: &[u8]) -> Result<StaticAnalysis> {
         file_type,
         FileType::PowerShell | FileType::JavaScript | FileType::Batch | FileType::Vbs
     ) {
-        Some(scripts::analyze_script(file_type, bytes))
+        Some(scripts::analyze_script(file_type, bytes)?)
     } else {
         None
     };
@@ -57,7 +65,7 @@ pub fn analyze_path(path: &Path, bytes: &[u8]) -> Result<StaticAnalysis> {
     };
     Ok(StaticAnalysis {
         file_type,
-        file_size: bytes.len() as u64,
+        file_size: file_size_bytes.max(bytes.len() as u64),
         entropy_mean,
         entropy_max,
         string_indicators,
@@ -65,4 +73,18 @@ pub fn analyze_path(path: &Path, bytes: &[u8]) -> Result<StaticAnalysis> {
         script,
         archive,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn analysis_preserves_declared_file_size_for_sampled_content() {
+        let analysis =
+            analyze_path_with_size(Path::new("large-benign.bin"), b"sample", 128 * 1024 * 1024)
+                .unwrap();
+
+        assert_eq!(analysis.file_size, 128 * 1024 * 1024);
+    }
 }

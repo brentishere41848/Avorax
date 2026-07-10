@@ -3,6 +3,7 @@
   "pack_version": "0.1.0",
   "format": "zentor-rule-pack-v1",
   "rule_count": 2,
+  "pack_sha256": "8e9f0b4d84705502cb6c9d09fcfec5d231fc59d51abf924ff51f8690d0047fe9",
   "primary_engine": "Avorax Native Engine",
   "compatibility_engines_required": false,
   "limitations": [

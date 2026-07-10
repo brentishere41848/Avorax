@@ -3,6 +3,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+. (Join-Path $PSScriptRoot "..\security\avorax-security-gate-tools.ps1")
 
 $legacy = ("Pa" + "sus")
 $terms = @(
@@ -29,9 +30,84 @@ $exclude = @(
     "!$migrationNote"
 )
 
-function Test-CommandAvailable {
-    param([string]$Name)
-    return $null -ne (Get-Command $Name -ErrorAction SilentlyContinue)
+$maxDiagnosticChars = 4096
+$maxDiagnosticBytes = 65536
+
+function Get-BoundedDiagnostic {
+    param(
+        [AllowNull()][object]$Value,
+        [int]$MaxLength = $maxDiagnosticChars
+    )
+
+    if ($null -eq $Value) {
+        return ""
+    }
+
+    if ($Value -is [array]) {
+        $text = ($Value | ForEach-Object {
+            if ($null -eq $_) {
+                ""
+            } else {
+                [string]$_
+            }
+        }) -join [Environment]::NewLine
+    } else {
+        $text = [string]$Value
+    }
+
+    if ($text.Length -le $MaxLength) {
+        return $text
+    }
+
+    return $text.Substring(0, $MaxLength) + "...[truncated]"
+}
+
+function Get-RipgrepPath {
+    try {
+        $commands = @(Get-Command -Name "rg" -CommandType Application -ErrorAction Stop)
+    } catch [System.Management.Automation.CommandNotFoundException] {
+        return $null
+    } catch {
+        throw
+    }
+
+    if ($commands.Count -eq 0) {
+        return $null
+    }
+
+    $command = $commands[0]
+    if ([string]::IsNullOrWhiteSpace($command.Source)) {
+        return $null
+    }
+
+    return $command.Source
+}
+
+function Invoke-RipgrepSearch {
+    param(
+        [string]$RipgrepPath,
+        [string[]]$Arguments
+    )
+
+    try {
+        $diagnostic = Invoke-AvoraxGateCommandDiagnostic $RipgrepPath $Arguments "ripgrep branding search" $maxDiagnosticBytes
+        $matches = @()
+        if (-not [string]::IsNullOrWhiteSpace($diagnostic.stdout)) {
+            $matches = @($diagnostic.stdout -split "`r?`n")
+        }
+
+        return [pscustomobject]@{
+            ExitCode = $diagnostic.exit_code
+            Matches = @($matches)
+            Error = Get-BoundedDiagnostic $diagnostic.stderr
+        }
+    } catch {
+        return [pscustomobject]@{
+            ExitCode = 2
+            Matches = @()
+            Error = Get-BoundedDiagnostic $_.Exception.Message
+        }
+    }
 }
 
 function Test-PathExcluded {
@@ -178,13 +254,14 @@ function Search-WithPowerShell {
                         }
                     }
                 } catch {
-                    # Ignore unreadable or binary-like files; active text assets are covered by normal scans.
+                    Write-Warning "Skipping unreadable fallback branding-scan file '$relative': $($_.Exception.Message)"
                 }
             }
         } catch {
             try {
-                Write-Warning "Skipping unreadable directory: $($directory.FullName)"
+                Write-Warning "Skipping unreadable fallback branding-scan directory '$($directory.FullName)': $($_.Exception.Message)"
             } catch {
+                Write-Error "Fallback branding-scan warning emission failed for '$($directory.FullName)': $($_.Exception.Message)" -ErrorAction Continue
             }
         }
     }
@@ -193,18 +270,26 @@ function Search-WithPowerShell {
 }
 
 $failures = @()
+$rgPath = Get-RipgrepPath
 foreach ($term in $terms) {
-    if (Test-CommandAvailable "rg") {
+    if ($null -ne $rgPath) {
         $args = @("-n", "-S", [regex]::Escape($term), $Root)
         foreach ($glob in $exclude) {
             $args += "--glob"
             $args += $glob
         }
-        $matches = & rg @args 2>$null
-        if ($LASTEXITCODE -eq 0 -and $matches) {
+        $result = Invoke-RipgrepSearch -RipgrepPath $rgPath -Arguments $args
+        if ($result.ExitCode -gt 1) {
+            $failures += "Branding search failed for term [$term] with rg exit code $($result.ExitCode):"
+            $failures += $result.Error
+            continue
+        }
+
+        $matches = $result.Matches
+        if ($result.ExitCode -eq 0 -and $matches) {
             $matches = @($matches | Where-Object { -not (Test-AllowedHistoricalMatch -Line $_ -Term $term) })
         }
-        if ($LASTEXITCODE -eq 0 -and $matches) {
+        if ($result.ExitCode -eq 0 -and $matches) {
             $failures += "Forbidden active branding term [$term]:"
             $failures += $matches
         }

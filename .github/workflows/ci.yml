@@ -30,7 +30,8 @@ jobs:
 
       - name: Test local core
         working-directory: core/zentor_local_core
-        run: cargo test
+        # These tests intentionally exercise process-wide AVORAX_* path overrides.
+        run: cargo test -- --test-threads=1
 
       - name: Test guard service
         working-directory: core/zentor_guard_service
@@ -38,7 +39,8 @@ jobs:
 
       - name: Test update service
         working-directory: core/avorax_update_service
-        run: cargo test
+        # Update tests intentionally exercise process-wide rollback and data roots.
+        run: cargo test -- --test-threads=1
 
       - name: Test backend API
         working-directory: services/api
@@ -99,11 +101,35 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Resolve explicit gate tool paths
+        shell: pwsh
+        run: |
+          function Resolve-CiApplicationPath([string]$Name) {
+            $commands = @(Get-Command $Name -CommandType Application -All -ErrorAction Stop)
+            foreach ($command in $commands) {
+              $source = [string]$command.Source
+              if (-not [string]::IsNullOrWhiteSpace($source) -and
+                  (Test-Path -LiteralPath $source -PathType Leaf)) {
+                return [System.IO.Path]::GetFullPath($source)
+              }
+            }
+            throw "Unable to resolve a concrete $Name executable path."
+          }
+          $cargo = Resolve-CiApplicationPath -Name "cargo"
+          $python = Resolve-CiApplicationPath -Name "python"
+          "AVORAX_CI_CARGO=$cargo" >> $env:GITHUB_ENV
+          "AVORAX_CI_PYTHON=$python" >> $env:GITHUB_ENV
+
       - name: Create CI protection self-test report
         shell: pwsh
         run: |
           $reportPath = Join-Path $env:RUNNER_TEMP "avorax-ci-selftest.json"
-          @{
+          $report = @{
             overall_result = "pass"
             driver = @{
               communication_port_ok = $false
@@ -116,7 +142,34 @@ jobs:
               normal_exe_blocked_only_as_unknown = $true
               unknown_unsigned_lockdown_blocked_before_launch = $false
             }
-          } | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $reportPath -Encoding UTF8
+          }
+          $json = $report | ConvertTo-Json -Depth 5
+          $tempReport = Join-Path (Split-Path $reportPath) (".avorax-ci-selftest." + [System.Guid]::NewGuid().ToString("N") + ".json.tmp")
+          $backupReport = Join-Path (Split-Path $reportPath) (".avorax-ci-selftest." + [System.Guid]::NewGuid().ToString("N") + ".json.bak")
+          $encoding = New-Object System.Text.UTF8Encoding($false)
+          try {
+            [System.IO.File]::WriteAllText($tempReport, $json, $encoding)
+            $tempItem = Get-Item -LiteralPath $tempReport -Force -ErrorAction Stop
+            if (($tempItem.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0 -or -not ($tempItem -is [System.IO.FileInfo])) {
+              throw "Temporary CI self-test report must be a regular non-reparse file: $tempReport"
+            }
+            if (Test-Path -LiteralPath $reportPath) {
+              $reportItem = Get-Item -LiteralPath $reportPath -Force -ErrorAction Stop
+              if (($reportItem.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0 -or -not ($reportItem -is [System.IO.FileInfo])) {
+                throw "CI self-test report target must be a regular non-reparse file: $reportPath"
+              }
+              [System.IO.File]::Replace($tempReport, $reportPath, $backupReport)
+            } else {
+              [System.IO.File]::Move($tempReport, $reportPath)
+            }
+          } finally {
+            if (Test-Path -LiteralPath $tempReport) {
+              Remove-Item -LiteralPath $tempReport -Force
+            }
+            if (Test-Path -LiteralPath $backupReport) {
+              Remove-Item -LiteralPath $backupReport -Force
+            }
+          }
           "AVORAX_CI_SELFTEST_REPORT=$reportPath" >> $env:GITHUB_ENV
 
       - name: Product copy gate
@@ -125,16 +178,25 @@ jobs:
 
       - name: No malware binaries gate
         shell: pwsh
-        run: .\tools\security\zentor-no-malware-binaries-gate.ps1 -RepoRoot .
+        run: .\tools\security\zentor-no-malware-binaries-gate.ps1 -RepoRoot . -PythonPath $env:AVORAX_CI_PYTHON
+
+      - name: Prebuild local core gate tests
+        shell: pwsh
+        timeout-minutes: 20
+        run: |
+          & $env:AVORAX_CI_CARGO test --manifest-path .\core\zentor_local_core\Cargo.toml --no-run --locked
+          if ($LASTEXITCODE -ne 0) {
+            throw "Local-core gate test prebuild failed with exit code $LASTEXITCODE."
+          }
 
       - name: False-positive gate
         shell: pwsh
-        run: .\tools\security\zentor-false-positive-gate.ps1 -RepoRoot .
+        run: .\tools\security\zentor-false-positive-gate.ps1 -RepoRoot . -CargoPath $env:AVORAX_CI_CARGO
 
       - name: Protection gate without driver feature claim
         shell: pwsh
-        run: .\tools\security\zentor-protection-gate.ps1 -RepoRoot . -SelfTestReport $env:AVORAX_CI_SELFTEST_REPORT
+        run: .\tools\security\zentor-protection-gate.ps1 -RepoRoot . -SelfTestReport $env:AVORAX_CI_SELFTEST_REPORT -CargoPath $env:AVORAX_CI_CARGO
 
       - name: Performance gate
         shell: pwsh
-        run: .\tools\perf\zentor-performance-gate.ps1 -RepoRoot .
+        run: .\tools\perf\zentor-performance-gate.ps1 -RepoRoot . -CargoPath $env:AVORAX_CI_CARGO -PythonPath $env:AVORAX_CI_PYTHON

@@ -16,7 +16,7 @@ class UpdateStatusRows extends StatelessWidget {
       if (model.latestVersion != null) ('Latest version', model.latestVersion!),
       if (model.channel != null) ('Channel', model.channel!),
       if (model.packageName != null) ('Package', model.packageName!),
-      ('Rollback', model.rollbackSupported ? 'Available' : 'Unavailable'),
+      ('Rollback', _rollbackLabel(model.rollbackSupported)),
       if (model.error != null) ('Last error', model.error!),
     ];
     return Wrap(
@@ -40,4 +40,10 @@ class UpdateStatusRows extends StatelessWidget {
       ],
     );
   }
+}
+
+String _rollbackLabel(bool? supported) {
+  if (supported == true) return 'Available';
+  if (supported == false) return 'Unavailable';
+  return 'Unknown';
 }

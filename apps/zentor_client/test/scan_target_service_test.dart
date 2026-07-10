@@ -78,4 +78,67 @@ void main() {
       expect(roots, contains(root.path));
     }
   });
+
+  test('quick scan ignores unsafe environment roots', () {
+    final targets = const ScanTargetService().quickScanTargets(
+      environment: {
+        'HOME': 'relative-home',
+        'USERPROFILE': r'\\server\share\user',
+        'TEMP': r'.\temp',
+        'TMP': r'\\server\share\tmp',
+        'APPDATA': r'relative\AppData',
+        'LOCALAPPDATA': r'\\server\share\LocalAppData',
+      },
+      platform: ScanPlatform.windows,
+    );
+
+    expect(targets, isEmpty);
+  });
+
+  test('full scan ignores relative home roots', () {
+    final roots = const ScanTargetService().fullScanRoots(
+      environment: {'HOME': 'relative-home', 'USERPROFILE': 'relative-user'},
+      platform: ScanPlatform.linux,
+    );
+
+    expect(roots, isNot(contains('relative-home')));
+    expect(roots, isNot(contains('relative-user')));
+  });
+
+  test(
+    'scan target planning keeps uninspectable paths for core validation',
+    () {
+      final source = File(
+        'lib/core/scanning/scan_target_service.dart',
+      ).readAsStringSync();
+
+      expect(source, contains('class ScanTargetPlan'));
+      expect(source, contains('ScanTargetPlan quickScanTargetPlan'));
+      expect(source, contains('ScanTargetPlan fullScanRootPlan'));
+      expect(source, contains('_pathExistsOrNeedsCoreValidation'));
+      expect(source, contains('_directoryExistsOrNeedsCoreValidation'));
+      expect(source, contains('_ScanTargetProbe('));
+      expect(source, contains('_scanTargetProbeLimitation'));
+      expect(source, contains('_boundedScanTargetDiagnostic(error)'));
+      expect(source, contains(r"RegExp(r'[\x00-\x1F\x7F]+')"));
+      expect(
+        source,
+        contains(r'Unable to inspect $label $path before Core validation'),
+      );
+      expect(source, contains('_environmentPath'));
+      expect(source, contains('_isAbsoluteLocalPath'));
+      expect(
+        source,
+        contains('FileSystemEntity.typeSync(path, followLinks: false)'),
+      );
+      expect(source, contains('FileSystemEntityType.link'));
+      expect(source, isNot(contains("env['HOME'] ?? env['USERPROFILE']")));
+      expect(source, isNot(contains("addIfPresent(env['TEMP'])")));
+      expect(source, isNot(contains("addIfPresent(env['TMPDIR'])")));
+      expect(source, isNot(contains("final appData = env['APPDATA'];")));
+      expect(source, isNot(contains('Directory(path).existsSync()')));
+      expect(source, isNot(contains('} on Object {\n      return true;')));
+      expect(source, isNot(contains('} on Object {\n      return false;')));
+    },
+  );
 }

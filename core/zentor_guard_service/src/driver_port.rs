@@ -131,18 +131,19 @@ extern "system" {
 pub fn start_background_worker() -> Arc<AtomicBool> {
     let stop = Arc::new(AtomicBool::new(false));
     let worker_stop = Arc::clone(&stop);
-    thread::Builder::new()
-        .name("zentor-driver-port".to_string())
+    if let Err(error) = thread::Builder::new()
+        .name("avorax-driver-port".to_string())
         .spawn(move || {
             if let Err(error) = run_message_loop(worker_stop) {
-                let _ = std::fs::create_dir_all(crate::event_log_base());
-                let _ = std::fs::write(
-                    crate::event_log_base().join("driver_port_error.log"),
-                    format!("{error:#}"),
-                );
+                crate::report_guard_fatal_error("driver_port_error.log", &format!("{error:#}"));
             }
         })
-        .expect("failed to spawn Zentor driver port worker");
+    {
+        crate::report_guard_fatal_error(
+            "driver_port_error.log",
+            &format!("failed to spawn Avorax driver port worker: {error}"),
+        );
+    }
     stop
 }
 
@@ -183,12 +184,13 @@ fn run_message_loop(stop: Arc<AtomicBool>) -> Result<()> {
             anyhow::bail!("FilterGetMessage failed: 0x{hr:08x}");
         }
 
-        let verdict = evaluate_native_request(&message.request).unwrap_or_else(|error| {
-            fail_open_verdict(
+        let verdict = match evaluate_native_request(&message.request) {
+            Ok(verdict) => verdict,
+            Err(error) => fail_open_verdict(
                 message.request.request_id,
                 &format!("guard evaluation error: {error:#}"),
-            )
-        });
+            ),
+        };
         let mut reply = DriverReply {
             header: FilterReplyHeader {
                 status: STATUS_SUCCESS,
@@ -208,7 +210,8 @@ fn run_message_loop(stop: Arc<AtomicBool>) -> Result<()> {
 fn evaluate_native_request(native: &NativeScanRequest) -> Result<NativeScanVerdict> {
     let request = native_to_domain(native)?;
     let mut config = crate::driver_ipc::DriverVerdictConfig::default();
-    config.known_bad_hashes = known_bad_cache::load_known_bad_hashes();
+    config.known_bad_hashes = known_bad_cache::load_known_bad_hashes()
+        .context("failed to load guard known-bad cache for driver port verdict")?;
     let verdict = evaluate_driver_request(&request, &config)?;
     Ok(domain_to_native(native.request_id, &verdict))
 }
@@ -217,20 +220,24 @@ fn native_to_domain(native: &NativeScanRequest) -> Result<ScanRequest> {
     let file_path =
         utf16z_to_string(&native.file_path).context("driver request path is not valid UTF-16")?;
     let rename_target = utf16z_to_string(&native.rename_target)
-        .ok()
-        .filter(|s| !s.is_empty());
-    let normalized_file_path = rename_target.or_else(|| Some(file_path.clone()));
+        .context("driver rename target is not valid UTF-16")?;
+    let normalized_file_path = if rename_target.is_empty() {
+        Some(file_path.clone())
+    } else {
+        Some(rename_target)
+    };
+    let event_type = match native.event_type {
+        0 => DriverEventType::FileOpen,
+        1 => DriverEventType::FileCreate,
+        2 => DriverEventType::FileWrite,
+        3 => DriverEventType::FileRename,
+        4 => DriverEventType::ImageExecuteAttempt,
+        5 => DriverEventType::SectionCreateAttempt,
+        value => anyhow::bail!("unsupported driver event type: {value}"),
+    };
     Ok(ScanRequest {
         request_id: native.request_id.to_string(),
-        event_type: match native.event_type {
-            0 => DriverEventType::FileOpen,
-            1 => DriverEventType::FileCreate,
-            2 => DriverEventType::FileWrite,
-            3 => DriverEventType::FileRename,
-            4 => DriverEventType::ImageExecuteAttempt,
-            5 => DriverEventType::SectionCreateAttempt,
-            _ => DriverEventType::FileOpen,
-        },
+        event_type,
         file_path,
         normalized_file_path,
         process_id: nonzero_u32(native.process_id),
@@ -307,8 +314,14 @@ fn nonzero_u32(value: u32) -> Option<u32> {
 }
 
 fn utf16z_to_string(input: &[u16]) -> Result<String, std::string::FromUtf16Error> {
-    let end = input.iter().position(|ch| *ch == 0).unwrap_or(input.len());
-    String::from_utf16(&input[..end])
+    String::from_utf16(utf16z_payload(input))
+}
+
+fn utf16z_payload(input: &[u16]) -> &[u16] {
+    match input.iter().position(|ch| *ch == 0) {
+        Some(end) => &input[..end],
+        None => input,
+    }
 }
 
 fn write_utf16z(output: &mut [u16], value: &str) {
@@ -331,5 +344,125 @@ impl Drop for PortHandle {
                 CloseHandle(self.0);
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn native_request() -> NativeScanRequest {
+        let mut request = NativeScanRequest {
+            version: 1,
+            request_id: 42,
+            event_type: 4,
+            process_id: 0,
+            parent_process_id: 0,
+            desired_access: 0,
+            create_disposition: 0,
+            file_attributes: 0,
+            file_size: 0,
+            timestamp_utc: 0,
+            file_path: [0; 1024],
+            rename_target: [0; 512],
+        };
+        write_utf16z(&mut request.file_path, r"C:\AvoraxFixtures\notepad.exe");
+        request
+    }
+
+    #[test]
+    fn native_request_rejects_invalid_rename_target_utf16() {
+        let mut request = native_request();
+        request.rename_target[0] = 0xD800;
+
+        let error = native_to_domain(&request).unwrap_err().to_string();
+
+        assert!(error.contains("driver rename target is not valid UTF-16"));
+    }
+
+    #[test]
+    fn native_request_rejects_unknown_event_type() {
+        let mut request = native_request();
+        request.event_type = 99;
+
+        let error = native_to_domain(&request).unwrap_err().to_string();
+
+        assert!(error.contains("unsupported driver event type: 99"));
+    }
+
+    #[test]
+    fn driver_port_utf16z_payload_uses_explicit_no_terminator_branch() {
+        assert_eq!(utf16z_payload(&[65, 0, 66]), &[65]);
+        assert_eq!(utf16z_payload(&[65, 66]), &[65, 66]);
+
+        let source = include_str!("driver_port.rs");
+        let start = source.find("fn utf16z_to_string").unwrap();
+        let end = source.find("fn write_utf16z").unwrap();
+        let utf16_source = &source[start..end];
+
+        assert!(utf16_source.contains("fn utf16z_payload(input: &[u16]) -> &[u16]"));
+        assert!(utf16_source.contains("Some(end) => &input[..end]"));
+        assert!(utf16_source.contains("None => input"));
+        assert!(!utf16_source.contains(".unwrap_or(input.len())"));
+    }
+
+    #[test]
+    fn native_driver_request_fields_are_not_silently_defaulted() {
+        let source = include_str!("driver_port.rs");
+        let start = source.find("fn native_to_domain").unwrap();
+        let end = source.find("fn domain_to_native").unwrap();
+        let native_source = &source[start..end];
+
+        assert!(native_source.contains("driver rename target is not valid UTF-16"));
+        assert!(native_source.contains("unsupported driver event type"));
+        assert!(!native_source.contains(".ok()"));
+        assert!(!native_source.contains("_ => DriverEventType::FileOpen"));
+    }
+
+    #[test]
+    fn driver_port_known_bad_cache_load_errors_are_reported() {
+        let source = include_str!("driver_port.rs");
+        let start = source.find("fn evaluate_native_request").unwrap();
+        let end = source.find("fn native_to_domain").unwrap();
+        let evaluate_source = &source[start..end];
+        let old_assignment =
+            ["config.known_bad_hashes = known_bad_cache::load_known_bad_hashes();"].concat();
+
+        assert!(evaluate_source
+            .contains("failed to load guard known-bad cache for driver port verdict"));
+        assert!(evaluate_source.contains("known_bad_cache::load_known_bad_hashes()"));
+        assert!(evaluate_source.contains(".context("));
+        assert!(!evaluate_source.contains(&old_assignment));
+    }
+
+    #[test]
+    fn driver_port_evaluation_fail_open_branch_is_explicit() {
+        let source = include_str!("driver_port.rs");
+        let start = source.find("fn run_message_loop").unwrap();
+        let end = source.find("fn evaluate_native_request").unwrap();
+        let loop_source = &source[start..end];
+
+        assert!(
+            loop_source.contains("let verdict = match evaluate_native_request(&message.request)")
+        );
+        assert!(loop_source.contains("Ok(verdict) => verdict"));
+        assert!(loop_source.contains("Err(error) => fail_open_verdict"));
+        assert!(loop_source.contains("guard evaluation error: {error:#}"));
+        assert!(!loop_source.contains("evaluate_native_request(&message.request).unwrap_or_else"));
+    }
+
+    #[test]
+    fn driver_port_worker_spawn_errors_are_reported() {
+        let source = crate::normalized_test_source(include_str!("driver_port.rs"));
+        let start = source.find("pub fn start_background_worker").unwrap();
+        let end = source.find("fn run_message_loop").unwrap();
+        let worker_source = &source[start..end];
+
+        assert!(worker_source.contains("if let Err(error) = thread::Builder::new()"));
+        assert!(worker_source.contains(".name(\"avorax-driver-port\".to_string())"));
+        assert!(worker_source
+            .contains("report_guard_fatal_error(\n            \"driver_port_error.log\""));
+        assert!(worker_source.contains("failed to spawn Avorax driver port worker: {error}"));
+        assert!(!worker_source.contains(".expect(\"failed to spawn Zentor driver port worker\")"));
     }
 }

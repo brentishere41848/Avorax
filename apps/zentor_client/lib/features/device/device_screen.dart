@@ -7,6 +7,15 @@ import '../../shared/widgets/zentor_loading_state.dart';
 import '../../shared/widgets/zentor_metric_card.dart';
 import '../../shared/widgets/zentor_status_card.dart';
 
+const int _maxDeviceDiagnosticChars = 4096;
+
+String _boundedDeviceDiagnostic(Object error) {
+  final text = '$error'.replaceAll(RegExp(r'[\x00-\x1F\x7F]+'), ' ').trim();
+  if (text.isEmpty) return 'unknown error';
+  if (text.length <= _maxDeviceDiagnosticChars) return text;
+  return '${text.substring(0, _maxDeviceDiagnosticChars - 3)}...';
+}
+
 class DeviceScreen extends ConsumerWidget {
   const DeviceScreen({super.key});
 
@@ -19,7 +28,7 @@ class DeviceScreen extends ConsumerWidget {
       error: (error, _) => ZentorMetricCard(
         title: 'Device & Protection Health',
         value: 'Unable to read platform info',
-        detail: '$error',
+        detail: _boundedDeviceDiagnostic(error),
         icon: Icons.error_outline,
       ),
       data: (value) => LayoutBuilder(
@@ -60,11 +69,8 @@ class DeviceScreen extends ConsumerWidget {
             ),
             ZentorMetricCard(
               title: 'Avorax Native Engine',
-              value: state.nativeEngineStatus == 'ready'
-                  ? 'Ready'
-                  : 'Unavailable',
-              detail:
-                  '${state.nativeSignatureCount} signatures, ${state.nativeRuleCount} rules. Native ML: ${_mlLabel(state.nativeMlStatus)}.',
+              value: _nativeEngineLabel(state),
+              detail: _nativeEngineDetail(state),
               icon: Icons.health_and_safety_outlined,
             ),
             ZentorMetricCard(
@@ -132,36 +138,77 @@ class DeviceScreen extends ConsumerWidget {
 
 String _serviceLabel(String status) => switch (status) {
   'running' => 'Running',
-  'stopped' => 'Not running',
+  'stopped' => 'Stopped',
+  'missing' => 'Missing',
   'installed' => 'Installed',
-  'monitorOnly' => 'Monitor only',
-  'blockConfirmedThreats' => 'Block confirmed threats',
-  _ => 'Not running',
+  'unknown' => 'Unknown',
+  'off' => 'Off',
+  _ => 'Unavailable',
 };
 
 String _driverLabel(String status) => switch (status) {
   'running' => 'Running',
-  'selfTestPassed' => 'Self-test passed',
-  'inactive' => 'Inactive',
-  _ => 'Missing',
+  'stopped' => 'Stopped',
+  'installed' => 'Installed',
+  'missing' => 'Missing',
+  'unknown' => 'Unknown',
+  _ => 'Unavailable',
 };
 
 String _mlLabel(String status) => switch (status) {
-  'active' => 'Production',
+  'loaded' => 'Loaded',
   'developmentModel' => 'Development',
   'modelMissing' => 'Missing',
+  'error' => 'Error',
   _ => 'Unavailable',
 };
+
+String _nativeEngineLabel(ZentorState state) {
+  if (state.lastEngineError?.trim().isNotEmpty ?? false) {
+    return 'Attention needed';
+  }
+  return switch (state.nativeEngineStatus) {
+    'ready' => 'Ready',
+    'error' => 'Error',
+    'unavailable' => 'Unavailable',
+    _ => 'Unknown',
+  };
+}
+
+String _nativeEngineDetail(ZentorState state) {
+  final diagnostic = state.lastEngineError?.trim();
+  final details = [
+    if (diagnostic != null && diagnostic.isNotEmpty)
+      'Engine diagnostic: $diagnostic',
+    '${state.nativeSignatureCount} signatures, ${state.nativeRuleCount} rules. Native ML: ${_mlLabel(state.nativeMlStatus)}.',
+    'Native ML production-ready: ${state.nativeMlProductionReady ? 'yes' : 'no'}.',
+    if (state.nativeSelfTestError?.trim().isNotEmpty ?? false)
+      'Native self-test: ${state.nativeSelfTestError}',
+    if (state.aiSelfTestError?.trim().isNotEmpty ?? false)
+      'AI self-test: ${state.aiSelfTestError}',
+  ];
+  return details.join('\n');
+}
 
 String _serviceDetails(Map<String, String> states) {
   if (states.isEmpty) {
     return 'No Avorax Windows service information was returned.';
   }
+  final warnings = states['avorax_service_probe_warnings']?.trim();
   return [
-    'Core: ${states['avorax_core_service'] ?? 'not installed'}',
-    'Guard: ${states['avorax_guard_service'] ?? 'not installed'}',
-    'Update: ${states['avorax_update_service'] ?? 'not installed'}',
+    'Core: ${_serviceState(states, 'avorax_core_service')}',
+    'Guard: ${_serviceState(states, 'avorax_guard_service')}',
+    'Update: ${_serviceState(states, 'avorax_update_service')}',
+    if (warnings != null && warnings.isNotEmpty) 'Probe warnings: $warnings',
   ].join('\n');
+}
+
+String _serviceState(Map<String, String> states, String name) {
+  final state = states[name]?.trim();
+  if (state == null || state.isEmpty) {
+    return 'unknown; service evidence missing';
+  }
+  return state;
 }
 
 String _shortPath(String path) {

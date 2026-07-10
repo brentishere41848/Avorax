@@ -10,7 +10,7 @@ UpdateViewModel updateViewModelFromState(ZentorState state) {
     channel: update?.channel,
     packageName: update?.packageName,
     releaseNotes: update?.releaseNotes,
-    rollbackSupported: update?.rollbackSupported ?? false,
+    rollbackSupported: update?.rollbackSupported,
     error: state.updateError,
   );
 }

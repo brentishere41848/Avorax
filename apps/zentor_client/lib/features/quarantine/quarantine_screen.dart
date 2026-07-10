@@ -7,6 +7,7 @@ import '../../app/theme/zentor_colors.dart';
 import '../../shared/widgets/zentor_button.dart';
 import '../../shared/widgets/zentor_empty_state.dart';
 import '../../shared/widgets/zentor_status_card.dart';
+import '../update/update_mutation_guard.dart';
 
 class QuarantineScreen extends ConsumerWidget {
   const QuarantineScreen({super.key});
@@ -15,23 +16,62 @@ class QuarantineScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(zentorControllerProvider);
     final controller = ref.read(zentorControllerProvider.notifier);
+    final configurationActionBusy =
+        state.securitySettingsActionInFlight ||
+        state.configurationResetInFlight;
+    final updateMutationBusy = updateMutationOperationInProgress(state);
+    final quarantineActionBusy =
+        state.quarantineActionInFlight || configurationActionBusy;
+    final quarantineMutationBusy = quarantineActionBusy || updateMutationBusy;
+    final scanOriginalPathBusy = quarantineMutationBusy;
+    final quarantineRefreshBusy = state.quarantineRefreshInFlight;
     return ZentorPanel(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              Expanded(
-                child: Text(
-                  'Quarantine',
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
+              Text(
+                'Quarantine',
+                style: Theme.of(context).textTheme.headlineMedium,
               ),
               ZentorButton(
-                label: 'Refresh',
+                label: state.scanTargetSelectionInFlight
+                    ? 'Choosing file'
+                    : 'Quarantine file',
+                icon: Icons.add_box_outlined,
+                secondary: true,
+                onPressed:
+                    quarantineMutationBusy ||
+                        state.scanTargetSelectionInFlight ||
+                        state.scanStartInFlight ||
+                        state.scanStatus == ScanStatus.running
+                    ? null
+                    : () async {
+                        final confirmed = await _confirmQuarantineAction(
+                          context,
+                          title: 'Quarantine selected file?',
+                          message:
+                              'Avorax will ask you to choose one file, then move that file into isolated quarantine storage. Only quarantine files you intend to isolate.',
+                          confirmLabel: 'Choose file',
+                          destructive: true,
+                        );
+                        if (!confirmed) return;
+                        await controller.quarantineSelectedFile(
+                          confirmed: true,
+                        );
+                      },
+              ),
+              ZentorButton(
+                label: quarantineRefreshBusy ? 'Refreshing' : 'Refresh',
                 icon: Icons.refresh,
                 secondary: true,
-                onPressed: controller.unawaitedRefreshQuarantine,
+                onPressed: quarantineActionBusy || quarantineRefreshBusy
+                    ? null
+                    : controller.unawaitedRefreshQuarantine,
               ),
             ],
           ),
@@ -104,7 +144,8 @@ class QuarantineScreen extends ConsumerWidget {
                           icon: Icons.restore_outlined,
                           secondary: true,
                           onPressed:
-                              item.status == QuarantineItemStatus.quarantined
+                              item.status == QuarantineItemStatus.quarantined &&
+                                  !quarantineMutationBusy
                               ? () async {
                                   final confirmed = await _confirmQuarantineAction(
                                     context,
@@ -114,7 +155,10 @@ class QuarantineScreen extends ConsumerWidget {
                                     confirmLabel: 'Restore file',
                                   );
                                   if (!confirmed) return;
-                                  await controller.restoreQuarantineItem(item);
+                                  await controller.restoreQuarantineItem(
+                                    item,
+                                    confirmed: true,
+                                  );
                                 }
                               : null,
                         ),
@@ -123,7 +167,8 @@ class QuarantineScreen extends ConsumerWidget {
                           icon: Icons.delete_outline,
                           secondary: true,
                           onPressed:
-                              item.status == QuarantineItemStatus.quarantined
+                              item.status == QuarantineItemStatus.quarantined &&
+                                  !quarantineMutationBusy
                               ? () async {
                                   final confirmed = await _confirmQuarantineAction(
                                     context,
@@ -135,10 +180,23 @@ class QuarantineScreen extends ConsumerWidget {
                                     destructive: true,
                                   );
                                   if (!confirmed) return;
-                                  await controller.deleteQuarantineItem(item);
+                                  await controller.deleteQuarantineItem(
+                                    item,
+                                    confirmed: true,
+                                  );
                                 }
                               : null,
                         ),
+                        if (item.status != QuarantineItemStatus.quarantined)
+                          ZentorButton(
+                            label: 'Scan original path',
+                            icon: Icons.manage_search_outlined,
+                            secondary: true,
+                            onPressed: scanOriginalPathBusy
+                                ? null
+                                : () =>
+                                      controller.rescanQuarantineOriginal(item),
+                          ),
                         const _MetaChip('Default', 'kept isolated'),
                       ],
                     ),
@@ -212,8 +270,9 @@ class _MetaChip extends StatelessWidget {
 }
 
 String _sourceLabel(String source) => switch (source) {
+  'scanner' => 'Scanner',
   'guard_service' => 'Guard Service',
   'minifilter_driver' => 'Minifilter Driver',
   'process_guard' => 'Process Guard',
-  _ => 'Scanner',
+  _ => 'Unknown source',
 };

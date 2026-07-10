@@ -2,7 +2,7 @@ use std::fs;
 use std::io::{Read, Write};
 use std::path::Path;
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use sha2::{Digest, Sha256};
 
 pub const MAX_FILE_BYTES: u64 = 64 * 1024 * 1024;
@@ -18,7 +18,7 @@ pub struct ScanContent {
 }
 
 pub fn read_scan_content(path: &Path) -> Result<ScanContent> {
-    let metadata = fs::metadata(path)?;
+    let metadata = ensure_regular_scan_content_file(path)?;
     let file_size_bytes = metadata.len();
     let sample_limit = MAX_FILE_BYTES.min(file_size_bytes) as usize;
     let mut file = fs::File::open(path)?;
@@ -51,4 +51,77 @@ pub fn read_scan_content(path: &Path) -> Result<ScanContent> {
 
 pub fn read_scan_bytes(path: &Path) -> Result<Vec<u8>> {
     Ok(read_scan_content(path)?.sampled_bytes)
+}
+
+fn ensure_regular_scan_content_file(path: &Path) -> Result<fs::Metadata> {
+    let metadata = fs::symlink_metadata(path)
+        .with_context(|| format!("unable to inspect scan content {}", path.display()))?;
+    if metadata.file_type().is_symlink() {
+        anyhow::bail!(
+            "refusing to read symbolic link scan content {}",
+            path.display()
+        );
+    }
+    if scan_content_metadata_is_windows_reparse_point(&metadata) {
+        anyhow::bail!(
+            "refusing to read reparse point scan content {}",
+            path.display()
+        );
+    }
+    if !metadata.file_type().is_file() {
+        anyhow::bail!("scan content is not a regular file {}", path.display());
+    }
+    Ok(metadata)
+}
+
+#[cfg(windows)]
+fn scan_content_metadata_is_windows_reparse_point(metadata: &fs::Metadata) -> bool {
+    use std::os::windows::fs::MetadataExt;
+    const FILE_ATTRIBUTE_REPARSE_POINT: u32 = 0x400;
+    metadata.file_attributes() & FILE_ATTRIBUTE_REPARSE_POINT != 0
+}
+
+#[cfg(not(windows))]
+fn scan_content_metadata_is_windows_reparse_point(_metadata: &fs::Metadata) -> bool {
+    false
+}
+
+#[cfg(test)]
+mod tests {
+    #[cfg(unix)]
+    use super::read_scan_content;
+    #[cfg(unix)]
+    use std::fs;
+
+    #[cfg(unix)]
+    #[test]
+    fn native_scan_content_rejects_symbolic_links() {
+        let temp = tempfile::tempdir().expect("tempdir");
+        let target = temp.path().join("target.bin");
+        let link = temp.path().join("linked.bin");
+        fs::write(&target, b"benign fixture").expect("target");
+        std::os::unix::fs::symlink(&target, &link).expect("symlink");
+
+        let error = read_scan_content(&link).expect_err("linked scan content should fail");
+
+        assert!(error.to_string().contains("symbolic link"));
+    }
+
+    #[test]
+    fn native_scan_content_uses_non_following_metadata() {
+        let source = include_str!("content_reader.rs");
+        let helper_pattern = ["fn ensure_regular_scan_", "content_file"].concat();
+        let helper_call_pattern = ["ensure_regular_scan_", "content_file(path)?"].concat();
+        let symlink_metadata_pattern = ["fs::", "symlink_metadata(path)"].concat();
+        let symlink_error_pattern = ["refusing to read symbolic link ", "scan content"].concat();
+        let reparse_error_pattern = ["refusing to read reparse point ", "scan content"].concat();
+        let old_metadata_pattern = ["fs::", "metadata(path)"].concat();
+
+        assert!(source.contains(&helper_pattern));
+        assert!(source.contains(&helper_call_pattern));
+        assert!(source.contains(&symlink_metadata_pattern));
+        assert!(source.contains(&symlink_error_pattern));
+        assert!(source.contains(&reparse_error_pattern));
+        assert!(!source.contains(&old_metadata_pattern));
+    }
 }

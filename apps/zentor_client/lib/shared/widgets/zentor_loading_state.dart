@@ -18,9 +18,11 @@ class ZentorLoadingState extends StatelessWidget {
           child: CircularProgressIndicator(strokeWidth: 2),
         ),
         const SizedBox(width: 12),
-        Text(
-          message,
-          style: const TextStyle(color: ZentorColors.textSecondary),
+        Flexible(
+          child: Text(
+            message,
+            style: const TextStyle(color: ZentorColors.textSecondary),
+          ),
         ),
       ],
     );

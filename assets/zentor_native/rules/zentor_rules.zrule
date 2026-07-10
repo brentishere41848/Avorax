@@ -1,6 +1,9 @@
 {
   "format": "zentor-rule-pack-v1",
   "version": "0.1.0",
+  "compiler_version": null,
+  "created_at": null,
+  "pack_sha256": "8e9f0b4d84705502cb6c9d09fcfec5d231fc59d51abf924ff51f8690d0047fe9",
   "rules": [
     {
       "id": "ZNE-RULE-PS-ENCODED-DOWNLOAD-EXEC",
@@ -11,9 +14,16 @@
       "verdict": "probableMalware",
       "false_positive_notes": "Administrator scripts may use encoded commands. This rule requires download and execution indicators.",
       "conditions": [
-        {"type": "file_type", "equals": "powershell_script"},
-        {"type": "encoded_command"},
-        {"type": "downloader_and_execution"}
+        {
+          "type": "file_type",
+          "equals": "powershell_script"
+        },
+        {
+          "type": "encoded_command"
+        },
+        {
+          "type": "downloader_and_execution"
+        }
       ],
       "min_condition_matches": 3,
       "action": "review_or_block_by_policy"
@@ -27,8 +37,13 @@
       "verdict": "suspicious",
       "false_positive_notes": "Installers and developer packages can legitimately contain executables. This rule is review-only without stronger evidence.",
       "conditions": [
-        {"type": "file_type", "equals": "zip"},
-        {"type": "archive_contains_executable"}
+        {
+          "type": "file_type",
+          "equals": "zip"
+        },
+        {
+          "type": "archive_contains_executable"
+        }
       ],
       "min_condition_matches": 2,
       "action": "review_only"

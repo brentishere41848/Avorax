@@ -126,6 +126,12 @@ fn trusted_process(process_path: &str, trusted_process_allowlist: &[PathBuf]) ->
 fn path_is_within(path: &Path, root: &Path) -> bool {
     let path = normalize_path_text(path);
     let root = normalize_path_text(root);
+    if root.is_empty() {
+        return false;
+    }
+    if root == "/" {
+        return path.starts_with('/');
+    }
     path == root || path.starts_with(&format!("{root}/"))
 }
 
@@ -134,11 +140,59 @@ fn paths_equal(left: &Path, right: &Path) -> bool {
 }
 
 fn normalize_path_text(path: &Path) -> String {
-    path.display()
+    let path_text = path
+        .display()
         .to_string()
         .replace('\\', "/")
-        .trim_end_matches('/')
-        .to_ascii_lowercase()
+        .to_ascii_lowercase();
+    collapse_path_segments(&path_text)
+}
+
+fn collapse_path_segments(path: &str) -> String {
+    let trimmed = path.trim_end_matches('/');
+    if trimmed.is_empty() {
+        return String::new();
+    }
+
+    let (prefix, rest, absolute) = split_path_prefix(trimmed);
+    let mut segments: Vec<&str> = Vec::new();
+    for segment in rest.split('/') {
+        match segment {
+            "" | "." => {}
+            ".." => {
+                if let Some(last) = segments.last() {
+                    if *last != ".." {
+                        segments.pop();
+                        continue;
+                    }
+                }
+                if !absolute {
+                    segments.push(segment);
+                }
+            }
+            _ => segments.push(segment),
+        }
+    }
+
+    let body = segments.join("/");
+    match (prefix, absolute, body.is_empty()) {
+        (Some(prefix), _, true) => prefix.to_string(),
+        (Some(prefix), _, false) => format!("{prefix}/{body}"),
+        (None, true, true) => "/".to_string(),
+        (None, true, false) => format!("/{body}"),
+        (None, false, _) => body,
+    }
+}
+
+fn split_path_prefix(path: &str) -> (Option<&str>, &str, bool) {
+    let bytes = path.as_bytes();
+    if bytes.len() >= 3 && bytes[1] == b':' && bytes[2] == b'/' {
+        return (Some(&path[..2]), &path[3..], true);
+    }
+    if path.starts_with('/') {
+        return (None, path.trim_start_matches('/'), true);
+    }
+    (None, path, false)
 }
 
 #[cfg(test)]
@@ -213,6 +267,58 @@ mod tests {
         .expect("protected document activity should trigger");
         assert_eq!(signal.files_modified_count, 25);
         assert_eq!(signal.affected_paths.len(), 25);
+    }
+
+    #[test]
+    fn ransomware_guard_does_not_count_traversal_outside_protected_root() {
+        let paths = (0..30)
+            .map(|idx| {
+                PathBuf::from(format!(
+                    "C:/Users/Test/Documents/../Downloads/file{idx}.tmp"
+                ))
+            })
+            .collect::<Vec<_>>();
+        let config = RansomwareGuardConfig {
+            protected_roots: vec![PathBuf::from("C:/Users/Test/Documents")],
+            trusted_process_allowlist: vec![],
+        };
+        let signal = RansomwareGuard::evaluate_with_config(
+            42,
+            "C:/Users/Test/AppData/Temp/tool.exe",
+            &paths,
+            30,
+            0.8,
+            0.0,
+            0.0,
+            60,
+            &config,
+        );
+
+        assert!(signal.is_none());
+    }
+
+    #[test]
+    fn trusted_process_allowlist_uses_collapsed_path_equivalence() {
+        let paths = (0..30)
+            .map(|idx| PathBuf::from(format!("C:/Users/Test/Documents/file{idx}.docx")))
+            .collect::<Vec<_>>();
+        let config = RansomwareGuardConfig {
+            protected_roots: vec![PathBuf::from("C:/Users/Test/Documents")],
+            trusted_process_allowlist: vec![PathBuf::from("C:/Program Files/Backup/backup.exe")],
+        };
+        let signal = RansomwareGuard::evaluate_with_config(
+            42,
+            "C:/Program Files/Backup/Tools/../backup.exe",
+            &paths,
+            30,
+            0.8,
+            0.0,
+            0.0,
+            60,
+            &config,
+        );
+
+        assert!(signal.is_none());
     }
 
     #[test]

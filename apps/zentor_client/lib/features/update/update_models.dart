@@ -8,7 +8,7 @@ class UpdateViewModel {
     this.channel,
     this.packageName,
     this.releaseNotes,
-    this.rollbackSupported = false,
+    this.rollbackSupported,
     this.error,
   });
 
@@ -18,6 +18,6 @@ class UpdateViewModel {
   final String? channel;
   final String? packageName;
   final String? releaseNotes;
-  final bool rollbackSupported;
+  final bool? rollbackSupported;
   final String? error;
 }

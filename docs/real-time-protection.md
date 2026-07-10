@@ -7,6 +7,10 @@ Avorax has two enforcement layers:
 
 Current Windows release uses the post-launch fallback unless the minifilter driver is separately built, installed, running, connected to Avorax Guard Service, and passing the protection self-test.
 
+Local Core also has finite user-mode watch-poll scan evidence for bounded command sessions. This can observe files created or modified after a polling command starts, wait for stable file metadata, and run normal scan/quarantine policy for confirmed detections. It is post-write detection only and does not prove an installed persistent service, OS notification coverage, or pre-execution blocking.
+
+Checkpoint 2114 wires that finite watch-poll capability into the Flutter Protection lifecycle as an app-lifetime loop. When best-effort watcher roots are active and protection remains on, the UI schedules a bounded tick every 1 minute; each tick asks Local Core to poll for 4 seconds at a 200 ms inner interval with at most 8 scan events. Threat, clean, limited, busy, and failure outcomes are written to local events and the Protection tab shows the loop status. This still stops when the app/controller stops, is post-write user-mode polling only, and is not a Windows service, scheduled task, filesystem notification subscription, minifilter, kernel realtime blocker, or pre-execution blocker.
+
 v0.1.13 adds prevention profiles:
 
 - Balanced Protection: confirmed threats block, suspicious items review, unknown apps allow-and-monitor.

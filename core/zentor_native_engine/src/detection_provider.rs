@@ -92,6 +92,7 @@ pub fn builtin_provider_inventory(
     signature_count: usize,
     rule_count: usize,
     ml_loaded: bool,
+    ml_production_ready: bool,
     compatibility_enabled: bool,
 ) -> Vec<DetectionProviderInfo> {
     vec![
@@ -134,7 +135,16 @@ pub fn builtin_provider_inventory(
             } else {
                 DetectionProviderStatus::Unavailable
             },
-            reason: (!ml_loaded).then(|| "development ML model is unavailable".to_string()),
+            reason: if !ml_loaded {
+                Some("development ML model is unavailable".to_string())
+            } else if !ml_production_ready {
+                Some(
+                    "development ML model is loaded for review only; not production-ready"
+                        .to_string(),
+                )
+            } else {
+                None
+            },
         },
         DetectionProviderInfo {
             id: "compatibility.yara".to_string(),

@@ -2,6 +2,7 @@
 /target/
 **/target/
 Cargo.lock
+!Cargo.lock
 !core/**/Cargo.lock
 !services/**/Cargo.lock
 
@@ -27,6 +28,10 @@ Thumbs.db
 *.log
 .zentor-dashboard-port
 .learnings/
+.workflow/
+**/.workflow/
+**/__pycache__/
+*.py[cod]
 
 # Flutter/Dart
 **/.dart_tool/
