@@ -218,6 +218,27 @@ class DesktopPackageWorkflowTests(unittest.TestCase):
         self.assertIn('return "$status"', builder)
         self.assertIn('sleep "$((attempt * 2))"', builder)
 
+    def test_native_builders_handle_tool_absence_without_swallowing_errors(self):
+        for platform in ("linux", "macos"):
+            builder = (
+                ROOT / "installer" / platform / f"build-{platform}.sh"
+            ).read_text(encoding="utf-8")
+
+            self.assertIn('if ! candidate="$(command -v "$fallback")"; then', builder)
+            self.assertIn('candidate=""', builder)
+            self.assertNotIn("|| true", builder)
+
+    def test_macos_entitlement_and_mount_cleanup_fail_visibly(self):
+        builder = (ROOT / "installer" / "macos" / "build-macos.sh").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn('if ! codesign -d --entitlements :- "$APP"', builder)
+        self.assertIn("refusing to package without sandbox evidence", builder)
+        self.assertIn("local prior_status=$?", builder)
+        self.assertIn("Failed to detach the Avorax DMG mount during cleanup", builder)
+        self.assertIn('return "$prior_status"', builder)
+
 
 if __name__ == "__main__":
     unittest.main()

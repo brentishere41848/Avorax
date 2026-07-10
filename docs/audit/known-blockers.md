@@ -724,3 +724,16 @@ that exact transient condition at most three times with bounded delays. Other
 DMG verification failures remain immediate failures. Native macOS CI evidence
 is still required before this retry is treated as verified; signing and
 notarization blockers are unchanged.
+
+## Checkpoint 2156 Native Package Cleanup Failure Visibility
+
+Linux and macOS tool discovery now handles only the expected missing-command
+status before the existing absolute executable validation, without `|| true`.
+The macOS package builder fails if signed-app entitlement inspection cannot be
+performed, rather than continuing without sandbox evidence. Its EXIT trap now
+preserves the original status, reports emergency DMG detach failure, and turns a
+detach failure after an otherwise successful path into a failure. Bash parsing,
+`16` packaging tests, `591` source contracts, diff checks, and the no-malware-
+binaries gate pass locally. Native Linux/macOS package CI remains required;
+signing, notarization, installed-host, service, driver, and pre-execution
+blockers are unchanged.

@@ -45,7 +45,9 @@ resolve_tool() {
   local label="$3"
   local candidate="$configured"
   if [[ -z "$candidate" ]]; then
-    candidate="$(command -v "$fallback" || true)"
+    if ! candidate="$(command -v "$fallback")"; then
+      candidate=""
+    fi
   fi
   if [[ -z "$candidate" || "$candidate" != /* || ! -f "$candidate" || ! -x "$candidate" ]]; then
     printf '%s must resolve to an absolute executable file.\n' "$label" >&2

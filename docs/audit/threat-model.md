@@ -325,3 +325,13 @@ handled narrowly, while unexpected PowerShell errors stop the verifier. macOS
 DMG verification may retry only the exact short-lived `hdiutil` resource-busy
 diagnostic, at most three times; malformed or persistently unavailable images
 still fail and cannot reach mount, manifest, signing, or packaged-core proof.
+
+## Checkpoint 2156 Native Cleanup Boundary
+
+Host tool absence is an expected discovery outcome, but it must flow into the
+existing checked executable failure instead of being hidden. A signed macOS app
+without readable entitlement evidence cannot be classified as suitable for the
+scanner package, because an unnoticed sandbox entitlement would make filesystem
+protection claims misleading. Emergency DMG detach is also security-relevant
+cleanup: failure is reported and can fail an otherwise successful build, while
+an existing build failure remains the primary nonzero status.
