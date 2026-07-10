@@ -30,6 +30,10 @@ mod preexecution_policy;
 mod self_test;
 
 const SERVICE_NAME: &str = "avorax_guard_service";
+#[cfg(windows)]
+const GUARD_SERVICE_RUNTIME_FAILURE_EXIT_CODE: u32 = 1;
+#[cfg(windows)]
+const GUARD_SERVICE_START_WAIT_HINT: Duration = Duration::from_secs(30);
 const QUARANTINE_EXTENSION: &str = "avoraxq";
 const MAX_GUARD_QUARANTINE_COPY_BYTES: u64 = 1024 * 1024 * 1024;
 const MAX_GUARD_HASH_BYTES: u64 = 1024 * 1024 * 1024;
@@ -419,10 +423,7 @@ fn cleanup_staged_guard_fatal_log(path: &Path, label: &str) -> anyhow::Result<()
 
 #[cfg(windows)]
 fn run_windows_service_loop() -> anyhow::Result<()> {
-    use windows_service::service::{
-        ServiceControl, ServiceControlAccept, ServiceExitCode, ServiceState, ServiceStatus,
-        ServiceType,
-    };
+    use windows_service::service::{ServiceControl, ServiceExitCode, ServiceState};
     use windows_service::service_control_handler::{self, ServiceControlHandlerResult};
 
     let (shutdown_tx, shutdown_rx) = mpsc::channel();
@@ -444,15 +445,15 @@ fn run_windows_service_loop() -> anyhow::Result<()> {
             },
         )?;
 
-    status_handle.set_service_status(ServiceStatus {
-        service_type: ServiceType::OWN_PROCESS,
-        current_state: ServiceState::Running,
-        controls_accepted: ServiceControlAccept::STOP | ServiceControlAccept::SHUTDOWN,
-        exit_code: ServiceExitCode::Win32(0),
-        checkpoint: 0,
-        wait_hint: Duration::from_secs(0),
-        process_id: None,
-    })?;
+    status_handle.set_service_status(guard_service_status(
+        ServiceState::StartPending,
+        ServiceExitCode::NO_ERROR,
+    ))?;
+
+    status_handle.set_service_status(guard_service_status(
+        ServiceState::Running,
+        ServiceExitCode::NO_ERROR,
+    ))?;
 
     let driver_port_stop = driver_port::start_background_worker();
     let result = watch_processes_until_shutdown(
@@ -462,17 +463,70 @@ fn run_windows_service_loop() -> anyhow::Result<()> {
     );
     driver_port_stop.store(true, std::sync::atomic::Ordering::Relaxed);
 
-    status_handle.set_service_status(ServiceStatus {
-        service_type: ServiceType::OWN_PROCESS,
-        current_state: ServiceState::Stopped,
-        controls_accepted: ServiceControlAccept::empty(),
-        exit_code: ServiceExitCode::Win32(0),
-        checkpoint: 0,
-        wait_hint: Duration::from_secs(0),
-        process_id: None,
-    })?;
+    let stop_status_result = status_handle.set_service_status(guard_service_status(
+        ServiceState::Stopped,
+        guard_service_stop_exit_code(&result),
+    ));
+    combine_guard_service_runtime_and_status_results(result, stop_status_result)
+}
 
-    result
+#[cfg(windows)]
+fn guard_service_status(
+    state: windows_service::service::ServiceState,
+    exit_code: windows_service::service::ServiceExitCode,
+) -> windows_service::service::ServiceStatus {
+    use windows_service::service::{
+        ServiceControlAccept, ServiceState, ServiceStatus, ServiceType,
+    };
+
+    let is_start_pending = state == ServiceState::StartPending;
+    let controls_accepted = if state == ServiceState::Running {
+        ServiceControlAccept::STOP | ServiceControlAccept::SHUTDOWN
+    } else {
+        ServiceControlAccept::empty()
+    };
+    ServiceStatus {
+        service_type: ServiceType::OWN_PROCESS,
+        current_state: state,
+        controls_accepted,
+        exit_code,
+        checkpoint: u32::from(is_start_pending),
+        wait_hint: if is_start_pending {
+            GUARD_SERVICE_START_WAIT_HINT
+        } else {
+            Duration::from_secs(0)
+        },
+        process_id: None,
+    }
+}
+
+#[cfg(windows)]
+fn guard_service_stop_exit_code(
+    runtime_result: &anyhow::Result<()>,
+) -> windows_service::service::ServiceExitCode {
+    if runtime_result.is_ok() {
+        windows_service::service::ServiceExitCode::NO_ERROR
+    } else {
+        windows_service::service::ServiceExitCode::ServiceSpecific(
+            GUARD_SERVICE_RUNTIME_FAILURE_EXIT_CODE,
+        )
+    }
+}
+
+#[cfg(windows)]
+fn combine_guard_service_runtime_and_status_results(
+    runtime_result: anyhow::Result<()>,
+    status_result: windows_service::Result<()>,
+) -> anyhow::Result<()> {
+    match (runtime_result, status_result) {
+        (Ok(()), Ok(())) => Ok(()),
+        (Err(runtime_error), Ok(())) => Err(runtime_error),
+        (Ok(()), Err(status_error)) => Err(status_error)
+            .context("failed to report stopped Guard Service status to Windows"),
+        (Err(runtime_error), Err(status_error)) => anyhow::bail!(
+            "Guard Service runtime failed: {runtime_error:#}; additionally failed to report stopped status to Windows: {status_error}"
+        ),
+    }
 }
 
 fn run_console_watch() -> anyhow::Result<()> {
@@ -4306,6 +4360,88 @@ mod tests {
         assert!(service_source.contains("NON_WINDOWS_GUARD_SERVICE_MODE_UNSUPPORTED"));
         assert!(service_source.contains("anyhow::bail!"));
         assert!(!service_source.contains("run_console_watch()"));
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn guard_service_statuses_are_fail_visible_and_state_appropriate() {
+        use windows_service::service::{ServiceControlAccept, ServiceExitCode, ServiceState};
+
+        let start_pending =
+            guard_service_status(ServiceState::StartPending, ServiceExitCode::NO_ERROR);
+        assert_eq!(start_pending.current_state, ServiceState::StartPending);
+        assert_eq!(
+            start_pending.controls_accepted,
+            ServiceControlAccept::empty()
+        );
+        assert_eq!(start_pending.checkpoint, 1);
+        assert_eq!(start_pending.wait_hint, GUARD_SERVICE_START_WAIT_HINT);
+
+        let running = guard_service_status(ServiceState::Running, ServiceExitCode::NO_ERROR);
+        assert_eq!(running.current_state, ServiceState::Running);
+        assert_eq!(
+            running.controls_accepted,
+            ServiceControlAccept::STOP | ServiceControlAccept::SHUTDOWN
+        );
+        assert_eq!(running.checkpoint, 0);
+        assert_eq!(running.wait_hint, Duration::from_secs(0));
+
+        let clean_result: anyhow::Result<()> = Ok(());
+        let failed_result: anyhow::Result<()> = Err(anyhow::anyhow!("watch failed"));
+        assert_eq!(
+            guard_service_stop_exit_code(&clean_result),
+            ServiceExitCode::NO_ERROR
+        );
+        assert_eq!(
+            guard_service_stop_exit_code(&failed_result),
+            ServiceExitCode::ServiceSpecific(GUARD_SERVICE_RUNTIME_FAILURE_EXIT_CODE)
+        );
+
+        let stopped = guard_service_status(
+            ServiceState::Stopped,
+            guard_service_stop_exit_code(&failed_result),
+        );
+        assert_eq!(stopped.current_state, ServiceState::Stopped);
+        assert_eq!(stopped.controls_accepted, ServiceControlAccept::empty());
+        assert_eq!(
+            stopped.exit_code,
+            ServiceExitCode::ServiceSpecific(GUARD_SERVICE_RUNTIME_FAILURE_EXIT_CODE)
+        );
+        assert_eq!(stopped.checkpoint, 0);
+        assert_eq!(stopped.wait_hint, Duration::from_secs(0));
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn guard_service_preserves_runtime_and_status_failures() {
+        let runtime_error = combine_guard_service_runtime_and_status_results(
+            Err(anyhow::anyhow!("watch failed")),
+            Ok(()),
+        )
+        .unwrap_err()
+        .to_string();
+        assert!(runtime_error.contains("watch failed"));
+
+        let status_error = combine_guard_service_runtime_and_status_results(
+            Ok(()),
+            Err(windows_service::Error::Winapi(
+                std::io::Error::from_raw_os_error(5),
+            )),
+        )
+        .unwrap_err()
+        .to_string();
+        assert!(status_error.contains("failed to report stopped Guard Service status"));
+
+        let combined_error = combine_guard_service_runtime_and_status_results(
+            Err(anyhow::anyhow!("watch failed")),
+            Err(windows_service::Error::Winapi(
+                std::io::Error::from_raw_os_error(5),
+            )),
+        )
+        .unwrap_err()
+        .to_string();
+        assert!(combined_error.contains("watch failed"));
+        assert!(combined_error.contains("failed to report stopped status"));
     }
 
     fn driver_request_for(path: &Path) -> driver_ipc::ScanRequest {

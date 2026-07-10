@@ -11969,6 +11969,29 @@ def test_local_core_and_guard_service_status_use_bounded_runners():
     assert ".read_to_end(&mut bytes)" not in guard_runner
 
 
+def test_guard_service_runtime_failure_is_not_reported_as_clean_stop():
+    guard = read(GUARD_MAIN)
+    service = guard[
+        guard.index("fn run_windows_service_loop"):
+        guard.index("fn run_console_watch")
+    ]
+
+    assert "ServiceState::StartPending" in service
+    assert "ServiceState::Running" in service
+    assert "ServiceState::Stopped" in service
+    assert "fn guard_service_status(" in service
+    assert "fn guard_service_stop_exit_code(" in service
+    assert "GUARD_SERVICE_RUNTIME_FAILURE_EXIT_CODE" in service
+    assert "ServiceExitCode::ServiceSpecific(" in service
+    assert "guard_service_stop_exit_code(&result)" in service
+    assert "combine_guard_service_runtime_and_status_results(result, stop_status_result)" in service
+    assert "additionally failed to report stopped status to Windows" in service
+    assert "current_state: ServiceState::Stopped" not in service
+    assert "exit_code: ServiceExitCode::Win32(0)" not in service
+    assert "guard_service_statuses_are_fail_visible_and_state_appropriate" in guard
+    assert "guard_service_preserves_runtime_and_status_failures" in guard
+
+
 def test_guard_clamav_compat_command_output_uses_bounded_runner():
     guard = read(ROOT / "core" / "zentor_guard_service" / "src" / "main.rs")
     clamav_start = guard.index("fn clamav_signature_match")

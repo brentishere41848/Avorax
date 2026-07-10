@@ -751,3 +751,26 @@ pass (`591`). The file marks license review partial, final-binary resolution
 false, and composition incomplete. Complete license/copyright review, final-
 binary dependency resolution, and Android Gradle lock evidence remain blockers;
 the lockfile inventory must not be represented as a complete production SBOM.
+
+## Checkpoint 2158 Guard Service Lifecycle Failure Visibility
+
+The Windows Guard Service now reports `StartPending` before `Running`, accepts
+stop/shutdown controls only while running, and maps an unexpected monitor-loop
+failure to service-specific exit code `1` instead of reporting a clean stopped
+state. Runtime and final-status reporting failures are combined so a secondary
+Service Control Manager error cannot hide the original protection failure.
+Guard rustfmt passed, the two focused lifecycle tests passed, the complete Guard
+suite passed (`214`), all workspace test binaries compiled, the Python source-
+contract gate passed (`592`), and the no-malware-binaries gate passed. This is
+fixture/runtime proof only: no service was installed or started, authenticated
+privilege-boundary IPC remains unimplemented, and driver/pre-execution claims
+remain blocked on reviewed signing and an approved elevated VM.
+
+The additional strict lint command `cargo clippy --manifest-path
+core/zentor_guard_service/Cargo.toml --all-targets --no-deps -- -D warnings`
+is not a passing release gate: Rust 1.96 reports `15` pre-existing lints in
+unchanged Guard/driver code (argument count, manual helpers, clone/return style,
+and DPAPI call style). The dependency-including variant also reports `13`
+pre-existing native-engine lints. Neither run reports the checkpoint 2158
+lifecycle additions; the existing lint debt remains visible for a separate
+reviewed cleanup instead of being represented as passing evidence.
