@@ -347,3 +347,15 @@ result is deterministic, atomically activated, independently schema-valid, and
 covered by the release checksum file. It describes reviewed lockfile contents,
 not reachability in final binaries, license compatibility, vulnerability status,
 or signed provenance; those distinctions remain machine-readable in the BOM.
+
+## Checkpoint 2158 Service Status Boundary
+
+Windows Service Control Manager status is security evidence and must not turn an
+unexpected monitoring failure into a clean stop. The Guard Service now exposes a
+bounded pending-start state, restricts accepted controls to the running state,
+and reports monitor failure with a nonzero service-specific exit code. If final
+status reporting also fails, both failures remain in the fatal diagnostic. This
+does not authenticate UI-to-service commands or prove installed service recovery:
+the current Flutter/local-core boundary remains per-process stdio, and privileged
+service IPC, service ACLs, restart policy, driver signing, and elevated-host E2E
+remain required before claiming persistent or pre-execution protection.
