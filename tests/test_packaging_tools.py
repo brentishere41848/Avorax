@@ -1,6 +1,7 @@
 import importlib.util
 import json
 import os
+import re
 import tempfile
 import unittest
 from pathlib import Path
@@ -129,6 +130,32 @@ class ReleaseChecksumTests(unittest.TestCase):
 
 
 class DesktopPackageWorkflowTests(unittest.TestCase):
+    def test_workflow_actions_are_exact_node24_compatible_pins(self):
+        workflows = {
+            path.name: path.read_text(encoding="utf-8")
+            for path in (ROOT / ".github" / "workflows").glob("*.yml")
+        }
+        combined = "\n".join(workflows.values())
+
+        expected_pins = {
+            "actions/checkout": "93cb6efe18208431cddfb8368fd83d5badbf9bfd",
+            "actions/setup-python": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+            "actions/setup-dotnet": "67a3573c9a986a3f9c594539f4ab511d57bb3ce9",
+            "actions/upload-artifact": "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+            "actions/download-artifact": "3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c",
+            "dtolnay/rust-toolchain": "fa04a1451ff1842e2626ccb99004d0195b455a88",
+            "subosito/flutter-action": "1a449444c387b1966244ae4d4f8c696479add0b2",
+            "softprops/action-gh-release": "718ea10b132b3b2eba29c1007bb80653f286566b",
+        }
+        for action, commit in expected_pins.items():
+            self.assertIn(f"uses: {action}@{commit}", combined)
+
+        mutable_ref = re.compile(
+            r"^\s*uses:\s+(?!\./)([^\s@]+)@(?![0-9a-f]{40}(?:\s|$))",
+            re.MULTILINE,
+        )
+        self.assertEqual(mutable_ref.findall(combined), [])
+
     def test_msi_admin_extract_waits_for_real_exit_code(self):
         workflow = (ROOT / ".github" / "workflows" / "desktop-packages.yml").read_text(
             encoding="utf-8"

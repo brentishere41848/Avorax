@@ -60,6 +60,29 @@ Checkpoint 2064 adds direct `flate2 = "1.1"` use to Avorax Native Engine for bou
 
 License fields were checked from the locally cached crate manifests in `C:\Users\Brent\.cargo\registry\src`: `flate2` reports `MIT OR Apache-2.0`, `miniz_oxide` reports `MIT OR Zlib OR Apache-2.0`, `crc32fast` reports `MIT OR Apache-2.0`, and `adler2` reports `0BSD OR MIT OR Apache-2.0`. A release host still needs complete SBOM/license output from the final lockfile set before release-candidate tagging.
 
+## GitHub Actions Supply Chain
+
+All third-party workflow actions are pinned to exact 40-character commit SHAs.
+The artifact and release actions use versions whose checked `action.yml` declares
+the Node 24 runtime, avoiding GitHub's deprecated Node 20 compatibility forcing.
+Release tags, commit SHAs, runtime declarations, and repository license metadata
+were queried from the action publishers through the GitHub API on 2026-07-10.
+
+| Action | Pinned release / commit | Runtime / license evidence |
+| --- | --- | --- |
+| `actions/checkout` | v5 / `93cb6efe18208431cddfb8368fd83d5badbf9bfd` | Exact existing desktop-package pin; MIT |
+| `actions/setup-python` | v6 / `ece7cb06caefa5fff74198d8649806c4678c61a1` | Exact existing desktop-package pin; MIT |
+| `actions/setup-dotnet` | v4 / `67a3573c9a986a3f9c594539f4ab511d57bb3ce9` | Exact existing desktop-package pin; MIT |
+| `actions/upload-artifact` | v7.0.1 / `043fb46d1a93c77aae656e7c1c64a875d1fc6a0a` | `action.yml` declares `node24`; MIT |
+| `actions/download-artifact` | v8.0.1 / `3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c` | `action.yml` declares `node24`; MIT |
+| `dtolnay/rust-toolchain` | `fa04a1451ff1842e2626ccb99004d0195b455a88` | Exact existing desktop-package pin; MIT |
+| `subosito/flutter-action` | v2 / `1a449444c387b1966244ae4d4f8c696479add0b2` | Exact existing desktop-package pin; MIT |
+| `softprops/action-gh-release` | v3.0.1 / `718ea10b132b3b2eba29c1007bb80653f286566b` | `action.yml` declares `node24`; MIT |
+
+`tests/test_packaging_tools.py` rejects mutable external action refs and requires
+the reviewed commit pins above. Local actions referenced through `./` remain
+repository-owned workflow code and are excluded from that external-action rule.
+
 ## Current Blockers
 
 - Cargo/rustfmt are available on this Windows validation host. `cargo generate-lockfile --manifest-path core\avorax_update_service\Cargo.toml` succeeded and updated the root workspace `Cargo.lock`; `cargo test --workspace --no-run` passed after lockfile refresh.
