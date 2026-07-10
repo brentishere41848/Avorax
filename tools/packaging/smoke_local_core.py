@@ -161,7 +161,10 @@ def run_smoke(core: Path, packaged_engine_root: Path, timeout: int) -> dict[str,
         raise SmokeError(f"packaged engine directory is missing: {packaged_engine_root / 'engine'}")
     started = time.monotonic()
     with tempfile.TemporaryDirectory(prefix="avorax-package-smoke-") as temporary:
-        root = Path(temporary)
+        # macOS exposes temporary directories through /var, which is a system
+        # symlink to /private/var. Use the real path so the restore smoke does
+        # not weaken the core's intentional symlink-ancestor rejection.
+        root = Path(temporary).resolve(strict=True)
         base_env = os.environ.copy()
         base_env.update(
             {

@@ -159,6 +159,13 @@ class DesktopPackageWorkflowTests(unittest.TestCase):
         self.assertIn('--core "$TAR_EXTRACT_ROOT/Avorax/avorax_core_service"', builder)
         self.assertIn('--report "$VERIFY_ROOT/linux-tar-core-smoke.json"', builder)
 
+    def test_package_smoke_canonicalizes_its_owned_temporary_root(self):
+        smoke = (ROOT / "tools" / "packaging" / "smoke_local_core.py").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("root = Path(temporary).resolve(strict=True)", smoke)
+
 
 if __name__ == "__main__":
     unittest.main()
