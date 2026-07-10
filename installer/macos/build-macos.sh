@@ -50,7 +50,9 @@ resolve_tool() {
   local label="$3"
   local candidate="$configured"
   if [[ -z "$candidate" ]]; then
-    candidate="$(command -v "$fallback" || true)"
+    if ! candidate="$(command -v "$fallback")"; then
+      candidate=""
+    fi
   fi
   if [[ -z "$candidate" || "$candidate" != /* || ! -f "$candidate" || ! -x "$candidate" ]]; then
     printf '%s must resolve to an absolute executable file.\n' "$label" >&2
@@ -138,7 +140,10 @@ codesign --force --sign - "$APP/Contents/MacOS/avorax_core_service"
 codesign --force --sign - "$APP/Contents/MacOS/avorax_guard_service"
 codesign --force --deep --sign - "$APP"
 codesign --verify --deep --strict --verbose=2 "$APP"
-codesign -d --entitlements :- "$APP" >"$VERIFY_ROOT/entitlements.plist" 2>&1 || true
+if ! codesign -d --entitlements :- "$APP" >"$VERIFY_ROOT/entitlements.plist" 2>&1; then
+  printf 'Unable to inspect the signed macOS app entitlements; refusing to package without sandbox evidence.\n' >&2
+  exit 1
+fi
 if grep -Fq 'com.apple.security.app-sandbox' "$VERIFY_ROOT/entitlements.plist"; then
   printf 'Release app unexpectedly enables the macOS App Sandbox; scanner file access would be misleading.\n' >&2
   exit 1
@@ -191,9 +196,14 @@ verify_dmg
 mkdir -p "$MOUNT_ROOT"
 ATTACHED=0
 cleanup_mount() {
+  local prior_status=$?
   if [[ "$ATTACHED" -eq 1 ]]; then
-    hdiutil detach "$MOUNT_ROOT" >/dev/null || true
+    if ! hdiutil detach "$MOUNT_ROOT" >/dev/null; then
+      printf 'Failed to detach the Avorax DMG mount during cleanup: %s\n' "$MOUNT_ROOT" >&2
+      return 1
+    fi
   fi
+  return "$prior_status"
 }
 trap cleanup_mount EXIT
 hdiutil attach "$DMG" -readonly -nobrowse -mountpoint "$MOUNT_ROOT" >/dev/null

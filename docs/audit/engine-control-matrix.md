@@ -4052,3 +4052,10 @@ passed and published the prerelease at commit
 | --- | --- | --- | --- |
 | PowerShell command and evidence enumeration | Load the checked core-health helper and enumerate update/report evidence without hiding unexpected errors | Runtime/source verified | PowerShell parser checks passed; the core-health smoke rejected seven malformed/error cases and passed real local stdio health; eleven update-builder fail-safe scenarios passed without producing `.aup` or feed output; `591` source contracts and the focused self-validating 11-gate MVP report passed |
 | macOS DMG integrity verification retry | Tolerate only a short-lived `hdiutil verify` resource-busy condition after successful DMG creation while preserving fail-closed integrity verification | Source/unit verified; native rerun required | Bash parse and packaging contracts pass. Retry is limited to three attempts with delays of 2 and 4 seconds, and only exact `Resource temporarily unavailable` failures are retried. Any other error fails immediately; native arm64/x64 package CI remains required |
+
+## Checkpoint 2156 Engine-Control Matrix Addendum
+
+| Control / engine | Responsibility | Classification | Evidence / limitation |
+| --- | --- | --- | --- |
+| Native package tool discovery | Resolve configured or host Linux/macOS build tools while distinguishing expected absence from unexpected script failure | Source/unit verified; native rerun required | Missing `command -v` results are handled explicitly and still fail the absolute executable validation; no `|| true` remains in either native builder |
+| macOS entitlement and emergency mount cleanup | Refuse packaging when entitlement inspection is unavailable and ensure cleanup failures are visible without erasing the original failure status | Source/unit verified; native rerun required | Entitlement inspection is fail-closed; the EXIT trap reports detach failure and preserves prior status. Bash parse, `16` packaging tests, and `591` source contracts pass; Developer ID signing/notarization and installed-host E2E remain blocked |
