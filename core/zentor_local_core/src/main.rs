@@ -79,6 +79,10 @@ const WATCH_POLL_MAX_FILES_PER_PASS: usize = 512;
 const WATCH_POLL_MAX_DEPTH: usize = 8;
 const WATCH_POLL_DEBOUNCE_MS: u64 = 200;
 const SERVICE_NAME: &str = "avorax_core_service";
+#[cfg(windows)]
+const CORE_SERVICE_RUNTIME_FAILURE_EXIT_CODE: u32 = 1;
+#[cfg(windows)]
+const CORE_SERVICE_START_WAIT_HINT: Duration = Duration::from_secs(30);
 const WINDOWS_ERROR_VIRUS_INFECTED: i32 = 225;
 const WINDOWS_ERROR_VIRUS_DELETED: i32 = 226;
 
@@ -272,10 +276,7 @@ fn write_core_fatal_error_log(file_name: &str, detail: &str) -> Result<()> {
 
 #[cfg(windows)]
 fn run_windows_service_loop() -> Result<()> {
-    use windows_service::service::{
-        ServiceControl, ServiceControlAccept, ServiceExitCode, ServiceState, ServiceStatus,
-        ServiceType,
-    };
+    use windows_service::service::{ServiceControl, ServiceExitCode, ServiceState};
     use windows_service::service_control_handler::{self, ServiceControlHandlerResult};
 
     let (shutdown_tx, shutdown_rx) = mpsc::channel();
@@ -297,32 +298,90 @@ fn run_windows_service_loop() -> Result<()> {
             },
         )?;
 
-    native_engine().context("native engine warmup failed")?;
+    status_handle.set_service_status(core_service_status(
+        ServiceState::StartPending,
+        ServiceExitCode::NO_ERROR,
+    ))?;
 
-    status_handle.set_service_status(ServiceStatus {
+    let runtime_result = (|| -> Result<()> {
+        native_engine().context("native engine warmup failed")?;
+        status_handle
+            .set_service_status(core_service_status(
+                ServiceState::Running,
+                ServiceExitCode::NO_ERROR,
+            ))
+            .context("failed to report running Core Service status to Windows")?;
+        shutdown_rx
+            .recv()
+            .context("core service shutdown channel closed before stop signal")?;
+        Ok(())
+    })();
+
+    let stop_status_result = status_handle.set_service_status(core_service_status(
+        ServiceState::Stopped,
+        core_service_stop_exit_code(&runtime_result),
+    ));
+    combine_core_service_runtime_and_status_results(runtime_result, stop_status_result)
+}
+
+#[cfg(windows)]
+fn core_service_status(
+    state: windows_service::service::ServiceState,
+    exit_code: windows_service::service::ServiceExitCode,
+) -> windows_service::service::ServiceStatus {
+    use windows_service::service::{
+        ServiceControlAccept, ServiceState, ServiceStatus, ServiceType,
+    };
+
+    let is_start_pending = state == ServiceState::StartPending;
+    let controls_accepted = if state == ServiceState::Running {
+        ServiceControlAccept::STOP | ServiceControlAccept::SHUTDOWN
+    } else {
+        ServiceControlAccept::empty()
+    };
+    ServiceStatus {
         service_type: ServiceType::OWN_PROCESS,
-        current_state: ServiceState::Running,
-        controls_accepted: ServiceControlAccept::STOP | ServiceControlAccept::SHUTDOWN,
-        exit_code: ServiceExitCode::Win32(0),
-        checkpoint: 0,
-        wait_hint: Duration::from_secs(0),
+        current_state: state,
+        controls_accepted,
+        exit_code,
+        checkpoint: u32::from(is_start_pending),
+        wait_hint: if is_start_pending {
+            CORE_SERVICE_START_WAIT_HINT
+        } else {
+            Duration::from_secs(0)
+        },
         process_id: None,
-    })?;
+    }
+}
 
-    shutdown_rx
-        .recv()
-        .context("core service shutdown channel closed before stop signal")?;
+#[cfg(windows)]
+fn core_service_stop_exit_code(
+    runtime_result: &Result<()>,
+) -> windows_service::service::ServiceExitCode {
+    if runtime_result.is_ok() {
+        windows_service::service::ServiceExitCode::NO_ERROR
+    } else {
+        windows_service::service::ServiceExitCode::ServiceSpecific(
+            CORE_SERVICE_RUNTIME_FAILURE_EXIT_CODE,
+        )
+    }
+}
 
-    status_handle.set_service_status(ServiceStatus {
-        service_type: ServiceType::OWN_PROCESS,
-        current_state: ServiceState::Stopped,
-        controls_accepted: ServiceControlAccept::empty(),
-        exit_code: ServiceExitCode::Win32(0),
-        checkpoint: 0,
-        wait_hint: Duration::from_secs(0),
-        process_id: None,
-    })?;
-    Ok(())
+#[cfg(windows)]
+fn combine_core_service_runtime_and_status_results(
+    runtime_result: Result<()>,
+    status_result: windows_service::Result<()>,
+) -> Result<()> {
+    match (runtime_result, status_result) {
+        (Ok(()), Ok(())) => Ok(()),
+        (Err(runtime_error), Ok(())) => Err(runtime_error),
+        (Ok(()), Err(status_error)) => {
+            Err(status_error).context("failed to report stopped Core Service status to Windows")
+        }
+        (Err(runtime_error), Err(status_error)) => anyhow::bail!(
+            "Core Service runtime failed: {runtime_error:#}; additionally failed to report stopped status to Windows: {status_error}"
+        ),
+    }
 }
 
 fn handle(command: CoreCommand) -> serde_json::Value {
@@ -4118,6 +4177,88 @@ mod tests {
         assert!(!loop_source.contains(&old_warmup_pattern));
         assert!(!loop_source.contains(&old_shutdown_pattern));
         assert!(!loop_source.contains(&old_shutdown_signal));
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn core_service_statuses_are_fail_visible_and_state_appropriate() {
+        use windows_service::service::{ServiceControlAccept, ServiceExitCode, ServiceState};
+
+        let start_pending =
+            core_service_status(ServiceState::StartPending, ServiceExitCode::NO_ERROR);
+        assert_eq!(start_pending.current_state, ServiceState::StartPending);
+        assert_eq!(
+            start_pending.controls_accepted,
+            ServiceControlAccept::empty()
+        );
+        assert_eq!(start_pending.checkpoint, 1);
+        assert_eq!(start_pending.wait_hint, CORE_SERVICE_START_WAIT_HINT);
+
+        let running = core_service_status(ServiceState::Running, ServiceExitCode::NO_ERROR);
+        assert_eq!(running.current_state, ServiceState::Running);
+        assert_eq!(
+            running.controls_accepted,
+            ServiceControlAccept::STOP | ServiceControlAccept::SHUTDOWN
+        );
+        assert_eq!(running.checkpoint, 0);
+        assert_eq!(running.wait_hint, Duration::from_secs(0));
+
+        let clean_result: Result<()> = Ok(());
+        let failed_result: Result<()> = Err(anyhow::anyhow!("warmup failed"));
+        assert_eq!(
+            core_service_stop_exit_code(&clean_result),
+            ServiceExitCode::NO_ERROR
+        );
+        assert_eq!(
+            core_service_stop_exit_code(&failed_result),
+            ServiceExitCode::ServiceSpecific(CORE_SERVICE_RUNTIME_FAILURE_EXIT_CODE)
+        );
+
+        let stopped = core_service_status(
+            ServiceState::Stopped,
+            core_service_stop_exit_code(&failed_result),
+        );
+        assert_eq!(stopped.current_state, ServiceState::Stopped);
+        assert_eq!(stopped.controls_accepted, ServiceControlAccept::empty());
+        assert_eq!(
+            stopped.exit_code,
+            ServiceExitCode::ServiceSpecific(CORE_SERVICE_RUNTIME_FAILURE_EXIT_CODE)
+        );
+        assert_eq!(stopped.checkpoint, 0);
+        assert_eq!(stopped.wait_hint, Duration::from_secs(0));
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn core_service_preserves_runtime_and_status_failures() {
+        let runtime_error = combine_core_service_runtime_and_status_results(
+            Err(anyhow::anyhow!("warmup failed")),
+            Ok(()),
+        )
+        .unwrap_err()
+        .to_string();
+        assert!(runtime_error.contains("warmup failed"));
+
+        let status_error = combine_core_service_runtime_and_status_results(
+            Ok(()),
+            Err(windows_service::Error::Winapi(
+                std::io::Error::from_raw_os_error(5),
+            )),
+        )
+        .unwrap_err()
+        .to_string();
+        assert!(status_error.contains("failed to report stopped Core Service status"));
+
+        let combined_error = combine_core_service_runtime_and_status_results(
+            Err(anyhow::anyhow!("warmup failed")),
+            Err(windows_service::Error::Winapi(
+                std::io::Error::from_raw_os_error(5),
+            )),
+        )
+        .unwrap_err()
+        .to_string();
+        assert!(combined_error.contains("warmup failed"));
+        assert!(combined_error.contains("failed to report stopped status"));
     }
 
     #[test]
