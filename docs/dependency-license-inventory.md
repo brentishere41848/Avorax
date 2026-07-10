@@ -72,7 +72,7 @@ were queried from the action publishers through the GitHub API on 2026-07-10.
 | --- | --- | --- |
 | `actions/checkout` | v5 / `93cb6efe18208431cddfb8368fd83d5badbf9bfd` | Exact existing desktop-package pin; MIT |
 | `actions/setup-python` | v6 / `ece7cb06caefa5fff74198d8649806c4678c61a1` | Exact existing desktop-package pin; MIT |
-| `actions/setup-dotnet` | v4 / `67a3573c9a986a3f9c594539f4ab511d57bb3ce9` | Exact existing desktop-package pin; MIT |
+| `actions/setup-dotnet` | v5.4.0 / `26b0ec14cb23fa6904739307f278c14f94c95bf1` | `action.yml` declares `node24`; MIT |
 | `actions/upload-artifact` | v7.0.1 / `043fb46d1a93c77aae656e7c1c64a875d1fc6a0a` | `action.yml` declares `node24`; MIT |
 | `actions/download-artifact` | v8.0.1 / `3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c` | `action.yml` declares `node24`; MIT |
 | `dtolnay/rust-toolchain` | `fa04a1451ff1842e2626ccb99004d0195b455a88` | Exact existing desktop-package pin; MIT |
@@ -80,7 +80,10 @@ were queried from the action publishers through the GitHub API on 2026-07-10.
 | `softprops/action-gh-release` | v3.0.1 / `718ea10b132b3b2eba29c1007bb80653f286566b` | `action.yml` declares `node24`; MIT |
 
 `tests/test_packaging_tools.py` rejects mutable external action refs and requires
-the reviewed commit pins above. Local actions referenced through `./` remain
+the reviewed commit pins above. It also requires every pinned Rust toolchain
+action to receive the exact `1.96.1` toolchain (directly or through the reviewed
+desktop-package environment), because a commit ref does not inherit the former
+`@stable` ref name as an input. Local actions referenced through `./` remain
 repository-owned workflow code and are excluded from that external-action rule.
 
 ## Current Blockers

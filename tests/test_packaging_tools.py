@@ -140,7 +140,7 @@ class DesktopPackageWorkflowTests(unittest.TestCase):
         expected_pins = {
             "actions/checkout": "93cb6efe18208431cddfb8368fd83d5badbf9bfd",
             "actions/setup-python": "ece7cb06caefa5fff74198d8649806c4678c61a1",
-            "actions/setup-dotnet": "67a3573c9a986a3f9c594539f4ab511d57bb3ce9",
+            "actions/setup-dotnet": "26b0ec14cb23fa6904739307f278c14f94c95bf1",
             "actions/upload-artifact": "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
             "actions/download-artifact": "3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c",
             "dtolnay/rust-toolchain": "fa04a1451ff1842e2626ccb99004d0195b455a88",
@@ -155,6 +155,19 @@ class DesktopPackageWorkflowTests(unittest.TestCase):
             re.MULTILINE,
         )
         self.assertEqual(mutable_ref.findall(combined), [])
+
+        rust_action = (
+            "uses: dtolnay/rust-toolchain@"
+            "fa04a1451ff1842e2626ccb99004d0195b455a88"
+        )
+        for name, workflow in workflows.items():
+            lines = workflow.splitlines()
+            for index, line in enumerate(lines):
+                if rust_action not in line:
+                    continue
+                context = "\n".join(lines[index + 1:index + 4])
+                self.assertIn("with:", context, name)
+                self.assertRegex(context, r"toolchain:\s+(?:1\.96\.1|\$\{\{ env\.RUST_TOOLCHAIN \}\})", name)
 
     def test_msi_admin_extract_waits_for_real_exit_code(self):
         workflow = (ROOT / ".github" / "workflows" / "desktop-packages.yml").read_text(
