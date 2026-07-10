@@ -204,9 +204,22 @@ jobs:
           New-Item -ItemType Directory -Path $extractRoot -ErrorAction Stop | Out-Null
           $log = Join-Path (Resolve-Path dist\windows-msi\verification).Path "msi-admin-extract.log"
           $msiexec = Join-Path $env:SystemRoot "System32\msiexec.exe"
-          & $msiexec /a $msi /qn "TARGETDIR=$extractRoot" /l*v $log
-          if ($LASTEXITCODE -ne 0) {
-            throw "MSI administrative extraction failed with exit code $LASTEXITCODE."
+          $arguments = @(
+            "/a"
+            "`"$msi`""
+            "/qn"
+            "TARGETDIR=`"$extractRoot`""
+            "/l*v"
+            "`"$log`""
+          )
+          $process = Start-Process `
+            -FilePath $msiexec `
+            -ArgumentList $arguments `
+            -Wait `
+            -PassThru `
+            -WindowStyle Hidden
+          if ($process.ExitCode -ne 0) {
+            throw "MSI administrative extraction failed with exit code $($process.ExitCode)."
           }
           $apps = @(Get-ChildItem -LiteralPath $extractRoot -Filter Avorax.exe -File -Recurse -ErrorAction Stop)
           if ($apps.Count -ne 1) {

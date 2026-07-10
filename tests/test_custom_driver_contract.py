@@ -10461,7 +10461,10 @@ def test_native_quarantine_removes_executable_permissions_before_hash_record():
     assert "remove_executable_permissions(&quarantine_path)?" in quarantine_source
     assert "std::os::unix::fs::PermissionsExt" in helper_source
     assert "permissions.mode() & !0o111" in helper_source
-    assert "fs::set_permissions(path, permissions)?" in helper_source
+    assert "regular_quarantine_payload_metadata(path, \"quarantine destination\")?" in helper_source
+    assert "expected.dev() == opened.dev() && expected.ino() == opened.ino()" in helper_source
+    assert "opened_file.set_permissions(permissions)?" in helper_source
+    assert "current.dev() == opened.dev() && current.ino() == opened.ino()" in helper_source
     assert "#[cfg(not(unix))]\nfn remove_executable_permissions(_path: &Path) -> Result<()> {\n    Ok(())\n}" in helper_source
     assert (
         quarantine_source.index('ensure_regular_quarantine_payload(&quarantine_path, "quarantine destination")?')
@@ -10476,6 +10479,7 @@ def test_native_quarantine_removes_executable_permissions_before_hash_record():
         < quarantine_source.index("let record = QuarantineRecord")
     )
     assert "native_quarantine_removes_executable_permissions_from_payload" in source
+    assert "native_quarantine_permission_hardening_rejects_symbolic_link" in source
 
 
 def test_native_quarantine_root_is_checked_before_payload_destination_use():

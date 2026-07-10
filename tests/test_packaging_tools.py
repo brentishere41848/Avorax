@@ -128,5 +128,26 @@ class ReleaseChecksumTests(unittest.TestCase):
                 )
 
 
+class DesktopPackageWorkflowTests(unittest.TestCase):
+    def test_msi_admin_extract_waits_for_real_exit_code(self):
+        workflow = (ROOT / ".github" / "workflows" / "desktop-packages.yml").read_text(
+            encoding="utf-8"
+        )
+        _, extraction_step = workflow.split(
+            "- name: Administratively extract MSI without installing", maxsplit=1
+        )
+        extraction_step, _ = extraction_step.split(
+            "- name: Record unsigned status and checksums", maxsplit=1
+        )
+        msiexec_section, _ = extraction_step.split("$apps = @(", maxsplit=1)
+
+        self.assertIn("$process = Start-Process", msiexec_section)
+        self.assertIn("-Wait", msiexec_section)
+        self.assertIn("-PassThru", msiexec_section)
+        self.assertIn("-WindowStyle Hidden", msiexec_section)
+        self.assertIn("$process.ExitCode", msiexec_section)
+        self.assertNotIn("$LASTEXITCODE", msiexec_section)
+
+
 if __name__ == "__main__":
     unittest.main()
