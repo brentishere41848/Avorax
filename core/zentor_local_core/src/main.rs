@@ -1,8 +1,7 @@
 use std::collections::HashMap;
 use std::ffi::OsString;
-use std::io::{self, BufRead, BufReader, Read, Write};
+use std::io::{self, BufRead, Read, Write};
 use std::path::{Path, PathBuf};
-use std::process::{Command, Stdio};
 use std::sync::mpsc;
 use std::thread;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
@@ -68,8 +67,6 @@ const MAX_CORE_IPC_THREAT_NAME_CHARS: usize = 256;
 const MAX_CORE_IPC_NOTE_CHARS: usize = 4096;
 const MAX_RANSOMWARE_ACTIVITY_RENAMED_COUNT: u32 = 100_000;
 const MAX_RANSOMWARE_ACTIVITY_TIME_WINDOW_SECONDS: u32 = 3_600;
-const MAX_CORE_SERVICE_STATUS_OUTPUT_BYTES: usize = 8192;
-const CORE_SERVICE_STATUS_COMMAND_TIMEOUT: Duration = Duration::from_secs(30);
 const WATCH_POLL_DEFAULT_DURATION_MS: u64 = 2_000;
 const WATCH_POLL_MIN_DURATION_MS: u64 = 250;
 const WATCH_POLL_MAX_DURATION_MS: u64 = 10_000;
@@ -2356,210 +2353,22 @@ fn core_service_system_status() -> &'static str {
 fn core_service_system_status_report() -> CoreServiceStatusReport {
     #[cfg(windows)]
     {
-        let sc = match windows_tools::windows_system32_tool("sc.exe") {
-            Ok(sc) => sc,
-            Err(error) => return CoreServiceStatusReport::unknown(format!("{error:#}")),
-        };
-        let mut command = Command::new(&sc);
-        command.args(["query", "avorax_core_service"]);
-        let output =
-            match run_core_service_status_command(&mut command, "Avorax Core Service sc query") {
-                Ok(output) => output,
-                Err(error) => {
-                    return CoreServiceStatusReport::unknown(format!(
-                        "failed to query Avorax Core Service: {error:#}"
-                    ));
-                }
-            };
-        if !output.status.success()
-            && core_service_status_query_reports_absent(&output.stdout, &output.stderr)
-        {
-            return CoreServiceStatusReport::status("missing");
+        use windows_tools::WindowsServiceStatus;
+
+        match windows_tools::query_windows_service_status("avorax_core_service") {
+            Ok(WindowsServiceStatus::Missing) => CoreServiceStatusReport::status("missing"),
+            Ok(WindowsServiceStatus::Running) => CoreServiceStatusReport::status("running"),
+            Ok(WindowsServiceStatus::Stopped) => CoreServiceStatusReport::status("stopped"),
+            Ok(WindowsServiceStatus::Installed) => CoreServiceStatusReport::status("installed"),
+            Err(error) => CoreServiceStatusReport::unknown(format!(
+                "failed to query Avorax Core Service: {error:#}"
+            )),
         }
-        if !output.status.success() {
-            return CoreServiceStatusReport::unknown(core_service_status_query_failure_detail(
-                output.status.code(),
-                &output.stdout,
-                &output.stderr,
-            ));
-        }
-        let Some(text) = core_service_status_output_text(&output.stdout) else {
-            return CoreServiceStatusReport::unknown(format!(
-                "Avorax Core Service status output exceeded {} bytes",
-                MAX_CORE_SERVICE_STATUS_OUTPUT_BYTES
-            ));
-        };
-        if text.contains("RUNNING") {
-            return CoreServiceStatusReport::status("running");
-        }
-        if text.contains("STOPPED") {
-            return CoreServiceStatusReport::status("stopped");
-        }
-        CoreServiceStatusReport::status("installed")
     }
     #[cfg(not(windows))]
     {
         CoreServiceStatusReport::status("unsupported")
     }
-}
-
-fn core_service_status_output_text(bytes: &[u8]) -> Option<String> {
-    if bytes.len() > MAX_CORE_SERVICE_STATUS_OUTPUT_BYTES {
-        return None;
-    }
-    Some(String::from_utf8_lossy(bytes).to_uppercase())
-}
-
-struct CoreServiceStatusCommandOutput {
-    status: std::process::ExitStatus,
-    stdout: Vec<u8>,
-    stderr: Vec<u8>,
-}
-
-fn run_core_service_status_command(
-    command: &mut Command,
-    label: &str,
-) -> Result<CoreServiceStatusCommandOutput> {
-    command
-        .stdin(Stdio::null())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped());
-    let mut child = command
-        .spawn()
-        .with_context(|| format!("failed to launch {label}"))?;
-    let stdout = child
-        .stdout
-        .take()
-        .with_context(|| format!("failed to capture {label} stdout"))?;
-    let stderr = child
-        .stderr
-        .take()
-        .with_context(|| format!("failed to capture {label} stderr"))?;
-    let stdout_reader = thread::spawn(move || read_bounded_core_service_status_output(stdout));
-    let stderr_reader = thread::spawn(move || read_bounded_core_service_status_output(stderr));
-    let status =
-        match wait_for_core_service_status_child(&mut child, CORE_SERVICE_STATUS_COMMAND_TIMEOUT)
-            .with_context(|| format!("failed to wait for {label}"))?
-        {
-            Some(status) => status,
-            None => {
-                let kill_error = child.kill().err();
-                let wait_error = child.wait().err();
-                let stdout = join_core_service_status_output(stdout_reader, label, "stdout")?;
-                let stderr = join_core_service_status_output(stderr_reader, label, "stderr")?;
-                let mut detail = format!(
-                    "{label} exceeded {} seconds",
-                    CORE_SERVICE_STATUS_COMMAND_TIMEOUT.as_secs()
-                );
-                if let Some(error) = kill_error {
-                    detail.push_str(&format!(
-                        "; failed to kill timed-out Core Service status command: {error}"
-                    ));
-                }
-                if let Some(error) = wait_error {
-                    detail.push_str(&format!(
-                        "; failed to reap timed-out Core Service status command: {error}"
-                    ));
-                }
-                detail.push_str(&format!(
-                    "; {}; {}",
-                    core_service_status_output_detail("stdout", &stdout),
-                    core_service_status_output_detail("stderr", &stderr)
-                ));
-                anyhow::bail!(detail);
-            }
-        };
-    let stdout = join_core_service_status_output(stdout_reader, label, "stdout")?;
-    let stderr = join_core_service_status_output(stderr_reader, label, "stderr")?;
-    Ok(CoreServiceStatusCommandOutput {
-        status,
-        stdout,
-        stderr,
-    })
-}
-
-fn wait_for_core_service_status_child(
-    child: &mut std::process::Child,
-    timeout: Duration,
-) -> io::Result<Option<std::process::ExitStatus>> {
-    let started = Instant::now();
-    loop {
-        if let Some(status) = child.try_wait()? {
-            return Ok(Some(status));
-        }
-        if started.elapsed() >= timeout {
-            return Ok(None);
-        }
-        thread::sleep(Duration::from_millis(50));
-    }
-}
-
-fn read_bounded_core_service_status_output<R: Read>(reader: R) -> Result<Vec<u8>> {
-    let mut reader = BufReader::new(reader);
-    let retain_limit = MAX_CORE_SERVICE_STATUS_OUTPUT_BYTES.saturating_add(1);
-    let mut bytes = Vec::new();
-    let mut buffer = [0_u8; 8192];
-    loop {
-        let read = reader
-            .read(&mut buffer)
-            .context("failed to read Core Service status command output")?;
-        if read == 0 {
-            break;
-        }
-        let remaining = retain_limit.saturating_sub(bytes.len());
-        if remaining > 0 {
-            let keep = read.min(remaining);
-            bytes.extend_from_slice(&buffer[..keep]);
-        }
-    }
-    Ok(bytes)
-}
-
-fn join_core_service_status_output(
-    reader: thread::JoinHandle<Result<Vec<u8>>>,
-    label: &str,
-    stream_name: &str,
-) -> Result<Vec<u8>> {
-    reader
-        .join()
-        .map_err(|_| anyhow::anyhow!("{label} {stream_name} reader panicked"))?
-}
-
-fn core_service_status_query_reports_absent(stdout: &[u8], stderr: &[u8]) -> bool {
-    let Some(stdout) = core_service_status_output_text(stdout) else {
-        return false;
-    };
-    let Some(stderr) = core_service_status_output_text(stderr) else {
-        return false;
-    };
-    let combined = format!("{stdout}\n{stderr}");
-    combined.contains("1060")
-        || combined.contains("SPECIFIED SERVICE DOES NOT EXIST")
-        || combined.contains("DOES NOT EXIST AS AN INSTALLED SERVICE")
-}
-
-fn core_service_status_output_detail(label: &str, bytes: &[u8]) -> String {
-    match core_service_status_output_text(bytes) {
-        Some(text) if !text.trim().is_empty() => format!("{label}: {}", text.trim()),
-        Some(_) => format!("{label}: <empty>"),
-        None => format!("{label}: output exceeded {MAX_CORE_SERVICE_STATUS_OUTPUT_BYTES} bytes"),
-    }
-}
-
-#[cfg(windows)]
-fn core_service_status_query_failure_detail(
-    exit_code: Option<i32>,
-    stdout: &[u8],
-    stderr: &[u8],
-) -> String {
-    let code = exit_code
-        .map(|code| code.to_string())
-        .unwrap_or_else(|| "terminated".to_string());
-    format!(
-        "Avorax Core Service query failed with exit {code}; {}; {}",
-        core_service_status_output_detail("stdout", stdout),
-        core_service_status_output_detail("stderr", stderr)
-    )
 }
 
 fn should_surface_native_verdict(verdict: AneVerdict) -> bool {
@@ -4312,112 +4121,36 @@ mod tests {
     }
 
     #[test]
-    fn core_service_status_output_is_bounded() {
-        let oversized = vec![b'a'; MAX_CORE_SERVICE_STATUS_OUTPUT_BYTES + 1];
-        assert!(core_service_status_output_text(&oversized).is_none());
-        assert_eq!(
-            core_service_status_output_text(b"STATE              : 1  STOPPED").as_deref(),
-            Some("STATE              : 1  STOPPED")
-        );
-
-        let source = include_str!("main.rs");
-        let start = source.find("fn core_service_system_status").unwrap();
-        let end = source.find("fn should_surface_native_verdict").unwrap();
-        let status_source = &source[start..end];
-        let old_direct_output =
-            ["String::from_utf8_lossy(&output.stdout)", ".to_uppercase()"].concat();
-        let old_sc_launch = ["Command::new(\"", "sc.exe\")"].concat();
-        assert!(source.contains("MAX_CORE_SERVICE_STATUS_OUTPUT_BYTES"));
-        assert!(status_source.contains("windows_tools::windows_system32_tool(\"sc.exe\")"));
-        assert!(status_source.contains("Command::new(&sc)"));
-        assert!(status_source.contains("run_core_service_status_command("));
-        assert!(status_source.contains("core_service_status_output_text(&output.stdout)"));
-        assert!(status_source.contains("CoreServiceStatusReport::unknown"));
-        assert!(status_source.contains("Avorax Core Service status output exceeded"));
-        assert!(!status_source.contains(&old_direct_output));
-        assert!(!status_source.contains(&old_sc_launch));
-        assert!(!status_source.contains(".output()"));
-    }
-
-    #[test]
-    fn core_service_status_query_uses_bounded_runner() {
-        let source = include_str!("main.rs");
-        let status_start = source.find("fn core_service_system_status_report").unwrap();
-        let status_end = source.find("fn core_service_status_output_text").unwrap();
-        let status_source = &source[status_start..status_end];
-        let runner_start = source.find("fn run_core_service_status_command").unwrap();
-        let runner_end = source
-            .find("fn core_service_status_query_reports_absent")
-            .unwrap();
-        let runner_source = &source[runner_start..runner_end];
-
-        assert!(source.contains(
-            "const CORE_SERVICE_STATUS_COMMAND_TIMEOUT: Duration = Duration::from_secs(30)"
-        ));
-        assert!(status_source.contains("run_core_service_status_command(&mut command,"));
-        assert!(runner_source.contains("stdin(Stdio::null())"));
-        assert!(runner_source.contains("stdout(Stdio::piped())"));
-        assert!(runner_source.contains("stderr(Stdio::piped())"));
-        assert!(runner_source.contains("child.try_wait()?"));
-        assert!(runner_source.contains("child.kill().err()"));
-        assert!(runner_source.contains("child.wait().err()"));
-        assert!(runner_source.contains("failed to kill timed-out Core Service status command"));
-        assert!(runner_source.contains("failed to reap timed-out Core Service status command"));
-        assert!(runner_source.contains("read_bounded_core_service_status_output(stdout)"));
-        assert!(runner_source.contains("read_bounded_core_service_status_output(stderr)"));
-        assert!(runner_source.contains("let mut reader = BufReader::new(reader)"));
-        assert!(runner_source.contains("MAX_CORE_SERVICE_STATUS_OUTPUT_BYTES.saturating_add(1)"));
-        assert!(runner_source.contains("read(&mut buffer)"));
-        assert!(runner_source.contains("bytes.extend_from_slice(&buffer[..keep])"));
-        assert!(!status_source.contains(".output()"));
-        assert!(!runner_source.contains(".read_to_end(&mut bytes)"));
-    }
-
-    #[test]
-    fn core_service_status_query_distinguishes_absent_from_probe_failure() {
-        assert!(core_service_status_query_reports_absent(
-            b"",
-            b"[SC] OpenService FAILED 1060:\r\nThe specified service does not exist as an installed service.\r\n",
-        ));
-        assert!(!core_service_status_query_reports_absent(
-            b"",
-            b"[SC] OpenSCManager FAILED 5:\r\nAccess is denied.\r\n",
-        ));
-
+    fn core_service_status_queries_scm_api_and_preserves_errors() {
         let source = include_str!("main.rs");
         let start = source.find("fn core_service_system_status").unwrap();
         let end = source.find("fn should_surface_native_verdict").unwrap();
         let status_source = &source[start..end];
 
-        assert!(source.contains("fn core_service_status_query_reports_absent"));
         assert!(status_source
-            .contains("core_service_status_query_reports_absent(&output.stdout, &output.stderr)"));
+            .contains("windows_tools::query_windows_service_status(\"avorax_core_service\")"));
+        assert!(status_source.contains("WindowsServiceStatus::Missing"));
+        assert!(status_source.contains("WindowsServiceStatus::Running"));
+        assert!(status_source.contains("WindowsServiceStatus::Stopped"));
+        assert!(status_source.contains("WindowsServiceStatus::Installed"));
         assert!(status_source.contains("CoreServiceStatusReport::status(\"missing\")"));
         assert!(status_source.contains("CoreServiceStatusReport::unknown"));
-        assert!(status_source.contains("core_service_status_query_failure_detail"));
-        assert!(!status_source
-            .contains("if !output.status.success() {\n            return \"missing\";"));
+        assert!(status_source.contains("failed to query Avorax Core Service"));
     }
 
     #[test]
-    fn core_service_status_errors_are_reported_not_silent_unknown() {
+    fn core_service_status_does_not_parse_localized_command_output() {
         let source = include_str!("main.rs");
-        let start = source.find("fn core_service_system_status_report").unwrap();
+        let start = source.find("fn core_service_system_status").unwrap();
         let end = source.find("fn should_surface_native_verdict").unwrap();
         let status_source = &source[start..end];
-        let health_start = source.find("fn health_response").unwrap();
-        let health_end = source.find("fn display_file_name").unwrap();
-        let health_source = &source[health_start..health_end];
 
-        assert!(source.contains("struct CoreServiceStatusReport"));
-        assert!(source.contains("error: Option<String>"));
-        assert!(status_source.contains("failed to query Avorax Core Service"));
-        assert!(status_source.contains("core_service_status_query_failure_detail"));
-        assert!(status_source.contains("Avorax Core Service status output exceeded"));
-        assert!(health_source.contains("\"core_service_status_error\": core_service_status.error"));
-        assert!(!status_source.contains("let Ok(sc)"));
-        assert!(!status_source.contains("let Ok(output)"));
-        assert!(!status_source.contains("return \"unknown\""));
+        assert!(!status_source.contains("sc.exe"));
+        assert!(!status_source.contains("Command::new"));
+        assert!(!status_source.contains("output.stdout"));
+        assert!(!status_source.contains("output.stderr"));
+        assert!(!status_source.contains("String::from_utf8_lossy"));
+        assert!(!status_source.contains("DOES NOT EXIST AS AN INSTALLED SERVICE"));
     }
 
     #[test]

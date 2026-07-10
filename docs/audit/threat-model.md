@@ -359,3 +359,16 @@ does not authenticate UI-to-service commands or prove installed service recovery
 the current Flutter/local-core boundary remains per-process stdio, and privileged
 service IPC, service ACLs, restart policy, driver signing, and elevated-host E2E
 remain required before claiming persistent or pre-execution protection.
+
+## Checkpoint 2159 Service Query Boundary
+
+Service status text is locale-dependent, and a failed helper process can emit
+attacker-influenced or misleading diagnostics. Local Core and Guard therefore
+no longer infer `missing`, `off`, `running`, or `stopped` from `sc.exe` output.
+They use typed Service Control Manager status with least query privilege and a
+fixed service-name allowlist. Only numeric error `1060` means absent; access
+denial, malformed names, and other API failures stay unknown with diagnostics.
+This reduces parsing and child-process attack surface but is observation only:
+it does not authenticate commands to a privileged service, validate installed
+service ACL/recovery configuration, start or stop services, or prove persistence
+or pre-execution blocking.
