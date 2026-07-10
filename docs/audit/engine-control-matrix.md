@@ -4025,8 +4025,9 @@ Full-suite refresh: `.workflow/ultracode/avorax-hardening/results/2116-small-thr
 
 ## Cross-Platform Beta Packaging Addendum
 
-Native workflow [29086402344](https://github.com/brentishere41848/Avorax/actions/runs/29086402344)
-passed at source commit `abf256c52050ee714fd49c374671844dea51c64e`.
+Release workflow [29088539809](https://github.com/brentishere41848/Avorax/actions/runs/29088539809)
+passed and published the prerelease at commit
+`7b1f8130a652e27d8750954e88b63f3b7f32de2a`.
 
 | Control / engine | Responsibility | Classification | Native evidence / limitation |
 | --- | --- | --- | --- |
