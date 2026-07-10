@@ -60,22 +60,39 @@ def _is_link_or_reparse(metadata: os.stat_result) -> bool:
     return stat.S_ISLNK(metadata.st_mode) or bool(file_attributes & reparse_flag)
 
 
-def _assert_no_link_ancestors(path: Path, description: str) -> None:
-    current = path.absolute()
-    while True:
-        if current.exists() and _is_link_or_reparse(current.lstat()):
-            raise SbomError(f"{description} traverses a link/reparse point: {current}")
-        if current.parent == current:
-            return
-        current = current.parent
+def _resolved_root(root: Path) -> Path:
+    try:
+        resolved = root.resolve(strict=True)
+    except OSError as error:
+        raise SbomError(f"repository root cannot be resolved: {root}") from error
+    if not resolved.is_dir():
+        raise SbomError(f"repository root is not a directory: {resolved}")
+    return resolved
 
 
-def _read_regular_utf8(path: Path) -> str:
-    path = path.absolute()
-    _assert_no_link_ancestors(path.parent, "lockfile path")
-    before = path.lstat()
+def _assert_under_root(path: Path, root: Path, description: str) -> None:
+    try:
+        common = os.path.commonpath((str(path), str(root)))
+    except ValueError as error:
+        raise SbomError(f"{description} is outside repository root: {path}") from error
+    if os.path.normcase(common) != os.path.normcase(str(root)):
+        raise SbomError(f"{description} is outside repository root: {path}")
+
+
+def _resolve_input(path: Path, root: Path) -> Path:
+    root = _resolved_root(root)
+    candidate = path if path.is_absolute() else root / path
+    before = candidate.lstat()
     if _is_link_or_reparse(before) or not stat.S_ISREG(before.st_mode):
-        raise SbomError(f"lockfile is not a regular non-link file: {path}")
+        raise SbomError(f"lockfile is not a regular non-link file: {candidate}")
+    resolved = candidate.resolve(strict=True)
+    _assert_under_root(resolved, root, "lockfile")
+    return resolved
+
+
+def _read_regular_utf8(path: Path, root: Path) -> str:
+    path = _resolve_input(path, root)
+    before = path.lstat()
     if before.st_size > MAX_LOCKFILE_BYTES:
         raise SbomError(f"lockfile exceeds {MAX_LOCKFILE_BYTES} bytes: {path}")
     with path.open("rb") as handle:
@@ -148,8 +165,10 @@ def _add_component(
     existing.dependency_kinds.add(dependency_kind)
 
 
-def add_cargo_lock(records: dict[str, ComponentRecord], path: Path) -> None:
-    text = _read_regular_utf8(path)
+def add_cargo_lock(
+    records: dict[str, ComponentRecord], path: Path, root: Path
+) -> None:
+    text = _read_regular_utf8(path, root)
     try:
         document = tomllib.loads(text)
     except tomllib.TOMLDecodeError as error:
@@ -198,8 +217,8 @@ def _yaml_scalar(value: str, description: str) -> str:
     return value
 
 
-def add_pub_lock(records: dict[str, ComponentRecord], path: Path) -> None:
-    lines = _read_regular_utf8(path).splitlines()
+def add_pub_lock(records: dict[str, ComponentRecord], path: Path, root: Path) -> None:
+    lines = _read_regular_utf8(path, root).splitlines()
     try:
         package_start = lines.index("packages:") + 1
         sdk_start = lines.index("sdks:")
@@ -284,10 +303,12 @@ def add_pub_lock(records: dict[str, ComponentRecord], path: Path) -> None:
         )
 
 
-def add_requirements_lock(records: dict[str, ComponentRecord], path: Path) -> None:
+def add_requirements_lock(
+    records: dict[str, ComponentRecord], path: Path, root: Path
+) -> None:
     origin = path.as_posix()
     found = 0
-    for raw_line in _read_regular_utf8(path).splitlines():
+    for raw_line in _read_regular_utf8(path, root).splitlines():
         line = raw_line.strip()
         if not line or line.startswith("#"):
             continue
@@ -315,6 +336,7 @@ def create_bom(
     cargo_locks: list[Path],
     pub_locks: list[Path],
     requirements_locks: list[Path],
+    root: Path,
 ) -> dict[str, Any]:
     if not VERSION_PATTERN.fullmatch(version):
         raise SbomError(f"invalid Avorax version: {version!r}")
@@ -322,11 +344,11 @@ def create_bom(
         raise SbomError("at least one Cargo, pub, and Python lockfile is required")
     records: dict[str, ComponentRecord] = {}
     for path in cargo_locks:
-        add_cargo_lock(records, path)
+        add_cargo_lock(records, path, root)
     for path in pub_locks:
-        add_pub_lock(records, path)
+        add_pub_lock(records, path, root)
     for path in requirements_locks:
-        add_requirements_lock(records, path)
+        add_requirements_lock(records, path, root)
 
     components: list[dict[str, Any]] = []
     for purl in sorted(records):
@@ -390,17 +412,20 @@ def create_bom(
     }
 
 
-def _write_atomic(output: Path, bom: dict[str, Any]) -> None:
-    output = output.absolute()
-    if not output.parent.is_dir():
-        raise SbomError(f"SBOM output directory does not exist: {output.parent}")
-    _assert_no_link_ancestors(output.parent, "SBOM output path")
-    if output.exists() and (
-        _is_link_or_reparse(output.lstat())
-        or not output.is_file()
-        or output.lstat().st_nlink != 1
+def _write_atomic(output: Path, bom: dict[str, Any], root: Path) -> None:
+    root = _resolved_root(root)
+    candidate = output if output.is_absolute() else root / output
+    if not candidate.parent.is_dir():
+        raise SbomError(f"SBOM output directory does not exist: {candidate.parent}")
+    parent = candidate.parent.resolve(strict=True)
+    _assert_under_root(parent, root, "SBOM output directory")
+    output = parent / candidate.name
+    if candidate.exists() and (
+        _is_link_or_reparse(candidate.lstat())
+        or not candidate.is_file()
+        or candidate.lstat().st_nlink != 1
     ):
-        raise SbomError(f"SBOM output is not a regular file: {output}")
+        raise SbomError(f"SBOM output is not a regular file: {candidate}")
     payload = (json.dumps(bom, indent=2, sort_keys=True) + "\n").encode("utf-8")
     temporary = output.with_name(f".{output.name}.{uuid.uuid4().hex}.tmp")
     descriptor = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
@@ -416,6 +441,7 @@ def _write_atomic(output: Path, bom: dict[str, Any]) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--repo-root", default=Path("."), type=Path)
     parser.add_argument("--version", required=True)
     parser.add_argument("--cargo-lock", action="append", required=True, type=Path)
     parser.add_argument("--pub-lock", action="append", required=True, type=Path)
@@ -428,8 +454,9 @@ def main() -> int:
             cargo_locks=args.cargo_lock,
             pub_locks=args.pub_lock,
             requirements_locks=args.requirements_lock,
+            root=args.repo_root,
         )
-        _write_atomic(args.output, bom)
+        _write_atomic(args.output, bom, args.repo_root)
     except (OSError, SbomError) as error:
         print(f"dependency SBOM error: {error}", file=sys.stderr)
         return 1

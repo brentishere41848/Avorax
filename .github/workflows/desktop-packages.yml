@@ -455,6 +455,7 @@ jobs:
             exit 1
           fi
           python tools/packaging/create_dependency_sbom.py \
+            --repo-root . \
             --version "$AVORAX_PACKAGE_VERSION" \
             --cargo-lock Cargo.lock \
             --cargo-lock core/zentor_native_engine/Cargo.lock \

@@ -187,12 +187,14 @@ class DependencySbomTests(unittest.TestCase):
                 cargo_locks=[cargo_one, cargo_two],
                 pub_locks=[pub],
                 requirements_locks=[requirements],
+                root=root,
             )
             second = dependency_sbom.create_bom(
                 version="0.1.15",
                 cargo_locks=[cargo_one, cargo_two],
                 pub_locks=[pub],
                 requirements_locks=[requirements],
+                root=root,
             )
 
             self.assertEqual(first, second)
@@ -233,7 +235,7 @@ class DependencySbomTests(unittest.TestCase):
             with self.assertRaisesRegex(
                 dependency_sbom.SbomError, "lacks pub.dev SHA-256 evidence"
             ):
-                dependency_sbom.add_pub_lock({}, pub)
+                dependency_sbom.add_pub_lock({}, pub, root)
 
     def test_pub_duplicate_field_is_rejected(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -246,7 +248,7 @@ class DependencySbomTests(unittest.TestCase):
                 encoding="utf-8",
             )
             with self.assertRaisesRegex(dependency_sbom.SbomError, "duplicate"):
-                dependency_sbom.add_pub_lock({}, pub)
+                dependency_sbom.add_pub_lock({}, pub, root)
 
     def test_sbom_atomic_writer_rejects_link_output(self):
         if os.name == "nt":
@@ -258,7 +260,19 @@ class DependencySbomTests(unittest.TestCase):
             linked = root / "linked.cdx.json"
             linked.symlink_to(target)
             with self.assertRaisesRegex(dependency_sbom.SbomError, "regular file"):
-                dependency_sbom._write_atomic(linked, {"bomFormat": "CycloneDX"})
+                dependency_sbom._write_atomic(
+                    linked, {"bomFormat": "CycloneDX"}, root
+                )
+
+    def test_lockfile_outside_explicit_root_is_rejected(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            parent = Path(temporary)
+            trusted = parent / "trusted"
+            trusted.mkdir()
+            outside = parent / "outside-requirements.txt"
+            outside.write_text("example==1.0.0\n", encoding="utf-8")
+            with self.assertRaisesRegex(dependency_sbom.SbomError, "outside"):
+                dependency_sbom.add_requirements_lock({}, outside, trusted)
 
 
 class DesktopPackageWorkflowTests(unittest.TestCase):
@@ -268,6 +282,7 @@ class DesktopPackageWorkflowTests(unittest.TestCase):
         )
 
         self.assertIn("tools/packaging/create_dependency_sbom.py", workflow)
+        self.assertIn("--repo-root .", workflow)
         self.assertIn("--cargo-lock Cargo.lock", workflow)
         self.assertIn("--pub-lock apps/zentor_client/pubspec.lock", workflow)
         self.assertIn("--requirements-lock ml/requirements.lock.txt", workflow)

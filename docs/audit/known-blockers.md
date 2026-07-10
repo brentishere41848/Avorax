@@ -746,7 +746,7 @@ Python verification lock. The real checkout produces `569` deduplicated
 components; repeated generation produced identical SHA-256 output, the official
 CycloneDX 1.6 schema accepted it, and a workflow-equivalent smoke produced seven
 checksum rows for six package fixtures plus the `.cdx.json`. Packaging tests
-pass (`21`, with three platform privilege skips on Windows) and source contracts
+pass (`22`, with three platform privilege skips on Windows) and source contracts
 pass (`591`). The file marks license review partial, final-binary resolution
 false, and composition incomplete. Complete license/copyright review, final-
 binary dependency resolution, and Android Gradle lock evidence remain blockers;
