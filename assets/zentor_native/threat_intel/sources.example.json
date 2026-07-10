@@ -1,6 +1,18 @@
 {
   "sources": [
     {
+      "name": "cryptwareapps Malware-Database",
+      "url": "https://github.com/cryptwareapps/Malware-Database",
+      "mode": "metadata_only",
+      "enabled": false
+    },
+    {
+      "name": "Cryakl Ultimate-RAT-Collection",
+      "url": "https://github.com/Cryakl/Ultimate-RAT-Collection",
+      "mode": "metadata_only",
+      "enabled": false
+    },
+    {
       "name": "Pyran1 MalwareDatabase",
       "url": "https://github.com/Pyran1/MalwareDatabase",
       "mode": "metadata_only",

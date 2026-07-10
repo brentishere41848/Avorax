@@ -28,6 +28,11 @@ GitHub malware-repository metadata import:
 python tools\zentor_intel\import_github_malware_metadata.py --config assets\zentor_native\threat_intel\sources.example.json --include-disabled --output assets\zentor_native\threat_intel\imported_github_metadata.jsonl
 ```
 
+The example registry includes the external sample repositories reviewed for
+metadata-only compatibility. Every entry remains disabled and cannot create an
+active signature, confirmed verdict, or quarantine action. Do not reinterpret a
+Git blob SHA, filename, extension, or repository path as a file SHA-256.
+
 Developer-provided hash-only import:
 
 ```powershell

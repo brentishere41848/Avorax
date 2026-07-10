@@ -1,4 +1,5 @@
 ﻿import os
+import json
 from pathlib import Path
 import re
 import stat
@@ -16477,6 +16478,37 @@ def test_github_intel_repo_metadata_shape_is_fail_visible():
     assert "if not repo_url:" not in importer
     assert "source.get(\"name\", repo_url)" not in importer
     assert "source.get(\"name\") or source.get(\"source_name\") or repo_url" not in importer
+
+
+def test_requested_external_malware_repositories_are_metadata_only_and_disabled():
+    registry_path = (
+        ROOT
+        / "assets"
+        / "zentor_native"
+        / "threat_intel"
+        / "sources.example.json"
+    )
+    registry = json.loads(read(registry_path))
+    sources = registry.get("sources")
+    assert isinstance(sources, list)
+
+    expected_urls = {
+        "https://github.com/cryptwareapps/Malware-Database",
+        "https://github.com/Cryakl/Ultimate-RAT-Collection",
+        "https://github.com/Pyran1/MalwareCollection",
+        "https://github.com/Pyran1/MalwareDatabaseUnsorted",
+    }
+    matching = [source for source in sources if source.get("url") in expected_urls]
+
+    assert {source.get("url") for source in matching} == expected_urls
+    assert len(matching) == len(expected_urls)
+    assert all(source.get("mode") == "metadata_only" for source in matching)
+    assert all(source.get("enabled") is False for source in matching)
+
+    safe_intel_doc = read(ROOT / "docs" / "safe-external-malware-intel.md")
+    assert "Metadata-only indicators cannot auto-quarantine" in safe_intel_doc
+    assert "must not download samples merely to calculate" in safe_intel_doc
+    assert "current `zentor_github_known_bad.zsig` pack contains no active signatures" in safe_intel_doc
 
 
 def test_hash_intel_categories_are_shared_normalized_and_allowlisted():
