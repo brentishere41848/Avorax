@@ -256,6 +256,82 @@ void main() {
   );
 
   test(
+    'Windows full protection requires authenticated Core Service evidence',
+    () async {
+      if (!Platform.isWindows) return;
+      SharedPreferences.setMockInitialValues({});
+      final preferences = await SharedPreferences.getInstance();
+      final localCore = _FakeLocalCoreClient(
+        healthSummaryResult: const LocalCoreHealth(
+          malwareEngineStatus: MalwareEngineStatus.available,
+          nativeEngineStatus: 'ready',
+          coreServiceStatus: 'running',
+          guardStatus: 'running',
+          driverStatus: 'running',
+        ),
+        serviceBoundaryHealthResult: CoreServiceBoundaryHealth.unavailable(
+          'SCM-authenticated service evidence fixture unavailable',
+        ),
+      );
+      final container = ProviderContainer(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(preferences),
+          localCoreClientProvider.overrideWithValue(localCore),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final controller = container.read(zentorControllerProvider.notifier);
+      await _waitForControllerStartup(container);
+      await controller.startProtection(confirmed: true);
+
+      final state = container.read(zentorControllerProvider);
+      expect(state.protectionStatus, ProtectionStatus.partiallyProtected);
+      expect(
+        state.coreServiceBoundaryHealth.status,
+        CoreServiceBoundaryStatus.unavailable,
+      );
+      expect(
+        state.lastEngineError,
+        contains('SCM-authenticated service evidence fixture unavailable'),
+      );
+    },
+  );
+
+  test(
+    'Windows full protection accepts authenticated ready service evidence',
+    () async {
+      if (!Platform.isWindows) return;
+      SharedPreferences.setMockInitialValues({});
+      final preferences = await SharedPreferences.getInstance();
+      final localCore = _FakeLocalCoreClient(
+        healthSummaryResult: const LocalCoreHealth(
+          malwareEngineStatus: MalwareEngineStatus.available,
+          nativeEngineStatus: 'ready',
+          coreServiceStatus: 'running',
+          guardStatus: 'running',
+          driverStatus: 'running',
+        ),
+      );
+      final container = ProviderContainer(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(preferences),
+          localCoreClientProvider.overrideWithValue(localCore),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final controller = container.read(zentorControllerProvider.notifier);
+      await _waitForControllerStartup(container);
+      await controller.startProtection(confirmed: true);
+
+      final state = container.read(zentorControllerProvider);
+      expect(state.protectionStatus, ProtectionStatus.protected);
+      expect(state.coreServiceBoundaryHealth.fullProtectionReady, isTrue);
+    },
+  );
+
+  test(
     'active protection process snapshot loop evaluates timer ticks',
     () async {
       SharedPreferences.setMockInitialValues({});
@@ -9351,6 +9427,20 @@ class _FakeLocalCoreClient extends LocalCoreClient {
       nativeEngineStatus: 'ready',
       coreServiceStatus: 'running',
     ),
+    this.serviceBoundaryHealthResult = const CoreServiceBoundaryHealth(
+      status: CoreServiceBoundaryStatus.ready,
+      protocolVersion: 1,
+      transport: 'windowsNamedPipe',
+      networkExposed: false,
+      commandScope: 'healthOnly',
+      clientAuthenticated: true,
+      serverAuthenticated: true,
+      serverPid: 4242,
+      servicePid: 4242,
+      serviceReady: true,
+      engineReady: true,
+      limitations: ['mutating commands are denied'],
+    ),
     this.healthSummaryException,
     List<QuarantineRecord>? quarantineRecords,
     List<AllowlistEntry>? allowlistEntries,
@@ -9404,6 +9494,7 @@ class _FakeLocalCoreClient extends LocalCoreClient {
   final String? listQuarantineFailure;
   final String? listAllowlistFailure;
   final LocalCoreHealth healthSummaryResult;
+  final CoreServiceBoundaryHealth serviceBoundaryHealthResult;
   final String? healthSummaryException;
   final bool desktop;
   final RealtimeWatcherState _watcherState;
@@ -9458,6 +9549,10 @@ class _FakeLocalCoreClient extends LocalCoreClient {
     if (exception != null) throw StateError(exception);
     return healthSummaryResult;
   }
+
+  @override
+  Future<CoreServiceBoundaryHealth> serviceBoundaryHealth() async =>
+      serviceBoundaryHealthResult;
 
   @override
   Future<String> startCoreService() async {

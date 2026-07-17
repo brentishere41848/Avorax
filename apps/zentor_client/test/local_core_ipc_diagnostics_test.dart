@@ -8,6 +8,188 @@ import 'package:zentor_protocol/zentor_protocol.dart';
 import 'source_text.dart';
 
 void main() {
+  test('Core Service boundary parser accepts authenticated ready evidence', () {
+    final health = CoreServiceBoundaryHealth.fromJson(
+      _serviceBoundaryFixture(),
+    );
+
+    expect(health.status, CoreServiceBoundaryStatus.ready);
+    expect(health.authenticatedBoundaryVerified, isTrue);
+    expect(health.fullProtectionReady, isTrue);
+    expect(health.serverPid, 4242);
+    expect(health.servicePid, 4242);
+    expect(health.nativeSignatureCount, 12);
+    expect(health.nativeRuleCount, 7);
+  });
+
+  test('Core Service boundary parser preserves authenticated degradation', () {
+    final fixture = _serviceBoundaryFixture()
+      ..['ok'] = false
+      ..['engineReady'] = false;
+
+    final health = CoreServiceBoundaryHealth.fromJson(fixture);
+
+    expect(health.status, CoreServiceBoundaryStatus.degraded);
+    expect(health.authenticatedBoundaryVerified, isTrue);
+    expect(health.fullProtectionReady, isFalse);
+  });
+
+  test('Core Service boundary diagnostics normalize control characters', () {
+    final health = CoreServiceBoundaryHealth.unavailable(
+      'service\nprobe\tfailed\u0000visibly',
+    );
+
+    expect(health.diagnostic, 'service probe failed visibly');
+  });
+
+  test('Core Service boundary parser rejects untrusted protocol variants', () {
+    final variants = <Map<String, Object?>>[
+      _serviceBoundaryFixture()..['unexpected'] = true,
+      _serviceBoundaryFixture()..remove('commandScope'),
+      _serviceBoundaryFixture()..['serverPid'] = 9999,
+      _serviceBoundaryFixture()..['clientAuthenticated'] = false,
+      _serviceBoundaryFixture()..['networkExposed'] = true,
+      _serviceBoundaryFixture()..['ok'] = false,
+      _serviceBoundaryFixture()..['limitations'] = <Object?>[],
+      _serviceBoundaryFixture()
+        ..['limitations'] = <Object?>['line one\nline two'],
+      _serviceBoundaryFixture()..['nativeRuleCount'] = 10000001,
+    ];
+
+    for (final variant in variants) {
+      expect(
+        () => CoreServiceBoundaryHealth.fromJson(variant),
+        throwsFormatException,
+      );
+    }
+  });
+
+  test('Core Service boundary launch is bounded and read-only', () {
+    final clientSource = readNormalizedSource(
+      'lib/core/local_core/local_core_client.dart',
+    );
+
+    expect(clientSource, contains("'--service-ipc-health'"));
+    expect(
+      clientSource,
+      contains('_maxServiceHealthResponseBytes = 16 * 1024'),
+    );
+    expect(
+      clientSource,
+      contains('_serviceHealthTimeout = Duration(seconds: 10)'),
+    );
+    expect(clientSource, contains('_ipcTimeoutTerminationStatus(process)'));
+    expect(clientSource, contains('CoreServiceBoundaryHealth.fromJson'));
+    expect(clientSource, isNot(contains("'--service-ipc-mutate'")));
+  });
+
+  test(
+    'Core Service boundary probe verifies a real subprocess response',
+    () async {
+      if (!Platform.isWindows) return;
+      final dir = Directory.systemTemp.createTempSync('avorax-service-health-');
+      addTearDown(() => dir.deleteSync(recursive: true));
+      final payload = jsonEncode(_serviceBoundaryFixture());
+      final script = File('${dir.path}${Platform.pathSeparator}health.dart')
+        ..writeAsStringSync('''
+import 'dart:io';
+
+void main(List<String> args) {
+  if (args.length != 1 || args.single != '--service-ipc-health') {
+    stderr.writeln('unexpected arguments');
+    exitCode = 9;
+    return;
+  }
+  stdout.writeln(${jsonEncode(payload)});
+}
+''');
+      final client = LocalCoreClient(
+        executableOverride: _dartExecutable(),
+        executableArguments: [script.path],
+      );
+
+      final health = await client.serviceBoundaryHealth();
+
+      expect(health.status, CoreServiceBoundaryStatus.ready);
+      expect(health.authenticatedBoundaryVerified, isTrue);
+      expect(health.fullProtectionReady, isTrue);
+    },
+  );
+
+  test(
+    'Core Service boundary probe fails closed on oversized output',
+    () async {
+      if (!Platform.isWindows) return;
+      final dir = Directory.systemTemp.createTempSync(
+        'avorax-service-health-oversized-',
+      );
+      addTearDown(() => dir.deleteSync(recursive: true));
+      final script = File('${dir.path}${Platform.pathSeparator}oversized.dart')
+        ..writeAsStringSync('''
+void main() {
+  print(''.padRight(17 * 1024, 'x'));
+}
+''');
+      final client = LocalCoreClient(
+        executableOverride: _dartExecutable(),
+        executableArguments: [script.path],
+      );
+
+      final health = await client.serviceBoundaryHealth();
+
+      expect(health.status, CoreServiceBoundaryStatus.unavailable);
+      expect(health.diagnostic, contains('exceeded the 16384-byte limit'));
+    },
+  );
+
+  test('Core Service boundary probe times out and reaps subprocess', () async {
+    if (!Platform.isWindows) return;
+    final dir = Directory.systemTemp.createTempSync(
+      'avorax-service-health-timeout-',
+    );
+    addTearDown(() => dir.deleteSync(recursive: true));
+    final script = _writeSleepingDartScript(dir, 'service_health_timeout.dart');
+    Process? spawned;
+    final client = LocalCoreClient(
+      executableOverride: _dartExecutable(),
+      executableArguments: [script.path],
+      serviceHealthTimeout: const Duration(milliseconds: 100),
+      processStarter: (executable, arguments) async {
+        spawned = await Process.start(executable, arguments);
+        return spawned!;
+      },
+    );
+
+    final health = await client.serviceBoundaryHealth();
+
+    expect(health.status, CoreServiceBoundaryStatus.unavailable);
+    expect(health.diagnostic, contains('timed out'));
+    expect(spawned, isNotNull);
+    await _expectProcessExited(spawned!, 'Core Service health timeout fixture');
+  });
+
+  test(
+    'Core Service boundary probe rejects timeout above safe maximum',
+    () async {
+      if (!Platform.isWindows) return;
+      var processStarted = false;
+      final client = LocalCoreClient(
+        executableOverride: _dartExecutable(),
+        serviceHealthTimeout: const Duration(seconds: 11),
+        processStarter: (executable, arguments) async {
+          processStarted = true;
+          return Process.start(executable, arguments);
+        },
+      );
+
+      final health = await client.serviceBoundaryHealth();
+
+      expect(health.status, CoreServiceBoundaryStatus.unavailable);
+      expect(health.diagnostic, contains('outside its safe bounds'));
+      expect(processStarted, isFalse);
+    },
+  );
+
   test('scan failure reports missing local core executable path', () async {
     final missing = Directory.systemTemp
         .createTempSync('avorax-missing-core-')
@@ -3470,6 +3652,27 @@ void main() {
     );
   });
 }
+
+Map<String, Object?> _serviceBoundaryFixture() => <String, Object?>{
+  'ok': true,
+  'protocolVersion': 1,
+  'transport': 'windowsNamedPipe',
+  'networkExposed': false,
+  'commandScope': 'healthOnly',
+  'clientAuthenticated': true,
+  'serverAuthenticated': true,
+  'serverPid': 4242,
+  'servicePid': 4242,
+  'serviceReady': true,
+  'engineReady': true,
+  'nativeSignatureCount': 12,
+  'nativeRuleCount': 7,
+  'nativeMlProductionReady': false,
+  'limitations': <Object?>[
+    'mutating commands are denied',
+    'user-mode service IPC does not provide pre-execution blocking',
+  ],
+};
 
 String _dartExecutable() {
   final flutterRoot = Platform.environment['FLUTTER_ROOT'];

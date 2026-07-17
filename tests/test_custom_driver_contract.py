@@ -2315,12 +2315,22 @@ def test_controller_protected_state_requires_ready_engine_evidence():
         "              nativeEngineReadyWithoutDiagnostic"
     ) in start_source
     assert "final preventionFailureDetails" in start_source
-    assert "state.driverStatus == 'running' && engineFullyReady" in start_source
+    assert "final serviceBoundaryReady" in start_source
+    assert "!Platform.isWindows ||" in start_source
+    assert "state.coreServiceBoundaryHealth.fullProtectionReady" in start_source
+    assert (
+        "state.driverStatus == 'running' &&\n"
+        "                    engineFullyReady &&\n"
+        "                    serviceBoundaryReady"
+    ) in start_source
     assert "?engineDiagnosticWarning" in start_source
     assert start_source.index("final engineDiagnosticWarning") < start_source.index(
         "final hasLocalPrevention"
     )
     assert start_source.index("final engineFullyReady") < start_source.index(
+        "ProtectionStatus.protected"
+    )
+    assert start_source.index("final serviceBoundaryReady") < start_source.index(
         "ProtectionStatus.protected"
     )
 

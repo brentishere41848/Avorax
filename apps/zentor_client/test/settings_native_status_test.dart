@@ -60,6 +60,22 @@ void main() {
       nativeMlProductionReady: true,
       aiModelInfo: AiModelInfo(featureSchemaVersion: 'zne-features-v2'),
       coreServiceStatus: 'running',
+      coreServiceBoundaryHealth: CoreServiceBoundaryHealth(
+        status: CoreServiceBoundaryStatus.ready,
+        protocolVersion: 1,
+        transport: 'windowsNamedPipe',
+        networkExposed: false,
+        commandScope: 'healthOnly',
+        clientAuthenticated: true,
+        serverAuthenticated: true,
+        serverPid: 4242,
+        servicePid: 4242,
+        serviceReady: true,
+        engineReady: true,
+        nativeSignatureCount: 123,
+        nativeRuleCount: 17,
+        limitations: ['mutating commands are denied'],
+      ),
       guardStatus: 'monitorOnly',
       driverStatus: 'testSigned',
       protectionSelfTestResult: 'Driver self-test requires signed release host',
@@ -124,6 +140,8 @@ void main() {
     expect(find.text('Production-ready'), findsOneWidget);
     expect(find.text('Yes'), findsOneWidget);
     expect(find.text('Core Service'), findsOneWidget);
+    expect(find.text('Core Service IPC'), findsOneWidget);
+    expect(find.text('Authenticated and ready'), findsOneWidget);
     expect(find.text('Guard mode'), findsOneWidget);
     expect(find.text('Monitor only'), findsOneWidget);
     expect(find.text('Driver status'), findsOneWidget);

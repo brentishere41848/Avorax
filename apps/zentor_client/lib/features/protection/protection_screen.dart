@@ -4,6 +4,7 @@ import 'package:zentor_protocol/zentor_protocol.dart';
 
 import '../../app/app_state.dart';
 import '../../app/theme/zentor_colors.dart';
+import '../../core/local_core/local_core_client.dart';
 import '../../shared/widgets/zentor_button.dart';
 import '../../shared/widgets/zentor_metric_card.dart';
 import '../../shared/widgets/zentor_status_card.dart';
@@ -334,6 +335,10 @@ class _ProtectionChecklist extends StatelessWidget {
       ),
       _CheckRow('Quarantine', _quarantineReadinessLabel(state)),
       _CheckRow('Core Service', _serviceLabel(state.coreServiceStatus)),
+      _CheckRow(
+        'Core Service IPC',
+        _serviceBoundaryLabel(state.coreServiceBoundaryHealth),
+      ),
       _CheckRow('Guard Service', _guardLabel(state.guardStatus)),
       _CheckRow(
         'Process Monitor',
@@ -418,10 +423,10 @@ class _CheckRow {
 
 String _protectionExplanation(ZentorState state) {
   if (_protectionEngineNeedsAttention(state)) {
-    return 'Action required: Avorax malware engine or native engine evidence is not ready. Avorax does not report files clean while local engine evidence is unavailable.';
+    return 'Action required: Avorax malware engine, native engine, or authenticated Core Service evidence is not ready. Avorax does not report files clean while local engine evidence is unavailable.';
   }
   if (state.protectionStatus == ProtectionStatus.protected) {
-    return 'Local scans, quarantine workflows, Guard Service, and native engine assets are available. Pre-execution blocking is shown as active only when the Windows driver is running and self-tested.';
+    return 'Local scans, quarantine workflows, Guard Service, native engine assets, and the authenticated Core Service boundary are available. Pre-execution blocking is shown as active only when the Windows driver is running and self-tested.';
   }
   if (state.nativeEngineStatus == 'ready' && state.driverStatus != 'running') {
     return 'Local scans are ready, and quarantine workflows remain available for confirmed detections. Real-time pre-execution blocking is not active because the Windows driver is not installed or has not passed self-test.';
@@ -440,6 +445,9 @@ String _serviceProtectionDetail(ZentorState state) {
         : 'Core/Guard services are not running. Manual scans and quarantine remain available.',
     if (state.coreServiceStatusError?.trim().isNotEmpty ?? false)
       'Core Service detail: ${state.coreServiceStatusError}',
+    'Core Service IPC: ${_serviceBoundaryLabel(state.coreServiceBoundaryHealth)}',
+    if (state.coreServiceBoundaryHealth.diagnostic?.trim().isNotEmpty ?? false)
+      'Core Service IPC detail: ${state.coreServiceBoundaryHealth.diagnostic}',
     if (state.guardStatusError?.trim().isNotEmpty ?? false)
       'Guard Service detail: ${state.guardStatusError}',
   ];
@@ -460,8 +468,22 @@ String _guardServiceDetail(ZentorState state) {
 bool _protectionEngineNeedsAttention(ZentorState state) {
   return state.malwareEngineStatus != MalwareEngineStatus.available ||
       state.nativeEngineStatus != 'ready' ||
+      state.coreServiceBoundaryHealth.status ==
+          CoreServiceBoundaryStatus.unavailable ||
+      state.coreServiceBoundaryHealth.status ==
+          CoreServiceBoundaryStatus.degraded ||
       (state.lastEngineError?.trim().isNotEmpty ?? false);
 }
+
+String _serviceBoundaryLabel(CoreServiceBoundaryHealth health) =>
+    switch (health.status) {
+      CoreServiceBoundaryStatus.notChecked => 'Not checked',
+      CoreServiceBoundaryStatus.unsupported => 'Unsupported on this platform',
+      CoreServiceBoundaryStatus.unavailable => 'Unavailable',
+      CoreServiceBoundaryStatus.degraded =>
+        'Authenticated; native engine degraded',
+      CoreServiceBoundaryStatus.ready => 'Authenticated and ready',
+    };
 
 String _startProtectionButtonLabel(ProtectionStatus status) {
   if (status == ProtectionStatus.idle || status == ProtectionStatus.error) {

@@ -5,6 +5,7 @@ import 'package:zentor_protocol/zentor_protocol.dart';
 
 import '../../app/app_state.dart';
 import '../../app/theme/zentor_colors.dart';
+import '../../core/local_core/local_core_client.dart';
 import '../../core/updates/update_service.dart';
 import '../../shared/widgets/zentor_button.dart';
 import '../../shared/widgets/zentor_status_card.dart';
@@ -257,6 +258,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             _ValueRow('Core Service', _serviceLabel(state.coreServiceStatus)),
             if (state.coreServiceStatusError?.trim().isNotEmpty ?? false)
               _ValueRow('Core Service detail', state.coreServiceStatusError!),
+            _ValueRow(
+              'Core Service IPC',
+              _serviceBoundaryLabel(state.coreServiceBoundaryHealth),
+            ),
+            if (state.coreServiceBoundaryHealth.diagnostic?.trim().isNotEmpty ??
+                false)
+              _ValueRow(
+                'Core Service IPC detail',
+                state.coreServiceBoundaryHealth.diagnostic!,
+              ),
             _ValueRow('Guard mode', _guardLabel(state.guardStatus)),
             if (state.guardStatusError?.trim().isNotEmpty ?? false)
               _ValueRow('Guard detail', state.guardStatusError!),
@@ -1084,6 +1095,16 @@ String _serviceLabel(String status) => switch (status) {
   'error' => 'Error',
   _ => 'Unavailable',
 };
+
+String _serviceBoundaryLabel(CoreServiceBoundaryHealth health) =>
+    switch (health.status) {
+      CoreServiceBoundaryStatus.notChecked => 'Not checked',
+      CoreServiceBoundaryStatus.unsupported => 'Unsupported on this platform',
+      CoreServiceBoundaryStatus.unavailable => 'Unavailable',
+      CoreServiceBoundaryStatus.degraded =>
+        'Authenticated; native engine degraded',
+      CoreServiceBoundaryStatus.ready => 'Authenticated and ready',
+    };
 
 String _guardLabel(String status) => switch (status) {
   'running' => 'Running',
