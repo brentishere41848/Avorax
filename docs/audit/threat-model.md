@@ -455,3 +455,31 @@ fabricate JSON, so installed executable ACLs, trusted publisher signing, package
 authenticity, and installed service/pipe lifecycle remain required TCB and E2E
 evidence. The service API remains health-only, and no mutation, persistence,
 kernel enforcement, or pre-execution claim is added.
+
+## Checkpoint 2164 Signed Hash-Intelligence Boundary
+
+External malware repository trees are attacker-controlled metadata and do not
+provide canonical file SHA-256 evidence. Treating Git blob identifiers, paths,
+filenames, extensions, or repository labels as confirmed malware would allow a
+third party to induce false positives and destructive quarantine. Avorax keeps
+those sources disabled and metadata-only. It never downloads sample bytes to
+manufacture hashes for this workflow.
+
+The reviewed-hash boundary now requires a non-empty pack whose every active row
+is a unique lowercase SHA-256 exact hash with confirmed confidence, critical
+severity, a production threat category, global file scope, empty context, and
+`quarantine_if_policy_allows`. Compilation and validation occur in unique local
+temporary files; only a validated regular pack atomically replaces the target.
+Failure cleanup revalidates temporary files, and an existing known-good pack is
+preserved when validation fails.
+
+The definitions-only package wrapper accepts checked local metadata and hashes,
+uses bounded local child processes, rejects reparse-backed paths, requires one
+and only one staged pack, and delegates signing, payload hashes, archive policy,
+atomic staging, and rollback to the normal `.aup` verifier/applier. This reduces
+schema, partial-write, path, and unsigned-update risk but does not prove source
+truth, production key custody, release-host integrity, HTTPS publication, or an
+installed service apply/rollback. Those remain release-process and installed-E2E
+boundaries. The benign smoke verifies package construction and `--verify` only;
+it does not apply definitions, install services, disable Defender, use malware,
+or claim pre-execution blocking.

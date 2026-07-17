@@ -16,11 +16,13 @@ python tools\zentor_intel\compile_zentor_signatures.py --input indicators.jsonl 
 python tools\zentor_intel\validate_indicator_pack.py --input assets\zentor_native\signatures\zentor_realworld_hashes.zsig
 ```
 
-The wrapper version of that local hash-only workflow requires explicit release metadata and cleans its temporary JSONL after success or failure:
+The wrapper version of that local hash-only workflow requires explicit release metadata, validates the strict non-empty `known-bad-sha256` profile, atomically activates only a validated pack, and cleans its temporary JSONL and pack after success or failure:
 
 ```powershell
 python tools\zentor_intel\build_realworld_detection_pack.py --source assets\zentor_native\threat_intel\sources.example.json --hashes hashes.txt --output assets\zentor_native\signatures\zentor_realworld_hashes.zsig --category trojan --version 0.2.1
 ```
+
+The strict profile accepts only unique canonical lowercase SHA-256 exact hashes with confirmed confidence, critical severity, an explicit production category, and `quarantine_if_policy_allows`. Use `tools/update/avorax-build-hash-intel-update.ps1` to package a reviewed local hash feed as a definitions-only signed `.aup`; it does not download or inspect sample bytes.
 
 GitHub malware-repository metadata import:
 

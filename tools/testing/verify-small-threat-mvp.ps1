@@ -255,6 +255,10 @@ $verifiedScope = $verifiedScope.Replace(
   "Windows App Installer/AppInstaller carrier review, ZIP nested executable/autorun/shortcut carrier review, registry/shortcut/disk-image carrier review, autorun INF/email/Office/RTF/PDF/web/help/OneNote/add-in carrier review, release update-service signed package verify/tamper smoke"
 )
 $verifiedScope = $verifiedScope.Replace(
+  "release update-package builder signed verify smoke, release update-package builder restricted-payload fail-safe smoke",
+  "release update-package builder signed verify smoke, release signed hash-intelligence definitions package smoke, release update-package builder restricted-payload fail-safe smoke"
+)
+$verifiedScope = $verifiedScope.Replace(
   "release local-core binary corrupt allowlist fail-closed smoke, release local-core binary quarantine metadata/payload tamper fail-safe smoke",
   "release local-core binary allowlist confirmed-fixture no-quarantine smoke, release local-core binary corrupt allowlist fail-closed smoke, release local-core binary quarantine metadata/payload tamper fail-safe smoke"
 )
@@ -464,6 +468,7 @@ try {
     $results.Add((Invoke-Step "release update-service rollback destination-kind fail-safe smoke" $repo $powershell @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "tools\testing\run-release-update-service-rollback-destination-kind-smoke.ps1", "-UpdateServicePath", $releaseUpdateServicePath)))
     $results.Add((Invoke-Step "release update-service rollback staged-engine restore smoke" $repo $powershell @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "tools\testing\run-release-update-service-rollback-staged-engine-smoke.ps1", "-UpdateServicePath", $releaseUpdateServicePath)))
     $results.Add((Invoke-Step "release update-package builder signed verify smoke" $repo $powershell @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "tools\testing\run-release-update-package-builder-smoke.ps1", "-UpdateServicePath", $releaseUpdateServicePath, "-SignerPath", $releaseUpdateSignerPath, "-KeygenPath", $releaseUpdateKeygenPath)))
+    $results.Add((Invoke-Step "release signed hash-intelligence definitions package smoke" $repo $powershell @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "tools\testing\run-hash-intel-update-package-smoke.ps1", "-PythonPath", $python, "-UpdateServicePath", $releaseUpdateServicePath, "-SignerPath", $releaseUpdateSignerPath, "-KeygenPath", $releaseUpdateKeygenPath)))
     $results.Add((Invoke-Step "release update-package builder restricted-payload fail-safe smoke" $repo $powershell @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "tools\testing\run-release-update-package-builder-failsafe-smoke.ps1", "-SignerPath", $releaseUpdateSignerPath)))
     $results.Add((Invoke-Step "safe EICAR detect-only smoke" $repo $powershell @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "tools\testing\run-safe-eicar-smoke.ps1", "-CargoPath", $cargo)))
     $results.Add((Invoke-Step "safe custom-folder scan smoke" $repo $powershell @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "tools\testing\run-safe-folder-scan-smoke.ps1", "-CargoPath", $cargo)))

@@ -16,7 +16,10 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_TEST_FILES = (ROOT / "tests" / "test_custom_driver_contract.py",)
+DEFAULT_TEST_FILES = (
+    ROOT / "tests" / "test_custom_driver_contract.py",
+    ROOT / "tests" / "test_hash_intel_update.py",
+)
 MAX_FAILURE_DIAGNOSTIC_CHARS = 16_384
 TRUNCATION_MARKER = "...[truncated]"
 

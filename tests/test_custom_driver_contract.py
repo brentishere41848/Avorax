@@ -16889,7 +16889,10 @@ def test_realworld_detection_pack_wrapper_bounds_subprocess_and_temp_outputs():
     helper_source = source[helper_start:main_start]
     main_source = source[main_start:]
 
-    assert "from github_intel_common import MAX_JSON_BYTES, require_regular_file" in source
+    assert (
+        "from github_intel_common import MAX_JSON_BYTES, checked_output_file, require_regular_file"
+        in source
+    )
     assert "import threading" in source
     assert "MAX_CHILD_OUTPUT_BYTES = 64 * 1024" in source
     assert "MAX_CHILD_OUTPUT_CHUNK_BYTES = 8192" in source
@@ -16922,11 +16925,22 @@ def test_realworld_detection_pack_wrapper_bounds_subprocess_and_temp_outputs():
     assert "uuid.uuid4().hex" in helper_source
     assert "follow_symlinks=False" in helper_source
     assert "def cleanup_temp_jsonl(path: Path) -> None" in helper_source
+    assert "def unique_temp_pack(output: Path) -> Path" in helper_source
+    assert "def cleanup_temp_pack(path: Path) -> None" in helper_source
+    assert "def activate_validated_pack(temp: Path, output: Path) -> None" in helper_source
+    assert 'checked_output_file(output, "signature pack output")' in helper_source
+    assert "os.replace(temp, target)" in helper_source
     assert "parser.add_argument(\"--category\", required=True)" in main_source
     assert "parser.add_argument(\"--version\", required=True)" in main_source
     assert "\"--version\"" in main_source
     assert "finally:" in main_source
     assert "cleanup_temp_jsonl(temp)" in main_source
+    assert "cleanup_temp_pack(temp_pack)" in main_source
+    assert '"--profile",' in main_source
+    assert '"known-bad-sha256",' in main_source
+    assert main_source.index('"known-bad-sha256",') < main_source.index(
+        "activate_validated_pack(temp_pack, output)"
+    )
 
 
 def test_python_release_subprocess_timeouts_report_cleanup_failures():
@@ -18921,6 +18935,7 @@ def test_small_threat_mvp_verifier_is_safe_and_reproducible():
     assert "release update-service rollback destination-kind fail-safe smoke" in source
     assert "release update-service rollback staged-engine restore smoke" in source
     assert "release update-package builder signed verify smoke" in source
+    assert "release signed hash-intelligence definitions package smoke" in source
     assert "release update-package builder restricted-payload fail-safe smoke" in source
     assert "release local-core binary safe hash fixture scan/quarantine smoke" in source
     assert "release local-core binary full-scan PE carrier safe hash fixture smoke" in source
@@ -19779,6 +19794,11 @@ def test_small_threat_mvp_report_validator_is_strict_and_local():
         in source
     )
     assert (
+        'Assert-ReportContainsStep $steps "release signed hash-intelligence '
+        'definitions package smoke"'
+        in source
+    )
+    assert (
         'Assert-ReportContainsStep $steps "release update-package builder '
         'restricted-payload fail-safe smoke"'
         in source
@@ -20225,6 +20245,12 @@ def test_small_threat_mvp_report_validator_is_strict_and_local():
     assert (
         'Assert-ReportScopeContains $verifiedScopeText "release update-package '
         'builder signed verify smoke" "verification_scope.verified"'
+        in source
+    )
+    assert (
+        'Assert-ReportScopeContains $verifiedScopeText "release signed '
+        'hash-intelligence definitions package smoke" '
+        '"verification_scope.verified"'
         in source
     )
     assert (
