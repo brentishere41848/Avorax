@@ -1,6 +1,6 @@
 # Avorax Threat Model
 
-Date: 2026-07-08
+Date: 2026-07-10
 
 This document records the defensive threat model for the current small-threat
 MVP. It is intentionally conservative: a feature is trusted only when the
@@ -19,6 +19,10 @@ repository has executable proof and the verification report names the proof.
 
 - Flutter UI to local-core IPC over stdio is local process IPC, not a network
   trust boundary.
+- Windows Core Service exposes a separate local named-pipe v1 boundary. Windows
+  authenticates the client token, remote clients are rejected, and the current
+  command allowlist contains only read-only `health`; Flutter does not yet use
+  this boundary for scan or mutation commands.
 - Release local-core JSON responses are untrusted until parsed, schema-checked,
   and surfaced with visible errors.
 - Engine assets, update packages, allowlist files, quarantine stores, and
@@ -383,3 +387,24 @@ service-specific stop status, while failure to publish that status is retained
 alongside the primary error. This proves state mapping and failure preservation,
 not installed service supervision: recovery actions, ACLs, privileged IPC,
 restart behavior, and elevated-host lifecycle remain outside the verified scope.
+
+## Checkpoint 2161 Authenticated Core Service IPC Boundary
+
+Running Local Core's broad stdio command handler as `LocalSystem` would turn
+file-system and quarantine commands into an unsafe confused-deputy boundary.
+Core Service therefore exposes a separate Windows named pipe with an explicit
+SYSTEM/Administrators/Authenticated Users ACL, `PIPE_REJECT_REMOTE_CLIENTS`, and
+exclusive first-instance creation. The server reads at most one 16 KiB message,
+obtains the local client PID, impersonates the client, opens its query token,
+and must successfully `RevertToSelf` before parsing or answering. Revert failure
+terminates the IPC worker and becomes a failing service runtime result.
+
+Protocol v1 rejects unknown fields, invalid versions, malformed JSON, empty or
+oversized request IDs, and every command except read-only `health`. The health
+response omits installation and data paths and states `healthOnly`, no network
+exposure, non-production ML status, and the user-mode limitations. A real local
+pipe fixture verifies client PID/token authentication, first-instance collision
+failure, malformed input, mutation denial, 16 KiB enforcement, recovery after
+oversized input, worker liveness, and bounded shutdown. This does not authorize
+mutations, connect Flutter to the service, validate the installed service ACL or
+recovery policy, or prove persistent/pre-execution protection.

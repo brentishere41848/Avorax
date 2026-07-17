@@ -24,6 +24,8 @@ mod allowlist;
 mod api;
 #[cfg_attr(not(test), allow(dead_code, unused_imports))]
 mod app_control;
+#[cfg(windows)]
+mod core_service_ipc;
 mod migration;
 #[cfg_attr(not(test), allow(dead_code))]
 mod protection;
@@ -304,17 +306,40 @@ fn run_windows_service_loop() -> Result<()> {
     ))?;
 
     let runtime_result = (|| -> Result<()> {
-        native_engine().context("native engine warmup failed")?;
-        status_handle
-            .set_service_status(core_service_status(
-                ServiceState::Running,
-                ServiceExitCode::NO_ERROR,
-            ))
-            .context("failed to report running Core Service status to Windows")?;
-        shutdown_rx
-            .recv()
-            .context("core service shutdown channel closed before stop signal")?;
-        Ok(())
+        let engine = native_engine().context("native engine warmup failed")?;
+        let engine_status = engine.status();
+        let health = core_service_ipc::ServiceHealth::ready(
+            engine_status.native_engine_ready,
+            engine_status.signature_count,
+            engine_status.rule_count,
+            engine_status.ml_model_production_ready,
+        );
+        let mut ipc_server = core_service_ipc::CoreServiceIpcServer::start(health)
+            .context("failed to start authenticated Core Service IPC")?;
+
+        let active_result = (|| -> Result<()> {
+            status_handle
+                .set_service_status(core_service_status(
+                    ServiceState::Running,
+                    ServiceExitCode::NO_ERROR,
+                ))
+                .context("failed to report running Core Service status to Windows")?;
+            loop {
+                match shutdown_rx.recv_timeout(Duration::from_millis(250)) {
+                    Ok(()) => return Ok(()),
+                    Err(mpsc::RecvTimeoutError::Timeout) => ipc_server
+                        .ensure_running()
+                        .context("Core Service IPC stopped unexpectedly")?,
+                    Err(mpsc::RecvTimeoutError::Disconnected) => {
+                        anyhow::bail!("core service shutdown channel closed before stop signal")
+                    }
+                }
+            }
+        })();
+        let ipc_stop_result = ipc_server
+            .stop()
+            .context("failed to stop authenticated Core Service IPC");
+        combine_core_service_ipc_results(active_result, ipc_stop_result)
     })();
 
     let stop_status_result = status_handle.set_service_status(core_service_status(
@@ -322,6 +347,21 @@ fn run_windows_service_loop() -> Result<()> {
         core_service_stop_exit_code(&runtime_result),
     ));
     combine_core_service_runtime_and_status_results(runtime_result, stop_status_result)
+}
+
+#[cfg(windows)]
+fn combine_core_service_ipc_results(
+    active_result: Result<()>,
+    stop_result: Result<()>,
+) -> Result<()> {
+    match (active_result, stop_result) {
+        (Ok(()), Ok(())) => Ok(()),
+        (Err(active_error), Ok(())) => Err(active_error),
+        (Ok(()), Err(stop_error)) => Err(stop_error),
+        (Err(active_error), Err(stop_error)) => anyhow::bail!(
+            "Core Service active runtime failed: {active_error:#}; additionally failed to stop IPC: {stop_error:#}"
+        ),
+    }
 }
 
 #[cfg(windows)]
@@ -4171,8 +4211,19 @@ mod tests {
         let old_shutdown_signal = ["let _ = shutdown_", "tx.send(())"].concat();
 
         assert!(loop_source.contains("native_engine().context(\"native engine warmup failed\")?"));
-        assert!(loop_source
-            .contains(".context(\"core service shutdown channel closed before stop signal\")?"));
+        assert!(loop_source.contains("CoreServiceIpcServer::start(health)"));
+        assert!(loop_source.contains("failed to start authenticated Core Service IPC"));
+        assert!(loop_source.contains("shutdown_rx.recv_timeout(Duration::from_millis(250))"));
+        assert!(loop_source.contains("Core Service IPC stopped unexpectedly"));
+        assert!(loop_source.contains("core service shutdown channel closed before stop signal"));
+        assert!(loop_source.contains("failed to stop authenticated Core Service IPC"));
+        let ipc_ready = loop_source
+            .find("CoreServiceIpcServer::start(health)")
+            .unwrap();
+        let running = loop_source
+            .find("ServiceState::Running")
+            .expect("running status must be reported");
+        assert!(ipc_ready < running);
         assert!(loop_source.contains("failed to signal core service shutdown"));
         assert!(!loop_source.contains(&old_warmup_pattern));
         assert!(!loop_source.contains(&old_shutdown_pattern));
@@ -4259,6 +4310,31 @@ mod tests {
         .to_string();
         assert!(combined_error.contains("warmup failed"));
         assert!(combined_error.contains("failed to report stopped status"));
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn core_service_preserves_active_and_ipc_stop_failures() {
+        let active_error =
+            combine_core_service_ipc_results(Err(anyhow::anyhow!("active loop failed")), Ok(()))
+                .unwrap_err()
+                .to_string();
+        assert!(active_error.contains("active loop failed"));
+
+        let stop_error =
+            combine_core_service_ipc_results(Ok(()), Err(anyhow::anyhow!("pipe stop failed")))
+                .unwrap_err()
+                .to_string();
+        assert!(stop_error.contains("pipe stop failed"));
+
+        let combined_error = combine_core_service_ipc_results(
+            Err(anyhow::anyhow!("active loop failed")),
+            Err(anyhow::anyhow!("pipe stop failed")),
+        )
+        .unwrap_err()
+        .to_string();
+        assert!(combined_error.contains("active loop failed"));
+        assert!(combined_error.contains("pipe stop failed"));
     }
 
     #[test]
