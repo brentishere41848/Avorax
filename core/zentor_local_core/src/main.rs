@@ -125,10 +125,13 @@ struct WatchPollScanSummary {
 
 fn main() -> Result<()> {
     let mut args = std::env::args().skip(1);
-    if let Some(arg) = args.next() {
-        if arg == "--service" {
-            return run_service();
-        }
+    match (args.next(), args.next()) {
+        (None, None) => {}
+        (Some(arg), None) if arg == "--service" => return run_service(),
+        (Some(arg), None) if arg == "--service-ipc-health" => return run_service_ipc_health(),
+        (Some(arg), None) => anyhow::bail!("unsupported command-line argument {arg}"),
+        (Some(_), Some(_)) => anyhow::bail!("only one command-line mode may be selected"),
+        (None, Some(_)) => unreachable!("a second argument cannot exist without a first"),
     }
     let migration_report =
         migration::migrate_from_legacy_brand().context("legacy data migration failed")?;
@@ -215,6 +218,18 @@ fn run_service() -> Result<()> {
 #[cfg(not(windows))]
 fn run_service() -> Result<()> {
     anyhow::bail!("Avorax Core Service Windows service mode is unsupported on this platform")
+}
+
+#[cfg(windows)]
+fn run_service_ipc_health() -> Result<()> {
+    let report = core_service_ipc::probe_service_health()?;
+    println!("{}", serde_json::to_string(&report)?);
+    Ok(())
+}
+
+#[cfg(not(windows))]
+fn run_service_ipc_health() -> Result<()> {
+    anyhow::bail!("Avorax Core Service health IPC is unsupported on this platform")
 }
 
 #[cfg(windows)]

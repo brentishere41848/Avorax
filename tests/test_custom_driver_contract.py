@@ -19,6 +19,9 @@ GUARD_SELF_TEST = ROOT / "core" / "zentor_guard_service" / "src" / "self_test.rs
 GUARD_DRIVER_IPC = ROOT / "core" / "zentor_guard_service" / "src" / "driver_ipc.rs"
 GUARD_KNOWN_BAD_CACHE = ROOT / "core" / "zentor_guard_service" / "src" / "known_bad_cache.rs"
 LOCAL_CORE_MAIN = ROOT / "core" / "zentor_local_core" / "src" / "main.rs"
+LOCAL_CORE_SERVICE_IPC = (
+    ROOT / "core" / "zentor_local_core" / "src" / "core_service_ipc.rs"
+)
 LOCAL_CORE_API = ROOT / "core" / "zentor_local_core" / "src" / "api" / "mod.rs"
 LOCAL_WINDOWS_TOOLS = ROOT / "core" / "zentor_local_core" / "src" / "windows_tools.rs"
 LOCAL_GUARD_SERVICE = ROOT / "core" / "zentor_local_core" / "src" / "protection" / "guard_service.rs"
@@ -23975,6 +23978,39 @@ def test_local_core_env_roots_reject_parent_traversal():
         assert "validate_local_core_env_root_text(name, &text)?" in function_source
         assert "PathBuf::from(text)" in function_source
     assert "local_core_program_data_root_rejects_parent_traversal_override" in source
+
+
+def test_local_core_service_health_client_stays_authenticated_bounded_and_read_only():
+    main = read(LOCAL_CORE_MAIN)
+    source = read(LOCAL_CORE_SERVICE_IPC)
+    production = source.split("#[cfg(test)]\nmod tests")[0]
+    client = production[
+        production.index("fn probe_service_health_with<F>"):
+        production.index("fn run_server")
+    ]
+
+    assert 'arg == "--service-ipc-health"' in main
+    assert "return run_service_ipc_health()" in main
+    assert "unsupported command-line argument {arg}" in main
+    assert 'query_running_windows_service_process_id("avorax_core_service")' in production
+    for marker in [
+        "GetNamedPipeServerProcessId",
+        "server_pid == service_pid_before",
+        "service_pid_after == service_pid_before",
+        "FILE_FLAG_OVERLAPPED",
+        "GetOverlappedResultEx",
+        "CancelIoEx",
+        "MAX_RESPONSE_BYTES",
+        "deny_unknown_fields",
+        'command: "health".to_string()',
+        "ok: health.engine_ready",
+        'response.command_scope == "healthOnly"',
+        'health.transport == "windowsNamedPipe"',
+        "!health.network_exposed",
+    ]:
+        assert marker in client or marker in production
+    for mutation in ['"scan"', '"quarantine"', '"restore"', '"delete"', '"update"']:
+        assert mutation not in client
 
 
 def test_local_quarantine_env_roots_reject_parent_traversal():

@@ -408,3 +408,26 @@ failure, malformed input, mutation denial, 16 KiB enforcement, recovery after
 oversized input, worker liveness, and bounded shutdown. This does not authorize
 mutations, connect Flutter to the service, validate the installed service ACL or
 recovery policy, or prove persistent/pre-execution protection.
+
+## Checkpoint 2162 Pipe Server Authentication Boundary
+
+An explicit pipe ACL and exclusive first-instance flag do not by themselves let
+an unprivileged client prove which process answered. The native health client
+therefore reads the running Core Service PID from typed SCM status, opens only
+the fixed local pipe, obtains the pipe server PID from the connected handle, and
+requires both identities to match. It queries SCM again after receiving the
+response; a stopped/restarted service, zero PID, mismatched server, or changed
+PID fails closed. The service name remains allowlisted and the SCM/service access
+rights remain `CONNECT` and `QUERY_STATUS` only.
+
+The client uses overlapped named-pipe reads and writes with finite waits,
+`CancelIoEx`, and completed-operation reaping so a same-name stalled server
+cannot hang the caller. It accepts one bounded strict protocol-v1 health response
+whose request ID and authenticated client PID match, whose scope remains
+`healthOnly`, and whose transport remains local and non-networked. Counts and
+limitation text are bounded, contradictory data/error fields and unknown JSON
+fields are rejected, and no mutation command can be selected. This authenticates
+the read-only native probe in local fixtures; it does not defend against code
+already executing inside the trusted service process, authorize privileged
+mutations, prove installed service ACL/recovery configuration, connect Flutter,
+or provide kernel/pre-execution enforcement.
