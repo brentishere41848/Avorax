@@ -256,7 +256,7 @@ impl UpdateVerifier {
             .try_into()
             .map_err(|_| anyhow::anyhow!("invalid public key length"))?;
         let verifying_key = VerifyingKey::from_bytes(&key_array)?;
-        let signature = Signature::from_slice(&signature_bytes)?;
+        let signature = Signature::from_slice(signature_bytes)?;
         verifying_key
             .verify(manifest_bytes, &signature)
             .context("manifest signature verification failed")

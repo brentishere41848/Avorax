@@ -120,6 +120,8 @@ impl UpdateManifest {
     }
 }
 
+// Manifest source-contract tests intentionally precede the scalar validators they inspect.
+#[allow(clippy::items_after_test_module)]
 #[cfg(test)]
 mod tests {
     use super::*;

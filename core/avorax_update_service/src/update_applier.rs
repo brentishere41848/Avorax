@@ -72,14 +72,18 @@ fn apply_package_with_service_control(
         let staging_cleanup_error = Some(format!("{error:#}"));
         return report_pre_activation_failure(
             error,
-            "staging_prepare_error",
-            "update apply aborted before activation because staging cleanup failed",
-            &verified.manifest.version,
-            &verified.manifest.package_id,
-            &verified.package_sha256,
-            &install_dir,
-            false,
-            staging_cleanup_error,
+            PreActivationFailureReport {
+                error_field: "staging_prepare_error",
+                context: "update apply aborted before activation because staging cleanup failed",
+                version: &verified.manifest.version,
+                package_id: &verified.manifest.package_id,
+                package_sha256: &verified.package_sha256,
+                install_dir: &install_dir,
+            },
+            StagingCleanupStatus {
+                ok: false,
+                error: staging_cleanup_error,
+            },
         );
     }
     if let Err(error) = package.extract_payload_to_verified_hash(&staging, &verified.package_sha256)
@@ -91,14 +95,18 @@ fn apply_package_with_service_control(
             .map(|err| format!("{err:#}"));
         return report_pre_activation_failure(
             error,
-            "extract_error",
-            "update apply aborted before activation because payload extraction failed",
-            &verified.manifest.version,
-            &verified.manifest.package_id,
-            &verified.package_sha256,
-            &install_dir,
-            staging_cleanup_result.is_ok(),
-            staging_cleanup_error,
+            PreActivationFailureReport {
+                error_field: "extract_error",
+                context: "update apply aborted before activation because payload extraction failed",
+                version: &verified.manifest.version,
+                package_id: &verified.manifest.package_id,
+                package_sha256: &verified.package_sha256,
+                install_dir: &install_dir,
+            },
+            StagingCleanupStatus {
+                ok: staging_cleanup_result.is_ok(),
+                error: staging_cleanup_error,
+            },
         );
     }
     let rollback = match create_snapshot(&install_dir, current_version)
@@ -113,14 +121,19 @@ fn apply_package_with_service_control(
                 .map(|err| format!("{err:#}"));
             return report_pre_activation_failure(
                 error,
-                "snapshot_error",
-                "update apply aborted before activation because rollback snapshot creation failed",
-                &verified.manifest.version,
-                &verified.manifest.package_id,
-                &verified.package_sha256,
-                &install_dir,
-                staging_cleanup_result.is_ok(),
-                staging_cleanup_error,
+                PreActivationFailureReport {
+                    error_field: "snapshot_error",
+                    context:
+                        "update apply aborted before activation because rollback snapshot creation failed",
+                    version: &verified.manifest.version,
+                    package_id: &verified.manifest.package_id,
+                    package_sha256: &verified.package_sha256,
+                    install_dir: &install_dir,
+                },
+                StagingCleanupStatus {
+                    ok: staging_cleanup_result.is_ok(),
+                    error: staging_cleanup_error,
+                },
             );
         }
     };
@@ -333,39 +346,47 @@ fn context_with_report_and_cleanup_error(
     context
 }
 
+struct PreActivationFailureReport<'a> {
+    error_field: &'a str,
+    context: &'a str,
+    version: &'a str,
+    package_id: &'a str,
+    package_sha256: &'a str,
+    install_dir: &'a Path,
+}
+
+struct StagingCleanupStatus {
+    ok: bool,
+    error: Option<String>,
+}
+
 fn report_pre_activation_failure(
     error: anyhow::Error,
-    error_field: &str,
-    context: &str,
-    version: &str,
-    package_id: &str,
-    package_sha256: &str,
-    install_dir: &Path,
-    staging_cleanup_ok: bool,
-    staging_cleanup_error: Option<String>,
+    details: PreActivationFailureReport<'_>,
+    staging_cleanup: StagingCleanupStatus,
 ) -> Result<()> {
     let error_text = format!("{error:#}");
     let mut report = json!({
         "ok": false,
         "applied": false,
-        "version": version,
-        "package_id": package_id,
-        "package_sha256": package_sha256,
+        "version": details.version,
+        "package_id": details.package_id,
+        "package_sha256": details.package_sha256,
         "rollback": null,
-        "install_dir": install_dir,
-        "staging_cleanup_ok": staging_cleanup_ok,
-        "staging_cleanup_error": staging_cleanup_error.clone(),
+        "install_dir": details.install_dir,
+        "staging_cleanup_ok": staging_cleanup.ok,
+        "staging_cleanup_error": staging_cleanup.error.clone(),
     });
     if let Some(object) = report.as_object_mut() {
-        object.insert(error_field.to_string(), json!(error_text));
+        object.insert(details.error_field.to_string(), json!(error_text));
     }
     let report_error = write_update_report(&report)
         .err()
         .map(|error| format!("{error:#}"));
     Err(error).context(context_with_report_and_cleanup_error(
-        context,
+        details.context,
         report_error.as_deref(),
-        staging_cleanup_error.as_deref(),
+        staging_cleanup.error.as_deref(),
     ))
 }
 

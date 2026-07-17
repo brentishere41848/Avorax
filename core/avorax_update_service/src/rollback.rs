@@ -1,4 +1,5 @@
 use anyhow::{Context, Result};
+use std::cmp::Reverse;
 use std::io::ErrorKind;
 use std::path::{Component, Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -68,7 +69,7 @@ fn copy_snapshot_items(install_dir: &Path, snapshot: &Path) -> Result<()> {
             RollbackItemKind::File => copy_file_staged(
                 &source,
                 &snapshot.join(item.name),
-                &snapshot,
+                snapshot,
                 "rollback snapshot",
             )?,
             RollbackItemKind::Directory => copy_dir(&source, &snapshot.join(item.name))?,
@@ -96,7 +97,7 @@ pub fn restore_latest_snapshot(install_dir: &Path) -> Result<PathBuf> {
             }
         }
     }
-    snapshots.sort_by(|left, right| right.0.cmp(&left.0));
+    snapshots.sort_by_key(|entry| Reverse(entry.0));
     let snapshot = snapshots
         .into_iter()
         .map(|(_, path)| path)
