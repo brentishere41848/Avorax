@@ -4127,3 +4127,9 @@ passed and published the prerelease at commit
 | Control / engine | Responsibility | Classification | Evidence / limitation |
 | --- | --- | --- | --- |
 | Strict update-service lint gate | Keep signed-update, rollback, path-safety, CLI, and verifier code free of Rust 1.96 Clippy warnings and prevent silent regression | Local all-target gate verified; CI enforcement source-verified | `cargo clippy --all-targets -- -D warnings` passes without command-line allowances. CI pins Rust 1.96.1, installs Clippy, and runs the same command after updater tests. Two source files retain narrow `items_after_test_module` annotations because source-contract tests intentionally inspect later production helpers; there is no crate-wide lint suppression. This gate improves maintainability but is not installed-host or security-boundary E2E proof. |
+
+## Checkpoint 2168 Engine-Control Matrix Addendum
+
+| Control / engine | Responsibility | Classification | Evidence / limitation |
+| --- | --- | --- | --- |
+| Strict Guard Service lint gate | Keep Guard process observation, driver-health, driver IPC, known-bad-cache, DPAPI metadata, and quarantine code free of Rust 1.96 Clippy warnings | Local all-target Guard gate verified; CI enforcement source-verified | `cargo clippy --all-targets --no-deps -- -D warnings` passes with no lint allowances; the complete Guard suite (`214`), source contracts (`608`), rustfmt/diff checks, and no-malware-binaries gate pass. CI pins Rust 1.96.1 and runs the exact command after Guard tests. `--no-deps` deliberately leaves thirteen native-engine dependency lints visible as separate debt; this gate is not installed-service, signed-driver, or pre-execution proof. |

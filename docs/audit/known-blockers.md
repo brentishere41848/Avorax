@@ -910,3 +910,9 @@ enforcement, or pre-execution blocking is claimed.
 - **Resolved locally:** Rust 1.96 strict Clippy now passes for every update-service target with warnings denied. The eleven prior findings were corrected through behavior-neutral conversions, borrows, sorting, CLI iteration, test allocations, and a structured pre-activation failure context. Two intentional source-contract test-module layouts have narrow local layout annotations instead of a crate-wide suppression.
 - **Regression-gated:** Windows CI installs the pinned Clippy component and runs `cargo clippy --all-targets -- -D warnings`; a Python source contract requires both the component and exact command.
 - **Unchanged limits:** This maintenance checkpoint changes no privilege, service, update-signing, network, installed-host, or malware-handling boundary. Installed service/update E2E and production signer custody remain partial or blocked as documented above.
+
+## Checkpoint 2168 Strict Guard-Service Lint Gate
+
+- **Resolved locally:** Every Guard Service target passes Rust 1.96 strict Clippy with warnings denied and no lint allowances. The fifteen prior Guard findings were corrected with a typed driver-health signal record, standard-library equivalents, explicit default construction, copy semantics, and immutable DPAPI input descriptors. The complete Guard suite passes (`214`), Python source contracts pass (`608`), rustfmt/diff checks pass, and the no-malware-binaries gate passes.
+- **Regression-gated:** Windows CI runs `cargo clippy --all-targets --no-deps -- -D warnings` after the complete Guard test suite. A Python source contract requires the pinned Clippy component, Guard working directory, and exact command.
+- **Still partial:** `--no-deps` intentionally excludes the native-engine dependency, whose thirteen pre-existing lints remain tracked debt. This maintenance checkpoint does not install/start the Guard Service or driver and does not prove kernel or pre-execution blocking.

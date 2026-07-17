@@ -1,22 +1,17 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub enum DriverProtectionMode {
     Disabled,
     ObserveOnly,
     Balanced,
     BlockKnownBad,
+    #[default]
     BlockConfirmedThreats,
     Lockdown,
     DeveloperMode,
     Aggressive,
-}
-
-impl Default for DriverProtectionMode {
-    fn default() -> Self {
-        Self::BlockConfirmedThreats
-    }
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]

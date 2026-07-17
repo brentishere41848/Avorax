@@ -40,6 +40,11 @@ jobs:
         working-directory: core/zentor_guard_service
         run: cargo test
 
+      - name: Lint guard service
+        working-directory: core/zentor_guard_service
+        # Native-engine lint debt is tracked separately; this gate owns Guard code.
+        run: cargo clippy --all-targets --no-deps -- -D warnings
+
       - name: Test update service
         working-directory: core/avorax_update_service
         # Update tests intentionally exercise process-wide rollback and data roots.
