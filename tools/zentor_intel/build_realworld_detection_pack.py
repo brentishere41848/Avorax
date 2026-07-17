@@ -7,7 +7,7 @@ import threading
 import uuid
 from pathlib import Path
 
-from github_intel_common import MAX_JSON_BYTES, require_regular_file
+from github_intel_common import MAX_JSON_BYTES, checked_output_file, require_regular_file
 
 
 MAX_TOOL_BYTES = 64 * 1024 * 1024
@@ -170,6 +170,41 @@ def cleanup_temp_jsonl(path: Path) -> None:
         raise SystemExit(f"unable to remove temporary indicator JSONL {path}: {exc}") from exc
 
 
+def unique_temp_pack(output: Path) -> Path:
+    output = output.resolve()
+    temp = output.with_name(f".{output.name}.{uuid.uuid4().hex}.zsig.tmp")
+    try:
+        os.stat(temp, follow_symlinks=False)
+    except FileNotFoundError:
+        return temp
+    except OSError as exc:
+        raise SystemExit(f"unable to inspect temporary signature pack {temp}: {exc}") from exc
+    raise SystemExit(f"temporary signature pack already exists: {temp}")
+
+
+def cleanup_temp_pack(path: Path) -> None:
+    try:
+        os.stat(path, follow_symlinks=False)
+    except FileNotFoundError:
+        return
+    except OSError as exc:
+        raise SystemExit(f"unable to inspect temporary signature pack during cleanup {path}: {exc}") from exc
+    require_regular_file(path, "temporary signature pack cleanup target", MAX_JSON_BYTES)
+    try:
+        path.unlink()
+    except OSError as exc:
+        raise SystemExit(f"unable to remove temporary signature pack {path}: {exc}") from exc
+
+
+def activate_validated_pack(temp: Path, output: Path) -> None:
+    require_regular_file(temp, "validated temporary signature pack", MAX_JSON_BYTES)
+    target = checked_output_file(output, "signature pack output")
+    try:
+        os.replace(temp, target)
+    except OSError as exc:
+        raise SystemExit(f"unable to atomically activate validated signature pack {target}: {exc}") from exc
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Build a real-world Avorax detection pack from local indicator files.")
     parser.add_argument("--source", required=True)
@@ -183,7 +218,9 @@ def main() -> int:
     import_script = tool_script("import_hash_feed.py")
     compile_script = tool_script("compile_zentor_signatures.py")
     validate_script = tool_script("validate_indicator_pack.py")
-    temp = unique_temp_jsonl(Path(args.output))
+    output = Path(args.output)
+    temp = unique_temp_jsonl(output)
+    temp_pack = unique_temp_pack(output)
     try:
         run_tool(
             "hash feed import",
@@ -208,14 +245,28 @@ def main() -> int:
                 "--input",
                 str(temp),
                 "--output",
-                args.output,
+                str(temp_pack),
                 "--version",
                 args.version,
             ],
         )
-        run_tool("indicator pack validation", [python, validate_script, "--input", args.output])
+        run_tool(
+            "known-bad SHA-256 pack validation",
+            [
+                python,
+                validate_script,
+                "--input",
+                str(temp_pack),
+                "--profile",
+                "known-bad-sha256",
+            ],
+        )
+        activate_validated_pack(temp_pack, output)
     finally:
-        cleanup_temp_jsonl(temp)
+        try:
+            cleanup_temp_jsonl(temp)
+        finally:
+            cleanup_temp_pack(temp_pack)
     return 0
 
 

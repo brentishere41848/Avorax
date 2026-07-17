@@ -11,6 +11,9 @@ from github_intel_common import read_json, required_canonical_category
 
 MAX_PACK_TEXT_BYTES = 4096
 PACK_SHA256_RE = re.compile(r"^[a-fA-F0-9]{64}$")
+CANONICAL_SHA256_RE = re.compile(r"^[a-f0-9]{64}$")
+GENERAL_PROFILE = "general"
+KNOWN_BAD_SHA256_PROFILE = "known-bad-sha256"
 SIGNATURE_PACK_KEYS = {
     "format",
     "version",
@@ -375,6 +378,55 @@ def validate_signature_pack(pack: dict) -> list:
     return items
 
 
+def validate_known_bad_sha256_profile(fmt: str, pack: dict, items: list) -> None:
+    if fmt != "zentor-signature-pack-v1":
+        raise SystemExit("known-bad-sha256 profile requires a signature pack")
+    if not items:
+        raise SystemExit("known-bad-sha256 profile requires at least one signature")
+    if not CANONICAL_SHA256_RE.fullmatch(pack["pack_sha256"]):
+        raise SystemExit(
+            "known-bad-sha256 profile requires a lowercase pack_sha256"
+        )
+
+    seen_ids: set[str] = set()
+    seen_hashes: set[str] = set()
+    for index, item in enumerate(items):
+        description = f"known-bad-sha256 signature {index}"
+        signature_id = item["id"]
+        if signature_id in seen_ids:
+            raise SystemExit(f"{description} duplicates signature id {signature_id}")
+        seen_ids.add(signature_id)
+
+        if item["signature_type"] != "exact_hash":
+            raise SystemExit(f"{description} must use exact_hash")
+        pattern = item["pattern"]
+        if not CANONICAL_SHA256_RE.fullmatch(pattern):
+            raise SystemExit(
+                f"{description} pattern must be a lowercase 64-character SHA-256"
+            )
+        if pattern in seen_hashes:
+            raise SystemExit(f"{description} duplicates SHA-256 {pattern}")
+        seen_hashes.add(pattern)
+
+        if item["confidence"] != "confirmed":
+            raise SystemExit(f"{description} confidence must be confirmed")
+        if item["severity"] != "critical":
+            raise SystemExit(f"{description} severity must be critical")
+        if item["action_policy"] != "quarantine_if_policy_allows":
+            raise SystemExit(
+                f"{description} action_policy must be quarantine_if_policy_allows"
+            )
+        if item["category"] in {"unknown", "testThreat"}:
+            raise SystemExit(f"{description} must use a production threat category")
+        if item.get("file_types") != ["*"]:
+            raise SystemExit(f"{description} file_types must be exactly ['*']")
+        if item.get("required_context") != []:
+            raise SystemExit(f"{description} required_context must be empty")
+        for optional_field in ("mask", "offset", "min_file_size", "max_file_size"):
+            if item.get(optional_field) is not None:
+                raise SystemExit(f"{description} {optional_field} must be null")
+
+
 def validate_rule_pack(pack: dict) -> list:
     reject_unknown_fields(pack, RULE_PACK_KEYS, "rule pack")
     required_text(pack.get("version"), "rule pack version")
@@ -394,6 +446,11 @@ def validate_rule_pack(pack: dict) -> list:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Validate Avorax indicator/signature/rule pack metadata.")
     parser.add_argument("--input", required=True)
+    parser.add_argument(
+        "--profile",
+        choices=(GENERAL_PROFILE, KNOWN_BAD_SHA256_PROFILE),
+        default=GENERAL_PROFILE,
+    )
     args = parser.parse_args()
     pack = read_json(Path(args.input), "indicator pack")
     fmt = required_text(pack.get("format"), "pack format")
@@ -403,7 +460,9 @@ def main() -> int:
         items = validate_signature_pack(pack)
     else:
         items = validate_rule_pack(pack)
-    print(f"validated {len(items)} items from {fmt}")
+    if args.profile == KNOWN_BAD_SHA256_PROFILE:
+        validate_known_bad_sha256_profile(fmt, pack, items)
+    print(f"validated {len(items)} items from {fmt} with profile {args.profile}")
     return 0
 
 

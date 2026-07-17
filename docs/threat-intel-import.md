@@ -26,10 +26,29 @@ python tools\zentor_intel\import_hash_feed.py --source assets\zentor_native\thre
 python tools\zentor_intel\compile_zentor_signatures.py --input indicators.jsonl --output assets\zentor_native\signatures\zentor_realworld_hashes.zsig --version 0.2.1
 ```
 
-The hash-feed wrapper performs import, compilation, and validation as one local metadata-only workflow. It requires explicit `--category` and `--version`, invokes checked local helper scripts with streaming bounded stdout/stderr tails and a fixed timeout, and removes its temporary JSONL on success or failure:
+The hash-feed wrapper performs import, compilation, and validation as one local metadata-only workflow. It requires explicit `--category` and `--version`, invokes checked local helper scripts with streaming bounded stdout/stderr tails and a fixed timeout, and removes its temporary JSONL and temporary signature pack on success or failure. It validates the strict `known-bad-sha256` profile before atomically replacing the output, so an empty or malformed feed cannot replace a previous pack.
 
 ```powershell
 python tools\zentor_intel\build_realworld_detection_pack.py --source assets\zentor_native\threat_intel\sources.example.json --hashes hashes.txt --output assets\zentor_native\signatures\zentor_realworld_hashes.zsig --category trojan --version 0.2.1
 ```
+
+The strict profile requires at least one unique lowercase 64-character SHA-256, `exact_hash`, `confirmed` confidence, `critical` severity, a production threat category, the exact `quarantine_if_policy_allows` policy, global file matching, empty required context, and no partial-hash fields. It rejects repository metadata, Git blob identifiers, test/unknown categories, duplicate IDs/hashes, and lower-confidence indicators.
+
+To turn a reviewed local SHA-256 feed into a definitions-only signed update, use the production signing environment and the dedicated wrapper:
+
+```powershell
+$env:AVORAX_UPDATE_SIGNER = '"C:\secure\avorax_sign_manifest.exe"'
+$env:AVORAX_UPDATE_PUBLIC_KEY_ID = "avorax-prod-ed25519"
+powershell -NoProfile -ExecutionPolicy Bypass -File tools\update\avorax-build-hash-intel-update.ps1 `
+  -Version 0.3.1 `
+  -Channel stable `
+  -Category trojan `
+  -SourceMetadata reviewed-source.json `
+  -HashFeed reviewed-sha256.txt `
+  -PythonPath C:\path\to\python.exe `
+  -OutputDir dist\updates
+```
+
+The resulting `.aup` contains only the reviewed signature pack under `payload/engine/signatures`. The normal update verifier still enforces the Ed25519 manifest signature, package and payload SHA-256 values, version/channel policy, bounded archive shape, atomic staging, rollback, and failure-safe behavior. The wrapper does not fetch feeds or samples; feed acquisition and maintainer review remain separate trusted release-host responsibilities.
 
 The importers do not download malware samples, run files, detonate payloads, or upload user files.

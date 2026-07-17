@@ -886,3 +886,10 @@ enforcement, or pre-execution blocking is claimed.
   and real installed service lifecycle are not independently verified by Dart.
   Service mutations remain disabled; kernel/pre-execution blocking remains
   technically blocked without the reviewed signed-driver path.
+
+## Checkpoint 2164 Signed Hash-Intelligence Update
+
+- **Resolved locally:** Reviewed hash-only imports now pass a strict non-empty `known-bad-sha256` profile before atomic activation. Empty, duplicate, uppercase, partial, lower-confidence, test/unknown-category, contextual, masked, or non-quarantine entries fail visibly and cannot replace the previous output pack.
+- **Resolved locally:** A definitions-only wrapper now stages exactly one reviewed signature pack and builds it through the existing Ed25519-signed `.aup` path. A release-binary smoke generated only a benign text hash and temporary test key, required the exact three-entry archive shape, and passed Update Service `--verify` without apply/install.
+- **Still blocked:** `cryptwareapps/Malware-Database`, `Cryakl/Ultimate-RAT-Collection`, `Pyran1/MalwareCollection`, and `Pyran1/MalwareDatabaseUnsorted` do not provide a reviewed canonical file SHA-256 feed through the configured metadata-only path. Git blob SHA/path/name/size evidence cannot be promoted to blocking. Their source entries remain disabled and `zentor_github_known_bad.zsig` remains empty.
+- **Still partial:** Automatic public definitions delivery requires a maintainer-reviewed SHA-256 feed, protected production Ed25519 key custody, authenticated release publication, feed/version ownership, rollback retention, and installed-host apply/rollback evidence. The local wrapper intentionally performs no network acquisition and no sample download.

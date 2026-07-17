@@ -357,6 +357,7 @@ if (Test-RegularDirectory $payloadSourceDriverTools) {
 }
 New-CheckedDirectory $payloadApp "payload app directory" | Out-Null
 New-CheckedDirectory $payloadServices "payload services directory" | Out-Null
+New-CheckedDirectory $payloadDocs "payload docs directory" | Out-Null
 
 $serviceFiles = @("avorax_core_service.exe", "avorax_guard_service.exe")
 $excludedAppFiles = @("avorax_core_service.exe", "avorax_guard_service.exe", "avorax_update_service.exe")

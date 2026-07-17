@@ -52,6 +52,12 @@ powershell -ExecutionPolicy Bypass -File tools\update\avorax-build-update-packag
 
 The builder refuses to produce an unsigned `.aup`.
 
+### Definitions-only hash updates
+
+`tools/update/avorax-build-hash-intel-update.ps1` composes the local reviewed-hash importer with the normal signed update builder. It stages exactly one strict known-bad SHA-256 pack under `engine/signatures`; the resulting manifest declares `native_engine_assets` and `signatures` while app, service, rules, ML, trust, docs, updater, and driver components remain false. The normal builder creates empty component-evidence directories explicitly, so a valid signature-only payload does not depend on unrelated app or docs files.
+
+The wrapper requires repository-relative source metadata, hash-feed and output paths, an absolute checked Python executable, explicit category/version/channel values, and a configured signer. It bounds child execution and output, rejects reparse-backed paths, rechecks that staging contains exactly one regular signature pack, and removes its checked temporary tree on success or failure. It never performs network acquisition. Production release automation must obtain and review a canonical SHA-256-only feed separately, protect the production signing key, publish both `.aup` and `update-feed.json` over authenticated HTTPS, and retain rollback evidence.
+
 For dev-channel signing with the bundled Python helper, set the signer to an absolute Python executable plus the helper path and opt in to the development key explicitly:
 
 ```powershell
