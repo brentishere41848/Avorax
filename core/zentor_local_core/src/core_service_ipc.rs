@@ -4,7 +4,7 @@
 //! v1 exposes only read-only health until per-user mutation authorization exists.
 
 use std::ffi::c_void;
-use std::ptr::null_mut;
+use std::ptr::{null, null_mut};
 use std::sync::{
     atomic::{AtomicBool, Ordering},
     Arc,
@@ -15,22 +15,29 @@ use std::time::{Duration, Instant};
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use windows_sys::Win32::Foundation::{
-    CloseHandle, GetLastError, LocalFree, ERROR_MORE_DATA, ERROR_NO_DATA, ERROR_PIPE_CONNECTED,
-    ERROR_PIPE_LISTENING, ERROR_PIPE_NOT_CONNECTED, HANDLE, INVALID_HANDLE_VALUE,
+    CloseHandle, GetLastError, LocalFree, ERROR_FILE_NOT_FOUND, ERROR_IO_PENDING, ERROR_MORE_DATA,
+    ERROR_NO_DATA, ERROR_PIPE_BUSY, ERROR_PIPE_CONNECTED, ERROR_PIPE_LISTENING,
+    ERROR_PIPE_NOT_CONNECTED, GENERIC_READ, GENERIC_WRITE, HANDLE, INVALID_HANDLE_VALUE,
+    WAIT_TIMEOUT,
 };
 use windows_sys::Win32::Security::Authorization::{
     ConvertStringSecurityDescriptorToSecurityDescriptorW, SDDL_REVISION_1,
 };
 use windows_sys::Win32::Security::{RevertToSelf, SECURITY_ATTRIBUTES, TOKEN_QUERY};
 use windows_sys::Win32::Storage::FileSystem::{
-    ReadFile, WriteFile, FILE_FLAG_FIRST_PIPE_INSTANCE, PIPE_ACCESS_DUPLEX,
+    CreateFileW, ReadFile, WriteFile, FILE_FLAG_FIRST_PIPE_INSTANCE, FILE_FLAG_OVERLAPPED,
+    OPEN_EXISTING, PIPE_ACCESS_DUPLEX,
 };
 use windows_sys::Win32::System::Pipes::{
     ConnectNamedPipe, CreateNamedPipeW, DisconnectNamedPipe, GetNamedPipeClientProcessId,
-    ImpersonateNamedPipeClient, PIPE_NOWAIT, PIPE_READMODE_MESSAGE, PIPE_REJECT_REMOTE_CLIENTS,
+    GetNamedPipeServerProcessId, ImpersonateNamedPipeClient, SetNamedPipeHandleState,
+    WaitNamedPipeW, PIPE_NOWAIT, PIPE_READMODE_MESSAGE, PIPE_REJECT_REMOTE_CLIENTS,
     PIPE_TYPE_MESSAGE,
 };
-use windows_sys::Win32::System::Threading::{GetCurrentThread, OpenThreadToken};
+use windows_sys::Win32::System::Threading::{CreateEventW, GetCurrentThread, OpenThreadToken};
+use windows_sys::Win32::System::IO::{
+    CancelIoEx, GetOverlappedResult, GetOverlappedResultEx, OVERLAPPED,
+};
 
 pub const CORE_SERVICE_PIPE_NAME: &str = r"\\.\pipe\AvoraxCoreService.v1";
 const CORE_SERVICE_PIPE_SDDL: &str = "D:P(A;;GA;;;SY)(A;;GA;;;BA)(A;;GRGW;;;AU)";
@@ -38,21 +45,24 @@ const PROTOCOL_VERSION: u32 = 1;
 const MAX_REQUEST_BYTES: usize = 16 * 1024;
 const MAX_RESPONSE_BYTES: usize = 16 * 1024;
 const MAX_REQUEST_ID_CHARS: usize = 128;
+const MAX_HEALTH_LIMITATIONS: usize = 16;
+const MAX_HEALTH_LIMITATION_CHARS: usize = 256;
+const MAX_REPORTED_DEFINITION_COUNT: usize = 10_000_000;
 const CLIENT_READ_TIMEOUT: Duration = Duration::from_secs(5);
 const PIPE_POLL_INTERVAL: Duration = Duration::from_millis(10);
 
-#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ServiceHealth {
     service_ready: bool,
     engine_ready: bool,
     native_signature_count: usize,
     native_rule_count: usize,
     native_ml_production_ready: bool,
-    transport: &'static str,
+    transport: String,
     network_exposed: bool,
-    command_scope: &'static str,
-    limitations: Vec<&'static str>,
+    command_scope: String,
+    limitations: Vec<String>,
 }
 
 impl ServiceHealth {
@@ -68,19 +78,19 @@ impl ServiceHealth {
             native_signature_count,
             native_rule_count,
             native_ml_production_ready,
-            transport: "windowsNamedPipe",
+            transport: "windowsNamedPipe".to_string(),
             network_exposed: false,
-            command_scope: "healthOnly",
+            command_scope: "healthOnly".to_string(),
             limitations: vec![
-                "mutating commands are denied",
-                "UI command mediation is not implemented",
-                "user-mode service IPC does not provide pre-execution blocking",
+                "mutating commands are denied".to_string(),
+                "UI command mediation is not implemented".to_string(),
+                "user-mode service IPC does not provide pre-execution blocking".to_string(),
             ],
         }
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct ServiceRequest {
     protocol_version: u32,
@@ -88,26 +98,46 @@ struct ServiceRequest {
     command: String,
 }
 
-#[derive(Debug, Serialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct ServiceResponse {
     protocol_version: u32,
     request_id: Option<String>,
     ok: bool,
     authenticated: bool,
     client_pid: u32,
-    command_scope: &'static str,
+    command_scope: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     data: Option<ServiceHealth>,
     #[serde(skip_serializing_if = "Option::is_none")]
     error: Option<ServiceError>,
 }
 
-#[derive(Debug, Serialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct ServiceError {
-    code: &'static str,
-    message: &'static str,
+    code: String,
+    message: String,
+}
+
+#[derive(Debug, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct ServiceHealthProbe {
+    ok: bool,
+    protocol_version: u32,
+    transport: String,
+    network_exposed: bool,
+    command_scope: String,
+    client_authenticated: bool,
+    server_authenticated: bool,
+    server_pid: u32,
+    service_pid: u32,
+    service_ready: bool,
+    engine_ready: bool,
+    native_signature_count: usize,
+    native_rule_count: usize,
+    native_ml_production_ready: bool,
+    limitations: Vec<String>,
 }
 
 pub struct CoreServiceIpcServer {
@@ -162,6 +192,337 @@ impl CoreServiceIpcServer {
             .join()
             .map_err(|_| anyhow::anyhow!("Core Service IPC worker panicked"))?
     }
+}
+
+pub fn probe_service_health() -> Result<ServiceHealthProbe> {
+    probe_service_health_with(CORE_SERVICE_PIPE_NAME, CLIENT_READ_TIMEOUT, || {
+        crate::windows_tools::query_running_windows_service_process_id("avorax_core_service")
+    })
+}
+
+fn probe_service_health_with<F>(
+    pipe_name: &str,
+    timeout: Duration,
+    mut running_service_pid: F,
+) -> Result<ServiceHealthProbe>
+where
+    F: FnMut() -> Result<u32>,
+{
+    if timeout.is_zero() || timeout > CLIENT_READ_TIMEOUT {
+        anyhow::bail!("Core Service IPC probe timeout is outside its safe bounds");
+    }
+    let service_pid_before = running_service_pid()
+        .context("failed to authenticate the Core Service through Windows SCM")?;
+    anyhow::ensure!(
+        service_pid_before != 0,
+        "Windows SCM returned an invalid zero Core Service process ID"
+    );
+
+    let pipe = open_client_pipe(pipe_name, timeout)?;
+    let server_pid = named_pipe_server_process_id(pipe.get())?;
+    anyhow::ensure!(
+        server_pid == service_pid_before,
+        "Core Service pipe server PID {server_pid} does not match SCM service PID {service_pid_before}"
+    );
+    configure_client_pipe_message_mode(pipe.get())?;
+
+    let request_id = format!("health-{}", uuid::Uuid::new_v4());
+    let request = ServiceRequest {
+        protocol_version: PROTOCOL_VERSION,
+        request_id: request_id.clone(),
+        command: "health".to_string(),
+    };
+    let request_bytes =
+        serde_json::to_vec(&request).context("failed to serialize Core Service health request")?;
+    anyhow::ensure!(
+        request_bytes.len() <= MAX_REQUEST_BYTES,
+        "Core Service health request exceeded its configured bound"
+    );
+    write_client_request(pipe.get(), &request_bytes, timeout)?;
+    let response_bytes = read_client_response(pipe.get(), timeout)?;
+
+    let service_pid_after = running_service_pid()
+        .context("failed to re-authenticate the Core Service through Windows SCM")?;
+    anyhow::ensure!(
+        service_pid_after == service_pid_before,
+        "Core Service process changed during the health probe"
+    );
+    let health = validate_health_response(&response_bytes, &request_id, std::process::id())?;
+
+    Ok(ServiceHealthProbe {
+        ok: health.engine_ready,
+        protocol_version: PROTOCOL_VERSION,
+        transport: health.transport,
+        network_exposed: health.network_exposed,
+        command_scope: health.command_scope,
+        client_authenticated: true,
+        server_authenticated: true,
+        server_pid,
+        service_pid: service_pid_after,
+        service_ready: health.service_ready,
+        engine_ready: health.engine_ready,
+        native_signature_count: health.native_signature_count,
+        native_rule_count: health.native_rule_count,
+        native_ml_production_ready: health.native_ml_production_ready,
+        limitations: health.limitations,
+    })
+}
+
+fn open_client_pipe(pipe_name: &str, timeout: Duration) -> Result<OwnedHandle> {
+    let pipe_name_wide = wide_string(pipe_name);
+    let deadline = Instant::now() + timeout;
+    loop {
+        let handle = unsafe {
+            CreateFileW(
+                pipe_name_wide.as_ptr(),
+                GENERIC_READ | GENERIC_WRITE,
+                0,
+                null(),
+                OPEN_EXISTING,
+                FILE_FLAG_OVERLAPPED,
+                null_mut(),
+            )
+        };
+        if handle != INVALID_HANDLE_VALUE {
+            return Ok(OwnedHandle::new(handle));
+        }
+        let code = unsafe { GetLastError() };
+        if Instant::now() >= deadline {
+            return Err(std::io::Error::from_raw_os_error(code as i32))
+                .context("timed out opening the local Core Service pipe");
+        }
+        match code {
+            ERROR_PIPE_BUSY => {
+                let wait_ms = remaining_timeout_ms(deadline);
+                if unsafe { WaitNamedPipeW(pipe_name_wide.as_ptr(), wait_ms) } == 0 {
+                    let wait_code = unsafe { GetLastError() };
+                    if Instant::now() >= deadline {
+                        return Err(std::io::Error::from_raw_os_error(wait_code as i32))
+                            .context("timed out waiting for the local Core Service pipe");
+                    }
+                }
+            }
+            ERROR_FILE_NOT_FOUND => thread::sleep(PIPE_POLL_INTERVAL),
+            _ => {
+                return Err(std::io::Error::from_raw_os_error(code as i32))
+                    .context("failed to open the local Core Service pipe")
+            }
+        }
+    }
+}
+
+fn remaining_timeout_ms(deadline: Instant) -> u32 {
+    let remaining = deadline.saturating_duration_since(Instant::now());
+    remaining.as_millis().clamp(1, u32::MAX as u128) as u32
+}
+
+fn named_pipe_server_process_id(pipe: HANDLE) -> Result<u32> {
+    let mut server_pid = 0;
+    if unsafe { GetNamedPipeServerProcessId(pipe, &mut server_pid) } == 0 {
+        return Err(last_os_error()).context("failed to identify the Core Service pipe server");
+    }
+    anyhow::ensure!(
+        server_pid != 0,
+        "Core Service pipe returned an invalid zero server process ID"
+    );
+    Ok(server_pid)
+}
+
+fn configure_client_pipe_message_mode(pipe: HANDLE) -> Result<()> {
+    let mode = PIPE_READMODE_MESSAGE;
+    if unsafe { SetNamedPipeHandleState(pipe, &mode, null(), null()) } == 0 {
+        return Err(last_os_error())
+            .context("failed to configure Core Service message-mode pipe client");
+    }
+    Ok(())
+}
+
+fn write_client_request(pipe: HANDLE, bytes: &[u8], timeout: Duration) -> Result<()> {
+    let event = create_overlapped_event()?;
+    let mut overlapped: OVERLAPPED = unsafe { std::mem::zeroed() };
+    overlapped.hEvent = event.get();
+    let mut written = 0;
+    let ok = unsafe {
+        WriteFile(
+            pipe,
+            bytes.as_ptr(),
+            bytes.len() as u32,
+            &mut written,
+            &mut overlapped,
+        )
+    };
+    if ok == 0 {
+        let code = unsafe { GetLastError() };
+        if code != ERROR_IO_PENDING {
+            return Err(std::io::Error::from_raw_os_error(code as i32))
+                .context("failed to write Core Service health request");
+        }
+        written = wait_for_overlapped(pipe, &mut overlapped, timeout, "health request write")?;
+    }
+    anyhow::ensure!(
+        written as usize == bytes.len(),
+        "Core Service health request write was incomplete: wrote {written} of {} bytes",
+        bytes.len()
+    );
+    Ok(())
+}
+
+fn read_client_response(pipe: HANDLE, timeout: Duration) -> Result<Vec<u8>> {
+    let event = create_overlapped_event()?;
+    let mut overlapped: OVERLAPPED = unsafe { std::mem::zeroed() };
+    overlapped.hEvent = event.get();
+    let mut bytes = vec![0u8; MAX_RESPONSE_BYTES];
+    let mut read = 0;
+    let ok = unsafe {
+        ReadFile(
+            pipe,
+            bytes.as_mut_ptr(),
+            bytes.len() as u32,
+            &mut read,
+            &mut overlapped,
+        )
+    };
+    if ok == 0 {
+        let code = unsafe { GetLastError() };
+        match code {
+            ERROR_IO_PENDING => {
+                read = wait_for_overlapped(pipe, &mut overlapped, timeout, "health response read")?
+            }
+            ERROR_MORE_DATA => anyhow::bail!(
+                "Core Service health response exceeds maximum size of {MAX_RESPONSE_BYTES} bytes"
+            ),
+            _ => {
+                return Err(std::io::Error::from_raw_os_error(code as i32))
+                    .context("failed to read Core Service health response")
+            }
+        }
+    }
+    anyhow::ensure!(read != 0, "Core Service returned an empty health response");
+    bytes.truncate(read as usize);
+    Ok(bytes)
+}
+
+fn create_overlapped_event() -> Result<OwnedHandle> {
+    let event = unsafe { CreateEventW(null(), 1, 0, null()) };
+    if event.is_null() {
+        return Err(last_os_error()).context("failed to create Core Service I/O event");
+    }
+    Ok(OwnedHandle::new(event))
+}
+
+fn wait_for_overlapped(
+    pipe: HANDLE,
+    overlapped: &mut OVERLAPPED,
+    timeout: Duration,
+    description: &str,
+) -> Result<u32> {
+    let mut transferred = 0;
+    if unsafe {
+        GetOverlappedResultEx(
+            pipe,
+            overlapped,
+            &mut transferred,
+            timeout.as_millis().clamp(1, u32::MAX as u128) as u32,
+            0,
+        )
+    } != 0
+    {
+        return Ok(transferred);
+    }
+    let code = unsafe { GetLastError() };
+    if code == ERROR_MORE_DATA {
+        anyhow::bail!(
+            "Core Service health response exceeds maximum size of {MAX_RESPONSE_BYTES} bytes"
+        );
+    }
+    if code == WAIT_TIMEOUT {
+        cancel_and_reap_overlapped(pipe, overlapped);
+        anyhow::bail!("Core Service {description} timed out");
+    }
+    cancel_and_reap_overlapped(pipe, overlapped);
+    Err(std::io::Error::from_raw_os_error(code as i32))
+        .context(format!("Core Service {description} failed"))
+}
+
+fn cancel_and_reap_overlapped(pipe: HANDLE, overlapped: &mut OVERLAPPED) {
+    unsafe {
+        CancelIoEx(pipe, overlapped);
+        let mut ignored = 0;
+        GetOverlappedResult(pipe, overlapped, &mut ignored, 1);
+    }
+}
+
+fn validate_health_response(
+    response_bytes: &[u8],
+    request_id: &str,
+    client_pid: u32,
+) -> Result<ServiceHealth> {
+    anyhow::ensure!(
+        !response_bytes.is_empty() && response_bytes.len() <= MAX_RESPONSE_BYTES,
+        "Core Service health response is outside its configured size bound"
+    );
+    let response: ServiceResponse = serde_json::from_slice(response_bytes)
+        .context("Core Service health response did not match the strict protocol schema")?;
+    anyhow::ensure!(
+        response.protocol_version == PROTOCOL_VERSION,
+        "Core Service returned an unsupported protocol version"
+    );
+    anyhow::ensure!(
+        response.request_id.as_deref() == Some(request_id),
+        "Core Service response request ID did not match"
+    );
+    anyhow::ensure!(response.ok, "Core Service rejected the health request");
+    anyhow::ensure!(
+        response.authenticated,
+        "Core Service did not authenticate the health client"
+    );
+    anyhow::ensure!(
+        response.client_pid == client_pid,
+        "Core Service response client PID did not match"
+    );
+    anyhow::ensure!(
+        response.command_scope == "healthOnly",
+        "Core Service returned an unexpected command scope"
+    );
+    anyhow::ensure!(
+        response.error.is_none(),
+        "Core Service returned contradictory health data and error fields"
+    );
+    let health = response
+        .data
+        .ok_or_else(|| anyhow::anyhow!("Core Service health response omitted health data"))?;
+    validate_health(&health)?;
+    Ok(health)
+}
+
+fn validate_health(health: &ServiceHealth) -> Result<()> {
+    anyhow::ensure!(health.service_ready, "Core Service did not report ready");
+    anyhow::ensure!(
+        health.transport == "windowsNamedPipe",
+        "Core Service returned an unexpected health transport"
+    );
+    anyhow::ensure!(
+        !health.network_exposed,
+        "Core Service unexpectedly reported a network-exposed transport"
+    );
+    anyhow::ensure!(
+        health.command_scope == "healthOnly",
+        "Core Service health data returned an unexpected command scope"
+    );
+    anyhow::ensure!(
+        health.native_signature_count <= MAX_REPORTED_DEFINITION_COUNT
+            && health.native_rule_count <= MAX_REPORTED_DEFINITION_COUNT,
+        "Core Service health definition counts exceed their safe bounds"
+    );
+    anyhow::ensure!(
+        !health.limitations.is_empty()
+            && health.limitations.len() <= MAX_HEALTH_LIMITATIONS
+            && health.limitations.iter().all(|limitation| {
+                !limitation.is_empty() && limitation.chars().count() <= MAX_HEALTH_LIMITATION_CHARS
+            }),
+        "Core Service health limitations exceed their safe bounds"
+    );
+    Ok(())
 }
 
 fn run_server(
@@ -279,7 +640,7 @@ fn serve_authenticated_client(
     if response_bytes.len() > MAX_RESPONSE_BYTES {
         anyhow::bail!("Core Service IPC response exceeded its configured bound");
     }
-    write_response(pipe, &response_bytes)
+    write_pipe_message(pipe, &response_bytes, "health response")
 }
 
 enum AuthenticationError {
@@ -419,7 +780,7 @@ fn build_response(
         ok: true,
         authenticated: true,
         client_pid,
-        command_scope: "healthOnly",
+        command_scope: "healthOnly".to_string(),
         data: Some(health.clone()),
         error: None,
     }
@@ -437,13 +798,16 @@ fn error_response(
         ok: false,
         authenticated: true,
         client_pid,
-        command_scope: "healthOnly",
+        command_scope: "healthOnly".to_string(),
         data: None,
-        error: Some(ServiceError { code, message }),
+        error: Some(ServiceError {
+            code: code.to_string(),
+            message: message.to_string(),
+        }),
     }
 }
 
-fn write_response(pipe: HANDLE, bytes: &[u8]) -> Result<()> {
+fn write_pipe_message(pipe: HANDLE, bytes: &[u8], description: &str) -> Result<()> {
     let mut written = 0;
     if unsafe {
         WriteFile(
@@ -455,11 +819,11 @@ fn write_response(pipe: HANDLE, bytes: &[u8]) -> Result<()> {
         )
     } == 0
     {
-        return Err(last_os_error()).context("failed to write Core Service IPC response");
+        return Err(last_os_error()).context(format!("failed to write Core Service {description}"));
     }
     if written as usize != bytes.len() {
         anyhow::bail!(
-            "Core Service IPC response write was incomplete: wrote {written} of {} bytes",
+            "Core Service {description} write was incomplete: wrote {written} of {} bytes",
             bytes.len()
         );
     }
@@ -528,11 +892,7 @@ impl Drop for LocalAllocation {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::ptr::null;
-    use windows_sys::Win32::Foundation::{
-        ERROR_BROKEN_PIPE, ERROR_PIPE_BUSY, GENERIC_READ, GENERIC_WRITE,
-    };
-    use windows_sys::Win32::Storage::FileSystem::{CreateFileW, OPEN_EXISTING};
+    use windows_sys::Win32::Foundation::ERROR_BROKEN_PIPE;
 
     fn health() -> ServiceHealth {
         ServiceHealth::ready(true, 7, 5, false)
@@ -569,7 +929,7 @@ mod tests {
 
     fn send_pipe_request(pipe_name: &str, request: &str) -> serde_json::Value {
         let handle = open_test_pipe(pipe_name);
-        write_response(handle.get(), request.as_bytes()).unwrap();
+        write_pipe_message(handle.get(), request.as_bytes(), "test request").unwrap();
 
         let mut bytes = vec![0u8; MAX_RESPONSE_BYTES];
         let mut read = 0;
@@ -711,6 +1071,69 @@ mod tests {
     }
 
     #[test]
+    fn health_client_validation_rejects_spoofed_or_broadened_responses() {
+        let request_id = "client-validation";
+        let valid = serde_json::to_vec(&build_response(
+            format!(r#"{{"protocolVersion":1,"requestId":"{request_id}","command":"health"}}"#)
+                .as_bytes(),
+            std::process::id(),
+            &health(),
+        ))
+        .unwrap();
+        assert_eq!(
+            validate_health_response(&valid, request_id, std::process::id()).unwrap(),
+            health()
+        );
+
+        for (field, value) in [
+            ("protocolVersion", serde_json::json!(2)),
+            ("requestId", serde_json::json!("wrong-request")),
+            ("authenticated", serde_json::json!(false)),
+            ("clientPid", serde_json::json!(0)),
+            ("commandScope", serde_json::json!("scanAndHealth")),
+        ] {
+            let mut changed: serde_json::Value = serde_json::from_slice(&valid).unwrap();
+            changed[field] = value;
+            assert!(validate_health_response(
+                &serde_json::to_vec(&changed).unwrap(),
+                request_id,
+                std::process::id()
+            )
+            .is_err());
+        }
+
+        let mut unknown: serde_json::Value = serde_json::from_slice(&valid).unwrap();
+        unknown["admin"] = serde_json::json!(true);
+        assert!(validate_health_response(
+            &serde_json::to_vec(&unknown).unwrap(),
+            request_id,
+            std::process::id()
+        )
+        .is_err());
+
+        for (field, value) in [
+            ("transport", serde_json::json!("tcp")),
+            ("networkExposed", serde_json::json!(true)),
+            ("commandScope", serde_json::json!("mutationAllowed")),
+            ("serviceReady", serde_json::json!(false)),
+            (
+                "nativeSignatureCount",
+                serde_json::json!(MAX_REPORTED_DEFINITION_COUNT + 1),
+            ),
+            ("limitations", serde_json::json!([])),
+        ] {
+            let mut changed: serde_json::Value = serde_json::from_slice(&valid).unwrap();
+            changed["data"][field] = value;
+            assert!(validate_health_response(
+                &serde_json::to_vec(&changed).unwrap(),
+                request_id,
+                std::process::id()
+            )
+            .is_err());
+        }
+    }
+
+    #[test]
     fn pipe_contract_rejects_remote_clients_and_uses_explicit_acl() {
         let source = include_str!("core_service_ipc.rs");
         assert!(source.contains("PIPE_REJECT_REMOTE_CLIENTS"));
@@ -771,5 +1194,144 @@ mod tests {
         server.ensure_running().unwrap();
         server.stop().unwrap();
         assert!(server.stop().is_err());
+    }
+
+    #[test]
+    fn real_health_probe_authenticates_pipe_server_pid_and_protocol() {
+        let pipe_name = format!(r"\\.\pipe\AvoraxCoreService.probe.{}", uuid::Uuid::new_v4());
+        let mut server = CoreServiceIpcServer::start_with_pipe_name_and_timeout(
+            health(),
+            &pipe_name,
+            Duration::from_millis(200),
+        )
+        .unwrap();
+
+        let report =
+            probe_service_health_with(
+                &pipe_name,
+                Duration::from_secs(1),
+                || Ok(std::process::id()),
+            )
+            .unwrap();
+        assert!(report.ok);
+        assert!(report.client_authenticated);
+        assert!(report.server_authenticated);
+        assert_eq!(report.server_pid, std::process::id());
+        assert_eq!(report.service_pid, std::process::id());
+        assert_eq!(report.command_scope, "healthOnly");
+        assert!(!report.network_exposed);
+
+        server.ensure_running().unwrap();
+        server.stop().unwrap();
+    }
+
+    #[test]
+    fn authenticated_probe_does_not_report_ok_for_degraded_engine() {
+        let pipe_name = format!(
+            r"\\.\pipe\AvoraxCoreService.degraded.{}",
+            uuid::Uuid::new_v4()
+        );
+        let mut server = CoreServiceIpcServer::start_with_pipe_name_and_timeout(
+            ServiceHealth::ready(false, 0, 0, false),
+            &pipe_name,
+            Duration::from_millis(200),
+        )
+        .unwrap();
+
+        let report =
+            probe_service_health_with(
+                &pipe_name,
+                Duration::from_secs(1),
+                || Ok(std::process::id()),
+            )
+            .unwrap();
+        assert!(!report.ok);
+        assert!(!report.engine_ready);
+        assert!(report.client_authenticated);
+        assert!(report.server_authenticated);
+
+        server.ensure_running().unwrap();
+        server.stop().unwrap();
+    }
+
+    #[test]
+    fn health_probe_rejects_pipe_server_pid_mismatch() {
+        let pipe_name = format!(r"\\.\pipe\AvoraxCoreService.spoof.{}", uuid::Uuid::new_v4());
+        let mut server = CoreServiceIpcServer::start_with_pipe_name_and_timeout(
+            health(),
+            &pipe_name,
+            Duration::from_millis(100),
+        )
+        .unwrap();
+
+        let spoofed_pid = std::process::id().saturating_add(1);
+        let error =
+            probe_service_health_with(&pipe_name, Duration::from_secs(1), || Ok(spoofed_pid))
+                .unwrap_err()
+                .to_string();
+        assert!(error.contains("does not match SCM service PID"));
+
+        thread::sleep(Duration::from_millis(150));
+        server.ensure_running().unwrap();
+        server.stop().unwrap();
+    }
+
+    #[test]
+    fn health_probe_cancels_a_stalled_pipe_response() {
+        let pipe_name = format!(r"\\.\pipe\AvoraxCoreService.stall.{}", uuid::Uuid::new_v4());
+        let pipe = create_service_pipe(&pipe_name).unwrap();
+        let fake_server = thread::spawn(move || {
+            let deadline = Instant::now() + Duration::from_secs(1);
+            while !connect_client(pipe.get()).unwrap() {
+                assert!(Instant::now() < deadline, "test client did not connect");
+                thread::sleep(PIPE_POLL_INTERVAL);
+            }
+            let stop = AtomicBool::new(false);
+            let request = read_request(pipe.get(), &stop, Duration::from_millis(200)).unwrap();
+            let parsed: ServiceRequest = serde_json::from_slice(&request).unwrap();
+            assert_eq!(parsed.command, "health");
+            thread::sleep(Duration::from_millis(150));
+            disconnect_client(pipe.get()).unwrap();
+        });
+
+        let started = Instant::now();
+        let error = probe_service_health_with(&pipe_name, Duration::from_millis(50), || {
+            Ok(std::process::id())
+        })
+        .unwrap_err()
+        .to_string();
+        assert!(error.contains("timed out"));
+        assert!(started.elapsed() < Duration::from_secs(1));
+        fake_server.join().unwrap();
+    }
+
+    #[test]
+    fn health_probe_rejects_service_restart_during_response() {
+        let pipe_name = format!(
+            r"\\.\pipe\AvoraxCoreService.restart.{}",
+            uuid::Uuid::new_v4()
+        );
+        let mut server = CoreServiceIpcServer::start_with_pipe_name_and_timeout(
+            health(),
+            &pipe_name,
+            Duration::from_millis(200),
+        )
+        .unwrap();
+        let mut query_count = 0;
+        let error = probe_service_health_with(&pipe_name, Duration::from_secs(1), || {
+            query_count += 1;
+            Ok(if query_count == 1 {
+                std::process::id()
+            } else {
+                std::process::id().saturating_add(1)
+            })
+        })
+        .unwrap_err()
+        .to_string();
+        assert!(error.contains("process changed during the health probe"));
+        assert_eq!(query_count, 2);
+
+        server.ensure_running().unwrap();
+        server.stop().unwrap();
     }
 }

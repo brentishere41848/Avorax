@@ -14,7 +14,16 @@ pub enum WindowsServiceStatus {
 }
 
 #[cfg(windows)]
-pub fn query_windows_service_status(name: &str) -> anyhow::Result<WindowsServiceStatus> {
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct WindowsServiceRuntimeStatus {
+    pub status: WindowsServiceStatus,
+    pub process_id: Option<u32>,
+}
+
+#[cfg(windows)]
+pub fn query_windows_service_runtime_status(
+    name: &str,
+) -> anyhow::Result<WindowsServiceRuntimeStatus> {
     use windows_service::service::ServiceAccess;
     use windows_service::service_manager::{ServiceManager, ServiceManagerAccess};
 
@@ -37,7 +46,10 @@ pub fn query_windows_service_status(name: &str) -> anyhow::Result<WindowsService
         Err(error)
             if windows_service_error_code(&error) == Some(WINDOWS_ERROR_SERVICE_DOES_NOT_EXIST) =>
         {
-            return Ok(WindowsServiceStatus::Missing);
+            return Ok(WindowsServiceRuntimeStatus {
+                status: WindowsServiceStatus::Missing,
+                process_id: None,
+            });
         }
         Err(error) => {
             anyhow::bail!(
@@ -51,7 +63,10 @@ pub fn query_windows_service_status(name: &str) -> anyhow::Result<WindowsService
         Err(error)
             if windows_service_error_code(&error) == Some(WINDOWS_ERROR_SERVICE_DOES_NOT_EXIST) =>
         {
-            return Ok(WindowsServiceStatus::Missing);
+            return Ok(WindowsServiceRuntimeStatus {
+                status: WindowsServiceStatus::Missing,
+                process_id: None,
+            });
         }
         Err(error) => {
             anyhow::bail!(
@@ -60,7 +75,36 @@ pub fn query_windows_service_status(name: &str) -> anyhow::Result<WindowsService
             );
         }
     };
-    Ok(classify_windows_service_state(status.current_state))
+    Ok(WindowsServiceRuntimeStatus {
+        status: classify_windows_service_state(status.current_state),
+        process_id: status.process_id.filter(|process_id| *process_id != 0),
+    })
+}
+
+#[cfg(windows)]
+pub fn query_windows_service_status(name: &str) -> anyhow::Result<WindowsServiceStatus> {
+    Ok(query_windows_service_runtime_status(name)?.status)
+}
+
+#[cfg(windows)]
+pub fn query_running_windows_service_process_id(name: &str) -> anyhow::Result<u32> {
+    let runtime = query_windows_service_runtime_status(name)?;
+    running_windows_service_process_id(name, runtime)
+}
+
+#[cfg(windows)]
+fn running_windows_service_process_id(
+    name: &str,
+    runtime: WindowsServiceRuntimeStatus,
+) -> anyhow::Result<u32> {
+    anyhow::ensure!(
+        runtime.status == WindowsServiceStatus::Running,
+        "Windows service {name} is not running (status: {:?})",
+        runtime.status
+    );
+    runtime.process_id.ok_or_else(|| {
+        anyhow::anyhow!("running Windows service {name} did not report a process ID")
+    })
 }
 
 #[cfg(windows)]
@@ -322,6 +366,30 @@ mod tests {
                 WindowsServiceStatus::Installed
             );
         }
+
+        assert_eq!(
+            running_windows_service_process_id(
+                "avorax_core_service",
+                WindowsServiceRuntimeStatus {
+                    status: WindowsServiceStatus::Running,
+                    process_id: Some(4242),
+                },
+            )
+            .unwrap(),
+            4242
+        );
+        for runtime in [
+            WindowsServiceRuntimeStatus {
+                status: WindowsServiceStatus::Running,
+                process_id: None,
+            },
+            WindowsServiceRuntimeStatus {
+                status: WindowsServiceStatus::Stopped,
+                process_id: None,
+            },
+        ] {
+            assert!(running_windows_service_process_id("avorax_core_service", runtime).is_err());
+        }
     }
 
     #[cfg(windows)]
@@ -342,6 +410,14 @@ mod tests {
                     | WindowsServiceStatus::Stopped
                     | WindowsServiceStatus::Installed
             ));
+
+            let runtime = query_windows_service_runtime_status(name).unwrap_or_else(|error| {
+                panic!("read-only runtime status query failed for {name}: {error:#}")
+            });
+            assert_eq!(runtime.status, status);
+            if runtime.status == WindowsServiceStatus::Running {
+                assert!(runtime.process_id.is_some());
+            }
         }
 
         let error = query_windows_service_status("unapproved_service_name")

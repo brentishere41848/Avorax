@@ -836,3 +836,33 @@ verification. No service was installed, started, stopped, or reconfigured.
 Flutter still uses per-process stdio, no mutating command crosses this service
 boundary, installed service/pipe ACL and recovery E2E remain partial, and no
 kernel or pre-execution blocking is claimed.
+
+## Checkpoint 2162 Mutually Authenticated Core Service Health Probe
+
+Local Core now exposes the narrow `--service-ipc-health` client mode. Before it
+trusts the named pipe, the client queries the fixed `avorax_core_service` name
+through Service Control Manager with read-only status access, obtains the
+running service PID, connects locally, and requires
+`GetNamedPipeServerProcessId` to return that exact PID. It repeats the SCM query
+after the response and rejects a service restart or PID change. Pipe I/O uses
+overlapped operations with bounded waits and cancellation; response JSON is
+limited to 16 KiB and strictly validates protocol version, request ID, client
+PID, health-only scope, local transport, no network exposure, bounded counts,
+and explicit limitations. Unknown CLI modes fail instead of silently entering
+the broad stdio handler.
+
+Twelve focused protocol/transport tests pass, including a real local probe,
+wrong server PID, service restart during response, stalled-response cancellation,
+degraded-engine failure honesty, strict unknown-field/schema checks, mutation denial, oversized input, recovery,
+and clean stop. The complete serialized Local Core suite passes (`498`), Python
+source contracts pass (`594`), all workspace test binaries compile, and the
+no-malware-binaries gate passes. The first default-parallel Local Core run had
+one existing PE-carrier fixture assertion fail after `496` passes; that exact
+test passed immediately alone and inside the complete serialized run. Strict
+Clippy remains non-green on `16` pre-existing lints outside this change and
+reports none in the new IPC/client code. A real no-service host invocation exits `1` with a visible
+`avorax_core_service ... Missing` diagnostic; an unknown mode also exits `1`.
+No service was installed, started, stopped, or reconfigured. Installed-service
+ACL/recovery and elevated-host E2E remain partial, Flutter does not consume this
+probe yet, all mutations remain disabled at the service boundary, and no
+persistent monitoring, driver enforcement, or pre-execution blocking is claimed.
