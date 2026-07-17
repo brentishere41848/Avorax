@@ -15743,7 +15743,10 @@ def test_update_applier_engine_activation_is_component_allowlisted():
     assert engine_source.index("ensure_payload_section_dir_ready(source)?") < (
         engine_source.index("std::fs::read_dir(source)")
     )
-    assert "copy_tree_overwrite(&component.source, &destination.join(component.name))?" in engine_source
+    assert "replace_tree_atomically(" in engine_source
+    assert "&component.source" in engine_source
+    assert "&destination.join(component.name)" in engine_source
+    assert 'anyhow::anyhow!("engine update destination has no install parent")' in engine_source
     assert "canonical_engine_payload_component" in engine_source
     assert "engine update payload subcomponent {raw_name} is not supported by normal updates" in engine_source
     assert "engine update payload subcomponent must be a directory" in engine_source
@@ -15755,6 +15758,26 @@ def test_update_applier_engine_activation_is_component_allowlisted():
     assert "engine update payload contains no supported runtime subdirectories" in engine_source
     assert "copy_engine_payload_section_rejects_empty_engine_directory" in applier
     assert "payload_section_enumerators_revalidate_section_root_before_enumeration" in applier
+
+
+def test_update_engine_component_replacement_is_atomic_and_removes_revoked_files():
+    source = read(UPDATE_FILE_REPLACER)
+    production = source.split("#[cfg(test)]")[0]
+    replacement = production[
+        production.index("pub fn replace_tree_atomically"):
+        production.index("fn ensure_existing_update_directory")
+    ]
+
+    assert "allocate_tree_sibling(destination, boundary, \"staging\")?" in replacement
+    assert "allocate_tree_sibling(destination, boundary, \"backup\")?" in replacement
+    assert "copy_tree_overwrite(source, &staging)" in replacement
+    assert "std::fs::rename(destination, backup)" in replacement
+    assert "std::fs::rename(staging, destination)" in replacement
+    assert "std::fs::rename(backup, destination)" in replacement
+    assert "cleanup_tree_sibling(backup, \"atomic tree backup\")?" in replacement
+    assert "ensure_existing_path_chain_not_link" in replacement
+    assert "atomic_tree_replacement_removes_files_missing_from_new_component" in source
+    assert "atomic_tree_replacement_rejects_non_directory_destination" in source
 
 
 def test_update_service_rejects_development_keys_unless_explicitly_allowed():

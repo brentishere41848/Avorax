@@ -1,5 +1,7 @@
 use anyhow::{Context, Result};
-use std::path::Path;
+use std::io::ErrorKind;
+use std::path::{Path, PathBuf};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::path_safety::{
     copy_file_staged, create_dir_all_checked, ensure_existing_path_chain_not_link,
@@ -50,6 +52,195 @@ pub fn copy_tree_overwrite(source: &Path, destination: &Path) -> Result<()> {
         }
     }
     Ok(())
+}
+
+pub fn replace_tree_atomically(source: &Path, destination: &Path, boundary: &Path) -> Result<()> {
+    ensure_not_link_or_reparse(boundary, "atomic tree replacement boundary")?;
+    ensure_existing_update_directory(boundary, "atomic tree replacement boundary")?;
+    ensure_existing_path_chain_not_link(
+        destination,
+        boundary,
+        "atomic tree replacement destination",
+    )?;
+    let parent = destination.parent().ok_or_else(|| {
+        anyhow::anyhow!(
+            "atomic tree replacement destination has no parent: {}",
+            destination.display()
+        )
+    })?;
+    ensure_existing_path_chain_not_link(parent, boundary, "atomic tree replacement parent")?;
+    create_dir_all_checked(parent, "atomic tree replacement parent")?;
+
+    let staging = allocate_tree_sibling(destination, boundary, "staging")?;
+    let backup = allocate_tree_sibling(destination, boundary, "backup")?;
+    if let Err(error) = copy_tree_overwrite(source, &staging) {
+        cleanup_tree_sibling(&staging, "atomic tree replacement staging").with_context(|| {
+            format!(
+                "failed to clean atomic tree replacement staging {} after copy failure: {error:#}",
+                staging.display()
+            )
+        })?;
+        return Err(error);
+    }
+
+    if let Err(error) = activate_replacement_tree(&staging, destination, &backup, boundary) {
+        cleanup_tree_sibling(&staging, "atomic tree replacement staging").with_context(|| {
+            format!(
+                "failed to clean atomic tree replacement staging {} after activation failure: {error:#}",
+                staging.display()
+            )
+        })?;
+        return Err(error);
+    }
+    Ok(())
+}
+
+fn activate_replacement_tree(
+    staging: &Path,
+    destination: &Path,
+    backup: &Path,
+    boundary: &Path,
+) -> Result<()> {
+    ensure_existing_path_chain_not_link(staging, boundary, "atomic tree staging")?;
+    ensure_existing_update_directory(staging, "atomic tree staging")?;
+    ensure_existing_path_chain_not_link(destination, boundary, "atomic tree destination")?;
+    ensure_existing_path_chain_not_link(backup, boundary, "atomic tree backup")?;
+    ensure_tree_sibling_absent(backup, "atomic tree backup")?;
+
+    let destination_exists = match std::fs::symlink_metadata(destination) {
+        Ok(metadata) => {
+            ensure_not_link_or_reparse(destination, "atomic tree destination")?;
+            anyhow::ensure!(
+                metadata.is_dir(),
+                "atomic tree destination is not a directory: {}",
+                destination.display()
+            );
+            true
+        }
+        Err(error) if error.kind() == ErrorKind::NotFound => false,
+        Err(error) => {
+            return Err(error).with_context(|| {
+                format!(
+                    "failed to inspect atomic tree destination {}",
+                    destination.display()
+                )
+            });
+        }
+    };
+
+    if destination_exists {
+        std::fs::rename(destination, backup).with_context(|| {
+            format!(
+                "failed to move atomic tree destination {} to backup {}",
+                destination.display(),
+                backup.display()
+            )
+        })?;
+    }
+
+    if let Err(error) = std::fs::rename(staging, destination).with_context(|| {
+        format!(
+            "failed to activate atomic tree staging {} as {}",
+            staging.display(),
+            destination.display()
+        )
+    }) {
+        if destination_exists {
+            if let Err(restore_error) = std::fs::rename(backup, destination) {
+                return Err(error).context(format!(
+                    "failed to restore atomic tree backup {} after activation failure: {restore_error}",
+                    backup.display()
+                ));
+            }
+        }
+        return Err(error);
+    }
+
+    if destination_exists {
+        cleanup_tree_sibling(backup, "atomic tree backup")?;
+    }
+    Ok(())
+}
+
+fn allocate_tree_sibling(destination: &Path, boundary: &Path, role: &str) -> Result<PathBuf> {
+    let parent = destination.parent().ok_or_else(|| {
+        anyhow::anyhow!(
+            "atomic tree replacement destination has no parent: {}",
+            destination.display()
+        )
+    })?;
+    let name = destination
+        .file_name()
+        .ok_or_else(|| {
+            anyhow::anyhow!(
+                "atomic tree replacement destination has no name: {}",
+                destination.display()
+            )
+        })?
+        .to_string_lossy();
+    let unique = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|duration| duration.as_nanos())
+        .context("failed to read time for atomic tree replacement")?;
+    for attempt in 0..16 {
+        let candidate = parent.join(format!(
+            ".{name}.{}.{}.{}.{}.avorax-dir",
+            std::process::id(),
+            unique,
+            attempt,
+            role
+        ));
+        anyhow::ensure!(
+            candidate.starts_with(boundary),
+            "atomic tree replacement sibling escaped boundary: {}",
+            candidate.display()
+        );
+        ensure_existing_path_chain_not_link(&candidate, boundary, "atomic tree sibling")?;
+        match std::fs::symlink_metadata(&candidate) {
+            Ok(_) => {}
+            Err(error) if error.kind() == ErrorKind::NotFound => return Ok(candidate),
+            Err(error) => {
+                return Err(error).with_context(|| {
+                    format!(
+                        "failed to inspect atomic tree sibling {}",
+                        candidate.display()
+                    )
+                });
+            }
+        }
+    }
+    anyhow::bail!(
+        "could not allocate atomic tree replacement {role} path for {}",
+        destination.display()
+    )
+}
+
+fn cleanup_tree_sibling(path: &Path, label: &str) -> Result<()> {
+    match std::fs::symlink_metadata(path) {
+        Ok(metadata) => {
+            ensure_not_link_or_reparse(path, label)?;
+            anyhow::ensure!(
+                metadata.is_dir(),
+                "{label} is not a directory: {}",
+                path.display()
+            );
+            crate::path_safety::remove_dir_all_checked(path, label)
+        }
+        Err(error) if error.kind() == ErrorKind::NotFound => Ok(()),
+        Err(error) => {
+            Err(error).with_context(|| format!("failed to inspect {label} {}", path.display()))
+        }
+    }
+}
+
+fn ensure_tree_sibling_absent(path: &Path, label: &str) -> Result<()> {
+    match std::fs::symlink_metadata(path) {
+        Ok(_) => anyhow::bail!("{label} already exists: {}", path.display()),
+        Err(error) if error.kind() == ErrorKind::NotFound => Ok(()),
+        Err(error) => {
+            Err(error).with_context(|| format!("failed to inspect {label} {}", path.display()))
+        }
+    }
 }
 
 fn ensure_existing_update_directory(path: &Path, label: &str) -> Result<()> {
@@ -221,6 +412,60 @@ mod tests {
 
         assert!(error.contains("target is not a regular file"));
         assert_no_staged_update_files(&destination);
+    }
+
+    #[test]
+    fn atomic_tree_replacement_removes_files_missing_from_new_component() {
+        let dir = tempdir().unwrap();
+        let source = dir.path().join("source");
+        let install = dir.path().join("install");
+        let destination = install.join("engine/signatures");
+        std::fs::create_dir_all(&source).unwrap();
+        std::fs::create_dir_all(&destination).unwrap();
+        std::fs::write(source.join("new.zsig"), b"new safe signature").unwrap();
+        std::fs::write(destination.join("revoked.zsig"), b"revoked fixture").unwrap();
+
+        replace_tree_atomically(&source, &destination, &install).unwrap();
+
+        assert_eq!(
+            std::fs::read(destination.join("new.zsig")).unwrap(),
+            b"new safe signature"
+        );
+        assert!(!destination.join("revoked.zsig").exists());
+        assert_no_tree_replacement_siblings(destination.parent().unwrap());
+    }
+
+    #[test]
+    fn atomic_tree_replacement_rejects_non_directory_destination() {
+        let dir = tempdir().unwrap();
+        let source = dir.path().join("source");
+        let install = dir.path().join("install");
+        let destination = install.join("engine/signatures");
+        std::fs::create_dir_all(&source).unwrap();
+        std::fs::create_dir_all(destination.parent().unwrap()).unwrap();
+        std::fs::write(source.join("new.zsig"), b"new safe signature").unwrap();
+        std::fs::write(&destination, b"wrong destination kind").unwrap();
+
+        let error = replace_tree_atomically(&source, &destination, &install)
+            .unwrap_err()
+            .to_string();
+
+        assert!(error.contains("atomic tree destination is not a directory"));
+        assert_eq!(
+            std::fs::read(&destination).unwrap(),
+            b"wrong destination kind"
+        );
+        assert_no_tree_replacement_siblings(destination.parent().unwrap());
+    }
+
+    fn assert_no_tree_replacement_siblings(parent: &Path) {
+        for entry in std::fs::read_dir(parent).unwrap() {
+            let name = entry.unwrap().file_name().to_string_lossy().to_string();
+            assert!(
+                !name.ends_with(".avorax-dir"),
+                "atomic tree replacement left a sibling behind: {name}"
+            );
+        }
     }
 
     fn assert_no_staged_update_files(destination: &Path) {

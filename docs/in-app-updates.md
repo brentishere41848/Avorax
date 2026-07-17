@@ -58,6 +58,8 @@ The builder refuses to produce an unsigned `.aup`.
 
 The wrapper requires repository-relative source metadata, hash-feed and output paths, an absolute checked Python executable, explicit category/version/channel values, and a configured signer. It bounds child execution and output, rejects reparse-backed paths, rechecks that staging contains exactly one regular signature pack, and removes its checked temporary tree on success or failure. It never performs network acquisition. Production release automation must obtain and review a canonical SHA-256-only feed separately, protect the production signing key, publish both `.aup` and `update-feed.json` over authenticated HTTPS, and retain rollback evidence.
 
+Engine updates replace each declared `signatures`, `rules`, `ml`, or `trust` subcomponent as an atomic directory unit. Files absent from the newly signed component are removed, which permits definition revocation; an existing component is first renamed to a checked sibling backup and restored if activation fails. The pre-apply rollback snapshot remains the recovery source for failures after component activation.
+
 For dev-channel signing with the bundled Python helper, set the signer to an absolute Python executable plus the helper path and opt in to the development key explicitly:
 
 ```powershell

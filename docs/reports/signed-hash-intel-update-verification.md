@@ -12,12 +12,13 @@ Scope: strict reviewed SHA-256 packs and definitions-only signed update packagin
 - Hash pack compilation validates a unique temporary pack and atomically activates it only after success. A failed empty-feed build preserves the previous output and removes both temporary JSONL and pack files.
 - The signed wrapper accepts only bounded version/channel path tokens, requires an absolute checked Python executable, stages exactly one signature pack, performs no network operation, and removes both of its checked work trees.
 - The release-binary smoke used one SHA-256 computed from benign text and a temporary generated Ed25519 key. The resulting `.aup` contained exactly `manifest.json`, `manifest.sig`, and `payload/engine/signatures/zentor_reviewed_known_bad.zsig`.
-- Update Service `--verify` accepted the signed package at current version `0.3.0`; the manifest declared only native engine signatures. No package was applied or installed.
+- Update Service `--verify` accepted the signed package at current version `0.3.0`; the manifest declared only native engine signatures.
+- The same release binary applied the package under checked temporary install/data roots with fake service control. The old signature pack was removed from the active component and preserved in the rollback snapshot; `--rollback` restored it and removed the new pack.
 - Runtime adversarial probes rejected a traversal version and relative Python executable before any feed processing. Temporary smoke, wrapper, and package-builder directories were removed after execution.
 
 ## Partial
 
-- The normal signed updater has atomic staging and rollback tests, but this checkpoint did not apply the hash-only package to a real installed service.
+- The hash-only package was not applied to a machine-installed service; real service lifecycle, installed ACL, and privilege E2E remain partial.
 - Production feed review, false-positive ownership, signing-key custody, HTTPS publication, release retention, and installed rollback evidence remain external release responsibilities.
 
 ## Disabled or Blocked
@@ -48,10 +49,10 @@ cargo build --release --manifest-path core\avorax_update_service\Cargo.toml --bi
 # Finished release profile; exit 0; 59.44s
 
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools\testing\run-hash-intel-update-package-smoke.ps1 -PythonPath C:\Users\Brent\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe
-# traversal/relative-tool rejection and signed package verification passed; exit 0
+# traversal/relative-tool rejection plus signed verify/isolated apply/rollback passed; exit 0
 
 cargo test --manifest-path core\avorax_update_service\Cargo.toml
-# 4 key-generator + 0 signer + 201 update-service tests passed; 0 failed
+# 4 key-generator + 0 signer + 203 update-service tests passed; 0 failed
 
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools\testing\run-release-update-package-builder-smoke.ps1
 # signed package builder verify smoke passed; exit 0

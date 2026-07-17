@@ -898,3 +898,9 @@ enforcement, or pre-execution blocking is claimed.
 
 - **Resolved locally:** Hash-feed source metadata now uses exact direct/template schemas, HTTPS-only credential-free provenance URLs, an active-row bound, duplicate rejection, and atomic output. Malformed or ambiguous metadata fails before pack compilation.
 - **Still blocked:** These structural checks cannot establish that a third party owns a source, classified a file correctly, or will operate a false-positive response process. Production activation still requires maintainer review and signed release ownership; the requested GitHub repository entries remain disabled metadata-only inputs.
+
+## Checkpoint 2166 Definition Revocation and Isolated Rollback
+
+- **Resolved locally:** Engine subcomponent activation no longer merges signed definitions into an existing directory. Each declared signatures/rules/ML/trust component is staged and atomically replaces its predecessor, so removed definitions are actually revoked. Rename failure restores the checked sibling backup.
+- **Verified in isolation:** A release-binary smoke builds and verifies a signed signature-only `.aup`, applies it under temporary install/data roots with fake service control, proves the old pack is absent and snapshotted, then rolls back to the exact old pack while removing the new one.
+- **Still partial:** No machine-installed service, production ACL, production key, or real service stop/start lifecycle was exercised. Installed update/rollback E2E still requires explicit approval and a disposable test host.

@@ -3,7 +3,8 @@ param(
   [Parameter(Mandatory = $true)][string]$PythonPath,
   [string]$UpdateServicePath = "",
   [string]$SignerPath = "",
-  [string]$KeygenPath = ""
+  [string]$KeygenPath = "",
+  [string]$FakeScSourcePath = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -33,6 +34,19 @@ function Resolve-ReleaseBinary([string]$ConfiguredPath, [string]$FileName) {
   $resolved = Get-AvoraxRequiredTool ([System.IO.Path]::GetFullPath($candidate)) "release $FileName"
   if ([System.IO.Path]::GetFileName($resolved) -ne $FileName) {
     throw "Hash-intel update smoke expects $FileName, got: $resolved"
+  }
+  return $resolved
+}
+
+function Resolve-FakeScSource([string]$ConfiguredPath) {
+  $candidate = $ConfiguredPath
+  if ([string]::IsNullOrWhiteSpace($candidate)) {
+    $candidate = "C:\Program Files\Git\usr\bin\true.exe"
+  }
+  $resolved = Get-AvoraxRequiredTool ([System.IO.Path]::GetFullPath($candidate)) "fake service-control success executable"
+  $probe = Invoke-AvoraxGateCommandDiagnostic $resolved @("stop", "avorax_guard_service") "fake service-control success probe" 4096 $script:repo
+  if ($probe.exit_code -ne 0) {
+    throw "Fake service-control success executable must exit 0 with service-like arguments: $resolved"
   }
   return $resolved
 }
@@ -77,6 +91,19 @@ function Write-Utf8NoBomFile([string]$Path, [string]$Text) {
   )
 }
 
+function Read-JsonFile([string]$Path, [string]$Description) {
+  $file = Get-AvoraxGateFile $Path $Description
+  return (Get-Content -LiteralPath $file -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop)
+}
+
+function Assert-FileText([string]$Path, [string]$Expected, [string]$Description) {
+  $file = Get-AvoraxGateFile $Path $Description
+  $actual = Get-Content -LiteralPath $file -Raw -ErrorAction Stop
+  if ($actual -ne $Expected) {
+    throw "$Description content mismatch: $file"
+  }
+}
+
 function Get-TextSha256([string]$Text) {
   $sha256 = [System.Security.Cryptography.SHA256]::Create()
   try {
@@ -113,6 +140,8 @@ $python = Get-AvoraxRequiredTool ([System.IO.Path]::GetFullPath($PythonPath)) "P
 $updateService = Resolve-ReleaseBinary $UpdateServicePath "avorax_update_service.exe"
 $signer = Resolve-ReleaseBinary $SignerPath "avorax_sign_manifest.exe"
 $keygen = Resolve-ReleaseBinary $KeygenPath "avorax_generate_update_key.exe"
+$fakeScSource = Resolve-FakeScSource $FakeScSourcePath
+$fakeScSourceDirectory = Split-Path -Parent $fakeScSource
 $wrapper = Get-AvoraxGateFile (Join-Path $repo "tools\update\avorax-build-hash-intel-update.ps1") "hash-intel update wrapper"
 $powershell = Get-AvoraxRequiredTool ([System.Diagnostics.Process]::GetCurrentProcess().MainModule.FileName) "PowerShell executable"
 $tempParent = Join-Path $repo ".workflow\ultracode\avorax-hardening\tmp"
@@ -121,6 +150,8 @@ $tempRoot = Join-Path $tempParent ("hash-intel-smoke-" + [System.Guid]::NewGuid(
 $inputRoot = Join-Path $tempRoot "input"
 $outputRoot = Join-Path $tempRoot "output"
 $dataRoot = Join-Path $tempRoot "data"
+$installRoot = Join-Path $tempRoot "install"
+$fakeWindowsRoot = Join-Path $tempRoot "fake-windows"
 $version = "0.3.1"
 $channel = "stable"
 $publicKeyId = "avorax-hash-intel-smoke-ed25519"
@@ -129,12 +160,42 @@ $oldPublicKey = [System.Environment]::GetEnvironmentVariable("AVORAX_UPDATE_PUBL
 $oldPublicKeyId = [System.Environment]::GetEnvironmentVariable("AVORAX_UPDATE_PUBLIC_KEY_ID")
 $oldSigningKey = [System.Environment]::GetEnvironmentVariable("AVORAX_UPDATE_SIGNING_PRIVATE_KEY_HEX")
 $oldDevUpdates = [System.Environment]::GetEnvironmentVariable("AVORAX_ALLOW_DEVELOPMENT_UPDATES")
+$oldSystemRoot = [System.Environment]::GetEnvironmentVariable("SystemRoot")
+$oldWindir = [System.Environment]::GetEnvironmentVariable("WINDIR")
+$oldPath = [System.Environment]::GetEnvironmentVariable("PATH")
 
 try {
   New-AvoraxGateDirectory $tempRoot "hash-intel smoke temporary root" | Out-Null
   New-AvoraxGateDirectory $inputRoot "hash-intel smoke input root" | Out-Null
   New-AvoraxGateDirectory $outputRoot "hash-intel smoke output root" | Out-Null
   New-AvoraxGateDirectory $dataRoot "hash-intel smoke data root" | Out-Null
+  New-AvoraxGateDirectory $installRoot "hash-intel smoke install root" | Out-Null
+  New-AvoraxGateDirectory (Join-Path $installRoot "engine") "hash-intel smoke engine root" | Out-Null
+  New-AvoraxGateDirectory (Join-Path $installRoot "engine\signatures") "hash-intel smoke installed signatures" | Out-Null
+  New-AvoraxGateDirectory (Join-Path $installRoot "engine\rules") "hash-intel smoke installed rules" | Out-Null
+  New-AvoraxGateDirectory (Join-Path $installRoot "engine\ml") "hash-intel smoke installed model" | Out-Null
+  New-AvoraxGateDirectory (Join-Path $installRoot "engine\trust") "hash-intel smoke installed trust" | Out-Null
+  New-AvoraxGateDirectory (Join-Path $installRoot "docs") "hash-intel smoke installed docs" | Out-Null
+  New-AvoraxGateDirectory $fakeWindowsRoot "hash-intel smoke fake Windows root" | Out-Null
+  New-AvoraxGateDirectory (Join-Path $fakeWindowsRoot "System32") "hash-intel smoke fake System32" | Out-Null
+  Copy-Item -LiteralPath $fakeScSource -Destination (Join-Path $fakeWindowsRoot "System32\sc.exe") -ErrorAction Stop
+
+  $oldApp = "benign previous Avorax app fixture`n"
+  $oldCore = "benign previous Avorax core service fixture`n"
+  $oldGuard = "benign previous Avorax guard service fixture`n"
+  $oldSignature = "benign previous Avorax signature fixture`n"
+  $oldRule = "benign previous Avorax rule fixture`n"
+  $oldModel = "benign previous Avorax model fixture`n"
+  $oldTrust = "benign previous Avorax trust fixture`n"
+  $oldDocs = "# Benign previous Avorax docs fixture`n"
+  Write-Utf8NoBomFile (Join-Path $installRoot "Avorax.exe") $oldApp
+  Write-Utf8NoBomFile (Join-Path $installRoot "avorax_core_service.exe") $oldCore
+  Write-Utf8NoBomFile (Join-Path $installRoot "avorax_guard_service.exe") $oldGuard
+  Write-Utf8NoBomFile (Join-Path $installRoot "engine\signatures\previous.zsig") $oldSignature
+  Write-Utf8NoBomFile (Join-Path $installRoot "engine\rules\previous.rule") $oldRule
+  Write-Utf8NoBomFile (Join-Path $installRoot "engine\ml\previous.model") $oldModel
+  Write-Utf8NoBomFile (Join-Path $installRoot "engine\trust\previous.trust") $oldTrust
+  Write-Utf8NoBomFile (Join-Path $installRoot "docs\previous.md") $oldDocs
 
   $sourcePath = Join-Path $inputRoot "source.json"
   $hashPath = Join-Path $inputRoot "hashes.txt"
@@ -247,12 +308,65 @@ try {
     $archive.Dispose()
   }
 
-  Write-Host "Avorax signed hash-intel update package smoke test passed."
+  Assert-NoReparseTree $tempRoot "hash-intel smoke apply tree"
+  Set-Item -Path Env:\SystemRoot -Value $fakeWindowsRoot -ErrorAction Stop
+  Set-Item -Path Env:\WINDIR -Value $fakeWindowsRoot -ErrorAction Stop
+  Set-Item -Path Env:\PATH -Value ($fakeScSourceDirectory + [System.IO.Path]::PathSeparator + $oldPath) -ErrorAction Stop
+
+  Invoke-SmokeCommand $updateService @(
+    "--apply", $packagePath, $installRoot, "0.3.0"
+  ) "signed hash-intel isolated apply" | Out-Null
+
+  Assert-FileText (Join-Path $installRoot "Avorax.exe") $oldApp "hash-intel unchanged app"
+  Assert-FileText (Join-Path $installRoot "avorax_core_service.exe") $oldCore "hash-intel unchanged core service"
+  Assert-FileText (Join-Path $installRoot "avorax_guard_service.exe") $oldGuard "hash-intel unchanged guard service"
+  Assert-FileText (Join-Path $installRoot "engine\rules\previous.rule") $oldRule "hash-intel unchanged rules"
+  Assert-FileText (Join-Path $installRoot "engine\ml\previous.model") $oldModel "hash-intel unchanged model"
+  Assert-FileText (Join-Path $installRoot "engine\trust\previous.trust") $oldTrust "hash-intel unchanged trust"
+  Assert-FileText (Join-Path $installRoot "docs\previous.md") $oldDocs "hash-intel unchanged docs"
+  $activePack = Read-JsonFile (Join-Path $installRoot "engine\signatures\zentor_reviewed_known_bad.zsig") "active reviewed hash pack"
+  if ($activePack.signatures.Count -ne 1 -or $activePack.signatures[0].pattern -ne $fixtureHash) {
+    throw "Isolated hash-intel apply did not activate the reviewed fixture hash."
+  }
+  if (Test-Path -LiteralPath (Join-Path $installRoot "engine\signatures\previous.zsig")) {
+    throw "Isolated hash-intel apply left the previous signature component active."
+  }
+  $rollbackRoot = Join-Path $dataRoot "updates\rollback\0.3.0"
+  Assert-FileText (Join-Path $rollbackRoot "engine\signatures\previous.zsig") $oldSignature "hash-intel rollback snapshot signature"
+  $updateReport = Read-JsonFile (Join-Path $dataRoot "updates\logs\update_report.json") "hash-intel apply report"
+  if (-not [bool]$updateReport.ok -or -not [bool]$updateReport.applied -or $updateReport.version -ne $version) {
+    throw "Isolated hash-intel apply report did not record successful activation."
+  }
+  $stagingRoot = Join-Path $dataRoot "updates\staging"
+  if ((Test-Path -LiteralPath $stagingRoot) -and @(Get-ChildItem -LiteralPath $stagingRoot -Force -Recurse -ErrorAction Stop).Count -ne 0) {
+    throw "Isolated hash-intel apply left files under the update staging root."
+  }
+
+  Invoke-SmokeCommand $updateService @(
+    "--rollback", $installRoot
+  ) "signed hash-intel isolated rollback" | Out-Null
+
+  Assert-FileText (Join-Path $installRoot "engine\signatures\previous.zsig") $oldSignature "restored hash-intel signature"
+  Assert-FileText (Join-Path $installRoot "engine\rules\previous.rule") $oldRule "restored hash-intel rules"
+  Assert-FileText (Join-Path $installRoot "engine\ml\previous.model") $oldModel "restored hash-intel model"
+  Assert-FileText (Join-Path $installRoot "engine\trust\previous.trust") $oldTrust "restored hash-intel trust"
+  if (Test-Path -LiteralPath (Join-Path $installRoot "engine\signatures\zentor_reviewed_known_bad.zsig")) {
+    throw "Isolated hash-intel rollback left the activated reviewed pack behind."
+  }
+  $rollbackStatus = Read-JsonFile (Join-Path $dataRoot "updates\logs\update_cli_status.json") "hash-intel rollback status"
+  if (-not [bool]$rollbackStatus.ok -or $rollbackStatus.command -ne "--rollback" -or $null -ne $rollbackStatus.error) {
+    throw "Isolated hash-intel rollback status did not report success."
+  }
+
+  Write-Host "Avorax signed hash-intel verify/apply/rollback smoke test passed."
 } finally {
   Restore-EnvVar "AVORAX_DATA_DIR" $oldDataDir
   Restore-EnvVar "AVORAX_UPDATE_PUBLIC_KEY_HEX" $oldPublicKey
   Restore-EnvVar "AVORAX_UPDATE_PUBLIC_KEY_ID" $oldPublicKeyId
   Restore-EnvVar "AVORAX_UPDATE_SIGNING_PRIVATE_KEY_HEX" $oldSigningKey
   Restore-EnvVar "AVORAX_ALLOW_DEVELOPMENT_UPDATES" $oldDevUpdates
+  Restore-EnvVar "SystemRoot" $oldSystemRoot
+  Restore-EnvVar "WINDIR" $oldWindir
+  Restore-EnvVar "PATH" $oldPath
   Remove-SmokeTemp $tempRoot $tempParent
 }

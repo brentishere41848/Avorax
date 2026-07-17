@@ -10,6 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 VALIDATOR = ROOT / "tools" / "zentor_intel" / "validate_indicator_pack.py"
 PACK_BUILDER = ROOT / "tools" / "zentor_intel" / "build_realworld_detection_pack.py"
 HASH_IMPORTER = ROOT / "tools" / "zentor_intel" / "import_hash_feed.py"
+HASH_UPDATE_SMOKE = ROOT / "tools" / "testing" / "run-hash-intel-update-package-smoke.ps1"
 UPDATE_WRAPPER = ROOT / "tools" / "update" / "avorax-build-hash-intel-update.ps1"
 
 
@@ -412,3 +413,24 @@ def test_signed_hash_intel_update_wrapper_is_local_bounded_and_signature_only():
     assert "git clone" not in source.lower()
     assert "github.com" not in source.lower()
     assert 'New-CheckedDirectory $payloadDocs "payload docs directory"' in package_builder
+
+
+def test_signed_hash_intel_smoke_applies_and_rolls_back_only_in_checked_temp_roots():
+    source = HASH_UPDATE_SMOKE.read_text(encoding="utf-8")
+
+    assert '"C:\\Program Files\\Git\\usr\\bin\\true.exe"' in source
+    assert 'Join-Path $fakeWindowsRoot "System32\\sc.exe"' in source
+    assert 'Set-Item -Path Env:\\SystemRoot -Value $fakeWindowsRoot' in source
+    assert '"--apply", $packagePath, $installRoot, "0.3.0"' in source
+    assert '"--rollback", $installRoot' in source
+    assert "left the previous signature component active" in source
+    assert '"hash-intel unchanged rules"' in source
+    assert '"hash-intel unchanged model"' in source
+    assert '"hash-intel unchanged trust"' in source
+    assert '"hash-intel unchanged docs"' in source
+    assert "left files under the update staging root" in source
+    assert "rollback left the activated reviewed pack behind" in source
+    assert 'Restore-EnvVar "SystemRoot" $oldSystemRoot' in source
+    assert 'Restore-EnvVar "WINDIR" $oldWindir' in source
+    assert 'Restore-EnvVar "PATH" $oldPath' in source
+    assert "Remove-SmokeTemp $tempRoot $tempParent" in source
