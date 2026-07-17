@@ -3,7 +3,7 @@ use serde_json::json;
 use std::io::ErrorKind;
 use std::path::{Component, Path, PathBuf};
 
-use crate::file_replacer::copy_tree_overwrite;
+use crate::file_replacer::{copy_tree_overwrite, replace_tree_atomically};
 use crate::logging::{program_data_dir, write_update_log};
 use crate::path_safety::{
     copy_file_staged, create_dir_all_checked, ensure_not_link_or_reparse, remove_dir_all_checked,
@@ -569,7 +569,13 @@ fn copy_engine_payload_section(source: &Path, destination: &Path) -> Result<()> 
         source.display()
     );
     for component in components {
-        copy_tree_overwrite(&component.source, &destination.join(component.name))?;
+        replace_tree_atomically(
+            &component.source,
+            &destination.join(component.name),
+            destination.parent().ok_or_else(|| {
+                anyhow::anyhow!("engine update destination has no install parent")
+            })?,
+        )?;
     }
     Ok(())
 }
@@ -1600,7 +1606,12 @@ mod tests {
         std::fs::create_dir_all(staging.join("docs/audit")).unwrap();
         std::fs::create_dir_all(staging.join("tools")).unwrap();
         std::fs::create_dir_all(staging.join("migrations")).unwrap();
-        std::fs::create_dir_all(&install).unwrap();
+        std::fs::create_dir_all(install.join("engine/signatures")).unwrap();
+        std::fs::write(
+            install.join("engine/signatures/revoked.asig"),
+            b"revoked old signature",
+        )
+        .unwrap();
 
         std::fs::write(staging.join("app/bin/AvoraxApp.txt"), b"new app").unwrap();
         std::fs::write(
@@ -1643,6 +1654,7 @@ mod tests {
             std::fs::read(install.join("engine/signatures/new.asig")).unwrap(),
             b"new signature"
         );
+        assert_missing_path(&install.join("engine/signatures/revoked.asig"));
         assert_eq!(
             std::fs::read(install.join("engine/rules/new.zrule")).unwrap(),
             b"new rule"
@@ -1832,9 +1844,7 @@ mod tests {
             "const NORMAL_ENGINE_PAYLOAD_COMPONENTS: &[&str] = &[\"signatures\", \"rules\", \"ml\", \"trust\"]"
         ));
         assert!(engine_source.contains("engine_payload_components(source)?"));
-        assert!(engine_source.contains(
-            "copy_tree_overwrite(&component.source, &destination.join(component.name))?"
-        ));
+        assert!(engine_source.contains("replace_tree_atomically("));
         assert!(engine_source.contains("canonical_engine_payload_component"));
         assert!(engine_source.contains("is not supported by normal updates"));
         assert!(engine_source.contains("engine update payload subcomponent must be a directory"));

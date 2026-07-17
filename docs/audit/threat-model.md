@@ -498,3 +498,19 @@ URL and schema are not authenticity evidence. The importer does not contact the
 URL, validate publisher control, or infer that a hash is malicious. Feed review,
 false-positive ownership, signing-key custody, and authenticated publication
 remain separate trusted release-process responsibilities.
+
+## Checkpoint 2166 Engine Definition Revocation Boundary
+
+Per-file overwrite left files that were absent from a new signed engine
+component in place. For malware definitions this meant a false-positive or
+revoked pack could remain active indefinitely even after a valid update. Engine
+subcomponents now activate through a checked sibling directory: copy and
+validation finish first, the existing component moves to a unique backup, the
+staged component is renamed into place, and activation failure restores the
+backup. Successful activation removes the backup; later apply failures still
+use the normal pre-apply rollback snapshot.
+
+The release smoke proves this behavior with benign text fixtures, temporary
+install/data roots, and a fake service-control executable under a temporary
+`SystemRoot`. It does not establish real installed ACLs, production signing-key
+custody, actual service lifecycle behavior, or kernel/pre-execution blocking.
