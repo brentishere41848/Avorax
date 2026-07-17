@@ -812,8 +812,7 @@ fn normalize_publisher_name(value: &str) -> Option<String> {
     {
         return None;
     }
-    let normalized = value
-        .trim()
+    let normalized = trimmed
         .split_whitespace()
         .collect::<Vec<_>>()
         .join(" ")

@@ -209,9 +209,11 @@ fn run_message_loop(stop: Arc<AtomicBool>) -> Result<()> {
 
 fn evaluate_native_request(native: &NativeScanRequest) -> Result<NativeScanVerdict> {
     let request = native_to_domain(native)?;
-    let mut config = crate::driver_ipc::DriverVerdictConfig::default();
-    config.known_bad_hashes = known_bad_cache::load_known_bad_hashes()
-        .context("failed to load guard known-bad cache for driver port verdict")?;
+    let config = crate::driver_ipc::DriverVerdictConfig {
+        known_bad_hashes: known_bad_cache::load_known_bad_hashes()
+            .context("failed to load guard known-bad cache for driver port verdict")?,
+        ..crate::driver_ipc::DriverVerdictConfig::default()
+    };
     let verdict = evaluate_driver_request(&request, &config)?;
     Ok(domain_to_native(native.request_id, &verdict))
 }

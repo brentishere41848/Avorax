@@ -9933,11 +9933,11 @@ def test_guard_quarantine_staged_writes_are_final_destination_exclusive_and_clea
     assert "remove_existing_quarantine_file(path, label)?" not in staged_source
     assert "remove_existing_quarantine_file(temp_path, label)?" not in staged_source
     write_error_source = staged_source[
-        staged_source.index("if let Err(error) = write_file_exclusive(&temp_path, bytes, label)"):
+        staged_source.index("write_file_exclusive(&temp_path, bytes, label)?;"):
         staged_source.index("if let Err(error) = reject_link_path(&temp_path, label)")
     ]
     assert "cleanup_guard_quarantine_staged_file" not in write_error_source
-    assert "return Err(error);" in write_error_source
+    assert "write_file_exclusive(&temp_path, bytes, label)?;" in write_error_source
     assert "let mut output = match fs::OpenOptions::new()" in file_writer_source
     assert "Err(error) => {" in file_writer_source
     assert "failed to create temporary {label}" in file_writer_source
@@ -18430,6 +18430,20 @@ def test_ci_workflow_enforces_strict_update_service_clippy():
     assert "components: clippy" in install_source
     assert "working-directory: core/avorax_update_service" in lint_source
     assert "run: cargo clippy --all-targets -- -D warnings" in lint_source
+
+
+def test_ci_workflow_enforces_strict_guard_service_clippy():
+    source = read(CI_WORKFLOW)
+    install_start = source.index("- name: Install Rust")
+    local_core_start = source.index("- name: Test local core")
+    install_source = source[install_start:local_core_start]
+    lint_start = source.index("- name: Lint guard service")
+    update_start = source.index("- name: Test update service")
+    lint_source = source[lint_start:update_start]
+
+    assert "components: clippy" in install_source
+    assert "working-directory: core/zentor_guard_service" in lint_source
+    assert "run: cargo clippy --all-targets --no-deps -- -D warnings" in lint_source
 
 
 def test_ci_workflow_prebuilds_timeout_bounded_false_positive_tests():

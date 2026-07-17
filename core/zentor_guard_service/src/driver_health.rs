@@ -35,6 +35,19 @@ pub struct DriverHealth {
     pub reason: String,
 }
 
+#[derive(Default)]
+struct DriverHealthSignals {
+    installed: bool,
+    running: bool,
+    ipc_connected: bool,
+    test_signed: bool,
+    secure_boot_enabled: bool,
+    load_attempted: bool,
+    load_succeeded: bool,
+    load_error: Option<String>,
+    probe_errors: Vec<String>,
+}
+
 impl DriverHealth {
     pub fn probe() -> Self {
         let mut probe_errors = Vec::new();
@@ -105,7 +118,7 @@ impl DriverHealth {
         } else {
             false
         };
-        classify_driver_health(
+        classify_driver_health(DriverHealthSignals {
             installed,
             running,
             ipc_connected,
@@ -115,21 +128,22 @@ impl DriverHealth {
             load_succeeded,
             load_error,
             probe_errors,
-        )
+        })
     }
 }
 
-fn classify_driver_health(
-    installed: bool,
-    running: bool,
-    ipc_connected: bool,
-    test_signed: bool,
-    secure_boot_enabled: bool,
-    load_attempted: bool,
-    load_succeeded: bool,
-    load_error: Option<String>,
-    probe_errors: Vec<String>,
-) -> DriverHealth {
+fn classify_driver_health(signals: DriverHealthSignals) -> DriverHealth {
+    let DriverHealthSignals {
+        installed,
+        running,
+        ipc_connected,
+        test_signed,
+        secure_boot_enabled,
+        load_attempted,
+        load_succeeded,
+        load_error,
+        probe_errors,
+    } = signals;
     let probe_failed = !probe_errors.is_empty();
     let reboot_required = installed && !running && !test_signed && !probe_failed;
     let status = if installed && running && ipc_connected {
@@ -170,10 +184,9 @@ fn classify_driver_health(
         "The custom Avorax minifilter is installed but not loaded. This development build is test-signed and Windows TESTSIGNING is off; run bcdedit /set testsigning on from an elevated terminal and reboot, then run the Avorax driver installer/load self-test again. Production builds require a Microsoft-signed driver instead."
             .to_string()
     } else if installed && load_attempted && !load_succeeded {
-        let load_error_detail = match load_error.as_deref() {
-            Some(error) => error,
-            None => "missing driver load failure detail",
-        };
+        let load_error_detail = load_error
+            .as_deref()
+            .unwrap_or("missing driver load failure detail");
         format!(
             "Windows TESTSIGNING is enabled and Avorax attempted to load ZentorAvFilter, but the filter is still not running. fltmc load error: {}",
             load_error_detail
@@ -752,7 +765,7 @@ fn powershell_encoded_command(script: &str) -> String {
 #[cfg(windows)]
 fn base64_encode(bytes: &[u8]) -> String {
     const TABLE: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-    let mut encoded = String::with_capacity(((bytes.len() + 2) / 3) * 4);
+    let mut encoded = String::with_capacity(bytes.len().div_ceil(3) * 4);
     let mut offset = 0;
     while offset < bytes.len() {
         let first = bytes[offset];
@@ -790,17 +803,11 @@ mod tests {
 
     #[test]
     fn installed_stopped_testsigning_off_secure_boot_on_reports_firmware_blocker() {
-        let health = classify_driver_health(
-            true,
-            false,
-            false,
-            false,
-            true,
-            false,
-            false,
-            None,
-            Vec::new(),
-        );
+        let health = classify_driver_health(DriverHealthSignals {
+            installed: true,
+            secure_boot_enabled: true,
+            ..DriverHealthSignals::default()
+        });
 
         assert_eq!(health.status, "secureBootBlocksTestSigning");
         assert!(health.reboot_required);
@@ -815,17 +822,10 @@ mod tests {
 
     #[test]
     fn installed_stopped_testsigning_off_requires_reboot_policy_step() {
-        let health = classify_driver_health(
-            true,
-            false,
-            false,
-            false,
-            false,
-            false,
-            false,
-            None,
-            Vec::new(),
-        );
+        let health = classify_driver_health(DriverHealthSignals {
+            installed: true,
+            ..DriverHealthSignals::default()
+        });
 
         assert_eq!(health.status, "testSigningRequired");
         assert!(health.reboot_required);
@@ -836,17 +836,13 @@ mod tests {
 
     #[test]
     fn installed_stopped_testsigning_on_reports_load_failure() {
-        let health = classify_driver_health(
-            true,
-            false,
-            false,
-            true,
-            false,
-            true,
-            false,
-            Some("access denied".to_string()),
-            Vec::new(),
-        );
+        let health = classify_driver_health(DriverHealthSignals {
+            installed: true,
+            test_signed: true,
+            load_attempted: true,
+            load_error: Some("access denied".to_string()),
+            ..DriverHealthSignals::default()
+        });
 
         assert_eq!(health.status, "loadFailed");
         assert!(!health.reboot_required);
@@ -856,17 +852,12 @@ mod tests {
 
     #[test]
     fn running_without_ipc_is_not_reported_as_pre_execution_ready() {
-        let health = classify_driver_health(
-            true,
-            true,
-            false,
-            true,
-            false,
-            false,
-            false,
-            None,
-            Vec::new(),
-        );
+        let health = classify_driver_health(DriverHealthSignals {
+            installed: true,
+            running: true,
+            test_signed: true,
+            ..DriverHealthSignals::default()
+        });
 
         assert_eq!(health.status, "communicationFailed");
         assert!(health.reason.contains("driver IPC did not respond"));
@@ -874,17 +865,10 @@ mod tests {
 
     #[test]
     fn driver_probe_errors_are_reported_in_health() {
-        let health = classify_driver_health(
-            false,
-            false,
-            false,
-            false,
-            false,
-            false,
-            false,
-            None,
-            vec!["driver service probe failed: denied".to_string()],
-        );
+        let health = classify_driver_health(DriverHealthSignals {
+            probe_errors: vec!["driver service probe failed: denied".to_string()],
+            ..DriverHealthSignals::default()
+        });
 
         assert_eq!(health.status, "probeFailed");
         assert!(!health.reboot_required);
@@ -1143,16 +1127,21 @@ mod tests {
             .unwrap();
         let classify_source = &source[start..end];
 
-        assert!(classify_source.contains("let load_error_detail = match load_error.as_deref()"));
-        assert!(classify_source.contains("Some(error) => error"));
-        assert!(classify_source.contains("None => \"missing driver load failure detail\""));
+        assert!(classify_source.contains(".unwrap_or(\"missing driver load failure detail\")"));
         assert!(!classify_source.contains(".unwrap_or(\"unknown load failure\")"));
     }
 
     #[test]
     fn auto_loaded_and_ipc_alive_reports_success() {
-        let health =
-            classify_driver_health(true, true, true, true, false, true, true, None, Vec::new());
+        let health = classify_driver_health(DriverHealthSignals {
+            installed: true,
+            running: true,
+            ipc_connected: true,
+            test_signed: true,
+            load_attempted: true,
+            load_succeeded: true,
+            ..DriverHealthSignals::default()
+        });
 
         assert_eq!(health.status, "communicationOk");
         assert!(health.load_succeeded);
