@@ -16641,15 +16641,30 @@ def test_hash_feed_import_requires_typed_metadata():
     main_source = source[main_start:]
 
     assert "MAX_HASH_FEED_TEXT_BYTES = 4096" in source
+    assert "MAX_HASH_FEED_ROWS = 100_000" in source
+    assert "SOURCE_METADATA_KEYS = {" in source
+    assert 'SOURCE_REGISTRY_KEYS = {"sources", "manual_hash_source_template"}' in source
     assert "def required_text(value: object, description: str) -> str" in helper_source
     assert "def optional_text(value: object, description: str, default: str | None = None)" in helper_source
+    assert "def reject_unknown_fields(value: dict, allowed: set[str], description: str)" in helper_source
+    assert "def resolve_source_metadata(value: dict) -> dict" in helper_source
+    assert "def optional_https_url(value: object, description: str) -> str | None" in helper_source
     assert "must be a string" in helper_source
     assert "must not be empty" in helper_source
     assert "control characters" in helper_source
+    assert "must be an absolute HTTPS URL" in helper_source
+    assert "must not contain credentials" in helper_source
+    assert "must not contain a fragment" in helper_source
+    assert "must not contain backslashes" in helper_source
+    assert "HTTPS_HOST_LABEL_RE.fullmatch(label)" in helper_source
+    assert "contains an invalid hostname" in helper_source
     assert "required_text(source.get(\"source_name\"), \"hash feed source_name\")" in main_source
-    assert "optional_text(source.get(\"source_url\"), \"hash feed source_url\")" in main_source
+    assert "optional_https_url(source.get(\"source_url\"), \"hash feed source_url\")" in main_source
     assert "optional_text(source.get(\"source_type\"), \"hash feed source_type\", \"manual_lab\")" in main_source
     assert "optional_text(source.get(\"malware_family\"), \"hash feed malware_family\")" in main_source
+    assert "first_hash_line: dict[str, int] = {}" in main_source
+    assert "duplicate SHA-256 on line {line_number}" in main_source
+    assert "if len(rows) >= MAX_HASH_FEED_ROWS" in main_source
     assert "parser.add_argument(\"--category\", required=True)" in main_source
     assert "required_category(args.category, \"hash feed category\")" in main_source
     assert "parser.add_argument(\"--category\", default=\"trojan\")" not in main_source

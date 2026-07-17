@@ -34,6 +34,8 @@ python tools\zentor_intel\build_realworld_detection_pack.py --source assets\zent
 
 The strict profile requires at least one unique lowercase 64-character SHA-256, `exact_hash`, `confirmed` confidence, `critical` severity, a production threat category, the exact `quarantine_if_policy_allows` policy, global file matching, empty required context, and no partial-hash fields. It rejects repository metadata, Git blob identifiers, test/unknown categories, duplicate IDs/hashes, and lower-confidence indicators.
 
+Hash-feed source JSON is also fail-closed. A direct source object may contain only `source_name`, `source_url`, `source_type`, and `malware_family`. A registry object may contain only `sources` and `manual_hash_source_template`, and the selected template has the same exact source schema. Unknown or mixed fields, non-list `sources`, non-object templates, non-HTTPS URLs, embedded credentials, fragments, backslashes, duplicate hashes, and more than 100,000 active rows are rejected before output. This validates provenance shape, not the truth of a third-party classification.
+
 To turn a reviewed local SHA-256 feed into a definitions-only signed update, use the production signing environment and the dedicated wrapper:
 
 ```powershell

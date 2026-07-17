@@ -9,6 +9,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 VALIDATOR = ROOT / "tools" / "zentor_intel" / "validate_indicator_pack.py"
 PACK_BUILDER = ROOT / "tools" / "zentor_intel" / "build_realworld_detection_pack.py"
+HASH_IMPORTER = ROOT / "tools" / "zentor_intel" / "import_hash_feed.py"
 UPDATE_WRAPPER = ROOT / "tools" / "update" / "avorax-build-hash-intel-update.ps1"
 
 
@@ -77,6 +78,22 @@ def run_python(*arguments: object) -> subprocess.CompletedProcess[str]:
 
 def validate_known_bad(path: Path) -> subprocess.CompletedProcess[str]:
     return run_python(VALIDATOR, "--input", path, "--profile", "known-bad-sha256")
+
+
+def import_hashes(
+    source: Path, hashes: Path, output: Path
+) -> subprocess.CompletedProcess[str]:
+    return run_python(
+        HASH_IMPORTER,
+        "--source",
+        source,
+        "--input",
+        hashes,
+        "--output",
+        output,
+        "--category",
+        "trojan",
+    )
 
 
 def test_known_bad_sha256_profile_accepts_strict_exact_hash_pack():
@@ -156,6 +173,140 @@ def test_known_bad_sha256_profile_rejects_uppercase_pack_hash():
 
         assert result.returncode != 0
         assert "requires a lowercase pack_sha256" in result.stderr
+
+
+def test_hash_importer_accepts_exact_direct_and_registry_source_schemas():
+    with tempfile.TemporaryDirectory(prefix="avorax-hash-source-schema-") as temp:
+        temp_path = Path(temp)
+        hashes = temp_path / "hashes.txt"
+        hashes.write_text(hashlib.sha256(b"benign source schema fixture").hexdigest() + "\n")
+        variants = [
+            {
+                "source_name": "reviewed direct fixture",
+                "source_url": "https://example.invalid/reviewed",
+                "source_type": "test_fixture",
+                "malware_family": "Fixture.Safe",
+            },
+            {
+                "sources": [],
+                "manual_hash_source_template": {
+                    "source_name": "reviewed registry fixture",
+                    "source_url": None,
+                    "source_type": "test_fixture",
+                    "malware_family": None,
+                },
+            },
+        ]
+        for index, source_value in enumerate(variants):
+            source = temp_path / f"source-{index}.json"
+            output = temp_path / f"output-{index}.jsonl"
+            source.write_text(json.dumps(source_value), encoding="utf-8")
+
+            result = import_hashes(source, hashes, output)
+
+            assert result.returncode == 0, result.stderr
+            row = json.loads(output.read_text(encoding="utf-8"))
+            assert row["source_name"] in {
+                "reviewed direct fixture",
+                "reviewed registry fixture",
+            }
+
+
+def test_hash_importer_rejects_unknown_or_ambiguous_source_metadata():
+    variants = [
+        (
+            {"source_name": "fixture", "unexpected": True},
+            "hash feed source metadata contains unknown fields: unexpected",
+        ),
+        (
+            {
+                "sources": [],
+                "manual_hash_source_template": {"source_name": "fixture"},
+                "unexpected": True,
+            },
+            "hash feed source registry contains unknown fields: unexpected",
+        ),
+        (
+            {
+                "sources": [],
+                "manual_hash_source_template": {
+                    "source_name": "fixture",
+                    "unexpected": True,
+                },
+            },
+            "hash feed manual_hash_source_template contains unknown fields: unexpected",
+        ),
+        (
+            {"sources": [], "manual_hash_source_template": None},
+            "manual_hash_source_template must be an object",
+        ),
+        (
+            {"sources": {}, "manual_hash_source_template": {"source_name": "fixture"}},
+            "hash feed source registry sources must be a list",
+        ),
+    ]
+    with tempfile.TemporaryDirectory(prefix="avorax-hash-source-reject-") as temp:
+        temp_path = Path(temp)
+        hashes = temp_path / "hashes.txt"
+        hashes.write_text(hashlib.sha256(b"benign source reject fixture").hexdigest() + "\n")
+        for index, (source_value, diagnostic) in enumerate(variants):
+            source = temp_path / f"source-{index}.json"
+            output = temp_path / f"output-{index}.jsonl"
+            source.write_text(json.dumps(source_value), encoding="utf-8")
+            previous = b"previous reviewed importer output\n"
+            if index == 0:
+                output.write_bytes(previous)
+
+            result = import_hashes(source, hashes, output)
+
+            assert result.returncode != 0
+            assert diagnostic in result.stderr
+            if index == 0:
+                assert output.read_bytes() == previous
+            else:
+                assert not output.exists()
+
+
+def test_hash_importer_rejects_unsafe_provenance_urls_and_duplicate_hashes():
+    urls = [
+        ("http://example.invalid/feed", "absolute HTTPS URL"),
+        ("https://user:secret@example.invalid/feed", "must not contain credentials"),
+        ("https://example.invalid/feed#section", "must not contain a fragment"),
+        ("https://example.invalid\\feed", "must not contain backslashes"),
+        ("https://bad host.invalid/feed", "contains an invalid hostname"),
+        ("https://-bad.example.invalid/feed", "contains an invalid hostname"),
+    ]
+    with tempfile.TemporaryDirectory(prefix="avorax-hash-provenance-") as temp:
+        temp_path = Path(temp)
+        fixture_hash = hashlib.sha256(b"benign provenance fixture").hexdigest()
+        hashes = temp_path / "hashes.txt"
+        hashes.write_text(fixture_hash + "\n", encoding="utf-8")
+        for index, (url, diagnostic) in enumerate(urls):
+            source = temp_path / f"source-{index}.json"
+            output = temp_path / f"output-{index}.jsonl"
+            source.write_text(
+                json.dumps({"source_name": "fixture", "source_url": url}),
+                encoding="utf-8",
+            )
+
+            result = import_hashes(source, hashes, output)
+
+            assert result.returncode != 0
+            assert diagnostic in result.stderr
+            assert not output.exists()
+
+        source = temp_path / "valid-source.json"
+        duplicate_output = temp_path / "duplicate.jsonl"
+        source.write_text(json.dumps({"source_name": "fixture"}), encoding="utf-8")
+        hashes.write_text(f"{fixture_hash}\nsha256:{fixture_hash.upper()}\n", encoding="utf-8")
+        previous = b"previous reviewed duplicate output\n"
+        duplicate_output.write_bytes(previous)
+
+        duplicate_result = import_hashes(source, hashes, duplicate_output)
+
+        assert duplicate_result.returncode != 0
+        assert "duplicate SHA-256 on line 2; first seen on line 1" in duplicate_result.stderr
+        assert duplicate_output.read_bytes() == previous
 
 
 def test_realworld_builder_atomically_activates_only_valid_known_bad_pack():
