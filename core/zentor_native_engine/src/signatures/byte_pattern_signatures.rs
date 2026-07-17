@@ -36,7 +36,7 @@ fn decode_hex(value: &str, label: &str) -> Result<Vec<u8>> {
     if clean.is_empty() {
         bail!("{label} hex is empty");
     }
-    if clean.len() % 2 != 0 {
+    if !clean.len().is_multiple_of(2) {
         bail!("{label} hex has odd length");
     }
     let mut bytes = Vec::with_capacity(clean.len() / 2);

@@ -272,11 +272,7 @@ fn write_record_staged(path: &Path, bytes: &[u8]) -> Result<()> {
     }
     ensure_native_quarantine_metadata_parent_directory(path)?;
     let temp_path = path.with_extension(format!("json.tmp-{}", Uuid::new_v4()));
-    if let Err(error) =
-        write_quarantine_metadata_file_exclusive(&temp_path, bytes, "temporary quarantine metadata")
-    {
-        return Err(error);
-    }
+    write_quarantine_metadata_file_exclusive(&temp_path, bytes, "temporary quarantine metadata")?;
     if let Err(error) =
         ensure_regular_quarantine_metadata_file(&temp_path, "temporary quarantine metadata")
     {

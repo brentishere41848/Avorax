@@ -36,6 +36,10 @@ jobs:
         # These tests intentionally exercise process-wide AVORAX_* path overrides.
         run: cargo test -- --test-threads=1
 
+      - name: Lint native engine
+        working-directory: core/zentor_native_engine
+        run: cargo clippy --all-targets --no-deps -- -D warnings
+
       - name: Test guard service
         working-directory: core/zentor_guard_service
         run: cargo test

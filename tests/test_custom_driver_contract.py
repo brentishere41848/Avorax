@@ -10724,13 +10724,12 @@ def test_native_quarantine_metadata_temp_cleanup_is_owner_aware():
         writer_source.index("Err(error) => {"):
         writer_source.index("};", writer_source.index("Err(error) => {"))
     ]
-    outer_write_error_source = staged_source[
-        staged_source.index("if let Err(error) ="):
-        staged_source.index("if let Err(error) =", staged_source.index("if let Err(error) =") + 1)
-    ]
+    outer_write_start = staged_source.index("write_quarantine_metadata_file_exclusive")
+    outer_write_end = staged_source.index("if let Err(error) =", outer_write_start)
+    outer_write_source = staged_source[outer_write_start:outer_write_end]
 
-    assert "cleanup_quarantine_metadata_temp_file(&temp_path)" not in outer_write_error_source
-    assert "return Err(error);" in outer_write_error_source
+    assert "cleanup_quarantine_metadata_temp_file(&temp_path)" not in outer_write_source
+    assert '(&temp_path, bytes, "temporary quarantine metadata")?;' in outer_write_source
     assert "let mut file = match fs::OpenOptions::new()" in writer_source
     assert "failed to create {label}" in create_error_source
     assert "cleanup_quarantine_metadata_temp_file" not in create_error_source
@@ -18416,6 +18415,20 @@ def test_ci_workflow_serializes_process_global_update_service_test_overrides():
     update_source = source[update_start:update_end]
 
     assert "run: cargo test -- --test-threads=1" in update_source
+
+
+def test_ci_workflow_enforces_strict_native_engine_clippy():
+    source = read(CI_WORKFLOW)
+    install_start = source.index("- name: Install Rust")
+    local_core_start = source.index("- name: Test local core")
+    install_source = source[install_start:local_core_start]
+    lint_start = source.index("- name: Lint native engine")
+    guard_start = source.index("- name: Test guard service")
+    lint_source = source[lint_start:guard_start]
+
+    assert "components: clippy" in install_source
+    assert "working-directory: core/zentor_native_engine" in lint_source
+    assert "run: cargo clippy --all-targets --no-deps -- -D warnings" in lint_source
 
 
 def test_ci_workflow_enforces_strict_update_service_clippy():

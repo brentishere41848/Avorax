@@ -73,7 +73,7 @@ fn ensure_regular_trust_store_metadata(
     if metadata.file_type().is_symlink() {
         return Err(anyhow!("{label} {} is a symbolic link", path.display()));
     }
-    if is_windows_reparse_point(&metadata) {
+    if is_windows_reparse_point(metadata) {
         return Err(anyhow!("{label} {} is a reparse point", path.display()));
     }
     if !metadata.file_type().is_file() {

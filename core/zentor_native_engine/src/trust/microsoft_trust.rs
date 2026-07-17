@@ -293,7 +293,7 @@ fn powershell_encoded_command(script: &str) -> String {
 
 fn base64_encode(bytes: &[u8]) -> String {
     const TABLE: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-    let mut encoded = String::with_capacity(((bytes.len() + 2) / 3) * 4);
+    let mut encoded = String::with_capacity(bytes.len().div_ceil(3) * 4);
     let mut offset = 0;
     while offset < bytes.len() {
         let first = bytes[offset];
@@ -548,7 +548,6 @@ fn distinguished_name_attributes(subject: &str) -> Result<Vec<(String, String)>>
 
 fn canonical_text(value: &str) -> String {
     value
-        .trim()
         .split_whitespace()
         .collect::<Vec<_>>()
         .join(" ")

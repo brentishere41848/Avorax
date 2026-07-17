@@ -781,7 +781,7 @@ fn archive_path_is_zip(path: &Path) -> bool {
 
 fn archive_entry_name_is_zip(entry_name: &str) -> bool {
     entry_name
-        .rsplit(|ch| ch == '/' || ch == '\\')
+        .rsplit(['/', '\\'])
         .next()
         .and_then(|file_name| file_name.rsplit_once('.'))
         .map(|(_, extension)| {
