@@ -431,3 +431,27 @@ the read-only native probe in local fixtures; it does not defend against code
 already executing inside the trusted service process, authorize privileged
 mutations, prove installed service ACL/recovery configuration, connect Flutter,
 or provide kernel/pre-execution enforcement.
+
+## Checkpoint 2163 Flutter Service-Evidence Boundary
+
+The Flutter client previously combined broad per-process stdio engine health
+with a textual service-state field. A running status did not prove that the UI
+had reached the registered Core Service or that the named-pipe server matched
+the Service Control Manager process. Flutter now invokes the native helper only
+in `--service-ipc-health` mode and treats its single JSON document as untrusted
+until strict schema and semantic validation pass. The client bounds stdout to
+16 KiB, bounds diagnostics, closes stdin, applies a ten-second outer timeout,
+and terminates and reaps a stalled helper. Unknown/missing fields, wrong
+protocol/transport/scope, network exposure, false authentication, zero or
+mismatched service/server PIDs, contradictory `ok` and engine readiness,
+excessive counts, and malformed limitations fail closed with visible detail.
+
+The service-boundary result is stored separately from stdio scan readiness and
+is shown in Protection and Settings. On Windows, full protection additionally
+requires a ready authenticated boundary; unavailable or degraded evidence can
+only produce partial protection. This does not independently authenticate the
+native helper binary from Dart. A writable, replaced, or untrusted helper could
+fabricate JSON, so installed executable ACLs, trusted publisher signing, package
+authenticity, and installed service/pipe lifecycle remain required TCB and E2E
+evidence. The service API remains health-only, and no mutation, persistence,
+kernel enforcement, or pre-execution claim is added.

@@ -19,6 +19,7 @@ class LocalCoreClient {
     this.cancelIpcTimeout,
     this.elevatedPowerShellTimeout,
     this.ipcProcessReapTimeout,
+    this.serviceHealthTimeout,
   });
 
   final String? executableOverride;
@@ -31,6 +32,7 @@ class LocalCoreClient {
   final Duration? cancelIpcTimeout;
   final Duration? elevatedPowerShellTimeout;
   final Duration? ipcProcessReapTimeout;
+  final Duration? serviceHealthTimeout;
 
   static Process? _activeScanProcess;
   static const _maxIpcStatusTextLength = 256;
@@ -47,12 +49,127 @@ class LocalCoreClient {
   static const _elevatedPowerShellTimeout = Duration(minutes: 2);
   static const _ipcProcessReapTimeout = Duration(seconds: 5);
   static const _windowsProcessTreeKillTimeout = Duration(seconds: 5);
+  static const _serviceHealthTimeout = Duration(seconds: 10);
+  static const _maxServiceHealthResponseBytes = 16 * 1024;
 
   bool get isDesktop =>
       Platform.isWindows || Platform.isMacOS || Platform.isLinux;
 
   Future<MalwareEngineStatus> health() async {
     return (await healthSummary()).malwareEngineStatus;
+  }
+
+  Future<CoreServiceBoundaryHealth> serviceBoundaryHealth() async {
+    if (!Platform.isWindows) {
+      return const CoreServiceBoundaryHealth(
+        status: CoreServiceBoundaryStatus.unsupported,
+        diagnostic:
+            'Authenticated Core Service IPC is available only on Windows.',
+      );
+    }
+    final executable = _localCoreExecutable();
+    final executableProbe = executable == null
+        ? null
+        : _regularFileProbe(executable);
+    if (executable == null || executableProbe!.isNotRegularFile) {
+      return CoreServiceBoundaryHealth.unavailable(
+        _missingRegularFileMessage(
+          'Avorax Core Service',
+          executable,
+          probe: executableProbe,
+          guidance: 'Authenticated service health could not be verified.',
+        ),
+      );
+    }
+    final executablePath = File(executable).absolute.path;
+    final launchBlocker = _executableLaunchBlocker(
+      'Avorax Core Service',
+      executablePath,
+      guidance: 'Authenticated service health could not be verified.',
+    );
+    if (launchBlocker != null) {
+      return CoreServiceBoundaryHealth.unavailable(launchBlocker);
+    }
+
+    try {
+      final timeout = serviceHealthTimeout ?? _serviceHealthTimeout;
+      if (timeout.inMicroseconds <= 0 || timeout > _serviceHealthTimeout) {
+        return CoreServiceBoundaryHealth.unavailable(
+          'Core Service health timeout was outside its safe bounds.',
+        );
+      }
+      final process = await (processStarter ?? Process.start)(executablePath, [
+        ...executableArguments,
+        '--service-ipc-health',
+      ]);
+      await process.stdin.close();
+      final results =
+          await Future.wait<Object>([
+            _collectBoundedUtf8Text(
+              process.stdout,
+              maxBytes: _maxServiceHealthResponseBytes,
+            ),
+            _collectBoundedIpcText(process.stderr),
+            process.exitCode,
+          ]).timeout(
+            timeout,
+            onTimeout: () async {
+              final terminationStatus = await _ipcTimeoutTerminationStatus(
+                process,
+              );
+              final reapStatus = await _ipcReapStatus(process);
+              throw TimeoutException(
+                'Core Service health probe timed out after ${_formatDuration(timeout)}. '
+                '$terminationStatus $reapStatus',
+              );
+            },
+          );
+      final stdout = results[0] as _BoundedUtf8Capture;
+      final stderr = (results[1] as String).trim();
+      final exitCode = results[2] as int;
+      if (stdout.truncated) {
+        return CoreServiceBoundaryHealth.unavailable(
+          'Core Service health response exceeded the '
+          '$_maxServiceHealthResponseBytes-byte limit.',
+        );
+      }
+      if (exitCode != 0) {
+        final detail = stderr.isEmpty
+            ? 'no stderr output'
+            : _boundedServiceHealthDiagnostic(stderr);
+        return CoreServiceBoundaryHealth.unavailable(
+          'Core Service health probe exited with exit code $exitCode: $detail',
+        );
+      }
+      final text = stdout.text.trim();
+      if (text.isEmpty) {
+        return CoreServiceBoundaryHealth.unavailable(
+          'Core Service health probe returned no response.',
+        );
+      }
+      final Object? decoded;
+      try {
+        decoded = jsonDecode(text);
+      } on Object catch (error) {
+        return CoreServiceBoundaryHealth.unavailable(
+          'Core Service health probe returned malformed JSON: '
+          '${_ipcDiagnosticOrNull('$error') ?? 'parse failed'}',
+        );
+      }
+      if (decoded is! Map) {
+        return CoreServiceBoundaryHealth.unavailable(
+          'Core Service health probe returned non-object JSON.',
+        );
+      }
+      return CoreServiceBoundaryHealth.fromJson(
+        Map<String, Object?>.from(decoded),
+      );
+    } on Object catch (error) {
+      return CoreServiceBoundaryHealth.unavailable(
+        'Authenticated Core Service health probe failed: '
+        '${_ipcDiagnosticOrNull('$error') ?? 'unknown error'}',
+      );
+    }
   }
 
   Future<LocalCoreHealth> healthSummary() async {
@@ -1322,6 +1439,31 @@ Start-Service -Name 'avorax_core_service' -ErrorAction Stop
       );
     }
     return buffer.toString();
+  }
+
+  Future<_BoundedUtf8Capture> _collectBoundedUtf8Text(
+    Stream<List<int>> stream, {
+    required int maxBytes,
+  }) async {
+    final bytes = <int>[];
+    var truncated = false;
+    await for (final chunk in stream) {
+      final remaining = maxBytes - bytes.length;
+      if (remaining <= 0) {
+        truncated = true;
+        continue;
+      }
+      if (chunk.length <= remaining) {
+        bytes.addAll(chunk);
+      } else {
+        bytes.addAll(chunk.take(remaining));
+        truncated = true;
+      }
+    }
+    return _BoundedUtf8Capture(
+      utf8.decode(bytes, allowMalformed: true),
+      truncated: truncated,
+    );
   }
 
   Future<_IpcJsonResponseCapture> _collectLastIpcJsonResponse(
@@ -4328,6 +4470,207 @@ class _FileProbeResult {
   final String? diagnostic;
 
   bool get isNotRegularFile => !isRegularFile;
+}
+
+class _BoundedUtf8Capture {
+  const _BoundedUtf8Capture(this.text, {required this.truncated});
+
+  final String text;
+  final bool truncated;
+}
+
+enum CoreServiceBoundaryStatus {
+  notChecked,
+  unsupported,
+  unavailable,
+  degraded,
+  ready,
+}
+
+class CoreServiceBoundaryHealth {
+  const CoreServiceBoundaryHealth({
+    this.status = CoreServiceBoundaryStatus.notChecked,
+    this.protocolVersion = 0,
+    this.transport = 'unknown',
+    this.networkExposed,
+    this.commandScope = 'unknown',
+    this.clientAuthenticated = false,
+    this.serverAuthenticated = false,
+    this.serverPid = 0,
+    this.servicePid = 0,
+    this.serviceReady = false,
+    this.engineReady = false,
+    this.nativeSignatureCount = 0,
+    this.nativeRuleCount = 0,
+    this.nativeMlProductionReady = false,
+    this.limitations = const [],
+    this.diagnostic,
+  });
+
+  factory CoreServiceBoundaryHealth.unavailable(String diagnostic) =>
+      CoreServiceBoundaryHealth(
+        status: CoreServiceBoundaryStatus.unavailable,
+        diagnostic: _boundedServiceHealthDiagnostic(diagnostic),
+      );
+
+  factory CoreServiceBoundaryHealth.fromJson(Map<String, Object?> json) {
+    const expectedFields = <String>{
+      'ok',
+      'protocolVersion',
+      'transport',
+      'networkExposed',
+      'commandScope',
+      'clientAuthenticated',
+      'serverAuthenticated',
+      'serverPid',
+      'servicePid',
+      'serviceReady',
+      'engineReady',
+      'nativeSignatureCount',
+      'nativeRuleCount',
+      'nativeMlProductionReady',
+      'limitations',
+    };
+    final actualFields = json.keys.toSet();
+    final missing = expectedFields.difference(actualFields).toList()..sort();
+    final unknown = actualFields.difference(expectedFields).toList()..sort();
+    if (missing.isNotEmpty || unknown.isNotEmpty) {
+      throw FormatException(
+        'Core Service health schema mismatch '
+        '(missing: ${missing.join(', ')}; unknown: ${unknown.join(', ')}).',
+      );
+    }
+
+    T requiredField<T>(String name) {
+      final value = json[name];
+      if (value is! T) {
+        throw FormatException('Core Service health field $name was malformed.');
+      }
+      return value;
+    }
+
+    int boundedCount(String name, {int maximum = 10000000}) {
+      final value = requiredField<int>(name);
+      if (value < 0 || value > maximum) {
+        throw FormatException(
+          'Core Service health field $name was outside its safe bounds.',
+        );
+      }
+      return value;
+    }
+
+    final ok = requiredField<bool>('ok');
+    final protocolVersion = requiredField<int>('protocolVersion');
+    final transport = requiredField<String>('transport');
+    final networkExposed = requiredField<bool>('networkExposed');
+    final commandScope = requiredField<String>('commandScope');
+    final clientAuthenticated = requiredField<bool>('clientAuthenticated');
+    final serverAuthenticated = requiredField<bool>('serverAuthenticated');
+    final serverPid = boundedCount('serverPid', maximum: 0xffffffff);
+    final servicePid = boundedCount('servicePid', maximum: 0xffffffff);
+    final serviceReady = requiredField<bool>('serviceReady');
+    final engineReady = requiredField<bool>('engineReady');
+    final nativeSignatureCount = boundedCount('nativeSignatureCount');
+    final nativeRuleCount = boundedCount('nativeRuleCount');
+    final nativeMlProductionReady = requiredField<bool>(
+      'nativeMlProductionReady',
+    );
+    final rawLimitations = requiredField<List<Object?>>('limitations');
+    if (protocolVersion != 1 ||
+        transport != 'windowsNamedPipe' ||
+        networkExposed ||
+        commandScope != 'healthOnly' ||
+        !clientAuthenticated ||
+        !serverAuthenticated ||
+        serverPid == 0 ||
+        servicePid == 0 ||
+        serverPid != servicePid ||
+        !serviceReady ||
+        ok != engineReady) {
+      throw const FormatException(
+        'Core Service health response failed authenticated boundary validation.',
+      );
+    }
+    if (rawLimitations.isEmpty || rawLimitations.length > 16) {
+      throw const FormatException(
+        'Core Service health limitations were outside their safe bounds.',
+      );
+    }
+    final limitations = <String>[];
+    for (final raw in rawLimitations) {
+      if (raw is! String ||
+          raw.trim().isEmpty ||
+          raw.length > 256 ||
+          RegExp(r'[\u0000-\u001f\u007f]').hasMatch(raw)) {
+        throw const FormatException(
+          'Core Service health limitation was malformed.',
+        );
+      }
+      limitations.add(raw);
+    }
+
+    return CoreServiceBoundaryHealth(
+      status: engineReady
+          ? CoreServiceBoundaryStatus.ready
+          : CoreServiceBoundaryStatus.degraded,
+      protocolVersion: protocolVersion,
+      transport: transport,
+      networkExposed: networkExposed,
+      commandScope: commandScope,
+      clientAuthenticated: clientAuthenticated,
+      serverAuthenticated: serverAuthenticated,
+      serverPid: serverPid,
+      servicePid: servicePid,
+      serviceReady: serviceReady,
+      engineReady: engineReady,
+      nativeSignatureCount: nativeSignatureCount,
+      nativeRuleCount: nativeRuleCount,
+      nativeMlProductionReady: nativeMlProductionReady,
+      limitations: List.unmodifiable(limitations),
+    );
+  }
+
+  final CoreServiceBoundaryStatus status;
+  final int protocolVersion;
+  final String transport;
+  final bool? networkExposed;
+  final String commandScope;
+  final bool clientAuthenticated;
+  final bool serverAuthenticated;
+  final int serverPid;
+  final int servicePid;
+  final bool serviceReady;
+  final bool engineReady;
+  final int nativeSignatureCount;
+  final int nativeRuleCount;
+  final bool nativeMlProductionReady;
+  final List<String> limitations;
+  final String? diagnostic;
+
+  bool get authenticatedBoundaryVerified =>
+      (status == CoreServiceBoundaryStatus.ready ||
+          status == CoreServiceBoundaryStatus.degraded) &&
+      protocolVersion == 1 &&
+      transport == 'windowsNamedPipe' &&
+      networkExposed == false &&
+      commandScope == 'healthOnly' &&
+      clientAuthenticated &&
+      serverAuthenticated &&
+      serverPid > 0 &&
+      serverPid == servicePid &&
+      serviceReady;
+
+  bool get fullProtectionReady => authenticatedBoundaryVerified && engineReady;
+}
+
+String _boundedServiceHealthDiagnostic(String value) {
+  final normalized = value
+      .replaceAll(RegExp(r'[\u0000-\u001f\u007f]'), ' ')
+      .replaceAll(RegExp(r'\s+'), ' ')
+      .trim();
+  if (normalized.isEmpty) return 'Core Service health evidence is unavailable.';
+  if (normalized.length <= 2048) return normalized;
+  return '${normalized.substring(0, 2034)}...[truncated]';
 }
 
 class LocalCoreHealth {

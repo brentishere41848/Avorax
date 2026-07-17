@@ -286,6 +286,7 @@ class ZentorState {
     this.compatibilityEnginesEnabled = false,
     this.coreServiceStatus = 'unknown',
     this.coreServiceStatusError,
+    this.coreServiceBoundaryHealth = const CoreServiceBoundaryHealth(),
     this.guardStatus = 'unknown',
     this.guardStatusError,
     this.driverStatus = 'unknown',
@@ -385,6 +386,7 @@ class ZentorState {
   final bool compatibilityEnginesEnabled;
   final String coreServiceStatus;
   final String? coreServiceStatusError;
+  final CoreServiceBoundaryHealth coreServiceBoundaryHealth;
   final String guardStatus;
   final String? guardStatusError;
   final String driverStatus;
@@ -492,6 +494,7 @@ class ZentorState {
     String? coreServiceStatus,
     String? coreServiceStatusError,
     bool clearCoreServiceStatusError = false,
+    CoreServiceBoundaryHealth? coreServiceBoundaryHealth,
     String? guardStatus,
     String? guardStatusError,
     bool clearGuardStatusError = false,
@@ -633,6 +636,8 @@ class ZentorState {
       coreServiceStatusError: clearCoreServiceStatusError
           ? null
           : coreServiceStatusError ?? this.coreServiceStatusError,
+      coreServiceBoundaryHealth:
+          coreServiceBoundaryHealth ?? this.coreServiceBoundaryHealth,
       guardStatus: guardStatus ?? this.guardStatus,
       guardStatusError: clearGuardStatusError
           ? null
@@ -2263,6 +2268,8 @@ class ZentorController extends StateNotifier<ZentorState> {
         malwareEngineStatus: MalwareEngineStatus.checking,
       );
       final health = await _localCoreClient.healthSummary();
+      final serviceBoundaryHealth = await _localCoreClient
+          .serviceBoundaryHealth();
       if (!mounted) return;
       final status = health.malwareEngineStatus;
       final healthDetails =
@@ -2276,6 +2283,9 @@ class ZentorController extends StateNotifier<ZentorState> {
                     !(health.aiSelfTestError?.trim().isNotEmpty ?? false))
                   'AI self-test failed without detail',
                 health.aiSelfTestError,
+                if (serviceBoundaryHealth.status ==
+                    CoreServiceBoundaryStatus.unavailable)
+                  serviceBoundaryHealth.diagnostic,
               ]
               .whereType<String>()
               .map((detail) => detail.trim())
@@ -2327,6 +2337,7 @@ class ZentorController extends StateNotifier<ZentorState> {
         clearNetworkExposed: health.networkExposed == null,
         compatibilityEnginesEnabled: health.compatibilityEnginesEnabled,
         coreServiceStatus: health.coreServiceStatus,
+        coreServiceBoundaryHealth: serviceBoundaryHealth,
         guardStatus: health.guardStatus,
         driverStatus: health.driverStatus,
         processMonitorStatus: health.processMonitorStatus,
@@ -2401,6 +2412,9 @@ class ZentorController extends StateNotifier<ZentorState> {
         clearNativeConfigDirectory: true,
         coreServiceStatus: 'unknown',
         clearCoreServiceStatusError: true,
+        coreServiceBoundaryHealth: CoreServiceBoundaryHealth.unavailable(
+          details,
+        ),
         guardStatus: 'unknown',
         clearGuardStatusError: true,
         driverStatus: 'unknown',
@@ -3349,9 +3363,14 @@ class ZentorController extends StateNotifier<ZentorState> {
           final engineFullyReady =
               state.malwareEngineStatus == MalwareEngineStatus.available &&
               nativeEngineReadyWithoutDiagnostic;
+          final serviceBoundaryReady =
+              !Platform.isWindows ||
+              state.coreServiceBoundaryHealth.fullProtectionReady;
           state = state.copyWith(
             protectionStatus:
-                state.driverStatus == 'running' && engineFullyReady
+                state.driverStatus == 'running' &&
+                    engineFullyReady &&
+                    serviceBoundaryReady
                 ? ProtectionStatus.protected
                 : ProtectionStatus.partiallyProtected,
             loading: false,
@@ -6323,6 +6342,38 @@ class ZentorController extends StateNotifier<ZentorState> {
       },
       'services': {
         'core_service_status': state.coreServiceStatus,
+        'core_service_boundary_status':
+            state.coreServiceBoundaryHealth.status.name,
+        'core_service_boundary_protocol_version':
+            state.coreServiceBoundaryHealth.protocolVersion,
+        'core_service_boundary_transport':
+            state.coreServiceBoundaryHealth.transport,
+        'core_service_boundary_command_scope':
+            state.coreServiceBoundaryHealth.commandScope,
+        'core_service_boundary_network_exposed':
+            state.coreServiceBoundaryHealth.networkExposed,
+        'core_service_boundary_client_authenticated':
+            state.coreServiceBoundaryHealth.clientAuthenticated,
+        'core_service_boundary_server_authenticated':
+            state.coreServiceBoundaryHealth.serverAuthenticated,
+        'core_service_boundary_pid_match':
+            state.coreServiceBoundaryHealth.serverPid > 0 &&
+            state.coreServiceBoundaryHealth.serverPid ==
+                state.coreServiceBoundaryHealth.servicePid,
+        'core_service_boundary_service_ready':
+            state.coreServiceBoundaryHealth.serviceReady,
+        'core_service_boundary_engine_ready':
+            state.coreServiceBoundaryHealth.engineReady,
+        'core_service_boundary_signature_count':
+            state.coreServiceBoundaryHealth.nativeSignatureCount,
+        'core_service_boundary_rule_count':
+            state.coreServiceBoundaryHealth.nativeRuleCount,
+        'core_service_boundary_ml_production_ready':
+            state.coreServiceBoundaryHealth.nativeMlProductionReady,
+        'core_service_boundary_limitations':
+            state.coreServiceBoundaryHealth.limitations,
+        'core_service_boundary_diagnostic':
+            state.coreServiceBoundaryHealth.diagnostic,
         'guard_status': state.guardStatus,
         'driver_status': state.driverStatus,
         'ipc_mode': state.ipcMode,

@@ -862,7 +862,27 @@ test passed immediately alone and inside the complete serialized run. Strict
 Clippy remains non-green on `16` pre-existing lints outside this change and
 reports none in the new IPC/client code. A real no-service host invocation exits `1` with a visible
 `avorax_core_service ... Missing` diagnostic; an unknown mode also exits `1`.
-No service was installed, started, stopped, or reconfigured. Installed-service
-ACL/recovery and elevated-host E2E remain partial, Flutter does not consume this
-probe yet, all mutations remain disabled at the service boundary, and no
-persistent monitoring, driver enforcement, or pre-execution blocking is claimed.
+No service was installed, started, stopped, or reconfigured. At checkpoint 2162,
+Flutter consumption was still partial; checkpoint 2163 below adds it. Installed
+service ACL/recovery and elevated-host E2E remain partial, all mutations remain
+disabled at the service boundary, and no persistent monitoring, driver
+enforcement, or pre-execution blocking is claimed.
+
+## Checkpoint 2163 Flutter Core Service Health Consumption
+
+- Flutter now consumes the native read-only `--service-ipc-health` probe with a
+  strict 16 KiB response limit, ten-second timeout, process termination/reaping,
+  exact schema checks, PID equality, local/no-network transport, health-only
+  scope, authentication flags, bounded counts, and bounded limitations.
+- Protection and Settings distinguish service-boundary ready, degraded,
+  unavailable, not-checked, and unsupported states. Windows cannot enter the
+  full `Protected` state unless this boundary is authenticated and engine-ready
+  in addition to the existing native-engine and driver requirements.
+- Parser, real benign subprocess, oversized-output, timeout cleanup, widget,
+  and Windows controller tests pass. No live malware or external sample
+  repository was downloaded, unpacked, retained, or executed.
+- Installed-service/UI E2E remains partial. The unsigned beta helper executable,
+  installation ACL, trusted-publisher proof, service/pipe ACL, recovery policy,
+  and real installed service lifecycle are not independently verified by Dart.
+  Service mutations remain disabled; kernel/pre-execution blocking remains
+  technically blocked without the reviewed signed-driver path.

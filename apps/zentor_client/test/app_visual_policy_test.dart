@@ -979,9 +979,19 @@ void main() {
     );
     expect(startProtection, contains('final preventionFailureDetails'));
     expect(startProtection, contains('?engineDiagnosticWarning'));
+    expect(startProtection, contains('final serviceBoundaryReady'));
+    expect(startProtection, contains('!Platform.isWindows ||'));
     expect(
       startProtection,
-      contains("state.driverStatus == 'running' && engineFullyReady"),
+      contains('state.coreServiceBoundaryHealth.fullProtectionReady'),
+    );
+    expect(
+      startProtection,
+      contains(
+        "state.driverStatus == 'running' &&\n"
+        '                    engineFullyReady &&\n'
+        '                    serviceBoundaryReady',
+      ),
     );
     expect(
       startProtection.indexOf('final engineDiagnosticWarning'),
@@ -989,6 +999,10 @@ void main() {
     );
     expect(
       startProtection.indexOf('final engineFullyReady'),
+      lessThan(startProtection.indexOf('ProtectionStatus.protected')),
+    );
+    expect(
+      startProtection.indexOf('final serviceBoundaryReady'),
       lessThan(startProtection.indexOf('ProtectionStatus.protected')),
     );
   });
