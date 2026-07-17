@@ -904,3 +904,9 @@ enforcement, or pre-execution blocking is claimed.
 - **Resolved locally:** Engine subcomponent activation no longer merges signed definitions into an existing directory. Each declared signatures/rules/ML/trust component is staged and atomically replaces its predecessor, so removed definitions are actually revoked. Rename failure restores the checked sibling backup.
 - **Verified in isolation:** A release-binary smoke builds and verifies a signed signature-only `.aup`, applies it under temporary install/data roots with fake service control, proves the old pack is absent and snapshotted, then rolls back to the exact old pack while removing the new one.
 - **Still partial:** No machine-installed service, production ACL, production key, or real service stop/start lifecycle was exercised. Installed update/rollback E2E still requires explicit approval and a disposable test host.
+
+## Checkpoint 2167 Strict Update-Service Lint Gate
+
+- **Resolved locally:** Rust 1.96 strict Clippy now passes for every update-service target with warnings denied. The eleven prior findings were corrected through behavior-neutral conversions, borrows, sorting, CLI iteration, test allocations, and a structured pre-activation failure context. Two intentional source-contract test-module layouts have narrow local layout annotations instead of a crate-wide suppression.
+- **Regression-gated:** Windows CI installs the pinned Clippy component and runs `cargo clippy --all-targets -- -D warnings`; a Python source contract requires both the component and exact command.
+- **Unchanged limits:** This maintenance checkpoint changes no privilege, service, update-signing, network, installed-host, or malware-handling boundary. Installed service/update E2E and production signer custody remain partial or blocked as documented above.

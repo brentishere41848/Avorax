@@ -49,7 +49,7 @@ pub fn copy_file_staged(source: &Path, target: &Path, boundary: &Path, label: &s
                 temp_target.display()
             )
         })?;
-        return Err(error.into());
+        return Err(error);
     }
     if let Err(error) = output.flush().and_then(|_| output.sync_all()) {
         drop(output);
@@ -267,6 +267,8 @@ pub fn remove_dir_all_checked(path: &Path, label: &str) -> Result<()> {
     Ok(())
 }
 
+// Source-contract tests intentionally precede the lower-level path-chain helpers.
+#[allow(clippy::items_after_test_module)]
 #[cfg(test)]
 mod tests {
     use super::*;

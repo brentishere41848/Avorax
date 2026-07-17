@@ -166,7 +166,7 @@ fn cli_allow_development_updates_or_reject(args: impl IntoIterator<Item = String
 }
 
 fn cli_reject_unexpected_args(args: impl IntoIterator<Item = String>, command: &str) -> Result<()> {
-    for arg in args {
+    if let Some(arg) = args.into_iter().next() {
         anyhow::bail!(
             "unsupported {command} argument: {}",
             bounded_cli_status_text(&arg, MAX_CLI_STATUS_COMMAND_CHARS)
@@ -983,15 +983,15 @@ mod tests {
     #[test]
     fn update_cli_status_fields_are_bounded() {
         let long_command = "a".repeat(crate::MAX_CLI_STATUS_COMMAND_CHARS + 32);
-        let bounded_command = crate::cli_status_command_label(&vec![long_command]);
+        let bounded_command = crate::cli_status_command_label(&[long_command]);
         assert!(bounded_command.chars().count() <= crate::MAX_CLI_STATUS_COMMAND_CHARS);
         assert!(bounded_command.ends_with(crate::CLI_STATUS_TRUNCATED_SUFFIX));
 
-        let control_command = crate::cli_status_command_label(&vec!["\0--apply\n".to_string()]);
+        let control_command = crate::cli_status_command_label(&["\0--apply\n".to_string()]);
         assert!(!control_command.contains('\0'));
         assert!(!control_command.contains('\n'));
         assert_eq!(
-            crate::cli_status_command_label(&vec!["\r\n\t".to_string()]),
+            crate::cli_status_command_label(&["\r\n\t".to_string()]),
             "unknown"
         );
 

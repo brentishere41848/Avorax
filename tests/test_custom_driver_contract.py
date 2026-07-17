@@ -18418,6 +18418,20 @@ def test_ci_workflow_serializes_process_global_update_service_test_overrides():
     assert "run: cargo test -- --test-threads=1" in update_source
 
 
+def test_ci_workflow_enforces_strict_update_service_clippy():
+    source = read(CI_WORKFLOW)
+    install_start = source.index("- name: Install Rust")
+    local_core_start = source.index("- name: Test local core")
+    install_source = source[install_start:local_core_start]
+    lint_start = source.index("- name: Lint update service")
+    backend_start = source.index("- name: Test backend API")
+    lint_source = source[lint_start:backend_start]
+
+    assert "components: clippy" in install_source
+    assert "working-directory: core/avorax_update_service" in lint_source
+    assert "run: cargo clippy --all-targets -- -D warnings" in lint_source
+
+
 def test_ci_workflow_prebuilds_timeout_bounded_false_positive_tests():
     source = read(CI_WORKFLOW)
     prebuild_start = source.index("- name: Prebuild local core gate tests")
