@@ -24,6 +24,8 @@ python tools\zentor_intel\build_realworld_detection_pack.py --source assets\zent
 
 The strict profile accepts only unique canonical lowercase SHA-256 exact hashes with confirmed confidence, critical severity, an explicit production category, and `quarantine_if_policy_allows`. Use `tools/update/avorax-build-hash-intel-update.ps1` to package a reviewed local hash feed as a definitions-only signed `.aup`; it does not download or inspect sample bytes.
 
+`import_hash_feed.py` accepts an exact direct source schema or the exact `manual_hash_source_template` registry schema. It rejects unknown/mixed fields, unsafe provenance URLs, duplicate hashes, and feeds above 100,000 active rows before writing its atomic JSONL output. Valid metadata does not replace human source and false-positive review.
+
 GitHub malware-repository metadata import:
 
 ```powershell

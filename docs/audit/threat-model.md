@@ -483,3 +483,18 @@ installed service apply/rollback. Those remain release-process and installed-E2E
 boundaries. The benign smoke verifies package construction and `--verify` only;
 it does not apply definitions, install services, disable Defender, use malware,
 or claim pre-execution blocking.
+
+## Checkpoint 2165 Reviewed Feed Provenance Boundary
+
+Source JSON and hash text remain untrusted even when supplied locally. Ambiguous
+objects could previously hide misspelled or ignored fields, and permissive URL
+text could misrepresent HTTP, credential-bearing, or fragment-qualified origins.
+The hash importer now selects one exact metadata schema, validates the registry
+template shape, requires safe HTTPS provenance when a URL is present, caps active
+rows, and rejects canonical duplicates before atomic output.
+
+This prevents configuration confusion and resource amplification, but a valid
+URL and schema are not authenticity evidence. The importer does not contact the
+URL, validate publisher control, or infer that a hash is malicious. Feed review,
+false-positive ownership, signing-key custody, and authenticated publication
+remain separate trusted release-process responsibilities.
