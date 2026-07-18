@@ -2163,6 +2163,8 @@ class ZentorController extends StateNotifier<ZentorState> {
       if (!mounted) return;
       final poll = result.poll;
       final detailParts = <String>[
+        'watcherActive=${result.watcher.active}',
+        'watcherMode=${result.watcher.mode}',
         'mode=${poll.mode}',
         'active=${poll.active}',
         'eventsObserved=${poll.eventsObserved}',
@@ -2184,6 +2186,22 @@ class ZentorController extends StateNotifier<ZentorState> {
             result.error ?? 'Watch-poll scan request failed.',
             eventDetails,
           ].join(' '),
+        );
+        _setWatchPollLoopState(status: 'limited', reason: failureDetails);
+        _lastWatchPollLoopRoutineEventKey = null;
+        await logEvent(
+          'watch_poll_loop_failed',
+          'Protection watch-poll scan failed',
+          details: failureDetails,
+          category: 'protection',
+          severity: 'warning',
+        );
+        return;
+      }
+      final consistencyError = _watchPollResponseConsistencyError(result);
+      if (consistencyError != null) {
+        final failureDetails = _boundedUiDiagnostic(
+          '$consistencyError $eventDetails',
         );
         _setWatchPollLoopState(status: 'limited', reason: failureDetails);
         _lastWatchPollLoopRoutineEventKey = null;
@@ -2247,6 +2265,33 @@ class ZentorController extends StateNotifier<ZentorState> {
     } finally {
       _watchPollEvaluationInFlight = false;
     }
+  }
+
+  String? _watchPollResponseConsistencyError(WatchPollScanResult result) {
+    final watcher = result.watcher;
+    final poll = result.poll;
+    if (watcher.active != poll.active) {
+      return 'Watch-poll response had contradictory watcher and poll activity.';
+    }
+    if (poll.active) {
+      if (watcher.mode != 'userModeBestEffort') {
+        return 'Watch-poll response had an invalid active watcher mode.';
+      }
+      if (watcher.watchedPaths.isEmpty) {
+        return 'Watch-poll response reported active without watched paths.';
+      }
+      if (poll.mode != 'finiteUserModePolling') {
+        return 'Watch-poll response had an invalid active poll mode.';
+      }
+      return null;
+    }
+    if (watcher.mode != 'stopped' && watcher.mode != 'off') {
+      return 'Watch-poll response had an invalid inactive watcher mode.';
+    }
+    if (poll.mode != 'stopped') {
+      return 'Watch-poll response had an invalid inactive poll mode.';
+    }
+    return null;
   }
 
   void _setWatchPollLoopState({

@@ -995,6 +995,44 @@ def test_flutter_process_snapshot_reports_fail_closed_on_rejection_or_diagnostic
     )
 
 
+def test_flutter_watch_poll_success_requires_consistent_watcher_and_poll_evidence():
+    app_state = read(APP_STATE)
+    client = read(LOCAL_CORE_CLIENT)
+    offline_scan_test = read(
+        ROOT / "apps" / "zentor_client" / "test" / "offline_scan_test.dart"
+    )
+    ipc_test = read(
+        ROOT
+        / "apps"
+        / "zentor_client"
+        / "test"
+        / "local_core_ipc_diagnostics_test.dart"
+    )
+    controller = app_state[
+        app_state.index("Future<void> _evaluateWatchPollForActiveProtection"):
+        app_state.index("void _setWatchPollLoopState")
+    ]
+    parser = client[
+        client.index("WatchPollScanResult _watchPollScanResultFromResponse"):
+        client.index("ProcessSnapshotReport _processSnapshotReportFromResponse")
+    ]
+
+    assert "_watchPollResponseConsistencyError(result)" in controller
+    assert "watcher.active != poll.active" in controller
+    assert "poll.mode != 'finiteUserModePolling'" in controller
+    assert "watch_poll_loop_failed" in controller
+    assert "_watchPollConsistencyError(watcher: watcher, poll: poll)" in parser
+    assert "watcher.active != poll.active" in parser
+    assert "poll.mode != 'finiteUserModePolling'" in parser
+    assert (
+        "active protection contradictory watch-poll success fails closed"
+        in offline_scan_test
+    )
+    assert (
+        "watch-poll parser rejects contradictory success evidence" in ipc_test
+    )
+
+
 def test_flutter_guard_status_labels_distinguish_unknown_from_off():
     for screen_path in [HOME_SCREEN, PROTECTION_SCREEN, SETTINGS_SCREEN]:
         source = read(screen_path)
