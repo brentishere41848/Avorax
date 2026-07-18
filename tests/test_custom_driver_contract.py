@@ -1033,6 +1033,67 @@ def test_flutter_watch_poll_success_requires_consistent_watcher_and_poll_evidenc
     )
 
 
+def test_flutter_mutating_action_success_requires_validated_evidence():
+    client = read(LOCAL_CORE_CLIENT)
+    ipc_test = read(
+        ROOT
+        / "apps"
+        / "zentor_client"
+        / "test"
+        / "local_core_ipc_diagnostics_test.dart"
+    )
+    action_parser = client[
+        client.index("LocalCoreActionResult _actionResult"):
+        client.index("String? _watcherProtocolError")
+    ]
+
+    for marker in [
+        "required String? Function(Map<String, Object?> response)",
+        "successEvidenceError(response)",
+        "action success without valid evidence",
+        "_quarantineActionEvidenceError",
+        "_allowlistActionEvidenceError",
+        "_pathActionEvidenceError",
+        "record.status != expectedStatus",
+        "record.quarantineId != expectedId",
+        "entry.active != expectedActive",
+        "entry.id != expectedId",
+        "_recordPathField(response[fieldName]) == null",
+    ]:
+        assert marker in action_parser
+
+    action_slices = [
+        client[client.index("Future<LocalCoreActionResult> quarantineThreat"):
+               client.index("Future<LocalCoreActionResult> quarantineFile")],
+        client[client.index("Future<LocalCoreActionResult> quarantineFile"):
+               client.index("Future<LocalCoreActionResult> addAllowlistEntry")],
+        client[client.index("Future<LocalCoreActionResult> addAllowlistEntry"):
+               client.index("Future<List<AllowlistEntry>> listAllowlist")],
+        client[client.index("Future<LocalCoreActionResult> removeAllowlistEntry"):
+               client.index("Future<LocalCoreActionResult> labelDetection")],
+        client[client.index("Future<LocalCoreActionResult> labelDetection"):
+               client.index("Future<LocalCoreActionResult> restoreQuarantineItem")],
+        client[client.index("Future<LocalCoreActionResult> restoreQuarantineItem"):
+               client.index("Future<LocalCoreActionResult> deleteQuarantineItem")],
+        client[client.index("Future<LocalCoreActionResult> deleteQuarantineItem"):
+               client.index("Future<String> runProtectionSelfTest")],
+        client[client.index("Future<LocalCoreActionResult> configureGuardMode"):
+               client.index("Future<LocalCoreActionResult> configureRansomwareGuard")],
+        client[client.index("Future<LocalCoreActionResult> configureRansomwareGuard"):
+               client.index("Future<RealtimeWatcherState> startWatch")],
+    ]
+    for action_slice in action_slices:
+        assert "successEvidenceError:" in action_slice
+
+    for test_name in [
+        "action success without expected path evidence fails at runtime",
+        "quarantine action success requires matching status evidence",
+        "allowlist action success requires matching active evidence",
+        "restore action success requires matching record identifier",
+    ]:
+        assert test_name in ipc_test
+
+
 def test_flutter_guard_status_labels_distinguish_unknown_from_off():
     for screen_path in [HOME_SCREEN, PROTECTION_SCREEN, SETTINGS_SCREEN]:
         source = read(screen_path)
