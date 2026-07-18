@@ -15,7 +15,8 @@ pub mod trust;
 pub mod verdict;
 
 #[cfg(test)]
-mod tests;
+#[path = "tests/mod.rs"]
+mod integration_tests;
 
 pub use config::EngineConfig;
 pub use detection_provider::{DetectionProviderInfo, DetectionProviderStatus};

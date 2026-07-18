@@ -116,9 +116,9 @@ impl RiskFusion {
         let ml_high = evidence
             .iter()
             .any(|item| item.source == EvidenceSource::NativeMl && item.weight >= 40);
-        let verdict = if score >= 85 && strong_positive_count >= 3 {
-            Verdict::ProbableMalware
-        } else if score >= 60 && (strong_positive_count >= 2 || ml_high) {
+        let verdict = if (score >= 85 && strong_positive_count >= 3)
+            || (score >= 60 && (strong_positive_count >= 2 || ml_high))
+        {
             Verdict::ProbableMalware
         } else if score >= 35 {
             Verdict::Suspicious
@@ -272,6 +272,31 @@ fn truncate_explanation(mut explanation: String) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn weighted_evidence(weights: &[i32]) -> Vec<Evidence> {
+        weights
+            .iter()
+            .enumerate()
+            .map(|(index, weight)| Evidence {
+                id: format!("weighted-{index}"),
+                title: format!("Weighted evidence {index}"),
+                detail: "Threshold regression fixture".to_string(),
+                weight: *weight,
+                source: EvidenceSource::NativeHeuristic,
+            })
+            .collect()
+    }
+
+    #[test]
+    fn probable_malware_thresholds_remain_conservative_and_explicit() {
+        let two_strong = RiskFusion::fuse(weighted_evidence(&[30, 30]), false, false);
+        let three_strong = RiskFusion::fuse(weighted_evidence(&[30, 30, 25]), false, false);
+        let one_strong = RiskFusion::fuse(weighted_evidence(&[60]), false, false);
+
+        assert_eq!(two_strong.verdict, Verdict::ProbableMalware);
+        assert_eq!(three_strong.verdict, Verdict::ProbableMalware);
+        assert_eq!(one_strong.verdict, Verdict::Suspicious);
+    }
 
     #[test]
     fn risk_fusion_bounds_reported_evidence_and_explanation() {

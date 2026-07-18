@@ -446,8 +446,10 @@ mod tests {
         let runner = NativeModelRunner {
             model: Some(valid_native_model()),
         };
-        let mut features = FeatureVector::default();
-        features.encoded_command_flag = f64::NAN;
+        let features = FeatureVector {
+            encoded_command_flag: f64::NAN,
+            ..FeatureVector::default()
+        };
 
         let error = runner.analyze_features(&features).unwrap_err().to_string();
 
@@ -460,8 +462,10 @@ mod tests {
         let runner = NativeModelRunner {
             model: Some(valid_native_model()),
         };
-        let mut features = FeatureVector::default();
-        features.known_bad_flag = MAX_NATIVE_ML_FEATURE_ABS + 1.0;
+        let features = FeatureVector {
+            known_bad_flag: MAX_NATIVE_ML_FEATURE_ABS + 1.0,
+            ..FeatureVector::default()
+        };
 
         let error = runner.analyze_features(&features).unwrap_err().to_string();
 

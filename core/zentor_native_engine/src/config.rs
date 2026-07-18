@@ -326,8 +326,8 @@ fn first_present_path(first_candidate: PathBuf, additional_candidates: &[PathBuf
     first_declared_asset_candidate(&first_candidate)
 }
 
-fn first_declared_asset_candidate(first_candidate: &PathBuf) -> PathBuf {
-    first_candidate.clone()
+fn first_declared_asset_candidate(first_candidate: &Path) -> PathBuf {
+    first_candidate.to_path_buf()
 }
 
 fn path_is_present_or_uninspectable(path: &Path) -> bool {
@@ -441,7 +441,10 @@ mod tests {
         let second = dir.path().join("zentor_core.zsig");
         fs::write(&second, "{}").unwrap();
 
-        assert_eq!(first_present_path(first, &[second.clone()]), second);
+        assert_eq!(
+            first_present_path(first, std::slice::from_ref(&second)),
+            second
+        );
     }
 
     #[test]

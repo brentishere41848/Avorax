@@ -295,7 +295,7 @@ fn validate_byte_pattern_signature(signature: &NativeSignature) -> Result<()> {
 fn valid_hex_bytes(value: &str) -> bool {
     let compact = value.replace([' ', '_'], "");
     !compact.is_empty()
-        && compact.len() % 2 == 0
+        && compact.len().is_multiple_of(2)
         && compact.bytes().all(|byte| byte.is_ascii_hexdigit())
 }
 

@@ -37,6 +37,16 @@ struct CentralDirectoryEntry {
     local_header_offset: u32,
 }
 
+struct ZipEntryView<'a> {
+    name: &'a str,
+    archive_bytes: &'a [u8],
+    body_start: usize,
+    general_purpose_flags: u16,
+    compression_method: u16,
+    compressed_size: usize,
+    uncompressed_size: usize,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct BoundedZipEntrySample {
     pub name: String,
@@ -115,17 +125,16 @@ fn bounded_local_header_entry_samples(bytes: &[u8]) -> Result<BoundedZipEntrySam
         }
         let name = String::from_utf8_lossy(&bytes[name_start..name_end]).to_ascii_lowercase();
         let body_start = extra_end;
-        collect_bounded_zip_entry_sample(
-            &name,
-            bytes,
+        let entry = ZipEntryView {
+            name: &name,
+            archive_bytes: bytes,
             body_start,
             general_purpose_flags,
             compression_method,
             compressed_size,
             uncompressed_size,
-            &mut samples,
-            &mut total_sampled_bytes,
-        );
+        };
+        collect_bounded_zip_entry_sample(&entry, &mut samples, &mut total_sampled_bytes);
         let body_end = body_start.saturating_add(compressed_size);
         if body_end > bytes.len() {
             samples.limit_exceeded = true;
@@ -201,17 +210,16 @@ fn bounded_central_directory_entry_samples(bytes: &[u8]) -> Option<BoundedZipEnt
             parsed_entries += 1;
             continue;
         };
-        collect_bounded_zip_entry_sample(
-            &entry.name,
-            bytes,
+        let entry_view = ZipEntryView {
+            name: &entry.name,
+            archive_bytes: bytes,
             body_start,
-            entry.general_purpose_flags,
-            entry.compression_method,
-            entry.compressed_size as usize,
-            entry.uncompressed_size as usize,
-            &mut samples,
-            &mut total_sampled_bytes,
-        );
+            general_purpose_flags: entry.general_purpose_flags,
+            compression_method: entry.compression_method,
+            compressed_size: entry.compressed_size as usize,
+            uncompressed_size: entry.uncompressed_size as usize,
+        };
+        collect_bounded_zip_entry_sample(&entry_view, &mut samples, &mut total_sampled_bytes);
         offset = next_offset;
         parsed_entries += 1;
     }
@@ -264,26 +272,17 @@ fn analyze_local_headers(bytes: &[u8]) -> Result<ArchiveAnalysis> {
         inspect_zip_entry_name(&name, &mut result);
         let body_start = extra_end;
         let body_end = body_start.saturating_add(compressed_size);
-        inspect_ooxml_relationship_entry(
-            &name,
-            bytes,
+        let entry = ZipEntryView {
+            name: &name,
+            archive_bytes: bytes,
             body_start,
             general_purpose_flags,
             compression_method,
             compressed_size,
             uncompressed_size,
-            &mut result,
-        );
-        inspect_archive_autorun_inf_entry(
-            &name,
-            bytes,
-            body_start,
-            general_purpose_flags,
-            compression_method,
-            compressed_size,
-            uncompressed_size,
-            &mut result,
-        );
+        };
+        inspect_ooxml_relationship_entry(&entry, &mut result);
+        inspect_archive_autorun_inf_entry(&entry, &mut result);
         result.entry_count += 1;
         if body_end > bytes.len() {
             result.limit_exceeded = true;
@@ -375,16 +374,16 @@ fn inspect_central_directory_autorun_inf_entry(
         result.limit_exceeded = true;
         return;
     };
-    inspect_archive_autorun_inf_entry(
-        &entry.name,
-        bytes,
+    let entry_view = ZipEntryView {
+        name: &entry.name,
+        archive_bytes: bytes,
         body_start,
-        entry.general_purpose_flags,
-        entry.compression_method,
-        entry.compressed_size as usize,
-        entry.uncompressed_size as usize,
-        result,
-    );
+        general_purpose_flags: entry.general_purpose_flags,
+        compression_method: entry.compression_method,
+        compressed_size: entry.compressed_size as usize,
+        uncompressed_size: entry.uncompressed_size as usize,
+    };
+    inspect_archive_autorun_inf_entry(&entry_view, result);
 }
 
 fn parse_central_directory_entry(
@@ -447,16 +446,16 @@ fn inspect_central_directory_ooxml_relationship(
         result.limit_exceeded = true;
         return;
     };
-    inspect_ooxml_relationship_entry(
-        &entry.name,
-        bytes,
+    let entry_view = ZipEntryView {
+        name: &entry.name,
+        archive_bytes: bytes,
         body_start,
-        entry.general_purpose_flags,
-        entry.compression_method,
-        entry.compressed_size as usize,
-        entry.uncompressed_size as usize,
-        result,
-    );
+        general_purpose_flags: entry.general_purpose_flags,
+        compression_method: entry.compression_method,
+        compressed_size: entry.compressed_size as usize,
+        uncompressed_size: entry.uncompressed_size as usize,
+    };
+    inspect_ooxml_relationship_entry(&entry_view, result);
 }
 
 fn central_directory_entry_body_start(
@@ -683,36 +682,27 @@ fn zip_entry_suffix_is_deceptive_review_executable_or_script(suffix: &str) -> bo
     )
 }
 
-fn inspect_ooxml_relationship_entry(
-    name: &str,
-    bytes: &[u8],
-    body_start: usize,
-    general_purpose_flags: u16,
-    compression_method: u16,
-    compressed_size: usize,
-    uncompressed_size: usize,
-    result: &mut ArchiveAnalysis,
-) {
-    if !ooxml_relationship_entry(name) {
+fn inspect_ooxml_relationship_entry(entry: &ZipEntryView<'_>, result: &mut ArchiveAnalysis) {
+    if !ooxml_relationship_entry(entry.name) {
         return;
     }
-    if general_purpose_flags & ZIP_GENERAL_PURPOSE_ENCRYPTED != 0 {
+    if entry.general_purpose_flags & ZIP_GENERAL_PURPOSE_ENCRYPTED != 0 {
         result.limit_exceeded = true;
         return;
     }
-    let Some(body_end) = body_start.checked_add(compressed_size) else {
+    let Some(body_end) = entry.body_start.checked_add(entry.compressed_size) else {
         result.limit_exceeded = true;
         return;
     };
-    if body_end > bytes.len() {
+    if body_end > entry.archive_bytes.len() {
         result.limit_exceeded = true;
         return;
     }
     match bounded_relationship_body(
-        &bytes[body_start..body_end],
-        compression_method,
-        compressed_size,
-        uncompressed_size,
+        &entry.archive_bytes[entry.body_start..body_end],
+        entry.compression_method,
+        entry.compressed_size,
+        entry.uncompressed_size,
     ) {
         Ok(Some(body)) => inspect_ooxml_relationship_body(&body, result),
         Ok(None) => {}
@@ -722,36 +712,27 @@ fn inspect_ooxml_relationship_entry(
     }
 }
 
-fn inspect_archive_autorun_inf_entry(
-    name: &str,
-    bytes: &[u8],
-    body_start: usize,
-    general_purpose_flags: u16,
-    compression_method: u16,
-    compressed_size: usize,
-    uncompressed_size: usize,
-    result: &mut ArchiveAnalysis,
-) {
-    if !archive_autorun_inf_entry(name) {
+fn inspect_archive_autorun_inf_entry(entry: &ZipEntryView<'_>, result: &mut ArchiveAnalysis) {
+    if !archive_autorun_inf_entry(entry.name) {
         return;
     }
-    if general_purpose_flags & ZIP_GENERAL_PURPOSE_ENCRYPTED != 0 {
+    if entry.general_purpose_flags & ZIP_GENERAL_PURPOSE_ENCRYPTED != 0 {
         result.limit_exceeded = true;
         return;
     }
-    let Some(body_end) = body_start.checked_add(compressed_size) else {
+    let Some(body_end) = entry.body_start.checked_add(entry.compressed_size) else {
         result.limit_exceeded = true;
         return;
     };
-    if body_end > bytes.len() {
+    if body_end > entry.archive_bytes.len() {
         result.limit_exceeded = true;
         return;
     }
     match bounded_autorun_inf_body(
-        &bytes[body_start..body_end],
-        compression_method,
-        compressed_size,
-        uncompressed_size,
+        &entry.archive_bytes[entry.body_start..body_end],
+        entry.compression_method,
+        entry.compressed_size,
+        entry.uncompressed_size,
     ) {
         Ok(Some(body)) => {
             let indicators = strings::extract_indicators(&body);
@@ -836,44 +817,40 @@ fn bounded_autorun_inf_body(
 }
 
 fn collect_bounded_zip_entry_sample(
-    name: &str,
-    bytes: &[u8],
-    body_start: usize,
-    general_purpose_flags: u16,
-    compression_method: u16,
-    compressed_size: usize,
-    uncompressed_size: usize,
+    entry: &ZipEntryView<'_>,
     samples: &mut BoundedZipEntrySamples,
     total_sampled_bytes: &mut usize,
 ) {
-    if name.ends_with('/') {
+    if entry.name.ends_with('/') {
         return;
     }
-    if unsafe_archive_path(name) {
+    if unsafe_archive_path(entry.name) {
         samples.limit_exceeded = true;
         return;
     }
-    if general_purpose_flags & ZIP_GENERAL_PURPOSE_ENCRYPTED != 0 {
+    if entry.general_purpose_flags & ZIP_GENERAL_PURPOSE_ENCRYPTED != 0 {
         samples.limit_exceeded = true;
         return;
     }
-    if general_purpose_flags & ZIP_GENERAL_PURPOSE_DATA_DESCRIPTOR != 0 && compressed_size == 0 {
+    if entry.general_purpose_flags & ZIP_GENERAL_PURPOSE_DATA_DESCRIPTOR != 0
+        && entry.compressed_size == 0
+    {
         samples.limit_exceeded = true;
         return;
     }
-    let Some(body_end) = body_start.checked_add(compressed_size) else {
+    let Some(body_end) = entry.body_start.checked_add(entry.compressed_size) else {
         samples.limit_exceeded = true;
         return;
     };
-    if body_end > bytes.len() {
+    if body_end > entry.archive_bytes.len() {
         samples.limit_exceeded = true;
         return;
     }
     let body = match bounded_archive_content_body(
-        &bytes[body_start..body_end],
-        compression_method,
-        compressed_size,
-        uncompressed_size,
+        &entry.archive_bytes[entry.body_start..body_end],
+        entry.compression_method,
+        entry.compressed_size,
+        entry.uncompressed_size,
     ) {
         Ok(Some(body)) => body,
         Ok(None) => return,
@@ -895,7 +872,7 @@ fn collect_bounded_zip_entry_sample(
     }
     *total_sampled_bytes = next_total;
     samples.entries.push(BoundedZipEntrySample {
-        name: name.to_string(),
+        name: entry.name.to_string(),
         bytes: body,
     });
 }
@@ -961,6 +938,9 @@ fn inspect_ooxml_relationship_body(body: &[u8], result: &mut ArchiveAnalysis) {
 mod tests {
     use super::*;
 
+    type DataDescriptorEntry<'a> = (&'a [u8], &'a [u8], u16, &'a [u8]);
+    type CentralDirectoryEntryFixture<'a> = (&'a [u8], &'a [u8], u16, u16, &'a [u8]);
+
     fn zip_with_name(name: &[u8]) -> Vec<u8> {
         let mut bytes = Vec::new();
         bytes.extend_from_slice(b"PK\x03\x04");
@@ -1024,9 +1004,7 @@ mod tests {
         bytes
     }
 
-    fn zip_with_data_descriptor_central_directory(
-        entries: &[(&[u8], &[u8], u16, &[u8])],
-    ) -> Vec<u8> {
+    fn zip_with_data_descriptor_central_directory(entries: &[DataDescriptorEntry<'_>]) -> Vec<u8> {
         let entries = entries
             .iter()
             .map(|(local_name, central_name, method, body)| {
@@ -1043,7 +1021,7 @@ mod tests {
     }
 
     fn zip_with_central_directory_entry_flags(
-        entries: &[(&[u8], &[u8], u16, u16, &[u8])],
+        entries: &[CentralDirectoryEntryFixture<'_>],
     ) -> Vec<u8> {
         let mut bytes = Vec::new();
         let mut central_entries = Vec::new();
