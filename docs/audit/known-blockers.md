@@ -949,3 +949,10 @@ enforcement, or pre-execution blocking is claimed.
 - **Failure visibility:** Rejected and incomplete responses set the active process loop to `limited`, clear routine-event dedupe state, and write a bounded warning event. Neither path emits `process_snapshot_evaluated` or `process_snapshot_loop_evaluated`.
 - **Verified:** Two controller regressions pass, the complete Flutter suite passes (`826`), Flutter analyze is clean, source contracts pass (`612`), and the no-malware-binaries gate passes.
 - **Still partial:** This proves app-lifetime controller response handling with benign fakes only. It does not prove an installed persistent process service, real-host process response policy, termination/quarantine, signed-driver enforcement, or pre-execution blocking.
+
+## Checkpoint 2174 Consistent Watch-Poll Response Evidence
+
+- **Resolved locally:** A nominal `ok=true` watch-poll response can no longer become active/clean when watcher and poll activity disagree, the active watcher has no watched paths, or active/inactive mode labels contradict the state.
+- **Defense in depth:** The Flutter IPC parser rejects contradictory evidence, and the controller independently repeats the consistency gate before updating status or writing success events. Failure evidence includes bounded watcher and poll state.
+- **Verified:** Contradictory activity and invalid active-mode IPC regressions pass, the controller fail-closed regression passes, the complete Flutter suite passes (`828`), Flutter analyze is clean, source contracts pass (`613`), and the no-malware-binaries gate passes.
+- **Still partial:** This validates benign subprocess/fake-controller evidence only. Finite watch-poll remains app-lifetime, bounded, post-write user-mode detection without persistent service, OS notification, signed-driver, or pre-execution proof.

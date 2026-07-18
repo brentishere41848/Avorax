@@ -4163,3 +4163,9 @@ passed and published the prerelease at commit
 | Control / engine | Responsibility | Classification | Evidence / limitation |
 | --- | --- | --- | --- |
 | Flutter process snapshot response gate | Prevent rejected, missing, or incompletely parsed Local Core snapshot evidence from becoming a clean evaluation or active process-loop claim | Controller runtime, full Flutter suite, and source-contract verified; installed monitoring E2E partial | The controller checks `report.ok` and requires no parser diagnostics before emitting evaluated/suspicious success. Rejection or incomplete evidence records a bounded warning, marks the active loop `limited`, resets routine dedupe, and emits no evaluated event. Two regressions, Flutter `826`, analyzer, source contracts `612`, and the no-malware gate pass. Benign fakes only were used; persistent service observation, real-host response policy, process action, signed-driver enforcement, and pre-execution behavior remain partial or blocked. |
+
+## Checkpoint 2174 Engine-Control Matrix Addendum
+
+| Control / engine | Responsibility | Classification | Evidence / limitation |
+| --- | --- | --- | --- |
+| Watch-poll response consistency gate | Require watcher plan and finite poll summary to agree before the UI may claim active or clean monitoring | IPC subprocess, controller runtime, analyzer, and source-contract verified; installed monitoring E2E partial | Parser and controller independently require matching activity, active watcher mode/path evidence, and activity-appropriate poll mode. Contradictions produce `watch_poll_loop_failed`, reset routine dedupe, and set `limited`; they cannot emit a clean event. Flutter passes `828`, source contracts pass `613`, analyzer and no-malware gates pass. Tests use benign JSON and fake controller data only. Finite polling remains app-lifetime and post-write, with no installed persistent service, OS-notification, kernel, signed-driver, or pre-execution proof. |

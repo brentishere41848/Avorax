@@ -1678,13 +1678,43 @@ Start-Service -Name 'avorax_core_service' -ErrorAction Stop
               'local core watch-poll response was missing poll summary',
             ],
           );
-    final error = watcher.error;
+    final error =
+        watcher.error ??
+        _watchPollConsistencyError(watcher: watcher, poll: poll);
     return WatchPollScanResult(
       ok: ok == true && error == null,
       watcher: watcher,
       poll: poll,
       error: error,
     );
+  }
+
+  String? _watchPollConsistencyError({
+    required RealtimeWatcherState watcher,
+    required WatchPollScanSummary poll,
+  }) {
+    if (watcher.active != poll.active) {
+      return 'Local Core watch-poll response had contradictory watcher and poll activity.';
+    }
+    if (poll.active) {
+      if (watcher.mode != 'userModeBestEffort') {
+        return 'Local Core watch-poll response had an invalid active watcher mode.';
+      }
+      if (watcher.watchedPaths.isEmpty) {
+        return 'Local Core watch-poll response reported active without watched paths.';
+      }
+      if (poll.mode != 'finiteUserModePolling') {
+        return 'Local Core watch-poll response had an invalid active poll mode.';
+      }
+      return null;
+    }
+    if (watcher.mode != 'stopped' && watcher.mode != 'off') {
+      return 'Local Core watch-poll response had an invalid inactive watcher mode.';
+    }
+    if (poll.mode != 'stopped') {
+      return 'Local Core watch-poll response had an invalid inactive poll mode.';
+    }
+    return null;
   }
 
   WatchPollScanSummary _watchPollSummaryFromJson(

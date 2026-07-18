@@ -1818,6 +1818,55 @@ void main() {
     expect(result.poll.limitations, contains('post-write-detection-only'));
   });
 
+  test('watch-poll parser rejects contradictory success evidence', () async {
+    final dir = Directory.systemTemp.createTempSync(
+      'avorax-watch-poll-contradiction-',
+    );
+    addTearDown(() => dir.deleteSync(recursive: true));
+    final payloads = <Map<String, Object?>>[
+      {
+        'ok': true,
+        'watcher': <String, Object?>{
+          'active': false,
+          'mode': 'stopped',
+          'watchedPaths': <String>[],
+          'limitations': <String>[],
+        },
+        'poll': _watchPollFixture(mode: 'finiteUserModePolling'),
+      },
+      {
+        'ok': true,
+        'watcher': <String, Object?>{
+          'active': true,
+          'mode': 'userModeBestEffort',
+          'watchedPaths': <String>['C:/Users/Brent/Downloads'],
+          'limitations': <String>[],
+        },
+        'poll': _watchPollFixture(mode: 'unexpectedMode'),
+      },
+    ];
+
+    final errors = <String>[];
+    for (var index = 0; index < payloads.length; index += 1) {
+      final payload = jsonEncode(payloads[index]);
+      final script = File(
+        '${dir.path}${Platform.pathSeparator}watch_poll_$index.dart',
+      )..writeAsStringSync('void main() { print(${jsonEncode(payload)}); }\n');
+      final client = LocalCoreClient(
+        executableOverride: _dartExecutable(),
+        executableArguments: [script.path],
+      );
+
+      final result = await client.watchPollScan(['C:/Users/Brent/Downloads']);
+
+      expect(result.ok, isFalse);
+      errors.add(result.error ?? '');
+    }
+
+    expect(errors[0], contains('contradictory watcher and poll activity'));
+    expect(errors[1], contains('invalid active poll mode'));
+  });
+
   test('watch-poll parser rejects malformed IPC responses', () async {
     final clientSource = File(
       'lib/core/local_core/local_core_client.dart',
@@ -1848,6 +1897,7 @@ void main() {
     );
     expect(parser, contains('watch-poll response was missing poll summary'));
     expect(parser, contains('_watchPollIntField'));
+    expect(parser, contains('_watchPollConsistencyError'));
     expect(parser, contains('local core watch-poll response had malformed'));
   });
 
@@ -3655,6 +3705,23 @@ void main() {
     );
   });
 }
+
+Map<String, Object?> _watchPollFixture({required String mode}) =>
+    <String, Object?>{
+      'active': true,
+      'mode': mode,
+      'duration_ms': 4000,
+      'poll_interval_ms': 200,
+      'max_events': 8,
+      'initial_files_observed': 3,
+      'polls_completed': 4,
+      'events_observed': 0,
+      'files_scanned': 0,
+      'threats_found': 0,
+      'quarantined_files': 0,
+      'scan_errors': <String>[],
+      'limitations': <String>['finite-polling-session-only'],
+    };
 
 Map<String, Object?> _serviceBoundaryFixture() => <String, Object?>{
   'ok': true,

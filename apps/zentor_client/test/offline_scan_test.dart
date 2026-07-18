@@ -513,7 +513,6 @@ void main() {
       ) {
         await Future<void>.delayed(Duration.zero);
       }
-
       final state = container.read(zentorControllerProvider);
       expect(localCore.processSnapshotCalls, 2);
       expect(state.processSnapshotLoopStatus, 'active');
@@ -843,7 +842,11 @@ void main() {
       ),
       watchPollResult: const WatchPollScanResult(
         ok: true,
-        watcher: RealtimeWatcherState(active: true, mode: 'userModeBestEffort'),
+        watcher: RealtimeWatcherState(
+          active: true,
+          mode: 'userModeBestEffort',
+          watchedPaths: ['fixture-watch-path'],
+        ),
         poll: WatchPollScanSummary(
           active: true,
           mode: 'finiteUserModePolling',
@@ -1035,6 +1038,96 @@ void main() {
     expect(failedEvent.severity, 'warning');
     expect(failedEvent.details, contains('watch poll IPC denied'));
   });
+
+  test(
+    'active protection contradictory watch-poll success fails closed',
+    () async {
+      SharedPreferences.setMockInitialValues({});
+      final preferences = await SharedPreferences.getInstance();
+      final target = Directory.systemTemp.createTempSync(
+        'avorax-watch-poll-contradiction-',
+      );
+      addTearDown(() => target.deleteSync(recursive: true));
+      final processTimerFactory = _ManualScheduledTimerFactory();
+      final watchPollTimerFactory = _ManualScheduledTimerFactory();
+      final localCore = _FakeLocalCoreClient(
+        watcherState: RealtimeWatcherState(
+          active: true,
+          mode: 'userModeBestEffort',
+          watchedPaths: [target.path],
+        ),
+        watchPollResult: const WatchPollScanResult(
+          ok: true,
+          watcher: RealtimeWatcherState(active: false, mode: 'stopped'),
+          poll: WatchPollScanSummary(
+            active: true,
+            mode: 'finiteUserModePolling',
+          ),
+        ),
+      );
+
+      final container = ProviderContainer(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(preferences),
+          localCoreClientProvider.overrideWithValue(localCore),
+          processSnapshotTimerFactoryProvider.overrideWithValue(
+            processTimerFactory.create,
+          ),
+          watchPollTimerFactoryProvider.overrideWithValue(
+            watchPollTimerFactory.create,
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final controller = container.read(zentorControllerProvider.notifier);
+      await _waitForControllerStartup(container);
+      await controller.selectDetectedApp(
+        DetectedApp(
+          appId: 'folder',
+          displayName: 'Protected folder',
+          path: target.path,
+          source: 'test',
+        ),
+        confirmed: true,
+      );
+      await controller.startProtection(confirmed: true);
+      watchPollTimerFactory.timer?.fire();
+      for (
+        var attempt = 0;
+        attempt < 20 && localCore.watchPollCalls < 1;
+        attempt += 1
+      ) {
+        await Future<void>.delayed(Duration.zero);
+      }
+      for (
+        var attempt = 0;
+        attempt < 20 &&
+            container.read(zentorControllerProvider).watchPollLoopStatus !=
+                'limited';
+        attempt += 1
+      ) {
+        await Future<void>.delayed(Duration.zero);
+      }
+
+      final state = container.read(zentorControllerProvider);
+      expect(localCore.watchPollCalls, 1);
+      expect(state.watchPollLoopStatus, 'limited');
+      expect(
+        state.watchPollLoopStatusReason,
+        contains('contradictory watcher and poll activity'),
+      );
+      final failedEvent = state.events.lastWhere(
+        (event) => event.type == 'watch_poll_loop_failed',
+      );
+      expect(failedEvent.severity, 'warning');
+      expect(failedEvent.details, contains('watcherActive=false'));
+      expect(
+        state.events.map((event) => event.type),
+        isNot(contains('watch_poll_loop_clean')),
+      );
+    },
+  );
 
   test('source marker: active protection process snapshot loop is bounded', () {
     final source = File('lib/app/app_state.dart').readAsStringSync();

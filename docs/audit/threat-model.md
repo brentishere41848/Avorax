@@ -562,3 +562,22 @@ bounded point-in-time user-mode snapshots and does not terminate, quarantine,
 or prevent process execution. Persistent service observation, authenticated
 mutation IPC, signed-driver enforcement, and installed-host E2E remain separate
 boundaries.
+
+## Checkpoint 2174 Watch-Poll Response Consistency
+
+A watch-poll response contains two related state claims: the watcher plan and
+the finite poll summary. A compromised, malformed, or version-incompatible
+subprocess could return `ok=true` while marking only one of those states active,
+or use a mode that does not match the activity flag. Accepting that combination
+as clean would create false monitoring evidence.
+
+The IPC parser and controller now independently require equal watcher/poll
+activity. Active evidence additionally requires `userModeBestEffort`, at least
+one watched path, and `finiteUserModePolling`; inactive evidence requires a
+stopped/off watcher and stopped poll. Contradictions become bounded warning
+events and a `limited` loop state, never `watch_poll_loop_clean`.
+
+This consistency check does not improve observation timing or provide process
+or filesystem blocking. Watch-poll remains finite post-write user-mode polling
+while the app is running. Persistent service monitoring, OS notifications,
+kernel enforcement, and pre-execution blocking remain separate boundaries.
