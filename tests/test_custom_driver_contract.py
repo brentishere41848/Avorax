@@ -2296,6 +2296,34 @@ def test_local_core_watcher_empty_plan_reports_stopped_with_limitations():
     assert "watch_plan_reports_stopped_when_no_paths_are_requested" in tests
 
 
+def test_local_core_watcher_does_not_cache_unknown_file_timestamps():
+    watcher = read(LOCAL_WATCHER)
+    core = read(LOCAL_CORE_MAIN)
+    timestamp_helper = watcher[
+        watcher.index("fn metadata_modified_at_ms"):
+        watcher.index("fn push_watch_scan_error")
+    ]
+    watch_loop = core[
+        core.index("fn run_watch_poll_scan"):
+        core.index("fn scan_paths")
+    ]
+
+    assert "pub modified_at_ms: Option<u64>" in watcher
+    assert "modified timestamp unavailable; file will not be cached as unchanged" in watcher
+    assert 'reason: "timestamp-unavailable-rescan"' in watcher
+    assert ".modified()" in timestamp_helper
+    assert ".map_err(" in timestamp_helper
+    assert ".ok()" not in timestamp_helper
+    assert ".unwrap_or(0)" not in timestamp_helper
+    assert "watch_baseline_entry(candidate, command_started_at_ms)" in watch_loop
+    assert "let modified_at_ms = candidate.modified_at_ms?;" in watch_loop
+    assert "if let Some(fingerprint) = fingerprint" in watch_loop
+    assert "system clock predates Unix epoch; watch baseline cannot be established" in watch_loop
+    assert "unavailable_timestamp_is_never_cached_as_unchanged" in watcher
+    assert "system_time_before_epoch_is_rejected_instead_of_cached_as_zero" in watcher
+    assert "watch_baseline_caches_only_valid_preexisting_timestamps" in core
+
+
 def test_controller_protected_state_requires_ready_engine_evidence():
     app_state = read(ROOT / "apps" / "zentor_client" / "lib" / "app" / "app_state.dart")
     start = app_state.index("Future<void> startProtection")

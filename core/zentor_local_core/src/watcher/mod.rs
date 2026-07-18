@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use std::time::{Duration, UNIX_EPOCH};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use serde::Serialize;
 use walkdir::WalkDir;
@@ -109,7 +109,7 @@ fn watcher_metadata_is_windows_reparse_point(_metadata: &std::fs::Metadata) -> b
 pub struct WatchEvent {
     pub path: PathBuf,
     pub size_bytes: u64,
-    pub modified_at_ms: u64,
+    pub modified_at_ms: Option<u64>,
     pub observed_at_ms: u64,
 }
 
@@ -118,7 +118,7 @@ impl WatchEvent {
         Self {
             path,
             size_bytes,
-            modified_at_ms: 0,
+            modified_at_ms: None,
             observed_at_ms,
         }
     }
@@ -127,6 +127,20 @@ impl WatchEvent {
         path: PathBuf,
         size_bytes: u64,
         modified_at_ms: u64,
+        observed_at_ms: u64,
+    ) -> Self {
+        Self {
+            path,
+            size_bytes,
+            modified_at_ms: Some(modified_at_ms),
+            observed_at_ms,
+        }
+    }
+
+    pub fn modified_with_optional_file_time(
+        path: PathBuf,
+        size_bytes: u64,
+        modified_at_ms: Option<u64>,
         observed_at_ms: u64,
     ) -> Self {
         Self {
@@ -142,7 +156,7 @@ impl WatchEvent {
 pub struct WatchCandidate {
     pub path: PathBuf,
     pub size_bytes: u64,
-    pub modified_at_ms: u64,
+    pub modified_at_ms: Option<u64>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -198,10 +212,23 @@ pub fn collect_watch_candidates(
             if !metadata.file_type().is_file() {
                 continue;
             }
+            let modified_at_ms = match metadata_modified_at_ms(&metadata) {
+                Ok(value) => Some(value),
+                Err(error) => {
+                    push_watch_scan_error(
+                        &mut scan_errors,
+                        format!(
+                            "{}: modified timestamp unavailable; file will not be cached as unchanged: {error}",
+                            path.display()
+                        ),
+                    );
+                    None
+                }
+            };
             candidates.push(WatchCandidate {
                 path,
                 size_bytes: metadata.len(),
-                modified_at_ms: metadata_modified_at_ms(&metadata),
+                modified_at_ms,
             });
             if candidates.len() >= max_files {
                 limit_reached = true;
@@ -221,13 +248,18 @@ pub fn collect_watch_candidates(
     }
 }
 
-fn metadata_modified_at_ms(metadata: &std::fs::Metadata) -> u64 {
-    metadata
+fn metadata_modified_at_ms(metadata: &std::fs::Metadata) -> Result<u64, String> {
+    let modified = metadata
         .modified()
-        .ok()
-        .and_then(|modified| modified.duration_since(UNIX_EPOCH).ok())
-        .map(|duration| duration.as_millis().min(u128::from(u64::MAX)) as u64)
-        .unwrap_or(0)
+        .map_err(|error| format!("modified timestamp query failed: {error}"))?;
+    system_time_to_unix_ms(modified)
+}
+
+fn system_time_to_unix_ms(value: SystemTime) -> Result<u64, String> {
+    let duration = value
+        .duration_since(UNIX_EPOCH)
+        .map_err(|error| format!("modified timestamp predates Unix epoch: {error}"))?;
+    Ok(duration.as_millis().min(u128::from(u64::MAX)) as u64)
 }
 
 fn push_watch_scan_error(scan_errors: &mut Vec<String>, detail: String) {
@@ -258,7 +290,7 @@ pub struct MonitorObservation {
 #[derive(Debug, Clone)]
 struct FileSnapshot {
     size_bytes: u64,
-    modified_at_ms: u64,
+    modified_at_ms: Option<u64>,
     first_seen_ms: u64,
     last_scanned_fingerprint: Option<FileFingerprint>,
     stable_observations: u8,
@@ -267,7 +299,7 @@ struct FileSnapshot {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 struct FileFingerprint {
     size_bytes: u64,
-    modified_at_ms: u64,
+    modified_at_ms: Option<u64>,
 }
 
 #[derive(Debug, Clone)]
@@ -343,6 +375,12 @@ impl UserModeFileMonitor {
             size_bytes: event.size_bytes,
             modified_at_ms: event.modified_at_ms,
         };
+        if event.modified_at_ms.is_none() {
+            snapshot.last_scanned_fingerprint = None;
+            return WatchEvaluation::ScanRequired {
+                reason: "timestamp-unavailable-rescan".to_string(),
+            };
+        }
         if snapshot.last_scanned_fingerprint == Some(fingerprint) {
             return WatchEvaluation::AlreadyScannedUnchanged;
         }
@@ -485,13 +523,13 @@ mod tests {
         assert_eq!(
             monitor.evaluate_event(WatchEvent::modified(path.clone(), 120, 1_700)),
             WatchEvaluation::ScanRequired {
-                reason: "created-or-modified".into()
+                reason: "timestamp-unavailable-rescan".into()
             }
         );
     }
 
     #[test]
-    fn unchanged_file_cache_suppresses_duplicate_scan_until_file_changes() {
+    fn unavailable_timestamp_is_never_cached_as_unchanged() {
         let mut monitor = UserModeFileMonitor::new(Duration::from_millis(250), 2);
         let path = PathBuf::from("C:/Users/Brent/Downloads/tool.exe");
 
@@ -502,17 +540,26 @@ mod tests {
         assert_eq!(
             monitor.evaluate_event(WatchEvent::modified(path.clone(), 42, 1_300)),
             WatchEvaluation::ScanRequired {
-                reason: "created-or-modified".into()
+                reason: "timestamp-unavailable-rescan".into()
             }
         );
         assert_eq!(
             monitor.evaluate_event(WatchEvent::modified(path.clone(), 42, 1_700)),
-            WatchEvaluation::AlreadyScannedUnchanged
+            WatchEvaluation::ScanRequired {
+                reason: "timestamp-unavailable-rescan".into()
+            }
         );
         assert_eq!(
             monitor.evaluate_event(WatchEvent::modified(path.clone(), 99, 2_100)),
             WatchEvaluation::WaitForStableFile
         );
+    }
+
+    #[test]
+    fn system_time_before_epoch_is_rejected_instead_of_cached_as_zero() {
+        let error = system_time_to_unix_ms(UNIX_EPOCH - Duration::from_secs(1)).unwrap_err();
+
+        assert!(error.contains("predates Unix epoch"));
     }
 
     #[test]
