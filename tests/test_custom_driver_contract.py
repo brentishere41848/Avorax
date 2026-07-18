@@ -12428,15 +12428,24 @@ def test_local_process_behavior_monitor_health_is_not_active_without_runtime_loo
         "pub struct ProcessMonitorPolicy",
         "pub struct ProcessSnapshotReport",
         "pub struct ProcessFinding",
+        "command_line_truncated",
         "MAX_PROCESS_SNAPSHOT_ITEMS",
         "MAX_PROCESS_TEXT_CHARS",
         "MAX_PROCESS_FINDINGS",
+        "PROCESS_TEXT_TRUNCATION_MARKER",
         "normalized_allowlist",
         "normalize_process_path_text",
+        "normalize_process_command_text",
+        "bounded_process_text",
         "snapshot_reports_encoded_script_host_as_suspicious_without_blocking_claim",
         "snapshot_honors_exact_normalized_allowlist",
         "snapshot_rejects_parent_traversal_and_bounds_inventory",
         "snapshot_detects_unsigned_user_writable_remote_transfer",
+        "snapshot_inspects_bounded_command_tail_for_suspicious_flags",
+        "snapshot_reviews_pretruncated_security_sensitive_command",
+        "exact_limit_benign_command_is_not_marked_truncated",
+        "snapshot_rejects_truncation_flag_without_command_evidence",
+        "snapshot_rejects_nul_command_evidence",
     ]:
         assert marker in process
     for marker in [
@@ -12450,6 +12459,7 @@ def test_local_process_behavior_monitor_health_is_not_active_without_runtime_loo
         '"evaluate_process_snapshot"',
         "ProcessMonitor::evaluate_snapshot",
         "process_snapshot_ipc_reports_suspicious_findings_without_active_loop_claim",
+        "process_snapshot_ipc_preserves_source_reported_truncation",
         "process_snapshot_ipc_honors_policy_allowlist",
         "process_snapshot_ipc_rejects_unknown_nested_observation_fields",
         "process_snapshot_ipc_requires_explicit_observations",
@@ -22319,6 +22329,9 @@ def test_release_local_core_process_snapshot_smoke_is_snapshot_only_and_bounded(
     assert "snapshot-only" in source
     assert "suspiciousProcess" in source
     assert "encoded or hidden" in source
+    assert "command_line_truncated" in source
+    assert "benign-tail-fixture" in source
+    assert "omitted arguments require review" in source
     assert "remote transfer" in source
     assert "user-writable" in source
     assert "skipped_processes" in source
@@ -23837,7 +23850,11 @@ def test_flutter_remaining_process_timeouts_report_kill_result():
     assert "'-ExecutionPolicy'" not in app_detector_windows_snapshot
     assert "'-ExecutionPolicy'" not in app_detector_windows_observations
     assert "row['command_line']" in app_detector_windows_observations
-    assert "String? _processSnapshotCommandLineText(String value)" in app_detector
+    assert "({String text, bool truncated})? _processSnapshotCommandLineText" in app_detector
+    assert "text.runes.toList(growable: false)" in app_detector
+    assert "_processSnapshotTruncationMarker" in app_detector
+    assert "commandLineTruncated: commandLineEvidence?.truncated ?? false" in app_detector
+    assert "if (commandLineTruncated) 'command_line_truncated': true" in client
     assert "tasklist.exe" not in app_detector
     assert "_windowsTasklistObservations" not in app_detector
     assert "expect(selfTest, contains('await _ipcTimeoutTerminationStatus'))" in client_test

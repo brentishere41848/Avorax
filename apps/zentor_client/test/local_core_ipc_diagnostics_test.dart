@@ -3518,10 +3518,12 @@ Future<void> main() async {
   final raw = await stdin.transform(utf8.decoder).join();
   final command = jsonDecode(raw) as Map<String, Object?>;
   final observations = command['process_observations'] as List<Object?>;
+  final observation = observations.single as Map<String, Object?>;
   final policy = command['process_monitor_policy'] as Map<String, Object?>;
   print(jsonEncode(<String, Object?>{
     'ok': command['command'] == 'evaluate_process_snapshot' &&
         observations.length == 1 &&
+        observation['command_line_truncated'] == true &&
         policy['suspicious_threshold'] == 40,
     'status': 'notActive',
     'capability': 'userModeSnapshot',
@@ -3551,6 +3553,7 @@ Future<void> main() async {
         imagePath: 'C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe',
         commandLine:
             'powershell.exe -WindowStyle Hidden -EncodedCommand benignfixture',
+        commandLineTruncated: true,
         signerTrusted: true,
       ),
     ]);

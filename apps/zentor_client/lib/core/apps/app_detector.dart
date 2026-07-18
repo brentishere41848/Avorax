@@ -13,6 +13,7 @@ typedef ProcessListProcessStarter =
 const int _maxAppDetectionDiagnosticChars = 2048;
 const int _maxAppDetectionProcessOutputChars = 256 * 1024;
 const int _maxProcessSnapshotObservations = 256;
+const String _processSnapshotTruncationMarker = ' ...[truncated-middle]... ';
 const Duration _windowsProcessTreeKillTimeout = Duration(seconds: 5);
 const String _windowsProcessSnapshotScript = r'''
 $ErrorActionPreference = 'Stop'
@@ -159,7 +160,7 @@ class AppDetector {
       final pid = _processSnapshotInt(row['pid']);
       final parentPid = _processSnapshotInt(row['parent_pid']);
       final image = _processSnapshotText(row['image_path']?.toString() ?? '');
-      final commandLine = _processSnapshotCommandLineText(
+      final commandLineEvidence = _processSnapshotCommandLineText(
         row['command_line']?.toString() ?? '',
       );
       if (image == null || pid == null || pid < 0) continue;
@@ -168,7 +169,8 @@ class AppDetector {
           pid: pid,
           parentPid: parentPid,
           imagePath: image,
-          commandLine: commandLine,
+          commandLine: commandLineEvidence?.text,
+          commandLineTruncated: commandLineEvidence?.truncated ?? false,
         ),
       );
     }
@@ -199,11 +201,27 @@ class AppDetector {
     return text.substring(0, _maxAppDetectionDiagnosticChars);
   }
 
-  String? _processSnapshotCommandLineText(String value) {
+  ({String text, bool truncated})? _processSnapshotCommandLineText(
+    String value,
+  ) {
     final text = value.replaceAll(RegExp(r'[\x00-\x1F\x7F]+'), ' ').trim();
     if (text.isEmpty || text.contains('\u0000')) return null;
-    if (text.length <= _maxAppDetectionDiagnosticChars) return text;
-    return text.substring(0, _maxAppDetectionDiagnosticChars);
+    final codePoints = text.runes.toList(growable: false);
+    if (codePoints.length <= _maxAppDetectionDiagnosticChars) {
+      return (text: text, truncated: false);
+    }
+    final retainedChars =
+        _maxAppDetectionDiagnosticChars -
+        _processSnapshotTruncationMarker.length;
+    final headChars = retainedChars ~/ 2;
+    final tailChars = retainedChars - headChars;
+    return (
+      text:
+          '${String.fromCharCodes(codePoints.take(headChars))}'
+          '$_processSnapshotTruncationMarker'
+          '${String.fromCharCodes(codePoints.skip(codePoints.length - tailChars))}',
+      truncated: true,
+    );
   }
 
   int? _processSnapshotInt(Object? value) {

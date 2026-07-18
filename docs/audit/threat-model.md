@@ -77,6 +77,7 @@ repository has executable proof and the verification report names the proof.
 | Timed-out helper commands leave child processes running | Flutter timeout paths now use bounded Windows process-tree cleanup for Avorax-spawned children and tests assert injected hung Dart fixtures exit | Installed desktop/service subprocess E2E and OS service supervision remain partial |
 | Bad watch input creates fake reports or watches broad roots | Watch wrapper path-guard smoke proves missing paths, missing roots, file roots, broad filesystem roots, and repo-escaping report paths fail visibly before watch polling or report creation | Installed service/background monitoring E2E and scheduled startup remain partial |
 | Missing or invalid file modification time hides a same-size rewrite from the finite watcher | Modification time is optional evidence; query/pre-epoch failures are bounded diagnostics, unknown timestamps are never inserted into baseline or unchanged caches, and the candidate is conservatively rescanned under existing limits | This remains post-write finite polling; persistent notification/service and pre-execution coverage are not provided |
+| Suspicious process arguments are hidden after a long benign command prefix | Flutter and Local Core retain bounded command-line head and tail evidence, propagate source truncation explicitly, inspect retained tail flags, and conservatively mark truncated security-sensitive commands for review | Omitted middle text cannot be reconstructed; this is snapshot-only review and does not stop or quarantine processes |
 | Status UI or installed smoke claims health from misleading output | Health IPC diagnostics, `avorax-status.ps1`, `-RequireReady`, path/report guards, and a bounded installed-smoke parser requiring exactly one typed JSON health response plus canonical binary/ready-engine checks | Actual installed service/driver proof remains blocked on release-host prerequisites |
 | Installed smoke reports protection without exercising file lifecycle postconditions | Installed lifecycle probe uses harmless exact-hash fixtures and fails unless scan quarantine removes the source, list returns the record, restore reproduces the original SHA-256 and removes the payload, and confirmed delete leaves source/payload absent; its generated report is independently schema-validated | Release-binary execution and installed-smoke wiring are verified; actual installed service mediation and packaged UI click-through remain blocked |
 | Portable package is modified, path-traverses on extraction, or claims installed protection | Builder hashes every packaged file after ready/lifecycle proof; archive smoke applies entry/count/size/total/ratio/path/duplicate limits, rejects manifest tampering, and reruns status/lifecycle from a fresh extraction; package/docs deny service, persistence, Defender replacement, and pre-execution claims | Local ZIP is unsigned and manual/finite user-mode only; transport authenticity and installed protection are not claimed |
@@ -95,6 +96,18 @@ bounded by the existing 10-second duration, 512-file pass, depth-eight, and
 32-event maxima. This improves post-write observation only; it does not add a
 persistent service, OS notification subscription, kernel blocking, or
 pre-execution protection.
+
+## Checkpoint 2172 Process Command Truncation Threat-Model Note
+
+The Windows process snapshot path no longer discards every command-line
+character after a fixed prefix. Flutter retains a bounded head and tail sample
+and reports whether the middle was omitted. Local Core independently bounds
+direct input, evaluates suspicious flags in either retained end, and sends a
+truncated script host or network-capable utility to review at the default
+threshold. This closes a simple benign-prefix evasion without pretending that
+omitted text was inspected. The result remains a user-mode point-in-time
+`suspiciousProcess` finding only; it does not terminate, quarantine, persistently
+monitor, or block execution.
 
 ## Checkpoint 2153 Portable Beta Threat-Model Note
 

@@ -4196,6 +4196,7 @@ class ProcessObservation {
     required this.imagePath,
     this.parentPid,
     this.commandLine,
+    this.commandLineTruncated = false,
     this.signerTrusted,
   });
 
@@ -4203,6 +4204,7 @@ class ProcessObservation {
   final int? parentPid;
   final String imagePath;
   final String? commandLine;
+  final bool commandLineTruncated;
   final bool? signerTrusted;
 
   Map<String, Object?> toJson() => {
@@ -4210,6 +4212,7 @@ class ProcessObservation {
     if (parentPid != null) 'parent_pid': parentPid,
     'image_path': imagePath,
     if (commandLine != null) 'command_line': commandLine,
+    if (commandLineTruncated) 'command_line_truncated': true,
     if (signerTrusted != null) 'signer_trusted': signerTrusted,
   };
 }

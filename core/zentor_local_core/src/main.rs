@@ -3624,6 +3624,35 @@ mod tests {
     }
 
     #[test]
+    fn process_snapshot_ipc_preserves_source_reported_truncation() {
+        let command: CoreCommand = serde_json::from_value(json!({
+            "command": "evaluate_process_snapshot",
+            "process_observations": [{
+                "pid": 43,
+                "parent_pid": 1,
+                "image_path": "C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe",
+                "command_line": "powershell.exe benign bounded head and tail fixture",
+                "command_line_truncated": true,
+                "signer_trusted": true
+            }]
+        }))
+        .unwrap();
+
+        let response = handle(command);
+
+        assert_eq!(response["ok"], true);
+        assert_eq!(response["findings"].as_array().unwrap().len(), 1);
+        assert_eq!(response["findings"][0]["score"], 40);
+        assert!(response["findings"][0]["reasons"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|reason| reason
+                .as_str()
+                .is_some_and(|value| value.contains("omitted arguments require review"))));
+    }
+
+    #[test]
     fn process_snapshot_ipc_honors_policy_allowlist() {
         let allowed = "C:/Users/Brent/AppData/Local/Temp/curl.exe";
         let command: CoreCommand = serde_json::from_value(json!({

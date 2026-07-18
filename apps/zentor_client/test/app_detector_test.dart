@@ -6,6 +6,9 @@ import 'package:zentor_client/core/apps/app_detector.dart';
 
 import 'source_text.dart';
 
+const int _processCommandSampleChars = 2048;
+const String _processCommandTruncationMarker = ' ...[truncated-middle]... ';
+
 void main() {
   test(
     'app detector returns empty when no real supported apps are found',
@@ -174,7 +177,8 @@ void main() {
         '          pid: pid,\n'
         '          parentPid: parentPid,\n'
         '          imagePath: image,\n'
-        '          commandLine: commandLine,',
+        '          commandLine: commandLineEvidence?.text,\n'
+        '          commandLineTruncated: commandLineEvidence?.truncated ?? false,',
       ),
     );
     expect(posixParser, contains("RegExp(r'\\s+').firstMatch(trimmed)"));
@@ -186,7 +190,9 @@ void main() {
     expect(source, contains('String? _processSnapshotText(String value)'));
     expect(
       source,
-      contains('String? _processSnapshotCommandLineText(String value)'),
+      contains(
+        '({String text, bool truncated})? _processSnapshotCommandLineText',
+      ),
     );
     expect(source, contains('int? _processSnapshotInt(Object? value)'));
     expect(
@@ -305,7 +311,52 @@ void main() {
       observations.single.commandLine,
       'powershell.exe -WindowStyle Hidden -EncodedCommand benignfixture',
     );
+    expect(observations.single.commandLineTruncated, isFalse);
   });
+
+  test(
+    'Windows process snapshot parser preserves bounded command tail',
+    () async {
+      if (!Platform.isWindows) return;
+      final padding = '\u{1F642}' * (_processCommandSampleChars + 256);
+      final command =
+          'powershell.exe x$padding -EncodedCommand benign-tail-fixture';
+      final detector = AppDetector.withProcessStarter(
+        processStarter: (_, _) => _startPrintingDartProcess(
+          jsonEncode([
+            {
+              'pid': 43,
+              'parent_pid': 7,
+              'image_path':
+                  'C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe',
+              'command_line': command,
+            },
+          ]),
+        ),
+      );
+
+      final observations = await detector.processSnapshotObservations();
+
+      expect(observations, hasLength(1));
+      expect(observations.single.commandLineTruncated, isTrue);
+      expect(
+        observations.single.commandLine,
+        contains(_processCommandTruncationMarker),
+      );
+      expect(
+        observations.single.commandLine,
+        endsWith('-EncodedCommand benign-tail-fixture'),
+      );
+      expect(
+        observations.single.commandLine!.runes.length,
+        _processCommandSampleChars,
+      );
+      expect(
+        observations.single.commandLine!.runes,
+        everyElement(isNot(inInclusiveRange(0xD800, 0xDFFF))),
+      );
+    },
+  );
 
   test('known install path probe failures are visible', () {
     final source = File('lib/core/apps/app_detector.dart').readAsStringSync();
