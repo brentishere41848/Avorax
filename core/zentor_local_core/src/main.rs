@@ -49,7 +49,8 @@ use scanner::{
 };
 use uuid::Uuid;
 use watcher::{
-    collect_watch_candidates, UserModeFileMonitor, WatchEvaluation, WatchEvent, WatcherState,
+    collect_watch_candidates, UserModeFileMonitor, WatchCandidate, WatchEvaluation, WatchEvent,
+    WatcherState,
 };
 
 const FULL_SCAN_MAX_SECONDS: u64 = 3 * 60 * 60;
@@ -1379,7 +1380,7 @@ fn run_watch_poll_scan(
         ));
     }
 
-    let command_started_at_ms = current_system_time_ms();
+    let command_started_at_ms = current_system_time_ms()?;
     let initial_snapshot =
         collect_watch_candidates(&roots, WATCH_POLL_MAX_FILES_PER_PASS, WATCH_POLL_MAX_DEPTH);
     for error in initial_snapshot.scan_errors {
@@ -1392,16 +1393,7 @@ fn run_watch_poll_scan(
     let mut known_files: HashMap<PathBuf, WatchFileFingerprint> = initial_snapshot
         .candidates
         .into_iter()
-        .filter(|candidate| candidate.modified_at_ms < command_started_at_ms)
-        .map(|candidate| {
-            (
-                candidate.path,
-                WatchFileFingerprint {
-                    size_bytes: candidate.size_bytes,
-                    modified_at_ms: candidate.modified_at_ms,
-                },
-            )
-        })
+        .filter_map(|candidate| watch_baseline_entry(candidate, command_started_at_ms))
         .collect();
 
     let started = Instant::now();
@@ -1430,15 +1422,17 @@ fn run_watch_poll_scan(
             if events.len() >= max_events {
                 break;
             }
-            let fingerprint = WatchFileFingerprint {
-                size_bytes: candidate.size_bytes,
-                modified_at_ms: candidate.modified_at_ms,
-            };
-            if known_files.get(&candidate.path) == Some(&fingerprint) {
+            let fingerprint = candidate
+                .modified_at_ms
+                .map(|modified_at_ms| WatchFileFingerprint {
+                    size_bytes: candidate.size_bytes,
+                    modified_at_ms,
+                });
+            if fingerprint.is_some_and(|value| known_files.get(&candidate.path) == Some(&value)) {
                 continue;
             }
             let observed_at_ms = started.elapsed().as_millis().min(u128::from(u64::MAX)) as u64;
-            match monitor.evaluate_event(WatchEvent::modified_with_file_time(
+            match monitor.evaluate_event(WatchEvent::modified_with_optional_file_time(
                 candidate.path.clone(),
                 candidate.size_bytes,
                 candidate.modified_at_ms,
@@ -1446,7 +1440,9 @@ fn run_watch_poll_scan(
             )) {
                 WatchEvaluation::WaitForDebounce | WatchEvaluation::WaitForStableFile => {}
                 WatchEvaluation::AlreadyScannedUnchanged => {
-                    known_files.insert(candidate.path, fingerprint);
+                    if let Some(fingerprint) = fingerprint {
+                        known_files.insert(candidate.path, fingerprint);
+                    }
                 }
                 WatchEvaluation::ScanRequired { reason } => {
                     let report = scan_paths(
@@ -1468,7 +1464,9 @@ fn run_watch_poll_scan(
                         threats_found: report.threats_found,
                         quarantined_files: report.quarantined_files,
                     });
-                    known_files.insert(candidate.path, fingerprint);
+                    if let Some(fingerprint) = fingerprint {
+                        known_files.insert(candidate.path, fingerprint);
+                    }
                 }
             }
         }
@@ -1495,12 +1493,25 @@ fn run_watch_poll_scan(
     ))
 }
 
-fn current_system_time_ms() -> u64 {
-    SystemTime::now()
+fn watch_baseline_entry(
+    candidate: WatchCandidate,
+    command_started_at_ms: u64,
+) -> Option<(PathBuf, WatchFileFingerprint)> {
+    let modified_at_ms = candidate.modified_at_ms?;
+    (modified_at_ms < command_started_at_ms).then_some((
+        candidate.path,
+        WatchFileFingerprint {
+            size_bytes: candidate.size_bytes,
+            modified_at_ms,
+        },
+    ))
+}
+
+fn current_system_time_ms() -> anyhow::Result<u64> {
+    let duration = SystemTime::now()
         .duration_since(UNIX_EPOCH)
-        .ok()
-        .map(|duration| duration.as_millis().min(u128::from(u64::MAX)) as u64)
-        .unwrap_or(0)
+        .context("system clock predates Unix epoch; watch baseline cannot be established")?;
+    Ok(duration.as_millis().min(u128::from(u64::MAX)) as u64)
 }
 
 fn scan_paths(
@@ -5255,6 +5266,39 @@ mod tests {
                 .iter()
                 .any(|value| value.as_str() == Some(limitation)));
         }
+    }
+
+    #[test]
+    fn watch_baseline_caches_only_valid_preexisting_timestamps() {
+        let path = PathBuf::from("C:/Users/Brent/Downloads/baseline.bin");
+        let unavailable = WatchCandidate {
+            path: path.clone(),
+            size_bytes: 10,
+            modified_at_ms: None,
+        };
+        let future = WatchCandidate {
+            path: path.clone(),
+            size_bytes: 10,
+            modified_at_ms: Some(1_001),
+        };
+        let preexisting = WatchCandidate {
+            path: path.clone(),
+            size_bytes: 10,
+            modified_at_ms: Some(999),
+        };
+
+        assert!(watch_baseline_entry(unavailable, 1_000).is_none());
+        assert!(watch_baseline_entry(future, 1_000).is_none());
+        assert_eq!(
+            watch_baseline_entry(preexisting, 1_000),
+            Some((
+                path,
+                WatchFileFingerprint {
+                    size_bytes: 10,
+                    modified_at_ms: 999,
+                },
+            ))
+        );
     }
 
     #[test]

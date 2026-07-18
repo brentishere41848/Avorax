@@ -1,6 +1,6 @@
 # Avorax Threat Model
 
-Date: 2026-07-10
+Date: 2026-07-18
 
 This document records the defensive threat model for the current small-threat
 MVP. It is intentionally conservative: a feature is trusted only when the
@@ -76,11 +76,25 @@ repository has executable proof and the verification report names the proof.
 | A later informational scan event hides a security warning in the shell notification area | Shell notification selection now ranks recent local events by severity, so `error` and `warning` events win over newer informational events, with newest-event tie-breaking at the same severity | This is in-app local-event notification evidence only; Windows toast delivery and installed packaged UI click-through remain partial |
 | Timed-out helper commands leave child processes running | Flutter timeout paths now use bounded Windows process-tree cleanup for Avorax-spawned children and tests assert injected hung Dart fixtures exit | Installed desktop/service subprocess E2E and OS service supervision remain partial |
 | Bad watch input creates fake reports or watches broad roots | Watch wrapper path-guard smoke proves missing paths, missing roots, file roots, broad filesystem roots, and repo-escaping report paths fail visibly before watch polling or report creation | Installed service/background monitoring E2E and scheduled startup remain partial |
+| Missing or invalid file modification time hides a same-size rewrite from the finite watcher | Modification time is optional evidence; query/pre-epoch failures are bounded diagnostics, unknown timestamps are never inserted into baseline or unchanged caches, and the candidate is conservatively rescanned under existing limits | This remains post-write finite polling; persistent notification/service and pre-execution coverage are not provided |
 | Status UI or installed smoke claims health from misleading output | Health IPC diagnostics, `avorax-status.ps1`, `-RequireReady`, path/report guards, and a bounded installed-smoke parser requiring exactly one typed JSON health response plus canonical binary/ready-engine checks | Actual installed service/driver proof remains blocked on release-host prerequisites |
 | Installed smoke reports protection without exercising file lifecycle postconditions | Installed lifecycle probe uses harmless exact-hash fixtures and fails unless scan quarantine removes the source, list returns the record, restore reproduces the original SHA-256 and removes the payload, and confirmed delete leaves source/payload absent; its generated report is independently schema-validated | Release-binary execution and installed-smoke wiring are verified; actual installed service mediation and packaged UI click-through remain blocked |
 | Portable package is modified, path-traverses on extraction, or claims installed protection | Builder hashes every packaged file after ready/lifecycle proof; archive smoke applies entry/count/size/total/ratio/path/duplicate limits, rejects manifest tampering, and reruns status/lifecycle from a fresh extraction; package/docs deny service, persistence, Defender replacement, and pre-execution claims | Local ZIP is unsigned and manual/finite user-mode only; transport authenticity and installed protection are not claimed |
 | User-mode watcher is mistaken for kernel protection | Watch wrappers and UI copy record no-service/no-kernel/no-pre-execution limits | Persistent background monitoring remains partial |
 | Network/update content is trusted blindly | Signed package verifier, tamper/restricted-payload/rollback smokes | Production signer ceremony and deployment approval remain blocked |
+
+## Checkpoint 2171 Watch-Timestamp Threat-Model Note
+
+The finite watcher no longer converts failed or pre-Unix-epoch modification
+timestamps to zero. Zero was ambiguous with a real epoch value and could make a
+same-size rewrite appear unchanged after baseline caching. Timestamp evidence is
+now optional: only a valid timestamp may enter the baseline or unchanged-file
+cache. An unavailable timestamp produces a bounded visible scan diagnostic and
+the candidate is rescanned rather than trusted as unchanged. Rechecks remain
+bounded by the existing 10-second duration, 512-file pass, depth-eight, and
+32-event maxima. This improves post-write observation only; it does not add a
+persistent service, OS notification subscription, kernel blocking, or
+pre-execution protection.
 
 ## Checkpoint 2153 Portable Beta Threat-Model Note
 
