@@ -960,6 +960,41 @@ def test_flutter_driver_status_defaults_to_unknown_until_confirmed_missing():
     assert '"driver_status": "missing"' in core
 
 
+def test_flutter_process_snapshot_reports_fail_closed_on_rejection_or_diagnostics():
+    app_state = read(APP_STATE)
+    offline_scan_test = read(
+        ROOT / "apps" / "zentor_client" / "test" / "offline_scan_test.dart"
+    )
+    verifier = read(SMALL_THREAT_MVP_VERIFIER)
+    validator = read(SMALL_THREAT_MVP_REPORT_VALIDATOR)
+    evaluator = app_state[
+        app_state.index("Future<void> _evaluateProcessSnapshot({"):
+        app_state.index("bool _shouldSkipRepeatedProcessSnapshotRoutineEvent")
+    ]
+
+    assert "if (!report.ok)" in evaluator
+    assert "if (report.diagnostics.isNotEmpty)" in evaluator
+    assert "Local Core rejected process snapshot evaluation" in evaluator
+    assert "Local Core returned incomplete process snapshot evidence" in evaluator
+    assert "Future<void> _recordProcessSnapshotFailure" in evaluator
+    assert "status: 'limited'" in evaluator
+    assert "severity: 'warning'" in evaluator
+    assert (
+        "active protection process snapshot rejected reports fail closed"
+        in offline_scan_test
+    )
+    assert (
+        "active protection incomplete process snapshot evidence fails closed"
+        in offline_scan_test
+    )
+    assert "fail-closed process snapshot response handling" in verifier
+    assert (
+        'Assert-ReportScopeContains $verifiedScopeText "fail-closed process '
+        'snapshot response handling" "verification_scope.verified"'
+        in validator
+    )
+
+
 def test_flutter_guard_status_labels_distinguish_unknown_from_off():
     for screen_path in [HOME_SCREEN, PROTECTION_SCREEN, SETTINGS_SCREEN]:
         source = read(screen_path)
@@ -19034,8 +19069,9 @@ def test_small_threat_mvp_verifier_is_safe_and_reproducible():
     assert "best-effort user-mode realtime watcher" in source
     assert (
         "suspicious-process snapshot observation, app-lifetime process snapshot "
-        "loop controller evidence, app-lifetime finite watch-poll scan loop "
-        "controller evidence, state/UI visibility, event evidence, and "
+        "loop controller evidence, fail-closed process snapshot response "
+        "handling, app-lifetime finite watch-poll scan loop controller evidence, "
+        "state/UI visibility, event evidence, and "
         "Protected Apps process-evidence newest ordering plus UTC timestamp "
         "visibility"
         in source

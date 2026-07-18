@@ -942,3 +942,10 @@ enforcement, or pre-execution blocking is claimed.
 - **Conservative fallback:** Truncated command lines from script hosts and network-capable Windows utilities reach the default review threshold even when no retained suspicious flag is visible. This is an explainable `suspiciousProcess` review result, not a confirmed-malware label or automatic process action.
 - **Verified:** Process-monitor tests pass (`10`), process-snapshot IPC tests pass (`5`), the complete Local Core suite passes (`506`), the complete Flutter suite passes (`824`), Flutter analyze, strict Clippy, rustfmt, source contracts (`611`), and the no-malware gate pass. The release-binary smoke verifies long-tail, source-reported truncation, inconsistent evidence rejection, and bounds with `266` synthetic observations and `4` expected findings.
 - **Still partial:** Process observation remains an app-lifetime user-mode snapshot. No persistent process service, termination/quarantine action, installed UI/service E2E, representative production false-positive study, signed driver, or pre-execution enforcement is proved.
+
+## Checkpoint 2173 Fail-Closed Process Snapshot Responses
+
+- **Resolved locally:** The Flutter controller no longer treats a Local Core process snapshot response with `ok=false` as a clean evaluation. It also refuses to mark a response successful when parser diagnostics show malformed or dropped evidence.
+- **Failure visibility:** Rejected and incomplete responses set the active process loop to `limited`, clear routine-event dedupe state, and write a bounded warning event. Neither path emits `process_snapshot_evaluated` or `process_snapshot_loop_evaluated`.
+- **Verified:** Two controller regressions pass, the complete Flutter suite passes (`826`), Flutter analyze is clean, source contracts pass (`612`), and the no-malware-binaries gate passes.
+- **Still partial:** This proves app-lifetime controller response handling with benign fakes only. It does not prove an installed persistent process service, real-host process response policy, termination/quarantine, signed-driver enforcement, or pre-execution blocking.

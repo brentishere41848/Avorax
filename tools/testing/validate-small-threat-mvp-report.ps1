@@ -2053,6 +2053,7 @@ if ($RequireFullSuite) {
   Assert-ReportScopeContains $verifiedScopeText "client UI tab/button/setting source inventory gate" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "Flutter timeout process-tree cleanup guards" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "Protected Apps process-evidence newest ordering plus UTC timestamp visibility" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "fail-closed process snapshot response handling" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "release update-service signed package verify/tamper smoke" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "release update-service apply tamper fail-before-activation smoke" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "release update-service apply snapshot-failure fail-safe smoke" "verification_scope.verified"
