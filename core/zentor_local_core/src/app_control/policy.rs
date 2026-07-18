@@ -12,21 +12,16 @@ use super::script_policy::ScriptPolicy;
 use super::trust_store::is_passthrough_system_or_zentor_path;
 use super::user_approval::UserApprovalStore;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum ProtectionMode {
     Off,
     MonitorOnly,
+    #[default]
     Balanced,
     BlockConfirmedThreats,
     Lockdown,
     DeveloperMode,
-}
-
-impl Default for ProtectionMode {
-    fn default() -> Self {
-        Self::Balanced
-    }
 }
 
 impl ProtectionMode {

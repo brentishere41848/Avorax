@@ -17,7 +17,7 @@ pub fn run_static_model(
     let input = tract_ndarray::Array2::from_shape_vec((1, FEATURE_COUNT), features.to_vec())?;
     let outputs = model.run(tvec!(input.into_tensor().into()))?;
     let probability = outputs
-        .get(0)
+        .first()
         .context("ONNX model did not return malware probability output")?
         .to_array_view::<f32>()?
         .iter()

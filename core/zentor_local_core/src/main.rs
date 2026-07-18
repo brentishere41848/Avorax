@@ -838,15 +838,18 @@ fn evaluate_ransomware_activity(
             .map(PathBuf::from)
             .collect(),
     };
+    let activity = protection::ransomware_guard::RansomwareActivity {
+        process_id: request.process_id,
+        process_path: &request.process_path,
+        modified_paths: &modified_paths,
+        files_renamed_count: request.files_renamed_count,
+        entropy_change_score: request.entropy_change_score,
+        ransom_note_score: request.ransom_note_score,
+        backup_tamper_score: request.backup_tamper_score,
+        time_window_seconds: request.time_window_seconds,
+    };
     let signal = protection::ransomware_guard::RansomwareGuard::evaluate_with_config(
-        request.process_id,
-        request.process_path,
-        &modified_paths,
-        request.files_renamed_count,
-        request.entropy_change_score,
-        request.ransom_note_score,
-        request.backup_tamper_score,
-        request.time_window_seconds,
+        activity,
         &runtime_config,
     );
     Ok(json!({
@@ -1707,7 +1710,7 @@ fn scan_paths(
             permission_denied_count,
             started,
         );
-        if files_scanned == total_files || files_scanned % 25 == 0 {
+        if files_scanned == total_files || files_scanned.is_multiple_of(25) {
             if let Some(emit) = emit_progress.as_deref_mut() {
                 emit(&progress);
             }
@@ -1747,7 +1750,7 @@ fn scan_paths(
         progress.progress_percent = Some(100.0);
         progress.estimated_remaining_seconds = Some(0);
     }
-    if let Some(emit) = emit_progress.as_deref_mut() {
+    if let Some(emit) = emit_progress {
         emit(&progress);
     }
     if cancelled {

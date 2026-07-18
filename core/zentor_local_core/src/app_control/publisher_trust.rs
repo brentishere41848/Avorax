@@ -71,7 +71,6 @@ impl TrustedPublisherPolicy {
 
 fn normalize_publisher_name(value: &str) -> Option<String> {
     let normalized = value
-        .trim()
         .split_whitespace()
         .collect::<Vec<_>>()
         .join(" ")

@@ -814,7 +814,7 @@ rule Review_Only
 
         assert!(source.contains(&scan_helper_pattern));
         assert!(source.contains(&scan_helper_call_pattern));
-        assert!(source.contains(&rule_helper_candidate_pattern));
+        assert!(source.contains(rule_helper_candidate_pattern));
         assert!(source.contains(&symlink_metadata_pattern));
         assert!(source.contains(&scan_target_pattern));
         assert!(source.contains(&scan_symlink_pattern));

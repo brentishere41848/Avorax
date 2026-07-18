@@ -597,7 +597,7 @@ fn encode_metadata_auth_key(key: &str) -> Result<String> {
     #[cfg(windows)]
     {
         let protected = dpapi_protect(key.as_bytes())?;
-        return Ok(format!("dpapi:{}\n", hex_encode(&protected)));
+        Ok(format!("dpapi:{}\n", hex_encode(&protected)))
     }
     #[cfg(not(windows))]
     {
@@ -774,7 +774,7 @@ fn hex_encode(bytes: &[u8]) -> String {
 }
 
 fn hex_decode(value: &str) -> Result<Vec<u8>> {
-    if value.len() % 2 != 0 {
+    if !value.len().is_multiple_of(2) {
         return Err(anyhow!(
             "protected quarantine metadata key has invalid hex length"
         ));
@@ -806,7 +806,7 @@ fn dpapi_protect(clear: &[u8]) -> Result<Vec<u8>> {
         CryptProtectData, CRYPTPROTECT_UI_FORBIDDEN, CRYPT_INTEGER_BLOB,
     };
 
-    let mut input = CRYPT_INTEGER_BLOB {
+    let input = CRYPT_INTEGER_BLOB {
         cbData: clear.len() as u32,
         pbData: clear.as_ptr() as *mut u8,
     };
@@ -816,7 +816,7 @@ fn dpapi_protect(clear: &[u8]) -> Result<Vec<u8>> {
     };
     let ok = unsafe {
         CryptProtectData(
-            &mut input,
+            &input,
             null(),
             null(),
             null_mut(),
@@ -846,7 +846,7 @@ fn dpapi_unprotect(protected: &[u8]) -> Result<Vec<u8>> {
         CryptUnprotectData, CRYPTPROTECT_UI_FORBIDDEN, CRYPT_INTEGER_BLOB,
     };
 
-    let mut input = CRYPT_INTEGER_BLOB {
+    let input = CRYPT_INTEGER_BLOB {
         cbData: protected.len() as u32,
         pbData: protected.as_ptr() as *mut u8,
     };
@@ -856,7 +856,7 @@ fn dpapi_unprotect(protected: &[u8]) -> Result<Vec<u8>> {
     };
     let ok = unsafe {
         CryptUnprotectData(
-            &mut input,
+            &input,
             null_mut(),
             null(),
             null_mut(),
@@ -945,9 +945,7 @@ fn reject_link_ancestors(path: &Path, label: &str) -> Result<()> {
 fn write_staged_quarantine_file(path: &Path, bytes: &[u8], label: &str) -> Result<()> {
     ensure_quarantine_file_parent_directory(path, label)?;
     let temp_path = quarantine_staged_temp_path(path, label)?;
-    if let Err(error) = write_file_exclusive(&temp_path, bytes, label) {
-        return Err(error);
-    }
+    write_file_exclusive(&temp_path, bytes, label)?;
     if let Err(error) = reject_link_path(&temp_path, label) {
         cleanup_quarantine_staged_file(&temp_path, label).with_context(|| {
             format!(
@@ -991,9 +989,7 @@ fn write_staged_quarantine_file(path: &Path, bytes: &[u8], label: &str) -> Resul
 fn replace_staged_quarantine_file(path: &Path, bytes: &[u8], label: &str) -> Result<()> {
     ensure_quarantine_file_parent_directory(path, label)?;
     let temp_path = quarantine_staged_temp_path(path, label)?;
-    if let Err(error) = write_file_exclusive(&temp_path, bytes, label) {
-        return Err(error);
-    }
+    write_file_exclusive(&temp_path, bytes, label)?;
     if let Err(error) = reject_link_path(&temp_path, label) {
         cleanup_quarantine_staged_file(&temp_path, label).with_context(|| {
             format!(

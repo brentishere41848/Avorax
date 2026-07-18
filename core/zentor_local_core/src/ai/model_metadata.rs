@@ -267,13 +267,15 @@ mod tests {
 
     #[test]
     fn production_model_metadata_requires_metric_evidence() {
-        let mut metadata = ModelMetadata::default();
-        metadata.production_ready = true;
-        metadata.training_sample_count = 1;
-        metadata.validation_sample_count = 1;
-        metadata.false_positive_rate = Some(0.01);
-        metadata.precision = Some(0.99);
-        metadata.recall = None;
+        let metadata = ModelMetadata {
+            production_ready: true,
+            training_sample_count: 1,
+            validation_sample_count: 1,
+            false_positive_rate: Some(0.01),
+            precision: Some(0.99),
+            recall: None,
+            ..ModelMetadata::default()
+        };
 
         let error = metadata.validate().unwrap_err().to_string();
 

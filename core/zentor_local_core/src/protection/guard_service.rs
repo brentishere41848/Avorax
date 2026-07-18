@@ -6,19 +6,14 @@ const GUARD_SERVICE_QUERY_NAMES: [&str; 2] = ["avorax_guard_service", "zentor_gu
 const NON_WINDOWS_GUARD_SERVICE_STATUS_UNSUPPORTED: &str =
     "Guard Service status is only available through Windows service control";
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub enum GuardMode {
     Off,
     MonitorOnly,
+    #[default]
     BlockConfirmedThreats,
     Aggressive,
-}
-
-impl Default for GuardMode {
-    fn default() -> Self {
-        Self::BlockConfirmedThreats
-    }
 }
 
 #[derive(Default)]

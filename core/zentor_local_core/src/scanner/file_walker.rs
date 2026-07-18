@@ -560,8 +560,10 @@ mod tests {
         .unwrap();
         fs::write(downloads.join("notes.txt"), "plain text").unwrap();
 
-        let walk =
-            collect_accessible_files_with_options(&[downloads.clone()], &WalkOptions::quick());
+        let walk = collect_accessible_files_with_options(
+            std::slice::from_ref(&downloads),
+            &WalkOptions::quick(),
+        );
 
         assert!(walk
             .files
