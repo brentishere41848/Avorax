@@ -1909,6 +1909,35 @@ class ZentorController extends StateNotifier<ZentorState> {
         observations,
       );
       if (!mounted) return;
+      if (!report.ok) {
+        final diagnosticParts = <String>[
+          'Local Core rejected process snapshot evaluation:',
+          report.statusReason,
+          if (report.diagnostics.isNotEmpty)
+            'diagnostics=${report.diagnostics.take(2).join("; ")}',
+        ];
+        await _recordProcessSnapshotFailure(
+          failedType: failedType,
+          failedMessage: failedMessage,
+          details: diagnosticParts.join(' '),
+          dedupeRepeatedRoutineEvents: dedupeRepeatedRoutineEvents,
+          updateProcessSnapshotLoopState: updateProcessSnapshotLoopState,
+        );
+        return;
+      }
+      if (report.diagnostics.isNotEmpty) {
+        await _recordProcessSnapshotFailure(
+          failedType: failedType,
+          failedMessage: failedMessage,
+          details:
+              'Local Core returned incomplete process snapshot evidence: '
+              'findings=${report.findings.length} '
+              'diagnostics=${report.diagnostics.take(2).join("; ")}',
+          dedupeRepeatedRoutineEvents: dedupeRepeatedRoutineEvents,
+          updateProcessSnapshotLoopState: updateProcessSnapshotLoopState,
+        );
+        return;
+      }
       final findingCount = report.findings.length;
       final detailParts = <String>[
         'observed=${report.observedProcesses}',
@@ -1916,8 +1945,6 @@ class ZentorController extends StateNotifier<ZentorState> {
         'findings=$findingCount',
         'status=${report.status}',
         'capability=${report.capability}',
-        if (report.diagnostics.isNotEmpty)
-          'diagnostics=${report.diagnostics.take(2).join("; ")}',
       ];
       final eventType = findingCount > 0 ? suspiciousType : evaluatedType;
       final eventMessage = findingCount > 0
@@ -1948,23 +1975,39 @@ class ZentorController extends StateNotifier<ZentorState> {
       );
     } on Object catch (error) {
       if (!mounted) return;
-      final details = _boundedUiDiagnostic(error);
-      if (updateProcessSnapshotLoopState) {
-        _setProcessSnapshotLoopState(status: 'limited', reason: details);
-      }
-      if (dedupeRepeatedRoutineEvents) {
-        _lastProcessSnapshotLoopRoutineEventKey = null;
-      }
-      await logEvent(
-        failedType,
-        failedMessage,
-        details: details,
-        category: 'protection',
-        severity: 'warning',
+      await _recordProcessSnapshotFailure(
+        failedType: failedType,
+        failedMessage: failedMessage,
+        details: _boundedUiDiagnostic(error),
+        dedupeRepeatedRoutineEvents: dedupeRepeatedRoutineEvents,
+        updateProcessSnapshotLoopState: updateProcessSnapshotLoopState,
       );
     } finally {
       _processSnapshotEvaluationInFlight = false;
     }
+  }
+
+  Future<void> _recordProcessSnapshotFailure({
+    required String failedType,
+    required String failedMessage,
+    required Object details,
+    required bool dedupeRepeatedRoutineEvents,
+    required bool updateProcessSnapshotLoopState,
+  }) async {
+    final boundedDetails = _boundedUiDiagnostic(details);
+    if (updateProcessSnapshotLoopState) {
+      _setProcessSnapshotLoopState(status: 'limited', reason: boundedDetails);
+    }
+    if (dedupeRepeatedRoutineEvents) {
+      _lastProcessSnapshotLoopRoutineEventKey = null;
+    }
+    await logEvent(
+      failedType,
+      failedMessage,
+      details: boundedDetails,
+      category: 'protection',
+      severity: 'warning',
+    );
   }
 
   bool _shouldSkipRepeatedProcessSnapshotRoutineEvent({

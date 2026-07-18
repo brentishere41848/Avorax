@@ -541,3 +541,24 @@ The release smoke proves this behavior with benign text fixtures, temporary
 install/data roots, and a fake service-control executable under a temporary
 `SystemRoot`. It does not establish real installed ACLs, production signing-key
 custody, actual service lifecycle behavior, or kernel/pre-execution blocking.
+
+## Checkpoint 2173 Process Snapshot Response Integrity
+
+Local Core process snapshot output crosses a subprocess IPC trust boundary.
+Missing responses, explicit rejection, malformed required fields, or malformed
+finding rows can remove evidence that would otherwise require review. Treating
+such a response as a clean snapshot would create false success and could hide a
+suspicious process from the event history.
+
+The Flutter controller now requires both `report.ok` and an empty diagnostics
+list before it may emit evaluated or suspicious success evidence. Rejection and
+incomplete parsing instead produce a bounded warning and a `limited` active-loop
+state. Existing valid findings in an incomplete response are not acted upon,
+because their surrounding response cannot be trusted; the failure remains
+visible for operator review.
+
+This is fail-closed status handling, not process blocking. The app still uses
+bounded point-in-time user-mode snapshots and does not terminate, quarantine,
+or prevent process execution. Persistent service observation, authenticated
+mutation IPC, signed-driver enforcement, and installed-host E2E remain separate
+boundaries.

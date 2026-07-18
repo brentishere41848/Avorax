@@ -532,6 +532,145 @@ void main() {
   );
 
   test(
+    'active protection process snapshot rejected reports fail closed',
+    () async {
+      SharedPreferences.setMockInitialValues({});
+      final preferences = await SharedPreferences.getInstance();
+      final timerFactory = _ManualScheduledTimerFactory();
+      final localCore = _FakeLocalCoreClient(
+        processSnapshotReport: const ProcessSnapshotReport(
+          ok: false,
+          status: 'unknown',
+          capability: 'unknown',
+          statusReason: 'process snapshot request rejected',
+        ),
+      );
+
+      final container = ProviderContainer(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(preferences),
+          localCoreClientProvider.overrideWithValue(localCore),
+          appDetectorProvider.overrideWithValue(
+            const _FakeAppDetector(
+              observations: [
+                ProcessObservation(
+                  pid: 85,
+                  imagePath: r'C:\Tools\fixture.exe',
+                  commandLine: 'fixture.exe --benign',
+                ),
+              ],
+            ),
+          ),
+          processSnapshotTimerFactoryProvider.overrideWithValue(
+            timerFactory.create,
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final controller = container.read(zentorControllerProvider.notifier);
+      await _waitForControllerStartup(container);
+      await controller.startProtection(confirmed: true);
+      timerFactory.timer?.fire();
+      for (
+        var attempt = 0;
+        attempt < 20 && localCore.processSnapshotCalls < 1;
+        attempt += 1
+      ) {
+        await Future<void>.delayed(Duration.zero);
+      }
+
+      final state = container.read(zentorControllerProvider);
+      expect(localCore.processSnapshotCalls, 1);
+      expect(state.processSnapshotLoopStatus, 'limited');
+      expect(
+        state.processSnapshotLoopStatusReason,
+        contains('process snapshot request rejected'),
+      );
+      final failedEvent = state.events.lastWhere(
+        (event) => event.type == 'process_snapshot_loop_failed',
+      );
+      expect(failedEvent.severity, 'warning');
+      expect(failedEvent.details, contains('Local Core rejected'));
+      expect(
+        state.events.map((event) => event.type),
+        isNot(contains('process_snapshot_loop_evaluated')),
+      );
+    },
+  );
+
+  test(
+    'active protection incomplete process snapshot evidence fails closed',
+    () async {
+      SharedPreferences.setMockInitialValues({});
+      final preferences = await SharedPreferences.getInstance();
+      final timerFactory = _ManualScheduledTimerFactory();
+      final localCore = _FakeLocalCoreClient(
+        processSnapshotReport: const ProcessSnapshotReport(
+          ok: true,
+          status: 'snapshotOnly',
+          capability: 'userModeSnapshot',
+          statusReason: 'fixture snapshot evaluated',
+          observedProcesses: 1,
+          diagnostics: [
+            'local core process snapshot response had malformed findings',
+          ],
+        ),
+      );
+
+      final container = ProviderContainer(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(preferences),
+          localCoreClientProvider.overrideWithValue(localCore),
+          appDetectorProvider.overrideWithValue(
+            const _FakeAppDetector(
+              observations: [
+                ProcessObservation(
+                  pid: 86,
+                  imagePath: r'C:\Tools\fixture.exe',
+                  commandLine: 'fixture.exe --benign',
+                ),
+              ],
+            ),
+          ),
+          processSnapshotTimerFactoryProvider.overrideWithValue(
+            timerFactory.create,
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final controller = container.read(zentorControllerProvider.notifier);
+      await _waitForControllerStartup(container);
+      await controller.startProtection(confirmed: true);
+      timerFactory.timer?.fire();
+      for (
+        var attempt = 0;
+        attempt < 20 && localCore.processSnapshotCalls < 1;
+        attempt += 1
+      ) {
+        await Future<void>.delayed(Duration.zero);
+      }
+
+      final state = container.read(zentorControllerProvider);
+      expect(localCore.processSnapshotCalls, 1);
+      expect(state.processSnapshotLoopStatus, 'limited');
+      expect(
+        state.processSnapshotLoopStatusReason,
+        contains('incomplete process snapshot evidence'),
+      );
+      final failedEvent = state.events.lastWhere(
+        (event) => event.type == 'process_snapshot_loop_failed',
+      );
+      expect(failedEvent.details, contains('malformed findings'));
+      expect(
+        state.events.map((event) => event.type),
+        isNot(contains('process_snapshot_loop_evaluated')),
+      );
+    },
+  );
+
+  test(
     'active protection process snapshot timer start failures are visible',
     () async {
       SharedPreferences.setMockInitialValues({});
