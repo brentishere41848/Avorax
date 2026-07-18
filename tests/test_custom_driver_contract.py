@@ -11547,11 +11547,11 @@ def test_local_quarantine_staged_writes_are_final_destination_exclusive_and_clea
     assert "remove_existing_quarantine_file(path, label)?" not in staged_source
     assert "remove_existing_quarantine_file(temp_path, label)?" not in staged_source
     write_error_source = staged_source[
-        staged_source.index("if let Err(error) = write_file_exclusive(&temp_path, bytes, label)"):
+        staged_source.index("write_file_exclusive(&temp_path, bytes, label)?;"):
         staged_source.index("if let Err(error) = reject_link_path(&temp_path, label)")
     ]
     assert "cleanup_quarantine_staged_file" not in write_error_source
-    assert "return Err(error);" in write_error_source
+    assert "write_file_exclusive(&temp_path, bytes, label)?;" in write_error_source
     assert "let mut output = match fs::OpenOptions::new()" in file_writer_source
     assert "Err(error) => {" in file_writer_source
     assert "failed to create temporary {label}" in file_writer_source
@@ -18428,6 +18428,20 @@ def test_ci_workflow_enforces_strict_native_engine_clippy():
 
     assert "components: clippy" in install_source
     assert "working-directory: core/zentor_native_engine" in lint_source
+    assert "run: cargo clippy --all-targets --no-deps -- -D warnings" in lint_source
+
+
+def test_ci_workflow_enforces_strict_local_core_clippy():
+    source = read(CI_WORKFLOW)
+    install_start = source.index("- name: Install Rust")
+    local_core_start = source.index("- name: Test local core")
+    install_source = source[install_start:local_core_start]
+    lint_start = source.index("- name: Lint local core")
+    native_lint_start = source.index("- name: Lint native engine")
+    lint_source = source[lint_start:native_lint_start]
+
+    assert "components: clippy" in install_source
+    assert "working-directory: core/zentor_local_core" in lint_source
     assert "run: cargo clippy --all-targets --no-deps -- -D warnings" in lint_source
 
 

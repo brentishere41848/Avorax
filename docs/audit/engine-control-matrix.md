@@ -4139,3 +4139,9 @@ passed and published the prerelease at commit
 | Control / engine | Responsibility | Classification | Evidence / limitation |
 | --- | --- | --- | --- |
 | Strict native detection-engine lint gate | Keep bounded archive parsing, static analysis, signatures, rules, trust, ML scaffolding, quarantine, scanning, and explainable verdict aggregation free of Rust 1.96 Clippy warnings | Local all-target native gate verified; CI enforcement source-verified | `cargo clippy --all-targets --no-deps -- -D warnings` passes with no lint allowances. The complete native suite (`433` library plus `6` compiler CLI), dependent Guard suite (`214`), source contracts (`609`), and no-malware-binaries gate pass. CI pins Rust 1.96.1 and runs the exact command. Verdict boundaries and existing ZIP safety limits are retained, but this gate does not measure detection accuracy or prove installed-service, signed-driver, or pre-execution behavior. |
+
+## Checkpoint 2170 Engine-Control Matrix Addendum
+
+| Control / engine | Responsibility | Classification | Evidence / limitation |
+| --- | --- | --- | --- |
+| Strict Local Core lint gate | Keep scan orchestration, progress/cancellation, quarantine/restore/delete, allowlist, user-mode watcher, ransomware activity, service health, and UI stdio IPC code free of Rust 1.96 Clippy warnings | Local all-target gate verified; CI enforcement source-verified | `cargo clippy --all-targets --no-deps -- -D warnings` passes without new lint suppression and removes the ransomware argument-count suppression through a named activity record. The complete serialized Local Core suite (`498`) and source contracts (`610`) pass. CI pins Rust 1.96.1 and runs the exact command after tests. Installed Core Service mutation remains disabled, watcher/ransomware observation remains best-effort post-activity user mode, and no signed-driver or pre-execution claim is made. |

@@ -23,51 +23,38 @@ pub struct RansomwareGuardConfig {
     pub trusted_process_allowlist: Vec<PathBuf>,
 }
 
+#[derive(Debug, Clone, Copy)]
+pub struct RansomwareActivity<'a> {
+    pub process_id: u32,
+    pub process_path: &'a str,
+    pub modified_paths: &'a [PathBuf],
+    pub files_renamed_count: u32,
+    pub entropy_change_score: f32,
+    pub ransom_note_score: f32,
+    pub backup_tamper_score: f32,
+    pub time_window_seconds: u32,
+}
+
 pub struct RansomwareGuard;
 
 impl RansomwareGuard {
-    pub fn evaluate(
-        process_id: u32,
-        process_path: impl Into<String>,
-        modified_paths: &[PathBuf],
-        renamed_count: u32,
-        entropy_change_score: f32,
-        ransom_note_score: f32,
-        backup_tamper_score: f32,
-        time_window_seconds: u32,
-    ) -> Option<RansomwareSignal> {
-        Self::evaluate_with_config(
-            process_id,
-            process_path,
-            modified_paths,
-            renamed_count,
-            entropy_change_score,
-            ransom_note_score,
-            backup_tamper_score,
-            time_window_seconds,
-            &RansomwareGuardConfig::default(),
-        )
+    pub fn evaluate(activity: RansomwareActivity<'_>) -> Option<RansomwareSignal> {
+        Self::evaluate_with_config(activity, &RansomwareGuardConfig::default())
     }
 
-    #[allow(clippy::too_many_arguments)]
     pub fn evaluate_with_config(
-        process_id: u32,
-        process_path: impl Into<String>,
-        modified_paths: &[PathBuf],
-        renamed_count: u32,
-        entropy_change_score: f32,
-        ransom_note_score: f32,
-        backup_tamper_score: f32,
-        time_window_seconds: u32,
+        activity: RansomwareActivity<'_>,
         config: &RansomwareGuardConfig,
     ) -> Option<RansomwareSignal> {
-        let process_path = process_path.into();
-        let protected_paths = protected_modified_paths(modified_paths, &config.protected_roots);
+        let process_path = activity.process_path.to_string();
+        let protected_paths =
+            protected_modified_paths(activity.modified_paths, &config.protected_roots);
         let modifications = protected_paths.len() as u32;
-        let severe_file_activity =
-            modifications >= 25 && time_window_seconds <= 120 && entropy_change_score >= 0.55;
-        let ransom_note_activity = ransom_note_score >= 0.75 && modifications >= 10;
-        let backup_tamper = backup_tamper_score >= 0.75 && modifications >= 1;
+        let severe_file_activity = modifications >= 25
+            && activity.time_window_seconds <= 120
+            && activity.entropy_change_score >= 0.55;
+        let ransom_note_activity = activity.ransom_note_score >= 0.75 && modifications >= 10;
+        let backup_tamper = activity.backup_tamper_score >= 0.75 && modifications >= 1;
         let critical_override = ransom_note_activity || backup_tamper;
         if trusted_process(&process_path, &config.trusted_process_allowlist) && !critical_override {
             return None;
@@ -81,18 +68,18 @@ impl RansomwareGuard {
             "medium"
         };
         Some(RansomwareSignal {
-            process_id,
+            process_id: activity.process_id,
             process_path,
             affected_paths: protected_paths
                 .iter()
                 .map(|path| path.display().to_string())
                 .collect(),
             files_modified_count: modifications,
-            files_renamed_count: renamed_count,
-            entropy_change_score,
-            ransom_note_score,
-            backup_tamper_score,
-            time_window_seconds,
+            files_renamed_count: activity.files_renamed_count,
+            entropy_change_score: activity.entropy_change_score,
+            ransom_note_score: activity.ransom_note_score,
+            backup_tamper_score: activity.backup_tamper_score,
+            time_window_seconds: activity.time_window_seconds,
             severity: "critical".to_string(),
             confidence: confidence.to_string(),
         })
@@ -204,16 +191,16 @@ mod tests {
         let paths = (0..30)
             .map(|idx| PathBuf::from(format!("C:/Users/Test/Documents/file{idx}.docx")))
             .collect::<Vec<_>>();
-        let signal = RansomwareGuard::evaluate(
-            42,
-            "C:/Users/Test/AppData/Temp/bad.exe",
-            &paths,
-            30,
-            0.8,
-            0.0,
-            0.0,
-            60,
-        );
+        let signal = RansomwareGuard::evaluate(RansomwareActivity {
+            process_id: 42,
+            process_path: "C:/Users/Test/AppData/Temp/bad.exe",
+            modified_paths: &paths,
+            files_renamed_count: 30,
+            entropy_change_score: 0.8,
+            ransom_note_score: 0.0,
+            backup_tamper_score: 0.0,
+            time_window_seconds: 60,
+        });
         assert!(signal.is_some());
     }
 
@@ -229,14 +216,16 @@ mod tests {
             trusted_process_allowlist: vec![],
         };
         let signal = RansomwareGuard::evaluate_with_config(
-            42,
-            "C:/Users/Test/AppData/Temp/tool.exe",
-            &paths,
-            30,
-            0.8,
-            0.0,
-            0.0,
-            60,
+            RansomwareActivity {
+                process_id: 42,
+                process_path: "C:/Users/Test/AppData/Temp/tool.exe",
+                modified_paths: &paths,
+                files_renamed_count: 30,
+                entropy_change_score: 0.8,
+                ransom_note_score: 0.0,
+                backup_tamper_score: 0.0,
+                time_window_seconds: 60,
+            },
             &config,
         );
         assert!(signal.is_none());
@@ -254,14 +243,16 @@ mod tests {
             trusted_process_allowlist: vec![],
         };
         let signal = RansomwareGuard::evaluate_with_config(
-            42,
-            "C:/Users/Test/AppData/Temp/tool.exe",
-            &paths,
-            75,
-            0.8,
-            0.0,
-            0.0,
-            60,
+            RansomwareActivity {
+                process_id: 42,
+                process_path: "C:/Users/Test/AppData/Temp/tool.exe",
+                modified_paths: &paths,
+                files_renamed_count: 75,
+                entropy_change_score: 0.8,
+                ransom_note_score: 0.0,
+                backup_tamper_score: 0.0,
+                time_window_seconds: 60,
+            },
             &config,
         )
         .expect("protected document activity should trigger");
@@ -283,14 +274,16 @@ mod tests {
             trusted_process_allowlist: vec![],
         };
         let signal = RansomwareGuard::evaluate_with_config(
-            42,
-            "C:/Users/Test/AppData/Temp/tool.exe",
-            &paths,
-            30,
-            0.8,
-            0.0,
-            0.0,
-            60,
+            RansomwareActivity {
+                process_id: 42,
+                process_path: "C:/Users/Test/AppData/Temp/tool.exe",
+                modified_paths: &paths,
+                files_renamed_count: 30,
+                entropy_change_score: 0.8,
+                ransom_note_score: 0.0,
+                backup_tamper_score: 0.0,
+                time_window_seconds: 60,
+            },
             &config,
         );
 
@@ -307,14 +300,16 @@ mod tests {
             trusted_process_allowlist: vec![PathBuf::from("C:/Program Files/Backup/backup.exe")],
         };
         let signal = RansomwareGuard::evaluate_with_config(
-            42,
-            "C:/Program Files/Backup/Tools/../backup.exe",
-            &paths,
-            30,
-            0.8,
-            0.0,
-            0.0,
-            60,
+            RansomwareActivity {
+                process_id: 42,
+                process_path: "C:/Program Files/Backup/Tools/../backup.exe",
+                modified_paths: &paths,
+                files_renamed_count: 30,
+                entropy_change_score: 0.8,
+                ransom_note_score: 0.0,
+                backup_tamper_score: 0.0,
+                time_window_seconds: 60,
+            },
             &config,
         );
 
@@ -331,14 +326,16 @@ mod tests {
             trusted_process_allowlist: vec![PathBuf::from("C:/Program Files/Backup/backup.exe")],
         };
         let signal = RansomwareGuard::evaluate_with_config(
-            42,
-            "C:/Program Files/Backup/backup.exe",
-            &paths,
-            30,
-            0.8,
-            0.0,
-            0.0,
-            60,
+            RansomwareActivity {
+                process_id: 42,
+                process_path: "C:/Program Files/Backup/backup.exe",
+                modified_paths: &paths,
+                files_renamed_count: 30,
+                entropy_change_score: 0.8,
+                ransom_note_score: 0.0,
+                backup_tamper_score: 0.0,
+                time_window_seconds: 60,
+            },
             &config,
         );
         assert!(signal.is_none());
@@ -355,14 +352,16 @@ mod tests {
         };
 
         let signal = RansomwareGuard::evaluate_with_config(
-            42,
-            "C:/Program Files/Backup/backup.exe",
-            &paths,
-            30,
-            0.8,
-            0.9,
-            0.95,
-            60,
+            RansomwareActivity {
+                process_id: 42,
+                process_path: "C:/Program Files/Backup/backup.exe",
+                modified_paths: &paths,
+                files_renamed_count: 30,
+                entropy_change_score: 0.8,
+                ransom_note_score: 0.9,
+                backup_tamper_score: 0.95,
+                time_window_seconds: 60,
+            },
             &config,
         )
         .expect("critical ransom-note/backup-tamper activity should not be suppressed");
