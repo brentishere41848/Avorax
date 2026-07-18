@@ -183,7 +183,8 @@ function New-ProcessObservation {
     [uint32]$ProcessId,
     [string]$ImagePath,
     [AllowNull()][string]$CommandLine,
-    [AllowNull()][bool]$SignerTrusted = $null
+    [AllowNull()][bool]$SignerTrusted = $null,
+    [bool]$CommandLineTruncated = $false
   )
   $item = [ordered]@{
     pid = $ProcessId
@@ -191,6 +192,9 @@ function New-ProcessObservation {
   }
   if ($null -ne $CommandLine) {
     $item.command_line = $CommandLine
+  }
+  if ($CommandLineTruncated) {
+    $item.command_line_truncated = $true
   }
   if ($null -ne $SignerTrusted) {
     $item.signer_trusted = $SignerTrusted
@@ -228,6 +232,9 @@ try {
 
   $observations = @(
     (New-ProcessObservation 42 "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" "powershell.exe -WindowStyle Hidden -EncodedCommand benignfixture" $true),
+    (New-ProcessObservation 43 "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" ("powershell.exe " + ("a" * 4352) + " -EncodedCommand benign-tail-fixture") $true),
+    (New-ProcessObservation 44 "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" "powershell.exe benign bounded head and tail fixture" $true $true),
+    (New-ProcessObservation 45 "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" $null $true $true),
     (New-ProcessObservation 77 "C:\Users\Brent\AppData\Local\Temp\curl.exe" "curl.exe https://example.invalid/benign-fixture" $false),
     (New-ProcessObservation 78 "C:\Users\Brent\..\Temp\bad.exe" "bad.exe" $false)
   )
@@ -259,11 +266,11 @@ try {
   if ([int]$snapshot.observed_processes -ne @($observations).Count) {
     throw "release local-core process snapshot did not report the bounded observation count: $(Get-BoundedText ($snapshot | ConvertTo-Json -Compress -Depth 8))"
   }
-  if ([int]$snapshot.skipped_processes -lt 8) {
+  if ([int]$snapshot.skipped_processes -lt 12) {
     throw "release local-core process snapshot did not report skipped malformed/over-limit observations: $(Get-BoundedText ($snapshot | ConvertTo-Json -Compress -Depth 8))"
   }
-  if (@($snapshot.findings).Count -ne 2) {
-    throw "release local-core process snapshot expected exactly two suspicious findings: $(Get-BoundedText ($snapshot | ConvertTo-Json -Compress -Depth 10))"
+  if (@($snapshot.findings).Count -ne 4) {
+    throw "release local-core process snapshot expected exactly four suspicious findings: $(Get-BoundedText ($snapshot | ConvertTo-Json -Compress -Depth 10))"
   }
 
   $scriptFinding = @($snapshot.findings) | Where-Object {
@@ -273,6 +280,23 @@ try {
     throw "release local-core process snapshot did not report the encoded script-host finding: $(Get-BoundedText ($snapshot | ConvertTo-Json -Compress -Depth 10))"
   }
   Assert-FindingReason $scriptFinding "encoded or hidden"
+
+  $tailFinding = @($snapshot.findings) | Where-Object {
+    $_.pid -eq 43 -and $_.verdict -eq "suspiciousProcess" -and [int]$_.score -ge 40
+  } | Select-Object -First 1
+  if ($null -eq $tailFinding) {
+    throw "release local-core process snapshot did not inspect the bounded command tail: $(Get-BoundedText ($snapshot | ConvertTo-Json -Compress -Depth 10))"
+  }
+  Assert-FindingReason $tailFinding "encoded or hidden"
+  Assert-FindingReason $tailFinding "truncated"
+
+  $sourceTruncationFinding = @($snapshot.findings) | Where-Object {
+    $_.pid -eq 44 -and $_.verdict -eq "suspiciousProcess" -and [int]$_.score -eq 40
+  } | Select-Object -First 1
+  if ($null -eq $sourceTruncationFinding) {
+    throw "release local-core process snapshot did not review source-reported truncation: $(Get-BoundedText ($snapshot | ConvertTo-Json -Compress -Depth 10))"
+  }
+  Assert-FindingReason $sourceTruncationFinding "omitted arguments require review"
 
   $downloadFinding = @($snapshot.findings) | Where-Object {
     $_.pid -eq 77 -and $_.verdict -eq "suspiciousProcess" -and [int]$_.score -ge 40

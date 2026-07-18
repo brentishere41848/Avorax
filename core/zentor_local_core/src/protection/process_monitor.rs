@@ -11,6 +11,7 @@ const PROCESS_MONITOR_STATUS_REASON: &str =
 const MAX_PROCESS_SNAPSHOT_ITEMS: usize = 256;
 const MAX_PROCESS_TEXT_CHARS: usize = 4096;
 const MAX_PROCESS_FINDINGS: usize = 64;
+const PROCESS_TEXT_TRUNCATION_MARKER: &str = " ...[truncated-middle]... ";
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
@@ -21,6 +22,8 @@ pub struct ProcessObservation {
     pub image_path: String,
     #[serde(default)]
     pub command_line: Option<String>,
+    #[serde(default)]
+    pub command_line_truncated: bool,
     #[serde(default)]
     pub signer_trusted: Option<bool>,
 }
@@ -103,16 +106,29 @@ impl ProcessMonitor {
                 continue;
             }
 
-            let command_line = observation
-                .command_line
-                .as_deref()
-                .and_then(normalize_process_text);
+            let command_line = match observation.command_line.as_deref() {
+                Some(value) => {
+                    let Some(normalized) =
+                        normalize_process_command_text(value, observation.command_line_truncated)
+                    else {
+                        skipped_processes += 1;
+                        continue;
+                    };
+                    Some(normalized)
+                }
+                None if observation.command_line_truncated => {
+                    skipped_processes += 1;
+                    continue;
+                }
+                None => None,
+            };
             let mut score = 0;
             let mut reasons = Vec::new();
 
             let image_leaf = process_image_leaf(&image_path);
             let command_lower = command_line
-                .as_deref()
+                .as_ref()
+                .map(|value| value.text.as_str())
                 .unwrap_or_default()
                 .to_ascii_lowercase();
             let image_lower = image_path.to_ascii_lowercase();
@@ -137,13 +153,17 @@ impl ProcessMonitor {
                     "unsigned process image is running from a user-writable location".to_string(),
                 );
             }
-            if command_line
-                .as_deref()
-                .is_some_and(|value| value.chars().count() >= MAX_PROCESS_TEXT_CHARS)
-            {
+            if command_line.as_ref().is_some_and(|value| value.truncated) {
                 score += 10;
                 reasons
                     .push("process command line reached the bounded inspection limit".to_string());
+                if is_script_host(image_leaf) || is_network_capable_lolbin(image_leaf) {
+                    score += 30;
+                    reasons.push(
+                        "security-sensitive process command line was truncated; omitted arguments require review"
+                            .to_string(),
+                    );
+                }
             }
 
             if score >= policy.suspicious_threshold && findings.len() < MAX_PROCESS_FINDINGS {
@@ -182,10 +202,10 @@ fn normalized_allowlist(paths: &[String]) -> HashSet<String> {
 }
 
 fn normalize_process_path_text(raw: &str) -> Option<String> {
-    let text = normalize_process_text(raw)?;
-    if text.contains('\0') {
+    if raw.contains('\0') || raw.chars().count() > MAX_PROCESS_TEXT_CHARS {
         return None;
     }
+    let text = sanitize_process_text(raw)?;
     let path = PathBuf::from(&text);
     let mut normalized = PathBuf::new();
     for component in path.components() {
@@ -202,12 +222,47 @@ fn normalize_process_path_text(raw: &str) -> Option<String> {
     }
 }
 
-fn normalize_process_text(raw: &str) -> Option<String> {
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct NormalizedProcessCommand {
+    text: String,
+    truncated: bool,
+}
+
+fn normalize_process_command_text(
+    raw: &str,
+    source_reported_truncated: bool,
+) -> Option<NormalizedProcessCommand> {
     if raw.contains('\0') {
         return None;
     }
-    let mut value: String = raw.chars().take(MAX_PROCESS_TEXT_CHARS).collect();
-    value = value
+    let (sample, locally_truncated) = bounded_process_text(raw);
+    let text = sanitize_process_text(&sample)?;
+    Some(NormalizedProcessCommand {
+        text,
+        truncated: source_reported_truncated || locally_truncated,
+    })
+}
+
+fn bounded_process_text(raw: &str) -> (String, bool) {
+    let char_count = raw.chars().count();
+    if char_count <= MAX_PROCESS_TEXT_CHARS {
+        return (raw.to_string(), false);
+    }
+
+    let marker_chars = PROCESS_TEXT_TRUNCATION_MARKER.chars().count();
+    let retained_chars = MAX_PROCESS_TEXT_CHARS.saturating_sub(marker_chars);
+    let head_chars = retained_chars / 2;
+    let tail_chars = retained_chars.saturating_sub(head_chars);
+    let mut sample = String::new();
+    sample.extend(raw.chars().take(head_chars));
+    sample.push_str(PROCESS_TEXT_TRUNCATION_MARKER);
+    let reversed_tail: String = raw.chars().rev().take(tail_chars).collect();
+    sample.extend(reversed_tail.chars().rev());
+    (sample, true)
+}
+
+fn sanitize_process_text(raw: &str) -> Option<String> {
+    let value: String = raw
         .chars()
         .map(|ch| if ch.is_control() { ' ' } else { ch })
         .collect();
@@ -298,6 +353,7 @@ mod tests {
                 command_line: Some(
                     "powershell.exe -WindowStyle Hidden -EncodedCommand benignfixture".to_string(),
                 ),
+                command_line_truncated: false,
                 signer_trusted: Some(true),
             }],
             &ProcessMonitorPolicy::default(),
@@ -321,6 +377,7 @@ mod tests {
                 parent_pid: None,
                 image_path: allowed.clone(),
                 command_line: Some("known-tool.exe --fixture".to_string()),
+                command_line_truncated: false,
                 signer_trusted: Some(false),
             }],
             &ProcessMonitorPolicy {
@@ -341,6 +398,7 @@ mod tests {
             parent_pid: None,
             image_path: r"C:\Users\Brent\..\Temp\bad.exe".to_string(),
             command_line: None,
+            command_line_truncated: false,
             signer_trusted: Some(false),
         });
         for pid in 2..270 {
@@ -349,6 +407,7 @@ mod tests {
                 parent_pid: None,
                 image_path: format!(r"C:\Windows\System32\benign-{pid}.exe"),
                 command_line: None,
+                command_line_truncated: false,
                 signer_trusted: Some(true),
             });
         }
@@ -374,6 +433,7 @@ mod tests {
                 parent_pid: Some(1),
                 image_path: r"C:\Users\Brent\AppData\Local\Temp\curl.exe".to_string(),
                 command_line: Some("curl.exe https://example.invalid/benign-fixture".to_string()),
+                command_line_truncated: false,
                 signer_trusted: Some(false),
             }],
             &ProcessMonitorPolicy::default(),
@@ -389,5 +449,114 @@ mod tests {
             .reasons
             .iter()
             .any(|reason| reason.contains("user-writable")));
+    }
+
+    #[test]
+    fn snapshot_inspects_bounded_command_tail_for_suspicious_flags() {
+        let command_line = format!(
+            "powershell.exe {} -EncodedCommand benignfixture",
+            "a".repeat(MAX_PROCESS_TEXT_CHARS + 256)
+        );
+        let report = ProcessMonitor::evaluate_snapshot(
+            &[ProcessObservation {
+                pid: 78,
+                parent_pid: Some(1),
+                image_path: r"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe"
+                    .to_string(),
+                command_line: Some(command_line),
+                command_line_truncated: false,
+                signer_trusted: Some(true),
+            }],
+            &ProcessMonitorPolicy::default(),
+        );
+
+        assert_eq!(report.findings.len(), 1);
+        assert!(report.findings[0]
+            .reasons
+            .iter()
+            .any(|reason| reason.contains("encoded or hidden")));
+        assert!(report.findings[0]
+            .reasons
+            .iter()
+            .any(|reason| reason.contains("truncated")));
+    }
+
+    #[test]
+    fn snapshot_reviews_pretruncated_security_sensitive_command() {
+        let report = ProcessMonitor::evaluate_snapshot(
+            &[ProcessObservation {
+                pid: 79,
+                parent_pid: Some(1),
+                image_path: r"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe"
+                    .to_string(),
+                command_line: Some("powershell.exe benign head and tail sample".to_string()),
+                command_line_truncated: true,
+                signer_trusted: Some(true),
+            }],
+            &ProcessMonitorPolicy::default(),
+        );
+
+        assert_eq!(report.findings.len(), 1);
+        assert_eq!(report.findings[0].score, 40);
+        assert!(report.findings[0]
+            .reasons
+            .iter()
+            .any(|reason| reason.contains("omitted arguments require review")));
+    }
+
+    #[test]
+    fn exact_limit_benign_command_is_not_marked_truncated() {
+        let command_line = "a".repeat(MAX_PROCESS_TEXT_CHARS);
+        let report = ProcessMonitor::evaluate_snapshot(
+            &[ProcessObservation {
+                pid: 80,
+                parent_pid: Some(1),
+                image_path: r"C:\Windows\System32\notepad.exe".to_string(),
+                command_line: Some(command_line),
+                command_line_truncated: false,
+                signer_trusted: Some(true),
+            }],
+            &ProcessMonitorPolicy::default(),
+        );
+
+        assert!(report.findings.is_empty());
+    }
+
+    #[test]
+    fn snapshot_rejects_truncation_flag_without_command_evidence() {
+        let report = ProcessMonitor::evaluate_snapshot(
+            &[ProcessObservation {
+                pid: 81,
+                parent_pid: Some(1),
+                image_path: r"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe"
+                    .to_string(),
+                command_line: None,
+                command_line_truncated: true,
+                signer_trusted: Some(true),
+            }],
+            &ProcessMonitorPolicy::default(),
+        );
+
+        assert_eq!(report.skipped_processes, 1);
+        assert!(report.findings.is_empty());
+    }
+
+    #[test]
+    fn snapshot_rejects_nul_command_evidence() {
+        let report = ProcessMonitor::evaluate_snapshot(
+            &[ProcessObservation {
+                pid: 82,
+                parent_pid: Some(1),
+                image_path: r"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe"
+                    .to_string(),
+                command_line: Some("powershell.exe\0-EncodedCommand fixture".to_string()),
+                command_line_truncated: false,
+                signer_trusted: Some(true),
+            }],
+            &ProcessMonitorPolicy::default(),
+        );
+
+        assert_eq!(report.skipped_processes, 1);
+        assert!(report.findings.is_empty());
     }
 }
