@@ -1679,6 +1679,9 @@ void main() {
     expect(actionParser, contains("final protocolWarnings = _scanErrorList("));
     expect(actionParser, contains('protocolWarnings.isNotEmpty'));
     expect(actionParser, contains('action success with protocol warnings'));
+    expect(actionParser, contains("response.containsKey('error')"));
+    expect(actionParser, contains('successEvidenceError(response)'));
+    expect(actionParser, contains('action success without valid evidence'));
     expect(actionParser, contains("return const LocalCoreActionResult.ok()"));
   });
 
@@ -1726,6 +1729,103 @@ void main() {
     expect(result.ok, isFalse);
     expect(result.error, contains('action success with protocol warnings'));
     expect(result.error, contains('malformed prelude before action result'));
+  });
+
+  test(
+    'action success without expected path evidence fails at runtime',
+    () async {
+      final dir = Directory.systemTemp.createTempSync(
+        'avorax-action-path-evidence-',
+      );
+      addTearDown(() => dir.deleteSync(recursive: true));
+      final client = _localCoreClientForPayload(
+        dir,
+        'missing_path.dart',
+        <String, Object?>{'ok': true},
+      );
+
+      final result = await client.configureGuardMode(
+        ProtectionMode.monitorOnly,
+      );
+
+      expect(result.ok, isFalse);
+      expect(result.error, contains('action success without valid evidence'));
+      expect(result.error, contains('expected result path was missing'));
+    },
+  );
+
+  test('quarantine action success requires matching status evidence', () async {
+    final dir = Directory.systemTemp.createTempSync(
+      'avorax-action-quarantine-evidence-',
+    );
+    addTearDown(() => dir.deleteSync(recursive: true));
+    final client = _localCoreClientForPayload(
+      dir,
+      'wrong_quarantine_status.dart',
+      <String, Object?>{
+        'ok': true,
+        'record': _quarantineRecordFixture(<String, Object?>{
+          'status': 'restored',
+          'actionTaken': 'restored',
+        }),
+      },
+    );
+
+    final result = await client.quarantineFile(
+      'C:/Users/Brent/Downloads/eicar.txt',
+      threatName: 'Harmless exact-hash fixture',
+      engine: 'fixture-engine',
+    );
+
+    expect(result.ok, isFalse);
+    expect(result.error, contains('record status did not match quarantined'));
+  });
+
+  test('allowlist action success requires matching active evidence', () async {
+    final dir = Directory.systemTemp.createTempSync(
+      'avorax-action-allowlist-evidence-',
+    );
+    addTearDown(() => dir.deleteSync(recursive: true));
+    final client = _localCoreClientForPayload(
+      dir,
+      'wrong_allowlist_state.dart',
+      <String, Object?>{
+        'ok': true,
+        'entry': _allowlistEntryFixture(<String, Object?>{}),
+      },
+    );
+
+    final result = await client.removeAllowlistEntry('allow_fixture');
+
+    expect(result.ok, isFalse);
+    expect(result.error, contains('active state did not match the request'));
+  });
+
+  test('restore action success requires matching record identifier', () async {
+    final dir = Directory.systemTemp.createTempSync(
+      'avorax-action-restore-evidence-',
+    );
+    addTearDown(() => dir.deleteSync(recursive: true));
+    final client = _localCoreClientForPayload(
+      dir,
+      'wrong_restore_id.dart',
+      <String, Object?>{
+        'ok': true,
+        'record': _quarantineRecordFixture(<String, Object?>{
+          'quarantineId': 'different_record',
+          'status': 'restored',
+          'actionTaken': 'restored',
+        }),
+      },
+    );
+
+    final result = await client.restoreQuarantineItem('record_fixture');
+
+    expect(result.ok, isFalse);
+    expect(
+      result.error,
+      contains('record identifier did not match the request'),
+    );
   });
 
   test('watcher responses with protocol warnings fail at runtime', () async {
@@ -3194,11 +3294,30 @@ import 'dart:io';
 Future<void> main() async {
   final raw = await stdin.transform(utf8.decoder).join();
   final command = jsonDecode(raw) as Map<String, Object?>;
+  final ok = command['command'] == 'quarantine_file' &&
+      command['path'] == 'C:/Users/Brent/Downloads/manual.bin' &&
+      command['threat_name'] == 'Manual quarantine' &&
+      command['engine'] == 'avorax-ui-manual-quarantine';
   print(jsonEncode(<String, Object?>{
-    'ok': command['command'] == 'quarantine_file' &&
-        command['path'] == 'C:/Users/Brent/Downloads/manual.bin' &&
-        command['threat_name'] == 'Manual quarantine' &&
-        command['engine'] == 'avorax-ui-manual-quarantine',
+    'ok': ok,
+    if (ok)
+      'record': <String, Object?>{
+        'quarantineId': 'manual_record',
+        'originalPath': 'C:/Users/Brent/Downloads/manual.bin',
+        'quarantinePath':
+            'C:/ProgramData/Avorax/Quarantine/manual_record.avoraxq',
+        'sha256':
+            'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+        'quarantinedAt': '2024-01-01T00:00:00Z',
+        'status': 'quarantined',
+        'fileSize': 16,
+        'detectionName': 'Manual quarantine',
+        'engine': 'avorax-ui-manual-quarantine',
+        'source': 'scanner',
+        'actionTaken': 'quarantined',
+        'blockedBeforeExecution': false,
+        'processStarted': false,
+      },
   }));
 }
 ''');
@@ -3743,6 +3862,22 @@ Map<String, Object?> _serviceBoundaryFixture() => <String, Object?>{
     'user-mode service IPC does not provide pre-execution blocking',
   ],
 };
+
+LocalCoreClient _localCoreClientForPayload(
+  Directory dir,
+  String scriptName,
+  Map<String, Object?> payload,
+) {
+  final encodedPayload = jsonEncode(payload);
+  final script = File('${dir.path}${Platform.pathSeparator}$scriptName')
+    ..writeAsStringSync(
+      'void main() { print(${jsonEncode(encodedPayload)}); }\n',
+    );
+  return LocalCoreClient(
+    executableOverride: _dartExecutable(),
+    executableArguments: <String>[script.path],
+  );
+}
 
 String _dartExecutable() {
   final flutterRoot = Platform.environment['FLUTTER_ROOT'];

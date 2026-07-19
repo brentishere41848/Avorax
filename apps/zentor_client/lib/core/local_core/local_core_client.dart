@@ -705,7 +705,14 @@ class LocalCoreClient {
       'threat_name': threat.threatName,
       'engine': threat.engine,
     });
-    return _actionResult(response, fallbackError: 'Quarantine request failed.');
+    return _actionResult(
+      response,
+      fallbackError: 'Quarantine request failed.',
+      successEvidenceError: (response) => _quarantineActionEvidenceError(
+        response,
+        expectedStatus: QuarantineItemStatus.quarantined,
+      ),
+    );
   }
 
   Future<LocalCoreActionResult> quarantineFile(
@@ -719,7 +726,14 @@ class LocalCoreClient {
       'threat_name': threatName,
       'engine': engine,
     });
-    return _actionResult(response, fallbackError: 'Quarantine request failed.');
+    return _actionResult(
+      response,
+      fallbackError: 'Quarantine request failed.',
+      successEvidenceError: (response) => _quarantineActionEvidenceError(
+        response,
+        expectedStatus: QuarantineItemStatus.quarantined,
+      ),
+    );
   }
 
   Future<LocalCoreActionResult> addAllowlistEntry(String path) async {
@@ -730,6 +744,8 @@ class LocalCoreClient {
     return _actionResult(
       response,
       fallbackError: 'Allowlist add request failed.',
+      successEvidenceError: (response) =>
+          _allowlistActionEvidenceError(response, expectedActive: true),
     );
   }
 
@@ -782,6 +798,11 @@ class LocalCoreClient {
     return _actionResult(
       response,
       fallbackError: 'Allowlist remove request failed.',
+      successEvidenceError: (response) => _allowlistActionEvidenceError(
+        response,
+        expectedActive: false,
+        expectedId: id,
+      ),
     );
   }
 
@@ -800,6 +821,8 @@ class LocalCoreClient {
     return _actionResult(
       response,
       fallbackError: 'Detection label request failed.',
+      successEvidenceError: (response) =>
+          _pathActionEvidenceError(response, fieldName: 'path'),
     );
   }
 
@@ -814,6 +837,11 @@ class LocalCoreClient {
     return _actionResult(
       response,
       fallbackError: 'Quarantine restore request failed.',
+      successEvidenceError: (response) => _quarantineActionEvidenceError(
+        response,
+        expectedStatus: QuarantineItemStatus.restored,
+        expectedId: quarantineId,
+      ),
     );
   }
 
@@ -828,6 +856,11 @@ class LocalCoreClient {
     return _actionResult(
       response,
       fallbackError: 'Quarantine delete request failed.',
+      successEvidenceError: (response) => _quarantineActionEvidenceError(
+        response,
+        expectedStatus: QuarantineItemStatus.deleted,
+        expectedId: quarantineId,
+      ),
     );
   }
 
@@ -959,6 +992,10 @@ class LocalCoreClient {
     return _actionResult(
       response,
       fallbackError: 'Guard mode config request failed.',
+      successEvidenceError: (response) => _pathActionEvidenceError(
+        response,
+        fieldName: 'guard_mode_config_path',
+      ),
     );
   }
 
@@ -974,6 +1011,10 @@ class LocalCoreClient {
     return _actionResult(
       response,
       fallbackError: 'Ransomware guard config request failed.',
+      successEvidenceError: (response) => _pathActionEvidenceError(
+        response,
+        fieldName: 'ransomware_guard_config_path',
+      ),
     );
   }
 
@@ -1561,6 +1602,8 @@ Start-Service -Name 'avorax_core_service' -ErrorAction Stop
   LocalCoreActionResult _actionResult(
     Map<String, Object?>? response, {
     required String fallbackError,
+    required String? Function(Map<String, Object?> response)
+    successEvidenceError,
   }) {
     if (response == null) {
       return LocalCoreActionResult.failed(
@@ -1577,6 +1620,20 @@ Start-Service -Name 'avorax_core_service' -ErrorAction Stop
           'Avorax local core IPC returned action success with protocol warnings: ${protocolWarnings.first}',
         );
       }
+      if (response.containsKey('error')) {
+        final error = _ipcDiagnosticOrNull(response['error']);
+        return LocalCoreActionResult.failed(
+          error == null
+              ? 'Avorax local core IPC returned action success with malformed error evidence.'
+              : 'Avorax local core IPC returned action success with error evidence: $error',
+        );
+      }
+      final evidenceError = successEvidenceError(response);
+      if (evidenceError != null) {
+        return LocalCoreActionResult.failed(
+          'Avorax local core IPC returned action success without valid evidence: $evidenceError',
+        );
+      }
       return const LocalCoreActionResult.ok();
     }
     final error = _ipcDiagnosticOrNull(response['error']);
@@ -1588,6 +1645,74 @@ Start-Service -Name 'avorax_core_service' -ErrorAction Stop
       );
     }
     return LocalCoreActionResult.failed(error ?? fallbackError);
+  }
+
+  String? _quarantineActionEvidenceError(
+    Map<String, Object?> response, {
+    required QuarantineItemStatus expectedStatus,
+    String? expectedId,
+  }) {
+    final recordJson = _actionEvidenceObject(response['record']);
+    if (recordJson == null) {
+      return 'the quarantine record was missing or malformed.';
+    }
+    final record = _quarantineRecordFromJson(recordJson);
+    if (record == null) {
+      return 'the quarantine record failed validation.';
+    }
+    if (record.status != expectedStatus) {
+      return 'the quarantine record status did not match ${expectedStatus.name}.';
+    }
+    if (expectedId != null && record.quarantineId != expectedId) {
+      return 'the quarantine record identifier did not match the request.';
+    }
+    return null;
+  }
+
+  String? _allowlistActionEvidenceError(
+    Map<String, Object?> response, {
+    required bool expectedActive,
+    String? expectedId,
+  }) {
+    final entryJson = _actionEvidenceObject(response['entry']);
+    if (entryJson == null) {
+      return 'the allowlist entry was missing or malformed.';
+    }
+    final entry = _allowlistEntryFromJson(entryJson);
+    if (entry == null) {
+      return 'the allowlist entry failed validation.';
+    }
+    if (entry.active != expectedActive) {
+      return 'the allowlist entry active state did not match the request.';
+    }
+    if (expectedId != null && entry.id != expectedId) {
+      return 'the allowlist entry identifier did not match the request.';
+    }
+    return null;
+  }
+
+  String? _pathActionEvidenceError(
+    Map<String, Object?> response, {
+    required String fieldName,
+  }) {
+    if (!response.containsKey(fieldName)) {
+      return 'the expected result path was missing.';
+    }
+    if (_recordPathField(response[fieldName]) == null) {
+      return 'the expected result path was malformed.';
+    }
+    return null;
+  }
+
+  Map<String, Object?>? _actionEvidenceObject(Object? value) {
+    if (value is! Map) return null;
+    final result = <String, Object?>{};
+    for (final entry in value.entries) {
+      final key = entry.key;
+      if (key is! String) return null;
+      result[key] = entry.value;
+    }
+    return result;
   }
 
   String? _watcherProtocolError(

@@ -581,3 +581,27 @@ This consistency check does not improve observation timing or provide process
 or filesystem blocking. Watch-poll remains finite post-write user-mode polling
 while the app is running. Persistent service monitoring, OS notifications,
 kernel enforcement, and pre-execution blocking remain separate boundaries.
+
+## Checkpoint 2175 Mutation Response Evidence
+
+Local Core mutation responses cross a subprocess IPC boundary after actions that
+change quarantine, allowlist, feedback, or protection configuration state. A
+bare `ok=true`, a stale record, or a record for another identifier could make
+the UI announce success even though the requested change was not demonstrated.
+That false state is especially dangerous for quarantine and restore because the
+operator may make later decisions based on a file location that was never
+proved.
+
+Flutter now validates action-specific success evidence before returning a
+successful result. Quarantine-family records use the same strict parser as list
+responses and must carry the expected status; identifier-bearing operations
+must echo the requested identifier. Allowlist rows must be valid and have the
+expected active state. Label and configuration writes must return a bounded
+absolute local path. Any success response containing an error field also fails
+closed.
+
+This verifies response completeness, not independent post-write durability or
+machine-wide service mutation. The native stores retain their existing atomic,
+integrity, path, and ACL controls. Installed authenticated mutation IPC remains
+disabled, and service/driver installation and pre-execution enforcement remain
+separate boundaries.
