@@ -970,3 +970,23 @@ enforcement, or pre-execution blocking is claimed.
 - **Failure visibility:** The client returns a typed `passed/details` result. The controller, event severity, stored state, and result-panel color use `passed`; malformed text without the word `FAIL` still renders and logs as an issue.
 - **Verified:** Benign subprocess fixtures cover exact success, malformed steps, nonzero exit, stderr output, incomplete envelopes, nested extra fields, invalid/non-UTC timestamps, contradictory flags, and timeout cleanup. Controller typed-failure regression passes. Flutter passes `838`, analyzer is clean, source contracts pass `615`, and the no-malware-binaries gate passes.
 - **Still partial:** This proves validation of a freshly launched per-process Guard response, not an installed service identity, trusted publisher, service ACL, signed minifilter, or pre-execution blocking. Those installed-host and production-signing requirements remain pending or technically blocked.
+
+## Checkpoint 2177 Verified Beta.3 Packages And MSI Extraction
+
+- **Resolved:** The current `v0.1.15-beta.3` release is public and points exactly
+  to merged commit `c3fc4f1d18bbd0a7c8f38aae1d1d051b8308515a`. All native jobs,
+  checksum consolidation, and prerelease publication pass in Desktop Packages
+  run `29761712577`.
+- **Verified:** Eight public assets are present. All seven package/evidence rows
+  in `SHA256SUMS.txt` match GitHub's asset digests, and the checksum file matches
+  its own GitHub digest. The Windows workflow performs a bounded real
+  administrative MSI extraction and harmless extracted-core lifecycle smoke.
+- **Path constraint explained:** An earlier extraction below the long checkout
+  failed with Windows Installer `1603`/`1304` at a 273-character output path.
+  The same MSI passed below a short opaque temporary root; the verifier now
+  enforces that bound and fails visibly when it cannot.
+- **Still blocked:** Windows packages are unsigned, macOS packages are ad-hoc
+  signed and not notarized, and no machine-wide package was installed during
+  this verification. Normal installed UI/service/ACL/update E2E, protected
+  signing credentials, signed-driver IPC, and pre-execution enforcement remain
+  partial or blocked. Microsoft Defender must remain enabled.

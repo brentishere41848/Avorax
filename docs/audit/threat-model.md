@@ -626,3 +626,22 @@ This gate does not authenticate a replacement executable by publisher and does
 not establish installed service or driver state by itself. Installed binary
 ACL/publisher validation, service lifecycle E2E, production driver signing, and
 pre-execution enforcement remain separate controls and blockers.
+
+## Checkpoint 2177 Windows MSI Verification Boundary
+
+The Windows MSI is untrusted input even when it was produced by the release
+workflow. Administrative extraction now runs only below a short opaque
+temporary root after the MSI is bounded, opened as a regular non-reparse file,
+and hashed. The verifier rejects excessive file count or aggregate bytes,
+reparse entries, missing required payloads, manifest or lifecycle failure, and
+any MSI mutation between the pre- and post-extraction hashes. Cleanup is limited
+to the exact generated child of the configured temporary base and rejects
+reparse paths.
+
+A long-checkout extraction produced Windows Installer `1603`/`1304` at a
+273-character output path; the same package passed under the bounded short root.
+This prevents a host-path limitation from being reported as corrupt package
+evidence or silently skipped. The verifier proves administrative extraction and
+harmless packaged-core behavior only. It does not install Avorax, start a
+service, establish installed ACLs, authenticate an unsigned publisher, or prove
+driver/pre-execution enforcement.
