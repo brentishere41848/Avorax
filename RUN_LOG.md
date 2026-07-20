@@ -13,6 +13,13 @@ Lead-engineer product-hardening pass across the Avorax repository. Goal is to mo
 - The bundled native ML model is treated as development-only unless release metadata and gates prove production readiness.
 - MSI/EXE installers are first-install/repair/recovery/offline paths. Normal in-app updates should use verified `.aup` packages.
 
+## 2026-07-20 continuation checkpoint 2179
+
+- GitHub head validation run `29766224417` exposed a deterministic risk-fusion bug through a random temporary directory named `.tmpupTeBo`: the substring `pup` inside a zero-weight publisher-trust diagnostic path caused real `office_macro_auto_run_remote_launch` evidence to be categorized as `PotentiallyUnwantedApp` instead of `MaliciousMacro`.
+- `core\zentor_native_engine\src\verdict\risk_fusion.rs` now excludes zero-weight diagnostics from category inference while retaining them in the explainable verdict. Added `zero_weight_diagnostics_cannot_override_evidence_category` with the exact path-shaped regression fixture.
+- Local verification passed: the new native regression and previously failing Local Core legacy Office carrier test each pass; the complete Native Engine suite passes `434` library plus `6` signature-compiler tests; the complete Local Core suite passes `506`; rustfmt and clippy pass for both affected crates.
+- Fresh GitHub head verification is pending. The failed run remains audit evidence rather than being hidden or treated as success.
+
 ## 2026-07-20 continuation checkpoint 2178
 
 - Removed the deferred elevated driver custom action from `installer\windows\build-msi.ps1`. Candidate minifilter files are now inert package content during ordinary MSI/EXE installation, and install evidence records that driver activation was not performed.

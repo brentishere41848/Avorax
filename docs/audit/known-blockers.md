@@ -1010,3 +1010,15 @@ enforcement, or pre-execution blocking is claimed.
 - **Still blocked:** Production Microsoft driver signing, disposable elevated-host
   install/load/unload/rollback evidence, authenticated driver IPC, and genuine
   pre-execution blocking remain unavailable and must not be claimed.
+
+## Checkpoint 2179 Diagnostic Category Isolation
+
+- **Resolved locally:** Zero-weight diagnostic evidence remains visible in the
+  verdict explanation but cannot determine or override a threat category.
+- **Verified locally:** The `.tmpupTeBo`/`pup` regression and formerly failing
+  legacy Office macro test pass. Native Engine passes `434 + 6`, Local Core
+  passes `506`, and rustfmt/clippy pass for both affected crates.
+- **Evidence pending:** Fresh GitHub head CI must pass after this fix. Run
+  `29766224417` remains a documented failure, not fake success.
+- **Technically limited:** No production false-positive/false-negative rate or
+  live-malware claim follows from benign fixtures and deterministic unit tests.

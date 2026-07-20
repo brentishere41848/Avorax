@@ -11,6 +11,16 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
 
 ## Latest Checkpoint Evidence - 2026-07-20
 
+- Current deterministic risk-category pass: checkpoint 2179 fixes a real CI
+  failure in run `29766224417`. A random `.tmpupTeBo` temp path placed the text
+  `pup` inside zero-weight publisher-trust diagnostics, which incorrectly
+  overrode positive Office macro evidence to the PUA category. Risk fusion now
+  ignores zero-weight diagnostics for category inference while retaining them
+  as explanation evidence. The exact regression, the formerly failing legacy
+  Office carrier test, complete Native Engine (`434 + 6`) and Local Core (`506`)
+  suites, rustfmt, and both clippy checks pass locally. Fresh GitHub head CI is
+  pending before merge.
+
 - Current explicit driver-activation boundary pass: checkpoint 2178 removes the
   elevated minifilter custom action from ordinary Windows MSI/EXE installation.
   Candidate driver files remain inert package content; the separate helper
