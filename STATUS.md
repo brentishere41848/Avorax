@@ -7,9 +7,33 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
 ## Current Commit
 
 - Current checkpoint commit: this working tree; run `git log -1 --oneline` after commit for the exact SHA.
-- Current release tag: not created from this checkpoint because Windows release packaging, installed service/UI E2E, and signed-driver validation are not complete on this host.
+- Current public release tag: `v0.1.15-beta.3`, published as a prerelease on 2026-07-20 with independently verified checksums. Checkpoint 2178 is source hardening and does not create a new release tag.
 
-## Latest Checkpoint Evidence - 2026-07-10
+## Latest Checkpoint Evidence - 2026-07-20
+
+- Current deterministic risk-category pass: checkpoint 2179 fixes a real CI
+  failure in run `29766224417`. A random `.tmpupTeBo` temp path placed the text
+  `pup` inside zero-weight publisher-trust diagnostics, which incorrectly
+  overrode positive Office macro evidence to the PUA category. Risk fusion now
+  ignores zero-weight diagnostics for category inference while retaining them
+  as explanation evidence. The exact regression, the formerly failing legacy
+  Office carrier test, complete Native Engine (`434 + 6`) and Local Core (`506`)
+  suites, rustfmt, and both clippy checks pass locally. Fresh GitHub head CI is
+  pending before merge.
+
+- Current explicit driver-activation boundary pass: checkpoint 2178 removes the
+  elevated minifilter custom action from ordinary Windows MSI/EXE installation.
+  Candidate driver files remain inert package content; the separate helper
+  requires `-ConfirmDriverInstall`, never imports bundled certificates into
+  `Root` or `TrustedPublisher`, and never enables TESTSIGNING. Local evidence
+  passes: `616` source contracts, `22` packaging tests with `3` expected Windows
+  symlink skips, parser and no-confirm helper checks, product/no-malware safety
+  gates, an actual Avorax MSI database/extraction/lifecycle pass, and rejection
+  of a real cached MSI containing a `CustomAction` table before extraction.
+  Avorax CI run `29765160511` and Desktop Packages runs `29765128390` and
+  `29765160524` pass, including both fresh Windows MSI/EXE jobs and all Linux,
+  macOS, checksum, Rust, Flutter, and security jobs. Production driver signing
+  and disposable elevated-host driver E2E remain blocked.
 
 - Current Ultracode portable-beta release preparation pass: checkpoint 2154 adds a prominent English beta safety disclaimer to the root and packaged READMEs and creates `docs\releases\avorax-portable-beta-0.1.0-beta.1.md`. The disclaimer states that this experimental manual scanner must not be the only antivirus, may miss advanced/novel/targeted/polymorphic/fileless/kernel-level/large-scale malware and ransomware, and requires Defender or another supported antivirus to remain enabled. The Windows portable bundle was rebuilt and re-extracted after the copy change; build passed in `5.715s`, archive smoke in `4.599s`, all four adversarial ZIP cases were rejected, and cleanup passed. The current artifact is `dist\Avorax-Portable-Beta-0.1.0-beta.1.zip`, `5,886,708` bytes, SHA-256 `a80155373a869576dad6d015c21221a18815bf3318a253a11c19477af128240b`. App-wide accessibility regression coverage also now checks all ten shell routes plus onboarding for labeled tap targets, Android target sizes, and 200% mobile text; all `21` tests pass after responsive header/status/checklist/action/metric/dropdown fixes and live-region notification semantics. GitHub publication is limited to this verified Windows ZIP: no MSI, standalone launcher EXE, or Linux binary is claimed or published without a real platform build and runtime verification.
 

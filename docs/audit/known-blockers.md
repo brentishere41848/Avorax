@@ -990,3 +990,35 @@ enforcement, or pre-execution blocking is claimed.
   this verification. Normal installed UI/service/ACL/update E2E, protected
   signing credentials, signed-driver IPC, and pre-execution enforcement remain
   partial or blocked. Microsoft Defender must remain enabled.
+
+## Checkpoint 2178 Explicit Driver Activation Boundary
+
+- **Resolved locally:** Candidate driver files can no longer trigger an elevated
+  deferred custom action during ordinary MSI/EXE installation. Driver activation
+  requires a separate invocation with `-ConfirmDriverInstall`.
+- **Trust-store safety:** The helper no longer imports a bundled certificate into
+  `Root` or `TrustedPublisher`, and it still refuses to enable TESTSIGNING.
+- **Verified locally:** `616` source contracts, `22` packaging tests with `3`
+  expected Windows symlink skips, PowerShell parser checks, generated-helper
+  no-confirm fail-closed runtime, product/no-malware safety gates, an actual
+  Avorax MSI database/extraction/lifecycle pass, and rejection of a real cached
+  MSI containing a `CustomAction` table before extraction all pass.
+- **Verified in CI:** Avorax CI run `29765160511` and Desktop Packages push/PR
+  runs `29765128390` and `29765160524` passed. Both fresh Windows MSI/EXE jobs,
+  package contracts, Linux x64, macOS arm64/x64, consolidated checksums, Rust,
+  Flutter, branding, and security jobs are green.
+- **Still blocked:** Production Microsoft driver signing, disposable elevated-host
+  install/load/unload/rollback evidence, authenticated driver IPC, and genuine
+  pre-execution blocking remain unavailable and must not be claimed.
+
+## Checkpoint 2179 Diagnostic Category Isolation
+
+- **Resolved locally:** Zero-weight diagnostic evidence remains visible in the
+  verdict explanation but cannot determine or override a threat category.
+- **Verified locally:** The `.tmpupTeBo`/`pup` regression and formerly failing
+  legacy Office macro test pass. Native Engine passes `434 + 6`, Local Core
+  passes `506`, and rustfmt/clippy pass for both affected crates.
+- **Evidence pending:** Fresh GitHub head CI must pass after this fix. Run
+  `29766224417` remains a documented failure, not fake success.
+- **Technically limited:** No production false-positive/false-negative rate or
+  live-malware claim follows from benign fixtures and deterministic unit tests.

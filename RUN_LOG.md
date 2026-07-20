@@ -13,6 +13,21 @@ Lead-engineer product-hardening pass across the Avorax repository. Goal is to mo
 - The bundled native ML model is treated as development-only unless release metadata and gates prove production readiness.
 - MSI/EXE installers are first-install/repair/recovery/offline paths. Normal in-app updates should use verified `.aup` packages.
 
+## 2026-07-20 continuation checkpoint 2179
+
+- GitHub head validation run `29766224417` exposed a deterministic risk-fusion bug through a random temporary directory named `.tmpupTeBo`: the substring `pup` inside a zero-weight publisher-trust diagnostic path caused real `office_macro_auto_run_remote_launch` evidence to be categorized as `PotentiallyUnwantedApp` instead of `MaliciousMacro`.
+- `core\zentor_native_engine\src\verdict\risk_fusion.rs` now excludes zero-weight diagnostics from category inference while retaining them in the explainable verdict. Added `zero_weight_diagnostics_cannot_override_evidence_category` with the exact path-shaped regression fixture.
+- Local verification passed: the new native regression and previously failing Local Core legacy Office carrier test each pass; the complete Native Engine suite passes `434` library plus `6` signature-compiler tests; the complete Local Core suite passes `506`; rustfmt and clippy pass for both affected crates.
+- Fresh GitHub head verification is pending. The failed run remains audit evidence rather than being hidden or treated as success.
+
+## 2026-07-20 continuation checkpoint 2178
+
+- Removed the deferred elevated driver custom action from `installer\windows\build-msi.ps1`. Candidate minifilter files are now inert package content during ordinary MSI/EXE installation, and install evidence records that driver activation was not performed.
+- The separate generated driver helper now requires `-ConfirmDriverInstall` before any administrative command is resolved or invoked. It no longer calls `certutil -addstore`, never imports the bundled development certificate into `Root` or `TrustedPublisher`, and still refuses to enable TESTSIGNING. The shared bounded command-diagnostic helper is explicitly loaded in the generated process.
+- Added a read-only MSI database gate to `tools\packaging\verify-windows-msi.ps1`. The verifier rejects any package containing a `CustomAction` table before administrative extraction or packaged-core execution.
+- Local verification passed: the generated helper parsed and failed closed without confirmation (`exit 1`, no management command reached); dependency-free source contracts passed `616`; packaging tests passed `22` with `3` expected Windows symlink skips; product-copy and no-malware-binaries gates passed. An actual Avorax MSI passed the new database and harmless lifecycle verification with `283` files and `79,136,091` payload bytes, while a read-only check of `C:\Windows\Installer\2c93bd29.msi` proved the negative gate rejects a real MSI containing a `CustomAction` table before extraction.
+- GitHub verification passed before merge: Avorax CI run `29765160511` passed branding/copy, Flutter/protocol, Rust core/guard, and security/protection/performance jobs; Desktop Packages push run `29765128390` and pull-request run `29765160524` both passed package contracts, Linux x64, Windows x64 MSI/EXE, macOS arm64/x64, and consolidated checksum jobs. Prerelease publication was intentionally skipped because this checkpoint changes source boundaries rather than release contents. Production driver signing, disposable elevated-host install/load/unload/rollback, authenticated driver IPC, and genuine pre-execution blocking remain blocked and are not claimed.
+
 ## 2026-07-10 continuation checkpoint 2154
 
 - Added a prominent English beta safety disclaimer to `README.md` and `docs\portable-beta.md`, and added publishable release notes at `docs\releases\avorax-portable-beta-0.1.0-beta.1.md`. The copy explicitly says the portable beta may miss advanced, novel, targeted, polymorphic, fileless, kernel-level, and large-scale threats; Defender or another supported antivirus must remain enabled.

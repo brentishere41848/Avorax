@@ -170,6 +170,7 @@ fn inferred_or_unknown_category(evidence: &[Evidence]) -> ThreatCategory {
 fn infer_category(evidence: &[Evidence]) -> Option<ThreatCategory> {
     let text = evidence
         .iter()
+        .filter(|item| item.weight > 0)
         .map(|item| {
             format!(
                 "{} {} {}",
@@ -394,6 +395,31 @@ mod tests {
             weight: 45,
             source: EvidenceSource::NativeHeuristic,
         }];
+
+        let verdict = RiskFusion::fuse(evidence, false, false);
+
+        assert_eq!(verdict.category, ThreatCategory::MaliciousMacro);
+        assert_eq!(verdict.verdict, Verdict::Suspicious);
+    }
+
+    #[test]
+    fn zero_weight_diagnostics_cannot_override_evidence_category() {
+        let evidence = vec![
+            Evidence {
+                id: "publisher_trust_diagnostic".to_string(),
+                title: "Publisher trust unavailable".to_string(),
+                detail: "Probe failed under C:\\Temp\\.tmpupTeBo\\invoice.doc".to_string(),
+                weight: 0,
+                source: EvidenceSource::TrustStore,
+            },
+            Evidence {
+                id: "office_macro_auto_run_remote_launch".to_string(),
+                title: "Office macro downloader carrier".to_string(),
+                detail: "Macro autoopen downloader evidence.".to_string(),
+                weight: 45,
+                source: EvidenceSource::NativeHeuristic,
+            },
+        ];
 
         let verdict = RiskFusion::fuse(evidence, false, false);
 

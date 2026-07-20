@@ -645,3 +645,35 @@ evidence or silently skipped. The verifier proves administrative extraction and
 harmless packaged-core behavior only. It does not install Avorax, start a
 service, establish installed ACLs, authenticate an unsigned publisher, or prove
 driver/pre-execution enforcement.
+
+## Checkpoint 2178 Explicit Driver Activation Boundary
+
+A normal MSI/EXE install must never change kernel-driver state or Windows trust
+stores merely because candidate driver files happen to be present in the build
+tree. Driver package content is therefore inert: the MSI contains no deferred
+driver custom action. The separate elevated helper requires the operator to pass
+`-ConfirmDriverInstall` before resolving or invoking any driver-management tool.
+The package verifier independently opens the built MSI database and rejects any
+`CustomAction` table before extraction or packaged-core execution.
+
+The helper may inspect a bundled certificate as package evidence but never calls
+`certutil -addstore`, never imports into `Root` or `TrustedPublisher`, and never
+enables TESTSIGNING. Windows remains the signature/catalog enforcement boundary
+for the explicit `pnputil` request. This does not establish production driver
+signing, installed driver health, rollback/uninstall behavior, or pre-execution
+blocking; those still require approved signing and a disposable elevated host.
+
+## Checkpoint 2179 Diagnostic Category Isolation
+
+Risk-fusion explanations can contain untrusted filenames, paths, probe errors,
+and command diagnostics. Substring-based category inference over those neutral
+rows is unsafe and nondeterministic: a random `.tmpupTeBo` path in publisher
+trust diagnostics contains `pup` and previously overrode positive Office macro
+evidence to `PotentiallyUnwantedApp`.
+
+Category inference now excludes evidence whose weight is zero. The diagnostic
+is still retained and bounded in the verdict explanation, but only positive
+detection evidence may assign a threat family. A regression fixture preserves
+the exact path-shaped collision and requires `MaliciousMacro` from the real
+macro signal. This does not turn diagnostics into detections or increase an
+automatic-action score.

@@ -95,6 +95,12 @@ The fixed installer must:
 - The Scan page fallback now distinguishes Core Service service state from generic engine availability and displays checked paths.
 - The release gate now requires a generated installer stage and both `Avorax-AntiVirus-*-x64.msi` and `Avorax-AntiVirus-*-x64-setup.exe` artifacts.
 - `tools/windows/avorax-installer-stage-test.ps1` validates the staged payload before release decisions. It checks app/service executables, engine packs, docs, smoke-test tooling, release self-trust manifest coverage, artifact naming, and forbidden installer copy.
+- Driver files and validation tooling are inert package content. The generated
+  MSI has no driver-install custom action, and the separate elevated helper
+  refuses to install or load a driver without `-ConfirmDriverInstall`. It never
+  imports a bundled certificate into `Root` or `TrustedPublisher` and never
+  enables TESTSIGNING. The Windows package verifier also opens the actual MSI
+  database and rejects any `CustomAction` table before administrative extraction.
 
 ## Remaining Installer UX Gap
 
