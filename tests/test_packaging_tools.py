@@ -334,20 +334,46 @@ class DesktopPackageWorkflowTests(unittest.TestCase):
         workflow = (ROOT / ".github" / "workflows" / "desktop-packages.yml").read_text(
             encoding="utf-8"
         )
+        verifier = (ROOT / "tools" / "packaging" / "verify-windows-msi.ps1").read_text(
+            encoding="utf-8"
+        )
         _, extraction_step = workflow.split(
             "- name: Administratively extract MSI without installing", maxsplit=1
         )
         extraction_step, _ = extraction_step.split(
             "- name: Record unsigned status and checksums", maxsplit=1
         )
-        msiexec_section, _ = extraction_step.split("$apps = @(", maxsplit=1)
 
-        self.assertIn("$process = Start-Process", msiexec_section)
-        self.assertIn("-Wait", msiexec_section)
-        self.assertIn("-PassThru", msiexec_section)
-        self.assertIn("-WindowStyle Hidden", msiexec_section)
-        self.assertIn("$process.ExitCode", msiexec_section)
-        self.assertNotIn("$LASTEXITCODE", msiexec_section)
+        self.assertIn("tools\\packaging\\verify-windows-msi.ps1", extraction_step)
+        self.assertIn("-TemporaryBasePath $env:RUNNER_TEMP", extraction_step)
+        self.assertNotIn("$LASTEXITCODE", extraction_step)
+        self.assertIn("Invoke-AvoraxGateCommandDiagnostic", verifier)
+        self.assertIn("$msiexecResult.exit_code -ne 0", verifier)
+        self.assertIn("$maxTemporaryRootLength = 120", verifier)
+        self.assertIn("$maxMsiBytes = 512MB", verifier)
+        self.assertIn("$maxPayloadFiles = 10000", verifier)
+        self.assertIn("$maxPayloadBytes = 2GB", verifier)
+        self.assertIn("MSI package changed during administrative extraction", verifier)
+        self.assertIn("^avorax-msi-admin-[a-f0-9]{32}$", verifier)
+        self.assertIn("Refusing to recursively remove", verifier)
+        self.assertIn("temporary_root_removed", verifier)
+        self.assertIn("did not produce its required report", verifier)
+        self.assertIn('-MaxLength 4096 `\n    -WorkingDirectory $repoRoot', verifier)
+        self.assertIn(
+            "if (-not $KeepExtracted -and (Test-Path -LiteralPath $extractRoot))",
+            verifier,
+        )
+        self.assertIn(
+            'try {\n  foreach ($output in @($installerLog, $smokeReport, $verificationReport))',
+            verifier,
+        )
+        self.assertNotIn("$verificationPassed -and", verifier)
+        self.assertGreaterEqual(
+            workflow.count('"tools/security/avorax-security-gate-tools.ps1"'), 2
+        )
+        self.assertGreaterEqual(
+            workflow.count('"tools/windows/avorax-installer-stage-test.ps1"'), 2
+        )
 
     def test_linux_tarball_is_extracted_and_smoked(self):
         builder = (ROOT / "installer" / "linux" / "build-linux.sh").read_text(

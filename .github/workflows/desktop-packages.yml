@@ -31,6 +31,8 @@ on:
       - "services/api/Cargo.lock"
       - "tests/test_packaging_tools.py"
       - "tools/packaging/**"
+      - "tools/security/avorax-security-gate-tools.ps1"
+      - "tools/windows/avorax-installer-stage-test.ps1"
   push:
     branches:
       - main
@@ -49,6 +51,8 @@ on:
       - "services/api/Cargo.lock"
       - "tests/test_packaging_tools.py"
       - "tools/packaging/**"
+      - "tools/security/avorax-security-gate-tools.ps1"
+      - "tools/windows/avorax-installer-stage-test.ps1"
 
 concurrency:
   group: desktop-packages-${{ github.ref }}
@@ -209,48 +213,12 @@ jobs:
         shell: pwsh
         run: |
           $msi = (Resolve-Path "dist\Avorax-AntiVirus-$env:AVORAX_PACKAGE_VERSION-x64.msi").Path
-          $extractRoot = Join-Path $env:RUNNER_TEMP ("avorax-msi-admin-" + [Guid]::NewGuid().ToString("N"))
-          New-Item -ItemType Directory -Path $extractRoot -ErrorAction Stop | Out-Null
-          $log = Join-Path (Resolve-Path dist\windows-msi\verification).Path "msi-admin-extract.log"
-          $msiexec = Join-Path $env:SystemRoot "System32\msiexec.exe"
-          $arguments = @(
-            "/a"
-            "`"$msi`""
-            "/qn"
-            "TARGETDIR=`"$extractRoot`""
-            "/l*v"
-            "`"$log`""
-          )
-          $process = Start-Process `
-            -FilePath $msiexec `
-            -ArgumentList $arguments `
-            -Wait `
-            -PassThru `
-            -WindowStyle Hidden
-          if ($process.ExitCode -ne 0) {
-            throw "MSI administrative extraction failed with exit code $($process.ExitCode)."
-          }
-          $apps = @(Get-ChildItem -LiteralPath $extractRoot -Filter Avorax.exe -File -Recurse -ErrorAction Stop)
-          if ($apps.Count -ne 1) {
-            throw "Expected exactly one administratively extracted Avorax.exe, found $($apps.Count)."
-          }
-          $installedRoot = $apps[0].Directory.FullName
-          foreach ($name in @("avorax_core_service.exe", "avorax_guard_service.exe", "engine")) {
-            if (-not (Test-Path -LiteralPath (Join-Path $installedRoot $name))) {
-              throw "Administrative image is missing $name."
-            }
-          }
           $python = (Get-Command python -CommandType Application -ErrorAction Stop).Source
-          & $python tools\packaging\smoke_local_core.py `
-            --core (Join-Path $installedRoot "avorax_core_service.exe") `
-            --engine-root $installedRoot `
-            --report dist\windows-msi\verification\windows-msi-extracted-core-smoke.json
-          if ($LASTEXITCODE -ne 0) { throw "Extracted MSI core smoke failed." }
-          [IO.File]::WriteAllText(
-            (Join-Path (Resolve-Path dist\windows-msi\verification).Path "msi-admin-root.txt"),
-            $installedRoot + [Environment]::NewLine,
-            [Text.UTF8Encoding]::new($false)
-          )
+          .\tools\packaging\verify-windows-msi.ps1 `
+            -MsiPath $msi `
+            -PythonPath $python `
+            -ReportDirectory dist\windows-msi\verification `
+            -TemporaryBasePath $env:RUNNER_TEMP
 
       - name: Record unsigned status and checksums
         shell: pwsh
