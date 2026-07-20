@@ -353,6 +353,7 @@ class ZentorState {
     this.hashProgress,
     this.currentScanPath,
     this.protectionSelfTestResult,
+    this.protectionSelfTestPassed,
     this.updateStatus = UpdateStatus.notChecked,
     this.currentAppVersion = 'Unknown',
     this.updatePackageMutationSupported = true,
@@ -453,6 +454,7 @@ class ZentorState {
   final double? hashProgress;
   final String? currentScanPath;
   final String? protectionSelfTestResult;
+  final bool? protectionSelfTestPassed;
   final UpdateStatus updateStatus;
   final String currentAppVersion;
   final bool updatePackageMutationSupported;
@@ -581,6 +583,7 @@ class ZentorState {
     String? currentScanPath,
     bool clearCurrentScanPath = false,
     String? protectionSelfTestResult,
+    bool? protectionSelfTestPassed,
     bool clearProtectionSelfTestResult = false,
     UpdateStatus? updateStatus,
     String? currentAppVersion,
@@ -769,6 +772,9 @@ class ZentorState {
       protectionSelfTestResult: clearProtectionSelfTestResult
           ? null
           : protectionSelfTestResult ?? this.protectionSelfTestResult,
+      protectionSelfTestPassed: clearProtectionSelfTestResult
+          ? null
+          : protectionSelfTestPassed ?? this.protectionSelfTestPassed,
       updateStatus: updateStatus ?? this.updateStatus,
       currentAppVersion: currentAppVersion ?? this.currentAppVersion,
       updatePackageMutationSupported:
@@ -4344,22 +4350,20 @@ class ZentorController extends StateNotifier<ZentorState> {
           clearError: true,
         );
         final result = await _localCoreClient.runProtectionSelfTest();
-        final failed =
-            result.contains('FAIL') ||
-            result.toLowerCase().contains('failed') ||
-            result.toLowerCase().contains('not active');
+        final failed = !result.passed;
         await logEvent(
           'protection_self_test_completed',
           failed
               ? 'Protection self-test completed with issues'
               : 'Protection self-test completed',
-          details: result,
+          details: result.details,
           category: 'protection',
           severity: failed ? 'warning' : 'info',
         );
         state = state.copyWith(
           loading: false,
-          protectionSelfTestResult: result,
+          protectionSelfTestResult: result.details,
+          protectionSelfTestPassed: result.passed,
           clearError: !failed,
           errorMessage: failed
               ? 'Protection self-test completed with issues. See the self-test result panel for exact failing checks.'
@@ -4378,6 +4382,7 @@ class ZentorController extends StateNotifier<ZentorState> {
         state = state.copyWith(
           loading: false,
           protectionSelfTestResult: 'Protection self-test failed: $details',
+          protectionSelfTestPassed: false,
           errorMessage: 'Unable to run protection self-test: $details',
         );
       }

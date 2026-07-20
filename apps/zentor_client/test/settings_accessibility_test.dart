@@ -146,9 +146,12 @@ class _RecordingShortcutLocalCoreClient extends LocalCoreClient {
   }
 
   @override
-  Future<String> runProtectionSelfTest() async {
+  Future<ProtectionSelfTestResult> runProtectionSelfTest() async {
     protectionSelfTestCalls += 1;
-    return 'PASS fixture protection self-test';
+    return const ProtectionSelfTestResult(
+      passed: true,
+      details: 'PASS fixture protection self-test',
+    );
   }
 }
 

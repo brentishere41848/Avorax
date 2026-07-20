@@ -605,3 +605,24 @@ machine-wide service mutation. The native stores retain their existing atomic,
 integrity, path, and ACL controls. Installed authenticated mutation IPC remains
 disabled, and service/driver installation and pre-execution enforcement remain
 separate boundaries.
+
+## Checkpoint 2176 Protection Self-Test Response Integrity
+
+Guard self-test output crosses a subprocess boundary and can be malformed,
+truncated, version-incompatible, or contradictory. Previously the desktop
+client ignored the process exit code, selected the final output line, accepted
+partial JSON, and then classified the returned text by searching for failure
+words. A failed or forged response without those words could therefore appear
+as a clean result and receive success styling.
+
+The client now requires zero exit, empty stderr, one bounded JSON line, the
+exact Guard event envelope, exact self-test report and nested status schemas,
+UTC timestamps within five minutes of each other, bounded control-free text,
+one to 64 unique exact step objects, and agreement among every step, report
+`passed`, `overall_result`, and outer `ok`. All other responses fail closed.
+The controller and UI consume a typed boolean instead of reinterpreting text.
+
+This gate does not authenticate a replacement executable by publisher and does
+not establish installed service or driver state by itself. Installed binary
+ACL/publisher validation, service lifecycle E2E, production driver signing, and
+pre-execution enforcement remain separate controls and blockers.

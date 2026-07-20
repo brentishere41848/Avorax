@@ -35,6 +35,22 @@ Legacy `guard_service.running` and `guard_service.ipc_ok` report fields are comp
 
 The legacy `guard_service.verdict_cache_ok` report field remains `false` until a real Guard verdict-cache implementation and self-test exist. It must not be used as proof of protection or cache health.
 
+## Desktop Client Evidence Gate
+
+The Flutter desktop client treats Guard stdout as untrusted IPC. It accepts a
+self-test result only when the process exits with code zero, stderr is empty,
+stdout contains exactly one JSON response, and the Guard envelope plus nested
+report objects have their exact documented fields and types. UTC timestamps,
+bounded text, unique bounded steps, `overall_result`, report `passed`, every
+step result, and the outer `ok` flag must agree.
+
+Any missing, extra, malformed, oversized, non-UTC, or contradictory evidence
+returns a typed failed result. Controller events and the result panel use that
+typed status; they do not infer success from words such as `PASS` or `FAIL`.
+This validates one freshly launched Guard process response. It does not prove
+that an installed service or minifilter is present and does not create a
+pre-execution blocking claim.
+
 ## Test Signing
 
 Avorax does not enable TESTSIGNING automatically. For a development VM only:

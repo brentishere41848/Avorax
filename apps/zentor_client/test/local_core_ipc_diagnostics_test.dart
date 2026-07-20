@@ -1236,44 +1236,47 @@ Future<void> main() async {
       'lib/core/local_core/local_core_client.dart',
     ).readAsStringSync();
     final formatter = clientSource.substring(
-      clientSource.indexOf('String _formatProtectionSelfTestSteps'),
+      clientSource.indexOf(
+        '_ProtectionSelfTestSteps _parseProtectionSelfTestSteps',
+      ),
       clientSource.indexOf('Future<LocalCoreActionResult> configureGuardMode'),
     );
 
     expect(formatter, contains('malformed self-test step'));
-    expect(formatter, contains('step was not an object'));
-    expect(formatter, contains('final rawName'));
+    expect(formatter, contains('invalid step object'));
+    expect(formatter, contains("step.length != 3"));
     expect(formatter, contains('malformed name'));
-    expect(formatter, contains('final rawReason'));
     expect(formatter, contains('malformed reason'));
     expect(formatter, contains('malformed passed flag'));
-    expect(formatter, contains('unnamed self-test step'));
+    expect(formatter, contains('names.add(name)'));
+    expect(formatter, contains('allPassed = allPassed && passed'));
     expect(clientSource, isNot(contains('.whereType<Map>()')));
   });
 
   test('protection self-test reports malformed step rows at runtime', () async {
     final dir = Directory.systemTemp.createTempSync('avorax-guard-self-test-');
     addTearDown(() => dir.deleteSync(recursive: true));
+    final payload = _protectionSelfTestEnvelope(
+      ok: false,
+      reportPassed: false,
+      steps: <Object?>[
+        'not-an-object',
+        <String, Object?>{'name': 42, 'reason': 'bad name', 'passed': false},
+        <String, Object?>{'reason': 'missing name is explicit', 'passed': true},
+        <String, Object?>{'name': 'driver ping', 'reason': 7, 'passed': false},
+        <String, Object?>{
+          'name': 'service mode',
+          'reason': 'bad flag',
+          'passed': 'yes',
+        },
+        <String, Object?>{'name': 'rule cache', 'reason': 'ok', 'passed': true},
+      ],
+    );
+    final encodedPayload = jsonEncode(payload);
     final script = File('${dir.path}${Platform.pathSeparator}self_test.dart')
-      ..writeAsStringSync('''
-import 'dart:convert';
-
-void main() {
-  final report = <String, Object?>{
-    'steps': <Object?>[
-      'not-an-object',
-      <String, Object?>{'name': 42, 'reason': 'bad name', 'passed': false},
-      <String, Object?>{'reason': 'missing name is explicit', 'passed': true},
-      <String, Object?>{'name': 'driver ping', 'reason': 7, 'passed': false},
-      <String, Object?>{'name': 'service mode', 'reason': 'bad flag', 'passed': 'yes'},
-      <String, Object?>{'name': 'rule cache', 'reason': 'ok', 'passed': true},
-    ],
-  };
-  print(jsonEncode(<String, Object?>{
-    'message': jsonEncode(report),
-  }));
-}
-''');
+      ..writeAsStringSync(
+        'void main() { print(${jsonEncode(encodedPayload)}); }\n',
+      );
 
     final client = LocalCoreClient(
       guardExecutableOverride: _dartExecutable(),
@@ -1283,21 +1286,171 @@ void main() {
     final result = await client.runProtectionSelfTest();
 
     expect(
-      result,
-      contains('FAIL malformed self-test step 1: step was not an object'),
+      result.details,
+      contains('FAIL malformed self-test step 1: invalid step object'),
     );
-    expect(result, contains('FAIL malformed self-test step 2: malformed name'));
     expect(
-      result,
-      contains('PASS unnamed self-test step 3: missing name is explicit'),
+      result.details,
+      contains('FAIL malformed self-test step 2: malformed name'),
     );
-    expect(result, contains('FAIL driver ping: malformed reason'));
+    expect(result.details, contains('FAIL malformed self-test step 3'));
+    expect(result.details, contains('FAIL driver ping: malformed reason'));
     expect(
-      result,
+      result.details,
       contains('FAIL service mode: malformed passed flag; bad flag'),
     );
-    expect(result, contains('PASS rule cache: ok'));
+    expect(result.details, contains('PASS rule cache: ok'));
+    expect(result.passed, isFalse);
   });
+
+  test('protection self-test accepts exact consistent evidence', () async {
+    final dir = Directory.systemTemp.createTempSync('avorax-self-test-valid-');
+    addTearDown(() => dir.deleteSync(recursive: true));
+    final payload = jsonEncode(
+      _protectionSelfTestEnvelope(
+        steps: const <Object?>[
+          <String, Object?>{
+            'name': 'guard service',
+            'reason': 'fixture responded',
+            'passed': true,
+          },
+        ],
+      ),
+    );
+    final script = File('${dir.path}${Platform.pathSeparator}valid.dart')
+      ..writeAsStringSync('void main() { print(${jsonEncode(payload)}); }\n');
+    final client = LocalCoreClient(
+      guardExecutableOverride: _dartExecutable(),
+      guardExecutableArguments: [script.path],
+    );
+
+    final result = await client.runProtectionSelfTest();
+
+    expect(result.passed, isTrue);
+    expect(result.details, 'PASS guard service: fixture responded');
+  });
+
+  test('protection self-test rejects nonzero process exit', () async {
+    final dir = Directory.systemTemp.createTempSync('avorax-self-test-exit-');
+    addTearDown(() => dir.deleteSync(recursive: true));
+    final payload = jsonEncode(_protectionSelfTestEnvelope());
+    final script = File('${dir.path}${Platform.pathSeparator}exit.dart')
+      ..writeAsStringSync('''
+import 'dart:io';
+void main() {
+  print(${jsonEncode(payload)});
+  exitCode = 9;
+}
+''');
+    final client = LocalCoreClient(
+      guardExecutableOverride: _dartExecutable(),
+      guardExecutableArguments: [script.path],
+    );
+
+    final result = await client.runProtectionSelfTest();
+
+    expect(result.passed, isFalse);
+    expect(result.details, contains('exited with code 9'));
+  });
+
+  test('protection self-test rejects whitespace-only stderr', () async {
+    final dir = Directory.systemTemp.createTempSync('avorax-self-test-stderr-');
+    addTearDown(() => dir.deleteSync(recursive: true));
+    final payload = jsonEncode(_protectionSelfTestEnvelope());
+    final script = File('${dir.path}${Platform.pathSeparator}stderr.dart')
+      ..writeAsStringSync('''
+import 'dart:io';
+void main() {
+  stdout.writeln(${jsonEncode(payload)});
+  stderr.write(' ');
+}
+''');
+    final client = LocalCoreClient(
+      guardExecutableOverride: _dartExecutable(),
+      guardExecutableArguments: [script.path],
+    );
+
+    final result = await client.runProtectionSelfTest();
+
+    expect(result.passed, isFalse);
+    expect(result.details, contains('stderr'));
+  });
+
+  test('protection self-test rejects contradictory success evidence', () async {
+    final dir = Directory.systemTemp.createTempSync(
+      'avorax-self-test-contradiction-',
+    );
+    addTearDown(() => dir.deleteSync(recursive: true));
+    final payload = jsonEncode(
+      _protectionSelfTestEnvelope(ok: true, reportPassed: false),
+    );
+    final script = File('${dir.path}${Platform.pathSeparator}conflict.dart')
+      ..writeAsStringSync('void main() { print(${jsonEncode(payload)}); }\n');
+    final client = LocalCoreClient(
+      guardExecutableOverride: _dartExecutable(),
+      guardExecutableArguments: [script.path],
+    );
+
+    final result = await client.runProtectionSelfTest();
+
+    expect(result.passed, isFalse);
+    expect(result.details, contains('contradictory'));
+  });
+
+  test(
+    'protection self-test rejects incomplete and nested extra evidence',
+    () async {
+      final dir = Directory.systemTemp.createTempSync(
+        'avorax-self-test-shape-',
+      );
+      addTearDown(() => dir.deleteSync(recursive: true));
+      final validEnvelope = _protectionSelfTestEnvelope();
+      final report = Map<String, Object?>.from(
+        jsonDecode(validEnvelope['message']! as String) as Map,
+      );
+      final driver = Map<String, Object?>.from(report['driver']! as Map)
+        ..['unexpected'] = true;
+      report['driver'] = driver;
+      final nestedExtra = Map<String, Object?>.from(validEnvelope)
+        ..['message'] = jsonEncode(report);
+      final nonUtcTimestamp = Map<String, Object?>.from(validEnvelope)
+        ..['created_at'] = '2026-07-19T13:00:00+01:00';
+      final invalidCalendarTimestamp = Map<String, Object?>.from(validEnvelope)
+        ..['created_at'] = '2026-02-31T12:00:00Z';
+      final payloads = <Map<String, Object?>>[
+        <String, Object?>{'ok': true},
+        nestedExtra,
+        nonUtcTimestamp,
+        invalidCalendarTimestamp,
+      ];
+
+      for (var index = 0; index < payloads.length; index++) {
+        final payload = jsonEncode(payloads[index]);
+        final script =
+            File('${dir.path}${Platform.pathSeparator}invalid_$index.dart')
+              ..writeAsStringSync(
+                'void main() { print(${jsonEncode(payload)}); }\n',
+              );
+        final client = LocalCoreClient(
+          guardExecutableOverride: _dartExecutable(),
+          guardExecutableArguments: [script.path],
+        );
+
+        final result = await client.runProtectionSelfTest();
+
+        expect(result.passed, isFalse, reason: 'fixture $index');
+        expect(
+          result.details,
+          anyOf(
+            contains('invalid'),
+            contains('malformed'),
+            contains('failed validation'),
+          ),
+          reason: 'fixture $index',
+        );
+      }
+    },
+  );
 
   test('protection self-test timeout reports cleanup at runtime', () async {
     final dir = Directory.systemTemp.createTempSync(
@@ -1320,11 +1473,15 @@ void main() {
 
     final result = await client.runProtectionSelfTest();
 
-    expect(result, contains('Protection self-test failed'));
-    expect(result, contains('Protection self-test timed out after 50ms'));
-    expect(result, contains('Termination requested.'));
+    expect(result.passed, isFalse);
+    expect(result.details, contains('Protection self-test failed'));
     expect(
-      result,
+      result.details,
+      contains('Protection self-test timed out after 50ms'),
+    );
+    expect(result.details, contains('Termination requested.'));
+    expect(
+      result.details,
       anyOf(
         contains('Timed-out process exited with code'),
         contains('Timed-out process did not exit within'),
@@ -2158,7 +2315,9 @@ void main() {
       'lib/core/local_core/local_core_client.dart',
     );
     final selfTest = clientSource.substring(
-      clientSource.indexOf('Future<String> runProtectionSelfTest'),
+      clientSource.indexOf(
+        'Future<ProtectionSelfTestResult> runProtectionSelfTest',
+      ),
       clientSource.indexOf('Future<LocalCoreActionResult> configureGuardMode'),
     );
     final callMethod = clientSource.substring(
@@ -2433,8 +2592,12 @@ void main() {
       'lib/core/local_core/local_core_client.dart',
     ).readAsStringSync();
     final selfTest = clientSource.substring(
-      clientSource.indexOf('Future<String> runProtectionSelfTest'),
-      clientSource.indexOf('String _formatProtectionSelfTestSteps'),
+      clientSource.indexOf(
+        'Future<ProtectionSelfTestResult> runProtectionSelfTest',
+      ),
+      clientSource.indexOf(
+        '_ProtectionSelfTestSteps _parseProtectionSelfTestSteps',
+      ),
     );
     final installReport = clientSource.substring(
       clientSource.indexOf('Future<String> openInstallReport'),
@@ -2500,7 +2663,9 @@ void main() {
         'lib/core/local_core/local_core_client.dart',
       ).readAsStringSync();
       final launcherSlice = clientSource.substring(
-        clientSource.indexOf('Future<String> runProtectionSelfTest'),
+        clientSource.indexOf(
+          'Future<ProtectionSelfTestResult> runProtectionSelfTest',
+        ),
         clientSource.indexOf('Future<String?> _runElevatedPowerShell'),
       );
 
@@ -3823,6 +3988,70 @@ void main() {
       isNot(contains('process_monitor_capability')),
     );
   });
+}
+
+Map<String, Object?> _protectionSelfTestEnvelope({
+  bool ok = true,
+  bool reportPassed = true,
+  List<Object?> steps = const <Object?>[
+    <String, Object?>{
+      'name': 'guard service',
+      'reason': 'fixture responded',
+      'passed': true,
+    },
+  ],
+}) {
+  final report = <String, Object?>{
+    'zentor_version': '0.1.15-test',
+    'timestamp_utc': '2026-07-19T12:00:00Z',
+    'driver': <String, Object?>{
+      'built': false,
+      'installed': false,
+      'running': false,
+      'test_signed': false,
+      'production_signed': false,
+      'communication_port_ok': false,
+    },
+    'guard_service': <String, Object?>{
+      'running': true,
+      'ipc_ok': true,
+      'verdict_cache_ok': false,
+    },
+    'tests': <String, Object?>{
+      'eicar_scan_blocked': true,
+      'eicar_quarantined': false,
+      'known_bad_executable_blocked_before_launch': false,
+      'known_bad_executable_quarantined': false,
+      'unknown_unsigned_lockdown_blocked_before_launch': false,
+      'unknown_unsigned_lockdown_policy_blocked': true,
+      'unknown_unsigned_allowed_after_hash_approval': true,
+      'known_good_executable_allowed': true,
+      'normal_exe_blocked_only_as_unknown': true,
+      'post_launch_fallback_verified': true,
+      'quarantine_ui_record_created': false,
+    },
+    'ai': <String, Object?>{
+      'model_loaded': false,
+      'model_version': 'unavailable',
+      'production_ready': false,
+      'can_auto_quarantine_ai_only': false,
+    },
+    'overall_result': reportPassed ? 'pass' : 'fail',
+    'passed': reportPassed,
+    'pre_execution_blocking_available': false,
+    'steps': steps,
+  };
+  return <String, Object?>{
+    'ok': ok,
+    'action': 'driverSelfTest',
+    'message': jsonEncode(report),
+    'process_id': null,
+    'process_path': null,
+    'quarantine_id': null,
+    'quarantine_path': null,
+    'quarantine_record_path': null,
+    'created_at': '2026-07-19T12:00:00Z',
+  };
 }
 
 Map<String, Object?> _watchPollFixture({required String mode}) =>
