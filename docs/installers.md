@@ -83,6 +83,23 @@ smoke, records `Get-AuthenticodeSignature` output, and administratively extracts
 the MSI into an isolated directory. It does not perform a normal MSI install or
 register services during CI.
 
+The same non-installing MSI verification can be reproduced on Windows:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass `
+  -File .\tools\packaging\verify-windows-msi.ps1 `
+  -MsiPath .\dist\Avorax-AntiVirus-0.1.15-x64.msi `
+  -PythonPath (Get-Command python -CommandType Application).Source
+```
+
+The verifier uses a short, opaque directory below `RUNNER_TEMP` or `TEMP`,
+checks the real `msiexec` exit code, rejects reparse points, validates required
+payloads, runs the benign packaged-core smoke, writes structured evidence, and
+removes only its own verified temporary directory. Windows Installer can return
+error 1304/1603 when an administrative extraction target makes a payload path
+longer than the legacy path limit; pass `-TemporaryBasePath` with a shorter
+local directory when the verifier rejects an overlong temporary root.
+
 ### Linux
 
 ```bash
