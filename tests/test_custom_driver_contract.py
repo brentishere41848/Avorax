@@ -1076,7 +1076,7 @@ def test_flutter_mutating_action_success_requires_validated_evidence():
         client[client.index("Future<LocalCoreActionResult> restoreQuarantineItem"):
                client.index("Future<LocalCoreActionResult> deleteQuarantineItem")],
         client[client.index("Future<LocalCoreActionResult> deleteQuarantineItem"):
-               client.index("Future<String> runProtectionSelfTest")],
+               client.index("Future<ProtectionSelfTestResult> runProtectionSelfTest")],
         client[client.index("Future<LocalCoreActionResult> configureGuardMode"):
                client.index("Future<LocalCoreActionResult> configureRansomwareGuard")],
         client[client.index("Future<LocalCoreActionResult> configureRansomwareGuard"):
@@ -1090,6 +1090,67 @@ def test_flutter_mutating_action_success_requires_validated_evidence():
         "quarantine action success requires matching status evidence",
         "allowlist action success requires matching active evidence",
         "restore action success requires matching record identifier",
+    ]:
+        assert test_name in ipc_test
+
+
+def test_flutter_protection_self_test_requires_exact_typed_evidence():
+    client = read(LOCAL_CORE_CLIENT)
+    app_state = read(APP_STATE)
+    protection = read(PROTECTION_SCREEN)
+    offline_scan_test = read(
+        ROOT / "apps" / "zentor_client" / "test" / "offline_scan_test.dart"
+    )
+    ipc_test = read(
+        ROOT
+        / "apps"
+        / "zentor_client"
+        / "test"
+        / "local_core_ipc_diagnostics_test.dart"
+    )
+    parser = client[
+        client.index("ProtectionSelfTestResult _protectionSelfTestResultFromOutput"):
+        client.index("Future<LocalCoreActionResult> configureGuardMode")
+    ]
+    controller = app_state[
+        app_state.index("Future<void> runProtectionSelfTest"):
+        app_state.index("Future<void> sendHeartbeat")
+    ]
+
+    for marker in [
+        "exitCode != 0",
+        "stderr.isNotEmpty",
+        "lines.length != 1",
+        "_hasExactSelfTestResponseFields",
+        "_hasExactSelfTestReportFields",
+        "_validSelfTestDriver",
+        "_validSelfTestGuard",
+        "_validSelfTestResults",
+        "_validSelfTestAi",
+        "_strictSelfTestTimestamp",
+        "reportPassed != steps.allPassed",
+        "ok != reportPassed",
+        "action != 'driverSelfTest'",
+        "stepsValue.length > 64",
+    ]:
+        assert marker in parser
+    assert "Future<ProtectionSelfTestResult> runProtectionSelfTest" in client
+    assert "final failed = !result.passed" in controller
+    assert "protectionSelfTestPassed: result.passed" in controller
+    assert "result.contains('FAIL')" not in controller
+    assert "passed: state.protectionSelfTestPassed == true" in protection
+    assert "final failed = !passed" in protection
+    assert "result.contains('FAIL')" not in protection
+    assert (
+        "protection self-test uses typed failure evidence instead of text sniffing"
+        in offline_scan_test
+    )
+    for test_name in [
+        "protection self-test accepts exact consistent evidence",
+        "protection self-test rejects nonzero process exit",
+        "protection self-test rejects whitespace-only stderr",
+        "protection self-test rejects contradictory success evidence",
+        "protection self-test rejects incomplete and nested extra evidence",
     ]:
         assert test_name in ipc_test
 
@@ -23904,8 +23965,8 @@ def test_flutter_remaining_process_timeouts_report_kill_result():
     )
 
     self_test = client[
-        client.index("Future<String> runProtectionSelfTest"):
-        client.index("String _formatProtectionSelfTestSteps")
+        client.index("Future<ProtectionSelfTestResult> runProtectionSelfTest"):
+        client.index("_ProtectionSelfTestSteps _parseProtectionSelfTestSteps")
     ]
     cancel = client[
         client.index("Future<void> _sendCancelScanRequest"):

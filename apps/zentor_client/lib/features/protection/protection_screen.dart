@@ -133,7 +133,10 @@ class ProtectionScreen extends ConsumerWidget {
               _ProtectionChecklist(state: state),
               if (state.protectionSelfTestResult != null) ...[
                 const SizedBox(height: 16),
-                _SelfTestResultPanel(result: state.protectionSelfTestResult!),
+                _SelfTestResultPanel(
+                  result: state.protectionSelfTestResult!,
+                  passed: state.protectionSelfTestPassed == true,
+                ),
               ],
               if (state.errorMessage != null) ...[
                 const SizedBox(height: 16),
@@ -262,16 +265,14 @@ class ProtectionScreen extends ConsumerWidget {
 }
 
 class _SelfTestResultPanel extends StatelessWidget {
-  const _SelfTestResultPanel({required this.result});
+  const _SelfTestResultPanel({required this.result, required this.passed});
 
   final String result;
+  final bool passed;
 
   @override
   Widget build(BuildContext context) {
-    final failed =
-        result.contains('FAIL') ||
-        result.toLowerCase().contains('failed') ||
-        result.toLowerCase().contains('not active');
+    final failed = !passed;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(14),

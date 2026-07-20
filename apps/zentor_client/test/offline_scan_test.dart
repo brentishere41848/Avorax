@@ -2887,7 +2887,7 @@ void main() {
     () async {
       SharedPreferences.setMockInitialValues({});
       final preferences = await SharedPreferences.getInstance();
-      final pendingSelfTest = Completer<String>();
+      final pendingSelfTest = Completer<ProtectionSelfTestResult>();
       final localCore = _FakeLocalCoreClient(
         pendingProtectionSelfTest: pendingSelfTest,
       );
@@ -2925,13 +2925,19 @@ void main() {
       expect(busyEvent.category, 'protection');
       expect(busyEvent.severity, 'warning');
 
-      pendingSelfTest.complete('PASS guard self-test fixture');
+      pendingSelfTest.complete(
+        const ProtectionSelfTestResult(
+          passed: true,
+          details: 'PASS guard self-test fixture',
+        ),
+      );
       await firstSelfTest;
 
       state = container.read(zentorControllerProvider);
       expect(localCore.protectionSelfTestCalls, 1);
       expect(state.protectionSelfTestInFlight, isFalse);
       expect(state.protectionSelfTestResult, 'PASS guard self-test fixture');
+      expect(state.protectionSelfTestPassed, isTrue);
     },
   );
 
@@ -2975,6 +2981,41 @@ void main() {
         busyEvent.details,
         'Protection self-test is already in progress or protection state is changing.',
       );
+    },
+  );
+
+  test(
+    'protection self-test uses typed failure evidence instead of text sniffing',
+    () async {
+      SharedPreferences.setMockInitialValues({});
+      final preferences = await SharedPreferences.getInstance();
+      const details = 'Guard response could not be authenticated.';
+      final localCore = _FakeLocalCoreClient(
+        protectionSelfTestResult: const ProtectionSelfTestResult.failed(
+          details,
+        ),
+      );
+      final container = ProviderContainer(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(preferences),
+          localCoreClientProvider.overrideWithValue(localCore),
+        ],
+      );
+      addTearDown(container.dispose);
+      final controller = container.read(zentorControllerProvider.notifier);
+      await _waitForControllerStartup(container);
+
+      await controller.runProtectionSelfTest();
+
+      final state = container.read(zentorControllerProvider);
+      expect(state.protectionSelfTestResult, details);
+      expect(state.protectionSelfTestPassed, isFalse);
+      expect(state.errorMessage, contains('completed with issues'));
+      final event = state.events.lastWhere(
+        (entry) => entry.type == 'protection_self_test_completed',
+      );
+      expect(event.severity, 'warning');
+      expect(event.details, details);
     },
   );
 
@@ -9651,6 +9692,7 @@ class _FakeLocalCoreClient extends LocalCoreClient {
     this.pendingGuardMode,
     List<LocalCoreActionResult>? guardModeResults,
     this.pendingProtectionSelfTest,
+    this.protectionSelfTestResult,
     this.pendingStartCoreService,
     this.listQuarantineFailure,
     this.listAllowlistFailure,
@@ -9719,7 +9761,8 @@ class _FakeLocalCoreClient extends LocalCoreClient {
   final Completer<LocalCoreActionResult>? pendingRestoreQuarantine;
   final Completer<LocalCoreActionResult>? pendingGuardMode;
   final List<LocalCoreActionResult> _guardModeResults;
-  final Completer<String>? pendingProtectionSelfTest;
+  final Completer<ProtectionSelfTestResult>? pendingProtectionSelfTest;
+  final ProtectionSelfTestResult? protectionSelfTestResult;
   final Completer<String>? pendingStartCoreService;
   final String? cancelFailure;
   final String? cancelWarning;
@@ -9829,15 +9872,20 @@ class _FakeLocalCoreClient extends LocalCoreClient {
   }
 
   @override
-  Future<String> runProtectionSelfTest() async {
+  Future<ProtectionSelfTestResult> runProtectionSelfTest() async {
     protectionSelfTestCalls += 1;
     final pending = pendingProtectionSelfTest;
     if (pending != null) return pending.future;
+    final configured = protectionSelfTestResult;
+    if (configured != null) return configured;
     final exception = actionException;
     if (exception != null) throw StateError(exception);
     final failure = actionFailure;
-    if (failure != null) return 'FAIL $failure';
-    return 'PASS guard self-test fixture';
+    if (failure != null) return ProtectionSelfTestResult.failed(failure);
+    return const ProtectionSelfTestResult(
+      passed: true,
+      details: 'PASS guard self-test fixture',
+    );
   }
 
   @override

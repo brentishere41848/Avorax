@@ -864,20 +864,24 @@ class LocalCoreClient {
     );
   }
 
-  Future<String> runProtectionSelfTest() async {
+  Future<ProtectionSelfTestResult> runProtectionSelfTest() async {
     if (!isDesktop) {
-      return 'Protection self-test is only available on desktop platforms.';
+      return const ProtectionSelfTestResult.failed(
+        'Protection self-test is only available on desktop platforms.',
+      );
     }
     final executable = _guardServiceExecutable();
     final executableProbe = executable == null
         ? null
         : _regularFileProbe(executable);
     if (executable == null || executableProbe!.isNotRegularFile) {
-      return _missingRegularFileMessage(
-        'Avorax Guard Service',
-        executable,
-        probe: executableProbe,
-        guidance: 'Post-launch fallback cannot be self-tested.',
+      return ProtectionSelfTestResult.failed(
+        _missingRegularFileMessage(
+          'Avorax Guard Service',
+          executable,
+          probe: executableProbe,
+          guidance: 'Post-launch fallback cannot be self-tested.',
+        ),
       );
     }
     final executablePath = File(executable).resolveSymbolicLinksSync();
@@ -886,7 +890,9 @@ class LocalCoreClient {
       executablePath,
       guidance: 'Post-launch fallback cannot be self-tested.',
     );
-    if (launchBlocker != null) return launchBlocker;
+    if (launchBlocker != null) {
+      return ProtectionSelfTestResult.failed(launchBlocker);
+    }
     try {
       final timeout = protectionSelfTestTimeout ?? _protectionSelfTestTimeout;
       final process = await (processStarter ?? Process.start)(
@@ -915,73 +921,357 @@ class LocalCoreClient {
             },
           );
       final stdout = (results[0] as String).trim();
-      final stderr = (results[1] as String).trim();
-      final lines = stdout
-          .split(RegExp(r'\r?\n'))
-          .map((line) => line.trim())
-          .where((line) => line.isNotEmpty)
-          .toList();
-      if (lines.isEmpty) {
-        return stderr.isEmpty
-            ? 'Protection self-test produced no output.'
-            : 'Protection self-test produced no output. stderr: $stderr';
-      }
-      final lastLine = lines.last;
-      final decoded = jsonDecode(lastLine);
-      if (decoded is! Map) return lastLine;
-      final message = decoded['message'];
-      if (message is String && message.trim().startsWith('{')) {
-        final report = jsonDecode(message);
-        if (report is Map) {
-          final steps = report['steps'];
-          if (steps is List) {
-            return _formatProtectionSelfTestSteps(steps);
-          }
-        }
-      }
-      return message is String ? message : lastLine;
+      final stderr = results[1] as String;
+      final exitCode = results[2] as int;
+      return _protectionSelfTestResultFromOutput(
+        stdout: stdout,
+        stderr: stderr,
+        exitCode: exitCode,
+      );
     } on Object catch (error) {
       final details = _ipcDiagnosticOrNull('$error') ?? 'Self-test failed.';
-      return 'Protection self-test failed: $details';
+      return ProtectionSelfTestResult.failed(
+        'Protection self-test failed: $details',
+      );
     }
   }
 
-  String _formatProtectionSelfTestSteps(List<Object?> steps) {
+  ProtectionSelfTestResult _protectionSelfTestResultFromOutput({
+    required String stdout,
+    required String stderr,
+    required int exitCode,
+  }) {
+    if (exitCode != 0) {
+      final diagnostic = stderr.isEmpty ? null : _ipcDiagnosticOrNull(stderr);
+      return ProtectionSelfTestResult.failed(
+        diagnostic == null
+            ? 'Protection self-test process exited with code $exitCode.'
+            : 'Protection self-test process exited with code $exitCode: $diagnostic',
+      );
+    }
+    if (stderr.isNotEmpty) {
+      final diagnostic = _ipcDiagnosticOrNull(stderr);
+      return ProtectionSelfTestResult.failed(
+        diagnostic == null
+            ? 'Protection self-test returned malformed stderr diagnostics.'
+            : 'Protection self-test returned stderr diagnostics: $diagnostic',
+      );
+    }
+    final lines = stdout
+        .split(RegExp(r'\r?\n'))
+        .map((line) => line.trim())
+        .where((line) => line.isNotEmpty)
+        .toList(growable: false);
+    if (lines.length != 1) {
+      return ProtectionSelfTestResult.failed(
+        lines.isEmpty
+            ? 'Protection self-test produced no output.'
+            : 'Protection self-test returned multiple non-empty response lines.',
+      );
+    }
+
+    Object? decoded;
+    try {
+      decoded = jsonDecode(lines.single);
+    } on Object {
+      return const ProtectionSelfTestResult.failed(
+        'Protection self-test returned invalid response JSON.',
+      );
+    }
+    final response = _actionEvidenceObject(decoded);
+    if (response == null || !_hasExactSelfTestResponseFields(response)) {
+      return const ProtectionSelfTestResult.failed(
+        'Protection self-test returned a malformed response object.',
+      );
+    }
+    final ok = response['ok'];
+    final action = _strictSelfTestText(response['action'], maxLength: 64);
+    final message = _protectionSelfTestMessage(response['message']);
+    final createdAt = _strictSelfTestTimestamp(response['created_at']);
+    if (ok is! bool || action == null || message == null || createdAt == null) {
+      return const ProtectionSelfTestResult.failed(
+        'Protection self-test response fields failed validation.',
+      );
+    }
+    if (response['process_id'] != null ||
+        response['process_path'] != null ||
+        response['quarantine_id'] != null ||
+        response['quarantine_path'] != null ||
+        response['quarantine_record_path'] != null) {
+      return const ProtectionSelfTestResult.failed(
+        'Protection self-test response contained unrelated action evidence.',
+      );
+    }
+    if (action == 'error') {
+      if (ok) {
+        return const ProtectionSelfTestResult.failed(
+          'Protection self-test error response contradicted its success flag.',
+        );
+      }
+      return ProtectionSelfTestResult.failed(
+        'Protection self-test failed: $message',
+      );
+    }
+    if (action != 'driverSelfTest') {
+      return const ProtectionSelfTestResult.failed(
+        'Protection self-test response had an unexpected action.',
+      );
+    }
+
+    Object? reportDecoded;
+    try {
+      reportDecoded = jsonDecode(message);
+    } on Object {
+      return const ProtectionSelfTestResult.failed(
+        'Protection self-test report JSON was invalid.',
+      );
+    }
+    final report = _actionEvidenceObject(reportDecoded);
+    if (report == null || !_hasExactSelfTestReportFields(report)) {
+      return const ProtectionSelfTestResult.failed(
+        'Protection self-test report shape was invalid.',
+      );
+    }
+    final reportPassed = report['passed'];
+    final overallResult = _strictSelfTestText(
+      report['overall_result'],
+      maxLength: 16,
+    );
+    final version = _strictSelfTestText(
+      report['zentor_version'],
+      maxLength: 128,
+    );
+    final timestamp = _strictSelfTestTimestamp(report['timestamp_utc']);
+    final preExecutionAvailable = report['pre_execution_blocking_available'];
+    if (reportPassed is! bool ||
+        overallResult == null ||
+        version == null ||
+        timestamp == null ||
+        preExecutionAvailable is! bool ||
+        !_validSelfTestDriver(report['driver']) ||
+        !_validSelfTestGuard(report['guard_service']) ||
+        !_validSelfTestResults(report['tests']) ||
+        !_validSelfTestAi(report['ai']) ||
+        createdAt.difference(timestamp).inSeconds.abs() > 300) {
+      return const ProtectionSelfTestResult.failed(
+        'Protection self-test report fields failed validation.',
+      );
+    }
+    final stepsValue = report['steps'];
+    if (stepsValue is! List || stepsValue.isEmpty || stepsValue.length > 64) {
+      return const ProtectionSelfTestResult.failed(
+        'Protection self-test report had an invalid step list.',
+      );
+    }
+    final steps = _parseProtectionSelfTestSteps(stepsValue);
+    if (!steps.valid) {
+      return ProtectionSelfTestResult.failed(steps.details);
+    }
+    if (reportPassed != steps.allPassed ||
+        overallResult != (reportPassed ? 'pass' : 'fail') ||
+        ok != reportPassed) {
+      return ProtectionSelfTestResult.failed(
+        'Protection self-test success evidence was contradictory.\n${steps.details}',
+      );
+    }
+    return ProtectionSelfTestResult(
+      passed: reportPassed,
+      details: steps.details,
+    );
+  }
+
+  bool _hasExactSelfTestResponseFields(Map<String, Object?> response) {
+    const expected = <String>{
+      'ok',
+      'action',
+      'message',
+      'process_id',
+      'process_path',
+      'quarantine_id',
+      'quarantine_path',
+      'quarantine_record_path',
+      'created_at',
+    };
+    return response.length == expected.length &&
+        expected.every(response.containsKey);
+  }
+
+  bool _hasExactSelfTestReportFields(Map<String, Object?> report) {
+    const expected = <String>{
+      'zentor_version',
+      'timestamp_utc',
+      'driver',
+      'guard_service',
+      'tests',
+      'ai',
+      'overall_result',
+      'passed',
+      'pre_execution_blocking_available',
+      'steps',
+    };
+    return report.length == expected.length &&
+        expected.every(report.containsKey);
+  }
+
+  String? _protectionSelfTestMessage(Object? value) {
+    if (value is! String ||
+        value.isEmpty ||
+        value.trim() != value ||
+        value.length > _maxIpcStdoutLineLength ||
+        RegExp(r'[\x00-\x1F\x7F]').hasMatch(value)) {
+      return null;
+    }
+    return value;
+  }
+
+  String? _strictSelfTestText(Object? value, {required int maxLength}) {
+    if (value is! String ||
+        value.isEmpty ||
+        value.length > maxLength ||
+        value.trim() != value ||
+        RegExp(r'[\x00-\x1F\x7F]').hasMatch(value)) {
+      return null;
+    }
+    return value;
+  }
+
+  DateTime? _strictSelfTestTimestamp(Object? value) {
+    final text = _strictSelfTestText(value, maxLength: 64);
+    if (text == null) return null;
+    final match = RegExp(
+      r'^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d{1,9})?(?:Z|\+00:00)$',
+    ).firstMatch(text);
+    if (match == null) return null;
+    final parsed = DateTime.tryParse(text);
+    if (parsed == null || !parsed.isUtc) return null;
+    final expectedParts = <int>[
+      for (var index = 1; index <= 6; index++) int.parse(match.group(index)!),
+    ];
+    final parsedParts = <int>[
+      parsed.year,
+      parsed.month,
+      parsed.day,
+      parsed.hour,
+      parsed.minute,
+      parsed.second,
+    ];
+    for (var index = 0; index < expectedParts.length; index++) {
+      if (expectedParts[index] != parsedParts[index]) return null;
+    }
+    return parsed;
+  }
+
+  bool _validSelfTestDriver(Object? value) => _exactBooleanObject(value, const {
+    'built',
+    'installed',
+    'running',
+    'test_signed',
+    'production_signed',
+    'communication_port_ok',
+  });
+
+  bool _validSelfTestGuard(Object? value) => _exactBooleanObject(value, const {
+    'running',
+    'ipc_ok',
+    'verdict_cache_ok',
+  });
+
+  bool _validSelfTestResults(Object? value) =>
+      _exactBooleanObject(value, const {
+        'eicar_scan_blocked',
+        'eicar_quarantined',
+        'known_bad_executable_blocked_before_launch',
+        'known_bad_executable_quarantined',
+        'unknown_unsigned_lockdown_blocked_before_launch',
+        'unknown_unsigned_lockdown_policy_blocked',
+        'unknown_unsigned_allowed_after_hash_approval',
+        'known_good_executable_allowed',
+        'normal_exe_blocked_only_as_unknown',
+        'post_launch_fallback_verified',
+        'quarantine_ui_record_created',
+      });
+
+  bool _validSelfTestAi(Object? value) {
+    final ai = _actionEvidenceObject(value);
+    if (ai == null) return false;
+    const required = <String>{
+      'model_loaded',
+      'model_version',
+      'production_ready',
+      'can_auto_quarantine_ai_only',
+    };
+    final hasMetadataError = ai.containsKey('metadata_error');
+    if (ai.length != required.length + (hasMetadataError ? 1 : 0) ||
+        !required.every(ai.containsKey) ||
+        ai['model_loaded'] is! bool ||
+        ai['production_ready'] is! bool ||
+        ai['can_auto_quarantine_ai_only'] is! bool ||
+        _strictSelfTestText(ai['model_version'], maxLength: 128) == null) {
+      return false;
+    }
+    return !hasMetadataError ||
+        _strictSelfTestText(ai['metadata_error'], maxLength: 2048) != null;
+  }
+
+  bool _exactBooleanObject(Object? value, Set<String> fields) {
+    final object = _actionEvidenceObject(value);
+    return object != null &&
+        object.length == fields.length &&
+        fields.every(
+          (field) => object.containsKey(field) && object[field] is bool,
+        );
+  }
+
+  _ProtectionSelfTestSteps _parseProtectionSelfTestSteps(List<Object?> steps) {
     final rows = <String>[];
+    final names = <String>{};
+    var valid = true;
+    var allPassed = true;
     for (var index = 0; index < steps.length; index++) {
       final stepNumber = index + 1;
-      final step = steps[index];
-      if (step is! Map) {
+      final step = _actionEvidenceObject(steps[index]);
+      if (step == null ||
+          step.length != 3 ||
+          !step.containsKey('name') ||
+          !step.containsKey('reason') ||
+          !step.containsKey('passed')) {
         rows.add(
-          'FAIL malformed self-test step $stepNumber: step was not an object',
+          'FAIL malformed self-test step $stepNumber: invalid step object',
         );
+        valid = false;
+        allPassed = false;
         continue;
       }
-      final rawName = step['name'];
-      final name = rawName == null
-          ? 'unnamed self-test step $stepNumber'
-          : _ipcDiagnosticOrNull(rawName);
-      if (name == null) {
+      final name = _strictSelfTestText(step['name'], maxLength: 128);
+      if (name == null || !names.add(name)) {
         rows.add('FAIL malformed self-test step $stepNumber: malformed name');
+        valid = false;
+        allPassed = false;
         continue;
       }
-      final rawReason = step['reason'];
-      final reason = rawReason == null
-          ? 'no reason provided'
-          : _ipcDiagnosticOrNull(rawReason);
+      final reason = _strictSelfTestText(step['reason'], maxLength: 2048);
       if (reason == null) {
         rows.add('FAIL $name: malformed reason');
+        valid = false;
+        allPassed = false;
         continue;
       }
       final passed = step['passed'];
       if (passed is! bool) {
         rows.add('FAIL $name: malformed passed flag; $reason');
+        valid = false;
+        allPassed = false;
         continue;
       }
+      allPassed = allPassed && passed;
       final status = passed ? 'PASS' : 'FAIL';
       rows.add('$status $name: $reason');
     }
-    return rows.join('\n');
+    return _ProtectionSelfTestSteps(
+      valid: valid,
+      allPassed: allPassed,
+      details: rows.join('\n'),
+    );
   }
 
   Future<LocalCoreActionResult> configureGuardMode(ProtectionMode mode) async {
@@ -4469,6 +4759,27 @@ class WatchPollScanSummary {
   final int quarantinedFiles;
   final List<String> scanErrors;
   final List<String> limitations;
+}
+
+class ProtectionSelfTestResult {
+  const ProtectionSelfTestResult({required this.passed, required this.details});
+
+  const ProtectionSelfTestResult.failed(this.details) : passed = false;
+
+  final bool passed;
+  final String details;
+}
+
+class _ProtectionSelfTestSteps {
+  const _ProtectionSelfTestSteps({
+    required this.valid,
+    required this.allPassed,
+    required this.details,
+  });
+
+  final bool valid;
+  final bool allPassed;
+  final String details;
 }
 
 class LocalCoreActionResult {
