@@ -20,7 +20,9 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
   symlink skips, parser and no-confirm helper checks, product/no-malware safety
   gates, an actual Avorax MSI database/extraction/lifecycle pass, and rejection
   of a real cached MSI containing a `CustomAction` table before extraction.
-  Fresh native package CI remains pending before merge. Production driver signing
+  Avorax CI run `29765160511` and Desktop Packages runs `29765128390` and
+  `29765160524` pass, including both fresh Windows MSI/EXE jobs and all Linux,
+  macOS, checksum, Rust, Flutter, and security jobs. Production driver signing
   and disposable elevated-host driver E2E remain blocked.
 
 - Current Ultracode portable-beta release preparation pass: checkpoint 2154 adds a prominent English beta safety disclaimer to the root and packaged READMEs and creates `docs\releases\avorax-portable-beta-0.1.0-beta.1.md`. The disclaimer states that this experimental manual scanner must not be the only antivirus, may miss advanced/novel/targeted/polymorphic/fileless/kernel-level/large-scale malware and ransomware, and requires Defender or another supported antivirus to remain enabled. The Windows portable bundle was rebuilt and re-extracted after the copy change; build passed in `5.715s`, archive smoke in `4.599s`, all four adversarial ZIP cases were rejected, and cleanup passed. The current artifact is `dist\Avorax-Portable-Beta-0.1.0-beta.1.zip`, `5,886,708` bytes, SHA-256 `a80155373a869576dad6d015c21221a18815bf3318a253a11c19477af128240b`. App-wide accessibility regression coverage also now checks all ten shell routes plus onboarding for labeled tap targets, Android target sizes, and 200% mobile text; all `21` tests pass after responsive header/status/checklist/action/metric/dropdown fixes and live-region notification semantics. GitHub publication is limited to this verified Windows ZIP: no MSI, standalone launcher EXE, or Linux binary is claimed or published without a real platform build and runtime verification.

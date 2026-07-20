@@ -1003,9 +1003,10 @@ enforcement, or pre-execution blocking is claimed.
   no-confirm fail-closed runtime, product/no-malware safety gates, an actual
   Avorax MSI database/extraction/lifecycle pass, and rejection of a real cached
   MSI containing a `CustomAction` table before extraction all pass.
-- **Evidence pending:** A fresh native package CI build must pass before this
-  checkpoint is merged and the generated release-path package is classified as
-  verified.
+- **Verified in CI:** Avorax CI run `29765160511` and Desktop Packages push/PR
+  runs `29765128390` and `29765160524` passed. Both fresh Windows MSI/EXE jobs,
+  package contracts, Linux x64, macOS arm64/x64, consolidated checksums, Rust,
+  Flutter, branding, and security jobs are green.
 - **Still blocked:** Production Microsoft driver signing, disposable elevated-host
   install/load/unload/rollback evidence, authenticated driver IPC, and genuine
   pre-execution blocking remain unavailable and must not be claimed.
