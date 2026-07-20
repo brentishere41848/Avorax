@@ -18,8 +18,10 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
   ignores zero-weight diagnostics for category inference while retaining them
   as explanation evidence. The exact regression, the formerly failing legacy
   Office carrier test, complete Native Engine (`434 + 6`) and Local Core (`506`)
-  suites, rustfmt, and both clippy checks pass locally. Fresh GitHub head CI is
-  pending before merge.
+  suites, rustfmt, and both clippy checks pass locally. Avorax CI run
+  `29767214563` and Desktop Packages runs `29767211055` and `29767214589` pass
+  on the final head, including both fresh Windows MSI/EXE jobs. PR `#30` merged
+  as `f28cad2f617dfbf4271507d895bed69dc862ce78`.
 
 - Current explicit driver-activation boundary pass: checkpoint 2178 removes the
   elevated minifilter custom action from ordinary Windows MSI/EXE installation.

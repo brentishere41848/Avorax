@@ -18,7 +18,7 @@ Lead-engineer product-hardening pass across the Avorax repository. Goal is to mo
 - GitHub head validation run `29766224417` exposed a deterministic risk-fusion bug through a random temporary directory named `.tmpupTeBo`: the substring `pup` inside a zero-weight publisher-trust diagnostic path caused real `office_macro_auto_run_remote_launch` evidence to be categorized as `PotentiallyUnwantedApp` instead of `MaliciousMacro`.
 - `core\zentor_native_engine\src\verdict\risk_fusion.rs` now excludes zero-weight diagnostics from category inference while retaining them in the explainable verdict. Added `zero_weight_diagnostics_cannot_override_evidence_category` with the exact path-shaped regression fixture.
 - Local verification passed: the new native regression and previously failing Local Core legacy Office carrier test each pass; the complete Native Engine suite passes `434` library plus `6` signature-compiler tests; the complete Local Core suite passes `506`; rustfmt and clippy pass for both affected crates.
-- Fresh GitHub head verification is pending. The failed run remains audit evidence rather than being hidden or treated as success.
+- Final GitHub head verification passed: Avorax CI run `29767214563` passed all branding, Flutter/protocol, Rust, and security/protection/performance jobs; Desktop Packages push run `29767211055` and pull-request run `29767214589` passed package contracts, Linux x64, Windows x64 MSI/EXE, macOS arm64/x64, and consolidated checksums. PR `#30` merged as `f28cad2f617dfbf4271507d895bed69dc862ce78`. Failed run `29766224417` remains audit evidence rather than being hidden or treated as success.
 
 ## 2026-07-20 continuation checkpoint 2178
 
