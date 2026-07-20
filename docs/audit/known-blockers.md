@@ -990,3 +990,22 @@ enforcement, or pre-execution blocking is claimed.
   this verification. Normal installed UI/service/ACL/update E2E, protected
   signing credentials, signed-driver IPC, and pre-execution enforcement remain
   partial or blocked. Microsoft Defender must remain enabled.
+
+## Checkpoint 2178 Explicit Driver Activation Boundary
+
+- **Resolved locally:** Candidate driver files can no longer trigger an elevated
+  deferred custom action during ordinary MSI/EXE installation. Driver activation
+  requires a separate invocation with `-ConfirmDriverInstall`.
+- **Trust-store safety:** The helper no longer imports a bundled certificate into
+  `Root` or `TrustedPublisher`, and it still refuses to enable TESTSIGNING.
+- **Verified locally:** `616` source contracts, `22` packaging tests with `3`
+  expected Windows symlink skips, PowerShell parser checks, generated-helper
+  no-confirm fail-closed runtime, product/no-malware safety gates, an actual
+  Avorax MSI database/extraction/lifecycle pass, and rejection of a real cached
+  MSI containing a `CustomAction` table before extraction all pass.
+- **Evidence pending:** A fresh native package CI build must pass before this
+  checkpoint is merged and the generated release-path package is classified as
+  verified.
+- **Still blocked:** Production Microsoft driver signing, disposable elevated-host
+  install/load/unload/rollback evidence, authenticated driver IPC, and genuine
+  pre-execution blocking remain unavailable and must not be claimed.

@@ -14093,6 +14093,12 @@ def test_driver_installer_does_not_silently_enable_testsigning():
         start,
     )
     generated_script = installer[start:end]
+    assert "[switch]$ConfirmDriverInstall" in installer
+    assert "Explicit -ConfirmDriverInstall is required" in installer
+    assert (
+        '. (Join-Path $PSScriptRoot "..\\security\\avorax-security-gate-tools.ps1")'
+        in installer
+    )
     assert "bcdedit.exe /set testsigning on" not in generated_script
     assert "testsigning_required" in generated_script
     assert "Avorax will not enable TESTSIGNING silently" in generated_script
@@ -14110,6 +14116,27 @@ def test_driver_installer_does_not_silently_enable_testsigning():
     assert "& $fltmc load ZentorAvFilter" not in generated_script
     assert "Write-TextFileAtomic $driverInstallScript" in installer
     assert "Set-Content -LiteralPath $driverInstallScript" not in installer
+
+
+def test_windows_installer_never_activates_or_trusts_driver_implicitly():
+    installer = read(INSTALLER)
+    confirmation = installer.index("if (-not $ConfirmDriverInstall)")
+    driver_start = installer.index(
+        "$errors = New-Object System.Collections.Generic.List[string]"
+    )
+    driver_end = installer.index("Write-JsonReport ([ordered]@{", driver_start)
+    driver_source = installer[driver_start:driver_end]
+
+    assert "InstallAvoraxMinifilterDriver" not in installer
+    assert "$driverCustomActionXml" not in installer
+    assert "pending_msi_custom_action" not in installer
+    assert "not_activated_requires_explicit_confirmed_workflow" in installer
+    assert "certificate_trust_store_modified = $false" in installer
+    assert "certutil.exe" not in driver_source
+    assert '"-addstore"' not in driver_source
+    assert '"TrustedPublisher"' not in driver_source
+    assert confirmation < installer.index('Get-SystemTool "pnputil.exe"')
+    assert confirmation < installer.index("avorax-security-gate-tools.ps1", confirmation)
 
 
 def test_live_driver_remediation_system32_root_is_checked():
@@ -18519,19 +18546,13 @@ def test_build_msi_json_reads_use_shared_bounded_handle_reader():
 
 def test_build_msi_driver_install_commands_use_bounded_diagnostics():
     source = read(INSTALLER)
-    driver_start = source.index('$certutil = Get-SystemTool "certutil.exe"')
+    driver_start = source.index('$bcdedit = Get-SystemTool "bcdedit.exe"')
     driver_end = source.index("Write-JsonReport ([ordered]@{", driver_start)
     driver_source = source[driver_start:driver_end]
 
     assert 'tools\\windows\\avorax-system32-tools.ps1' in source
-    assert (
-        'Invoke-AvoraxCommandDiagnostic $certutil @("-addstore", "-f", "Root", $certPath) "certutil -addstore Root" 4096'
-        in driver_source
-    )
-    assert (
-        'Invoke-AvoraxCommandDiagnostic $certutil @("-addstore", "-f", "TrustedPublisher", $certPath) "certutil -addstore TrustedPublisher" 4096'
-        in driver_source
-    )
+    assert "certutil.exe" not in driver_source
+    assert '"-addstore"' not in driver_source
     assert 'Invoke-AvoraxCommandDiagnostic $bcdedit @("/enum") "bcdedit /enum" 32768' in driver_source
     assert (
         'Invoke-AvoraxCommandDiagnostic $pnputil @("/add-driver", $driverInfPath, "/install") "pnputil /add-driver ZentorAvFilter" 4096'
@@ -18543,8 +18564,6 @@ def test_build_msi_driver_install_commands_use_bounded_diagnostics():
     )
     assert 'Invoke-AvoraxCommandDiagnostic $fltmc @("load", "ZentorAvFilter") "fltmc load ZentorAvFilter" 4096' in driver_source
     assert 'Invoke-AvoraxCommandDiagnostic $fltmc @("filters") "fltmc filters" 4096' in driver_source
-    assert "$certRootOutput = &" not in driver_source
-    assert "$certPublisherOutput = &" not in driver_source
     assert "$bcdeditOutput = &" not in driver_source
     assert "$driverInstallOutput = &" not in driver_source
     assert "$serviceConfigOutput = &" not in driver_source

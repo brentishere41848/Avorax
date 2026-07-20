@@ -95,7 +95,21 @@ The stage test fails if the app, service executables, installed `engine\` packs,
 
 The Guard Service is not a kernel driver and does not provide true pre-execution blocking by itself. It monitors process starts and can stop/quarantine confirmed threats after launch when the user enables that protection mode. High-confidence non-confirmed detections remain review-only. True pre-execution blocking still requires the Windows driver validation workflow.
 
-The MSI packages driver tooling and validation scripts, but it does not silently install unsigned or test-signed drivers and does not silently enable Windows TESTSIGNING. Driver activation must go through the documented driver workflow and self-test.
+The MSI packages driver tooling and, when explicitly built for driver
+validation, may package a candidate driver. The MSI/EXE never installs or loads
+that driver, never imports a bundled certificate into a Windows trust store,
+and never enables Windows TESTSIGNING. Driver activation is a separate elevated
+workflow that requires an explicit confirmation switch:
+
+```powershell
+# Disposable driver-validation VM only, after signature/trust review.
+powershell -ExecutionPolicy Bypass -File "C:\Program Files\Avorax\tools\windows\avorax-install-driver.ps1" -ConfirmDriverInstall
+```
+
+The helper asks Windows to validate the driver package. A development/test
+certificate, when present as package evidence, is not trusted automatically.
+Provisioning test trust and TESTSIGNING remains a separate, visible lab-host
+operation; production systems require a properly signed driver package.
 
 Set `AVORAX_GUARD_MODE` or `AVORAX_PROTECTION_MODE` to `blockConfirmedThreats`, `monitorOnly`, `disabled`, `balanced`, `lockdown`, or `developerMode` before starting the service to control post-launch behavior. If no mode is configured, the service defaults to blocking confirmed threats only.
 

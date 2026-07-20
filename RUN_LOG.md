@@ -13,6 +13,14 @@ Lead-engineer product-hardening pass across the Avorax repository. Goal is to mo
 - The bundled native ML model is treated as development-only unless release metadata and gates prove production readiness.
 - MSI/EXE installers are first-install/repair/recovery/offline paths. Normal in-app updates should use verified `.aup` packages.
 
+## 2026-07-20 continuation checkpoint 2178
+
+- Removed the deferred elevated driver custom action from `installer\windows\build-msi.ps1`. Candidate minifilter files are now inert package content during ordinary MSI/EXE installation, and install evidence records that driver activation was not performed.
+- The separate generated driver helper now requires `-ConfirmDriverInstall` before any administrative command is resolved or invoked. It no longer calls `certutil -addstore`, never imports the bundled development certificate into `Root` or `TrustedPublisher`, and still refuses to enable TESTSIGNING. The shared bounded command-diagnostic helper is explicitly loaded in the generated process.
+- Added a read-only MSI database gate to `tools\packaging\verify-windows-msi.ps1`. The verifier rejects any package containing a `CustomAction` table before administrative extraction or packaged-core execution.
+- Local verification passed: the generated helper parsed and failed closed without confirmation (`exit 1`, no management command reached); dependency-free source contracts passed `616`; packaging tests passed `22` with `3` expected Windows symlink skips; product-copy and no-malware-binaries gates passed. An actual Avorax MSI passed the new database and harmless lifecycle verification with `283` files and `79,136,091` payload bytes, while a read-only check of `C:\Windows\Installer\2c93bd29.msi` proved the negative gate rejects a real MSI containing a `CustomAction` table before extraction.
+- Fresh native package CI is still required before merge. Production driver signing, disposable elevated-host install/load/unload/rollback, authenticated driver IPC, and genuine pre-execution blocking remain blocked and are not claimed.
+
 ## 2026-07-10 continuation checkpoint 2154
 
 - Added a prominent English beta safety disclaimer to `README.md` and `docs\portable-beta.md`, and added publishable release notes at `docs\releases\avorax-portable-beta-0.1.0-beta.1.md`. The copy explicitly says the portable beta may miss advanced, novel, targeted, polymorphic, fileless, kernel-level, and large-scale threats; Defender or another supported antivirus must remain enabled.

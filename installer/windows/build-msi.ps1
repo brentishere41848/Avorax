@@ -844,9 +844,15 @@ New-SafeDirectory (Split-Path $driverInstallScript) "driver install helper direc
 @'
 param(
   [string]$DriverInf,
-  [string]$ReportPath
+  [string]$ReportPath,
+  [switch]$ConfirmDriverInstall
 )
 $ErrorActionPreference = "Stop"
+
+if (-not $ConfirmDriverInstall) {
+  throw "Explicit -ConfirmDriverInstall is required. Avorax never installs or loads a kernel driver as part of the normal MSI/EXE flow."
+}
+. (Join-Path $PSScriptRoot "..\security\avorax-security-gate-tools.ps1")
 
 function Test-LocalWindowsPath([string]$Path) {
   $normalized = $Path -replace '/', '\'
@@ -1073,10 +1079,9 @@ $filterLoadError = $null
 $filterQueryError = $null
 $driverInstallError = $null
 $serviceConfigError = $null
-$certificateImportErrors = New-Object System.Collections.Generic.List[string]
+$bundledCertificatePresent = $false
 try {
   $driverInfPath = Get-SafeFile $DriverInf "driver INF"
-  $certutil = Get-SystemTool "certutil.exe"
   $bcdedit = Get-SystemTool "bcdedit.exe"
   $pnputil = Get-SystemTool "pnputil.exe"
   $sc = Get-SystemTool "sc.exe"
@@ -1084,23 +1089,8 @@ try {
   $driverDir = Split-Path $driverInfPath
   $certPath = Join-Path $driverDir "ZentorAvFilter.cer"
   if (Test-Path -LiteralPath $certPath) {
-    $certPath = Get-SafeFile $certPath "driver test certificate"
-    $certRootDiagnostic = Invoke-AvoraxCommandDiagnostic $certutil @("-addstore", "-f", "Root", $certPath) "certutil -addstore Root" 4096
-    $certRootExitCode = $certRootDiagnostic.exit_code
-    if ($certRootExitCode -ne 0) {
-      $certRootText = $certRootDiagnostic.output
-      $certRootError = Get-BoundedDiagnostic "certutil Root import failed with exit code $certRootExitCode`: $certRootText"
-      $certificateImportErrors.Add($certRootError)
-      $errors.Add($certRootError)
-    }
-    $certPublisherDiagnostic = Invoke-AvoraxCommandDiagnostic $certutil @("-addstore", "-f", "TrustedPublisher", $certPath) "certutil -addstore TrustedPublisher" 4096
-    $certPublisherExitCode = $certPublisherDiagnostic.exit_code
-    if ($certPublisherExitCode -ne 0) {
-      $certPublisherText = $certPublisherDiagnostic.output
-      $certPublisherError = Get-BoundedDiagnostic "certutil TrustedPublisher import failed with exit code $certPublisherExitCode`: $certPublisherText"
-      $certificateImportErrors.Add($certPublisherError)
-      $errors.Add($certPublisherError)
-    }
+    [void](Get-SafeFile $certPath "bundled driver certificate evidence")
+    $bundledCertificatePresent = $true
   }
   $bcdeditDiagnostic = Invoke-AvoraxCommandDiagnostic $bcdedit @("/enum") "bcdedit /enum" 32768
   $bcdeditExitCode = $bcdeditDiagnostic.exit_code
@@ -1158,7 +1148,9 @@ try {
     filter_query_error = $filterQueryError
     driver_install_error = $driverInstallError
     service_config_error = $serviceConfigError
-    certificate_import_errors = @($certificateImportErrors)
+    explicit_install_confirmation = [bool]$ConfirmDriverInstall
+    bundled_certificate_present = [bool]$bundledCertificatePresent
+    certificate_trust_store_modified = $false
     errors = @($errors)
   })
 } catch {
@@ -1175,7 +1167,9 @@ try {
     filter_query_error = $filterQueryError
     driver_install_error = $driverInstallError
     service_config_error = $serviceConfigError
-    certificate_import_errors = @($certificateImportErrors)
+    explicit_install_confirmation = [bool]$ConfirmDriverInstall
+    bundled_certificate_present = [bool]$bundledCertificatePresent
+    certificate_trust_store_modified = $false
     errors = @($errors)
   })
   throw
@@ -1303,7 +1297,7 @@ $manifest = [ordered]@{
     guard_service = "installed and started by MSI"
     update_service = "installed by MSI as manual-demand updater"
   }
-  driver_status = if ($driverPackageIncluded) { "signed driver package is included and installer will install/load ZentorAvFilter" } else { "driver package not included; build with -RequireDriverPackage for release builds" }
+  driver_status = if ($driverPackageIncluded) { "candidate driver package is included but never activated by MSI; explicit elevated validation and installation are required" } else { "driver package not included; build with -RequireDriverPackage only for explicit driver-validation packages" }
 }
 $manifestPath = Join-Path $stageDir "install-manifest.json"
 Write-JsonFileAtomic $manifestPath $manifest 8 "installer payload manifest"
@@ -1353,7 +1347,7 @@ foreach ($requiredPayload in @(
   @("driver-tools\zentor_windows_minifilter\scripts\run-driver-self-test.ps1", "minifilter driver self-test"),
   @("driver-tools\zentor_windows_process_guard\scripts\run-process-guard-self-test.ps1", "process guard self-test"),
   @("tools\windows\zentor-protection-selftest.ps1", "protection self-test"),
-  @("tools\windows\avorax-install-driver.ps1", "driver install custom action script"),
+  @("tools\windows\avorax-install-driver.ps1", "explicit driver installation helper"),
   @("tools\windows\zentor-release-gate.ps1", "Windows release gate"),
   @("tools\windows\avorax-installed-smoke-test.ps1", "installed smoke test"),
   @("tools\windows\avorax-installer-stage-test.ps1", "installer stage test"),
@@ -1461,7 +1455,7 @@ $installReport = [ordered]@{
   trust_pack_present = Test-SafeFile (Join-Path $stageEngineDir "trust\avorax_known_good.atrust") "staged installed trust pack"
   engine_self_test_result = "pending_post_install_validation"
   driver_package_included = $driverPackageIncluded
-  driver_install_result = if ($driverPackageIncluded) { "pending_msi_custom_action" } else { "not_included" }
+  driver_install_result = if ($driverPackageIncluded) { "not_activated_requires_explicit_confirmed_workflow" } else { "not_included" }
   errors = @()
 }
 Write-JsonFileAtomic $installReportSource $installReport 6 "installer report template"
@@ -1511,16 +1505,6 @@ foreach ($dir in $updateDataSubdirs) {
 }
 
 
-$driverCustomActionXml = ""
-if ($driverPackageIncluded) {
-  $driverCustomActionXml = @'
-    <CustomAction Id="InstallAvoraxMinifilterDriver" Directory="INSTALLFOLDER" Execute="deferred" Impersonate="no" ExeCommand="&quot;[SystemFolder]WindowsPowerShell\v1.0\powershell.exe&quot; -NoProfile -ExecutionPolicy Bypass -File &quot;[INSTALLFOLDER]tools\windows\avorax-install-driver.ps1&quot;" Return="check" />
-    <InstallExecuteSequence>
-      <Custom Action="InstallAvoraxMinifilterDriver" After="InstallFiles" Condition="NOT Installed" />
-    </InstallExecuteSequence>
-'@
-}
-
 $upgradeCode = "35E0D125-9699-4CFB-8E93-588D0E83F517"
 $majorUpgradeXml = '    <MajorUpgrade DowngradeErrorMessage="A newer version of Avorax is already installed." />'
 if ($RecoveryInstall) {
@@ -1553,7 +1537,6 @@ $programDataXml
 
 $directoryXml
 $componentsXml
-$driverCustomActionXml
     <DirectoryRef Id="ApplicationProgramsFolder">
       <Component Id="StartMenuShortcut" Guid="*">
         <Shortcut Id="ZentorStartMenuShortcut" Name="Avorax Anti-Virus" Target="[INSTALLFOLDER]Avorax.exe" WorkingDirectory="INSTALLFOLDER" />

@@ -111,6 +111,42 @@ function Get-InstallerFailureDiagnostic {
   return Get-AvoraxGateBoundedDiagnostic (($matches | ForEach-Object Line) -join " ") 2048
 }
 
+function Assert-NoMsiCustomActionTable {
+  param([string]$Path)
+
+  $installer = $null
+  $database = $null
+  $view = $null
+  $record = $null
+  try {
+    $installer = New-Object -ComObject WindowsInstaller.Installer
+    $database = $installer.GetType().InvokeMember(
+      "OpenDatabase",
+      "InvokeMethod",
+      $null,
+      $installer,
+      @($Path, 0)
+    )
+    $view = $database.OpenView(
+      "SELECT ``Name`` FROM ``_Tables`` WHERE ``Name`` = 'CustomAction'"
+    )
+    $view.Execute()
+    $record = $view.Fetch()
+    if ($null -ne $record) {
+      throw "MSI contains a CustomAction table. Avorax packages must keep driver activation and trust-store changes outside the normal MSI/EXE flow."
+    }
+  } catch {
+    $detail = Get-AvoraxGateBoundedDiagnostic $_.Exception.Message 2048
+    throw "MSI custom-action policy inspection failed: $detail"
+  } finally {
+    foreach ($comObject in @($record, $view, $database, $installer)) {
+      if ($null -ne $comObject -and [Runtime.InteropServices.Marshal]::IsComObject($comObject)) {
+        [void][Runtime.InteropServices.Marshal]::FinalReleaseComObject($comObject)
+      }
+    }
+  }
+}
+
 $repoRoot = Get-AvoraxGateDirectory (
   [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot "..\.."))
 ) "Avorax repository root"
@@ -123,6 +159,7 @@ if ($msiBytes -le 0 -or $msiBytes -gt $maxMsiBytes) {
   throw "MSI package size must be between 1 and $maxMsiBytes bytes: $msiBytes"
 }
 $msiSha256 = (Get-FileHash -LiteralPath $msi -Algorithm SHA256).Hash.ToLowerInvariant()
+Assert-NoMsiCustomActionTable $msi
 $python = Get-AvoraxRequiredTool ([System.IO.Path]::GetFullPath($PythonPath)) "Python interpreter"
 $smokeScript = Get-AvoraxGateFile (
   (Join-Path $repoRoot "tools\packaging\smoke_local_core.py")
@@ -264,6 +301,9 @@ $report = [ordered]@{
     file = Split-Path $msi -Leaf
     bytes = [int64]$msiBytes
     sha256 = $msiSha256
+    custom_action_table_present = $false
+    implicit_driver_activation_allowed = $false
+    implicit_trust_store_changes_allowed = $false
   }
   administrative_extraction = [ordered]@{
     msiexec_exit_code = [int]$msiexecResult.exit_code
