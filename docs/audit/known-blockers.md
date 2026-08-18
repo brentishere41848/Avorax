@@ -1018,7 +1018,8 @@ enforcement, or pre-execution blocking is claimed.
 - **Verified locally:** The `.tmpupTeBo`/`pup` regression and formerly failing
   legacy Office macro test pass. Native Engine passes `434 + 6`, Local Core
   passes `506`, and rustfmt/clippy pass for both affected crates.
-- **Evidence pending:** Fresh GitHub head CI must pass after this fix. Run
-  `29766224417` remains a documented failure, not fake success.
+- **Verified in CI:** Avorax CI run `29767214563` and Desktop Packages push/PR
+  runs `29767211055` and `29767214589` pass on the final head. PR `#30` merged
+  as `f28cad2`. Failed run `29766224417` remains documented, not fake success.
 - **Technically limited:** No production false-positive/false-negative rate or
   live-malware claim follows from benign fixtures and deterministic unit tests.
