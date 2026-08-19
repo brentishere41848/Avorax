@@ -1023,3 +1023,31 @@ enforcement, or pre-execution blocking is claimed.
   as `f28cad2`. Failed run `29766224417` remains documented, not fake success.
 - **Technically limited:** No production false-positive/false-negative rate or
   live-malware claim follows from benign fixtures and deterministic unit tests.
+
+## Checkpoint 2180 Project Readiness And Dependency Evidence
+
+- **Resolved locally:** Dependency package/integrity counts are stable across LF
+  and CRLF input, use a finite regex timeout, and fail closed on missing or zero
+  summaries. The prior Python lockfile `0/0` false evidence state is rejected.
+- **Verified locally:** PowerShell parsing, direct LF/CRLF runtime checks,
+  dependency evidence, `617` source contracts, and the full small-threat suite
+  (`217/217` in `961.5s`) pass, including the final report validator. The full
+  Rust workspace passes `1,408` tests and the full Flutter suite passes `838`.
+- **Resolved locally:** Native Authenticode evidence no longer inherits ambient
+  PowerShell module discovery. The checked WindowsPowerShell child imports the
+  checked built-in Security manifest through a child-only module root and
+  module-qualified cmdlets. Four focused probes pass normally and with an
+  intentionally invalid parent `PSModulePath`.
+- **Partial:** Packaged desktop click-through, installed Core/Guard service and
+  authenticated mutation IPC, installed quarantine ACL/DPAPI behavior, installed
+  update/rollback, OS picker/export dialogs, and persistent monitoring E2E still
+  require a disposable elevated release-style Windows host.
+- **Blocked:** Production Windows code/driver signing, signed driver lifecycle
+  and pre-execution proof, production update-key custody, and final-artifact
+  release signing cannot be completed safely in this unprivileged checkout.
+- **Technically limited:** No live-malware corpus, production detection-rate,
+  kernel realtime, secure-erase, background scheduler, or Defender-replacement
+  claim is made. Development ML and cloud reputation are not production engines.
+- **Release prerequisite:** A full SBOM from exact final artifacts plus complete
+  license/copyright review remains required; source-level CycloneDX inventory is
+  intentionally incomplete.

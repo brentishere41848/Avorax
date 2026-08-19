@@ -15,6 +15,7 @@ const MAX_AUTHENTICODE_SUBJECT_BYTES: usize = 2048;
 const MAX_AUTHENTICODE_DIAGNOSTIC_BYTES: usize = 4096;
 const AUTHENTICODE_COMMAND_TIMEOUT: Duration = Duration::from_secs(30);
 const AUTHENTICODE_TARGET_PATH_ENV: &str = "AVORAX_AUTHENTICODE_TARGET_PATH";
+const AUTHENTICODE_MODULE_PATH_ENV: &str = "AVORAX_AUTHENTICODE_MODULE_PATH";
 
 pub fn is_windows_system_path(path: &Path) -> Result<bool> {
     Ok(windows_system_path_roots()?
@@ -107,6 +108,7 @@ pub fn microsoft_signature_verdict(path: &Path) -> Result<bool> {
         return Ok(false);
     }
     let powershell = windows_powershell_tool()?;
+    let (security_module, module_root) = windows_powershell_security_module(&powershell)?;
     let script = authenticode_probe_script();
     let encoded_script = powershell_encoded_command(&script);
     let mut command = Command::new(&powershell);
@@ -119,7 +121,9 @@ pub fn microsoft_signature_verdict(path: &Path) -> Result<bool> {
             "-EncodedCommand",
             &encoded_script,
         ])
-        .env(AUTHENTICODE_TARGET_PATH_ENV, path.as_os_str());
+        .env(AUTHENTICODE_TARGET_PATH_ENV, path.as_os_str())
+        .env(AUTHENTICODE_MODULE_PATH_ENV, security_module.as_os_str())
+        .env("PSModulePath", module_root.as_os_str());
     let label = format!("Authenticode signature inspection for {}", path.display());
     let output = run_authenticode_command(&mut command, &label)?;
     if !output.status.success() {
@@ -137,7 +141,7 @@ pub fn microsoft_signature_verdict(path: &Path) -> Result<bool> {
 
 fn authenticode_probe_script() -> String {
     format!(
-        "$target = [Environment]::GetEnvironmentVariable('{AUTHENTICODE_TARGET_PATH_ENV}', 'Process'); if ([string]::IsNullOrEmpty($target)) {{ throw 'missing Authenticode target path' }}; Get-AuthenticodeSignature -LiteralPath $target | ConvertTo-Json -Compress"
+        "$module = [Environment]::GetEnvironmentVariable('{AUTHENTICODE_MODULE_PATH_ENV}', 'Process'); if ([string]::IsNullOrEmpty($module)) {{ throw 'missing Authenticode module path' }}; Import-Module -Name $module -Force -ErrorAction Stop; $target = [Environment]::GetEnvironmentVariable('{AUTHENTICODE_TARGET_PATH_ENV}', 'Process'); if ([string]::IsNullOrEmpty($target)) {{ throw 'missing Authenticode target path' }}; Microsoft.PowerShell.Security\\Get-AuthenticodeSignature -LiteralPath $target | Microsoft.PowerShell.Utility\\ConvertTo-Json -Compress"
     )
 }
 
@@ -357,9 +361,59 @@ fn windows_powershell_tool() -> Result<PathBuf> {
     Ok(candidate)
 }
 
+#[cfg(windows)]
+fn windows_powershell_security_module(powershell: &Path) -> Result<(PathBuf, PathBuf)> {
+    let version_root = powershell
+        .parent()
+        .context("WindowsPowerShell executable is missing its version directory")?;
+    let module_root = version_root.join("Modules");
+    let module_dir = module_root.join("Microsoft.PowerShell.Security");
+    for (description, directory) in [
+        ("WindowsPowerShell module root", &module_root),
+        ("WindowsPowerShell Security module directory", &module_dir),
+    ] {
+        let metadata = fs::symlink_metadata(directory)
+            .with_context(|| format!("unable to inspect {description} {}", directory.display()))?;
+        anyhow::ensure!(
+            metadata.file_type().is_dir(),
+            "{description} {} is not a directory",
+            directory.display()
+        );
+        anyhow::ensure!(
+            !metadata.file_type().is_symlink() && !is_windows_reparse_point(&metadata),
+            "refusing to use linked or reparse-point {description} {}",
+            directory.display()
+        );
+    }
+
+    let manifest = module_dir.join("Microsoft.PowerShell.Security.psd1");
+    let metadata = fs::symlink_metadata(&manifest).with_context(|| {
+        format!(
+            "unable to inspect WindowsPowerShell Security module manifest {}",
+            manifest.display()
+        )
+    })?;
+    anyhow::ensure!(
+        metadata.file_type().is_file(),
+        "WindowsPowerShell Security module manifest {} is not a regular file",
+        manifest.display()
+    );
+    anyhow::ensure!(
+        !metadata.file_type().is_symlink() && !is_windows_reparse_point(&metadata),
+        "refusing to import linked or reparse-point WindowsPowerShell Security module manifest {}",
+        manifest.display()
+    );
+    Ok((manifest, module_root))
+}
+
 #[cfg(not(windows))]
 fn windows_powershell_tool() -> Result<PathBuf> {
     anyhow::bail!("WindowsPowerShell is unavailable on this platform")
+}
+
+#[cfg(not(windows))]
+fn windows_powershell_security_module(_powershell: &Path) -> Result<(PathBuf, PathBuf)> {
+    anyhow::bail!("WindowsPowerShell Security module is unavailable on this platform")
 }
 
 #[cfg(windows)]
@@ -710,6 +764,7 @@ mod tests {
         assert!(verdict_source.contains("Authenticode signature inspection failed"));
         assert!(verdict_source.contains("parse_authenticode_json(&output.stdout)?"));
         assert!(verdict_source.contains("windows_powershell_tool()?"));
+        assert!(verdict_source.contains("windows_powershell_security_module(&powershell)?"));
         assert!(verdict_source.contains("authenticode_probe_script()"));
         assert!(verdict_source.contains("powershell_encoded_command(&script)"));
         assert!(verdict_source.contains("Command::new(&powershell)"));
@@ -717,9 +772,19 @@ mod tests {
         assert!(verdict_source.contains("\"-EncodedCommand\""));
         assert!(verdict_source.contains("AUTHENTICODE_TARGET_PATH_ENV"));
         assert!(verdict_source.contains(".env(AUTHENTICODE_TARGET_PATH_ENV, path.as_os_str())"));
+        assert!(verdict_source.contains("AUTHENTICODE_MODULE_PATH_ENV"));
+        assert!(verdict_source
+            .contains(".env(AUTHENTICODE_MODULE_PATH_ENV, security_module.as_os_str())"));
+        assert!(verdict_source.contains(".env(\"PSModulePath\", module_root.as_os_str())"));
         assert!(verdict_source.contains("fn authenticode_probe_script() -> String"));
         assert!(verdict_source.contains("GetEnvironmentVariable"));
-        assert!(verdict_source.contains("Get-AuthenticodeSignature -LiteralPath $target"));
+        assert!(verdict_source.contains("Import-Module -Name $module -Force -ErrorAction Stop"));
+        assert!(verdict_source.contains(
+            "Microsoft.PowerShell.Security\\\\Get-AuthenticodeSignature -LiteralPath $target"
+        ));
+        assert!(verdict_source.contains("Microsoft.PowerShell.Utility\\\\ConvertTo-Json -Compress"));
+        assert!(verdict_source.contains("Microsoft.PowerShell.Security.psd1"));
+        assert!(verdict_source.contains("fs::symlink_metadata(directory)"));
         assert!(verdict_source.contains("let system_root = native_windows_system_root()?;"));
         assert!(verdict_source.contains("fn native_windows_system_root() -> Result<PathBuf>"));
         assert!(verdict_source.contains("normalize_native_windows_system_root_text(&text)"));

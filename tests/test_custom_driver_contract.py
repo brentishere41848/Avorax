@@ -470,6 +470,7 @@ WINDOWS_FIX_DRIVER_LIVE = ROOT / "tools" / "windows" / "avorax-fix-driver-live.p
 WINDOWS_PROTECTION_SELFTEST = ROOT / "tools" / "windows" / "zentor-protection-selftest.ps1"
 PRODUCT_COPY_GATE = ROOT / "tools" / "security" / "zentor-product-copy-gate.ps1"
 DEPENDENCY_EVIDENCE = ROOT / "tools" / "security" / "avorax-dependency-evidence.ps1"
+DEPENDENCY_LICENSE_INVENTORY = ROOT / "docs" / "dependency-license-inventory.md"
 VERIFY_NO_MALWARE_BINARIES = ROOT / "tools" / "zentor_intel" / "verify_no_malware_binaries.py"
 NO_MALWARE_POWERSHELL_GATE = ROOT / "tools" / "security" / "zentor-no-malware-binaries-gate.ps1"
 NO_MALWARE_SHELL_GATE = ROOT / "tools" / "security" / "zentor-no-malware-binaries-gate.sh"
@@ -23288,6 +23289,36 @@ def test_release_source_text_scans_use_shared_bounded_handle_reader():
     assert "Get-Content -Raw -LiteralPath $wxs.FullName" not in wxs_source
 
 
+def test_dependency_lockfile_counts_are_line_ending_stable_and_fail_closed():
+    helper = read(SECURITY_GATE_TOOLS)
+    dependency = read(DEPENDENCY_EVIDENCE)
+    inventory = read(DEPENDENCY_LICENSE_INVENTORY)
+    validator = read(SMALL_THREAT_MVP_REPORT_VALIDATOR)
+    workflow = read(CI_WORKFLOW)
+
+    assert "function Get-AvoraxGateRegexMatchCount" in helper
+    assert '$Text.Replace("`r`n", "`n").Replace("`r", "`n")' in helper
+    assert "[TimeSpan]::FromSeconds(2)" in helper
+    assert "RegexMatchTimeoutException" in helper
+    assert "function Count-RegexMatches" not in dependency
+    assert "function Count-RegexMatches" not in validator
+    assert "Get-AvoraxGateRegexMatchCount $text $PackagePattern" in dependency
+    assert "Get-AvoraxGateRegexMatchCount $text $Expected.package_pattern" in validator
+    assert '$summaryFailures = @(' in dependency
+    assert "Lockfile summary package count must be positive:" in dependency
+    assert "Lockfile summary integrity count must be positive:" in dependency
+    assert "$releaseBlockers += $summaryFailures" in dependency
+    assert "A full SBOM generated from the exact final artifacts" in inventory
+    assert "required on the provisioned release host" in inventory
+    assert "cannot satisfy that gate by itself" in inventory
+    assert "- name: Dependency evidence gate" in workflow
+    assert (
+        ".\\tools\\security\\avorax-dependency-evidence.ps1 -RepoRoot . "
+        "-ReportPath .\\.workflow\\ultracode\\avorax-hardening\\results\\ci-dependency-evidence.json"
+        in workflow
+    )
+
+
 def test_branding_gate_ripgrep_uses_shared_bounded_command_runner():
     source = read(BRANDING_CHECK)
     invoke_start = source.index("function Invoke-RipgrepSearch")
@@ -23840,6 +23871,10 @@ def test_native_authenticode_probe_uses_bounded_command_runner():
         in production
     )
     assert (
+        'const AUTHENTICODE_MODULE_PATH_ENV: &str = "AVORAX_AUTHENTICODE_MODULE_PATH"'
+        in production
+    )
+    assert (
         "authenticode_probe_accepts_unsigned_file_without_encoded_command_argument_error"
         in source
     )
@@ -23850,9 +23885,18 @@ def test_native_authenticode_probe_uses_bounded_command_runner():
     assert "let powershell = windows_powershell_tool().unwrap();" in source
     assert "fn authenticode_probe_script() -> String" in verdict
     assert "GetEnvironmentVariable" in verdict
-    assert "Get-AuthenticodeSignature -LiteralPath $target" in verdict
+    assert "windows_powershell_security_module(&powershell)?" in verdict
+    assert "Import-Module -Name $module -Force -ErrorAction Stop" in verdict
+    assert r"Microsoft.PowerShell.Security\\Get-AuthenticodeSignature -LiteralPath $target" in verdict
+    assert r"Microsoft.PowerShell.Utility\\ConvertTo-Json -Compress" in verdict
     assert "run_authenticode_command(&mut command, &label)?" in verdict
     assert ".env(AUTHENTICODE_TARGET_PATH_ENV, path.as_os_str())" in verdict
+    assert ".env(AUTHENTICODE_MODULE_PATH_ENV, security_module.as_os_str())" in verdict
+    assert '.env("PSModulePath", module_root.as_os_str())' in verdict
+    assert 'module_root.join("Microsoft.PowerShell.Security")' in production
+    assert 'module_dir.join("Microsoft.PowerShell.Security.psd1")' in production
+    assert "fs::symlink_metadata(directory)" in production
+    assert "fs::symlink_metadata(&manifest)" in production
     assert ".arg(path.as_os_str())" not in verdict
     assert "authenticode_command_diagnostic(&output.stderr, &output.stdout)" in verdict
     assert "parse_authenticode_json(&output.stdout)?" in verdict

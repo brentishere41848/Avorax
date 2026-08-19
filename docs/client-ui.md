@@ -177,3 +177,17 @@ fake scan results. Empty states are explicit:
 The Home headline, hero copy, real-time protection metric, Protection explanation, Settings Antivirus row, and Protection primary action label must not report or imply `Protected` unless engine evidence is also ready. If the malware engine is checking, unavailable, outdated, or errored, or if the native engine is not ready, the UI shows attention-needed/action-required status and explanation rather than a protected headline, ready-assets copy, enabled metric, or local-only reassurance even when protection settings are enabled. The Protection explanation, Settings Antivirus row, and controller `ProtectionStatus.protected` transition use the same combined malware/native engine evidence gate before ready-assets or protected-state copy. Partial protection must remain visibly limited or labeled as driver self-test required instead of disabled or fully enabled.
 
 Device protection must not depend on any unrelated product mode.
+
+## Checkpoint 2180 Verification Refresh
+
+The inventory currently contains 11 routes and 65 documented control/setting
+rows. `tools/testing/validate-client-ui-inventory.py` source-gates 61 high-risk
+controls, all 9 desktop destinations, and the 4 primary mobile shortcuts. The
+checkpoint 2180 full verifier passed `217/217` steps in `961.5s`, and the full
+Flutter suite passed `838/838`, including UI
+inventory, route/navigation, no-fake-control, quick/full/custom scan, progress,
+cancel, quarantine, allowlist, update, logs/export, scheduling, concurrency,
+configuration, and analyzer tests. This refresh does not convert packaged
+desktop click-through, OS picker/elevation dialogs, Windows notifications,
+installed service mutation, or signed-driver behavior from partial/blocked to
+verified.

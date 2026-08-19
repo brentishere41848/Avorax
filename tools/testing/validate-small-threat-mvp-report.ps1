@@ -716,19 +716,6 @@ function Assert-DependencyLockfileCheck {
   }
 }
 
-function Count-RegexMatches {
-  param(
-    [string]$Text,
-    [string]$Pattern
-  )
-
-  [System.Text.RegularExpressions.Regex]::Matches(
-    $Text,
-    $Pattern,
-    [System.Text.RegularExpressions.RegexOptions]::Multiline
-  ).Count
-}
-
 function Assert-DependencyLockfileSummary {
   param(
     [object]$Summary,
@@ -758,8 +745,8 @@ function Assert-DependencyLockfileSummary {
   $lockfileFull = Assert-SmallThreatMvpRepoChildPath ([System.IO.Path]::GetFullPath((Join-Path $RepositoryRoot $lockfile))) $RepositoryRoot "$description lockfile"
   Get-AvoraxGateFile $lockfileFull "$description lockfile" | Out-Null
   $text = Read-AvoraxGateTextFileBounded $lockfileFull $maxReportBytes "$description lockfile"
-  $expectedPackageCount = Count-RegexMatches $text $Expected.package_pattern
-  $expectedIntegrityCount = Count-RegexMatches $text $Expected.integrity_pattern
+  $expectedPackageCount = Get-AvoraxGateRegexMatchCount $text $Expected.package_pattern "$description package entries"
+  $expectedIntegrityCount = Get-AvoraxGateRegexMatchCount $text $Expected.integrity_pattern "$description integrity entries"
   if ($expectedPackageCount -le 0) {
     throw "$description current lockfile package count must be positive: $lockfile"
   }

@@ -163,19 +163,6 @@ function New-LockfileCheck {
     }
 }
 
-function Count-RegexMatches {
-    param(
-        [string]$Text,
-        [string]$Pattern
-    )
-
-    return [System.Text.RegularExpressions.Regex]::Matches(
-        $Text,
-        $Pattern,
-        [System.Text.RegularExpressions.RegexOptions]::Multiline
-    ).Count
-}
-
 function New-LockfileSummary {
     param(
         [string]$Ecosystem,
@@ -191,8 +178,8 @@ function New-LockfileSummary {
     $integrityCount = 0
     if ($present) {
         $text = Read-AvoraxGateTextFileBounded $fullPath $maxTextFileBytes "$Ecosystem lockfile $Lockfile"
-        $packageCount = Count-RegexMatches $text $PackagePattern
-        $integrityCount = Count-RegexMatches $text $IntegrityPattern
+        $packageCount = Get-AvoraxGateRegexMatchCount $text $PackagePattern "$Ecosystem lockfile $Lockfile package entries"
+        $integrityCount = Get-AvoraxGateRegexMatchCount $text $IntegrityPattern "$Ecosystem lockfile $Lockfile integrity entries"
     }
 
     [pscustomobject]@{
@@ -348,6 +335,20 @@ $failedRequirementChecks = @(
         Where-Object { -not $_.ok } |
         ForEach-Object { $_.name }
 )
+$summaryFailures = @(
+    foreach ($summary in $lockfileSummaries) {
+        if (-not $summary.present) {
+            "Lockfile summary source is missing: $($summary.lockfile)"
+        } else {
+            if ([int]$summary.package_count -le 0) {
+                "Lockfile summary package count must be positive: $($summary.lockfile)"
+            }
+            if ([int]$summary.integrity_entry_count -le 0) {
+                "Lockfile summary integrity count must be positive: $($summary.lockfile)"
+            }
+        }
+    }
+)
 $wrapperFailures = @()
 if (-not $gradleWrapperCheck.url_pinned) { $wrapperFailures += "Gradle wrapper URL is not pinned to 9.1.0-all" }
 if (-not $gradleWrapperCheck.sha256_pinned) { $wrapperFailures += "Gradle wrapper distributionSha256Sum is missing or unexpected" }
@@ -355,6 +356,7 @@ if (-not $gradleWrapperCheck.sha256_pinned) { $wrapperFailures += "Gradle wrappe
 $releaseBlockers = @()
 $releaseBlockers += $missingRequiredLocks
 $releaseBlockers += $failedRequirementChecks
+$releaseBlockers += $summaryFailures
 $releaseBlockers += $wrapperFailures
 
 $report = [pscustomobject]@{

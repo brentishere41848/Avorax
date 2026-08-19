@@ -327,6 +327,31 @@ function Read-AvoraxGateTextFileBounded([string]$Path, [int]$MaxBytes, [string]$
   }
 }
 
+function Get-AvoraxGateRegexMatchCount(
+  [AllowNull()][AllowEmptyString()][string]$Text,
+  [string]$Pattern,
+  [string]$Description
+) {
+  if ($null -eq $Text) {
+    throw "$Description input text is required."
+  }
+  if ([string]::IsNullOrWhiteSpace($Pattern)) {
+    throw "$Description regex pattern is required."
+  }
+
+  $normalizedText = $Text.Replace("`r`n", "`n").Replace("`r", "`n")
+  try {
+    return [System.Text.RegularExpressions.Regex]::Matches(
+      $normalizedText,
+      $Pattern,
+      [System.Text.RegularExpressions.RegexOptions]::Multiline,
+      [TimeSpan]::FromSeconds(2)
+    ).Count
+  } catch [System.Text.RegularExpressions.RegexMatchTimeoutException] {
+    throw "$Description regex matching exceeded the two-second limit."
+  }
+}
+
 function Write-AvoraxGateJsonFileAtomic([string]$Path, [object]$Value, [int]$Depth, [string]$Description) {
   Assert-AvoraxNoReparsePath $Path $Description
   $target = [System.IO.Path]::GetFullPath($Path)
