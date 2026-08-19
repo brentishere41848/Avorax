@@ -7,9 +7,30 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
 ## Current Commit
 
 - Current checkpoint commit: this working tree; run `git log -1 --oneline` after commit for the exact SHA.
-- Current public release tag: `v0.1.15-beta.3`, published as a prerelease on 2026-07-20 with independently verified checksums. Checkpoints 2178-2182 are source hardening and do not create a new release tag.
+- Current public release tag: `v0.1.15-beta.3`, published as a prerelease on 2026-07-20 with independently verified checksums. Checkpoints 2178-2184 are source hardening and do not create a new release tag.
 
-## Latest Checkpoint Evidence - 2026-08-19
+## Latest Checkpoint Evidence - 2026-08-20
+
+- Current Ultracode cross-platform quarantine permission pass: checkpoint 2184
+  replaces separate `icacls.exe`/environment-account paths with one shared
+  handle-based permission crate. Windows derives the process-token SID, verifies
+  exact owner/protected DACL and file identity, and denies only payload
+  execution; Unix verifies effective ownership, descriptor identity, and exact
+  `0700`/`0600` modes. Dedicated-leaf plus bounded vault-shape preflight prevents
+  arbitrary-root permission mutation, Local Core tests use a temporary
+  thread-local vault, and post-move finalization failures preserve the sole
+  opaque payload with a visible recovery path. Platform tests pass `6/6`,
+  focused Local Core quarantine `112/112`, focused Guard quarantine `47/47`,
+  complete Local Core `517/517`, complete Guard `223/223`, Rust workspace
+  `1,435/1,435`, source contracts `620/620`, strict affected-crate Clippy, Linux
+  platform Clippy, Guard Linux all-target compilation, formatting, dependency
+  evidence, and the central verifier/report-validator (`219/219`, no
+  failures/skips, `618.0s`) pass. The real ProgramData vault remained exactly
+  `16,072` files and `4,522,733` bytes; nothing was deleted. Evidence is recorded
+  in `docs/reports/checkpoint-2184-quarantine-permissions.md`. Hosted Linux/
+  package evidence and installed LocalSystem/DPAPI/ACL/service/UI E2E remain
+  pending; no encryption, secure-erase, kernel, pre-execution, or production
+  detection-rate claim is made.
 
 - Current deterministic risk-category pass: checkpoint 2179 fixes a real CI
   failure in run `29766224417`. A random `.tmpupTeBo` temp path placed the text

@@ -18,6 +18,7 @@ GUARD_MAIN = ROOT / "core" / "zentor_guard_service" / "src" / "main.rs"
 GUARD_SELF_TEST = ROOT / "core" / "zentor_guard_service" / "src" / "self_test.rs"
 GUARD_DRIVER_IPC = ROOT / "core" / "zentor_guard_service" / "src" / "driver_ipc.rs"
 GUARD_KNOWN_BAD_CACHE = ROOT / "core" / "zentor_guard_service" / "src" / "known_bad_cache.rs"
+PLATFORM_SECURITY = ROOT / "core" / "avorax_platform_security" / "src" / "lib.rs"
 LOCAL_CORE_MAIN = ROOT / "core" / "zentor_local_core" / "src" / "main.rs"
 LOCAL_CORE_SERVICE_IPC = (
     ROOT / "core" / "zentor_local_core" / "src" / "core_service_ipc.rs"
@@ -10432,30 +10433,30 @@ def test_guard_quarantine_expected_hash_is_validated_before_payload_work():
     assert "guard_quarantine_rejects_invalid_expected_hash_before_directory_work" in guard
 
 
-def test_guard_quarantine_finalization_failure_cleans_untracked_artifacts():
+def test_guard_quarantine_finalization_failure_preserves_payload_and_cleans_metadata():
     guard = read(GUARD_MAIN)
     quarantine_source = guard[
         guard.index("fn quarantine_file("):
         guard.index("fn reject_symlink_source")
     ]
     cleanup_source = guard[
-        guard.index("fn cleanup_untracked_guard_quarantine_artifacts"):
+        guard.index("fn cleanup_untracked_guard_quarantine_metadata_artifacts"):
         guard.index("fn copy_file_exclusive")
     ]
 
     assert "let finalize_result = (|| -> anyhow::Result<GuardQuarantineRecord>" in quarantine_source
-    assert "cleanup_untracked_guard_quarantine_artifacts(&id, &destination)" in quarantine_source
-    assert "after quarantine finalization failure" in quarantine_source
+    assert "cleanup_untracked_guard_quarantine_metadata_artifacts(&id)" in quarantine_source
+    assert "payload was not deleted and must be inspected" in quarantine_source
     assert "return Err(error)" in quarantine_source
     for label in [
-        '"untracked guard quarantine payload"',
         '"untracked guard quarantine metadata record"',
         '"untracked guard quarantine metadata temp record"',
         '"untracked guard quarantine metadata auth sidecar"',
         '"untracked guard quarantine metadata auth temp sidecar"',
     ]:
         assert label in cleanup_source
-    assert "failed to clean up one or more untracked guard quarantine artifacts" in cleanup_source
+    assert '"untracked guard quarantine payload"' not in cleanup_source
+    assert "failed to clean up one or more untracked guard quarantine metadata artifacts" in cleanup_source
     assert "checked_quarantine_record_path(id)" in cleanup_source
     assert (
         quarantine_source.index("fs::rename(path, &destination)")
@@ -10463,9 +10464,9 @@ def test_guard_quarantine_finalization_failure_cleans_untracked_artifacts():
     )
     assert (
         quarantine_source.index("write_quarantine_record(&record)?")
-        < quarantine_source.index("cleanup_untracked_guard_quarantine_artifacts")
+        < quarantine_source.index("cleanup_untracked_guard_quarantine_metadata_artifacts")
     )
-    assert "guard_quarantine_finalization_failures_clean_untracked_artifacts" in guard
+    assert "guard_quarantine_finalization_failures_preserve_payload_and_clean_metadata" in guard
 
 
 def test_native_engine_mutation_boundary_routes_quarantine_to_local_core():
@@ -10697,6 +10698,7 @@ def test_quarantine_copy_fallback_cleans_destination_on_verification_failure():
             "pub(crate) fn copy_then_remove_verified(",
             "fn copy_file_exclusive(source: &Path, destination: &Path)",
             "Result<String>",
+            "copy_file_exclusive(source, destination)?",
             "invalid copied native quarantine destination",
             "failed to verify copied native quarantine destination",
             "native_quarantine_copy_fallback_verification_failure_cleans_destination",
@@ -10706,6 +10708,7 @@ def test_quarantine_copy_fallback_cleans_destination_on_verification_failure():
             "fn copy_then_remove_verified",
             "fn ensure_quarantine_payload_destination_absent",
             "anyhow::Result<String>",
+            "copy_file_exclusive(source, destination)?",
             "invalid copied guard quarantine destination",
             "failed to verify copied guard quarantine destination",
             "guard_quarantine_copy_fallback_verification_failure_cleans_destination",
@@ -10715,13 +10718,23 @@ def test_quarantine_copy_fallback_cleans_destination_on_verification_failure():
             "fn copy_then_remove_verified",
             "fn ensure_quarantine_payload_destination_absent",
             "Result<String>",
+            "copy_file_exclusive(source, destination, ExclusiveCopySecurity::Quarantine)?",
             "invalid copied quarantine destination",
             "failed to verify copied quarantine destination",
             "copy_fallback_verification_failure_cleans_destination",
         ),
     ]
 
-    for source, start_marker, end_marker, result_type, cleanup_label, verify_error, rust_marker in cases:
+    for (
+        source,
+        start_marker,
+        end_marker,
+        result_type,
+        copy_marker,
+        cleanup_label,
+        verify_error,
+        rust_marker,
+    ) in cases:
         copy_source = source[source.index(start_marker): source.index(end_marker)]
         verification_source = copy_source[
             copy_source.index("let destination_hash = match"):
@@ -10733,7 +10746,7 @@ def test_quarantine_copy_fallback_cleans_destination_on_verification_failure():
         assert "after verification failure" in verification_source
         assert verify_error in verification_source
         assert (
-            copy_source.index("copy_file_exclusive(source, destination)?")
+            copy_source.index(copy_marker)
             < copy_source.index("let destination_hash = match")
         )
         assert (
@@ -11309,7 +11322,9 @@ def test_local_quarantine_copy_fallback_validates_expected_hash_before_copy():
     )
     assert (
         copy_source.index("let expected_sha256 = normalize_quarantine_sha256(expected_sha256)")
-        < copy_source.index("copy_file_exclusive(source, destination)?")
+        < copy_source.index(
+            "copy_file_exclusive(source, destination, ExclusiveCopySecurity::Quarantine)?"
+        )
     )
     assert "copy_fallback_rejects_invalid_expected_hash_before_copy" in source
     assert "copy_fallback_accepts_bare_expected_hash" in source
@@ -11344,7 +11359,11 @@ def test_local_quarantine_metadata_text_reader_is_file_and_byte_bounded():
         source.index("fn constant_time_eq")
     ]
 
-    assert "let metadata = ensure_regular_quarantine_file(path, label)?" in read_source
+    assert "let expected = ensure_regular_quarantine_file(path, label)?" in read_source
+    assert "harden_open_quarantine_file_permissions(" in read_source
+    assert read_source.index("harden_open_quarantine_file_permissions(") < read_source.index(
+        "let mut total = 0_u64"
+    )
     assert "if !metadata.is_file()" in read_source
     assert "metadata.len() > max_bytes" in read_source
     assert "let mut total = 0_u64" in read_source
@@ -11466,12 +11485,13 @@ def test_local_quarantine_restore_revalidates_parent_before_staging_and_activati
     assert (
         staged_source.index('reject_link_ancestors(parent, "quarantine restore parent")?;')
         < staged_source.index("ensure_restore_temp_destination_absent(&temp_destination)?;")
-        < staged_source.index("copy_file_exclusive(quarantine_path, &temp_destination)")
+        < staged_source.index("if let Err(error) = copy_file_exclusive(")
         < staged_source.index(
             'if let Err(error) = reject_link_ancestors(parent, "quarantine restore parent")'
         )
         < staged_source.index("fs::rename(&temp_destination, original_path)")
     )
+    assert "ExclusiveCopySecurity::Restore" in staged_source
     assert "restore_revalidates_parent_before_staging_and_activation" in source
 
 
@@ -11862,39 +11882,39 @@ def test_local_quarantine_file_normalizes_metadata_before_payload_move():
     assert "quarantine_file_normalizes_untrusted_detection_metadata_before_move" in source
 
 
-def test_local_quarantine_finalization_failure_cleans_untracked_artifacts():
+def test_local_quarantine_finalization_failure_preserves_payload_and_cleans_metadata():
     source = read(LOCAL_QUARANTINE_STORE)
     quarantine_source = source[
         source.index("pub fn quarantine_file(&self"):
         source.index("pub fn list(&self)")
     ]
     cleanup_source = source[
-        source.index("fn cleanup_untracked_quarantine_artifacts"):
+        source.index("fn cleanup_untracked_quarantine_metadata_artifacts"):
         source.index("fn copy_local_quarantine_payload_limited")
     ]
 
     assert "let finalize_result = (|| -> Result<QuarantineRecord>" in quarantine_source
-    assert "cleanup_untracked_quarantine_artifacts(&self.base, &id, &quarantine_path)" in quarantine_source
-    assert "after quarantine finalization failure" in quarantine_source
+    assert "cleanup_untracked_quarantine_metadata_artifacts(&self.base, &id)" in quarantine_source
+    assert "payload was not deleted and must be inspected" in quarantine_source
     assert "Err(error)" in quarantine_source
     for label in [
-        '"untracked quarantine payload"',
         '"untracked quarantine metadata record"',
         '"untracked quarantine metadata temp record"',
         '"untracked quarantine metadata auth sidecar"',
         '"untracked quarantine metadata auth temp sidecar"',
     ]:
         assert label in cleanup_source
-    assert "failed to clean up one or more untracked quarantine artifacts" in cleanup_source
+    assert '"untracked quarantine payload"' not in cleanup_source
+    assert "failed to clean up one or more untracked quarantine metadata artifacts" in cleanup_source
     assert (
         quarantine_source.index("fs::rename(path, &quarantine_path)")
         < quarantine_source.index("let finalize_result = (|| -> Result<QuarantineRecord>")
     )
     assert (
         quarantine_source.index("self.write_record(&record)?")
-        < quarantine_source.index("cleanup_untracked_quarantine_artifacts")
+        < quarantine_source.index("cleanup_untracked_quarantine_metadata_artifacts")
     )
-    assert "quarantine_finalization_failures_clean_untracked_artifacts" in source
+    assert "quarantine_finalization_failures_preserve_payload_and_clean_metadata" in source
 
 
 def test_local_quarantine_staged_writes_are_final_destination_exclusive_and_cleanup_temps():
@@ -12024,8 +12044,13 @@ def test_local_quarantine_legacy_extensions_follow_current_payload_policy():
     assert "legacy_quarantine_record_with_old_extension_is_rejected" in source
     assert "legacy_zentor_quarantine_record_is_rejected" in source
     assert "store.list().unwrap_err()" in legacy_source
-    assert "invalid payload path in quarantine metadata record" in legacy_source
-    assert "quarantine payload has unsafe extension" in legacy_source
+    assert "store.metadata_auth_key(true).unwrap()" in legacy_source
+    assert (
+        "refusing to change permissions on an unrecognized quarantine directory"
+        in legacy_source
+    )
+    assert '"unrecognized entry legacy.{legacy_extension}"' in legacy_source
+    assert "unrecognized entry legacy.zentorq" in legacy_source
     assert "legacy.zentorq" in legacy_source
     assert '["pa", "susq"].concat()' in legacy_source
 
@@ -12113,7 +12138,7 @@ def test_guard_process_commands_use_bounded_runner():
     ]
     runner = guard[
         guard.index("fn run_guard_process_command"):
-        guard.index("#[cfg(windows)]\nstruct BoundedGuardCommandOutput")
+        guard.index("fn read_bounded_guard_command_output")
     ]
     reader_start = guard.index("fn read_bounded_guard_command_output")
     reader_prefix = guard[max(0, reader_start - 32):reader_start]
@@ -12429,54 +12454,201 @@ def test_guard_clamav_compat_command_output_uses_bounded_runner():
     assert "reader.take((MAX_GUARD_CLAMAV_COMMAND_OUTPUT_BYTES + 1) as u64)" not in clamav_reader
 
 
-def test_local_quarantine_acl_stderr_reader_drains_while_bounded():
-    source = read(LOCAL_QUARANTINE_STORE)
-    reader_start = source.index("fn read_bounded_quarantine_command_output")
-    excerpt_start = source.index("fn command_output_excerpt")
-    reader = source[reader_start:excerpt_start]
-    acl_start = source.index("fn harden_quarantine_base_acl")
-    account_start = source.index("#[cfg(windows)]\nfn current_windows_account")
-    acl = source[acl_start:account_start]
+def test_shared_quarantine_platform_permissions_are_bounded_and_verified():
+    source = read(PLATFORM_SECURITY)
+    production = source.split("#[cfg(test)]")[0]
+    unix_directory = production[
+        production.index("pub fn harden_unix_private_directory"):
+        production.index("pub fn harden_unix_private_file")
+    ]
+    unix_file = production[
+        production.index("pub fn harden_unix_private_file"):
+        production.index("const MAX_WINDOWS_TOKEN_USER_BYTES")
+    ]
 
-    assert "read_bounded_quarantine_command_output(stderr, MAX_QUARANTINE_COMMAND_OUTPUT_BYTES)" in acl
-    assert "let mut reader = BufReader::new(reader)" in reader
-    assert "let retain_limit = max_bytes.saturating_add(1)" in reader
-    assert ".read(&mut buffer)" in reader or ".read(&mut buffer)" in reader.replace("\n", "")
-    assert "let remaining = retain_limit.saturating_sub(bytes.len())" in reader
-    assert "bytes.extend_from_slice(&buffer[..keep])" in reader
-    assert "command_output_excerpt(&output.stderr)" in acl
-    assert "reader.take((max_bytes + 1) as u64)" not in reader
-    assert ".read_to_end(&mut bytes)" not in reader
+    assert "MAX_QUARANTINE_DIRECTORY_ENTRIES: usize = 65_536" in production
+    assert "MAX_QUARANTINE_ENTRY_NAME_CHARS: usize = 512" in production
+    assert "pub fn validate_quarantine_directory_contents" in production
+    assert "count > MAX_QUARANTINE_DIRECTORY_ENTRIES" in production
+    assert "is_recognized_quarantine_artifact_name(&name)" in production
+    assert '".metadata_auth_key.tmp-"' in production
+    assert '".json.auth.tmp-"' in production
+    assert '".avoraxq"' in production
+    assert "containing unrecognized entry {name}" in production
+    assert "quarantine_directory_preflight_accepts_only_vault_shaped_files" in source
+    assert "quarantine_directory_preflight_rejects_unknown_or_wrong_kind_entries" in source
+    assert "permissions.set_mode(0o700)" in unix_directory
+    assert "current.permissions().mode() & 0o7777 != 0o700" in unix_directory
+    assert "current.uid() != unsafe { libc::geteuid() }" in unix_directory
+    assert "current.gid() != unsafe { libc::getegid() }" in unix_directory
+    assert "expected.dev() != opened_metadata.dev()" in unix_directory
+    assert "expected.ino() != opened_metadata.ino()" in unix_directory
+    assert "permissions.set_mode(0o600)" in unix_file
+    assert "current.permissions().mode() & 0o7777 != 0o600" in unix_file
+    assert "current.uid() != unsafe { libc::geteuid() }" in unix_file
+    assert "current.gid() != unsafe { libc::getegid() }" in unix_file
+    assert "expected.dev() != opened.dev()" in unix_file
+    assert "expected.ino() != opened.ino()" in unix_file
+    assert "fn enforce_unix_opened_owner(" in production
+    assert "libc::fchown(file.as_raw_fd(), uid, gid)" in production
+    assert "failed to transfer {label} ownership" in production
+    assert "opened {label} ownership verification failed" in production
+    assert "MAX_WINDOWS_TOKEN_USER_BYTES: u32 = 64 * 1024" in production
+    assert "MAX_WINDOWS_SID_STRING_UNITS: usize = 256" in production
+    assert "MAX_WINDOWS_SECURITY_PATH_UNITS: usize = 32_767" in production
+    assert "OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &mut token)" in production
+    assert "GetTokenInformation" in production
+    assert "ConvertSidToStringSidW" in production
+    assert '"(D;;0x20;;;WD)"' in production
+    assert '"(A;;FA;;;SY)"' in production
+    assert '"(A;;FA;;;BA)"' in production
+    assert 'format!("O:{sid}D:P{}", aces.join(""))' in production
+    assert "SetSecurityInfo" in production
+    assert "OWNER_SECURITY_INFORMATION" in production
+    assert "PROTECTED_DACL_SECURITY_INFORMATION" in production
+    assert "GetSecurityInfo" in production
+    assert "GetSecurityDescriptorOwner" in production
+    assert "EqualSid(actual_owner, expected_owner)" in production
+    assert "Windows quarantine owner verification mismatch" in production
+    assert "READ_CONTROL | WRITE_DAC | WRITE_OWNER" in production
+    assert "control & SE_DACL_PROTECTED == 0" in production
+    assert "actual_aces != expected_aces" in production
+    assert "CreateFileW" in production
+    assert ".take(MAX_WINDOWS_SECURITY_PATH_UNITS.saturating_add(1))" in production
+    assert "path_wide.contains(&0)" in production
+    assert "Windows quarantine security path is too long" in production
+    assert "FILE_FLAG_OPEN_REPARSE_POINT" in production
+    assert "GetFileInformationByHandle" in production
+    assert "refusing to harden a Windows reparse point" in production
+    assert "expected_file: Option<&fs::File>" in production
+    assert "expected_file.as_raw_handle()" in production
+    assert "expected_info.dwVolumeSerialNumber != info.dwVolumeSerialNumber" in production
+    assert "expected_info.nFileIndexHigh != info.nFileIndexHigh" in production
+    assert "expected_info.nFileIndexLow != info.nFileIndexLow" in production
+    assert "Windows quarantine file changed between data and security opens" in production
+    assert "finish_windows_handle" in production
+    assert "finish_local_allocation" in production
+    assert "additional cleanup failure for {label}" in production
+    assert 'std::env::var("USERNAME")' not in production
+    assert 'std::env::var("USERDOMAIN")' not in production
+    assert "unix_private_file_rejects_path_replacement" in source
+    assert "windows_process_sid_ignores_spoofed_account_environment" in source
+    assert "windows_private_directory_and_file_dacls_are_applied_and_verified" in source
+    assert "windows_quarantine_file_rejects_open_handle_path_mismatch" in source
+    assert "windows_security_paths_are_bounded_and_reject_nul" in source
 
 
-def test_quarantine_acl_command_runners_have_timeout_cleanup_diagnostics():
+def test_quarantine_components_use_shared_permissions_without_acl_subprocesses():
     local = read(LOCAL_QUARANTINE_STORE)
     guard = read(GUARD_MAIN)
-    local_runner = local[
-        local.index("fn run_quarantine_acl_command"):
-        local.index("fn read_bounded_quarantine_command_output")
+    local_production = local.split("#[cfg(test)]\nmod tests")[0]
+    guard_production = guard.split("#[cfg(test)]")[0]
+    workspace = read(ROOT / "Cargo.toml")
+    local_manifest = read(ROOT / "core" / "zentor_local_core" / "Cargo.toml")
+    guard_manifest = read(ROOT / "core" / "zentor_guard_service" / "Cargo.toml")
+
+    assert '"core/avorax_platform_security"' in workspace
+    for manifest in (local_manifest, guard_manifest):
+        assert 'avorax_platform_security = { path = "../avorax_platform_security" }' in manifest
+    for production in (local_production, guard_production):
+        assert "avorax_platform_security::harden_unix_private_directory(path)" in production
+        assert "avorax_platform_security::harden_windows_private_directory(path)" in production
+        assert "avorax_platform_security::harden_unix_private_file(file, path)" in production
+        assert (
+            "avorax_platform_security::harden_windows_quarantine_file(file, path)"
+            in production
+        )
+        assert "current_windows_account" not in production
+        assert "icacls.exe" not in production
+        assert "run_quarantine_acl_command" not in production
+        assert "run_guard_acl_command" not in production
+    assert "enum ExclusiveCopySecurity" in local_production
+    assert "Quarantine" in local_production
+    assert "Restore" in local_production
+    assert "security == ExclusiveCopySecurity::Quarantine" in local_production
+    assert "self.harden_record_payload_if_present(&record)?" in local_production
+    assert "fn harden_record_payload_if_present" in local_production
+    assert "harden_open_quarantine_file_permissions(" in local_production
+    integrity_source = local_production[
+        local_production.index("fn ensure_payload_integrity"):
+        local_production.index("fn harden_record_payload_if_present")
     ]
-    guard_runner = guard[
-        guard.index("fn run_guard_acl_command"):
-        guard.index("fn read_bounded_guard_command_output")
+    restore_source = local_production[
+        local_production.index("pub fn restore(&self"):
+        local_production.index("pub fn delete(&self")
+    ]
+    staged_restore_source = local_production[
+        local_production.index("fn restore_payload_staged"):
+        local_production.index("fn write_record")
+    ]
+    assert "harden_open_quarantine_file_permissions" not in integrity_source
+    assert "harden_quarantine_payload_permissions(&original_path)" not in restore_source
+    assert "ExclusiveCopySecurity::Restore" in staged_restore_source
+    local_base_ensure = local_production[
+        local_production.index("fn ensure_base_directory(&self)"):
+        local_production.index("fn quarantine_detection_name")
+    ]
+    guard_base_ensure = guard_production[
+        guard_production.index("fn ensure_quarantine_base_directory_path"):
+        guard_production.index("fn harden_quarantine_base_permissions")
+    ]
+    assert local_base_ensure.count("reject_link_ancestors(&self.base") == 2
+    assert (
+        local_base_ensure.index("validate_quarantine_directory_contents(&self.base)")
+        < local_base_ensure.index("harden_quarantine_base_permissions(&self.base)")
+    )
+    assert "fn reject_guard_link_ancestors" in guard_production
+    assert guard_base_ensure.count("reject_guard_link_ancestors(base") == 2
+    assert (
+        guard_base_ensure.index("validate_quarantine_directory_contents(base)")
+        < guard_base_ensure.index("harden_quarantine_base_permissions(base)")
+    )
+    assert "fn validate_quarantine_override_leaf" in local_production
+    assert "fn validate_guard_quarantine_override_leaf" in guard_production
+    assert "#[cfg(test)]\n    fn with_base(base: PathBuf)" in local_production
+    assert "pub fn with_base(base: PathBuf)" not in local_production
+    assert "must end in a dedicated Quarantine directory" in local_production
+    assert "must end in a dedicated Quarantine directory" in guard_production
+    guard_env_path = guard_production[
+        guard_production.index("fn absolute_guard_quarantine_env_path"):
+        guard_production.index("fn validate_guard_quarantine_override_leaf")
+    ]
+    assert "if !is_local_windows_drive_path(&path)" in guard_env_path
+    assert "must be a local Windows drive path" in guard_env_path
+    assert "quarantine_base_override_requires_dedicated_leaf" in local
+    assert "guard_quarantine_base_override_requires_dedicated_leaf" in guard
+    assert "existing_quarantine_base_rejects_unknown_content_before_permission_changes" in local
+    assert "existing_guard_quarantine_base_rejects_unknown_content_before_permissions" in guard
+    assert "quarantine_rejects_symbolic_link_base_ancestor_before_creation" in local
+    assert "guard_quarantine_rejects_symbolic_link_base_ancestor_before_creation" in guard
+    guard_quarantine_reader = guard_production[
+        guard_production.index("fn read_bounded_guard_quarantine_text"):
+        guard_production.index("fn guard_quarantine_metadata_file_present")
+    ]
+    assert "harden_open_guard_quarantine_file_permissions(&file, path, label)?" in (
+        guard_quarantine_reader
+    )
+
+
+def test_local_quarantine_runtime_tests_use_isolated_temp_vault():
+    local = read(LOCAL_QUARANTINE_STORE)
+    main = read(LOCAL_CORE_MAIN)
+    test_base_source = local[
+        local.index("#[cfg(test)]\nthread_local!"):
+        local.index("fn absolute_quarantine_env_path")
+    ]
+    failure_test = main[
+        main.index("fn auto_quarantine_failure_is_reported_without_hiding_detection"):
+        main.index("fn normal_exe_is_not_confirmed_threat")
     ]
 
-    assert "const QUARANTINE_ACL_COMMAND_TIMEOUT: Duration = Duration::from_secs(30)" in local
-    assert "const GUARD_ACL_COMMAND_TIMEOUT: Duration = Duration::from_secs(30)" in guard
-    assert "fn wait_for_quarantine_acl_child" in local_runner
-    assert "fn wait_for_guard_acl_child" in guard_runner
-    for runner in (local_runner, guard_runner):
-        assert ".try_wait()" in runner
-        assert "child.kill().err()" in runner
-        assert "child.wait().err()" in runner
-        assert "command_output_excerpt(&stderr)" in runner
-        assert ".wait().context(\"failed to wait for" not in runner
-    assert "failed to kill timed-out quarantine ACL command" in local_runner
-    assert "failed to reap timed-out quarantine ACL command" in local_runner
-    assert "std::thread::sleep(Duration::from_millis(50))" in local_runner
-    assert "failed to kill timed-out guard quarantine ACL command" in guard_runner
-    assert "failed to reap timed-out guard quarantine ACL command" in guard_runner
-    assert "thread::sleep(Duration::from_millis(50))" in guard_runner
+    assert "static TEST_QUARANTINE_TEMP_DIR: tempfile::TempDir" in test_base_source
+    assert "TEST_QUARANTINE_BASE_OVERRIDE" in test_base_source
+    assert 'directory.path().join("Quarantine")' in test_base_source
+    assert "pub(crate) fn override_test_quarantine_base" in test_base_source
+    assert "quarantine_base_uses_an_isolated_test_directory" in local
+    assert "quarantine::override_test_quarantine_base" in failure_test
+    assert 'std::env::set_var("AVORAX_QUARANTINE_DIR"' not in failure_test
 
 
 def test_local_clamav_command_output_reader_drains_while_bounded():
@@ -13912,10 +14084,9 @@ def test_guard_text_readers_are_metadata_and_actual_byte_bounded():
     ]
 
     assert "let metadata = ensure_regular_guard_config_file(path, label)?" in config_source
-    assert (
-        "let metadata = ensure_regular_guard_quarantine_metadata_file(path, label)?"
-        in quarantine_source
-    )
+    assert "ensure_regular_guard_quarantine_metadata_file(path, label)?" in quarantine_source
+    assert "harden_open_guard_quarantine_file_permissions(" in quarantine_source
+    assert "let metadata = file" in quarantine_source
     assert (
         "fn ensure_regular_guard_config_file(path: &Path, label: &str) -> anyhow::Result<fs::Metadata>"
         in guard
@@ -13927,7 +14098,14 @@ def test_guard_text_readers_are_metadata_and_actual_byte_bounded():
     assert "total > max_bytes" in config_source
     assert "bytes.extend_from_slice(&buffer[..read])" in config_source
     assert "String::from_utf8(bytes)" in config_source
-    assert "read_bounded_guard_utf8_file(path, max_bytes, label, &metadata)" in quarantine_source
+    assert (
+        "read_bounded_guard_utf8_opened_file(file, path, max_bytes, label, &metadata)"
+        in quarantine_source
+    )
+    assert (
+        "read_bounded_guard_utf8_file(path, max_bytes, label, &metadata)"
+        not in quarantine_source
+    )
     assert "guard_text_readers_are_metadata_and_actual_byte_bounded" in guard
 
 
@@ -19148,6 +19326,9 @@ def test_small_threat_mvp_verifier_is_safe_and_reproducible():
     assert "allowlist" in source
     assert "local-core training-label feedback regressions" in source
     assert "training_label" in source
+    assert "platform quarantine permission regressions" in source
+    assert "core\\avorax_platform_security\\Cargo.toml" in source
+    assert "shared cross-platform quarantine permission hardening" in source
     assert "local-core quarantine metadata regressions" in source
     assert "quarantine" in source
     assert "Flutter local-event audit tests" in source
@@ -23945,24 +24126,14 @@ def test_guard_process_skip_collapses_path_segments_before_system_skip():
     assert "/usr/../tmp/payload" in source
 
 
-def test_local_windows_tools_reject_parent_traversal_in_system_root():
+def test_local_windows_tools_expose_no_removed_acl_command_surface():
     source = read(LOCAL_WINDOWS_TOOLS)
     production = source.split("#[cfg(test)]")[0]
-    root_source = production[
-        production.index("fn windows_system_root"):
-        production.index("fn is_local_windows_drive_path")
-    ]
 
-    assert "normalize_windows_system_root_text(&text)" in root_source
-    assert "PathBuf::from(normalized_root)" in root_source
-    assert "PathBuf::from(text)" not in root_source
-    assert "fn normalize_windows_system_root_text(value: &str) -> anyhow::Result<String>" in production
-    assert "fn collapse_windows_system_root_segments(path: &str) -> String" in production
-    assert "fn split_windows_system_root_prefix(path: &str) -> (Option<&str>, &str, bool)" in production
-    assert "Windows system root must not contain parent traversal" in production
-    assert "collapse_windows_system_root_segments(&normalized)" in production
-    assert 'match part {\n            "" | "." => {}' in production
-    assert "windows_system32_tool_rejects_parent_traversal_source_marker" in source
+    assert "fn windows_system32_tool" not in production
+    assert "fn windows_system_root" not in production
+    assert "icacls.exe" not in production
+    assert "current_windows_account" not in production
 
 
 def test_guard_windows_tools_reject_parent_traversal_in_system_root():
@@ -24618,7 +24789,7 @@ def test_local_core_service_health_client_stays_authenticated_bounded_and_read_o
 
 def test_local_quarantine_env_roots_reject_parent_traversal():
     source = read(LOCAL_QUARANTINE_STORE)
-    production = source.split("#[cfg(test)]")[0]
+    production = source.split("#[cfg(test)]\nmod tests")[0]
     root_source = production[
         production.index("fn absolute_quarantine_env_path"):
         production.index("#[cfg(windows)]", production.index("fn absolute_quarantine_env_path"))

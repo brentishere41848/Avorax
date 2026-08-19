@@ -6645,3 +6645,42 @@ Updates page showed:
   admin install, service/driver state, machine-wide component, or project file
   deletion was involved. Installed service/ACL/DPAPI/UI E2E remains partial and
   no kernel or pre-execution claim is made.
+
+## 2026-08-20 continuation checkpoint 2184
+
+- Replaced Local Core and Guard's separate quarantine permission paths with the
+  shared `avorax_platform_security` crate. Windows uses the process-token SID,
+  handle identity, exact owner/protected-DACL readback, and an exact payload
+  execute deny; Unix uses effective UID/GID, descriptor identity, and verified
+  `0700`/`0600` modes.
+- Added fail-closed ancestor checks and a dedicated `Quarantine` leaf contract.
+  Existing roots are bounded to 65,536 recognized non-link vault artifacts
+  before any ACL/mode mutation, preventing an override from repurposing an
+  arbitrary populated directory.
+- Moved Local Core's default test vault into a thread-local temporary directory.
+  The existing ProgramData vault remained exactly 16,072 files and 4,522,733
+  bytes before and after focused, complete, workspace, and central tests; no
+  existing quarantine content or project file was deleted.
+- Hardened permission-before-read handling for metadata/key material and
+  authenticated legacy payloads. Post-move finalization failures retain the
+  sole opaque payload, clean only incomplete metadata/auth files, and return a
+  visible recovery path.
+- Platform tests pass `6/6`, focused Local quarantine `112/112`, focused Guard
+  quarantine `47/47`, complete Local Core `517/517`, complete Guard `223/223`,
+  the Rust workspace `1,435/1,435`, and source contracts `620/620`. Strict
+  affected-crate Clippy, shared Linux-target Clippy, Guard Linux all-target
+  compilation, rustfmt, metadata, dependency, parser, branding, safety,
+  performance, and diff checks pass.
+- The first central run failed honestly at branding because a compatibility test
+  contained a literal retired-brand token. After correcting the source fixture,
+  the focused regression, source/branding gates, and a complete restart passed.
+  A final diff review also made Local Core's arbitrary-base constructor
+  test-only and rejected Windows UNC quarantine overrides in Guard. The final
+  verifier passed `219/219` with no failed/skipped steps in `618.0s`;
+  an independent `-RequireFullSuite` report validation also passed.
+- A full Local Core Linux cross-check on this Windows host remains blocked at
+  `tract-linalg` by missing `x86_64-linux-gnu-gcc`; no machine-wide compiler was
+  installed. Native Ubuntu CI, package jobs, and installed LocalSystem/DPAPI/
+  ACL/service/UI E2E remain pending. No live malware, Defender exclusion,
+  driver/service change, admin install, secure-erase, or pre-execution claim was
+  involved.

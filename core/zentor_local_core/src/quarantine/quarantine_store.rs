@@ -1,10 +1,6 @@
 use std::fs;
 use std::io::{self, BufReader, Read, Write};
 use std::path::{Path, PathBuf};
-#[cfg(windows)]
-use std::process::{Command, ExitStatus, Stdio};
-#[cfg(windows)]
-use std::time::{Duration, Instant};
 
 use anyhow::{anyhow, Context, Result};
 use chrono::Utc;
@@ -41,6 +37,12 @@ enum QuarantineMetadataAuthScheme {
     LegacyPrefixSha256V1,
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum ExclusiveCopySecurity {
+    Quarantine,
+    Restore,
+}
+
 pub struct QuarantineStore {
     base: PathBuf,
 }
@@ -52,7 +54,8 @@ impl QuarantineStore {
         })
     }
 
-    pub fn with_base(base: PathBuf) -> Self {
+    #[cfg(test)]
+    fn with_base(base: PathBuf) -> Self {
         Self { base }
     }
 
@@ -79,7 +82,7 @@ impl QuarantineStore {
             .or_else(|_| copy_then_remove_verified(path, &quarantine_path, &source_sha256))?;
         let finalize_result = (|| -> Result<QuarantineRecord> {
             ensure_regular_quarantine_payload(&quarantine_path, "quarantine payload")?;
-            remove_executable_permissions(&quarantine_path)?;
+            harden_quarantine_payload_permissions(&quarantine_path)?;
             let quarantined_sha256 = sha256_for_file(&quarantine_path)?;
             if !source_sha256.eq_ignore_ascii_case(&quarantined_sha256) {
                 return Err(anyhow!("quarantine payload hash changed during move"));
@@ -107,13 +110,19 @@ impl QuarantineStore {
         match finalize_result {
             Ok(record) => Ok(record),
             Err(error) => {
-                cleanup_untracked_quarantine_artifacts(&self.base, &id, &quarantine_path)
+                cleanup_untracked_quarantine_metadata_artifacts(&self.base, &id)
                     .with_context(|| {
                         format!(
-                            "failed to clean up untracked quarantine artifacts after quarantine finalization failure: {error:#}"
+                            "failed to clean up untracked quarantine metadata after finalization failure; payload was not deleted and must be inspected at {}: {error:#}",
+                            quarantine_path.display()
                         )
                     })?;
-                Err(error)
+                Err(error).with_context(|| {
+                    format!(
+                        "quarantine finalization failed; payload was not deleted and must be inspected at {}",
+                        quarantine_path.display()
+                    )
+                })
             }
         }
     }
@@ -122,6 +131,10 @@ impl QuarantineStore {
         if !optional_quarantine_directory_present(&self.base, "quarantine base directory")? {
             return Ok(Vec::new());
         }
+        reject_link_ancestors(&self.base, "quarantine base directory")?;
+        avorax_platform_security::validate_quarantine_directory_contents(&self.base)
+            .context("refusing to change permissions on an unrecognized quarantine directory")?;
+        harden_quarantine_base_permissions(&self.base)?;
         let mut records = Vec::new();
         for entry in fs::read_dir(&self.base)? {
             let entry = entry?;
@@ -170,6 +183,7 @@ impl QuarantineStore {
                                 path.display()
                             )
                         })?;
+                        self.harden_record_payload_if_present(&record)?;
                         if auth_scheme == QuarantineMetadataAuthScheme::LegacyPrefixSha256V1 {
                             self.migrate_legacy_record_auth(&path, &record, &raw)?;
                         }
@@ -203,6 +217,7 @@ impl QuarantineStore {
         Self::ensure_quarantined_status_for_action(&record, "restore")?;
         let quarantine_path = validate_quarantine_payload_path_text(&record.quarantine_path)?;
         self.ensure_quarantine_payload_path(&quarantine_path)?;
+        harden_quarantine_payload_permissions(&quarantine_path)?;
         self.ensure_payload_integrity(&record, &quarantine_path)?;
         let original_path = validate_original_restore_path_text(&record.original_path)?;
         reject_existing_restore_destination(&original_path)?;
@@ -248,6 +263,7 @@ impl QuarantineStore {
         Self::ensure_quarantined_status_for_action(&record, "delete")?;
         let quarantine_path = validate_quarantine_payload_path_text(&record.quarantine_path)?;
         self.ensure_quarantine_payload_path(&quarantine_path)?;
+        harden_quarantine_payload_permissions(&quarantine_path)?;
         self.ensure_payload_integrity(&record, &quarantine_path)?;
         let previous_status = record.status.clone();
         let previous_action_taken = record.action_taken.clone();
@@ -331,6 +347,20 @@ impl QuarantineStore {
         Ok(())
     }
 
+    fn harden_record_payload_if_present(&self, record: &QuarantineRecord) -> Result<()> {
+        let path = validate_quarantine_payload_path_text(&record.quarantine_path)?;
+        if !optional_quarantine_file_present(&path, "quarantine payload")? {
+            return Ok(());
+        }
+        self.ensure_quarantine_payload_path(&path)?;
+        harden_quarantine_payload_permissions(&path).with_context(|| {
+            format!(
+                "failed to harden existing quarantine payload {}",
+                path.display()
+            )
+        })
+    }
+
     fn restore_payload_staged(
         &self,
         record: &QuarantineRecord,
@@ -344,7 +374,11 @@ impl QuarantineStore {
         reject_link_ancestors(parent, "quarantine restore parent")?;
         ensure_regular_quarantine_payload(quarantine_path, "quarantine payload")?;
         ensure_restore_temp_destination_absent(&temp_destination)?;
-        if let Err(error) = copy_file_exclusive(quarantine_path, &temp_destination) {
+        if let Err(error) = copy_file_exclusive(
+            quarantine_path,
+            &temp_destination,
+            ExclusiveCopySecurity::Restore,
+        ) {
             return Err(error.context("unable to stage quarantine restore"));
         }
         if let Err(error) = self.ensure_payload_integrity(record, &temp_destination) {
@@ -570,9 +604,12 @@ impl QuarantineStore {
     }
 
     fn ensure_base_directory(&self) -> Result<()> {
+        reject_link_ancestors(&self.base, "quarantine base directory")?;
         fs::create_dir_all(&self.base)?;
-        reject_link_path(&self.base, "quarantine base directory")?;
-        harden_quarantine_base_acl(&self.base)?;
+        reject_link_ancestors(&self.base, "quarantine base directory")?;
+        avorax_platform_security::validate_quarantine_directory_contents(&self.base)
+            .context("refusing to change permissions on an unrecognized quarantine directory")?;
+        harden_quarantine_base_permissions(&self.base)?;
         Ok(())
     }
 }
@@ -623,9 +660,17 @@ fn quarantine_metadata_label(label: &str, value: Option<&str>, fallback: &str) -
 }
 
 fn read_bounded_quarantine_text(path: &Path, max_bytes: u64, label: &str) -> Result<String> {
-    let metadata = ensure_regular_quarantine_file(path, label)?;
-    if !metadata.is_file() {
+    let expected = ensure_regular_quarantine_file(path, label)?;
+    if !expected.is_file() {
         return Err(anyhow!("{label} is not a regular file"));
+    }
+    let mut file = fs::File::open(path).with_context(|| format!("unable to read {label}"))?;
+    harden_open_quarantine_file_permissions(&file, path, label, ExclusiveCopySecurity::Quarantine)?;
+    let metadata = file
+        .metadata()
+        .with_context(|| format!("unable to inspect opened {label}"))?;
+    if !metadata.is_file() {
+        return Err(anyhow!("opened {label} is not a regular file"));
     }
     if metadata.len() > max_bytes {
         return Err(anyhow!(
@@ -634,7 +679,6 @@ fn read_bounded_quarantine_text(path: &Path, max_bytes: u64, label: &str) -> Res
             max_bytes
         ));
     }
-    let mut file = fs::File::open(path).with_context(|| format!("unable to read {label}"))?;
     let mut total = 0_u64;
     let mut buffer = [0_u8; 8 * 1024];
     let mut bytes = Vec::new();
@@ -1273,6 +1317,22 @@ fn write_file_exclusive(path: &Path, bytes: &[u8], label: &str) -> Result<()> {
                 .with_context(|| format!("failed to create temporary {label} {}", path.display()));
         }
     };
+    if let Err(error) = harden_open_quarantine_file_permissions(
+        &output,
+        path,
+        label,
+        ExclusiveCopySecurity::Quarantine,
+    ) {
+        drop(output);
+        cleanup_quarantine_staged_file(path, label).with_context(|| {
+            format!(
+                "failed to clean up temporary {label} {} after permission hardening failure: {error:#}",
+                path.display()
+            )
+        })?;
+        return Err(error)
+            .with_context(|| format!("failed to harden temporary {label} {}", path.display()));
+    }
     if let Err(error) = output.write_all(bytes) {
         drop(output);
         cleanup_quarantine_staged_file(path, label).with_context(|| {
@@ -1454,150 +1514,16 @@ fn ensure_restore_temp_destination_absent(path: &Path) -> Result<()> {
     }
 }
 
-fn harden_quarantine_base_acl(_path: &Path) -> Result<()> {
+fn harden_quarantine_base_permissions(path: &Path) -> Result<()> {
+    #[cfg(unix)]
+    avorax_platform_security::harden_unix_private_directory(path)
+        .context("failed to enforce owner-only quarantine directory permissions")?;
     #[cfg(windows)]
-    {
-        let current_user = current_windows_account()?;
-        let current_user_grant = format!("{current_user}:(OI)(CI)F");
-        let icacls = crate::windows_tools::windows_system32_tool("icacls.exe")?;
-        let mut command = Command::new(&icacls);
-        command.arg(_path).args([
-            "/inheritance:r",
-            "/grant:r",
-            "*S-1-5-18:(OI)(CI)F",
-            "*S-1-5-32-544:(OI)(CI)F",
-            &current_user_grant,
-        ]);
-        let output = run_quarantine_acl_command(&mut command)?;
-        if !output.status.success() {
-            return Err(anyhow!(
-                "failed to harden quarantine ACLs: {}",
-                command_output_excerpt(&output.stderr)
-            ));
-        }
-    }
+    avorax_platform_security::harden_windows_private_directory(path)
+        .context("failed to enforce exact quarantine directory DACL")?;
+    #[cfg(not(any(unix, windows)))]
+    let _ = path;
     Ok(())
-}
-
-const MAX_QUARANTINE_COMMAND_OUTPUT_BYTES: usize = 2048;
-#[cfg(windows)]
-const QUARANTINE_ACL_COMMAND_TIMEOUT: Duration = Duration::from_secs(30);
-
-#[cfg(windows)]
-struct BoundedQuarantineCommandOutput {
-    status: ExitStatus,
-    stderr: Vec<u8>,
-}
-
-#[cfg(windows)]
-fn run_quarantine_acl_command(command: &mut Command) -> Result<BoundedQuarantineCommandOutput> {
-    command
-        .stdin(Stdio::null())
-        .stdout(Stdio::null())
-        .stderr(Stdio::piped());
-    let mut child = command
-        .spawn()
-        .context("failed to launch quarantine ACL command")?;
-    let stderr = child
-        .stderr
-        .take()
-        .ok_or_else(|| anyhow!("failed to capture quarantine ACL command stderr"))?;
-    let stderr_reader = std::thread::spawn(move || {
-        read_bounded_quarantine_command_output(stderr, MAX_QUARANTINE_COMMAND_OUTPUT_BYTES)
-    });
-    let status = match wait_for_quarantine_acl_child(&mut child)? {
-        Some(status) => status,
-        None => {
-            let kill_error = child.kill().err();
-            let wait_error = child.wait().err();
-            let stderr = stderr_reader
-                .join()
-                .map_err(|_| anyhow!("quarantine ACL stderr reader panicked"))??;
-            let mut detail = format!(
-                "quarantine ACL command timed out after {} seconds",
-                QUARANTINE_ACL_COMMAND_TIMEOUT.as_secs()
-            );
-            if let Some(error) = kill_error {
-                detail.push_str(&format!(
-                    "; failed to kill timed-out quarantine ACL command: {error}"
-                ));
-            }
-            if let Some(error) = wait_error {
-                detail.push_str(&format!(
-                    "; failed to reap timed-out quarantine ACL command: {error}"
-                ));
-            }
-            let stderr_excerpt = command_output_excerpt(&stderr);
-            if !stderr_excerpt.is_empty() {
-                detail.push_str(&format!("; stderr: {stderr_excerpt}"));
-            }
-            return Err(anyhow!(detail));
-        }
-    };
-    let stderr = stderr_reader
-        .join()
-        .map_err(|_| anyhow!("quarantine ACL stderr reader panicked"))??;
-    Ok(BoundedQuarantineCommandOutput { status, stderr })
-}
-
-#[cfg(windows)]
-fn wait_for_quarantine_acl_child(child: &mut std::process::Child) -> Result<Option<ExitStatus>> {
-    let started = Instant::now();
-    loop {
-        if let Some(status) = child
-            .try_wait()
-            .context("failed to poll quarantine ACL command")?
-        {
-            return Ok(Some(status));
-        }
-        if started.elapsed() >= QUARANTINE_ACL_COMMAND_TIMEOUT {
-            return Ok(None);
-        }
-        std::thread::sleep(Duration::from_millis(50));
-    }
-}
-
-#[cfg(windows)]
-fn read_bounded_quarantine_command_output<R: Read>(reader: R, max_bytes: usize) -> Result<Vec<u8>> {
-    let mut reader = BufReader::new(reader);
-    let mut bytes = Vec::new();
-    let retain_limit = max_bytes.saturating_add(1);
-    let mut buffer = [0_u8; 8192];
-    loop {
-        let read = reader
-            .read(&mut buffer)
-            .context("failed to read quarantine ACL command stderr")?;
-        if read == 0 {
-            break;
-        }
-        let remaining = retain_limit.saturating_sub(bytes.len());
-        if remaining > 0 {
-            let keep = read.min(remaining);
-            bytes.extend_from_slice(&buffer[..keep]);
-        }
-    }
-    Ok(bytes)
-}
-
-fn command_output_excerpt(bytes: &[u8]) -> String {
-    let limit = bytes.len().min(MAX_QUARANTINE_COMMAND_OUTPUT_BYTES);
-    let mut text = String::from_utf8_lossy(&bytes[..limit]).trim().to_string();
-    if bytes.len() > MAX_QUARANTINE_COMMAND_OUTPUT_BYTES {
-        text.push_str("...[truncated]");
-    }
-    text
-}
-
-#[cfg(windows)]
-fn current_windows_account() -> Result<String> {
-    let user = std::env::var("USERNAME").map_err(|_| anyhow!("USERNAME is not set"))?;
-    if user.trim().is_empty() {
-        return Err(anyhow!("USERNAME is empty"));
-    }
-    match std::env::var("USERDOMAIN") {
-        Ok(domain) if !domain.trim().is_empty() => Ok(format!("{domain}\\{user}")),
-        _ => Ok(user),
-    }
 }
 
 fn copy_then_remove_verified(
@@ -1609,7 +1535,7 @@ fn copy_then_remove_verified(
         .with_context(|| "invalid local quarantine copy expected sha256")?;
     ensure_regular_quarantine_source(source)?;
     ensure_quarantine_payload_destination_absent(destination)?;
-    copy_file_exclusive(source, destination)?;
+    copy_file_exclusive(source, destination, ExclusiveCopySecurity::Quarantine)?;
     let destination_hash = match (|| -> Result<String> {
         ensure_regular_quarantine_payload(destination, "quarantine payload destination")?;
         sha256_for_file(destination)
@@ -1699,17 +1625,12 @@ fn cleanup_quarantine_partial_file(path: &Path, label: &str) -> Result<()> {
     }
 }
 
-fn cleanup_untracked_quarantine_artifacts(
-    base: &Path,
-    id: &str,
-    payload_path: &Path,
-) -> Result<()> {
+fn cleanup_untracked_quarantine_metadata_artifacts(base: &Path, id: &str) -> Result<()> {
     let metadata_path = base.join(format!("{id}.json"));
     let metadata_temp_path = base.join(format!("{id}.json.tmp"));
     let auth_path = base.join(format!("{id}.json.auth"));
     let auth_temp_path = base.join(format!("{id}.json.auth.tmp"));
     let targets = [
-        (payload_path.to_path_buf(), "untracked quarantine payload"),
         (metadata_path, "untracked quarantine metadata record"),
         (
             metadata_temp_path,
@@ -1731,7 +1652,7 @@ fn cleanup_untracked_quarantine_artifacts(
         Ok(())
     } else {
         Err(anyhow!(
-            "failed to clean up one or more untracked quarantine artifacts: {}",
+            "failed to clean up one or more untracked quarantine metadata artifacts: {}",
             failures.join("; ")
         ))
     }
@@ -1763,7 +1684,11 @@ fn copy_local_quarantine_payload_limited<R: Read, W: Write>(
     }
 }
 
-fn copy_file_exclusive(source: &Path, destination: &Path) -> Result<()> {
+fn copy_file_exclusive(
+    source: &Path,
+    destination: &Path,
+    security: ExclusiveCopySecurity,
+) -> Result<()> {
     let mut input = fs::File::open(source)
         .with_context(|| format!("failed to open quarantine source {}", source.display()))?;
     let mut output = fs::OpenOptions::new()
@@ -1776,6 +1701,27 @@ fn copy_file_exclusive(source: &Path, destination: &Path) -> Result<()> {
                 destination.display()
             )
         })?;
+    if let Err(error) = harden_open_quarantine_file_permissions(
+        &output,
+        destination,
+        "quarantine copy destination",
+        security,
+    ) {
+        drop(output);
+        cleanup_quarantine_partial_file(destination, "unhardened quarantine destination")
+            .with_context(|| {
+                format!(
+                    "failed to clean up quarantine destination {} after permission hardening failure: {error:#}",
+                    destination.display()
+                )
+            })?;
+        return Err(error).with_context(|| {
+            format!(
+                "failed to harden quarantine destination {}",
+                destination.display()
+            )
+        });
+    }
     if let Err(error) = copy_local_quarantine_payload_limited(
         &mut input,
         &mut output,
@@ -1817,7 +1763,17 @@ fn copy_file_exclusive(source: &Path, destination: &Path) -> Result<()> {
     Ok(())
 }
 
+#[cfg(not(test))]
 fn quarantine_base() -> Result<PathBuf> {
+    quarantine_base_from_environment()
+}
+
+#[cfg(test)]
+fn quarantine_base() -> Result<PathBuf> {
+    test_quarantine_base()
+}
+
+fn quarantine_base_from_environment() -> Result<PathBuf> {
     if let Some(path) = absolute_quarantine_env_path("AVORAX_QUARANTINE_DIR")? {
         return Ok(path);
     }
@@ -1849,6 +1805,46 @@ fn quarantine_base() -> Result<PathBuf> {
     Err(anyhow!("local quarantine base root is unavailable"))
 }
 
+#[cfg(test)]
+thread_local! {
+    static TEST_QUARANTINE_TEMP_DIR: tempfile::TempDir = tempfile::tempdir()
+        .expect("create isolated local-core quarantine test directory");
+    static TEST_QUARANTINE_BASE_OVERRIDE: std::cell::RefCell<Option<PathBuf>> =
+        const { std::cell::RefCell::new(None) };
+}
+
+#[cfg(test)]
+pub(crate) struct TestQuarantineBaseOverride {
+    previous: Option<PathBuf>,
+    _not_send: std::marker::PhantomData<std::rc::Rc<()>>,
+}
+
+#[cfg(test)]
+impl Drop for TestQuarantineBaseOverride {
+    fn drop(&mut self) {
+        TEST_QUARANTINE_BASE_OVERRIDE.with(|value| {
+            value.replace(self.previous.take());
+        });
+    }
+}
+
+#[cfg(test)]
+pub(crate) fn override_test_quarantine_base(base: PathBuf) -> TestQuarantineBaseOverride {
+    let previous = TEST_QUARANTINE_BASE_OVERRIDE.with(|value| value.replace(Some(base)));
+    TestQuarantineBaseOverride {
+        previous,
+        _not_send: std::marker::PhantomData,
+    }
+}
+
+#[cfg(test)]
+fn test_quarantine_base() -> Result<PathBuf> {
+    if let Some(base) = TEST_QUARANTINE_BASE_OVERRIDE.with(|value| value.borrow().clone()) {
+        return Ok(base);
+    }
+    TEST_QUARANTINE_TEMP_DIR.with(|directory| Ok(directory.path().join("Quarantine")))
+}
+
 fn absolute_quarantine_env_path(name: &str) -> Result<Option<PathBuf>> {
     let Some(value) = std::env::var_os(name) else {
         return Ok(None);
@@ -1865,7 +1861,23 @@ fn absolute_quarantine_env_path(name: &str) -> Result<Option<PathBuf>> {
             path.display()
         ));
     }
+    if matches!(name, "AVORAX_QUARANTINE_DIR" | "ZENTOR_QUARANTINE_DIR") {
+        validate_quarantine_override_leaf(name, &path)?;
+    }
     Ok(Some(path))
+}
+
+fn validate_quarantine_override_leaf(name: &str, path: &Path) -> Result<()> {
+    let leaf = path
+        .file_name()
+        .and_then(|value| value.to_str())
+        .ok_or_else(|| anyhow!("{name} must end in a dedicated Quarantine directory"))?;
+    if !leaf.eq_ignore_ascii_case("quarantine") {
+        return Err(anyhow!(
+            "{name} must end in a dedicated Quarantine directory"
+        ));
+    }
+    Ok(())
 }
 
 fn validate_quarantine_env_root_text(name: &str, text: &str) -> Result<()> {
@@ -1950,18 +1962,39 @@ fn sha256_body(trimmed: &str) -> &str {
     }
 }
 
-#[cfg(unix)]
-fn remove_executable_permissions(path: &Path) -> Result<()> {
-    use std::os::unix::fs::PermissionsExt;
-    let mut permissions =
-        ensure_regular_quarantine_payload(path, "quarantine payload")?.permissions();
-    permissions.set_mode(permissions.mode() & !0o111);
-    fs::set_permissions(path, permissions)?;
+fn harden_quarantine_payload_permissions(path: &Path) -> Result<()> {
+    let file = fs::File::open(path)
+        .with_context(|| format!("failed to open quarantine payload {}", path.display()))?;
+    harden_open_quarantine_file_permissions(
+        &file,
+        path,
+        "quarantine payload",
+        ExclusiveCopySecurity::Quarantine,
+    )?;
     Ok(())
 }
 
-#[cfg(not(unix))]
-fn remove_executable_permissions(_path: &Path) -> Result<()> {
+fn harden_open_quarantine_file_permissions(
+    file: &fs::File,
+    path: &Path,
+    label: &str,
+    security: ExclusiveCopySecurity,
+) -> Result<()> {
+    #[cfg(unix)]
+    avorax_platform_security::harden_unix_private_file(file, path)
+        .with_context(|| format!("failed to enforce owner-only permissions for {label}"))?;
+    #[cfg(windows)]
+    {
+        let _ = file;
+        if security == ExclusiveCopySecurity::Quarantine {
+            avorax_platform_security::harden_windows_quarantine_file(file, path)
+                .with_context(|| format!("failed to enforce exact DACL for {label}"))?;
+        }
+    }
+    #[cfg(not(any(unix, windows)))]
+    {
+        let _ = (file, path, label, security);
+    }
     Ok(())
 }
 
@@ -2022,7 +2055,7 @@ mod tests {
         let previous = std::env::var_os("AVORAX_QUARANTINE_DIR");
         std::env::set_var("AVORAX_QUARANTINE_DIR", "relative-quarantine");
 
-        let error = quarantine_base().unwrap_err().to_string();
+        let error = quarantine_base_from_environment().unwrap_err().to_string();
 
         match previous {
             Some(value) => std::env::set_var("AVORAX_QUARANTINE_DIR", value),
@@ -2038,13 +2071,37 @@ mod tests {
         let dir = tempdir().unwrap();
         std::env::set_var("AVORAX_QUARANTINE_DIR", dir.path().join(".."));
 
-        let error = quarantine_base().unwrap_err().to_string();
+        let error = quarantine_base_from_environment().unwrap_err().to_string();
 
         match previous {
             Some(value) => std::env::set_var("AVORAX_QUARANTINE_DIR", value),
             None => std::env::remove_var("AVORAX_QUARANTINE_DIR"),
         }
         assert!(error.contains("AVORAX_QUARANTINE_DIR must not contain parent traversal"));
+    }
+
+    #[test]
+    fn quarantine_base_override_requires_dedicated_leaf() {
+        let _lock = env_lock();
+        let previous = std::env::var_os("AVORAX_QUARANTINE_DIR");
+        let dir = tempdir().unwrap();
+        std::env::set_var("AVORAX_QUARANTINE_DIR", dir.path().join("not-a-vault"));
+
+        let error = quarantine_base_from_environment().unwrap_err().to_string();
+
+        match previous {
+            Some(value) => std::env::set_var("AVORAX_QUARANTINE_DIR", value),
+            None => std::env::remove_var("AVORAX_QUARANTINE_DIR"),
+        }
+        assert!(error.contains("must end in a dedicated Quarantine directory"));
+    }
+
+    #[test]
+    fn quarantine_base_uses_an_isolated_test_directory() {
+        let base = quarantine_base().unwrap();
+
+        assert!(base.ends_with("Quarantine"));
+        assert!(base.starts_with(std::env::temp_dir()));
     }
 
     #[test]
@@ -2064,13 +2121,13 @@ mod tests {
     }
 
     #[test]
-    fn quarantine_finalization_failures_clean_untracked_artifacts() {
+    fn quarantine_finalization_failures_preserve_payload_and_clean_metadata() {
         let source = include_str!("quarantine_store.rs");
         let start = source.find("pub fn quarantine_file(&self").unwrap();
         let end = source.find("pub fn list(&self)").unwrap();
         let quarantine_source = &source[start..end];
         let cleanup_start = source
-            .find("fn cleanup_untracked_quarantine_artifacts")
+            .find("fn cleanup_untracked_quarantine_metadata_artifacts")
             .unwrap();
         let cleanup_end = source
             .find("fn copy_local_quarantine_payload_limited")
@@ -2079,16 +2136,16 @@ mod tests {
 
         assert!(quarantine_source.contains("let finalize_result = (|| -> Result<QuarantineRecord>"));
         assert!(quarantine_source
-            .contains("cleanup_untracked_quarantine_artifacts(&self.base, &id, &quarantine_path)"));
-        assert!(quarantine_source.contains("after quarantine finalization failure"));
+            .contains("cleanup_untracked_quarantine_metadata_artifacts(&self.base, &id)"));
+        assert!(quarantine_source.contains("payload was not deleted and must be inspected"));
         assert!(quarantine_source.contains("Err(error)"));
-        assert!(cleanup_source.contains("\"untracked quarantine payload\""));
+        assert!(!cleanup_source.contains("\"untracked quarantine payload\""));
         assert!(cleanup_source.contains("\"untracked quarantine metadata record\""));
         assert!(cleanup_source.contains("\"untracked quarantine metadata temp record\""));
         assert!(cleanup_source.contains("\"untracked quarantine metadata auth sidecar\""));
         assert!(cleanup_source.contains("\"untracked quarantine metadata auth temp sidecar\""));
         assert!(cleanup_source
-            .contains("failed to clean up one or more untracked quarantine artifacts"));
+            .contains("failed to clean up one or more untracked quarantine metadata artifacts"));
         assert!(
             quarantine_source
                 .find("fs::rename(path, &quarantine_path)")
@@ -2102,9 +2159,60 @@ mod tests {
                 .find("self.write_record(&record)?")
                 .unwrap()
                 < quarantine_source
-                    .find("cleanup_untracked_quarantine_artifacts")
+                    .find("cleanup_untracked_quarantine_metadata_artifacts")
                     .unwrap()
         );
+    }
+
+    #[test]
+    fn quarantine_finalization_metadata_cleanup_never_deletes_payload() {
+        let dir = tempdir().unwrap();
+        let base = dir.path().join("q");
+        fs::create_dir(&base).unwrap();
+        let id = "cleanup-fixture";
+        let payload = base.join(format!("{id}.{QUARANTINE_EXTENSION}"));
+        let metadata = base.join(format!("{id}.json"));
+        let metadata_temp = base.join(format!("{id}.json.tmp"));
+        let auth = base.join(format!("{id}.json.auth"));
+        let auth_temp = base.join(format!("{id}.json.auth.tmp"));
+        fs::write(&payload, b"preserve").unwrap();
+        for path in [&metadata, &metadata_temp, &auth, &auth_temp] {
+            fs::write(path, b"partial").unwrap();
+        }
+
+        cleanup_untracked_quarantine_metadata_artifacts(&base, id).unwrap();
+
+        assert_eq!(fs::read(&payload).unwrap(), b"preserve");
+        for path in [metadata, metadata_temp, auth, auth_temp] {
+            assert!(!path.exists());
+        }
+    }
+
+    #[test]
+    fn existing_quarantine_base_rejects_unknown_content_before_permission_changes() {
+        let dir = tempdir().unwrap();
+        let base = dir.path().join("quarantine");
+        fs::create_dir(&base).unwrap();
+        fs::write(base.join("unrelated.txt"), b"preserve").unwrap();
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            fs::set_permissions(&base, fs::Permissions::from_mode(0o777)).unwrap();
+        }
+        let store = QuarantineStore::with_base(base.clone());
+
+        let error = store.list().unwrap_err();
+
+        assert!(format!("{error:#}").contains("unrecognized entry unrelated.txt"));
+        assert_eq!(fs::read(base.join("unrelated.txt")).unwrap(), b"preserve");
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            assert_eq!(
+                fs::metadata(base).unwrap().permissions().mode() & 0o7777,
+                0o777
+            );
+        }
     }
 
     #[test]
@@ -2130,6 +2238,77 @@ mod tests {
         assert!(!file.exists());
         assert!(Path::new(&record.quarantine_path).exists());
         assert_eq!(store.list().unwrap().len(), 1);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn quarantine_artifacts_are_owner_only_and_non_executable_on_unix() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let dir = tempdir().unwrap();
+        let file = dir.path().join("bad.exe");
+        let base = dir.path().join("q");
+        fs::write(&file, b"bad").unwrap();
+        fs::set_permissions(&file, fs::Permissions::from_mode(0o777)).unwrap();
+        fs::create_dir(&base).unwrap();
+        fs::set_permissions(&base, fs::Permissions::from_mode(0o777)).unwrap();
+        let store = QuarantineStore::with_base(base.clone());
+        let result = fixture_scan_result(&file, ScanStatus::Infected);
+
+        let record = store.quarantine_file(&file, &result).unwrap();
+
+        assert_eq!(
+            fs::metadata(&base).unwrap().permissions().mode() & 0o7777,
+            0o700
+        );
+        for path in [
+            PathBuf::from(&record.quarantine_path),
+            base.join(format!("{}.json", record.quarantine_id)),
+            base.join(format!("{}.json.auth", record.quarantine_id)),
+            base.join(".metadata_auth_key"),
+        ] {
+            assert_eq!(
+                fs::metadata(path).unwrap().permissions().mode() & 0o7777,
+                0o600
+            );
+        }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn list_repairs_existing_quarantine_artifact_modes_on_unix() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let dir = tempdir().unwrap();
+        let file = dir.path().join("bad.exe");
+        let base = dir.path().join("q");
+        fs::write(&file, b"bad").unwrap();
+        let store = QuarantineStore::with_base(base.clone());
+        let result = fixture_scan_result(&file, ScanStatus::Infected);
+        let record = store.quarantine_file(&file, &result).unwrap();
+        let artifacts = [
+            PathBuf::from(&record.quarantine_path),
+            base.join(format!("{}.json", record.quarantine_id)),
+            base.join(format!("{}.json.auth", record.quarantine_id)),
+            base.join(".metadata_auth_key"),
+        ];
+        fs::set_permissions(&base, fs::Permissions::from_mode(0o777)).unwrap();
+        for path in &artifacts {
+            fs::set_permissions(path, fs::Permissions::from_mode(0o777)).unwrap();
+        }
+
+        assert_eq!(store.list().unwrap().len(), 1);
+
+        assert_eq!(
+            fs::metadata(&base).unwrap().permissions().mode() & 0o7777,
+            0o700
+        );
+        for path in artifacts {
+            assert_eq!(
+                fs::metadata(path).unwrap().permissions().mode() & 0o7777,
+                0o600
+            );
+        }
     }
 
     #[test]
@@ -2232,6 +2411,30 @@ mod tests {
         assert!(file.exists());
     }
 
+    #[cfg(unix)]
+    #[test]
+    fn quarantine_rejects_symbolic_link_base_ancestor_before_creation() {
+        use std::os::unix::fs::symlink;
+
+        let dir = tempdir().unwrap();
+        let real_parent = dir.path().join("real-parent");
+        let linked_parent = dir.path().join("linked-parent");
+        fs::create_dir(&real_parent).unwrap();
+        symlink(&real_parent, &linked_parent).unwrap();
+        let file = dir.path().join("bad.exe");
+        fs::write(&file, b"bad").unwrap();
+        let store = QuarantineStore::with_base(linked_parent.join("q"));
+        let result = fixture_scan_result(&file, ScanStatus::Infected);
+
+        let error = store.quarantine_file(&file, &result).unwrap_err();
+
+        assert!(error
+            .to_string()
+            .contains("refusing to use symbolic link quarantine base directory"));
+        assert!(file.exists());
+        assert!(!real_parent.join("q").exists());
+    }
+
     #[cfg(windows)]
     #[test]
     fn windows_reparse_point_attribute_constant_is_expected_value() {
@@ -2240,8 +2443,9 @@ mod tests {
 
     #[cfg(windows)]
     #[test]
-    fn windows_current_account_for_acl_is_not_empty() {
-        assert!(!current_windows_account().unwrap().trim().is_empty());
+    fn windows_process_sid_for_quarantine_acl_is_not_empty() {
+        let sid = avorax_platform_security::current_windows_process_sid().unwrap();
+        assert!(sid.starts_with("S-1-"));
     }
 
     #[cfg(not(windows))]
@@ -2602,7 +2806,14 @@ mod tests {
         let end = source.find("fn constant_time_eq").unwrap();
         let read_source = &source[start..end];
 
-        assert!(read_source.contains("let metadata = ensure_regular_quarantine_file(path, label)?"));
+        assert!(read_source.contains("let expected = ensure_regular_quarantine_file(path, label)?"));
+        assert!(read_source.contains("harden_open_quarantine_file_permissions("));
+        assert!(
+            read_source
+                .find("harden_open_quarantine_file_permissions(")
+                .unwrap()
+                < read_source.find("let mut total = 0_u64").unwrap()
+        );
         assert!(read_source.contains("if !metadata.is_file()"));
         assert!(read_source.contains("metadata.len() > max_bytes"));
         assert!(read_source.contains("let mut total = 0_u64"));
@@ -2848,16 +3059,15 @@ mod tests {
     #[test]
     fn restore_staging_uses_exclusive_temp_destination() {
         let source = include_str!("quarantine_store.rs");
+        let restore_start = source.find("fn restore_payload_staged").unwrap();
+        let restore_end = source.find("fn write_record").unwrap();
+        let restore_source = &source[restore_start..restore_end];
         let temp_absent_pattern = ["fn ensure_restore_temp_", "destination_absent"].concat();
-        let restore_copy_pattern = [
-            "copy_file_",
-            "exclusive(quarantine_path, &temp_destination)",
-        ]
-        .concat();
         let old_copy_pattern = ["fs::copy(quarantine_", "path, &temp_destination)"].concat();
 
         assert!(source.contains(&temp_absent_pattern));
-        assert!(source.contains(&restore_copy_pattern));
+        assert!(restore_source.contains("copy_file_exclusive("));
+        assert!(restore_source.contains("ExclusiveCopySecurity::Restore"));
         assert!(source.contains("quarantine restore temp destination"));
         assert!(!source.contains(&old_copy_pattern));
     }
@@ -3063,7 +3273,9 @@ mod tests {
         assert!(copy_source.contains("failed to verify copied quarantine destination"));
         assert!(
             copy_source
-                .find("copy_file_exclusive(source, destination)?")
+                .find(
+                    "copy_file_exclusive(source, destination, ExclusiveCopySecurity::Quarantine)?",
+                )
                 .unwrap()
                 < copy_source.find("let destination_hash = match").unwrap()
         );
@@ -3589,41 +3801,30 @@ mod tests {
     }
 
     #[test]
-    fn quarantine_acl_command_output_is_bounded() {
-        let long = vec![b'a'; MAX_QUARANTINE_COMMAND_OUTPUT_BYTES + 16];
-        let excerpt = command_output_excerpt(&long);
+    fn quarantine_permissions_use_shared_verified_platform_controls() {
         let source = crate::normalized_test_source(include_str!("quarantine_store.rs"));
-        let start = source.find("fn harden_quarantine_base_acl").unwrap();
-        let end = source
-            .find("#[cfg(windows)]\nfn current_windows_account")
+        let base_start = source
+            .find("fn harden_quarantine_base_permissions")
             .unwrap();
-        let acl_source = &source[start..end];
-        let old_stderr = ["String::from_utf8_lossy(&output.stderr", ")"].concat();
+        let base_end = source.find("fn copy_then_remove_verified").unwrap();
+        let base_source = &source[base_start..base_end];
+        let payload_start = source
+            .find("fn harden_quarantine_payload_permissions")
+            .unwrap();
+        let tests_start = source.find("#[cfg(test)]\nmod tests").unwrap();
+        let payload_source = &source[payload_start..tests_start];
 
-        assert!(excerpt.ends_with("...[truncated]"));
-        assert!(acl_source.contains("fn harden_quarantine_base_acl(_path: &Path)"));
-        assert!(acl_source.contains("windows_tools::windows_system32_tool(\"icacls.exe\")?"));
-        assert!(acl_source.contains("Command::new(&icacls)"));
-        assert!(acl_source.contains("run_quarantine_acl_command(&mut command)?"));
-        assert!(source.contains("fn run_quarantine_acl_command(command: &mut Command)"));
-        assert!(source.contains(
-            "read_bounded_quarantine_command_output(stderr, MAX_QUARANTINE_COMMAND_OUTPUT_BYTES)"
-        ));
-        assert!(source.contains("let retain_limit = max_bytes.saturating_add(1)"));
-        assert!(source.contains("let remaining = retain_limit.saturating_sub(bytes.len())"));
-        assert!(source.contains("bytes.extend_from_slice(&buffer[..keep])"));
-        let production_source = source.split("#[cfg(test)]").next().unwrap();
-        assert!(!production_source.contains("reader.take((max_bytes + 1) as u64)"));
-        assert!(source.contains("stdin(Stdio::null())"));
-        assert!(source.contains("stdout(Stdio::null())"));
-        assert!(source.contains("stderr(Stdio::piped())"));
-        assert!(acl_source.contains(".arg(_path)"));
-        assert!(acl_source.contains("command_output_excerpt(&output.stderr)"));
-        let old_icacls_launch = ["Command::new(\"", "icacls\")"].concat();
-        assert!(!acl_source.contains(".output()?"));
-        assert!(!acl_source.contains(&old_stderr));
-        assert!(!acl_source.contains(&old_icacls_launch));
-        assert!(!acl_source.contains("let _ = path;"));
+        assert!(base_source.contains("harden_unix_private_directory(path)"));
+        assert!(base_source.contains("harden_windows_private_directory(path)"));
+        assert!(payload_source.contains("harden_unix_private_file(file, path)"));
+        assert!(payload_source.contains("harden_windows_quarantine_file(file, path)"));
+        assert!(payload_source.contains("security == ExclusiveCopySecurity::Quarantine"));
+        let production_source = &source[..tests_start];
+        assert!(production_source.contains("ExclusiveCopySecurity::Restore"));
+        assert!(production_source.contains("ExclusiveCopySecurity::Quarantine"));
+        assert!(!production_source.contains("current_windows_account"));
+        assert!(!production_source.contains("std::env::var(\"USERNAME\")"));
+        assert!(!production_source.contains("icacls.exe"));
     }
 
     #[test]
@@ -4135,20 +4336,20 @@ mod tests {
         let dir = tempdir().unwrap();
         let base = dir.path().join("q");
         fs::create_dir_all(&base).unwrap();
+        let store = QuarantineStore::with_base(base.clone());
+        store.metadata_auth_key(true).unwrap();
         let legacy_extension = ["pa", "susq"].concat();
         let legacy_file = base.join(format!("legacy.{legacy_extension}"));
         fs::write(&legacy_file, b"quarantined").unwrap();
         let mut record = fixture_record("legacy", dir.path().join("restore.exe"), legacy_file);
         record.sha256 = sha256_for_file(Path::new(&record.quarantine_path)).unwrap();
-        let store = QuarantineStore::with_base(base.clone());
         write_authenticated_fixture(&store, &base.join("legacy.json"), &record);
         let error = store.list().unwrap_err();
 
-        assert!(error
-            .to_string()
-            .contains("invalid payload path in quarantine metadata record"));
         let error_chain = format!("{error:#}");
-        assert!(error_chain.contains("quarantine payload has unsafe extension"));
+        assert!(error_chain
+            .contains("refusing to change permissions on an unrecognized quarantine directory"));
+        assert!(error_chain.contains(&format!("unrecognized entry legacy.{legacy_extension}")));
     }
 
     #[test]
@@ -4156,20 +4357,20 @@ mod tests {
         let dir = tempdir().unwrap();
         let base = dir.path().join("q");
         fs::create_dir_all(&base).unwrap();
+        let store = QuarantineStore::with_base(base.clone());
+        store.metadata_auth_key(true).unwrap();
         let legacy_file = base.join("legacy.zentorq");
         fs::write(&legacy_file, b"quarantined").unwrap();
         let mut record =
             fixture_record("legacy-zentor", dir.path().join("restore.exe"), legacy_file);
         record.sha256 = sha256_for_file(Path::new(&record.quarantine_path)).unwrap();
-        let store = QuarantineStore::with_base(base.clone());
         write_authenticated_fixture(&store, &base.join("legacy-zentor.json"), &record);
         let error = store.list().unwrap_err();
 
-        assert!(error
-            .to_string()
-            .contains("invalid payload path in quarantine metadata record"));
         let error_chain = format!("{error:#}");
-        assert!(error_chain.contains("quarantine payload has unsafe extension"));
+        assert!(error_chain
+            .contains("refusing to change permissions on an unrecognized quarantine directory"));
+        assert!(error_chain.contains("unrecognized entry legacy.zentorq"));
     }
 
     #[test]

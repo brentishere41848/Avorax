@@ -1,6 +1,6 @@
 # Dependency and License Inventory
 
-Date: 2026-07-05
+Date: 2026-08-20
 
 This inventory records dependency pinning and license evidence that affects Avorax release readiness. It is source-derived evidence for the current checkout. The desktop release workflow now emits a deterministic CycloneDX lockfile component inventory, but that inventory is explicitly incomplete and is not a substitute for final-binary dependency resolution plus complete license review on a provisioned release host.
 
@@ -10,7 +10,7 @@ A full SBOM generated from the exact final artifacts, together with a complete l
 
 Checkpoint 2131 expands the generated dependency evidence JSON with `lockfile_summaries` and `license_inventory`. The summaries are derived from bounded local reads of Cargo, pub, and Python lockfiles and record package counts plus checksum/SHA-256/exact-pin counts. The license inventory is intentionally `source_level_partial`: it points to this document, confirms no machine-wide dependency installation and no network access are required by the gate, and keeps `full_release_sbom_required=true` until a provisioned release host generates complete SBOM/license output from final artifacts.
 
-Checkpoint 2157 adds `tools/packaging/create_dependency_sbom.py`. The dependency-free generator performs bounded UTF-8 reads of regular non-link Cargo, pub, and Python lockfiles; rejects malformed structure, missing hosted pub.dev SHA-256 evidence, duplicate pub fields, changed inputs, links/reparse paths, conflicting hashes, and unsafe output targets; deduplicates package URLs while retaining every source lockfile; and writes deterministic CycloneDX 1.6 JSON atomically. The current repository produces `569` unique components. Two independent runs produced SHA-256 `AE4006E90B35C85BE93B6D28EA4958C5AB63EF8EB71DFB08138A89457796E739`, and the result passed the official CycloneDX 1.6 JSON schema using an isolated exact-pinned validator environment that was removed afterward.
+Checkpoint 2157 adds `tools/packaging/create_dependency_sbom.py`. The dependency-free generator performs bounded UTF-8 reads of regular non-link Cargo, pub, and Python lockfiles; rejects malformed structure, missing hosted pub.dev SHA-256 evidence, duplicate pub fields, changed inputs, links/reparse paths, conflicting hashes, and unsafe output targets; deduplicates package URLs while retaining every source lockfile; and writes deterministic CycloneDX 1.6 JSON atomically. With the checkpoint 2184 internal platform-security workspace member, the current repository produces `570` unique components. Two independent local runs produced SHA-256 `D04315EEB9326F73D0C327D18B5D143DBDFAFBFB8110A215197C7B3589DB0BBE`. The generator and dependency evidence gate pass; final release artifacts still require schema validation and complete license review on the provisioned release host.
 
 The generated metadata deliberately states `avorax:license-review-status=partial`, `avorax:final-binary-resolution=false`, and `compositions.aggregate=incomplete`. The cross-platform workflow includes the `.cdx.json` beside the six native artifacts and includes it in `SHA256SUMS.txt`. This closes the missing reproducible lockfile inventory, not the production license/SBOM blocker.
 
@@ -32,7 +32,7 @@ Dependency lockfiles are release inputs. Existing lockfiles must be reviewed dur
 
 | Component | Manifest | Lockfile | Current status |
 | --- | --- | --- | --- |
-| Root Rust workspace | `Cargo.toml` | `Cargo.lock` | Present; Cargo-generated workspace lock contains 363 Cargo package entries and includes the update-service workspace member. |
+| Root Rust workspace | `Cargo.toml` | `Cargo.lock` | Present; Cargo-generated workspace lock contains 364 Cargo package entries and includes the update-service and shared platform-security workspace members. |
 | Native engine | `core/zentor_native_engine/Cargo.toml` | `core/zentor_native_engine/Cargo.lock` | Present; source count check found 89 Cargo package entries. |
 | Local core | `core/zentor_local_core/Cargo.toml` | `core/zentor_local_core/Cargo.lock` | Present; source count check found 188 Cargo package entries. |
 | Guard service | `core/zentor_guard_service/Cargo.toml` | `core/zentor_guard_service/Cargo.lock` | Present; source count check found 102 Cargo package entries. |
@@ -50,7 +50,7 @@ Checkpoint 2131 source-level lockfile summary counts from `.workflow/ultracode/a
 
 | Ecosystem | Lockfile | Package count | Integrity count | Integrity evidence |
 | --- | --- | ---: | ---: | --- |
-| Cargo | `Cargo.lock` | 363 | 358 | Cargo registry checksum entries. |
+| Cargo | `Cargo.lock` | 364 | 358 | Cargo registry checksum entries. |
 | Cargo | `core/zentor_native_engine/Cargo.lock` | 89 | 88 | Cargo registry checksum entries. |
 | Cargo | `core/zentor_local_core/Cargo.lock` | 188 | 186 | Cargo registry checksum entries. |
 | Cargo | `core/zentor_guard_service/Cargo.lock` | 102 | 100 | Cargo registry checksum entries. |
@@ -79,6 +79,22 @@ RustCrypto HMAC construction over the existing SHA-256 implementation;
 `getrandom` obtains the 32-byte metadata key from the operating-system random
 source. Final-artifact SBOM generation and complete license/copyright review
 remain production release requirements.
+
+## Shared Platform Security Crate
+
+Checkpoint 2184 adds the internal workspace crate
+`core/avorax_platform_security`. Local Core and Guard both depend on it by local
+path so Unix ownership/mode enforcement and Windows process-token/DACL
+verification have one implementation. The crate adds no new registry package:
+it uses existing workspace dependencies `anyhow`, `libc`, `windows-sys 0.61.2`,
+and test-only `tempfile`. Their versions and checksums were already pinned in
+`Cargo.lock` and remain subject to the existing final-artifact SBOM and
+license-review gate.
+
+Locked metadata verification reports `anyhow 1.0.103`, `libc 0.2.186`,
+`windows-sys 0.61.2`, and `tempfile 3.27.0`; each declares
+`MIT OR Apache-2.0`. This is source-manifest license evidence for reused
+dependencies, not a substitute for final-binary copyright/notices review.
 
 ## GitHub Actions Supply Chain
 

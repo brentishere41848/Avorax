@@ -1,5 +1,6 @@
 [workspace]
 members = [
+    "core/avorax_platform_security",
     "core/zentor_native_engine",
     "core/zentor_local_core",
     "core/zentor_guard_service",

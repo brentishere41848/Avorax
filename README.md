@@ -221,12 +221,51 @@ supported, records hashes and action metadata, authenticates metadata, checks
 payload integrity before restore, rejects unsafe destinations and traversal,
 and never permanently deletes automatically.
 
+On Unix, opened handles are transferred to the effective process UID/GID, the
+quarantine directory is verified as exact mode `0700`, and each payload,
+metadata file, auth sidecar, and key file as exact mode `0600`. On Windows,
+Avorax derives the account SID from the current process token rather than
+mutable environment variables, applies a protected exact DACL through Windows
+handle APIs, transfers ownership to that SID, reads owner and DACL back for
+verification, and denies `FILE_EXECUTE` on quarantined payload files. For files,
+the data handle and ACL handle must have the same volume serial and file ID, so
+a replaced path fails before its contents are used. SYSTEM,
+Administrators, and the process-token SID retain the access needed for recovery.
+Reparse points and object-kind changes are rejected, including existing
+linked/reparse ancestors of the vault path before and after directory creation.
+Explicit Local Core or Guard quarantine overrides must be absolute, contain no
+parent traversal, and end in a dedicated `Quarantine` directory. Before Avorax
+changes that directory's permissions, it enumerates at most 65,536 entries and
+requires every entry to be a non-link regular file with a recognized opaque
+payload, metadata, authentication, key, or staging name. Unknown content fails
+visibly before ACL or mode changes.
+
+Bounded metadata, auth-sidecar, and key reads harden existing files before
+reading their contents. After metadata authentication and path validation,
+Local Core also repairs the permissions of any present legacy payload surfaced
+by the Recovery Vault. Untracked files are never accepted as valid records.
+
 On Windows, the metadata authentication key is DPAPI-protected. This does not
 mean every quarantine payload is encrypted on every platform. Avorax does not
 promise secure erasure, especially on SSDs.
 
+These permission rules have isolated Windows and Unix regression coverage.
+Installed LocalSystem service ownership, upgrade/repair, and unprivileged UI
+mediation still need a disposable elevated Windows-host E2E pass. Until that
+boundary is deployed, another process running as the same SID/UID shares the
+user-mode vault principal and remains inside the trusted computing base.
+
+Quarantine is path-specific. Avorax does not yet enumerate every hard link to a
+detected file across a volume, so another pre-existing hard link can remain and
+must be treated as a separate scan target.
+
 Restore and permanent delete always require explicit user action. Restore
 refuses silent overwrite conflicts.
+
+If quarantine permission or authenticated-metadata finalization fails after the
+payload has moved, cleanup removes only partial metadata. It does not delete the
+only payload copy; the operation fails visibly and reports the retained vault
+path for inspection and recovery.
 
 ## Real-Time Protection
 
