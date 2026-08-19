@@ -6528,3 +6528,31 @@ Updates page showed:
 - `cargo test --manifest-path core\zentor_native_engine\Cargo.toml product_trust -- --test-threads=1` matched `0 tests`; it is recorded as non-evidence and superseded by the `zentor`/`trust_root` filters above.
 - Existing local-core warning debt remains visible; live Authenticode, production AI dataset validation, replacement-race, Unix-only symlink, and installed E2E fixtures remain partial.
 - Full evidence is recorded in `.workflow/ultracode/avorax-hardening/results/1629-native-trust-local-ai-runtime-suite.md`.
+
+## 2026-08-19 continuation checkpoint 2180
+
+- Reproduced a full-suite report failure where `ml/requirements.lock.txt` was
+  counted as `0/0` on CRLF input even though it contains ten exact pins.
+- Centralized line-ending-stable, timeout-bounded regex counting; made zero or
+  missing lockfile summaries release blockers; added the dependency gate to CI;
+  and documented the full final-artifact SBOM requirement.
+- Verified PowerShell parsing, LF/CRLF runtime equality, dependency evidence,
+  `617` source contracts, `git diff --check`, and the full small-threat verifier
+  plus final report validator (`217/217`, `961.5s`).
+- The unfiltered Rust workspace suite exposed ambient `PSModulePath` selecting
+  an incompatible Security module for WindowsPowerShell 5.1. Native
+  Authenticode probing now validates and imports the exact built-in module from
+  the checked System32 helper, overrides only the child module path, and uses
+  module-qualified cmdlets. Four focused probes pass under both normal and
+  deliberately invalid parent module paths.
+- Full workspace Rust verification passed `1,408` tests, the full Flutter suite
+  passed `838`, native strict Clippy passed, and the final full verifier retained
+  `217/217` green steps after the product-code repair.
+- A direct report-validator call after `cargo build --workspace --release`
+  rejected the stale installed-core lifecycle hash as designed. The final full
+  verifier rebuilt Local Core, regenerated lifecycle evidence for that binary,
+  and passed the report validator; no later build replaced the verified binary.
+- Refreshed the engine/control matrix, threat model, blocker register, UI
+  inventory, and consolidated project-readiness report. No live malware,
+  Defender exclusions, admin install, service/driver activation, machine-wide
+  package install, or file deletion was performed.

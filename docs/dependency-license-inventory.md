@@ -4,6 +4,8 @@ Date: 2026-07-05
 
 This inventory records dependency pinning and license evidence that affects Avorax release readiness. It is source-derived evidence for the current checkout. The desktop release workflow now emits a deterministic CycloneDX lockfile component inventory, but that inventory is explicitly incomplete and is not a substitute for final-binary dependency resolution plus complete license review on a provisioned release host.
 
+A full SBOM generated from the exact final artifacts, together with a complete license and copyright review, is required on the provisioned release host before production release approval. The source-level inventory in this repository cannot satisfy that gate by itself.
+
 `tools/security/avorax-dependency-evidence.ps1` verifies the source-level dependency evidence without launching ambient package managers. In release mode it fails on missing required lockfiles; use `-AllowKnownBlockers` only for partial local evidence reports that must not be treated as release approval. Reports with allowed blockers and remaining release blockers set `partial=true`.
 
 Checkpoint 2131 expands the generated dependency evidence JSON with `lockfile_summaries` and `license_inventory`. The summaries are derived from bounded local reads of Cargo, pub, and Python lockfiles and record package counts plus checksum/SHA-256/exact-pin counts. The license inventory is intentionally `source_level_partial`: it points to this document, confirms no machine-wide dependency installation and no network access are required by the gate, and keeps `full_release_sbom_required=true` until a provisioned release host generates complete SBOM/license output from final artifacts.

@@ -677,3 +677,40 @@ detection evidence may assign a threat family. A regression fixture preserves
 the exact path-shaped collision and requires `MaliciousMacro` from the real
 macro signal. This does not turn diagnostics into detections or increase an
 automatic-action score.
+
+## Checkpoint 2180 Dependency Evidence And Readiness Boundary
+
+Dependency and verification reports are security inputs because release gates
+may use them to approve binaries. Platform line endings caused the Python exact
+requirement regex to report zero packages and zero integrity entries while the
+generator still exited successfully. If only the generator result were trusted,
+incomplete dependency evidence could be mistaken for release readiness.
+
+Generation and validation now share a bounded regex counter that normalizes
+line endings and times out after two seconds. Missing source files, zero package
+counts, and zero integrity counts are release blockers. CI runs the generator,
+and the full report validator independently recomputes the counts from current
+lockfiles. The dependency document also states explicitly that source-level
+inventory does not replace a full SBOM and license review of final artifacts.
+
+Authenticode helper module discovery is also a security input. The unfiltered
+workspace suite showed that an ambient `PSModulePath` could make the checked
+WindowsPowerShell 5.1 process autoload an incompatible PowerShell 7 Security
+module. The probe now derives the built-in Security manifest from the checked
+`System32\WindowsPowerShell\v1.0` executable, rejects linked/reparse module
+paths, replaces the child `PSModulePath`, explicitly imports that manifest, and
+uses module-qualified cmdlets. A hostile or broken parent module path therefore
+cannot silently change publisher-trust evidence; module failures remain
+visible and fail closed.
+
+This closes the false-evidence path, not the production supply-chain boundary.
+Compromised package registries, build-host compromise, signer-key theft,
+final-binary transitive dependencies, license obligations, and release artifact
+substitution still require pinned inputs, isolated release hosts, signed
+artifacts, key custody, final-artifact SBOM review, and operational monitoring.
+
+The consolidated readiness review does not promote partial engines. User-mode
+watching remains app-lifetime and post-write; process snapshots remain
+observational; development ML and cloud reputation remain non-production;
+YARA/ClamAV are optional compatibility paths; and pre-execution claims remain
+blocked until a signed installed driver passes approved elevated E2E testing.

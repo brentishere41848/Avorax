@@ -202,6 +202,10 @@ jobs:
         shell: pwsh
         run: .\tools\security\zentor-no-malware-binaries-gate.ps1 -RepoRoot . -PythonPath $env:AVORAX_CI_PYTHON
 
+      - name: Dependency evidence gate
+        shell: pwsh
+        run: .\tools\security\avorax-dependency-evidence.ps1 -RepoRoot . -ReportPath .\.workflow\ultracode\avorax-hardening\results\ci-dependency-evidence.json
+
       - name: Prebuild local core gate tests
         shell: pwsh
         timeout-minutes: 20
