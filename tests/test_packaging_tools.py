@@ -276,6 +276,56 @@ class DependencySbomTests(unittest.TestCase):
 
 
 class DesktopPackageWorkflowTests(unittest.TestCase):
+    def test_linux_prerequisite_install_is_bounded_retried_and_fail_visible(self):
+        workflow = (ROOT / ".github" / "workflows" / "desktop-packages.yml").read_text(
+            encoding="utf-8"
+        )
+        helper = (
+            ROOT / "tools" / "packaging" / "install-linux-build-prerequisites.sh"
+        ).read_text(encoding="utf-8")
+        _, prerequisite_step = workflow.split(
+            "- name: Install native build prerequisites", maxsplit=1
+        )
+        prerequisite_step, _ = prerequisite_step.split(
+            "- name: Setup Rust", maxsplit=1
+        )
+
+        self.assertIn(
+            "bash tools/packaging/install-linux-build-prerequisites.sh",
+            prerequisite_step,
+        )
+        self.assertNotIn("apt-get", prerequisite_step)
+        self.assertIn(
+            "tools/packaging/install-linux-build-prerequisites.sh", workflow
+        )
+        self.assertIn(
+            'readonly apt_timeout_seconds="${AVORAX_APT_TIMEOUT_SECONDS:-300}"',
+            helper,
+        )
+        self.assertIn(
+            'readonly apt_attempts="${AVORAX_APT_ATTEMPTS:-3}"', helper
+        )
+        self.assertIn(
+            'AVORAX_APT_TIMEOUT_SECONDS "$apt_timeout_seconds" 30 900 || return',
+            helper,
+        )
+        self.assertIn('^(0|[1-9][0-9]*)$', helper)
+        self.assertIn("readonly max_apt_operation_budget_seconds=1200", helper)
+        self.assertIn("validate_operation_budget || return", helper)
+        self.assertIn("timeout --signal=TERM", helper)
+        self.assertIn('--kill-after="${apt_kill_grace_seconds}s"', helper)
+        self.assertIn("-o Acquire::Retries=2", helper)
+        self.assertIn("-o Acquire::http::Timeout=30", helper)
+        self.assertIn("-o Acquire::https::Timeout=30", helper)
+        self.assertIn("-o DPkg::Lock::Timeout=30", helper)
+        self.assertIn('if ((status == 124)); then', helper)
+        self.assertIn('require_command apt-get || return', helper)
+        self.assertIn('require_command sleep || return', helper)
+        self.assertIn('sleep "$apt_retry_delay_seconds" || return', helper)
+        self.assertIn('run_bounded_apt "apt-get update" update || return', helper)
+        self.assertIn('return "$status"', helper)
+        self.assertNotIn("|| true", helper)
+
     def test_workflow_creates_hashes_and_publishes_partial_lockfile_sbom(self):
         workflow = (ROOT / ".github" / "workflows" / "desktop-packages.yml").read_text(
             encoding="utf-8"

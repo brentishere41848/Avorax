@@ -6556,3 +6556,24 @@ Updates page showed:
   inventory, and consolidated project-readiness report. No live malware,
   Defender exclusions, admin install, service/driver activation, machine-wide
   package install, or file deletion was performed.
+
+## 2026-08-19 continuation checkpoint 2181
+
+- Investigated the duplicate PR Desktop Packages Linux attempts that stalled in
+  GitHub-hosted `apt-get` prerequisite work before any Avorax project step. The
+  exact-commit branch package run had already passed Linux, so no scanner or
+  package-product test failure was hidden.
+- Replaced inline unbounded prerequisite commands with a maintained helper that
+  validates canonical bounded configuration, applies command/network/lock
+  timeouts, retries finitely, distinguishes timeout exit 124, and propagates the
+  final failure status.
+- Added a 1,200-second combined per-operation ceiling. Defaults allow three
+  300-second attempts plus bounded termination and retry delay, totaling 955
+  seconds each for update and install.
+- Local verification passed: `23` packaging tests with `3` expected Windows
+  symlink skips, `617` source contracts, Bash syntax, timeout-then-success command
+  doubles, invalid-integer rejection, oversized-budget rejection, persistent
+  exit-42 propagation after exact retry exhaustion, and `git diff --check`.
+- No package manager, admin operation, live malware, Defender setting, service,
+  driver, or local file deletion was used. This is package-CI reliability work;
+  checkpoint 2180 readiness estimates and product limitations remain unchanged.
