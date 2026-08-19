@@ -1051,3 +1051,19 @@ enforcement, or pre-execution blocking is claimed.
 - **Release prerequisite:** A full SBOM from exact final artifacts plus complete
   license/copyright review remains required; source-level CycloneDX inventory is
   intentionally incomplete.
+
+## Checkpoint 2181 Linux Package Prerequisite Bounds
+
+- **Resolved locally:** The Linux package workflow no longer waits on unbounded
+  inline `apt-get` commands. Process, acquisition, and lock waits are bounded;
+  retries are finite; timeout exit 124 is visible; and the final failure status
+  is returned.
+- **Verified locally:** `23` packaging tests pass with `3` expected Windows
+  symlink skips, `617` source contracts pass, Bash syntax passes, and harmless
+  command doubles prove retry, invalid-config, and cumulative-budget behavior.
+- **Operational limit:** External GitHub runner or package-mirror availability
+  can still fail the job. The failure is bounded and visible, not converted into
+  success.
+- **Unchanged product blockers:** Installed package/service/ACL/DPAPI E2E,
+  production signing, signed-driver/pre-execution proof, production accuracy,
+  update-key custody, and final-artifact SBOM/license review remain open.
