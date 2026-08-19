@@ -6636,6 +6636,11 @@ Updates page showed:
   `619`, and strict native Clippy, rustfmt, PowerShell parsing, and
   `git diff --check` pass. The central verifier/report validator passes
   `218/218` with no failures or skips in `836.4s` (`1.9s` validator).
+- GitHub head commit `a7e8ca33d02a2513e6a8b8949ef3120cddc1d58a`
+  passes Avorax CI run `32291858708`; Desktop Packages push run `32291729128`
+  and pull-request run `32291858742` both pass package contracts, Windows x64
+  MSI/EXE, Linux x64 DEB/tar, macOS arm64/x64 DMG, and consolidated
+  checksum/SBOM evidence. Prerelease publication was correctly skipped.
 - No dependency, live-malware corpus, standard EICAR string, Defender setting,
   admin install, service/driver state, machine-wide component, or project file
   deletion was involved. Installed service/ACL/DPAPI/UI E2E remains partial and

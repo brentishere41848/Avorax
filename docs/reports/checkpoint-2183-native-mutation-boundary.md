@@ -72,8 +72,12 @@ Rust formatting, PowerShell parser checks, and `git diff --check` also pass. The
 central verifier passed `218/218` steps with no failed or skipped steps in
 `836.4s`; its independent `-RequireFullSuite` report validator passed in `1.9s`.
 The structured report is `.verification/2183-small-threat-mvp-report.json` and
-is intentionally not committed. Package and GitHub head evidence is recorded
-after the final checkpoint review rather than inferred here.
+is intentionally not committed. GitHub head commit
+`a7e8ca33d02a2513e6a8b8949ef3120cddc1d58a` passes Avorax CI run
+`32291858708`. Desktop Packages push run `32291729128` and pull-request run
+`32291858742` both pass package contracts, Windows x64 MSI/EXE, Linux x64
+DEB/tar, macOS arm64/x64 DMG, and consolidated checksum/lockfile-SBOM evidence.
+The non-tag prerelease publication job was correctly skipped.
 
 ## Classification
 
@@ -81,6 +85,9 @@ after the final checkpoint review rather than inferred here.
   native quarantine fails before path I/O; detect-only and lockdown review
   still return verdicts without mutation; production Native Engine code cannot
   construct its old store; Local Core remains the authenticated lifecycle owner.
+- **Verified on GitHub:** the exact head commit passes general CI and two
+  independent Desktop Packages runs across Windows, Linux, macOS arm64, and
+  macOS x64.
 - **Partial:** packaged UI click-through and installed Local Core/Guard service
   mediation still require a disposable elevated Windows host.
 - **Disabled with blocker:** Native Engine direct and automatic quarantine are

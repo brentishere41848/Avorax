@@ -1090,11 +1090,13 @@ enforcement, or pre-execution blocking is claimed.
 - **Resolved locally:** The Native Engine is detection/verdict only in
   production. Auto-quarantine compatibility modes and the direct quarantine
   entry point fail visibly before file or root I/O.
-- **Verified locally:** Three focused boundary regressions, all `435 + 6`
+- **Verified locally and on GitHub:** Three focused boundary regressions, all `435 + 6`
   Native Engine tests, all `515` Local Core tests, the `1,423`-test Rust
   workspace, `838` Flutter tests, `619` source contracts, rustfmt, PowerShell
   parsing, strict native Clippy, and the central verifier/report validator
-  (`218/218` in `836.4s`) pass.
+  (`218/218` in `836.4s`) pass. Exact head
+  `a7e8ca33d02a2513e6a8b8949ef3120cddc1d58a` passes Avorax CI
+  `32291858708` and Desktop Packages runs `32291729128` and `32291858742`.
 - **Supported mutation owner:** Local Core remains responsible for authenticated
   quarantine, list, rescan, restore, and delete. Its quick, full, custom,
   watcher, and manual flows still consume Native Engine verdicts in detect-only
