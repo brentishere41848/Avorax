@@ -1067,3 +1067,20 @@ enforcement, or pre-execution blocking is claimed.
 - **Unchanged product blockers:** Installed package/service/ACL/DPAPI E2E,
   production signing, signed-driver/pre-execution proof, production accuracy,
   update-key custody, and final-artifact SBOM/license review remain open.
+
+## Checkpoint 2182 Quarantine Authentication And Interoperability
+
+- **Resolved locally:** New Local Core and Guard quarantine metadata uses one
+  HMAC-SHA-256 contract instead of separate custom keyed-digest domains.
+- **Resolved locally:** Local Core accepts the bounded Guard source/actions the
+  current Guard really writes, so a Guard record can be listed and restored.
+- **Resolved locally:** Missing sidecars and plaintext Windows keys fail closed;
+  strict unknown-field and filename/ID checks prevent ambiguous records.
+- **Migration boundary:** Only an exact authenticated v1 Local Core or Guard tag
+  can migrate, and only after the complete record validates. Unsigned or invalid
+  metadata is not migrated.
+- **Partial:** Installed LocalSystem key ownership, ACL/DPAPI upgrade and repair,
+  unprivileged UI mediation, authenticated service mutations, and package
+  install/uninstall lifecycle remain unverified on a disposable elevated host.
+- **Technically limited:** Metadata HMAC is not payload encryption, quarantine
+  delete is not secure erase, and no driver or pre-execution claim follows.

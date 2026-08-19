@@ -66,6 +66,20 @@ Checkpoint 2064 adds direct `flate2 = "1.1"` use to Avorax Native Engine for bou
 
 License fields were checked from the locally cached crate manifests in `C:\Users\Brent\.cargo\registry\src`: `flate2` reports `MIT OR Apache-2.0`, `miniz_oxide` reports `MIT OR Zlib OR Apache-2.0`, `crc32fast` reports `MIT OR Apache-2.0`, and `adler2` reports `0BSD OR MIT OR Apache-2.0`. A release host still needs complete SBOM/license output from the final lockfile set before release-candidate tagging.
 
+## Quarantine Authentication Dependencies
+
+Checkpoint 2182 makes `hmac = "0.12"` and `getrandom = "0.3"` direct Local Core
+and Guard dependencies. Both packages were already present transitively in the
+root `Cargo.lock`; the manifest change makes the quarantine security contract
+explicit without introducing a new lockfile package.
+
+The lockfile pins `hmac` `0.12.1` and `getrandom` `0.3.4`. Locally cached crate
+metadata reports `MIT OR Apache-2.0` for both. `hmac` provides the reviewed
+RustCrypto HMAC construction over the existing SHA-256 implementation;
+`getrandom` obtains the 32-byte metadata key from the operating-system random
+source. Final-artifact SBOM generation and complete license/copyright review
+remain production release requirements.
+
 ## GitHub Actions Supply Chain
 
 All third-party workflow actions are pinned to exact 40-character commit SHAs.
