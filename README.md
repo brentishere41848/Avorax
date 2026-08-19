@@ -198,6 +198,11 @@ Avorax Native Engine (ANE) is the primary local scanner:
 7. **Verdict fusion** combines independent evidence into an explainable result
    and conservative action policy.
 
+ANE is non-mutating in production. Local Core consumes its verdict and is the
+only supported owner of authenticated quarantine, list, rescan, restore, and
+delete operations. Native auto-quarantine compatibility modes fail visibly
+instead of writing an incompatible record.
+
 Weak signals do not become malware labels by themselves. An unsigned developer
 tool, unknown CLI binary, VPN installer, or normal executable in Downloads is
 not automatically called a virus. Suspicious and heuristic findings remain

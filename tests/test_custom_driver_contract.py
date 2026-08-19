@@ -89,6 +89,18 @@ NATIVE_RISK_FUSION = (
 )
 NATIVE_SCAN_ENV_ROOTS = ROOT / "core" / "zentor_native_engine" / "src" / "scan" / "env_roots.rs"
 NATIVE_ENGINE = ROOT / "core" / "zentor_native_engine" / "src" / "engine.rs"
+NATIVE_ENGINE_TESTS = (
+    ROOT / "core" / "zentor_native_engine" / "src" / "tests" / "mod.rs"
+)
+NATIVE_QUARANTINE_MOD = (
+    ROOT / "core" / "zentor_native_engine" / "src" / "quarantine" / "mod.rs"
+)
+NATIVE_SCAN_RESULT = (
+    ROOT / "core" / "zentor_native_engine" / "src" / "scan" / "scan_result.rs"
+)
+NATIVE_VERDICT_MOD = (
+    ROOT / "core" / "zentor_native_engine" / "src" / "verdict" / "mod.rs"
+)
 NATIVE_DETECTION_PROVIDER = (
     ROOT / "core" / "zentor_native_engine" / "src" / "detection_provider.rs"
 )
@@ -10454,6 +10466,97 @@ def test_guard_quarantine_finalization_failure_cleans_untracked_artifacts():
         < quarantine_source.index("cleanup_untracked_guard_quarantine_artifacts")
     )
     assert "guard_quarantine_finalization_failures_clean_untracked_artifacts" in guard
+
+
+def test_native_engine_mutation_boundary_routes_quarantine_to_local_core():
+    engine = read(NATIVE_ENGINE)
+    native_tests = read(NATIVE_ENGINE_TESTS)
+    quarantine_mod = read(NATIVE_QUARANTINE_MOD)
+    scan_result = read(NATIVE_SCAN_RESULT)
+    verdict_mod = read(NATIVE_VERDICT_MOD)
+    local_core = read(LOCAL_CORE_MAIN)
+    verifier = read(SMALL_THREAT_MVP_VERIFIER)
+    validator = read(SMALL_THREAT_MVP_REPORT_VALIDATOR)
+    production = engine[:engine.index("#[cfg(test)]\nmod engine_source_tests")]
+    scan_source = production[
+        production.index("    pub fn scan_file("):
+        production.index("    pub(crate) fn scan_bytes_for_test(")
+    ]
+    test_scan_source = production[
+        production.index("    pub(crate) fn scan_bytes_for_test("):
+        production.index("    fn scan_bytes_at(")
+    ]
+    scan_bytes_source = production[
+        production.index("    fn scan_bytes_at("):
+        production.index("    pub fn quarantine(&self")
+    ]
+    quarantine_source = production[
+        production.index("    pub fn quarantine(&self"):
+        production.index("    pub fn restore_quarantine_item(")
+    ]
+    roots_source = production[
+        production.index("    fn scan_roots("):
+        production.index("fn ensure_non_mutating_scan_mode(")
+    ]
+    folder_source = production[
+        production.index("    pub fn scan_folder("):
+        production.index("    pub fn start_quick_scan(")
+    ]
+    quick_source = production[
+        production.index("    pub fn start_quick_scan("):
+        production.index("    pub fn start_full_scan(")
+    ]
+    full_source = production[
+        production.index("    pub fn start_full_scan("):
+        production.index("    pub fn get_scan_progress(")
+    ]
+
+    assert "const NATIVE_MUTATION_BOUNDARY_MESSAGE" in production
+    assert "use Avorax Local Core for authenticated quarantine lifecycle" in production
+    assert scan_source.index("ensure_non_mutating_scan_mode(mode)?") < scan_source.index(
+        "read_scan_content(&path)?"
+    )
+    assert "ensure_non_mutating_scan_mode(mode)?" in test_scan_source
+    assert roots_source.index("ensure_non_mutating_scan_mode(mode)?") < roots_source.index(
+        "file_walker::collect_files"
+    )
+    assert "ensure_non_mutating_scan_mode(mode)?" in folder_source
+    assert quick_source.index("ensure_non_mutating_scan_mode(mode)?") < quick_source.index(
+        "quick_scan_planner::quick_scan_roots()?"
+    )
+    assert full_source.index("ensure_non_mutating_scan_mode(mode)?") < full_source.index(
+        "full_scan_planner::full_scan_roots()?"
+    )
+    assert "ScanActionMode::DetectOnly | ScanActionMode::LockdownReview => Ok(())" in production
+    assert "ScanActionMode::AutoQuarantineConfirmed" in production
+    assert "ScanActionMode::AutoQuarantineHighConfidence" in production
+    assert "quarantine_record: None" in scan_bytes_source
+    assert "anyhow::bail!(NATIVE_MUTATION_BOUNDARY_MESSAGE)" in quarantine_source
+    assert "QuarantineStore::new" not in production
+    assert "should_auto_quarantine" not in production
+    assert "read_scan_bytes" not in production
+    assert "#[cfg(test)]\npub(crate) mod quarantine_action;" in quarantine_mod
+    assert "#[cfg(test)]\npub(crate) mod quarantine_store;" in quarantine_mod
+    assert "pub use quarantine_store::QuarantineStore" not in quarantine_mod
+    assert "#[cfg(test)]\npub(crate) mod action_policy;" in verdict_mod
+    assert scan_result.count(
+        "Compatibility mode rejected by the Native Engine; Local Core owns quarantine mutation."
+    ) == 2
+    assert "always `None` for Native Engine production scans" in scan_result
+    assert "engine.scan_file(path.clone(), AneScanActionMode::DetectOnly)" in local_core
+    assert "native_mutation_boundary_blocks_before_scan_or_walk_io" in engine
+    assert "native_mutation_boundary_entrypoints_fail_before_changing_known_bad_file" in native_tests
+    assert "native_mutation_boundary_lockdown_review_scans_without_mutation" in native_tests
+    assert 'Invoke-Step "native-engine detection-only mutation boundary regressions"' in verifier
+    assert "native-engine detection-only mutation boundary" in verifier
+    assert (
+        'Assert-ReportContainsStep $steps "native-engine detection-only mutation boundary regressions"'
+        in validator
+    )
+    assert (
+        'Assert-ReportScopeContains $verifiedScopeText "native-engine detection-only mutation boundary"'
+        in validator
+    )
 
 
 def test_native_quarantine_copy_fallback_is_bounded_and_cleans_partials():

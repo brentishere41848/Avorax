@@ -4,6 +4,7 @@ Avorax is split into visible UI, local protection services, and platform-specifi
 
 - Flutter UI: status, scans, quarantine, settings, events.
 - `zentor_local_core`: offline scanner powered by Avorax Native Engine, native signatures, native rules, native ML runtime, risk scoring, quarantine, allowlist, recovery primitives.
+- `zentor_native_engine`: bounded non-mutating signatures, rules, static analysis, heuristics, trust, development-model signals, and explainable verdict fusion. Local Core owns authenticated file mutation and recovery.
 - `app_control`: prevention-first execution policy for Balanced, Lockdown, Developer, and Monitor profiles. It separates "unknown app blocked" from "malware detected".
 - `zentor_guard_service`: background user-mode real-time guard. It can monitor process starts, stop confirmed threats after launch, and quarantine files.
 - Windows minifilter/process guard: required for true pre-execution/on-access blocking. The project path exists, but production activation requires WDK build, testing, and signing.

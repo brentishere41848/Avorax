@@ -1084,3 +1084,29 @@ enforcement, or pre-execution blocking is claimed.
   install/uninstall lifecycle remain unverified on a disposable elevated host.
 - **Technically limited:** Metadata HMAC is not payload encryption, quarantine
   delete is not secure erase, and no driver or pre-execution claim follows.
+
+## Checkpoint 2183 Native Engine Mutation Boundary
+
+- **Resolved locally:** The Native Engine is detection/verdict only in
+  production. Auto-quarantine compatibility modes and the direct quarantine
+  entry point fail visibly before file or root I/O.
+- **Verified locally and on GitHub:** Three focused boundary regressions, all `435 + 6`
+  Native Engine tests, all `515` Local Core tests, the `1,423`-test Rust
+  workspace, `838` Flutter tests, `619` source contracts, rustfmt, PowerShell
+  parsing, strict native Clippy, and the central verifier/report validator
+  (`218/218` in `836.4s`) pass. Exact head
+  `a7e8ca33d02a2513e6a8b8949ef3120cddc1d58a` passes Avorax CI
+  `32291858708` and Desktop Packages runs `32291729128` and `32291858742`.
+- **Supported mutation owner:** Local Core remains responsible for authenticated
+  quarantine, list, rescan, restore, and delete. Its quick, full, custom,
+  watcher, and manual flows still consume Native Engine verdicts in detect-only
+  mode.
+- **Disabled with blocker:** Native direct/automatic quarantine remains disabled
+  because its duplicate unauthenticated record schema, process-bound DPAPI
+  context, and missing restore contract cannot safely share the Local Core vault.
+- **Partial:** Installed service identity, authenticated mutation IPC, LocalSystem
+  DPAPI/ACL behavior, repair/upgrade, and packaged UI click-through still need a
+  disposable elevated Windows host.
+- **Technically limited:** No kernel interception, pre-execution protection,
+  production signing, secure erase, or production detection-rate evidence is
+  added by this checkpoint.
