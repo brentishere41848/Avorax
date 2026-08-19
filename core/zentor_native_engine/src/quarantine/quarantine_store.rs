@@ -13,12 +13,12 @@ use std::thread;
 use std::time::{Duration, Instant};
 
 use anyhow::{anyhow, Context, Result};
-use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
+use chrono::Utc;
 use sha2::{Digest, Sha256};
 use uuid::Uuid;
 
 use super::quarantine_action::QUARANTINE_EXTENSION;
+use super::QuarantineRecord;
 
 #[cfg(windows)]
 const FILE_ATTRIBUTE_REPARSE_POINT: u32 = 0x400;
@@ -33,21 +33,6 @@ const MAX_NATIVE_QUARANTINE_COMMAND_OUTPUT_BYTES: usize = 2048;
 #[cfg(windows)]
 const NATIVE_QUARANTINE_ACL_COMMAND_TIMEOUT: Duration = Duration::from_secs(30);
 const DEFAULT_NATIVE_QUARANTINE_DETECTION_NAME: &str = "Native detection";
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct QuarantineRecord {
-    pub quarantine_id: String,
-    pub original_path: String,
-    pub quarantine_path: String,
-    pub sha256: String,
-    #[serde(default)]
-    pub file_size_bytes: u64,
-    pub detection_name: String,
-    pub engine: String,
-    pub quarantined_at: DateTime<Utc>,
-    pub blocked_before_execution: bool,
-    pub action_taken: String,
-}
 
 #[derive(Debug, Clone)]
 pub struct QuarantineStore {

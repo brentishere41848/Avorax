@@ -743,3 +743,25 @@ ACL recovery, upgrade/repair, unprivileged UI mediation, and service mutation
 IPC require disposable elevated-host E2E. An administrator or compromised
 LocalSystem process remains inside the trusted computing base, and secure erase
 is not claimed.
+
+## Checkpoint 2183 Single Quarantine Mutation Owner
+
+Two product components must not move files into one quarantine root under
+incompatible metadata, authentication, restore, and security-context contracts.
+The Native Engine previously exposed direct and scan-policy quarantine through
+an unauthenticated record writer while Local Core and Guard used the shared HMAC
+lifecycle. A confirmed native verdict could therefore create an item the normal
+Recovery Vault could not safely authenticate or restore.
+
+The Native Engine is now limited to detection and explainable verdicts.
+Mutating scan modes are rejected before file reads or root walking, and direct
+native quarantine rejects before I/O. Its old store and action policy compile
+only for private tests. `DetectOnly` and `LockdownReview` remain functional, and
+the product path continues to route confirmed lifecycle actions through Local
+Core's authenticated quarantine implementation.
+
+This intentionally disables a duplicate unsafe capability; it does not reduce
+the existing Local Core quick, full, custom, watcher, manual quarantine, restore,
+or delete paths. Installed service identity, DPAPI/ACL behavior, UI mediation,
+and package click-through remain partial. The boundary is user mode and makes no
+driver, pre-execution, secure-erase, or production detection-rate claim.

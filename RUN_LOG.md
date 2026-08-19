@@ -6613,3 +6613,30 @@ Updates page showed:
 - No live malware, standard EICAR string, Defender exclusion, machine-wide
   install, service/driver change, or deletion outside isolated temporary test
   data was used. Installed ACL/DPAPI/service/UI E2E remains partial.
+
+## 2026-08-19 continuation checkpoint 2183
+
+- Audited the Native Engine mutation path and found a second quarantine writer
+  with unauthenticated metadata, no normal restore contract, and a potentially
+  shared root with Local Core. The product path already used Native Engine
+  detect-only verdicts and Local Core lifecycle actions.
+- Made the Native Engine detection/verdict only in production. Its file, byte,
+  and root scan entry points reject mutating modes before path I/O; direct
+  quarantine fails immediately with an explicit Local Core routing diagnostic.
+- Kept `DetectOnly` and `LockdownReview` functional. Local Core quick, full,
+  custom, watcher, and manual flows retain authenticated quarantine/list/rescan/
+  restore/delete ownership.
+- Moved the obsolete native store, extension helper, and action policy behind
+  private test-only gates while preserving serialized compatibility fields and
+  explicit disabled-mode behavior.
+- Added focused runtime/source regressions plus mandatory central verifier and
+  report-validator evidence. Focused boundary tests pass `3/3`, complete Native
+  Engine tests pass `435 + 6`, complete Local Core tests pass `515/515`, the
+  Rust workspace passes `1,423`, Flutter passes `838`, source contracts pass
+  `619`, and strict native Clippy, rustfmt, PowerShell parsing, and
+  `git diff --check` pass. The central verifier/report validator passes
+  `218/218` with no failures or skips in `836.4s` (`1.9s` validator).
+- No dependency, live-malware corpus, standard EICAR string, Defender setting,
+  admin install, service/driver state, machine-wide component, or project file
+  deletion was involved. Installed service/ACL/DPAPI/UI E2E remains partial and
+  no kernel or pre-execution claim is made.

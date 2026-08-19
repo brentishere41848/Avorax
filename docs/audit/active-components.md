@@ -1,6 +1,6 @@
 # Active Avorax Components
 
-Date: 2026-06-25
+Date: 2026-08-19
 
 This inventory identifies the active components that should remain part of the
 Avorax Anti-Virus product foundation. Archived legacy material under `archive/`
@@ -17,8 +17,8 @@ controls, update controls, and technical blockers.
 
 ## Rust Engine and Services
 
-- `core/zentor_native_engine/` - primary Avorax Native Engine (ANE) scanner, signatures, rules, analyzers, verdicts, quarantine, telemetry, threat-intel import, and safe test logic.
-- `core/zentor_local_core/` - local command surface for scanning, scan jobs, compatibility providers, allowlist, quarantine, recovery, and application-control policy.
+- `core/zentor_native_engine/` - primary non-mutating Avorax Native Engine (ANE) scanner, signatures, rules, analyzers, verdicts, telemetry, threat-intel import, and safe test logic. Its old quarantine writer is private test-only code.
+- `core/zentor_local_core/` - local command surface for scanning, scan jobs, compatibility providers, allowlist, authenticated quarantine, recovery, and application-control policy.
 - `core/zentor_guard_service/` - real-time guard and driver-facing service logic.
 - `services/api/` - backend API crate retained for service/API integration tests; it is not a replacement for the desktop client.
 

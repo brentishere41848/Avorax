@@ -15,10 +15,10 @@ use crate::config::EngineConfig;
 use crate::detection_provider::{builtin_provider_inventory, DetectionProviderInfo};
 use crate::heuristics;
 use crate::ml::{feature_extractor, NativeModelRunner};
-use crate::quarantine::{QuarantineRecord, QuarantineStore};
+use crate::quarantine::QuarantineRecord;
 use crate::rules::RuleDb;
 use crate::scan::archive_scanner;
-use crate::scan::content_reader::{read_scan_bytes, read_scan_content};
+use crate::scan::content_reader::read_scan_content;
 use crate::scan::file_walker;
 use crate::scan::full_scan_planner;
 use crate::scan::quick_scan_planner;
@@ -29,7 +29,6 @@ use crate::signatures::SignatureDb;
 use crate::trust::{
     microsoft_trust, publisher_trust, zentor_trust, Allowlist, KnownBadStore, KnownGoodStore,
 };
-use crate::verdict::action_policy::should_auto_quarantine;
 use crate::verdict::risk_fusion::{Evidence, EvidenceSource, RiskFusion};
 use crate::verdict::{Confidence, FinalVerdict, Verdict};
 
@@ -37,6 +36,7 @@ const MAX_SCAN_SUMMARY_RESULTS: usize = 100;
 const MAX_NATIVE_SCAN_ERROR_DETAILS: usize = 20;
 const MAX_NATIVE_SCAN_ERROR_DETAIL_CHARS: usize = 4096;
 const NATIVE_SCAN_ERROR_TRUNCATION_SUFFIX: &str = "...[truncated]";
+const NATIVE_MUTATION_BOUNDARY_MESSAGE: &str = "native engine file mutation is disabled; use Avorax Local Core for authenticated quarantine lifecycle";
 type ScanContentMetadata = (String, u64, u64, bool);
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -137,12 +137,11 @@ impl ZentorNativeEngine {
     }
 
     pub fn scan_file(&mut self, path: PathBuf, mode: ScanActionMode) -> Result<FileScanVerdict> {
+        ensure_non_mutating_scan_mode(mode)?;
         let content = read_scan_content(&path)?;
         self.scan_bytes_at(
             path,
             &content.sampled_bytes,
-            mode,
-            true,
             Some((
                 content.full_sha256,
                 content.file_size_bytes,
@@ -152,21 +151,20 @@ impl ZentorNativeEngine {
         )
     }
 
-    pub fn scan_bytes_for_test(
+    pub(crate) fn scan_bytes_for_test(
         &mut self,
         path: PathBuf,
         bytes: &[u8],
         mode: ScanActionMode,
     ) -> Result<FileScanVerdict> {
-        self.scan_bytes_at(path, bytes, mode, false, None)
+        ensure_non_mutating_scan_mode(mode)?;
+        self.scan_bytes_at(path, bytes, None)
     }
 
     fn scan_bytes_at(
         &mut self,
         path: PathBuf,
         bytes: &[u8],
-        mode: ScanActionMode,
-        allow_quarantine: bool,
         content_metadata: Option<ScanContentMetadata>,
     ) -> Result<FileScanVerdict> {
         let (sha256, file_size_bytes, scanned_bytes, scan_sample_limited) =
@@ -325,22 +323,6 @@ impl ZentorNativeEngine {
         }
         let final_verdict =
             RiskFusion::fuse(evidence, known_good || trusted_local_artifact, allowlisted);
-        let quarantine_record =
-            if should_auto_quarantine(mode, final_verdict.verdict, final_verdict.confidence)
-                && !allowlisted
-                && allow_quarantine
-            {
-                Some(
-                    QuarantineStore::new(self.config.quarantine_dir.clone()).quarantine_file(
-                        &path,
-                        &sha256,
-                        &final_verdict.user_visible_explanation,
-                        false,
-                    )?,
-                )
-            } else {
-                None
-            };
         Ok(FileScanVerdict {
             path,
             sha256,
@@ -350,7 +332,7 @@ impl ZentorNativeEngine {
             engine: "Avorax Native Engine".to_string(),
             final_verdict,
             scanned_at: Utc::now(),
-            quarantine_record,
+            quarantine_record: None,
         })
     }
 
@@ -458,10 +440,12 @@ impl ZentorNativeEngine {
     }
 
     pub fn scan_folder(&mut self, path: PathBuf, mode: ScanActionMode) -> Result<ScanJobId> {
+        ensure_non_mutating_scan_mode(mode)?;
         self.scan_roots(vec![path], ScanMode::Custom, mode)
     }
 
     pub fn start_quick_scan(&mut self, mode: ScanActionMode) -> Result<ScanJobId> {
+        ensure_non_mutating_scan_mode(mode)?;
         self.scan_roots(
             quick_scan_planner::quick_scan_roots()?,
             ScanMode::Quick,
@@ -470,6 +454,7 @@ impl ZentorNativeEngine {
     }
 
     pub fn start_full_scan(&mut self, mode: ScanActionMode) -> Result<ScanJobId> {
+        ensure_non_mutating_scan_mode(mode)?;
         self.scan_roots(full_scan_planner::full_scan_roots()?, ScanMode::Full, mode)
     }
 
@@ -507,14 +492,8 @@ impl ZentorNativeEngine {
         Ok(self.ransomware_window.observe(event).0)
     }
 
-    pub fn quarantine(&self, path: PathBuf, reason: &str) -> Result<QuarantineRecord> {
-        let bytes = read_scan_bytes(&path)?;
-        QuarantineStore::new(self.config.quarantine_dir.clone()).quarantine_file(
-            &path,
-            &sha256_bytes(&bytes),
-            reason,
-            false,
-        )
+    pub fn quarantine(&self, _path: PathBuf, _reason: &str) -> Result<QuarantineRecord> {
+        anyhow::bail!(NATIVE_MUTATION_BOUNDARY_MESSAGE)
     }
 
     pub fn restore_quarantine_item(&self, _id: String) -> Result<String> {
@@ -567,6 +546,7 @@ impl ZentorNativeEngine {
         scan_mode: ScanMode,
         mode: ScanActionMode,
     ) -> Result<ScanJobId> {
+        ensure_non_mutating_scan_mode(mode)?;
         let job_id = ScanJobId::default();
         let mut progress = ScanProgress::new(job_id.clone(), scan_mode);
         let started = Instant::now();
@@ -660,6 +640,15 @@ impl ZentorNativeEngine {
         };
         self.scan_results.insert(job_id.clone(), summary);
         Ok(job_id)
+    }
+}
+
+fn ensure_non_mutating_scan_mode(mode: ScanActionMode) -> Result<()> {
+    match mode {
+        ScanActionMode::DetectOnly | ScanActionMode::LockdownReview => Ok(()),
+        ScanActionMode::AutoQuarantineConfirmed | ScanActionMode::AutoQuarantineHighConfidence => {
+            anyhow::bail!(NATIVE_MUTATION_BOUNDARY_MESSAGE)
+        }
     }
 }
 
@@ -836,6 +825,78 @@ pub fn sha256_bytes(bytes: &[u8]) -> String {
 
 #[cfg(test)]
 mod engine_source_tests {
+    #[test]
+    fn native_mutation_boundary_blocks_before_scan_or_walk_io() {
+        for mode in [
+            super::ScanActionMode::AutoQuarantineConfirmed,
+            super::ScanActionMode::AutoQuarantineHighConfidence,
+        ] {
+            let error = super::ensure_non_mutating_scan_mode(mode).unwrap_err();
+            assert!(error
+                .to_string()
+                .contains("use Avorax Local Core for authenticated quarantine lifecycle"));
+        }
+        assert!(super::ensure_non_mutating_scan_mode(super::ScanActionMode::DetectOnly).is_ok());
+        assert!(
+            super::ensure_non_mutating_scan_mode(super::ScanActionMode::LockdownReview).is_ok()
+        );
+
+        let source = include_str!("engine.rs");
+        let production_source = &source[..source
+            .find("#[cfg(test)]\nmod engine_source_tests")
+            .unwrap()];
+        let scan_start = source.find("pub fn scan_file").unwrap();
+        let test_scan_start = source.find("pub(crate) fn scan_bytes_for_test").unwrap();
+        let scan_source = &source[scan_start..test_scan_start];
+        let roots_start = source.find("fn scan_roots").unwrap();
+        let roots_end = source.find("fn ensure_non_mutating_scan_mode").unwrap();
+        let roots_source = &source[roots_start..roots_end];
+        let folder_start = source.find("pub fn scan_folder").unwrap();
+        let quick_start = source.find("pub fn start_quick_scan").unwrap();
+        let full_start = source.find("pub fn start_full_scan").unwrap();
+        let progress_start = source.find("pub fn get_scan_progress").unwrap();
+        let folder_source = &source[folder_start..quick_start];
+        let quick_source = &source[quick_start..full_start];
+        let full_source = &source[full_start..progress_start];
+        let quarantine_start = source.find("pub fn quarantine(&self").unwrap();
+        let restore_start = source.find("pub fn restore_quarantine_item").unwrap();
+        let quarantine_source = &source[quarantine_start..restore_start];
+
+        assert!(
+            scan_source
+                .find("ensure_non_mutating_scan_mode(mode)?")
+                .unwrap()
+                < scan_source.find("read_scan_content(&path)?").unwrap()
+        );
+        assert!(
+            roots_source
+                .find("ensure_non_mutating_scan_mode(mode)?")
+                .unwrap()
+                < roots_source.find("file_walker::collect_files").unwrap()
+        );
+        assert!(folder_source.contains("ensure_non_mutating_scan_mode(mode)?"));
+        assert!(
+            quick_source
+                .find("ensure_non_mutating_scan_mode(mode)?")
+                .unwrap()
+                < quick_source
+                    .find("quick_scan_planner::quick_scan_roots()?")
+                    .unwrap()
+        );
+        assert!(
+            full_source
+                .find("ensure_non_mutating_scan_mode(mode)?")
+                .unwrap()
+                < full_source
+                    .find("full_scan_planner::full_scan_roots()?")
+                    .unwrap()
+        );
+        assert!(quarantine_source.contains("anyhow::bail!(NATIVE_MUTATION_BOUNDARY_MESSAGE)"));
+        assert!(!production_source.contains("QuarantineStore::new"));
+        assert!(!production_source.contains("should_auto_quarantine"));
+        assert!(!production_source.contains("read_scan_bytes"));
+    }
+
     #[test]
     fn scan_summary_results_are_bounded_without_changing_counts() {
         let source = include_str!("engine.rs");

@@ -12,7 +12,9 @@ use super::{ScanJobId, ScanMode, ScanProgress};
 #[serde(rename_all = "camelCase")]
 pub enum ScanActionMode {
     DetectOnly,
+    /// Compatibility mode rejected by the Native Engine; Local Core owns quarantine mutation.
     AutoQuarantineConfirmed,
+    /// Compatibility mode rejected by the Native Engine; Local Core owns quarantine mutation.
     AutoQuarantineHighConfidence,
     LockdownReview,
 }
@@ -31,6 +33,7 @@ pub struct FileScanVerdict {
     pub engine: String,
     pub final_verdict: FinalVerdict,
     pub scanned_at: DateTime<Utc>,
+    /// Compatibility field that is always `None` for Native Engine production scans.
     pub quarantine_record: Option<QuarantineRecord>,
 }
 

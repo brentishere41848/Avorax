@@ -1,4 +1,5 @@
-pub mod action_policy;
+#[cfg(test)]
+pub(crate) mod action_policy;
 pub mod confidence;
 pub mod explanation;
 pub mod risk_fusion;

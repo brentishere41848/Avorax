@@ -752,9 +752,7 @@ mod tests {
         fs::create_dir_all(&downloads).unwrap();
         let file = downloads.join("Avorax-AntiVirus-0.2.2-x64-setup.exe");
         fs::write(&file, b"avorax installer fixture").unwrap();
-        let verdict = engine
-            .scan_file(file, ScanActionMode::AutoQuarantineConfirmed)
-            .unwrap();
+        let verdict = engine.scan_file(file, ScanActionMode::DetectOnly).unwrap();
         assert!(matches!(
             verdict.final_verdict.verdict,
             Verdict::LikelyClean | Verdict::Clean
@@ -772,9 +770,7 @@ mod tests {
         fs::create_dir_all(&downloads).unwrap();
         let file = downloads.join("Avorax-AntiVirus-0.2.2-x64.msi");
         fs::write(&file, b"avorax msi fixture").unwrap();
-        let verdict = engine
-            .scan_file(file, ScanActionMode::AutoQuarantineConfirmed)
-            .unwrap();
+        let verdict = engine.scan_file(file, ScanActionMode::DetectOnly).unwrap();
         assert!(matches!(
             verdict.final_verdict.verdict,
             Verdict::LikelyClean | Verdict::Clean
@@ -805,16 +801,67 @@ mod tests {
     }
 
     #[test]
-    fn github_known_bad_sha256_can_quarantine_by_policy() {
+    fn native_mutation_boundary_entrypoints_fail_before_changing_known_bad_file() {
         let (dir, mut engine) = test_engine();
         let file = dir.path().join("github-known-bad.bin");
         fs::write(&file, b"github known bad hash-only fixture").unwrap();
-        let verdict = engine
-            .scan_file(file.clone(), ScanActionMode::AutoQuarantineConfirmed)
-            .unwrap();
-        assert_eq!(verdict.final_verdict.verdict, Verdict::ConfirmedMalware);
-        assert!(verdict.quarantine_record.is_some());
-        assert!(!file.exists());
+
+        for mode in [
+            ScanActionMode::AutoQuarantineConfirmed,
+            ScanActionMode::AutoQuarantineHighConfidence,
+        ] {
+            let error = engine.scan_file(file.clone(), mode).unwrap_err();
+            assert!(error
+                .to_string()
+                .contains("native engine file mutation is disabled"));
+            assert_eq!(
+                fs::read(&file).unwrap(),
+                b"github known bad hash-only fixture"
+            );
+            assert!(!dir.path().join("quarantine").exists());
+        }
+
+        let byte_scan_error = engine
+            .scan_bytes_for_test(
+                file.clone(),
+                b"github known bad hash-only fixture",
+                ScanActionMode::AutoQuarantineConfirmed,
+            )
+            .unwrap_err();
+        assert!(byte_scan_error
+            .to_string()
+            .contains("native engine file mutation is disabled"));
+
+        for error in [
+            engine
+                .scan_folder(
+                    dir.path().join("missing-root"),
+                    ScanActionMode::AutoQuarantineConfirmed,
+                )
+                .unwrap_err(),
+            engine
+                .start_quick_scan(ScanActionMode::AutoQuarantineConfirmed)
+                .unwrap_err(),
+            engine
+                .start_full_scan(ScanActionMode::AutoQuarantineConfirmed)
+                .unwrap_err(),
+        ] {
+            assert!(error
+                .to_string()
+                .contains("native engine file mutation is disabled"));
+        }
+
+        let error = engine
+            .quarantine(file.clone(), "confirmed fixture")
+            .unwrap_err();
+        assert!(error
+            .to_string()
+            .contains("use Avorax Local Core for authenticated quarantine lifecycle"));
+        assert_eq!(
+            fs::read(&file).unwrap(),
+            b"github known bad hash-only fixture"
+        );
+        assert!(!dir.path().join("quarantine").exists());
     }
 
     #[test]
@@ -848,16 +895,17 @@ mod tests {
     }
 
     #[test]
-    fn confirmed_mode_quarantines_eicar() {
+    fn native_mutation_boundary_lockdown_review_scans_without_mutation() {
         let (dir, mut engine) = test_engine();
         let file = dir.path().join("known_bad_fixture.bin");
         fs::write(&file, b"harmless-known-bad-fixture").unwrap();
         let verdict = engine
-            .scan_file(file.clone(), ScanActionMode::AutoQuarantineConfirmed)
+            .scan_file(file.clone(), ScanActionMode::LockdownReview)
             .unwrap();
-        let record = verdict.quarantine_record.as_ref().unwrap();
-        assert!(record.quarantine_path.ends_with(".avoraxq"));
-        assert!(!file.exists());
+        assert_eq!(verdict.final_verdict.verdict, Verdict::ConfirmedMalware);
+        assert!(verdict.quarantine_record.is_none());
+        assert_eq!(fs::read(&file).unwrap(), b"harmless-known-bad-fixture");
+        assert!(!dir.path().join("quarantine").exists());
     }
 
     #[test]

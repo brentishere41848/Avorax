@@ -270,6 +270,7 @@ $verifiedScope = $verifiedScope.Replace(
   "local/native quarantine metadata and trust regressions",
   "local/native quarantine metadata and trust regressions, shared Local Core/Guard HMAC-SHA-256 quarantine metadata authentication and interoperability"
 )
+$verifiedScope += " Additional verified boundary: native-engine detection-only mutation boundary."
 $verifiedScope = $verifiedScope.Replace(
   "best-effort user-mode realtime watcher planning/status/IPC/controller paths",
   "release local-core binary watcher honesty smoke, best-effort user-mode realtime watcher planning/status/IPC/controller paths"
@@ -440,6 +441,7 @@ try {
     $results.Add((Invoke-Step "native-engine known-bad hash regressions" $repo $cargo @("test", "--manifest-path", "core\zentor_native_engine\Cargo.toml", "known_bad", "--", "--test-threads=1")))
     $results.Add((Invoke-Step "native-engine allowlist boundary regressions" $repo $cargo @("test", "--manifest-path", "core\zentor_native_engine\Cargo.toml", "allowlist", "--", "--test-threads=1")))
     $results.Add((Invoke-Step "native-engine quarantine trust regressions" $repo $cargo @("test", "--manifest-path", "core\zentor_native_engine\Cargo.toml", "quarantine_trust", "--", "--test-threads=1")))
+    $results.Add((Invoke-Step "native-engine detection-only mutation boundary regressions" $repo $cargo @("test", "--manifest-path", "core\zentor_native_engine\Cargo.toml", "native_mutation_boundary", "--", "--test-threads=1")))
     $results.Add((Invoke-Step "native-engine rule pack coverage" $repo $cargo @("test", "--manifest-path", "core\zentor_native_engine\Cargo.toml", "rule_pack_loads", "--", "--test-threads=1")))
     $results.Add((Invoke-Step "native-engine archive traversal analyzer" $repo $cargo @("test", "--manifest-path", "core\zentor_native_engine\Cargo.toml", "archive_zip_slip", "--", "--test-threads=1")))
     $results.Add((Invoke-Step "native-engine large-file sample bounds" $repo $cargo @("test", "--manifest-path", "core\zentor_native_engine\Cargo.toml", "large_file_scan_reports_full_hash_and_sample_limit", "--", "--test-threads=1")))
