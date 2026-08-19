@@ -13,6 +13,7 @@ use std::time::{Duration, SystemTime};
 
 use anyhow::Context;
 use chrono::{DateTime, Utc};
+use hmac::{Hmac, Mac};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use uuid::Uuid;
@@ -45,6 +46,8 @@ const MAX_GUARD_QUARANTINE_USER_NOTE_CHARS: usize = 2048;
 const MAX_GUARD_QUARANTINE_RECORD_PATH_CHARS: usize = 4096;
 const DEFAULT_GUARD_QUARANTINE_DETECTION_NAME: &str = "Guard detection";
 const DEFAULT_GUARD_QUARANTINE_ENGINE: &str = "guard-service";
+const GUARD_QUARANTINE_AUTH_HMAC_PREFIX: &str = "hmac-sha256:";
+const GUARD_QUARANTINE_AUTH_HMAC_DOMAIN: &[u8] = b"avorax-quarantine-record-v2\0";
 #[cfg(feature = "compat_yara")]
 const GUARD_YARA_SAMPLE_LIMIT_BYTES: u64 = 1_048_576;
 #[cfg(any(feature = "compat_yara", test))]
@@ -146,6 +149,7 @@ enum QuarantineStatus {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct GuardQuarantineRecord {
     quarantine_id: String,
     original_path: String,
@@ -2637,7 +2641,10 @@ fn quarantine_record_auth_valid(path: &Path, raw: &str) -> anyhow::Result<bool> 
         &auth_path,
         "guard quarantine metadata auth sidecar",
     )? {
-        return Ok(true);
+        anyhow::bail!(
+            "guard quarantine metadata authentication sidecar is required for record {}; unsigned legacy metadata is disabled",
+            path.display()
+        );
     }
     let Some(expected) = quarantine_record_auth_tag(raw, false)? else {
         anyhow::bail!(
@@ -2669,12 +2676,15 @@ fn quarantine_record_auth_tag(raw: &str, create_key: bool) -> anyhow::Result<Opt
     let Some(key) = quarantine_metadata_auth_key(create_key)? else {
         return Ok(None);
     };
-    let mut hasher = Sha256::new();
-    hasher.update(b"avorax-guard-quarantine-record-v1\0");
-    hasher.update(key.as_bytes());
-    hasher.update(b"\0");
-    hasher.update(raw.as_bytes());
-    Ok(Some(format!("sha256:{:x}", hasher.finalize())))
+    let mut mac = Hmac::<Sha256>::new_from_slice(key.as_bytes())
+        .map_err(|_| anyhow::anyhow!("invalid guard quarantine metadata authentication key"))?;
+    mac.update(GUARD_QUARANTINE_AUTH_HMAC_DOMAIN);
+    mac.update(raw.as_bytes());
+    let tag = mac.finalize().into_bytes();
+    Ok(Some(format!(
+        "{GUARD_QUARANTINE_AUTH_HMAC_PREFIX}{}",
+        hex_encode(&tag)
+    )))
 }
 
 fn quarantine_metadata_auth_key(create: bool) -> anyhow::Result<Option<String>> {
@@ -2699,7 +2709,7 @@ fn quarantine_metadata_auth_key(create: bool) -> anyhow::Result<Option<String>> 
         return Ok(None);
     }
     ensure_quarantine_base_directory()?;
-    let key = Uuid::new_v4().to_string();
+    let key = generate_quarantine_metadata_auth_key()?;
     write_staged_quarantine_file(
         &path,
         encode_metadata_auth_key(&key)?.as_bytes(),
@@ -2974,8 +2984,22 @@ fn decode_metadata_auth_key(raw: &str) -> anyhow::Result<String> {
                 anyhow::anyhow!("protected guard quarantine metadata key is not UTF-8")
             });
         }
+        anyhow::bail!(
+            "plaintext guard quarantine metadata authentication keys are not accepted on Windows"
+        );
     }
-    Ok(trimmed.to_string())
+    #[cfg(not(windows))]
+    {
+        Ok(trimmed.to_string())
+    }
+}
+
+fn generate_quarantine_metadata_auth_key() -> anyhow::Result<String> {
+    let mut key = [0_u8; 32];
+    getrandom::fill(&mut key).map_err(|error| {
+        anyhow::anyhow!("unable to generate guard quarantine metadata authentication key: {error}")
+    })?;
+    Ok(hex_encode(&key))
 }
 
 fn hex_encode(bytes: &[u8]) -> String {
@@ -4796,7 +4820,7 @@ mod tests {
 
     #[cfg(not(windows))]
     #[test]
-    fn metadata_key_storage_round_trips_plaintext_off_windows() {
+    fn guard_quarantine_metadata_key_storage_round_trips_plaintext_off_windows() {
         let encoded = encode_metadata_auth_key("fixture-key").unwrap();
         assert_eq!(encoded, "fixture-key\n");
         assert_eq!(decode_metadata_auth_key(&encoded).unwrap(), "fixture-key");
@@ -4804,10 +4828,21 @@ mod tests {
 
     #[cfg(windows)]
     #[test]
-    fn metadata_key_storage_uses_dpapi_on_windows() {
+    fn guard_quarantine_metadata_key_storage_uses_dpapi_on_windows() {
         let encoded = encode_metadata_auth_key("fixture-key").unwrap();
         assert!(encoded.starts_with("dpapi:"));
+        assert!(!encoded.contains("fixture-key"));
         assert_eq!(decode_metadata_auth_key(&encoded).unwrap(), "fixture-key");
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn guard_quarantine_metadata_key_storage_rejects_plaintext_on_windows() {
+        let error = decode_metadata_auth_key("fixture-key\n").unwrap_err();
+
+        assert!(error
+            .to_string()
+            .contains("plaintext guard quarantine metadata authentication keys are not accepted"));
     }
 
     #[test]
@@ -5227,7 +5262,7 @@ mod tests {
 
     #[cfg(unix)]
     #[test]
-    fn guard_legacy_fixed_record_temp_link_is_not_used_by_uuid_staging() {
+    fn guard_quarantine_legacy_fixed_record_temp_link_is_not_used_by_uuid_staging() {
         use std::os::unix::fs::symlink;
 
         let _lock = env_lock();
@@ -5255,7 +5290,7 @@ mod tests {
 
     #[cfg(unix)]
     #[test]
-    fn guard_legacy_fixed_auth_temp_link_is_not_used_by_uuid_staging() {
+    fn guard_quarantine_legacy_fixed_auth_temp_link_is_not_used_by_uuid_staging() {
         use std::os::unix::fs::symlink;
 
         let _lock = env_lock();
@@ -5289,7 +5324,7 @@ mod tests {
 
     #[cfg(unix)]
     #[test]
-    fn guard_legacy_fixed_metadata_key_temp_link_is_not_used_by_uuid_staging() {
+    fn guard_quarantine_legacy_fixed_metadata_key_temp_link_is_not_used_by_uuid_staging() {
         use std::os::unix::fs::symlink;
 
         let _lock = env_lock();
@@ -5328,6 +5363,11 @@ mod tests {
 
         write_quarantine_record(&record).unwrap();
         let path = quarantine_record_path("record").unwrap();
+        let auth = fs::read_to_string(path.with_extension("json.auth")).unwrap();
+        let auth = auth.trim();
+        assert!(auth.starts_with(GUARD_QUARANTINE_AUTH_HMAC_PREFIX));
+        assert_eq!(auth.len(), GUARD_QUARANTINE_AUTH_HMAC_PREFIX.len() + 64);
+        assert!(!auth.starts_with("sha256:"));
         assert!(quarantine_record_auth_valid(&path, &fs::read_to_string(&path).unwrap()).unwrap());
 
         record.engine = "tampered-engine".to_string();
@@ -5340,6 +5380,23 @@ mod tests {
             .to_string()
             .contains("guard quarantine metadata authentication failed"));
         std::env::remove_var("AVORAX_GUARD_QUARANTINE_DIR");
+    }
+
+    #[test]
+    fn guard_quarantine_hmac_and_record_contract_match_local_core() {
+        let local_source =
+            include_str!("../../zentor_local_core/src/quarantine/quarantine_store.rs");
+
+        assert_eq!(
+            GUARD_QUARANTINE_AUTH_HMAC_DOMAIN,
+            b"avorax-quarantine-record-v2\0"
+        );
+        assert!(local_source.contains(
+            "const QUARANTINE_AUTH_HMAC_DOMAIN: &[u8] = b\"avorax-quarantine-record-v2\\0\";"
+        ));
+        assert!(local_source.contains("\"guard_service\""));
+        assert!(local_source.contains("process_stop_requested_and_file_quarantined"));
+        assert!(local_source.contains("file_quarantined_without_process_stop"));
     }
 
     #[test]
@@ -5369,7 +5426,7 @@ mod tests {
     }
 
     #[test]
-    fn guard_oversized_metadata_key_is_rejected_before_decode() {
+    fn guard_quarantine_oversized_metadata_key_is_rejected_before_decode() {
         let _lock = env_lock();
         let dir = tempdir().unwrap();
         let base = dir.path().join("quarantine");
@@ -5391,7 +5448,21 @@ mod tests {
     }
 
     #[test]
-    fn guard_authenticated_record_without_metadata_key_is_reported() {
+    fn guard_quarantine_generated_metadata_auth_key_is_32_random_bytes_encoded_as_hex() {
+        let _lock = env_lock();
+        let dir = tempdir().unwrap();
+        std::env::set_var("AVORAX_GUARD_QUARANTINE_DIR", dir.path().join("quarantine"));
+
+        let key = quarantine_metadata_auth_key(true).unwrap().unwrap();
+
+        assert_eq!(key.len(), 64);
+        assert!(key.bytes().all(|byte| byte.is_ascii_hexdigit()));
+        assert_eq!(key, key.to_ascii_lowercase());
+        std::env::remove_var("AVORAX_GUARD_QUARANTINE_DIR");
+    }
+
+    #[test]
+    fn guard_quarantine_authenticated_record_without_metadata_key_is_reported() {
         let _lock = env_lock();
         let dir = tempdir().unwrap();
         let base = dir.path().join("quarantine");
@@ -5413,7 +5484,7 @@ mod tests {
     }
 
     #[test]
-    fn guard_legacy_record_without_auth_sidecar_remains_readable() {
+    fn guard_quarantine_unsigned_legacy_record_without_auth_sidecar_is_rejected() {
         let _lock = env_lock();
         let dir = tempdir().unwrap();
         std::env::set_var("AVORAX_GUARD_QUARANTINE_DIR", dir.path().join("quarantine"));
@@ -5423,7 +5494,61 @@ mod tests {
         fs::create_dir_all(path.parent().unwrap()).unwrap();
         fs::write(&path, &raw).unwrap();
 
+        let error = quarantine_record_auth_valid(&path, &raw).unwrap_err();
+
+        assert!(error
+            .to_string()
+            .contains("guard quarantine metadata authentication sidecar is required"));
+        assert!(error
+            .to_string()
+            .contains("unsigned legacy metadata is disabled"));
+        std::env::remove_var("AVORAX_GUARD_QUARANTINE_DIR");
+    }
+
+    #[test]
+    fn guard_quarantine_legacy_prefix_sha256_auth_tag_is_rejected() {
+        let _lock = env_lock();
+        let dir = tempdir().unwrap();
+        std::env::set_var("AVORAX_GUARD_QUARANTINE_DIR", dir.path().join("quarantine"));
+        let record = guard_fixture_record(dir.path(), "record");
+        write_quarantine_record(&record).unwrap();
+        let path = quarantine_record_path("record").unwrap();
+        let raw = fs::read_to_string(&path).unwrap();
+        fs::write(
+            path.with_extension("json.auth"),
+            format!("sha256:{}\n", "0".repeat(64)),
+        )
+        .unwrap();
+
+        assert!(!quarantine_record_auth_valid(&path, &raw).unwrap());
+        let error = ensure_quarantine_record_auth_valid(&path, &raw).unwrap_err();
+        assert!(error
+            .to_string()
+            .contains("guard quarantine metadata authentication failed"));
+        std::env::remove_var("AVORAX_GUARD_QUARANTINE_DIR");
+    }
+
+    #[test]
+    fn guard_quarantine_hmac_authenticated_record_schema_rejects_unknown_fields() {
+        let _lock = env_lock();
+        let dir = tempdir().unwrap();
+        std::env::set_var("AVORAX_GUARD_QUARANTINE_DIR", dir.path().join("quarantine"));
+        let record = guard_fixture_record(dir.path(), "record");
+        let mut value = serde_json::to_value(&record).unwrap();
+        value
+            .as_object_mut()
+            .unwrap()
+            .insert("unexpected".to_string(), serde_json::Value::Bool(true));
+        let raw = serde_json::to_string_pretty(&value).unwrap();
+        let path = quarantine_record_path("record").unwrap();
+        fs::create_dir_all(path.parent().unwrap()).unwrap();
+        fs::write(&path, &raw).unwrap();
+        let tag = quarantine_record_auth_tag(&raw, true).unwrap().unwrap();
+        fs::write(path.with_extension("json.auth"), format!("{tag}\n")).unwrap();
+
         assert!(quarantine_record_auth_valid(&path, &raw).unwrap());
+        let error = serde_json::from_str::<GuardQuarantineRecord>(&raw).unwrap_err();
+        assert!(error.to_string().contains("unknown field"));
         std::env::remove_var("AVORAX_GUARD_QUARANTINE_DIR");
     }
 
@@ -5499,7 +5624,7 @@ mod tests {
     }
 
     #[test]
-    fn guard_directory_metadata_key_is_rejected() {
+    fn guard_quarantine_directory_metadata_key_is_rejected() {
         let _lock = env_lock();
         let dir = tempdir().unwrap();
         let base = dir.path().join("quarantine");

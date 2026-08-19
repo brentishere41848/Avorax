@@ -267,6 +267,10 @@ $verifiedScope = $verifiedScope.Replace(
   "release local-core binary quarantine metadata/payload tamper fail-safe smoke, release local-core binary ransomware guard config/activity smoke, detect-only scans"
 )
 $verifiedScope = $verifiedScope.Replace(
+  "local/native quarantine metadata and trust regressions",
+  "local/native quarantine metadata and trust regressions, shared Local Core/Guard HMAC-SHA-256 quarantine metadata authentication and interoperability"
+)
+$verifiedScope = $verifiedScope.Replace(
   "best-effort user-mode realtime watcher planning/status/IPC/controller paths",
   "release local-core binary watcher honesty smoke, best-effort user-mode realtime watcher planning/status/IPC/controller paths"
 )

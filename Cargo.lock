@@ -3446,6 +3446,8 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "chrono",
+ "getrandom 0.3.4",
+ "hmac",
  "serde",
  "serde_json",
  "sha2",
@@ -3463,6 +3465,8 @@ dependencies = [
  "anyhow",
  "chrono",
  "flate2",
+ "getrandom 0.3.4",
+ "hmac",
  "serde",
  "serde_json",
  "sha2",

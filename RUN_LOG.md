@@ -6577,3 +6577,39 @@ Updates page showed:
 - No package manager, admin operation, live malware, Defender setting, service,
   driver, or local file deletion was used. This is package-CI reliability work;
   checkpoint 2180 readiness estimates and product limitations remain unchanged.
+
+## 2026-08-19 continuation checkpoint 2182
+
+- Audited the shared quarantine metadata boundary and found three related gaps:
+  custom prefix-keyed SHA-256 instead of HMAC, unsigned records accepted as
+  legacy, and incompatible Local Core/Guard auth and action contracts despite a
+  shared quarantine directory.
+- Added direct pinned `hmac` and `getrandom` dependencies. New metadata uses one
+  domain-separated HMAC-SHA-256 format and a 32-byte operating-system-random
+  key. Windows rejects plaintext key files and retains DPAPI protection.
+- Local Core now rejects unknown fields and filename/ID mismatches. Missing
+  sidecars fail visibly. Exact authenticated v1 Local Core and Guard tags may
+  migrate only after full validation and are re-verified after migration;
+  unsigned or malformed records are never migrated.
+- Aligned Local Core with the two bounded action values Guard actually writes.
+  A runtime regression proves a Guard record can be listed and restored while
+  preserving historical process evidence; unsupported source, pre-execution,
+  and incomplete process claims remain rejected.
+- Focused verification passes Local Core quarantine `108/108` and Guard
+  quarantine `42/42`. Complete Local Core (`515/515`), Guard (`219/219`), Rust
+  workspace (`1,422`), Flutter (`838/838`), and Python source-contract (`618`)
+  suites pass. Strict Clippy, formatting, dependency evidence, PowerShell
+  parsing, release workspace build, and `git diff --check` also pass.
+- The central small-threat verifier passed `217/217` steps with no failed or
+  skipped steps in `935.8s`; its independent full-suite report validator passed
+  in `2.3s`. Full evidence is maintained in
+  `docs/reports/checkpoint-2182-quarantine-hmac.md`.
+- GitHub head verification passed for commit
+  `a5635b7e54f4f657798edf41be45781c0de37d18`: Avorax CI run `32283061236`
+  passed all branding, Flutter/protocol, Rust, and
+  security/protection/performance jobs; Desktop Packages pull-request run
+  `32283061198` passed package contracts plus Windows x64 MSI/EXE, Linux x64
+  DEB/tar, and macOS arm64/x64 DMG jobs.
+- No live malware, standard EICAR string, Defender exclusion, machine-wide
+  install, service/driver change, or deletion outside isolated temporary test
+  data was used. Installed ACL/DPAPI/service/UI E2E remains partial.

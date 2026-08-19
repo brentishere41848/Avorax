@@ -714,3 +714,32 @@ watching remains app-lifetime and post-write; process snapshots remain
 observational; development ML and cloud reputation remain non-production;
 YARA/ClamAV are optional compatibility paths; and pre-execution claims remain
 blocked until a signed installed driver passes approved elevated E2E testing.
+
+## Checkpoint 2182 Quarantine Metadata And Cross-Engine Integrity
+
+Quarantine metadata is a security decision input. An attacker who can remove an
+auth sidecar, alter a restore path, add ambiguous fields, rename a record, or
+make Guard and Local Core disagree could hide a quarantined item or influence a
+later restore/delete decision. A custom keyed digest is also an unnecessary
+cryptographic construction when a reviewed HMAC implementation is available.
+
+Local Core and Guard now write one domain-separated HMAC-SHA-256 format with a
+32-byte operating-system-random key. Windows key files must be DPAPI-protected;
+plaintext is rejected. Missing sidecars, malformed tags, unknown fields,
+filename/ID mismatches, unsafe paths, and contradictory source/action/process
+claims fail closed. Local Core may migrate exact authenticated v1 Local Core or
+Guard tags only after the complete record validates, and verifies the unchanged
+record again after replacing the sidecar. Unsigned records are never migrated.
+
+The cross-engine contract now accepts only the Guard actions the current Guard
+actually writes and preserves historical process evidence through a Local Core
+restore. It still rejects Guard pre-execution claims because the current Guard
+path is post-launch user mode. This prevents the interoperability repair from
+weakening claim honesty.
+
+Residual boundaries remain. HMAC does not encrypt payload bytes. DPAPI is bound
+to the creating Windows security context; installed LocalSystem service access,
+ACL recovery, upgrade/repair, unprivileged UI mediation, and service mutation
+IPC require disposable elevated-host E2E. An administrator or compromised
+LocalSystem process remains inside the trusted computing base, and secure erase
+is not claimed.

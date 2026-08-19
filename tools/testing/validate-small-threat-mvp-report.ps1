@@ -2094,6 +2094,7 @@ if ($RequireFullSuite) {
   Assert-ReportScopeContains $verifiedScopeText "release local-core binary allowlist confirmed-fixture no-quarantine smoke" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "release local-core binary corrupt allowlist fail-closed smoke" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "release local-core binary quarantine metadata/payload tamper fail-safe smoke" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "shared Local Core/Guard HMAC-SHA-256 quarantine metadata authentication and interoperability" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "release local-core binary ransomware guard config/activity smoke" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "release local-core binary watcher honesty smoke" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "release local-core binary process snapshot observation smoke" "verification_scope.verified"

@@ -8,6 +8,7 @@ use std::time::{Duration, Instant};
 
 use anyhow::{anyhow, Context, Result};
 use chrono::Utc;
+use hmac::{Hmac, Mac};
 use sha2::{Digest, Sha256};
 use uuid::Uuid;
 
@@ -27,8 +28,18 @@ const MAX_QUARANTINE_USER_NOTE_CHARS: usize = 2048;
 const MAX_QUARANTINE_PAYLOAD_PATH_CHARS: usize = 4096;
 const MAX_QUARANTINE_RESTORE_PATH_CHARS: usize = 4096;
 const DEFAULT_QUARANTINE_DETECTION_NAME: &str = "Detected threat";
+const QUARANTINE_AUTH_HMAC_PREFIX: &str = "hmac-sha256:";
+const QUARANTINE_AUTH_HMAC_DOMAIN: &[u8] = b"avorax-quarantine-record-v2\0";
+const QUARANTINE_AUTH_LEGACY_DOMAIN: &[u8] = b"avorax-quarantine-record-v1\0";
+const QUARANTINE_AUTH_GUARD_LEGACY_DOMAIN: &[u8] = b"avorax-guard-quarantine-record-v1\0";
 #[cfg(windows)]
 const FILE_ATTRIBUTE_REPARSE_POINT: u32 = 0x400;
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum QuarantineMetadataAuthScheme {
+    HmacSha256V2,
+    LegacyPrefixSha256V1,
+}
 
 pub struct QuarantineStore {
     base: PathBuf,
@@ -121,12 +132,7 @@ impl QuarantineStore {
                     MAX_QUARANTINE_METADATA_BYTES,
                     "quarantine metadata record",
                 )?;
-                if !self.record_auth_valid(&path, &raw)? {
-                    return Err(anyhow!(
-                        "quarantine metadata authentication failed for record {}",
-                        path.display()
-                    ));
-                }
+                let auth_scheme = self.verified_record_auth_scheme(&path, &raw)?;
                 match serde_json::from_str(&raw) {
                     Ok(record) => {
                         let record: QuarantineRecord = record;
@@ -136,6 +142,13 @@ impl QuarantineStore {
                                 path.display()
                             )
                         })?;
+                        self.ensure_record_path_matches_id(&path, &record.quarantine_id)
+                            .with_context(|| {
+                                format!(
+                                    "quarantine metadata filename does not match record id in {}",
+                                    path.display()
+                                )
+                            })?;
                         validate_original_restore_path_text(&record.original_path).with_context(
                             || {
                                 format!(
@@ -157,6 +170,9 @@ impl QuarantineStore {
                                 path.display()
                             )
                         })?;
+                        if auth_scheme == QuarantineMetadataAuthScheme::LegacyPrefixSha256V1 {
+                            self.migrate_legacy_record_auth(&path, &record, &raw)?;
+                        }
                         records.push(record);
                     }
                     Err(error) => {
@@ -430,12 +446,19 @@ impl QuarantineStore {
         Ok(())
     }
 
-    fn record_auth_valid(&self, path: &Path, raw: &str) -> Result<bool> {
+    fn verified_record_auth_scheme(
+        &self,
+        path: &Path,
+        raw: &str,
+    ) -> Result<QuarantineMetadataAuthScheme> {
         let auth_path = path.with_extension("json.auth");
         if !optional_quarantine_file_present(&auth_path, "quarantine metadata auth sidecar")? {
-            return Ok(true);
+            return Err(anyhow!(
+                "quarantine metadata authentication sidecar is required for record {}; unsigned legacy metadata is disabled",
+                path.display()
+            ));
         }
-        let Some(expected) = self.record_auth_tag(raw, false)? else {
+        let Some(key) = self.metadata_auth_key(false)? else {
             return Err(anyhow!(
                 "quarantine metadata authentication key unavailable for authenticated record {}",
                 path.display()
@@ -448,19 +471,75 @@ impl QuarantineStore {
         )?
         .trim()
         .to_string();
-        Ok(constant_time_eq(expected.as_bytes(), actual.as_bytes()))
+        let expected = hmac_record_auth_tag(&key, raw)?;
+        if constant_time_eq(expected.as_bytes(), actual.as_bytes()) {
+            return Ok(QuarantineMetadataAuthScheme::HmacSha256V2);
+        }
+        let local_legacy_expected = legacy_record_auth_tag(&key, raw);
+        let guard_legacy_expected = guard_legacy_record_auth_tag(&key, raw);
+        if constant_time_eq(local_legacy_expected.as_bytes(), actual.as_bytes())
+            || constant_time_eq(guard_legacy_expected.as_bytes(), actual.as_bytes())
+        {
+            return Ok(QuarantineMetadataAuthScheme::LegacyPrefixSha256V1);
+        }
+        Err(anyhow!(
+            "quarantine metadata authentication failed for record {}",
+            path.display()
+        ))
     }
 
     fn record_auth_tag(&self, raw: &str, create_key: bool) -> Result<Option<String>> {
         let Some(key) = self.metadata_auth_key(create_key)? else {
             return Ok(None);
         };
-        let mut hasher = Sha256::new();
-        hasher.update(b"avorax-quarantine-record-v1\0");
-        hasher.update(key.as_bytes());
-        hasher.update(b"\0");
-        hasher.update(raw.as_bytes());
-        Ok(Some(format!("sha256:{:x}", hasher.finalize())))
+        Ok(Some(hmac_record_auth_tag(&key, raw)?))
+    }
+
+    fn migrate_legacy_record_auth(
+        &self,
+        path: &Path,
+        record: &QuarantineRecord,
+        raw: &str,
+    ) -> Result<()> {
+        let current_raw = read_bounded_quarantine_text(
+            path,
+            MAX_QUARANTINE_METADATA_BYTES,
+            "quarantine metadata record during authentication migration",
+        )?;
+        if current_raw != raw {
+            return Err(anyhow!(
+                "quarantine metadata changed before authentication migration for record {}",
+                path.display()
+            ));
+        }
+        self.replace_record_auth(record, raw)
+            .with_context(|| "unable to migrate legacy quarantine metadata authentication")?;
+        let verified_raw = read_bounded_quarantine_text(
+            path,
+            MAX_QUARANTINE_METADATA_BYTES,
+            "quarantine metadata record after authentication migration",
+        )?;
+        if verified_raw != raw
+            || self.verified_record_auth_scheme(path, &verified_raw)?
+                != QuarantineMetadataAuthScheme::HmacSha256V2
+        {
+            return Err(anyhow!(
+                "quarantine metadata authentication migration verification failed for record {}",
+                path.display()
+            ));
+        }
+        Ok(())
+    }
+
+    fn ensure_record_path_matches_id(&self, path: &Path, id: &str) -> Result<()> {
+        let expected = self.base.join(format!("{id}.json"));
+        if path != expected {
+            return Err(anyhow!(
+                "quarantine metadata path {} does not match record id {id}",
+                path.display()
+            ));
+        }
+        Ok(())
     }
 
     fn metadata_auth_key(&self, create: bool) -> Result<Option<String>> {
@@ -481,7 +560,7 @@ impl QuarantineStore {
             return Ok(None);
         }
         self.ensure_base_directory()?;
-        let key = Uuid::new_v4().to_string();
+        let key = generate_metadata_auth_key()?;
         write_staged_quarantine_file(
             &path,
             encode_metadata_auth_key(&key)?.as_bytes(),
@@ -593,6 +672,40 @@ fn constant_time_eq(left: &[u8], right: &[u8]) -> bool {
         == 0
 }
 
+fn hmac_record_auth_tag(key: &str, raw: &str) -> Result<String> {
+    let mut mac = Hmac::<Sha256>::new_from_slice(key.as_bytes())
+        .map_err(|_| anyhow!("invalid quarantine metadata authentication key"))?;
+    mac.update(QUARANTINE_AUTH_HMAC_DOMAIN);
+    mac.update(raw.as_bytes());
+    let tag = mac.finalize().into_bytes();
+    Ok(format!("{QUARANTINE_AUTH_HMAC_PREFIX}{}", hex_encode(&tag)))
+}
+
+fn generate_metadata_auth_key() -> Result<String> {
+    let mut key = [0_u8; 32];
+    getrandom::fill(&mut key).map_err(|error| {
+        anyhow!("unable to generate quarantine metadata authentication key: {error}")
+    })?;
+    Ok(hex_encode(&key))
+}
+
+fn legacy_record_auth_tag(key: &str, raw: &str) -> String {
+    legacy_record_auth_tag_for_domain(QUARANTINE_AUTH_LEGACY_DOMAIN, key, raw)
+}
+
+fn guard_legacy_record_auth_tag(key: &str, raw: &str) -> String {
+    legacy_record_auth_tag_for_domain(QUARANTINE_AUTH_GUARD_LEGACY_DOMAIN, key, raw)
+}
+
+fn legacy_record_auth_tag_for_domain(domain: &[u8], key: &str, raw: &str) -> String {
+    let mut hasher = Sha256::new();
+    hasher.update(domain);
+    hasher.update(key.as_bytes());
+    hasher.update(b"\0");
+    hasher.update(raw.as_bytes());
+    format!("sha256:{:x}", hasher.finalize())
+}
+
 fn encode_metadata_auth_key(key: &str) -> Result<String> {
     #[cfg(windows)]
     {
@@ -615,8 +728,14 @@ fn decode_metadata_auth_key(raw: &str) -> Result<String> {
             return String::from_utf8(clear)
                 .map_err(|_| anyhow!("protected quarantine metadata key is not UTF-8"));
         }
+        Err(anyhow!(
+            "plaintext quarantine metadata authentication keys are not accepted on Windows"
+        ))
     }
-    Ok(trimmed.to_string())
+    #[cfg(not(windows))]
+    {
+        Ok(trimmed.to_string())
+    }
 }
 
 fn validate_quarantine_id(id: &str) -> Result<()> {
@@ -680,12 +799,6 @@ fn validate_quarantine_record_metadata(record: &QuarantineRecord) -> Result<()> 
         MAX_QUARANTINE_METADATA_STATE_CHARS,
         true,
     )?;
-    let expected_action_taken = expected_quarantine_action_taken(&record.status);
-    if record.action_taken != expected_action_taken {
-        return Err(anyhow!(
-            "quarantine metadata action taken does not match status"
-        ));
-    }
     if record.blocked_before_execution && record.process_started {
         return Err(anyhow!(
             "quarantine metadata cannot claim both pre-execution blocking and process start"
@@ -697,6 +810,12 @@ fn validate_quarantine_record_metadata(record: &QuarantineRecord) -> Result<()> 
         ));
     }
     validate_quarantine_source_for_claims(record)?;
+    let expected_action_taken = expected_quarantine_action_taken(record)?;
+    if record.action_taken != expected_action_taken {
+        return Err(anyhow!(
+            "quarantine metadata action taken does not match status"
+        ));
+    }
     if let Some(note) = &record.user_note {
         validate_quarantine_metadata_text(
             "user note",
@@ -721,15 +840,35 @@ fn validate_quarantine_source_for_claims(record: &QuarantineRecord) -> Result<()
             }
             Ok(())
         }
+        "guard_service" => {
+            if record.blocked_before_execution {
+                return Err(anyhow!(
+                    "guard service quarantine source cannot claim pre-execution blocking"
+                ));
+            }
+            if record.process_started && record.process_id.is_none() {
+                return Err(anyhow!(
+                    "guard service process-start evidence requires a process id"
+                ));
+            }
+            Ok(())
+        }
         _ => Err(anyhow!("unsupported quarantine metadata source")),
     }
 }
 
-fn expected_quarantine_action_taken(status: &QuarantineStatus) -> &'static str {
-    match status {
-        QuarantineStatus::Quarantined => "quarantined",
-        QuarantineStatus::Restored => "restored",
-        QuarantineStatus::Deleted => "deleted",
+fn expected_quarantine_action_taken(record: &QuarantineRecord) -> Result<&'static str> {
+    match (record.source.as_str(), &record.status) {
+        ("scanner", QuarantineStatus::Quarantined) => Ok("quarantined"),
+        ("guard_service", QuarantineStatus::Quarantined) if record.process_started => {
+            Ok("process_stop_requested_and_file_quarantined")
+        }
+        ("guard_service", QuarantineStatus::Quarantined) => {
+            Ok("file_quarantined_without_process_stop")
+        }
+        ("scanner" | "guard_service", QuarantineStatus::Restored) => Ok("restored"),
+        ("scanner" | "guard_service", QuarantineStatus::Deleted) => Ok("deleted"),
+        _ => Err(anyhow!("unsupported quarantine metadata source")),
     }
 }
 
@@ -2118,7 +2257,18 @@ mod tests {
     fn metadata_key_storage_uses_dpapi_on_windows() {
         let encoded = encode_metadata_auth_key("fixture-key").unwrap();
         assert!(encoded.starts_with("dpapi:"));
+        assert!(!encoded.contains("fixture-key"));
         assert_eq!(decode_metadata_auth_key(&encoded).unwrap(), "fixture-key");
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn metadata_key_storage_rejects_plaintext_on_windows() {
+        let error = decode_metadata_auth_key("fixture-key\n").unwrap_err();
+
+        assert!(error
+            .to_string()
+            .contains("plaintext quarantine metadata authentication keys are not accepted"));
     }
 
     #[test]
@@ -2417,9 +2567,8 @@ mod tests {
         let dir = tempdir().unwrap();
         let base = dir.path().join("q");
         fs::create_dir_all(&base).unwrap();
-        fs::write(base.join("corrupt.json"), b"{not-json").unwrap();
-
-        let store = QuarantineStore::with_base(base);
+        let store = QuarantineStore::with_base(base.clone());
+        write_authenticated_raw(&store, &base.join("corrupt.json"), "{not-json");
         let err = store.list().unwrap_err();
 
         assert!(err
@@ -2471,13 +2620,8 @@ mod tests {
         let outside = dir.path().join("outside.avoraxq");
         fs::write(&outside, b"do not delete").unwrap();
         let record = fixture_record("escape", dir.path().join("restore.exe"), outside.clone());
-        fs::write(
-            base.join("escape.json"),
-            serde_json::to_string_pretty(&record).unwrap(),
-        )
-        .unwrap();
-
-        let store = QuarantineStore::with_base(base);
+        let store = QuarantineStore::with_base(base.clone());
+        write_authenticated_fixture(&store, &base.join("escape.json"), &record);
         assert!(store.delete("escape", true).is_err());
         assert!(outside.exists());
     }
@@ -2519,26 +2663,19 @@ mod tests {
         );
         bad_restore.file_size = fs::metadata(&payload).unwrap().len();
         bad_restore.sha256 = sha256_for_file(&payload).unwrap();
-        fs::write(
-            base.join("bad-restore.json"),
-            serde_json::to_string_pretty(&bad_restore).unwrap(),
-        )
-        .unwrap();
         let store = QuarantineStore::with_base(base.clone());
+        write_authenticated_fixture(&store, &base.join("bad-restore.json"), &bad_restore);
         let restore_error = store.list().unwrap_err();
         assert!(restore_error
             .to_string()
             .contains("invalid original path in quarantine metadata record"));
 
         fs::remove_file(base.join("bad-restore.json")).unwrap();
+        fs::remove_file(base.join("bad-restore.json.auth")).unwrap();
         let mut bad_payload =
             fixture_record("bad-payload", dir.path().join("restore.exe"), payload);
         bad_payload.quarantine_path = dir.path().join("payload.tmp").display().to_string();
-        fs::write(
-            base.join("bad-payload.json"),
-            serde_json::to_string_pretty(&bad_payload).unwrap(),
-        )
-        .unwrap();
+        write_authenticated_fixture(&store, &base.join("bad-payload.json"), &bad_payload);
 
         let payload_error = store.list().unwrap_err();
         assert!(payload_error
@@ -2556,12 +2693,8 @@ mod tests {
 
         let mut bad_hash = fixture_record("bad-hash", dir.path().join("restore.exe"), payload);
         bad_hash.sha256 = "sha256:not-a-real-hash".to_string();
-        fs::write(
-            base.join("bad-hash.json"),
-            serde_json::to_string_pretty(&bad_hash).unwrap(),
-        )
-        .unwrap();
         let store = QuarantineStore::with_base(base.clone());
+        write_authenticated_fixture(&store, &base.join("bad-hash.json"), &bad_hash);
         let hash_error = store.list().unwrap_err();
         assert!(hash_error
             .to_string()
@@ -2570,14 +2703,11 @@ mod tests {
         assert!(hash_error_chain.contains("invalid quarantine metadata sha256"));
 
         fs::remove_file(base.join("bad-hash.json")).unwrap();
+        fs::remove_file(base.join("bad-hash.json.auth")).unwrap();
         let payload = base.join("record.avoraxq");
         let mut bad_label = fixture_record("bad-label", dir.path().join("restore.exe"), payload);
         bad_label.detection_name = "Fixture\nDetection".to_string();
-        fs::write(
-            base.join("bad-label.json"),
-            serde_json::to_string_pretty(&bad_label).unwrap(),
-        )
-        .unwrap();
+        write_authenticated_fixture(&store, &base.join("bad-label.json"), &bad_label);
 
         let label_error = store.list().unwrap_err();
         assert!(label_error
@@ -2802,13 +2932,8 @@ mod tests {
         let mut record = fixture_record("linked-parent", restore_path.clone(), payload.clone());
         record.file_size = fs::metadata(&payload).unwrap().len();
         record.sha256 = sha256_for_file(&payload).unwrap();
-        fs::write(
-            base.join("linked-parent.json"),
-            serde_json::to_string_pretty(&record).unwrap(),
-        )
-        .unwrap();
-
-        let store = QuarantineStore::with_base(base);
+        let store = QuarantineStore::with_base(base.clone());
+        write_authenticated_fixture(&store, &base.join("linked-parent.json"), &record);
         let err = store.restore("linked-parent", true).unwrap_err();
 
         assert!(err
@@ -3201,6 +3326,71 @@ mod tests {
     }
 
     #[test]
+    fn guard_service_record_is_listed_and_restored_through_local_core() {
+        let dir = tempdir().unwrap();
+        let base = dir.path().join("q");
+        let payload = base.join("guard-record.avoraxq");
+        fs::create_dir_all(&base).unwrap();
+        fs::write(&payload, b"quarantined").unwrap();
+        let restore_path = dir.path().join("restore.exe");
+        let store = QuarantineStore::with_base(base);
+        let mut record = fixture_record("guard-record", restore_path.clone(), payload.clone());
+        record.file_size = fs::metadata(&payload).unwrap().len();
+        record.sha256 = sha256_for_file(&payload).unwrap();
+        record.source = "guard_service".to_string();
+        record.action_taken = "process_stop_requested_and_file_quarantined".to_string();
+        record.process_started = true;
+        record.process_id = Some(4242);
+
+        store.write_record(&record).unwrap();
+        let listed = store.list().unwrap();
+
+        assert_eq!(listed.len(), 1);
+        assert_eq!(listed[0].source, "guard_service");
+        assert_eq!(
+            listed[0].action_taken,
+            "process_stop_requested_and_file_quarantined"
+        );
+        assert!(listed[0].process_started);
+        assert_eq!(listed[0].process_id, Some(4242));
+
+        let restored = store.restore("guard-record", true).unwrap();
+
+        assert_eq!(restored.status, QuarantineStatus::Restored);
+        assert_eq!(restored.action_taken, "restored");
+        assert_eq!(restored.source, "guard_service");
+        assert_eq!(fs::read(&restore_path).unwrap(), b"quarantined");
+        assert!(!payload.exists());
+    }
+
+    #[test]
+    fn guard_service_record_rejects_inconsistent_execution_evidence() {
+        let dir = tempdir().unwrap();
+        let base = dir.path().join("q");
+        let payload = base.join("guard-record.avoraxq");
+        fs::create_dir_all(&base).unwrap();
+        fs::write(&payload, b"quarantined").unwrap();
+        let store = QuarantineStore::with_base(base.clone());
+        let mut record = fixture_record("guard-record", dir.path().join("restore.exe"), payload);
+        record.source = "guard_service".to_string();
+        record.action_taken = "process_stop_requested_and_file_quarantined".to_string();
+        record.process_started = true;
+
+        let missing_pid = store.write_record(&record).unwrap_err();
+        assert!(format!("{missing_pid:#}")
+            .contains("guard service process-start evidence requires a process id"));
+
+        record.process_started = false;
+        record.blocked_before_execution = true;
+        record.action_taken = "file_quarantined_without_process_stop".to_string();
+        let preexecution = store.write_record(&record).unwrap_err();
+        assert!(format!("{preexecution:#}")
+            .contains("guard service quarantine source cannot claim pre-execution blocking"));
+        assert!(!base.join("guard-record.json").exists());
+        assert!(!base.join("guard-record.json.auth").exists());
+    }
+
+    #[test]
     fn metadata_validation_requires_action_taken_to_match_status() {
         let source = include_str!("quarantine_store.rs");
         let validation_start = source
@@ -3209,17 +3399,18 @@ mod tests {
         let validation_end = source.find("fn validate_quarantine_metadata_text").unwrap();
         let validation_source = &source[validation_start..validation_end];
 
-        assert!(validation_source.contains(
-            "let expected_action_taken = expected_quarantine_action_taken(&record.status);"
-        ));
+        assert!(validation_source
+            .contains("let expected_action_taken = expected_quarantine_action_taken(record)?;"));
         assert!(validation_source.contains("record.action_taken != expected_action_taken"));
         assert!(
             validation_source.contains("quarantine metadata action taken does not match status")
         );
-        assert!(source.contains("fn expected_quarantine_action_taken(status: &QuarantineStatus)"));
-        assert!(source.contains("QuarantineStatus::Quarantined => \"quarantined\""));
-        assert!(source.contains("QuarantineStatus::Restored => \"restored\""));
-        assert!(source.contains("QuarantineStatus::Deleted => \"deleted\""));
+        assert!(source.contains("fn expected_quarantine_action_taken(record: &QuarantineRecord)"));
+        assert!(source.contains("(\"scanner\", QuarantineStatus::Quarantined)"));
+        assert!(source.contains("process_stop_requested_and_file_quarantined"));
+        assert!(source.contains("file_quarantined_without_process_stop"));
+        assert!(source.contains("QuarantineStatus::Restored"));
+        assert!(source.contains("QuarantineStatus::Deleted"));
     }
 
     #[test]
@@ -3257,9 +3448,14 @@ mod tests {
         assert!(validation_source.contains("fn validate_quarantine_source_for_claims"));
         assert!(validation_source.contains("record.source.as_str()"));
         assert!(validation_source.contains("\"scanner\""));
+        assert!(validation_source.contains("\"guard_service\""));
         assert!(validation_source.contains("unsupported quarantine metadata source"));
         assert!(validation_source
             .contains("scanner quarantine source cannot claim execution-state evidence"));
+        assert!(validation_source
+            .contains("guard service quarantine source cannot claim pre-execution blocking"));
+        assert!(validation_source
+            .contains("guard service process-start evidence requires a process id"));
     }
 
     #[test]
@@ -3566,6 +3762,11 @@ mod tests {
         let mut record = fixture_record("record", dir.path().join("restore.exe"), payload);
 
         store.write_record(&record).unwrap();
+        let auth = fs::read_to_string(base.join("record.json.auth")).unwrap();
+        let auth = auth.trim();
+        assert!(auth.starts_with(QUARANTINE_AUTH_HMAC_PREFIX));
+        assert_eq!(auth.len(), QUARANTINE_AUTH_HMAC_PREFIX.len() + 64);
+        assert!(!auth.starts_with("sha256:"));
         record.engine = "tampered-engine".to_string();
         fs::write(
             base.join("record.json"),
@@ -3596,7 +3797,9 @@ mod tests {
         )
         .unwrap();
 
-        let err = store.record_auth_valid(&record_path, "{}").unwrap_err();
+        let err = store
+            .verified_record_auth_scheme(&record_path, "{}")
+            .unwrap_err();
 
         assert!(err.to_string().contains("quarantine metadata auth sidecar"));
         assert!(err.to_string().contains("exceeds maximum size"));
@@ -3627,7 +3830,7 @@ mod tests {
     }
 
     #[test]
-    fn legacy_record_without_auth_sidecar_remains_readable() {
+    fn unsigned_legacy_record_without_auth_sidecar_is_rejected() {
         let dir = tempdir().unwrap();
         let base = dir.path().join("q");
         fs::create_dir_all(&base).unwrap();
@@ -3641,10 +3844,167 @@ mod tests {
         .unwrap();
 
         let store = QuarantineStore::with_base(base);
+        let error = store.list().unwrap_err();
+
+        assert!(error
+            .to_string()
+            .contains("quarantine metadata authentication sidecar is required"));
+        assert!(error
+            .to_string()
+            .contains("unsigned legacy metadata is disabled"));
+    }
+
+    #[test]
+    fn legacy_authenticated_record_migrates_to_hmac_after_validation() {
+        let dir = tempdir().unwrap();
+        let base = dir.path().join("q");
+        fs::create_dir_all(&base).unwrap();
+        let payload = base.join("legacy.avoraxq");
+        fs::write(&payload, b"quarantined").unwrap();
+        let record = fixture_record("legacy", dir.path().join("restore.exe"), payload);
+        let raw = serde_json::to_string_pretty(&record).unwrap();
+        let store = QuarantineStore::with_base(base.clone());
+        let key = store.metadata_auth_key(true).unwrap().unwrap();
+        let legacy_tag = legacy_record_auth_tag(&key, &raw);
+        fs::write(base.join("legacy.json"), &raw).unwrap();
+        fs::write(base.join("legacy.json.auth"), format!("{legacy_tag}\n")).unwrap();
+
         let records = store.list().unwrap();
 
         assert_eq!(records.len(), 1);
         assert_eq!(records[0].quarantine_id, "legacy");
+        let migrated = fs::read_to_string(base.join("legacy.json.auth")).unwrap();
+        assert!(migrated.trim().starts_with(QUARANTINE_AUTH_HMAC_PREFIX));
+        assert!(!migrated.trim().starts_with("sha256:"));
+        assert_eq!(store.list().unwrap().len(), 1);
+    }
+
+    #[test]
+    fn legacy_guard_authenticated_record_migrates_to_shared_hmac() {
+        let dir = tempdir().unwrap();
+        let base = dir.path().join("q");
+        fs::create_dir_all(&base).unwrap();
+        let payload = base.join("guard-record.avoraxq");
+        fs::write(&payload, b"quarantined").unwrap();
+        let mut record = fixture_record("guard-record", dir.path().join("restore.exe"), payload);
+        record.source = "guard_service".to_string();
+        record.action_taken = "process_stop_requested_and_file_quarantined".to_string();
+        record.process_started = true;
+        record.process_id = Some(4242);
+        let raw = serde_json::to_string_pretty(&record).unwrap();
+        let store = QuarantineStore::with_base(base.clone());
+        let key = store.metadata_auth_key(true).unwrap().unwrap();
+        let legacy_tag = guard_legacy_record_auth_tag(&key, &raw);
+        fs::write(base.join("guard-record.json"), &raw).unwrap();
+        fs::write(
+            base.join("guard-record.json.auth"),
+            format!("{legacy_tag}\n"),
+        )
+        .unwrap();
+
+        let records = store.list().unwrap();
+
+        assert_eq!(records.len(), 1);
+        assert_eq!(records[0].source, "guard_service");
+        assert_eq!(records[0].process_id, Some(4242));
+        let migrated = fs::read_to_string(base.join("guard-record.json.auth")).unwrap();
+        assert!(migrated.trim().starts_with(QUARANTINE_AUTH_HMAC_PREFIX));
+        assert!(!migrated.trim().starts_with("sha256:"));
+    }
+
+    #[test]
+    fn legacy_authenticated_record_with_unknown_field_is_not_migrated() {
+        let dir = tempdir().unwrap();
+        let base = dir.path().join("q");
+        fs::create_dir_all(&base).unwrap();
+        let payload = base.join("legacy.avoraxq");
+        fs::write(&payload, b"quarantined").unwrap();
+        let record = fixture_record("legacy", dir.path().join("restore.exe"), payload);
+        let mut value = serde_json::to_value(&record).unwrap();
+        value
+            .as_object_mut()
+            .unwrap()
+            .insert("unexpected".to_string(), serde_json::Value::Bool(true));
+        let raw = serde_json::to_string_pretty(&value).unwrap();
+        let store = QuarantineStore::with_base(base.clone());
+        let key = store.metadata_auth_key(true).unwrap().unwrap();
+        let legacy_tag = legacy_record_auth_tag(&key, &raw);
+        fs::write(base.join("legacy.json"), &raw).unwrap();
+        fs::write(base.join("legacy.json.auth"), format!("{legacy_tag}\n")).unwrap();
+
+        let error = store.list().unwrap_err();
+
+        assert!(error
+            .to_string()
+            .contains("unable to parse quarantine metadata record"));
+        assert!(format!("{error:#}").contains("unknown field"));
+        assert_eq!(
+            fs::read_to_string(base.join("legacy.json.auth"))
+                .unwrap()
+                .trim(),
+            legacy_tag
+        );
+    }
+
+    #[test]
+    fn hmac_authenticated_record_with_unknown_field_is_rejected() {
+        let dir = tempdir().unwrap();
+        let base = dir.path().join("q");
+        fs::create_dir_all(&base).unwrap();
+        let payload = base.join("record.avoraxq");
+        fs::write(&payload, b"quarantined").unwrap();
+        let record = fixture_record("record", dir.path().join("restore.exe"), payload);
+        let mut value = serde_json::to_value(&record).unwrap();
+        value
+            .as_object_mut()
+            .unwrap()
+            .insert("unexpected".to_string(), serde_json::Value::Bool(true));
+        let raw = serde_json::to_string_pretty(&value).unwrap();
+        let store = QuarantineStore::with_base(base.clone());
+        write_authenticated_raw(&store, &base.join("record.json"), &raw);
+
+        let error = store.list().unwrap_err();
+
+        assert!(error
+            .to_string()
+            .contains("unable to parse quarantine metadata record"));
+        assert!(format!("{error:#}").contains("unknown field"));
+        assert!(fs::read_to_string(base.join("record.json.auth"))
+            .unwrap()
+            .trim()
+            .starts_with(QUARANTINE_AUTH_HMAC_PREFIX));
+    }
+
+    #[test]
+    fn authenticated_record_filename_must_match_quarantine_id() {
+        let dir = tempdir().unwrap();
+        let base = dir.path().join("q");
+        fs::create_dir_all(&base).unwrap();
+        let payload = base.join("record.avoraxq");
+        fs::write(&payload, b"quarantined").unwrap();
+        let record = fixture_record("record", dir.path().join("restore.exe"), payload);
+        let raw = serde_json::to_string_pretty(&record).unwrap();
+        let store = QuarantineStore::with_base(base.clone());
+        write_authenticated_raw(&store, &base.join("other.json"), &raw);
+
+        let error = store.list().unwrap_err();
+
+        assert!(error
+            .to_string()
+            .contains("quarantine metadata filename does not match record id"));
+        assert!(format!("{error:#}").contains("does not match record id record"));
+    }
+
+    #[test]
+    fn generated_metadata_auth_key_is_32_random_bytes_encoded_as_hex() {
+        let dir = tempdir().unwrap();
+        let store = QuarantineStore::with_base(dir.path().join("q"));
+
+        let key = store.metadata_auth_key(true).unwrap().unwrap();
+
+        assert_eq!(key.len(), 64);
+        assert!(key.bytes().all(|byte| byte.is_ascii_hexdigit()));
+        assert_eq!(key, key.to_ascii_lowercase());
     }
 
     #[cfg(unix)]
@@ -3749,13 +4109,8 @@ mod tests {
         let payload = base.join("payload.avoraxq");
         fs::write(&payload, b"quarantined").unwrap();
         let record = fixture_record("bad/id", dir.path().join("restore.exe"), payload);
-        fs::write(
-            base.join("bad.json"),
-            serde_json::to_string_pretty(&record).unwrap(),
-        )
-        .unwrap();
-
-        let store = QuarantineStore::with_base(base);
+        let store = QuarantineStore::with_base(base.clone());
+        write_authenticated_fixture(&store, &base.join("bad.json"), &record);
         let error = store.list().unwrap_err();
 
         assert!(error
@@ -3770,7 +4125,7 @@ mod tests {
         let restore_start = source.find("pub fn restore_requires_confirmation").unwrap();
         let list_source = &source[list_start..restore_start];
 
-        assert!(list_source.contains("quarantine metadata authentication failed"));
+        assert!(list_source.contains("self.verified_record_auth_scheme(&path, &raw)?"));
         assert!(!list_source
             .contains("if !self.record_auth_valid(&path, &raw)? {\n                    continue;"));
     }
@@ -3785,13 +4140,8 @@ mod tests {
         fs::write(&legacy_file, b"quarantined").unwrap();
         let mut record = fixture_record("legacy", dir.path().join("restore.exe"), legacy_file);
         record.sha256 = sha256_for_file(Path::new(&record.quarantine_path)).unwrap();
-        fs::write(
-            base.join("legacy.json"),
-            serde_json::to_string_pretty(&record).unwrap(),
-        )
-        .unwrap();
-
-        let store = QuarantineStore::with_base(base);
+        let store = QuarantineStore::with_base(base.clone());
+        write_authenticated_fixture(&store, &base.join("legacy.json"), &record);
         let error = store.list().unwrap_err();
 
         assert!(error
@@ -3811,13 +4161,8 @@ mod tests {
         let mut record =
             fixture_record("legacy-zentor", dir.path().join("restore.exe"), legacy_file);
         record.sha256 = sha256_for_file(Path::new(&record.quarantine_path)).unwrap();
-        fs::write(
-            base.join("legacy-zentor.json"),
-            serde_json::to_string_pretty(&record).unwrap(),
-        )
-        .unwrap();
-
-        let store = QuarantineStore::with_base(base);
+        let store = QuarantineStore::with_base(base.clone());
+        write_authenticated_fixture(&store, &base.join("legacy-zentor.json"), &record);
         let error = store.list().unwrap_err();
 
         assert!(error
@@ -3835,6 +4180,24 @@ mod tests {
         let result = fixture_scan_result(&file, ScanStatus::Clean);
         assert_eq!(result.status, ScanStatus::Clean);
         assert!(file.exists());
+    }
+
+    fn write_authenticated_raw(store: &QuarantineStore, path: &Path, raw: &str) {
+        if let Some(parent) = path.parent() {
+            fs::create_dir_all(parent).unwrap();
+        }
+        fs::write(path, raw).unwrap();
+        let tag = store.record_auth_tag(raw, true).unwrap().unwrap();
+        fs::write(path.with_extension("json.auth"), format!("{tag}\n")).unwrap();
+    }
+
+    fn write_authenticated_fixture(
+        store: &QuarantineStore,
+        path: &Path,
+        record: &QuarantineRecord,
+    ) {
+        let raw = serde_json::to_string_pretty(record).unwrap();
+        write_authenticated_raw(store, path, &raw);
     }
 
     fn fixture_scan_result(path: &Path, status: ScanStatus) -> ScanResult {

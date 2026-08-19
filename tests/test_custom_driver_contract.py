@@ -10134,7 +10134,10 @@ def test_guard_quarantine_staged_writes_are_final_destination_exclusive_and_clea
     marker_start = guard.index("fn guard_quarantine_staged_writes_reject_linked_temp_paths_in_source")
     marker_source = guard[
         marker_start:
-        guard.index("fn guard_legacy_fixed_record_temp_link_is_not_used_by_uuid_staging", marker_start)
+        guard.index(
+            "fn guard_quarantine_legacy_fixed_record_temp_link_is_not_used_by_uuid_staging",
+            marker_start,
+        )
     ]
 
     first_parent_check = staged_source.index("ensure_quarantine_file_parent_directory(path, label)?")
@@ -10192,9 +10195,18 @@ def test_guard_quarantine_staged_writes_are_final_destination_exclusive_and_clea
     assert "refusing to replace non-file {label}" in destination_source
     assert "guard_quarantine_staged_writes_reject_existing_final_record" in guard
     assert "guard_quarantine_staged_writes_reject_existing_final_auth_sidecar" in guard
-    assert "guard_legacy_fixed_record_temp_link_is_not_used_by_uuid_staging" in guard
-    assert "guard_legacy_fixed_auth_temp_link_is_not_used_by_uuid_staging" in guard
-    assert "guard_legacy_fixed_metadata_key_temp_link_is_not_used_by_uuid_staging" in guard
+    assert (
+        "guard_quarantine_legacy_fixed_record_temp_link_is_not_used_by_uuid_staging"
+        in guard
+    )
+    assert (
+        "guard_quarantine_legacy_fixed_auth_temp_link_is_not_used_by_uuid_staging"
+        in guard
+    )
+    assert (
+        "guard_quarantine_legacy_fixed_metadata_key_temp_link_is_not_used_by_uuid_staging"
+        in guard
+    )
     assert "ensure_quarantine_file_parent_directory(path, label)" in marker_source
     assert "ensure_quarantine_file_destination_absent(path, label)" in marker_source
     assert "cleanup_guard_quarantine_staged_file(&temp_path, label)" in marker_source
@@ -11408,7 +11420,7 @@ def test_local_quarantine_action_taken_must_match_status():
     ]
 
     assert (
-        "let expected_action_taken = expected_quarantine_action_taken(&record.status);"
+        "let expected_action_taken = expected_quarantine_action_taken(record)?;"
         in validation_source
     )
     assert "record.action_taken != expected_action_taken" in validation_source
@@ -11416,10 +11428,12 @@ def test_local_quarantine_action_taken_must_match_status():
         "quarantine metadata action taken does not match status"
         in validation_source
     )
-    assert "fn expected_quarantine_action_taken(status: &QuarantineStatus)" in source
-    assert 'QuarantineStatus::Quarantined => "quarantined"' in source
-    assert 'QuarantineStatus::Restored => "restored"' in source
-    assert 'QuarantineStatus::Deleted => "deleted"' in source
+    assert "fn expected_quarantine_action_taken(record: &QuarantineRecord)" in source
+    assert '("scanner", QuarantineStatus::Quarantined)' in source
+    assert "process_stop_requested_and_file_quarantined" in source
+    assert "file_quarantined_without_process_stop" in source
+    assert "QuarantineStatus::Restored" in source
+    assert "QuarantineStatus::Deleted" in source
     assert (
         "write_record_rejects_status_action_mismatch_before_staged_persistence"
         in source
@@ -11471,9 +11485,18 @@ def test_local_quarantine_source_claims_are_restricted_and_ui_is_explicit():
     assert "fn validate_quarantine_source_for_claims" in validation_source
     assert "record.source.as_str()" in validation_source
     assert '"scanner"' in validation_source
+    assert '"guard_service"' in validation_source
     assert "unsupported quarantine metadata source" in validation_source
     assert (
         "scanner quarantine source cannot claim execution-state evidence"
+        in validation_source
+    )
+    assert (
+        "guard service quarantine source cannot claim pre-execution blocking"
+        in validation_source
+    )
+    assert (
+        "guard service process-start evidence requires a process id"
         in validation_source
     )
     assert (
@@ -11486,8 +11509,52 @@ def test_local_quarantine_source_claims_are_restricted_and_ui_is_explicit():
     )
     assert "metadata_validation_restricts_source_claims" in source
     assert "'scanner' => 'Scanner'" in quarantine_screen
+    assert "'guard_service' => 'Guard Service'" in quarantine_screen
     assert "_ => 'Scanner'" not in quarantine_screen
     assert "_ => 'Unknown source'" in quarantine_screen
+
+
+def test_shared_quarantine_metadata_auth_uses_hmac_and_fails_closed():
+    local = read(LOCAL_QUARANTINE_STORE)
+    local_record = read(
+        ROOT
+        / "core"
+        / "zentor_local_core"
+        / "src"
+        / "quarantine"
+        / "quarantine_record.rs"
+    )
+    guard = read(GUARD_MAIN)
+    local_manifest = read(ROOT / "core" / "zentor_local_core" / "Cargo.toml")
+    guard_manifest = read(ROOT / "core" / "zentor_guard_service" / "Cargo.toml")
+    verifier = read(ROOT / "tools" / "testing" / "verify-small-threat-mvp.ps1")
+    validator = read(
+        ROOT / "tools" / "testing" / "validate-small-threat-mvp-report.ps1"
+    )
+    shared_scope = (
+        "shared Local Core/Guard HMAC-SHA-256 quarantine metadata "
+        "authentication and interoperability"
+    )
+
+    for manifest in [local_manifest, guard_manifest]:
+        assert 'getrandom = "0.3"' in manifest
+        assert 'hmac = "0.12"' in manifest
+    for source in [local, guard]:
+        assert "use hmac::{Hmac, Mac};" in source
+        assert 'b"avorax-quarantine-record-v2\\0"' in source
+        assert '"hmac-sha256:"' in source
+        assert "getrandom::fill(&mut key)" in source
+        assert "unsigned legacy metadata is disabled" in source
+        assert "plaintext" in source
+    assert "#[serde(deny_unknown_fields)]" in local_record
+    assert "#[serde(deny_unknown_fields)]" in guard
+    assert "guard_legacy_record_auth_tag" in local
+    assert "migrate_legacy_record_auth" in local
+    assert "ensure_record_path_matches_id" in local
+    assert "guard_service_record_is_listed_and_restored_through_local_core" in local
+    assert "guard_quarantine_hmac_and_record_contract_match_local_core" in guard
+    assert shared_scope in verifier
+    assert shared_scope in validator
 
 
 def test_local_quarantine_payload_path_text_is_validated_before_pathbuf():

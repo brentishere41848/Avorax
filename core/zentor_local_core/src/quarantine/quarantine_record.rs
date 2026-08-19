@@ -10,6 +10,7 @@ pub enum QuarantineStatus {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct QuarantineRecord {
     pub quarantine_id: String,
     pub original_path: String,
