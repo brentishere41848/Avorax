@@ -78,8 +78,12 @@ The full central verifier passed `217/217` steps with no failed or skipped steps
 in `935.8s`. Its independent `-RequireFullSuite` report validator passed in
 `2.3s`. The structured report is
 `.verification/2182-small-threat-mvp-report.json`; that local evidence directory
-is intentionally not committed. Branch CI and package CI remain pending until
-the reviewed checkpoint is pushed.
+is intentionally not committed. GitHub verification for commit
+`a5635b7e54f4f657798edf41be45781c0de37d18` also passed: Avorax CI run
+`32283061236` completed the branding, Flutter/protocol, Rust, and
+security/protection/performance jobs; Desktop Packages pull-request run
+`32283061198` completed package contracts plus Windows x64 MSI/EXE, Linux x64
+DEB/tar, macOS arm64 DMG, and macOS x64 DMG jobs.
 
 ## Classification
 
