@@ -29,6 +29,8 @@ mod preexecution_policy;
 mod self_test;
 #[cfg(windows)]
 mod windows_processes;
+#[cfg(windows)]
+mod windows_system;
 
 const SERVICE_NAME: &str = "avorax_guard_service";
 #[cfg(windows)]
@@ -1032,11 +1034,13 @@ fn watch_processes(
     max_iterations: Option<u32>,
     protection_mode: preexecution_policy::DriverProtectionMode,
 ) -> anyhow::Result<GuardEvent> {
+    let process_skip_policy = guard_process_skip_policy()?;
     watch_processes_with_provider(
         known_malicious_hashes,
         poll_interval_ms,
         max_iterations,
         protection_mode,
+        &process_skip_policy,
         list_processes,
     )
 }
@@ -1046,6 +1050,7 @@ fn watch_processes_with_provider<F>(
     poll_interval_ms: u64,
     max_iterations: Option<u32>,
     protection_mode: preexecution_policy::DriverProtectionMode,
+    process_skip_policy: &ProcessSkipPolicy,
     mut process_provider: F,
 ) -> anyhow::Result<GuardEvent>
 where
@@ -1068,7 +1073,7 @@ where
             if !process_requires_inspection(&previous_processes, &process) {
                 continue;
             }
-            if should_skip_process_path(&process.path) {
+            if should_skip_process_path(&process.path, process_skip_policy) {
                 continue;
             }
             let inspection =
@@ -1109,6 +1114,7 @@ fn watch_processes_until_shutdown(
     shutdown_rx: &mpsc::Receiver<()>,
 ) -> anyhow::Result<()> {
     let poll_interval_ms = validate_guard_watch_poll_interval_ms(poll_interval_ms)?;
+    let process_skip_policy = guard_process_skip_policy()?;
     let initial_collection = list_processes()?;
     let mut previous_processes = process_snapshot(&initial_collection.processes);
     let mut coverage_warning_state = ProcessCoverageWarningState::default();
@@ -1138,7 +1144,7 @@ fn watch_processes_until_shutdown(
             if !process_requires_inspection(&previous_processes, &process) {
                 continue;
             }
-            if should_skip_process_path(&process.path) {
+            if should_skip_process_path(&process.path, &process_skip_policy) {
                 continue;
             }
 
@@ -3616,19 +3622,12 @@ fn harden_quarantine_base_permissions(path: &Path) -> anyhow::Result<()> {
 #[cfg(windows)]
 fn windows_system32_tool(name: &str) -> anyhow::Result<PathBuf> {
     anyhow::ensure!(
-        matches!(name, "powershell.exe" | "taskkill.exe"),
+        name == "taskkill.exe",
         "unsupported guard Windows System32 tool {name}"
     );
     let system_root = guard_windows_system_root()?;
-    let candidate = if name == "powershell.exe" {
-        system_root
-            .join("System32")
-            .join("WindowsPowerShell")
-            .join("v1.0")
-            .join(name)
-    } else {
-        system_root.join("System32").join(name)
-    };
+    let candidate = system_root.join("System32").join(name);
+    reject_guard_link_ancestors(&candidate, "Windows System32 tool path")?;
     let metadata = fs::symlink_metadata(&candidate).with_context(|| {
         format!(
             "unable to inspect Windows System32 tool {}",
@@ -3655,102 +3654,41 @@ fn windows_system32_tool(name: &str) -> anyhow::Result<PathBuf> {
 
 #[cfg(windows)]
 fn guard_windows_system_root() -> anyhow::Result<PathBuf> {
-    let mut diagnostics = Vec::new();
-    for key in ["SystemRoot", "WINDIR"] {
-        match std::env::var_os(key) {
-            Some(value) => {
-                let text = value.to_string_lossy().trim().to_string();
-                if text.is_empty() {
-                    diagnostics.push(format!("{key} is empty"));
-                    continue;
-                }
-                let normalized_root = match normalize_guard_windows_system_root_text(&text) {
-                    Ok(text) => text,
-                    Err(error) => {
-                        diagnostics.push(format!("{key} is unsafe: {error}"));
-                        continue;
-                    }
-                };
-                let path = PathBuf::from(normalized_root);
-                if !is_local_windows_drive_path(&path) {
-                    diagnostics.push(format!(
-                        "{key} must be a local Windows drive path: {}",
-                        path.display()
-                    ));
-                    continue;
-                }
-                return Ok(path);
-            }
-            None => diagnostics.push(format!("{key} is not set")),
-        }
-    }
-    anyhow::bail!(
-        "Guard Windows System32 tool root is unavailable: {}",
-        diagnostics.join("; ")
-    );
-}
-
-#[cfg(windows)]
-fn normalize_guard_windows_system_root_text(value: &str) -> anyhow::Result<String> {
+    let path = windows_system::system_windows_directory()?;
     anyhow::ensure!(
-        !value.contains('\0'),
-        "Guard Windows system root contains NUL"
+        is_local_windows_drive_path(&path),
+        "system Windows directory must be a local Windows drive path: {}",
+        path.display()
     );
-    let normalized = value.trim().replace('/', "\\");
+    reject_guard_link_ancestors(&path, "system Windows directory")?;
+    let metadata = fs::symlink_metadata(&path).with_context(|| {
+        format!(
+            "unable to inspect system Windows directory {}",
+            path.display()
+        )
+    })?;
     anyhow::ensure!(
-        !normalized.split('\\').any(|part| part == ".."),
-        "Guard Windows system root must not contain parent traversal"
+        metadata.file_type().is_dir()
+            && !metadata.file_type().is_symlink()
+            && !guard_metadata_is_reparse_point(&metadata),
+        "system Windows directory is not a regular non-reparse directory: {}",
+        path.display()
     );
-    Ok(collapse_guard_windows_system_root_segments(&normalized))
-}
-
-#[cfg(windows)]
-fn collapse_guard_windows_system_root_segments(path: &str) -> String {
-    let trimmed = path.trim_end_matches('\\');
-    if trimmed.is_empty() {
-        return String::new();
-    }
-    let (prefix, rest, absolute) = split_guard_windows_system_root_prefix(trimmed);
-    let mut parts = Vec::new();
-    for part in rest.split('\\') {
-        match part {
-            "" | "." => {}
-            _ => parts.push(part),
-        }
-    }
-    let joined = parts.join("\\");
-    match (prefix, absolute, joined.is_empty()) {
-        (Some(prefix), true, true) => format!("{prefix}\\"),
-        (Some(prefix), true, false) => format!("{prefix}\\{joined}"),
-        (None, true, true) => "\\".to_string(),
-        (None, true, false) => format!("\\{joined}"),
-        (Some(prefix), false, true) => prefix.to_string(),
-        (Some(prefix), false, false) => format!("{prefix}{joined}"),
-        (None, false, _) => joined,
-    }
-}
-
-#[cfg(windows)]
-fn split_guard_windows_system_root_prefix(path: &str) -> (Option<&str>, &str, bool) {
-    if path.len() >= 3 && path.as_bytes()[1] == b':' && path.as_bytes()[2] == b'\\' {
-        return (Some(&path[..2]), &path[3..], true);
-    }
-    if path.starts_with('\\') {
-        return (None, path.trim_start_matches('\\'), true);
-    }
-    (None, path, false)
+    Ok(path)
 }
 
 #[cfg(windows)]
 fn is_local_windows_drive_path(path: &Path) -> bool {
     use std::path::{Component, Prefix};
 
-    match path.components().next() {
-        Some(Component::Prefix(prefix)) => {
-            matches!(prefix.kind(), Prefix::Disk(_) | Prefix::VerbatimDisk(_))
-        }
-        _ => false,
-    }
+    let mut components = path.components();
+    matches!(
+        (components.next(), components.next()),
+        (
+            Some(Component::Prefix(prefix)),
+            Some(Component::RootDir)
+        ) if matches!(prefix.kind(), Prefix::Disk(_) | Prefix::VerbatimDisk(_))
+    )
 }
 
 #[cfg(windows)]
@@ -4680,33 +4618,52 @@ fn is_guard_clamscan_reparse_point(_metadata: &fs::Metadata) -> bool {
     false
 }
 
-fn should_skip_process_path(path: &Path) -> bool {
+#[derive(Debug, Default)]
+struct ProcessSkipPolicy {
+    windows_system_root: Option<String>,
+}
+
+fn guard_process_skip_policy() -> anyhow::Result<ProcessSkipPolicy> {
+    #[cfg(windows)]
+    {
+        Ok(process_skip_policy_for_windows_root(
+            &guard_windows_system_root()?,
+        ))
+    }
+    #[cfg(not(windows))]
+    {
+        Ok(ProcessSkipPolicy::default())
+    }
+}
+
+fn process_skip_policy_for_windows_root(root: &Path) -> ProcessSkipPolicy {
+    ProcessSkipPolicy {
+        windows_system_root: Some(normalize_observed_windows_process_path(
+            &root.display().to_string(),
+        )),
+    }
+}
+
+fn should_skip_process_path(path: &Path, policy: &ProcessSkipPolicy) -> bool {
     let raw = path.display().to_string();
     let windows_path = normalize_observed_windows_process_path(&raw);
     let unix_path = normalize_observed_unix_process_path(&raw);
 
-    should_skip_windows_process_path(&windows_path) || should_skip_unix_process_path(&unix_path)
+    should_skip_windows_process_path(&windows_path, policy.windows_system_root.as_deref())
+        || should_skip_unix_process_path(&unix_path)
 }
 
-fn should_skip_windows_process_path(path: &str) -> bool {
-    let Some(root) = observed_windows_root(path) else {
+fn should_skip_windows_process_path(path: &str, system_root: Option<&str>) -> bool {
+    let Some(root) = system_root else {
         return false;
     };
-    let system32 = join_observed_process_path(&root, "system32", '\\');
-    let syswow64 = join_observed_process_path(&root, "syswow64", '\\');
-    let explorer = join_observed_process_path(&root, "explorer.exe", '\\');
+    let system32 = join_observed_process_path(root, "system32", '\\');
+    let syswow64 = join_observed_process_path(root, "syswow64", '\\');
+    let explorer = join_observed_process_path(root, "explorer.exe", '\\');
 
     path == explorer
         || observed_process_path_is_equal_or_descendant(path, &system32, '\\')
         || observed_process_path_is_equal_or_descendant(path, &syswow64, '\\')
-}
-
-fn observed_windows_root(path: &str) -> Option<String> {
-    let bytes = path.as_bytes();
-    if bytes.len() < 3 || !bytes[0].is_ascii_alphabetic() || bytes[1] != b':' || bytes[2] != b'\\' {
-        return None;
-    }
-    Some(format!("{}:\\windows", bytes[0] as char))
 }
 
 fn should_skip_unix_process_path(path: &str) -> bool {
@@ -6479,6 +6436,7 @@ mod tests {
             100,
             Some(1),
             preexecution_policy::DriverProtectionMode::BlockConfirmedThreats,
+            &ProcessSkipPolicy::default(),
             || {
                 Ok(ProcessCollection {
                     processes: vec![ObservedProcess {
@@ -6501,6 +6459,7 @@ mod tests {
             100,
             Some(1),
             preexecution_policy::DriverProtectionMode::BlockConfirmedThreats,
+            &ProcessSkipPolicy::default(),
             || Ok(ProcessCollection::default()),
         )
         .unwrap();
@@ -6522,6 +6481,7 @@ mod tests {
             100,
             Some(1),
             preexecution_policy::DriverProtectionMode::BlockConfirmedThreats,
+            &ProcessSkipPolicy::default(),
             || {
                 let mut collection = ProcessCollection::default();
                 collection
@@ -6877,23 +6837,91 @@ mod tests {
 
     #[test]
     fn process_skip_uses_component_aware_normalized_system_paths() {
-        assert!(should_skip_process_path(Path::new(
-            r"C:\Windows\System32\.\cmd.exe"
+        let policy = process_skip_policy_for_windows_root(Path::new(r"C:\Windows"));
+
+        assert!(should_skip_process_path(
+            Path::new(r"C:\Windows\System32\.\cmd.exe"),
+            &policy
+        ));
+        assert!(should_skip_process_path(
+            Path::new(r"C:\Windows\SysWOW64\rundll32.exe"),
+            &policy
+        ));
+        assert!(should_skip_process_path(
+            Path::new(r"C:\Windows\Explorer.exe"),
+            &policy
+        ));
+        assert!(!should_skip_process_path(
+            Path::new(r"D:\Windows\System32\payload.exe"),
+            &policy
+        ));
+        assert!(!should_skip_process_path(
+            Path::new(r"C:\Windows.old\System32\payload.exe"),
+            &policy
+        ));
+        assert!(!should_skip_process_path(
+            Path::new(r"C:\Windows\System32\..\Temp\payload.exe"),
+            &policy
+        ));
+        assert!(!should_skip_process_path(
+            Path::new(r"C:\Users\Brent\Windows\System32\payload.exe"),
+            &policy
+        ));
+        assert!(should_skip_process_path(
+            Path::new("/usr/./bin/true"),
+            &policy
+        ));
+        assert!(!should_skip_process_path(
+            Path::new("/usr/../tmp/payload"),
+            &policy
+        ));
+    }
+
+    #[test]
+    fn process_skip_source_uses_the_native_system_root_without_drive_inference() {
+        let source = include_str!("main.rs");
+        let windows_system = include_str!("windows_system.rs");
+        let policy_start = source.find("struct ProcessSkipPolicy").unwrap();
+        let policy_end = source
+            .find("fn normalize_observed_windows_process_path")
+            .unwrap();
+        let policy_source = &source[policy_start..policy_end];
+        let root_start = source.find("fn guard_windows_system_root").unwrap();
+        let root_end = source.find("fn is_local_windows_drive_path").unwrap();
+        let root_source = &source[root_start..root_end];
+
+        assert!(policy_source.contains("guard_windows_system_root()?"));
+        assert!(policy_source.contains("policy.windows_system_root.as_deref()"));
+        assert!(policy_source.contains("process_skip_policy_for_windows_root"));
+        assert!(!policy_source.contains("observed_windows_root"));
+        assert!(root_source.contains("windows_system::system_windows_directory()?"));
+        assert!(root_source.contains("reject_guard_link_ancestors"));
+        assert!(!root_source.contains("std::env::var_os"));
+        assert!(!root_source.contains("SystemRoot"));
+        assert!(!root_source.contains("WINDIR"));
+        assert!(windows_system.contains("GetSystemWindowsDirectoryW("));
+        assert!(windows_system.contains("MAX_SYSTEM_WINDOWS_DIRECTORY_CHARS: usize = 32_768"));
+        assert!(windows_system.contains("vec![u16::MAX; MAX_SYSTEM_WINDOWS_DIRECTORY_CHARS]"));
+        assert!(windows_system.contains("chars >= buffer.len()"));
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn process_skip_runtime_rejects_a_different_drive_windows_lookalike() {
+        let root = guard_windows_system_root().unwrap();
+        let policy = guard_process_skip_policy().unwrap();
+        let root_text = normalize_observed_windows_process_path(&root.display().to_string());
+        let root_drive = root_text.as_bytes()[0].to_ascii_lowercase();
+        let other_drive = if root_drive == b'q' { 'R' } else { 'Q' };
+        let real_system_process = root.join("System32").join("cmd.exe");
+        let lookalike = PathBuf::from(format!(r"{other_drive}:\Windows\System32\cmd.exe"));
+
+        assert!(should_skip_process_path(&real_system_process, &policy));
+        assert!(!should_skip_process_path(&lookalike, &policy));
+        assert!(!is_local_windows_drive_path(Path::new(r"C:Windows")));
+        assert!(!is_local_windows_drive_path(Path::new(
+            r"\\server\share\Windows"
         )));
-        assert!(should_skip_process_path(Path::new(
-            r"C:\Windows\SysWOW64\rundll32.exe"
-        )));
-        assert!(should_skip_process_path(Path::new(
-            r"C:\Windows\Explorer.exe"
-        )));
-        assert!(!should_skip_process_path(Path::new(
-            r"C:\Windows\System32\..\Temp\payload.exe"
-        )));
-        assert!(!should_skip_process_path(Path::new(
-            r"C:\Users\Brent\Windows\System32\payload.exe"
-        )));
-        assert!(should_skip_process_path(Path::new("/usr/./bin/true")));
-        assert!(!should_skip_process_path(Path::new("/usr/../tmp/payload")));
     }
 
     #[cfg(windows)]

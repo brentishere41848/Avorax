@@ -81,6 +81,7 @@ repository has executable proof and the verification report names the proof.
 | Status UI or installed smoke claims health from misleading output | Health IPC diagnostics, `avorax-status.ps1`, `-RequireReady`, path/report guards, and a bounded installed-smoke parser requiring exactly one typed JSON health response plus canonical binary/ready-engine checks | Actual installed service/driver proof remains blocked on release-host prerequisites |
 | Installed smoke reports protection without exercising file lifecycle postconditions | Installed lifecycle probe uses harmless exact-hash fixtures and fails unless scan quarantine removes the source, list returns the record, restore reproduces the original SHA-256 and removes the payload, and confirmed delete leaves source/payload absent; its generated report is independently schema-validated | Release-binary execution and installed-smoke wiring are verified; actual installed service mediation and packaged UI click-through remain blocked |
 | Portable package is modified, path-traverses on extraction, or claims installed protection | Builder hashes every packaged file after ready/lifecycle proof; archive smoke applies entry/count/size/total/ratio/path/duplicate limits, rejects manifest tampering, and reruns status/lifecycle from a fresh extraction; package/docs deny service, persistence, Defender replacement, and pre-execution claims | Local ZIP is unsigned and manual/finite user-mode only; transport authenticity and installed protection are not claimed |
+| A process chooses a lookalike `X:\Windows\System32` path to evade Guard polling inspection | Guard creates one immutable skip policy from bounded `GetSystemWindowsDirectoryW` output; other-drive, `Windows.old`, traversal, and user-profile lookalikes do not receive the Windows-system skip | The actual Windows `System32`/`SysWOW64` and `Explorer.exe` exclusion remains broad and path-based; polling is post-launch and can miss short-lived processes |
 | User-mode watcher is mistaken for kernel protection | Watch wrappers and UI copy record no-service/no-kernel/no-pre-execution limits | Persistent background monitoring remains partial |
 | Network/update content is trusted blindly | Signed package verifier, tamper/restricted-payload/rollback smokes | Production signer ceremony and deployment approval remain blocked |
 
@@ -1017,3 +1018,44 @@ occurrences across two snapshots and first detail `Access is denied`. That is
 expected user-mode limitation evidence, not 290 threats. The collector is much
 faster than the removed helper on this host, but it remains post-launch
 observation and does not replace Defender or establish pre-execution blocking.
+
+## Checkpoint 2191 Native System-Root Skip Boundary
+
+The old Windows skip function inferred `X:\Windows` from the drive letter of
+the untrusted observed image path. That let an image under an otherwise
+lookalike `D:\Windows\System32` select the root against which its own exclusion
+was evaluated. The path still had to be an observable regular file, but the
+policy decision used attacker-influenced location text.
+
+Guard now asks Windows for the shared system Windows directory once when the
+watcher starts. The FFI parser is bounded to 32,768 UTF-16 code units,
+initializes unused buffer space with a non-NUL sentinel, and rejects failed,
+zero, oversized, embedded-NUL, or non-API-terminated results. The
+returned path must be an absolute rooted local disk path whose existing
+ancestors and final directory are non-reparse. Failure to construct this policy
+aborts watcher startup visibly; it does not fall back to `SystemRoot`, `WINDIR`,
+`C:\Windows`, or the observed process drive.
+
+The normalized process path is compared only with that immutable root.
+Deterministic tests prove actual-root `System32`, `SysWOW64`, and `Explorer.exe`
+retain the current behavior while other-drive, `Windows.old`, parent-traversal,
+and user-profile lookalikes remain inspectable. A Windows runtime test obtains
+the real root and rejects the equivalent path on another drive. A release child
+with `SystemRoot` and `WINDIR` spoofed to
+`Q:\Avorax-Lookalike-Windows` produces the same fail-visible coverage result as
+normal children.
+
+This closes root selection by an observed path or mutable environment; it does
+not prove every file under the actual Windows system directories is trusted.
+Those broad exclusions remain in the current polling policy to avoid expensive
+and noisy repeated inspection of core operating-system processes. Replacing
+them requires a separately tested identity/publisher policy and production
+false-positive evidence. Protected-process access denial, between-poll starts,
+installed LocalSystem behavior, and macOS support also remain limited or
+blocked. No driver, service, Defender setting, pre-execution claim, or package
+installation is involved.
+
+Guard driver-health/driver-IPC code and Native Engine Authenticode/quarantine
+helper discovery retain separate validated environment-root implementations.
+They were not silently reclassified by this checkpoint and remain follow-up
+candidates for a shared native system-directory resolver.

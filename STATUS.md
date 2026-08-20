@@ -6,16 +6,45 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
 
 ## Current Commit
 
-- Checkpoint 2189 merged through PR `#41` as
-  `6ca2e61c1360a92b0077b3cfe4f06a2f3fc4a522`. Checkpoint 2190 implementation
-  head `a928aa0297cadeedd002a4e84cf937250de6bf3b` is tracked by PR `#42` on branch
-  `agent/checkpoint-2190-native-windows-process-enumeration` and has exact-head
-  local, CI, native Ubuntu, and cross-platform package evidence.
+- Checkpoint 2190 merged through PR `#42` as
+  `f66ea472bff3d6f0b9ff4cb3b0cfcf2f25dee92a`. Checkpoint 2191 implementation
+  head `67e067d2d74d7561c4a48269284702ca50f1b1a1` is tracked by draft PR `#43` on
+  branch `agent/checkpoint-2191-guard-system-root-skip-policy`; local and hosted
+  implementation-head CI/package evidence is verified. The documentation-only
+  evidence head still requires exact-head CI before merge.
 - Current public release tag: `v0.1.15-beta.3`, published as a prerelease on
-  2026-07-20 with independently verified checksums. Checkpoints 2178-2190 are
+  2026-07-20 with independently verified checksums. Checkpoints 2178-2191 are
   source hardening and do not create a new release tag.
 
 ## Latest Checkpoint Evidence - 2026-08-20
+
+- Current Guard native-system-root pass: checkpoint 2191 removes observed-drive
+  inference from the Windows process skip. A process at
+  `D:\Windows\System32\payload.exe` no longer receives a system skip when the
+  real shared Windows directory is on another drive. One Windows-only module
+  obtains that directory through bounded `GetSystemWindowsDirectoryW`, checks
+  return length, NUL shape, local-drive form, and the non-reparse target plus
+  ancestor chain. The watcher captures one immutable skip policy at startup;
+  checked `taskkill.exe` discovery uses the same root and ancestor validation.
+  Actual-root `System32`, `SysWOW64`, and `Explorer.exe` retain the existing
+  broad skip, which remains a technical limitation rather than a trust or
+  pre-execution claim. Focused process-skip and system-directory tests pass
+  `3/3` each, process watch `1/1`, process collection `14/14`, Guard `244/244`,
+  the locked Rust workspace `1,476/1,476`, and source contracts `626/626`.
+  Strict Guard Clippy, rustfmt, parser checks, and release build pass. The final
+  central verifier and independent validator pass `220/220` in `545.5s`, with no
+  failed steps or report error. Three release watches, including a child with
+  spoofed `SystemRoot`/`WINDIR`, completed in `82.2ms`, `74.2ms`, and `73.6ms`;
+  all remained honestly `ok:false` with 280 coverage gaps and no stderr. The
+  gaps are not threat counts. `Cargo.lock` is unchanged and the existing
+  ProgramData vault remains `16,072` files, `4,522,733` bytes, and zero pending
+  journals. Implementation head `67e067d2d74d7561c4a48269284702ca50f1b1a1`
+  passes Avorax CI `32366912857`; Desktop Packages push `32366882138` and PR
+  `32366913124` pass Windows/Linux/macOS packages and consolidation, with both
+  publish jobs skipped. Other Guard driver helpers and Native Engine helper
+  discovery are outside this checkpoint. No service, driver, installer,
+  Defender setting, or release was changed. Evidence is maintained in
+  `docs/reports/checkpoint-2191-native-system-root-process-skip.md`.
 
 - Current native Windows process-enumeration pass: checkpoint 2190 removes the
   WindowsPowerShell/CIM child process from every Guard snapshot. An isolated
@@ -35,12 +64,16 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
   `1,471/1,471`, source contracts `626/626`, strict Clippy, rustfmt, parser
   checks, and release build. The definitive central verifier and full-report
   validator pass `220/220` in `687.6s`. Exact implementation head
-  `a928aa0297cadeedd002a4e84cf937250de6bf3b` passes Avorax CI `32356686816`;
-  Ubuntu job `96387285689` passes the exact filter `9/9`. Desktop Packages push
-  `32356656322` and PR `32356686469` pass Windows MSI/EXE, Linux DEB/tar,
-  macOS arm64/x64 DMGs, and consolidation; publish is skipped. `Cargo.lock` is
-  unchanged and no dependency version was added. Read-only inventory confirms
-  the ProgramData vault remains exactly `16,072` files and `4,522,733` bytes.
+  `a928aa0297cadeedd002a4e84cf937250de6bf3b` and evidence head
+  `9fec6ccbf36d0146e6ac66fe911e48b0449a98a8` pass hosted checks.
+  Evidence-head Avorax CI `32358381763`, Desktop Packages push `32358376699`,
+  and PR `32358381728` pass Windows MSI/EXE, Linux DEB/tar, macOS arm64/x64
+  DMGs, and consolidation; publish is skipped. PR `#42` merged as
+  `f66ea472bff3d6f0b9ff4cb3b0cfcf2f25dee92a`; merged-main CI `32359532900`
+  and packages `32359532935` pass, with publish job `96399641725` skipped.
+  `Cargo.lock` is unchanged and no dependency version was added. Read-only
+  inventory confirms the ProgramData vault remains exactly `16,072` files and
+  `4,522,733` bytes.
   Installed LocalSystem visibility, protected processes, between-poll starts,
   macOS Guard enumeration, kernel interception, and pre-execution blocking
   remain partial, technically limited, or disabled. Evidence is maintained in

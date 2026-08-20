@@ -1395,12 +1395,13 @@ enforcement, or pre-execution blocking is claimed.
   are `185.9ms`, `72.2ms`, and `66.4ms`; the removed PowerShell/CIM path measured
   `1,150.3ms`, `812.0ms`, and `762.7ms` on the same host. These are diagnostic
   samples, not production latency or detection-rate evidence.
-- **Verified hosted:** Exact implementation head
-  `a928aa0297cadeedd002a4e84cf937250de6bf3b` passes Avorax CI
-  `32356686816`. Pinned Ubuntu job `96387285689` passes the exact locked
-  `process_collection` filter `9/9`. Desktop Packages push `32356656322` and PR
-  `32356686469` pass Windows, Linux, macOS arm64/x64, and consolidation;
-  prerelease publishing is skipped.
+- **Verified hosted:** Implementation
+  `a928aa0297cadeedd002a4e84cf937250de6bf3b` and evidence
+  `9fec6ccbf36d0146e6ac66fe911e48b0449a98a8` are merged by PR `#42` as
+  `f66ea472bff3d6f0b9ff4cb3b0cfcf2f25dee92a`. Evidence-head CI
+  `32358381763`, package push `32358376699`, package PR `32358381728`,
+  merged-main CI `32359532900`, and merged-main packages `32359532935` pass
+  Windows, Linux, macOS arm64/x64, and consolidation. Publish is skipped.
 - **Dependency boundary:** `windows-sys` stays at the existing locked version;
   only Toolhelp and Threading feature gates were enabled. `Cargo.lock` is
   unchanged and the dependency evidence gate passes.
@@ -1414,3 +1415,47 @@ enforcement, or pre-execution blocking is claimed.
   between-snapshot processes and same-path PID reuse, and one native kernel call
   cannot be cancelled mid-call. No kernel, pre-execution, Defender-replacement,
   or complete process-coverage claim is made.
+
+## Checkpoint 2191 Native System-Root Process Skip
+
+- **Resolved locally:** Guard no longer derives `X:\Windows` from each observed
+  process image. A lookalike on another drive can no longer select the root
+  used to skip its own inspection. The watcher derives one policy from bounded
+  `GetSystemWindowsDirectoryW` output instead.
+- **Resolved locally:** Guard's `taskkill.exe` discovery no longer trusts
+  `SystemRoot` or `WINDIR`. It uses the same native root and rejects a reparse
+  target or any linked/reparse ancestor before the existing bounded runner is
+  invoked.
+- **Verified locally:** The native parser rejects invalid lengths, embedded
+  NULs, and absent termination. Runtime tests accept the actual system root and
+  reject an other-drive lookalike. Process skip and system-directory filters
+  pass `3/3` each, process watch `1/1`, collection `14/14`, Guard `244/244`, the
+  workspace `1,476/1,476`, source contracts `626/626`, strict Guard Clippy,
+  rustfmt, script parsing, release build, and central verification `220/220` in
+  `545.5s`.
+- **Verified locally:** Release finite watches took `82.2ms`, `74.2ms` with a
+  spoofed child-only Windows environment, and `73.6ms`. All exited zero, wrote
+  no stderr, and returned `ok:false` with 280 visibility gaps rather than a fake
+  clean result. The count is not threats.
+- **Verified hosted implementation head:** Commit
+  `67e067d2d74d7561c4a48269284702ca50f1b1a1` passes Avorax CI
+  `32366912857`. Desktop Packages push `32366882138` and PR `32366913124` pass
+  package contracts, Windows x64 MSI/EXE, Linux x64 DEB/tar, macOS x64/arm64
+  DMGs, and consolidation. Publish jobs are skipped. The documentation-only
+  evidence head remains pending exact-head CI; no package is installed or
+  published.
+- **Technically limited:** Paths beneath the actual Windows `System32` and
+  `SysWOW64` directories and the actual `Explorer.exe` retain a broad skip. A
+  compromised or misplaced image within those protected roots could therefore
+  be outside this polling inspection path. Replacing this with identity,
+  publisher, or richer process-policy evidence needs separate design and false-
+  positive validation.
+- **Out of scope / still separately implemented:** Guard driver-health and
+  driver-IPC helper discovery, Native Engine Authenticode, and Native Engine
+  quarantine helpers still use their own validated environment-root logic.
+  Checkpoint 2191 does not claim those paths use the new resolver.
+- **Existing low-severity quality blocker:** Optional workspace-wide strict
+  Clippy reports three pre-existing `services/api` style lints
+  (`enum_variant_names` and `items_after_test_module`). The API compiles and the
+  complete workspace test suite passes; strict Clippy for the changed Guard
+  crate passes with `-D warnings`.

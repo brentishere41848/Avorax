@@ -13,6 +13,68 @@ Lead-engineer product-hardening pass across the Avorax repository. Goal is to mo
 - The bundled native ML model is treated as development-only unless release metadata and gates prove production readiness.
 - MSI/EXE installers are first-install/repair/recovery/offline paths. Normal in-app updates should use verified `.aup` packages.
 
+## 2026-08-20 continuation checkpoint 2191
+
+- Removed an overbroad Windows process-skip inference. Guard previously built
+  `X:\Windows` from the drive letter of each observed image, so a lookalike such
+  as `D:\Windows\System32\payload.exe` could inherit the system-process skip
+  even when the shared Windows directory was on `C:`.
+- Added an isolated Windows-only system-directory resolver using
+  `GetSystemWindowsDirectoryW`. It uses one 32,768-code-unit buffer, checks the
+  API result and returned length, initializes unused space with a non-NUL
+  sentinel, rejects embedded NULs or missing API-written termination, and then
+  requires an absolute rooted local drive plus a non-reparse
+  directory/ancestor chain.
+- Guard now builds one immutable process-skip policy from that native directory
+  at watcher startup. Only the actual directory's `System32`, `SysWOW64`, and
+  `Explorer.exe` paths receive the existing skip; other-drive, `Windows.old`,
+  traversal, and user-profile lookalikes remain inspectable. The checked
+  `taskkill.exe` path uses the same native root and validates its full ancestor
+  chain.
+- This does not assert that every executable under the real `System32` or
+  `SysWOW64` is benign. That broad path-based exclusion remains a documented
+  technical limitation, and process observation remains best-effort
+  post-launch user mode rather than pre-execution blocking.
+- Focused process-skip and Windows-directory tests pass `3/3` each; process
+  watch passes `1/1`; process collection passes `14/14`; Guard passes `244/244`;
+  the locked workspace passes `1,476/1,476`; source contracts pass `626/626`;
+  strict Guard Clippy, rustfmt, both modified PowerShell parsers, and the release
+  build pass.
+- The definitive central verifier records `220/220` passed steps, zero
+  failures, and an empty error from `2026-08-20T11:48:39.5771068Z` through
+  `2026-08-20T11:57:45.1272217Z` (`545.5s`). Its independent full-suite report
+  validator passes in `1.6s`.
+- Final release finite-watch samples took `82.2ms`, `74.2ms` with child-only
+  `SystemRoot`/`WINDIR` set to `Q:\Avorax-Lookalike-Windows`, and `73.6ms`.
+  Every run exited zero with empty stderr and intentionally returned
+  `ok:false`, `watchCompletedWithCoverageGaps`, and 280 gap occurrences. The
+  gaps are protected-process visibility limits, not threats.
+- Failed or superseded invocations remain explicit: two stale source contracts
+  failed before their intended assertions were updated; the first strict Guard
+  Clippy pass found four local style lints; and the first spoof smoke used a
+  stale debug binary before a rebuild. A later `unittest` invocation discovered
+  zero pytest-style functions, while the repository runner passed `626/626`.
+  Optional workspace-wide strict Clippy also exposed three pre-existing
+  `services/api` style lints; targeted strict Guard Clippy and all workspace
+  build/tests pass.
+- `windows-sys` stays at locked version `0.61.2`; only its existing dependency
+  feature set expands with `Win32_System_SystemInformation`. `Cargo.lock` is
+  unchanged. The ProgramData vault remains exactly `16,072` files, zero
+  directories, `4,522,733` bytes, and zero pending journals.
+- This checkpoint does not change Guard driver-health/driver-IPC helpers,
+  Native Engine Authenticode/quarantine helper discovery, Defender settings,
+  services, drivers, installers, or releases.
+- Exact implementation/local-evidence head
+  `67e067d2d74d7561c4a48269284702ca50f1b1a1` passes Avorax CI
+  `32366912857`, including Flutter/protocol, branding, security, native Unix,
+  and Rust jobs. Desktop Packages push `32366882138` and PR `32366913124` pass
+  Windows x64 MSI/EXE, Linux x64 DEB/tar, macOS x64/arm64 DMGs, package
+  contracts, and checksum/SBOM consolidation. Consolidation jobs
+  `96422164489` and `96422683427` pass; publish jobs `96422235471` and
+  `96422771716` are intentionally skipped. No package was installed or
+  released. A documentation-only evidence head still requires exact-head CI
+  before merge.
+
 ## 2026-08-20 continuation checkpoint 2190
 
 - Replaced Guard's per-snapshot WindowsPowerShell/CIM process helper with an
@@ -48,11 +110,17 @@ Lead-engineer product-hardening pass across the Avorax repository. Goal is to mo
   pytest; no dependency was installed and the dependency-free project runner is
   the counted `626/626` result.
 - Exact implementation head `a928aa0297cadeedd002a4e84cf937250de6bf3b`
-  passes Avorax CI `32356686816`; pinned Ubuntu job `96387285689` runs the
-  locked `process_collection` filter and passes `9/9`. Desktop Packages push
-  run `32356656322` and PR run `32356686469` pass Windows x64 MSI/EXE, Linux
-  x64 DEB/tar, macOS arm64/x64 DMGs, and consolidation. Publish jobs were
-  intentionally skipped; no package was installed or released.
+  and final evidence head `9fec6ccbf36d0146e6ac66fe911e48b0449a98a8`
+  pass hosted checks. Evidence-head Avorax CI `32358381763`, Desktop Packages
+  push `32358376699`, and Desktop Packages PR `32358381728` are green across
+  Flutter/protocol, Rust, security, branding, Windows x64 MSI/EXE, Linux x64
+  DEB/tar, macOS arm64/x64 DMGs, and consolidation; both publish jobs are
+  skipped.
+- PR `#42` merged to `main` as
+  `f66ea472bff3d6f0b9ff4cb3b0cfcf2f25dee92a`. Exact merged-main Avorax CI
+  `32359532900` and Desktop Packages `32359532935` pass. Consolidation job
+  `96399551588` passes and publish job `96399641725` is intentionally skipped;
+  no package was installed or released.
 - `windows-sys` remains at the locked version and only existing crate feature
   gates were enabled; `Cargo.lock` is unchanged. The real ProgramData vault
   remains exactly `16,072` files, zero directories, and `4,522,733` bytes with

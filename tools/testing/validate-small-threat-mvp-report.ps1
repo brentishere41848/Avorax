@@ -2103,6 +2103,7 @@ if ($RequireFullSuite) {
   Assert-ReportScopeContains $verifiedScopeText "release local-core binary ransomware guard config/activity smoke" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "release local-core binary watcher honesty smoke" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "Guard native Windows process enumeration and Linux procfs coverage gaps are bounded, fail-visible, and cannot become a clean finite-watch result" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Guard Windows process skips and taskkill discovery use the bounded native system Windows directory and reject environment or other-drive lookalikes" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "release local-core binary process snapshot observation smoke" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "release local-core binary finite watch-poll scan/quarantine smoke" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "local scan wrapper release-binary progress/quarantine smoke" "verification_scope.verified"
