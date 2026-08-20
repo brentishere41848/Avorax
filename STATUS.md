@@ -7,10 +7,12 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
 ## Current Commit
 
 - Checkpoint 2186 merged as `1b4a31de1d406eb4bed1e928d72bb83a5c0feb7c`
-  through PR `#38`. Checkpoint 2187 finalization-recovery implementation is
-  locally complete on its publication branch; hosted CI/package evidence is not
-  claimed until that exact implementation commit is pushed and passes.
-- Current public release tag: `v0.1.15-beta.3`, published as a prerelease on 2026-07-20 with independently verified checksums. Checkpoints 2178-2185 are source hardening and do not create a new release tag.
+  through PR `#38`. Checkpoint 2187 implementation commit
+  `3e361a4d0b1829017603d3644c4866ccb5d3ad6c` is published through PR `#39`
+  and passes exact-head Avorax CI plus both Desktop Packages runs.
+- Current public release tag: `v0.1.15-beta.3`, published as a prerelease on
+  2026-07-20 with independently verified checksums. Checkpoints 2178-2187 are
+  source hardening and do not create a new release tag.
 
 ## Latest Checkpoint Evidence - 2026-08-20
 
@@ -31,12 +33,17 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
   plus independent report validator (`219/219`, no failures or skips,
   `533.3s`). Read-only post-run inventory confirms the real ProgramData vault is
   unchanged at `16,072` files and `4,522,733` bytes, including `5,357` payloads,
-  records, and auth sidecars, one key, and no pending journals. The Ubuntu job is
-  extended to 11 locked Cargo invocations for native lock/writer runtime, but no
-  hosted result is claimed before publication. Installed LocalSystem/DPAPI/UI
-  interruption E2E, hostile same-principal mutation, historical unsigned
-  payload salvage, kernel interception, and pre-execution blocking remain
-  partial, unsupported, or technically limited. Evidence is recorded in
+  records, and auth sidecars, one key, and no pending journals. Exact
+  implementation head `3e361a4d0b1829017603d3644c4866ccb5d3ad6c` passes
+  Avorax CI run `32331431435`; Ubuntu job `96312704078` passes shared `8/8`,
+  Local Core `1+1+2+1+1`, and Guard `1+1+2+1+1`, totaling `20/20` across 11
+  locked Cargo invocations. Desktop Packages push run `32331417805` and PR run
+  `32331431406` both pass package contracts, Windows x64 MSI/EXE, Linux x64
+  DEB/tar, macOS arm64/x64 DMGs, and consolidated checksum/SBOM evidence;
+  prerelease publication was intentionally skipped. Installed LocalSystem/
+  DPAPI/UI interruption E2E, hostile same-principal mutation, historical
+  unsigned payload salvage, kernel interception, and pre-execution blocking
+  remain partial, unsupported, or technically limited. Evidence is recorded in
   `docs/reports/checkpoint-2187-quarantine-finalization-recovery.md`.
 
 - Current quarantine hard-link policy pass: checkpoint 2186 adds one shared,

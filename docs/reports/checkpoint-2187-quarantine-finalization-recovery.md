@@ -110,6 +110,22 @@ The final report spans `2026-08-20T04:04:45.0821841Z` through
 `2026-08-20T04:13:38.4066718Z`, has status `passed`, contains exactly `219`
 steps with status `passed`, and has an empty error field.
 
+## Hosted Verification
+
+Exact implementation commit `3e361a4d0b1829017603d3644c4866ccb5d3ad6c`
+passes Avorax CI run `32331431435`. Native Ubuntu 24.04 job `96312704078`
+passes the shared platform crate `8/8`, Local Core `1+1+2+1+1`, and Guard
+`1+1+2+1+1`, totaling `20/20` tests across all 11 locked Cargo invocations.
+This includes both active journal-lock regressions and both normal quarantine
+writers on Unix.
+
+Desktop Packages push run `32331417805` and pull-request run `32331431406`
+both pass package contracts, Windows x64 MSI/EXE build and administrative
+extraction, Linux x64 DEB/tar, macOS arm64/x64 DMGs, and consolidated
+checksums/lockfile SBOM evidence. Each consolidation required all six release
+artifacts. Branch prerelease publication was intentionally skipped, and no
+package was installed.
+
 ## Failed And Superseded Attempts
 
 The first source-contract runs exposed three stale assertions from the previous
@@ -129,6 +145,12 @@ its writer was still between journal commit and source movement. That run is not
 the final evidence. The journal lifetime lock, persisted-byte readback, Windows
 cross-handle regression, normal Local/Guard writer tests, full Rust suites, and
 the final `219/219` central run were added or rerun afterward.
+
+The first post-hosted no-malware-binary gate invocation omitted its mandatory
+explicit `-PythonPath`. The gate refused before scanning or mutation with
+`AVORAX_PYTHON or -PythonPath is required`; the same command was rerun with
+`C:\Users\Brent\AppData\Local\Python\pythoncore-3.14-64\python.exe` and passed.
+The rejected invocation is not counted as success.
 
 No failed or superseded command is counted as final success.
 
@@ -161,8 +183,8 @@ The bounded Ubuntu quarantine job is extended from seven to 11 locked Cargo
 invocations. It adds Local Core active-lock and normal-writer tests plus Guard
 journal-lock and normal-writer tests. The job still uses pinned Rust `1.96.1`,
 `ubuntu-24.04`, fail-fast Bash, serial tests, and a 30-minute timeout, and
-installs no system package. Hosted success is not claimed until the exact
-implementation commit passes.
+installs no system package. Avorax CI `32331431435`, job `96312704078`, passes
+the exact implementation commit with all `20/20` selected native tests green.
 
 Generated `.verification` output is untracked and excluded from publication.
 
@@ -174,7 +196,8 @@ Generated `.verification` output is untracked and excluded from publication.
 | Verified locally | Guard journal writer interoperability | Same schema/domain/lock, normal quarantine finalization, and Local contract compatibility; Guard `226/226`. |
 | Verified locally | Fail-closed malformed/ambiguous states | Missing/tampered auth, unknown fields, ID/path mismatch, changed payload, conflicting final record, incomplete state, duplicate source/payload, and active writer preserve evidence. |
 | Verified locally | Full regression and safety gates | Workspace `1,458/1,458`; source contracts `623/623`; strict Clippy; central verifier/report validator `219/219` in `533.3s`; branding, product-copy, no-malware, false-positive, protection, performance, dependency, Flutter, analyzer, scan, quarantine, restore, and delete gates passed. |
-| Pending hosted | Native Unix lock and writer runtime | Exact tests are wired into the bounded Ubuntu job, but no run is called successful before the implementation commit is pushed and completes. |
+| Verified hosted | Native Unix lock and writer runtime | Avorax CI `32331431435`, job `96312704078`, passes `20/20` selected tests across shared platform, Local Core, and Guard on exact implementation commit `3e361a4d0b1829017603d3644c4866ccb5d3ad6c`. |
+| Verified hosted | Cross-platform package regression | Desktop Packages push/PR runs `32331417805` and `32331431406` pass Windows MSI/EXE, Linux DEB/tar, both macOS DMGs, six-artifact consolidation, checksums, and lockfile SBOM evidence without installation or prerelease publication. |
 | Partial / blocked | Installed interruption and UI/service recovery | LocalSystem DPAPI/ACL ownership, packaged UI messaging/click-through, repair/upgrade interruption, and crash-at-every-instruction package E2E require a disposable elevated Windows host. |
 | Unsupported | Historical unsigned payload salvage | Automatic recovery requires a current authenticated journal or final record; old untracked payloads are not promoted. |
 | Technically limited | Hostile filesystem concurrency | The lock coordinates cooperating Avorax processes. Same-principal software that ignores locks and administrator/root mutation remain in the trusted computing base. |

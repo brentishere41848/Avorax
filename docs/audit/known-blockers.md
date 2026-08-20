@@ -1282,11 +1282,17 @@ enforcement, or pre-execution blocking is claimed.
   contracts pass `623/623`, and strict affected-crate Clippy, rustfmt,
   dependency resolution, and the central verifier/report validator (`219/219`,
   no failures or skips, `533.3s`) pass. Only benign temporary fixtures are used.
+- **Verified hosted:** Exact implementation head
+  `3e361a4d0b1829017603d3644c4866ccb5d3ad6c` passes Avorax CI run
+  `32331431435`. Native Ubuntu job `96312704078` passes shared `8/8`, Local Core
+  `1+1+2+1+1`, and Guard `1+1+2+1+1`, totaling `20/20` permission, hard-link,
+  journal-lock, and normal-writer tests across 11 locked Cargo invocations.
+  Desktop Packages push/PR runs `32331417805` and `32331431406` also pass all
+  Windows, Linux, macOS, checksum, and lockfile-SBOM jobs without installation.
 - **Partial:** Installed LocalSystem/DPAPI/ACL behavior, packaged UI list/action
   click-through, hostile/non-cooperating same-principal concurrency,
   repair/upgrade interruption, and crash-at-every-instruction E2E still require
-  a disposable elevated host. Native Unix lock runtime is wired into the bounded
-  Ubuntu job but is not claimed hosted until the checkpoint CI run passes.
+  a disposable elevated host.
 - **Technically limited:** Recovery is list-triggered Local Core user-mode work,
   not kernel interception. A state containing both source and isolated payload
   is deliberately not auto-resolved because deleting either copy would require
