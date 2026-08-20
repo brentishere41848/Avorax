@@ -24911,3 +24911,39 @@ def test_local_passthrough_env_roots_reject_parent_traversal():
     assert "PathBuf::from(text)" in root_source
     assert "PathBuf::from(value)" not in root_source
     assert "passthrough_roots_reject_parent_traversal_overrides" in source
+
+
+def test_ci_runs_native_unix_quarantine_permission_runtime_contracts():
+    workflow = read(CI_WORKFLOW)
+    start = workflow.index("  quarantine-unix:\n")
+    end = workflow.index("\n  flutter:\n", start)
+    job = workflow[start:end]
+
+    for marker in [
+        "name: Unix quarantine permission runtime",
+        "runs-on: ubuntu-24.04",
+        "timeout-minutes: 30",
+        "actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd",
+        "dtolnay/rust-toolchain@fa04a1451ff1842e2626ccb99004d0195b455a88",
+        "toolchain: 1.96.1",
+        "Test shared Unix permission engine",
+        "Test Local Core Unix permission routing",
+        "Test Guard Unix permission routing",
+        "set -euo pipefail",
+        "--manifest-path core/avorax_platform_security/Cargo.toml",
+        "--manifest-path core/zentor_local_core/Cargo.toml",
+        "--manifest-path core/zentor_guard_service/Cargo.toml",
+        "quarantine_artifacts_are_owner_only_and_non_executable_on_unix",
+        "list_repairs_existing_quarantine_artifact_modes_on_unix",
+        "guard_quarantine_artifacts_are_owner_only_and_non_executable_on_unix",
+        "guard_auth_reads_repair_existing_private_modes_on_unix",
+        "-- --test-threads=1",
+    ]:
+        assert marker in job
+
+    assert job.count("cargo test --locked") == 5
+    assert job.count("set -euo pipefail") == 3
+    assert "continue-on-error" not in job
+    assert "|| true" not in job
+    assert "apt-get" not in job
+    assert "curl " not in job

@@ -154,8 +154,14 @@ below `RUNNER_TEMP`, rejects an unexpected pre-existing or linked home,
 explicitly initializes `trunk` with `pod repo add-cdn`, verifies the resulting
 directory is non-linked, and exports the checked home to subsequent Flutter
 steps. The focused source contract and all 24 packaging tests pass locally with
-three expected Windows symlink skips. PR `#36` must not merge unless replacement
-head package jobs pass; no hosted success is inferred from these local checks.
+three expected Windows symlink skips. Replacement head
+`7156936ba714b66b6ca88140d48d81697ecf49e4` passed Avorax CI run
+`32317397484`, Desktop Packages push run `32317394123`, and Desktop Packages PR
+run `32317397452`. The isolated CocoaPods initialization step passed for macOS
+arm64 and x64 in both package runs. PR `#36` merged as
+`a254689666f01159d8d0a67001c1774fcc38628f`; main CI run `32318477688` and
+Desktop Packages run `32318477650` then passed all expected jobs. Prerelease
+publication was intentionally skipped.
 
 ## Classification
 
@@ -167,7 +173,7 @@ head package jobs pass; no hosted success is inferred from these local checks.
 | Verified locally | Guard quarantine lifecycle | Focused `47/47`, complete `223/223`, shared metadata/permission interoperability, process evidence, and root preflight pass. |
 | Verified locally | Repository regression boundary | Rust workspace `1,435/1,435`, source contracts `620/620`, central verifier `219/219`, independent report validation, lint, format, dependency, branding, safety, and performance gates pass. |
 | Partial | Installed Windows product | Installed LocalSystem owner/DACL/DPAPI behavior, unprivileged UI-to-service mediation, repair/upgrade, package install/uninstall, and click-through UI E2E require a disposable elevated Windows host. |
-| Verified hosted | Cross-platform package build boundary | Runs `32315126623` and `32315144889` independently passed Linux x64 DEB/tar, Windows x64 MSI/EXE, macOS arm64/x64 DMG, and consolidated checksums for implementation head `fc287d91c792be74e45ab3204831b00d6d9cd1bf`. This is package build/inspection evidence, not installation or runtime protection proof. |
+| Verified hosted | Cross-platform package build boundary | Implementation runs `32315126623` and `32315144889`, final-head runs `32317394123` and `32317397452`, and main run `32318477650` passed Linux x64 DEB/tar, Windows x64 MSI/EXE, macOS arm64/x64 DMG, and consolidated checksums. This is package build/inspection evidence, not installation or runtime protection proof. |
 | Disabled or blocked | Full Local Core Linux runtime cross-check | This Windows host reaches `tract-linalg` but lacks `x86_64-linux-gnu-gcc`; no machine-wide cross compiler was installed. Native Ubuntu package compilation passes, but the current workflow does not run the full Local Core or Unix permission test suites. |
 | Partial | Retained payload recovery | A finalization failure preserves the sole opaque payload and reports its path, but a dedicated authenticated recovery workflow is not yet implemented. |
 | Partial | Pre-existing ProgramData vault provenance | The 5,357 record-shaped sets were preserved exactly as requested. Count and total-byte baselines stayed stable after test isolation, but each historical record has not been provenance-reviewed; cleanup requires an explicit authenticated operator action. |

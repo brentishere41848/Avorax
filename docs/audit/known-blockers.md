@@ -1165,9 +1165,15 @@ enforcement, or pre-execution blocking is claimed.
   Rust workspace passes `1,435/1,435`; the central verifier passes `219/219`
   with no failed or skipped steps in `618.0s`, and the independent full-suite
   report validator passes.
-- **Pending independent evidence:** Linux Unix-mode tests and clean Windows/Linux
-  workspace CI must pass on the checkpoint head before this row is promoted to
-  hosted-run verified.
+- **Verified hosted baseline:** Replacement head
+  `7156936ba714b66b6ca88140d48d81697ecf49e4` passed Avorax CI
+  `32317397484` and Desktop Packages push/PR runs `32317394123` and
+  `32317397452`; merge `a254689666f01159d8d0a67001c1774fcc38628f`
+  passed main CI `32318477688` and Desktop Packages `32318477650`.
+- **Pending independent Unix runtime evidence:** Checkpoint 2185 adds a bounded
+  Ubuntu 24.04 job for the five shared, two Local Core, and two Guard permission
+  tests. Until that job runs successfully, Unix mode/ownership behavior remains
+  partial rather than inferred from compilation or package success.
 - **Local cross-toolchain blocker:** The shared platform crate and Guard compile
   for the installed Linux Rust target. A full Local Core cross-check reaches the
   existing `tract-linalg` C build and stops because this Windows host has no
@@ -1190,3 +1196,19 @@ enforcement, or pre-execution blocking is claimed.
   remain accessible and must be scanned as a separate path. Volume-wide
   neutralization is not claimed; bounded link-count handling remains follow-up
   hardening work.
+
+## Checkpoint 2185 Native Unix Quarantine Runtime CI
+
+- **Implemented locally:** Avorax CI now has a dedicated `ubuntu-24.04` job with
+  pinned Rust `1.96.1`, locked dependencies, fail-fast shell mode, and a
+  30-minute job timeout.
+- **Expected native evidence:** The job runs five shared platform tests, two
+  Local Core Unix permission-routing tests, and two Guard Unix
+  permission-routing tests. It installs no packages or machine-wide components.
+- **Verified locally:** Windows platform tests pass `6/6`, source contracts pass
+  `621/621`, and diff, branding, product-copy, and no-malware gates pass.
+- **Still pending:** A hosted Ubuntu execution has not yet run on this branch.
+  The nine Unix tests remain partial until that run completes successfully.
+- **Unchanged blockers:** Installed LocalSystem/DPAPI/ACL/service/UI E2E,
+  production signing, driver/pre-execution proof, production detection rates,
+  and the hard-link/ancestor-race boundaries remain open or technically limited.
