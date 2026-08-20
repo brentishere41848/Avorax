@@ -2363,6 +2363,8 @@ void main() {
     expect(powerShell, contains('_powershellSingleQuoted(powerShell)'));
     expect(powerShell, contains("'-EncodedCommand'"));
     expect(powerShell, contains('_powershellEncodedCommand(launcher)'));
+    expect(powerShell, isNot(contains("'-ExecutionPolicy'")));
+    expect(powerShell, isNot(contains("'Bypass'")));
     expect(powerShell, isNot(contains("Process.start('powershell.exe'")));
     expect(powerShell, isNot(contains("'-Command'")));
     expect(cancelMethod, contains('_cancelIpcTimeout'));
@@ -2431,27 +2433,22 @@ void main() {
     expect(clientSource, contains('WindowsPowerShell'));
   });
 
-  test(
-    'service repair does not silence unexpected service-query failures',
-    () async {
-      final clientSource = File(
-        'lib/core/local_core/local_core_client.dart',
-      ).readAsStringSync();
-      final repairMethod = clientSource.substring(
-        clientSource.indexOf('Future<String> repairInstallation'),
-        clientSource.indexOf('Future<String> openInstallReport'),
-      );
+  test('repair installation never performs direct service registration', () {
+    final clientSource = File(
+      'lib/core/local_core/local_core_client.dart',
+    ).readAsStringSync();
+    final repairMethod = clientSource.substring(
+      clientSource.indexOf('Future<String> repairInstallation'),
+      clientSource.indexOf('Future<String> openInstallReport'),
+    );
 
-      expect(repairMethod, contains("Get-Service -Name 'avorax_core_service'"));
-      expect(repairMethod, contains('-ErrorAction Stop'));
-      expect(
-        repairMethod,
-        contains("CategoryInfo.Category -ne 'ObjectNotFound'"),
-      );
-      expect(repairMethod, contains('throw'));
-      expect(repairMethod, isNot(contains('SilentlyContinue')));
-    },
-  );
+    expect(repairMethod, contains('avoraxInstallerOwnedRepairBlocker'));
+    expect(repairMethod, isNot(contains('_runElevatedPowerShell')));
+    expect(repairMethod, isNot(contains('New-Service')));
+    expect(repairMethod, isNot(contains('Set-Service')));
+    expect(repairMethod, isNot(contains('Start-Service')));
+    expect(repairMethod, isNot(contains('Get-Service')));
+  });
 
   test('source marker: cancel IPC verifies local core response', () async {
     final clientSource = File(
@@ -2720,8 +2717,9 @@ void main() {
       expect(launcherSlice, contains('_isWindowsRemoteOrDevicePath(path)'));
       expect(
         launcherSlice,
-        contains('final escapedExecutable = executablePath.replaceAll'),
+        isNot(contains('final escapedExecutable = executablePath.replaceAll')),
       );
+      expect(launcherSlice, contains('avoraxInstallerOwnedRepairBlocker'));
       expect(
         launcherSlice,
         isNot(contains('File(Platform.resolvedExecutable).parent.path')),
@@ -2821,66 +2819,55 @@ void main() {
     expect(installReport, isNot(contains("Process.start('explorer.exe'")));
   });
 
-  test('repair installation refuses development checkout executable', () async {
-    if (!Platform.isWindows) return;
-    final devExecutable = File(
-      '../../target/release/zentor_local_core.exe',
-    ).absolute;
-    if (!devExecutable.existsSync()) return;
+  test(
+    'repair installation ignores executable overrides and stays blocked',
+    () async {
+      var attemptedLaunch = false;
+      final client = LocalCoreClient(
+        executableOverride: r'C:\Users\Public\untrusted-core.exe',
+        processStarter: (_, _) {
+          attemptedLaunch = true;
+          throw StateError('repair should not launch PowerShell');
+        },
+      );
 
-    var attemptedLaunch = false;
-    final client = LocalCoreClient(
-      executableOverride: devExecutable.path,
-      processStarter: (_, _) {
-        attemptedLaunch = true;
-        throw StateError('repair should not launch PowerShell');
-      },
-    );
+      final result = await client.repairInstallation();
 
-    final result = await client.repairInstallation();
+      expect(attemptedLaunch, isFalse);
+      expect(result, avoraxInstallerOwnedRepairBlocker);
+      expect(result, contains('In-app service registration is disabled'));
+      expect(result, contains('MSI/EXE installer'));
+    },
+  );
 
-    expect(attemptedLaunch, isFalse);
-    expect(
-      result,
-      contains('Refusing to register a development checkout executable'),
-    );
-    expect(result, contains('Build and install Avorax first'));
-  });
-
-  test('source marker: repair installation uses installed-only executable', () {
-    final clientSource = File(
-      'lib/core/local_core/local_core_client.dart',
-    ).readAsStringSync();
-    final repairInstallation = clientSource.substring(
-      clientSource.indexOf('Future<String> repairInstallation'),
-      clientSource.indexOf('Future<String> openInstallReport'),
-    );
-    final installedResolver = clientSource.substring(
-      clientSource.indexOf('String? _installedLocalCoreExecutableForRepair'),
-      clientSource.indexOf('String? _guardServiceExecutable'),
-    );
-
-    expect(
-      repairInstallation,
-      contains('_installedLocalCoreExecutableForRepair()'),
-    );
-    expect(
-      repairInstallation,
-      contains('_developmentServiceRegistrationBlocker('),
-    );
-    expect(
-      repairInstallation,
-      contains('if (devCheckoutBlocker != null) return devCheckoutBlocker'),
-    );
-    expect(
-      installedResolver,
-      isNot(contains('_developmentExecutableCandidates(')),
-    );
-    expect(
-      installedResolver,
-      contains('Refusing to register a development checkout executable'),
-    );
-  });
+  test(
+    'source marker: repair installation is installer-owned and fail-closed',
+    () {
+      final clientSource = File(
+        'lib/core/local_core/local_core_client.dart',
+      ).readAsStringSync();
+      final repairInstallation = clientSource.substring(
+        clientSource.indexOf('Future<String> repairInstallation'),
+        clientSource.indexOf('Future<String> openInstallReport'),
+      );
+      expect(
+        repairInstallation,
+        contains('return avoraxInstallerOwnedRepairBlocker;'),
+      );
+      expect(repairInstallation, isNot(contains('executableOverride')));
+      expect(repairInstallation, isNot(contains('_environmentPathOverride')));
+      expect(repairInstallation, isNot(contains('_runElevatedPowerShell')));
+      expect(clientSource, isNot(contains('New-Service')));
+      expect(
+        clientSource,
+        isNot(contains('_installedLocalCoreExecutableForRepair')),
+      );
+      expect(
+        clientSource,
+        isNot(contains('_developmentServiceRegistrationBlocker')),
+      );
+    },
+  );
 
   test('scan report and progress parsers bound string IPC fields', () async {
     final clientSource = File(

@@ -891,3 +891,33 @@ between the final handle check and rename/removal, and moving or deleting one
 path cannot identify arbitrary aliases elsewhere on the volume. Destination
 postflight catches aliases visible before finalization, but Avorax must still
 describe quarantine as path-specific rather than volume-wide neutralization.
+
+## Checkpoint 2188 Installer-Owned Service Repair Boundary
+
+The former Flutter repair path crossed a privilege boundary that the desktop
+client could not authenticate safely. A same-user process could supply a Local
+Core executable override through constructor or process environment state and
+then rely on a user accepting the UAC prompt before elevated `New-Service` or
+service reconfiguration consumed that path. UAC remained an explicit boundary,
+but the desktop client had no signed-installer provenance contract for the
+selected executable.
+
+Checkpoint 2188 removes direct service creation and reconfiguration from the
+Flutter client. Repair no longer reads executable overrides, resolves a repair
+binary, builds `New-Service`/`Set-Service` commands, or launches elevated repair
+PowerShell. The Scan surface permanently disables the repair button, displays
+that installer repair is required, and exposes the same bounded blocker in a
+tooltip. Direct client and controller calls fail closed and emit
+`installation_repair_blocked`; there is no `installation_repair_requested`
+success event. The remaining elevated helper does not use PowerShell execution-
+policy bypass and is reachable only by the separately confirmed fixed-name
+`Get-Service`/`Start-Service` flow for an already registered service.
+
+Service installation and repair are now owned by a verified official MSI/EXE
+package. End-to-end proof still requires a disposable elevated Windows host,
+production code signing, installed-path and ACL inspection, service identity
+validation, repair/rollback tests, and package provenance checks. Starting the
+fixed existing service remains only partially verified until that host test is
+performed. Administrators and the Windows service control manager remain in the
+trusted computing base. This change does not install a service or driver and
+does not add or claim pre-execution blocking.

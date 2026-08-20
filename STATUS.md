@@ -6,15 +6,48 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
 
 ## Current Commit
 
-- Checkpoint 2186 merged as `1b4a31de1d406eb4bed1e928d72bb83a5c0feb7c`
-  through PR `#38`. Checkpoint 2187 implementation commit
-  `3e361a4d0b1829017603d3644c4866ccb5d3ad6c` is published through PR `#39`
-  and passes exact-head Avorax CI plus both Desktop Packages runs.
+- Checkpoint 2187 merged as `7dfc2e549a5158b2cd5922124bb5297b67283a63`
+  through PR `#39`. Checkpoint 2188 implementation commit
+  `b67e787a0db0aa08ab82ae7ecc26f975399d4628` is published through PR
+  `#40` and passes exact-head Avorax CI plus both Desktop Packages runs.
 - Current public release tag: `v0.1.15-beta.3`, published as a prerelease on
-  2026-07-20 with independently verified checksums. Checkpoints 2178-2187 are
+  2026-07-20 with independently verified checksums. Checkpoints 2178-2188 are
   source hardening and do not create a new release tag.
 
 ## Latest Checkpoint Evidence - 2026-08-20
+
+- Current installer-owned service-repair pass: checkpoint 2188 removes the
+  Flutter client's elevated service registration/reconfiguration path. An
+  untrusted constructor/environment executable override can no longer reach a
+  repair process, `New-Service`, `Set-Service`, or UAC; direct runtime coverage
+  requires the exact installer-owned blocker and zero process launches. The
+  Scan control remains inventory-visible but permanently disabled as
+  `Repair unavailable`, has no callback/dialog, and names official verified
+  MSI/EXE reinstall/repair as the only route. Stale controller calls log
+  `installation_repair_blocked`, never requested/success. Existing-service
+  start remains limited to fixed `avorax_core_service` and no longer uses
+  `-ExecutionPolicy Bypass`. A full Rust run also exposed and repaired a
+  parallel test-environment race by moving eight overrides into exact child
+  test processes. Affected Flutter tests pass `380/380`, complete Flutter
+  `838/838`, Native Engine `435/435`, the locked Rust workspace `1,458/1,458`,
+  source contracts `625/625`, strict Native Engine Clippy, analyzer, formatting,
+  and UI inventory (11 routes, 61 controls) all pass.
+  The definitive central verifier and independent full-report validator pass
+  `219/219` with no failures or skips in `535.4s`; all recorded step durations
+  are non-negative after monotonic timing replaced wall-clock subtraction.
+  Exact implementation head `b67e787a0db0aa08ab82ae7ecc26f975399d4628`
+  passes Avorax CI run `32339319834`, including Rust, Flutter/protocol,
+  branding/copy, native Ubuntu quarantine, and security/protection/performance
+  jobs. Desktop Packages push run `32339252987` and PR run `32339319827` both
+  pass package contracts, Windows x64 MSI/EXE, Linux x64 DEB/tar, macOS
+  arm64/x64 DMGs, and consolidated six-artifact checksum/SBOM evidence;
+  prerelease publication was intentionally skipped.
+  The ProgramData vault remains read-only verified and unchanged at `16,072`
+  files and `4,522,733` bytes. Installed service repair E2E remains blocked on
+  a disposable elevated Windows host with a verified official installer; no
+  release, installation, service/driver action, detection-rate, pre-execution,
+  or Defender-replacement claim is made. Evidence is recorded in
+  `docs/reports/checkpoint-2188-installer-owned-service-repair.md`.
 
 - Current quarantine finalization-recovery pass: checkpoint 2187 writes a
   strict domain-separated HMAC journal before Local Core or Guard moves a

@@ -9186,8 +9186,7 @@ def test_controller_service_recovery_events_are_categorized():
         ("install_report", "install_report_open_confirmation_required", "warning"),
         ("install_report", "install_report_open_requested", "warning"),
         ("install_report", "install_report_open_failed", "error"),
-        ("repair", "installation_repair_confirmation_required", "warning"),
-        ("repair", "installation_repair_requested", "warning"),
+        ("repair", "installation_repair_blocked", "warning"),
         ("repair", "installation_repair_failed", "error"),
     ]
     for slice_name, event_name, severity in expected:
@@ -9273,7 +9272,7 @@ def test_controller_service_recovery_actions_are_single_flight():
     assert "updateStatus: UpdateStatus.installing" in scan_test
     assert "find.widgetWithText(\n      OutlinedButton,\n      'Start Core Service'," in scan_test
     assert "find.widgetWithText(\n      OutlinedButton,\n      'Open install report'," in scan_test
-    assert "find.widgetWithText(\n      OutlinedButton,\n      'Repair installation'," in scan_test
+    assert "find.widgetWithText(\n      OutlinedButton,\n      'Repair unavailable'," in scan_test
     assert "tester.widget<OutlinedButton>(startButton).onPressed, isNull" in scan_test
     assert "tester.widget<OutlinedButton>(reportButton).onPressed, isNull" in scan_test
     assert "tester.widget<OutlinedButton>(repairButton).onPressed, isNull" in scan_test
@@ -9281,14 +9280,13 @@ def test_controller_service_recovery_actions_are_single_flight():
     assert "scan start core service dialog confirm calls local core" in scan_test
     assert "scan open install report dialog confirm calls local core" in scan_test
     assert "scan open install report dialog cancel does not call local core" in scan_test
-    assert "scan repair installation dialog confirm calls local core" in scan_test
-    assert "scan repair installation dialog cancel does not call local core" in scan_test
+    assert "scan repair installation stays disabled with visible blocker" in scan_test
     assert "expect(localCore.startCoreServiceCalls, 0)" in scan_test
     assert "expect(localCore.startCoreServiceCalls, 1)" in scan_test
     assert "expect(localCore.openInstallReportCalls, 0)" in scan_test
     assert "expect(localCore.openInstallReportCalls, 1)" in scan_test
     assert "expect(localCore.repairInstallationCalls, 0)" in scan_test
-    assert "expect(localCore.repairInstallationCalls, 1)" in scan_test
+    assert "expect(localCore.repairInstallationCalls, 1)" not in scan_test
     assert "service recovery actions block while update package work is busy" in offline_scan_test
     assert "UpdateStatus.downloading" in offline_scan_test
     assert "UpdateStatus.verifying" in offline_scan_test
@@ -9313,7 +9311,73 @@ def test_controller_service_recovery_actions_are_single_flight():
     assert "controller de-duplicates overlapping service/report actions" in service_doc_rows
     assert "disabled while a service recovery action or update package work is in flight" in service_doc_rows
     assert "rejects update-busy service starts before Local Core IPC" in service_doc_rows
-    assert "rejects update-busy repair before Local Core IPC" in service_doc_rows
+    assert "in-app service registration is disabled" in service_doc_rows
+
+
+def test_flutter_service_repair_is_installer_owned_and_never_elevates():
+    client = read(LOCAL_CORE_CLIENT)
+    app_state = read(
+        ROOT / "apps" / "zentor_client" / "lib" / "app" / "app_state.dart"
+    )
+    scan = read(SCAN_SCREEN)
+    client_test = read(LOCAL_CORE_IPC_DIAGNOSTICS_TEST)
+    offline_scan_test = read(
+        ROOT / "apps" / "zentor_client" / "test" / "offline_scan_test.dart"
+    )
+    scan_test = read(
+        ROOT / "apps" / "zentor_client" / "test" / "scan_screen_test.dart"
+    )
+    inventory_gate = read(
+        ROOT / "tools" / "testing" / "validate-client-ui-inventory.py"
+    )
+    repair = client[
+        client.index("Future<String> repairInstallation"):
+        client.index("Future<String> openInstallReport")
+    ]
+    elevated = client[
+        client.index("Future<String?> _runElevatedPowerShell"):
+        client.index("String _powerShellLaunchDiagnostic")
+    ]
+    controller_repair = app_state[
+        app_state.index("Future<void> repairInstallation"):
+        app_state.index("Future<bool> addManualProtectedAppFile")
+    ]
+
+    assert "const avoraxInstallerOwnedRepairBlocker" in client
+    assert "return avoraxInstallerOwnedRepairBlocker;" in repair
+    assert "_runElevatedPowerShell" not in repair
+    assert "executableOverride" not in repair
+    assert "_environmentPathOverride" not in repair
+    assert "New-Service" not in client
+    assert "_installedLocalCoreExecutableForRepair" not in client
+    assert "_developmentServiceRegistrationBlocker" not in client
+    assert "'-ExecutionPolicy'" not in elevated
+    assert "'Bypass'" not in elevated
+    assert "label: 'Installer repair'" in scan
+    assert "Required; in-app service registration is disabled" in scan
+    assert "label: 'Repair unavailable'" in scan
+    assert "message: avoraxInstallerOwnedRepairBlocker" in scan
+    assert "onPressed: null" in scan
+    assert "onRepairInstallation" not in scan
+    assert "repair installation ignores executable overrides and stays blocked" in client_test
+    assert "expect(attemptedLaunch, isFalse)" in client_test
+    assert "scan repair installation stays disabled with visible blocker" in scan_test
+    assert "installation_repair_blocked" in controller_repair
+    assert "installation_repair_requested" not in controller_repair
+    assert "details: avoraxInstallerOwnedRepairBlocker" in controller_repair
+    assert "errorMessage: avoraxInstallerOwnedRepairBlocker" in controller_repair
+    assert "installer-owned repair blocker is logged without fake success" in offline_scan_test
+    assert "contains('installation_repair_blocked')" in offline_scan_test
+    assert "isNot(contains('installation_repair_requested'))" in offline_scan_test
+    repair_inventory = inventory_gate[
+        inventory_gate.index('"Repair installation"'):
+        inventory_gate.index('"Scan result card"')
+    ]
+    assert '"No callback"' in repair_inventory
+    assert '"label: \'Repair unavailable\'"' in repair_inventory
+    assert '"message: avoraxInstallerOwnedRepairBlocker"' in repair_inventory
+    assert '"onPressed: null"' in repair_inventory
+    assert "onRepairInstallation(confirmed: true)" not in repair_inventory
 
 
 def test_controller_quarantine_and_allowlist_events_are_categorized():
@@ -19795,7 +19859,7 @@ def test_small_threat_mvp_verifier_is_safe_and_reproducible():
     assert "local YARA/ClamAV compatibility regressions" in source
     assert "local ransomware guard runtime policy/config regressions" in source
     assert "health/self-test UI/controller paths" in source
-    assert "repair-installation development-checkout boundary" in source
+    assert "repair-installation installer-owned fail-closed boundary" in source
     assert "branding gate for active product/copy boundary" in source
     assert "protection start-stop confirmation/failure-honesty guards" in source
     assert "protection action public busy-state guards" in source
@@ -19825,7 +19889,7 @@ def test_small_threat_mvp_verifier_is_safe_and_reproducible():
     assert "safe synthetic performance/resource gate" in source
     assert "source-level dependency/lockfile evidence gate" in source
     assert "full release-host SBOM/license output" in source
-    assert "installed service repair E2E" in source
+    assert "installer-owned service repair/install E2E" in source
     assert "installed update/rollback E2E" in source
     assert "release-host performance baselines" in source
     assert "no driver-latency claim from synthetic user-mode performance evidence" in source
@@ -20238,6 +20302,25 @@ def test_small_threat_mvp_verifier_is_safe_and_reproducible():
     assert "Invoke-WebRequest" not in source
     assert "Expand-Archive" not in source
     assert "Set-ExecutionPolicy" not in source
+
+
+def test_small_threat_mvp_verifier_uses_monotonic_elapsed_timing():
+    source = (ROOT / "tools/testing/verify-small-threat-mvp.ps1").read_text(
+        encoding="utf-8"
+    )
+    invoke_step = source[
+        source.index("function Invoke-Step"):
+        source.index("function New-SmallThreatMvpVerificationReport")
+    ]
+
+    assert "[System.Diagnostics.Stopwatch]::StartNew()" in invoke_step
+    assert "$timer.Elapsed.TotalSeconds" in invoke_step
+    assert "$timer.Stop()" in invoke_step
+    assert "$overallTimer = [System.Diagnostics.Stopwatch]::StartNew()" in source
+    assert source.count("$overallTimer.Elapsed.TotalSeconds") == 2
+    assert "$overallTimer.Stop()" in source
+    assert "((Get-Date) - $started).TotalSeconds" not in invoke_step
+    assert "((Get-Date) - $startedAll).TotalSeconds" not in source
 
 
 def test_small_threat_mvp_report_validator_is_strict_and_local():

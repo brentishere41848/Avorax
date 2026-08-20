@@ -411,22 +411,25 @@ fn push_unique(candidates: &mut Vec<String>, value: String) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::test_support::{is_isolated_environment_case, run_isolated_environment_case};
     use std::fs;
-    use std::sync::{Mutex, OnceLock};
     use tempfile::tempdir;
-
-    fn trust_env_lock() -> std::sync::MutexGuard<'static, ()> {
-        static LOCK: OnceLock<Mutex<()>> = OnceLock::new();
-        LOCK.get_or_init(|| Mutex::new(())).lock().unwrap()
-    }
 
     #[test]
     fn product_path_trust_requires_exact_roots() {
-        let _lock = trust_env_lock();
-        let previous_program_data = std::env::var_os("ProgramData");
-        let previous_program_files = std::env::var_os("ProgramFiles");
-        std::env::set_var("ProgramData", r"C:\ProgramData");
-        std::env::set_var("ProgramFiles", r"C:\Program Files");
+        const CASE: &str = "product-path-roots";
+        if !is_isolated_environment_case(CASE) {
+            run_isolated_environment_case(
+                "trust::zentor_trust::tests::product_path_trust_requires_exact_roots",
+                CASE,
+                |command| {
+                    command
+                        .env("ProgramData", r"C:\ProgramData")
+                        .env("ProgramFiles", r"C:\Program Files");
+                },
+            );
+            return;
+        }
 
         let trusted_quarantine =
             is_zentor_path(Path::new(r"C:\ProgramData\Avorax\Quarantine\item.avoraxq")).unwrap();
@@ -450,15 +453,6 @@ mod tests {
             r"C:\ProgramDataX\Avorax\Quarantine\lookalike.exe",
         ))
         .unwrap();
-
-        match previous_program_data {
-            Some(value) => std::env::set_var("ProgramData", value),
-            None => std::env::remove_var("ProgramData"),
-        }
-        match previous_program_files {
-            Some(value) => std::env::set_var("ProgramFiles", value),
-            None => std::env::remove_var("ProgramFiles"),
-        }
 
         assert!(trusted_quarantine);
         assert!(trusted_quarantine_current_dir);
@@ -617,35 +611,40 @@ mod tests {
 
     #[test]
     fn quarantine_trust_roots_reject_relative_overrides() {
-        let _lock = trust_env_lock();
-        let previous = std::env::var_os("AVORAX_QUARANTINE_DIR");
-
-        std::env::set_var("AVORAX_QUARANTINE_DIR", "relative-quarantine");
-        let result = is_zentor_path(Path::new(r"C:\Users\Public\Downloads\tool.exe"));
-
-        match previous {
-            Some(value) => std::env::set_var("AVORAX_QUARANTINE_DIR", value),
-            None => std::env::remove_var("AVORAX_QUARANTINE_DIR"),
+        const CASE: &str = "trust-quarantine-root-relative";
+        if !is_isolated_environment_case(CASE) {
+            run_isolated_environment_case(
+                "trust::zentor_trust::tests::quarantine_trust_roots_reject_relative_overrides",
+                CASE,
+                |command| {
+                    command.env("AVORAX_QUARANTINE_DIR", "relative-quarantine");
+                },
+            );
+            return;
         }
 
+        let result = is_zentor_path(Path::new(r"C:\Users\Public\Downloads\tool.exe"));
         let error = result.unwrap_err().to_string();
         assert!(error.contains("AVORAX_QUARANTINE_DIR must be an absolute local path"));
     }
 
     #[test]
     fn quarantine_trust_roots_reject_parent_traversal_overrides() {
-        let _lock = trust_env_lock();
-        let previous = std::env::var_os("AVORAX_QUARANTINE_DIR");
         let dir = tempdir().unwrap();
-
-        std::env::set_var("AVORAX_QUARANTINE_DIR", dir.path().join(".."));
-        let result = is_zentor_path(Path::new(r"C:\Users\Public\Downloads\tool.exe"));
-
-        match previous {
-            Some(value) => std::env::set_var("AVORAX_QUARANTINE_DIR", value),
-            None => std::env::remove_var("AVORAX_QUARANTINE_DIR"),
+        const CASE: &str = "trust-quarantine-root-parent-traversal";
+        if !is_isolated_environment_case(CASE) {
+            let override_path = dir.path().join("..");
+            run_isolated_environment_case(
+                "trust::zentor_trust::tests::quarantine_trust_roots_reject_parent_traversal_overrides",
+                CASE,
+                |command| {
+                    command.env("AVORAX_QUARANTINE_DIR", override_path);
+                },
+            );
+            return;
         }
 
+        let result = is_zentor_path(Path::new(r"C:\Users\Public\Downloads\tool.exe"));
         let error = result.unwrap_err().to_string();
         assert!(error.contains("AVORAX_QUARANTINE_DIR"));
         assert!(error.contains("must not contain parent traversal"));

@@ -7,6 +7,11 @@ import 'package:zentor_protocol/zentor_protocol.dart';
 typedef LocalCoreProcessStarter =
     Future<Process> Function(String executable, List<String> arguments);
 
+const avoraxInstallerOwnedRepairBlocker =
+    'In-app service registration is disabled. Installation repair is owned by '
+    'the Avorax MSI/EXE installer; reinstall Avorax using a verified official '
+    'installer package.';
+
 class LocalCoreClient {
   const LocalCoreClient({
     this.executableOverride,
@@ -1405,56 +1410,7 @@ if ($service.Status -ne 'Running') {
   }
 
   Future<String> repairInstallation() async {
-    if (!Platform.isWindows) {
-      return 'Repairing the Avorax service registration is only supported on Windows.';
-    }
-    final executable = _installedLocalCoreExecutableForRepair();
-    final executableProbe = executable == null
-        ? null
-        : _regularFileProbe(executable);
-    if (executable == null || executableProbe!.isNotRegularFile) {
-      return _missingRegularFileMessage(
-        'Avorax Core Service',
-        executable,
-        probe: executableProbe,
-        guidance:
-            'Reinstall Avorax or set AVORAX_CORE_SERVICE to the installed executable.',
-      );
-    }
-    final executablePath = File(executable).resolveSymbolicLinksSync();
-    final devCheckoutBlocker = _developmentServiceRegistrationBlocker(
-      executablePath,
-      const ['core', 'zentor_local_core'],
-    );
-    if (devCheckoutBlocker != null) return devCheckoutBlocker;
-    final launchBlocker = _executableLaunchBlocker(
-      'Avorax Core Service',
-      executablePath,
-      guidance:
-          'Reinstall Avorax or set AVORAX_CORE_SERVICE to the installed executable.',
-    );
-    if (launchBlocker != null) return launchBlocker;
-    final escapedExecutable = executablePath.replaceAll("'", "''");
-    final result = await _runElevatedPowerShell('''
-\$exe = '$escapedExecutable'
-\$service = \$null
-try {
-  \$service = Get-Service -Name 'avorax_core_service' -ErrorAction Stop
-} catch {
-  if (\$_.CategoryInfo.Category -ne 'ObjectNotFound') {
-    throw
-  }
-}
-if (\$null -eq \$service) {
-  New-Service -Name 'avorax_core_service' -BinaryPathName "`"\$exe`" --service" -DisplayName 'Avorax Core Service' -Description 'Provides local scanning, native engine loading, quarantine, scan jobs, and local protection state for Avorax Anti-Virus.' -StartupType Automatic -ErrorAction Stop
-}
-Set-Service -Name 'avorax_core_service' -StartupType Automatic -ErrorAction Stop
-Start-Service -Name 'avorax_core_service' -ErrorAction Stop
-''');
-    if (result == null) {
-      return 'Avorax Core Service repair was requested.';
-    }
-    return 'Avorax Core Service repair failed: $result';
+    return avoraxInstallerOwnedRepairBlocker;
   }
 
   Future<String> openInstallReport() async {
@@ -2542,46 +2498,6 @@ Start-Service -Name 'avorax_core_service' -ErrorAction Stop
     return candidates.first;
   }
 
-  String? _installedLocalCoreExecutableForRepair() {
-    if (executableOverride != null) return executableOverride;
-    final override = _environmentPathOverride(
-      'AVORAX_CORE_SERVICE',
-      'ZENTOR_LOCAL_CORE',
-    );
-    if (override != null) return override;
-    final primaryName = Platform.isWindows
-        ? 'avorax_core_service.exe'
-        : 'avorax_core_service';
-    final legacyName = Platform.isWindows
-        ? 'zentor_local_core.exe'
-        : 'zentor_local_core';
-    final executableParent = _requiredResolvedExecutableParentPath(
-      'Avorax Core Service executable directory',
-    );
-    final candidates = [
-      _joinPath([executableParent, primaryName]),
-      _joinPath([executableParent, legacyName]),
-    ];
-    for (final candidate in candidates) {
-      final file = File(candidate);
-      if (_regularFileProbe(candidate).isRegularFile) return file.absolute.path;
-    }
-    return candidates.first;
-  }
-
-  String? _developmentServiceRegistrationBlocker(
-    String executablePath,
-    List<String> crateSegments,
-  ) {
-    for (final root in _candidateDevelopmentRepoRoots()) {
-      if (!_isDevelopmentRepoRoot(root, crateSegments)) continue;
-      if (_localPathInside(root.path, executablePath)) {
-        return 'Refusing to register a development checkout executable as the Windows Core Service. Build and install Avorax first, then repair the installed service from the installed app.';
-      }
-    }
-    return null;
-  }
-
   String? _guardServiceExecutable() {
     if (guardExecutableOverride != null) return guardExecutableOverride;
     final override = _environmentPathOverride(
@@ -2959,14 +2875,12 @@ Start-Service -Name 'avorax_core_service' -ErrorAction Stop
     final quotedPowerShell = _powershellSingleQuoted(powerShell);
     final launcher =
         '\$process = Start-Process -FilePath $quotedPowerShell '
-        "-ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-EncodedCommand','$encoded') "
+        "-ArgumentList @('-NoProfile','-EncodedCommand','$encoded') "
         '-Verb RunAs -Wait -PassThru; exit \$process.ExitCode';
     try {
       final timeout = elevatedPowerShellTimeout ?? _elevatedPowerShellTimeout;
       final process = await (processStarter ?? Process.start)(powerShell, [
         '-NoProfile',
-        '-ExecutionPolicy',
-        'Bypass',
         '-EncodedCommand',
         _powershellEncodedCommand(launcher),
       ]);
