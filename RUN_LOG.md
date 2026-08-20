@@ -13,6 +13,55 @@ Lead-engineer product-hardening pass across the Avorax repository. Goal is to mo
 - The bundled native ML model is treated as development-only unless release metadata and gates prove production readiness.
 - MSI/EXE installers are first-install/repair/recovery/offline paths. Normal in-app updates should use verified `.aup` packages.
 
+## 2026-08-20 continuation checkpoint 2188
+
+- Removed in-app service registration/reconfiguration from the Flutter client.
+  `repairInstallation()` now returns one stable installer-owned blocker and
+  cannot resolve an executable, invoke `New-Service`/`Set-Service`, launch a
+  process, or cross UAC. Official verified MSI/EXE reinstall/repair is the only
+  supported installation-repair route.
+- Kept existing-service start narrow: it can only query/start fixed
+  `avorax_core_service`. The shared elevated start helper no longer passes
+  `-ExecutionPolicy Bypass`; service creation and executable-path registration
+  are absent.
+- Replaced the Scan repair callback/dialog with a visible but permanently
+  disabled `Repair unavailable` control. Its tooltip and diagnostic state name
+  the installer boundary, the stable inventory ID remains `Repair installation`,
+  and the backing action is `No callback`. Stale controller calls fail visibly
+  as `installation_repair_blocked` and cannot emit requested/success events.
+- Added direct runtime, widget, controller, source, and inventory regressions.
+  The affected Flutter suite passes `380/380`, the complete Flutter suite
+  `838/838`, analyzer and format checks pass, UI inventory accounts for 11
+  routes and 61 controls, and source contracts pass `625/625`.
+- The first full Rust workspace run exposed a parallel environment race in
+  Native Engine tests. Eight environment-override tests now rerun their exact
+  case in child test processes instead of mutating the parent environment.
+  Native Engine passes `435/435`, the workspace `1,458/1,458`, strict Native
+  Engine Clippy passes, and rustfmt is clean.
+- Failed attempts remain explicit: one diagnostic finder, two stale source
+  assertions, unavailable `pytest` in both existing Python runtimes, two UI
+  inventory gate assumptions, the first Rust race, and initial Clippy module
+  placement were corrected before their final suites passed. An earlier
+  central `219/219` run in `523.4s` predates the Rust test-isolation repair and
+  is retained as superseded evidence.
+- The next complete central run executed all `219` content steps successfully,
+  but its report validator rejected step 210 because a host wall-clock
+  adjustment produced `-0.5s`. Step and overall elapsed durations now use
+  monotonic .NET `Stopwatch` instances, with a dependency-free source contract;
+  the rejected report is not counted as success.
+- The definitive central verifier and its built-in independent full-report
+  validator pass `219/219` with no failures or skips in `535.4s`; the minimum
+  recorded step duration is `0.1s`. A separate `-RequireFullSuite` validator
+  invocation also passes the final report.
+- Read-only inventory confirms the real ProgramData vault remains exactly
+  `16,072` files and `4,522,733` bytes: `5,357` payloads, `5,357` records,
+  `5,357` auth sidecars, one key, and no pending journals. No existing artifact
+  was changed or deleted.
+- Installed service repair remains blocked pending disposable elevated-host
+  MSI/EXE E2E. This checkpoint makes no detection-rate, persistent-monitoring,
+  driver, pre-execution, secure-erase, or Defender-replacement claim and does
+  not create a release.
+
 ## 2026-08-20 continuation checkpoint 2187
 
 - Added one Local Core/Guard-compatible finalization journal contract. The

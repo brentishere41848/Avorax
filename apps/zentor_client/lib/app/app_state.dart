@@ -2714,30 +2714,27 @@ class ZentorController extends StateNotifier<ZentorState> {
 
   Future<void> repairInstallation({bool confirmed = false}) async {
     if (!confirmed) {
-      const message =
-          'Installation repair requires explicit confirmation because it can register or reconfigure the Avorax Core Service and may prompt for administrator approval.';
       await logEvent(
-        'installation_repair_confirmation_required',
-        'Installation repair confirmation required',
-        details: message,
+        'installation_repair_blocked',
+        'Installation repair blocked',
+        details: avoraxInstallerOwnedRepairBlocker,
         category: 'protection',
         severity: 'warning',
       );
-      state = state.copyWith(errorMessage: message);
+      state = state.copyWith(errorMessage: avoraxInstallerOwnedRepairBlocker);
       return;
     }
     if (!await _beginServiceAction('Repair installation')) return;
     try {
-      final result = await _localCoreClient.repairInstallation();
+      await _localCoreClient.repairInstallation();
       await logEvent(
-        'installation_repair_requested',
-        'Installation repair requested',
-        details: result,
+        'installation_repair_blocked',
+        'Installation repair blocked',
+        details: avoraxInstallerOwnedRepairBlocker,
         category: 'protection',
         severity: 'warning',
       );
-      state = state.copyWith(errorMessage: result);
-      await unawaitedCheckMalwareEngine();
+      state = state.copyWith(errorMessage: avoraxInstallerOwnedRepairBlocker);
     } on Object catch (error) {
       final details = _boundedUiDiagnostic(error);
       final message = 'Unable to repair Avorax installation: $details';
@@ -6265,7 +6262,7 @@ class ZentorController extends StateNotifier<ZentorState> {
       return 'Avorax Core Service is installed but not running. Start the service, then retry the scan.';
     }
     if (state.coreServiceStatus == 'missing') {
-      return 'Avorax Core Service is not registered. Use Repair installation or reinstall Avorax.';
+      return 'Avorax Core Service is not registered. In-app service registration is disabled; reinstall Avorax using a verified official installer.';
     }
     if (state.coreServiceStatus == 'unknown') {
       return 'Avorax Core Service status is unknown. Check service diagnostics, then retry the scan.';

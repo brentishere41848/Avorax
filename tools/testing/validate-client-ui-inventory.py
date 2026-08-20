@@ -190,9 +190,13 @@ REQUIRED_CONTROLS = (
     RequiredControl(
         "Scan",
         "Repair installation",
-        "onRepairInstallation(confirmed: true)",
+        "No callback",
         "apps/zentor_client/lib/features/scan/scan_screen.dart",
-        ("'Repair installation'", "onRepairInstallation(confirmed: true)"),
+        (
+            "label: 'Repair unavailable'",
+            "message: avoraxInstallerOwnedRepairBlocker",
+            "onPressed: null",
+        ),
     ),
     RequiredControl(
         "Scan result card",

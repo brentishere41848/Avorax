@@ -6,6 +6,7 @@ import 'package:zentor_protocol/zentor_protocol.dart';
 
 import '../../app/app_state.dart';
 import '../../app/theme/zentor_colors.dart';
+import '../../core/local_core/local_core_client.dart';
 import '../../shared/widgets/zentor_button.dart';
 import '../../shared/widgets/zentor_empty_state.dart';
 import '../../shared/widgets/zentor_metric_card.dart';
@@ -434,7 +435,6 @@ class _ScanResults extends StatelessWidget {
               onRetry: controller.unawaitedCheckMalwareEngine,
               onStartCoreService: controller.startCoreService,
               onOpenInstallReport: controller.openInstallReport,
-              onRepairInstallation: controller.repairInstallation,
             )
           else if (report.threats.isEmpty && report.scanErrors.isNotEmpty)
             _ScanErrorDiagnostics(report: report)
@@ -572,14 +572,12 @@ class _EngineUnavailableDiagnostics extends StatelessWidget {
     required this.onRetry,
     required this.onStartCoreService,
     required this.onOpenInstallReport,
-    required this.onRepairInstallation,
   });
 
   final ZentorState state;
   final Future<void> Function() onRetry;
   final Future<void> Function({bool confirmed}) onStartCoreService;
   final Future<void> Function({bool confirmed}) onOpenInstallReport;
-  final Future<void> Function({bool confirmed}) onRepairInstallation;
 
   @override
   Widget build(BuildContext context) {
@@ -632,6 +630,10 @@ class _EngineUnavailableDiagnostics extends StatelessWidget {
               label: 'ProgramData',
               value: state.programDataDirectory ?? 'Unknown',
             ),
+            const _DiagnosticChip(
+              label: 'Installer repair',
+              value: 'Required; in-app service registration is disabled',
+            ),
             if (state.enginePathsChecked.isNotEmpty)
               _DiagnosticChip(
                 label: 'Paths checked',
@@ -672,13 +674,14 @@ class _EngineUnavailableDiagnostics extends StatelessWidget {
                   ? null
                   : () => _confirmOpenInstallReport(context),
             ),
-            ZentorButton(
-              label: 'Repair installation',
-              icon: Icons.build_outlined,
-              secondary: true,
-              onPressed: serviceActionBusy
-                  ? null
-                  : () => _confirmRepairInstallation(context),
+            const Tooltip(
+              message: avoraxInstallerOwnedRepairBlocker,
+              child: ZentorButton(
+                label: 'Repair unavailable',
+                icon: Icons.build_outlined,
+                secondary: true,
+                onPressed: null,
+              ),
             ),
           ],
         ),
@@ -732,30 +735,6 @@ class _EngineUnavailableDiagnostics extends StatelessWidget {
     );
     if (confirmed != true) return;
     await onOpenInstallReport(confirmed: true);
-  }
-
-  Future<void> _confirmRepairInstallation(BuildContext context) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Repair installation?'),
-        content: const Text(
-          'This can register or reconfigure the Avorax Core Service as a Windows service, set it to start automatically, and show a Windows administrator prompt. Continue only if you trust this installed Avorax build.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Repair'),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true) return;
-    await onRepairInstallation(confirmed: true);
   }
 
   String _engineDirectoryLabel(ZentorState state) {

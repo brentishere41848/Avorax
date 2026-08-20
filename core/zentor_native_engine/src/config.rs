@@ -417,13 +417,8 @@ fn native_quarantine_root_is_allowed(path: &Path) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::test_support::{is_isolated_environment_case, run_isolated_environment_case};
     use std::fs;
-    use std::sync::{Mutex, OnceLock};
-
-    fn native_quarantine_env_lock() -> std::sync::MutexGuard<'static, ()> {
-        static LOCK: OnceLock<Mutex<()>> = OnceLock::new();
-        LOCK.get_or_init(|| Mutex::new(())).lock().unwrap()
-    }
 
     #[test]
     fn first_present_path_defaults_to_first_candidate_when_all_missing() {
@@ -512,23 +507,21 @@ mod tests {
 
     #[test]
     fn native_engine_default_root_rejects_relative_override() {
-        let _lock = native_quarantine_env_lock();
-        let previous_engine_dir = std::env::var_os("AVORAX_ENGINE_DIR");
-        let previous_engine_root = std::env::var_os("AVORAX_ENGINE_ROOT");
-
-        std::env::remove_var("AVORAX_ENGINE_DIR");
-        std::env::set_var("AVORAX_ENGINE_ROOT", "relative-native-engine");
+        const CASE: &str = "engine-root-relative";
+        if !is_isolated_environment_case(CASE) {
+            run_isolated_environment_case(
+                "config::tests::native_engine_default_root_rejects_relative_override",
+                CASE,
+                |command| {
+                    command
+                        .env_remove("AVORAX_ENGINE_DIR")
+                        .env("AVORAX_ENGINE_ROOT", "relative-native-engine");
+                },
+            );
+            return;
+        }
 
         let result = native_engine_default_root();
-
-        match previous_engine_dir {
-            Some(value) => std::env::set_var("AVORAX_ENGINE_DIR", value),
-            None => std::env::remove_var("AVORAX_ENGINE_DIR"),
-        }
-        match previous_engine_root {
-            Some(value) => std::env::set_var("AVORAX_ENGINE_ROOT", value),
-            None => std::env::remove_var("AVORAX_ENGINE_ROOT"),
-        }
 
         let error = result.unwrap_err().to_string();
         assert!(error.contains("AVORAX_ENGINE_ROOT"));
@@ -537,24 +530,23 @@ mod tests {
 
     #[test]
     fn native_engine_default_root_rejects_parent_traversal_override() {
-        let _lock = native_quarantine_env_lock();
-        let previous_engine_dir = std::env::var_os("AVORAX_ENGINE_DIR");
-        let previous_engine_root = std::env::var_os("AVORAX_ENGINE_ROOT");
         let dir = tempfile::tempdir().unwrap();
-
-        std::env::remove_var("AVORAX_ENGINE_DIR");
-        std::env::set_var("AVORAX_ENGINE_ROOT", dir.path().join(".."));
+        const CASE: &str = "engine-root-parent-traversal";
+        if !is_isolated_environment_case(CASE) {
+            let override_path = dir.path().join("..");
+            run_isolated_environment_case(
+                "config::tests::native_engine_default_root_rejects_parent_traversal_override",
+                CASE,
+                |command| {
+                    command
+                        .env_remove("AVORAX_ENGINE_DIR")
+                        .env("AVORAX_ENGINE_ROOT", override_path);
+                },
+            );
+            return;
+        }
 
         let result = native_engine_default_root();
-
-        match previous_engine_dir {
-            Some(value) => std::env::set_var("AVORAX_ENGINE_DIR", value),
-            None => std::env::remove_var("AVORAX_ENGINE_DIR"),
-        }
-        match previous_engine_root {
-            Some(value) => std::env::set_var("AVORAX_ENGINE_ROOT", value),
-            None => std::env::remove_var("AVORAX_ENGINE_ROOT"),
-        }
 
         let error = result.unwrap_err().to_string();
         assert!(error.contains("AVORAX_ENGINE_ROOT"));
@@ -650,37 +642,40 @@ mod tests {
 
     #[test]
     fn native_quarantine_root_rejects_relative_override() {
-        let _lock = native_quarantine_env_lock();
-        let previous_avorax = std::env::var_os("AVORAX_QUARANTINE_DIR");
-
-        std::env::set_var("AVORAX_QUARANTINE_DIR", "relative-native-quarantine");
-        let result = avorax_quarantine_dir();
-
-        if let Some(previous_avorax) = previous_avorax {
-            std::env::set_var("AVORAX_QUARANTINE_DIR", previous_avorax);
-        } else {
-            std::env::remove_var("AVORAX_QUARANTINE_DIR");
+        const CASE: &str = "quarantine-root-relative";
+        if !is_isolated_environment_case(CASE) {
+            run_isolated_environment_case(
+                "config::tests::native_quarantine_root_rejects_relative_override",
+                CASE,
+                |command| {
+                    command.env("AVORAX_QUARANTINE_DIR", "relative-native-quarantine");
+                },
+            );
+            return;
         }
 
+        let result = avorax_quarantine_dir();
         let error = result.unwrap_err().to_string();
         assert!(error.contains("AVORAX_QUARANTINE_DIR must be an absolute local path"));
     }
 
     #[test]
     fn native_quarantine_root_rejects_parent_traversal_override() {
-        let _lock = native_quarantine_env_lock();
-        let previous_avorax = std::env::var_os("AVORAX_QUARANTINE_DIR");
         let dir = tempfile::tempdir().unwrap();
-
-        std::env::set_var("AVORAX_QUARANTINE_DIR", dir.path().join(".."));
-        let result = avorax_quarantine_dir();
-
-        if let Some(previous_avorax) = previous_avorax {
-            std::env::set_var("AVORAX_QUARANTINE_DIR", previous_avorax);
-        } else {
-            std::env::remove_var("AVORAX_QUARANTINE_DIR");
+        const CASE: &str = "quarantine-root-parent-traversal";
+        if !is_isolated_environment_case(CASE) {
+            let override_path = dir.path().join("..");
+            run_isolated_environment_case(
+                "config::tests::native_quarantine_root_rejects_parent_traversal_override",
+                CASE,
+                |command| {
+                    command.env("AVORAX_QUARANTINE_DIR", override_path);
+                },
+            );
+            return;
         }
 
+        let result = avorax_quarantine_dir();
         let error = result.unwrap_err().to_string();
         assert!(error.contains("AVORAX_QUARANTINE_DIR"));
         assert!(error.contains("must not contain parent traversal"));
@@ -688,31 +683,27 @@ mod tests {
 
     #[test]
     fn native_quarantine_root_has_no_temp_fallback() {
-        let _lock = native_quarantine_env_lock();
         let keys = [
             "AVORAX_QUARANTINE_DIR",
             "ProgramData",
             "PROGRAMDATA",
             "HOME",
         ];
-        let previous: Vec<_> = keys
-            .iter()
-            .map(|key| (*key, std::env::var_os(key)))
-            .collect();
-
-        for key in keys {
-            std::env::remove_var(key);
+        const CASE: &str = "quarantine-root-unavailable";
+        if !is_isolated_environment_case(CASE) {
+            run_isolated_environment_case(
+                "config::tests::native_quarantine_root_has_no_temp_fallback",
+                CASE,
+                |command| {
+                    for key in keys {
+                        command.env_remove(key);
+                    }
+                },
+            );
+            return;
         }
+
         let result = avorax_quarantine_dir();
-
-        for (key, value) in previous {
-            if let Some(value) = value {
-                std::env::set_var(key, value);
-            } else {
-                std::env::remove_var(key);
-            }
-        }
-
         let source = include_str!("config.rs");
         let production_source = source.split("#[cfg(test)]").next().unwrap();
         let start = production_source.find("fn avorax_quarantine_dir").unwrap();

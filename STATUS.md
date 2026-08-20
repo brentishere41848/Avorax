@@ -16,6 +16,32 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
 
 ## Latest Checkpoint Evidence - 2026-08-20
 
+- Current installer-owned service-repair pass: checkpoint 2188 removes the
+  Flutter client's elevated service registration/reconfiguration path. An
+  untrusted constructor/environment executable override can no longer reach a
+  repair process, `New-Service`, `Set-Service`, or UAC; direct runtime coverage
+  requires the exact installer-owned blocker and zero process launches. The
+  Scan control remains inventory-visible but permanently disabled as
+  `Repair unavailable`, has no callback/dialog, and names official verified
+  MSI/EXE reinstall/repair as the only route. Stale controller calls log
+  `installation_repair_blocked`, never requested/success. Existing-service
+  start remains limited to fixed `avorax_core_service` and no longer uses
+  `-ExecutionPolicy Bypass`. A full Rust run also exposed and repaired a
+  parallel test-environment race by moving eight overrides into exact child
+  test processes. Affected Flutter tests pass `380/380`, complete Flutter
+  `838/838`, Native Engine `435/435`, the locked Rust workspace `1,458/1,458`,
+  source contracts `625/625`, strict Native Engine Clippy, analyzer, formatting,
+  and UI inventory (11 routes, 61 controls) all pass.
+  The definitive central verifier and independent full-report validator pass
+  `219/219` with no failures or skips in `535.4s`; all recorded step durations
+  are non-negative after monotonic timing replaced wall-clock subtraction.
+  The ProgramData vault remains read-only verified and unchanged at `16,072`
+  files and `4,522,733` bytes. Installed service repair E2E remains blocked on
+  a disposable elevated Windows host with a verified official installer; no
+  release, installation, service/driver action, detection-rate, pre-execution,
+  or Defender-replacement claim is made. Evidence is recorded in
+  `docs/reports/checkpoint-2188-installer-owned-service-repair.md`.
+
 - Current quarantine finalization-recovery pass: checkpoint 2187 writes a
   strict domain-separated HMAC journal before Local Core or Guard moves a
   source. The auth sidecar is staged first, `.pending` is the commit marker, and

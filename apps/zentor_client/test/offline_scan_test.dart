@@ -2126,62 +2126,58 @@ void main() {
     expect(stopFlow, contains('protection_stop_confirmation_required'));
   });
 
-  test(
-    'source marker: service and install-report actions require confirmation',
-    () {
-      final appState = File('lib/app/app_state.dart').readAsStringSync();
-      final startCoreService = appState.substring(
-        appState.indexOf('Future<void> startCoreService'),
-        appState.indexOf('Future<void> openInstallReport'),
-      );
-      final repairInstallation = appState.substring(
-        appState.indexOf('Future<void> repairInstallation'),
-        appState.indexOf('Future<bool> addManualProtectedAppFile'),
-      );
-      final openInstallReport = appState.substring(
-        appState.indexOf('Future<void> openInstallReport'),
-        appState.indexOf('Future<void> repairInstallation'),
-      );
+  test('source marker: service actions confirm and repair stays blocked', () {
+    final appState = File('lib/app/app_state.dart').readAsStringSync();
+    final startCoreService = appState.substring(
+      appState.indexOf('Future<void> startCoreService'),
+      appState.indexOf('Future<void> openInstallReport'),
+    );
+    final repairInstallation = appState.substring(
+      appState.indexOf('Future<void> repairInstallation'),
+      appState.indexOf('Future<bool> addManualProtectedAppFile'),
+    );
+    final openInstallReport = appState.substring(
+      appState.indexOf('Future<void> openInstallReport'),
+      appState.indexOf('Future<void> repairInstallation'),
+    );
 
-      expect(startCoreService, contains('bool confirmed = false'));
-      expect(startCoreService, contains('if (!confirmed)'));
-      expect(
-        startCoreService,
-        contains('core_service_start_confirmation_required'),
-      );
-      expect(
-        startCoreService.indexOf('if (!confirmed)'),
-        lessThan(startCoreService.indexOf('_localCoreClient.startCoreService')),
-      );
-      expect(repairInstallation, contains('bool confirmed = false'));
-      expect(repairInstallation, contains('if (!confirmed)'));
-      expect(
-        repairInstallation,
-        contains('installation_repair_confirmation_required'),
-      );
-      expect(
-        repairInstallation.indexOf('if (!confirmed)'),
-        lessThan(
-          repairInstallation.indexOf('_localCoreClient.repairInstallation'),
-        ),
-      );
-      expect(openInstallReport, contains('bool confirmed = false'));
-      expect(openInstallReport, contains('if (!confirmed)'));
-      expect(
-        openInstallReport,
-        contains('install_report_open_confirmation_required'),
-      );
-      expect(
-        openInstallReport.indexOf('if (!confirmed)'),
-        lessThan(
-          openInstallReport.indexOf('_localCoreClient.openInstallReport'),
-        ),
-      );
-      expect(startCoreService, contains('core_service_start_failed'));
-      expect(openInstallReport, contains('install_report_open_failed'));
-      expect(repairInstallation, contains('installation_repair_failed'));
-    },
-  );
+    expect(startCoreService, contains('bool confirmed = false'));
+    expect(startCoreService, contains('if (!confirmed)'));
+    expect(
+      startCoreService,
+      contains('core_service_start_confirmation_required'),
+    );
+    expect(
+      startCoreService.indexOf('if (!confirmed)'),
+      lessThan(startCoreService.indexOf('_localCoreClient.startCoreService')),
+    );
+    expect(repairInstallation, contains('bool confirmed = false'));
+    expect(repairInstallation, contains('if (!confirmed)'));
+    expect(repairInstallation, contains('installation_repair_blocked'));
+    expect(
+      repairInstallation,
+      isNot(contains('installation_repair_requested')),
+    );
+    expect(
+      repairInstallation.indexOf('if (!confirmed)'),
+      lessThan(
+        repairInstallation.indexOf('_localCoreClient.repairInstallation'),
+      ),
+    );
+    expect(openInstallReport, contains('bool confirmed = false'));
+    expect(openInstallReport, contains('if (!confirmed)'));
+    expect(
+      openInstallReport,
+      contains('install_report_open_confirmation_required'),
+    );
+    expect(
+      openInstallReport.indexOf('if (!confirmed)'),
+      lessThan(openInstallReport.indexOf('_localCoreClient.openInstallReport')),
+    );
+    expect(startCoreService, contains('core_service_start_failed'));
+    expect(openInstallReport, contains('install_report_open_failed'));
+    expect(repairInstallation, contains('installation_repair_failed'));
+  });
 
   test('source marker: protection privilege diagnostics are bounded', () {
     final appState = File('lib/app/app_state.dart').readAsStringSync();
@@ -2326,7 +2322,7 @@ void main() {
       expect(localCore.startCoreServiceCalls, 0);
       expect(localCore.openInstallReportCalls, 0);
       expect(localCore.repairInstallationCalls, 0);
-      expect(state.errorMessage, contains('explicit confirmation'));
+      expect(state.errorMessage, avoraxInstallerOwnedRepairBlocker);
       expect(
         state.events.map((event) => event.type),
         contains('core_service_start_confirmation_required'),
@@ -2337,7 +2333,7 @@ void main() {
       );
       expect(
         state.events.map((event) => event.type),
-        contains('installation_repair_confirmation_required'),
+        contains('installation_repair_blocked'),
       );
     },
   );
@@ -2503,6 +2499,42 @@ void main() {
       contains('installation_repair_failed'),
     );
   });
+
+  test(
+    'installer-owned repair blocker is logged without fake success',
+    () async {
+      SharedPreferences.setMockInitialValues({});
+      final preferences = await SharedPreferences.getInstance();
+      final localCore = _FakeLocalCoreClient(
+        repairInstallationResult: avoraxInstallerOwnedRepairBlocker,
+      );
+
+      final container = ProviderContainer(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(preferences),
+          localCoreClientProvider.overrideWithValue(localCore),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final controller = container.read(zentorControllerProvider.notifier);
+      await _waitForControllerStartup(container);
+      await controller.repairInstallation(confirmed: true);
+
+      final state = container.read(zentorControllerProvider);
+      expect(localCore.repairInstallationCalls, 1);
+      expect(state.serviceActionInFlight, isFalse);
+      expect(state.errorMessage, avoraxInstallerOwnedRepairBlocker);
+      expect(
+        state.events.map((event) => event.type),
+        contains('installation_repair_blocked'),
+      );
+      expect(
+        state.events.map((event) => event.type),
+        isNot(contains('installation_repair_requested')),
+      );
+    },
+  );
 
   test(
     'unconfirmed protection mode change preserves current profile',
@@ -9694,6 +9726,7 @@ class _FakeLocalCoreClient extends LocalCoreClient {
     this.pendingProtectionSelfTest,
     this.protectionSelfTestResult,
     this.pendingStartCoreService,
+    this.repairInstallationResult = 'Installation repair requested.',
     this.listQuarantineFailure,
     this.listAllowlistFailure,
     this.healthSummaryResult = const LocalCoreHealth(
@@ -9764,6 +9797,7 @@ class _FakeLocalCoreClient extends LocalCoreClient {
   final Completer<ProtectionSelfTestResult>? pendingProtectionSelfTest;
   final ProtectionSelfTestResult? protectionSelfTestResult;
   final Completer<String>? pendingStartCoreService;
+  final String repairInstallationResult;
   final String? cancelFailure;
   final String? cancelWarning;
   final String? listQuarantineFailure;
@@ -9852,7 +9886,7 @@ class _FakeLocalCoreClient extends LocalCoreClient {
     repairInstallationCalls += 1;
     final exception = actionException;
     if (exception != null) throw StateError(exception);
-    return 'Installation repair requested.';
+    return repairInstallationResult;
   }
 
   @override

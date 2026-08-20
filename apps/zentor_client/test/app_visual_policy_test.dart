@@ -263,33 +263,29 @@ void main() {
     expect(appState, isNot(contains('deleteThreatPermanently')));
   });
 
-  test('repair installation action requires explicit confirmation', () {
-    final scanScreen = File(
-      'lib/features/scan/scan_screen.dart',
-    ).readAsStringSync();
-    final diagnostics = scanScreen.substring(
-      scanScreen.indexOf('class _EngineUnavailableDiagnostics'),
-      scanScreen.indexOf('class _DiagnosticChip'),
-    );
+  test(
+    'repair installation action is visibly disabled and installer-owned',
+    () {
+      final scanScreen = File(
+        'lib/features/scan/scan_screen.dart',
+      ).readAsStringSync();
+      final diagnostics = scanScreen.substring(
+        scanScreen.indexOf('class _EngineUnavailableDiagnostics'),
+        scanScreen.indexOf('class _DiagnosticChip'),
+      );
 
-    expect(diagnostics, contains('Future<void> _confirmRepairInstallation'));
-    expect(diagnostics, contains('showDialog<bool>'));
-    expect(diagnostics, contains('Avorax Core Service'));
-    expect(diagnostics, contains('Windows administrator prompt'));
-    expect(diagnostics, contains('trust this installed Avorax build'));
-    expect(
-      diagnostics,
-      contains('Future<void> Function({bool confirmed}) onRepairInstallation'),
-    );
-    expect(
-      diagnostics,
-      contains('await onRepairInstallation(confirmed: true);'),
-    );
-    expect(
-      diagnostics,
-      isNot(contains('onPressed: () => onRepairInstallation()')),
-    );
-  });
+      expect(diagnostics, contains("label: 'Installer repair'"));
+      expect(
+        diagnostics,
+        contains("value: 'Required; in-app service registration is disabled'"),
+      );
+      expect(diagnostics, contains('avoraxInstallerOwnedRepairBlocker'));
+      expect(diagnostics, contains("label: 'Repair unavailable'"));
+      expect(diagnostics, contains('onPressed: null'));
+      expect(diagnostics, isNot(contains('_confirmRepairInstallation')));
+      expect(diagnostics, isNot(contains('onRepairInstallation')));
+    },
+  );
 
   test('start core service action requires explicit confirmation', () {
     final scanScreen = File(
@@ -1663,13 +1659,9 @@ void main() {
       'warning',
     );
     expectEventMetadata(installReport, 'install_report_open_failed', 'error');
-    expectEventMetadata(
-      repair,
-      'installation_repair_confirmation_required',
-      'warning',
-    );
-    expectEventMetadata(repair, 'installation_repair_requested', 'warning');
+    expectEventMetadata(repair, 'installation_repair_blocked', 'warning');
     expectEventMetadata(repair, 'installation_repair_failed', 'error');
+    expect(repair, isNot(contains('installation_repair_requested')));
   });
 
   test('controller protected app mutation events are categorized', () {

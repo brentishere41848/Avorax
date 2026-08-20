@@ -1300,3 +1300,27 @@ enforcement, or pre-execution blocking is claimed.
   recovery only; same-principal processes that ignore it and administrator/root
   races remain in the trusted computing base. Historical unsigned payloads are
   not promoted.
+
+## Checkpoint 2188 Installer-Owned Service Repair
+
+- **Historical repair claims superseded:** Checkpoints 1936-1937 documented an
+  in-app elevated service-registration path with development-checkout guards.
+  That path is no longer active. Flutter contains no `New-Service`,
+  `Set-Service`, repair executable resolver, or elevated repair launch.
+- **Explicitly disabled and verified:** Scan shows `Repair unavailable`, a
+  visible installer-required diagnostic, and a bounded tooltip. It provides no
+  repair callback. Direct client calls return the installer-owned blocker, and
+  controller evidence records `installation_repair_blocked` without a repair-
+  requested success event.
+- **Existing-service start remains partial:** The confirmed Start Core Service
+  flow can only query/start the fixed `avorax_core_service` registration. It
+  cannot install or reconfigure it, but its elevated installed-host behavior is
+  not yet proven end to end.
+- **Blocked prerequisite:** Real service repair/install validation requires a
+  disposable elevated Windows host plus an official production-signed MSI/EXE.
+  Evidence must cover package provenance, installed paths, service identity,
+  ACLs, start/stop, repair, rollback, and uninstall without weakening Defender
+  or Windows security.
+- **No expanded claim:** This checkpoint changes a privilege boundary, not
+  detection coverage. No service, driver, package, Defender exclusion, live
+  malware, or pre-execution blocking was used.

@@ -417,7 +417,7 @@ void main() {
     );
     final repairButton = find.widgetWithText(
       OutlinedButton,
-      'Repair installation',
+      'Repair unavailable',
     );
 
     expect(startButton, findsOneWidget);
@@ -461,7 +461,7 @@ void main() {
       );
       final repairButton = find.widgetWithText(
         OutlinedButton,
-        'Repair installation',
+        'Repair unavailable',
       );
 
       expect(startButton, findsOneWidget);
@@ -614,7 +614,7 @@ void main() {
     },
   );
 
-  testWidgets('scan repair installation dialog confirm calls local core', (
+  testWidgets('scan repair installation stays disabled with visible blocker', (
     tester,
   ) async {
     final localCore = _RecordingLocalCoreClient();
@@ -629,46 +629,19 @@ void main() {
 
     final repairButton = find.widgetWithText(
       OutlinedButton,
-      'Repair installation',
+      'Repair unavailable',
     );
+    final repairStatus = find.text(
+      'Installer repair: Required; in-app service registration is disabled',
+      skipOffstage: false,
+    );
+    expect(repairStatus, findsOneWidget);
     await tester.ensureVisible(repairButton);
-    await tester.tap(repairButton);
-    await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(FilledButton, 'Repair'));
-    await tester.pumpAndSettle();
 
-    expect(localCore.repairInstallationCalls, 1);
+    expect(tester.widget<OutlinedButton>(repairButton).onPressed, isNull);
+    expect(localCore.repairInstallationCalls, 0);
+    expect(find.text('Repair installation?'), findsNothing);
   });
-
-  testWidgets(
-    'scan repair installation dialog cancel does not call local core',
-    (tester) async {
-      final localCore = _RecordingLocalCoreClient();
-      await _pumpScanScreen(
-        tester,
-        const ZentorState(
-          coreServiceStatus: 'stopped',
-          lastScanReport: _engineUnavailableReport,
-        ),
-        localCoreClient: localCore,
-      );
-
-      final repairButton = find.widgetWithText(
-        OutlinedButton,
-        'Repair installation',
-      );
-      await tester.ensureVisible(repairButton);
-      await tester.tap(repairButton);
-      await tester.pumpAndSettle();
-
-      expect(find.text('Repair installation?'), findsOneWidget);
-      await tester.tap(find.widgetWithText(TextButton, 'Cancel'));
-      await tester.pumpAndSettle();
-
-      expect(localCore.repairInstallationCalls, 0);
-      expect(find.text('Repair installation?'), findsNothing);
-    },
-  );
 
   testWidgets('quick scan auto-quarantine dialog cancel does not scan', (
     tester,
