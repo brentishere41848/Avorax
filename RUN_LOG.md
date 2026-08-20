@@ -13,6 +13,49 @@ Lead-engineer product-hardening pass across the Avorax repository. Goal is to mo
 - The bundled native ML model is treated as development-only unless release metadata and gates prove production readiness.
 - MSI/EXE installers are first-install/repair/recovery/offline paths. Normal in-app updates should use verified `.aup` packages.
 
+## 2026-08-20 continuation checkpoint 2186
+
+- Added `avorax_platform_security::ensure_open_file_has_single_link`, which
+  reads a file's link count from an opened handle (`nlink` on Unix and
+  `GetFileInformationByHandle.nNumberOfLinks` on Windows) and visibly rejects
+  every count other than one.
+- Local Core and Guard now preflight the detected source, hold and recheck the
+  copy source before deletion, and postflight moved/copied payloads through the
+  permission-hardening route before authenticated metadata is finalized.
+  Existing vault entries are checked before permission repair. A known
+  multi-linked source remains untouched and no payload or record is created.
+- Added benign Windows/Unix hardlink fixtures for the shared helper, vault
+  preflight, postflight hardening, Local Core direct/copy paths, and Guard
+  direct/copy paths. The Ubuntu quarantine job now has seven locked Cargo
+  invocations and includes the Local/Guard `hard_link` filters.
+- Local verification passes platform `9/9`, Local Core `519/519`, Guard
+  `225/225`, the Rust workspace `1,442/1,442`, source contracts `622/622`,
+  strict affected-crate Clippy, strict Linux platform Clippy, Guard Linux
+  all-target compilation, rustfmt, `git diff --check`, branding, product-copy,
+  no-malware-binary, false-positive, performance, and protection gates. The
+  central verifier and independent full-report validator pass `219/219` with no
+  failures or skips in `605.1s`.
+- Failed attempts remain explicit: the concrete Python installation has no
+  `pytest` module, so no package was installed and the repository's
+  dependency-free source-contract runner was used. The new contract initially
+  failed on an over-broad Windows function slice and then on a Guard-specific
+  cleanup label; both test defects were repaired before `622/622` passed. A
+  combined strict Linux Guard Clippy attempt failed on 24 existing
+  platform-gating/manual-`ok` warnings; plain Linux all-target compilation
+  passes with the existing warnings, while the changed shared platform crate is
+  strict-Clippy clean. A standalone protection-gate invocation also failed
+  before its required synthetic self-test report existed; the central verifier
+  created the bounded fixture and the same gate then passed. Neither failed
+  command is counted as success.
+- Read-only post-verification inventory confirms the real ProgramData vault is
+  unchanged at `16,072` files and `4,522,733` bytes: `5,357` payloads, `5,357`
+  JSON records, `5,357` auth sidecars, and one metadata key. No existing
+  quarantine file was changed or deleted.
+- Native Unix hardlink runtime and hosted CI/package evidence remain pending.
+  The policy does not enumerate all names on a volume or make link creation and
+  rename/removal atomic; that residual race is documented and volume-wide
+  neutralization is not claimed.
+
 ## 2026-08-20 continuation checkpoint 2185
 
 - Added a dedicated `Unix quarantine permission runtime` job to Avorax CI on

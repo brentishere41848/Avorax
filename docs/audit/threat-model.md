@@ -846,8 +846,18 @@ Vault-ancestor validation is a pre/post path check, not a fully handle-relative
 ancestors concurrently remains in the trusted computing base; this checkpoint
 does not claim protection from such an administrator/root race.
 
-Hard links remain a separate boundary. Moving or deleting one detected path
-does not enumerate every other directory entry that may refer to the same file
-on the volume. Until bounded link-count detection and an explicit response
-policy are implemented and tested, Avorax must not describe per-path quarantine
-as volume-wide neutralization.
+Hard links have a bounded fail-visible policy. Local Core and Guard require an
+opened source handle to report exactly one filesystem link before quarantine,
+recheck the opened source before copy-fallback removal, and require the vault
+payload to remain single-linked before permission mutation and authenticated
+record finalization. Vault-shape preflight also rejects hard-linked entries.
+Windows reads `nNumberOfLinks` with `GetFileInformationByHandle`; Unix reads
+`nlink` from descriptor metadata. A pre-existing alternate hard link therefore
+causes the action to fail without moving the source or creating a record.
+
+This is not volume-wide enumeration or an atomic hard-link transaction. A
+same-SID/UID or administrator/root-capable process can still race a new link
+between the final handle check and rename/removal, and moving or deleting one
+path cannot identify arbitrary aliases elsewhere on the volume. Destination
+postflight catches aliases visible before finalization, but Avorax must still
+describe quarantine as path-specific rather than volume-wide neutralization.

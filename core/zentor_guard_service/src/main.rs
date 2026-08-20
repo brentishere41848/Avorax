@@ -2039,6 +2039,7 @@ fn quarantine_file(
     validate_guard_quarantine_record_path_text("payload path", &quarantine_path, true)?;
     ensure_quarantine_base_directory_path(&base)?;
     let metadata = regular_guard_file_metadata(path, "quarantine source")?;
+    let source_link_guard = open_single_link_guard_file(path, "quarantine source")?;
     let source_sha256 = sha256_file(path)?;
     let source_sha256_body = normalize_sha256(&source_sha256).ok_or_else(|| {
         anyhow::anyhow!("guard quarantine source hash helper returned invalid SHA-256")
@@ -2055,6 +2056,11 @@ fn quarantine_file(
             thread::sleep(Duration::from_millis(150));
             continue;
         }
+        avorax_platform_security::ensure_open_file_has_single_link(
+            &source_link_guard,
+            path,
+            "guard quarantine source immediately before move",
+        )?;
         ensure_quarantine_payload_destination_absent(&destination)?;
         match fs::rename(path, &destination)
             .or_else(|_| copy_then_remove_verified(path, &destination, &source_sha256))
@@ -2157,6 +2163,14 @@ fn regular_guard_file_metadata(path: &Path, label: &str) -> anyhow::Result<fs::M
     Ok(metadata)
 }
 
+fn open_single_link_guard_file(path: &Path, label: &str) -> anyhow::Result<fs::File> {
+    regular_guard_file_metadata(path, label)?;
+    let file = fs::File::open(path)
+        .with_context(|| format!("failed to open {label} {}", path.display()))?;
+    avorax_platform_security::ensure_open_file_has_single_link(&file, path, label)?;
+    Ok(file)
+}
+
 fn reject_link_path(path: &Path, label: &str) -> anyhow::Result<()> {
     let metadata = fs::symlink_metadata(path)?;
     if metadata.file_type().is_symlink() {
@@ -2199,7 +2213,7 @@ fn copy_then_remove_verified(
         .ok_or_else(|| anyhow::anyhow!("invalid guard quarantine copy expected sha256"))?;
     regular_guard_file_metadata(source, "quarantine source")?;
     ensure_quarantine_payload_destination_absent(destination)?;
-    copy_file_exclusive(source, destination)?;
+    let source_file = copy_file_exclusive(source, destination)?;
     let destination_hash = match (|| -> anyhow::Result<String> {
         regular_guard_file_metadata(destination, "guard quarantine destination")?;
         let destination_hash = sha256_file(destination)?;
@@ -2235,6 +2249,22 @@ fn copy_then_remove_verified(
             );
         }
         anyhow::bail!("hash verification failed before deleting original quarantine source");
+    }
+    if let Err(error) = avorax_platform_security::ensure_open_file_has_single_link(
+        &source_file,
+        source,
+        "guard quarantine copy source before removal",
+    ) {
+        cleanup_guard_quarantine_partial_file(destination, "copied guard quarantine destination")
+            .with_context(|| {
+                format!(
+                    "failed to clean up copied guard quarantine destination {} after hard-link pre-removal failure: {error:#}",
+                    destination.display()
+                )
+            })?;
+        return Err(error).context(
+            "guard quarantine copy source link count changed before removal; original was preserved",
+        );
     }
     if let Err(error) = fs::remove_file(source) {
         cleanup_guard_quarantine_partial_file(destination, "copied guard quarantine destination")
@@ -2338,9 +2368,14 @@ fn cleanup_untracked_guard_quarantine_metadata_artifacts(id: &str) -> anyhow::Re
     }
 }
 
-fn copy_file_exclusive(source: &Path, destination: &Path) -> anyhow::Result<()> {
+fn copy_file_exclusive(source: &Path, destination: &Path) -> anyhow::Result<fs::File> {
     let mut input = fs::File::open(source)
         .with_context(|| format!("failed to open quarantine source {}", source.display()))?;
+    avorax_platform_security::ensure_open_file_has_single_link(
+        &input,
+        source,
+        "guard quarantine copy source",
+    )?;
     let mut output = fs::OpenOptions::new()
         .write(true)
         .create_new(true)
@@ -2412,7 +2447,7 @@ fn copy_file_exclusive(source: &Path, destination: &Path) -> anyhow::Result<()> 
             )
         });
     }
-    Ok(())
+    Ok(input)
 }
 
 fn copy_guard_quarantine_payload_limited<R: Read, W: Write>(
@@ -3334,6 +3369,8 @@ fn harden_open_guard_quarantine_file_permissions(
     path: &Path,
     label: &str,
 ) -> anyhow::Result<()> {
+    avorax_platform_security::ensure_open_file_has_single_link(file, path, label)
+        .with_context(|| format!("failed to enforce single-link policy for {label}"))?;
     #[cfg(unix)]
     avorax_platform_security::harden_unix_private_file(file, path)
         .with_context(|| format!("failed to enforce owner-only permissions for {label}"))?;
@@ -4822,6 +4859,35 @@ mod tests {
         std::env::remove_var("AVORAX_GUARD_QUARANTINE_DIR");
     }
 
+    #[cfg(any(unix, windows))]
+    #[test]
+    fn guard_quarantine_rejects_hard_linked_source_before_move() {
+        let _lock = env_lock();
+        let dir = tempdir().unwrap();
+        let base = dir.path().join("quarantine");
+        std::env::set_var("AVORAX_GUARD_QUARANTINE_DIR", &base);
+        let file = dir.path().join("bad.exe");
+        let alternate = dir.path().join("alternate.exe");
+        fs::write(&file, b"benign known-bad fixture").unwrap();
+        fs::hard_link(&file, &alternate).unwrap();
+        let hash = sha256_file(&file).unwrap();
+        let threat_match = LocalThreatMatch {
+            reason: "known malicious hash".to_string(),
+            engine: "fixture".to_string(),
+            confidence: LocalThreatConfidence::Confirmed,
+        };
+
+        let error = quarantine_file(&file, &hash, None, &threat_match).unwrap_err();
+        let detail = format!("{error:#}");
+
+        assert!(detail.contains("hard-link count is 2"), "{detail}");
+        assert!(file.exists());
+        assert!(alternate.exists());
+        assert!(base.exists());
+        assert!(fs::read_dir(&base).unwrap().next().is_none());
+        std::env::remove_var("AVORAX_GUARD_QUARANTINE_DIR");
+    }
+
     #[test]
     fn guard_quarantine_uses_regular_file_guards_around_move() {
         let source = include_str!("main.rs");
@@ -5064,6 +5130,26 @@ mod tests {
 
         assert!(!source.exists());
         assert!(destination.exists());
+    }
+
+    #[cfg(any(unix, windows))]
+    #[test]
+    fn guard_quarantine_copy_fallback_rejects_hard_linked_source() {
+        let dir = tempdir().unwrap();
+        let source = dir.path().join("source.exe");
+        let alternate = dir.path().join("alternate.exe");
+        let destination = dir.path().join("destination.avoraxq");
+        fs::write(&source, b"benign fixture").unwrap();
+        fs::hard_link(&source, &alternate).unwrap();
+        let hash = sha256_file(&source).unwrap();
+
+        let error = copy_then_remove_verified(&source, &destination, &hash).unwrap_err();
+        let detail = format!("{error:#}");
+
+        assert!(detail.contains("hard-link count is 2"), "{detail}");
+        assert!(source.exists());
+        assert!(alternate.exists());
+        assert!(!destination.exists());
     }
 
     #[test]

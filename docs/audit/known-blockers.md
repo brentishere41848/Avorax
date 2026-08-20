@@ -1191,11 +1191,16 @@ enforcement, or pre-execution blocking is claimed.
   transaction. Concurrent mutation by an administrator/root-capable principal
   remains inside the trusted computing base. Retained untracked-payload recovery
   tooling also remains follow-up work.
-- **Open hard-link boundary:** Per-path quarantine does not enumerate every hard
-  link to the same file across a volume. A pre-existing alternate link can
-  remain accessible and must be scanned as a separate path. Volume-wide
-  neutralization is not claimed; bounded link-count handling remains follow-up
-  hardening work.
+- **Technically limited hard-link boundary:** Checkpoint 2186 implements
+  handle-based single-link preflight in Local Core and Guard, copy-source
+  revalidation before removal, payload/vault-entry postflight before permission
+  mutation or record finalization, and visible rejection that preserves an
+  already multi-linked source. Windows runtime regressions pass locally; native
+  Unix runtime remains pending in the expanded Ubuntu CI job until a hosted run
+  succeeds. The control does not enumerate a volume or make rename/removal and
+  link creation atomic. Same-SID/UID and administrator/root races remain in the
+  trusted computing boundary, alternate paths remain separate scan targets, and
+  volume-wide neutralization is not claimed.
 
 ## Checkpoint 2185 Native Unix Quarantine Runtime CI
 
@@ -1220,4 +1225,27 @@ enforcement, or pre-execution blocking is claimed.
   The earlier failure remains recorded and is not counted as success.
 - **Unchanged blockers:** Installed LocalSystem/DPAPI/ACL/service/UI E2E,
   production signing, driver/pre-execution proof, production detection rates,
-  and the hard-link/ancestor-race boundaries remain open or technically limited.
+  and the remaining hard-link race/ancestor-race boundaries remain technically
+  limited.
+
+## Checkpoint 2186 Quarantine Hard-Link Policy
+
+- **Verified locally on Windows:** The shared inspector, vault preflight, and
+  permission-hardening postflight pass `9/9`. Local Core direct and copy
+  hardlink fixtures pass and its complete suite is `519/519`; Guard equivalents
+  pass and its complete suite is `225/225`. The Rust workspace passes
+  `1,442/1,442`, source contracts pass `622/622`, and the central verifier/report
+  validator passes `219/219` with no failures or skips in `605.1s`.
+- **Pending hosted Unix evidence:** The pinned Ubuntu 24.04 job now adds exact
+  Local Core and Guard `hard_link` filters to its full shared-platform run. No
+  native Unix runtime claim is made until a hosted branch-head run succeeds.
+- **Existing local cross-target lint debt:** Strict Linux Clippy for the changed
+  shared platform crate passes. Guard Linux all-target compilation passes, but
+  combined strict Guard Clippy fails on 24 existing Windows-only dead-code and
+  manual-`ok` diagnostics. This failed command is retained and is not counted as
+  success; resolving unrelated platform-gating debt is outside this checkpoint.
+- **Technically limited:** The implemented policy rejects a known non-single
+  link count and postflights before record finalization. It does not enumerate a
+  volume or atomically exclude same-principal/administrator link creation
+  between the final check and rename/removal. Alternate names remain separate
+  scan targets, and Avorax does not claim volume-wide neutralization.

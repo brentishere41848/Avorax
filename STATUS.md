@@ -6,12 +6,35 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
 
 ## Current Commit
 
-- Checkpoint 2184 merged as `a254689666f01159d8d0a67001c1774fcc38628f`
-  through PR `#36`. Checkpoint 2185 native Unix runtime CI is in progress on a
-  branch based on that merge.
+- Checkpoint 2185 merged as `7236d6a80fef6adbcdf72f544c279686984acea3`
+  through PR `#37`. Checkpoint 2186 hard-link quarantine policy is in progress
+  on a branch based on that merge.
 - Current public release tag: `v0.1.15-beta.3`, published as a prerelease on 2026-07-20 with independently verified checksums. Checkpoints 2178-2185 are source hardening and do not create a new release tag.
 
 ## Latest Checkpoint Evidence - 2026-08-20
+
+- Current quarantine hard-link policy pass: checkpoint 2186 adds one shared,
+  fail-closed link-count control using an already-opened file handle. Windows
+  reads `nNumberOfLinks` through `GetFileInformationByHandle`; Unix reads
+  descriptor `nlink`. Local Core and Guard reject a source unless its count is
+  exactly one, keep the copy source open and recheck it before removal, and
+  reject a linked vault payload before permission changes or authenticated
+  record finalization. Vault-shape preflight also rejects hard-linked entries.
+  Windows adversarial tests prove both source names remain and no payload/record
+  is created. Local evidence passes platform `9/9`, Local Core `519/519`, Guard
+  `225/225`, the Rust workspace `1,442/1,442`, source contracts `622/622`,
+  strict affected-crate Clippy, strict Linux platform Clippy, Guard Linux
+  all-target compilation, formatting, diff/branding/product-copy/no-malware
+  gates, and the central verifier/report validator (`219/219`, no failures or
+  skips, `605.1s`). The real ProgramData vault remains exactly `16,072` files
+  and `4,522,733` bytes; nothing was deleted. An attempted combined strict Linux
+  Guard Clippy remains failed on existing Windows-only dead-code/manual-`ok`
+  warnings and is not counted as success. The Ubuntu job now adds two Local and
+  two Guard hardlink tests; native Unix runtime is pending a hosted run. The
+  policy does not enumerate a volume or make link creation and path mutation
+  atomic, so same-principal/administrator races and volume-wide neutralization
+  remain technically limited. Evidence is recorded in
+  `docs/reports/checkpoint-2186-quarantine-hardlink-policy.md`.
 
 - Current native Unix quarantine permission CI pass: checkpoint 2185 adds a
   bounded Ubuntu 24.04 job to the normal Avorax CI workflow. It pins Rust

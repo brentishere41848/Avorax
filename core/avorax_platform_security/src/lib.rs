@@ -7,6 +7,57 @@ const MAX_QUARANTINE_DIRECTORY_ENTRIES: usize = 65_536;
 const MAX_QUARANTINE_ENTRY_NAME_CHARS: usize = 512;
 const MAX_QUARANTINE_ID_CHARS: usize = 128;
 
+pub fn ensure_open_file_has_single_link(file: &fs::File, path: &Path, label: &str) -> Result<()> {
+    let link_count = open_file_link_count(file, path, label)?;
+    if link_count != 1 {
+        return Err(anyhow!(
+            "refusing to use {label} {} because its hard-link count is {link_count}; quarantine requires exactly one filesystem link",
+            path.display()
+        ));
+    }
+    Ok(())
+}
+
+#[cfg(unix)]
+fn open_file_link_count(file: &fs::File, path: &Path, label: &str) -> Result<u64> {
+    use std::os::unix::fs::MetadataExt;
+
+    let metadata = file
+        .metadata()
+        .with_context(|| format!("failed to inspect opened {label} {}", path.display()))?;
+    if !metadata.is_file() {
+        return Err(anyhow!("opened {label} {} is not a file", path.display()));
+    }
+    Ok(metadata.nlink())
+}
+
+#[cfg(windows)]
+fn open_file_link_count(file: &fs::File, path: &Path, label: &str) -> Result<u64> {
+    use std::os::windows::io::AsRawHandle;
+    use windows_sys::Win32::Storage::FileSystem::{
+        GetFileInformationByHandle, BY_HANDLE_FILE_INFORMATION,
+    };
+
+    let handle = file.as_raw_handle() as windows_sys::Win32::Foundation::HANDLE;
+    let mut info = BY_HANDLE_FILE_INFORMATION::default();
+    if unsafe { GetFileInformationByHandle(handle, &mut info) } == 0 {
+        return Err(std::io::Error::last_os_error())
+            .with_context(|| format!("failed to inspect opened {label} {}", path.display()));
+    }
+    if info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY != 0 {
+        return Err(anyhow!("opened {label} {} is not a file", path.display()));
+    }
+    Ok(u64::from(info.nNumberOfLinks))
+}
+
+#[cfg(not(any(unix, windows)))]
+fn open_file_link_count(_file: &fs::File, path: &Path, label: &str) -> Result<u64> {
+    Err(anyhow!(
+        "hard-link count inspection is unsupported for {label} {} on this platform",
+        path.display()
+    ))
+}
+
 pub fn validate_quarantine_directory_contents(path: &Path) -> Result<()> {
     let directory = fs::symlink_metadata(path).with_context(|| {
         format!(
@@ -78,6 +129,13 @@ pub fn validate_quarantine_directory_contents(path: &Path) -> Result<()> {
                 entry_path.display()
             ));
         }
+        let opened = fs::File::open(&entry_path).with_context(|| {
+            format!(
+                "failed to open quarantine entry before permission changes {}",
+                entry_path.display()
+            )
+        })?;
+        ensure_open_file_has_single_link(&opened, &entry_path, "quarantine directory entry")?;
     }
     Ok(())
 }
@@ -195,6 +253,7 @@ pub fn harden_unix_private_directory(path: &Path) -> Result<()> {
 pub fn harden_unix_private_file(file: &fs::File, path: &Path) -> Result<()> {
     use std::os::unix::fs::{MetadataExt, PermissionsExt};
 
+    ensure_open_file_has_single_link(file, path, "private file")?;
     let expected = fs::symlink_metadata(path)
         .with_context(|| format!("failed to inspect private file {}", path.display()))?;
     let opened = file
@@ -329,6 +388,7 @@ pub fn harden_windows_private_directory(path: &Path) -> Result<()> {
 
 #[cfg(windows)]
 pub fn harden_windows_quarantine_file(file: &fs::File, path: &Path) -> Result<()> {
+    ensure_open_file_has_single_link(file, path, "quarantine file")?;
     let sid = current_windows_process_sid()?;
     let mut aces = vec![
         "(D;;0x20;;;WD)".to_string(),
@@ -827,6 +887,63 @@ mod tests {
         fs::create_dir(directory.join("record.json")).unwrap();
         let wrong_kind = validate_quarantine_directory_contents(&directory).unwrap_err();
         assert!(format!("{wrong_kind:#}").contains("not a non-link regular file"));
+    }
+
+    #[cfg(any(unix, windows))]
+    #[test]
+    fn opened_file_hard_link_count_must_be_exactly_one() {
+        let root = tempfile::tempdir().unwrap();
+        let path = root.path().join("fixture.avoraxq");
+        let alternate = root.path().join("alternate.avoraxq");
+        fs::write(&path, b"benign fixture").unwrap();
+        fs::hard_link(&path, &alternate).unwrap();
+        let file = fs::File::open(&path).unwrap();
+
+        let error = ensure_open_file_has_single_link(&file, &path, "test payload").unwrap_err();
+        let detail = format!("{error:#}");
+
+        assert!(detail.contains("hard-link count is 2"), "{detail}");
+        assert!(
+            detail.contains("requires exactly one filesystem link"),
+            "{detail}"
+        );
+    }
+
+    #[cfg(any(unix, windows))]
+    #[test]
+    fn quarantine_directory_preflight_rejects_hard_linked_entries() {
+        let root = tempfile::tempdir().unwrap();
+        let directory = root.path().join("quarantine");
+        fs::create_dir(&directory).unwrap();
+        let entry = directory.join("record.avoraxq");
+        let alternate = root.path().join("alternate");
+        fs::write(&entry, b"benign fixture").unwrap();
+        fs::hard_link(&entry, &alternate).unwrap();
+
+        let error = validate_quarantine_directory_contents(&directory).unwrap_err();
+        let detail = format!("{error:#}");
+
+        assert!(detail.contains("hard-link count is 2"), "{detail}");
+    }
+
+    #[cfg(any(unix, windows))]
+    #[test]
+    fn private_file_hardening_rejects_hard_linked_payload() {
+        let root = tempfile::tempdir().unwrap();
+        let path = root.path().join("fixture.avoraxq");
+        let alternate = root.path().join("alternate.avoraxq");
+        fs::write(&path, b"benign fixture").unwrap();
+        fs::hard_link(&path, &alternate).unwrap();
+        let file = fs::File::open(&path).unwrap();
+
+        #[cfg(unix)]
+        let error = harden_unix_private_file(&file, &path).unwrap_err();
+        #[cfg(windows)]
+        let error = harden_windows_quarantine_file(&file, &path).unwrap_err();
+        let detail = format!("{error:#}");
+
+        assert!(detail.contains("hard-link count is 2"), "{detail}");
+        assert_eq!(fs::read(&alternate).unwrap(), b"benign fixture");
     }
 
     #[cfg(unix)]

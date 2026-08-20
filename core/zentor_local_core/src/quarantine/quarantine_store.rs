@@ -76,8 +76,14 @@ impl QuarantineStore {
             quarantine_metadata_label("engine", Some(result.engine.as_str()), "local scanner");
         self.ensure_base_directory()?;
         let metadata = ensure_regular_quarantine_source(path)?;
+        let source_link_guard = open_single_link_quarantine_file(path, "quarantine source")?;
         let source_sha256 = sha256_for_file(path)?;
         ensure_quarantine_payload_destination_absent(&quarantine_path)?;
+        avorax_platform_security::ensure_open_file_has_single_link(
+            &source_link_guard,
+            path,
+            "quarantine source immediately before move",
+        )?;
         fs::rename(path, &quarantine_path)
             .or_else(|_| copy_then_remove_verified(path, &quarantine_path, &source_sha256))?;
         let finalize_result = (|| -> Result<QuarantineRecord> {
@@ -1069,6 +1075,17 @@ fn ensure_regular_quarantine_source(path: &Path) -> Result<fs::Metadata> {
     Ok(metadata)
 }
 
+fn open_single_link_quarantine_file(path: &Path, label: &str) -> Result<fs::File> {
+    let metadata = ensure_regular_quarantine_file(path, label)?;
+    if !metadata.is_file() {
+        return Err(anyhow!("{label} is not a regular file"));
+    }
+    let file = fs::File::open(path)
+        .with_context(|| format!("failed to open {label} {}", path.display()))?;
+    avorax_platform_security::ensure_open_file_has_single_link(&file, path, label)?;
+    Ok(file)
+}
+
 fn ensure_regular_quarantine_payload(path: &Path, label: &str) -> Result<fs::Metadata> {
     let metadata = ensure_regular_quarantine_file(path, label)?;
     if !metadata.is_file() {
@@ -1535,7 +1552,7 @@ fn copy_then_remove_verified(
         .with_context(|| "invalid local quarantine copy expected sha256")?;
     ensure_regular_quarantine_source(source)?;
     ensure_quarantine_payload_destination_absent(destination)?;
-    copy_file_exclusive(source, destination, ExclusiveCopySecurity::Quarantine)?;
+    let source_file = copy_file_exclusive(source, destination, ExclusiveCopySecurity::Quarantine)?;
     let destination_hash = match (|| -> Result<String> {
         ensure_regular_quarantine_payload(destination, "quarantine payload destination")?;
         sha256_for_file(destination)
@@ -1567,6 +1584,22 @@ fn copy_then_remove_verified(
         return Err(anyhow!(
             "hash verification failed before deleting original quarantine source"
         ));
+    }
+    if let Err(error) = avorax_platform_security::ensure_open_file_has_single_link(
+        &source_file,
+        source,
+        "quarantine copy source before removal",
+    ) {
+        cleanup_quarantine_partial_file(destination, "copied quarantine destination")
+            .with_context(|| {
+                format!(
+                    "failed to clean up copied quarantine destination {} after hard-link pre-removal failure: {error:#}",
+                    destination.display()
+                )
+            })?;
+        return Err(error).context(
+            "quarantine copy source link count changed before removal; original was preserved",
+        );
     }
     if let Err(error) = fs::remove_file(source) {
         cleanup_quarantine_partial_file(destination, "copied quarantine destination")
@@ -1688,9 +1721,14 @@ fn copy_file_exclusive(
     source: &Path,
     destination: &Path,
     security: ExclusiveCopySecurity,
-) -> Result<()> {
+) -> Result<fs::File> {
     let mut input = fs::File::open(source)
         .with_context(|| format!("failed to open quarantine source {}", source.display()))?;
+    avorax_platform_security::ensure_open_file_has_single_link(
+        &input,
+        source,
+        "quarantine copy source",
+    )?;
     let mut output = fs::OpenOptions::new()
         .write(true)
         .create_new(true)
@@ -1760,7 +1798,7 @@ fn copy_file_exclusive(
             )
         });
     }
-    Ok(())
+    Ok(input)
 }
 
 #[cfg(not(test))]
@@ -1980,6 +2018,8 @@ fn harden_open_quarantine_file_permissions(
     label: &str,
     security: ExclusiveCopySecurity,
 ) -> Result<()> {
+    avorax_platform_security::ensure_open_file_has_single_link(file, path, label)
+        .with_context(|| format!("failed to enforce single-link policy for {label}"))?;
     #[cfg(unix)]
     {
         let _ = security;
@@ -2389,6 +2429,28 @@ mod tests {
             .contains("refusing to use symbolic link quarantine source"));
         assert!(target.exists());
         assert!(link.exists());
+    }
+
+    #[cfg(any(unix, windows))]
+    #[test]
+    fn quarantine_rejects_hard_linked_source_before_move() {
+        let dir = tempdir().unwrap();
+        let file = dir.path().join("bad.exe");
+        let alternate = dir.path().join("alternate.exe");
+        let base = dir.path().join("q");
+        fs::write(&file, b"benign known-bad fixture").unwrap();
+        fs::hard_link(&file, &alternate).unwrap();
+        let store = QuarantineStore::with_base(base.clone());
+        let result = fixture_scan_result(&file, ScanStatus::Infected);
+
+        let error = store.quarantine_file(&file, &result).unwrap_err();
+        let detail = format!("{error:#}");
+
+        assert!(detail.contains("hard-link count is 2"), "{detail}");
+        assert!(file.exists());
+        assert!(alternate.exists());
+        assert!(base.exists());
+        assert!(fs::read_dir(base).unwrap().next().is_none());
     }
 
     #[cfg(unix)]
@@ -3228,6 +3290,27 @@ mod tests {
 
         assert!(!source.exists());
         assert!(destination.exists());
+    }
+
+    #[cfg(any(unix, windows))]
+    #[test]
+    fn copy_fallback_rejects_hard_linked_source_before_destination_creation() {
+        let dir = tempdir().unwrap();
+        let source = dir.path().join("source.exe");
+        let alternate = dir.path().join("alternate.exe");
+        let destination = dir.path().join("q").join("payload.avoraxq");
+        fs::create_dir_all(destination.parent().unwrap()).unwrap();
+        fs::write(&source, b"benign fixture").unwrap();
+        fs::hard_link(&source, &alternate).unwrap();
+        let expected_hash = sha256_for_file(&source).unwrap();
+
+        let error = copy_then_remove_verified(&source, &destination, &expected_hash).unwrap_err();
+        let detail = format!("{error:#}");
+
+        assert!(detail.contains("hard-link count is 2"), "{detail}");
+        assert!(source.exists());
+        assert!(alternate.exists());
+        assert!(!destination.exists());
     }
 
     #[test]
