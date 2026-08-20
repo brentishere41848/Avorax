@@ -5,6 +5,7 @@ use std::path::{Path, PathBuf};
 use anyhow::{anyhow, Context, Result};
 use chrono::Utc;
 use hmac::{Hmac, Mac};
+use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use uuid::Uuid;
 
@@ -26,6 +27,10 @@ const MAX_QUARANTINE_RESTORE_PATH_CHARS: usize = 4096;
 const DEFAULT_QUARANTINE_DETECTION_NAME: &str = "Detected threat";
 const QUARANTINE_AUTH_HMAC_PREFIX: &str = "hmac-sha256:";
 const QUARANTINE_AUTH_HMAC_DOMAIN: &[u8] = b"avorax-quarantine-record-v2\0";
+const QUARANTINE_FINALIZATION_JOURNAL_FORMAT: &str = "avorax-quarantine-finalization-journal-v1";
+const QUARANTINE_FINALIZATION_JOURNAL_AUTH_DOMAIN: &[u8] =
+    b"avorax-quarantine-finalization-journal-v1\0";
+const MAX_QUARANTINE_RECOVERY_ENTRIES: usize = 65_536;
 const QUARANTINE_AUTH_LEGACY_DOMAIN: &[u8] = b"avorax-quarantine-record-v1\0";
 const QUARANTINE_AUTH_GUARD_LEGACY_DOMAIN: &[u8] = b"avorax-guard-quarantine-record-v1\0";
 #[cfg(windows)]
@@ -41,6 +46,13 @@ enum QuarantineMetadataAuthScheme {
 enum ExclusiveCopySecurity {
     Quarantine,
     Restore,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct QuarantineFinalizationJournal {
+    format: String,
+    record: QuarantineRecord,
 }
 
 pub struct QuarantineStore {
@@ -78,14 +90,64 @@ impl QuarantineStore {
         let metadata = ensure_regular_quarantine_source(path)?;
         let source_link_guard = open_single_link_quarantine_file(path, "quarantine source")?;
         let source_sha256 = sha256_for_file(path)?;
+        let record = QuarantineRecord {
+            quarantine_id: id.clone(),
+            original_path,
+            quarantine_path: quarantine_path_text,
+            sha256: source_sha256.clone(),
+            file_size: metadata.len(),
+            detection_name,
+            engine,
+            quarantined_at: Utc::now(),
+            status: QuarantineStatus::Quarantined,
+            user_note: None,
+            source: "scanner".to_string(),
+            blocked_before_execution: false,
+            process_started: false,
+            action_taken: "quarantined".to_string(),
+            process_id: None,
+        };
         ensure_quarantine_payload_destination_absent(&quarantine_path)?;
-        avorax_platform_security::ensure_open_file_has_single_link(
+        let _finalization_journal_lock = self.write_finalization_journal(&record)?;
+        let move_result = avorax_platform_security::ensure_open_file_has_single_link(
             &source_link_guard,
             path,
             "quarantine source immediately before move",
-        )?;
-        fs::rename(path, &quarantine_path)
-            .or_else(|_| copy_then_remove_verified(path, &quarantine_path, &source_sha256))?;
+        )
+        .and_then(|_| {
+            fs::rename(path, &quarantine_path)
+                .or_else(|_| copy_then_remove_verified(path, &quarantine_path, &source_sha256))
+        });
+        if let Err(error) = move_result {
+            match optional_quarantine_path_present(
+                &quarantine_path,
+                "quarantine destination after source move failure",
+            ) {
+                Ok(true) => {
+                    return Err(error).with_context(|| {
+                        format!(
+                            "quarantine source move failed and left a destination artifact; authenticated recovery journal was retained at {}",
+                            quarantine_path.display()
+                        )
+                    });
+                }
+                Err(inspection_error) => {
+                    return Err(error).with_context(|| {
+                        format!(
+                            "quarantine source move failed and destination absence could not be established; authenticated recovery journal was retained at {}: {inspection_error:#}",
+                            quarantine_path.display()
+                        )
+                    });
+                }
+                Ok(false) => {}
+            }
+            self.cleanup_finalization_journal(&id).with_context(|| {
+                format!(
+                    "failed to clean up unused quarantine finalization journal after source move failure: {error:#}"
+                )
+            })?;
+            return Err(error);
+        }
         let finalize_result = (|| -> Result<QuarantineRecord> {
             ensure_regular_quarantine_payload(&quarantine_path, "quarantine payload")?;
             harden_quarantine_payload_permissions(&quarantine_path)?;
@@ -93,44 +155,447 @@ impl QuarantineStore {
             if !source_sha256.eq_ignore_ascii_case(&quarantined_sha256) {
                 return Err(anyhow!("quarantine payload hash changed during move"));
             }
-            let record = QuarantineRecord {
-                quarantine_id: id.clone(),
-                original_path,
-                quarantine_path: quarantine_path_text,
-                sha256: quarantined_sha256,
-                file_size: metadata.len(),
-                detection_name,
-                engine,
-                quarantined_at: Utc::now(),
-                status: QuarantineStatus::Quarantined,
-                user_note: None,
-                source: "scanner".to_string(),
-                blocked_before_execution: false,
-                process_started: false,
-                action_taken: "quarantined".to_string(),
-                process_id: None,
-            };
             self.write_record(&record)?;
             Ok(record)
         })();
         match finalize_result {
-            Ok(record) => Ok(record),
+            Ok(record) => {
+                self.cleanup_finalization_journal(&id).with_context(|| {
+                    format!(
+                        "quarantine record was finalized but its recovery journal could not be removed for {}",
+                        quarantine_path.display()
+                    )
+                })?;
+                Ok(record)
+            }
             Err(error) => {
                 cleanup_untracked_quarantine_metadata_artifacts(&self.base, &id)
                     .with_context(|| {
                         format!(
-                            "failed to clean up untracked quarantine metadata after finalization failure; payload was not deleted and must be inspected at {}: {error:#}",
+                            "failed to clean up incomplete quarantine metadata after finalization failure; payload and authenticated recovery journal were retained at {}: {error:#}",
                             quarantine_path.display()
                         )
                     })?;
                 Err(error).with_context(|| {
                     format!(
-                        "quarantine finalization failed; payload was not deleted and must be inspected at {}",
+                        "quarantine finalization failed; payload and authenticated recovery journal were retained for bounded retry at {}",
                         quarantine_path.display()
                     )
                 })
             }
         }
+    }
+
+    fn write_finalization_journal(&self, record: &QuarantineRecord) -> Result<fs::File> {
+        validate_quarantine_record_for_write(record)?;
+        if record.status != QuarantineStatus::Quarantined {
+            return Err(anyhow!(
+                "quarantine finalization journal requires quarantined status"
+            ));
+        }
+        self.ensure_base_directory()?;
+        let path = self.finalization_journal_path(&record.quarantine_id)?;
+        let auth_path = self.finalization_journal_auth_path(&record.quarantine_id)?;
+        let journal = QuarantineFinalizationJournal {
+            format: QUARANTINE_FINALIZATION_JOURNAL_FORMAT.to_string(),
+            record: record.clone(),
+        };
+        let raw = serde_json::to_string_pretty(&journal)?;
+        let Some(key) = self.metadata_auth_key(true)? else {
+            return Err(anyhow!(
+                "quarantine finalization journal authentication key unavailable"
+            ));
+        };
+        let tag = hmac_finalization_journal_auth_tag(&key, &raw)?;
+        write_staged_quarantine_file(
+            &auth_path,
+            format!("{tag}\n").as_bytes(),
+            "quarantine finalization journal auth sidecar",
+        )?;
+        if let Err(error) =
+            write_staged_quarantine_file(&path, raw.as_bytes(), "quarantine finalization journal")
+        {
+            cleanup_quarantine_partial_file(
+                &auth_path,
+                "unused quarantine finalization journal auth sidecar",
+            )
+            .with_context(|| {
+                format!(
+                    "failed to clean up journal auth sidecar after journal write failure: {error:#}"
+                )
+            })?;
+            return Err(error);
+        }
+        let (journal_lock, persisted) =
+            read_locked_bounded_quarantine_text(
+                &path,
+                MAX_QUARANTINE_METADATA_BYTES,
+                "quarantine finalization journal",
+            )
+            .with_context(|| {
+                format!(
+                    "unable to lock persisted quarantine finalization journal {}; source was not moved and recovery evidence was retained",
+                    path.display()
+                )
+            })?;
+        if persisted != raw {
+            self.cleanup_finalization_journal(&record.quarantine_id)?;
+            return Err(anyhow!(
+                "quarantine finalization journal changed after write"
+            ));
+        }
+        if let Err(error) = self.ensure_finalization_journal_auth_valid(&path, &persisted) {
+            self.cleanup_finalization_journal(&record.quarantine_id)
+                .with_context(|| {
+                    format!("failed to clean up invalid quarantine finalization journal: {error:#}")
+                })?;
+            return Err(error);
+        }
+        Ok(journal_lock)
+    }
+
+    fn recover_pending_finalizations(&self) -> Result<()> {
+        let mut journals = Vec::new();
+        let mut journal_auth = Vec::new();
+        let mut count = 0_usize;
+        for entry in fs::read_dir(&self.base)
+            .context("unable to enumerate quarantine finalization journals")?
+        {
+            count = count
+                .checked_add(1)
+                .ok_or_else(|| anyhow!("quarantine recovery entry count overflow"))?;
+            if count > MAX_QUARANTINE_RECOVERY_ENTRIES {
+                return Err(anyhow!(
+                    "quarantine recovery exceeds the entry limit of {MAX_QUARANTINE_RECOVERY_ENTRIES}"
+                ));
+            }
+            let entry = entry.context("unable to read quarantine recovery directory entry")?;
+            let name = entry
+                .file_name()
+                .into_string()
+                .map_err(|_| anyhow!("quarantine recovery entry name is not Unicode"))?;
+            if let Some(id) = name.strip_suffix(".pending.auth") {
+                validate_quarantine_id(id)?;
+                journal_auth.push((id.to_string(), entry.path()));
+            } else if let Some(id) = name.strip_suffix(".pending") {
+                validate_quarantine_id(id)?;
+                journals.push((id.to_string(), entry.path()));
+            }
+        }
+        journals.sort_by(|left, right| left.0.cmp(&right.0));
+        journal_auth.sort_by(|left, right| left.0.cmp(&right.0));
+
+        for (id, auth_path) in journal_auth {
+            let journal_path = self.finalization_journal_path(&id)?;
+            if optional_quarantine_file_present(&journal_path, "quarantine finalization journal")? {
+                continue;
+            }
+            self.recover_orphan_finalization_journal_auth(&id, &auth_path)?;
+        }
+
+        for (id, path) in journals {
+            self.recover_finalization_journal(&id, &path)?;
+        }
+        Ok(())
+    }
+
+    fn recover_orphan_finalization_journal_auth(&self, id: &str, auth_path: &Path) -> Result<()> {
+        let expected_auth_path = self.finalization_journal_auth_path(id)?;
+        if auth_path != expected_auth_path {
+            return Err(anyhow!(
+                "orphan quarantine finalization journal auth path does not match id {id}"
+            ));
+        }
+        if !optional_quarantine_file_present(
+            auth_path,
+            "orphan quarantine finalization journal auth sidecar",
+        )? {
+            return Ok(());
+        }
+        let payload_path = self.base.join(format!("{id}.{QUARANTINE_EXTENSION}"));
+        let metadata_path = self.base.join(format!("{id}.json"));
+        let metadata_auth_path = self.base.join(format!("{id}.json.auth"));
+        let payload_present = optional_quarantine_file_present(
+            &payload_path,
+            "quarantine payload related to orphan finalization journal auth",
+        )?;
+        let metadata_present = optional_quarantine_file_present(
+            &metadata_path,
+            "quarantine metadata related to orphan finalization journal auth",
+        )?;
+        let metadata_auth_present = optional_quarantine_file_present(
+            &metadata_auth_path,
+            "quarantine metadata auth related to orphan finalization journal auth",
+        )?;
+
+        if !payload_present && !metadata_present && !metadata_auth_present {
+            return cleanup_quarantine_partial_file(
+                auth_path,
+                "orphan quarantine finalization journal auth sidecar",
+            );
+        }
+        if !metadata_present || !metadata_auth_present {
+            return Err(anyhow!(
+                "orphan quarantine finalization journal auth sidecar has incomplete related state for {id}; refusing automatic cleanup"
+            ));
+        }
+
+        let raw = read_bounded_quarantine_text(
+            &metadata_path,
+            MAX_QUARANTINE_METADATA_BYTES,
+            "finalized quarantine metadata related to orphan finalization journal auth",
+        )?;
+        if self.verified_record_auth_scheme(&metadata_path, &raw)?
+            != QuarantineMetadataAuthScheme::HmacSha256V2
+        {
+            return Err(anyhow!(
+                "orphan quarantine finalization journal auth sidecar requires a current authenticated final record for {id}"
+            ));
+        }
+        let record: QuarantineRecord = serde_json::from_str(&raw).context(
+            "unable to parse finalized quarantine metadata related to orphan finalization journal auth",
+        )?;
+        validate_quarantine_record_for_write(&record)?;
+        self.ensure_record_path_matches_id(&metadata_path, id)?;
+        if record.quarantine_id != id {
+            return Err(anyhow!(
+                "finalized quarantine record id does not match orphan journal auth for {id}"
+            ));
+        }
+        let recorded_payload = validate_quarantine_payload_path_text(&record.quarantine_path)?;
+        if recorded_payload != payload_path {
+            return Err(anyhow!(
+                "finalized quarantine payload path does not match orphan journal auth for {id}"
+            ));
+        }
+        match record.status {
+            QuarantineStatus::Quarantined => {
+                if !payload_present {
+                    return Err(anyhow!(
+                        "authenticated quarantined record related to orphan journal auth has no payload for {id}"
+                    ));
+                }
+                harden_quarantine_payload_permissions(&payload_path)?;
+                self.ensure_payload_integrity(&record, &payload_path)?;
+            }
+            QuarantineStatus::Restored | QuarantineStatus::Deleted => {
+                if payload_present {
+                    return Err(anyhow!(
+                        "authenticated non-quarantined record related to orphan journal auth still has a payload for {id}"
+                    ));
+                }
+            }
+        }
+        cleanup_quarantine_partial_file(
+            auth_path,
+            "verified orphan quarantine finalization journal auth sidecar",
+        )
+    }
+
+    fn recover_finalization_journal(&self, id: &str, path: &Path) -> Result<()> {
+        let expected_path = self.finalization_journal_path(id)?;
+        if path != expected_path {
+            return Err(anyhow!(
+                "quarantine finalization journal path does not match id {id}"
+            ));
+        }
+        let (_journal_lock, raw) = read_locked_bounded_quarantine_text(
+            path,
+            MAX_QUARANTINE_METADATA_BYTES,
+            "quarantine finalization journal",
+        )
+        .with_context(|| {
+            format!(
+                "quarantine finalization journal {} is active or unavailable; recovery evidence was preserved",
+                path.display()
+            )
+        })?;
+        self.ensure_finalization_journal_auth_valid(path, &raw)?;
+        let journal: QuarantineFinalizationJournal = serde_json::from_str(&raw)
+            .context("unable to parse authenticated quarantine finalization journal")?;
+        if journal.format != QUARANTINE_FINALIZATION_JOURNAL_FORMAT {
+            return Err(anyhow!(
+                "unsupported quarantine finalization journal format"
+            ));
+        }
+        if journal.record.quarantine_id != id {
+            return Err(anyhow!(
+                "quarantine finalization journal id does not match its filename"
+            ));
+        }
+        validate_quarantine_record_for_write(&journal.record)?;
+        if journal.record.status != QuarantineStatus::Quarantined {
+            return Err(anyhow!(
+                "quarantine finalization journal record is not quarantined"
+            ));
+        }
+        let expected_payload = self.base.join(format!("{id}.{QUARANTINE_EXTENSION}"));
+        let recorded_payload =
+            validate_quarantine_payload_path_text(&journal.record.quarantine_path)?;
+        if recorded_payload != expected_payload {
+            return Err(anyhow!(
+                "quarantine finalization journal payload path does not match id {id}"
+            ));
+        }
+        let metadata_path = self.base.join(format!("{id}.json"));
+        let metadata_auth_path = self.base.join(format!("{id}.json.auth"));
+        let metadata_present = optional_quarantine_file_present(
+            &metadata_path,
+            "quarantine metadata record during finalization recovery",
+        )?;
+        let metadata_auth_present = optional_quarantine_file_present(
+            &metadata_auth_path,
+            "quarantine metadata auth sidecar during finalization recovery",
+        )?;
+        let payload_present = optional_quarantine_file_present(
+            &expected_payload,
+            "quarantine payload during finalization recovery",
+        )?;
+
+        if metadata_present && metadata_auth_present {
+            let final_raw = read_bounded_quarantine_text(
+                &metadata_path,
+                MAX_QUARANTINE_METADATA_BYTES,
+                "quarantine metadata record during finalization recovery",
+            )?;
+            self.verified_record_auth_scheme(&metadata_path, &final_raw)?;
+            let final_record: QuarantineRecord = serde_json::from_str(&final_raw)
+                .context("unable to parse finalized quarantine metadata during recovery")?;
+            validate_quarantine_record_for_write(&final_record)?;
+            if final_record != journal.record {
+                return Err(anyhow!(
+                    "finalized quarantine record conflicts with authenticated recovery journal for {id}"
+                ));
+            }
+            if !payload_present {
+                return Err(anyhow!(
+                    "finalized quarantine record and recovery journal exist without payload for {id}"
+                ));
+            }
+            harden_quarantine_payload_permissions(&expected_payload)?;
+            self.ensure_payload_integrity(&journal.record, &expected_payload)?;
+            self.cleanup_finalization_journal(id)?;
+            return Ok(());
+        }
+
+        if !payload_present {
+            if metadata_present || metadata_auth_present {
+                return Err(anyhow!(
+                    "incomplete quarantine metadata and recovery journal exist without payload for {id}"
+                ));
+            }
+            self.ensure_abandoned_journal_source_intact(&journal.record)?;
+            self.cleanup_finalization_journal(id)?;
+            return Ok(());
+        }
+
+        let original_path = validate_original_restore_path_text(&journal.record.original_path)?;
+        if optional_quarantine_path_present(
+            &original_path,
+            "original source during quarantine finalization recovery",
+        )? {
+            return Err(anyhow!(
+                "quarantine finalization recovery found both isolated payload and original source for {id}; refusing to claim completed quarantine"
+            ));
+        }
+        harden_quarantine_payload_permissions(&expected_payload)?;
+        self.ensure_payload_integrity(&journal.record, &expected_payload)?;
+        cleanup_untracked_quarantine_metadata_artifacts(&self.base, id)?;
+        self.write_record(&journal.record)?;
+        let final_raw = read_bounded_quarantine_text(
+            &metadata_path,
+            MAX_QUARANTINE_METADATA_BYTES,
+            "recovered quarantine metadata record",
+        )?;
+        if self.verified_record_auth_scheme(&metadata_path, &final_raw)?
+            != QuarantineMetadataAuthScheme::HmacSha256V2
+            || serde_json::from_str::<QuarantineRecord>(&final_raw)? != journal.record
+        {
+            return Err(anyhow!(
+                "recovered quarantine metadata verification failed for {id}"
+            ));
+        }
+        self.cleanup_finalization_journal(id)?;
+        Ok(())
+    }
+
+    fn ensure_abandoned_journal_source_intact(&self, record: &QuarantineRecord) -> Result<()> {
+        let source = validate_original_restore_path_text(&record.original_path)?;
+        let metadata = ensure_regular_quarantine_source(&source).with_context(|| {
+            "pending quarantine journal has neither payload nor intact original source"
+        })?;
+        if metadata.len() != record.file_size {
+            return Err(anyhow!(
+                "pending quarantine journal original source size changed"
+            ));
+        }
+        let opened = open_single_link_quarantine_file(
+            &source,
+            "pending quarantine journal original source",
+        )?;
+        let actual = sha256_for_file(&source)?;
+        if !record.sha256.eq_ignore_ascii_case(&actual) {
+            return Err(anyhow!(
+                "pending quarantine journal original source hash changed"
+            ));
+        }
+        avorax_platform_security::ensure_open_file_has_single_link(
+            &opened,
+            &source,
+            "pending quarantine journal original source after hash",
+        )?;
+        Ok(())
+    }
+
+    fn ensure_finalization_journal_auth_valid(&self, path: &Path, raw: &str) -> Result<()> {
+        let auth_path = path.with_extension("pending.auth");
+        if !optional_quarantine_file_present(
+            &auth_path,
+            "quarantine finalization journal auth sidecar",
+        )? {
+            return Err(anyhow!(
+                "quarantine finalization journal auth sidecar is required for {}",
+                path.display()
+            ));
+        }
+        let Some(key) = self.metadata_auth_key(false)? else {
+            return Err(anyhow!(
+                "quarantine finalization journal authentication key unavailable"
+            ));
+        };
+        let actual = read_bounded_quarantine_text(
+            &auth_path,
+            MAX_QUARANTINE_METADATA_AUTH_BYTES,
+            "quarantine finalization journal auth sidecar",
+        )?
+        .trim()
+        .to_string();
+        let expected = hmac_finalization_journal_auth_tag(&key, raw)?;
+        if !constant_time_eq(expected.as_bytes(), actual.as_bytes()) {
+            return Err(anyhow!(
+                "quarantine finalization journal authentication failed for {}",
+                path.display()
+            ));
+        }
+        Ok(())
+    }
+
+    fn cleanup_finalization_journal(&self, id: &str) -> Result<()> {
+        validate_quarantine_id(id)?;
+        let path = self.finalization_journal_path(id)?;
+        let auth_path = self.finalization_journal_auth_path(id)?;
+        cleanup_quarantine_partial_file(&path, "quarantine finalization journal")?;
+        cleanup_quarantine_partial_file(&auth_path, "quarantine finalization journal auth sidecar")
+    }
+
+    fn finalization_journal_path(&self, id: &str) -> Result<PathBuf> {
+        validate_quarantine_id(id)?;
+        Ok(self.base.join(format!("{id}.pending")))
+    }
+
+    fn finalization_journal_auth_path(&self, id: &str) -> Result<PathBuf> {
+        validate_quarantine_id(id)?;
+        Ok(self.base.join(format!("{id}.pending.auth")))
     }
 
     pub fn list(&self) -> Result<Vec<QuarantineRecord>> {
@@ -141,6 +606,7 @@ impl QuarantineStore {
         avorax_platform_security::validate_quarantine_directory_contents(&self.base)
             .context("refusing to change permissions on an unrecognized quarantine directory")?;
         harden_quarantine_base_permissions(&self.base)?;
+        self.recover_pending_finalizations()?;
         let mut records = Vec::new();
         for entry in fs::read_dir(&self.base)? {
             let entry = entry?;
@@ -437,6 +903,13 @@ impl QuarantineStore {
         let raw = serde_json::to_string_pretty(record)?;
         write_staged_quarantine_file(&path, raw.as_bytes(), "quarantine metadata record")?;
         self.write_record_auth(record, &raw)?;
+        if self.verified_record_auth_scheme(&path, &raw)?
+            != QuarantineMetadataAuthScheme::HmacSha256V2
+        {
+            return Err(anyhow!(
+                "quarantine metadata authentication verification failed after write"
+            ));
+        }
         Ok(())
     }
 
@@ -712,6 +1185,53 @@ fn read_bounded_quarantine_text(path: &Path, max_bytes: u64, label: &str) -> Res
         .with_context(|| format!("unable to read {label}"))
 }
 
+fn read_locked_bounded_quarantine_text(
+    path: &Path,
+    max_bytes: u64,
+    label: &str,
+) -> Result<(fs::File, String)> {
+    let expected = ensure_regular_quarantine_file(path, label)?;
+    if !expected.is_file() {
+        return Err(anyhow!("{label} is not a regular file"));
+    }
+    let file = fs::File::open(path).with_context(|| format!("unable to lock {label}"))?;
+    file.try_lock()
+        .map_err(io::Error::from)
+        .with_context(|| format!("unable to acquire exclusive lock for {label}"))?;
+    harden_open_quarantine_file_permissions(&file, path, label, ExclusiveCopySecurity::Quarantine)?;
+    let metadata = file
+        .metadata()
+        .with_context(|| format!("unable to inspect locked {label}"))?;
+    if !metadata.is_file() {
+        return Err(anyhow!("locked {label} is not a regular file"));
+    }
+    if metadata.len() > max_bytes {
+        return Err(anyhow!(
+            "{label} {} exceeds maximum size of {} bytes",
+            path.display(),
+            max_bytes
+        ));
+    }
+    let mut reader = file
+        .try_clone()
+        .with_context(|| format!("unable to clone locked {label} handle"))?;
+    let mut bytes = Vec::with_capacity(metadata.len() as usize);
+    Read::take(&mut reader, max_bytes.saturating_add(1))
+        .read_to_end(&mut bytes)
+        .with_context(|| format!("unable to read locked {label}"))?;
+    if bytes.len() as u64 > max_bytes {
+        return Err(anyhow!(
+            "{label} {} exceeds maximum size of {} bytes",
+            path.display(),
+            max_bytes
+        ));
+    }
+    let raw = String::from_utf8(bytes)
+        .map_err(|_| anyhow!("{label} {} is not valid UTF-8", path.display()))
+        .with_context(|| format!("unable to read locked {label}"))?;
+    Ok((file, raw))
+}
+
 fn constant_time_eq(left: &[u8], right: &[u8]) -> bool {
     if left.len() != right.len() {
         return false;
@@ -726,6 +1246,15 @@ fn hmac_record_auth_tag(key: &str, raw: &str) -> Result<String> {
     let mut mac = Hmac::<Sha256>::new_from_slice(key.as_bytes())
         .map_err(|_| anyhow!("invalid quarantine metadata authentication key"))?;
     mac.update(QUARANTINE_AUTH_HMAC_DOMAIN);
+    mac.update(raw.as_bytes());
+    let tag = mac.finalize().into_bytes();
+    Ok(format!("{QUARANTINE_AUTH_HMAC_PREFIX}{}", hex_encode(&tag)))
+}
+
+fn hmac_finalization_journal_auth_tag(key: &str, raw: &str) -> Result<String> {
+    let mut mac = Hmac::<Sha256>::new_from_slice(key.as_bytes())
+        .map_err(|_| anyhow!("invalid quarantine finalization journal authentication key"))?;
+    mac.update(QUARANTINE_FINALIZATION_JOURNAL_AUTH_DOMAIN);
     mac.update(raw.as_bytes());
     let tag = mac.finalize().into_bytes();
     Ok(format!("{QUARANTINE_AUTH_HMAC_PREFIX}{}", hex_encode(&tag)))
@@ -2164,7 +2693,7 @@ mod tests {
     }
 
     #[test]
-    fn quarantine_finalization_failures_preserve_payload_and_clean_metadata() {
+    fn quarantine_finalization_failures_preserve_payload_and_authenticated_journal() {
         let source = include_str!("quarantine_store.rs");
         let start = source.find("pub fn quarantine_file(&self").unwrap();
         let end = source.find("pub fn list(&self)").unwrap();
@@ -2178,9 +2707,19 @@ mod tests {
         let cleanup_source = &source[cleanup_start..cleanup_end];
 
         assert!(quarantine_source.contains("let finalize_result = (|| -> Result<QuarantineRecord>"));
+        assert!(quarantine_source.contains("self.write_finalization_journal(&record)?"));
+        assert!(quarantine_source.contains("let _finalization_journal_lock"));
         assert!(quarantine_source
             .contains("cleanup_untracked_quarantine_metadata_artifacts(&self.base, &id)"));
-        assert!(quarantine_source.contains("payload was not deleted and must be inspected"));
+        assert!(quarantine_source.contains(
+            "payload and authenticated recovery journal were retained for bounded retry"
+        ));
+        assert!(quarantine_source.contains("let move_result ="));
+        assert!(quarantine_source.contains("optional_quarantine_path_present("));
+        assert!(quarantine_source.contains(
+            "destination absence could not be established; authenticated recovery journal was retained"
+        ));
+        assert!(quarantine_source.contains("self.cleanup_finalization_journal(&id)"));
         assert!(quarantine_source.contains("Err(error)"));
         assert!(!cleanup_source.contains("\"untracked quarantine payload\""));
         assert!(cleanup_source.contains("\"untracked quarantine metadata record\""));
@@ -2189,6 +2728,14 @@ mod tests {
         assert!(cleanup_source.contains("\"untracked quarantine metadata auth temp sidecar\""));
         assert!(cleanup_source
             .contains("failed to clean up one or more untracked quarantine metadata artifacts"));
+        assert!(
+            quarantine_source
+                .find("self.write_finalization_journal(&record)?")
+                .unwrap()
+                < quarantine_source
+                    .find("fs::rename(path, &quarantine_path)")
+                    .unwrap()
+        );
         assert!(
             quarantine_source
                 .find("fs::rename(path, &quarantine_path)")
@@ -2229,6 +2776,437 @@ mod tests {
         for path in [metadata, metadata_temp, auth, auth_temp] {
             assert!(!path.exists());
         }
+    }
+
+    #[test]
+    fn pending_finalization_recovers_isolated_payload_to_authenticated_record() {
+        let dir = tempdir().unwrap();
+        let store = QuarantineStore::with_base(dir.path().join("q"));
+        let (record, original, payload) =
+            recovery_fixture_record(&store, dir.path(), "recover-record", b"benign recovery");
+        store.write_finalization_journal(&record).unwrap();
+        fs::rename(&original, &payload).unwrap();
+
+        let records = store.list().unwrap();
+
+        assert_eq!(records, vec![record.clone()]);
+        assert!(!original.exists());
+        assert_eq!(fs::read(&payload).unwrap(), b"benign recovery");
+        assert!(!store
+            .finalization_journal_path(&record.quarantine_id)
+            .unwrap()
+            .exists());
+        assert!(!store
+            .finalization_journal_auth_path(&record.quarantine_id)
+            .unwrap()
+            .exists());
+        let metadata = store.base.join(format!("{}.json", record.quarantine_id));
+        let raw = fs::read_to_string(&metadata).unwrap();
+        assert_eq!(
+            store.verified_record_auth_scheme(&metadata, &raw).unwrap(),
+            QuarantineMetadataAuthScheme::HmacSha256V2
+        );
+    }
+
+    #[test]
+    fn pending_finalization_tampering_fails_closed_and_preserves_payload() {
+        let dir = tempdir().unwrap();
+        let store = QuarantineStore::with_base(dir.path().join("q"));
+        let (record, original, payload) =
+            recovery_fixture_record(&store, dir.path(), "tampered-journal", b"benign tamper");
+        store.write_finalization_journal(&record).unwrap();
+        fs::rename(&original, &payload).unwrap();
+        let journal_path = store
+            .finalization_journal_path(&record.quarantine_id)
+            .unwrap();
+        let tampered = fs::read_to_string(&journal_path)
+            .unwrap()
+            .replace("Fixture detection", "Tampered detection");
+        fs::write(&journal_path, tampered).unwrap();
+
+        let error = store.list().unwrap_err();
+        let detail = format!("{error:#}");
+
+        assert!(detail.contains("finalization journal authentication failed"));
+        assert_eq!(fs::read(&payload).unwrap(), b"benign tamper");
+        assert!(journal_path.exists());
+        assert!(store
+            .finalization_journal_auth_path(&record.quarantine_id)
+            .unwrap()
+            .exists());
+        assert!(!store
+            .base
+            .join(format!("{}.json", record.quarantine_id))
+            .exists());
+    }
+
+    #[test]
+    fn authenticated_pending_finalization_rejects_unknown_fields() {
+        let dir = tempdir().unwrap();
+        let store = QuarantineStore::with_base(dir.path().join("q"));
+        let (record, original, payload) = recovery_fixture_record(
+            &store,
+            dir.path(),
+            "unknown-journal-field",
+            b"benign unknown field",
+        );
+        store.write_finalization_journal(&record).unwrap();
+        let journal_path = store
+            .finalization_journal_path(&record.quarantine_id)
+            .unwrap();
+        let mut value: serde_json::Value =
+            serde_json::from_str(&fs::read_to_string(&journal_path).unwrap()).unwrap();
+        value
+            .as_object_mut()
+            .unwrap()
+            .insert("unexpected".to_string(), serde_json::Value::Bool(true));
+        write_authenticated_finalization_journal_raw(
+            &store,
+            &record.quarantine_id,
+            &serde_json::to_string_pretty(&value).unwrap(),
+        );
+        fs::rename(&original, &payload).unwrap();
+
+        let error = store.list().unwrap_err();
+        let detail = format!("{error:#}");
+
+        assert!(detail.contains("unable to parse authenticated quarantine finalization journal"));
+        assert!(detail.contains("unknown field"));
+        assert_eq!(fs::read(&payload).unwrap(), b"benign unknown field");
+        assert!(journal_path.exists());
+    }
+
+    #[test]
+    fn authenticated_pending_finalization_rejects_filename_id_mismatch() {
+        let dir = tempdir().unwrap();
+        let store = QuarantineStore::with_base(dir.path().join("q"));
+        let (record, original, payload) = recovery_fixture_record(
+            &store,
+            dir.path(),
+            "journal-record-id",
+            b"benign id mismatch",
+        );
+        store.write_finalization_journal(&record).unwrap();
+        fs::rename(&original, &payload).unwrap();
+        let original_journal = store
+            .finalization_journal_path(&record.quarantine_id)
+            .unwrap();
+        let original_auth = store
+            .finalization_journal_auth_path(&record.quarantine_id)
+            .unwrap();
+        let renamed_journal = store
+            .finalization_journal_path("different-journal-id")
+            .unwrap();
+        let renamed_auth = store
+            .finalization_journal_auth_path("different-journal-id")
+            .unwrap();
+        fs::rename(original_journal, &renamed_journal).unwrap();
+        fs::rename(original_auth, &renamed_auth).unwrap();
+
+        let error = store.list().unwrap_err();
+
+        assert!(error
+            .to_string()
+            .contains("journal id does not match its filename"));
+        assert_eq!(fs::read(&payload).unwrap(), b"benign id mismatch");
+        assert!(renamed_journal.exists());
+        assert!(renamed_auth.exists());
+    }
+
+    #[test]
+    fn pending_finalization_rejects_changed_payload_and_preserves_evidence() {
+        let dir = tempdir().unwrap();
+        let store = QuarantineStore::with_base(dir.path().join("q"));
+        let (record, original, payload) =
+            recovery_fixture_record(&store, dir.path(), "changed-payload", b"fixture-one");
+        store.write_finalization_journal(&record).unwrap();
+        fs::rename(&original, &payload).unwrap();
+        fs::write(&payload, b"fixture-two").unwrap();
+
+        let error = store.list().unwrap_err();
+
+        assert!(error
+            .to_string()
+            .contains("quarantine payload hash mismatch"));
+        assert_eq!(fs::read(&payload).unwrap(), b"fixture-two");
+        assert!(store
+            .finalization_journal_path(&record.quarantine_id)
+            .unwrap()
+            .exists());
+        assert!(store
+            .finalization_journal_auth_path(&record.quarantine_id)
+            .unwrap()
+            .exists());
+    }
+
+    #[test]
+    fn pending_finalization_rejects_conflicting_authenticated_final_record() {
+        let dir = tempdir().unwrap();
+        let store = QuarantineStore::with_base(dir.path().join("q"));
+        let (record, original, payload) =
+            recovery_fixture_record(&store, dir.path(), "conflicting-final", b"benign conflict");
+        store.write_finalization_journal(&record).unwrap();
+        fs::rename(&original, &payload).unwrap();
+        let mut conflicting = record.clone();
+        conflicting.engine = "Conflicting engine".to_string();
+        store.write_record(&conflicting).unwrap();
+
+        let error = store.list().unwrap_err();
+
+        assert!(error
+            .to_string()
+            .contains("finalized quarantine record conflicts with authenticated recovery journal"));
+        assert_eq!(fs::read(&payload).unwrap(), b"benign conflict");
+        assert!(store
+            .finalization_journal_path(&record.quarantine_id)
+            .unwrap()
+            .exists());
+        assert!(store
+            .base
+            .join(format!("{}.json", record.quarantine_id))
+            .exists());
+    }
+
+    #[test]
+    fn pending_finalization_without_auth_fails_closed_and_preserves_payload() {
+        let dir = tempdir().unwrap();
+        let store = QuarantineStore::with_base(dir.path().join("q"));
+        let (record, original, payload) = recovery_fixture_record(
+            &store,
+            dir.path(),
+            "missing-journal-auth",
+            b"benign missing auth",
+        );
+        store.write_finalization_journal(&record).unwrap();
+        fs::rename(&original, &payload).unwrap();
+        let auth_path = store
+            .finalization_journal_auth_path(&record.quarantine_id)
+            .unwrap();
+        fs::remove_file(&auth_path).unwrap();
+
+        let error = store.list().unwrap_err();
+
+        assert!(error
+            .to_string()
+            .contains("finalization journal auth sidecar is required"));
+        assert_eq!(fs::read(&payload).unwrap(), b"benign missing auth");
+        assert!(store
+            .finalization_journal_path(&record.quarantine_id)
+            .unwrap()
+            .exists());
+        assert!(!auth_path.exists());
+    }
+
+    #[test]
+    fn abandoned_pending_finalization_cleans_journal_only_when_source_is_intact() {
+        let dir = tempdir().unwrap();
+        let store = QuarantineStore::with_base(dir.path().join("q"));
+        let (record, original, payload) =
+            recovery_fixture_record(&store, dir.path(), "abandoned-journal", b"benign abandoned");
+        store.write_finalization_journal(&record).unwrap();
+
+        assert!(store.list().unwrap().is_empty());
+        assert_eq!(fs::read(&original).unwrap(), b"benign abandoned");
+        assert!(!payload.exists());
+        assert!(!store
+            .finalization_journal_path(&record.quarantine_id)
+            .unwrap()
+            .exists());
+        assert!(!store
+            .finalization_journal_auth_path(&record.quarantine_id)
+            .unwrap()
+            .exists());
+    }
+
+    #[test]
+    fn active_pending_finalization_lock_blocks_concurrent_recovery() {
+        let dir = tempdir().unwrap();
+        let store = QuarantineStore::with_base(dir.path().join("q"));
+        let (record, original, payload) = recovery_fixture_record(
+            &store,
+            dir.path(),
+            "active-journal",
+            b"benign active journal",
+        );
+        let journal_lock = store.write_finalization_journal(&record).unwrap();
+
+        let error = store.list().unwrap_err();
+        let detail = format!("{error:#}");
+
+        assert!(detail.contains("active or unavailable"));
+        assert!(detail.contains("exclusive lock"));
+        assert_eq!(fs::read(&original).unwrap(), b"benign active journal");
+        assert!(!payload.exists());
+        assert!(store
+            .finalization_journal_path(&record.quarantine_id)
+            .unwrap()
+            .exists());
+        assert!(store
+            .finalization_journal_auth_path(&record.quarantine_id)
+            .unwrap()
+            .exists());
+
+        drop(journal_lock);
+        assert!(store.list().unwrap().is_empty());
+        assert_eq!(fs::read(&original).unwrap(), b"benign active journal");
+        assert!(!store
+            .finalization_journal_path(&record.quarantine_id)
+            .unwrap()
+            .exists());
+        assert!(!store
+            .finalization_journal_auth_path(&record.quarantine_id)
+            .unwrap()
+            .exists());
+    }
+
+    #[test]
+    fn pending_finalization_with_source_and_payload_refuses_ambiguous_recovery() {
+        let dir = tempdir().unwrap();
+        let store = QuarantineStore::with_base(dir.path().join("q"));
+        let (record, original, payload) =
+            recovery_fixture_record(&store, dir.path(), "duplicate-state", b"benign duplicate");
+        store.write_finalization_journal(&record).unwrap();
+        fs::copy(&original, &payload).unwrap();
+
+        let error = store.list().unwrap_err();
+
+        assert!(error
+            .to_string()
+            .contains("both isolated payload and original source"));
+        assert_eq!(fs::read(&original).unwrap(), b"benign duplicate");
+        assert_eq!(fs::read(&payload).unwrap(), b"benign duplicate");
+        assert!(store
+            .finalization_journal_path(&record.quarantine_id)
+            .unwrap()
+            .exists());
+        assert!(store
+            .finalization_journal_auth_path(&record.quarantine_id)
+            .unwrap()
+            .exists());
+    }
+
+    #[test]
+    fn pending_finalization_replaces_partial_metadata_after_payload_move() {
+        let dir = tempdir().unwrap();
+        let store = QuarantineStore::with_base(dir.path().join("q"));
+        let (record, original, payload) =
+            recovery_fixture_record(&store, dir.path(), "partial-metadata", b"benign partial");
+        store.write_finalization_journal(&record).unwrap();
+        fs::rename(&original, &payload).unwrap();
+        let metadata = store.base.join(format!("{}.json", record.quarantine_id));
+        fs::write(&metadata, b"partial").unwrap();
+
+        let records = store.list().unwrap();
+
+        assert_eq!(records, vec![record.clone()]);
+        let raw = fs::read_to_string(&metadata).unwrap();
+        assert_eq!(
+            serde_json::from_str::<QuarantineRecord>(&raw).unwrap(),
+            record
+        );
+        assert!(metadata.with_extension("json.auth").exists());
+        assert!(!store
+            .finalization_journal_path("partial-metadata")
+            .unwrap()
+            .exists());
+    }
+
+    #[test]
+    fn completed_finalization_cleans_stale_authenticated_journal() {
+        let dir = tempdir().unwrap();
+        let store = QuarantineStore::with_base(dir.path().join("q"));
+        let (record, original, payload) = recovery_fixture_record(
+            &store,
+            dir.path(),
+            "completed-finalization",
+            b"benign completed",
+        );
+        store.write_finalization_journal(&record).unwrap();
+        fs::rename(&original, &payload).unwrap();
+        store.write_record(&record).unwrap();
+
+        assert_eq!(store.list().unwrap(), vec![record.clone()]);
+        assert!(!store
+            .finalization_journal_path(&record.quarantine_id)
+            .unwrap()
+            .exists());
+        assert!(!store
+            .finalization_journal_auth_path(&record.quarantine_id)
+            .unwrap()
+            .exists());
+        assert_eq!(fs::read(&payload).unwrap(), b"benign completed");
+    }
+
+    #[test]
+    fn completed_finalization_cleans_orphan_journal_auth_after_verification() {
+        let dir = tempdir().unwrap();
+        let store = QuarantineStore::with_base(dir.path().join("q"));
+        let (record, original, payload) = recovery_fixture_record(
+            &store,
+            dir.path(),
+            "orphan-auth-completed",
+            b"benign orphan auth",
+        );
+        store.write_finalization_journal(&record).unwrap();
+        fs::rename(&original, &payload).unwrap();
+        store.write_record(&record).unwrap();
+        fs::remove_file(
+            store
+                .finalization_journal_path(&record.quarantine_id)
+                .unwrap(),
+        )
+        .unwrap();
+        let orphan_auth = store
+            .finalization_journal_auth_path(&record.quarantine_id)
+            .unwrap();
+
+        assert_eq!(store.list().unwrap(), vec![record]);
+        assert!(!orphan_auth.exists());
+        assert_eq!(fs::read(&payload).unwrap(), b"benign orphan auth");
+    }
+
+    #[test]
+    fn orphan_journal_auth_with_payload_but_no_final_record_fails_closed() {
+        let dir = tempdir().unwrap();
+        let store = QuarantineStore::with_base(dir.path().join("q"));
+        let (record, original, payload) = recovery_fixture_record(
+            &store,
+            dir.path(),
+            "orphan-auth-incomplete",
+            b"benign incomplete auth",
+        );
+        store.write_finalization_journal(&record).unwrap();
+        fs::rename(&original, &payload).unwrap();
+        fs::remove_file(
+            store
+                .finalization_journal_path(&record.quarantine_id)
+                .unwrap(),
+        )
+        .unwrap();
+        let orphan_auth = store
+            .finalization_journal_auth_path(&record.quarantine_id)
+            .unwrap();
+
+        let error = store.list().unwrap_err();
+
+        assert!(error.to_string().contains(
+            "orphan quarantine finalization journal auth sidecar has incomplete related state"
+        ));
+        assert!(orphan_auth.exists());
+        assert_eq!(fs::read(&payload).unwrap(), b"benign incomplete auth");
+    }
+
+    #[test]
+    fn orphan_journal_auth_without_related_state_is_cleaned() {
+        let dir = tempdir().unwrap();
+        let base = dir.path().join("q");
+        fs::create_dir_all(&base).unwrap();
+        let orphan_auth = base.join("unused-journal.pending.auth");
+        fs::write(&orphan_auth, b"uncommitted auth fixture").unwrap();
+        let store = QuarantineStore::with_base(base);
+
+        assert!(store.list().unwrap().is_empty());
+        assert!(!orphan_auth.exists());
     }
 
     #[test]
@@ -4490,6 +5468,17 @@ mod tests {
         write_authenticated_raw(store, path, &raw);
     }
 
+    fn write_authenticated_finalization_journal_raw(store: &QuarantineStore, id: &str, raw: &str) {
+        let key = store.metadata_auth_key(false).unwrap().unwrap();
+        let tag = hmac_finalization_journal_auth_tag(&key, raw).unwrap();
+        fs::write(store.finalization_journal_path(id).unwrap(), raw).unwrap();
+        fs::write(
+            store.finalization_journal_auth_path(id).unwrap(),
+            format!("{tag}\n"),
+        )
+        .unwrap();
+    }
+
     fn fixture_scan_result(path: &Path, status: ScanStatus) -> ScanResult {
         ScanResult {
             status,
@@ -4526,5 +5515,20 @@ mod tests {
             action_taken: "quarantined".to_string(),
             process_id: None,
         }
+    }
+
+    fn recovery_fixture_record(
+        store: &QuarantineStore,
+        root: &Path,
+        id: &str,
+        bytes: &[u8],
+    ) -> (QuarantineRecord, PathBuf, PathBuf) {
+        let original = root.join(format!("{id}-original.exe"));
+        let payload = store.base.join(format!("{id}.{QUARANTINE_EXTENSION}"));
+        fs::write(&original, bytes).unwrap();
+        let mut record = fixture_record(id, original.clone(), payload.clone());
+        record.file_size = bytes.len() as u64;
+        record.sha256 = sha256_for_file(&original).unwrap();
+        (record, original, payload)
     }
 }

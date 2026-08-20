@@ -1189,8 +1189,9 @@ enforcement, or pre-execution blocking is claimed.
 - **Technically limited:** Vault-ancestor checks run before and after creation
   but are path-based, not a fully handle-relative NT/`openat2` object-tree
   transaction. Concurrent mutation by an administrator/root-capable principal
-  remains inside the trusted computing base. Retained untracked-payload recovery
-  tooling also remains follow-up work.
+  remains inside the trusted computing base. The retained authenticated-payload
+  recovery gap documented here is superseded by checkpoint 2187; historical
+  unsigned/untracked payload salvage remains an explicit operator task.
 - **Technically limited hard-link boundary:** Checkpoint 2186 implements
   handle-based single-link preflight in Local Core and Guard, copy-source
   revalidation before removal, payload/vault-entry postflight before permission
@@ -1258,3 +1259,38 @@ enforcement, or pre-execution blocking is claimed.
   volume or atomically exclude same-principal/administrator link creation
   between the final check and rename/removal. Alternate names remain separate
   scan targets, and Avorax does not claim volume-wide neutralization.
+
+## Checkpoint 2187 Quarantine Finalization Recovery
+
+- **Resolved locally:** Local Core and Guard write the same strict pre-move
+  `avorax-quarantine-finalization-journal-v1` record and domain-separated HMAC.
+  Both read back the exact committed bytes, verify authentication, and hold an
+  exclusive journal lock through finalization. Guard retains the journal for
+  Local Core when post-move finalization fails.
+- **Resolved locally:** Local Core runs bounded recovery before list. It can
+  finalize an intact isolated payload, discard an abandoned pre-move journal
+  only after acquiring the recovery lock and proving the original source intact,
+  clean a verified stale journal or orphan sidecar, and replace partial final
+  metadata only from authenticated journal evidence. An active writer fails
+  visibly and its evidence remains untouched.
+- **Fail-closed states:** Missing/tampered auth, unknown JSON fields,
+  filename/ID mismatch, changed payload, conflicting final metadata, partial
+  related state, and simultaneous source plus payload all fail visibly and
+  preserve the payload/journal/final evidence that exists.
+- **Verified locally:** Platform passes `9/9`, Local Core passes `534/534`, Guard
+  passes `226/226`, the locked Rust workspace passes `1,458/1,458`, source
+  contracts pass `623/623`, and strict affected-crate Clippy, rustfmt,
+  dependency resolution, and the central verifier/report validator (`219/219`,
+  no failures or skips, `533.3s`) pass. Only benign temporary fixtures are used.
+- **Partial:** Installed LocalSystem/DPAPI/ACL behavior, packaged UI list/action
+  click-through, hostile/non-cooperating same-principal concurrency,
+  repair/upgrade interruption, and crash-at-every-instruction E2E still require
+  a disposable elevated host. Native Unix lock runtime is wired into the bounded
+  Ubuntu job but is not claimed hosted until the checkpoint CI run passes.
+- **Technically limited:** Recovery is list-triggered Local Core user-mode work,
+  not kernel interception. A state containing both source and isolated payload
+  is deliberately not auto-resolved because deleting either copy would require
+  an unsafe assumption. The lock coordinates cooperating Avorax writers and
+  recovery only; same-principal processes that ignore it and administrator/root
+  races remain in the trusted computing base. Historical unsigned payloads are
+  not promoted.

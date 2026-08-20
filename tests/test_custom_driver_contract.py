@@ -10300,8 +10300,7 @@ def test_guard_quarantine_metadata_fields_are_bounded_before_payload_move():
         quarantine_source.index("guard_quarantine_metadata_label(")
         < quarantine_source.index("fs::rename(path, &destination)")
     )
-    assert "detection_name: detection_name.clone()" in quarantine_source
-    assert "engine: engine.clone()" in quarantine_source
+    assert "detection_name,\n        engine," in quarantine_source
     assert "ch.is_control()" in label_helper
     assert "take(MAX_GUARD_QUARANTINE_METADATA_LABEL_CHARS)" in label_helper
     assert "fallback.to_string()" in label_helper
@@ -10433,7 +10432,7 @@ def test_guard_quarantine_expected_hash_is_validated_before_payload_work():
     assert "guard_quarantine_rejects_invalid_expected_hash_before_directory_work" in guard
 
 
-def test_guard_quarantine_finalization_failure_preserves_payload_and_cleans_metadata():
+def test_guard_quarantine_finalization_failure_preserves_payload_and_authenticated_journal():
     guard = read(GUARD_MAIN)
     quarantine_source = guard[
         guard.index("fn quarantine_file("):
@@ -10444,10 +10443,20 @@ def test_guard_quarantine_finalization_failure_preserves_payload_and_cleans_meta
         guard.index("fn copy_file_exclusive")
     ]
 
-    assert "let finalize_result = (|| -> anyhow::Result<GuardQuarantineRecord>" in quarantine_source
+    assert "let quarantine_result = (|| -> anyhow::Result<GuardQuarantineRecord>" in quarantine_source
+    assert "write_guard_finalization_journal(&record)?" in quarantine_source
     assert "cleanup_untracked_guard_quarantine_metadata_artifacts(&id)" in quarantine_source
-    assert "payload was not deleted and must be inspected" in quarantine_source
-    assert "return Err(error)" in quarantine_source
+    assert (
+        "payload and authenticated recovery journal were retained for bounded Local Core retry"
+        in quarantine_source
+    )
+    assert "cleanup_guard_finalization_journal(&id)" in quarantine_source
+    assert "Err(error) if retain_finalization_journal" in quarantine_source
+    assert "guard_quarantine_artifact_present(" in quarantine_source
+    assert (
+        "destination absence could not be established; authenticated recovery journal was retained"
+        in quarantine_source
+    )
     for label in [
         '"untracked guard quarantine metadata record"',
         '"untracked guard quarantine metadata temp record"',
@@ -10459,14 +10468,21 @@ def test_guard_quarantine_finalization_failure_preserves_payload_and_cleans_meta
     assert "failed to clean up one or more untracked guard quarantine metadata artifacts" in cleanup_source
     assert "checked_quarantine_record_path(id)" in cleanup_source
     assert (
+        quarantine_source.index("write_guard_finalization_journal(&record)?")
+        < quarantine_source.index("fs::rename(path, &destination)")
+    )
+    assert (
         quarantine_source.index("fs::rename(path, &destination)")
-        < quarantine_source.index("let finalize_result = (|| -> anyhow::Result<GuardQuarantineRecord>")
+        < quarantine_source.index("write_quarantine_record(&record)?")
     )
     assert (
         quarantine_source.index("write_quarantine_record(&record)?")
         < quarantine_source.index("cleanup_untracked_guard_quarantine_metadata_artifacts")
     )
-    assert "guard_quarantine_finalization_failures_preserve_payload_and_clean_metadata" in guard
+    assert (
+        "guard_quarantine_finalization_failures_preserve_payload_and_authenticated_journal"
+        in guard
+    )
 
 
 def test_native_engine_mutation_boundary_routes_quarantine_to_local_core():
@@ -11882,7 +11898,7 @@ def test_local_quarantine_file_normalizes_metadata_before_payload_move():
     assert "quarantine_file_normalizes_untrusted_detection_metadata_before_move" in source
 
 
-def test_local_quarantine_finalization_failure_preserves_payload_and_cleans_metadata():
+def test_local_quarantine_finalization_failure_preserves_payload_and_authenticated_journal():
     source = read(LOCAL_QUARANTINE_STORE)
     quarantine_source = source[
         source.index("pub fn quarantine_file(&self"):
@@ -11894,8 +11910,20 @@ def test_local_quarantine_finalization_failure_preserves_payload_and_cleans_meta
     ]
 
     assert "let finalize_result = (|| -> Result<QuarantineRecord>" in quarantine_source
+    assert "self.write_finalization_journal(&record)?" in quarantine_source
+    assert "let _finalization_journal_lock" in quarantine_source
     assert "cleanup_untracked_quarantine_metadata_artifacts(&self.base, &id)" in quarantine_source
-    assert "payload was not deleted and must be inspected" in quarantine_source
+    assert (
+        "payload and authenticated recovery journal were retained for bounded retry"
+        in quarantine_source
+    )
+    assert "let move_result =" in quarantine_source
+    assert "optional_quarantine_path_present(" in quarantine_source
+    assert (
+        "destination absence could not be established; authenticated recovery journal was retained"
+        in quarantine_source
+    )
+    assert "self.cleanup_finalization_journal(&id)" in quarantine_source
     assert "Err(error)" in quarantine_source
     for label in [
         '"untracked quarantine metadata record"',
@@ -11907,6 +11935,10 @@ def test_local_quarantine_finalization_failure_preserves_payload_and_cleans_meta
     assert '"untracked quarantine payload"' not in cleanup_source
     assert "failed to clean up one or more untracked quarantine metadata artifacts" in cleanup_source
     assert (
+        quarantine_source.index("self.write_finalization_journal(&record)?")
+        < quarantine_source.index("fs::rename(path, &quarantine_path)")
+    )
+    assert (
         quarantine_source.index("fs::rename(path, &quarantine_path)")
         < quarantine_source.index("let finalize_result = (|| -> Result<QuarantineRecord>")
     )
@@ -11914,7 +11946,108 @@ def test_local_quarantine_finalization_failure_preserves_payload_and_cleans_meta
         quarantine_source.index("self.write_record(&record)?")
         < quarantine_source.index("cleanup_untracked_quarantine_metadata_artifacts")
     )
-    assert "quarantine_finalization_failures_preserve_payload_and_clean_metadata" in source
+    assert (
+        "quarantine_finalization_failures_preserve_payload_and_authenticated_journal"
+        in source
+    )
+
+
+def test_quarantine_finalization_journals_are_strict_bounded_and_domain_authenticated():
+    local = read(LOCAL_QUARANTINE_STORE)
+    guard = read(GUARD_MAIN)
+    platform = read(PLATFORM_SECURITY)
+    local_write_and_recovery = local[
+        local.index("fn write_finalization_journal"):
+        local.index("pub fn list(&self)")
+    ]
+    local_list = local[
+        local.index("pub fn list(&self)"):
+        local.index("pub fn restore")
+    ]
+    guard_write = guard[
+        guard.index("fn write_guard_finalization_journal"):
+        guard.index("fn write_quarantine_record")
+    ]
+    guard_quarantine = guard[
+        guard.index("fn quarantine_file("):
+        guard.index("fn reject_symlink_source")
+    ]
+    local_auth = local[
+        local.index("fn hmac_finalization_journal_auth_tag"):
+        local.index("fn legacy_record_auth_tag")
+    ]
+    platform_names = platform[
+        platform.index("fn is_recognized_quarantine_artifact_name"):
+        platform.index("fn is_safe_quarantine_component")
+    ]
+
+    journal_format = '"avorax-quarantine-finalization-journal-v1"'
+    journal_domain = 'b"avorax-quarantine-finalization-journal-v1\\0"'
+    assert journal_format in local
+    assert journal_format in guard
+    assert journal_domain in local
+    assert journal_domain in guard
+    assert 'b"avorax-quarantine-record-v2\\0"' in local
+    assert 'b"avorax-quarantine-record-v2\\0"' in guard
+    assert "#[serde(rename_all = \"camelCase\", deny_unknown_fields)]" in local
+    assert "struct QuarantineFinalizationJournal" in local
+    assert "struct GuardQuarantineFinalizationJournal" in guard
+    assert "Hmac::<Sha256>::new_from_slice" in local_auth
+    assert "QUARANTINE_FINALIZATION_JOURNAL_AUTH_DOMAIN" in local_auth
+    assert "Hmac::<Sha256>::new_from_slice" in guard_write
+    assert "constant_time_eq(expected.as_bytes(), actual.as_bytes())" in local_write_and_recovery
+    assert "constant_time_eq(expected.as_bytes(), actual.as_bytes())" in guard_write
+    assert "fn write_finalization_journal(&self, record: &QuarantineRecord) -> Result<fs::File>" in local
+    assert "fn write_guard_finalization_journal(record: &GuardQuarantineRecord) -> anyhow::Result<fs::File>" in guard
+    assert "let _finalization_journal_lock" in local
+    assert "let _finalization_journal_lock" in guard_quarantine
+    assert "read_locked_bounded_quarantine_text(" in local_write_and_recovery
+    assert "read_locked_bounded_guard_quarantine_text(" in guard_write
+    assert "file.try_lock()" in local
+    assert "file.try_lock()" in guard
+    assert "if persisted != raw" in local_write_and_recovery
+    assert "if persisted != raw" in guard_write
+    assert (
+        local_write_and_recovery.index("&auth_path,")
+        < local_write_and_recovery.index("raw.as_bytes(), \"quarantine finalization journal\"")
+    )
+    assert (
+        guard_write.index("&auth_path,")
+        < guard_write.index("raw.as_bytes(),\n        \"guard quarantine finalization journal\"")
+    )
+    assert "const MAX_QUARANTINE_RECOVERY_ENTRIES: usize = 65_536" in local
+    assert "count > MAX_QUARANTINE_RECOVERY_ENTRIES" in local_write_and_recovery
+    assert "self.recover_pending_finalizations()?" in local_list
+    assert 'format!("{id}.pending")' in local_write_and_recovery
+    assert 'format!("{id}.pending.auth")' in local_write_and_recovery
+    assert 'name.strip_suffix(".pending.auth")' in local_write_and_recovery
+    assert 'name.strip_suffix(".pending")' in local_write_and_recovery
+    assert "finalized quarantine record conflicts with authenticated recovery journal" in local_write_and_recovery
+    assert "both isolated payload and original source" in local_write_and_recovery
+    assert "ensure_abandoned_journal_source_intact" in local_write_and_recovery
+    assert '".pending",' in platform_names
+    assert '".pending.auth",' in platform_names
+    assert "name.strip_suffix(suffix)" in platform_names
+    assert "quarantine_directory_preflight_accepts_only_vault_shaped_files" in platform
+    for marker in [
+        "pending_finalization_recovers_isolated_payload_to_authenticated_record",
+        "pending_finalization_tampering_fails_closed_and_preserves_payload",
+        "authenticated_pending_finalization_rejects_unknown_fields",
+        "authenticated_pending_finalization_rejects_filename_id_mismatch",
+        "pending_finalization_rejects_changed_payload_and_preserves_evidence",
+        "pending_finalization_rejects_conflicting_authenticated_final_record",
+        "pending_finalization_without_auth_fails_closed_and_preserves_payload",
+        "abandoned_pending_finalization_cleans_journal_only_when_source_is_intact",
+        "active_pending_finalization_lock_blocks_concurrent_recovery",
+        "pending_finalization_with_source_and_payload_refuses_ambiguous_recovery",
+        "pending_finalization_replaces_partial_metadata_after_payload_move",
+        "completed_finalization_cleans_stale_authenticated_journal",
+        "completed_finalization_cleans_orphan_journal_auth_after_verification",
+        "orphan_journal_auth_with_payload_but_no_final_record_fails_closed",
+        "orphan_journal_auth_without_related_state_is_cleaned",
+    ]:
+        assert marker in local
+    assert "guard_finalization_journal_is_domain_authenticated_and_tamper_evident" in guard
 
 
 def test_local_quarantine_staged_writes_are_final_destination_exclusive_and_cleanup_temps():
@@ -25038,11 +25171,15 @@ def test_ci_runs_native_unix_quarantine_permission_runtime_contracts():
         "guard_quarantine_artifacts_are_owner_only_and_non_executable_on_unix",
         "guard_auth_reads_repair_existing_private_modes_on_unix",
         "hard_link",
+        "active_pending_finalization_lock_blocks_concurrent_recovery",
+        "safe_eicar_simulator_is_detected_and_auto_quarantined_by_confirmed_mode",
+        "guard_finalization_journal_is_domain_authenticated_and_tamper_evident",
+        "known_malicious_hash_is_quarantined",
         "-- --test-threads=1",
     ]:
         assert marker in job
 
-    assert job.count("cargo test --locked") == 7
+    assert job.count("cargo test --locked") == 11
     assert job.count("hard_link") == 2
     assert job.count("set -euo pipefail") == 3
     assert "continue-on-error" not in job

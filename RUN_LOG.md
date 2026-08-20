@@ -13,6 +13,56 @@ Lead-engineer product-hardening pass across the Avorax repository. Goal is to mo
 - The bundled native ML model is treated as development-only unless release metadata and gates prove production readiness.
 - MSI/EXE installers are first-install/repair/recovery/offline paths. Normal in-app updates should use verified `.aup` packages.
 
+## 2026-08-20 continuation checkpoint 2187
+
+- Added one Local Core/Guard-compatible finalization journal contract. The
+  auth-sidecar is staged before the strict `.pending` commit marker, uses the
+  separate `avorax-quarantine-finalization-journal-v1\0` HMAC domain, and is
+  persisted before source mutation. Both writers now read back the exact journal
+  bytes, verify the HMAC, and retain an exclusive file lock until final record
+  verification and journal cleanup.
+- Added bounded Local Core recovery before quarantine listing. It examines at
+  most `65,536` entries, acquires the journal lock without waiting, authenticates
+  before strict parse/use, binds filename/ID/payload path, validates claims and
+  payload size/hash/single-link policy, writes and re-verifies a current HMAC
+  record, and only then cleans the journal. Active writers, tampering, missing
+  auth, unknown fields, ID mismatch, changed payload, conflicting records,
+  incomplete state, and simultaneous source plus payload all fail visibly and
+  preserve evidence.
+- Recovery can finish an isolated intact payload, replace partial final
+  metadata, clean an exact stale finalization pair, remove an uncommitted orphan
+  auth sidecar with no related state, and clean a pre-move journal only after the
+  writer lock is free and the original source is proven intact. Guard leaves
+  post-move failures for this single Local Core lifecycle owner.
+- Added 15 initial Local/Guard runtime regressions plus one active-writer lock
+  regression. Final local totals pass: platform `9/9`, Local Core `534/534`,
+  Guard `226/226`, workspace `1,458/1,458`, source contracts `623/623`, strict
+  affected-crate Clippy, rustfmt, and locked metadata. The final central verifier
+  and independent full-report validator pass `219/219` with no failures or skips
+  in `533.3s`.
+- Extended the bounded Ubuntu quarantine job from seven to 11 locked Cargo
+  invocations. It now runs Local Core active-lock and normal quarantine writer
+  tests plus Guard journal-lock and normal quarantine writer tests in addition
+  to existing permission/hard-link coverage. Hosted success remains pending
+  until the exact implementation commit runs on GitHub.
+- Review failures remain explicit. Three stale source assertions and three
+  incorrect new test assumptions were fixed before source contracts reached
+  `623/623`. The first lock compile failed because `File::by_ref` was ambiguous
+  between `Read` and `Write`; the call now explicitly uses `Read::take`. A first
+  central `219/219` run in `545s` was invalidated as final evidence after manual
+  review found that recovery could clean a still-active writer's journal; the
+  cross-process lock fix was added and every affected/full suite rerun. None of
+  those intermediate failures or superseded runs is counted as final success.
+- Read-only post-verification inventory confirms the real ProgramData vault is
+  unchanged at `16,072` files and `4,522,733` bytes: `5,357` payloads, `5,357`
+  JSON records, `5,357` auth sidecars, one key, and no pending journals. No
+  existing quarantine artifact was changed or deleted.
+- Installed LocalSystem/DPAPI/UI crash recovery, hostile same-principal mutation,
+  historical unsigned payload salvage, and crash-at-every-instruction package
+  E2E remain partial or unsupported. No live malware, standard EICAR file,
+  Defender exclusion, service/driver operation, package installation, secure
+  erase, kernel interception, or pre-execution claim was used.
+
 ## 2026-08-20 continuation checkpoint 2186
 
 - Added `avorax_platform_security::ensure_open_file_has_single_link`, which

@@ -6,13 +6,38 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
 
 ## Current Commit
 
-- Checkpoint 2185 merged as `7236d6a80fef6adbcdf72f544c279686984acea3`
-  through PR `#37`. Checkpoint 2186 implementation head
-  `2613b4131cb31c37e413d7610403fb2d665582e9` is validated in PR `#38`; its
-  hosted evidence finalization is in progress on the same branch.
+- Checkpoint 2186 merged as `1b4a31de1d406eb4bed1e928d72bb83a5c0feb7c`
+  through PR `#38`. Checkpoint 2187 finalization-recovery implementation is
+  locally complete on its publication branch; hosted CI/package evidence is not
+  claimed until that exact implementation commit is pushed and passes.
 - Current public release tag: `v0.1.15-beta.3`, published as a prerelease on 2026-07-20 with independently verified checksums. Checkpoints 2178-2185 are source hardening and do not create a new release tag.
 
 ## Latest Checkpoint Evidence - 2026-08-20
+
+- Current quarantine finalization-recovery pass: checkpoint 2187 writes a
+  strict domain-separated HMAC journal before Local Core or Guard moves a
+  source. The auth sidecar is staged first, `.pending` is the commit marker, and
+  each writer reads back the exact bytes, verifies authentication, then holds an
+  exclusive operating-system file lock through finalization and cleanup. Local
+  Core list performs a bounded `65,536`-entry recovery pass and first acquires
+  the same non-blocking lock, so an active writer cannot be mistaken for an
+  abandoned transaction. It completes an intact isolated payload into a current
+  authenticated record, replaces partial metadata, cleans only proven stale
+  journals/orphan auth, and fails closed while preserving evidence for malformed
+  auth/schema/ID/path, changed payload, conflicting record, duplicate
+  source/payload, partial state, or active writer. Local Core passes `534/534`,
+  Guard `226/226`, the locked Rust workspace `1,458/1,458`, source contracts
+  `623/623`, strict affected-crate Clippy, formatting, and the central verifier
+  plus independent report validator (`219/219`, no failures or skips,
+  `533.3s`). Read-only post-run inventory confirms the real ProgramData vault is
+  unchanged at `16,072` files and `4,522,733` bytes, including `5,357` payloads,
+  records, and auth sidecars, one key, and no pending journals. The Ubuntu job is
+  extended to 11 locked Cargo invocations for native lock/writer runtime, but no
+  hosted result is claimed before publication. Installed LocalSystem/DPAPI/UI
+  interruption E2E, hostile same-principal mutation, historical unsigned
+  payload salvage, kernel interception, and pre-execution blocking remain
+  partial, unsupported, or technically limited. Evidence is recorded in
+  `docs/reports/checkpoint-2187-quarantine-finalization-recovery.md`.
 
 - Current quarantine hard-link policy pass: checkpoint 2186 adds one shared,
   fail-closed link-count control using an already-opened file handle. Windows

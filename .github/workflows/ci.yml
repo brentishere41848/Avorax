@@ -103,6 +103,14 @@ jobs:
             --manifest-path core/zentor_local_core/Cargo.toml \
             hard_link \
             -- --test-threads=1
+          cargo test --locked \
+            --manifest-path core/zentor_local_core/Cargo.toml \
+            active_pending_finalization_lock_blocks_concurrent_recovery \
+            -- --test-threads=1
+          cargo test --locked \
+            --manifest-path core/zentor_local_core/Cargo.toml \
+            safe_eicar_simulator_is_detected_and_auto_quarantined_by_confirmed_mode \
+            -- --test-threads=1
 
       - name: Test Guard Unix permission routing
         shell: bash
@@ -119,6 +127,14 @@ jobs:
           cargo test --locked \
             --manifest-path core/zentor_guard_service/Cargo.toml \
             hard_link \
+            -- --test-threads=1
+          cargo test --locked \
+            --manifest-path core/zentor_guard_service/Cargo.toml \
+            guard_finalization_journal_is_domain_authenticated_and_tamper_evident \
+            -- --test-threads=1
+          cargo test --locked \
+            --manifest-path core/zentor_guard_service/Cargo.toml \
+            known_malicious_hash_is_quarantined \
             -- --test-threads=1
 
   flutter:
