@@ -921,3 +921,54 @@ fixed existing service remains only partially verified until that host test is
 performed. Administrators and the Windows service control manager remain in the
 trusted computing base. This change does not install a service or driver and
 does not add or claim pre-execution blocking.
+
+## Checkpoint 2189 Process Enumeration Evidence Boundary
+
+Process observation has two independent failure surfaces: collecting a process
+image and inspecting an image after collection. The Guard already reported
+metadata/hash/native/compat inspection failures, but Windows rows with no
+`ExecutablePath` and individual Linux procfs failures could be omitted before
+inspection. A finite no-threat result could therefore overstate the set of
+processes actually observed.
+
+Every collection now carries a saturating gap count and one bounded diagnostic.
+Finite completion is non-clean when that count is non-zero. Persistent service
+mode writes one structured limitation event, suppresses duplicate warnings
+while the condition remains active, and rearms only after three clear polls.
+Failure to persist the warning remains fatal. This makes incomplete evidence
+visible without generating an unbounded event stream.
+
+A collection with zero observable executable images and no prior gap records
+its own limitation. Guard should observe at least its own running image, so an
+empty but syntactically valid helper envelope or procfs directory is not
+accepted as proof that all observable processes were clean.
+
+Windows uses a strict bounded CIM envelope and treats missing non-kernel image
+paths plus invalid/uninspectable returned paths as gaps. Linux bounds procfs PID
+records, reports malformed/inaccessible entries, and treats a missing procfs
+root as an error. `NotFound` while resolving a PID is treated as normal churn or
+an image-less process because the process may have exited; a resolved target
+that is unavailable while the PID directory remains present is a gap. On
+unsupported platforms process enumeration is explicitly disabled.
+
+The watcher retains only the previous bounded PID/path map. This fixes
+unbounded lifetime PID accumulation and detects changed-image PID reuse after a
+snapshot transition. Polling still cannot distinguish every same-path PID reuse
+or observe a process that starts and exits between polls. Permissions can also
+prevent a user-mode collector from reading protected process images. These are
+technical limits, not clean evidence; stronger timing claims require a verified
+signed driver or an approved authenticated operating-system event source.
+
+Exact implementation head `d8ff525c362003a5396258ad8ffaeb51741b9387`
+passes Avorax CI `32350190743`. Its pinned Ubuntu job `96367469456` runs the
+exact locked native `process_collection` filter and passes `8/8`, including
+malformed-image, empty-root, and unavailable-root procfs fixtures. Desktop
+Packages push run `32350121197` and PR run `32350190448` both pass Windows,
+Linux, macOS arm64/x64, and consolidated checksum/lockfile-SBOM jobs. Those
+builds exercise packaging without installing or publishing any package.
+
+The current path remains best-effort post-launch user mode. It does not stop an
+image before execution, replace Defender, establish a production detection
+rate, or prove installed LocalSystem visibility, event-log ACLs, shutdown, UI
+mediation, and performance. Those installed checks require a disposable
+elevated Windows host.

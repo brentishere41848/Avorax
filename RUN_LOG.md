@@ -13,6 +13,59 @@ Lead-engineer product-hardening pass across the Avorax repository. Goal is to mo
 - The bundled native ML model is treated as development-only unless release metadata and gates prove production readiness.
 - MSI/EXE installers are first-install/repair/recovery/offline paths. Normal in-app updates should use verified `.aup` packages.
 
+## 2026-08-20 continuation checkpoint 2189
+
+- Replaced Guard's process-list-only contract with a bounded collection plus
+  explicit coverage evidence. Windows CIM rows without executable paths and
+  Linux procfs entry/image failures can no longer disappear before finite-watch
+  completion.
+- Windows now emits a strict process/count JSON envelope from checked System32
+  WindowsPowerShell without `-ExecutionPolicy Bypass`. Empty/malformed/excessive
+  output and unknown fields fail visibly; inaccessible, non-absolute, missing,
+  or non-regular process images become coverage gaps.
+- Linux procfs now separates expected non-PID entries and `NotFound` churn from
+  malformed/inaccessible records, bounds PID collection at `65,536`, and fails
+  if procfs itself is unavailable. Unsupported platforms, including macOS, now
+  report process monitoring disabled instead of an empty successful snapshot.
+- Finite watches return `ok:false` for collection gaps, with a distinct combined
+  action when inspection errors also occurred. Persistent watches write one
+  structured limitation event and deduplicate it until three clear polls.
+- Replaced the lifetime PID set with the previous bounded PID/path snapshot.
+  Exited PIDs are removed and a reused PID with a changed path is inspected.
+  Same-path reuse entirely between polls remains a documented polling limit.
+- Empty process collections with no collector-reported error now create their
+  own coverage gap. The Guard must be able to observe at least its own image,
+  so a valid empty envelope/procfs snapshot cannot become clean evidence.
+- Added the exact locked `process_collection` filter to the existing pinned
+  Ubuntu CI job and source-locked that hosted execution contract.
+- The live non-elevated Windows command path returned
+  `watchCompletedWithCoverageGaps` with `ok:false` and 307 gap occurrences over
+  two snapshots; no process action occurred. Guard passes `234/234`, the
+  checkpoint filter `8/8`, workspace `1,466/1,466`, source contracts `626/626`,
+  strict Guard Clippy, rustfmt, and parser checks.
+- A pre-review central verifier and independent validator passed `220/220`, but
+  manual diff review then found the valid-empty snapshot edge. That run is
+  superseded and is not final evidence. The first post-repair `220/220` run was
+  also superseded after review found the truncation suffix could extend a
+  nominal 512-character detail to 526 characters. The cap now includes its
+  suffix. The definitive central verifier and independent full-report
+  validator pass `220/220`, with no failures or skips, in `516.5s`; the
+  process-collection step passed in `0.2s`.
+  The real ProgramData vault remains exactly `16,072` files and `4,522,733`
+  bytes with no pending journals.
+- Exact implementation head `d8ff525c362003a5396258ad8ffaeb51741b9387`
+  passes Avorax CI run `32350190743`. The pinned Ubuntu job `96367469456`
+  executes the exact locked `process_collection` filter and passes all `8/8`,
+  including native procfs malformed-image, empty-root, and unavailable-root
+  fixtures.
+- Desktop Packages push run `32350121197` and PR run `32350190448` both pass
+  package contracts, Windows x64 MSI/EXE, Linux x64 DEB/tar, macOS arm64/x64
+  DMGs, and consolidated six-artifact checksum/lockfile-SBOM evidence. The
+  consolidation jobs are `96370430780` and `96370779650`; prerelease publish
+  jobs were intentionally skipped. No package was installed or published.
+- No dependency, live malware, Defender setting, service/driver operation,
+  quarantine mutation, or pre-execution claim is involved.
+
 ## 2026-08-20 continuation checkpoint 2188
 
 - Removed in-app service registration/reconfiguration from the Flutter client.

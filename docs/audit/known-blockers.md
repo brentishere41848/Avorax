@@ -1324,3 +1324,50 @@ enforcement, or pre-execution blocking is claimed.
 - **No expanded claim:** This checkpoint changes a privilege boundary, not
   detection coverage. No service, driver, package, Defender exclusion, live
   malware, or pre-execution blocking was used.
+
+## Checkpoint 2189 Process Enumeration Coverage
+
+- **Resolved locally:** Guard process enumeration returns bounded process rows
+  plus explicit coverage gaps. Finite watch completion cannot be `ok:true` when
+  any collection gap occurred, and combined collection/inspection limitations
+  remain distinct.
+- **Resolved locally:** Windows counts non-kernel CIM rows without executable
+  paths and accounts for malformed/unavailable paths. Linux counts procfs
+  entry, link, and image-validation failures while treating non-PID entries and
+  `NotFound` churn separately. Missing procfs and unsupported platforms fail
+  visibly instead of returning an empty successful list.
+- **Resolved locally:** Persistent warnings are structured and deduplicated;
+  coverage details and process rows are bounded. The previous PID/path snapshot
+  replaces the lifetime PID set, so stale PIDs do not grow memory indefinitely
+  and changed-path PID reuse is inspected.
+- **Resolved locally:** A zero-row collection with no collector-reported error
+  records its own gap. Because Guard should observe at least its own executable,
+  a syntactically valid empty Windows envelope or procfs snapshot cannot
+  clean-pass.
+- **Verified locally:** Guard passes `234/234`, checkpoint filter `8/8`, the
+  locked Rust workspace `1,466/1,466`, source contracts `626/626`, strict Guard
+  Clippy, rustfmt, PowerShell parsing, and a real Windows command invocation that
+  returned `ok:false` with `watchCompletedWithCoverageGaps` and `307` gap
+  occurrences over two snapshots. The earlier `220/220` full run is
+  superseded by the subsequent empty-snapshot repair and is not counted as
+  final. A later green run was also superseded when review found the truncation
+  suffix outside the nominal 512-character detail cap; the corrected cap now
+  includes that suffix. The definitive central verifier and independent
+  validator pass `220/220`, with no failures or skips, in `516.5s`.
+- **Verified hosted:** Exact implementation head
+  `d8ff525c362003a5396258ad8ffaeb51741b9387` passes Avorax CI
+  `32350190743`. Pinned Ubuntu job `96367469456` executes the exact locked
+  `process_collection` filter and passes `8/8`, including the native procfs
+  malformed-image, empty-root, and unavailable-root fixtures.
+- **Verified hosted package regression:** Desktop Packages push run
+  `32350121197` and PR run `32350190448` both pass package contracts, Windows
+  x64 MSI/EXE, Linux x64 DEB/tar, macOS arm64/x64 DMGs, and consolidated six-
+  artifact checksum/lockfile-SBOM evidence. Prerelease publication was
+  intentionally skipped; no package was installed or released.
+- **Disabled:** Guard process enumeration on non-Windows/non-Linux platforms is
+  explicitly disabled. macOS no longer reports absent `/proc` as empty success.
+- **Blocked / technically limited:** Installed LocalSystem service-loop E2E
+  needs a disposable elevated Windows host. Polling can miss a process that
+  starts and exits between snapshots, including indistinguishable same-path PID
+  reuse. This is post-launch user-mode observation, not kernel interception,
+  pre-execution blocking, Defender replacement, or detection-rate evidence.
