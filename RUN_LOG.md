@@ -13,6 +13,56 @@ Lead-engineer product-hardening pass across the Avorax repository. Goal is to mo
 - The bundled native ML model is treated as development-only unless release metadata and gates prove production readiness.
 - MSI/EXE installers are first-install/repair/recovery/offline paths. Normal in-app updates should use verified `.aup` packages.
 
+## 2026-08-20 continuation checkpoint 2192
+
+- Consolidated the remaining Guard Service Windows-root consumers onto the
+  bounded native `GetSystemWindowsDirectoryW` module introduced in checkpoint
+  2191. Driver-health helper discovery and driver-IPC system-path fail-open
+  decisions no longer trust mutable `SystemRoot` or `WINDIR` values.
+- Expanded the shared resolver to require a rooted local drive with normal
+  components, reject symbolic-link/reparse ancestors and targets, require the
+  actual root to be a directory and selected helpers to be regular files, and
+  restrict relative helper paths to 1-8 components of at most 128 safe ASCII
+  characters.
+- Driver health retains an exact allowlist for `sc.exe`, `fltmc.exe`,
+  `bcdedit.exe`, and `System32\WindowsPowerShell\v1.0\powershell.exe`. Its
+  existing closed-stdin, 30-second, bounded-output runner is unchanged.
+- Driver IPC now propagates native-root resolution errors into verdict
+  evaluation. The native driver port preserves availability through its
+  existing reason-bearing fail-open error verdict rather than silently choosing
+  an empty or environment-derived trust root. One immutable success/error is
+  cached per Guard process to avoid repeated Win32/metadata work on every
+  event. Direct callers receive an error.
+- The existing process-skip root and checked `taskkill.exe` discovery delegate
+  to the same module. A Windows runtime regression proves spoofing both
+  variables to `Q:\SpoofedWindows` does not change the actual root.
+- Native-root tests pass `5/5`; Guard passes `247/247`; the locked workspace
+  passes `1,479/1,479`; source contracts pass `626/626`; strict Guard Clippy,
+  rustfmt, two PowerShell parser checks, and release Guard build pass.
+- The definitive verifier records `221/221` passed steps, zero failed/skipped
+  steps, and an empty error from `2026-08-20T13:48:37.5422686Z` through
+  `2026-08-20T14:00:19.886874Z` (`702.3s`). Its independent validator passes
+  in `2.0s`. The prior 220-step report fails the expanded validator as expected
+  because it lacks `guard-service native Windows root regressions`.
+- One preliminary inline PowerShell parser wrapper had a quoting error around
+  `$file:`. The corrected wrapper passed; no product script parser or product
+  test failed.
+- Read-only post-suite inventory confirms the ProgramData vault remains exactly
+  16,072 files, zero directories, 4,522,733 bytes, 5,357 complete
+  payload/metadata/auth sets, one metadata-auth key, and zero pending files.
+  `Cargo.lock` and dependency versions are unchanged.
+- Native Engine Authenticode/quarantine helper roots, installed LocalSystem
+  service/driver E2E, production-signed driver IPC, helper ACL attack fixtures,
+  and pre-execution enforcement remain partial or blocked. Actual-root
+  `System32`/`SysWOW64` exclusions remain broad and path-based, and
+  metadata-to-launch validation is not atomic.
+- Standard EICAR/Defender integration remained skipped. Only safe simulators
+  and benign fixtures were used. No service, driver, Defender setting, package
+  installation, publication, or release changed.
+- Local evidence is documented in
+  `docs/reports/checkpoint-2192-guard-native-root-consumers.md`; hosted evidence
+  is not claimed before an exact commit and CI run exist.
+
 ## 2026-08-20 continuation checkpoint 2191
 
 - Removed an overbroad Windows process-skip inference. Guard previously built
@@ -64,16 +114,15 @@ Lead-engineer product-hardening pass across the Avorax repository. Goal is to mo
 - This checkpoint does not change Guard driver-health/driver-IPC helpers,
   Native Engine Authenticode/quarantine helper discovery, Defender settings,
   services, drivers, installers, or releases.
-- Exact implementation/local-evidence head
-  `67e067d2d74d7561c4a48269284702ca50f1b1a1` passes Avorax CI
-  `32366912857`, including Flutter/protocol, branding, security, native Unix,
-  and Rust jobs. Desktop Packages push `32366882138` and PR `32366913124` pass
-  Windows x64 MSI/EXE, Linux x64 DEB/tar, macOS x64/arm64 DMGs, package
-  contracts, and checksum/SBOM consolidation. Consolidation jobs
-  `96422164489` and `96422683427` pass; publish jobs `96422235471` and
-  `96422771716` are intentionally skipped. No package was installed or
-  released. A documentation-only evidence head still requires exact-head CI
-  before merge.
+- Implementation/local-evidence head
+  `67e067d2d74d7561c4a48269284702ca50f1b1a1` and documentation evidence head
+  `7a48c013a126e9bd68fa705fa7295f6027e29fec` merged through PR `#43` as
+  `d35ed9e9081a0ffb246a6350688bd833bfa6fe9d`. Evidence-head CI
+  `32368675449` and PR packages `32368675439` pass; package consolidation
+  `96427640105` passes and publish `96427739316` is skipped. Merged-main CI
+  `32369958558` and packages `32369958304` pass; consolidation `96431254827`
+  passes and publish `96431345741` is skipped. No package was installed or
+  released.
 
 ## 2026-08-20 continuation checkpoint 2190
 

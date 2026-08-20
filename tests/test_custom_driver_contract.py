@@ -12431,8 +12431,9 @@ def test_guard_process_collection_coverage_is_bounded_and_fail_visible():
         "are bounded, fail-visible, and cannot become a clean finite-watch result"
     )
     skip_scope_claim = (
-        "Guard Windows process skips and taskkill discovery use the bounded native "
-        "system Windows directory and reject environment or other-drive lookalikes"
+        "Guard process skips, taskkill discovery, driver-health System32 tools, and "
+        "driver IPC fail-open roots use the bounded native system Windows directory "
+        "and reject environment or other-drive lookalikes"
     )
     assert step_name in verifier
     assert step_name in validator
@@ -12490,13 +12491,23 @@ def test_guard_process_commands_use_bounded_runner():
 
 def test_guard_fail_open_runtime_roots_ignore_relative_environment_values():
     ipc = read(ROOT / "core" / "zentor_guard_service" / "src" / "driver_ipc.rs")
+    windows_roots = ipc[ipc.index("fn windows_directory_candidates"):ipc.index("fn program_data_candidates")]
     assert "fn push_unique_absolute_runtime_root" in ipc
     assert "fn runtime_root_candidate_is_absolute" in ipc
     assert "fail_open_runtime_roots_ignore_relative_environment_values" in ipc
+    assert "fail_open_windows_root_ignores_spoofed_environment_values" in ipc
     assert "fail_open_product_and_quarantine_roots_do_not_use_hardcoded_fallbacks" in ipc
     assert 'std::env::set_var(name, "relative-runtime-root")' in ipc
-    assert "push_unique_absolute_runtime_root" in ipc[ipc.index("fn windows_directory_candidates"):ipc.index("fn normalize_windows_fail_open_path")]
-    assert "C:\\Windows" not in ipc[ipc.index("fn windows_directory_candidates"):ipc.index("fn program_data_candidates")]
+    assert "checked_system_windows_directory()" in windows_roots
+    assert "unable to establish the Windows system fail-open root" in windows_roots
+    assert "WINDOWS_DIRECTORY_CANDIDATES.get_or_init" in windows_roots
+    assert "resolve_windows_directory_candidates()" in windows_roots
+    assert "Err(error) => anyhow::bail!" in windows_roots
+    assert "push_unique_absolute_runtime_root" in windows_roots
+    assert "std::env" not in windows_roots
+    assert "SystemRoot" not in windows_roots
+    assert "WINDIR" not in windows_roots
+    assert "C:\\Windows" not in windows_roots
     program_data = ipc[ipc.index("fn program_data_candidates"):ipc.index("fn product_install_root_candidates")]
     product_roots = ipc[ipc.index("fn product_install_root_candidates"):ipc.index("fn quarantine_root_candidates")]
     assert "C:\\ProgramData" not in program_data
@@ -19903,6 +19914,8 @@ def test_small_threat_mvp_verifier_is_safe_and_reproducible():
     assert "driver_ipc" in source
     assert "guard-service driver-health probe regressions" in source
     assert "driver_health" in source
+    assert "guard-service native Windows root regressions" in source
+    assert "windows_system" in source
     assert "guard-service self-test regressions" in source
     assert "guard-service process observation regressions" in source
     assert "process_watch" in source
@@ -24586,17 +24599,19 @@ def test_guard_windows_tools_use_native_bounded_system_root():
         production.index("fn guard_windows_system_root")
     ]
 
-    assert "windows_system::system_windows_directory()?" in root_source
-    assert "is_local_windows_drive_path(&path)" in root_source
-    assert "Some(Component::RootDir)" in production
-    assert "reject_guard_link_ancestors(&path" in root_source
-    assert "fs::symlink_metadata(&path)" in root_source
-    assert "guard_metadata_is_reparse_point(&metadata)" in root_source
+    assert "windows_system::checked_system_windows_directory()" in root_source
     assert "std::env::var_os" not in root_source
     assert '"SystemRoot"' not in root_source
     assert '"WINDIR"' not in root_source
-    assert "reject_guard_link_ancestors(&candidate" in tool_source
+    assert "windows_system::checked_system32_file(&[name]" in tool_source
     assert "GetSystemWindowsDirectoryW(" in windows_system
+    assert "fn checked_system_windows_directory()" in windows_system
+    assert "fn checked_system32_file(" in windows_system
+    assert "Some(Component::RootDir)" in windows_system
+    assert "fn reject_reparse_ancestors(" in windows_system
+    assert "fs::symlink_metadata(&path)" in windows_system
+    assert "metadata_is_reparse_point(&metadata)" in windows_system
+    assert "validate_system32_relative_component(component, label)?" in windows_system
     assert "MAX_SYSTEM_WINDOWS_DIRECTORY_CHARS: usize = 32_768" in windows_system
     assert "vec![u16::MAX; MAX_SYSTEM_WINDOWS_DIRECTORY_CHARS]" in windows_system
     assert "chars >= buffer.len()" in windows_system
@@ -24606,23 +24621,22 @@ def test_guard_windows_tools_use_native_bounded_system_root():
     assert "guard_external_command_outputs_are_bounded" in source
 
 
-def test_guard_driver_health_tools_reject_parent_traversal_in_system_root():
+def test_guard_driver_health_tools_use_native_checked_system_root():
     source = read(GUARD_HEALTH)
     production = source.split("#[cfg(test)]")[0]
-    root_source = production[
-        production.index("fn windows_system_root"):
-        production.index("fn is_local_windows_drive_path")
+    tool_source = production[
+        production.index("fn windows_system32_tool"):
+        production.index("#[cfg(not(windows))]", production.index("fn windows_system32_tool"))
     ]
 
-    assert "normalize_driver_health_windows_system_root_text(&text)" in root_source
-    assert "PathBuf::from(normalized_root)" in root_source
-    assert "PathBuf::from(text)" not in root_source
-    assert "fn normalize_driver_health_windows_system_root_text(value: &str) -> Result<String, String>" in production
-    assert "fn collapse_driver_health_windows_system_root_segments(path: &str) -> String" in production
-    assert "fn split_driver_health_windows_system_root_prefix(path: &str) -> (Option<&str>, &str, bool)" in production
-    assert "Windows driver-health system root must not contain parent traversal" in production
-    assert "collapse_driver_health_windows_system_root_segments(\n        &normalized," in production
-    assert 'match part {\n            "" | "." => {}' in production
+    assert "crate::windows_system::checked_system32_file(" in tool_source
+    assert '"sc.exe" | "fltmc.exe" | "bcdedit.exe" => &[name]' in tool_source
+    assert '"powershell.exe" => &["WindowsPowerShell", "v1.0", name]' in tool_source
+    assert "unsupported Windows driver-health tool" in tool_source
+    assert "fn windows_system_root" not in production
+    assert "normalize_driver_health_windows_system_root_text" not in production
+    assert '"SystemRoot"' not in production
+    assert '"WINDIR"' not in production
     assert "driver_health_system_commands_use_checked_system32_paths" in source
 
 

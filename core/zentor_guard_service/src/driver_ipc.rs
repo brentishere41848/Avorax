@@ -22,6 +22,7 @@ const MAX_TRUSTED_PUBLISHER_NAME_LEN: usize = 256;
 const MAX_TRUSTED_METADATA_SOURCE_LEN: usize = 64;
 #[cfg(windows)]
 const FILE_ATTRIBUTE_REPARSE_POINT: u32 = 0x400;
+static WINDOWS_DIRECTORY_CANDIDATES: OnceLock<Result<Vec<String>, String>> = OnceLock::new();
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
@@ -179,7 +180,7 @@ pub fn evaluate_driver_request(
     config: &DriverVerdictConfig,
 ) -> anyhow::Result<ScanVerdict> {
     let path = normalized_path(request);
-    if should_fail_open_path(&path) {
+    if should_fail_open_path(&path)? {
         return Ok(allow(
             request,
             FinalVerdict::LikelyClean,
@@ -1155,24 +1156,24 @@ fn normalized_yara_confidence(rule_name: &str, value: &str) -> anyhow::Result<St
     }
 }
 
-fn should_fail_open_path(path: &Path) -> bool {
+fn should_fail_open_path(path: &Path) -> anyhow::Result<bool> {
     let raw = path.display().to_string();
     if runtime_root_candidate_has_parent_traversal(&raw) {
-        return false;
+        return Ok(false);
     }
     let windows_path = normalize_windows_fail_open_path(&raw);
     let unix_path = normalize_unix_fail_open_path(&raw);
-    is_windows_system_runtime_path(&windows_path)
+    Ok(is_windows_system_runtime_path(&windows_path)?
         || is_windows_product_runtime_path(&windows_path)
         || is_unix_system_runtime_path(&unix_path)
-        || is_unix_product_runtime_path(&unix_path)
+        || is_unix_product_runtime_path(&unix_path))
 }
 
-fn is_windows_system_runtime_path(path: &str) -> bool {
-    windows_directory_candidates().iter().any(|windows| {
+fn is_windows_system_runtime_path(path: &str) -> anyhow::Result<bool> {
+    Ok(windows_directory_candidates()?.iter().any(|windows| {
         path_is_equal_or_descendant(path, &join_windows_path(windows, "system32"), '\\')
             || path_is_equal_or_descendant(path, &join_windows_path(windows, "syswow64"), '\\')
-    })
+    }))
 }
 
 fn is_windows_product_runtime_path(path: &str) -> bool {
@@ -1232,19 +1233,27 @@ fn is_unix_product_runtime_path(path: &str) -> bool {
     false
 }
 
-fn windows_directory_candidates() -> Vec<String> {
-    let mut candidates = Vec::new();
-    for key in ["SystemRoot", "WINDIR"] {
-        if let Ok(value) = std::env::var(key) {
-            if runtime_root_candidate_text_is_safe(&value) {
-                push_unique_absolute_runtime_root(
-                    &mut candidates,
-                    normalize_windows_fail_open_path(&value),
-                );
-            }
-        }
+fn windows_directory_candidates() -> anyhow::Result<&'static [String]> {
+    match WINDOWS_DIRECTORY_CANDIDATES.get_or_init(|| {
+        resolve_windows_directory_candidates().map_err(|error| format!("{error:#}"))
+    }) {
+        Ok(candidates) => Ok(candidates.as_slice()),
+        Err(error) => anyhow::bail!("{error}"),
     }
-    candidates
+}
+
+fn resolve_windows_directory_candidates() -> anyhow::Result<Vec<String>> {
+    let mut candidates = Vec::new();
+    #[cfg(windows)]
+    {
+        let path = crate::windows_system::checked_system_windows_directory()
+            .context("unable to establish the Windows system fail-open root")?;
+        push_unique_absolute_runtime_root(
+            &mut candidates,
+            normalize_windows_fail_open_path(&path.display().to_string()),
+        );
+    }
+    Ok(candidates)
 }
 
 fn program_data_candidates() -> Vec<String> {
@@ -2069,22 +2078,25 @@ mod tests {
         let _lock = env_lock();
         let previous_program_data = std::env::var_os("ProgramData");
         std::env::set_var("ProgramData", r"C:\ProgramData");
-        for windows in windows_directory_candidates() {
+        for windows in windows_directory_candidates().unwrap() {
             let system_file = format!("{windows}\\System32\\kernel32.dll");
-            assert!(should_fail_open_path(Path::new(&system_file)));
+            assert!(should_fail_open_path(Path::new(&system_file)).unwrap());
         }
-        assert!(should_fail_open_path(Path::new(
-            r"C:\ProgramData\Avorax\Quarantine\item.avoraxq"
-        )));
+        assert!(
+            should_fail_open_path(Path::new(r"C:\ProgramData\Avorax\Quarantine\item.avoraxq"))
+                .unwrap()
+        );
         assert!(!should_fail_open_path(Path::new(
             r"C:\Users\Public\Windows\System32\lookalike.exe"
-        )));
+        ))
+        .unwrap());
         assert!(!should_fail_open_path(Path::new(
             r"C:\ProgramDataX\Avorax\Quarantine\lookalike.exe"
-        )));
-        assert!(!should_fail_open_path(Path::new(
-            r"C:\Users\Public\avorax_guard_service.exe"
-        )));
+        ))
+        .unwrap());
+        assert!(
+            !should_fail_open_path(Path::new(r"C:\Users\Public\avorax_guard_service.exe")).unwrap()
+        );
         if let Some(previous_program_data) = previous_program_data {
             std::env::set_var("ProgramData", previous_program_data);
         } else {
@@ -2099,9 +2111,43 @@ mod tests {
         let end = source.find("fn program_data_candidates").unwrap();
         let helper = &source[start..end];
 
-        assert!(helper.contains("[\"SystemRoot\", \"WINDIR\"]"));
+        assert!(helper.contains("checked_system_windows_directory()"));
+        assert!(helper.contains("unable to establish the Windows system fail-open root"));
+        assert!(helper.contains("WINDOWS_DIRECTORY_CANDIDATES.get_or_init"));
+        assert!(helper.contains("resolve_windows_directory_candidates()"));
+        assert!(helper.contains("Err(error) => anyhow::bail!"));
         assert!(helper.contains("push_unique_absolute_runtime_root"));
+        assert!(!helper.contains("std::env"));
+        assert!(!helper.contains("SystemRoot"));
+        assert!(!helper.contains("WINDIR"));
         assert!(!helper.contains("C:\\Windows"));
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn fail_open_windows_root_ignores_spoofed_environment_values() {
+        let _lock = env_lock();
+        let previous_system_root = std::env::var_os("SystemRoot");
+        let previous_windir = std::env::var_os("WINDIR");
+        let baseline = windows_directory_candidates().unwrap().to_vec();
+
+        std::env::set_var("SystemRoot", r"Q:\SpoofedWindows");
+        std::env::set_var("WINDIR", r"Q:\SpoofedWindows");
+        let spoofed = windows_directory_candidates().unwrap().to_vec();
+
+        for (name, value) in [
+            ("SystemRoot", previous_system_root),
+            ("WINDIR", previous_windir),
+        ] {
+            if let Some(value) = value {
+                std::env::set_var(name, value);
+            } else {
+                std::env::remove_var(name);
+            }
+        }
+
+        assert_eq!(spoofed, baseline);
+        assert!(!spoofed.iter().any(|root| root.contains("spoofedwindows")));
     }
 
     #[test]
@@ -2160,7 +2206,8 @@ mod tests {
                 .any(|root| root.contains(name)));
             assert!(!should_fail_open_path(
                 &std::env::temp_dir().join(name).join("payload.avoraxq")
-            ));
+            )
+            .unwrap());
         }
 
         for (name, value) in previous {
@@ -2198,6 +2245,7 @@ mod tests {
         }
 
         assert!(!windows_directory_candidates()
+            .unwrap()
             .iter()
             .any(|root| root.contains("relative-runtime-root")));
         assert!(!product_install_root_candidates()
@@ -2206,12 +2254,14 @@ mod tests {
         assert!(!quarantine_root_candidates()
             .iter()
             .any(|root| root.contains("relative-runtime-root")));
-        assert!(!should_fail_open_path(Path::new(
-            r"relative-runtime-root\System32\kernel32.dll"
-        )));
+        assert!(
+            !should_fail_open_path(Path::new(r"relative-runtime-root\System32\kernel32.dll"))
+                .unwrap()
+        );
         assert!(!should_fail_open_path(Path::new(
             r"relative-runtime-root\Avorax\Quarantine\payload.avoraxq"
-        )));
+        ))
+        .unwrap());
 
         for (name, value) in previous {
             if let Some(value) = value {
@@ -2273,6 +2323,7 @@ mod tests {
         };
 
         assert!(!windows_directory_candidates()
+            .unwrap()
             .iter()
             .any(|root| root.contains("tempsystem")));
         assert!(!program_data_candidates()

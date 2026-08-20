@@ -210,8 +210,15 @@ both pass package contracts, Windows x64 MSI/EXE, Linux x64 DEB/tar, macOS
 x64/arm64 DMGs, and consolidated checksum/lockfile-SBOM evidence.
 Consolidation jobs `96422164489` and `96422683427` pass. Publish jobs
 `96422235471` and `96422771716` are intentionally skipped. No package was
-installed or released. The documentation-only evidence head still requires
-exact-head CI before merge.
+installed or released.
+
+Documentation evidence head
+`7a48c013a126e9bd68fa705fa7295f6027e29fec` passes Avorax CI
+`32368675449` and Desktop Packages PR run `32368675439`; consolidation
+`96427640105` passes and publish `96427739316` is skipped. PR `#43` merged as
+`d35ed9e9081a0ffb246a6350688bd833bfa6fe9d`. Merged-main CI
+`32369958558` and Desktop Packages `32369958304` pass; consolidation
+`96431254827` passes and publish `96431345741` is skipped.
 
 ## Classification
 
@@ -221,11 +228,11 @@ exact-head CI before merge.
 | Verified locally | Process-skip root selection | Actual-root paths retain policy; other-drive and path lookalikes do not select their own skip root. |
 | Verified locally | Guard taskkill path | Native root, full ancestor checks, allowlisted leaf, and bounded runner source/runtime contracts pass. |
 | Verified locally | Shared regression | Guard, workspace, source contracts, release build, central verifier, and report validator pass. |
-| Verified hosted implementation head | Hosted and packaged regression | CI, Windows/Linux/macOS package construction, and checksum/SBOM consolidation pass at `67e067d2d74d7561c4a48269284702ca50f1b1a1`; publish is skipped. The documentation-only evidence head remains pending exact-head checks. |
+| Verified hosted and merged | Hosted and packaged regression | Implementation `67e067d2d74d7561c4a48269284702ca50f1b1a1`, evidence `7a48c013a126e9bd68fa705fa7295f6027e29fec`, and merged main `d35ed9e9081a0ffb246a6350688bd833bfa6fe9d` pass CI and Windows/Linux/macOS package construction plus checksum/SBOM consolidation; publish is skipped. |
 | Partial / blocked | Installed LocalSystem behavior | Installed service identity, visibility, ACLs, event logging, lifetime, shutdown, and UI mediation need a disposable elevated host. |
 | Technically limited | Real Windows system-directory skip | Actual-root `System32`, `SysWOW64`, and `Explorer.exe` remain broadly path-excluded. |
 | Technically limited | User-mode timing and visibility | Polling is post-launch, misses some short-lived processes, and cannot query every protected image. |
-| Out of scope | Other helper-root implementations | Guard driver helpers and Native Engine Authenticode/quarantine helpers were not changed or reclassified. |
+| Superseded follow-up | Other helper-root implementations | Checkpoint 2192 moves Guard driver-health and driver-IPC roots to the shared native resolver. Native Engine Authenticode/quarantine helpers remain separate. |
 
 No live malware, downloaded malware repository, standard EICAR file, Defender
 exclusion, service/driver operation, installer execution, machine-wide change,
