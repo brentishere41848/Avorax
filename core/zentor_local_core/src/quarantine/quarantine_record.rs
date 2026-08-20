@@ -9,7 +9,7 @@ pub enum QuarantineStatus {
     Deleted,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 pub struct QuarantineRecord {
     pub quarantine_id: String,

@@ -153,13 +153,20 @@ fn is_recognized_quarantine_artifact_name(name: &str) -> bool {
     if let Some(token) = name.strip_prefix(".metadata_auth_key.tmp-") {
         return is_safe_quarantine_component(token, MAX_QUARANTINE_ID_CHARS);
     }
-    for marker in [".json.auth.tmp-", ".json.tmp-"] {
+    for marker in [
+        ".pending.auth.tmp-",
+        ".pending.tmp-",
+        ".json.auth.tmp-",
+        ".json.tmp-",
+    ] {
         if let Some((id, token)) = name.split_once(marker) {
             return is_safe_quarantine_component(id, MAX_QUARANTINE_ID_CHARS)
                 && is_safe_quarantine_component(token, MAX_QUARANTINE_ID_CHARS);
         }
     }
     for suffix in [
+        ".pending.auth",
+        ".pending",
         ".json.auth.tmp",
         ".json.tmp",
         ".json.auth",
@@ -862,6 +869,10 @@ mod tests {
             ".metadata_auth_key",
             ".metadata_auth_key.tmp-fixture",
             "record.avoraxq",
+            "record.pending",
+            "record.pending.auth",
+            "record.pending.tmp-fixture",
+            "record.pending.auth.tmp-fixture",
             "record.json",
             "record.json.auth",
             "record.json.tmp-fixture",

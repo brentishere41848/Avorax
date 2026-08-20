@@ -33,7 +33,9 @@ vault ACLs or modes to an arbitrary existing directory.
 Before permission changes, Local Core and Guard enumerate a maximum of `65,536`
 directory entries. Every entry must be a non-link regular file with a recognized
 opaque payload, strict metadata, authentication sidecar, metadata key, or staged
-write name. Unknown names, directories, links/reparse points, enumeration
+write/finalization-journal name. Finalization journals use `<id>.pending` and
+`<id>.pending.auth`; UUID-staged variants are also recognized. Unknown names,
+directories, links/reparse points, enumeration
 failure, or an excessive entry count fail visibly before permission mutation.
 This name/shape preflight does not authenticate records; HMAC and schema/path
 validation remain mandatory before lifecycle use.
@@ -74,11 +76,49 @@ not carry the quarantine owner/execute-deny policy into the destination; it
 inherits the destination directory policy and is integrity-checked before
 atomic activation.
 
+Before moving a source, Local Core and Guard write a strict authenticated
+finalization journal. The authentication sidecar is persisted first and the
+`.pending` file is the commit marker. Its record contains the already validated
+ID, original path, opaque payload path, SHA-256, size, detection evidence, and
+action claims. Journal authentication uses a separate HMAC domain from final
+record authentication. The writer reads the committed journal back, verifies
+its exact bytes and HMAC, acquires an exclusive file lock, and keeps that lock
+through source movement, final-record verification, and journal cleanup.
+
 If permission or authenticated-metadata finalization fails after a payload has
-already moved into the vault, cleanup removes only partial metadata and auth
-sidecars. It never deletes the only payload copy. The command fails visibly and
-reports the retained opaque payload path, which may require an administrator to
-inspect or recover before the record can be exposed through normal listing.
+already moved into the vault, cleanup removes only partial final metadata and
+auth sidecars. It never deletes the only payload copy or its authenticated
+journal. The command fails visibly and reports the retained opaque payload path.
+
+Local Core performs bounded recovery before normal quarantine listing:
+
+- Recovery must first acquire the same journal lock without waiting. If Local
+  Core or Guard is still finalizing that ID, listing fails visibly and leaves
+  the source, payload, journal, and sidecars untouched. A crashed writer releases
+  the operating-system lock automatically.
+- An authenticated journal plus an intact payload and absent original source is
+  hardened, size/hash checked, finalized into a current HMAC record, read back,
+  and only then has its journal removed.
+- A journal with no payload is removed only when the original source is still a
+  regular single-link file with the exact recorded size and SHA-256 and no
+  cooperating writer still holds the journal lock.
+- A matching authenticated final record and intact payload permits cleanup of a
+  stale journal or a journal-auth sidecar left by interrupted cleanup.
+- Partial final metadata may be replaced only after journal authentication and
+  payload integrity succeed.
+- Tampered/unsigned/unknown-field journals, filename/ID mismatches, conflicting
+  final records, changed payloads, missing sources, excessive vault entries, or
+  a state containing both original source and isolated payload fail visibly and
+  preserve evidence for operator review.
+
+An orphan journal-auth sidecar with no related state may be removed because no
+move was committed. With related state it is removed only after a current final
+record and its status-appropriate payload state verify. Recovery never treats a
+duplicate source/payload state as completed quarantine and never promises that
+same-principal or administrator filesystem races are impossible. The lock
+coordinates Avorax Local Core and Guard; it is not a security boundary against a
+same-principal or administrator/root process that ignores advisory locks or can
+mutate the vault directly.
 
 Existing bounded metadata, auth-sidecar, and key reads apply these permissions
 before content is consumed. Once an existing record has passed authentication,
@@ -109,6 +149,13 @@ DPAPI-protected and plaintext key files are rejected. The quarantine ID must
 also match the metadata filename, unknown JSON fields are rejected, and Guard
 process-action evidence is validated before Local Core may list, restore, or
 delete the record.
+
+Finalization journals use wrapper format
+`avorax-quarantine-finalization-journal-v1` and HMAC domain
+`avorax-quarantine-finalization-journal-v1\0`. Final records continue to use
+their distinct `avorax-quarantine-record-v2\0` domain. Local Core and Guard use
+the same compatible journal schema so Local Core can finish a Guard-created
+post-launch quarantine after an interrupted metadata write.
 
 Unsigned records are not treated as trusted legacy data. A record with no auth
 sidecar fails visibly. A valid older v1 Local Core or Guard prefix-hash sidecar

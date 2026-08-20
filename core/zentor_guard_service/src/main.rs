@@ -36,6 +36,7 @@ const GUARD_SERVICE_START_WAIT_HINT: Duration = Duration::from_secs(30);
 const QUARANTINE_EXTENSION: &str = "avoraxq";
 const MAX_GUARD_QUARANTINE_COPY_BYTES: u64 = 1024 * 1024 * 1024;
 const MAX_GUARD_HASH_BYTES: u64 = 1024 * 1024 * 1024;
+const MAX_GUARD_QUARANTINE_METADATA_BYTES: u64 = 256 * 1024;
 const MAX_GUARD_QUARANTINE_METADATA_AUTH_BYTES: u64 = 16 * 1024;
 const MAX_GUARD_QUARANTINE_ID_CHARS: usize = 128;
 const MAX_GUARD_QUARANTINE_METADATA_LABEL_CHARS: usize = 256;
@@ -46,6 +47,10 @@ const DEFAULT_GUARD_QUARANTINE_DETECTION_NAME: &str = "Guard detection";
 const DEFAULT_GUARD_QUARANTINE_ENGINE: &str = "guard-service";
 const GUARD_QUARANTINE_AUTH_HMAC_PREFIX: &str = "hmac-sha256:";
 const GUARD_QUARANTINE_AUTH_HMAC_DOMAIN: &[u8] = b"avorax-quarantine-record-v2\0";
+const GUARD_QUARANTINE_FINALIZATION_JOURNAL_FORMAT: &str =
+    "avorax-quarantine-finalization-journal-v1";
+const GUARD_QUARANTINE_FINALIZATION_JOURNAL_AUTH_DOMAIN: &[u8] =
+    b"avorax-quarantine-finalization-journal-v1\0";
 #[cfg(feature = "compat_yara")]
 const GUARD_YARA_SAMPLE_LIMIT_BYTES: u64 = 1_048_576;
 #[cfg(any(feature = "compat_yara", test))]
@@ -162,6 +167,13 @@ struct GuardQuarantineRecord {
     blocked_before_execution: bool,
     process_started: bool,
     process_id: Option<u32>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct GuardQuarantineFinalizationJournal {
+    format: String,
+    record: GuardQuarantineRecord,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -2048,25 +2060,50 @@ fn quarantine_file(
         anyhow::bail!("quarantine source hash changed before move");
     }
     let file_size = metadata.len();
-    let mut last_error: Option<anyhow::Error> = None;
-    ensure_quarantine_payload_destination_absent(&destination)?;
-    for _ in 0..10 {
-        if let Err(error) = regular_guard_file_metadata(path, "quarantine source") {
-            last_error = Some(error);
-            thread::sleep(Duration::from_millis(150));
-            continue;
+    let record = GuardQuarantineRecord {
+        quarantine_id: id.clone(),
+        original_path,
+        quarantine_path,
+        sha256: source_sha256.clone(),
+        file_size,
+        detection_name,
+        engine,
+        action_taken: if process_id.is_some() {
+            "process_stop_requested_and_file_quarantined"
+        } else {
+            "file_quarantined_without_process_stop"
         }
-        avorax_platform_security::ensure_open_file_has_single_link(
-            &source_link_guard,
-            path,
-            "guard quarantine source immediately before move",
-        )?;
-        ensure_quarantine_payload_destination_absent(&destination)?;
-        match fs::rename(path, &destination)
-            .or_else(|_| copy_then_remove_verified(path, &destination, &source_sha256))
-        {
-            Ok(()) => {
-                let finalize_result = (|| -> anyhow::Result<GuardQuarantineRecord> {
+        .to_string(),
+        quarantined_at: Utc::now(),
+        status: QuarantineStatus::Quarantined,
+        user_note: None,
+        source: "guard_service".to_string(),
+        blocked_before_execution: false,
+        process_started: process_id.is_some(),
+        process_id,
+    };
+    ensure_quarantine_payload_destination_absent(&destination)?;
+    let _finalization_journal_lock = write_guard_finalization_journal(&record)?;
+    let mut retain_finalization_journal = false;
+    let quarantine_result = (|| -> anyhow::Result<GuardQuarantineRecord> {
+        let mut last_error: Option<anyhow::Error> = None;
+        for _ in 0..10 {
+            if let Err(error) = regular_guard_file_metadata(path, "quarantine source") {
+                last_error = Some(error);
+                thread::sleep(Duration::from_millis(150));
+                continue;
+            }
+            avorax_platform_security::ensure_open_file_has_single_link(
+                &source_link_guard,
+                path,
+                "guard quarantine source immediately before move",
+            )?;
+            ensure_quarantine_payload_destination_absent(&destination)?;
+            match fs::rename(path, &destination)
+                .or_else(|_| copy_then_remove_verified(path, &destination, &source_sha256))
+            {
+                Ok(()) => {
+                    retain_finalization_journal = true;
                     regular_guard_file_metadata(&destination, "guard quarantine destination")?;
                     harden_guard_quarantine_payload_permissions(&destination)?;
                     let quarantined_sha256 = sha256_file(&destination)?;
@@ -2077,65 +2114,80 @@ fn quarantine_file(
                             )
                         })?;
                     if quarantined_sha256_body != source_sha256_body {
-                        return Err(anyhow::anyhow!(
-                            "guard quarantine payload hash changed during move"
-                        ));
+                        anyhow::bail!("guard quarantine payload hash changed during move");
                     }
-                    let record = GuardQuarantineRecord {
-                        quarantine_id: id.clone(),
-                        original_path: original_path.clone(),
-                        quarantine_path: quarantine_path.clone(),
-                        sha256: quarantined_sha256,
-                        file_size,
-                        detection_name: detection_name.clone(),
-                        engine: engine.clone(),
-                        action_taken: if process_id.is_some() {
-                            "process_stop_requested_and_file_quarantined"
-                        } else {
-                            "file_quarantined_without_process_stop"
-                        }
-                        .to_string(),
-                        quarantined_at: Utc::now(),
-                        status: QuarantineStatus::Quarantined,
-                        user_note: None,
-                        source: "guard_service".to_string(),
-                        blocked_before_execution: false,
-                        process_started: process_id.is_some(),
-                        process_id,
-                    };
                     write_quarantine_record(&record)?;
-                    Ok(record)
-                })();
-                match finalize_result {
-                    Ok(record) => return Ok(record),
-                    Err(error) => {
-                        cleanup_untracked_guard_quarantine_metadata_artifacts(&id)
-                            .with_context(|| {
+                    return Ok(record.clone());
+                }
+                Err(error) => {
+                    match guard_quarantine_artifact_present(
+                        &destination,
+                        "guard quarantine destination after source move failure",
+                    ) {
+                        Ok(true) => {
+                            retain_finalization_journal = true;
+                            return Err(error).with_context(|| {
                                 format!(
-                                    "failed to clean up untracked guard quarantine metadata after finalization failure; payload was not deleted and must be inspected at {}: {error:#}",
+                                    "guard quarantine source move failed and left a destination artifact; authenticated recovery journal was retained at {}",
                                     destination.display()
                                 )
-                            })?;
-                        return Err(error).with_context(|| {
-                            format!(
-                                "guard quarantine finalization failed; payload was not deleted and must be inspected at {}",
-                                destination.display()
-                            )
-                        });
+                            });
+                        }
+                        Err(inspection_error) => {
+                            retain_finalization_journal = true;
+                            return Err(error).with_context(|| {
+                                format!(
+                                    "guard quarantine source move failed and destination absence could not be established; authenticated recovery journal was retained at {}: {inspection_error:#}",
+                                    destination.display()
+                                )
+                            });
+                        }
+                        Ok(false) => {}
                     }
+                    last_error = Some(error);
+                    thread::sleep(Duration::from_millis(150));
                 }
             }
-            Err(error) => {
-                last_error = Some(error);
-                thread::sleep(Duration::from_millis(150));
-            }
         }
-    }
-    match last_error {
-        Some(error) => Err(error),
-        None => Err(anyhow::anyhow!(
-            "guard quarantine failed after retry loop without a recorded cause"
-        )),
+        match last_error {
+            Some(error) => Err(error),
+            None => Err(anyhow::anyhow!(
+                "guard quarantine failed after retry loop without a recorded cause"
+            )),
+        }
+    })();
+    match quarantine_result {
+        Ok(record) => {
+            cleanup_guard_finalization_journal(&id).with_context(|| {
+                format!(
+                    "guard quarantine record was finalized but its recovery journal could not be removed for {}",
+                    destination.display()
+                )
+            })?;
+            Ok(record)
+        }
+        Err(error) if retain_finalization_journal => {
+            cleanup_untracked_guard_quarantine_metadata_artifacts(&id).with_context(|| {
+                format!(
+                    "failed to clean up incomplete guard quarantine metadata after finalization failure; payload and authenticated recovery journal were retained at {}: {error:#}",
+                    destination.display()
+                )
+            })?;
+            Err(error).with_context(|| {
+                format!(
+                    "guard quarantine finalization failed; payload and authenticated recovery journal were retained for bounded Local Core retry at {}",
+                    destination.display()
+                )
+            })
+        }
+        Err(error) => {
+            cleanup_guard_finalization_journal(&id).with_context(|| {
+                format!(
+                    "failed to clean up unused guard quarantine finalization journal after source move failure: {error:#}"
+                )
+            })?;
+            Err(error)
+        }
     }
 }
 
@@ -2314,6 +2366,16 @@ fn ensure_quarantine_payload_destination_absent(path: &Path) -> anyhow::Result<(
     }
 }
 
+fn guard_quarantine_artifact_present(path: &Path, label: &str) -> anyhow::Result<bool> {
+    match fs::symlink_metadata(path) {
+        Ok(_) => Ok(true),
+        Err(error) if error.kind() == io::ErrorKind::NotFound => Ok(false),
+        Err(error) => {
+            Err(error).with_context(|| format!("unable to inspect {label} {}", path.display()))
+        }
+    }
+}
+
 fn cleanup_guard_quarantine_partial_file(path: &Path, label: &str) -> anyhow::Result<()> {
     match fs::remove_file(path) {
         Ok(()) => Ok(()),
@@ -2474,6 +2536,138 @@ fn copy_guard_quarantine_payload_limited<R: Read, W: Write>(
         }
         output.write_all(&buffer[..read])?;
     }
+}
+
+fn write_guard_finalization_journal(record: &GuardQuarantineRecord) -> anyhow::Result<fs::File> {
+    validate_guard_quarantine_record(record)?;
+    if record.status != QuarantineStatus::Quarantined {
+        anyhow::bail!("guard quarantine finalization journal requires quarantined status");
+    }
+    let path = checked_guard_finalization_journal_path(&record.quarantine_id)?;
+    let auth_path = checked_guard_finalization_journal_auth_path(&record.quarantine_id)?;
+    if let Some(parent) = path.parent() {
+        ensure_quarantine_base_directory_path(parent)?;
+    }
+    let journal = GuardQuarantineFinalizationJournal {
+        format: GUARD_QUARANTINE_FINALIZATION_JOURNAL_FORMAT.to_string(),
+        record: record.clone(),
+    };
+    let raw = serde_json::to_string_pretty(&journal)?;
+    let Some(tag) = guard_finalization_journal_auth_tag(&raw, true)? else {
+        anyhow::bail!("guard quarantine finalization journal authentication key unavailable");
+    };
+    write_staged_quarantine_file(
+        &auth_path,
+        format!("{tag}\n").as_bytes(),
+        "guard quarantine finalization journal auth sidecar",
+    )?;
+    if let Err(error) = write_staged_quarantine_file(
+        &path,
+        raw.as_bytes(),
+        "guard quarantine finalization journal",
+    ) {
+        cleanup_guard_quarantine_partial_file(
+            &auth_path,
+            "unused guard quarantine finalization journal auth sidecar",
+        )
+        .with_context(|| {
+            format!(
+                "failed to clean up guard journal auth sidecar after journal write failure: {error:#}"
+            )
+        })?;
+        return Err(error);
+    }
+    let (journal_lock, persisted) = read_locked_bounded_guard_quarantine_text(
+        &path,
+        MAX_GUARD_QUARANTINE_METADATA_BYTES,
+        "guard quarantine finalization journal",
+    )
+    .with_context(|| {
+        format!(
+            "unable to lock persisted guard quarantine finalization journal {}; source was not moved and recovery evidence was retained",
+            path.display()
+        )
+    })?;
+    if persisted != raw {
+        cleanup_guard_finalization_journal(&record.quarantine_id)?;
+        anyhow::bail!("guard quarantine finalization journal changed after write");
+    }
+    if let Err(error) = ensure_guard_finalization_journal_auth_valid(&path, &persisted) {
+        cleanup_guard_finalization_journal(&record.quarantine_id).with_context(|| {
+            format!("failed to clean up invalid guard finalization journal: {error:#}")
+        })?;
+        return Err(error);
+    }
+    Ok(journal_lock)
+}
+
+fn ensure_guard_finalization_journal_auth_valid(path: &Path, raw: &str) -> anyhow::Result<()> {
+    let auth_path = path.with_extension("pending.auth");
+    if !guard_quarantine_metadata_file_present(
+        &auth_path,
+        "guard quarantine finalization journal auth sidecar",
+    )? {
+        anyhow::bail!(
+            "guard quarantine finalization journal auth sidecar is required for {}",
+            path.display()
+        );
+    }
+    let Some(expected) = guard_finalization_journal_auth_tag(raw, false)? else {
+        anyhow::bail!("guard quarantine finalization journal authentication key unavailable");
+    };
+    let actual = read_bounded_guard_quarantine_text(
+        &auth_path,
+        MAX_GUARD_QUARANTINE_METADATA_AUTH_BYTES,
+        "guard quarantine finalization journal auth sidecar",
+    )?
+    .trim()
+    .to_string();
+    if !constant_time_eq(expected.as_bytes(), actual.as_bytes()) {
+        anyhow::bail!(
+            "guard quarantine finalization journal authentication failed for {}",
+            path.display()
+        );
+    }
+    Ok(())
+}
+
+fn guard_finalization_journal_auth_tag(
+    raw: &str,
+    create_key: bool,
+) -> anyhow::Result<Option<String>> {
+    let Some(key) = quarantine_metadata_auth_key(create_key)? else {
+        return Ok(None);
+    };
+    let mut mac = Hmac::<Sha256>::new_from_slice(key.as_bytes()).map_err(|_| {
+        anyhow::anyhow!("invalid guard quarantine finalization journal authentication key")
+    })?;
+    mac.update(GUARD_QUARANTINE_FINALIZATION_JOURNAL_AUTH_DOMAIN);
+    mac.update(raw.as_bytes());
+    let tag = mac.finalize().into_bytes();
+    Ok(Some(format!(
+        "{GUARD_QUARANTINE_AUTH_HMAC_PREFIX}{}",
+        hex_encode(&tag)
+    )))
+}
+
+fn cleanup_guard_finalization_journal(id: &str) -> anyhow::Result<()> {
+    let path = checked_guard_finalization_journal_path(id)?;
+    let auth_path = checked_guard_finalization_journal_auth_path(id)?;
+    cleanup_guard_quarantine_partial_file(&path, "guard quarantine finalization journal")?;
+    cleanup_guard_quarantine_partial_file(
+        &auth_path,
+        "guard quarantine finalization journal auth sidecar",
+    )
+}
+
+fn checked_guard_finalization_journal_path(id: &str) -> anyhow::Result<PathBuf> {
+    validate_guard_quarantine_id(id)?;
+    Ok(quarantine_base()?.join(format!("{id}.pending")))
+}
+
+fn checked_guard_finalization_journal_auth_path(id: &str) -> anyhow::Result<PathBuf> {
+    validate_guard_quarantine_id(id)?;
+    Ok(quarantine_base()?.join(format!("{id}.pending.auth")))
 }
 
 fn write_quarantine_record(record: &GuardQuarantineRecord) -> anyhow::Result<()> {
@@ -2755,6 +2949,34 @@ fn read_bounded_guard_quarantine_text(
         anyhow::bail!("opened {label} {} is not a regular file", path.display());
     }
     read_bounded_guard_utf8_opened_file(file, path, max_bytes, label, &metadata)
+}
+
+fn read_locked_bounded_guard_quarantine_text(
+    path: &Path,
+    max_bytes: u64,
+    label: &str,
+) -> anyhow::Result<(fs::File, String)> {
+    ensure_regular_guard_quarantine_metadata_file(path, label)?;
+    let file = fs::File::open(path)
+        .with_context(|| format!("unable to lock {label} {}", path.display()))?;
+    file.try_lock().map_err(io::Error::from).with_context(|| {
+        format!(
+            "unable to acquire exclusive lock for {label} {}",
+            path.display()
+        )
+    })?;
+    harden_open_guard_quarantine_file_permissions(&file, path, label)?;
+    let metadata = file
+        .metadata()
+        .with_context(|| format!("unable to inspect locked {label} {}", path.display()))?;
+    if !metadata.is_file() {
+        anyhow::bail!("locked {label} {} is not a regular file", path.display());
+    }
+    let reader = file
+        .try_clone()
+        .with_context(|| format!("unable to clone locked {label} handle {}", path.display()))?;
+    let raw = read_bounded_guard_utf8_opened_file(reader, path, max_bytes, label, &metadata)?;
+    Ok((file, raw))
 }
 
 fn guard_quarantine_metadata_file_present(path: &Path, label: &str) -> anyhow::Result<bool> {
@@ -4906,7 +5128,7 @@ mod tests {
     }
 
     #[test]
-    fn guard_quarantine_finalization_failures_preserve_payload_and_clean_metadata() {
+    fn guard_quarantine_finalization_failures_preserve_payload_and_authenticated_journal() {
         let source = include_str!("main.rs");
         let start = source.find("fn quarantine_file(").unwrap();
         let end = source.find("fn reject_symlink_source").unwrap();
@@ -4918,11 +5140,20 @@ mod tests {
         let cleanup_source = &source[cleanup_start..cleanup_end];
 
         assert!(quarantine_source
-            .contains("let finalize_result = (|| -> anyhow::Result<GuardQuarantineRecord>"));
+            .contains("let quarantine_result = (|| -> anyhow::Result<GuardQuarantineRecord>"));
+        assert!(quarantine_source.contains("write_guard_finalization_journal(&record)?"));
+        assert!(quarantine_source.contains("let _finalization_journal_lock"));
         assert!(quarantine_source
             .contains("cleanup_untracked_guard_quarantine_metadata_artifacts(&id)"));
-        assert!(quarantine_source.contains("payload was not deleted and must be inspected"));
-        assert!(quarantine_source.contains("return Err(error)"));
+        assert!(quarantine_source.contains(
+            "payload and authenticated recovery journal were retained for bounded Local Core retry"
+        ));
+        assert!(quarantine_source.contains("cleanup_guard_finalization_journal(&id)"));
+        assert!(quarantine_source.contains("Err(error) if retain_finalization_journal"));
+        assert!(quarantine_source.contains("guard_quarantine_artifact_present("));
+        assert!(quarantine_source.contains(
+            "destination absence could not be established; authenticated recovery journal was retained"
+        ));
         assert!(!cleanup_source.contains("\"untracked guard quarantine payload\""));
         assert!(cleanup_source.contains("\"untracked guard quarantine metadata record\""));
         assert!(cleanup_source.contains("\"untracked guard quarantine metadata temp record\""));
@@ -4936,10 +5167,18 @@ mod tests {
         assert!(cleanup_source.contains("checked_quarantine_record_path(id)"));
         assert!(
             quarantine_source
+                .find("write_guard_finalization_journal(&record)?")
+                .unwrap()
+                < quarantine_source
+                    .find("fs::rename(path, &destination)")
+                    .unwrap()
+        );
+        assert!(
+            quarantine_source
                 .find("fs::rename(path, &destination)")
                 .unwrap()
                 < quarantine_source
-                    .find("let finalize_result = (|| -> anyhow::Result<GuardQuarantineRecord>")
+                    .find("write_quarantine_record(&record)?")
                     .unwrap()
         );
         assert!(
@@ -4976,6 +5215,52 @@ mod tests {
         for path in [metadata, metadata_temp, auth, auth_temp] {
             assert!(!path.exists());
         }
+        std::env::remove_var("AVORAX_GUARD_QUARANTINE_DIR");
+    }
+
+    #[test]
+    fn guard_finalization_journal_is_domain_authenticated_and_tamper_evident() {
+        let _lock = env_lock();
+        let dir = tempdir().unwrap();
+        let base = dir.path().join("quarantine");
+        std::env::set_var("AVORAX_GUARD_QUARANTINE_DIR", &base);
+        let record = guard_fixture_record(dir.path(), "journal-record");
+
+        let journal_lock = write_guard_finalization_journal(&record).unwrap();
+
+        let journal_path = base.join("journal-record.pending");
+        let auth_path = base.join("journal-record.pending.auth");
+        let competing_lock = fs::File::open(&journal_path).unwrap();
+        assert!(competing_lock.try_lock().is_err());
+        drop(competing_lock);
+        drop(journal_lock);
+        let raw = fs::read_to_string(&journal_path).unwrap();
+        let journal: GuardQuarantineFinalizationJournal = serde_json::from_str(&raw).unwrap();
+        assert_eq!(journal.format, GUARD_QUARANTINE_FINALIZATION_JOURNAL_FORMAT);
+        assert_eq!(journal.record.quarantine_id, record.quarantine_id);
+        ensure_guard_finalization_journal_auth_valid(&journal_path, &raw).unwrap();
+        let journal_tag = fs::read_to_string(&auth_path).unwrap();
+        assert!(journal_tag
+            .trim()
+            .starts_with(GUARD_QUARANTINE_AUTH_HMAC_PREFIX));
+        assert_ne!(
+            journal_tag.trim(),
+            quarantine_record_auth_tag(&raw, false).unwrap().unwrap()
+        );
+
+        fs::write(&journal_path, format!("{raw} ")).unwrap();
+        let error = ensure_guard_finalization_journal_auth_valid(
+            &journal_path,
+            &fs::read_to_string(&journal_path).unwrap(),
+        )
+        .unwrap_err();
+        assert!(error
+            .to_string()
+            .contains("finalization journal authentication failed"));
+        assert!(auth_path.exists());
+        cleanup_guard_finalization_journal(&record.quarantine_id).unwrap();
+        assert!(!journal_path.exists());
+        assert!(!auth_path.exists());
         std::env::remove_var("AVORAX_GUARD_QUARANTINE_DIR");
     }
 
@@ -5711,6 +5996,20 @@ mod tests {
         assert!(local_source.contains(
             "const QUARANTINE_AUTH_HMAC_DOMAIN: &[u8] = b\"avorax-quarantine-record-v2\\0\";"
         ));
+        assert_eq!(
+            GUARD_QUARANTINE_FINALIZATION_JOURNAL_AUTH_DOMAIN,
+            b"avorax-quarantine-finalization-journal-v1\0"
+        );
+        assert_eq!(
+            GUARD_QUARANTINE_FINALIZATION_JOURNAL_FORMAT,
+            "avorax-quarantine-finalization-journal-v1"
+        );
+        assert!(local_source.contains("b\"avorax-quarantine-finalization-journal-v1\\0\""));
+        assert!(local_source.contains(
+            "const QUARANTINE_FINALIZATION_JOURNAL_FORMAT: &str = \"avorax-quarantine-finalization-journal-v1\";"
+        ));
+        assert!(local_source.contains("struct QuarantineFinalizationJournal"));
+        assert!(local_source.contains("self.recover_pending_finalizations()?"));
         assert!(local_source.contains("\"guard_service\""));
         assert!(local_source.contains("process_stop_requested_and_file_quarantined"));
         assert!(local_source.contains("file_quarantined_without_process_stop"));

@@ -825,10 +825,40 @@ to resolve inside the vault. Unsigned or untracked files are not promoted into
 valid quarantine records.
 
 A finalization failure after payload movement is not converted into implicit
-deletion. Local Core and Guard clean only incomplete metadata/auth artifacts,
-retain the sole opaque payload, and return a visible error containing its vault
-path. The retained payload is deliberately not listed as an authenticated
-record; administrator recovery tooling remains follow-up work.
+deletion. Before mutation, Local Core and Guard persist a strict journal plus a
+domain-separated HMAC sidecar. They clean only incomplete final metadata/auth
+artifacts, retain the sole opaque payload and authenticated journal, and return
+a visible error containing its vault path. If a copy fallback reports failure
+but leaves a destination artifact, or destination absence cannot be proved, the
+journal is retained rather than incorrectly classified as unused.
+
+After the `.pending` commit marker is written, its writer reads back and
+authenticates the exact persisted bytes, acquires an exclusive operating-system
+file lock, and holds it until finalization or fail-visible return. Recovery uses
+the same non-blocking lock. An active Local Core or Guard transaction therefore
+cannot be mistaken for an abandoned pre-move journal; a crashed process releases
+the lock automatically. The lock coordinates cooperating Avorax processes and
+does not elevate same-principal or administrator/root filesystem mutation out of
+the trusted computing base.
+
+Local Core's list boundary performs a bounded 65,536-entry recovery pass. It
+authenticates and strictly parses each journal, binds filename/record ID and the
+expected opaque payload path, checks record claims, verifies payload size/hash
+and single-link hardening, writes and re-verifies current final metadata, and
+then removes the journal. A pre-move journal may be discarded only after the
+recovery lock is held, no payload/final metadata exists, and the original source
+still has the recorded size, hash, regular-file kind, and one link. A stale
+journal or orphan journal auth sidecar may be cleaned after the complete final record and
+status-appropriate payload state authenticate. Tampering, unknown fields,
+missing authentication, record conflicts, changed payloads, partial related
+state, or both source and payload fail visibly without deleting evidence.
+
+This recovery closes the checkpoint-2184 untracked-payload listing gap for
+authenticated journals; it is not a general salvage tool for historical
+unsigned payloads. Recovery runs on Local Core list access, so an installed
+Guard-only process does not independently finalize journals until Local Core is
+invoked. Installed LocalSystem/DPAPI/UI mediation and crash-at-every-instruction
+package E2E still require a disposable elevated Windows host.
 
 Residual boundaries remain. Unit and integration tests exercise the current
 Windows process identity and temporary filesystem, while Linux CI supplies the
