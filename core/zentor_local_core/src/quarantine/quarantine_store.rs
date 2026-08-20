@@ -1981,8 +1981,11 @@ fn harden_open_quarantine_file_permissions(
     security: ExclusiveCopySecurity,
 ) -> Result<()> {
     #[cfg(unix)]
-    avorax_platform_security::harden_unix_private_file(file, path)
-        .with_context(|| format!("failed to enforce owner-only permissions for {label}"))?;
+    {
+        let _ = security;
+        avorax_platform_security::harden_unix_private_file(file, path)
+            .with_context(|| format!("failed to enforce owner-only permissions for {label}"))?;
+    }
     #[cfg(windows)]
     {
         let _ = file;
@@ -3918,7 +3921,10 @@ mod tests {
         .unwrap();
         let store = QuarantineStore::with_base(base.clone());
 
-        let key = store.metadata_auth_key(true).unwrap();
+        let key = store
+            .metadata_auth_key(true)
+            .unwrap()
+            .expect("metadata authentication key should be created");
 
         assert!(!key.trim().is_empty());
         assert_eq!(

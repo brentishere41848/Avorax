@@ -13,13 +13,50 @@ Lead-engineer product-hardening pass across the Avorax repository. Goal is to mo
 - The bundled native ML model is treated as development-only unless release metadata and gates prove production readiness.
 - MSI/EXE installers are first-install/repair/recovery/offline paths. Normal in-app updates should use verified `.aup` packages.
 
+## 2026-08-20 continuation checkpoint 2185
+
+- Added a dedicated `Unix quarantine permission runtime` job to Avorax CI on
+  `ubuntu-24.04`. The job pins Rust `1.96.1`, uses `Cargo.lock`, fails fast, and
+  has a 30-minute bound.
+- The hosted scope is deliberately narrow and auditable: all five shared
+  platform tests plus the two Unix permission-routing tests in Local Core and
+  the two matching Guard tests. It installs no system packages and does not run
+  service, driver, malware, or machine-wide operations.
+- Added a dependency-free source contract that requires the pinned actions,
+  runner, timeout, five locked Cargo invocations, exact test filters, and
+  fail-fast shell mode. It rejects `continue-on-error`, `|| true`, `apt-get`, and
+  `curl` in the job.
+- Local verification passed: source contracts `621/621`, Windows platform tests
+  `6/6`, `git diff --check`, branding, product-copy, and the no-malware-binary
+  gate. The first no-malware command correctly rejected the WindowsApps Python
+  alias as a reparse path; resolving the concrete interpreter through
+  `sys.executable` and rerunning passed.
+- First hosted run `32319783686`, job `96279486707`, passed all five shared Unix
+  tests and then failed compiling the first Local Core filter because the
+  Unix-only legacy metadata-key regression called `.trim()` on
+  `Option<String>`. Guard was skipped. This failure is retained and is not
+  counted as success.
+- Repaired the test to explicitly require `Some(key)`, gated `OsString` and
+  `mpsc` imports to Windows, and consumed the Unix-only unused action
+  discriminator. The source contract pins the explicit key expectation. After
+  repair, rustfmt, source contracts `621/621`, and focused Local Core quarantine
+  tests `112/112` pass locally.
+- Replacement run `32320253194` passed all five Avorax CI jobs. Unix job
+  `96280869830` passed all Unix steps: shared platform `5/5`, Local Core `1+1`,
+  and Guard `1+1`. The log contains no selected warning/error lines. Native Unix
+  quarantine permission runtime is
+  verified hosted on repair commit
+  `029a381af8fb86d1261a72845b61675a194e8447`; installed Windows and documented
+  filesystem/principal limitations are unchanged.
+
 ## 2026-08-20 continuation checkpoint 2184
 
 - Added the shared `avorax_platform_security` crate and moved Local Core and Guard quarantine ownership, exact permission readback, open-handle identity, reparse/link rejection, bounded vault-shape checks, and platform-specific hardening behind one fail-closed implementation. Windows uses the process-token SID and denies execute only on opaque payloads; Unix requires the effective UID/GID and exact `0700`/`0600` modes.
 - Explicit quarantine overrides now require a dedicated `Quarantine` leaf, Windows Guard rejects UNC roots, production cannot call the arbitrary-base test constructor, pre-existing metadata/auth/key files are hardened before bounded reads, authenticated legacy payloads are hardened only after validation, and finalization failures retain the sole opaque payload with a visible recovery path. Local tests use thread-local temporary vaults instead of ProgramData.
 - Local verification passed: platform `6/6`, focused Local Core quarantine `112/112`, focused Guard quarantine `47/47`, complete Local Core `517/517`, complete Guard `223/223`, Rust workspace `1,435/1,435`, source contracts `620/620`, central verifier `219/219` in `618.0s`, independent full-suite report validation, strict affected-crate Clippy, formatting, dependency/SBOM, branding, safety, protection, false-positive, performance, and diff gates. The pre-existing ProgramData vault stayed at `16,072` files and `4,522,733` bytes; its historical record provenance was not individually audited and no file was deleted.
 - GitHub implementation head `fc287d91c792be74e45ab3204831b00d6d9cd1bf` passed Avorax CI run `32315144870`. Desktop Packages push run `32315126623` and pull-request run `32315144889` passed package contracts, Linux x64 DEB/tar, Windows x64 MSI/EXE, macOS arm64/x64 DMG, and consolidated checksums. Branch prerelease publication was intentionally skipped. The Linux jobs prove native release compilation and package verification, not Unix-specific permission runtime tests; installed LocalSystem/DPAPI/ACL/service/UI E2E also remains pending.
-- A later evidence-head Desktop Packages run `32316236496` failed honestly in macOS x64 before Avorax compilation: CocoaPods tried to clone `https://cdn.cocoapods.org/` as a Git repository and returned `repository not found`. The same run's Windows, Linux, and macOS arm64 jobs passed, and the previous x64 job passed, exposing dependence on runner CocoaPods state rather than an Avorax source failure. The workflow now uses a fresh architecture-specific `CP_HOME_DIR` below `RUNNER_TEMP`, explicitly initializes `trunk` with `pod repo add-cdn`, rejects pre-existing/link state, and exports the checked location to later steps. Focused source coverage and all `24` packaging tests pass locally with `3` expected Windows symlink skips. The failed run remains audit evidence and is not counted as success; replacement-head package jobs are required before merge.
+- A later evidence-head Desktop Packages run `32316236496` failed honestly in macOS x64 before Avorax compilation: CocoaPods tried to clone `https://cdn.cocoapods.org/` as a Git repository and returned `repository not found`. The same run's Windows, Linux, and macOS arm64 jobs passed, and the previous x64 job passed, exposing dependence on runner CocoaPods state rather than an Avorax source failure. The workflow now uses a fresh architecture-specific `CP_HOME_DIR` below `RUNNER_TEMP`, explicitly initializes `trunk` with `pod repo add-cdn`, rejects pre-existing/link state, and exports the checked location to later steps. Focused source coverage and all `24` packaging tests pass locally with `3` expected Windows symlink skips. The failed run remains audit evidence and is not counted as success.
+- Replacement head `7156936ba714b66b6ca88140d48d81697ecf49e4` passed Avorax CI `32317397484` plus Desktop Packages push/PR runs `32317394123` and `32317397452`. The isolated CocoaPods step passed for arm64 and x64 in both package runs. PR `#36` merged as `a254689666f01159d8d0a67001c1774fcc38628f`; main CI `32318477688` and Desktop Packages `32318477650` passed all expected jobs, with prerelease publication intentionally skipped.
 
 ## 2026-07-20 continuation checkpoint 2179
 

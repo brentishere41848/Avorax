@@ -6,10 +6,36 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
 
 ## Current Commit
 
-- Checkpoint 2184 implementation commit: `fc287d91c792be74e45ab3204831b00d6d9cd1bf` in PR `#36`.
-- Current public release tag: `v0.1.15-beta.3`, published as a prerelease on 2026-07-20 with independently verified checksums. Checkpoints 2178-2184 are source hardening and do not create a new release tag.
+- Checkpoint 2184 merged as `a254689666f01159d8d0a67001c1774fcc38628f`
+  through PR `#36`. Checkpoint 2185 native Unix runtime CI is in progress on a
+  branch based on that merge.
+- Current public release tag: `v0.1.15-beta.3`, published as a prerelease on 2026-07-20 with independently verified checksums. Checkpoints 2178-2185 are source hardening and do not create a new release tag.
 
 ## Latest Checkpoint Evidence - 2026-08-20
+
+- Current native Unix quarantine permission CI pass: checkpoint 2185 adds a
+  bounded Ubuntu 24.04 job to the normal Avorax CI workflow. It pins Rust
+  `1.96.1`, uses the locked workspace, fails on the first command error, and has
+  a 30-minute job timeout. The job is scoped to nine checkpoint-specific tests:
+  five shared platform tests, two Local Core permission-routing tests, and two
+  Guard permission-routing tests. A dependency-free source contract prevents
+  silent removal, unpinned action drift, `continue-on-error`, `|| true`, package
+  installation, or an unbounded job. First hosted run `32319783686` failed in
+  job `96279486707`: all five shared tests passed, then Local Core exposed a
+  Unix-only test compile error by calling `.trim()` on `Option<String>`; Guard
+  was consequently skipped. The test now explicitly requires the generated key,
+  Windows-only imports are correctly gated, and the Unix permission helper
+  consumes its platform-irrelevant action discriminator without warning. After
+  repair, local evidence passes Windows platform `6/6`, Local Core quarantine
+  `112/112`, source contracts `621/621`, rustfmt, `git diff --check`, branding,
+  product-copy, and no-malware-binary gates. Replacement run `32320253194`
+  completed successfully across all five Avorax CI jobs; Unix job `96280869830`
+  passed shared `5/5`, Local Core `1+1`, and Guard `1+1` native Ubuntu tests with
+  every Unix job step successful. The Unix permission
+  runtime contract is therefore **verified hosted** on repair commit
+  `029a381af8fb86d1261a72845b61675a194e8447`; the failed run remains retained
+  and is not counted as success. Evidence is recorded in
+  `docs/reports/checkpoint-2185-unix-quarantine-runtime-ci.md`.
 
 - Current Ultracode cross-platform quarantine permission pass: checkpoint 2184
   replaces separate `icacls.exe`/environment-account paths with one shared
@@ -34,8 +60,13 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
   prerelease publication was intentionally skipped. A later evidence-head run
   `32316236496` failed in macOS x64 before Avorax compilation because CocoaPods
   treated its CDN URL as a Git repository. The failed run is retained and not
-  counted as success. The package workflow now initializes an isolated explicit
-  CocoaPods CDN source and must pass on the replacement head before merge.
+  counted as success. Replacement head `7156936ba714b66b6ca88140d48d81697ecf49e4`
+  passed Avorax CI `32317397484` plus Desktop Packages push/PR runs
+  `32317394123` and `32317397452`; the isolated CocoaPods step passed on both Mac
+  architectures in both package runs. PR `#36` merged as
+  `a254689666f01159d8d0a67001c1774fcc38628f`. Main CI `32318477688` and Desktop
+  Packages `32318477650` then passed, including package contracts, Linux,
+  Windows MSI/EXE, both Mac DMGs, and checksums.
   Native Unix permission runtime tests and installed LocalSystem/DPAPI/ACL/
   service/UI E2E remain pending; no encryption, secure-erase, kernel,
   pre-execution, or production detection-rate claim is made.

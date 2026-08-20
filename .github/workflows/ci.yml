@@ -66,6 +66,53 @@ jobs:
         working-directory: services/api
         run: cargo test
 
+  quarantine-unix:
+    name: Unix quarantine permission runtime
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@fa04a1451ff1842e2626ccb99004d0195b455a88
+        with:
+          toolchain: 1.96.1
+
+      - name: Test shared Unix permission engine
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo test --locked \
+            --manifest-path core/avorax_platform_security/Cargo.toml \
+            -- --test-threads=1
+
+      - name: Test Local Core Unix permission routing
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo test --locked \
+            --manifest-path core/zentor_local_core/Cargo.toml \
+            quarantine_artifacts_are_owner_only_and_non_executable_on_unix \
+            -- --test-threads=1
+          cargo test --locked \
+            --manifest-path core/zentor_local_core/Cargo.toml \
+            list_repairs_existing_quarantine_artifact_modes_on_unix \
+            -- --test-threads=1
+
+      - name: Test Guard Unix permission routing
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo test --locked \
+            --manifest-path core/zentor_guard_service/Cargo.toml \
+            guard_quarantine_artifacts_are_owner_only_and_non_executable_on_unix \
+            -- --test-threads=1
+          cargo test --locked \
+            --manifest-path core/zentor_guard_service/Cargo.toml \
+            guard_auth_reads_repair_existing_private_modes_on_unix \
+            -- --test-threads=1
+
   flutter:
     name: Flutter client and protocol
     runs-on: windows-latest
