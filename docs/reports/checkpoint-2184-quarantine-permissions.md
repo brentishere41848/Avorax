@@ -126,18 +126,34 @@ fixtures were confined to temporary directories. The structured verifier report
 is `.verification/2184-small-threat-mvp-report.json` and is intentionally not
 committed.
 
+## Hosted Verification
+
+Implementation head `fc287d91c792be74e45ab3204831b00d6d9cd1bf` in PR `#36`
+passed Avorax CI run `32315144870`: branding/copy, Flutter/protocol, Rust Local
+Core/Guard, and security/protection/performance jobs all completed successfully.
+Desktop Packages push run `32315126623` and pull-request run `32315144889` both
+passed package contracts, Linux x64 DEB/tar, Windows x64 MSI/EXE, macOS
+arm64/x64 DMG, and consolidated checksum jobs. Prerelease publication was
+intentionally skipped by branch policy because this checkpoint is not a release
+tag.
+
+The Ubuntu 24.04 jobs natively compiled Local Core and Guard and verified the
+Linux packages. The current package workflow does not execute Unix-specific
+permission unit tests, so native Unix runtime permission behavior remains
+partial rather than being inferred from a successful package build.
+
 ## Classification
 
 | Classification | Control or engine | Evidence and boundary |
 |---|---|---|
 | Verified locally | Shared Windows permission engine | Process-token SID, exact owner/protected DACL readback, payload execute deny, reparse/wrong-kind rejection, and same-file handle identity have runtime regressions. |
-| Verified locally | Shared Unix permission engine | Effective UID/GID, descriptor identity, exact `0700`/`0600`, ownership transfer, and fail-closed mismatch behavior compile and pass platform regressions; native hosted Unix runtime remains pending. |
+| Partial | Shared Unix permission engine | Effective UID/GID, descriptor identity, exact `0700`/`0600`, ownership transfer, and fail-closed mismatch behavior have source regressions, cross-target checks, and a native Ubuntu release build. The hosted package workflow does not execute the Unix-only runtime tests. |
 | Verified locally | Local Core quarantine lifecycle | Focused `112/112`, complete `517/517`, safe quarantine/restore/delete smokes, legacy migration, finalization retention, and temporary test-vault isolation pass. |
 | Verified locally | Guard quarantine lifecycle | Focused `47/47`, complete `223/223`, shared metadata/permission interoperability, process evidence, and root preflight pass. |
 | Verified locally | Repository regression boundary | Rust workspace `1,435/1,435`, source contracts `620/620`, central verifier `219/219`, independent report validation, lint, format, dependency, branding, safety, and performance gates pass. |
 | Partial | Installed Windows product | Installed LocalSystem owner/DACL/DPAPI behavior, unprivileged UI-to-service mediation, repair/upgrade, package install/uninstall, and click-through UI E2E require a disposable elevated Windows host. |
-| Partial | Hosted cross-platform evidence | Linux CI must run the checkpoint-specific Unix tests and clean workspace build on the pushed head. Windows/macOS/Linux package jobs must also pass before hosted verification is claimed. |
-| Disabled or blocked | Full Local Core Linux cross-check on this Windows host | Compilation reaches `tract-linalg` and requires unavailable `x86_64-linux-gnu-gcc`. No machine-wide cross compiler was installed; native Ubuntu CI is the prerequisite. |
+| Verified hosted | Cross-platform package build boundary | Runs `32315126623` and `32315144889` independently passed Linux x64 DEB/tar, Windows x64 MSI/EXE, macOS arm64/x64 DMG, and consolidated checksums for implementation head `fc287d91c792be74e45ab3204831b00d6d9cd1bf`. This is package build/inspection evidence, not installation or runtime protection proof. |
+| Disabled or blocked | Full Local Core Linux runtime cross-check | This Windows host reaches `tract-linalg` but lacks `x86_64-linux-gnu-gcc`; no machine-wide cross compiler was installed. Native Ubuntu package compilation passes, but the current workflow does not run the full Local Core or Unix permission test suites. |
 | Partial | Retained payload recovery | A finalization failure preserves the sole opaque payload and reports its path, but a dedicated authenticated recovery workflow is not yet implemented. |
 | Partial | Pre-existing ProgramData vault provenance | The 5,357 record-shaped sets were preserved exactly as requested. Count and total-byte baselines stayed stable after test isolation, but each historical record has not been provenance-reviewed; cleanup requires an explicit authenticated operator action. |
 | Technically limited | Same-principal and privileged attackers | Portable user-mode permissions do not isolate data from another process running as the same SID/UID. Administrators, LocalSystem, and root remain trusted. |

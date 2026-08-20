@@ -6,7 +6,7 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
 
 ## Current Commit
 
-- Current checkpoint commit: this working tree; run `git log -1 --oneline` after commit for the exact SHA.
+- Checkpoint 2184 implementation commit: `fc287d91c792be74e45ab3204831b00d6d9cd1bf` in PR `#36`.
 - Current public release tag: `v0.1.15-beta.3`, published as a prerelease on 2026-07-20 with independently verified checksums. Checkpoints 2178-2184 are source hardening and do not create a new release tag.
 
 ## Latest Checkpoint Evidence - 2026-08-20
@@ -27,8 +27,12 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
   evidence, and the central verifier/report-validator (`219/219`, no
   failures/skips, `618.0s`) pass. The real ProgramData vault remained exactly
   `16,072` files and `4,522,733` bytes; nothing was deleted. Evidence is recorded
-  in `docs/reports/checkpoint-2184-quarantine-permissions.md`. Hosted Linux/
-  package evidence and installed LocalSystem/DPAPI/ACL/service/UI E2E remain
+  in `docs/reports/checkpoint-2184-quarantine-permissions.md`. Hosted Avorax CI
+  run `32315144870` passed, and Desktop Packages push run `32315126623` plus
+  pull-request run `32315144889` passed package contracts, Linux x64 DEB/tar,
+  Windows x64 MSI/EXE, macOS arm64/x64 DMG, and checksum consolidation. Branch
+  prerelease publication was intentionally skipped. Native Unix permission
+  runtime tests and installed LocalSystem/DPAPI/ACL/service/UI E2E remain
   pending; no encryption, secure-erase, kernel, pre-execution, or production
   detection-rate claim is made.
 
