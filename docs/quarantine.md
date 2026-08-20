@@ -125,10 +125,21 @@ disposable elevated-host E2E pass before production release. In the portable
 user-mode beta, another process running under the same SID/UID shares the vault
 principal; permission hardening alone is not process isolation.
 
-Quarantine removes and secures the detected path; it does not enumerate all
-hard links to the same file across a volume. A pre-existing alternate hard link
-can therefore remain accessible and must be detected as its own path. Avorax
-does not report that case as volume-wide neutralization.
+Quarantine accepts a source only when the operating-system link count read from
+an opened file handle is exactly one. Local Core and Guard check before the
+move, check the still-open copy source again before removing it, and reject a
+moved or copied vault payload before permission changes or record finalization
+if its link count is no longer one. Existing vault entries are subject to the
+same rule before permission repair. A pre-existing multi-linked source fails
+visibly and remains in place; Avorax does not create a quarantine record for it.
+
+This policy does not enumerate or remove every directory entry for a file
+across a volume. A same-principal or administrator/root process may also race a
+new hard link between the final count check and a path mutation. Post-move
+payload validation catches a link visible before record finalization, but the
+complete operation is not a filesystem transaction. Alternate paths must still
+be scanned as separate targets, and Avorax does not claim volume-wide
+neutralization.
 
 ## Restore, Delete, And Allowlist
 

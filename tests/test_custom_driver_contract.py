@@ -12544,6 +12544,100 @@ def test_shared_quarantine_platform_permissions_are_bounded_and_verified():
     assert "windows_security_paths_are_bounded_and_reject_nul" in source
 
 
+def test_quarantine_hard_link_policy_is_handle_based_and_fail_closed():
+    platform = read(PLATFORM_SECURITY)
+    local = read(LOCAL_QUARANTINE_STORE)
+    guard = read(GUARD_MAIN)
+    platform_production = platform.split("#[cfg(test)]")[0]
+    local_production = local.split("#[cfg(test)]\nmod tests")[0]
+    guard_production = guard.split("#[cfg(test)]")[0]
+    windows_file_hardening = platform_production[
+        platform_production.index("pub fn harden_windows_quarantine_file"):
+        platform_production.index("fn windows_token_user_sid")
+    ]
+    local_quarantine = local_production[
+        local_production.index("pub fn quarantine_file(&self"):
+        local_production.index("pub fn list(&self)")
+    ]
+    guard_quarantine = guard_production[
+        guard_production.index("fn quarantine_file("):
+        guard_production.index("fn reject_symlink_source")
+    ]
+    local_copy = local_production[
+        local_production.index("fn copy_then_remove_verified"):
+        local_production.index("fn ensure_quarantine_payload_destination_absent")
+    ]
+    guard_copy = guard_production[
+        guard_production.index("fn copy_then_remove_verified"):
+        guard_production.index("fn ensure_quarantine_payload_destination_absent")
+    ]
+
+    assert "pub fn ensure_open_file_has_single_link" in platform_production
+    assert "metadata.nlink()" in platform_production
+    assert "info.nNumberOfLinks" in platform_production
+    assert "GetFileInformationByHandle" in platform_production
+    assert "hard-link count is {link_count}" in platform_production
+    assert "quarantine requires exactly one filesystem link" in platform_production
+    assert "opened_file_hard_link_count_must_be_exactly_one" in platform
+    assert "quarantine_directory_preflight_rejects_hard_linked_entries" in platform
+    assert "private_file_hardening_rejects_hard_linked_payload" in platform
+    assert (
+        platform_production.index(
+            'ensure_open_file_has_single_link(file, path, "private file")'
+        )
+        < platform_production.index("let owned = enforce_unix_opened_owner")
+    )
+    assert (
+        windows_file_hardening.index(
+            'ensure_open_file_has_single_link(file, path, "quarantine file")'
+        )
+        < windows_file_hardening.index("let sid = current_windows_process_sid()?")
+    )
+
+    for quarantine_source, open_marker, move_marker, post_marker, record_marker in (
+        (
+            local_quarantine,
+            'open_single_link_quarantine_file(path, "quarantine source")',
+            "fs::rename(path, &quarantine_path)",
+            "harden_quarantine_payload_permissions(&quarantine_path)?",
+            "self.write_record(&record)?",
+        ),
+        (
+            guard_quarantine,
+            'open_single_link_guard_file(path, "quarantine source")',
+            "fs::rename(path, &destination)",
+            "harden_guard_quarantine_payload_permissions(&destination)?",
+            "write_quarantine_record(&record)?",
+        ),
+    ):
+        assert quarantine_source.index(open_marker) < quarantine_source.index(move_marker)
+        assert quarantine_source.index(move_marker) < quarantine_source.index(post_marker)
+        assert quarantine_source.index(post_marker) < quarantine_source.index(record_marker)
+
+    for copy_source, source_marker, removal_marker, cleanup_marker in (
+        (
+            local_copy,
+            "quarantine copy source before removal",
+            "fs::remove_file(source)",
+            "copied quarantine destination",
+        ),
+        (
+            guard_copy,
+            "guard quarantine copy source before removal",
+            "fs::remove_file(source)",
+            "copied guard quarantine destination",
+        ),
+    ):
+        assert "let source_file =" in copy_source
+        assert copy_source.index(source_marker) < copy_source.index(removal_marker)
+        assert "original was preserved" in copy_source
+        assert cleanup_marker in copy_source
+
+    for source in (local, guard):
+        assert "quarantine_rejects_hard_linked_source_before_move" in source
+        assert "copy_fallback_rejects_hard_linked_source" in source
+
+
 def test_quarantine_components_use_shared_permissions_without_acl_subprocesses():
     local = read(LOCAL_QUARANTINE_STORE)
     guard = read(GUARD_MAIN)
@@ -24943,11 +25037,13 @@ def test_ci_runs_native_unix_quarantine_permission_runtime_contracts():
         "list_repairs_existing_quarantine_artifact_modes_on_unix",
         "guard_quarantine_artifacts_are_owner_only_and_non_executable_on_unix",
         "guard_auth_reads_repair_existing_private_modes_on_unix",
+        "hard_link",
         "-- --test-threads=1",
     ]:
         assert marker in job
 
-    assert job.count("cargo test --locked") == 5
+    assert job.count("cargo test --locked") == 7
+    assert job.count("hard_link") == 2
     assert job.count("set -euo pipefail") == 3
     assert "continue-on-error" not in job
     assert "|| true" not in job
