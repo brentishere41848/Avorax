@@ -6,18 +6,47 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
 
 ## Current Commit
 
-- Checkpoint 2188 merged as `5dee34d7c1737e87ea7612bb4b873e2f6c06c331`
-  through PR `#40`. Checkpoint 2189 implementation head
-  `d8ff525c362003a5396258ad8ffaeb51741b9387` is published in draft PR `#41`
-  on branch `agent/checkpoint-2189-process-enumeration-evidence` and has exact-
-  head local, CI, native Ubuntu, and cross-platform package evidence.
+- Checkpoint 2189 merged through PR `#41` as
+  `6ca2e61c1360a92b0077b3cfe4f06a2f3fc4a522`. Checkpoint 2190 implementation
+  head `a928aa0297cadeedd002a4e84cf937250de6bf3b` is tracked by PR `#42` on branch
+  `agent/checkpoint-2190-native-windows-process-enumeration` and has exact-head
+  local, CI, native Ubuntu, and cross-platform package evidence.
 - Current public release tag: `v0.1.15-beta.3`, published as a prerelease on
-  2026-07-20 with independently verified checksums. Checkpoints 2178-2189 are
+  2026-07-20 with independently verified checksums. Checkpoints 2178-2190 are
   source hardening and do not create a new release tag.
 
 ## Latest Checkpoint Evidence - 2026-08-20
 
-- Current process-enumeration evidence pass: checkpoint 2189 prevents Guard's
+- Current native Windows process-enumeration pass: checkpoint 2190 removes the
+  WindowsPowerShell/CIM child process from every Guard snapshot. An isolated
+  Win32 module uses Toolhelp, limited process-query rights, and
+  `QueryFullProcessImageNameW`; RAII closes all successful handles. PID records
+  remain capped at `65,536`, one 32,768-code-unit buffer is reused, collection
+  has a two-second query budget, and zero limits fail before Win32 use.
+  Exited-PID churn is distinct from access denial; access/query/path/snapshot,
+  budget, record, and empty-snapshot gaps still prevent `ok:true`.
+  Final release finite-watch timings were `185.9ms`, `72.2ms`, and `66.4ms`,
+  compared with `1,150.3ms`, `812.0ms`, and `762.7ms` for the prior helper on
+  this host. All final native runs returned
+  `watchCompletedWithCoverageGaps`, `ok:false`, and 290 gap occurrences over
+  two snapshots, with protected-process access denial as the first detail.
+  These are observation gaps, not threats or complete-coverage evidence.
+  Focused collection passes `14/14`, Guard `239/239`, the locked workspace
+  `1,471/1,471`, source contracts `626/626`, strict Clippy, rustfmt, parser
+  checks, and release build. The definitive central verifier and full-report
+  validator pass `220/220` in `687.6s`. Exact implementation head
+  `a928aa0297cadeedd002a4e84cf937250de6bf3b` passes Avorax CI `32356686816`;
+  Ubuntu job `96387285689` passes the exact filter `9/9`. Desktop Packages push
+  `32356656322` and PR `32356686469` pass Windows MSI/EXE, Linux DEB/tar,
+  macOS arm64/x64 DMGs, and consolidation; publish is skipped. `Cargo.lock` is
+  unchanged and no dependency version was added. Read-only inventory confirms
+  the ProgramData vault remains exactly `16,072` files and `4,522,733` bytes.
+  Installed LocalSystem visibility, protected processes, between-poll starts,
+  macOS Guard enumeration, kernel interception, and pre-execution blocking
+  remain partial, technically limited, or disabled. Evidence is maintained in
+  `docs/reports/checkpoint-2190-native-windows-process-enumeration.md`.
+
+- Prior process-enumeration evidence pass: checkpoint 2189 prevents Guard's
   finite watcher from returning clean success after Windows CIM or Linux procfs
   records could not be observed. Collection gaps use a saturating count, one
   512-character diagnostic, a 65,536-record ceiling, strict Windows JSON, and

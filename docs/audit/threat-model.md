@@ -972,3 +972,48 @@ image before execution, replace Defender, establish a production detection
 rate, or prove installed LocalSystem visibility, event-log ACLs, shutdown, UI
 mediation, and performance. Those installed checks require a disposable
 elevated Windows host.
+
+## Checkpoint 2190 Native Windows Process Collector Boundary
+
+Launching WindowsPowerShell and CIM on every process snapshot added a helper
+process, script encoding, JSON serialization/parsing, external command output,
+and startup latency to a 750 ms polling loop. Checkpoint 2190 removes that
+Windows collection path. Guard now calls the documented Toolhelp and process
+image APIs through the locked `windows-sys` crate, without ambient tool lookup,
+script execution, network input, or helper output parsing.
+
+The native FFI boundary is isolated in one Windows-only module. It requests
+only `PROCESS_QUERY_LIMITED_INFORMATION`, checks every Win32 result before use,
+reads `GetLastError` immediately after failures, validates returned character
+counts, and owns each successful handle until RAII cleanup. Memory is bounded by
+one 32,768-code-unit image buffer and at most 65,536 PID records. A two-second
+budget is checked between image queries; record and time exhaustion become
+coverage gaps rather than truncation disguised as complete evidence.
+
+Process churn and unavailable evidence are intentionally different. An
+`ERROR_INVALID_PARAMETER` for a non-kernel PID is treated as a process that
+exited between snapshot and query. Access denial, image query failure,
+unexpected snapshot termination, unsafe/missing image paths, and all resource
+limits are incomplete coverage. PIDs 0 and 4 are the only explicit kernel
+exclusions. A zero-row result still becomes a gap because the running Guard
+should observe itself.
+
+The operating system, `windows-sys` ABI definitions, and the process token are
+inside this collector's trusted computing base. The collector does not elevate,
+open processes for mutation, inject code, suspend or terminate a process, or
+alter Windows security. Process termination remains a separate policy action
+using the existing checked bounded command runner after a confirmed verdict.
+
+Protected processes can deny limited queries. A process can start and exit
+between polls, one native call cannot be cancelled mid-call, and same-path PID
+reuse can remain indistinguishable. The two-second budget is therefore a
+between-call work bound, not a hard kernel-call deadline. These conditions
+produce partial evidence and never a complete-coverage claim. Stronger timing
+or visibility claims require an approved OS event source or a production-signed
+installed driver with authenticated IPC and dedicated validation.
+
+The final non-elevated release watch returned `ok:false` with 290 gap
+occurrences across two snapshots and first detail `Access is denied`. That is
+expected user-mode limitation evidence, not 290 threats. The collector is much
+faster than the removed helper on this host, but it remains post-launch
+observation and does not replace Defender or establish pre-execution blocking.
