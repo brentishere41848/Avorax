@@ -6,13 +6,12 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
 
 ## Current Commit
 
-- Checkpoint 2191 implementation
-  `67e067d2d74d7561c4a48269284702ca50f1b1a1` and evidence
-  `7a48c013a126e9bd68fa705fa7295f6027e29fec` merged through PR `#43` as
-  `d35ed9e9081a0ffb246a6350688bd833bfa6fe9d`; exact-head and merged-main
-  CI/package evidence is verified. Checkpoint 2192 is local on branch
-  `agent/checkpoint-2192-guard-native-root-consumers`; hosted evidence is not
-  claimed yet.
+- Checkpoint 2192 implementation
+  `f6a40cc200764d0925bbcc3032a74e87be21b232` is published on draft PR `#44`
+  from branch `agent/checkpoint-2192-guard-native-root-consumers`. Exact-head
+  Avorax CI `32378264705`, package push `32378112753`, and package PR
+  `32378264725` pass; package publication is intentionally skipped. Merge and
+  installed evidence remain pending.
 - Current public release tag: `v0.1.15-beta.3`, published as a prerelease on
   2026-07-20 with independently verified checksums. Checkpoints 2178-2192 are
   source hardening and do not create a new release tag.
@@ -38,7 +37,8 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
   files. Native Engine helper-root consolidation, installed driver/service E2E,
   signed-driver IPC, and pre-execution behavior remain partial or blocked. No
   Defender setting, service, driver, package install, publication, or release
-  changed. Evidence is maintained in
+  changed. Exact implementation-head CI and all desktop package builds pass as
+  recorded above. Evidence is maintained in
   `docs/reports/checkpoint-2192-guard-native-root-consumers.md`.
 
 - Current Guard native-system-root pass: checkpoint 2191 removes observed-drive

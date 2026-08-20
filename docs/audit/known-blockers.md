@@ -1462,18 +1462,21 @@ enforcement, or pre-execution blocking is claimed.
 
 ## Checkpoint 2192 Guard Native Root Consumers
 
-- **Resolved locally:** Guard driver-health no longer trusts `SystemRoot` or
+- **Resolved and exact-head verified:** Guard driver-health no longer trusts
+  `SystemRoot` or
   `WINDIR` when locating `sc.exe`, `fltmc.exe`, `bcdedit.exe`, or Windows
   PowerShell. Its component-specific allowlist delegates to the shared native
   Windows-root module, which validates the local-drive root, complete existing
   ancestor chain, final regular file, component count, component length, and
   component alphabet.
-- **Resolved locally:** Guard driver-IPC no longer grants its system-path
+- **Resolved and exact-head verified:** Guard driver-IPC no longer grants its
+  system-path
   fail-open decision from environment-derived Windows roots. It uses the same
   checked `GetSystemWindowsDirectoryW` result once per Guard process and caches
   both success and error to avoid repeated native/metadata work; a spoofed
   `Q:\SpoofedWindows` environment leaves candidates unchanged.
-- **Resolved locally:** Native-root resolver errors are no longer silently
+- **Resolved and exact-head verified:** Native-root resolver errors are no
+  longer silently
   converted to an empty Windows candidate list. Verdict evaluation returns the
   error; the native driver port keeps availability through its existing
   reason-bearing fail-open error response, while direct callers receive an
@@ -1483,6 +1486,12 @@ enforcement, or pre-execution blocking is claimed.
   Clippy, rustfmt, PowerShell parsing, and release Guard build. The central
   verifier and independent validator pass `221/221` in `702.3s`; an old report
   missing the new native-root step is rejected as expected.
+- **Verified hosted at the implementation head:** Commit
+  `f6a40cc200764d0925bbcc3032a74e87be21b232` is published on draft PR `#44`.
+  Avorax CI run `32378264705` passes all jobs. Desktop Packages push run
+  `32378112753` and PR run `32378264725` pass package contracts, Windows,
+  Linux, both macOS architectures, and checksum consolidation; both publish
+  jobs are skipped. Merge and installed evidence remain pending.
 - **Verified unchanged:** Read-only inventory after verification is 16,072
   ProgramData quarantine files, zero directories, 4,522,733 bytes, 5,357
   complete payload/metadata/auth sets, one metadata-auth key, and zero pending

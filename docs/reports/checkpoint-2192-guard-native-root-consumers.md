@@ -110,12 +110,27 @@ remains exactly 16,072 files, zero directories, 4,522,733 bytes, 5,357 complete
 `.avoraxq`/`.json`/`.auth` sets, one `.metadata_auth_key`, and zero pending
 files. No vault content was changed or deleted.
 
+## Hosted Evidence
+
+Implementation commit `f6a40cc200764d0925bbcc3032a74e87be21b232` is
+published on draft PR `#44`. Exact-head Avorax CI run `32378264705` passed its
+security/protection/performance, Flutter/protocol, Rust local-core/Guard, Unix
+quarantine-permission, and branding/copy jobs.
+
+Desktop Packages push run `32378112753` and PR run `32378264725` passed package
+contracts, Windows x64 MSI/EXE, Linux x64 DEB/tar, macOS arm64/x64 DMGs, and
+consolidated checksum evidence. Consolidation jobs `96458306800` and
+`96459611854` passed. Publish jobs `96458410803` and `96459718001` were
+intentionally skipped. This is build evidence, not installed-package or
+runtime protection evidence.
+
 ## Classification
 
 - **Verified:** native root parsing, component validation, local-drive and
   reparse checks, Guard tool allowlists, environment-spoof resistance, visible
   resolver errors, complete local Rust/source/full-suite regression, and
-  release compilation.
+  release compilation, plus exact implementation-head CI and desktop package
+  construction.
 - **Partial:** live driver-health commands are covered by bounded runner and
   path tests, but an installed service/driver command lifecycle was not run.
 - **Blocked:** production-signed driver install/load/unload/rollback,

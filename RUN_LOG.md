@@ -59,9 +59,14 @@ Lead-engineer product-hardening pass across the Avorax repository. Goal is to mo
 - Standard EICAR/Defender integration remained skipped. Only safe simulators
   and benign fixtures were used. No service, driver, Defender setting, package
   installation, publication, or release changed.
-- Local evidence is documented in
-  `docs/reports/checkpoint-2192-guard-native-root-consumers.md`; hosted evidence
-  is not claimed before an exact commit and CI run exist.
+- Implementation commit `f6a40cc200764d0925bbcc3032a74e87be21b232` is
+  published on draft PR `#44`. Exact-head Avorax CI run `32378264705` passes
+  all five jobs. Desktop Packages push run `32378112753` and PR run
+  `32378264725` pass contracts, Windows MSI/EXE, Linux DEB/tar, macOS
+  arm64/x64 DMGs, and consolidation jobs `96458306800`/`96459611854`;
+  publish jobs `96458410803`/`96459718001` are intentionally skipped. No
+  package was installed, published, or released. Evidence is documented in
+  `docs/reports/checkpoint-2192-guard-native-root-consumers.md`.
 
 ## 2026-08-20 continuation checkpoint 2191
 
