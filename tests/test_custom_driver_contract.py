@@ -18,6 +18,9 @@ GUARD_MAIN = ROOT / "core" / "zentor_guard_service" / "src" / "main.rs"
 GUARD_WINDOWS_PROCESSES = (
     ROOT / "core" / "zentor_guard_service" / "src" / "windows_processes.rs"
 )
+GUARD_WINDOWS_SYSTEM = (
+    ROOT / "core" / "zentor_guard_service" / "src" / "windows_system.rs"
+)
 GUARD_CARGO = ROOT / "core" / "zentor_guard_service" / "Cargo.toml"
 GUARD_SELF_TEST = ROOT / "core" / "zentor_guard_service" / "src" / "self_test.rs"
 GUARD_DRIVER_IPC = ROOT / "core" / "zentor_guard_service" / "src" / "driver_ipc.rs"
@@ -12427,10 +12430,16 @@ def test_guard_process_collection_coverage_is_bounded_and_fail_visible():
         "Guard native Windows process enumeration and Linux procfs coverage gaps "
         "are bounded, fail-visible, and cannot become a clean finite-watch result"
     )
+    skip_scope_claim = (
+        "Guard Windows process skips and taskkill discovery use the bounded native "
+        "system Windows directory and reject environment or other-drive lookalikes"
+    )
     assert step_name in verifier
     assert step_name in validator
     assert scope_claim in verifier
     assert scope_claim in validator
+    assert skip_scope_claim in verifier
+    assert skip_scope_claim in validator
     assert "polling can miss processes that start and exit between snapshots" in verifier
     assert "Guard process enumeration is disabled on unsupported" in verifier
 
@@ -24537,11 +24546,17 @@ def test_guard_process_skip_collapses_path_segments_before_system_skip():
     assert "fn split_observed_process_path_prefix(path: &str, separator: char) -> (Option<&str>, &str, bool)" in skip_source
     assert 'match part {\n            "" | "." => {}' in skip_source
     assert '".." =>' in skip_source
-    assert "should_skip_windows_process_path(&windows_path)" in skip_source
+    assert "struct ProcessSkipPolicy" in production
+    assert "fn guard_process_skip_policy() -> anyhow::Result<ProcessSkipPolicy>" in production
+    assert "guard_windows_system_root()?" in production
+    assert "policy.windows_system_root.as_deref()" in skip_source
+    assert "fn observed_windows_root" not in production
     assert "observed_process_path_is_equal_or_descendant(path, &system32, '\\\\')" in skip_source
     assert 'lower.contains("\\\\windows\\\\system32\\\\")' not in skip_source
     assert 'lower.starts_with("/usr/")' not in skip_source
     assert "process_skip_uses_component_aware_normalized_system_paths" in source
+    assert "process_skip_runtime_rejects_a_different_drive_windows_lookalike" in source
+    assert r"D:\Windows\System32\payload.exe" in source
     assert r"System32\..\Temp\payload.exe" in source
     assert r"Users\Brent\Windows\System32\payload.exe" in source
     assert "/usr/../tmp/payload" in source
@@ -24557,23 +24572,37 @@ def test_local_windows_tools_expose_no_removed_acl_command_surface():
     assert "current_windows_account" not in production
 
 
-def test_guard_windows_tools_reject_parent_traversal_in_system_root():
+def test_guard_windows_tools_use_native_bounded_system_root():
     source = read(GUARD_MAIN)
+    windows_system = read(GUARD_WINDOWS_SYSTEM)
+    cargo = read(GUARD_CARGO)
     production = source.split("#[cfg(test)]")[0]
     root_source = production[
         production.index("fn guard_windows_system_root"):
         production.index("fn is_local_windows_drive_path")
     ]
+    tool_source = production[
+        production.index("fn windows_system32_tool"):
+        production.index("fn guard_windows_system_root")
+    ]
 
-    assert "normalize_guard_windows_system_root_text(&text)" in root_source
-    assert "PathBuf::from(normalized_root)" in root_source
-    assert "PathBuf::from(text)" not in root_source
-    assert "fn normalize_guard_windows_system_root_text(value: &str) -> anyhow::Result<String>" in production
-    assert "fn collapse_guard_windows_system_root_segments(path: &str) -> String" in production
-    assert "fn split_guard_windows_system_root_prefix(path: &str) -> (Option<&str>, &str, bool)" in production
-    assert "Guard Windows system root must not contain parent traversal" in production
-    assert "collapse_guard_windows_system_root_segments(&normalized)" in production
-    assert 'match part {\n            "" | "." => {}' in production
+    assert "windows_system::system_windows_directory()?" in root_source
+    assert "is_local_windows_drive_path(&path)" in root_source
+    assert "Some(Component::RootDir)" in production
+    assert "reject_guard_link_ancestors(&path" in root_source
+    assert "fs::symlink_metadata(&path)" in root_source
+    assert "guard_metadata_is_reparse_point(&metadata)" in root_source
+    assert "std::env::var_os" not in root_source
+    assert '"SystemRoot"' not in root_source
+    assert '"WINDIR"' not in root_source
+    assert "reject_guard_link_ancestors(&candidate" in tool_source
+    assert "GetSystemWindowsDirectoryW(" in windows_system
+    assert "MAX_SYSTEM_WINDOWS_DIRECTORY_CHARS: usize = 32_768" in windows_system
+    assert "vec![u16::MAX; MAX_SYSTEM_WINDOWS_DIRECTORY_CHARS]" in windows_system
+    assert "chars >= buffer.len()" in windows_system
+    assert "buffer[..chars].contains(&0)" in windows_system
+    assert "buffer[chars] != 0" in windows_system
+    assert '"Win32_System_SystemInformation"' in cargo
     assert "guard_external_command_outputs_are_bounded" in source
 
 

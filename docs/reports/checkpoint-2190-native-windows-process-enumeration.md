@@ -130,25 +130,34 @@ EICAR/Defender integration remained opt-in and was not run.
 
 ## Hosted Evidence
 
-Exact implementation head
-`a928aa0297cadeedd002a4e84cf937250de6bf3b` is in PR `#42` and passes Avorax
-CI run `32356686816`. All five jobs pass:
+Implementation head `a928aa0297cadeedd002a4e84cf937250de6bf3b` and
+evidence head `9fec6ccbf36d0146e6ac66fe911e48b0449a98a8` are in PR
+`#42`. Exact evidence-head Avorax CI run `32358381763` passes all five jobs:
 
-- Flutter/protocol `96387285422`;
-- branding/copy `96387285651`;
-- security/protection/performance `96387285657`;
-- native Unix quarantine/process coverage `96387285689`; and
-- Rust/local-core/Guard/update/API `96387285704`.
+- Flutter/protocol `96392451629`;
+- native Unix quarantine/process coverage `96392451825`;
+- Rust/local-core/Guard/update/API `96392451877`;
+- security/protection/performance `96392451897`; and
+- branding/copy `96392452059`.
 
 The pinned Ubuntu job runs the exact locked `process_collection` filter and
 passes `9/9`, including native procfs malformed/unavailable-image fixtures and
 the cross-platform source boundary for the Win32 collector.
 
-Desktop Packages push run `32356656322` and PR run `32356686469` both pass
-package contracts, Windows x64 MSI/EXE, Linux x64 DEB/tar, macOS arm64/x64 DMG,
-and consolidated checksum/lockfile-SBOM evidence. Consolidation jobs
-`96391021281` and `96390367305` pass. Publish jobs `96391116275` and
-`96390431544` are intentionally skipped. No package was installed or released.
+Desktop Packages evidence-head PR run `32358381728` and push run `32358376699`
+both pass package contracts, Windows x64 MSI/EXE, Linux x64 DEB/tar, macOS
+arm64/x64 DMG, and consolidated checksum/lockfile-SBOM evidence. Their
+consolidation jobs `96395530791` and `96395394769` pass. Publish jobs
+`96395596885` and `96395466344` are intentionally skipped.
+
+PR `#42` merged to `main` as
+`f66ea472bff3d6f0b9ff4cb3b0cfcf2f25dee92a`. Exact merged-main Avorax CI
+`32359532900` passes Flutter `96395938072`, Unix `96395938238`, security
+`96395938248`, Rust `96395938343`, and branding `96395938391`. Merged-main
+Desktop Packages `32359532935` passes contracts `96395938047`, Windows
+`96395972906`, macOS arm64 `96395973006`, Linux `96395973007`, macOS x64
+`96395973419`, and consolidation `96399551588`; publish `96399641725` is
+skipped. No package was installed or released.
 
 ## Existing Vault Check
 
