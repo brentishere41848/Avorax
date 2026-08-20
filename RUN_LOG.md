@@ -63,8 +63,17 @@ Lead-engineer product-hardening pass across the Avorax repository. Goal is to mo
   directories, `4,522,733` bytes, and zero pending journals.
 - This checkpoint does not change Guard driver-health/driver-IPC helpers,
   Native Engine Authenticode/quarantine helper discovery, Defender settings,
-  services, drivers, installers, or releases. Hosted exact-head CI/package
-  evidence is pending and is not counted as verified yet.
+  services, drivers, installers, or releases.
+- Exact implementation/local-evidence head
+  `67e067d2d74d7561c4a48269284702ca50f1b1a1` passes Avorax CI
+  `32366912857`, including Flutter/protocol, branding, security, native Unix,
+  and Rust jobs. Desktop Packages push `32366882138` and PR `32366913124` pass
+  Windows x64 MSI/EXE, Linux x64 DEB/tar, macOS x64/arm64 DMGs, package
+  contracts, and checksum/SBOM consolidation. Consolidation jobs
+  `96422164489` and `96422683427` pass; publish jobs `96422235471` and
+  `96422771716` are intentionally skipped. No package was installed or
+  released. A documentation-only evidence head still requires exact-head CI
+  before merge.
 
 ## 2026-08-20 continuation checkpoint 2190
 

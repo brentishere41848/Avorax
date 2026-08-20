@@ -7,12 +7,13 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
 ## Current Commit
 
 - Checkpoint 2190 merged through PR `#42` as
-  `f66ea472bff3d6f0b9ff4cb3b0cfcf2f25dee92a`. Checkpoint 2191 is the current
-  locally verified work on branch
-  `agent/checkpoint-2191-guard-system-root-skip-policy`; hosted exact-head
-  evidence is pending and is not yet classified as verified.
+  `f66ea472bff3d6f0b9ff4cb3b0cfcf2f25dee92a`. Checkpoint 2191 implementation
+  head `67e067d2d74d7561c4a48269284702ca50f1b1a1` is tracked by draft PR `#43` on
+  branch `agent/checkpoint-2191-guard-system-root-skip-policy`; local and hosted
+  implementation-head CI/package evidence is verified. The documentation-only
+  evidence head still requires exact-head CI before merge.
 - Current public release tag: `v0.1.15-beta.3`, published as a prerelease on
-  2026-07-20 with independently verified checksums. Checkpoints 2178-2190 are
+  2026-07-20 with independently verified checksums. Checkpoints 2178-2191 are
   source hardening and do not create a new release tag.
 
 ## Latest Checkpoint Evidence - 2026-08-20
@@ -37,9 +38,12 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
   all remained honestly `ok:false` with 280 coverage gaps and no stderr. The
   gaps are not threat counts. `Cargo.lock` is unchanged and the existing
   ProgramData vault remains `16,072` files, `4,522,733` bytes, and zero pending
-  journals. Other Guard driver helpers and Native Engine helper discovery are
-  outside this checkpoint. No service, driver, installer, Defender setting, or
-  release was changed. Evidence is maintained in
+  journals. Implementation head `67e067d2d74d7561c4a48269284702ca50f1b1a1`
+  passes Avorax CI `32366912857`; Desktop Packages push `32366882138` and PR
+  `32366913124` pass Windows/Linux/macOS packages and consolidation, with both
+  publish jobs skipped. Other Guard driver helpers and Native Engine helper
+  discovery are outside this checkpoint. No service, driver, installer,
+  Defender setting, or release was changed. Evidence is maintained in
   `docs/reports/checkpoint-2191-native-system-root-process-skip.md`.
 
 - Current native Windows process-enumeration pass: checkpoint 2190 removes the

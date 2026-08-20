@@ -1437,10 +1437,13 @@ enforcement, or pre-execution blocking is claimed.
   spoofed child-only Windows environment, and `73.6ms`. All exited zero, wrote
   no stderr, and returned `ok:false` with 280 visibility gaps rather than a fake
   clean result. The count is not threats.
-- **Pending hosted evidence:** Exact-head CI, native Ubuntu regression, and
-  cross-platform package construction have not yet run for checkpoint 2191 and
-  are not counted as verified. No package is installed or published by this
-  local evidence.
+- **Verified hosted implementation head:** Commit
+  `67e067d2d74d7561c4a48269284702ca50f1b1a1` passes Avorax CI
+  `32366912857`. Desktop Packages push `32366882138` and PR `32366913124` pass
+  package contracts, Windows x64 MSI/EXE, Linux x64 DEB/tar, macOS x64/arm64
+  DMGs, and consolidation. Publish jobs are skipped. The documentation-only
+  evidence head remains pending exact-head CI; no package is installed or
+  published.
 - **Technically limited:** Paths beneath the actual Windows `System32` and
   `SysWOW64` directories and the actual `Explorer.exe` retain a broad skip. A
   compromised or misplaced image within those protected roots could therefore

@@ -195,10 +195,23 @@ No existing quarantine artifact was changed or deleted.
 
 ## Hosted Evidence
 
-Hosted exact-head CI and cross-platform package construction have not yet run
-for checkpoint 2191. They remain pending and are not classified as verified.
-No push, release, publication, package installation, service action, or driver
-action is part of the local evidence above.
+Exact implementation/local-evidence head
+`67e067d2d74d7561c4a48269284702ca50f1b1a1` passes Avorax CI run
+`32366912857`. Its five jobs pass:
+
+- Rust/local-core/Guard/update/API `96418298360`;
+- branding/copy `96418298483`;
+- security/protection/performance `96418298492`;
+- Flutter/protocol `96418298532`; and
+- native Unix quarantine/Guard routing `96418298685`.
+
+Desktop Packages push run `32366882138` and pull-request run `32366913124`
+both pass package contracts, Windows x64 MSI/EXE, Linux x64 DEB/tar, macOS
+x64/arm64 DMGs, and consolidated checksum/lockfile-SBOM evidence.
+Consolidation jobs `96422164489` and `96422683427` pass. Publish jobs
+`96422235471` and `96422771716` are intentionally skipped. No package was
+installed or released. The documentation-only evidence head still requires
+exact-head CI before merge.
 
 ## Classification
 
@@ -208,7 +221,7 @@ action is part of the local evidence above.
 | Verified locally | Process-skip root selection | Actual-root paths retain policy; other-drive and path lookalikes do not select their own skip root. |
 | Verified locally | Guard taskkill path | Native root, full ancestor checks, allowlisted leaf, and bounded runner source/runtime contracts pass. |
 | Verified locally | Shared regression | Guard, workspace, source contracts, release build, central verifier, and report validator pass. |
-| Partial / pending | Hosted and packaged regression | Exact-head CI and Windows/Linux/macOS package jobs have not yet run for this checkpoint. |
+| Verified hosted implementation head | Hosted and packaged regression | CI, Windows/Linux/macOS package construction, and checksum/SBOM consolidation pass at `67e067d2d74d7561c4a48269284702ca50f1b1a1`; publish is skipped. The documentation-only evidence head remains pending exact-head checks. |
 | Partial / blocked | Installed LocalSystem behavior | Installed service identity, visibility, ACLs, event logging, lifetime, shutdown, and UI mediation need a disposable elevated host. |
 | Technically limited | Real Windows system-directory skip | Actual-root `System32`, `SysWOW64`, and `Explorer.exe` remain broadly path-excluded. |
 | Technically limited | User-mode timing and visibility | Polling is post-launch, misses some short-lived processes, and cannot query every protected image. |
