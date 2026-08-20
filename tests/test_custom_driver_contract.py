@@ -12328,6 +12328,80 @@ def test_guard_process_hash_cache_uses_file_identity():
     assert "process_watch_inspection_errors_are_not_suppressed" in guard
 
 
+def test_guard_process_collection_coverage_is_bounded_and_fail_visible():
+    guard = read(GUARD_MAIN).replace("\r\n", "\n").replace("\r", "\n")
+    verifier = read(SMALL_THREAT_MVP_VERIFIER)
+    validator = read(SMALL_THREAT_MVP_REPORT_VALIDATOR)
+    production = guard[:guard.index("#[cfg(test)]")]
+    watch_source = production[
+        production.index("fn watch_processes("):
+        production.index("fn inspect_new_process")
+    ]
+    collection_source = production[
+        production.index("struct ProcessCollection"):
+        production.index("fn stop_process")
+    ]
+    windows_source = collection_source[
+        collection_source.index("fn list_processes_windows"):
+        collection_source.index("fn windows_process_query_text")
+    ]
+    procfs_source = collection_source[
+        collection_source.index("fn list_processes_procfs"):
+        collection_source.index("fn guard_process_path_is_regular_file")
+    ]
+
+    assert "const MAX_OBSERVED_PROCESS_RECORDS: usize = 65_536" in production
+    assert "const MAX_PROCESS_COVERAGE_DETAIL_CHARS: usize = 512" in production
+    assert "struct ProcessCollectionCoverage" in collection_source
+    assert "gaps: u64" in collection_source
+    assert "first_detail: Option<String>" in collection_source
+    assert "with_empty_coverage_evidence" in collection_source
+    assert (
+        "process collector returned no observable executable image records"
+        in collection_source
+    )
+    assert "self.gaps.saturating_add(count)" in collection_source
+    assert "value.chars().count() <= MAX_PROCESS_COVERAGE_DETAIL_CHARS" in collection_source
+    assert "saturating_sub(TRUNCATION_SUFFIX.chars().count())" in collection_source
+    assert "value.chars().take(prefix_chars)" in collection_source
+    assert "watchCompletedWithCoverageGaps" in watch_source
+    assert "clean all-process result cannot be claimed" in watch_source
+    assert "processCollectionCoverageLimited" in watch_source
+    assert "PROCESS_COVERAGE_RECOVERY_POLLS" in watch_source
+    assert "previous_processes = current_processes" in watch_source
+    assert "process_requires_inspection(&previous_processes, &process)" in watch_source
+    assert "HashSet<u32>" not in watch_source
+    assert "CoverageErrors" in windows_source
+    assert "Where-Object { $_.ExecutablePath }" not in windows_source
+    assert "ExecutionPolicy" not in windows_source
+    assert "MAX_OBSERVED_PROCESS_RECORDS" in collection_source
+    assert "process monitoring is disabled" in collection_source
+    assert "Linux procfs process enumeration unavailable" in procfs_source
+    assert "Err(error) if error.kind() == io::ErrorKind::NotFound => continue" in procfs_source
+    assert "let Ok(entry) = entry" not in procfs_source
+    assert "let Ok(path) = fs::read_link" not in procfs_source
+    for test_name in [
+        "process_collection_empty_snapshots_cannot_clean_pass",
+        "process_collection_finite_watch_cannot_clean_pass_with_gaps",
+        "process_collection_persistent_warnings_are_deduplicated_until_recovery",
+        "process_collection_reused_pid_path_change_requires_inspection",
+        "process_collection_windows_envelope_preserves_coverage_gaps",
+        "process_collection_procfs_accounts_for_malformed_and_unavailable_images",
+    ]:
+        assert test_name in guard
+    step_name = "guard-service process collection coverage regressions"
+    scope_claim = (
+        "Guard process enumeration coverage gaps are bounded, fail-visible, "
+        "and cannot become a clean finite-watch result"
+    )
+    assert step_name in verifier
+    assert step_name in validator
+    assert scope_claim in verifier
+    assert scope_claim in validator
+    assert "polling can miss processes that start and exit between snapshots" in verifier
+    assert "Guard process enumeration is disabled on unsupported" in verifier
+
+
 def test_guard_process_commands_use_bounded_runner():
     guard = read(GUARD_MAIN)
     production = guard[:guard.index("#[cfg(test)]")]
@@ -19794,6 +19868,8 @@ def test_small_threat_mvp_verifier_is_safe_and_reproducible():
     assert "guard-service self-test regressions" in source
     assert "guard-service process observation regressions" in source
     assert "process_watch" in source
+    assert "guard-service process collection coverage regressions" in source
+    assert "process_collection" in source
     assert "guard-service process skip regressions" in source
     assert "process_skip" in source
     assert "update-service signed package/update regressions" in source
@@ -25258,11 +25334,12 @@ def test_ci_runs_native_unix_quarantine_permission_runtime_contracts():
         "safe_eicar_simulator_is_detected_and_auto_quarantined_by_confirmed_mode",
         "guard_finalization_journal_is_domain_authenticated_and_tamper_evident",
         "known_malicious_hash_is_quarantined",
+        "process_collection",
         "-- --test-threads=1",
     ]:
         assert marker in job
 
-    assert job.count("cargo test --locked") == 11
+    assert job.count("cargo test --locked") == 12
     assert job.count("hard_link") == 2
     assert job.count("set -euo pipefail") == 3
     assert "continue-on-error" not in job

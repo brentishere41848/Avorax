@@ -6,15 +6,50 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
 
 ## Current Commit
 
-- Checkpoint 2187 merged as `7dfc2e549a5158b2cd5922124bb5297b67283a63`
-  through PR `#39`. Checkpoint 2188 implementation commit
-  `b67e787a0db0aa08ab82ae7ecc26f975399d4628` is published through PR
-  `#40` and passes exact-head Avorax CI plus both Desktop Packages runs.
+- Checkpoint 2188 merged as `5dee34d7c1737e87ea7612bb4b873e2f6c06c331`
+  through PR `#40`. Checkpoint 2189 implementation head
+  `d8ff525c362003a5396258ad8ffaeb51741b9387` is published in draft PR `#41`
+  on branch `agent/checkpoint-2189-process-enumeration-evidence` and has exact-
+  head local, CI, native Ubuntu, and cross-platform package evidence.
 - Current public release tag: `v0.1.15-beta.3`, published as a prerelease on
-  2026-07-20 with independently verified checksums. Checkpoints 2178-2188 are
+  2026-07-20 with independently verified checksums. Checkpoints 2178-2189 are
   source hardening and do not create a new release tag.
 
 ## Latest Checkpoint Evidence - 2026-08-20
+
+- Current process-enumeration evidence pass: checkpoint 2189 prevents Guard's
+  finite watcher from returning clean success after Windows CIM or Linux procfs
+  records could not be observed. Collection gaps use a saturating count, one
+  512-character diagnostic, a 65,536-record ceiling, strict Windows JSON, and
+  fail-visible unsupported-platform behavior. Persistent warnings are
+  structured and deduplicated; PID state is bounded to the previous snapshot
+  and changed paths on reused PIDs are reinspected. A snapshot with zero
+  observable executable images is itself a coverage gap, so a syntactically
+  valid empty collector response cannot clean-pass. The real non-elevated
+  Windows command path returned `ok:false` with
+  `watchCompletedWithCoverageGaps` with `307` gap occurrences across two
+  snapshots, not fake clean success or threat count. Guard passes `234/234`,
+  the checkpoint filter `8/8`, the locked Rust workspace `1,466/1,466`, source
+  contracts `626/626`, strict Guard Clippy, rustfmt, and PowerShell parser
+  checks. The first `220/220` central run was superseded after manual review
+  found and repaired the empty-snapshot evidence edge; the next green run was
+  superseded when review found the truncation suffix outside the stated
+  512-character cap. The definitive central verifier and independent
+  full-report validator now pass `220/220`, with no failures or skips, in
+  `516.5s`; the required process-collection step passed.
+  Read-only inventory confirms the
+  ProgramData vault is unchanged at `16,072` files and `4,522,733` bytes.
+  Exact implementation head `d8ff525c362003a5396258ad8ffaeb51741b9387`
+  passes Avorax CI `32350190743`; its pinned Ubuntu job `96367469456`
+  passes the native `process_collection` filter `8/8`. Desktop Packages push
+  run `32350121197` and PR run `32350190448` both pass package contracts,
+  Windows x64 MSI/EXE, Linux x64 DEB/tar, macOS arm64/x64 DMGs, and
+  consolidated six-artifact checksum/lockfile-SBOM evidence. Their publish
+  jobs were intentionally skipped, so this checkpoint creates no release.
+  macOS Guard polling is explicitly disabled, installed LocalSystem
+  service-loop E2E remains blocked, and polling still cannot prove
+  pre-execution or observe every process between snapshots. Evidence is maintained in
+  `docs/reports/checkpoint-2189-process-enumeration-evidence.md`.
 
 - Current installer-owned service-repair pass: checkpoint 2188 removes the
   Flutter client's elevated service registration/reconfiguration path. An
