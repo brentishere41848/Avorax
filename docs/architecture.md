@@ -3,6 +3,7 @@
 Avorax is split into visible UI, local protection services, and platform-specific blocking layers.
 
 - Flutter UI: status, scans, quarantine, settings, events.
+- `avorax_platform_security`: shared fail-closed filesystem permission boundary for Local Core and Guard quarantine. It preflights a bounded vault-shaped directory inventory before mutation, transfers and verifies Unix effective UID/GID ownership plus exact `0700`/`0600` modes, and applies/read-backs Windows owner SID plus protected DACLs using the actual process token while binding file data and ACL handles to one volume/file identity.
 - `zentor_local_core`: offline scanner powered by Avorax Native Engine, native signatures, native rules, native ML runtime, risk scoring, quarantine, allowlist, recovery primitives.
 - `zentor_native_engine`: bounded non-mutating signatures, rules, static analysis, heuristics, trust, development-model signals, and explainable verdict fusion. Local Core owns authenticated file mutation and recovery.
 - `app_control`: prevention-first execution policy for Balanced, Lockdown, Developer, and Monitor profiles. It separates "unknown app blocked" from "malware detected".

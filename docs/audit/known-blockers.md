@@ -507,8 +507,8 @@ This file tracks blockers that must be reported honestly and must not be represe
 - Release-gate path-safety hardening needs full release fixture verification; source checks confirm release-gate helper scripts, reports, AI model files, stage roots, and stage payloads are validated as local non-reparse file/directory evidence before read or execution, dist artifact enumeration failures are bounded visible errors instead of silent missing-artifact evidence, checkpoint 828 makes malformed self-test/AI metadata JSON fail as bounded gate evidence, and checkpoint 1081 bounds top-level release gate error aggregation/output.
 - Local-core service-status System32 `sc.exe` path/output hardening is runtime-verified for current crate fixtures in checkpoint 1647: `service_status` passed (`10`) and covers checked System32 helper resolution plus bounded service-query diagnostics. Elevated installed Windows service-control E2E remains partial.
 - Guard driver-health bounded command execution is runtime-verified for crate fixtures in checkpoint 1642: `driver_health` passed `16 passed; 0 failed`, covering bounded probe diagnostics, timeouts, and visible cleanup-failure reporting; live Windows driver-health command E2E remains partial.
-- Local quarantine System32 `icacls.exe` path hardening is runtime-verified for current local-core fixtures in checkpoint 1647: `acl` passed (`2`) and covers checked System32 helper resolution plus bounded ACL diagnostics. Real Windows ACL enforcement on an installed quarantine root remains partial.
-- Guard quarantine System32 `icacls.exe` path hardening is runtime/source-marker verified in checkpoint 1720: Guard `guard_quarantine` passed (`28`), `guard_external_command_outputs_are_bounded` passed (`1`), `windows_current_account_for_acl_is_not_empty` passed (`1`), and Guard rustfmt passed. This covers checked System32 helper resolution, bounded command-output plumbing, and Guard quarantine path/staging fixtures; real Windows ACL enforcement on an installed quarantine root remains partial.
+- Historical Local quarantine `icacls.exe` path/runner evidence from checkpoint 1647 is superseded by checkpoint 2184. Production Local Core no longer launches an ACL subprocess; the shared platform crate applies and reads back the exact DACL through Windows handle APIs. Installed LocalSystem quarantine-root E2E remains partial.
+- Historical Guard `icacls.exe` path/runner evidence from checkpoint 1720 is superseded by checkpoint 2184. Production Guard no longer launches an ACL subprocess or derives identity from account environment variables; the shared process-token/DACL path has current runtime coverage. Installed Guard quarantine-root E2E remains partial.
 - Guard quarantine metadata field validation is runtime-verified in checkpoint 1637: Guard threat labels are normalized before payload movement and record ID/hash/label/action/source fields are validated before staged metadata/auth writes; Guard rustfmt passed.
 - Guard quarantine record path validation is runtime-verified in checkpoint 1637: Guard original/payload record path text is validated before quarantine directory hardening, payload movement, and staged metadata/auth writes; Guard rustfmt passed.
 - Guard quarantine expected-hash preflight is runtime-verified in checkpoint 1637: malformed expected SHA-256 values fail before quarantine root resolution, directory hardening, source hashing, or payload movement; Guard rustfmt passed.
@@ -1110,3 +1110,83 @@ enforcement, or pre-execution blocking is claimed.
 - **Technically limited:** No kernel interception, pre-execution protection,
   production signing, secure erase, or production detection-rate evidence is
   added by this checkpoint.
+
+## Checkpoint 2184 Quarantine Permission Boundary
+
+- **Resolved locally:** Local Core and Guard no longer resolve `icacls.exe` or
+  trust `USERNAME`/`USERDOMAIN` for production quarantine ACLs. Both use the
+  actual Windows process-token SID and one shared handle-based DACL helper.
+- **Resolved locally:** Windows quarantine directories receive a protected exact
+  DACL and process-token SID ownership; payload files additionally deny the
+  exact `FILE_EXECUTE` right. Owner and DACL are read back and compared, and
+  reparse/wrong-kind objects fail closed. File volume serial/file IDs must also
+  match across the data and ACL handles, so path replacement fails visibly.
+- **Resolved locally:** Unix opened handles are transferred to the effective
+  process UID/GID and quarantine directories are verified at exact mode `0700`;
+  payload, metadata, sidecar, and key files are verified at `0600`, with
+  device/inode, owner, kind, and mode checks. Forbidden ownership transfer fails
+  closed.
+- **Resolved locally:** Local Core and Guard reject existing symbolic-link or
+  Windows reparse-point ancestors before and after quarantine directory
+  creation; redirected vault roots are not accepted.
+- **Resolved locally:** Explicit quarantine overrides must end in a dedicated
+  `Quarantine` leaf. Existing roots are bounded to `65,536` entries and must
+  contain only recognized non-link vault artifact names before any ACL or mode
+  is changed. Windows Guard rejects UNC/network overrides, and Local Core's
+  arbitrary-base constructor is test-only. Unknown content and wrong object
+  kinds fail visibly.
+- **Resolved locally:** Local Core's default test quarantine is thread-local and
+  temporary. Focused and complete scan suites leave the real ProgramData vault
+  unchanged; explicit failure fixtures use a scoped test-only override.
+- **Preserved pending operator review:** The existing ProgramData vault contains
+  `5,357` record-shaped payload/metadata/auth sets plus one key file (`16,072`
+  files, `4,522,733` bytes). Their individual provenance was not audited. No
+  file was deleted; count and total bytes stayed unchanged after test isolation.
+  Any cleanup requires an explicit authenticated operator action.
+- **Resolved locally:** A Linux all-target Guard check exposed and repaired
+  process-command imports that were incorrectly Windows-gated plus a Unix-only
+  metadata-key test that treated `Option<String>` as `String`. Guard now
+  compiles all targets for `x86_64-unknown-linux-gnu`; existing non-fatal
+  platform-specific warning debt remains visible.
+- **Resolved locally:** Existing bounded metadata, auth-sidecar, and key reads
+  repair permissions before content is consumed. Local Core repairs a present
+  legacy payload only after record authentication, schema checks, and vault-path
+  validation; unsigned and untracked content is not migrated.
+- **Resolved locally:** A permission or authenticated-metadata finalization
+  failure after payload movement removes only incomplete metadata/auth files.
+  The sole payload is retained, its opaque path is reported in the visible
+  error, and runtime regressions prevent cleanup from deleting it.
+- **Verified locally:** Platform tests pass `6/6` on Windows, Local Core
+  quarantine tests pass `112/112`, complete Local Core passes `517/517`, Guard
+  quarantine passes `47/47`, complete Guard passes `223/223`, and source
+  contracts pass `620/620`. Strict Clippy passes for all affected Windows
+  targets and the shared Linux target; Guard's Linux all-target check passes
+  with only the documented platform-specific dead-code warnings. The complete
+  Rust workspace passes `1,435/1,435`; the central verifier passes `219/219`
+  with no failed or skipped steps in `618.0s`, and the independent full-suite
+  report validator passes.
+- **Pending independent evidence:** Linux Unix-mode tests and clean Windows/Linux
+  workspace CI must pass on the checkpoint head before this row is promoted to
+  hosted-run verified.
+- **Local cross-toolchain blocker:** The shared platform crate and Guard compile
+  for the installed Linux Rust target. A full Local Core cross-check reaches the
+  existing `tract-linalg` C build and stops because this Windows host has no
+  `x86_64-linux-gnu-gcc`. No machine-wide compiler was installed; native Ubuntu
+  CI is the required runtime/build evidence.
+- **Partial:** Installed LocalSystem ACL/DPAPI behavior, unprivileged UI/service
+  mediation, repair/upgrade, and package install/uninstall remain unverified on
+  a disposable elevated Windows host. Portable user-mode operation cannot
+  isolate the vault from another process running as the same SID/UID.
+- **Technically limited:** Administrators and LocalSystem remain trusted. DACLs
+  and modes do not encrypt payloads, provide secure erase, or establish kernel
+  pre-execution enforcement.
+- **Technically limited:** Vault-ancestor checks run before and after creation
+  but are path-based, not a fully handle-relative NT/`openat2` object-tree
+  transaction. Concurrent mutation by an administrator/root-capable principal
+  remains inside the trusted computing base. Retained untracked-payload recovery
+  tooling also remains follow-up work.
+- **Open hard-link boundary:** Per-path quarantine does not enumerate every hard
+  link to the same file across a volume. A pre-existing alternate link can
+  remain accessible and must be scanned as a separate path. Volume-wide
+  neutralization is not claimed; bounded link-count handling remains follow-up
+  hardening work.

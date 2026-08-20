@@ -13,6 +13,14 @@ Lead-engineer product-hardening pass across the Avorax repository. Goal is to mo
 - The bundled native ML model is treated as development-only unless release metadata and gates prove production readiness.
 - MSI/EXE installers are first-install/repair/recovery/offline paths. Normal in-app updates should use verified `.aup` packages.
 
+## 2026-08-20 continuation checkpoint 2184
+
+- Added the shared `avorax_platform_security` crate and moved Local Core and Guard quarantine ownership, exact permission readback, open-handle identity, reparse/link rejection, bounded vault-shape checks, and platform-specific hardening behind one fail-closed implementation. Windows uses the process-token SID and denies execute only on opaque payloads; Unix requires the effective UID/GID and exact `0700`/`0600` modes.
+- Explicit quarantine overrides now require a dedicated `Quarantine` leaf, Windows Guard rejects UNC roots, production cannot call the arbitrary-base test constructor, pre-existing metadata/auth/key files are hardened before bounded reads, authenticated legacy payloads are hardened only after validation, and finalization failures retain the sole opaque payload with a visible recovery path. Local tests use thread-local temporary vaults instead of ProgramData.
+- Local verification passed: platform `6/6`, focused Local Core quarantine `112/112`, focused Guard quarantine `47/47`, complete Local Core `517/517`, complete Guard `223/223`, Rust workspace `1,435/1,435`, source contracts `620/620`, central verifier `219/219` in `618.0s`, independent full-suite report validation, strict affected-crate Clippy, formatting, dependency/SBOM, branding, safety, protection, false-positive, performance, and diff gates. The pre-existing ProgramData vault stayed at `16,072` files and `4,522,733` bytes; its historical record provenance was not individually audited and no file was deleted.
+- GitHub implementation head `fc287d91c792be74e45ab3204831b00d6d9cd1bf` passed Avorax CI run `32315144870`. Desktop Packages push run `32315126623` and pull-request run `32315144889` passed package contracts, Linux x64 DEB/tar, Windows x64 MSI/EXE, macOS arm64/x64 DMG, and consolidated checksums. Branch prerelease publication was intentionally skipped. The Linux jobs prove native release compilation and package verification, not Unix-specific permission runtime tests; installed LocalSystem/DPAPI/ACL/service/UI E2E also remains pending.
+- A later evidence-head Desktop Packages run `32316236496` failed honestly in macOS x64 before Avorax compilation: CocoaPods tried to clone `https://cdn.cocoapods.org/` as a Git repository and returned `repository not found`. The same run's Windows, Linux, and macOS arm64 jobs passed, and the previous x64 job passed, exposing dependence on runner CocoaPods state rather than an Avorax source failure. The workflow now uses a fresh architecture-specific `CP_HOME_DIR` below `RUNNER_TEMP`, explicitly initializes `trunk` with `pod repo add-cdn`, rejects pre-existing/link state, and exports the checked location to later steps. Focused source coverage and all `24` packaging tests pass locally with `3` expected Windows symlink skips. The failed run remains audit evidence and is not counted as success; replacement-head package jobs are required before merge.
+
 ## 2026-07-20 continuation checkpoint 2179
 
 - GitHub head validation run `29766224417` exposed a deterministic risk-fusion bug through a random temporary directory named `.tmpupTeBo`: the substring `pup` inside a zero-weight publisher-trust diagnostic path caused real `office_macro_auto_run_remote_launch` evidence to be categorized as `PotentiallyUnwantedApp` instead of `MaliciousMacro`.
@@ -6645,3 +6653,42 @@ Updates page showed:
   admin install, service/driver state, machine-wide component, or project file
   deletion was involved. Installed service/ACL/DPAPI/UI E2E remains partial and
   no kernel or pre-execution claim is made.
+
+## 2026-08-20 continuation checkpoint 2184
+
+- Replaced Local Core and Guard's separate quarantine permission paths with the
+  shared `avorax_platform_security` crate. Windows uses the process-token SID,
+  handle identity, exact owner/protected-DACL readback, and an exact payload
+  execute deny; Unix uses effective UID/GID, descriptor identity, and verified
+  `0700`/`0600` modes.
+- Added fail-closed ancestor checks and a dedicated `Quarantine` leaf contract.
+  Existing roots are bounded to 65,536 recognized non-link vault artifacts
+  before any ACL/mode mutation, preventing an override from repurposing an
+  arbitrary populated directory.
+- Moved Local Core's default test vault into a thread-local temporary directory.
+  The existing ProgramData vault remained exactly 16,072 files and 4,522,733
+  bytes before and after focused, complete, workspace, and central tests; no
+  existing quarantine content or project file was deleted.
+- Hardened permission-before-read handling for metadata/key material and
+  authenticated legacy payloads. Post-move finalization failures retain the
+  sole opaque payload, clean only incomplete metadata/auth files, and return a
+  visible recovery path.
+- Platform tests pass `6/6`, focused Local quarantine `112/112`, focused Guard
+  quarantine `47/47`, complete Local Core `517/517`, complete Guard `223/223`,
+  the Rust workspace `1,435/1,435`, and source contracts `620/620`. Strict
+  affected-crate Clippy, shared Linux-target Clippy, Guard Linux all-target
+  compilation, rustfmt, metadata, dependency, parser, branding, safety,
+  performance, and diff checks pass.
+- The first central run failed honestly at branding because a compatibility test
+  contained a literal retired-brand token. After correcting the source fixture,
+  the focused regression, source/branding gates, and a complete restart passed.
+  A final diff review also made Local Core's arbitrary-base constructor
+  test-only and rejected Windows UNC quarantine overrides in Guard. The final
+  verifier passed `219/219` with no failed/skipped steps in `618.0s`;
+  an independent `-RequireFullSuite` report validation also passed.
+- A full Local Core Linux cross-check on this Windows host remains blocked at
+  `tract-linalg` by missing `x86_64-linux-gnu-gcc`; no machine-wide compiler was
+  installed. Native Ubuntu CI, package jobs, and installed LocalSystem/DPAPI/
+  ACL/service/UI E2E remain pending. No live malware, Defender exclusion,
+  driver/service change, admin install, secure-erase, or pre-execution claim was
+  involved.

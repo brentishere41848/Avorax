@@ -4,8 +4,6 @@ use std::ffi::OsString;
 use std::fs;
 use std::io::{self, BufRead, BufReader, Read, Write};
 use std::path::{Path, PathBuf};
-#[cfg(windows)]
-use std::process::ExitStatus;
 use std::process::{Command, Stdio};
 use std::sync::mpsc;
 use std::thread;
@@ -66,8 +64,6 @@ const MAX_GUARD_IPC_REQUEST_ID_CHARS: usize = 128;
 const MAX_WINDOWS_PROCESS_QUERY_BYTES: usize = 1024 * 1024;
 const MAX_GUARD_COMMAND_OUTPUT_BYTES: usize = 2048;
 const GUARD_PROCESS_COMMAND_TIMEOUT: Duration = Duration::from_secs(30);
-#[cfg(windows)]
-const GUARD_ACL_COMMAND_TIMEOUT: Duration = Duration::from_secs(30);
 #[cfg(any(feature = "compat_clamav", test))]
 const MAX_GUARD_CLAMAV_COMMAND_OUTPUT_BYTES: usize = 8192;
 #[cfg(any(feature = "compat_clamav", test))]
@@ -1327,14 +1323,24 @@ fn read_bounded_guard_utf8_file(
     label: &str,
     metadata: &fs::Metadata,
 ) -> anyhow::Result<String> {
+    let file = fs::File::open(path)
+        .with_context(|| format!("unable to read {label} {}", path.display()))?;
+    read_bounded_guard_utf8_opened_file(file, path, max_bytes, label, metadata)
+}
+
+fn read_bounded_guard_utf8_opened_file(
+    mut file: fs::File,
+    path: &Path,
+    max_bytes: u64,
+    label: &str,
+    metadata: &fs::Metadata,
+) -> anyhow::Result<String> {
     if metadata.len() > max_bytes {
         anyhow::bail!(
             "{label} {} exceeds maximum size of {max_bytes} bytes",
             path.display()
         );
     }
-    let mut file = fs::File::open(path)
-        .with_context(|| format!("unable to read {label} {}", path.display()))?;
     let mut total = 0_u64;
     let mut buffer = [0_u8; 8 * 1024];
     let mut bytes = Vec::new();
@@ -1982,80 +1988,6 @@ fn join_guard_command_output_reader(
         .map_err(|_| anyhow::anyhow!("{label} {stream_name} reader panicked"))?
 }
 
-#[cfg(windows)]
-struct BoundedGuardCommandOutput {
-    status: ExitStatus,
-    stderr: Vec<u8>,
-}
-
-#[cfg(windows)]
-fn run_guard_acl_command(command: &mut Command) -> anyhow::Result<BoundedGuardCommandOutput> {
-    command
-        .stdin(Stdio::null())
-        .stdout(Stdio::null())
-        .stderr(Stdio::piped());
-    let mut child = command
-        .spawn()
-        .context("failed to launch guard quarantine ACL command")?;
-    let stderr = child
-        .stderr
-        .take()
-        .context("failed to capture guard quarantine ACL command stderr")?;
-    let stderr_reader = thread::spawn(move || {
-        read_bounded_guard_command_output(stderr, MAX_GUARD_COMMAND_OUTPUT_BYTES)
-    });
-    let status = match wait_for_guard_acl_child(&mut child)? {
-        Some(status) => status,
-        None => {
-            let kill_error = child.kill().err();
-            let wait_error = child.wait().err();
-            let stderr = stderr_reader
-                .join()
-                .map_err(|_| anyhow::anyhow!("guard quarantine ACL stderr reader panicked"))??;
-            let mut detail = format!(
-                "guard quarantine ACL command timed out after {} seconds",
-                GUARD_ACL_COMMAND_TIMEOUT.as_secs()
-            );
-            if let Some(error) = kill_error {
-                detail.push_str(&format!(
-                    "; failed to kill timed-out guard quarantine ACL command: {error}"
-                ));
-            }
-            if let Some(error) = wait_error {
-                detail.push_str(&format!(
-                    "; failed to reap timed-out guard quarantine ACL command: {error}"
-                ));
-            }
-            let stderr_excerpt = command_output_excerpt(&stderr);
-            if !stderr_excerpt.is_empty() {
-                detail.push_str(&format!("; stderr: {stderr_excerpt}"));
-            }
-            anyhow::bail!(detail);
-        }
-    };
-    let stderr = stderr_reader
-        .join()
-        .map_err(|_| anyhow::anyhow!("guard quarantine ACL stderr reader panicked"))??;
-    Ok(BoundedGuardCommandOutput { status, stderr })
-}
-
-#[cfg(windows)]
-fn wait_for_guard_acl_child(child: &mut std::process::Child) -> anyhow::Result<Option<ExitStatus>> {
-    let started = std::time::Instant::now();
-    loop {
-        if let Some(status) = child
-            .try_wait()
-            .context("failed to poll guard quarantine ACL command")?
-        {
-            return Ok(Some(status));
-        }
-        if started.elapsed() >= GUARD_ACL_COMMAND_TIMEOUT {
-            return Ok(None);
-        }
-        thread::sleep(Duration::from_millis(50));
-    }
-}
-
 fn read_bounded_guard_command_output<R: Read>(
     reader: R,
     max_bytes: usize,
@@ -2130,7 +2062,7 @@ fn quarantine_file(
             Ok(()) => {
                 let finalize_result = (|| -> anyhow::Result<GuardQuarantineRecord> {
                     regular_guard_file_metadata(&destination, "guard quarantine destination")?;
-                    remove_executable_permissions(&destination)?;
+                    harden_guard_quarantine_payload_permissions(&destination)?;
                     let quarantined_sha256 = sha256_file(&destination)?;
                     let quarantined_sha256_body = normalize_sha256(&quarantined_sha256)
                         .ok_or_else(|| {
@@ -2171,13 +2103,19 @@ fn quarantine_file(
                 match finalize_result {
                     Ok(record) => return Ok(record),
                     Err(error) => {
-                        cleanup_untracked_guard_quarantine_artifacts(&id, &destination)
+                        cleanup_untracked_guard_quarantine_metadata_artifacts(&id)
                             .with_context(|| {
                                 format!(
-                                    "failed to clean up untracked guard quarantine artifacts after quarantine finalization failure: {error:#}"
+                                    "failed to clean up untracked guard quarantine metadata after finalization failure; payload was not deleted and must be inspected at {}: {error:#}",
+                                    destination.display()
                                 )
                             })?;
-                        return Err(error);
+                        return Err(error).with_context(|| {
+                            format!(
+                                "guard quarantine finalization failed; payload was not deleted and must be inspected at {}",
+                                destination.display()
+                            )
+                        });
                     }
                 }
             }
@@ -2229,6 +2167,24 @@ fn reject_link_path(path: &Path, label: &str) -> anyhow::Result<()> {
         use std::os::windows::fs::MetadataExt;
         if metadata.file_attributes() & FILE_ATTRIBUTE_REPARSE_POINT != 0 {
             anyhow::bail!("refusing to use reparse point {label}");
+        }
+    }
+    Ok(())
+}
+
+fn reject_guard_link_ancestors(path: &Path, label: &str) -> anyhow::Result<()> {
+    for ancestor in path.ancestors() {
+        if ancestor.as_os_str().is_empty() {
+            continue;
+        }
+        match fs::symlink_metadata(ancestor) {
+            Ok(_) => reject_link_path(ancestor, label)?,
+            Err(error) if error.kind() == io::ErrorKind::NotFound => {}
+            Err(error) => {
+                return Err(error).with_context(|| {
+                    format!("unable to inspect {label} ancestor {}", ancestor.display())
+                });
+            }
         }
     }
     Ok(())
@@ -2338,14 +2294,8 @@ fn cleanup_guard_quarantine_partial_file(path: &Path, label: &str) -> anyhow::Re
     }
 }
 
-fn cleanup_untracked_guard_quarantine_artifacts(
-    id: &str,
-    payload_path: &Path,
-) -> anyhow::Result<()> {
-    let mut targets = vec![(
-        payload_path.to_path_buf(),
-        "untracked guard quarantine payload",
-    )];
+fn cleanup_untracked_guard_quarantine_metadata_artifacts(id: &str) -> anyhow::Result<()> {
+    let mut targets = Vec::new();
     match checked_quarantine_record_path(id) {
         Ok(metadata_path) => {
             targets.push((
@@ -2382,7 +2332,7 @@ fn cleanup_untracked_guard_quarantine_artifacts(
         Ok(())
     } else {
         Err(anyhow::anyhow!(
-            "failed to clean up one or more untracked guard quarantine artifacts: {}",
+            "failed to clean up one or more untracked guard quarantine metadata artifacts: {}",
             failures.join("; ")
         ))
     }
@@ -2401,6 +2351,29 @@ fn copy_file_exclusive(source: &Path, destination: &Path) -> anyhow::Result<()> 
                 destination.display()
             )
         })?;
+    if let Err(error) = harden_open_guard_quarantine_file_permissions(
+        &output,
+        destination,
+        "guard quarantine copy destination",
+    ) {
+        drop(output);
+        cleanup_guard_quarantine_partial_file(
+            destination,
+            "unhardened guard quarantine destination",
+        )
+        .with_context(|| {
+            format!(
+                "failed to clean up guard quarantine destination {} after permission hardening failure: {error:#}",
+                destination.display()
+            )
+        })?;
+        return Err(error).with_context(|| {
+            format!(
+                "failed to harden guard quarantine destination {}",
+                destination.display()
+            )
+        });
+    }
     if let Err(error) = copy_guard_quarantine_payload_limited(
         &mut input,
         &mut output,
@@ -2689,6 +2662,19 @@ fn quarantine_record_auth_tag(raw: &str, create_key: bool) -> anyhow::Result<Opt
 
 fn quarantine_metadata_auth_key(create: bool) -> anyhow::Result<Option<String>> {
     let base = quarantine_base()?;
+    match fs::symlink_metadata(&base) {
+        Ok(_) => ensure_quarantine_base_directory_path(&base)?,
+        Err(error) if error.kind() == io::ErrorKind::NotFound && !create => return Ok(None),
+        Err(error) if error.kind() == io::ErrorKind::NotFound => {}
+        Err(error) => {
+            return Err(error).with_context(|| {
+                format!(
+                    "unable to inspect guard quarantine base directory {}",
+                    base.display()
+                )
+            });
+        }
+    }
     let path = base.join(".metadata_auth_key");
     if guard_quarantine_metadata_file_present(
         &path,
@@ -2723,8 +2709,17 @@ fn read_bounded_guard_quarantine_text(
     max_bytes: u64,
     label: &str,
 ) -> anyhow::Result<String> {
-    let metadata = ensure_regular_guard_quarantine_metadata_file(path, label)?;
-    read_bounded_guard_utf8_file(path, max_bytes, label, &metadata)
+    ensure_regular_guard_quarantine_metadata_file(path, label)?;
+    let file = fs::File::open(path)
+        .with_context(|| format!("unable to open {label} {}", path.display()))?;
+    harden_open_guard_quarantine_file_permissions(&file, path, label)?;
+    let metadata = file
+        .metadata()
+        .with_context(|| format!("unable to inspect opened {label} {}", path.display()))?;
+    if !metadata.is_file() {
+        anyhow::bail!("opened {label} {} is not a regular file", path.display());
+    }
+    read_bounded_guard_utf8_opened_file(file, path, max_bytes, label, &metadata)
 }
 
 fn guard_quarantine_metadata_file_present(path: &Path, label: &str) -> anyhow::Result<bool> {
@@ -2873,6 +2868,17 @@ fn write_file_exclusive(path: &Path, bytes: &[u8], label: &str) -> anyhow::Resul
                 .with_context(|| format!("failed to create temporary {label} {}", path.display()));
         }
     };
+    if let Err(error) = harden_open_guard_quarantine_file_permissions(&output, path, label) {
+        drop(output);
+        cleanup_guard_quarantine_staged_file(path, label).with_context(|| {
+            format!(
+                "failed to clean up temporary {label} {} after permission hardening failure: {error:#}",
+                path.display()
+            )
+        })?;
+        return Err(error)
+            .with_context(|| format!("failed to harden temporary {label} {}", path.display()));
+    }
     if let Err(error) = output.write_all(bytes) {
         drop(output);
         cleanup_guard_quarantine_staged_file(path, label).with_context(|| {
@@ -3148,41 +3154,31 @@ fn ensure_quarantine_base_directory() -> anyhow::Result<PathBuf> {
 }
 
 fn ensure_quarantine_base_directory_path(base: &Path) -> anyhow::Result<()> {
+    reject_guard_link_ancestors(base, "quarantine base directory")?;
     fs::create_dir_all(base)?;
-    reject_link_path(base, "quarantine base directory")?;
-    harden_quarantine_base_acl(base)?;
+    reject_guard_link_ancestors(base, "quarantine base directory")?;
+    avorax_platform_security::validate_quarantine_directory_contents(base)
+        .context("refusing to change permissions on an unrecognized guard quarantine directory")?;
+    harden_quarantine_base_permissions(base)?;
     Ok(())
 }
 
-fn harden_quarantine_base_acl(_path: &Path) -> anyhow::Result<()> {
+fn harden_quarantine_base_permissions(path: &Path) -> anyhow::Result<()> {
+    #[cfg(unix)]
+    avorax_platform_security::harden_unix_private_directory(path)
+        .context("failed to enforce owner-only guard quarantine directory permissions")?;
     #[cfg(windows)]
-    {
-        let current_user = current_windows_account()?;
-        let current_user_grant = format!("{current_user}:(OI)(CI)F");
-        let icacls = windows_system32_tool("icacls.exe")?;
-        let mut command = Command::new(&icacls);
-        command.arg(_path).args([
-            "/inheritance:r",
-            "/grant:r",
-            "*S-1-5-18:(OI)(CI)F",
-            "*S-1-5-32-544:(OI)(CI)F",
-            &current_user_grant,
-        ]);
-        let output = run_guard_acl_command(&mut command)?;
-        if !output.status.success() {
-            anyhow::bail!(
-                "failed to harden guard quarantine ACLs: {}",
-                command_output_excerpt(&output.stderr)
-            );
-        }
-    }
+    avorax_platform_security::harden_windows_private_directory(path)
+        .context("failed to enforce exact guard quarantine directory DACL")?;
+    #[cfg(not(any(unix, windows)))]
+    let _ = path;
     Ok(())
 }
 
 #[cfg(windows)]
 fn windows_system32_tool(name: &str) -> anyhow::Result<PathBuf> {
     anyhow::ensure!(
-        matches!(name, "icacls.exe" | "powershell.exe" | "taskkill.exe"),
+        matches!(name, "powershell.exe" | "taskkill.exe"),
         "unsupported guard Windows System32 tool {name}"
     );
     let system_root = guard_windows_system_root()?;
@@ -3326,26 +3322,30 @@ fn guard_metadata_is_reparse_point(metadata: &fs::Metadata) -> bool {
     metadata.file_attributes() & FILE_ATTRIBUTE_REPARSE_POINT != 0
 }
 
-#[cfg(windows)]
-fn current_windows_account() -> anyhow::Result<String> {
-    let user = std::env::var("USERNAME").map_err(|_| anyhow::anyhow!("USERNAME is not set"))?;
-    if user.trim().is_empty() {
-        anyhow::bail!("USERNAME is empty");
-    }
-    match std::env::var("USERDOMAIN") {
-        Ok(domain) if !domain.trim().is_empty() => Ok(format!("{domain}\\{user}")),
-        _ => Ok(user),
-    }
+fn harden_guard_quarantine_payload_permissions(path: &Path) -> anyhow::Result<()> {
+    let file = fs::File::open(path)
+        .with_context(|| format!("failed to open guard quarantine payload {}", path.display()))?;
+    harden_open_guard_quarantine_file_permissions(&file, path, "guard quarantine payload")?;
+    Ok(())
 }
 
-fn remove_executable_permissions(_path: &Path) -> anyhow::Result<()> {
+fn harden_open_guard_quarantine_file_permissions(
+    file: &fs::File,
+    path: &Path,
+    label: &str,
+) -> anyhow::Result<()> {
     #[cfg(unix)]
+    avorax_platform_security::harden_unix_private_file(file, path)
+        .with_context(|| format!("failed to enforce owner-only permissions for {label}"))?;
+    #[cfg(windows)]
     {
-        use std::os::unix::fs::PermissionsExt;
-        let metadata = regular_guard_file_metadata(_path, "guard quarantine destination")?;
-        let mut permissions = metadata.permissions();
-        permissions.set_mode(permissions.mode() & !0o111);
-        fs::set_permissions(_path, permissions)?;
+        let _ = file;
+        avorax_platform_security::harden_windows_quarantine_file(file, path)
+            .with_context(|| format!("failed to enforce exact DACL for {label}"))?;
+    }
+    #[cfg(not(any(unix, windows)))]
+    {
+        let _ = (file, path, label);
     }
     Ok(())
 }
@@ -3412,7 +3412,33 @@ fn absolute_guard_quarantine_env_path(name: &str) -> anyhow::Result<Option<PathB
     if !path.is_absolute() {
         anyhow::bail!("guard quarantine path environment {name} must be absolute: {value}");
     }
+    #[cfg(windows)]
+    if !is_local_windows_drive_path(&path) {
+        anyhow::bail!(
+            "guard quarantine path environment {name} must be a local Windows drive path: {value}"
+        );
+    }
+    if name.ends_with("QUARANTINE_DIR") {
+        validate_guard_quarantine_override_leaf(name, &path)?;
+    }
     Ok(Some(path))
+}
+
+fn validate_guard_quarantine_override_leaf(name: &str, path: &Path) -> anyhow::Result<()> {
+    let leaf = path
+        .file_name()
+        .and_then(|value| value.to_str())
+        .ok_or_else(|| {
+            anyhow::anyhow!(
+                "guard quarantine path environment {name} must end in a dedicated Quarantine directory"
+            )
+        })?;
+    if !leaf.eq_ignore_ascii_case("quarantine") {
+        anyhow::bail!(
+            "guard quarantine path environment {name} must end in a dedicated Quarantine directory"
+        );
+    }
+    Ok(())
 }
 
 fn sha256_file(path: &Path) -> anyhow::Result<String> {
@@ -4372,12 +4398,14 @@ mod tests {
     fn guard_service_mode_fails_visibly_off_windows() {
         let source = include_str!("main.rs");
         let production = &source[..source.find("#[cfg(test)]").unwrap()];
-        let start = source.find("#[cfg(not(windows))]\nfn run_service").unwrap();
-        let end = source[start..]
+        let start = production
+            .find("#[cfg(not(windows))]\nfn run_service")
+            .unwrap();
+        let end = production[start..]
             .find("#[cfg(windows)]\nfn windows_service_main")
             .map(|offset| start + offset)
             .unwrap();
-        let service_source = &source[start..end];
+        let service_source = &production[start..end];
 
         assert!(service_source.contains("NON_WINDOWS_GUARD_SERVICE_MODE_UNSUPPORTED"));
         assert!(service_source.contains("anyhow::bail!"));
@@ -4581,6 +4609,88 @@ mod tests {
         std::env::remove_var("AVORAX_GUARD_QUARANTINE_DIR");
     }
 
+    #[cfg(unix)]
+    #[test]
+    fn guard_quarantine_artifacts_are_owner_only_and_non_executable_on_unix() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let _lock = env_lock();
+        let dir = tempdir().unwrap();
+        let base = dir.path().join("quarantine");
+        fs::create_dir(&base).unwrap();
+        fs::set_permissions(&base, fs::Permissions::from_mode(0o777)).unwrap();
+        std::env::set_var("AVORAX_GUARD_QUARANTINE_DIR", &base);
+        let file = dir.path().join("bad.exe");
+        fs::write(&file, b"known bad fixture").unwrap();
+        fs::set_permissions(&file, fs::Permissions::from_mode(0o777)).unwrap();
+        let hash = sha256_file(&file).unwrap();
+        let threat_match = LocalThreatMatch {
+            reason: "known bad fixture".to_string(),
+            engine: "fixture".to_string(),
+            confidence: LocalThreatConfidence::Confirmed,
+        };
+
+        let record = quarantine_file(&file, &hash, None, &threat_match).unwrap();
+
+        assert_eq!(
+            fs::metadata(&base).unwrap().permissions().mode() & 0o7777,
+            0o700
+        );
+        for path in [
+            PathBuf::from(&record.quarantine_path),
+            base.join(format!("{}.json", record.quarantine_id)),
+            base.join(format!("{}.json.auth", record.quarantine_id)),
+            base.join(".metadata_auth_key"),
+        ] {
+            assert_eq!(
+                fs::metadata(path).unwrap().permissions().mode() & 0o7777,
+                0o600
+            );
+        }
+        std::env::remove_var("AVORAX_GUARD_QUARANTINE_DIR");
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn guard_auth_reads_repair_existing_private_modes_on_unix() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let _lock = env_lock();
+        let dir = tempdir().unwrap();
+        let base = dir.path().join("quarantine");
+        std::env::set_var("AVORAX_GUARD_QUARANTINE_DIR", &base);
+        let file = dir.path().join("bad.exe");
+        fs::write(&file, b"known bad fixture").unwrap();
+        let hash = sha256_file(&file).unwrap();
+        let threat_match = LocalThreatMatch {
+            reason: "known bad fixture".to_string(),
+            engine: "fixture".to_string(),
+            confidence: LocalThreatConfidence::Confirmed,
+        };
+        let record = quarantine_file(&file, &hash, None, &threat_match).unwrap();
+        let record_path = base.join(format!("{}.json", record.quarantine_id));
+        let auth_path = base.join(format!("{}.json.auth", record.quarantine_id));
+        let key_path = base.join(".metadata_auth_key");
+        let raw = fs::read_to_string(&record_path).unwrap();
+        fs::set_permissions(&base, fs::Permissions::from_mode(0o777)).unwrap();
+        fs::set_permissions(&auth_path, fs::Permissions::from_mode(0o777)).unwrap();
+        fs::set_permissions(&key_path, fs::Permissions::from_mode(0o777)).unwrap();
+
+        ensure_quarantine_record_auth_valid(&record_path, &raw).unwrap();
+
+        assert_eq!(
+            fs::metadata(&base).unwrap().permissions().mode() & 0o7777,
+            0o700
+        );
+        for path in [auth_path, key_path] {
+            assert_eq!(
+                fs::metadata(path).unwrap().permissions().mode() & 0o7777,
+                0o600
+            );
+        }
+        std::env::remove_var("AVORAX_GUARD_QUARANTINE_DIR");
+    }
+
     #[test]
     fn guard_quarantine_record_metadata_validation_rejects_unsafe_fields() {
         let dir = tempdir().unwrap();
@@ -4730,13 +4840,13 @@ mod tests {
     }
 
     #[test]
-    fn guard_quarantine_finalization_failures_clean_untracked_artifacts() {
+    fn guard_quarantine_finalization_failures_preserve_payload_and_clean_metadata() {
         let source = include_str!("main.rs");
         let start = source.find("fn quarantine_file(").unwrap();
         let end = source.find("fn reject_symlink_source").unwrap();
         let quarantine_source = &source[start..end];
         let cleanup_start = source
-            .find("fn cleanup_untracked_guard_quarantine_artifacts")
+            .find("fn cleanup_untracked_guard_quarantine_metadata_artifacts")
             .unwrap();
         let cleanup_end = source.find("fn copy_file_exclusive").unwrap();
         let cleanup_source = &source[cleanup_start..cleanup_end];
@@ -4744,18 +4854,19 @@ mod tests {
         assert!(quarantine_source
             .contains("let finalize_result = (|| -> anyhow::Result<GuardQuarantineRecord>"));
         assert!(quarantine_source
-            .contains("cleanup_untracked_guard_quarantine_artifacts(&id, &destination)"));
-        assert!(quarantine_source.contains("after quarantine finalization failure"));
+            .contains("cleanup_untracked_guard_quarantine_metadata_artifacts(&id)"));
+        assert!(quarantine_source.contains("payload was not deleted and must be inspected"));
         assert!(quarantine_source.contains("return Err(error)"));
-        assert!(cleanup_source.contains("\"untracked guard quarantine payload\""));
+        assert!(!cleanup_source.contains("\"untracked guard quarantine payload\""));
         assert!(cleanup_source.contains("\"untracked guard quarantine metadata record\""));
         assert!(cleanup_source.contains("\"untracked guard quarantine metadata temp record\""));
         assert!(cleanup_source.contains("\"untracked guard quarantine metadata auth sidecar\""));
         assert!(
             cleanup_source.contains("\"untracked guard quarantine metadata auth temp sidecar\"")
         );
-        assert!(cleanup_source
-            .contains("failed to clean up one or more untracked guard quarantine artifacts"));
+        assert!(cleanup_source.contains(
+            "failed to clean up one or more untracked guard quarantine metadata artifacts"
+        ));
         assert!(cleanup_source.contains("checked_quarantine_record_path(id)"));
         assert!(
             quarantine_source
@@ -4770,9 +4881,36 @@ mod tests {
                 .find("write_quarantine_record(&record)?")
                 .unwrap()
                 < quarantine_source
-                    .find("cleanup_untracked_guard_quarantine_artifacts")
+                    .find("cleanup_untracked_guard_quarantine_metadata_artifacts")
                     .unwrap()
         );
+    }
+
+    #[test]
+    fn guard_quarantine_finalization_metadata_cleanup_never_deletes_payload() {
+        let _lock = env_lock();
+        let dir = tempdir().unwrap();
+        let base = dir.path().join("quarantine");
+        fs::create_dir(&base).unwrap();
+        std::env::set_var("AVORAX_GUARD_QUARANTINE_DIR", &base);
+        let id = "cleanup-fixture";
+        let payload = base.join(format!("{id}.{QUARANTINE_EXTENSION}"));
+        let metadata = base.join(format!("{id}.json"));
+        let metadata_temp = base.join(format!("{id}.json.tmp"));
+        let auth = base.join(format!("{id}.json.auth"));
+        let auth_temp = base.join(format!("{id}.json.auth.tmp"));
+        fs::write(&payload, b"preserve").unwrap();
+        for path in [&metadata, &metadata_temp, &auth, &auth_temp] {
+            fs::write(path, b"partial").unwrap();
+        }
+
+        cleanup_untracked_guard_quarantine_metadata_artifacts(id).unwrap();
+
+        assert_eq!(fs::read(&payload).unwrap(), b"preserve");
+        for path in [metadata, metadata_temp, auth, auth_temp] {
+            assert!(!path.exists());
+        }
+        std::env::remove_var("AVORAX_GUARD_QUARANTINE_DIR");
     }
 
     #[cfg(unix)]
@@ -4783,7 +4921,7 @@ mod tests {
         let _lock = env_lock();
         let dir = tempdir().unwrap();
         let real_base = dir.path().join("real-q");
-        let link_base = dir.path().join("link-q");
+        let link_base = dir.path().join("quarantine");
         fs::create_dir_all(&real_base).unwrap();
         symlink(&real_base, &link_base).unwrap();
         std::env::set_var("AVORAX_GUARD_QUARANTINE_DIR", &link_base);
@@ -4806,6 +4944,39 @@ mod tests {
         std::env::remove_var("AVORAX_GUARD_QUARANTINE_DIR");
     }
 
+    #[cfg(unix)]
+    #[test]
+    fn guard_quarantine_rejects_symbolic_link_base_ancestor_before_creation() {
+        use std::os::unix::fs::symlink;
+
+        let _lock = env_lock();
+        let dir = tempdir().unwrap();
+        let real_parent = dir.path().join("real-parent");
+        let linked_parent = dir.path().join("linked-parent");
+        fs::create_dir(&real_parent).unwrap();
+        symlink(&real_parent, &linked_parent).unwrap();
+        let base = linked_parent.join("quarantine");
+        std::env::set_var("AVORAX_GUARD_QUARANTINE_DIR", &base);
+        let file = dir.path().join("bad.exe");
+        fs::write(&file, b"known bad fixture").unwrap();
+        let hash = sha256_file(&file).unwrap();
+        let threat_match = LocalThreatMatch {
+            reason: "known malicious hash".to_string(),
+            engine: "fixture".to_string(),
+            confidence: LocalThreatConfidence::Confirmed,
+        };
+
+        let error = quarantine_file(&file, &hash, None, &threat_match)
+            .expect_err("symbolic link quarantine ancestor should be rejected");
+
+        assert!(error
+            .to_string()
+            .contains("refusing to use symbolic link quarantine base directory"));
+        assert!(file.exists());
+        assert!(!real_parent.join("q").exists());
+        std::env::remove_var("AVORAX_GUARD_QUARANTINE_DIR");
+    }
+
     #[cfg(windows)]
     #[test]
     fn windows_reparse_point_attribute_constant_is_expected_value() {
@@ -4814,8 +4985,9 @@ mod tests {
 
     #[cfg(windows)]
     #[test]
-    fn windows_current_account_for_acl_is_not_empty() {
-        assert!(!current_windows_account().unwrap().trim().is_empty());
+    fn windows_process_sid_for_guard_quarantine_acl_is_not_empty() {
+        let sid = avorax_platform_security::current_windows_process_sid().unwrap();
+        assert!(sid.starts_with("S-1-"));
     }
 
     #[cfg(not(windows))]
@@ -5148,12 +5320,69 @@ mod tests {
     }
 
     #[test]
+    fn guard_quarantine_base_override_requires_dedicated_leaf() {
+        let _lock = env_lock();
+        let previous = std::env::var_os("AVORAX_GUARD_QUARANTINE_DIR");
+        let dir = tempdir().unwrap();
+        std::env::set_var(
+            "AVORAX_GUARD_QUARANTINE_DIR",
+            dir.path().join("not-a-vault"),
+        );
+
+        let error = quarantine_base().unwrap_err().to_string();
+
+        #[cfg(windows)]
+        let network_error = {
+            std::env::set_var("AVORAX_GUARD_QUARANTINE_DIR", r"\\server\share\Quarantine");
+            quarantine_base().unwrap_err().to_string()
+        };
+
+        match previous {
+            Some(value) => std::env::set_var("AVORAX_GUARD_QUARANTINE_DIR", value),
+            None => std::env::remove_var("AVORAX_GUARD_QUARANTINE_DIR"),
+        }
+        assert!(error.contains("must end in a dedicated Quarantine directory"));
+        #[cfg(windows)]
+        assert!(network_error.contains("must be a local Windows drive path"));
+    }
+
+    #[test]
+    fn existing_guard_quarantine_base_rejects_unknown_content_before_permissions() {
+        let dir = tempdir().unwrap();
+        let base = dir.path().join("quarantine");
+        fs::create_dir(&base).unwrap();
+        fs::write(base.join("unrelated.txt"), b"preserve").unwrap();
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            fs::set_permissions(&base, fs::Permissions::from_mode(0o777)).unwrap();
+        }
+
+        let error = ensure_quarantine_base_directory_path(&base).unwrap_err();
+
+        assert!(format!("{error:#}").contains("unrecognized entry unrelated.txt"));
+        assert_eq!(fs::read(base.join("unrelated.txt")).unwrap(), b"preserve");
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            assert_eq!(
+                fs::metadata(base).unwrap().permissions().mode() & 0o7777,
+                0o777
+            );
+        }
+    }
+
+    #[test]
     fn guard_quarantine_base_path_safety_markers_stay_in_place() {
         let source = include_str!("main.rs");
 
         assert!(source.contains("fn quarantine_base() -> anyhow::Result<PathBuf>"));
         assert!(source.contains("fn absolute_guard_quarantine_env_path"));
         assert!(source.contains("guard quarantine path environment {name} must be absolute"));
+        assert!(source.contains(
+            "guard quarantine path environment {name} must be a local Windows drive path"
+        ));
+        assert!(source.contains("if !is_local_windows_drive_path(&path)"));
         assert!(source.contains("quarantine_base()?"));
         assert!(!source.contains("PathBuf::from(\".avorax/quarantine\")"));
     }
@@ -5339,7 +5568,9 @@ mod tests {
         )
         .unwrap();
 
-        let key = quarantine_metadata_auth_key(true).unwrap();
+        let key = quarantine_metadata_auth_key(true)
+            .unwrap()
+            .expect("guard quarantine metadata key should be created");
 
         assert!(!key.trim().is_empty());
         assert_eq!(
@@ -5634,10 +5865,11 @@ mod tests {
 
         let err = quarantine_metadata_auth_key(false).unwrap_err();
 
-        assert!(err
-            .to_string()
-            .contains("guard quarantine metadata authentication key"));
-        assert!(err.to_string().contains("not a regular file"));
+        let error_chain = format!("{err:#}");
+        assert!(error_chain.contains(
+            "refusing to change permissions on an unrecognized guard quarantine directory"
+        ));
+        assert!(error_chain.contains("not a non-link regular file"));
         std::env::remove_var("AVORAX_GUARD_QUARANTINE_DIR");
     }
 
@@ -6012,9 +6244,7 @@ mod tests {
         let source = crate::normalized_test_source(include_str!("main.rs"));
         let production = &source[..source.find("#[cfg(test)]").unwrap()];
         let runner_start = source.find("fn run_guard_process_command").unwrap();
-        let acl_start = source
-            .find("#[cfg(windows)]\nstruct BoundedGuardCommandOutput")
-            .unwrap();
+        let acl_start = source.find("fn read_bounded_guard_command_output").unwrap();
         let runner_source = &source[runner_start..acl_start];
         let old_output = [".out", "put()"].concat();
         let old_unbounded_read = [".read_to_", "end(&mut bytes)"].concat();
@@ -6400,9 +6630,10 @@ mod tests {
         assert!(
             config_source.contains("let metadata = ensure_regular_guard_config_file(path, label)?")
         );
-        assert!(quarantine_source.contains(
-            "let metadata = ensure_regular_guard_quarantine_metadata_file(path, label)?"
-        ));
+        assert!(quarantine_source
+            .contains("ensure_regular_guard_quarantine_metadata_file(path, label)?"));
+        assert!(quarantine_source.contains("harden_open_guard_quarantine_file_permissions("));
+        assert!(quarantine_source.contains("let metadata = file"));
         assert!(source.contains("fn ensure_regular_guard_config_file(path: &Path, label: &str) -> anyhow::Result<fs::Metadata>"));
         assert!(source.contains(
             ") -> anyhow::Result<fs::Metadata> {\n    let metadata = fs::symlink_metadata(path)"
@@ -6413,7 +6644,10 @@ mod tests {
         assert!(config_source.contains("total > max_bytes"));
         assert!(config_source.contains("bytes.extend_from_slice(&buffer[..read])"));
         assert!(config_source.contains("String::from_utf8(bytes)"));
-        assert!(quarantine_source
+        assert!(quarantine_source.contains(
+            "read_bounded_guard_utf8_opened_file(file, path, max_bytes, label, &metadata)"
+        ));
+        assert!(!quarantine_source
             .contains("read_bounded_guard_utf8_file(path, max_bytes, label, &metadata)"));
     }
 
@@ -7251,11 +7485,6 @@ mod tests {
             .map(|offset| clamav_start + offset)
             .unwrap();
         let clamav_source = &source[clamav_start..clamav_end];
-        let acl_start = source.find("fn harden_quarantine_base_acl").unwrap();
-        let acl_end = source
-            .find("#[cfg(windows)]\nfn current_windows_account")
-            .unwrap();
-        let acl_source = &source[acl_start..acl_end];
         let old_stdout = ["String::from_utf8_lossy(&output.stdout", ")"].concat();
         let old_stderr = ["String::from_utf8_lossy(&output.stderr", ")"].concat();
 
@@ -7263,30 +7492,6 @@ mod tests {
         assert!(clamav_source.contains("MAX_GUARD_CLAMAV_COMMAND_OUTPUT_BYTES"));
         assert!(clamav_source.contains("GUARD_CLAMAV_SCAN_TIMEOUT"));
         assert!(clamav_source.contains("failed to reap timed-out guard ClamAV scanner"));
-        assert!(acl_source.contains("fn harden_quarantine_base_acl(_path: &Path)"));
-        assert!(acl_source.contains("windows_system32_tool(\"icacls.exe\")?"));
-        assert!(acl_source.contains("Command::new(&icacls)"));
-        assert!(acl_source.contains("let system_root = guard_windows_system_root()?;"));
-        assert!(acl_source.contains("fn guard_windows_system_root() -> anyhow::Result<PathBuf>"));
-        assert!(acl_source.contains("normalize_guard_windows_system_root_text(&text)"));
-        assert!(acl_source.contains("PathBuf::from(normalized_root)"));
-        assert!(acl_source.contains("for key in [\"SystemRoot\", \"WINDIR\"]"));
-        assert!(acl_source.contains("std::env::var_os(key)"));
-        assert!(acl_source.contains("Guard Windows System32 tool root is unavailable"));
-        assert!(acl_source.contains("Guard Windows system root must not contain parent traversal"));
-        assert!(acl_source
-            .contains("fn collapse_guard_windows_system_root_segments(path: &str) -> String"));
-        assert!(acl_source.contains("fn split_guard_windows_system_root_prefix(path: &str)"));
-        assert!(acl_source.contains("collapse_guard_windows_system_root_segments(&normalized)"));
-        assert!(acl_source.contains("match part {\n            \"\" | \".\" => {}"));
-        assert!(acl_source.contains("system_root.join(\"System32\").join(name)"));
-        assert!(acl_source.contains("fs::symlink_metadata(&candidate)"));
-        assert!(acl_source.contains("guard_metadata_is_reparse_point(&metadata)"));
-        assert!(acl_source.contains("Prefix::Disk(_) | Prefix::VerbatimDisk(_)"));
-        assert!(acl_source.contains("run_guard_acl_command(&mut command)?"));
-        assert!(source.contains("fn run_guard_acl_command(command: &mut Command)"));
-        assert!(production
-            .contains("read_bounded_guard_command_output(stderr, MAX_GUARD_COMMAND_OUTPUT_BYTES)"));
         assert!(production.contains("let retain_limit = max_bytes.saturating_add(1)"));
         assert!(production.contains("let remaining = retain_limit.saturating_sub(bytes.len())"));
         assert!(production.contains("bytes.extend_from_slice(&buffer[..keep])"));
@@ -7298,27 +7503,42 @@ mod tests {
             !production.contains("reader.take((MAX_GUARD_CLAMAV_COMMAND_OUTPUT_BYTES + 1) as u64)")
         );
         assert!(production.contains("stdin(Stdio::null())"));
-        assert!(production.contains("stdout(Stdio::null())"));
-        assert!(production.contains("stderr(Stdio::piped())"));
-        assert!(acl_source.contains(".arg(_path)"));
-        assert!(acl_source.contains("command_output_excerpt(&output.stderr)"));
+        assert!(clamav_source.contains("stdout(std::process::Stdio::piped())"));
+        assert!(clamav_source.contains("stderr(std::process::Stdio::piped())"));
         let old_windows_root_fallback = ["PathBuf::from(r\"", "C:\\Windows", "\")"].concat();
-        let old_env_string_reader = ["std::env::", "var(key)"].concat();
-        let old_silent_env_error = [".", "ok()"].concat();
         let old_icacls_launch = ["Command::new(\"", "icacls\")"].concat();
         assert!(!clamav_source.contains(".output()?"));
         assert!(!clamav_source.contains("command_output_excerpt(&output.stdout)"));
         assert!(!clamav_source.contains("command_output_excerpt(&output.stderr)"));
         assert!(!clamav_source.contains(&old_stdout));
         assert!(!clamav_source.contains(&old_stderr));
-        assert!(!acl_source.contains(&old_stderr));
-        assert!(!acl_source.contains(".output()?"));
-        assert!(!acl_source.contains(&old_windows_root_fallback));
-        assert!(!acl_source.contains(&old_env_string_reader));
-        assert!(!acl_source.contains(&old_silent_env_error));
-        assert!(!acl_source.contains(&old_icacls_launch));
-        assert!(!acl_source.contains("PathBuf::from(text)"));
-        assert!(!acl_source.contains("let _ = path;"));
+        assert!(!production.contains(&old_windows_root_fallback));
+        assert!(!production.contains(&old_icacls_launch));
+    }
+
+    #[test]
+    fn guard_quarantine_permissions_use_shared_verified_platform_controls() {
+        let source = crate::normalized_test_source(include_str!("main.rs"));
+        let production = &source[..source.find("#[cfg(test)]").unwrap()];
+        let base_start = source
+            .find("fn harden_quarantine_base_permissions")
+            .unwrap();
+        let base_end = source.find("fn windows_system32_tool").unwrap();
+        let base_source = &source[base_start..base_end];
+        let payload_start = source
+            .find("fn harden_guard_quarantine_payload_permissions")
+            .unwrap();
+        let payload_end = source.find("fn quarantine_base").unwrap();
+        let payload_source = &source[payload_start..payload_end];
+
+        assert!(base_source.contains("harden_unix_private_directory(path)"));
+        assert!(base_source.contains("harden_windows_private_directory(path)"));
+        assert!(payload_source.contains("harden_unix_private_file(file, path)"));
+        assert!(payload_source.contains("harden_windows_quarantine_file(file, path)"));
+        assert!(production.contains("harden_open_guard_quarantine_file_permissions("));
+        assert!(!production.contains("current_windows_account"));
+        assert!(!production.contains("std::env::var(\"USERNAME\")"));
+        assert!(!production.contains("run_guard_acl_command"));
     }
 
     #[test]

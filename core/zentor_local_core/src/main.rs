@@ -9021,17 +9021,17 @@ placeholder
 
     #[test]
     fn auto_quarantine_failure_is_reported_without_hiding_detection() {
-        let _lock = env_lock();
         let dir = tempdir().unwrap();
         let file = dir.path().join("safe-eicar.com");
-        let invalid_quarantine_base = dir.path().join("not-a-directory");
+        let invalid_quarantine_base = dir.path().join("Quarantine");
         fs::write(&file, "ZENTOR-SAFE-EICAR-SIMULATOR-FILE").unwrap();
         fs::write(
             &invalid_quarantine_base,
             "blocks quarantine directory creation",
         )
         .unwrap();
-        std::env::set_var("AVORAX_QUARANTINE_DIR", &invalid_quarantine_base);
+        let _quarantine_override =
+            quarantine::override_test_quarantine_base(invalid_quarantine_base);
 
         let report = scan_paths(
             vec![file.clone()],
@@ -9052,7 +9052,6 @@ placeholder
             .scan_errors
             .iter()
             .any(|error| error.contains("auto-quarantine failed")));
-        std::env::remove_var("AVORAX_QUARANTINE_DIR");
     }
 
     #[test]

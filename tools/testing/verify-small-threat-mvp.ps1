@@ -271,6 +271,7 @@ $verifiedScope = $verifiedScope.Replace(
   "local/native quarantine metadata and trust regressions, shared Local Core/Guard HMAC-SHA-256 quarantine metadata authentication and interoperability"
 )
 $verifiedScope += " Additional verified boundary: native-engine detection-only mutation boundary."
+$verifiedScope += " Additional verified boundary: shared cross-platform quarantine permission hardening with process-token SID and exact protected Windows DACL verification plus exact Unix 0700/0600 verification."
 $verifiedScope = $verifiedScope.Replace(
   "best-effort user-mode realtime watcher planning/status/IPC/controller paths",
   "release local-core binary watcher honesty smoke, best-effort user-mode realtime watcher planning/status/IPC/controller paths"
@@ -400,6 +401,7 @@ try {
     $results.Add((Invoke-Step "local-core trust-store boundary regressions" $repo $cargo @("test", "--manifest-path", "core\zentor_local_core\Cargo.toml", "trust_store", "--", "--test-threads=1")))
     $results.Add((Invoke-Step "local-core allowlist persistence regressions" $repo $cargo @("test", "--manifest-path", "core\zentor_local_core\Cargo.toml", "allowlist", "--", "--test-threads=1")))
     $results.Add((Invoke-Step "local-core training-label feedback regressions" $repo $cargo @("test", "--manifest-path", "core\zentor_local_core\Cargo.toml", "training_label", "--", "--test-threads=1")))
+    $results.Add((Invoke-Step "platform quarantine permission regressions" $repo $cargo @("test", "--manifest-path", "core\avorax_platform_security\Cargo.toml", "--", "--test-threads=1")))
     $results.Add((Invoke-Step "local-core quarantine metadata regressions" $repo $cargo @("test", "--manifest-path", "core\zentor_local_core\Cargo.toml", "quarantine", "--", "--test-threads=1")))
     $results.Add((Invoke-Step "local-core scan cancellation regressions" $repo $cargo @("test", "--manifest-path", "core\zentor_local_core\Cargo.toml", "scan_cancellation", "--", "--test-threads=1")))
     $results.Add((Invoke-Step "local-core realtime watcher regressions" $repo $cargo @("test", "--manifest-path", "core\zentor_local_core\Cargo.toml", "watch", "--", "--test-threads=1")))

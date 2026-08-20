@@ -765,3 +765,89 @@ the existing Local Core quick, full, custom, watcher, manual quarantine, restore
 or delete paths. Installed service identity, DPAPI/ACL behavior, UI mediation,
 and package click-through remain partial. The boundary is user mode and makes no
 driver, pre-execution, secure-erase, or production detection-rate claim.
+
+## Checkpoint 2184 Quarantine Permission Identity And Verification
+
+Quarantine permissions are a security boundary, so mutable `USERNAME` and
+`USERDOMAIN` values cannot identify the principal that receives vault access.
+An inherited or retained explicit ACL can also leave access broader than the
+command that attempted to harden it, while a moved Unix file can retain its old
+mode. Treating a successful external ACL process exit as proof would not verify
+the resulting object.
+
+Local Core and Guard now delegate to one platform-security crate. Windows reads
+the user SID from the current process token, opens the exact object without
+following a reparse point, rejects NUL-containing or oversized paths before the
+Windows API call, applies a protected DACL through handle APIs, and
+sets ownership to that token SID. It reads owner and DACL back, compares the
+owner SID and exact ACE sequence, and fails closed on mismatch. File hardening
+also compares the already-opened data handle with the ACL handle by volume
+serial and file ID, so a path replacement between those opens fails visibly.
+Quarantine files
+deny the specific `FILE_EXECUTE` right to Everyone; directory and recovery
+access remains with SYSTEM, Administrators, and the process-token SID. Cleanup
+failures are combined with the original failure instead of being discarded. No
+external `icacls` command or environment-derived account name remains in either
+production quarantine path.
+
+Unix hardening compares the opened handle's device/inode identity with the path,
+transfers differing ownership through the descriptor to the effective process
+UID/GID, sets exact directory/file modes `0700`/`0600`, and rechecks identity,
+ownership, kind, and mode afterward. A forbidden ownership transfer fails
+closed. Local Core separates quarantine copies from restore staging so the
+Windows execute-deny ACL is not carried to a restored destination; payload
+integrity and destination checks still run before atomic activation.
+
+Local Core and Guard check every existing vault-path ancestor before and after
+directory creation. A symbolic-link or Windows reparse-point ancestor fails
+closed, preventing a configured path from being redirected between the trusted
+name and a different filesystem location.
+
+An absolute override can still be dangerous if it names an unrelated existing
+directory and Avorax then replaces that directory's ACL or modes. Explicit
+quarantine overrides therefore require the final component `Quarantine`, and a
+bounded preflight accepts at most 65,536 recognized non-link regular vault
+artifacts before any permission mutation. Unknown names, wrong object kinds,
+links/reparse points, and enumeration errors fail visibly. This is a directory
+ownership/shape guard, not record authenticity: HMAC, strict schema, identifier,
+path, and integrity checks remain required before list/restore/delete use.
+
+Regression tests previously reached the normal ProgramData fallback. Local Core
+test builds now select a thread-local temporary vault by default, with a scoped
+override only for deterministic failure cases. A complete Local Core run was
+observed to leave the real vault's entry count and byte total unchanged. No
+existing user vault content was deleted as part of this repair.
+
+Upgrade handling is fail closed. Metadata, auth-sidecar, and key readers harden
+existing files before reading them. Local Core hardens an existing payload only
+after the associated record is authenticated, parsed, validated, and confirmed
+to resolve inside the vault. Unsigned or untracked files are not promoted into
+valid quarantine records.
+
+A finalization failure after payload movement is not converted into implicit
+deletion. Local Core and Guard clean only incomplete metadata/auth artifacts,
+retain the sole opaque payload, and return a visible error containing its vault
+path. The retained payload is deliberately not listed as an authenticated
+record; administrator recovery tooling remains follow-up work.
+
+Residual boundaries remain. Unit and integration tests exercise the current
+Windows process identity and temporary filesystem, while Linux CI supplies the
+Unix branch evidence. Installed LocalSystem service ownership, DPAPI key access,
+cross-account UI mediation, repair/upgrade, and package lifecycle still require
+a disposable elevated Windows host. Administrators and LocalSystem remain in
+the trusted computing base. In user-mode operation, other processes with the
+same SID/UID also share the vault principal and remain trusted until an isolated
+service plus authenticated IPC is deployed and verified. This does not encrypt
+payloads, guarantee secure erase, add kernel interception, or prove
+pre-execution blocking.
+
+Vault-ancestor validation is a pre/post path check, not a fully handle-relative
+`openat2` or NT object-tree transaction. A principal able to mutate trusted
+ancestors concurrently remains in the trusted computing base; this checkpoint
+does not claim protection from such an administrator/root race.
+
+Hard links remain a separate boundary. Moving or deleting one detected path
+does not enumerate every other directory entry that may refer to the same file
+on the volume. Until bounded link-count detection and an explicit response
+policy are implemented and tested, Avorax must not describe per-path quarantine
+as volume-wide neutralization.

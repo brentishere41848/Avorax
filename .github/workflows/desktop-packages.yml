@@ -360,6 +360,31 @@ jobs:
         run: |
           test "$(uname -m)" = "${{ matrix.host_arch }}"
 
+      - name: Initialize isolated CocoaPods CDN source
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${RUNNER_TEMP:-}" || "$RUNNER_TEMP" != /* ]]; then
+            printf 'RUNNER_TEMP must be a non-empty absolute path.\n' >&2
+            exit 1
+          fi
+          expected_home="$RUNNER_TEMP/avorax-cocoapods-${{ matrix.arch }}"
+          if [[ -z "${GITHUB_ENV:-}" || ! -f "$GITHUB_ENV" || -L "$GITHUB_ENV" ]]; then
+            printf 'GITHUB_ENV must be a regular non-link file.\n' >&2
+            exit 1
+          fi
+          CP_HOME_DIR="$expected_home"
+          export CP_HOME_DIR
+          if [[ -e "$CP_HOME_DIR" || -L "$CP_HOME_DIR" ]]; then
+            printf 'Isolated CocoaPods home must start absent: %s\n' "$CP_HOME_DIR" >&2
+            exit 1
+          fi
+          pod repo add-cdn trunk https://cdn.cocoapods.org/
+          test -d "$CP_HOME_DIR/repos/trunk"
+          test ! -L "$CP_HOME_DIR/repos/trunk"
+          pod repo list
+          printf 'CP_HOME_DIR=%s\n' "$CP_HOME_DIR" >> "$GITHUB_ENV"
+
       - name: Validate package tooling
         run: python -m unittest discover -s tests -p "test_packaging_tools.py" -v
 
