@@ -274,7 +274,7 @@ $verifiedScope = $verifiedScope.Replace(
 $verifiedScope += " Additional verified boundary: native-engine detection-only mutation boundary."
 $verifiedScope += " Additional verified boundary: shared cross-platform quarantine permission hardening with process-token SID and exact protected Windows DACL verification plus exact Unix 0700/0600 verification."
 $verifiedScope += " Additional verified boundary: Guard native Windows process enumeration and Linux procfs coverage gaps are bounded, fail-visible, and cannot become a clean finite-watch result."
-$verifiedScope += " Additional verified boundary: Guard Windows process skips and taskkill discovery use the bounded native system Windows directory and reject environment or other-drive lookalikes."
+$verifiedScope += " Additional verified boundary: Guard process skips, taskkill discovery, driver-health System32 tools, and driver IPC fail-open roots use the bounded native system Windows directory and reject environment or other-drive lookalikes."
 $verifiedScope = $verifiedScope.Replace(
   "best-effort user-mode realtime watcher planning/status/IPC/controller paths",
   "release local-core binary watcher honesty smoke, best-effort user-mode realtime watcher planning/status/IPC/controller paths"
@@ -461,6 +461,7 @@ try {
     $results.Add((Invoke-Step "guard-service quarantine metadata regressions" $repo $cargo @("test", "--manifest-path", "core\zentor_guard_service\Cargo.toml", "quarantine", "--", "--test-threads=1")))
     $results.Add((Invoke-Step "guard-service driver IPC boundary regressions" $repo $cargo @("test", "--manifest-path", "core\zentor_guard_service\Cargo.toml", "driver_ipc", "--", "--test-threads=1")))
     $results.Add((Invoke-Step "guard-service driver-health probe regressions" $repo $cargo @("test", "--manifest-path", "core\zentor_guard_service\Cargo.toml", "driver_health", "--", "--test-threads=1")))
+    $results.Add((Invoke-Step "guard-service native Windows root regressions" $repo $cargo @("test", "--manifest-path", "core\zentor_guard_service\Cargo.toml", "windows_system", "--", "--test-threads=1")))
     $results.Add((Invoke-Step "guard-service self-test regressions" $repo $cargo @("test", "--manifest-path", "core\zentor_guard_service\Cargo.toml", "self_test", "--", "--test-threads=1")))
     $results.Add((Invoke-Step "guard-service process observation regressions" $repo $cargo @("test", "--manifest-path", "core\zentor_guard_service\Cargo.toml", "process_watch", "--", "--test-threads=1")))
     $results.Add((Invoke-Step "guard-service process collection coverage regressions" $repo $cargo @("test", "--manifest-path", "core\zentor_guard_service\Cargo.toml", "process_collection", "--", "--test-threads=1")))

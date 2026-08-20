@@ -3625,56 +3625,12 @@ fn windows_system32_tool(name: &str) -> anyhow::Result<PathBuf> {
         name == "taskkill.exe",
         "unsupported guard Windows System32 tool {name}"
     );
-    let system_root = guard_windows_system_root()?;
-    let candidate = system_root.join("System32").join(name);
-    reject_guard_link_ancestors(&candidate, "Windows System32 tool path")?;
-    let metadata = fs::symlink_metadata(&candidate).with_context(|| {
-        format!(
-            "unable to inspect Windows System32 tool {}",
-            candidate.display()
-        )
-    })?;
-    anyhow::ensure!(
-        !metadata.file_type().is_symlink(),
-        "refusing to launch symbolic link Windows System32 tool {}",
-        candidate.display()
-    );
-    anyhow::ensure!(
-        !guard_metadata_is_reparse_point(&metadata),
-        "refusing to launch reparse point Windows System32 tool {}",
-        candidate.display()
-    );
-    anyhow::ensure!(
-        metadata.file_type().is_file(),
-        "Windows System32 tool {} is not a regular file",
-        candidate.display()
-    );
-    Ok(candidate)
+    windows_system::checked_system32_file(&[name], "guard Windows System32 tool")
 }
 
 #[cfg(windows)]
 fn guard_windows_system_root() -> anyhow::Result<PathBuf> {
-    let path = windows_system::system_windows_directory()?;
-    anyhow::ensure!(
-        is_local_windows_drive_path(&path),
-        "system Windows directory must be a local Windows drive path: {}",
-        path.display()
-    );
-    reject_guard_link_ancestors(&path, "system Windows directory")?;
-    let metadata = fs::symlink_metadata(&path).with_context(|| {
-        format!(
-            "unable to inspect system Windows directory {}",
-            path.display()
-        )
-    })?;
-    anyhow::ensure!(
-        metadata.file_type().is_dir()
-            && !metadata.file_type().is_symlink()
-            && !guard_metadata_is_reparse_point(&metadata),
-        "system Windows directory is not a regular non-reparse directory: {}",
-        path.display()
-    );
-    Ok(path)
+    windows_system::checked_system_windows_directory()
 }
 
 #[cfg(windows)]
@@ -3689,13 +3645,6 @@ fn is_local_windows_drive_path(path: &Path) -> bool {
             Some(Component::RootDir)
         ) if matches!(prefix.kind(), Prefix::Disk(_) | Prefix::VerbatimDisk(_))
     )
-}
-
-#[cfg(windows)]
-fn guard_metadata_is_reparse_point(metadata: &fs::Metadata) -> bool {
-    use std::os::windows::fs::MetadataExt;
-
-    metadata.file_attributes() & FILE_ATTRIBUTE_REPARSE_POINT != 0
 }
 
 fn harden_guard_quarantine_payload_permissions(path: &Path) -> anyhow::Result<()> {
@@ -6894,12 +6843,14 @@ mod tests {
         assert!(policy_source.contains("policy.windows_system_root.as_deref()"));
         assert!(policy_source.contains("process_skip_policy_for_windows_root"));
         assert!(!policy_source.contains("observed_windows_root"));
-        assert!(root_source.contains("windows_system::system_windows_directory()?"));
-        assert!(root_source.contains("reject_guard_link_ancestors"));
+        assert!(root_source.contains("windows_system::checked_system_windows_directory()"));
         assert!(!root_source.contains("std::env::var_os"));
         assert!(!root_source.contains("SystemRoot"));
         assert!(!root_source.contains("WINDIR"));
         assert!(windows_system.contains("GetSystemWindowsDirectoryW("));
+        assert!(windows_system.contains("fn checked_system_windows_directory()"));
+        assert!(windows_system.contains("fn reject_reparse_ancestors("));
+        assert!(windows_system.contains("checked_system32_file("));
         assert!(windows_system.contains("MAX_SYSTEM_WINDOWS_DIRECTORY_CHARS: usize = 32_768"));
         assert!(windows_system.contains("vec![u16::MAX; MAX_SYSTEM_WINDOWS_DIRECTORY_CHARS]"));
         assert!(windows_system.contains("chars >= buffer.len()"));

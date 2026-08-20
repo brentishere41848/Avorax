@@ -1055,7 +1055,46 @@ installed LocalSystem behavior, and macOS support also remain limited or
 blocked. No driver, service, Defender setting, pre-execution claim, or package
 installation is involved.
 
-Guard driver-health/driver-IPC code and Native Engine Authenticode/quarantine
-helper discovery retain separate validated environment-root implementations.
-They were not silently reclassified by this checkpoint and remain follow-up
-candidates for a shared native system-directory resolver.
+At checkpoint 2191, Guard driver-health/driver-IPC code and Native Engine
+Authenticode/quarantine helper discovery retained separate validated
+environment-root implementations. They were not silently reclassified by that
+checkpoint; checkpoint 2192 addresses only the two Guard consumers.
+
+## Checkpoint 2192 Guard Native Root Consumer Boundary
+
+Checkpoint 2192 removes mutable `SystemRoot`/`WINDIR` input from the remaining
+Guard driver-health and driver-IPC system-root decisions. Driver health now
+resolves only allowlisted `sc.exe`, `fltmc.exe`, `bcdedit.exe`, and Windows
+PowerShell components beneath the checked directory returned by
+`GetSystemWindowsDirectoryW`. Driver IPC derives its actual `System32` and
+`SysWOW64` fail-open roots from the same checked result. The existing process
+skip and `taskkill.exe` paths also delegate to this shared validation.
+
+The resolver bounds the Win32 output parser and relative component count/size,
+requires a rooted local drive with normal components, and rejects symbolic-link
+or reparse-point ancestors and final targets. Component allowlists remain at
+the caller so adding an arbitrary helper name does not silently expand command
+execution. Environment-spoof tests prove `Q:\SpoofedWindows` cannot replace the
+actual root.
+
+Driver IPC caches one immutable checked root result for the Guard process
+lifetime, avoiding repeated native and ancestor metadata work on every event.
+Root-resolution errors are cached and propagated into verdict evaluation. The
+native port then uses its existing reason-bearing fail-open error verdict, which
+avoids a silent trust substitution and avoids unexplained system lockout. This
+availability choice does not label a file clean or malicious and is not a
+pre-execution protection claim.
+
+The operating system, locked `windows-sys` ABI, process token, and protection of
+the real Windows tree remain trusted. Metadata inspection followed by command
+creation is not an atomic handle-based launch. A privileged actor able to
+replace protected system paths, or compromise Windows itself, is outside this
+user-mode boundary. Actual-root `System32`/`SysWOW64` fail-open and process-skip
+coverage remains broad and path-based rather than publisher-based.
+
+Native Engine Authenticode and quarantine helper discovery still retain their
+separately validated environment-root implementations and remain the next
+consolidation candidates. Installed LocalSystem behavior, live helper ACLs,
+signed-driver IPC, driver lifecycle, and true pre-execution enforcement remain
+partial or blocked. No service, driver, Defender setting, package installation,
+or release is changed by checkpoint 2192.

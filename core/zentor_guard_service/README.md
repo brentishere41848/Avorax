@@ -10,8 +10,10 @@ Windows v1 behavior is best-effort post-launch protection:
   Linux processes through bounded procfs reads. Access, path, record, budget,
   and empty-snapshot gaps remain visible and prevent a clean finite-watch result.
 - Resolves the shared Windows directory with bounded native Win32 APIs for the
-  process-skip policy and checked `taskkill.exe` discovery. Environment-spoofed
-  and other-drive `Windows\System32` lookalikes are not skipped.
+  process-skip policy, checked `taskkill.exe`, driver-health System32 tools, and
+  driver-IPC system-path fail-open roots. Mutable `SystemRoot`/`WINDIR` values
+  cannot redirect those controls; unsafe or unavailable roots fail visibly.
+  Other-drive `Windows\System32` lookalikes are not treated as system paths.
 - Checks known malicious hashes and Avorax Native Engine verdicts.
 - Uses ANE native signatures, native rules, native ML, and native risk fusion as the default decision source.
 - Keeps ClamAV/YARA only as optional compatibility features (`compat_clamav`, `compat_yara`) and does not require them.

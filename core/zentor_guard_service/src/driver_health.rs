@@ -534,155 +534,16 @@ fn driver_ipc_helper_is_reparse_point(metadata: &fs::Metadata) -> bool {
 
 #[cfg(windows)]
 fn windows_system32_tool(name: &str) -> Result<PathBuf, String> {
-    match name {
-        "sc.exe" | "fltmc.exe" | "bcdedit.exe" | "powershell.exe" => {}
+    let relative_components: &[&str] = match name {
+        "sc.exe" | "fltmc.exe" | "bcdedit.exe" => &[name],
+        "powershell.exe" => &["WindowsPowerShell", "v1.0", name],
         _ => return Err(format!("unsupported Windows driver-health tool: {name}")),
-    }
-    let root = windows_system_root()?;
-    let candidate = if name == "powershell.exe" {
-        root.join("System32")
-            .join("WindowsPowerShell")
-            .join("v1.0")
-            .join(name)
-    } else {
-        root.join("System32").join(name)
     };
-    if !is_local_windows_drive_path(&candidate) {
-        return Err(format!(
-            "Windows driver-health tool must be on a local drive: {}",
-            candidate.display()
-        ));
-    }
-    match fs::symlink_metadata(&candidate) {
-        Ok(metadata) => {
-            let file_type = metadata.file_type();
-            if file_type.is_symlink() {
-                return Err(format!(
-                    "Windows driver-health tool path is a symbolic link: {}",
-                    candidate.display()
-                ));
-            }
-            if driver_ipc_helper_is_reparse_point(&metadata) {
-                return Err(format!(
-                    "Windows driver-health tool path is a reparse point: {}",
-                    candidate.display()
-                ));
-            }
-            if !file_type.is_file() {
-                return Err(format!(
-                    "Windows driver-health tool path is not a regular file: {}",
-                    candidate.display()
-                ));
-            }
-            Ok(candidate)
-        }
-        Err(error) => Err(format!(
-            "failed to inspect Windows driver-health tool {}: {error}",
-            candidate.display()
-        )),
-    }
-}
-
-#[cfg(windows)]
-fn windows_system_root() -> Result<PathBuf, String> {
-    let mut diagnostics = Vec::new();
-    for variable in ["SystemRoot", "WINDIR"] {
-        match std::env::var_os(variable) {
-            Some(value) => {
-                let text = value.to_string_lossy().trim().to_owned();
-                if text.is_empty() {
-                    diagnostics.push(format!("{variable} is empty"));
-                    continue;
-                }
-                let normalized_root = match normalize_driver_health_windows_system_root_text(&text)
-                {
-                    Ok(text) => text,
-                    Err(error) => {
-                        diagnostics.push(format!("{variable} is unsafe: {error}"));
-                        continue;
-                    }
-                };
-                let path = PathBuf::from(normalized_root);
-                if !is_local_windows_drive_path(&path) {
-                    diagnostics.push(format!(
-                        "{variable} must be a local Windows drive path: {}",
-                        path.display()
-                    ));
-                    continue;
-                }
-                return Ok(path);
-            }
-            None => diagnostics.push(format!("{variable} is not set")),
-        }
-    }
-    Err(format!(
-        "Windows driver-health tool root is unavailable: {}",
-        diagnostics.join("; ")
-    ))
-}
-
-#[cfg(windows)]
-fn normalize_driver_health_windows_system_root_text(value: &str) -> Result<String, String> {
-    if value.contains('\0') {
-        return Err("Windows driver-health system root contains NUL".to_string());
-    }
-    let normalized = value.trim().replace('/', "\\");
-    if normalized.split('\\').any(|part| part == "..") {
-        return Err(
-            "Windows driver-health system root must not contain parent traversal".to_string(),
-        );
-    }
-    Ok(collapse_driver_health_windows_system_root_segments(
-        &normalized,
-    ))
-}
-
-#[cfg(windows)]
-fn collapse_driver_health_windows_system_root_segments(path: &str) -> String {
-    let trimmed = path.trim_end_matches('\\');
-    if trimmed.is_empty() {
-        return String::new();
-    }
-    let (prefix, rest, absolute) = split_driver_health_windows_system_root_prefix(trimmed);
-    let mut parts = Vec::new();
-    for part in rest.split('\\') {
-        match part {
-            "" | "." => {}
-            _ => parts.push(part),
-        }
-    }
-    let joined = parts.join("\\");
-    match (prefix, absolute, joined.is_empty()) {
-        (Some(prefix), true, true) => format!("{prefix}\\"),
-        (Some(prefix), true, false) => format!("{prefix}\\{joined}"),
-        (None, true, true) => "\\".to_string(),
-        (None, true, false) => format!("\\{joined}"),
-        (Some(prefix), false, true) => prefix.to_string(),
-        (Some(prefix), false, false) => format!("{prefix}{joined}"),
-        (None, false, _) => joined,
-    }
-}
-
-#[cfg(windows)]
-fn split_driver_health_windows_system_root_prefix(path: &str) -> (Option<&str>, &str, bool) {
-    if path.len() >= 3 && path.as_bytes()[1] == b':' && path.as_bytes()[2] == b'\\' {
-        return (Some(&path[..2]), &path[3..], true);
-    }
-    if path.starts_with('\\') {
-        return (None, path.trim_start_matches('\\'), true);
-    }
-    (None, path, false)
-}
-
-#[cfg(windows)]
-fn is_local_windows_drive_path(path: &Path) -> bool {
-    let normalized = path.as_os_str().to_string_lossy().replace('/', "\\");
-    let bytes = normalized.as_bytes();
-    bytes.len() >= 3
-        && bytes[0].is_ascii_alphabetic()
-        && bytes[1] == b':'
-        && bytes[2] == b'\\'
-        && !normalized.starts_with("\\\\")
+    crate::windows_system::checked_system32_file(
+        relative_components,
+        &format!("Windows driver-health tool {name}"),
+    )
+    .map_err(|error| error.to_string())
 }
 
 #[cfg(not(windows))]
@@ -1070,30 +931,17 @@ mod tests {
         assert!(production.contains("windows_system32_tool(\"fltmc.exe\")?"));
         assert!(production.contains("windows_system32_tool(\"bcdedit.exe\")?"));
         assert!(production.contains("windows_system32_tool(\"powershell.exe\")?"));
-        assert!(production.contains("fn windows_system_root() -> Result<PathBuf, String>"));
-        assert!(production.contains("normalize_driver_health_windows_system_root_text(&text)"));
-        assert!(production.contains("PathBuf::from(normalized_root)"));
-        assert!(production.contains("SystemRoot"));
-        assert!(production.contains("WINDIR"));
-        assert!(production.contains("Windows driver-health tool root is unavailable"));
-        assert!(production.contains("must be a local Windows drive path"));
-        assert!(production
-            .contains("Windows driver-health system root must not contain parent traversal"));
-        assert!(production.contains(
-            "fn collapse_driver_health_windows_system_root_segments(path: &str) -> String"
-        ));
+        assert!(production.contains("crate::windows_system::checked_system32_file("));
+        assert!(production.contains("\"sc.exe\" | \"fltmc.exe\" | \"bcdedit.exe\" => &[name]"));
         assert!(
-            production.contains("fn split_driver_health_windows_system_root_prefix(path: &str)")
+            production.contains("\"powershell.exe\" => &[\"WindowsPowerShell\", \"v1.0\", name]")
         );
-        assert!(production.contains(
-            "collapse_driver_health_windows_system_root_segments(\n        &normalized,"
-        ));
-        assert!(production.contains("match part {\n            \"\" | \".\" => {}"));
+        assert!(production.contains("unsupported Windows driver-health tool"));
+        assert!(!production.contains("fn windows_system_root"));
+        assert!(!production.contains("std::env::var_os"));
+        assert!(!production.contains("SystemRoot"));
+        assert!(!production.contains("WINDIR"));
         assert!(!production.contains(&old_windows_root_fallback));
-        assert!(production.contains("Windows driver-health tool must be on a local drive"));
-        assert!(production.contains("Windows driver-health tool path is a symbolic link"));
-        assert!(production.contains("Windows driver-health tool path is a reparse point"));
-        assert!(!production.contains("PathBuf::from(text)"));
         assert!(!production.contains(&old_sc));
         assert!(!production.contains(&old_fltmc));
         assert!(!production.contains(&old_bcdedit));

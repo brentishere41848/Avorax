@@ -1437,25 +1437,72 @@ enforcement, or pre-execution blocking is claimed.
   spoofed child-only Windows environment, and `73.6ms`. All exited zero, wrote
   no stderr, and returned `ok:false` with 280 visibility gaps rather than a fake
   clean result. The count is not threats.
-- **Verified hosted implementation head:** Commit
-  `67e067d2d74d7561c4a48269284702ca50f1b1a1` passes Avorax CI
-  `32366912857`. Desktop Packages push `32366882138` and PR `32366913124` pass
-  package contracts, Windows x64 MSI/EXE, Linux x64 DEB/tar, macOS x64/arm64
-  DMGs, and consolidation. Publish jobs are skipped. The documentation-only
-  evidence head remains pending exact-head CI; no package is installed or
-  published.
+- **Verified hosted:** Implementation
+  `67e067d2d74d7561c4a48269284702ca50f1b1a1` and evidence
+  `7a48c013a126e9bd68fa705fa7295f6027e29fec` are merged by PR `#43` as
+  `d35ed9e9081a0ffb246a6350688bd833bfa6fe9d`. Evidence-head CI
+  `32368675449`, package PR `32368675439`, merged-main CI `32369958558`, and
+  merged-main packages `32369958304` pass. Consolidation passes and publish is
+  skipped; no package is installed or published.
 - **Technically limited:** Paths beneath the actual Windows `System32` and
   `SysWOW64` directories and the actual `Explorer.exe` retain a broad skip. A
   compromised or misplaced image within those protected roots could therefore
   be outside this polling inspection path. Replacing this with identity,
   publisher, or richer process-policy evidence needs separate design and false-
   positive validation.
-- **Out of scope / still separately implemented:** Guard driver-health and
-  driver-IPC helper discovery, Native Engine Authenticode, and Native Engine
-  quarantine helpers still use their own validated environment-root logic.
-  Checkpoint 2191 does not claim those paths use the new resolver.
+- **Superseded follow-up:** Checkpoint 2192 moves Guard driver-health and
+  driver-IPC system-root decisions onto the shared native resolver. Native
+  Engine Authenticode and quarantine helpers still use their own validated
+  environment-root logic.
 - **Existing low-severity quality blocker:** Optional workspace-wide strict
   Clippy reports three pre-existing `services/api` style lints
   (`enum_variant_names` and `items_after_test_module`). The API compiles and the
   complete workspace test suite passes; strict Clippy for the changed Guard
   crate passes with `-D warnings`.
+
+## Checkpoint 2192 Guard Native Root Consumers
+
+- **Resolved and exact-head verified:** Guard driver-health no longer trusts
+  `SystemRoot` or
+  `WINDIR` when locating `sc.exe`, `fltmc.exe`, `bcdedit.exe`, or Windows
+  PowerShell. Its component-specific allowlist delegates to the shared native
+  Windows-root module, which validates the local-drive root, complete existing
+  ancestor chain, final regular file, component count, component length, and
+  component alphabet.
+- **Resolved and exact-head verified:** Guard driver-IPC no longer grants its
+  system-path
+  fail-open decision from environment-derived Windows roots. It uses the same
+  checked `GetSystemWindowsDirectoryW` result once per Guard process and caches
+  both success and error to avoid repeated native/metadata work; a spoofed
+  `Q:\SpoofedWindows` environment leaves candidates unchanged.
+- **Resolved and exact-head verified:** Native-root resolver errors are no
+  longer silently
+  converted to an empty Windows candidate list. Verdict evaluation returns the
+  error; the native driver port keeps availability through its existing
+  reason-bearing fail-open error response, while direct callers receive an
+  explicit failure.
+- **Verified locally:** Native-root tests pass `5/5`, Guard `247/247`, the
+  locked workspace `1,479/1,479`, source contracts `626/626`, strict Guard
+  Clippy, rustfmt, PowerShell parsing, and release Guard build. The central
+  verifier and independent validator pass `221/221` in `702.3s`; an old report
+  missing the new native-root step is rejected as expected.
+- **Verified hosted at the implementation head:** Commit
+  `f6a40cc200764d0925bbcc3032a74e87be21b232` is published on draft PR `#44`.
+  Avorax CI run `32378264705` passes all jobs. Desktop Packages push run
+  `32378112753` and PR run `32378264725` pass package contracts, Windows,
+  Linux, both macOS architectures, and checksum consolidation; both publish
+  jobs are skipped. Merge and installed evidence remain pending.
+- **Verified unchanged:** Read-only inventory after verification is 16,072
+  ProgramData quarantine files, zero directories, 4,522,733 bytes, 5,357
+  complete payload/metadata/auth sets, one metadata-auth key, and zero pending
+  files. `Cargo.lock` and dependency versions are unchanged.
+- **Partial / blocked:** No installed driver-health command lifecycle,
+  installed LocalSystem service, production-signed driver, authenticated live
+  driver IPC, helper ACL attack fixture, package install, or pre-execution
+  enforcement was exercised. Those need a disposable elevated Windows host and
+  production signing prerequisites.
+- **Technically limited:** Actual-root `System32`/`SysWOW64` fail-open and
+  process-skip policies remain broad and path-based. Metadata validation and
+  later command creation are not one atomic handle-based launch. Native Engine
+  Authenticode and quarantine helper roots still use separate validated
+  environment logic and remain follow-up work.

@@ -6,17 +6,40 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
 
 ## Current Commit
 
-- Checkpoint 2190 merged through PR `#42` as
-  `f66ea472bff3d6f0b9ff4cb3b0cfcf2f25dee92a`. Checkpoint 2191 implementation
-  head `67e067d2d74d7561c4a48269284702ca50f1b1a1` is tracked by draft PR `#43` on
-  branch `agent/checkpoint-2191-guard-system-root-skip-policy`; local and hosted
-  implementation-head CI/package evidence is verified. The documentation-only
-  evidence head still requires exact-head CI before merge.
+- Checkpoint 2192 implementation
+  `f6a40cc200764d0925bbcc3032a74e87be21b232` is published on draft PR `#44`
+  from branch `agent/checkpoint-2192-guard-native-root-consumers`. Exact-head
+  Avorax CI `32378264705`, package push `32378112753`, and package PR
+  `32378264725` pass; package publication is intentionally skipped. Merge and
+  installed evidence remain pending.
 - Current public release tag: `v0.1.15-beta.3`, published as a prerelease on
-  2026-07-20 with independently verified checksums. Checkpoints 2178-2191 are
+  2026-07-20 with independently verified checksums. Checkpoints 2178-2192 are
   source hardening and do not create a new release tag.
 
 ## Latest Checkpoint Evidence - 2026-08-20
+
+- Current Guard native-root consumer pass: checkpoint 2192 moves driver-health
+  discovery for `sc.exe`, `fltmc.exe`, `bcdedit.exe`, and Windows PowerShell,
+  plus driver-IPC `System32`/`SysWOW64` fail-open roots, away from mutable
+  `SystemRoot`/`WINDIR` values. The shared native resolver validates a rooted
+  local drive, normal and bounded fixed components, every existing ancestor,
+  and final directory/file type while rejecting symbolic links and Windows
+  reparse points. Driver IPC caches one immutable checked result per Guard
+  process so this work is not repeated on every event. Resolver errors
+  propagate into the existing reason-bearing native-port fail-open path instead
+  of silently substituting trust. A Windows
+  runtime test confirms `Q:\SpoofedWindows` environment values cannot change
+  the actual root. Native-root tests pass `5/5`, Guard `247/247`, the locked
+  workspace `1,479/1,479`, source contracts `626/626`, strict Guard Clippy,
+  parser checks, and release build. The definitive verifier and validator pass
+  `221/221` in `702.3s`; a stale report missing the new step is rejected. The
+  ProgramData vault remains 16,072 files, 4,522,733 bytes, and zero pending
+  files. Native Engine helper-root consolidation, installed driver/service E2E,
+  signed-driver IPC, and pre-execution behavior remain partial or blocked. No
+  Defender setting, service, driver, package install, publication, or release
+  changed. Exact implementation-head CI and all desktop package builds pass as
+  recorded above. Evidence is maintained in
+  `docs/reports/checkpoint-2192-guard-native-root-consumers.md`.
 
 - Current Guard native-system-root pass: checkpoint 2191 removes observed-drive
   inference from the Windows process skip. A process at
@@ -38,12 +61,14 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
   all remained honestly `ok:false` with 280 coverage gaps and no stderr. The
   gaps are not threat counts. `Cargo.lock` is unchanged and the existing
   ProgramData vault remains `16,072` files, `4,522,733` bytes, and zero pending
-  journals. Implementation head `67e067d2d74d7561c4a48269284702ca50f1b1a1`
-  passes Avorax CI `32366912857`; Desktop Packages push `32366882138` and PR
-  `32366913124` pass Windows/Linux/macOS packages and consolidation, with both
-  publish jobs skipped. Other Guard driver helpers and Native Engine helper
-  discovery are outside this checkpoint. No service, driver, installer,
-  Defender setting, or release was changed. Evidence is maintained in
+  journals. Implementation `67e067d2d74d7561c4a48269284702ca50f1b1a1`
+  and evidence `7a48c013a126e9bd68fa705fa7295f6027e29fec` merged through PR
+  `#43` as `d35ed9e9081a0ffb246a6350688bd833bfa6fe9d`. Evidence-head CI
+  `32368675449`, package PR `32368675439`, merged-main CI `32369958558`, and
+  merged-main packages `32369958304` pass with publish skipped. Checkpoint 2192
+  supersedes the Guard driver-helper follow-up; Native Engine helper discovery
+  remains separate. No service, driver, installer, Defender setting, or release
+  was changed. Evidence is maintained in
   `docs/reports/checkpoint-2191-native-system-root-process-skip.md`.
 
 - Current native Windows process-enumeration pass: checkpoint 2190 removes the
