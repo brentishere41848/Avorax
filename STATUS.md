@@ -28,9 +28,13 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
   consumes its platform-irrelevant action discriminator without warning. After
   repair, local evidence passes Windows platform `6/6`, Local Core quarantine
   `112/112`, source contracts `621/621`, rustfmt, `git diff --check`, branding,
-  product-copy, and no-malware-binary gates. Native Unix runtime status remains
-  **pending** until a replacement Ubuntu job executes all nine tests; the failed
-  run is retained and is not counted as success. Evidence is recorded in
+  product-copy, and no-malware-binary gates. Replacement run `32320253194`
+  completed successfully across all five Avorax CI jobs; Unix job `96280869830`
+  passed shared `5/5`, Local Core `1+1`, and Guard `1+1` native Ubuntu tests with
+  every Unix job step successful. The Unix permission
+  runtime contract is therefore **verified hosted** on repair commit
+  `029a381af8fb86d1261a72845b61675a194e8447`; the failed run remains retained
+  and is not counted as success. Evidence is recorded in
   `docs/reports/checkpoint-2185-unix-quarantine-runtime-ci.md`.
 
 - Current Ultracode cross-platform quarantine permission pass: checkpoint 2184

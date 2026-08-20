@@ -40,7 +40,14 @@ Lead-engineer product-hardening pass across the Avorax repository. Goal is to mo
   `mpsc` imports to Windows, and consumed the Unix-only unused action
   discriminator. The source contract pins the explicit key expectation. After
   repair, rustfmt, source contracts `621/621`, and focused Local Core quarantine
-  tests `112/112` pass locally. A replacement hosted run remains required.
+  tests `112/112` pass locally.
+- Replacement run `32320253194` passed all five Avorax CI jobs. Unix job
+  `96280869830` passed all Unix steps: shared platform `5/5`, Local Core `1+1`,
+  and Guard `1+1`. The log contains no selected warning/error lines. Native Unix
+  quarantine permission runtime is
+  verified hosted on repair commit
+  `029a381af8fb86d1261a72845b61675a194e8447`; installed Windows and documented
+  filesystem/principal limitations are unchanged.
 
 ## 2026-08-20 continuation checkpoint 2184
 

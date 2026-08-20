@@ -1214,8 +1214,10 @@ enforcement, or pre-execution blocking is claimed.
   helper is removed. Windows platform tests pass `6/6`, focused Local Core
   quarantine passes `112/112`, source contracts pass `621/621`, and rustfmt,
   diff, branding, product-copy, and no-malware gates pass.
-- **Still pending:** A replacement hosted Ubuntu execution must pass the two
-  Local Core and two Guard filters after the already-passing five shared tests.
+- **Verified hosted:** Replacement run `32320253194`, job `96280869830`, passed
+  shared platform `5/5`, Local Core `1+1`, and Guard `1+1`. All Unix job steps
+  succeeded on repair commit `029a381af8fb86d1261a72845b61675a194e8447`.
+  The earlier failure remains recorded and is not counted as success.
 - **Unchanged blockers:** Installed LocalSystem/DPAPI/ACL/service/UI E2E,
   production signing, driver/pre-execution proof, production detection rates,
   and the hard-link/ancestor-race boundaries remain open or technically limited.

@@ -76,15 +76,31 @@ before validating the key text. Windows-only `OsString` and `mpsc` imports are
 platform-gated, and the Unix permission branch explicitly consumes the action
 discriminator that only affects the Windows DACL. A source contract pins the
 explicit key expectation. Rustfmt, `621/621` source contracts, and `112/112`
-focused Local Core quarantine tests pass after the repair. A clean replacement
-Ubuntu run is still required.
+focused Local Core quarantine tests passed after the repair. A clean replacement
+Ubuntu run was still required at this stage.
+
+## Replacement Hosted Evidence
+
+Repair commit `029a381af8fb86d1261a72845b61675a194e8447` passed all five jobs in
+Avorax CI run `32320253194`, including native Unix job `96280869830`:
+
+```text
+Test shared Unix permission engine: success; 5 passed, 0 failed
+Test Local Core Unix permission routing: success; 1 + 1 passed, 0 failed
+Test Guard Unix permission routing: success; 1 + 1 passed, 0 failed
+```
+
+Every job step completed successfully. The filtered job log contained no
+warning or compiler-error lines. The four focused integration commands each
+matched one test rather than returning a zero-test false success. Total native
+checkpoint scope is `9/9`.
 
 ## Hosted Classification
 
 | Classification | Control | Evidence and boundary |
 |---|---|---|
 | Verified locally | Workflow and fail-closed source contract | Source contracts pass `621/621`; Windows platform tests pass `6/6`; diff and safety gates pass. |
-| Partial, hosted repair pending | Native Unix permission runtime | Run `32319783686` proved the five shared tests but failed compiling the first Local Core filter; Guard was skipped. The repair is locally green, but all nine tests require a clean replacement Ubuntu run. |
+| Verified hosted | Native Unix permission runtime | Run `32320253194`, job `96280869830`, passed shared `5/5`, Local Core `1+1`, and Guard `1+1` on Ubuntu 24.04. Failed run `32319783686` remains recorded and is not counted. |
 | Unchanged partial | Installed Windows quarantine | LocalSystem ownership, DPAPI, unprivileged UI/service mediation, repair/upgrade, and package install/uninstall need a disposable elevated Windows host. |
 | Technically limited | Filesystem and principal boundary | Same-UID/SID processes, administrators/root, alternate hard links, and path-based ancestor races remain documented limits. Permissions do not encrypt or securely erase payloads and do not prove pre-execution blocking. |
 
