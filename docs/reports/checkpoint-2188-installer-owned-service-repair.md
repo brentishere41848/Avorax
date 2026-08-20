@@ -109,6 +109,31 @@ overall, and has an empty error field. The verifier's built-in
 `-RequireFullSuite` validator passed in `1.6s`; a separate invocation of the
 same validator also passed with `steps: 219` and `require_full_suite: True`.
 
+## Hosted Verification
+
+Exact implementation head
+`b67e787a0db0aa08ab82ae7ecc26f975399d4628` passed Avorax CI run
+`32339319834`. All five jobs completed successfully:
+
+| Job | Job ID | Result |
+|---|---:|---|
+| Rust local core and guard | `96335040453` | Passed |
+| Flutter client and protocol | `96335040657` | Passed |
+| Branding and copy gate | `96335040703` | Passed |
+| Unix quarantine permission runtime | `96335040757` | Passed |
+| Security, protection, and performance gates | `96335040818` | Passed |
+
+Desktop Packages push run `32339252987` and pull-request run `32339319827`
+also passed on that exact head. Each independently passed package contracts,
+Windows x64 MSI/EXE build and extraction verification, Linux x64 DEB/tar,
+macOS arm64 and x64 DMGs, and consolidation requiring six release artifacts
+with checksums and a lockfile SBOM. The push run package job IDs were
+`96334840140`, `96334877357`, `96334877378`, `96334877397`, `96334877414`,
+and `96337149167`; the pull-request run package job IDs were `96335040484`,
+`96335067167`, `96335067180`, `96335067208`, `96335067257`, and
+`96338411636`. Prerelease publication was intentionally skipped in both runs.
+No package was installed or published by this checkpoint.
+
 ## Failed And Superseded Attempts
 
 - The first four-file Flutter run had one test-only finder failure because a

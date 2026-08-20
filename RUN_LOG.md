@@ -57,6 +57,13 @@ Lead-engineer product-hardening pass across the Avorax repository. Goal is to mo
   `16,072` files and `4,522,733` bytes: `5,357` payloads, `5,357` records,
   `5,357` auth sidecars, one key, and no pending journals. No existing artifact
   was changed or deleted.
+- Exact implementation head `b67e787a0db0aa08ab82ae7ecc26f975399d4628`
+  passes Avorax CI run `32339319834` across all five jobs. Desktop Packages
+  push run `32339252987` and pull-request run `32339319827` both pass package
+  contracts, Windows x64 MSI/EXE, Linux x64 DEB/tar, macOS arm64/x64 DMGs,
+  and consolidated six-artifact checksum/SBOM evidence. Prerelease publication
+  was intentionally skipped in both runs; no package was installed or
+  published.
 - Installed service repair remains blocked pending disposable elevated-host
   MSI/EXE E2E. This checkpoint makes no detection-rate, persistent-monitoring,
   driver, pre-execution, secure-erase, or Defender-replacement claim and does
