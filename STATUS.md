@@ -7,8 +7,9 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
 ## Current Commit
 
 - Checkpoint 2185 merged as `7236d6a80fef6adbcdf72f544c279686984acea3`
-  through PR `#37`. Checkpoint 2186 hard-link quarantine policy is in progress
-  on a branch based on that merge.
+  through PR `#37`. Checkpoint 2186 implementation head
+  `2613b4131cb31c37e413d7610403fb2d665582e9` is validated in PR `#38`; its
+  hosted evidence finalization is in progress on the same branch.
 - Current public release tag: `v0.1.15-beta.3`, published as a prerelease on 2026-07-20 with independently verified checksums. Checkpoints 2178-2185 are source hardening and do not create a new release tag.
 
 ## Latest Checkpoint Evidence - 2026-08-20
@@ -29,11 +30,16 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
   skips, `605.1s`). The real ProgramData vault remains exactly `16,072` files
   and `4,522,733` bytes; nothing was deleted. An attempted combined strict Linux
   Guard Clippy remains failed on existing Windows-only dead-code/manual-`ok`
-  warnings and is not counted as success. The Ubuntu job now adds two Local and
-  two Guard hardlink tests; native Unix runtime is pending a hosted run. The
-  policy does not enumerate a volume or make link creation and path mutation
-  atomic, so same-principal/administrator races and volume-wide neutralization
-  remain technically limited. Evidence is recorded in
+  warnings and is not counted as success. Exact implementation head
+  `2613b4131cb31c37e413d7610403fb2d665582e9` passed Avorax CI run
+  `32324715015`; Ubuntu job `96293537585` passed shared `8/8`, Local Core
+  `1+1+2`, and Guard `1+1+2`, for native scope `16/16` across seven locked
+  Cargo invocations. Desktop Packages push run `32324694830` and PR run
+  `32324715004` both passed package contracts, Windows MSI/EXE, Linux DEB/tar,
+  macOS arm64/x64 DMGs, and consolidated checksums; prerelease publication was
+  intentionally skipped. The policy does not enumerate a volume or make link
+  creation and path mutation atomic, so same-principal/administrator races and
+  volume-wide neutralization remain technically limited. Evidence is recorded in
   `docs/reports/checkpoint-2186-quarantine-hardlink-policy.md`.
 
 - Current native Unix quarantine permission CI pass: checkpoint 2185 adds a

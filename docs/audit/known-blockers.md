@@ -1196,9 +1196,11 @@ enforcement, or pre-execution blocking is claimed.
   revalidation before removal, payload/vault-entry postflight before permission
   mutation or record finalization, and visible rejection that preserves an
   already multi-linked source. Windows runtime regressions pass locally; native
-  Unix runtime remains pending in the expanded Ubuntu CI job until a hosted run
-  succeeds. The control does not enumerate a volume or make rename/removal and
-  link creation atomic. Same-SID/UID and administrator/root races remain in the
+  Unix runtime passes hosted on implementation head
+  `2613b4131cb31c37e413d7610403fb2d665582e9` in run `32324715015`, job
+  `96293537585`, with `16/16` selected tests. The control does not enumerate a
+  volume or make link creation and rename/removal atomic. Same-SID/UID and
+  administrator/root races remain in the
   trusted computing boundary, alternate paths remain separate scan targets, and
   volume-wide neutralization is not claimed.
 
@@ -1236,9 +1238,16 @@ enforcement, or pre-execution blocking is claimed.
   pass and its complete suite is `225/225`. The Rust workspace passes
   `1,442/1,442`, source contracts pass `622/622`, and the central verifier/report
   validator passes `219/219` with no failures or skips in `605.1s`.
-- **Pending hosted Unix evidence:** The pinned Ubuntu 24.04 job now adds exact
-  Local Core and Guard `hard_link` filters to its full shared-platform run. No
-  native Unix runtime claim is made until a hosted branch-head run succeeds.
+- **Verified hosted Unix evidence:** Avorax CI `32324715015`, job
+  `96293537585`, passed shared platform `8/8`, Local Core `1+1+2`, and Guard
+  `1+1+2`, for `16/16` selected native tests across seven locked Cargo
+  invocations on exact implementation head
+  `2613b4131cb31c37e413d7610403fb2d665582e9`.
+- **Verified hosted package regression:** Desktop Packages push run
+  `32324694830` and PR run `32324715004` both passed package contracts,
+  Windows MSI/EXE, Linux DEB/tar, macOS arm64/x64 DMGs, and consolidated
+  checksums. No package was installed and branch prerelease publication was
+  intentionally skipped.
 - **Existing local cross-target lint debt:** Strict Linux Clippy for the changed
   shared platform crate passes. Guard Linux all-target compilation passes, but
   combined strict Guard Clippy fails on 24 existing Windows-only dead-code and

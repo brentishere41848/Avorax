@@ -51,8 +51,14 @@ Lead-engineer product-hardening pass across the Avorax repository. Goal is to mo
   unchanged at `16,072` files and `4,522,733` bytes: `5,357` payloads, `5,357`
   JSON records, `5,357` auth sidecars, and one metadata key. No existing
   quarantine file was changed or deleted.
-- Native Unix hardlink runtime and hosted CI/package evidence remain pending.
-  The policy does not enumerate all names on a volume or make link creation and
+- Exact implementation head `2613b4131cb31c37e413d7610403fb2d665582e9`
+  passed Avorax CI `32324715015`. Ubuntu job `96293537585` passed shared
+  platform `8/8`, Local Core `1+1+2`, and Guard `1+1+2`, for `16/16` selected
+  native tests across seven locked Cargo invocations. Desktop Packages push
+  run `32324694830` and PR run `32324715004` both passed package contracts,
+  Windows MSI/EXE, Linux DEB/tar, macOS arm64/x64 DMGs, and consolidated
+  checksums; branch prerelease publication was intentionally skipped.
+- The policy does not enumerate all names on a volume or make link creation and
   rename/removal atomic; that residual race is documented and volume-wide
   neutralization is not claimed.
 

@@ -141,8 +141,13 @@ generated `.verification` output remains untracked.
 The existing pinned `ubuntu-24.04` quarantine job still runs the complete shared
 platform crate and now adds `hard_link` filters for Local Core and Guard. The job
 has seven `cargo test --locked` invocations, fail-fast Bash, serial tests, and a
-30-minute timeout. It installs no package or machine-wide component. A hosted
-branch-head run is pending and no native Unix runtime success is claimed yet.
+30-minute timeout. It installs no package or machine-wide component. Exact
+implementation head `2613b4131cb31c37e413d7610403fb2d665582e9` passed Avorax
+CI run `32324715015`; job `96293537585` passed shared `8/8`, Local Core
+`1+1+2`, and Guard `1+1+2`, for `16/16` selected native tests. Desktop Packages
+push run `32324694830` and PR run `32324715004` both passed package contracts,
+Windows MSI/EXE, Linux DEB/tar, macOS arm64/x64 DMGs, and consolidated
+checksums. Branch prerelease publication was intentionally skipped.
 
 ## Classification
 
@@ -153,7 +158,8 @@ branch-head run is pending and no native Unix runtime success is claimed yet.
 | Verified locally | Guard direct and copy policy | Two focused adversarial tests plus complete Guard `225/225`; source and alternate remain, destination/record stay absent. |
 | Verified locally | Full regression and safety gates | Rust workspace `1,442/1,442`; central verifier/report validator `219/219` in `605.1s`; branding, product-copy, no-malware, false-positive, protection, performance, dependency, Flutter, and analyzer gates pass. |
 | Verified locally | Wiring and workflow contract | Source contracts `622/622`; affected Windows Clippy and Linux shared-platform Clippy pass. |
-| Partial | Native Unix hardlink runtime | Unix code compiles; the expanded Ubuntu runtime job must pass on the exact branch head. |
+| Verified hosted | Native Unix hardlink runtime | Avorax CI `32324715015`, job `96293537585`: shared `8/8`, Local Core `1+1+2`, and Guard `1+1+2`, totaling `16/16` selected native tests on exact implementation head `2613b4131cb31c37e413d7610403fb2d665582e9`. |
+| Verified hosted | Cross-platform package regression | Desktop Packages push `32324694830` and PR `32324715004` passed Windows MSI/EXE, Linux DEB/tar, macOS arm64/x64 DMGs, and consolidated checksums without package installation or prerelease publication. |
 | Technically limited | Volume-wide aliases and concurrent mutation | Avorax does not enumerate all links on a volume or atomically exclude same-SID/UID, administrator, or root link creation between the final check and mutation. Alternate names remain independent scan targets. |
 | Unchanged partial | Installed service/UI flow | LocalSystem ownership, cross-account UI/service mediation, package lifecycle, and elevated-host click-through still require a disposable test host. |
 
