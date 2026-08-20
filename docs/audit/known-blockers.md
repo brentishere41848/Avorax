@@ -1205,10 +1205,17 @@ enforcement, or pre-execution blocking is claimed.
 - **Expected native evidence:** The job runs five shared platform tests, two
   Local Core Unix permission-routing tests, and two Guard Unix
   permission-routing tests. It installs no packages or machine-wide components.
-- **Verified locally:** Windows platform tests pass `6/6`, source contracts pass
-  `621/621`, and diff, branding, product-copy, and no-malware gates pass.
-- **Still pending:** A hosted Ubuntu execution has not yet run on this branch.
-  The nine Unix tests remain partial until that run completes successfully.
+- **Failed attempt retained:** Run `32319783686`, job `96279486707`, passed the
+  five shared tests and then exposed a Unix-only Local Core test compile error:
+  `.trim()` was called on `Option<String>`. Guard did not run. This is not
+  counted as Unix integration success.
+- **Repair verified locally:** The test now explicitly requires `Some(key)`,
+  Windows-only imports are gated, and Unix-only warning debt in the permission
+  helper is removed. Windows platform tests pass `6/6`, focused Local Core
+  quarantine passes `112/112`, source contracts pass `621/621`, and rustfmt,
+  diff, branding, product-copy, and no-malware gates pass.
+- **Still pending:** A replacement hosted Ubuntu execution must pass the two
+  Local Core and two Guard filters after the already-passing five shared tests.
 - **Unchanged blockers:** Installed LocalSystem/DPAPI/ACL/service/UI E2E,
   production signing, driver/pre-execution proof, production detection rates,
   and the hard-link/ancestor-race boundaries remain open or technically limited.

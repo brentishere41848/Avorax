@@ -31,9 +31,16 @@ Lead-engineer product-hardening pass across the Avorax repository. Goal is to mo
   gate. The first no-malware command correctly rejected the WindowsApps Python
   alias as a reparse path; resolving the concrete interpreter through
   `sys.executable` and rerunning passed.
-- Hosted Ubuntu execution is pending and is not counted as success. The shared
-  Unix permission engine remains partial until all nine tests pass on the
-  checkpoint head.
+- First hosted run `32319783686`, job `96279486707`, passed all five shared Unix
+  tests and then failed compiling the first Local Core filter because the
+  Unix-only legacy metadata-key regression called `.trim()` on
+  `Option<String>`. Guard was skipped. This failure is retained and is not
+  counted as success.
+- Repaired the test to explicitly require `Some(key)`, gated `OsString` and
+  `mpsc` imports to Windows, and consumed the Unix-only unused action
+  discriminator. The source contract pins the explicit key expectation. After
+  repair, rustfmt, source contracts `621/621`, and focused Local Core quarantine
+  tests `112/112` pass locally. A replacement hosted run remains required.
 
 ## 2026-08-20 continuation checkpoint 2184
 

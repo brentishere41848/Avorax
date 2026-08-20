@@ -1,7 +1,9 @@
 use std::collections::HashMap;
+#[cfg(windows)]
 use std::ffi::OsString;
 use std::io::{self, BufRead, Read, Write};
 use std::path::{Path, PathBuf};
+#[cfg(windows)]
 use std::sync::mpsc;
 use std::thread;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};

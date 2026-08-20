@@ -11999,6 +11999,12 @@ def test_local_quarantine_staged_writes_are_final_destination_exclusive_and_clea
     assert "legacy_fixed_record_temp_link_is_not_used_by_uuid_staging" in source
     assert "legacy_fixed_auth_temp_link_is_not_used_by_uuid_staging" in source
     assert "legacy_fixed_metadata_key_temp_link_is_not_used_by_uuid_staging" in source
+    legacy_key_test = source[
+        source.index("fn legacy_fixed_metadata_key_temp_link_is_not_used_by_uuid_staging"):
+        source.index("fn oversized_metadata_key_is_rejected_before_decode")
+    ]
+    assert '.expect("metadata authentication key should be created")' in legacy_key_test
+    assert "assert!(!key.trim().is_empty())" in legacy_key_test
     assert "ensure_quarantine_file_parent_directory(path, label)" in marker_source
     assert "ensure_quarantine_file_destination_absent(path, label)" in marker_source
     assert "cleanup_quarantine_staged_file(&temp_path, label)" in marker_source

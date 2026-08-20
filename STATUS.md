@@ -20,12 +20,17 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
   five shared platform tests, two Local Core permission-routing tests, and two
   Guard permission-routing tests. A dependency-free source contract prevents
   silent removal, unpinned action drift, `continue-on-error`, `|| true`, package
-  installation, or an unbounded job. Local evidence passes the Windows platform
-  suite `6/6`, source contracts `621/621`, `git diff --check`, branding,
+  installation, or an unbounded job. First hosted run `32319783686` failed in
+  job `96279486707`: all five shared tests passed, then Local Core exposed a
+  Unix-only test compile error by calling `.trim()` on `Option<String>`; Guard
+  was consequently skipped. The test now explicitly requires the generated key,
+  Windows-only imports are correctly gated, and the Unix permission helper
+  consumes its platform-irrelevant action discriminator without warning. After
+  repair, local evidence passes Windows platform `6/6`, Local Core quarantine
+  `112/112`, source contracts `621/621`, rustfmt, `git diff --check`, branding,
   product-copy, and no-malware-binary gates. Native Unix runtime status remains
-  **pending** until a clean hosted Ubuntu job executes all nine tests; no hosted
-  success is inferred from source inspection or Windows execution. Evidence is
-  recorded in
+  **pending** until a replacement Ubuntu job executes all nine tests; the failed
+  run is retained and is not counted as success. Evidence is recorded in
   `docs/reports/checkpoint-2185-unix-quarantine-runtime-ci.md`.
 
 - Current Ultracode cross-platform quarantine permission pass: checkpoint 2184
