@@ -13,6 +13,55 @@ Lead-engineer product-hardening pass across the Avorax repository. Goal is to mo
 - The bundled native ML model is treated as development-only unless release metadata and gates prove production readiness.
 - MSI/EXE installers are first-install/repair/recovery/offline paths. Normal in-app updates should use verified `.aup` packages.
 
+## 2026-08-20 continuation checkpoint 2190
+
+- Replaced Guard's per-snapshot WindowsPowerShell/CIM process helper with an
+  isolated native Toolhelp collector. It enumerates PIDs, requests only
+  `PROCESS_QUERY_LIMITED_INFORMATION`, obtains Win32 image paths with
+  `QueryFullProcessImageNameW`, and closes every successful snapshot/process
+  handle through RAII.
+- Native collection retains the existing `65,536` PID ceiling, reuses one
+  32,768-code-unit path buffer, applies a two-second query budget, rejects zero
+  limits, and uses saturating gap counts. Exited-PID
+  `ERROR_INVALID_PARAMETER` churn is separate from access/query failures;
+  protected-process denial, early snapshot termination, limit exhaustion, and
+  invalid/unavailable paths remain fail-visible.
+- Windows process polling no longer starts a child process, resolves
+  PowerShell, executes CIM, encodes a script, or parses helper JSON. Existing
+  checked stop commands retain the bounded runner; non-zero exits now report
+  bounded stderr, then stdout, then an explicit no-output diagnostic.
+- Final release finite-watch samples took `185.9ms`, `72.2ms`, and `66.4ms`,
+  versus `1,150.3ms`, `812.0ms`, and `762.7ms` on the checkpoint 2189
+  PowerShell/CIM path. This is host-local diagnostic evidence, not a production
+  latency claim. Every native run remained honestly non-clean: `ok:false`,
+  `watchCompletedWithCoverageGaps`, 290 gap occurrences over two snapshots,
+  and first detail `Access is denied` for PID 236. The count is not threats and
+  no process action occurred.
+- Focused process collection passes `14/14`; Guard passes `239/239`; the locked
+  workspace passes `1,471/1,471`; source contracts pass `626/626`; strict Guard
+  Clippy, rustfmt, PowerShell parsing, and the release build pass. The definitive
+  central verifier and full-report validator pass `220/220` with no failures in
+  `687.6s`.
+- Failed attempts remain explicit: one stale Guard source anchor, one Clippy
+  test initialization, and one source-contract slice were corrected before the
+  final suites. `unittest` discovered zero tests and the bundled runtime lacks
+  pytest; no dependency was installed and the dependency-free project runner is
+  the counted `626/626` result.
+- Exact implementation head `a928aa0297cadeedd002a4e84cf937250de6bf3b`
+  passes Avorax CI `32356686816`; pinned Ubuntu job `96387285689` runs the
+  locked `process_collection` filter and passes `9/9`. Desktop Packages push
+  run `32356656322` and PR run `32356686469` pass Windows x64 MSI/EXE, Linux
+  x64 DEB/tar, macOS arm64/x64 DMGs, and consolidation. Publish jobs were
+  intentionally skipped; no package was installed or released.
+- `windows-sys` remains at the locked version and only existing crate feature
+  gates were enabled; `Cargo.lock` is unchanged. The real ProgramData vault
+  remains exactly `16,072` files, zero directories, and `4,522,733` bytes with
+  no pending journals.
+- This remains best-effort post-launch user-mode observation. Protected process
+  access, between-poll processes, same-path PID reuse, installed LocalSystem
+  visibility, macOS collection, kernel interception, and pre-execution blocking
+  remain limited, disabled, or blocked. No Defender-replacement claim is made.
+
 ## 2026-08-20 continuation checkpoint 2189
 
 - Replaced Guard's process-list-only contract with a bounded collection plus
@@ -63,6 +112,10 @@ Lead-engineer product-hardening pass across the Avorax repository. Goal is to mo
   DMGs, and consolidated six-artifact checksum/lockfile-SBOM evidence. The
   consolidation jobs are `96370430780` and `96370779650`; prerelease publish
   jobs were intentionally skipped. No package was installed or published.
+- PR `#41` merged to `main` as
+  `6ca2e61c1360a92b0077b3cfe4f06a2f3fc4a522`. Merged-main Avorax CI run
+  `32352853863` and Desktop Packages run `32352853839` pass; consolidation job
+  `96378902892` passes and publish job `96378966482` is skipped.
 - No dependency, live malware, Defender setting, service/driver operation,
   quarantine mutation, or pre-execution claim is involved.
 

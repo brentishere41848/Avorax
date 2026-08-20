@@ -15,6 +15,10 @@ INSTALLER = ROOT / "installer" / "windows" / "build-msi.ps1"
 ANDROID_BUILD_GRADLE = ROOT / "apps" / "zentor_client" / "android" / "build.gradle.kts"
 GUARD_HEALTH = ROOT / "core" / "zentor_guard_service" / "src" / "driver_health.rs"
 GUARD_MAIN = ROOT / "core" / "zentor_guard_service" / "src" / "main.rs"
+GUARD_WINDOWS_PROCESSES = (
+    ROOT / "core" / "zentor_guard_service" / "src" / "windows_processes.rs"
+)
+GUARD_CARGO = ROOT / "core" / "zentor_guard_service" / "Cargo.toml"
 GUARD_SELF_TEST = ROOT / "core" / "zentor_guard_service" / "src" / "self_test.rs"
 GUARD_DRIVER_IPC = ROOT / "core" / "zentor_guard_service" / "src" / "driver_ipc.rs"
 GUARD_KNOWN_BAD_CACHE = ROOT / "core" / "zentor_guard_service" / "src" / "known_bad_cache.rs"
@@ -12330,6 +12334,8 @@ def test_guard_process_hash_cache_uses_file_identity():
 
 def test_guard_process_collection_coverage_is_bounded_and_fail_visible():
     guard = read(GUARD_MAIN).replace("\r\n", "\n").replace("\r", "\n")
+    windows_native = read(GUARD_WINDOWS_PROCESSES).replace("\r\n", "\n").replace("\r", "\n")
+    guard_cargo = read(GUARD_CARGO)
     verifier = read(SMALL_THREAT_MVP_VERIFIER)
     validator = read(SMALL_THREAT_MVP_REPORT_VALIDATOR)
     production = guard[:guard.index("#[cfg(test)]")]
@@ -12341,9 +12347,10 @@ def test_guard_process_collection_coverage_is_bounded_and_fail_visible():
         production.index("struct ProcessCollection"):
         production.index("fn stop_process")
     ]
+    windows_start = collection_source.index("fn list_processes_windows")
     windows_source = collection_source[
-        collection_source.index("fn list_processes_windows"):
-        collection_source.index("fn windows_process_query_text")
+        windows_start:
+        collection_source.index('#[cfg(target_os = "linux")]', windows_start)
     ]
     procfs_source = collection_source[
         collection_source.index("fn list_processes_procfs"):
@@ -12371,9 +12378,23 @@ def test_guard_process_collection_coverage_is_bounded_and_fail_visible():
     assert "previous_processes = current_processes" in watch_source
     assert "process_requires_inspection(&previous_processes, &process)" in watch_source
     assert "HashSet<u32>" not in watch_source
-    assert "CoverageErrors" in windows_source
-    assert "Where-Object { $_.ExecutablePath }" not in windows_source
-    assert "ExecutionPolicy" not in windows_source
+    assert "collect_windows_process_images(" in windows_source
+    assert "WINDOWS_PROCESS_COLLECTION_BUDGET" in windows_source
+    assert "CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0)" in windows_native
+    assert "PROCESS_QUERY_LIMITED_INFORMATION" in windows_native
+    assert "QueryFullProcessImageNameW(" in windows_native
+    assert "MAX_WINDOWS_PROCESS_IMAGE_CHARS: u32 = 32_768" in windows_native
+    assert "elapsed() >= time_budget" in windows_native
+    assert "coverage_gaps.saturating_add(count)" in windows_native
+    assert "ERROR_INVALID_PARAMETER" in windows_native
+    assert "ERROR_NO_MORE_FILES" in windows_native
+    assert "CloseHandle(self.0)" in windows_native
+    assert '"Win32_System_Diagnostics_ToolHelp"' in guard_cargo
+    assert '"Win32_System_Threading"' in guard_cargo
+    assert "Get-CimInstance" not in windows_source
+    assert "powershell.exe" not in windows_source
+    assert "Command::new" not in windows_source
+    assert "Command::new" not in windows_native
     assert "MAX_OBSERVED_PROCESS_RECORDS" in collection_source
     assert "process monitoring is disabled" in collection_source
     assert "Linux procfs process enumeration unavailable" in procfs_source
@@ -12385,14 +12406,26 @@ def test_guard_process_collection_coverage_is_bounded_and_fail_visible():
         "process_collection_finite_watch_cannot_clean_pass_with_gaps",
         "process_collection_persistent_warnings_are_deduplicated_until_recovery",
         "process_collection_reused_pid_path_change_requires_inspection",
-        "process_collection_windows_envelope_preserves_coverage_gaps",
         "process_collection_procfs_accounts_for_malformed_and_unavailable_images",
     ]:
         assert test_name in guard
+    for test_name in [
+        "process_collection_windows_native_snapshot_preserves_coverage_gaps",
+        "process_collection_windows_native_snapshot_rejects_bad_paths",
+    ]:
+        assert test_name in guard
+    for test_name in [
+        "process_collection_windows_native_rejects_zero_limits",
+        "process_collection_windows_native_runtime_observes_current_process",
+        "process_collection_windows_native_query_gaps_and_churn_are_distinct",
+        "process_collection_windows_native_budget_is_fail_visible",
+        "process_collection_windows_native_record_limit_is_fail_visible",
+    ]:
+        assert test_name in windows_native
     step_name = "guard-service process collection coverage regressions"
     scope_claim = (
-        "Guard process enumeration coverage gaps are bounded, fail-visible, "
-        "and cannot become a clean finite-watch result"
+        "Guard native Windows process enumeration and Linux procfs coverage gaps "
+        "are bounded, fail-visible, and cannot become a clean finite-watch result"
     )
     assert step_name in verifier
     assert step_name in validator
@@ -12404,11 +12437,8 @@ def test_guard_process_collection_coverage_is_bounded_and_fail_visible():
 
 def test_guard_process_commands_use_bounded_runner():
     guard = read(GUARD_MAIN)
+    windows_native = read(GUARD_WINDOWS_PROCESSES)
     production = guard[:guard.index("#[cfg(test)]")]
-    process_query = guard[
-        guard.index("fn list_processes_windows"):
-        guard.index("#[derive(Debug, Deserialize)]", guard.index("fn list_processes_windows"))
-    ]
     stop_process = guard[
         guard.index("fn stop_process(process_id: u32)"):
         guard.index("#[cfg(windows)]\nfn windows_system32_tool")
@@ -12422,15 +12452,13 @@ def test_guard_process_commands_use_bounded_runner():
 
     assert "const GUARD_PROCESS_COMMAND_TIMEOUT: Duration = Duration::from_secs(30)" in production
     assert "#[cfg(windows)]\nuse std::ffi::OsString;" in production
-    assert "run_guard_process_command(" in process_query
-    assert '"Windows process query"' in process_query
-    assert "MAX_WINDOWS_PROCESS_QUERY_BYTES" in process_query
-    assert "GUARD_PROCESS_COMMAND_TIMEOUT" in process_query
-    assert "windows_process_query_text(&output.stdout)?" in process_query
     assert "run_guard_process_command(" in stop_process
     assert "taskkill for process {process_id}" in stop_process
     assert "kill for process {process_id}" in stop_process
     assert "MAX_GUARD_COMMAND_OUTPUT_BYTES" in stop_process
+    assert "guard_process_command_failure_detail(&output)" in stop_process
+    assert "command_output_excerpt(&output.stdout)" in production
+    assert "command_output_excerpt(&output.stderr)" in production
     assert "stdin(Stdio::null())" in runner
     assert "stdout(Stdio::piped())" in runner
     assert "stderr(Stdio::piped())" in runner
@@ -12445,8 +12473,9 @@ def test_guard_process_commands_use_bounded_runner():
     assert "join_guard_command_output_reader" in runner
     assert "failed to read bounded guard command output" in production
     assert "#[cfg(windows)]" not in reader_prefix
-    assert ".output()" not in process_query
     assert ".output()" not in stop_process
+    assert "run_guard_process_command(" not in windows_native
+    assert "Command::new" not in windows_native
     assert ".read_to_end(&mut bytes)" not in runner
 
 

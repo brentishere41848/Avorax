@@ -273,7 +273,7 @@ $verifiedScope = $verifiedScope.Replace(
 )
 $verifiedScope += " Additional verified boundary: native-engine detection-only mutation boundary."
 $verifiedScope += " Additional verified boundary: shared cross-platform quarantine permission hardening with process-token SID and exact protected Windows DACL verification plus exact Unix 0700/0600 verification."
-$verifiedScope += " Additional verified boundary: Guard process enumeration coverage gaps are bounded, fail-visible, and cannot become a clean finite-watch result."
+$verifiedScope += " Additional verified boundary: Guard native Windows process enumeration and Linux procfs coverage gaps are bounded, fail-visible, and cannot become a clean finite-watch result."
 $verifiedScope = $verifiedScope.Replace(
   "best-effort user-mode realtime watcher planning/status/IPC/controller paths",
   "release local-core binary watcher honesty smoke, best-effort user-mode realtime watcher planning/status/IPC/controller paths"

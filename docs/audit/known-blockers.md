@@ -1371,3 +1371,46 @@ enforcement, or pre-execution blocking is claimed.
   starts and exits between snapshots, including indistinguishable same-path PID
   reuse. This is post-launch user-mode observation, not kernel interception,
   pre-execution blocking, Defender replacement, or detection-rate evidence.
+
+## Checkpoint 2190 Native Windows Process Enumeration
+
+- **Resolved locally:** Guard no longer launches WindowsPowerShell/CIM for each
+  Windows process snapshot. Toolhelp plus `QueryFullProcessImageNameW` now runs
+  in one isolated Windows-only module with limited query access and RAII handle
+  ownership. No helper process, encoded script, JSON helper envelope, ambient
+  `PATH`, or network input remains in the Windows collector.
+- **Resolved locally:** PID records, image memory, and between-call query work
+  are bounded. Zero limits fail before Win32 use. Record exhaustion, budget
+  exhaustion, early snapshot termination, access/query failures, and unsafe or
+  unavailable returned paths remain visible coverage gaps. Exited-PID churn is
+  separate and cannot inflate a clean-coverage claim.
+- **Verified locally:** The exact native runtime observes the current test
+  process. Deterministic fixtures cover access versus churn, zero limits,
+  record/time bounds, bad paths, gap propagation, and empty snapshots. Focused
+  collection passes `14/14`, Guard `239/239`, the locked workspace
+  `1,471/1,471`, source contracts `626/626`, strict Guard Clippy, rustfmt,
+  PowerShell parsing, and the release build.
+- **Verified locally:** The definitive central verifier and report validator
+  pass `220/220` with no failures in `687.6s`. Final release finite-watch samples
+  are `185.9ms`, `72.2ms`, and `66.4ms`; the removed PowerShell/CIM path measured
+  `1,150.3ms`, `812.0ms`, and `762.7ms` on the same host. These are diagnostic
+  samples, not production latency or detection-rate evidence.
+- **Verified hosted:** Exact implementation head
+  `a928aa0297cadeedd002a4e84cf937250de6bf3b` passes Avorax CI
+  `32356686816`. Pinned Ubuntu job `96387285689` passes the exact locked
+  `process_collection` filter `9/9`. Desktop Packages push `32356656322` and PR
+  `32356686469` pass Windows, Linux, macOS arm64/x64, and consolidation;
+  prerelease publishing is skipped.
+- **Dependency boundary:** `windows-sys` stays at the existing locked version;
+  only Toolhelp and Threading feature gates were enabled. `Cargo.lock` is
+  unchanged and the dependency evidence gate passes.
+- **Blocked / technically limited:** The final non-elevated live watch reports
+  `ok:false` and 290 access/coverage-gap occurrences across two snapshots.
+  Installed LocalSystem visibility, protected process access, event ACLs,
+  service lifetime/shutdown, packaged UI mediation, and realistic sustained
+  performance need a disposable elevated Windows host.
+- **Disabled / technically limited:** Unsupported platforms, including macOS,
+  still disable Guard process enumeration explicitly. Polling can miss
+  between-snapshot processes and same-path PID reuse, and one native kernel call
+  cannot be cancelled mid-call. No kernel, pre-execution, Defender-replacement,
+  or complete process-coverage claim is made.

@@ -27,6 +27,8 @@ mod known_bad_cache;
 mod known_good_cache;
 mod preexecution_policy;
 mod self_test;
+#[cfg(windows)]
+mod windows_processes;
 
 const SERVICE_NAME: &str = "avorax_guard_service";
 #[cfg(windows)]
@@ -66,7 +68,6 @@ const MAX_GUARD_IPC_PATH_CHARS: usize = 4096;
 const MAX_GUARD_IPC_HASHES: usize = 2048;
 const MAX_GUARD_IPC_TEXT_CHARS: usize = 1024;
 const MAX_GUARD_IPC_REQUEST_ID_CHARS: usize = 128;
-const MAX_WINDOWS_PROCESS_QUERY_BYTES: usize = 1024 * 1024;
 const MAX_GUARD_COMMAND_OUTPUT_BYTES: usize = 2048;
 const GUARD_PROCESS_COMMAND_TIMEOUT: Duration = Duration::from_secs(30);
 #[cfg(any(feature = "compat_clamav", test))]
@@ -80,6 +81,8 @@ const MAX_GUARD_WATCH_POLL_INTERVAL_MS: u64 = 10_000;
 const MAX_OBSERVED_PROCESS_RECORDS: usize = 65_536;
 const MAX_PROCESS_COVERAGE_DETAIL_CHARS: usize = 512;
 const PROCESS_COVERAGE_RECOVERY_POLLS: u8 = 3;
+#[cfg(windows)]
+const WINDOWS_PROCESS_COLLECTION_BUDGET: Duration = Duration::from_secs(2);
 
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -1814,157 +1817,37 @@ fn list_processes() -> anyhow::Result<ProcessCollection> {
 
 #[cfg(windows)]
 fn list_processes_windows() -> anyhow::Result<ProcessCollection> {
-    let script = concat!(
-        "$ErrorActionPreference='Stop';",
-        "$rows=@(Get-CimInstance Win32_Process | Select-Object ProcessId,ExecutablePath);",
-        "$processes=@($rows | Where-Object { -not [string]::IsNullOrWhiteSpace($_.ExecutablePath) } | Select-Object ProcessId,ExecutablePath);",
-        "$coverageErrors=@($rows | Where-Object { $_.ProcessId -notin @(0,4) -and [string]::IsNullOrWhiteSpace($_.ExecutablePath) }).Count;",
-        "[pscustomobject]@{Processes=$processes;CoverageErrors=[uint64]$coverageErrors} | ConvertTo-Json -Compress -Depth 3"
-    );
-    let powershell = windows_system32_tool("powershell.exe")?;
-    let encoded_script = powershell_encoded_command(script);
-    let mut command = Command::new(&powershell);
-    command.args([
-        "-NoProfile",
-        "-NonInteractive",
-        "-EncodedCommand",
-        &encoded_script,
-    ]);
-    let output = run_guard_process_command(
-        &mut command,
-        "Windows process query",
-        MAX_WINDOWS_PROCESS_QUERY_BYTES,
-        MAX_GUARD_COMMAND_OUTPUT_BYTES,
-        GUARD_PROCESS_COMMAND_TIMEOUT,
+    let snapshot = windows_processes::collect_windows_process_images(
+        MAX_OBSERVED_PROCESS_RECORDS,
+        WINDOWS_PROCESS_COLLECTION_BUDGET,
     )?;
-    if !output.status.success() {
-        return Err(anyhow::anyhow!(
-            "Windows process query failed: {}",
-            command_output_excerpt(&output.stderr)
-        ));
-    }
-    let stdout = windows_process_query_text(&output.stdout)?;
-    parse_windows_process_json(&stdout)
+    Ok(windows_process_snapshot_to_collection(snapshot))
 }
 
 #[cfg(windows)]
-fn windows_process_query_text(bytes: &[u8]) -> anyhow::Result<String> {
-    if bytes.len() > MAX_WINDOWS_PROCESS_QUERY_BYTES {
-        anyhow::bail!(
-            "Windows process query JSON exceeded {} bytes",
-            MAX_WINDOWS_PROCESS_QUERY_BYTES
-        );
-    }
-    Ok(String::from_utf8_lossy(bytes).to_string())
-}
-
-#[cfg(windows)]
-fn powershell_encoded_command(script: &str) -> String {
-    let mut bytes = Vec::with_capacity(script.len() * 2);
-    for unit in script.encode_utf16() {
-        bytes.push((unit & 0xff) as u8);
-        bytes.push((unit >> 8) as u8);
-    }
-    base64_encode(&bytes)
-}
-
-#[cfg(windows)]
-fn base64_encode(bytes: &[u8]) -> String {
-    const TABLE: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-    let mut encoded = String::with_capacity(bytes.len().div_ceil(3) * 4);
-    let mut offset = 0;
-    while offset < bytes.len() {
-        let first = bytes[offset];
-        let second = if offset + 1 < bytes.len() {
-            bytes[offset + 1]
-        } else {
-            0
-        };
-        let third = if offset + 2 < bytes.len() {
-            bytes[offset + 2]
-        } else {
-            0
-        };
-        let triple = ((first as u32) << 16) | ((second as u32) << 8) | third as u32;
-        encoded.push(TABLE[((triple >> 18) & 0x3f) as usize] as char);
-        encoded.push(TABLE[((triple >> 12) & 0x3f) as usize] as char);
-        if offset + 1 < bytes.len() {
-            encoded.push(TABLE[((triple >> 6) & 0x3f) as usize] as char);
-        } else {
-            encoded.push('=');
-        }
-        if offset + 2 < bytes.len() {
-            encoded.push(TABLE[(triple & 0x3f) as usize] as char);
-        } else {
-            encoded.push('=');
-        }
-        offset += 3;
-    }
-    encoded
-}
-
-#[cfg(windows)]
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "PascalCase", deny_unknown_fields)]
-struct WindowsProcessEnvelope {
-    processes: Vec<WindowsProcessRow>,
-    coverage_errors: u64,
-}
-
-#[cfg(windows)]
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "PascalCase", deny_unknown_fields)]
-struct WindowsProcessRow {
-    process_id: u32,
-    executable_path: String,
-}
-
-#[cfg(windows)]
-fn parse_windows_process_json(json: &str) -> anyhow::Result<ProcessCollection> {
-    if json.len() > MAX_WINDOWS_PROCESS_QUERY_BYTES {
-        anyhow::bail!(
-            "Windows process query JSON exceeded {} bytes",
-            MAX_WINDOWS_PROCESS_QUERY_BYTES
-        );
-    }
-    let trimmed = json.trim();
-    if trimmed.is_empty() {
-        anyhow::bail!("Windows process query returned empty JSON");
-    }
-    let parsed: WindowsProcessEnvelope = serde_json::from_str(trimmed)?;
-    if parsed.processes.len() > MAX_OBSERVED_PROCESS_RECORDS {
-        anyhow::bail!(
-            "Windows process query returned more than {} process records",
-            MAX_OBSERVED_PROCESS_RECORDS
-        );
-    }
-    if parsed.coverage_errors > MAX_OBSERVED_PROCESS_RECORDS as u64 {
-        anyhow::bail!(
-            "Windows process query reported more than {} coverage errors",
-            MAX_OBSERVED_PROCESS_RECORDS
-        );
-    }
-
+fn windows_process_snapshot_to_collection(
+    snapshot: windows_processes::WindowsProcessSnapshot,
+) -> ProcessCollection {
+    let windows_processes::WindowsProcessSnapshot {
+        processes,
+        coverage_gaps,
+        first_coverage_detail,
+    } = snapshot;
     let mut collection = ProcessCollection::default();
     collection.coverage.record_gaps(
-        parsed.coverage_errors,
-        "Win32_Process did not expose an executable path for one or more non-kernel processes",
+        coverage_gaps,
+        first_coverage_detail.as_deref().unwrap_or(
+            "native Windows process collector reported incomplete coverage without a detail",
+        ),
     );
-    for row in parsed.processes {
-        if row.executable_path.trim().is_empty() {
-            collection.coverage.record_gap(format!(
-                "Win32_Process returned an empty executable path for PID {}",
-                row.process_id
-            ));
-            continue;
-        }
+    for row in processes {
         let process = ObservedProcess {
             process_id: row.process_id,
-            path: PathBuf::from(row.executable_path),
+            path: row.path,
         };
         if !process.path.is_absolute() {
             collection.coverage.record_gap(format!(
-                "Win32_Process returned a non-absolute executable path for PID {}",
+                "native Windows process collector returned a non-absolute executable path for PID {}",
                 process.process_id
             ));
             continue;
@@ -1972,16 +1855,16 @@ fn parse_windows_process_json(json: &str) -> anyhow::Result<ProcessCollection> {
         match guard_process_path_is_regular_file(&process.path) {
             Ok(true) => collection.processes.push(process),
             Ok(false) => collection.coverage.record_gap(format!(
-                "Win32_Process executable path for PID {} was unavailable or not a regular file",
+                "native Windows process executable path for PID {} was unavailable or not a regular file",
                 process.process_id
             )),
             Err(error) => collection.coverage.record_gap(format!(
-                "unable to validate Win32_Process executable path for PID {}: {error:#}",
+                "unable to validate native Windows process executable path for PID {}: {error:#}",
                 process.process_id
             )),
         }
     }
-    Ok(collection.with_empty_coverage_evidence())
+    collection.with_empty_coverage_evidence()
 }
 
 #[cfg(target_os = "linux")]
@@ -2119,9 +2002,9 @@ fn stop_process(process_id: u32) -> anyhow::Result<()> {
         )?;
         if !output.status.success() {
             anyhow::bail!(
-                "taskkill failed for process {process_id} with status {}; stderr: {}",
+                "taskkill failed for process {process_id} with status {}; {}",
                 output.status,
-                command_output_excerpt(&output.stderr)
+                guard_process_command_failure_detail(&output)
             );
         }
     }
@@ -2140,9 +2023,9 @@ fn stop_process(process_id: u32) -> anyhow::Result<()> {
         )?;
         if !output.status.success() {
             anyhow::bail!(
-                "kill failed for process {process_id} with status {}; stderr: {}",
+                "kill failed for process {process_id} with status {}; {}",
                 output.status,
-                command_output_excerpt(&output.stderr)
+                guard_process_command_failure_detail(&output)
             );
         }
     }
@@ -2193,6 +2076,18 @@ struct GuardProcessCommandOutput {
     status: std::process::ExitStatus,
     stdout: Vec<u8>,
     stderr: Vec<u8>,
+}
+
+fn guard_process_command_failure_detail(output: &GuardProcessCommandOutput) -> String {
+    let stderr = command_output_excerpt(&output.stderr);
+    if !stderr.trim().is_empty() {
+        return format!("stderr: {stderr}");
+    }
+    let stdout = command_output_excerpt(&output.stdout);
+    if !stdout.trim().is_empty() {
+        return format!("stdout: {stdout}");
+    }
+    "no command diagnostic output".to_string()
 }
 
 fn run_guard_process_command(
@@ -6919,7 +6814,7 @@ mod tests {
         assert!(stop_source.contains("PathBuf::from(\"/usr/bin/kill\")"));
         assert!(stop_source.contains("fs::symlink_metadata(&candidate)"));
         assert!(stop_source.contains("output.status.success()"));
-        assert!(stop_source.contains("command_output_excerpt(&output.stderr)"));
+        assert!(stop_source.contains("guard_process_command_failure_detail(&output)"));
         let old_taskkill_launch = ["Command::new(\"", "taskkill\")"].concat();
         let old_kill_launch = ["Command::new(\"", "kill\")"].concat();
         assert!(!stop_source.contains(&old_taskkill_launch));
@@ -6954,7 +6849,9 @@ mod tests {
     #[test]
     fn process_listing_uses_non_following_path_checks() {
         let source = include_str!("main.rs");
-        let start = source.find("fn parse_windows_process_json").unwrap();
+        let start = source
+            .find("fn windows_process_snapshot_to_collection")
+            .unwrap();
         let end = source.find("fn stop_process").unwrap();
         let process_source = &source[start..end];
 
@@ -7001,20 +6898,22 @@ mod tests {
 
     #[cfg(windows)]
     #[test]
-    fn process_collection_windows_envelope_preserves_coverage_gaps() {
+    fn process_collection_windows_native_snapshot_preserves_coverage_gaps() {
         let dir = tempdir().unwrap();
         let executable = dir.path().join("fixture.exe");
         fs::write(&executable, b"benign process fixture").unwrap();
-        let json = serde_json::json!({
-            "Processes": [{
-                "ProcessId": 42,
-                "ExecutablePath": executable.display().to_string(),
+        let snapshot = windows_processes::WindowsProcessSnapshot {
+            processes: vec![windows_processes::WindowsProcessImage {
+                process_id: 42,
+                path: executable,
             }],
-            "CoverageErrors": 2,
-        })
-        .to_string();
+            coverage_gaps: 2,
+            first_coverage_detail: Some(
+                "native Windows process image was inaccessible".to_string(),
+            ),
+        };
 
-        let collection = parse_windows_process_json(&json).unwrap();
+        let collection = windows_process_snapshot_to_collection(snapshot);
 
         assert_eq!(collection.processes.len(), 1);
         assert_eq!(collection.processes[0].process_id, 42);
@@ -7023,12 +6922,10 @@ mod tests {
             .coverage
             .first_detail
             .unwrap()
-            .contains("did not expose an executable path"));
-        assert!(parse_windows_process_json("")
-            .unwrap_err()
-            .to_string()
-            .contains("empty JSON"));
-        let empty = parse_windows_process_json(r#"{"Processes":[],"CoverageErrors":0}"#).unwrap();
+            .contains("inaccessible"));
+        let empty = windows_process_snapshot_to_collection(
+            windows_processes::WindowsProcessSnapshot::default(),
+        );
         assert_eq!(empty.coverage.gaps, 1);
         assert!(empty
             .coverage
@@ -7039,13 +6936,16 @@ mod tests {
 
     #[cfg(windows)]
     #[test]
-    fn process_collection_windows_envelope_rejects_unknown_fields_and_bad_paths() {
-        let unknown = r#"{"Processes":[],"CoverageErrors":0,"Ignored":true}"#;
-        assert!(parse_windows_process_json(unknown).is_err());
-
-        let relative =
-            r#"{"Processes":[{"ProcessId":7,"ExecutablePath":"relative.exe"}],"CoverageErrors":0}"#;
-        let collection = parse_windows_process_json(relative).unwrap();
+    fn process_collection_windows_native_snapshot_rejects_bad_paths() {
+        let snapshot = windows_processes::WindowsProcessSnapshot {
+            processes: vec![windows_processes::WindowsProcessImage {
+                process_id: 7,
+                path: PathBuf::from("relative.exe"),
+            }],
+            coverage_gaps: 0,
+            first_coverage_detail: None,
+        };
+        let collection = windows_process_snapshot_to_collection(snapshot);
         assert!(collection.processes.is_empty());
         assert_eq!(collection.coverage.gaps, 1);
         assert!(collection
@@ -7056,46 +6956,35 @@ mod tests {
     }
 
     #[test]
-    fn windows_process_query_output_is_bounded() {
+    fn windows_process_collection_uses_bounded_native_api() {
         let source = include_str!("main.rs");
+        let native = include_str!("windows_processes.rs");
         let start = source.find("fn list_processes_windows").unwrap();
         let end = start
             + source[start..]
-                .find("#[derive(Debug, Deserialize)]")
+                .find("#[cfg(target_os = \"linux\")]")
                 .unwrap();
         let process_source = &source[start..end];
-        let old_stderr = ["String::from_utf8_lossy(&output.stderr", ")"].concat();
-        let old_stdout_parse = [
-            "parse_windows_process_json(&String::from_utf8_lossy(&output.stdout",
-            "))",
-        ]
-        .concat();
 
-        assert!(source.contains("MAX_WINDOWS_PROCESS_QUERY_BYTES"));
-        assert!(process_source.contains("windows_system32_tool(\"powershell.exe\")?"));
-        assert!(process_source.contains("powershell_encoded_command(script)"));
-        assert!(process_source.contains("Command::new(&powershell)"));
-        assert!(process_source.contains("run_guard_process_command("));
-        assert!(process_source.contains("MAX_WINDOWS_PROCESS_QUERY_BYTES"));
-        assert!(process_source.contains("GUARD_PROCESS_COMMAND_TIMEOUT"));
-        assert!(process_source.contains("\"-EncodedCommand\""));
-        assert!(process_source.contains("let second = if offset + 1 < bytes.len()"));
-        assert!(process_source.contains("let third = if offset + 2 < bytes.len()"));
-        assert!(process_source.contains("windows_process_query_text(&output.stdout)?"));
-        assert!(process_source.contains("command_output_excerpt(&output.stderr)"));
-        assert!(process_source.contains("Windows process query JSON exceeded"));
-        let old_powershell_launch = ["Command::new(\"", "powershell\")"].concat();
-        let old_command_arg = ["\"-Com", "mand\""].concat();
-        let old_base64_padding_default = [".unwrap_or", "(0)"].concat();
-        assert!(!process_source.contains(&old_powershell_launch));
-        assert!(!process_source.contains(&old_command_arg));
-        assert!(!process_source.contains(&old_base64_padding_default));
-        assert!(!process_source.contains(&old_stderr));
-        assert!(!process_source.contains(&old_stdout_parse));
-        assert!(!process_source.contains(".output()"));
-        assert!(!process_source.contains("ExecutionPolicy"));
-        assert!(!process_source.contains("Where-Object { $_.ExecutablePath }"));
-        assert!(process_source.contains("CoverageErrors"));
+        assert!(source.contains(
+            "const WINDOWS_PROCESS_COLLECTION_BUDGET: Duration = Duration::from_secs(2)"
+        ));
+        assert!(process_source.contains("collect_windows_process_images("));
+        assert!(process_source.contains("MAX_OBSERVED_PROCESS_RECORDS"));
+        assert!(process_source.contains("WINDOWS_PROCESS_COLLECTION_BUDGET"));
+        assert!(native.contains("CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0)"));
+        assert!(native.contains("PROCESS_QUERY_LIMITED_INFORMATION"));
+        assert!(native.contains("QueryFullProcessImageNameW("));
+        assert!(native.contains("MAX_WINDOWS_PROCESS_IMAGE_CHARS: u32 = 32_768"));
+        assert!(native.contains("elapsed() >= time_budget"));
+        assert!(native.contains("coverage_gaps.saturating_add(count)"));
+        assert!(native.contains("ERROR_INVALID_PARAMETER"));
+        assert!(native.contains("ERROR_NO_MORE_FILES"));
+        assert!(native.contains("CloseHandle(self.0)"));
+        assert!(!process_source.contains("powershell.exe"));
+        assert!(!process_source.contains("Get-CimInstance"));
+        assert!(!process_source.contains("Command::new"));
+        assert!(!native.contains("Command::new"));
     }
 
     #[test]
