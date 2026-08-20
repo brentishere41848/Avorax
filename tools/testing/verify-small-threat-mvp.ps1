@@ -273,6 +273,7 @@ $verifiedScope = $verifiedScope.Replace(
 )
 $verifiedScope += " Additional verified boundary: native-engine detection-only mutation boundary."
 $verifiedScope += " Additional verified boundary: shared cross-platform quarantine permission hardening with process-token SID and exact protected Windows DACL verification plus exact Unix 0700/0600 verification."
+$verifiedScope += " Additional verified boundary: Guard process enumeration coverage gaps are bounded, fail-visible, and cannot become a clean finite-watch result."
 $verifiedScope = $verifiedScope.Replace(
   "best-effort user-mode realtime watcher planning/status/IPC/controller paths",
   "release local-core binary watcher honesty smoke, best-effort user-mode realtime watcher planning/status/IPC/controller paths"
@@ -339,7 +340,7 @@ $verifiedScope = $verifiedScope.Replace(
 )
 $optionalDefenderScope = "Optional: standard EICAR file/Defender integration is skipped by default to avoid repeated Microsoft Defender DOS/EICAR_Test_File alerts; rerun with -IncludeDefenderEicar for that host integration proof."
 $partialScope = "Partial: packaged desktop click-through E2E, installed local-core/service E2E, installer-owned service repair/install E2E, installed update/rollback E2E, installed UI filesystem picker flows, installed log export filesystem E2E, installed realtime watcher smoke/E2E, installed process observation service/driver loop/E2E, full release-host SBOM/license output, release-host performance baselines, and production false-positive-rate evidence."
-$technicalLimits = "Technically limited: no live malware, no pre-execution blocking claim without a signed installed driver, no kernel realtime blocking claim, no installed service or OS-level polling-loop claim from app-lifetime snapshot observation, no driver-latency claim from synthetic user-mode performance evidence, no Windows Scheduled Task/background-service scheduling claim, no secure-erase claim, no machine-wide dependency installation, and no enterprise update/deployment approval claim."
+$technicalLimits = "Technically limited: no live malware, no pre-execution blocking claim without a signed installed driver, no kernel realtime blocking claim, polling can miss processes that start and exit between snapshots, Guard process enumeration is disabled on unsupported non-Windows/non-Linux platforms, no installed service or OS-level polling-loop claim from app-lifetime snapshot observation, no driver-latency claim from synthetic user-mode performance evidence, no Windows Scheduled Task/background-service scheduling claim, no secure-erase claim, no machine-wide dependency installation, and no enterprise update/deployment approval claim."
 
 $pathAdditions = @(
   "C:\Program Files\Git\cmd",
@@ -461,6 +462,7 @@ try {
     $results.Add((Invoke-Step "guard-service driver-health probe regressions" $repo $cargo @("test", "--manifest-path", "core\zentor_guard_service\Cargo.toml", "driver_health", "--", "--test-threads=1")))
     $results.Add((Invoke-Step "guard-service self-test regressions" $repo $cargo @("test", "--manifest-path", "core\zentor_guard_service\Cargo.toml", "self_test", "--", "--test-threads=1")))
     $results.Add((Invoke-Step "guard-service process observation regressions" $repo $cargo @("test", "--manifest-path", "core\zentor_guard_service\Cargo.toml", "process_watch", "--", "--test-threads=1")))
+    $results.Add((Invoke-Step "guard-service process collection coverage regressions" $repo $cargo @("test", "--manifest-path", "core\zentor_guard_service\Cargo.toml", "process_collection", "--", "--test-threads=1")))
     $results.Add((Invoke-Step "guard-service process skip regressions" $repo $cargo @("test", "--manifest-path", "core\zentor_guard_service\Cargo.toml", "process_skip", "--", "--test-threads=1")))
     $results.Add((Invoke-Step "update-service signed package/update regressions" $repo $cargo @("test", "--manifest-path", "core\avorax_update_service\Cargo.toml", "--", "--test-threads=1")))
     $results.Add((Invoke-Step "update-service release binary build" $repo $cargo @("build", "--release", "--manifest-path", "core\avorax_update_service\Cargo.toml")))

@@ -77,6 +77,9 @@ const GUARD_CLAMAV_SCAN_TIMEOUT: Duration = Duration::from_secs(120);
 const DEFAULT_GUARD_WATCH_POLL_INTERVAL_MS: u64 = 750;
 const MIN_GUARD_WATCH_POLL_INTERVAL_MS: u64 = 100;
 const MAX_GUARD_WATCH_POLL_INTERVAL_MS: u64 = 10_000;
+const MAX_OBSERVED_PROCESS_RECORDS: usize = 65_536;
+const MAX_PROCESS_COVERAGE_DETAIL_CHARS: usize = 512;
+const PROCESS_COVERAGE_RECOVERY_POLLS: u8 = 3;
 
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -1026,19 +1029,40 @@ fn watch_processes(
     max_iterations: Option<u32>,
     protection_mode: preexecution_policy::DriverProtectionMode,
 ) -> anyhow::Result<GuardEvent> {
+    watch_processes_with_provider(
+        known_malicious_hashes,
+        poll_interval_ms,
+        max_iterations,
+        protection_mode,
+        list_processes,
+    )
+}
+
+fn watch_processes_with_provider<F>(
+    known_malicious_hashes: &HashSet<String>,
+    poll_interval_ms: u64,
+    max_iterations: Option<u32>,
+    protection_mode: preexecution_policy::DriverProtectionMode,
+    mut process_provider: F,
+) -> anyhow::Result<GuardEvent>
+where
+    F: FnMut() -> anyhow::Result<ProcessCollection>,
+{
     let poll_interval_ms = validate_guard_watch_poll_interval_ms(poll_interval_ms)?;
-    let mut seen: HashSet<u32> = list_processes()?
-        .into_iter()
-        .map(|process| process.process_id)
-        .collect();
+    let initial_collection = process_provider()?.with_empty_coverage_evidence();
+    let mut previous_processes = process_snapshot(&initial_collection.processes);
+    let mut coverage = initial_collection.coverage;
     let mut cache: HashMap<PathBuf, ProcessHashCacheEntry> = HashMap::new();
     let mut iterations = 0u32;
     let mut inspection_errors = 0u64;
 
     loop {
         iterations = iterations.saturating_add(1);
-        for process in list_processes()? {
-            if !seen.insert(process.process_id) {
+        let collection = process_provider()?.with_empty_coverage_evidence();
+        coverage.merge(collection.coverage);
+        let current_processes = process_snapshot(&collection.processes);
+        for process in collection.processes {
+            if !process_requires_inspection(&previous_processes, &process) {
                 continue;
             }
             if should_skip_process_path(&process.path) {
@@ -1065,36 +1089,11 @@ fn watch_processes(
                 );
             }
         }
+        previous_processes = current_processes;
 
         if let Some(max_iterations) = max_iterations {
             if iterations >= max_iterations {
-                if inspection_errors > 0 {
-                    return Ok(GuardEvent {
-                        ok: false,
-                        action: "watchCompletedWithInspectionErrors".to_string(),
-                        message: format!(
-                            "Process watch completed with {inspection_errors} process inspection error(s). No confirmed threat process was observed."
-                        ),
-                        process_id: None,
-                        process_path: None,
-                        quarantine_id: None,
-                        quarantine_path: None,
-                        quarantine_record_path: None,
-                        created_at: Utc::now(),
-                    });
-                }
-                return Ok(GuardEvent {
-                    ok: true,
-                    action: "watchCompleted".to_string(),
-                    message: "Process watch completed. No confirmed threat process was observed."
-                        .to_string(),
-                    process_id: None,
-                    process_path: None,
-                    quarantine_id: None,
-                    quarantine_path: None,
-                    quarantine_record_path: None,
-                    created_at: Utc::now(),
-                });
+                return Ok(process_watch_completion_event(inspection_errors, &coverage));
             }
         }
         thread::sleep(Duration::from_millis(poll_interval_ms));
@@ -1107,10 +1106,15 @@ fn watch_processes_until_shutdown(
     shutdown_rx: &mpsc::Receiver<()>,
 ) -> anyhow::Result<()> {
     let poll_interval_ms = validate_guard_watch_poll_interval_ms(poll_interval_ms)?;
-    let mut seen: HashSet<u32> = list_processes()?
-        .into_iter()
-        .map(|process| process.process_id)
-        .collect();
+    let initial_collection = list_processes()?;
+    let mut previous_processes = process_snapshot(&initial_collection.processes);
+    let mut coverage_warning_state = ProcessCoverageWarningState::default();
+    if let Some(event) = process_collection_coverage_warning_event(
+        &initial_collection.coverage,
+        &mut coverage_warning_state,
+    ) {
+        write_guard_event(&event)?;
+    }
     let mut cache: HashMap<PathBuf, ProcessHashCacheEntry> = HashMap::new();
     let protection_mode = configured_guard_mode()?;
 
@@ -1119,8 +1123,16 @@ fn watch_processes_until_shutdown(
             return Ok(());
         }
 
-        for process in list_processes()? {
-            if !seen.insert(process.process_id) {
+        let collection = list_processes()?;
+        if let Some(event) = process_collection_coverage_warning_event(
+            &collection.coverage,
+            &mut coverage_warning_state,
+        ) {
+            write_guard_event(&event)?;
+        }
+        let current_processes = process_snapshot(&collection.processes);
+        for process in collection.processes {
+            if !process_requires_inspection(&previous_processes, &process) {
                 continue;
             }
             if should_skip_process_path(&process.path) {
@@ -1156,9 +1168,136 @@ fn watch_processes_until_shutdown(
                 }
             }
         }
+        previous_processes = current_processes;
 
         thread::sleep(Duration::from_millis(poll_interval_ms));
     }
+}
+
+fn process_snapshot(processes: &[ObservedProcess]) -> HashMap<u32, PathBuf> {
+    processes
+        .iter()
+        .map(|process| (process.process_id, process.path.clone()))
+        .collect()
+}
+
+fn process_requires_inspection(
+    previous_processes: &HashMap<u32, PathBuf>,
+    process: &ObservedProcess,
+) -> bool {
+    previous_processes.get(&process.process_id) != Some(&process.path)
+}
+
+fn process_watch_completion_event(
+    inspection_errors: u64,
+    coverage: &ProcessCollectionCoverage,
+) -> GuardEvent {
+    if coverage.gaps > 0 {
+        let action = if inspection_errors > 0 {
+            "watchCompletedWithCoverageGapsAndInspectionErrors"
+        } else {
+            "watchCompletedWithCoverageGaps"
+        };
+        let mut message = format!(
+            "Process watch completed with {} process enumeration coverage gap(s)",
+            coverage.gaps
+        );
+        if inspection_errors > 0 {
+            message.push_str(&format!(
+                " and {inspection_errors} process inspection error(s)"
+            ));
+        }
+        message.push_str(
+            ". No confirmed threat process was observed, but a clean all-process result cannot be claimed.",
+        );
+        if let Some(detail) = coverage.first_detail.as_deref() {
+            message.push_str(&format!(" First coverage gap: {detail}"));
+        }
+        return GuardEvent {
+            ok: false,
+            action: action.to_string(),
+            message,
+            process_id: None,
+            process_path: None,
+            quarantine_id: None,
+            quarantine_path: None,
+            quarantine_record_path: None,
+            created_at: Utc::now(),
+        };
+    }
+    if inspection_errors > 0 {
+        return GuardEvent {
+            ok: false,
+            action: "watchCompletedWithInspectionErrors".to_string(),
+            message: format!(
+                "Process watch completed with {inspection_errors} process inspection error(s). No confirmed threat process was observed."
+            ),
+            process_id: None,
+            process_path: None,
+            quarantine_id: None,
+            quarantine_path: None,
+            quarantine_record_path: None,
+            created_at: Utc::now(),
+        };
+    }
+    GuardEvent {
+        ok: true,
+        action: "watchCompleted".to_string(),
+        message: "Process watch completed. No confirmed threat process was observed.".to_string(),
+        process_id: None,
+        process_path: None,
+        quarantine_id: None,
+        quarantine_path: None,
+        quarantine_record_path: None,
+        created_at: Utc::now(),
+    }
+}
+
+#[derive(Debug, Default)]
+struct ProcessCoverageWarningState {
+    warning_active: bool,
+    consecutive_clear_polls: u8,
+}
+
+fn process_collection_coverage_warning_event(
+    coverage: &ProcessCollectionCoverage,
+    state: &mut ProcessCoverageWarningState,
+) -> Option<GuardEvent> {
+    if coverage.gaps == 0 {
+        if state.warning_active {
+            state.consecutive_clear_polls = state.consecutive_clear_polls.saturating_add(1);
+            if state.consecutive_clear_polls >= PROCESS_COVERAGE_RECOVERY_POLLS {
+                state.warning_active = false;
+                state.consecutive_clear_polls = 0;
+            }
+        }
+        return None;
+    }
+
+    state.consecutive_clear_polls = 0;
+    if state.warning_active {
+        return None;
+    }
+    state.warning_active = true;
+
+    let mut message = format!(
+        "Process observation coverage is limited by {} process enumeration gap(s) in this poll. No all-process protection claim is made.",
+        coverage.gaps
+    );
+    if let Some(detail) = coverage.first_detail.as_deref() {
+        message.push_str(&format!(" First coverage gap: {detail}"));
+    }
+    Some(GuardEvent {
+        ok: false,
+        action: "processCollectionCoverageLimited".to_string(),
+        message,
+        process_id: None,
+        process_path: None,
+        quarantine_id: None,
+        quarantine_path: None,
+        quarantine_record_path: None,
+        created_at: Utc::now(),
+    })
 }
 
 fn inspect_new_process(
@@ -1599,28 +1738,95 @@ struct ObservedProcess {
     path: PathBuf,
 }
 
-fn list_processes() -> anyhow::Result<Vec<ObservedProcess>> {
+#[derive(Debug, Default)]
+struct ProcessCollection {
+    processes: Vec<ObservedProcess>,
+    coverage: ProcessCollectionCoverage,
+}
+
+impl ProcessCollection {
+    fn with_empty_coverage_evidence(mut self) -> Self {
+        if self.processes.is_empty() && self.coverage.gaps == 0 {
+            self.coverage
+                .record_gap("process collector returned no observable executable image records");
+        }
+        self
+    }
+}
+
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
+struct ProcessCollectionCoverage {
+    gaps: u64,
+    first_detail: Option<String>,
+}
+
+impl ProcessCollectionCoverage {
+    fn record_gap(&mut self, detail: impl AsRef<str>) {
+        self.record_gaps(1, detail);
+    }
+
+    fn record_gaps(&mut self, count: u64, detail: impl AsRef<str>) {
+        if count == 0 {
+            return;
+        }
+        self.gaps = self.gaps.saturating_add(count);
+        if self.first_detail.is_none() {
+            self.first_detail = Some(bounded_process_coverage_detail(detail.as_ref()));
+        }
+    }
+
+    fn merge(&mut self, other: Self) {
+        self.gaps = self.gaps.saturating_add(other.gaps);
+        if self.first_detail.is_none() {
+            self.first_detail = other.first_detail;
+        }
+    }
+}
+
+fn bounded_process_coverage_detail(value: &str) -> String {
+    if value.chars().count() <= MAX_PROCESS_COVERAGE_DETAIL_CHARS {
+        return value.to_string();
+    }
+    const TRUNCATION_SUFFIX: &str = "...[truncated]";
+    let prefix_chars =
+        MAX_PROCESS_COVERAGE_DETAIL_CHARS.saturating_sub(TRUNCATION_SUFFIX.chars().count());
+    let mut detail: String = value.chars().take(prefix_chars).collect();
+    detail.push_str(TRUNCATION_SUFFIX);
+    detail
+}
+
+fn list_processes() -> anyhow::Result<ProcessCollection> {
     #[cfg(windows)]
     {
         list_processes_windows()
     }
-    #[cfg(not(windows))]
+    #[cfg(target_os = "linux")]
     {
         list_processes_procfs()
+    }
+    #[cfg(all(not(windows), not(target_os = "linux")))]
+    {
+        anyhow::bail!(
+            "Avorax user-mode process enumeration is unsupported on this platform; process monitoring is disabled"
+        )
     }
 }
 
 #[cfg(windows)]
-fn list_processes_windows() -> anyhow::Result<Vec<ObservedProcess>> {
-    let script = "Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath } | Select-Object ProcessId,ExecutablePath | ConvertTo-Json -Compress";
+fn list_processes_windows() -> anyhow::Result<ProcessCollection> {
+    let script = concat!(
+        "$ErrorActionPreference='Stop';",
+        "$rows=@(Get-CimInstance Win32_Process | Select-Object ProcessId,ExecutablePath);",
+        "$processes=@($rows | Where-Object { -not [string]::IsNullOrWhiteSpace($_.ExecutablePath) } | Select-Object ProcessId,ExecutablePath);",
+        "$coverageErrors=@($rows | Where-Object { $_.ProcessId -notin @(0,4) -and [string]::IsNullOrWhiteSpace($_.ExecutablePath) }).Count;",
+        "[pscustomobject]@{Processes=$processes;CoverageErrors=[uint64]$coverageErrors} | ConvertTo-Json -Compress -Depth 3"
+    );
     let powershell = windows_system32_tool("powershell.exe")?;
     let encoded_script = powershell_encoded_command(script);
     let mut command = Command::new(&powershell);
     command.args([
         "-NoProfile",
         "-NonInteractive",
-        "-ExecutionPolicy",
-        "Bypass",
         "-EncodedCommand",
         &encoded_script,
     ]);
@@ -1697,22 +1903,24 @@ fn base64_encode(bytes: &[u8]) -> String {
     encoded
 }
 
+#[cfg(windows)]
 #[derive(Debug, Deserialize)]
-#[serde(untagged)]
-enum WindowsProcessJson {
-    One(WindowsProcessRow),
-    Many(Vec<WindowsProcessRow>),
+#[serde(rename_all = "PascalCase", deny_unknown_fields)]
+struct WindowsProcessEnvelope {
+    processes: Vec<WindowsProcessRow>,
+    coverage_errors: u64,
 }
 
+#[cfg(windows)]
 #[derive(Debug, Deserialize)]
-#[serde(rename_all = "PascalCase")]
+#[serde(rename_all = "PascalCase", deny_unknown_fields)]
 struct WindowsProcessRow {
     process_id: u32,
     executable_path: String,
 }
 
 #[cfg(windows)]
-fn parse_windows_process_json(json: &str) -> anyhow::Result<Vec<ObservedProcess>> {
+fn parse_windows_process_json(json: &str) -> anyhow::Result<ProcessCollection> {
     if json.len() > MAX_WINDOWS_PROCESS_QUERY_BYTES {
         anyhow::bail!(
             "Windows process query JSON exceeded {} bytes",
@@ -1721,55 +1929,133 @@ fn parse_windows_process_json(json: &str) -> anyhow::Result<Vec<ObservedProcess>
     }
     let trimmed = json.trim();
     if trimmed.is_empty() {
-        return Ok(Vec::new());
+        anyhow::bail!("Windows process query returned empty JSON");
     }
-    let parsed: WindowsProcessJson = serde_json::from_str(trimmed)?;
-    let rows = match parsed {
-        WindowsProcessJson::One(row) => vec![row],
-        WindowsProcessJson::Many(rows) => rows,
-    };
-    let mut processes = Vec::new();
-    for row in rows {
+    let parsed: WindowsProcessEnvelope = serde_json::from_str(trimmed)?;
+    if parsed.processes.len() > MAX_OBSERVED_PROCESS_RECORDS {
+        anyhow::bail!(
+            "Windows process query returned more than {} process records",
+            MAX_OBSERVED_PROCESS_RECORDS
+        );
+    }
+    if parsed.coverage_errors > MAX_OBSERVED_PROCESS_RECORDS as u64 {
+        anyhow::bail!(
+            "Windows process query reported more than {} coverage errors",
+            MAX_OBSERVED_PROCESS_RECORDS
+        );
+    }
+
+    let mut collection = ProcessCollection::default();
+    collection.coverage.record_gaps(
+        parsed.coverage_errors,
+        "Win32_Process did not expose an executable path for one or more non-kernel processes",
+    );
+    for row in parsed.processes {
+        if row.executable_path.trim().is_empty() {
+            collection.coverage.record_gap(format!(
+                "Win32_Process returned an empty executable path for PID {}",
+                row.process_id
+            ));
+            continue;
+        }
         let process = ObservedProcess {
             process_id: row.process_id,
             path: PathBuf::from(row.executable_path),
         };
-        if guard_process_path_is_regular_file(&process.path)? {
-            processes.push(process);
+        if !process.path.is_absolute() {
+            collection.coverage.record_gap(format!(
+                "Win32_Process returned a non-absolute executable path for PID {}",
+                process.process_id
+            ));
+            continue;
+        }
+        match guard_process_path_is_regular_file(&process.path) {
+            Ok(true) => collection.processes.push(process),
+            Ok(false) => collection.coverage.record_gap(format!(
+                "Win32_Process executable path for PID {} was unavailable or not a regular file",
+                process.process_id
+            )),
+            Err(error) => collection.coverage.record_gap(format!(
+                "unable to validate Win32_Process executable path for PID {}: {error:#}",
+                process.process_id
+            )),
         }
     }
-    Ok(processes)
+    Ok(collection.with_empty_coverage_evidence())
 }
 
-#[cfg(not(windows))]
-fn list_processes_procfs() -> anyhow::Result<Vec<ObservedProcess>> {
-    let mut processes = Vec::new();
-    let proc = Path::new("/proc");
+#[cfg(target_os = "linux")]
+fn list_processes_procfs() -> anyhow::Result<ProcessCollection> {
+    list_processes_procfs_at(Path::new("/proc"))
+}
+
+#[cfg(target_os = "linux")]
+fn list_processes_procfs_at(proc: &Path) -> anyhow::Result<ProcessCollection> {
     if !guard_process_directory_is_regular(proc)? {
-        return Ok(processes);
+        anyhow::bail!(
+            "Linux procfs process enumeration unavailable at {}",
+            proc.display()
+        );
     }
-    for entry in fs::read_dir(proc)? {
-        let Ok(entry) = entry else {
-            continue;
+    let mut collection = ProcessCollection::default();
+    let mut pid_records = 0usize;
+    for entry_result in fs::read_dir(proc)? {
+        let entry = match entry_result {
+            Ok(entry) => entry,
+            Err(error) => {
+                collection
+                    .coverage
+                    .record_gap(format!("unable to read a procfs directory entry: {error}"));
+                continue;
+            }
         };
         let file_name = entry.file_name();
         let Some(pid) = procfs_pid_from_file_name(&file_name) else {
             continue;
         };
-        let Ok(path) = fs::read_link(entry.path().join("exe")) else {
-            continue;
+        pid_records = pid_records.saturating_add(1);
+        if pid_records > MAX_OBSERVED_PROCESS_RECORDS {
+            collection.coverage.record_gap(format!(
+                "procfs process record limit of {} was reached",
+                MAX_OBSERVED_PROCESS_RECORDS
+            ));
+            break;
+        }
+
+        let pid_directory = entry.path();
+        let path = match fs::read_link(pid_directory.join("exe")) {
+            Ok(path) => path,
+            Err(error) if error.kind() == io::ErrorKind::NotFound => continue,
+            Err(error) => {
+                collection.coverage.record_gap(format!(
+                    "unable to resolve procfs executable for PID {pid}: {error}"
+                ));
+                continue;
+            }
         };
-        if guard_process_path_is_regular_file(&path)? {
-            processes.push(ObservedProcess {
+        match guard_process_path_is_regular_file(&path) {
+            Ok(true) => collection.processes.push(ObservedProcess {
                 process_id: pid,
                 path,
-            });
+            }),
+            Ok(false) => match guard_process_directory_is_regular(&pid_directory) {
+                Ok(true) => collection.coverage.record_gap(format!(
+                    "procfs executable for PID {pid} was unavailable or not a regular file"
+                )),
+                Ok(false) => {}
+                Err(error) => collection.coverage.record_gap(format!(
+                    "unable to determine whether procfs PID {pid} exited: {error:#}"
+                )),
+            },
+            Err(error) => collection.coverage.record_gap(format!(
+                "unable to validate procfs executable for PID {pid}: {error:#}"
+            )),
         }
     }
-    Ok(processes)
+    Ok(collection.with_empty_coverage_evidence())
 }
 
-#[cfg(not(windows))]
+#[cfg(target_os = "linux")]
 fn procfs_pid_from_file_name(file_name: &std::ffi::OsStr) -> Option<u32> {
     let raw = file_name.to_string_lossy();
     match raw.parse::<u32>() {
@@ -6293,15 +6579,144 @@ mod tests {
 
     #[test]
     fn watch_processes_completes_without_fake_detection() {
-        let result = watch_processes(
+        let result = watch_processes_with_provider(
             &HashSet::new(),
             100,
             Some(1),
             preexecution_policy::DriverProtectionMode::BlockConfirmedThreats,
+            || {
+                Ok(ProcessCollection {
+                    processes: vec![ObservedProcess {
+                        process_id: 42,
+                        path: PathBuf::from("fixture.exe"),
+                    }],
+                    coverage: ProcessCollectionCoverage::default(),
+                })
+            },
         )
         .unwrap();
         assert_eq!(result.action, "watchCompleted");
         assert!(result.ok);
+    }
+
+    #[test]
+    fn process_collection_empty_snapshots_cannot_clean_pass() {
+        let result = watch_processes_with_provider(
+            &HashSet::new(),
+            100,
+            Some(1),
+            preexecution_policy::DriverProtectionMode::BlockConfirmedThreats,
+            || Ok(ProcessCollection::default()),
+        )
+        .unwrap();
+
+        assert_eq!(result.action, "watchCompletedWithCoverageGaps");
+        assert!(!result.ok);
+        assert!(result
+            .message
+            .contains("2 process enumeration coverage gap(s)"));
+        assert!(result
+            .message
+            .contains("no observable executable image records"));
+    }
+
+    #[test]
+    fn process_collection_finite_watch_cannot_clean_pass_with_gaps() {
+        let result = watch_processes_with_provider(
+            &HashSet::new(),
+            100,
+            Some(1),
+            preexecution_policy::DriverProtectionMode::BlockConfirmedThreats,
+            || {
+                let mut collection = ProcessCollection::default();
+                collection
+                    .coverage
+                    .record_gap("fixture process image was inaccessible");
+                Ok(collection)
+            },
+        )
+        .unwrap();
+
+        assert_eq!(result.action, "watchCompletedWithCoverageGaps");
+        assert!(!result.ok);
+        assert!(result
+            .message
+            .contains("2 process enumeration coverage gap(s)"));
+        assert!(result
+            .message
+            .contains("clean all-process result cannot be claimed"));
+        assert!(result
+            .message
+            .contains("fixture process image was inaccessible"));
+    }
+
+    #[test]
+    fn process_collection_watch_combines_inspection_limitations() {
+        let mut coverage = ProcessCollectionCoverage::default();
+        coverage.record_gaps(2, "fixture coverage detail");
+
+        let result = process_watch_completion_event(3, &coverage);
+
+        assert_eq!(
+            result.action,
+            "watchCompletedWithCoverageGapsAndInspectionErrors"
+        );
+        assert!(!result.ok);
+        assert!(result
+            .message
+            .contains("2 process enumeration coverage gap(s)"));
+        assert!(result.message.contains("3 process inspection error(s)"));
+    }
+
+    #[test]
+    fn process_collection_persistent_warnings_are_deduplicated_until_recovery() {
+        let mut state = ProcessCoverageWarningState::default();
+        let mut limited = ProcessCollectionCoverage::default();
+        limited.record_gap("fixture coverage detail");
+        let clear = ProcessCollectionCoverage::default();
+
+        let warning = process_collection_coverage_warning_event(&limited, &mut state).unwrap();
+        assert_eq!(warning.action, "processCollectionCoverageLimited");
+        assert!(!warning.ok);
+        assert!(process_collection_coverage_warning_event(&limited, &mut state).is_none());
+        for _ in 0..PROCESS_COVERAGE_RECOVERY_POLLS - 1 {
+            assert!(process_collection_coverage_warning_event(&clear, &mut state).is_none());
+        }
+        assert!(process_collection_coverage_warning_event(&limited, &mut state).is_none());
+        for _ in 0..PROCESS_COVERAGE_RECOVERY_POLLS {
+            assert!(process_collection_coverage_warning_event(&clear, &mut state).is_none());
+        }
+        assert!(process_collection_coverage_warning_event(&limited, &mut state).is_some());
+    }
+
+    #[test]
+    fn process_collection_detail_is_bounded() {
+        let mut coverage = ProcessCollectionCoverage::default();
+        coverage.record_gap("x".repeat(MAX_PROCESS_COVERAGE_DETAIL_CHARS + 50));
+
+        let detail = coverage.first_detail.unwrap();
+        assert!(detail.ends_with("...[truncated]"));
+        assert_eq!(detail.chars().count(), MAX_PROCESS_COVERAGE_DETAIL_CHARS);
+
+        let exact = bounded_process_coverage_detail(&"y".repeat(MAX_PROCESS_COVERAGE_DETAIL_CHARS));
+        assert_eq!(exact.chars().count(), MAX_PROCESS_COVERAGE_DETAIL_CHARS);
+        assert!(!exact.ends_with("...[truncated]"));
+    }
+
+    #[test]
+    fn process_collection_reused_pid_path_change_requires_inspection() {
+        let previous = HashMap::from([(42, PathBuf::from("first.exe"))]);
+        let unchanged = ObservedProcess {
+            process_id: 42,
+            path: PathBuf::from("first.exe"),
+        };
+        let reused = ObservedProcess {
+            process_id: 42,
+            path: PathBuf::from("second.exe"),
+        };
+
+        assert!(!process_requires_inspection(&previous, &unchanged));
+        assert!(process_requires_inspection(&previous, &reused));
     }
 
     #[test]
@@ -6543,9 +6958,9 @@ mod tests {
         let end = source.find("fn stop_process").unwrap();
         let process_source = &source[start..end];
 
-        assert!(process_source.contains("guard_process_path_is_regular_file(&process.path)?"));
+        assert!(process_source.contains("match guard_process_path_is_regular_file(&process.path)"));
         assert!(process_source.contains("guard_process_directory_is_regular(proc)?"));
-        assert!(process_source.contains("guard_process_path_is_regular_file(&path)?"));
+        assert!(process_source.contains("match guard_process_path_is_regular_file(&path)"));
         assert!(process_source.contains(
             "fn guard_process_path_is_regular_file(path: &Path) -> anyhow::Result<bool>"
         ));
@@ -6582,6 +6997,62 @@ mod tests {
         )));
         assert!(should_skip_process_path(Path::new("/usr/./bin/true")));
         assert!(!should_skip_process_path(Path::new("/usr/../tmp/payload")));
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn process_collection_windows_envelope_preserves_coverage_gaps() {
+        let dir = tempdir().unwrap();
+        let executable = dir.path().join("fixture.exe");
+        fs::write(&executable, b"benign process fixture").unwrap();
+        let json = serde_json::json!({
+            "Processes": [{
+                "ProcessId": 42,
+                "ExecutablePath": executable.display().to_string(),
+            }],
+            "CoverageErrors": 2,
+        })
+        .to_string();
+
+        let collection = parse_windows_process_json(&json).unwrap();
+
+        assert_eq!(collection.processes.len(), 1);
+        assert_eq!(collection.processes[0].process_id, 42);
+        assert_eq!(collection.coverage.gaps, 2);
+        assert!(collection
+            .coverage
+            .first_detail
+            .unwrap()
+            .contains("did not expose an executable path"));
+        assert!(parse_windows_process_json("")
+            .unwrap_err()
+            .to_string()
+            .contains("empty JSON"));
+        let empty = parse_windows_process_json(r#"{"Processes":[],"CoverageErrors":0}"#).unwrap();
+        assert_eq!(empty.coverage.gaps, 1);
+        assert!(empty
+            .coverage
+            .first_detail
+            .unwrap()
+            .contains("no observable executable image records"));
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn process_collection_windows_envelope_rejects_unknown_fields_and_bad_paths() {
+        let unknown = r#"{"Processes":[],"CoverageErrors":0,"Ignored":true}"#;
+        assert!(parse_windows_process_json(unknown).is_err());
+
+        let relative =
+            r#"{"Processes":[{"ProcessId":7,"ExecutablePath":"relative.exe"}],"CoverageErrors":0}"#;
+        let collection = parse_windows_process_json(relative).unwrap();
+        assert!(collection.processes.is_empty());
+        assert_eq!(collection.coverage.gaps, 1);
+        assert!(collection
+            .coverage
+            .first_detail
+            .unwrap()
+            .contains("non-absolute"));
     }
 
     #[test]
@@ -6622,6 +7093,9 @@ mod tests {
         assert!(!process_source.contains(&old_stderr));
         assert!(!process_source.contains(&old_stdout_parse));
         assert!(!process_source.contains(".output()"));
+        assert!(!process_source.contains("ExecutionPolicy"));
+        assert!(!process_source.contains("Where-Object { $_.ExecutablePath }"));
+        assert!(process_source.contains("CoverageErrors"));
     }
 
     #[test]
@@ -6779,7 +7253,7 @@ mod tests {
         assert!(!configured_slice.contains(".and_then(|value| parse_guard_mode(&value))"));
     }
 
-    #[cfg(not(windows))]
+    #[cfg(target_os = "linux")]
     #[test]
     fn procfs_pid_parse_uses_explicit_branch() {
         use std::ffi::OsStr;
@@ -6797,6 +7271,70 @@ mod tests {
         assert!(procfs_source.contains("procfs_pid_from_file_name(&file_name)"));
         assert!(procfs_source.contains("match raw.parse::<u32>()"));
         assert!(!procfs_source.contains(".ok()"));
+        assert!(!procfs_source.contains("let Ok(entry) = entry"));
+        assert!(!procfs_source.contains("let Ok(path) = fs::read_link"));
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn process_collection_procfs_accounts_for_malformed_and_unavailable_images() {
+        use std::os::unix::fs::symlink;
+
+        let dir = tempdir().unwrap();
+        let proc = dir.path().join("proc");
+        let executable = dir.path().join("fixture-bin");
+        fs::create_dir(&proc).unwrap();
+        fs::write(&executable, b"benign process fixture").unwrap();
+
+        let visible_pid = proc.join("100");
+        fs::create_dir(&visible_pid).unwrap();
+        symlink(&executable, visible_pid.join("exe")).unwrap();
+
+        let malformed_pid = proc.join("101");
+        fs::create_dir(&malformed_pid).unwrap();
+        fs::create_dir(malformed_pid.join("exe")).unwrap();
+
+        let exited_pid = proc.join("102");
+        fs::create_dir(&exited_pid).unwrap();
+
+        let missing_image_pid = proc.join("103");
+        fs::create_dir(&missing_image_pid).unwrap();
+        symlink(
+            dir.path().join("missing-bin"),
+            missing_image_pid.join("exe"),
+        )
+        .unwrap();
+
+        fs::create_dir(proc.join("self")).unwrap();
+
+        let collection = list_processes_procfs_at(&proc).unwrap();
+
+        assert_eq!(collection.processes.len(), 1);
+        assert_eq!(collection.processes[0].process_id, 100);
+        assert_eq!(collection.processes[0].path, executable);
+        assert_eq!(collection.coverage.gaps, 2);
+        assert!(collection.coverage.first_detail.is_some());
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn process_collection_procfs_fails_when_root_is_unavailable() {
+        let dir = tempdir().unwrap();
+        let empty_proc = dir.path().join("empty-proc");
+        fs::create_dir(&empty_proc).unwrap();
+        let empty = list_processes_procfs_at(&empty_proc).unwrap();
+        assert_eq!(empty.coverage.gaps, 1);
+        assert!(empty
+            .coverage
+            .first_detail
+            .unwrap()
+            .contains("no observable executable image records"));
+
+        let error = list_processes_procfs_at(&dir.path().join("missing-proc"))
+            .unwrap_err()
+            .to_string();
+
+        assert!(error.contains("procfs process enumeration unavailable"));
     }
 
     #[test]
