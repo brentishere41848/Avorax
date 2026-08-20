@@ -31,10 +31,14 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
   run `32315144870` passed, and Desktop Packages push run `32315126623` plus
   pull-request run `32315144889` passed package contracts, Linux x64 DEB/tar,
   Windows x64 MSI/EXE, macOS arm64/x64 DMG, and checksum consolidation. Branch
-  prerelease publication was intentionally skipped. Native Unix permission
-  runtime tests and installed LocalSystem/DPAPI/ACL/service/UI E2E remain
-  pending; no encryption, secure-erase, kernel, pre-execution, or production
-  detection-rate claim is made.
+  prerelease publication was intentionally skipped. A later evidence-head run
+  `32316236496` failed in macOS x64 before Avorax compilation because CocoaPods
+  treated its CDN URL as a Git repository. The failed run is retained and not
+  counted as success. The package workflow now initializes an isolated explicit
+  CocoaPods CDN source and must pass on the replacement head before merge.
+  Native Unix permission runtime tests and installed LocalSystem/DPAPI/ACL/
+  service/UI E2E remain pending; no encryption, secure-erase, kernel,
+  pre-execution, or production detection-rate claim is made.
 
 - Current deterministic risk-category pass: checkpoint 2179 fixes a real CI
   failure in run `29766224417`. A random `.tmpupTeBo` temp path placed the text

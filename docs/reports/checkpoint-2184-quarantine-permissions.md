@@ -142,6 +142,21 @@ Linux packages. The current package workflow does not execute Unix-specific
 permission unit tests, so native Unix runtime permission behavior remains
 partial rather than being inferred from a successful package build.
 
+A subsequent evidence-only head triggered Desktop Packages run `32316236496`.
+Its Windows, Linux, and macOS arm64 jobs passed, but macOS x64 failed before
+Avorax app compilation while Flutter invoked CocoaPods. CocoaPods attempted to
+clone `https://cdn.cocoapods.org/` as a Git repository and returned
+`repository not found`. This run is retained as failure evidence and is not
+counted as a package success.
+
+The workflow repair assigns each macOS architecture a fresh `CP_HOME_DIR`
+below `RUNNER_TEMP`, rejects an unexpected pre-existing or linked home,
+explicitly initializes `trunk` with `pod repo add-cdn`, verifies the resulting
+directory is non-linked, and exports the checked home to subsequent Flutter
+steps. The focused source contract and all 24 packaging tests pass locally with
+three expected Windows symlink skips. PR `#36` must not merge unless replacement
+head package jobs pass; no hosted success is inferred from these local checks.
+
 ## Classification
 
 | Classification | Control or engine | Evidence and boundary |

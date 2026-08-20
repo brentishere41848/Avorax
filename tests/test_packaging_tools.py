@@ -341,6 +341,36 @@ class DesktopPackageWorkflowTests(unittest.TestCase):
         self.assertIn("partial dependency inventory", workflow)
         self.assertIn("not a complete license review", workflow)
 
+    def test_macos_workflow_initializes_isolated_cocoapods_cdn_source(self):
+        workflow = (ROOT / ".github" / "workflows" / "desktop-packages.yml").read_text(
+            encoding="utf-8"
+        )
+        _, macos_job = workflow.split("\n  macos:", maxsplit=1)
+        macos_job, _ = macos_job.split("\n  release-assets:", maxsplit=1)
+        _, source_step = macos_job.split(
+            "- name: Initialize isolated CocoaPods CDN source", maxsplit=1
+        )
+        source_step, _ = source_step.split("- name: Validate package tooling", maxsplit=1)
+
+        self.assertIn("set -euo pipefail", source_step)
+        self.assertIn(
+            'expected_home="$RUNNER_TEMP/avorax-cocoapods-${{ matrix.arch }}"',
+            source_step,
+        )
+        self.assertIn('CP_HOME_DIR="$expected_home"', source_step)
+        self.assertIn("export CP_HOME_DIR", source_step)
+        self.assertIn(
+            "pod repo add-cdn trunk https://cdn.cocoapods.org/", source_step
+        )
+        self.assertIn('test -d "$CP_HOME_DIR/repos/trunk"', source_step)
+        self.assertIn('test ! -L "$CP_HOME_DIR/repos/trunk"', source_step)
+        self.assertIn(
+            "printf 'CP_HOME_DIR=%s\\n' \"$CP_HOME_DIR\" >> \"$GITHUB_ENV\"",
+            source_step,
+        )
+        self.assertNotIn("CocoaPods/Specs.git", source_step)
+        self.assertNotIn("|| true", source_step)
+
     def test_workflow_actions_are_exact_node24_compatible_pins(self):
         workflows = {
             path.name: path.read_text(encoding="utf-8")
