@@ -1486,12 +1486,13 @@ enforcement, or pre-execution blocking is claimed.
   Clippy, rustfmt, PowerShell parsing, and release Guard build. The central
   verifier and independent validator pass `221/221` in `702.3s`; an old report
   missing the new native-root step is rejected as expected.
-- **Verified hosted at the implementation head:** Commit
-  `f6a40cc200764d0925bbcc3032a74e87be21b232` is published on draft PR `#44`.
-  Avorax CI run `32378264705` passes all jobs. Desktop Packages push run
-  `32378112753` and PR run `32378264725` pass package contracts, Windows,
-  Linux, both macOS architectures, and checksum consolidation; both publish
-  jobs are skipped. Merge and installed evidence remain pending.
+- **Verified hosted at implementation and merged-main heads:** Commit
+  `f6a40cc200764d0925bbcc3032a74e87be21b232` passed Avorax CI
+  `32378264705` and package push/PR runs `32378112753`/`32378264725` before PR
+  `#44` merged as `71887973206f5287ba50cc8ff6e5eadcf43c678b`. Merged-main
+  CI `32381508352` passed. Package run `32381508319` attempt 1 preserved one
+  arm64 DMG settle failure; failed-job attempt 2 passed all required jobs and
+  skipped publication. Checkpoint 2193 hardens this transient boundary.
 - **Verified unchanged:** Read-only inventory after verification is 16,072
   ProgramData quarantine files, zero directories, 4,522,733 bytes, 5,357
   complete payload/metadata/auth sets, one metadata-auth key, and zero pending
@@ -1506,3 +1507,36 @@ enforcement, or pre-execution blocking is claimed.
   later command creation are not one atomic handle-based launch. Native Engine
   Authenticode and quarantine helper roots still use separate validated
   environment logic and remain follow-up work.
+
+## Checkpoint 2193 macOS DMG Verification Settle
+
+- **Failure preserved:** Merged-main Desktop Packages run `32381508319`
+  attempt 1 passed every completed platform except macOS arm64. Job
+  `96465645009` created its DMG, then all three verification attempts returned
+  the exact transient `Resource temporarily unavailable` result. This attempt
+  remains failed evidence and is not relabeled as success.
+- **Transient classification evidenced:** Failed-job rerun attempt 2 passed
+  arm64 job `96772353094` without a source change, then passed consolidation
+  job `96774515074`; publication job `96774649572` was skipped. The successful
+  run naturally left about 2.5 seconds between creation and first verification,
+  while the failed run began after about 0.06 seconds.
+- **Resolved locally:** The macOS builder now settles with `sync` plus three
+  seconds and retries only the exact resource-busy diagnostic. Five attempts
+  and 2/4/8/16-second backoff bound additional wait to 33 seconds including the
+  initial settle. Non-transient failures return immediately and the final
+  transient failure returns its real status.
+- **Verification:** Package contracts pass 24 tests with 3 explicit Windows
+  symlink-privilege skips; source contracts pass `626/626`; parser and diff
+  checks pass. The expanded central verifier and independent validator pass
+  `222/222` in `553.8s`; a stale report without the package step is rejected.
+- **Hosted status:** Implementation
+  `07e803c42880e7bc556642e206828f4e5c33b815` is on draft PR `#45`. Avorax CI
+  `32484140638` passes all five jobs. Desktop Packages push/PR runs
+  `32484112523`/`32484140672` pass contracts, Windows, Linux, macOS arm64/x64,
+  and consolidation. All four macOS jobs passed `Attempt 1/5`; publish jobs
+  `96780340949`/`96780547410` were skipped.
+- **Still blocked / limited:** macOS Developer ID signing and notarization,
+  installed package click-through, persistent Guard process collection on
+  macOS, installed service behavior, signed-driver enforcement, and
+  pre-execution protection remain unavailable or technically limited. A DMG
+  build is package evidence, not Defender replacement or detection-rate proof.

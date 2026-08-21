@@ -486,11 +486,15 @@ class DesktopPackageWorkflowTests(unittest.TestCase):
         )
 
         self.assertIn("verify_dmg()", builder)
-        self.assertIn("for attempt in 1 2 3", builder)
+        self.assertIn("sync\nsleep 3", builder)
+        self.assertIn("local max_attempts=5", builder)
+        self.assertIn("for attempt in 1 2 3 4 5", builder)
         self.assertIn('output="$(hdiutil verify "$DMG" 2>&1)"', builder)
+        self.assertIn("printf 'Attempt %s/%s", builder)
         self.assertIn('"$output" != *"Resource temporarily unavailable"*', builder)
+        self.assertIn('"$attempt" -eq "$max_attempts"', builder)
         self.assertIn('return "$status"', builder)
-        self.assertIn('sleep "$((attempt * 2))"', builder)
+        self.assertIn('sleep "$((1 << attempt))"', builder)
 
     def test_native_builders_handle_tool_absence_without_swallowing_errors(self):
         for platform in ("linux", "macos"):
