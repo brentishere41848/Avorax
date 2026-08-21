@@ -10973,6 +10973,7 @@ def test_native_quarantine_root_is_checked_before_payload_destination_use():
 
 def test_native_quarantine_root_acl_hardening_uses_platform_security():
     source = read(NATIVE_QUARANTINE_STORE)
+    module_source = read(NATIVE_QUARANTINE_MOD)
     production = source.split("#[cfg(test)]")[0]
     root_source = source[
         source.index("fn ensure_native_quarantine_root_directory"):
@@ -10995,6 +10996,7 @@ def test_native_quarantine_root_acl_hardening_uses_platform_security():
     assert "Command::new" not in production
     assert "native_windows_quarantine_root_acl_uses_platform_security" in source
     assert "native_windows_quarantine_root_acl_ignores_account_environment" in source
+    assert '#[cfg(test)]\npub(crate) mod quarantine_store;' in module_source
 
 
 def test_native_quarantine_hash_input_is_byte_bounded():
@@ -20014,10 +20016,11 @@ def test_small_threat_mvp_verifier_is_safe_and_reproducible():
         in source
     )
     assert (
-        "Native Engine quarantine root ACLs use token-derived native DACL application and "
-        "verification without an external helper"
+        "Native Engine's disabled test-only legacy quarantine store uses token-derived "
+        "native DACL application and verification without an external helper"
         in source
     )
+    assert "production quarantine remains owned by Local Core" in source
     assert "full release-host SBOM/license output" in source
     assert "installer-owned service repair/install E2E" in source
     assert "installed update/rollback E2E" in source
@@ -20759,9 +20762,14 @@ def test_small_threat_mvp_report_validator_is_strict_and_local():
         in source
     )
     assert (
-        'Assert-ReportScopeContains $verifiedScopeText "Native Engine quarantine root '
-        'ACLs use token-derived native DACL application and verification without an '
-        'external helper"'
+        'Assert-ReportScopeContains $verifiedScopeText "Native Engine\'s disabled test-only '
+        'legacy quarantine store uses token-derived native DACL application and '
+        'verification without an external helper"'
+        in source
+    )
+    assert (
+        'Assert-ReportScopeContains $verifiedScopeText "production quarantine remains '
+        'owned by Local Core"'
         in source
     )
     assert 'Assert-ReportContainsStep $steps "native-engine file-type classifier regressions"' in source
@@ -24666,6 +24674,7 @@ def test_guard_driver_health_tools_use_native_checked_system_root():
 def test_native_windows_tools_use_native_bounded_system_root():
     trust = read(NATIVE_MICROSOFT_TRUST)
     quarantine = read(NATIVE_QUARANTINE_STORE)
+    quarantine_mod = read(NATIVE_QUARANTINE_MOD)
     windows_system = read(NATIVE_WINDOWS_SYSTEM)
     native_lib = read(NATIVE_LIB)
     cargo = read(NATIVE_CARGO)
@@ -24692,7 +24701,19 @@ def test_native_windows_tools_use_native_bounded_system_root():
     assert "buffer[..chars].contains(&0)" in windows_system
     assert "buffer[chars] != 0" in windows_system
     assert '"Win32_System_SystemInformation"' in cargo
-    assert 'avorax_platform_security = { path = "../avorax_platform_security" }' in cargo
+    windows_dependencies = cargo[
+        cargo.index("[target.'cfg(windows)'.dependencies]"):
+        cargo.index("[target.'cfg(windows)'.dev-dependencies]")
+    ]
+    windows_dev_dependencies = cargo[
+        cargo.index("[target.'cfg(windows)'.dev-dependencies]"):
+        cargo.index("[dev-dependencies]")
+    ]
+    assert "avorax_platform_security" not in windows_dependencies
+    assert (
+        'avorax_platform_security = { path = "../avorax_platform_security" }'
+        in windows_dev_dependencies
+    )
     assert "crate::windows_system::checked_system32_file(" in trust_tool
     assert '&["WindowsPowerShell", "v1.0", "powershell.exe"]' in trust_tool
     assert (
@@ -24707,6 +24728,7 @@ def test_native_windows_tools_use_native_bounded_system_root():
     assert 'std::env::var("USERNAME")' not in quarantine_production
     assert 'std::env::var("USERDOMAIN")' not in quarantine_production
     assert "icacls.exe" not in quarantine_production
+    assert '#[cfg(test)]\npub(crate) mod quarantine_store;' in quarantine_mod
     assert "native_windows_system_directory_ignores_spoofed_environment" in windows_system
     assert "native_windows_system32_file_rejects_unsafe_relative_components" in windows_system
     assert "native_windows_system_directories_are_checked_and_bounded" in windows_system
