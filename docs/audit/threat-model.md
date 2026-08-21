@@ -1071,8 +1071,8 @@ installation is involved.
 
 At checkpoint 2191, Guard driver-health/driver-IPC code and Native Engine
 Authenticode/quarantine helper discovery retained separate validated
-environment-root implementations. They were not silently reclassified by that
-checkpoint; checkpoint 2192 addresses only the two Guard consumers.
+environment-root implementations. Checkpoint 2192 addresses the two Guard
+consumers; checkpoint 2194 supersedes the Native Engine follow-up.
 
 ## Checkpoint 2192 Guard Native Root Consumer Boundary
 
@@ -1106,9 +1106,51 @@ replace protected system paths, or compromise Windows itself, is outside this
 user-mode boundary. Actual-root `System32`/`SysWOW64` fail-open and process-skip
 coverage remains broad and path-based rather than publisher-based.
 
-Native Engine Authenticode and quarantine helper discovery still retain their
-separately validated environment-root implementations and remain the next
-consolidation candidates. Installed LocalSystem behavior, live helper ACLs,
-signed-driver IPC, driver lifecycle, and true pre-execution enforcement remain
-partial or blocked. No service, driver, Defender setting, package installation,
-or release is changed by checkpoint 2192.
+Native Engine helper-root follow-up is superseded by checkpoint 2194. Installed
+LocalSystem behavior, live helper ACLs, signed-driver IPC, driver lifecycle,
+and true pre-execution enforcement remain partial or blocked. No service,
+driver, Defender setting, package installation, or release is changed by
+checkpoint 2192.
+
+## Checkpoint 2194 Native Engine Windows Root Boundary
+
+Before checkpoint 2194, Native Engine independently validated candidates from
+mutable `SystemRoot` and `WINDIR` for Authenticode PowerShell discovery and
+system-path trust. That validation rejected obvious malformed candidates, but
+the process environment still selected the root. Its retained legacy
+quarantine compatibility store also used `icacls.exe` and account-name
+environment variables in Windows-only tests.
+
+Native Engine now obtains one process-stable result from
+`GetSystemWindowsDirectoryW`. The parser uses a sentinel-filled 32,768-unit
+UTF-16 buffer and rejects API failure, zero or excessive length, embedded NUL,
+and missing API-written termination. The path must be a rooted local drive with
+normal components; existing ancestors and targets must not be symbolic links or
+Windows reparse points. Only bounded fixed components can select the checked
+PowerShell file or `System32`/`SysWOW64` directories. Root resolution errors are
+cached and remain explicit; there is no environment or `C:\Windows` fallback.
+
+System location is only one conjunct in local Microsoft artifact trust. A file
+must also pass Microsoft Authenticode verification. Therefore an arbitrary file
+placed beneath a familiar directory is not automatically classified clean.
+PowerShell remains an external helper with closed stdin, a 30-second deadline,
+and 64 KiB output cap. Metadata checks and later process creation are not an
+atomic handle-based launch; replacing the helper with direct native
+`WinVerifyTrust` remains possible future hardening.
+
+The Native Engine quarantine store is private `#[cfg(test)]` compatibility
+code, not an active mutation engine. Production Native Engine remains
+detection-only and Local Core exclusively owns quarantine, authenticated
+metadata, recovery, rescan, restore, and deletion. Tests now call the shared
+platform-security implementation, which derives the current process token SID,
+applies a protected exact Windows DACL, and verifies it without `icacls.exe` or
+account-name environment input.
+
+Windows, the Win32 ABI, process token, and protection of the actual system tree
+remain trusted. Missing `SysWOW64`, including on unsupported 32-bit Windows,
+fails conservatively; the current Windows package job covers x64 only. Installed
+LocalSystem behavior, protected helper ACL attack testing, production signing,
+signed-driver IPC, and pre-execution enforcement remain partial or blocked.
+This checkpoint changes no service, driver, Defender setting, package install,
+publication, or release and makes no Defender-replacement or kernel-blocking
+claim.

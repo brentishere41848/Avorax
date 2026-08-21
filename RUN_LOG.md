@@ -13,6 +13,61 @@ Lead-engineer product-hardening pass across the Avorax repository. Goal is to mo
 - The bundled native ML model is treated as development-only unless release metadata and gates prove production readiness.
 - MSI/EXE installers are first-install/repair/recovery/offline paths. Normal in-app updates should use verified `.aup` packages.
 
+## 2026-08-21 continuation checkpoint 2194
+
+- Removed mutable `SystemRoot`/`WINDIR` input from Native Engine Authenticode
+  helper discovery and Microsoft system-path trust. A new Windows-only module
+  obtains the shared Windows directory through bounded
+  `GetSystemWindowsDirectoryW`, caches one immutable success/error per process,
+  and rejects malformed UTF-16, non-local or relative roots, traversal,
+  symlink/reparse ancestors, and linked targets.
+- PowerShell discovery is restricted to the checked
+  `System32\WindowsPowerShell\v1.0\powershell.exe` component. Local artifact
+  trust still requires both the checked system location and a valid Microsoft
+  Authenticode signature; a system path alone is not a clean verdict.
+- The private legacy Native Engine quarantine store is compiled only for tests;
+  production Native Engine remains detection-only and Local Core remains the
+  sole production quarantine owner. Its retained compatibility tests no longer
+  invoke `icacls.exe` or trust `USERNAME`/`USERDOMAIN`; they call the shared
+  token-SID DACL hardener and verify the resulting ACL.
+- Focused native Windows-root tests pass `10/10`; unsigned and Microsoft-signed
+  Authenticode probes pass `2/2`; shared Windows ACL/SID tests pass `4/4`.
+  Native Engine passes 442 library plus 6 binary tests, the locked Rust
+  workspace passes `1,486/1,486`, Flutter passes `838/838`, source contracts
+  pass `626/626`, and strict Native Clippy, rustfmt, script parsing, offline
+  standalone lock checking, and diff checks pass.
+- The definitive central verifier records `223/223` passed steps, zero failed
+  or skipped steps, and an empty error from
+  `2026-08-21T14:40:21.946741Z` through
+  `2026-08-21T14:49:04.2857232Z` (`522.3s`). Its independent full-report
+  validator passes in `1.5s`.
+- Standalone Native Engine lock evidence was regenerated without network use:
+  89 packages/88 registry checksums became 72/70, and every one of the 70
+  exact registry package versions already exists in the root workspace lock.
+  `windows-sys` remains pinned at `0.61.2`; the shared platform-security crate
+  is an internal Windows test-only dependency for the disabled legacy store.
+- Read-only post-suite inventory confirms the ProgramData vault remains exactly
+  16,072 files, zero directories, 4,522,733 bytes, 5,357 complete
+  payload/metadata/auth sets, one metadata-auth key, and zero pending files.
+- Implementation commits `7cdf7caf5fa0c0e0d66fb66dc9fa397128b74dcb`
+  and `1dee3e25d5131d9b999cce7580e5df0f59a82f47` are published on draft PR
+  `#46`. Exact implementation-head Avorax CI `32493387468` passes all five
+  jobs. Desktop Packages push/PR runs `32493383509`/`32493387522` pass
+  contracts, Windows MSI/EXE, Linux DEB/tar, macOS arm64/x64, and consolidation
+  jobs `96810781054`/`96810450806`; publication jobs `96810863387` and
+  `96810546778` are intentionally skipped. No package has been installed,
+  published, or released.
+- Residual limits remain explicit: metadata inspection and helper launch are
+  not one atomic handle operation; Windows and its protected system tree remain
+  trusted; 32-bit Windows fails conservatively and is unsupported; installed
+  LocalSystem/service/driver behavior, signed pre-execution enforcement, and
+  Defender replacement remain blocked or technically limited.
+- Standard Defender/EICAR integration remained skipped. Only safe simulators
+  and benign fixtures were used. No service, driver, Defender setting,
+  machine-wide component, package installation, publication, or release
+  changed. Evidence is documented in
+  `docs/reports/checkpoint-2194-native-engine-windows-roots.md`.
+
 ## 2026-08-21 continuation checkpoint 2193
 
 - Preserved the checkpoint-2192 merged-main package failure instead of
