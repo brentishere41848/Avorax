@@ -19958,6 +19958,8 @@ def test_small_threat_mvp_verifier_is_safe_and_reproducible():
     assert "Flutter Protected Apps picker adapter tests" in source
     assert '--plain-name", "protected apps add"' in source
     assert "Flutter protection self-test controller tests" in source
+    assert "Desktop package builder source contracts" in source
+    assert '"test_packaging_tools.py", "-v"' in source
     assert "Branding gate" in source
     assert "tools\\branding\\branding-check.ps1" in source
     assert "Safe synthetic performance/resource gate" in source
@@ -20015,6 +20017,11 @@ def test_small_threat_mvp_verifier_is_safe_and_reproducible():
     assert "protection gate with synthetic non-driver self-test fixture" in source
     assert "safe synthetic performance/resource gate" in source
     assert "source-level dependency/lockfile evidence gate" in source
+    assert (
+        "desktop package builder source contracts including bounded macOS DMG transient "
+        "verification retries"
+        in source
+    )
     assert "full release-host SBOM/license output" in source
     assert "installer-owned service repair/install E2E" in source
     assert "installed update/rollback E2E" in source
@@ -20741,6 +20748,10 @@ def test_small_threat_mvp_report_validator_is_strict_and_local():
     assert 'Assert-ReportContainsStep $steps "Protection gate without driver feature claim"' in source
     assert 'Assert-ReportContainsStep $steps "Safe synthetic performance/resource gate"' in source
     assert 'Assert-ReportContainsStep $steps "Dependency evidence gate"' in source
+    assert (
+        'Assert-ReportContainsStep $steps "Desktop package builder source contracts"'
+        in source
+    )
     assert 'Assert-ReportContainsStep $steps "native-engine file-type classifier regressions"' in source
     assert (
         'Assert-ReportContainsStep $steps "native-engine archive content sampling regressions"'

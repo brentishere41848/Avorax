@@ -172,22 +172,27 @@ hdiutil create \
   -ov \
   "$DMG"
 
+# Hosted macOS runners can briefly retain a just-created image in diskimages-helper.
+sync
+sleep 3
+
 verify_dmg() {
   local attempt output status
+  local max_attempts=5
   : >"$VERIFY_ROOT/hdiutil-verify.txt"
-  for attempt in 1 2 3; do
+  for attempt in 1 2 3 4 5; do
     set +e
     output="$(hdiutil verify "$DMG" 2>&1)"
     status=$?
     set -e
-    printf 'Attempt %s/3\n%s\n' "$attempt" "$output" | tee -a "$VERIFY_ROOT/hdiutil-verify.txt"
+    printf 'Attempt %s/%s\n%s\n' "$attempt" "$max_attempts" "$output" | tee -a "$VERIFY_ROOT/hdiutil-verify.txt"
     if [[ "$status" -eq 0 ]]; then
       return 0
     fi
-    if [[ "$attempt" -eq 3 || "$output" != *"Resource temporarily unavailable"* ]]; then
+    if [[ "$attempt" -eq "$max_attempts" || "$output" != *"Resource temporarily unavailable"* ]]; then
       return "$status"
     fi
-    sleep "$((attempt * 2))"
+    sleep "$((1 << attempt))"
   done
   return 1
 }

@@ -337,7 +337,7 @@ $verifiedScope = $verifiedScope.Replace(
 )
 $verifiedScope = $verifiedScope.Replace(
   "source-level dependency/lockfile evidence gate",
-  "release-host prerequisite ready-or-blocked evidence gate, source-level dependency/lockfile evidence gate"
+  "desktop package builder source contracts including bounded macOS DMG transient verification retries, release-host prerequisite ready-or-blocked evidence gate, source-level dependency/lockfile evidence gate"
 )
 $optionalDefenderScope = "Optional: standard EICAR file/Defender integration is skipped by default to avoid repeated Microsoft Defender DOS/EICAR_Test_File alerts; rerun with -IncludeDefenderEicar for that host integration proof."
 $partialScope = "Partial: packaged desktop click-through E2E, installed local-core/service E2E, installer-owned service repair/install E2E, installed update/rollback E2E, installed UI filesystem picker flows, installed log export filesystem E2E, installed realtime watcher smoke/E2E, installed process observation service/driver loop/E2E, full release-host SBOM/license output, release-host performance baselines, and production false-positive-rate evidence."
@@ -604,6 +604,7 @@ try {
   $bundledPackInventoryReport = Join-Path $repo ".workflow\ultracode\avorax-hardening\results\small-threat-mvp-bundled-pack-inventory.json"
   $results.Add((Invoke-Step "Bundled signature/rule pack validation" $repo $powershell @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "tools\testing\run-bundled-pack-validation.ps1", "-PythonPath", $python, "-ReportPath", $bundledPackInventoryReport)))
   $results.Add((Invoke-Step "Python source contracts" $repo $python @("-B", "tools\testing\run-python-source-contracts.py")))
+  $results.Add((Invoke-Step "Desktop package builder source contracts" $repo $python @("-B", "-m", "unittest", "discover", "-s", "tests", "-p", "test_packaging_tools.py", "-v")))
   $results.Add((Invoke-Step "Branding gate" $repo $powershell @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "tools\branding\branding-check.ps1", "-Root", $repo)))
   $results.Add((Invoke-Step "Product-copy gate" $repo $powershell @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "tools\security\zentor-product-copy-gate.ps1")))
   $results.Add((Invoke-Step "No-malware-binaries gate" $repo $powershell @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "tools\security\zentor-no-malware-binaries-gate.ps1", "-PythonPath", $python)))
