@@ -6,22 +6,50 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
 
 ## Current Commit
 
-- Checkpoint 2193 implementation
-  `07e803c42880e7bc556642e206828f4e5c33b815` is published on draft PR `#45`
-  from branch `agent/checkpoint-2193-macos-dmg-verify-settle`. Exact-head
-  Avorax CI `32484140638` and Desktop Packages push/PR runs `32484112523` and
-  `32484140672` pass. Both package consolidation jobs pass and both
-  publication jobs are intentionally skipped.
+- Checkpoint 2194 implementation head
+  `1dee3e25d5131d9b999cce7580e5df0f59a82f47` is published on draft PR `#46`
+  from branch `agent/checkpoint-2194-native-engine-windows-roots`. Exact-head
+  Avorax CI `32493387468` passes all five jobs. Desktop Packages push/PR runs
+  `32493383509`/`32493387522` pass every build and consolidation; both
+  publication jobs are intentionally skipped. No package is installed,
+  published, or released.
+- Checkpoint 2193 implementation/evidence heads
+  `07e803c42880e7bc556642e206828f4e5c33b815` and
+  `21db1719154a698b339bbc69cae532ae3185a22b` merged through PR `#45` as
+  `ab1233b4f04a6a4b0d5dd4d949a8003dd41169f1`. Evidence-head and merged-main
+  CI/package runs pass all required jobs; both publish jobs are intentionally
+  skipped.
 - Checkpoint 2192 merged through PR `#44` as
   `71887973206f5287ba50cc8ff6e5eadcf43c678b`. Merged-main CI `32381508352`
   passed. Desktop Packages run `32381508319` attempt 1 exposed an honest
   transient macOS arm64 DMG verification failure; failed-job rerun attempt 2
   passed and publication remained skipped. Checkpoint 2193 hardens that race.
 - Current public release tag: `v0.1.15-beta.3`, published as a prerelease on
-  2026-07-20 with independently verified checksums. Checkpoints 2178-2193 are
+  2026-07-20 with independently verified checksums. Checkpoints 2178-2194 are
   source hardening and do not create a new release tag.
 
 ## Latest Checkpoint Evidence - 2026-08-21
+
+- Current Native Engine Windows-root pass: checkpoint 2194 replaces separately
+  validated mutable `SystemRoot`/`WINDIR` candidates in Authenticode helper
+  discovery with bounded, process-stable `GetSystemWindowsDirectoryW` output.
+  The checked root must be a rooted local drive with normal components and no
+  symlink/reparse target or ancestor. PowerShell is selected only by a bounded
+  fixed component path; system-path trust still requires valid Microsoft
+  Authenticode. The legacy Native quarantine store remains private test-only
+  compatibility code and now uses shared token-SID DACL hardening rather than
+  `icacls.exe` or account-name environment variables; Local Core remains the
+  only production quarantine owner. Focused Windows-root tests pass `10/10`,
+  Authenticode probes `2/2`, platform ACL/SID tests `4/4`, Native Engine 448
+  tests, the locked Rust workspace `1,486/1,486`, Flutter `838/838`, source
+  contracts `626/626`, and strict lint/parser/offline-lock checks. The final
+  verifier and validator pass `223/223` in `522.3s`. The vault remains 16,072
+  files, 4,522,733 bytes, and zero pending files. Exact implementation-head CI
+  passes all five jobs; both implementation-head package workflows pass every
+  platform and consolidation with publication skipped. No Defender setting,
+  service, driver, package install, publication, or release changed. Evidence
+  is maintained in
+  `docs/reports/checkpoint-2194-native-engine-windows-roots.md`.
 
 - Current macOS package-verification pass: checkpoint 2193 preserves the
   merged-main attempt-1 failure where a newly created arm64 DMG returned

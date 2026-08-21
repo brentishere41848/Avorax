@@ -3496,6 +3496,7 @@ name = "zentor_native_engine"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "avorax_platform_security",
  "chrono",
  "flate2",
  "serde",
@@ -3504,6 +3505,7 @@ dependencies = [
  "tempfile",
  "uuid",
  "walkdir",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]

@@ -97,6 +97,11 @@ NATIVE_RISK_FUSION = (
 )
 NATIVE_SCAN_ENV_ROOTS = ROOT / "core" / "zentor_native_engine" / "src" / "scan" / "env_roots.rs"
 NATIVE_ENGINE = ROOT / "core" / "zentor_native_engine" / "src" / "engine.rs"
+NATIVE_LIB = ROOT / "core" / "zentor_native_engine" / "src" / "lib.rs"
+NATIVE_CARGO = ROOT / "core" / "zentor_native_engine" / "Cargo.toml"
+NATIVE_WINDOWS_SYSTEM = (
+    ROOT / "core" / "zentor_native_engine" / "src" / "windows_system.rs"
+)
 NATIVE_ENGINE_TESTS = (
     ROOT / "core" / "zentor_native_engine" / "src" / "tests" / "mod.rs"
 )
@@ -10966,51 +10971,32 @@ def test_native_quarantine_root_is_checked_before_payload_destination_use():
     assert "native_quarantine_rejects_linked_root_before_payload_move" in source
 
 
-def test_native_quarantine_root_acl_hardening_uses_checked_system32_tool():
+def test_native_quarantine_root_acl_hardening_uses_platform_security():
     source = read(NATIVE_QUARANTINE_STORE)
+    module_source = read(NATIVE_QUARANTINE_MOD)
+    production = source.split("#[cfg(test)]")[0]
     root_source = source[
         source.index("fn ensure_native_quarantine_root_directory"):
         source.index("fn ensure_existing_native_quarantine_directory")
     ]
     acl_source = source[
         source.index("fn harden_native_quarantine_root_acl"):
-        source.index("#[cfg(windows)]\nstruct BoundedNativeQuarantineCommandOutput")
-    ]
-    runner_source = source[
-        source.index("fn run_native_quarantine_acl_command"):
-        source.index("fn command_output_excerpt")
-    ]
-    tool_source = source[
-        source.index("fn native_windows_system32_tool"):
         source.index("fn ensure_existing_native_quarantine_directory")
     ]
-    old_icacls_launch = 'Command::new("icacls")'
 
     assert "harden_native_quarantine_root_acl(path)?" in root_source
-    assert "const NATIVE_QUARANTINE_ACL_COMMAND_TIMEOUT: Duration = Duration::from_secs(30)" in source
-    assert "const MAX_NATIVE_QUARANTINE_COMMAND_OUTPUT_BYTES: usize = 2048" in source
-    assert "current_windows_account()?" in acl_source
-    assert 'native_windows_system32_tool("icacls.exe")?' in acl_source
-    assert "Command::new(&icacls)" in acl_source
-    assert "run_native_quarantine_acl_command(&mut command)?" in acl_source
-    assert '"failed to harden native quarantine ACLs: {}"' in acl_source
-    assert "stdin(Stdio::null())" in runner_source
-    assert "stdout(Stdio::null())" in runner_source
-    assert "stderr(Stdio::piped())" in runner_source
-    assert "read_bounded_native_quarantine_command_output" in runner_source
-    assert "native quarantine ACL command timed out after" in runner_source
-    assert "failed to kill timed-out native quarantine ACL command" in runner_source
-    assert "failed to reap timed-out native quarantine ACL command" in runner_source
-    assert "command_output_excerpt(&stderr)" in runner_source
-    assert 'name.eq_ignore_ascii_case("icacls.exe")' in tool_source
-    assert "native_windows_system_root()?" in tool_source
-    assert "fs::symlink_metadata(&candidate)" in tool_source
-    assert "FILE_ATTRIBUTE_REPARSE_POINT" in tool_source
-    assert "Native Windows System32 tool root is unavailable" in tool_source
-    assert "Native Windows system root must not contain parent traversal" in tool_source
-    assert "is_local_windows_drive_path(&path)" in tool_source
-    assert old_icacls_launch not in acl_source
-    assert "native_quarantine_root_acl_hardening_uses_checked_system32_tool" in source
+    assert "avorax_platform_security::harden_windows_private_directory(_path)" in acl_source
+    assert "failed to harden native quarantine root ACL" in acl_source
+    assert "current_windows_account" not in production
+    assert 'std::env::var("USERNAME")' not in production
+    assert 'std::env::var("USERDOMAIN")' not in production
+    assert "native_windows_system32_tool" not in production
+    assert "icacls.exe" not in production
+    assert "run_native_quarantine_acl_command" not in production
+    assert "Command::new" not in production
+    assert "native_windows_quarantine_root_acl_uses_platform_security" in source
+    assert "native_windows_quarantine_root_acl_ignores_account_environment" in source
+    assert '#[cfg(test)]\npub(crate) mod quarantine_store;' in module_source
 
 
 def test_native_quarantine_hash_input_is_byte_bounded():
@@ -19879,6 +19865,8 @@ def test_small_threat_mvp_verifier_is_safe_and_reproducible():
         in source
     )
     assert "native-engine Authenticode Microsoft-signed probe regression" in source
+    assert "native-engine native Windows root regressions" in source
+    assert '"native_windows"' in source
     assert (
         "authenticode_probe_accepts_microsoft_signed_windows_powershell_binary"
         in source
@@ -20022,6 +20010,17 @@ def test_small_threat_mvp_verifier_is_safe_and_reproducible():
         "verification retries"
         in source
     )
+    assert (
+        "Native Engine Authenticode PowerShell discovery uses a bounded, process-stable "
+        "OS-reported Windows directory resolver"
+        in source
+    )
+    assert (
+        "Native Engine's disabled test-only legacy quarantine store uses token-derived "
+        "native DACL application and verification without an external helper"
+        in source
+    )
+    assert "production quarantine remains owned by Local Core" in source
     assert "full release-host SBOM/license output" in source
     assert "installer-owned service repair/install E2E" in source
     assert "installed update/rollback E2E" in source
@@ -20750,6 +20749,27 @@ def test_small_threat_mvp_report_validator_is_strict_and_local():
     assert 'Assert-ReportContainsStep $steps "Dependency evidence gate"' in source
     assert (
         'Assert-ReportContainsStep $steps "Desktop package builder source contracts"'
+        in source
+    )
+    assert (
+        'Assert-ReportContainsStep $steps "native-engine native Windows root regressions"'
+        in source
+    )
+    assert (
+        'Assert-ReportScopeContains $verifiedScopeText "Native Engine Authenticode '
+        'PowerShell discovery uses a bounded, process-stable OS-reported Windows '
+        'directory resolver"'
+        in source
+    )
+    assert (
+        'Assert-ReportScopeContains $verifiedScopeText "Native Engine\'s disabled test-only '
+        'legacy quarantine store uses token-derived native DACL application and '
+        'verification without an external helper"'
+        in source
+    )
+    assert (
+        'Assert-ReportScopeContains $verifiedScopeText "production quarantine remains '
+        'owned by Local Core"'
         in source
     )
     assert 'Assert-ReportContainsStep $steps "native-engine file-type classifier regressions"' in source
@@ -24651,21 +24671,69 @@ def test_guard_driver_health_tools_use_native_checked_system_root():
     assert "driver_health_system_commands_use_checked_system32_paths" in source
 
 
-def test_native_microsoft_powershell_tool_rejects_parent_traversal_in_system_root():
-    source = read(NATIVE_MICROSOFT_TRUST)
-    production = source.split("#[cfg(test)]")[0]
-    root_source = production[
-        production.index("fn native_windows_system_root"):
-        production.index("fn is_local_windows_drive_path")
+def test_native_windows_tools_use_native_bounded_system_root():
+    trust = read(NATIVE_MICROSOFT_TRUST)
+    quarantine = read(NATIVE_QUARANTINE_STORE)
+    quarantine_mod = read(NATIVE_QUARANTINE_MOD)
+    windows_system = read(NATIVE_WINDOWS_SYSTEM)
+    native_lib = read(NATIVE_LIB)
+    cargo = read(NATIVE_CARGO)
+    trust_production = trust.split("#[cfg(test)]")[0]
+    quarantine_production = quarantine.split("#[cfg(test)]")[0]
+    trust_tool = trust_production[
+        trust_production.index("fn windows_powershell_tool"):
+        trust_production.index("fn windows_powershell_security_module")
     ]
-
-    assert "normalize_native_windows_system_root_text(&text)" in root_source
-    assert "PathBuf::from(normalized_root)" in root_source
-    assert "PathBuf::from(text)" not in root_source
-    assert "fn normalize_native_windows_system_root_text(value: &str) -> Result<String>" in production
-    assert "Native WindowsPowerShell system root must not contain parent traversal" in production
-    assert "collapse_windows_system_path_segments(&normalized)" in production
-    assert "authenticode_probe_failures_are_reportable_before_bool_compatibility" in source
+    assert "#[cfg(windows)]\nmod windows_system;" in native_lib
+    assert "GetSystemWindowsDirectoryW(" in windows_system
+    assert "static SYSTEM_WINDOWS_DIRECTORY: OnceLock<Result<PathBuf, String>>" in windows_system
+    assert "fn checked_system_windows_directory()" in windows_system
+    assert "fn checked_system_directory(" in windows_system
+    assert "fn checked_system32_file(" in windows_system
+    assert "Some(Component::RootDir)" in windows_system
+    assert "fn reject_reparse_ancestors(" in windows_system
+    assert "fs::symlink_metadata(&path)" in windows_system
+    assert "metadata_is_reparse_point(&metadata)" in windows_system
+    assert "validate_system32_relative_component(component, label)?" in windows_system
+    assert "MAX_SYSTEM_WINDOWS_DIRECTORY_CHARS: usize = 32_768" in windows_system
+    assert "vec![u16::MAX; MAX_SYSTEM_WINDOWS_DIRECTORY_CHARS]" in windows_system
+    assert "chars >= buffer.len()" in windows_system
+    assert "buffer[..chars].contains(&0)" in windows_system
+    assert "buffer[chars] != 0" in windows_system
+    assert '"Win32_System_SystemInformation"' in cargo
+    windows_dependencies = cargo[
+        cargo.index("[target.'cfg(windows)'.dependencies]"):
+        cargo.index("[target.'cfg(windows)'.dev-dependencies]")
+    ]
+    windows_dev_dependencies = cargo[
+        cargo.index("[target.'cfg(windows)'.dev-dependencies]"):
+        cargo.index("[dev-dependencies]")
+    ]
+    assert "avorax_platform_security" not in windows_dependencies
+    assert (
+        'avorax_platform_security = { path = "../avorax_platform_security" }'
+        in windows_dev_dependencies
+    )
+    assert "crate::windows_system::checked_system32_file(" in trust_tool
+    assert '&["WindowsPowerShell", "v1.0", "powershell.exe"]' in trust_tool
+    assert (
+        "avorax_platform_security::harden_windows_private_directory(_path)"
+        in quarantine_production
+    )
+    assert "native_windows_system_root" not in trust_production
+    assert "native_windows_system_root" not in quarantine_production
+    assert '"SystemRoot"' not in trust_production
+    assert '"WINDIR"' not in trust_production
+    assert "current_windows_account" not in quarantine_production
+    assert 'std::env::var("USERNAME")' not in quarantine_production
+    assert 'std::env::var("USERDOMAIN")' not in quarantine_production
+    assert "icacls.exe" not in quarantine_production
+    assert '#[cfg(test)]\npub(crate) mod quarantine_store;' in quarantine_mod
+    assert "native_windows_system_directory_ignores_spoofed_environment" in windows_system
+    assert "native_windows_system32_file_rejects_unsafe_relative_components" in windows_system
+    assert "native_windows_system_directories_are_checked_and_bounded" in windows_system
+    assert "native_windows_system32_file_runtime_returns_real_tools" in windows_system
+    assert "authenticode_probe_failures_are_reportable_before_bool_compatibility" in trust
 
 
 def test_native_authenticode_probe_uses_bounded_command_runner():

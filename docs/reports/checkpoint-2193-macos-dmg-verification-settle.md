@@ -108,8 +108,11 @@ vault content was modified or deleted.
 
 ## Hosted Status
 
-Implementation commit `07e803c42880e7bc556642e206828f4e5c33b815` is on
-draft PR `#45`. Exact-head Avorax CI `32484140638` passes all five jobs.
+Implementation commit `07e803c42880e7bc556642e206828f4e5c33b815` and
+documentation/evidence commit `21db1719154a698b339bbc69cae532ae3185a22b`
+merged through PR `#45` as
+`ab1233b4f04a6a4b0d5dd4d949a8003dd41169f1`. Exact implementation-head
+Avorax CI `32484140638` passes all five jobs.
 
 Desktop Packages push run `32484112523` passes:
 
@@ -142,14 +145,28 @@ verification; PR arm64/x64 left about 6.1/5.8 seconds. This proves the settle
 path executed natively on both architectures. No package was installed,
 published, or released.
 
+Documentation/evidence-head Avorax CI `32485827199` passes branding job
+`96781981504`, Flutter `96781981514`, Rust `96781981301`, security/performance
+`96781981841`, and Unix quarantine runtime `96781981701`. Desktop Packages PR
+run `32485827196` passes contracts `96781981503`, Windows `96782018494`, Linux
+`96782018592`, macOS arm64 `96782018517`, macOS x64 `96782018556`, and
+consolidation `96786883294`; publication `96786963894` is skipped.
+
+Merged-main Avorax CI `32487488540` passes security/performance `96787200424`,
+branding `96787200637`, Rust `96787200694`, Flutter `96787200701`, and Unix
+quarantine runtime `96787200761`. Merged-main Desktop Packages run
+`32487488604` passes contracts `96787201107`, Linux `96787244821`, macOS x64
+`96787244857`, macOS arm64 `96787244860`, Windows `96787244948`, and
+consolidation `96790912733`; publication `96791008797` is skipped.
+
 ## Classification
 
 - **Verified locally:** exact transient classification, bounded settle/backoff,
   non-transient immediate failure, retry-budget failure, package source
   contracts, central verifier integration, and independent report validation.
-- **Verified hosted at exact implementation head:** Avorax CI, Windows, Linux,
-  macOS arm64/x64, package contracts, and consolidation pass in push and PR
-  workflows; publication is skipped.
+- **Verified hosted at exact implementation/evidence and merged-main heads:**
+  Avorax CI, Windows, Linux, macOS arm64/x64, package contracts, and
+  consolidation pass; publication is skipped.
 - **Blocked:** Developer ID signing, notarization, installed package
   click-through, protected signing credentials, and production approval.
 - **Technically limited:** DMG construction is package evidence only. It does

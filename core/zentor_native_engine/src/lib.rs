@@ -14,6 +14,9 @@ pub mod threat_intel;
 pub mod trust;
 pub mod verdict;
 
+#[cfg(windows)]
+mod windows_system;
+
 pub use config::EngineConfig;
 pub use detection_provider::{DetectionProviderInfo, DetectionProviderStatus};
 pub use engine::{EngineStatus, SelfTestReport, ZentorNativeEngine};

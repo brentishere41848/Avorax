@@ -1451,9 +1451,10 @@ enforcement, or pre-execution blocking is claimed.
   publisher, or richer process-policy evidence needs separate design and false-
   positive validation.
 - **Superseded follow-up:** Checkpoint 2192 moves Guard driver-health and
-  driver-IPC system-root decisions onto the shared native resolver. Native
-  Engine Authenticode and quarantine helpers still use their own validated
-  environment-root logic.
+  driver-IPC system-root decisions onto the shared native resolver. Checkpoint
+  2194 separately removes mutable environment roots from Native Engine
+  Authenticode discovery and removes account-environment/helper execution from
+  its private test-only legacy quarantine store.
 - **Existing low-severity quality blocker:** Optional workspace-wide strict
   Clippy reports three pre-existing `services/api` style lints
   (`enum_variant_names` and `items_after_test_module`). The API compiles and the
@@ -1505,8 +1506,8 @@ enforcement, or pre-execution blocking is claimed.
 - **Technically limited:** Actual-root `System32`/`SysWOW64` fail-open and
   process-skip policies remain broad and path-based. Metadata validation and
   later command creation are not one atomic handle-based launch. Native Engine
-  Authenticode and quarantine helper roots still use separate validated
-  environment logic and remain follow-up work.
+  helper-root follow-up is superseded by checkpoint 2194; Guard's broad
+  process/IPC exceptions remain separate policy work.
 
 ## Checkpoint 2193 macOS DMG Verification Settle
 
@@ -1530,13 +1531,58 @@ enforcement, or pre-execution blocking is claimed.
   checks pass. The expanded central verifier and independent validator pass
   `222/222` in `553.8s`; a stale report without the package step is rejected.
 - **Hosted status:** Implementation
-  `07e803c42880e7bc556642e206828f4e5c33b815` is on draft PR `#45`. Avorax CI
-  `32484140638` passes all five jobs. Desktop Packages push/PR runs
-  `32484112523`/`32484140672` pass contracts, Windows, Linux, macOS arm64/x64,
-  and consolidation. All four macOS jobs passed `Attempt 1/5`; publish jobs
-  `96780340949`/`96780547410` were skipped.
+  `07e803c42880e7bc556642e206828f4e5c33b815` and evidence
+  `21db1719154a698b339bbc69cae532ae3185a22b` merged through PR `#45` as
+  `ab1233b4f04a6a4b0d5dd4d949a8003dd41169f1`. Evidence-head CI/package runs
+  `32485827199`/`32485827196` and merged-main CI/package runs
+  `32487488540`/`32487488604` pass; consolidation passes and publication is
+  skipped at both heads.
 - **Still blocked / limited:** macOS Developer ID signing and notarization,
   installed package click-through, persistent Guard process collection on
   macOS, installed service behavior, signed-driver enforcement, and
   pre-execution protection remain unavailable or technically limited. A DMG
   build is package evidence, not Defender replacement or detection-rate proof.
+
+## Checkpoint 2194 Native Engine Windows Roots
+
+- **Resolved locally:** Native Engine Authenticode helper discovery and
+  Microsoft local-artifact root decisions no longer consume mutable
+  `SystemRoot` or `WINDIR`. Bounded `GetSystemWindowsDirectoryW` output is
+  validated as one local, normal, non-reparse directory and cached once per
+  process, including failures.
+- **Resolved locally:** The checked PowerShell candidate has a fixed bounded
+  component path, and local Microsoft trust requires both checked system
+  location and valid Microsoft Authenticode. A familiar path alone never
+  produces a clean verdict.
+- **Disabled boundary clarified:** Native Engine production code remains
+  detection-only. Its legacy quarantine store is private test-only code; Local
+  Core remains the sole production quarantine owner. Compatibility tests now
+  use the shared token-SID DACL hardener without `icacls.exe`, `USERNAME`, or
+  `USERDOMAIN`.
+- **Verified locally:** Native Windows-root tests pass `10/10`, Authenticode
+  probes `2/2`, platform ACL/SID tests `4/4`, Native Engine 448 tests, the
+  locked workspace `1,486/1,486`, Flutter `838/838`, source contracts
+  `626/626`, strict Native Clippy, rustfmt, parsers, standalone offline lock
+  check, and `git diff --check`. The central report and validator pass
+  `223/223` in `522.3s`.
+- **Verified unchanged:** ProgramData quarantine remains 16,072 files, zero
+  directories, 4,522,733 bytes, 5,357 complete payload/metadata/auth sets, one
+  key, and zero pending files. No vault item was changed or removed.
+- **Dependency boundary:** `windows-sys` remains pinned at `0.61.2`. The
+  internal platform-security crate is Windows test-only for the disabled
+  legacy store. The standalone lock contains 72 packages/70 registry checksums,
+  all already represented at exact versions in the root workspace lock.
+- **Hosted status:** Implementation head
+  `1dee3e25d5131d9b999cce7580e5df0f59a82f47` is on draft PR `#46`; Avorax CI
+  `32493387468` passes all five jobs. Desktop Packages push/PR runs
+  `32493383509`/`32493387522` pass all builds and consolidation; publication is
+  skipped. Documentation-head and merged-main evidence remain pending.
+- **Partial / blocked:** Installed LocalSystem/service execution, protected
+  helper ACL attack E2E, production code signing, signed-driver IPC, and real
+  pre-execution enforcement need approved disposable elevated hosts and signing
+  prerequisites.
+- **Technically limited:** Metadata validation and later helper launch are not
+  atomic. Windows and protection of its real system tree remain trusted.
+  32-bit Windows is unsupported and fails conservatively. User-mode polling can
+  miss short-lived activity and does not replace Defender or provide kernel
+  blocking.
