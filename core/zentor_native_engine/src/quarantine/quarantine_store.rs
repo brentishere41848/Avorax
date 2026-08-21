@@ -1,16 +1,8 @@
 use std::fs;
-#[cfg(windows)]
-use std::io::BufReader;
 use std::io::{self, Read, Write};
 #[cfg(windows)]
 use std::os::windows::fs::MetadataExt;
 use std::path::{Path, PathBuf};
-#[cfg(windows)]
-use std::process::{Command, ExitStatus, Stdio};
-#[cfg(windows)]
-use std::thread;
-#[cfg(windows)]
-use std::time::{Duration, Instant};
 
 use anyhow::{anyhow, Context, Result};
 use chrono::Utc;
@@ -28,10 +20,6 @@ const MAX_NATIVE_QUARANTINE_METADATA_BYTES: usize = 256 * 1024;
 const MAX_NATIVE_QUARANTINE_METADATA_LABEL_CHARS: usize = 256;
 const MAX_NATIVE_QUARANTINE_METADATA_STATE_CHARS: usize = 64;
 const MAX_NATIVE_QUARANTINE_RECORD_PATH_CHARS: usize = 4096;
-#[cfg(windows)]
-const MAX_NATIVE_QUARANTINE_COMMAND_OUTPUT_BYTES: usize = 2048;
-#[cfg(windows)]
-const NATIVE_QUARANTINE_ACL_COMMAND_TIMEOUT: Duration = Duration::from_secs(30);
 const DEFAULT_NATIVE_QUARANTINE_DETECTION_NAME: &str = "Native detection";
 
 #[derive(Debug, Clone)]
@@ -456,295 +444,14 @@ fn ensure_native_quarantine_root_directory(path: &Path) -> Result<()> {
 fn harden_native_quarantine_root_acl(_path: &Path) -> Result<()> {
     #[cfg(windows)]
     {
-        let current_user = current_windows_account()?;
-        let current_user_grant = format!("{current_user}:(OI)(CI)F");
-        let icacls = native_windows_system32_tool("icacls.exe")?;
-        let mut command = Command::new(&icacls);
-        command.arg(_path).args([
-            "/inheritance:r",
-            "/grant:r",
-            "*S-1-5-18:(OI)(CI)F",
-            "*S-1-5-32-544:(OI)(CI)F",
-            &current_user_grant,
-        ]);
-        let output = run_native_quarantine_acl_command(&mut command)?;
-        if !output.status.success() {
-            return Err(anyhow!(
-                "failed to harden native quarantine ACLs: {}",
-                command_output_excerpt(&output.stderr)
-            ));
-        }
+        avorax_platform_security::harden_windows_private_directory(_path).with_context(|| {
+            format!(
+                "failed to harden native quarantine root ACL {}",
+                _path.display()
+            )
+        })?;
     }
     Ok(())
-}
-
-#[cfg(windows)]
-struct BoundedNativeQuarantineCommandOutput {
-    status: ExitStatus,
-    stderr: Vec<u8>,
-}
-
-#[cfg(windows)]
-fn run_native_quarantine_acl_command(
-    command: &mut Command,
-) -> Result<BoundedNativeQuarantineCommandOutput> {
-    command
-        .stdin(Stdio::null())
-        .stdout(Stdio::null())
-        .stderr(Stdio::piped());
-    let mut child = command
-        .spawn()
-        .context("failed to launch native quarantine ACL command")?;
-    let stderr = child
-        .stderr
-        .take()
-        .ok_or_else(|| anyhow!("failed to capture native quarantine ACL command stderr"))?;
-    let stderr_reader = thread::spawn(move || {
-        read_bounded_native_quarantine_command_output(
-            stderr,
-            MAX_NATIVE_QUARANTINE_COMMAND_OUTPUT_BYTES,
-        )
-    });
-    let status = match wait_for_native_quarantine_acl_child(&mut child)? {
-        Some(status) => status,
-        None => {
-            let kill_error = child.kill().err();
-            let wait_error = child.wait().err();
-            let stderr = stderr_reader
-                .join()
-                .map_err(|_| anyhow!("native quarantine ACL stderr reader panicked"))??;
-            let mut detail = format!(
-                "native quarantine ACL command timed out after {} seconds",
-                NATIVE_QUARANTINE_ACL_COMMAND_TIMEOUT.as_secs()
-            );
-            if let Some(error) = kill_error {
-                detail.push_str(&format!(
-                    "; failed to kill timed-out native quarantine ACL command: {error}"
-                ));
-            }
-            if let Some(error) = wait_error {
-                detail.push_str(&format!(
-                    "; failed to reap timed-out native quarantine ACL command: {error}"
-                ));
-            }
-            let stderr_excerpt = command_output_excerpt(&stderr);
-            if !stderr_excerpt.is_empty() {
-                detail.push_str(&format!("; stderr: {stderr_excerpt}"));
-            }
-            return Err(anyhow!(detail));
-        }
-    };
-    let stderr = stderr_reader
-        .join()
-        .map_err(|_| anyhow!("native quarantine ACL stderr reader panicked"))??;
-    Ok(BoundedNativeQuarantineCommandOutput { status, stderr })
-}
-
-#[cfg(windows)]
-fn wait_for_native_quarantine_acl_child(
-    child: &mut std::process::Child,
-) -> Result<Option<ExitStatus>> {
-    let started = Instant::now();
-    loop {
-        if let Some(status) = child
-            .try_wait()
-            .context("failed to poll native quarantine ACL command")?
-        {
-            return Ok(Some(status));
-        }
-        if started.elapsed() >= NATIVE_QUARANTINE_ACL_COMMAND_TIMEOUT {
-            return Ok(None);
-        }
-        thread::sleep(Duration::from_millis(50));
-    }
-}
-
-#[cfg(windows)]
-fn read_bounded_native_quarantine_command_output<R: Read>(
-    reader: R,
-    max_bytes: usize,
-) -> Result<Vec<u8>> {
-    let mut reader = BufReader::new(reader);
-    let mut bytes = Vec::new();
-    let retain_limit = max_bytes.saturating_add(1);
-    let mut buffer = [0_u8; 8192];
-    loop {
-        let read = reader
-            .read(&mut buffer)
-            .context("failed to read native quarantine ACL command stderr")?;
-        if read == 0 {
-            break;
-        }
-        let remaining = retain_limit.saturating_sub(bytes.len());
-        if remaining > 0 {
-            let keep = read.min(remaining);
-            bytes.extend_from_slice(&buffer[..keep]);
-        }
-    }
-    Ok(bytes)
-}
-
-#[cfg(windows)]
-fn command_output_excerpt(bytes: &[u8]) -> String {
-    let limit = bytes.len().min(MAX_NATIVE_QUARANTINE_COMMAND_OUTPUT_BYTES);
-    let mut text = String::from_utf8_lossy(&bytes[..limit]).trim().to_string();
-    if bytes.len() > MAX_NATIVE_QUARANTINE_COMMAND_OUTPUT_BYTES {
-        text.push_str("...[truncated]");
-    }
-    text
-}
-
-#[cfg(windows)]
-fn native_windows_system32_tool(name: &str) -> Result<PathBuf> {
-    if !name.eq_ignore_ascii_case("icacls.exe") {
-        anyhow::bail!("unsupported native Windows System32 tool {name}");
-    }
-    let system_root = native_windows_system_root()?;
-    let is_system32_root = system_root
-        .file_name()
-        .and_then(|value| value.to_str())
-        .map(|value| value.eq_ignore_ascii_case("System32"))
-        .unwrap_or(false);
-    let candidate = if is_system32_root {
-        system_root.join(name)
-    } else {
-        system_root.join("System32").join(name)
-    };
-    let metadata = fs::symlink_metadata(&candidate).with_context(|| {
-        format!(
-            "unable to inspect native Windows System32 tool {}",
-            candidate.display()
-        )
-    })?;
-    if metadata.file_type().is_symlink() {
-        anyhow::bail!(
-            "refusing to launch symbolic link native Windows System32 tool {}",
-            candidate.display()
-        );
-    }
-    if metadata.file_attributes() & FILE_ATTRIBUTE_REPARSE_POINT != 0 {
-        anyhow::bail!(
-            "refusing to launch reparse point native Windows System32 tool {}",
-            candidate.display()
-        );
-    }
-    if !metadata.file_type().is_file() {
-        anyhow::bail!(
-            "native Windows System32 tool {} is not a regular file",
-            candidate.display()
-        );
-    }
-    Ok(candidate)
-}
-
-#[cfg(windows)]
-fn native_windows_system_root() -> Result<PathBuf> {
-    let mut diagnostics = Vec::new();
-    for key in ["SystemRoot", "WINDIR"] {
-        match std::env::var_os(key) {
-            Some(value) => {
-                let text = value.to_string_lossy().trim().to_string();
-                if text.is_empty() {
-                    diagnostics.push(format!("{key} is empty"));
-                    continue;
-                }
-                let normalized_root = match normalize_native_windows_system_root_text(&text) {
-                    Ok(text) => text,
-                    Err(error) => {
-                        diagnostics.push(format!("{key} is unsafe: {error}"));
-                        continue;
-                    }
-                };
-                let path = PathBuf::from(normalized_root);
-                if !is_local_windows_drive_path(&path) {
-                    diagnostics.push(format!(
-                        "{key} must be a local Windows drive path: {}",
-                        path.display()
-                    ));
-                    continue;
-                }
-                return Ok(path);
-            }
-            None => diagnostics.push(format!("{key} is not set")),
-        }
-    }
-    anyhow::bail!(
-        "Native Windows System32 tool root is unavailable: {}",
-        diagnostics.join("; ")
-    );
-}
-
-#[cfg(windows)]
-fn normalize_native_windows_system_root_text(value: &str) -> Result<String> {
-    if value.contains('\0') {
-        anyhow::bail!("Native Windows system root contains NUL");
-    }
-    let normalized = value.trim().replace('/', "\\");
-    if normalized.split('\\').any(|part| part == "..") {
-        anyhow::bail!("Native Windows system root must not contain parent traversal");
-    }
-    Ok(collapse_native_windows_system_root_segments(&normalized))
-}
-
-#[cfg(windows)]
-fn collapse_native_windows_system_root_segments(path: &str) -> String {
-    let trimmed = path.trim_end_matches('\\');
-    if trimmed.is_empty() {
-        return String::new();
-    }
-    let (prefix, rest, absolute) = split_native_windows_system_root_prefix(trimmed);
-    let mut parts = Vec::new();
-    for part in rest.split('\\') {
-        match part {
-            "" | "." => {}
-            _ => parts.push(part),
-        }
-    }
-    let joined = parts.join("\\");
-    match (prefix, absolute, joined.is_empty()) {
-        (Some(prefix), true, true) => format!("{prefix}\\"),
-        (Some(prefix), true, false) => format!("{prefix}\\{joined}"),
-        (None, true, true) => "\\".to_string(),
-        (None, true, false) => format!("\\{joined}"),
-        (Some(prefix), false, true) => prefix.to_string(),
-        (Some(prefix), false, false) => format!("{prefix}{joined}"),
-        (None, false, _) => joined,
-    }
-}
-
-#[cfg(windows)]
-fn split_native_windows_system_root_prefix(path: &str) -> (Option<&str>, &str, bool) {
-    if path.len() >= 3 && path.as_bytes()[1] == b':' && path.as_bytes()[2] == b'\\' {
-        return (Some(&path[..2]), &path[3..], true);
-    }
-    if path.starts_with('\\') {
-        return (None, path.trim_start_matches('\\'), true);
-    }
-    (None, path, false)
-}
-
-#[cfg(windows)]
-fn is_local_windows_drive_path(path: &Path) -> bool {
-    use std::path::{Component, Prefix};
-
-    match path.components().next() {
-        Some(Component::Prefix(prefix)) => {
-            matches!(prefix.kind(), Prefix::Disk(_) | Prefix::VerbatimDisk(_))
-        }
-        _ => false,
-    }
-}
-
-#[cfg(windows)]
-fn current_windows_account() -> Result<String> {
-    let user = std::env::var("USERNAME").map_err(|_| anyhow!("USERNAME is not set"))?;
-    if user.trim().is_empty() {
-        return Err(anyhow!("USERNAME is empty"));
-    }
-    match std::env::var("USERDOMAIN") {
-        Ok(domain) if !domain.trim().is_empty() => Ok(format!("{domain}\\{user}")),
-        _ => Ok(user),
-    }
 }
 
 fn ensure_existing_native_quarantine_directory(path: &Path, label: &str) -> Result<()> {
@@ -1535,8 +1242,9 @@ mod tests {
     }
 
     #[test]
-    fn native_quarantine_root_acl_hardening_uses_checked_system32_tool() {
+    fn native_windows_quarantine_root_acl_uses_platform_security() {
         let source = include_str!("quarantine_store.rs");
+        let production = source.split("#[cfg(test)]").next().unwrap();
         let root_start = source
             .find("fn ensure_native_quarantine_root_directory")
             .unwrap();
@@ -1545,38 +1253,44 @@ mod tests {
             .unwrap();
         let root_source = &source[root_start..root_end];
         let acl_start = source.find("fn harden_native_quarantine_root_acl").unwrap();
-        let acl_end = source
-            .find("#[cfg(windows)]\nstruct BoundedNativeQuarantineCommandOutput")
-            .unwrap();
-        let acl_source = &source[acl_start..acl_end];
-        let runner_start = source.find("fn run_native_quarantine_acl_command").unwrap();
-        let runner_end = source.find("fn command_output_excerpt").unwrap();
-        let runner_source = &source[runner_start..runner_end];
-        let tool_start = source.find("fn native_windows_system32_tool").unwrap();
-        let tool_end = source
-            .find("fn ensure_existing_native_quarantine_directory")
-            .unwrap();
-        let tool_source = &source[tool_start..tool_end];
-        let old_icacls_launch = ["Command::new(\"", "icacls\")"].concat();
+        let acl_source = &source[acl_start..root_end];
 
         assert!(root_source.contains("harden_native_quarantine_root_acl(path)?"));
-        assert!(acl_source.contains("current_windows_account()?"));
-        assert!(acl_source.contains("native_windows_system32_tool(\"icacls.exe\")?"));
-        assert!(acl_source.contains("Command::new(&icacls)"));
-        assert!(acl_source.contains("run_native_quarantine_acl_command(&mut command)?"));
-        assert!(acl_source.contains("failed to harden native quarantine ACLs"));
-        assert!(runner_source.contains("stdin(Stdio::null())"));
-        assert!(runner_source.contains("stdout(Stdio::null())"));
-        assert!(runner_source.contains("stderr(Stdio::piped())"));
-        assert!(runner_source.contains("NATIVE_QUARANTINE_ACL_COMMAND_TIMEOUT"));
-        assert!(runner_source.contains("failed to kill timed-out native quarantine ACL command"));
-        assert!(runner_source.contains("failed to reap timed-out native quarantine ACL command"));
-        assert!(tool_source.contains("Native Windows System32 tool root is unavailable"));
-        assert!(
-            tool_source.contains("Native Windows system root must not contain parent traversal")
+        assert!(acl_source
+            .contains("avorax_platform_security::harden_windows_private_directory(_path)"));
+        assert!(acl_source.contains("failed to harden native quarantine root ACL"));
+        assert!(!production.contains("current_windows_account"));
+        assert!(!production.contains("std::env::var(\"USERNAME\")"));
+        assert!(!production.contains("std::env::var(\"USERDOMAIN\")"));
+        assert!(!production.contains("native_windows_system32_tool"));
+        assert!(!production.contains("icacls.exe"));
+        assert!(!production.contains("run_native_quarantine_acl_command"));
+        assert!(!production.contains("Command::new"));
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn native_windows_quarantine_root_acl_ignores_account_environment() {
+        const CASE: &str = "native-windows-quarantine-account-environment-spoof";
+        if crate::test_support::is_isolated_environment_case(CASE) {
+            assert_eq!(std::env::var("USERNAME").unwrap(), "Everyone");
+            assert_eq!(std::env::var("USERDOMAIN").unwrap(), "UntrustedDomain");
+            let temp = tempfile::tempdir().expect("tempdir");
+            let root = temp.path().join("quarantine");
+            fs::create_dir(&root).expect("quarantine root");
+            harden_native_quarantine_root_acl(&root).expect("native ACL hardening");
+            return;
+        }
+
+        crate::test_support::run_isolated_environment_case(
+            "quarantine::quarantine_store::tests::native_windows_quarantine_root_acl_ignores_account_environment",
+            CASE,
+            |command| {
+                command
+                    .env("USERNAME", "Everyone")
+                    .env("USERDOMAIN", "UntrustedDomain");
+            },
         );
-        assert!(tool_source.contains("is_local_windows_drive_path(&path)"));
-        assert!(!acl_source.contains(&old_icacls_launch));
     }
 
     #[test]

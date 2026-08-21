@@ -275,6 +275,7 @@ $verifiedScope += " Additional verified boundary: native-engine detection-only m
 $verifiedScope += " Additional verified boundary: shared cross-platform quarantine permission hardening with process-token SID and exact protected Windows DACL verification plus exact Unix 0700/0600 verification."
 $verifiedScope += " Additional verified boundary: Guard native Windows process enumeration and Linux procfs coverage gaps are bounded, fail-visible, and cannot become a clean finite-watch result."
 $verifiedScope += " Additional verified boundary: Guard process skips, taskkill discovery, driver-health System32 tools, and driver IPC fail-open roots use the bounded native system Windows directory and reject environment or other-drive lookalikes."
+$verifiedScope += " Additional verified boundary: Native Engine Authenticode PowerShell discovery uses a bounded, process-stable OS-reported Windows directory resolver that rejects mutable environment roots, unsafe relative components, links, and reparse points; Native Engine quarantine root ACLs use token-derived native DACL application and verification without an external helper."
 $verifiedScope = $verifiedScope.Replace(
   "best-effort user-mode realtime watcher planning/status/IPC/controller paths",
   "release local-core binary watcher honesty smoke, best-effort user-mode realtime watcher planning/status/IPC/controller paths"
@@ -441,6 +442,7 @@ try {
     $results.Add((Invoke-Step "native-engine archive embedded rule and heuristic detection" $repo $cargo @("test", "--manifest-path", "core\zentor_native_engine\Cargo.toml", "script_rule_and_heuristics_inside_zip_entry_are_reported_without_extracting_archive", "--", "--test-threads=1")))
     $results.Add((Invoke-Step "native-engine packaged signature coverage" $repo $cargo @("test", "--manifest-path", "core\zentor_native_engine\Cargo.toml", "repo_native_packs_detect_more_than_eicar", "--", "--test-threads=1")))
     $results.Add((Invoke-Step "native-engine trust-store boundary regressions" $repo $cargo @("test", "--manifest-path", "core\zentor_native_engine\Cargo.toml", "trust_store", "--", "--test-threads=1")))
+    $results.Add((Invoke-Step "native-engine native Windows root regressions" $repo $cargo @("test", "--manifest-path", "core\zentor_native_engine\Cargo.toml", "native_windows", "--", "--test-threads=1")))
     $results.Add((Invoke-Step "native-engine Authenticode unsigned-file probe regression" $repo $cargo @("test", "--manifest-path", "core\zentor_native_engine\Cargo.toml", "authenticode_probe_accepts_unsigned_file_without_encoded_command_argument_error", "--", "--test-threads=1")))
     $results.Add((Invoke-Step "native-engine Authenticode Microsoft-signed probe regression" $repo $cargo @("test", "--manifest-path", "core\zentor_native_engine\Cargo.toml", "authenticode_probe_accepts_microsoft_signed_windows_powershell_binary", "--", "--test-threads=1")))
     $results.Add((Invoke-Step "native-engine known-good hash regressions" $repo $cargo @("test", "--manifest-path", "core\zentor_native_engine\Cargo.toml", "known_good", "--", "--test-threads=1")))

@@ -25,10 +25,15 @@ pub fn is_windows_system_path(path: &Path) -> Result<bool> {
 
 #[cfg(windows)]
 fn windows_system_path_roots() -> Result<Vec<PathBuf>> {
-    let system_root = native_windows_system_root()?;
     Ok(vec![
-        system_root.join("System32"),
-        system_root.join("SysWOW64"),
+        crate::windows_system::checked_system_directory(
+            "System32",
+            "Windows System32 trust directory",
+        )?,
+        crate::windows_system::checked_system_directory(
+            "SysWOW64",
+            "Windows SysWOW64 trust directory",
+        )?,
     ])
 }
 
@@ -331,34 +336,10 @@ fn base64_encode(bytes: &[u8]) -> String {
 
 #[cfg(windows)]
 fn windows_powershell_tool() -> Result<PathBuf> {
-    let system_root = native_windows_system_root()?;
-    let candidate = system_root
-        .join("System32")
-        .join("WindowsPowerShell")
-        .join("v1.0")
-        .join("powershell.exe");
-    let metadata = fs::symlink_metadata(&candidate).with_context(|| {
-        format!(
-            "unable to inspect WindowsPowerShell executable {}",
-            candidate.display()
-        )
-    })?;
-    anyhow::ensure!(
-        !metadata.file_type().is_symlink(),
-        "refusing to launch symbolic link WindowsPowerShell executable {}",
-        candidate.display()
-    );
-    anyhow::ensure!(
-        !is_windows_reparse_point(&metadata),
-        "refusing to launch reparse point WindowsPowerShell executable {}",
-        candidate.display()
-    );
-    anyhow::ensure!(
-        metadata.file_type().is_file(),
-        "WindowsPowerShell executable {} is not a regular file",
-        candidate.display()
-    );
-    Ok(candidate)
+    crate::windows_system::checked_system32_file(
+        &["WindowsPowerShell", "v1.0", "powershell.exe"],
+        "WindowsPowerShell executable",
+    )
 }
 
 #[cfg(windows)]
@@ -414,69 +395,6 @@ fn windows_powershell_tool() -> Result<PathBuf> {
 #[cfg(not(windows))]
 fn windows_powershell_security_module(_powershell: &Path) -> Result<(PathBuf, PathBuf)> {
     anyhow::bail!("WindowsPowerShell Security module is unavailable on this platform")
-}
-
-#[cfg(windows)]
-fn native_windows_system_root() -> Result<PathBuf> {
-    let mut diagnostics = Vec::new();
-    for key in ["SystemRoot", "WINDIR"] {
-        match std::env::var_os(key) {
-            Some(value) => {
-                let text = value.to_string_lossy().trim().to_string();
-                if text.is_empty() {
-                    diagnostics.push(format!("{key} is empty"));
-                    continue;
-                }
-                let normalized_root = match normalize_native_windows_system_root_text(&text) {
-                    Ok(text) => text,
-                    Err(error) => {
-                        diagnostics.push(format!("{key} is unsafe: {error}"));
-                        continue;
-                    }
-                };
-                let path = PathBuf::from(normalized_root);
-                if !is_local_windows_drive_path(&path) {
-                    diagnostics.push(format!(
-                        "{key} must be a local Windows drive path: {}",
-                        path.display()
-                    ));
-                    continue;
-                }
-                return Ok(path);
-            }
-            None => diagnostics.push(format!("{key} is not set")),
-        }
-    }
-    anyhow::bail!(
-        "Native WindowsPowerShell tool root is unavailable: {}",
-        diagnostics.join("; ")
-    );
-}
-
-#[cfg(windows)]
-fn normalize_native_windows_system_root_text(value: &str) -> Result<String> {
-    anyhow::ensure!(
-        !value.contains('\0'),
-        "Native WindowsPowerShell system root contains NUL"
-    );
-    let normalized = value.trim().replace('/', "\\");
-    anyhow::ensure!(
-        !normalized.split('\\').any(|part| part == ".."),
-        "Native WindowsPowerShell system root must not contain parent traversal"
-    );
-    Ok(collapse_windows_system_path_segments(&normalized))
-}
-
-#[cfg(windows)]
-fn is_local_windows_drive_path(path: &Path) -> bool {
-    use std::path::{Component, Prefix};
-
-    match path.components().next() {
-        Some(Component::Prefix(prefix)) => {
-            matches!(prefix.kind(), Prefix::Disk(_) | Prefix::VerbatimDisk(_))
-        }
-        _ => false,
-    }
 }
 
 fn parse_authenticode_json(bytes: &[u8]) -> Result<Value> {
@@ -669,7 +587,7 @@ mod tests {
     }
 
     #[test]
-    fn windows_system_path_trust_uses_checked_system_root_not_hardcoded_root() {
+    fn native_windows_system_path_trust_uses_checked_root_not_hardcoded_root() {
         let source = include_str!("microsoft_trust.rs");
         let helper_start = source.find("pub fn is_windows_system_path").unwrap();
         let verdict_start = source.find("pub fn microsoft_signature_verdict").unwrap();
@@ -681,7 +599,9 @@ mod tests {
             helper_source.contains("pub fn is_windows_system_path(path: &Path) -> Result<bool>")
         );
         assert!(helper_source.contains("windows_system_path_roots()?"));
-        assert!(helper_source.contains("native_windows_system_root()?"));
+        assert!(helper_source.contains("crate::windows_system::checked_system_directory("));
+        assert!(helper_source.contains("\"System32\""));
+        assert!(helper_source.contains("\"SysWOW64\""));
         assert!(helper_source.contains("path_starts_with_case_insensitive(path, root)"));
         assert!(helper_source.contains("path_text.starts_with(&format!"));
         assert!(!helper_source
@@ -693,7 +613,7 @@ mod tests {
     }
 
     #[test]
-    fn windows_system_path_prefix_requires_component_boundary() {
+    fn native_windows_system_path_prefix_requires_component_boundary() {
         assert!(path_starts_with_case_insensitive(
             Path::new(r"C:\Windows\System32\kernel32.dll"),
             Path::new(r"C:\Windows\System32")
@@ -785,16 +705,11 @@ mod tests {
         assert!(verdict_source.contains("Microsoft.PowerShell.Utility\\\\ConvertTo-Json -Compress"));
         assert!(verdict_source.contains("Microsoft.PowerShell.Security.psd1"));
         assert!(verdict_source.contains("fs::symlink_metadata(directory)"));
-        assert!(verdict_source.contains("let system_root = native_windows_system_root()?;"));
-        assert!(verdict_source.contains("fn native_windows_system_root() -> Result<PathBuf>"));
-        assert!(verdict_source.contains("normalize_native_windows_system_root_text(&text)"));
-        assert!(verdict_source.contains("PathBuf::from(normalized_root)"));
-        assert!(verdict_source.contains("for key in [\"SystemRoot\", \"WINDIR\"]"));
-        assert!(verdict_source.contains("std::env::var_os(key)"));
-        assert!(verdict_source.contains("Native WindowsPowerShell tool root is unavailable"));
-        assert!(verdict_source
-            .contains("Native WindowsPowerShell system root must not contain parent traversal"));
-        assert!(verdict_source.contains("collapse_windows_system_path_segments(&normalized)"));
+        assert!(verdict_source.contains("crate::windows_system::checked_system32_file("));
+        assert!(verdict_source.contains("&[\"WindowsPowerShell\", \"v1.0\", \"powershell.exe\"]"));
+        assert!(!verdict_source.contains("std::env::var_os"));
+        assert!(!verdict_source.contains("\"SystemRoot\""));
+        assert!(!verdict_source.contains("\"WINDIR\""));
         assert!(verdict_source.contains("let second = if offset + 1 < bytes.len()"));
         assert!(verdict_source.contains("let third = if offset + 2 < bytes.len()"));
         let old_powershell_launch = ["Command::new(\"", "powershell\")"].concat();
