@@ -327,6 +327,20 @@ explicit experimental prerelease with hashes and warnings. Production release
 remains blocked on protected signing credentials, installed-host privilege/IPC
 verification, platform distribution approval, and a complete dependency review.
 
+## Checkpoint 2193 DMG Verification Threat-Model Note
+
+A just-created DMG is not trusted merely because `hdiutil create` returned
+success. Merged-main evidence showed `hdiutil verify` can race the hosted
+macOS disk-image helper and return `Resource temporarily unavailable` before
+the image settles. The builder now performs a fixed settle and retries only
+that exact transient response within a 33-second total settle/backoff bound.
+All other verification errors fail immediately, and exhausting the transient
+budget returns the real failure status. The mounted manifest, payload,
+signature, entitlement, Gatekeeper, checksum, and lifecycle checks remain
+mandatory. This change improves package-build availability; it does not make an
+ad-hoc signature a Developer ID signature, provide notarization, install the
+package, or establish runtime antivirus protection.
+
 Linux/macOS update mutation controls remain unavailable because the signed
 `.aup` activation implementation is Windows-specific. The UI exposes manual
 reinstall guidance on those platforms, avoiding a dead control or false update

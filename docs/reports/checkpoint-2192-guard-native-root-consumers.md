@@ -124,6 +124,17 @@ consolidated checksum evidence. Consolidation jobs `96458306800` and
 intentionally skipped. This is build evidence, not installed-package or
 runtime protection evidence.
 
+Documentation commit `ac76a2f0a4896b9e42d6c771e952af84ec5ae203`
+completed PR `#44`, which merged as
+`71887973206f5287ba50cc8ff6e5eadcf43c678b`. Merged-main Avorax CI
+`32381508352` passed. Desktop Packages run `32381508319` attempt 1 passed all
+completed jobs except macOS arm64, where three exact transient
+`Resource temporarily unavailable` DMG verification responses failed the job.
+Failed-job rerun attempt 2 passed arm64 job `96772353094` and consolidation
+`96774515074`; publication `96774649572` remained skipped. Checkpoint 2193
+preserves and hardens this hosted-runner settle race rather than relabeling the
+failed first attempt.
+
 ## Classification
 
 - **Verified:** native root parsing, component validation, local-drive and

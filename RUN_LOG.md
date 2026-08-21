@@ -13,6 +13,58 @@ Lead-engineer product-hardening pass across the Avorax repository. Goal is to mo
 - The bundled native ML model is treated as development-only unless release metadata and gates prove production readiness.
 - MSI/EXE installers are first-install/repair/recovery/offline paths. Normal in-app updates should use verified `.aup` packages.
 
+## 2026-08-21 continuation checkpoint 2193
+
+- Preserved the checkpoint-2192 merged-main package failure instead of
+  rerunning it into fake success. Desktop Packages run `32381508319` attempt 1
+  passed contracts, Windows, Linux, and macOS x64, but macOS arm64 job
+  `96465645009` failed while verifying the newly created DMG.
+- The failed arm64 log shows DMG creation at `14:48:00.7588840Z`, followed by
+  attempts at `14:48:00.8182550Z`, `14:48:02.9980220Z`, and
+  `14:48:07.1962030Z`. Every attempt returned the exact transient
+  `Resource temporarily unavailable` response. App construction, signing,
+  manifest verification, and DMG creation had already passed.
+- Failed-job rerun attempt 2 succeeded without a source change. Arm64 job
+  `96772353094` created the DMG at `12:45:08.6481380Z`, reached its first
+  verification attempt at `12:45:11.1254510Z`, and completed successfully.
+  Consolidation job `96774515074` passed and publication job `96774649572`
+  was intentionally skipped. This confirms a hosted-runner settle race, not a
+  valid reason to suppress verification.
+- The macOS builder now calls `sync`, waits three seconds, and permits at most
+  five verification attempts. Only the exact resource-busy diagnostic is
+  retried, with bounded 2/4/8/16-second backoff. Any other verification error
+  fails immediately; the fifth transient failure returns the real exit code.
+- Desktop package contracts now form a required central-verifier step and
+  verification scope. The independent full-report validator rejects a passed
+  report that omits this step or scope.
+- Focused package tests pass 24 tests with 3 explicit Windows symlink-privilege
+  skips. Source contracts pass `626/626`; both modified PowerShell scripts and
+  the macOS builder parse; `git diff --check` passes.
+- The definitive central verifier records `222/222` passed steps, zero failed
+  report steps, and an empty error from `2026-08-21T12:43:18.0517012Z` through
+  `2026-08-21T12:52:31.8582905Z` (`553.8s`). Its independent validator passes
+  in `1.5s`; the prior 221-step report fails as expected because it lacks the
+  new package contract step.
+- Read-only pre/post-suite inventory confirms the ProgramData vault remains
+  exactly 16,072 files, zero directories, 4,522,733 bytes, 5,357 complete
+  payload/metadata/auth sets, one metadata-auth key, and zero pending files.
+  `Cargo.lock` and dependency versions are unchanged.
+- Implementation commit `07e803c42880e7bc556642e206828f4e5c33b815`
+  is published on draft PR `#45`. Exact-head Avorax CI `32484140638` passes
+  all five jobs. Desktop Packages push run `32484112523` and PR run
+  `32484140672` pass contracts, Windows MSI/EXE, Linux DEB/tar, both macOS
+  DMGs, and consolidation jobs `96780217485`/`96780488329`. Publish jobs
+  `96780340949`/`96780547410` are intentionally skipped.
+- All four changed-code macOS jobs passed `Attempt 1/5` with no transient
+  response. Creation-to-attempt times were about 6.4s/7.0s on the push arm64/
+  x64 jobs and 6.1s/5.8s on the PR arm64/x64 jobs, proving the settle path ran
+  on both architectures. No package was installed or released.
+- Standard Defender/EICAR integration remained skipped. Only safe simulators
+  and benign fixtures were used. No package, service, driver, or machine-wide
+  component was installed; no Defender setting, publication, or release
+  changed. Evidence is documented in
+  `docs/reports/checkpoint-2193-macos-dmg-verification-settle.md`.
+
 ## 2026-08-20 continuation checkpoint 2192
 
 - Consolidated the remaining Guard Service Windows-root consumers onto the
