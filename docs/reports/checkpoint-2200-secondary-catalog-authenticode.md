@@ -85,6 +85,10 @@ checkpoint-2199 `230`-step report. The protected vault remains exactly 16,072
 files, zero directories, 4,522,733 bytes, 5,357 each `.avoraxq`/`.json`/`.auth`,
 one metadata key, and zero pending.
 
-Exact-head hosted CI/packages, guarded PR merge, merged-main evidence, and
-preconditioned original-tree synchronization remain pending and are not claimed
-by this local report.
+Implementation head `882f24d45c13b60b952cfacb94d3eee2563fb0f8` passes
+Avorax CI `32605433795` and Desktop Packages push/PR runs `32605424354` and
+`32605433783`. Windows MSI/EXE, Linux DEB/tar, macOS arm64/x64 DMG, package
+contracts, six-artifact consolidation, checksums, and lockfile CycloneDX SBOM
+all pass. Both prerelease publication jobs are skipped. Evidence-head checks,
+guarded PR merge, merged-main evidence, and preconditioned original-tree
+synchronization remain pending and are not claimed by this report.

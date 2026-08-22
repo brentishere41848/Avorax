@@ -250,4 +250,8 @@ Local/Guard Clippy, both complete locked workspace variants, dependency
 evidence, package-builder source contracts, and the definitive `231/231`
 verifier pass locally. No dependency version, feature, or lockfile entry was
 added. Hosted package SBOM generation and final-artifact license, notice, and
-copyright review remain pending and are not inferred from local source checks.
+copyright review remain distinct from local source checks. Implementation-head
+package push/PR runs `32605424354`/`32605433783` pass lockfile CycloneDX SBOM
+generation, six-artifact checksum consolidation, and package evidence upload
+with publication skipped. Evidence-head and merged-main package proof remain
+pending.

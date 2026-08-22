@@ -1766,8 +1766,11 @@ enforcement, or pre-execution blocking is claimed.
   complete Authenticode module passes `24/24`, Native Engine passes `458 + 6`,
   both locked workspace variants, release host smoke, Flutter `838/838`, source
   contracts `628/628`, and strict gates pass. The definitive verifier/validator
-  passes `231/231` in `424.1s` and rejects stale `230`-step evidence. Hosted,
-  merge, and original-tree evidence remain pending.
+  passes `231/231` in `424.1s` and rejects stale `230`-step evidence.
+  Implementation head `882f24d45c13b60b952cfacb94d3eee2563fb0f8`
+  passes CI `32605433795` and package push/PR `32605424354`/`32605433783`
+  with publication skipped. Evidence-head, merge, and original-tree evidence
+  remain pending.
 - **Partial positive evidence:** The installed WindowsPowerShell fixture can
   prove real primary-catalog provider compatibility and wrong-hash rejection.
   The unit fixture can prove bounded secondary decision logic. Neither is a
