@@ -185,17 +185,18 @@ impl ZentorNativeEngine {
                 false
             }
         };
-        let microsoft_signature_valid = match microsoft_trust::microsoft_signature_verdict(&path) {
-            Ok(valid) => valid,
-            Err(error) => {
-                trust_diagnostics.push((
-                    "publisher_trust_diagnostic",
-                    "Publisher trust unavailable",
-                    format!("Microsoft publisher trust probe failed: {error:#}"),
-                ));
-                false
-            }
-        };
+        let microsoft_signature_valid =
+            match microsoft_trust::microsoft_signature_verdict_for_sha256(&path, &sha256) {
+                Ok(valid) => valid,
+                Err(error) => {
+                    trust_diagnostics.push((
+                        "publisher_trust_diagnostic",
+                        "Publisher trust unavailable",
+                        format!("Microsoft publisher trust probe failed: {error:#}"),
+                    ));
+                    false
+                }
+            };
         let microsoft_system_path = match microsoft_trust::is_windows_system_path(&path) {
             Ok(is_system_path) => is_system_path,
             Err(error) => {

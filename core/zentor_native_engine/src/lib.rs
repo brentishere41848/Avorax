@@ -15,6 +15,9 @@ pub mod trust;
 pub mod verdict;
 
 #[cfg(windows)]
+mod windows_authenticode;
+
+#[cfg(windows)]
 mod windows_system;
 
 pub use config::EngineConfig;

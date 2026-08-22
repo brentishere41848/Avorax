@@ -1,21 +1,9 @@
 use std::fs;
-use std::io::{BufReader, Read};
 #[cfg(windows)]
 use std::os::windows::fs::MetadataExt;
 use std::path::{Path, PathBuf};
-use std::process::{Command, Stdio};
-use std::thread;
-use std::time::Duration;
 
 use anyhow::{Context, Result};
-use serde_json::Value;
-
-const MAX_AUTHENTICODE_JSON_BYTES: usize = 64 * 1024;
-const MAX_AUTHENTICODE_SUBJECT_BYTES: usize = 2048;
-const MAX_AUTHENTICODE_DIAGNOSTIC_BYTES: usize = 4096;
-const AUTHENTICODE_COMMAND_TIMEOUT: Duration = Duration::from_secs(30);
-const AUTHENTICODE_TARGET_PATH_ENV: &str = "AVORAX_AUTHENTICODE_TARGET_PATH";
-const AUTHENTICODE_MODULE_PATH_ENV: &str = "AVORAX_AUTHENTICODE_MODULE_PATH";
 
 pub fn is_windows_system_path(path: &Path) -> Result<bool> {
     Ok(windows_system_path_roots()?
@@ -106,307 +94,24 @@ fn split_windows_system_path_prefix(path: &str) -> (Option<&str>, &str, bool) {
 }
 
 pub fn microsoft_signature_verdict(path: &Path) -> Result<bool> {
-    if !cfg!(windows) {
-        return Ok(false);
-    }
+    microsoft_signature_verdict_inner(path, None)
+}
+
+pub fn microsoft_signature_verdict_for_sha256(path: &Path, expected_sha256: &str) -> Result<bool> {
+    microsoft_signature_verdict_inner(path, Some(expected_sha256))
+}
+
+#[cfg(windows)]
+fn microsoft_signature_verdict_inner(path: &Path, expected_sha256: Option<&str>) -> Result<bool> {
     if !authenticode_candidate_file(path)? {
         return Ok(false);
     }
-    let powershell = windows_powershell_tool()?;
-    let (security_module, module_root) = windows_powershell_security_module(&powershell)?;
-    let script = authenticode_probe_script();
-    let encoded_script = powershell_encoded_command(&script);
-    let mut command = Command::new(&powershell);
-    command
-        .args([
-            "-NoProfile",
-            "-NonInteractive",
-            "-ExecutionPolicy",
-            "Bypass",
-            "-EncodedCommand",
-            &encoded_script,
-        ])
-        .env(AUTHENTICODE_TARGET_PATH_ENV, path.as_os_str())
-        .env(AUTHENTICODE_MODULE_PATH_ENV, security_module.as_os_str())
-        .env("PSModulePath", module_root.as_os_str());
-    let label = format!("Authenticode signature inspection for {}", path.display());
-    let output = run_authenticode_command(&mut command, &label)?;
-    if !output.status.success() {
-        let detail = authenticode_command_diagnostic(&output.stderr, &output.stdout);
-        anyhow::bail!(
-            "Authenticode signature inspection failed for {} with status {}: {}",
-            path.display(),
-            output.status,
-            detail
-        );
-    }
-    let signature = parse_authenticode_json(&output.stdout)?;
-    authenticode_json_has_valid_microsoft_signer(&signature)
-}
-
-fn authenticode_probe_script() -> String {
-    format!(
-        "$module = [Environment]::GetEnvironmentVariable('{AUTHENTICODE_MODULE_PATH_ENV}', 'Process'); if ([string]::IsNullOrEmpty($module)) {{ throw 'missing Authenticode module path' }}; Import-Module -Name $module -Force -ErrorAction Stop; $target = [Environment]::GetEnvironmentVariable('{AUTHENTICODE_TARGET_PATH_ENV}', 'Process'); if ([string]::IsNullOrEmpty($target)) {{ throw 'missing Authenticode target path' }}; Microsoft.PowerShell.Security\\Get-AuthenticodeSignature -LiteralPath $target | Microsoft.PowerShell.Utility\\ConvertTo-Json -Compress"
-    )
-}
-
-struct AuthenticodeCommandOutput {
-    status: std::process::ExitStatus,
-    stdout: Vec<u8>,
-    stderr: Vec<u8>,
-}
-
-fn run_authenticode_command(
-    command: &mut Command,
-    label: &str,
-) -> Result<AuthenticodeCommandOutput> {
-    command
-        .stdin(Stdio::null())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped());
-    let mut child = command
-        .spawn()
-        .with_context(|| format!("failed to launch {label}"))?;
-    let stdout = child
-        .stdout
-        .take()
-        .with_context(|| format!("failed to capture {label} stdout"))?;
-    let stderr = child
-        .stderr
-        .take()
-        .with_context(|| format!("failed to capture {label} stderr"))?;
-    let stdout_reader = thread::spawn(move || {
-        read_bounded_authenticode_command_output(stdout, MAX_AUTHENTICODE_JSON_BYTES)
-    });
-    let stderr_reader = thread::spawn(move || {
-        read_bounded_authenticode_command_output(stderr, MAX_AUTHENTICODE_DIAGNOSTIC_BYTES)
-    });
-    let status = match wait_for_authenticode_child(&mut child, AUTHENTICODE_COMMAND_TIMEOUT)
-        .with_context(|| format!("failed to wait for {label}"))?
-    {
-        Some(status) => status,
-        None => {
-            let kill_error = child.kill().err();
-            let wait_error = child.wait().err();
-            let stdout = join_authenticode_command_output(stdout_reader, label, "stdout")?;
-            let stderr = join_authenticode_command_output(stderr_reader, label, "stderr")?;
-            let mut detail = format!(
-                "{label} exceeded {} seconds",
-                AUTHENTICODE_COMMAND_TIMEOUT.as_secs()
-            );
-            if let Some(error) = kill_error {
-                detail.push_str(&format!(
-                    "; failed to kill timed-out Authenticode command: {error}"
-                ));
-            }
-            if let Some(error) = wait_error {
-                detail.push_str(&format!(
-                    "; failed to reap timed-out Authenticode command: {error}"
-                ));
-            }
-            let diagnostic = authenticode_command_diagnostic(&stderr, &stdout);
-            if diagnostic != "no diagnostic output" {
-                detail.push_str(&format!("; {diagnostic}"));
-            }
-            anyhow::bail!(detail);
-        }
-    };
-    let stdout = join_authenticode_command_output(stdout_reader, label, "stdout")?;
-    let stderr = join_authenticode_command_output(stderr_reader, label, "stderr")?;
-    Ok(AuthenticodeCommandOutput {
-        status,
-        stdout,
-        stderr,
-    })
-}
-
-fn wait_for_authenticode_child(
-    child: &mut std::process::Child,
-    timeout: Duration,
-) -> std::io::Result<Option<std::process::ExitStatus>> {
-    let started = std::time::Instant::now();
-    loop {
-        if let Some(status) = child.try_wait()? {
-            return Ok(Some(status));
-        }
-        if started.elapsed() >= timeout {
-            return Ok(None);
-        }
-        thread::sleep(Duration::from_millis(50));
-    }
-}
-
-fn read_bounded_authenticode_command_output<R: Read>(
-    reader: R,
-    max_bytes: usize,
-) -> Result<Vec<u8>> {
-    let mut reader = BufReader::new(reader);
-    let retain_limit = max_bytes.saturating_add(1);
-    let mut bytes = Vec::new();
-    let mut buffer = [0_u8; 8192];
-    loop {
-        let read = reader
-            .read(&mut buffer)
-            .context("failed to read Authenticode command output")?;
-        if read == 0 {
-            break;
-        }
-        let remaining = retain_limit.saturating_sub(bytes.len());
-        if remaining > 0 {
-            let keep = read.min(remaining);
-            bytes.extend_from_slice(&buffer[..keep]);
-        }
-    }
-    Ok(bytes)
-}
-
-fn join_authenticode_command_output(
-    reader: thread::JoinHandle<Result<Vec<u8>>>,
-    label: &str,
-    stream_name: &str,
-) -> Result<Vec<u8>> {
-    reader
-        .join()
-        .map_err(|_| anyhow::anyhow!("{label} {stream_name} reader panicked"))?
-}
-
-fn authenticode_command_diagnostic(stderr: &[u8], stdout: &[u8]) -> String {
-    let stderr = authenticode_output_excerpt(stderr);
-    if !stderr.trim().is_empty() {
-        return format!("stderr: {}", stderr.trim());
-    }
-    let stdout = authenticode_output_excerpt(stdout);
-    if !stdout.trim().is_empty() {
-        return format!("stdout: {}", stdout.trim());
-    }
-    "no diagnostic output".to_string()
-}
-
-fn authenticode_output_excerpt(bytes: &[u8]) -> String {
-    let limit = bytes.len().min(MAX_AUTHENTICODE_DIAGNOSTIC_BYTES);
-    let mut text = String::from_utf8_lossy(&bytes[..limit]).to_string();
-    if bytes.len() > MAX_AUTHENTICODE_DIAGNOSTIC_BYTES {
-        text.push_str("...[truncated]");
-    }
-    text
-}
-
-fn powershell_encoded_command(script: &str) -> String {
-    let mut bytes = Vec::with_capacity(script.len() * 2);
-    for unit in script.encode_utf16() {
-        bytes.push((unit & 0xff) as u8);
-        bytes.push((unit >> 8) as u8);
-    }
-    base64_encode(&bytes)
-}
-
-fn base64_encode(bytes: &[u8]) -> String {
-    const TABLE: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-    let mut encoded = String::with_capacity(bytes.len().div_ceil(3) * 4);
-    let mut offset = 0;
-    while offset < bytes.len() {
-        let first = bytes[offset];
-        let second = if offset + 1 < bytes.len() {
-            bytes[offset + 1]
-        } else {
-            0
-        };
-        let third = if offset + 2 < bytes.len() {
-            bytes[offset + 2]
-        } else {
-            0
-        };
-        let triple = ((first as u32) << 16) | ((second as u32) << 8) | third as u32;
-        encoded.push(TABLE[((triple >> 18) & 0x3f) as usize] as char);
-        encoded.push(TABLE[((triple >> 12) & 0x3f) as usize] as char);
-        if offset + 1 < bytes.len() {
-            encoded.push(TABLE[((triple >> 6) & 0x3f) as usize] as char);
-        } else {
-            encoded.push('=');
-        }
-        if offset + 2 < bytes.len() {
-            encoded.push(TABLE[(triple & 0x3f) as usize] as char);
-        } else {
-            encoded.push('=');
-        }
-        offset += 3;
-    }
-    encoded
-}
-
-#[cfg(windows)]
-fn windows_powershell_tool() -> Result<PathBuf> {
-    crate::windows_system::checked_system32_file(
-        &["WindowsPowerShell", "v1.0", "powershell.exe"],
-        "WindowsPowerShell executable",
-    )
-}
-
-#[cfg(windows)]
-fn windows_powershell_security_module(powershell: &Path) -> Result<(PathBuf, PathBuf)> {
-    let version_root = powershell
-        .parent()
-        .context("WindowsPowerShell executable is missing its version directory")?;
-    let module_root = version_root.join("Modules");
-    let module_dir = module_root.join("Microsoft.PowerShell.Security");
-    for (description, directory) in [
-        ("WindowsPowerShell module root", &module_root),
-        ("WindowsPowerShell Security module directory", &module_dir),
-    ] {
-        let metadata = fs::symlink_metadata(directory)
-            .with_context(|| format!("unable to inspect {description} {}", directory.display()))?;
-        anyhow::ensure!(
-            metadata.file_type().is_dir(),
-            "{description} {} is not a directory",
-            directory.display()
-        );
-        anyhow::ensure!(
-            !metadata.file_type().is_symlink() && !is_windows_reparse_point(&metadata),
-            "refusing to use linked or reparse-point {description} {}",
-            directory.display()
-        );
-    }
-
-    let manifest = module_dir.join("Microsoft.PowerShell.Security.psd1");
-    let metadata = fs::symlink_metadata(&manifest).with_context(|| {
-        format!(
-            "unable to inspect WindowsPowerShell Security module manifest {}",
-            manifest.display()
-        )
-    })?;
-    anyhow::ensure!(
-        metadata.file_type().is_file(),
-        "WindowsPowerShell Security module manifest {} is not a regular file",
-        manifest.display()
-    );
-    anyhow::ensure!(
-        !metadata.file_type().is_symlink() && !is_windows_reparse_point(&metadata),
-        "refusing to import linked or reparse-point WindowsPowerShell Security module manifest {}",
-        manifest.display()
-    );
-    Ok((manifest, module_root))
+    crate::windows_authenticode::has_valid_microsoft_signature(path, expected_sha256)
 }
 
 #[cfg(not(windows))]
-fn windows_powershell_tool() -> Result<PathBuf> {
-    anyhow::bail!("WindowsPowerShell is unavailable on this platform")
-}
-
-#[cfg(not(windows))]
-fn windows_powershell_security_module(_powershell: &Path) -> Result<(PathBuf, PathBuf)> {
-    anyhow::bail!("WindowsPowerShell Security module is unavailable on this platform")
-}
-
-fn parse_authenticode_json(bytes: &[u8]) -> Result<Value> {
-    if bytes.len() > MAX_AUTHENTICODE_JSON_BYTES {
-        anyhow::bail!("Authenticode JSON output exceeds maximum size");
-    }
-    let signature =
-        serde_json::from_slice::<Value>(bytes).context("failed to parse Authenticode JSON")?;
-    signature
-        .as_object()
-        .context("Authenticode JSON output must be an object")?;
-    Ok(signature)
+fn microsoft_signature_verdict_inner(_path: &Path, _expected_sha256: Option<&str>) -> Result<bool> {
+    Ok(false)
 }
 
 fn authenticode_candidate_file(path: &Path) -> Result<bool> {
@@ -434,103 +139,24 @@ fn is_windows_reparse_point(_metadata: &fs::Metadata) -> bool {
     false
 }
 
-fn authenticode_json_has_valid_microsoft_signer(signature: &Value) -> Result<bool> {
-    signature
-        .as_object()
-        .context("Authenticode signature JSON must be an object")?;
-    if !authenticode_status_is_valid(signature.get("Status"))? {
-        return Ok(false);
-    }
-    let certificate = signature
-        .get("SignerCertificate")
-        .context("valid Authenticode signature is missing SignerCertificate")?;
-    signer_certificate_is_microsoft(certificate)
-}
-
-fn authenticode_status_is_valid(status: Option<&Value>) -> Result<bool> {
-    let status = status.context("Authenticode signature JSON is missing Status")?;
-    match status {
-        Value::Number(number) => number
-            .as_i64()
-            .map(|value| value == 0)
-            .context("Authenticode Status must be an integer"),
-        Value::String(text) => Ok(canonical_text(text) == "valid"),
-        _ => anyhow::bail!("Authenticode Status must be a string or integer"),
-    }
-}
-
-fn signer_certificate_is_microsoft(certificate: &Value) -> Result<bool> {
-    certificate
-        .as_object()
-        .context("SignerCertificate must be an object")?;
-    let subject = certificate
-        .get("Subject")
-        .and_then(Value::as_str)
-        .context("SignerCertificate is missing string Subject")?;
-    anyhow::ensure!(
-        subject.len() <= MAX_AUTHENTICODE_SUBJECT_BYTES,
-        "SignerCertificate Subject exceeds maximum size"
-    );
-    distinguished_name_has_microsoft_subject(subject)
-}
-
-fn distinguished_name_has_microsoft_subject(subject: &str) -> Result<bool> {
-    Ok(distinguished_name_attributes(subject)?
-        .iter()
-        .any(|(key, value)| {
-            let key = canonical_text(key);
-            let value = canonical_text(value);
-            (key == "o" && value == "microsoft corporation")
-                || (key == "cn"
-                    && matches!(
-                        value.as_str(),
-                        "microsoft corporation"
-                            | "microsoft windows"
-                            | "microsoft windows publisher"
-                    ))
-        }))
-}
-
-fn distinguished_name_attributes(subject: &str) -> Result<Vec<(String, String)>> {
-    let mut attributes = Vec::new();
-    for (index, part) in subject.split(',').enumerate() {
-        let part = part.trim();
-        anyhow::ensure!(
-            !part.is_empty(),
-            "SignerCertificate Subject component {} is empty",
-            index
-        );
-        let Some((key, value)) = part.split_once('=') else {
-            anyhow::bail!(
-                "SignerCertificate Subject component {} is missing '='",
-                index
-            );
-        };
-        let key = key.trim();
-        let value = value.trim();
-        anyhow::ensure!(
-            !key.is_empty() && !value.is_empty(),
-            "SignerCertificate Subject component {} has empty key or value",
-            index
-        );
-        attributes.push((key.to_string(), value.to_string()));
-    }
-    Ok(attributes)
-}
-
-fn canonical_text(value: &str) -> String {
-    value
-        .split_whitespace()
-        .collect::<Vec<_>>()
-        .join(" ")
-        .to_ascii_lowercase()
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    use serde_json::json;
     use std::fs;
+
+    #[cfg(windows)]
+    fn microsoft_embedded_signature_fixture() -> PathBuf {
+        let program_files_x86 = std::env::var_os("ProgramFiles(x86)")
+            .expect("x64 Windows ProgramFiles(x86) is required for the Edge signature fixture");
+        let path = PathBuf::from(program_files_x86)
+            .join("Microsoft")
+            .join("Edge")
+            .join("Application")
+            .join("msedge.exe");
+        assert!(path.is_absolute());
+        assert!(fs::symlink_metadata(&path).unwrap().is_file());
+        path
+    }
 
     #[test]
     fn authenticode_candidate_rejects_directory() {
@@ -566,24 +192,82 @@ mod tests {
 
     #[cfg(windows)]
     #[test]
-    fn authenticode_probe_accepts_unsigned_file_without_encoded_command_argument_error() {
+    fn native_direct_authenticode_rejects_unsigned_benign_file() {
         let dir = tempfile::tempdir().unwrap();
         let file = dir.path().join("unsigned-fixture.exe");
         fs::write(&file, b"benign unsigned fixture").unwrap();
 
-        let verdict = microsoft_signature_verdict(&file).unwrap();
-
-        assert!(!verdict);
+        assert!(!microsoft_signature_verdict(&file).unwrap());
     }
 
     #[cfg(windows)]
     #[test]
-    fn authenticode_probe_accepts_microsoft_signed_windows_powershell_binary() {
-        let powershell = windows_powershell_tool().unwrap();
+    fn native_direct_authenticode_rejects_malformed_non_pe_file() {
+        let dir = tempfile::tempdir().unwrap();
+        let file = dir.path().join("malformed-fixture.exe");
+        fs::write(&file, [0_u8, 0xff, b'M', b'Z', 0, 1, 2, 3]).unwrap();
 
-        let verdict = microsoft_signature_verdict(&powershell).unwrap();
+        assert!(!microsoft_signature_verdict(&file).unwrap());
+    }
 
-        assert!(verdict);
+    #[cfg(windows)]
+    #[test]
+    fn native_direct_authenticode_catalog_signed_windows_powershell_is_not_claimed_as_embedded() {
+        let powershell = crate::windows_system::checked_system32_file(
+            &["WindowsPowerShell", "v1.0", "powershell.exe"],
+            "catalog-signed WindowsPowerShell fixture",
+        )
+        .unwrap();
+
+        assert!(!microsoft_signature_verdict(&powershell).unwrap());
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn native_direct_authenticode_microsoft_signed_embedded_edge_binary() {
+        let edge = microsoft_embedded_signature_fixture();
+
+        assert!(microsoft_signature_verdict(&edge).unwrap());
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn native_direct_authenticode_microsoft_signed_embedded_verdict_binds_to_scanned_sha256() {
+        let edge = microsoft_embedded_signature_fixture();
+        let bytes = fs::read(&edge).unwrap();
+        let sha256 = crate::engine::sha256_bytes(&bytes);
+
+        assert!(microsoft_signature_verdict_for_sha256(&edge, &sha256).unwrap());
+        let error = microsoft_signature_verdict_for_sha256(&edge, &"0".repeat(64))
+            .unwrap_err()
+            .to_string();
+        assert!(error.contains("does not match the bytes already scanned"));
+    }
+
+    #[test]
+    fn native_direct_authenticode_production_has_no_script_or_json_helper() {
+        let source = include_str!("microsoft_trust.rs");
+        let production = source.split("#[cfg(test)]").next().unwrap();
+
+        assert!(production.contains(
+            "crate::windows_authenticode::has_valid_microsoft_signature(path, expected_sha256)"
+        ));
+        assert!(production.contains("pub fn microsoft_signature_verdict_for_sha256("));
+        for removed in [
+            "std::process::Command",
+            "WindowsPowerShell",
+            "powershell.exe",
+            "EncodedCommand",
+            "PSModulePath",
+            "serde_json",
+            "ConvertTo-Json",
+            "Get-AuthenticodeSignature",
+        ] {
+            assert!(
+                !production.contains(removed),
+                "obsolete helper marker: {removed}"
+            );
+        }
     }
 
     #[test]
@@ -640,253 +324,13 @@ mod tests {
         ));
     }
 
+    #[cfg(not(windows))]
     #[test]
-    fn microsoft_signature_output_is_bounded_before_parse() {
-        let oversized = vec![b'{'; MAX_AUTHENTICODE_JSON_BYTES + 1];
-        let source = include_str!("microsoft_trust.rs");
-        let old_parse = ["serde_json::from_slice::<Value>(&output.", "stdout)"].concat();
-
-        assert!(parse_authenticode_json(&oversized).is_err());
-        assert!(source.contains("MAX_AUTHENTICODE_JSON_BYTES"));
-        assert!(source.contains("parse_authenticode_json(&output.stdout)"));
-        assert!(!source.contains(&old_parse));
-    }
-
-    #[test]
-    fn authenticode_json_parser_rejects_malformed_or_non_object_output() {
-        assert!(parse_authenticode_json(b"{not json").is_err());
-        assert!(parse_authenticode_json(br#"[{"Status":0}]"#).is_err());
-    }
-
-    #[test]
-    fn authenticode_json_schema_errors_are_not_false_defaults() {
-        let source = include_str!("microsoft_trust.rs");
-        let old_silent_parse = ["serde_json::from_slice::<Value>(bytes)", ".ok()"].concat();
-        let old_false_default = [".unwrap_or", "(false)"].concat();
-
-        assert!(source.contains("pub fn microsoft_signature_verdict(path: &Path) -> Result<bool>"));
-        assert!(source.contains("authenticode_json_has_valid_microsoft_signer(&signature)"));
-        assert!(source.contains("valid Authenticode signature is missing SignerCertificate"));
-        assert!(source.contains("SignerCertificate is missing string Subject"));
-        assert!(!source.contains(&old_silent_parse));
-        assert!(!source.contains(&old_false_default));
-    }
-
-    #[test]
-    fn authenticode_probe_failures_are_reportable_before_bool_compatibility() {
-        let source = include_str!("microsoft_trust.rs");
-        let verdict_start = source.find("pub fn microsoft_signature_verdict").unwrap();
-        let parse_start = source.find("fn parse_authenticode_json").unwrap();
-        let verdict_source = &source[verdict_start..parse_start];
-
-        assert!(verdict_source.contains("Authenticode signature inspection for"));
-        assert!(verdict_source.contains("failed to launch {label}"));
-        assert!(verdict_source.contains("Authenticode signature inspection failed"));
-        assert!(verdict_source.contains("parse_authenticode_json(&output.stdout)?"));
-        assert!(verdict_source.contains("windows_powershell_tool()?"));
-        assert!(verdict_source.contains("windows_powershell_security_module(&powershell)?"));
-        assert!(verdict_source.contains("authenticode_probe_script()"));
-        assert!(verdict_source.contains("powershell_encoded_command(&script)"));
-        assert!(verdict_source.contains("Command::new(&powershell)"));
-        assert!(verdict_source.contains("run_authenticode_command(&mut command, &label)?"));
-        assert!(verdict_source.contains("\"-EncodedCommand\""));
-        assert!(verdict_source.contains("AUTHENTICODE_TARGET_PATH_ENV"));
-        assert!(verdict_source.contains(".env(AUTHENTICODE_TARGET_PATH_ENV, path.as_os_str())"));
-        assert!(verdict_source.contains("AUTHENTICODE_MODULE_PATH_ENV"));
-        assert!(verdict_source
-            .contains(".env(AUTHENTICODE_MODULE_PATH_ENV, security_module.as_os_str())"));
-        assert!(verdict_source.contains(".env(\"PSModulePath\", module_root.as_os_str())"));
-        assert!(verdict_source.contains("fn authenticode_probe_script() -> String"));
-        assert!(verdict_source.contains("GetEnvironmentVariable"));
-        assert!(verdict_source.contains("Import-Module -Name $module -Force -ErrorAction Stop"));
-        assert!(verdict_source.contains(
-            "Microsoft.PowerShell.Security\\\\Get-AuthenticodeSignature -LiteralPath $target"
-        ));
-        assert!(verdict_source.contains("Microsoft.PowerShell.Utility\\\\ConvertTo-Json -Compress"));
-        assert!(verdict_source.contains("Microsoft.PowerShell.Security.psd1"));
-        assert!(verdict_source.contains("fs::symlink_metadata(directory)"));
-        assert!(verdict_source.contains("crate::windows_system::checked_system32_file("));
-        assert!(verdict_source.contains("&[\"WindowsPowerShell\", \"v1.0\", \"powershell.exe\"]"));
-        assert!(!verdict_source.contains("std::env::var_os"));
-        assert!(!verdict_source.contains("\"SystemRoot\""));
-        assert!(!verdict_source.contains("\"WINDIR\""));
-        assert!(verdict_source.contains("let second = if offset + 1 < bytes.len()"));
-        assert!(verdict_source.contains("let third = if offset + 2 < bytes.len()"));
-        let old_powershell_launch = ["Command::new(\"", "powershell\")"].concat();
-        let old_command_arg = ["\"-Com", "mand\""].concat();
-        let old_positional_target_arg = [".arg(path", ".as_os_str())"].concat();
-        let old_windows_root_fallback = ["PathBuf::from(r\"", "C:\\Windows", "\")"].concat();
-        let old_env_string_reader = ["std::env::", "var(key)"].concat();
-        let old_silent_env_error = [".", "ok()"].concat();
-        let old_base64_padding_default = [".unwrap_or", "(0)"].concat();
-        assert!(!verdict_source.contains(&old_powershell_launch));
-        assert!(!verdict_source.contains(&old_command_arg));
-        assert!(!verdict_source.contains(&old_positional_target_arg));
-        assert!(!verdict_source.contains(&old_windows_root_fallback));
-        assert!(!verdict_source.contains(&old_env_string_reader));
-        assert!(!verdict_source.contains(&old_silent_env_error));
-        assert!(!verdict_source.contains(&old_base64_padding_default));
-        assert!(!verdict_source.contains(".output()"));
-        assert!(!verdict_source.contains("PathBuf::from(text)"));
-        let production_source = source.split("#[cfg(test)]").next().unwrap();
-        assert!(!production_source.contains("pub fn has_valid_microsoft_signature"));
-    }
-
-    #[test]
-    fn authenticode_probe_uses_bounded_command_runner() {
-        let source = include_str!("microsoft_trust.rs");
-        let production = &source[..source.find("#[cfg(test)]").unwrap()];
-        let runner_start = source.find("fn run_authenticode_command").unwrap();
-        let powershell_start = source.find("fn powershell_encoded_command").unwrap();
-        let runner_source = &source[runner_start..powershell_start];
-        let old_output = [".out", "put()"].concat();
-        let old_unbounded_read = [".read_to_", "end(&mut bytes)"].concat();
-
-        assert!(production
-            .contains("const AUTHENTICODE_COMMAND_TIMEOUT: Duration = Duration::from_secs(30)"));
-        assert!(production.contains("const MAX_AUTHENTICODE_DIAGNOSTIC_BYTES: usize = 4096"));
-        assert!(runner_source.contains("stdin(Stdio::null())"));
-        assert!(runner_source.contains("stdout(Stdio::piped())"));
-        assert!(runner_source.contains("stderr(Stdio::piped())"));
-        assert!(runner_source.contains(
-            "read_bounded_authenticode_command_output(stdout, MAX_AUTHENTICODE_JSON_BYTES)"
-        ));
-        assert!(runner_source.contains(
-            "read_bounded_authenticode_command_output(stderr, MAX_AUTHENTICODE_DIAGNOSTIC_BYTES)"
-        ));
-        assert!(runner_source
-            .contains("wait_for_authenticode_child(&mut child, AUTHENTICODE_COMMAND_TIMEOUT)"));
-        assert!(runner_source.contains("child.try_wait()?"));
-        assert!(runner_source.contains("child.kill().err()"));
-        assert!(runner_source.contains("child.wait().err()"));
-        assert!(runner_source.contains("failed to kill timed-out Authenticode command"));
-        assert!(runner_source.contains("failed to reap timed-out Authenticode command"));
-        assert!(runner_source.contains("let mut reader = BufReader::new(reader)"));
-        assert!(runner_source.contains("let retain_limit = max_bytes.saturating_add(1)"));
-        assert!(runner_source.contains("bytes.extend_from_slice(&buffer[..keep])"));
-        assert!(runner_source.contains("failed to read Authenticode command output"));
-        assert!(!production.contains(&old_output));
-        assert!(!runner_source.contains(&old_unbounded_read));
-    }
-
-    #[test]
-    fn authenticode_json_accepts_valid_microsoft_subject() {
-        let signature = json!({
-            "Status": 0,
-            "SignerCertificate": {
-                "Subject": "CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
-            }
-        });
-
-        assert!(authenticode_json_has_valid_microsoft_signer(&signature).unwrap());
-    }
-
-    #[test]
-    fn authenticode_json_accepts_string_valid_status() {
-        let signature = json!({
-            "Status": "Valid",
-            "SignerCertificate": {
-                "Subject": "CN=Microsoft Windows Publisher, O=Microsoft Corporation, C=US"
-            }
-        });
-
-        assert!(authenticode_json_has_valid_microsoft_signer(&signature).unwrap());
-    }
-
-    #[test]
-    fn authenticode_json_rejects_status_message_without_valid_status() {
-        let signature = json!({
-            "StatusMessage": "Status: 0 Microsoft Corporation",
-            "SignerCertificate": {
-                "Subject": "CN=Microsoft Corporation, O=Microsoft Corporation, C=US"
-            }
-        });
-
-        assert!(authenticode_json_has_valid_microsoft_signer(&signature).is_err());
-    }
-
-    #[test]
-    fn authenticode_json_rejects_non_microsoft_subject_with_microsoft_text() {
-        let signature = json!({
-            "Status": 0,
-            "Path": "C:\\Users\\Public\\Microsoft Corporation\\tool.exe",
-            "SignerCertificate": {
-                "Subject": "CN=Not Microsoft Corporation, O=Contoso Software, C=US"
-            }
-        });
-
-        assert!(!authenticode_json_has_valid_microsoft_signer(&signature).unwrap());
-    }
-
-    #[test]
-    fn authenticode_json_rejects_malformed_subject_components() {
-        let missing_equals = json!({
-            "Status": 0,
-            "SignerCertificate": {
-                "Subject": "CN=Microsoft Corporation, malformed-component, O=Microsoft Corporation"
-            }
-        });
-        let empty_component = json!({
-            "Status": "Valid",
-            "SignerCertificate": {
-                "Subject": "CN=Microsoft Windows Publisher, , O=Microsoft Corporation"
-            }
-        });
-        let empty_value = json!({
-            "Status": 0,
-            "SignerCertificate": {
-                "Subject": "CN=Microsoft Corporation, O=, C=US"
-            }
-        });
-
-        assert!(authenticode_json_has_valid_microsoft_signer(&missing_equals).is_err());
-        assert!(authenticode_json_has_valid_microsoft_signer(&empty_component).is_err());
-        assert!(authenticode_json_has_valid_microsoft_signer(&empty_value).is_err());
-    }
-
-    #[test]
-    fn authenticode_subject_parser_does_not_silently_drop_components() {
-        let source = include_str!("microsoft_trust.rs");
-        let start = source.find("fn distinguished_name_attributes").unwrap();
-        let end = source.find("fn canonical_text").unwrap();
-        let parser_source = &source[start..end];
-
-        assert!(parser_source.contains("SignerCertificate Subject component"));
-        assert!(!parser_source.contains(".filter_map("));
-    }
-
-    #[test]
-    fn authenticode_json_rejects_invalid_status() {
-        let signature = json!({
-            "Status": 1,
-            "SignerCertificate": {
-                "Subject": "CN=Microsoft Corporation, O=Microsoft Corporation, C=US"
-            }
-        });
-
-        assert!(!authenticode_json_has_valid_microsoft_signer(&signature).unwrap());
-    }
-
-    #[test]
-    fn authenticode_json_reports_missing_signer_schema_for_valid_status() {
-        let missing_certificate = json!({
-            "Status": 0
-        });
-        let missing_subject = json!({
-            "Status": "Valid",
-            "SignerCertificate": {}
-        });
-        let oversized_subject_text =
-            "O=".to_string() + &"A".repeat(MAX_AUTHENTICODE_SUBJECT_BYTES + 1);
-        let oversized_subject = json!({
-            "Status": 0,
-            "SignerCertificate": {
-                "Subject": oversized_subject_text
-            }
-        });
-
-        assert!(authenticode_json_has_valid_microsoft_signer(&missing_certificate).is_err());
-        assert!(authenticode_json_has_valid_microsoft_signer(&missing_subject).is_err());
-        assert!(authenticode_json_has_valid_microsoft_signer(&oversized_subject).is_err());
+    fn native_direct_authenticode_is_conservatively_unavailable_off_windows() {
+        assert!(!microsoft_signature_verdict(Path::new("fixture.exe")).unwrap());
+        assert!(
+            !microsoft_signature_verdict_for_sha256(Path::new("fixture.exe"), &"0".repeat(64))
+                .unwrap()
+        );
     }
 }

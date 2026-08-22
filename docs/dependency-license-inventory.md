@@ -131,3 +131,17 @@ repository-owned workflow code and are excluded from that external-action rule.
 - Python package metadata plus disposable Windows/Python 3.12 install/import smoke tests have passed, including a `--no-deps` install from `ml/requirements.lock.txt`. A release host still needs to regenerate/review the lock for the target Python/platform as needed and capture complete license/SBOM output.
 - Cross-platform package CI now generates and checksums a CycloneDX 1.6 inventory from the current Rust, Dart, and Python lockfiles. Release-candidate approval still requires final-binary dependency resolution, complete license/copyright review, and Android Gradle lock evidence before any Android release.
 - `tools/security/avorax-dependency-evidence.ps1` treats Android Gradle lock evidence as non-blocking for the Windows antivirus release path while still reporting its presence/absence. Root Rust and update-service workspace lock evidence are present through `Cargo.lock`.
+
+## Native WinTrust Feature Surface
+
+Checkpoint 2195 adds no registry package and does not change a dependency
+version. Native Engine continues to use pinned `windows-sys 0.61.2`; its Windows
+target feature set now exposes the existing Foundation, FileSystem,
+Cryptography/Catalog/SIP, and WinTrust declarations needed for direct
+handle-based Authenticode verification. Locally cached crate metadata records
+`windows-sys` as `MIT OR Apache-2.0`.
+
+Both lockfiles remained byte-unchanged and the complete dependency-evidence
+gate passed during checkpoint 2195 local verification. Feature-level source
+inventory is not a final binary SBOM, license notice set, or copyright review;
+those remain release-host requirements.

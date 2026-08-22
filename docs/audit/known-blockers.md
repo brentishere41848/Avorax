@@ -1586,3 +1586,37 @@ enforcement, or pre-execution blocking is claimed.
   32-bit Windows is unsupported and fails conservatively. User-mode polling can
   miss short-lived activity and does not replace Defender or provide kernel
   blocking.
+
+## Checkpoint 2195 Direct Authenticode
+
+- **Locally verified; hosted evidence pending:** The PowerShell/JSON signature
+  probe is replaced by direct handle-based `WinVerifyTrust`, exact Microsoft
+  leaf organization/common-name checks, explicit state cleanup, and a scan-path
+  SHA-256 binding read. Focused benign fixtures, full Native/workspace/Flutter
+  suites, strict lint, dependency gates, a cold locked release build, and the
+  definitive verifier pass locally. Exact-head hosted CI/packages, PR/merge,
+  and original-tree synchronization remain pending.
+- **Conservative failure boundary:** Missing or invalid signatures are not
+  trusted. Revocation-cache absence, policy/security settings, provider/API
+  failures, file I/O, unknown statuses, and WinTrust cleanup failures are
+  surfaced as publisher-trust diagnostics and cannot add clean-trust weight.
+- **Catalog and multiple-signature blocker:** The current `WTD_CHOICE_FILE`
+  implementation evaluates the primary embedded signature. Catalog-only
+  signatures and secondary signatures are not enumerated. Supporting them
+  safely requires bounded catalog lookup/signature iteration, equivalent chain
+  and Microsoft identity validation, hash binding, adversarial fixtures, and
+  explicit aggregation policy.
+- **Cancellation limitation:** `WTD_CACHE_ONLY_URL_RETRIEVAL` prevents online
+  retrieval, but one in-process `WinVerifyTrust` call has no hard cancellation
+  deadline. The caller can cancel between files, not while this native call is
+  executing. A safe hard deadline would require an isolated authenticated
+  helper process and bounded teardown, which is not introduced here.
+- **TOCTOU limitation:** Read sharing without write/delete sharing blocks new
+  incompatible opens and the second hash prevents trust for bytes different
+  from those already scanned. It cannot revoke a writable or memory-mapped
+  handle opened earlier, prevent mutation after the verdict, or authorize later
+  execution. Kernel/pre-execution enforcement is not claimed.
+- **Unchanged product blockers:** Installed LocalSystem/service/UI E2E,
+  production package signing, signed-driver IPC, 32-bit Windows support,
+  production false-positive/detection-rate evidence, and Defender coexistence
+  remain separate release prerequisites. Defender must not be weakened.

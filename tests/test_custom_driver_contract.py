@@ -102,6 +102,9 @@ NATIVE_CARGO = ROOT / "core" / "zentor_native_engine" / "Cargo.toml"
 NATIVE_WINDOWS_SYSTEM = (
     ROOT / "core" / "zentor_native_engine" / "src" / "windows_system.rs"
 )
+NATIVE_WINDOWS_AUTHENTICODE = (
+    ROOT / "core" / "zentor_native_engine" / "src" / "windows_authenticode.rs"
+)
 NATIVE_ENGINE_TESTS = (
     ROOT / "core" / "zentor_native_engine" / "src" / "tests" / "mod.rs"
 )
@@ -19859,16 +19862,18 @@ def test_small_threat_mvp_verifier_is_safe_and_reproducible():
     assert "native-engine packaged signature coverage" in source
     assert "repo_native_packs_detect_more_than_eicar" in source
     assert "native-engine trust-store boundary regressions" in source
-    assert "native-engine Authenticode unsigned-file probe regression" in source
+    assert "native-engine direct Authenticode boundary regressions" in source
+    assert '"windows_authenticode::tests"' in source
+    assert "native-engine direct Authenticode unsigned/malformed regressions" in source
+    assert '"native_direct_authenticode_rejects"' in source
     assert (
-        "authenticode_probe_accepts_unsigned_file_without_encoded_command_argument_error"
+        "native-engine direct Authenticode Microsoft-signed/hash-binding regressions"
         in source
     )
-    assert "native-engine Authenticode Microsoft-signed probe regression" in source
     assert "native-engine native Windows root regressions" in source
     assert '"native_windows"' in source
     assert (
-        "authenticode_probe_accepts_microsoft_signed_windows_powershell_binary"
+        '"native_direct_authenticode_microsoft_signed"'
         in source
     )
     assert "native-engine known-good hash regressions" in source
@@ -19916,7 +19921,11 @@ def test_small_threat_mvp_verifier_is_safe_and_reproducible():
     assert "local heuristic/static-feature signal regressions" in source
     assert "local app-control/trust-store policy regressions" in source
     assert "native-engine exact-hash trust-store regressions" in source
-    assert "Windows Authenticode unsigned-file and Microsoft-signed probe regressions" in source
+    assert (
+        "Windows direct Authenticode boundary, unsigned/malformed, Microsoft-signed, "
+        "and scanned-content hash-binding regressions"
+        in source
+    )
     assert "local/native allowlist and training-label feedback regressions" in source
     assert "local/native quarantine metadata and trust regressions" in source
     assert "Guard service fixture regressions without pre-execution claims" in source
@@ -20011,8 +20020,14 @@ def test_small_threat_mvp_verifier_is_safe_and_reproducible():
         in source
     )
     assert (
-        "Native Engine Authenticode PowerShell discovery uses a bounded, process-stable "
-        "OS-reported Windows directory resolver"
+        "Native Engine uses direct handle-based WinVerifyTrust with no script, child "
+        "process, JSON, or network retrieval"
+        in source
+    )
+    assert "a second bounded SHA-256 read matching the bytes already scanned" in source
+    assert (
+        "Catalog signatures, secondary signatures, memory-mapped mutation, native-call "
+        "hard cancellation, and pre-execution blocking are not claimed"
         in source
     )
     assert (
@@ -20741,7 +20756,8 @@ def test_small_threat_mvp_report_validator_is_strict_and_local():
     assert "driver_request_known_good_allows_in_lockdown" in source
     assert "Get-AvoraxGateFile ([System.IO.Path]::GetFullPath($text)) $Description" in source
     assert "-RequireFullSuite requires skip_flutter=false and skip_rust=false" in source
-    assert "-RequireFullSuite expected at least 80 verifier steps" in source
+    assert "if ($steps.Count -ne 224)" in source
+    assert "-RequireFullSuite expected exactly 224 verifier steps" in source
     assert 'Assert-ReportContainsStep $steps "Branding gate"' in source
     assert 'Assert-ReportContainsStep $steps "False-positive gate"' in source
     assert 'Assert-ReportContainsStep $steps "Protection gate without driver feature claim"' in source
@@ -20756,9 +20772,9 @@ def test_small_threat_mvp_report_validator_is_strict_and_local():
         in source
     )
     assert (
-        'Assert-ReportScopeContains $verifiedScopeText "Native Engine Authenticode '
-        'PowerShell discovery uses a bounded, process-stable OS-reported Windows '
-        'directory resolver"'
+        'Assert-ReportScopeContains $verifiedScopeText "Native Engine uses direct '
+        'handle-based WinVerifyTrust with no script, child process, JSON, or network '
+        'retrieval"'
         in source
     )
     assert (
@@ -20838,11 +20854,15 @@ def test_small_threat_mvp_report_validator_is_strict_and_local():
         in source
     )
     assert (
-        'Assert-ReportContainsStep $steps "native-engine Authenticode unsigned-file probe regression"'
+        'Assert-ReportContainsStep $steps "native-engine direct Authenticode boundary regressions"'
         in source
     )
     assert (
-        'Assert-ReportContainsStep $steps "native-engine Authenticode Microsoft-signed probe regression"'
+        'Assert-ReportContainsStep $steps "native-engine direct Authenticode unsigned/malformed regressions"'
+        in source
+    )
+    assert (
+        'Assert-ReportContainsStep $steps "native-engine direct Authenticode Microsoft-signed/hash-binding regressions"'
         in source
     )
     assert (
@@ -21306,8 +21326,9 @@ def test_small_threat_mvp_report_validator_is_strict_and_local():
         in source
     )
     assert (
-        'Assert-ReportScopeContains $verifiedScopeText "Windows Authenticode '
-        'unsigned-file and Microsoft-signed probe regressions" '
+        'Assert-ReportScopeContains $verifiedScopeText "Windows direct Authenticode '
+        'boundary, unsigned/malformed, Microsoft-signed, and scanned-content '
+        'hash-binding regressions" '
         '"verification_scope.verified"'
         in source
     )
@@ -24680,10 +24701,7 @@ def test_native_windows_tools_use_native_bounded_system_root():
     cargo = read(NATIVE_CARGO)
     trust_production = trust.split("#[cfg(test)]")[0]
     quarantine_production = quarantine.split("#[cfg(test)]")[0]
-    trust_tool = trust_production[
-        trust_production.index("fn windows_powershell_tool"):
-        trust_production.index("fn windows_powershell_security_module")
-    ]
+    assert "#[cfg(windows)]\nmod windows_authenticode;" in native_lib
     assert "#[cfg(windows)]\nmod windows_system;" in native_lib
     assert "GetSystemWindowsDirectoryW(" in windows_system
     assert "static SYSTEM_WINDOWS_DIRECTORY: OnceLock<Result<PathBuf, String>>" in windows_system
@@ -24701,6 +24719,16 @@ def test_native_windows_tools_use_native_bounded_system_root():
     assert "buffer[..chars].contains(&0)" in windows_system
     assert "buffer[chars] != 0" in windows_system
     assert '"Win32_System_SystemInformation"' in cargo
+    for feature in (
+        "Win32_Foundation",
+        "Win32_Security",
+        "Win32_Security_Cryptography",
+        "Win32_Security_Cryptography_Catalog",
+        "Win32_Security_Cryptography_Sip",
+        "Win32_Security_WinTrust",
+        "Win32_Storage_FileSystem",
+    ):
+        assert f'"{feature}"' in cargo
     windows_dependencies = cargo[
         cargo.index("[target.'cfg(windows)'.dependencies]"):
         cargo.index("[target.'cfg(windows)'.dev-dependencies]")
@@ -24714,8 +24742,7 @@ def test_native_windows_tools_use_native_bounded_system_root():
         'avorax_platform_security = { path = "../avorax_platform_security" }'
         in windows_dev_dependencies
     )
-    assert "crate::windows_system::checked_system32_file(" in trust_tool
-    assert '&["WindowsPowerShell", "v1.0", "powershell.exe"]' in trust_tool
+    assert "crate::windows_authenticode::has_valid_microsoft_signature(" in trust_production
     assert (
         "avorax_platform_security::harden_windows_private_directory(_path)"
         in quarantine_production
@@ -24733,80 +24760,78 @@ def test_native_windows_tools_use_native_bounded_system_root():
     assert "native_windows_system32_file_rejects_unsafe_relative_components" in windows_system
     assert "native_windows_system_directories_are_checked_and_bounded" in windows_system
     assert "native_windows_system32_file_runtime_returns_real_tools" in windows_system
-    assert "authenticode_probe_failures_are_reportable_before_bool_compatibility" in trust
+    assert "native_direct_authenticode_production_has_no_script_or_json_helper" in trust
 
 
-def test_native_authenticode_probe_uses_bounded_command_runner():
-    source = read(NATIVE_MICROSOFT_TRUST)
-    production = source.split("#[cfg(test)]")[0]
-    verdict = production[
-        production.index("pub fn microsoft_signature_verdict"):
-        production.index("fn powershell_encoded_command")
-    ]
-    runner = production[
-        production.index("fn run_authenticode_command"):
-        production.index("fn powershell_encoded_command")
-    ]
+def test_native_authenticode_uses_direct_hash_bound_wintrust():
+    trust = read(NATIVE_MICROSOFT_TRUST)
+    trust_production = trust.split("#[cfg(test)]")[0]
+    wintrust = read(NATIVE_WINDOWS_AUTHENTICODE)
+    production = wintrust.split("#[cfg(test)]")[0]
 
-    assert "const AUTHENTICODE_COMMAND_TIMEOUT: Duration = Duration::from_secs(30)" in production
-    assert "const MAX_AUTHENTICODE_DIAGNOSTIC_BYTES: usize = 4096" in production
+    assert "pub fn microsoft_signature_verdict_for_sha256(" in trust_production
+    assert "microsoft_signature_verdict_inner(path, Some(expected_sha256))" in trust_production
+    assert "fs::symlink_metadata(path)" in trust_production
+    assert "metadata.file_type().is_symlink()" in trust_production
+    assert "is_windows_reparse_point(&metadata)" in trust_production
+    assert "crate::windows_authenticode::has_valid_microsoft_signature(" in trust_production
+    assert "pub(crate) fn has_valid_microsoft_signature(" in production
+    assert "validate_expected_sha256(expected_sha256)?" in production
+    assert "path.is_absolute()" in production
+    assert "!wide.contains(&0)" in production
+    assert "MAX_AUTHENTICODE_PATH_UTF16_UNITS: usize = 32_767" in production
+    assert ".share_mode(FILE_SHARE_READ)" in production
+    assert "FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_SEQUENTIAL_SCAN" in production
+    assert "metadata.file_attributes() & FILE_ATTRIBUTE_REPARSE_POINT == 0" in production
+    assert "handle != INVALID_HANDLE_VALUE" in production
+    assert "WinVerifyTrust(" in production
+    assert "WTD_UI_NONE" in production
+    assert "WTD_REVOKE_WHOLECHAIN" in production
+    assert "WTD_CHOICE_FILE" in production
+    assert "WTD_STATEACTION_VERIFY" in production
+    assert "WTD_STATEACTION_CLOSE" in production
+    assert "WTD_CACHE_ONLY_URL_RETRIEVAL" in production
+    assert "WTD_REVOCATION_CHECK_CHAIN_EXCLUDE_ROOT" in production
+    assert "WTD_DISABLE_MD2_MD4" in production
+    assert "WTHelperProvDataFromStateData" in production
+    assert "WTHelperGetProvSignerFromChain(provider, 0, 0, 0)" in production
+    assert "WTHelperGetProvCertFromChain(signer, 0)" in production
+    assert "CertGetNameStringW(" in production
+    assert "MAX_SIGNER_ATTRIBUTE_UTF16_UNITS: usize = 2_048" in production
+    assert 'value == "microsoft corporation"' in production
+    assert '"microsoft windows publisher"' in production
+    assert "organization_matches && common_name_matches" in production
+    assert "MAX_AUTHENTICODE_BIND_BYTES: u64 = 512 * 1024 * 1024" in production
+    assert "AUTHENTICODE_HASH_BUFFER_BYTES: usize = 128 * 1024" in production
+    assert "enforce_content_binding_size(path, &file)?" in production
+    assert "total_bytes <= MAX_AUTHENTICODE_BIND_BYTES" in production
+    assert "before.last_write_time() == after.last_write_time()" in production
+    assert "actual_sha256.eq_ignore_ascii_case(expected_sha256)" in production
+    assert "does not match the bytes already scanned" in production
+    assert "WinVerifyTrust could not establish a definitive verdict" in production
+    assert "WinVerifyTrust state cleanup failed" in production
+    assert "native_direct_authenticode_rejects_unsigned_benign_file" in trust
+    assert "native_direct_authenticode_rejects_malformed_non_pe_file" in trust
     assert (
-        'const AUTHENTICODE_TARGET_PATH_ENV: &str = "AVORAX_AUTHENTICODE_TARGET_PATH"'
-        in production
+        "native_direct_authenticode_catalog_signed_windows_powershell_is_not_claimed_as_embedded"
+        in trust
     )
+    assert "native_direct_authenticode_microsoft_signed_embedded_edge_binary" in trust
     assert (
-        'const AUTHENTICODE_MODULE_PATH_ENV: &str = "AVORAX_AUTHENTICODE_MODULE_PATH"'
-        in production
+        "native_direct_authenticode_microsoft_signed_embedded_verdict_binds_to_scanned_sha256"
+        in trust
     )
-    assert (
-        "authenticode_probe_accepts_unsigned_file_without_encoded_command_argument_error"
-        in source
-    )
-    assert (
-        "authenticode_probe_accepts_microsoft_signed_windows_powershell_binary"
-        in source
-    )
-    assert "let powershell = windows_powershell_tool().unwrap();" in source
-    assert "fn authenticode_probe_script() -> String" in verdict
-    assert "GetEnvironmentVariable" in verdict
-    assert "windows_powershell_security_module(&powershell)?" in verdict
-    assert "Import-Module -Name $module -Force -ErrorAction Stop" in verdict
-    assert r"Microsoft.PowerShell.Security\\Get-AuthenticodeSignature -LiteralPath $target" in verdict
-    assert r"Microsoft.PowerShell.Utility\\ConvertTo-Json -Compress" in verdict
-    assert "run_authenticode_command(&mut command, &label)?" in verdict
-    assert ".env(AUTHENTICODE_TARGET_PATH_ENV, path.as_os_str())" in verdict
-    assert ".env(AUTHENTICODE_MODULE_PATH_ENV, security_module.as_os_str())" in verdict
-    assert '.env("PSModulePath", module_root.as_os_str())' in verdict
-    assert 'module_root.join("Microsoft.PowerShell.Security")' in production
-    assert 'module_dir.join("Microsoft.PowerShell.Security.psd1")' in production
-    assert "fs::symlink_metadata(directory)" in production
-    assert "fs::symlink_metadata(&manifest)" in production
-    assert ".arg(path.as_os_str())" not in verdict
-    assert "authenticode_command_diagnostic(&output.stderr, &output.stdout)" in verdict
-    assert "parse_authenticode_json(&output.stdout)?" in verdict
-    assert "stdin(Stdio::null())" in runner
-    assert "stdout(Stdio::piped())" in runner
-    assert "stderr(Stdio::piped())" in runner
-    assert (
-        "read_bounded_authenticode_command_output(stdout, MAX_AUTHENTICODE_JSON_BYTES)"
-        in runner
-    )
-    assert (
-        "read_bounded_authenticode_command_output(stderr, MAX_AUTHENTICODE_DIAGNOSTIC_BYTES)"
-        in runner
-    )
-    assert "wait_for_authenticode_child(&mut child, AUTHENTICODE_COMMAND_TIMEOUT)" in runner
-    assert "child.try_wait()?" in runner
-    assert "child.kill().err()" in runner
-    assert "child.wait().err()" in runner
-    assert "failed to kill timed-out Authenticode command" in runner
-    assert "failed to reap timed-out Authenticode command" in runner
-    assert "let mut reader = BufReader::new(reader)" in runner
-    assert "let retain_limit = max_bytes.saturating_add(1)" in runner
-    assert "bytes.extend_from_slice(&buffer[..keep])" in runner
-    assert "failed to read Authenticode command output" in runner
-    assert ".output()" not in verdict
-    assert ".read_to_end(&mut bytes)" not in runner
+    assert "content_binding_rejects_oversized_file_before_wintrust" in wintrust
+    assert "wintrust_cleanup_failure_cannot_return_a_verdict" in wintrust
+    for removed in (
+        "std::process::Command",
+        "EncodedCommand",
+        "PSModulePath",
+        "serde_json",
+        "ConvertTo-Json",
+        "Get-AuthenticodeSignature",
+    ):
+        assert removed not in trust_production
 
 
 def test_update_service_control_rejects_parent_traversal_in_system_root():
@@ -25294,6 +25319,11 @@ def test_local_core_env_roots_reject_parent_traversal():
         function_source = production[start:end]
         assert "validate_local_core_env_root_text(name, &text)?" in function_source
         assert "PathBuf::from(text)" in function_source
+    assert 'const ISOLATED_ENV_CASE: &str = "AVORAX_LOCAL_CORE_ISOLATED_ENV_CASE"' in source
+    assert "fn run_isolated_environment_case(" in source
+    assert '.arg("--exact")' in source
+    assert '.env(ISOLATED_ENV_CASE, case)' in source
+    assert 'command.env("AVORAX_DATA_DIR", "relative-runtime")' in source
     assert "local_core_program_data_root_rejects_parent_traversal_override" in source
 
 
