@@ -1904,8 +1904,8 @@ if ($RequireFullSuite) {
   if ($skipFlutter -or $skipRust) {
     throw "-RequireFullSuite requires skip_flutter=false and skip_rust=false."
   }
-  if ($steps.Count -ne 229) {
-    throw "-RequireFullSuite expected exactly 229 verifier steps for this source revision, found $($steps.Count)."
+  if ($steps.Count -ne 230) {
+    throw "-RequireFullSuite expected exactly 230 verifier steps for this source revision, found $($steps.Count)."
   }
   if ($steps[0].name -ne "local-core safe simulator scan reporting") {
     throw "-RequireFullSuite first step mismatch: $($steps[0].name)"
@@ -1941,6 +1941,7 @@ if ($RequireFullSuite) {
   Assert-ReportContainsStep $steps "native-engine catalog Authenticode Microsoft-signed/hash-binding regressions"
   Assert-ReportContainsStep $steps "native-engine secondary embedded Authenticode Microsoft-signed regressions"
   Assert-ReportContainsStep $steps "native-engine Authenticode helper isolation regressions"
+  Assert-ReportContainsStep $steps "native-engine Authenticode mandatory-hash/file-identity regressions"
   Assert-ReportContainsStep $steps "native-engine ClickOnce carrier heuristic detection"
   Assert-ReportContainsStep $steps "native-engine Java Web Start carrier heuristic detection"
   Assert-ReportContainsStep $steps "native-engine Windows scriptlet carrier heuristic detection"
@@ -2062,6 +2063,12 @@ if ($RequireFullSuite) {
   Assert-ReportScopeContains $verifiedScopeText "Secondary catalog signatures, memory-mapped and post-verdict mutation, same-token helper least privilege, and pre-execution blocking are not claimed" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "Native Engine's disabled test-only legacy quarantine store uses token-derived native DACL application and verification without an external helper" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "production quarantine remains owned by Local Core" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "every Microsoft publisher-trust request requires the scanner's lowercase or uppercase 64-hex SHA-256" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "no path-only publisher verdict API remains" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Windows volume/file identity, legacy file index, creation/write/change times, attributes, allocation/end size, link count, delete-pending, and directory state" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Any query failure or drift is diagnostic and cannot become trust" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Last-access time is intentionally excluded because reads may update it" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Existing writable mappings and mutation after the verdict remain user-mode limitations" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "client UI tab/button/setting source inventory gate" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "Flutter timeout process-tree cleanup guards" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "Protected Apps process-evidence newest ordering plus UTC timestamp visibility" "verification_scope.verified"

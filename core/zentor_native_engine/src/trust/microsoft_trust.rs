@@ -93,16 +93,12 @@ fn split_windows_system_path_prefix(path: &str) -> (Option<&str>, &str, bool) {
     (None, path, false)
 }
 
-pub fn microsoft_signature_verdict(path: &Path) -> Result<bool> {
-    microsoft_signature_verdict_inner(path, None)
-}
-
 pub fn microsoft_signature_verdict_for_sha256(path: &Path, expected_sha256: &str) -> Result<bool> {
-    microsoft_signature_verdict_inner(path, Some(expected_sha256))
+    microsoft_signature_verdict_inner(path, expected_sha256)
 }
 
 #[cfg(windows)]
-fn microsoft_signature_verdict_inner(path: &Path, expected_sha256: Option<&str>) -> Result<bool> {
+fn microsoft_signature_verdict_inner(path: &Path, expected_sha256: &str) -> Result<bool> {
     if !authenticode_candidate_file(path)? {
         return Ok(false);
     }
@@ -110,7 +106,7 @@ fn microsoft_signature_verdict_inner(path: &Path, expected_sha256: Option<&str>)
 }
 
 #[cfg(not(windows))]
-fn microsoft_signature_verdict_inner(_path: &Path, _expected_sha256: Option<&str>) -> Result<bool> {
+fn microsoft_signature_verdict_inner(_path: &Path, _expected_sha256: &str) -> Result<bool> {
     Ok(false)
 }
 
@@ -143,6 +139,10 @@ fn is_windows_reparse_point(_metadata: &fs::Metadata) -> bool {
 mod tests {
     use super::*;
     use std::fs;
+
+    fn fixture_sha256(path: &Path) -> String {
+        crate::engine::sha256_bytes(&fs::read(path).unwrap())
+    }
 
     #[cfg(windows)]
     fn microsoft_embedded_signature_fixture() -> PathBuf {
@@ -197,7 +197,8 @@ mod tests {
         let file = dir.path().join("unsigned-fixture.exe");
         fs::write(&file, b"benign unsigned fixture").unwrap();
 
-        assert!(!microsoft_signature_verdict(&file).unwrap());
+        let sha256 = fixture_sha256(&file);
+        assert!(!microsoft_signature_verdict_for_sha256(&file, &sha256).unwrap());
     }
 
     #[cfg(windows)]
@@ -207,7 +208,8 @@ mod tests {
         let file = dir.path().join("malformed-fixture.exe");
         fs::write(&file, [0_u8, 0xff, b'M', b'Z', 0, 1, 2, 3]).unwrap();
 
-        assert!(!microsoft_signature_verdict(&file).unwrap());
+        let sha256 = fixture_sha256(&file);
+        assert!(!microsoft_signature_verdict_for_sha256(&file, &sha256).unwrap());
     }
 
     #[cfg(windows)]
@@ -219,7 +221,8 @@ mod tests {
         )
         .unwrap();
 
-        assert!(microsoft_signature_verdict(&powershell).unwrap());
+        let sha256 = fixture_sha256(&powershell);
+        assert!(microsoft_signature_verdict_for_sha256(&powershell, &sha256).unwrap());
     }
 
     #[cfg(windows)]
@@ -245,7 +248,8 @@ mod tests {
     fn native_direct_authenticode_microsoft_signed_embedded_edge_binary() {
         let edge = microsoft_embedded_signature_fixture();
 
-        assert!(microsoft_signature_verdict(&edge).unwrap());
+        let sha256 = fixture_sha256(&edge);
+        assert!(microsoft_signature_verdict_for_sha256(&edge, &sha256).unwrap());
     }
 
     #[cfg(windows)]
@@ -271,6 +275,7 @@ mod tests {
             "crate::windows_authenticode::has_valid_microsoft_signature(path, expected_sha256)"
         ));
         assert!(production.contains("pub fn microsoft_signature_verdict_for_sha256("));
+        assert!(!production.contains("pub fn microsoft_signature_verdict(path:"));
         for removed in [
             "std::process::Command",
             "WindowsPowerShell",
@@ -344,7 +349,6 @@ mod tests {
     #[cfg(not(windows))]
     #[test]
     fn native_direct_authenticode_is_conservatively_unavailable_off_windows() {
-        assert!(!microsoft_signature_verdict(Path::new("fixture.exe")).unwrap());
         assert!(
             !microsoft_signature_verdict_for_sha256(Path::new("fixture.exe"), &"0".repeat(64))
                 .unwrap()

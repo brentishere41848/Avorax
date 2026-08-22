@@ -80,12 +80,11 @@ function New-HelperRequestJson {
     [Parameter(Mandatory = $true)]
     [string]$Path,
 
-    [AllowNull()]
-    [object]$ExpectedSha256
+    [Parameter(Mandatory = $true)]
+    [string]$ExpectedSha256
   )
 
-  if ($null -ne $ExpectedSha256 -and
-      ($ExpectedSha256 -isnot [string] -or $ExpectedSha256 -notmatch '^[0-9a-f]{64}$')) {
+  if ($ExpectedSha256 -notmatch '^[0-9a-f]{64}$') {
     throw "expected Authenticode helper SHA-256 must be exactly 64 lowercase hexadecimal characters; length=$($ExpectedSha256.Length)"
   }
   $units = @($Path.ToCharArray() | ForEach-Object { [int][char]$_ })
@@ -181,8 +180,8 @@ function Assert-ClientVerdict {
     [Parameter(Mandatory = $true)]
     [string]$Fixture,
 
-    [AllowNull()]
-    [object]$ExpectedSha256,
+    [Parameter(Mandatory = $true)]
+    [string]$ExpectedSha256,
 
     [Parameter(Mandatory = $true)]
     [bool]$ExpectedTrusted,
@@ -255,10 +254,11 @@ $unsignedFixture = Join-Path $tempRoot "unsigned-benign-fixture.exe"
 try {
   [void][System.IO.Directory]::CreateDirectory($tempRoot)
   [System.IO.File]::WriteAllText($unsignedFixture, "benign unsigned Authenticode helper fixture", [System.Text.Encoding]::ASCII)
+  $unsignedHash = Get-Sha256Hex $unsignedFixture
   foreach ($hostBinary in @($localCore, $guard)) {
     Assert-ClientVerdict $hostBinary $embeddedFixture $embeddedHash $true $TimeoutSeconds
     Assert-ClientVerdict $hostBinary $catalogFixture $catalogHash $true $TimeoutSeconds
-    Assert-ClientVerdict $hostBinary $unsignedFixture $null $false $TimeoutSeconds
+    Assert-ClientVerdict $hostBinary $unsignedFixture $unsignedHash $false $TimeoutSeconds
     Assert-ClientHashMismatch $hostBinary $embeddedFixture $TimeoutSeconds
   }
 } finally {
@@ -271,5 +271,5 @@ try {
 }
 
 Write-Output "Release Authenticode isolated-helper smoke passed for Local Core and Guard."
-Write-Output "Verified: bounded nonce-bound IPC, embedded and catalog Microsoft trust, unsigned rejection, hash mismatch failure, no fixture execution."
+Write-Output "Verified: mandatory hash-bound nonce IPC, embedded and catalog Microsoft trust, unsigned rejection, hash mismatch failure, no fixture execution."
 Write-Output "Safety: benign installed fixtures only; no EICAR, live malware, network, installation, service/driver start, Defender change, publication, or protected-vault access."

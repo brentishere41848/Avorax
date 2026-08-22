@@ -4,6 +4,26 @@
 
 Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-install, repair, recovery, offline, and manual-install paths only. Normal app updates target signed `.aup` packages applied by Avorax Update Service.
 
+- Checkpoint 2199 mandatory hash-bound Authenticode and stable handle identity is
+  implemented and locally verified. Every Microsoft publisher-trust
+  request now requires the scanner's exact 64-hex SHA-256; the unused path-only
+  verdict API is removed and strict helper JSON can no longer carry null or omit
+  the digest. Direct verification snapshots the same open handle before and
+  after trust using Windows volume/file ID, legacy file index, creation/write/
+  change times, attributes, allocation/end size, link count, delete-pending, and
+  directory state. Query failure or drift is diagnostic and supplies no trust.
+  Benign tests cover missing/null hash, pre-existing writer denial, hardlink
+  drift, stable identity, and combined verification/snapshot errors. Focused
+  identity/helper/direct/catalog/secondary tests pass `4/4`, `4/4`, `4/4`,
+  `3/3`, and `3/3`; Native passes `456 + 6`, strict Native/Local/Guard Clippy,
+  both locked workspace variants, release builds/smoke, Flutter analyzer and
+  `838/838`, and source contracts `627/627` pass. The definitive verifier and
+  independent validator pass `230/230` in `504.6s`; stale `229`-step evidence is
+  rejected. This remains an uncommitted local batch on
+  `agent/checkpoint-2199-authenticode-file-identity`; hosted evidence is pending.
+  Unsupported file-identity queries fail conservatively. Writable mappings,
+  post-verdict mutation, same-token helper privilege, secondary catalog
+  signatures, installed E2E, and pre-execution protection remain limited.
 - Checkpoint 2198 release Authenticode isolation is implemented and locally
   verified. Non-debug Local Core and Guard builds route the
   existing direct, handle-based WinTrust policy through an exact-current-
@@ -28,8 +48,14 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
   `32597124365` and Desktop Packages push/PR runs
   `32597113497`/`32597124404`: Windows MSI/EXE, Linux DEB/tar, both macOS DMGs,
   six-artifact consolidation, checksums, and lockfile SBOM pass; publication is
-  skipped. Draft PR `#50` is open. Evidence-head checks, merge, and original-
-  tree sync remain pending. The helper uses the same token and is a
+  skipped. Evidence head `e14e6dd9d80e77823c1c1db8d968c5f86f598ce0`
+  passes CI `32597873447` and packages `32597873398`; PR `#50` merged normally
+  as `ab6bd8908d679a60515bac0cf3ceb56f3b6f8a45`. Merged-main CI
+  `32598488946` and packages `32598488969` pass with publication skipped. All
+  18 explicit files synchronized only after old/new blob preconditions matched;
+  raw source/destination SHA-256 and merge blobs match, destination source
+  contracts `627/627`, helper tests `4/4`, strict Clippy, release builds, format,
+  and two-host smoke pass. The helper uses the same token and is a
   hard-timeout boundary, not a least-privilege sandbox; secondary catalog
   signatures remain conservatively unsupported.
 - Checkpoint 2197 secondary embedded Authenticode is implemented and locally
@@ -83,13 +109,17 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
 
 ## Current Commit
 
-- Checkpoint 2198 is an uncommitted, locally verified implementation batch on
-  `agent/checkpoint-2198-native-catalog-secondary-authenticode`, based on
-  merged main `736a9f6ccdb6f7512c854aa816361fc322489222`. The definitive local verifier
-  and independent validator pass `229/229`. Exact implementation-head CI and
-  package runs pass with publication skipped; evidence-head checks, PR `#50`
-  merge, and original-tree synchronization are still pending. It is not a
-  release head.
+- Checkpoint 2199 is an uncommitted, locally verified implementation batch on
+  `agent/checkpoint-2199-authenticode-file-identity`, based on merged main
+  `ab6bd8908d679a60515bac0cf3ceb56f3b6f8a45`. The definitive local verifier
+  and validator pass `230/230`; exact-head hosted evidence remains pending.
+- Checkpoint 2198 implementation/evidence heads
+  `10668f17e084187014cc4bfa34a6191c47493d7c` and
+  `e14e6dd9d80e77823c1c1db8d968c5f86f598ce0` pass the definitive local
+  verifier/validator (`229/229`) and exact-head CI/packages. PR `#50` merged as
+  `ab6bd8908d679a60515bac0cf3ceb56f3b6f8a45`; merged-main checks and the exact
+  18-file original-tree sync plus focused destination checks pass. Publication
+  was skipped. It is not a release head.
 - Checkpoint 2197 implementation/evidence heads
   `e4dcb89e9b6fe487713d07283a719ad41317af22` and
   `137ee29052a10696956256629f8d729ec561ba40` merged through PR `#49` as

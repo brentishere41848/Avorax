@@ -19891,6 +19891,8 @@ def test_small_threat_mvp_verifier_is_safe_and_reproducible():
     assert '"native_secondary_authenticode"' in source
     assert "native-engine Authenticode helper isolation regressions" in source
     assert '"native_authenticode_helper"' in source
+    assert "native-engine Authenticode mandatory-hash/file-identity regressions" in source
+    assert '"native_authenticode_file_identity"' in source
     assert "guard-service release binary build" in source
     assert "release Authenticode isolated helper IPC/hash-binding smoke" in source
     assert "tools\\testing\\run-release-authenticode-helper-smoke.ps1" in source
@@ -20090,6 +20092,12 @@ def test_small_threat_mvp_verifier_is_safe_and_reproducible():
         in source
     )
     assert "production quarantine remains owned by Local Core" in source
+    assert "every Microsoft publisher-trust request requires the scanner's lowercase or uppercase 64-hex SHA-256" in source
+    assert "no path-only publisher verdict API remains" in source
+    assert "Windows volume/file identity, legacy file index, creation/write/change times" in source
+    assert "Any query failure or drift is diagnostic and cannot become trust" in source
+    assert "Last-access time is intentionally excluded because reads may update it" in source
+    assert "Existing writable mappings and mutation after the verdict remain user-mode limitations" in source
     assert "full release-host SBOM/license output" in source
     assert "installer-owned service repair/install E2E" in source
     assert "installed update/rollback E2E" in source
@@ -20810,8 +20818,8 @@ def test_small_threat_mvp_report_validator_is_strict_and_local():
     assert "driver_request_known_good_allows_in_lockdown" in source
     assert "Get-AvoraxGateFile ([System.IO.Path]::GetFullPath($text)) $Description" in source
     assert "-RequireFullSuite requires skip_flutter=false and skip_rust=false" in source
-    assert "if ($steps.Count -ne 229)" in source
-    assert "-RequireFullSuite expected exactly 229 verifier steps" in source
+    assert "if ($steps.Count -ne 230)" in source
+    assert "-RequireFullSuite expected exactly 230 verifier steps" in source
     assert 'Assert-ReportContainsStep $steps "Branding gate"' in source
     assert 'Assert-ReportContainsStep $steps "False-positive gate"' in source
     assert 'Assert-ReportContainsStep $steps "Protection gate without driver feature claim"' in source
@@ -20948,6 +20956,10 @@ def test_small_threat_mvp_report_validator_is_strict_and_local():
     )
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper isolation regressions"'
+        in source
+    )
+    assert (
+        'Assert-ReportContainsStep $steps "native-engine Authenticode mandatory-hash/file-identity regressions"'
         in source
     )
     assert 'Assert-ReportContainsStep $steps "guard-service release binary build"' in source
@@ -21841,9 +21853,15 @@ def test_release_authenticode_helper_smoke_is_bounded_benign_and_noninstalling()
     assert "schema_version = 1" in source
     assert '[guid]::NewGuid().ToString("D")' in source
     assert "path_utf16 = $units" in source
+    assert "[string]$ExpectedSha256" in source
+    assert "expected_sha256 = $ExpectedSha256" in source
+    assert "$ExpectedSha256 -notmatch '^[0-9a-f]{64}$'" in source
     assert "Microsoft\\Edge\\Application\\msedge.exe" in source
     assert "WindowsPowerShell\\v1.0\\powershell.exe" in source
     assert "benign unsigned Authenticode helper fixture" in source
+    assert "$unsignedHash = Get-Sha256Hex $unsignedFixture" in source
+    assert "Assert-ClientVerdict $hostBinary $unsignedFixture $unsignedHash $false" in source
+    assert "$null $false" not in source
     assert 'response.status -ne "ok"' in source
     assert 'response.status -ne "error"' in source
     assert "does not match the bytes already scanned" in source
@@ -24930,7 +24948,8 @@ def test_native_authenticode_uses_direct_hash_bound_file_and_catalog_wintrust():
     guard_main = read(GUARD_MAIN).split("#[cfg(test)]")[0]
 
     assert "pub fn microsoft_signature_verdict_for_sha256(" in trust_production
-    assert "microsoft_signature_verdict_inner(path, Some(expected_sha256))" in trust_production
+    assert "microsoft_signature_verdict_inner(path, expected_sha256)" in trust_production
+    assert "pub fn microsoft_signature_verdict(path:" not in trust_production
     assert "fs::symlink_metadata(path)" in trust_production
     assert "metadata.file_type().is_symlink()" in trust_production
     assert "is_windows_reparse_point(&metadata)" in trust_production
@@ -24977,7 +24996,43 @@ def test_native_authenticode_uses_direct_hash_bound_file_and_catalog_wintrust():
     assert "AUTHENTICODE_HASH_BUFFER_BYTES: usize = 128 * 1024" in production
     assert "enforce_content_binding_size(path, &file)?" in production
     assert "total_bytes <= MAX_AUTHENTICODE_BIND_BYTES" in production
-    assert "before.last_write_time() == after.last_write_time()" in production
+    assert "struct AuthenticodeFileSnapshot" in production
+    assert "GetFileInformationByHandle(handle, &mut legacy)" in production
+    assert "GetFileInformationByHandleEx(" in production
+    assert "FileBasicInfo" in production
+    assert "FileStandardInfo" in production
+    assert "FileIdInfo" in production
+    for identity_field in (
+        "volume_serial_number",
+        "file_id",
+        "file_index",
+        "creation_time",
+        "last_write_time",
+        "change_time",
+        "file_attributes",
+        "allocation_size",
+        "end_of_file",
+        "number_of_links",
+        "delete_pending",
+        "directory",
+    ):
+        assert identity_field in production
+    assert "before == after" in production
+    assert "id.VolumeSerialNumber as u32 == legacy.dwVolumeSerialNumber" in production
+    assert "basic.CreationTime as u64 == legacy_creation_time" in production
+    assert "basic.LastWriteTime as u64 == legacy_last_write_time" in production
+    assert "combine_verdict_and_file_snapshot(" in production
+    assert "identity verification also failed" in production
+    assert production.index(
+        "let before = snapshot_authenticode_file(path, &file)?;"
+    ) < production.index(
+        "let verdict = match verify_open_file(path, &path_wide, &mut file, expected_sha256)"
+    )
+    assert production.index(
+        "let after = snapshot_authenticode_file(path, &file);"
+    ) > production.index(
+        "let verdict = match verify_open_file(path, &path_wide, &mut file, expected_sha256)"
+    )
     assert "actual_sha256.eq_ignore_ascii_case(expected_sha256)" in production
     assert "does not match the bytes already scanned" in production
     assert "CryptCATAdminAcquireContext2(" in production
@@ -25007,6 +25062,8 @@ def test_native_authenticode_uses_direct_hash_bound_file_and_catalog_wintrust():
     assert "MAX_AUTHENTICODE_HELPER_RESPONSE_BYTES: usize = 16 * 1024" in production
     assert "Uuid::new_v4().hyphenated().to_string()" in production
     assert "#[serde(deny_unknown_fields)]" in production
+    assert "expected_sha256: String" in production
+    assert "expected_sha256: Option" not in production
     assert "CreateJobObjectW(" in production
     assert "JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE" in production
     assert "AssignProcessToJobObject(" in production
@@ -25055,6 +25112,11 @@ def test_native_authenticode_uses_direct_hash_bound_file_and_catalog_wintrust():
     assert "native_authenticode_helper_response_cannot_fake_or_cross_nonce_verdicts" in wintrust
     assert "native_authenticode_helper_timeout_kills_and_reaps_the_isolated_process" in wintrust
     assert "native_authenticode_helper_locks_a_bounded_non_reparse_current_executable" in wintrust
+    assert "native_authenticode_file_identity_requires_a_mandatory_hash" in wintrust
+    assert "native_authenticode_file_identity_denies_a_preexisting_writer" in wintrust
+    assert "native_authenticode_file_identity_detects_benign_link_count_drift" in wintrust
+    assert "native_authenticode_file_identity_failure_cannot_return_or_hide_trust" in wintrust
+    assert 'Err(anyhow::anyhow!("final identity query failed"))' in wintrust
     assert "catalog_member_tag_is_uppercase_hex_with_one_terminator" in wintrust
     assert "catalog_path_buffer_requires_one_bounded_local_absolute_path" in wintrust
     assert (
