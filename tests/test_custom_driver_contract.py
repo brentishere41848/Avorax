@@ -19876,6 +19876,11 @@ def test_small_threat_mvp_verifier_is_safe_and_reproducible():
         '"native_direct_authenticode_microsoft_signed"'
         in source
     )
+    assert (
+        "native-engine catalog Authenticode Microsoft-signed/hash-binding regressions"
+        in source
+    )
+    assert '"native_catalog_authenticode"' in source
     assert "native-engine known-good hash regressions" in source
     assert "known_good" in source
     assert "native-engine known-bad hash regressions" in source
@@ -19922,7 +19927,7 @@ def test_small_threat_mvp_verifier_is_safe_and_reproducible():
     assert "local app-control/trust-store policy regressions" in source
     assert "native-engine exact-hash trust-store regressions" in source
     assert (
-        "Windows direct Authenticode boundary, unsigned/malformed, Microsoft-signed, "
+        "Windows direct Authenticode file/catalog boundary, unsigned/malformed, Microsoft-signed, "
         "and scanned-content hash-binding regressions"
         in source
     )
@@ -20026,7 +20031,17 @@ def test_small_threat_mvp_verifier_is_safe_and_reproducible():
     )
     assert "a second bounded SHA-256 read matching the bytes already scanned" in source
     assert (
-        "Catalog signatures, secondary signatures, memory-mapped mutation, native-call "
+        "bounded SHA-256 system-catalog membership whose verified leaf has the exact "
+        "Microsoft identity"
+        in source
+    )
+    assert (
+        "Catalog lookup is capped at 16 candidates, rejects non-local catalog paths, and "
+        "fails visibly on API, policy, limit, or cleanup errors"
+        in source
+    )
+    assert (
+        "Secondary signatures, memory-mapped mutation, native-call "
         "hard cancellation, and pre-execution blocking are not claimed"
         in source
     )
@@ -20756,8 +20771,8 @@ def test_small_threat_mvp_report_validator_is_strict_and_local():
     assert "driver_request_known_good_allows_in_lockdown" in source
     assert "Get-AvoraxGateFile ([System.IO.Path]::GetFullPath($text)) $Description" in source
     assert "-RequireFullSuite requires skip_flutter=false and skip_rust=false" in source
-    assert "if ($steps.Count -ne 224)" in source
-    assert "-RequireFullSuite expected exactly 224 verifier steps" in source
+    assert "if ($steps.Count -ne 225)" in source
+    assert "-RequireFullSuite expected exactly 225 verifier steps" in source
     assert 'Assert-ReportContainsStep $steps "Branding gate"' in source
     assert 'Assert-ReportContainsStep $steps "False-positive gate"' in source
     assert 'Assert-ReportContainsStep $steps "Protection gate without driver feature claim"' in source
@@ -20863,6 +20878,10 @@ def test_small_threat_mvp_report_validator_is_strict_and_local():
     )
     assert (
         'Assert-ReportContainsStep $steps "native-engine direct Authenticode Microsoft-signed/hash-binding regressions"'
+        in source
+    )
+    assert (
+        'Assert-ReportContainsStep $steps "native-engine catalog Authenticode Microsoft-signed/hash-binding regressions"'
         in source
     )
     assert (
@@ -21326,10 +21345,22 @@ def test_small_threat_mvp_report_validator_is_strict_and_local():
         in source
     )
     assert (
-        'Assert-ReportScopeContains $verifiedScopeText "Windows direct Authenticode '
+        'Assert-ReportScopeContains $verifiedScopeText "Windows direct Authenticode file/catalog '
         'boundary, unsigned/malformed, Microsoft-signed, and scanned-content '
         'hash-binding regressions" '
         '"verification_scope.verified"'
+        in source
+    )
+    assert (
+        'Assert-ReportScopeContains $verifiedScopeText "Catalog lookup is capped at 16 '
+        'candidates, rejects non-local catalog paths, and fails visibly on API, policy, '
+        'limit, or cleanup errors" "verification_scope.verified"'
+        in source
+    )
+    assert (
+        'Assert-ReportScopeContains $verifiedScopeText "Secondary signatures, '
+        'memory-mapped mutation, native-call hard cancellation, and pre-execution '
+        'blocking are not claimed" "verification_scope.verified"'
         in source
     )
     assert (
@@ -24763,7 +24794,7 @@ def test_native_windows_tools_use_native_bounded_system_root():
     assert "native_direct_authenticode_production_has_no_script_or_json_helper" in trust
 
 
-def test_native_authenticode_uses_direct_hash_bound_wintrust():
+def test_native_authenticode_uses_direct_hash_bound_file_and_catalog_wintrust():
     trust = read(NATIVE_MICROSOFT_TRUST)
     trust_production = trust.split("#[cfg(test)]")[0]
     wintrust = read(NATIVE_WINDOWS_AUTHENTICODE)
@@ -24788,6 +24819,7 @@ def test_native_authenticode_uses_direct_hash_bound_wintrust():
     assert "WTD_UI_NONE" in production
     assert "WTD_REVOKE_WHOLECHAIN" in production
     assert "WTD_CHOICE_FILE" in production
+    assert "WTD_CHOICE_CATALOG" in production
     assert "WTD_STATEACTION_VERIFY" in production
     assert "WTD_STATEACTION_CLOSE" in production
     assert "WTD_CACHE_ONLY_URL_RETRIEVAL" in production
@@ -24808,14 +24840,29 @@ def test_native_authenticode_uses_direct_hash_bound_wintrust():
     assert "before.last_write_time() == after.last_write_time()" in production
     assert "actual_sha256.eq_ignore_ascii_case(expected_sha256)" in production
     assert "does not match the bytes already scanned" in production
+    assert "CryptCATAdminAcquireContext2(" in production
+    assert "BCRYPT_SHA256_ALGORITHM" in production
+    assert "CryptCATAdminCalcHashFromFileHandle2(" in production
+    assert "CryptCATAdminEnumCatalogFromHash(" in production
+    assert "CryptCATCatalogInfoFromContext(" in production
+    assert "CryptCATAdminReleaseCatalogContext(" in production
+    assert "CryptCATAdminReleaseContext(" in production
+    assert "SHA256_CATALOG_HASH_BYTES: usize = 32" in production
+    assert "MAX_CATALOG_CANDIDATES: usize = 16" in production
+    assert "Prefix::Disk(_) | Prefix::VerbatimDisk(_)" in production
+    assert "catalog_path.is_absolute() && local_drive" in production
+    assert "catalog context cleanup failed" in production
+    assert "catalog administrator cleanup failed" in production
+    assert "catalog lookup exceeded the" in production
     assert "WinVerifyTrust could not establish a definitive verdict" in production
     assert "WinVerifyTrust state cleanup failed" in production
     assert "native_direct_authenticode_rejects_unsigned_benign_file" in trust
     assert "native_direct_authenticode_rejects_malformed_non_pe_file" in trust
     assert (
-        "native_direct_authenticode_catalog_signed_windows_powershell_is_not_claimed_as_embedded"
+        "native_catalog_authenticode_accepts_catalog_signed_windows_powershell"
         in trust
     )
+    assert "native_catalog_authenticode_verdict_binds_to_scanned_sha256" in trust
     assert "native_direct_authenticode_microsoft_signed_embedded_edge_binary" in trust
     assert (
         "native_direct_authenticode_microsoft_signed_embedded_verdict_binds_to_scanned_sha256"
@@ -24823,6 +24870,16 @@ def test_native_authenticode_uses_direct_hash_bound_wintrust():
     )
     assert "content_binding_rejects_oversized_file_before_wintrust" in wintrust
     assert "wintrust_cleanup_failure_cannot_return_a_verdict" in wintrust
+    assert "catalog_member_tag_is_uppercase_hex_with_one_terminator" in wintrust
+    assert "catalog_path_buffer_requires_one_bounded_local_absolute_path" in wintrust
+    assert (
+        "native_catalog_authenticode_windows_powershell_requires_catalog_fallback"
+        in wintrust
+    )
+    assert (
+        "catalog_cleanup_failure_cannot_return_a_verdict_or_hide_verification_error"
+        in wintrust
+    )
     for removed in (
         "std::process::Command",
         "EncodedCommand",
