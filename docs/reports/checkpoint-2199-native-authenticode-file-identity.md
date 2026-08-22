@@ -120,5 +120,12 @@ recorded invariant and `.verification` must remain untracked.
   4,522,733 bytes, 5,357 each `.avoraxq`/`.json`/`.auth`, one metadata key, and
   zero pending. `.verification` remains untracked.
 
-No hosted CI/package, merge, synchronization, installation, release, or
-publication result is claimed yet.
+Implementation head `d619c0a5ddb627e9d940d12478d5db9589ee5679`
+passes Avorax CI `32601267008` and Desktop Packages push/PR
+`32601253745`/`32601266989`. Package contracts, Windows x64 MSI/EXE, Linux x64
+DEB/tar, macOS arm64/x64 DMG, six-artifact consolidation, checksums, and
+lockfile CycloneDX SBOM pass. Both prerelease publication jobs are explicitly
+skipped.
+
+Evidence-head CI/packages, merge, merged-main checks, synchronization,
+installation, release, and publication are not yet claimed.

@@ -1365,5 +1365,6 @@ supply required identity information fail conservatively. Same-token helper
 privilege, secondary catalog signatures, production signing, installed service/
 UI behavior, driver IPC, pre-execution blocking, Defender replacement, and
 production detection-rate claims remain outside this checkpoint. The completed
-local verifier/validator passes `230/230` in `504.6s`; hosted exact-head, merge,
-and synchronized-tree evidence remains pending.
+local verifier/validator passes `230/230` in `504.6s`. Exact implementation-head
+CI/packages pass with publication skipped; evidence-head, merge, and
+synchronized-tree evidence remains pending.

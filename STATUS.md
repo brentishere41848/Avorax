@@ -19,8 +19,11 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
   both locked workspace variants, release builds/smoke, Flutter analyzer and
   `838/838`, and source contracts `627/627` pass. The definitive verifier and
   independent validator pass `230/230` in `504.6s`; stale `229`-step evidence is
-  rejected. This remains an uncommitted local batch on
-  `agent/checkpoint-2199-authenticode-file-identity`; hosted evidence is pending.
+  rejected. Implementation head `d619c0a5ddb627e9d940d12478d5db9589ee5679`
+  passes Avorax CI `32601267008` and Desktop Packages push/PR
+  `32601253745`/`32601266989`, including all six platform artifacts,
+  consolidation/checksums, and lockfile SBOM with publication skipped. Draft
+  PR `#51` is open; evidence-head checks, merge, and sync remain pending.
   Unsupported file-identity queries fail conservatively. Writable mappings,
   post-verdict mutation, same-token helper privilege, secondary catalog
   signatures, installed E2E, and pre-execution protection remain limited.
@@ -109,10 +112,12 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
 
 ## Current Commit
 
-- Checkpoint 2199 is an uncommitted, locally verified implementation batch on
+- Checkpoint 2199 implementation head
+  `d619c0a5ddb627e9d940d12478d5db9589ee5679` is locally verified on
   `agent/checkpoint-2199-authenticode-file-identity`, based on merged main
   `ab6bd8908d679a60515bac0cf3ceb56f3b6f8a45`. The definitive local verifier
-  and validator pass `230/230`; exact-head hosted evidence remains pending.
+  and validator pass `230/230`; exact implementation-head CI and package runs
+  pass with publication skipped. Evidence-head/merge/sync remain pending.
 - Checkpoint 2198 implementation/evidence heads
   `10668f17e084187014cc4bfa34a6191c47493d7c` and
   `e14e6dd9d80e77823c1c1db8d968c5f86f598ce0` pass the definitive local

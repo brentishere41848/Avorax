@@ -220,6 +220,9 @@ handle, and compared without network or package-manager access.
 
 Lockfile stability, exact API feature resolution, strict lint, both complete
 locked workspace variants, and the dependency/license evidence gate pass
-locally. No lockfile changed. Hosted package SBOM and final-artifact review
-remain pending; source-level API reuse remains distinct from final-binary
-license, notice, and copyright review.
+locally. No lockfile changed. Implementation-head package push/PR runs
+`32601253745`/`32601266989` pass lockfile CycloneDX SBOM generation and
+six-artifact checksum consolidation with publication skipped. Evidence-head and
+merged-main package proof plus final release-artifact review remain pending.
+Source-level API reuse remains distinct from final-binary license, notice, and
+copyright review.

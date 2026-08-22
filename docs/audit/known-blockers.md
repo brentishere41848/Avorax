@@ -1731,7 +1731,9 @@ enforcement, or pre-execution blocking is claimed.
   and unused aggregate publisher function are removed; helper JSON requires a
   non-null digest. Focused and complete Native, locked workspace, release smoke,
   Flutter, source-contract, security/dependency, and `230/230` verifier evidence
-  passes locally. Exact-head hosted CI/packages and merge evidence remain pending.
+  passes locally. Implementation head `d619c0a5ddb627e9d940d12478d5db9589ee5679`
+  passes CI `32601267008` and package push/PR `32601253745`/`32601266989`
+  with publication skipped. Evidence-head, merge, and sync remain pending.
 - **Stable handle evidence:** The candidate's same open handle is queried before
   and after the complete WinTrust/catalog/hash operation for volume/file ID,
   legacy index, creation/write/change times, attributes, allocation/end size,
