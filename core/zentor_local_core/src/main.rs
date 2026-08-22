@@ -3511,7 +3511,37 @@ mod tests {
         ApplicationTrustLevel, ProtectionMode,
     };
     use std::fs;
+    use std::process::Command;
     use tempfile::tempdir;
+
+    const ISOLATED_ENV_CASE: &str = "AVORAX_LOCAL_CORE_ISOLATED_ENV_CASE";
+
+    fn is_isolated_environment_case(case: &str) -> bool {
+        std::env::var(ISOLATED_ENV_CASE).as_deref() == Ok(case)
+    }
+
+    fn run_isolated_environment_case(
+        test_name: &str,
+        case: &str,
+        configure: impl FnOnce(&mut Command),
+    ) {
+        let mut command = Command::new(std::env::current_exe().unwrap());
+        command
+            .arg("--exact")
+            .arg(test_name)
+            .arg("--nocapture")
+            .arg("--test-threads=1")
+            .env(ISOLATED_ENV_CASE, case);
+        configure(&mut command);
+
+        let output = command.output().unwrap();
+        assert!(
+            output.status.success(),
+            "isolated environment test {test_name} failed\nstdout:\n{}\nstderr:\n{}",
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
 
     const TRUSTED_FIXTURE_HASH: &str =
         "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
@@ -4432,33 +4462,37 @@ mod tests {
 
     #[test]
     fn local_core_program_data_root_rejects_relative_override() {
-        let _lock = env_lock();
-        let previous = std::env::var_os("AVORAX_DATA_DIR");
-        std::env::set_var("AVORAX_DATA_DIR", "relative-runtime");
-
-        let error = avorax_program_data_dir().unwrap_err().to_string();
-
-        match previous {
-            Some(value) => std::env::set_var("AVORAX_DATA_DIR", value),
-            None => std::env::remove_var("AVORAX_DATA_DIR"),
+        const CASE: &str = "program-data-relative";
+        if is_isolated_environment_case(CASE) {
+            let error = avorax_program_data_dir().unwrap_err().to_string();
+            assert!(error.contains("AVORAX_DATA_DIR must be an absolute local path"));
+            return;
         }
-        assert!(error.contains("AVORAX_DATA_DIR must be an absolute local path"));
+        run_isolated_environment_case(
+            "tests::local_core_program_data_root_rejects_relative_override",
+            CASE,
+            |command| {
+                command.env("AVORAX_DATA_DIR", "relative-runtime");
+            },
+        );
     }
 
     #[test]
     fn local_core_program_data_root_rejects_parent_traversal_override() {
-        let _lock = env_lock();
-        let previous = std::env::var_os("AVORAX_DATA_DIR");
-        let dir = tempdir().unwrap();
-        std::env::set_var("AVORAX_DATA_DIR", dir.path().join(".."));
-
-        let error = avorax_program_data_dir().unwrap_err().to_string();
-
-        match previous {
-            Some(value) => std::env::set_var("AVORAX_DATA_DIR", value),
-            None => std::env::remove_var("AVORAX_DATA_DIR"),
+        const CASE: &str = "program-data-parent-traversal";
+        if is_isolated_environment_case(CASE) {
+            let error = avorax_program_data_dir().unwrap_err().to_string();
+            assert!(error.contains("AVORAX_DATA_DIR must not contain parent traversal"));
+            return;
         }
-        assert!(error.contains("AVORAX_DATA_DIR must not contain parent traversal"));
+        let dir = tempdir().unwrap();
+        run_isolated_environment_case(
+            "tests::local_core_program_data_root_rejects_parent_traversal_override",
+            CASE,
+            |command| {
+                command.env("AVORAX_DATA_DIR", dir.path().join(".."));
+            },
+        );
     }
 
     #[test]

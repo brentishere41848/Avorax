@@ -1154,3 +1154,43 @@ signed-driver IPC, and pre-execution enforcement remain partial or blocked.
 This checkpoint changes no service, driver, Defender setting, package install,
 publication, or release and makes no Defender-replacement or kernel-blocking
 claim.
+
+## Checkpoint 2195 Direct Authenticode Boundary
+
+Checkpoint 2195 removes the external PowerShell, module-discovery, script,
+JSON, and command-output surfaces from Native Engine publisher verification.
+The candidate is opened as an absolute bounded regular non-reparse file without
+write/delete sharing, and `WinVerifyTrust` receives that handle. The trust call
+is noninteractive and cache-only, so it does not retrieve network content.
+WinTrust state is closed for success and failure paths, and cleanup errors are
+not swallowed.
+
+A valid chain alone does not establish Microsoft identity. The primary signer
+leaf must contain both exact `Microsoft Corporation` organization and an exact
+allowlisted Microsoft common name. Subject lookalikes, unsigned files, invalid
+signatures, and malformed files do not supply publisher trust. Revocation,
+policy, provider, I/O, cleanup, and unknown failures remain visible diagnostics
+and contribute zero trust weight rather than becoming clean results.
+
+The scan engine previously computes a full SHA-256 before publisher trust. It
+now passes that digest into the native verifier. After a valid Microsoft signer
+is established, the verifier rewinds the same open handle, rereads at most 512
+MiB using a 128 KiB buffer, compares pre/post metadata, and requires the digest
+to match. The limit is checked before WinTrust and during every read, bounding
+a file that grows through a handle opened before Avorax acquired its handle.
+
+This reduces but does not eliminate user-mode TOCTOU. An already open writable
+or memory-mapped handle can still mutate bytes, and a file can change after a
+verdict before another application executes it. `WinVerifyTrust` itself cannot
+be hard-cancelled in-process; cache-only behavior prevents online stalls but is
+not a kernel-call deadline. Catalog-only and secondary signatures are not
+evaluated, so valid Microsoft files relying on those forms may conservatively
+receive no trust or a diagnostic. Stronger execution-time guarantees require a
+separately validated signed driver or an OS execution-control boundary.
+
+Windows trust stores, cryptographic providers, the Win32 ABI, and protection of
+their state remain in the trusted computing base. Native Engine stays
+detection-only and Local Core stays the authenticated quarantine owner. No
+service, driver, Defender setting, package install, publication, release,
+execution authorization, Defender replacement, pre-execution, or detection-rate
+claim is introduced.

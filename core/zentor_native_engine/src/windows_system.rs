@@ -10,7 +10,9 @@ use windows_sys::Win32::Foundation::GetLastError;
 use windows_sys::Win32::System::SystemInformation::GetSystemWindowsDirectoryW;
 
 const MAX_SYSTEM_WINDOWS_DIRECTORY_CHARS: usize = 32_768;
+#[cfg(test)]
 const MAX_SYSTEM32_RELATIVE_COMPONENTS: usize = 8;
+#[cfg(test)]
 const MAX_SYSTEM32_COMPONENT_CHARS: usize = 128;
 const FILE_ATTRIBUTE_REPARSE_POINT: u32 = 0x400;
 
@@ -67,6 +69,7 @@ pub(crate) fn checked_system_directory(name: &str, label: &str) -> Result<PathBu
     Ok(candidate)
 }
 
+#[cfg(test)]
 pub(crate) fn checked_system32_file(relative_components: &[&str], label: &str) -> Result<PathBuf> {
     anyhow::ensure!(
         !relative_components.is_empty()
@@ -130,6 +133,7 @@ fn query_system_windows_directory() -> Result<PathBuf> {
     system_windows_directory_from_result(chars, &buffer)
 }
 
+#[cfg(test)]
 fn validate_system32_relative_component(component: &str, label: &str) -> Result<()> {
     anyhow::ensure!(
         !component.is_empty() && component.chars().count() <= MAX_SYSTEM32_COMPONENT_CHARS,
