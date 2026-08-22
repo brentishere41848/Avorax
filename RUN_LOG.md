@@ -7231,3 +7231,110 @@ Updates page showed:
   ACL/service/UI E2E remain pending. No live malware, Defender exclusion,
   driver/service change, admin install, secure-erase, or pre-execution claim was
   involved.
+
+## 2026-08-22 continuation checkpoint 2195 scripting phase
+
+- Read the authoritative handoff and preserved branch/base state. `.verification`
+  remains untracked and untouched; no ProgramData quarantine path was opened for
+  mutation.
+- Replaced the production WindowsPowerShell/JSON Authenticode path with a
+  Windows-only direct `WinVerifyTrust` module using an already opened regular
+  non-reparse file handle, read-only sharing, cache-only URL retrieval, explicit
+  state cleanup, and fail-visible operational status handling.
+- Tightened Microsoft identity from a name substring/one-attribute decision to
+  valid Authenticode plus exact `Microsoft Corporation` organization and one of
+  three exact Microsoft leaf common names.
+- Bound the engine's publisher-trust decision to its previously computed
+  SHA-256. Successful Microsoft signatures are reread through the same handle
+  with a 128 KiB buffer, a 512 MiB preflight and live byte ceiling, pre/post
+  metadata checks, and exact digest comparison. The path-only compatibility API
+  remains, but the engine does not use it.
+- Added Windows dependency features without adding a package or changing the
+  pinned `windows-sys 0.61.2` version. Added benign unsigned, malformed,
+  Microsoft-signed, wrong-hash, signer-lookalike, path-bound, share-mode, and
+  trust-status test scripts plus Python source contracts.
+- Replaced the two old Authenticode verifier steps with three direct-native
+  steps. The independent full-suite validator now requires exactly 224 steps
+  and exact direct-Authenticode scope, so checkpoint-2194's 223-step report is
+  stale by construction.
+- Per the user-requested sequence, no formatter, parser, test, build, dependency
+  gate, verifier, hosted workflow, package, PR, merge, release, or synchronization
+  command has run during this scripting phase. Exact evidence will be appended
+  after the complete scripted batch passes or fails visibly.
+- Catalog signature lookup, secondary-signature enumeration, native-call hard
+  cancellation, memory-mapped and post-verdict mutation, installed service/UI
+  behavior, production signing, signed-driver IPC, and pre-execution blocking
+  remain limited or blocked and are not claimed.
+- The first focused native run compiled the new FFI path and passed `6/7`, then
+  failed because generic `TRUST_E_FAIL` numerically overlaps the broad
+  certificate HRESULT range. The failure was preserved and repaired by an
+  explicit inconclusive-status exclusion. Compilation also exposed four
+  obsolete System32 helper dead-code warnings after PowerShell removal; those
+  helper constants/functions are now test-only rather than suppressed.
+- The immediate focused retry then failed at compile time because the new
+  `TRUST_E_FAIL` exclusion still required the import removed during warning
+  cleanup. The import was restored; no failed result is counted as passing.
+- Unsigned and malformed fixtures then passed `2/2`, while the initial positive
+  WindowsPowerShell fixture failed `0/2`. Read-only local signature metadata
+  identified it as a valid catalog signature (`SignatureType=Catalog`), which
+  the documented primary-embedded `WTD_CHOICE_FILE` boundary intentionally does
+  not claim. The test batch now records PowerShell's conservative catalog
+  rejection separately and uses the installed x64 Microsoft Edge executable,
+  which has a primary embedded Microsoft Authenticode signature, for positive
+  signer and SHA-256-binding evidence.
+- The first full workspace run then failed one Local Core archive-limit test
+  after another parallel test temporarily set process-wide
+  `AVORAX_DATA_DIR=relative-runtime`. The failure was not retried as success.
+  Both negative ProgramData-root environment tests now perform their mutation
+  only in an exact isolated child-test process; the parent suite no longer
+  exposes unrelated readers to transient invalid configuration. A Python source
+  contract preserves the child-process boundary.
+
+## 2026-08-22 continuation checkpoint 2195 local verification
+
+- Final focused evidence passed direct boundary/status/path/hash/cleanup `7/7`,
+  benign unsigned/malformed `2/2`, catalog-only PowerShell rejection `1/1`,
+  embedded Microsoft Edge signer and right/wrong SHA-256 binding `2/2`, engine
+  diagnostic `1/1`, and native Windows roots `10/10`.
+- Complete Native Engine passed `440` library plus `6` binary tests; strict
+  all-target/all-feature Clippy with `-D warnings`, rustfmt, and standalone
+  checks passed. The complete Rust workspace rerun passed `1,484/1,484`, full
+  Flutter passed `838/838`, analyzer passed, and source contracts passed
+  `626/626`.
+- PowerShell parsers, dependency evidence, no-malware, false-positive,
+  product-copy, branding, update, quarantine, restore, logging, bounded
+  resource, lockfile, and `git diff --check` gates passed. No lockfile changed.
+- The definitive verifier ran from `2026-08-22T14:59:32.8735961Z` to
+  `2026-08-22T15:10:58.9771126Z` and passed `224/224` steps with zero failed or
+  skipped verifier steps in `686.1s`. Its built-in validator passed and a
+  separate `-RequireFullSuite` validator rerun passed in `2.7s`. The stale
+  checkpoint-2194 `223`-step report was rejected as expected.
+- The packaging-contract step ran 24 tests with three explicit optional
+  Windows-symlink-privilege skips. The containing verifier step passed; no
+  antivirus runtime path was skipped. Hosted package runners remain required.
+- A cold `cargo build --workspace --release --locked` in a new prevalidated
+  temporary target passed in `3m27s`. Cargo then removed exactly 4,033 isolated
+  temporary files (`1.4 GiB`); no repository or evidence file was deleted.
+- The protected ProgramData vault remained exactly `16,072` files, zero
+  directories, `4,522,733` bytes, `5,357` each `.avoraxq`/`.json`/`.auth`, one
+  `.metadata_auth_key`, and zero pending files after verification.
+- Exact-head hosted CI/package evidence, implementation/evidence commits,
+  PR/merge, and safe original-tree synchronization remain pending. No release,
+  publication, install, service/driver start, Defender change, or direct-main
+  push occurred.
+
+## 2026-08-22 continuation checkpoint 2195 implementation-head hosting
+
+- Committed the implementation, tests, verifier/validator, source contracts,
+  and design/audit documentation as
+  `1e6f86a32f80f6cecec737f249d90a858c0fcb39` and pushed only branch
+  `agent/checkpoint-2195-native-direct-authenticode`.
+- Opened draft PR `#47`. Exact-head Avorax CI run `32581595210` passed security,
+  dependency, protection, performance, Rust/Clippy, Flutter, branding, and Unix
+  quarantine permission jobs.
+- Desktop Packages push run `32581579353` and PR run `32581595294` passed package
+  contracts, Windows x64 MSI/EXE, Linux x64 DEB/tar, macOS arm64/x64 DMG,
+  six-artifact consolidation, checksums, and lockfile SBOM evidence.
+- Both prerelease publication jobs were explicitly skipped. No artifact was
+  installed, released, or published. Evidence-head and merged-main checks,
+  merge, and original-tree synchronization remain pending.

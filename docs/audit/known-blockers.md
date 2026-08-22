@@ -1589,13 +1589,15 @@ enforcement, or pre-execution blocking is claimed.
 
 ## Checkpoint 2195 Direct Authenticode
 
-- **Locally verified; hosted evidence pending:** The PowerShell/JSON signature
+- **Implementation head locally and hosted verified:** The PowerShell/JSON signature
   probe is replaced by direct handle-based `WinVerifyTrust`, exact Microsoft
   leaf organization/common-name checks, explicit state cleanup, and a scan-path
   SHA-256 binding read. Focused benign fixtures, full Native/workspace/Flutter
   suites, strict lint, dependency gates, a cold locked release build, and the
-  definitive verifier pass locally. Exact-head hosted CI/packages, PR/merge,
-  and original-tree synchronization remain pending.
+  definitive verifier pass locally. Exact implementation-head CI plus all
+  Windows/Linux/macOS package jobs pass with publication skipped. Evidence-head
+  CI/packages, PR/merge, merged-main checks, and original-tree synchronization
+  remain pending.
 - **Conservative failure boundary:** Missing or invalid signatures are not
   trusted. Revocation-cache absence, policy/security settings, provider/API
   failures, file I/O, unknown statuses, and WinTrust cleanup failures are
