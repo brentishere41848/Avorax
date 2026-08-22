@@ -157,4 +157,22 @@ release gates; a source-level unchanged-lock statement does not replace them.
 
 Both lockfiles remained byte-unchanged in the checkpoint diff. The definitive
 dependency-evidence step and the complete locked Rust workspace passed locally;
-hosted package SBOM evidence remains pending for the checkpoint head.
+hosted package SBOM evidence passed on implementation head, evidence head, and
+merged main with publication skipped.
+
+## Native Secondary Signature API Surface
+
+Checkpoint 2197 adds no dependency, package, Cargo feature, executable helper,
+parser, network client, or lockfile change. It uses
+`WINTRUST_SIGNATURE_SETTINGS`, `WSS_GET_SECONDARY_SIG_COUNT`, and
+`WSS_VERIFY_SPECIFIC` from the WinTrust declarations already enabled through
+pinned `windows-sys 0.61.2`. The reviewed registry license remains
+`MIT OR Apache-2.0`.
+
+Both lockfiles remain unchanged in the diff. Strict Native Clippy, both complete
+locked workspace variants, the definitive dependency-evidence gate, and the
+226-step local verifier passed. Exact implementation-head package push/PR runs
+`32591426228`/`32591435262` passed lockfile SBOM generation and artifact
+consolidation with publication skipped. Evidence-head and merged-main package
+proof plus final release-artifact license/notice review remain pending; source
+API reuse is not final-binary license or notice evidence.

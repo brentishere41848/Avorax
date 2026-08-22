@@ -1639,9 +1639,42 @@ enforcement, or pre-execution blocking is claimed.
   embedded/unsigned/malformed tests pass `5/5`; Native Engine passes `445 + 6`;
   the Rust workspace passes `1,489`; Flutter passes `838/838`; source contracts pass
   `626/626`. The all-features workspace also passes `1,490`. The final
-  definitive verifier and independent validator pass `225/225` in `577.2s`;
-  hosted package evidence remains pending.
-- **Still limited / blocked:** Secondary embedded signature enumeration,
+  definitive verifier and independent validator pass `225/225` in `577.2s`.
+  Exact implementation/evidence heads, normal PR merge, merged-main CI/packages,
+  and preconditioned 12-file synchronization pass with publication skipped.
+- **Still limited / blocked after checkpoint 2196:** Secondary embedded signature enumeration,
   in-call hard cancellation, memory-mapped and post-verdict mutation,
   production signing, installed LocalSystem/service/UI E2E, signed-driver IPC,
   pre-execution blocking, and production accuracy remain separate work.
+
+## Checkpoint 2197 Secondary Embedded Authenticode
+
+- **Locally verified; hosted integration pending:** Native Engine can enumerate
+  secondary embedded signatures only after one valid primary signature establishes a
+  definitive policy result. Primary output is restricted to zero or the
+  initialized untouched sentinel, secondary requested/returned indices must
+  match exactly, and stable reported counts, state close/reset between calls,
+  the 16-total cap, exact Microsoft leaf identity, and scanned-content digest
+  binding are all mandatory. Secondary
+  tests pass `14/14`; Native Engine, complete Rust workspaces, Flutter, source
+  contracts, strict lint, and the exact `226/226` verifier/validator pass.
+  Implementation head CI and package runs pass across all target platforms with
+  publication skipped. Evidence-head, merge, and synchronized-tree proof remain
+  pending.
+- **Conservative invalid-primary boundary:** A definitively invalid primary is
+  not rescued by a secondary signature. It contributes no embedded publisher
+  trust and proceeds only to the existing bounded catalog fallback. This can
+  reject unusual files where Windows might expose a usable secondary despite an
+  invalid primary; accepting that shape requires stronger policy evidence.
+- **Secondary catalog signatures remain unsupported:** Checkpoint 2197 applies
+  `WINTRUST_SIGNATURE_SETTINGS` only to `WTD_CHOICE_FILE`. Catalog candidates
+  retain checkpoint 2196's one verified signer evaluation. A separate bounded
+  design and benign fixture are required before claiming multi-signed catalogs.
+- **Host availability:** The runtime test depends on a bounded known-name
+  multi-signed Microsoft Edge DLL beneath the installed x64 Edge application
+  directory. Absence is a visible test blocker, not a skip or synthetic pass.
+- **Unchanged technical limits:** In-process WinTrust calls cannot be hard-
+  cancelled. Earlier writable/memory-mapped handles and post-verdict mutation
+  remain user-mode TOCTOU limits. No execution authorization, kernel blocking,
+  Defender replacement, production accuracy, installed-service, or signed-
+  driver claim is introduced.

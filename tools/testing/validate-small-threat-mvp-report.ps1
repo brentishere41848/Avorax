@@ -1904,8 +1904,8 @@ if ($RequireFullSuite) {
   if ($skipFlutter -or $skipRust) {
     throw "-RequireFullSuite requires skip_flutter=false and skip_rust=false."
   }
-  if ($steps.Count -ne 225) {
-    throw "-RequireFullSuite expected exactly 225 verifier steps for this source revision, found $($steps.Count)."
+  if ($steps.Count -ne 226) {
+    throw "-RequireFullSuite expected exactly 226 verifier steps for this source revision, found $($steps.Count)."
   }
   if ($steps[0].name -ne "local-core safe simulator scan reporting") {
     throw "-RequireFullSuite first step mismatch: $($steps[0].name)"
@@ -1939,6 +1939,7 @@ if ($RequireFullSuite) {
   Assert-ReportContainsStep $steps "native-engine direct Authenticode unsigned/malformed regressions"
   Assert-ReportContainsStep $steps "native-engine direct Authenticode Microsoft-signed/hash-binding regressions"
   Assert-ReportContainsStep $steps "native-engine catalog Authenticode Microsoft-signed/hash-binding regressions"
+  Assert-ReportContainsStep $steps "native-engine secondary embedded Authenticode Microsoft-signed regressions"
   Assert-ReportContainsStep $steps "native-engine ClickOnce carrier heuristic detection"
   Assert-ReportContainsStep $steps "native-engine Java Web Start carrier heuristic detection"
   Assert-ReportContainsStep $steps "native-engine Windows scriptlet carrier heuristic detection"
@@ -2049,7 +2050,10 @@ if ($RequireFullSuite) {
   Assert-ReportScopeContains $verifiedScopeText "Native Engine uses direct handle-based WinVerifyTrust with no script, child process, JSON, or network retrieval" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "a second bounded SHA-256 read matching the bytes already scanned" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "Catalog lookup is capped at 16 candidates, rejects non-local catalog paths, and fails visibly on API, policy, limit, or cleanup errors" "verification_scope.verified"
-  Assert-ReportScopeContains $verifiedScopeText "Secondary signatures, memory-mapped mutation, native-call hard cancellation, and pre-execution blocking are not claimed" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "valid primary or bounded secondary embedded Authenticode signature" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Embedded verification requests primary index zero, requires primary output to be zero or untouched, checks every secondary returned index exactly, caps the total at 16, closes each WinTrust state before the next signature, and fails visibly on count drift, API, policy, limit, or cleanup errors" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "An invalid primary embedded signature is not rescued by a secondary signature, but catalog fallback remains available" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Secondary catalog signatures, memory-mapped mutation, native-call hard cancellation, and pre-execution blocking are not claimed" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "Native Engine's disabled test-only legacy quarantine store uses token-derived native DACL application and verification without an external helper" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "production quarantine remains owned by Local Core" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "client UI tab/button/setting source inventory gate" "verification_scope.verified"

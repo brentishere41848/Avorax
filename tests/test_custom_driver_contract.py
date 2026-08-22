@@ -19881,6 +19881,11 @@ def test_small_threat_mvp_verifier_is_safe_and_reproducible():
         in source
     )
     assert '"native_catalog_authenticode"' in source
+    assert (
+        "native-engine secondary embedded Authenticode Microsoft-signed regressions"
+        in source
+    )
+    assert '"native_secondary_authenticode"' in source
     assert "native-engine known-good hash regressions" in source
     assert "known_good" in source
     assert "native-engine known-bad hash regressions" in source
@@ -20030,9 +20035,18 @@ def test_small_threat_mvp_verifier_is_safe_and_reproducible():
         in source
     )
     assert "a second bounded SHA-256 read matching the bytes already scanned" in source
+    assert "valid primary or bounded secondary embedded Authenticode signature" in source
+    assert "bounded SHA-256 system-catalog membership" in source
+    assert "whose verified leaf has the exact Microsoft identity" in source
+    assert "requests primary index zero" in source
+    assert "requires primary output to be zero or untouched" in source
+    assert "checks every secondary returned index exactly" in source
+    assert "caps the total at 16" in source
+    assert "closes each WinTrust state before the next signature" in source
+    assert "fails visibly on count drift" in source
     assert (
-        "bounded SHA-256 system-catalog membership whose verified leaf has the exact "
-        "Microsoft identity"
+        "An invalid primary embedded signature is not rescued by a secondary signature, "
+        "but catalog fallback remains available"
         in source
     )
     assert (
@@ -20041,7 +20055,7 @@ def test_small_threat_mvp_verifier_is_safe_and_reproducible():
         in source
     )
     assert (
-        "Secondary signatures, memory-mapped mutation, native-call "
+        "Secondary catalog signatures, memory-mapped mutation, native-call "
         "hard cancellation, and pre-execution blocking are not claimed"
         in source
     )
@@ -20771,8 +20785,8 @@ def test_small_threat_mvp_report_validator_is_strict_and_local():
     assert "driver_request_known_good_allows_in_lockdown" in source
     assert "Get-AvoraxGateFile ([System.IO.Path]::GetFullPath($text)) $Description" in source
     assert "-RequireFullSuite requires skip_flutter=false and skip_rust=false" in source
-    assert "if ($steps.Count -ne 225)" in source
-    assert "-RequireFullSuite expected exactly 225 verifier steps" in source
+    assert "if ($steps.Count -ne 226)" in source
+    assert "-RequireFullSuite expected exactly 226 verifier steps" in source
     assert 'Assert-ReportContainsStep $steps "Branding gate"' in source
     assert 'Assert-ReportContainsStep $steps "False-positive gate"' in source
     assert 'Assert-ReportContainsStep $steps "Protection gate without driver feature claim"' in source
@@ -20790,6 +20804,25 @@ def test_small_threat_mvp_report_validator_is_strict_and_local():
         'Assert-ReportScopeContains $verifiedScopeText "Native Engine uses direct '
         'handle-based WinVerifyTrust with no script, child process, JSON, or network '
         'retrieval"'
+        in source
+    )
+    assert (
+        'Assert-ReportScopeContains $verifiedScopeText "valid primary or bounded '
+        'secondary embedded Authenticode signature"'
+        in source
+    )
+    assert (
+        'Assert-ReportScopeContains $verifiedScopeText "Embedded verification requests '
+        'primary index zero, requires primary output to be zero or untouched, checks '
+        'every secondary returned index exactly, caps the total at 16, closes each '
+        'WinTrust state before the next signature, and fails visibly on count drift, '
+        'API, policy, limit, or cleanup errors"'
+        in source
+    )
+    assert (
+        'Assert-ReportScopeContains $verifiedScopeText "An invalid primary embedded '
+        'signature is not rescued by a secondary signature, but catalog fallback '
+        'remains available"'
         in source
     )
     assert (
@@ -20882,6 +20915,10 @@ def test_small_threat_mvp_report_validator_is_strict_and_local():
     )
     assert (
         'Assert-ReportContainsStep $steps "native-engine catalog Authenticode Microsoft-signed/hash-binding regressions"'
+        in source
+    )
+    assert (
+        'Assert-ReportContainsStep $steps "native-engine secondary embedded Authenticode Microsoft-signed regressions"'
         in source
     )
     assert (
@@ -21358,7 +21395,7 @@ def test_small_threat_mvp_report_validator_is_strict_and_local():
         in source
     )
     assert (
-        'Assert-ReportScopeContains $verifiedScopeText "Secondary signatures, '
+        'Assert-ReportScopeContains $verifiedScopeText "Secondary catalog signatures, '
         'memory-mapped mutation, native-call hard cancellation, and pre-execution '
         'blocking are not claimed" "verification_scope.verified"'
         in source
@@ -24849,6 +24886,19 @@ def test_native_authenticode_uses_direct_hash_bound_file_and_catalog_wintrust():
     assert "CryptCATAdminReleaseContext(" in production
     assert "SHA256_CATALOG_HASH_BYTES: usize = 32" in production
     assert "MAX_CATALOG_CANDIDATES: usize = 16" in production
+    assert "MAX_EMBEDDED_SIGNATURES: u32 = 16" in production
+    assert "WINTRUST_SIGNATURE_SETTINGS" in production
+    assert "WSS_GET_SECONDARY_SIG_COUNT | WSS_VERIFY_SPECIFIC" in production
+    assert "pSignatureSettings: &mut signature_settings" in production
+    assert "signature_settings.dwVerifiedSigIndex = u32::MAX" in production
+    assert "verified_signature_index_is_acceptable(" in production
+    assert "reported == 0 || reported == u32::MAX" in production
+    assert "reported == requested" in production
+    assert "signature_settings.cSecondarySigs == secondary_count" in production
+    assert "for index in 1..=secondary_count" in production
+    assert "if primary == EmbeddedSignatureVerdict::Invalid" in production
+    assert "trust_data.hWVTStateData = null_mut()" in production
+    assert "trust_data.dwStateAction = WTD_STATEACTION_VERIFY" in production
     assert "Prefix::Disk(_) | Prefix::VerbatimDisk(_)" in production
     assert "catalog_path.is_absolute() && local_drive" in production
     assert "catalog context cleanup failed" in production
@@ -24870,6 +24920,14 @@ def test_native_authenticode_uses_direct_hash_bound_file_and_catalog_wintrust():
     )
     assert "content_binding_rejects_oversized_file_before_wintrust" in wintrust
     assert "wintrust_cleanup_failure_cannot_return_a_verdict" in wintrust
+    assert (
+        "native_secondary_authenticode_aggregation_is_bounded_ordered_and_fail_visible"
+        in wintrust
+    )
+    assert (
+        "native_secondary_authenticode_microsoft_signed_edge_dll_verifies_exact_index"
+        in wintrust
+    )
     assert "catalog_member_tag_is_uppercase_hex_with_one_terminator" in wintrust
     assert "catalog_path_buffer_requires_one_bounded_local_absolute_path" in wintrust
     assert (
