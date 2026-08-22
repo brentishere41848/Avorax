@@ -104,8 +104,15 @@ jobs. Desktop Packages push/PR runs `32591426228`/`32591435262` passed package
 contracts, Windows x64 MSI/EXE, Linux x64 DEB/tar, macOS x64/arm64 DMGs,
 six-artifact consolidation, checksums, and lockfile SBOM generation. Publish
 jobs `97077392409` and `97077262064` were intentionally skipped. No artifact
-was installed, published, or released. Evidence-head CI/packages, normal merge,
-merged-main checks, and preconditioned synchronization remain pending.
+was installed, published, or released. Evidence head
+`137ee29052a10696956256629f8d729ec561ba40` passed Avorax CI `32592153314`
+and Desktop Packages `32592153266`, with publication skipped. PR `#49` merged
+normally as `736a9f6ccdb6f7512c854aa816361fc322489222`. Merged-main CI
+`32593102355` and packages `32593102373` passed with publication skipped. All
+12 explicit files synchronized to the original tree after exact old/new blob
+preconditions matched; destination hashes and focused secondary `3/3`, strict
+Clippy, rustfmt, parser, and source-contract `626/626` checks passed. The vault
+invariant remained unchanged.
 
 ## Remaining Limits
 

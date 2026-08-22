@@ -4,6 +4,34 @@
 
 Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-install, repair, recovery, offline, and manual-install paths only. Normal app updates target signed `.aup` packages applied by Avorax Update Service.
 
+- Checkpoint 2198 release Authenticode isolation is implemented and locally
+  verified. Non-debug Local Core and Guard builds route the
+  existing direct, handle-based WinTrust policy through an exact-current-
+  executable child mode with strict nonce-bound JSON, optional scan-hash
+  binding, bounded pipes and diagnostics, a 15-second deadline, and a Windows
+  kill-on-close Job. The parent holds a bounded regular non-reparse read handle
+  to its own executable while launching it without shell, PATH lookup, network,
+  or a visible window. Timeout, kill, reap, protocol, hash, and cleanup failures
+  are fail-visible and cannot supply Microsoft trust. Debug builds retain the
+  direct path for deterministic unit tests. Local Core and Guard entry points,
+  adversarial benign tests, release smoke, verifier/validator contracts, source
+  contracts, and audit documents pass in the uncommitted batch on
+  `agent/checkpoint-2198-native-catalog-secondary-authenticode`. Helper isolation
+  passes `4/4`, focused Authenticode passes `26/26`, Native Engine passes
+  `452 + 6`, both complete locked Rust workspace variants pass, Flutter passes
+  `838/838`, source contracts pass `627/627`, strict Clippy and release Local
+  Core/Guard builds pass, and the benign release smoke passes on both hosts. The
+  definitive verifier and independent validator pass exactly `229/229` in
+  `433s`; the validator rejects stale 226-step evidence. The protected vault
+  remains unchanged. Exact implementation head
+  `10668f17e084187014cc4bfa34a6191c47493d7c` passes Avorax CI
+  `32597124365` and Desktop Packages push/PR runs
+  `32597113497`/`32597124404`: Windows MSI/EXE, Linux DEB/tar, both macOS DMGs,
+  six-artifact consolidation, checksums, and lockfile SBOM pass; publication is
+  skipped. Draft PR `#50` is open. Evidence-head checks, merge, and original-
+  tree sync remain pending. The helper uses the same token and is a
+  hard-timeout boundary, not a least-privilege sandbox; secondary catalog
+  signatures remain conservatively unsupported.
 - Checkpoint 2197 secondary embedded Authenticode is implemented and locally
   verified. Native Engine requests primary index zero and the signature count,
   accepts only primary output zero or the documented provider-untouched
@@ -22,8 +50,13 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
   Implementation head `e4dcb89e9b6fe487713d07283a719ad41317af22`
   passes Avorax CI `32591435260` and Desktop Packages push/PR runs
   `32591426228`/`32591435262`; every platform and consolidation passed and
-  publication was skipped. Evidence-head, merge, merged-main, and original-tree
-  synchronization evidence are still pending and are not claimed.
+  publication was skipped. Evidence head
+  `137ee29052a10696956256629f8d729ec561ba40` passed CI `32592153314` and
+  packages `32592153266`; PR `#49` merged normally as
+  `736a9f6ccdb6f7512c854aa816361fc322489222`. Merged-main CI
+  `32593102355` and packages `32593102373` passed with publication skipped.
+  All 12 explicit files synchronized to the original tree only after exact
+  old/new blob preconditions matched, and focused destination checks passed.
 - Checkpoint 2196 catalog Authenticode is implemented and locally verified.
   Native Engine now has bounded same-handle SHA-256 catalog lookup,
   at most 16 candidates, local-path validation, cache-only WinTrust, exact
@@ -50,12 +83,19 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
 
 ## Current Commit
 
-- Checkpoint 2197 implementation head
-  `e4dcb89e9b6fe487713d07283a719ad41317af22` is pushed on draft PR `#49` from
-  `agent/checkpoint-2197-native-secondary-authenticode`, based on merged main
-  `6d721d5d683c8ee90ccb40945894012ceda76803`. Exact-head CI/packages pass with
-  publication skipped. It is not yet merged, published, released, or
-  synchronized.
+- Checkpoint 2198 is an uncommitted, locally verified implementation batch on
+  `agent/checkpoint-2198-native-catalog-secondary-authenticode`, based on
+  merged main `736a9f6ccdb6f7512c854aa816361fc322489222`. The definitive local verifier
+  and independent validator pass `229/229`. Exact implementation-head CI and
+  package runs pass with publication skipped; evidence-head checks, PR `#50`
+  merge, and original-tree synchronization are still pending. It is not a
+  release head.
+- Checkpoint 2197 implementation/evidence heads
+  `e4dcb89e9b6fe487713d07283a719ad41317af22` and
+  `137ee29052a10696956256629f8d729ec561ba40` merged through PR `#49` as
+  `736a9f6ccdb6f7512c854aa816361fc322489222`. Exact-head and merged-main
+  CI/package evidence passes with publication skipped; the 12-file original-
+  tree sync and focused checks passed. This is not a release head.
 - Checkpoint 2196 implementation/evidence heads
   `3eb079cce859b3523dcb22c983ba81628900f9c5` and
   `e3b4bdddb1a952c70ef7f4c690f7bff4fac963a0` merged through PR `#48` as
@@ -81,7 +121,7 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
   transient macOS arm64 DMG verification failure; failed-job rerun attempt 2
   passed and publication remained skipped. Checkpoint 2193 hardens that race.
 - Current public release tag: `v0.1.15-beta.3`, published as a prerelease on
-  2026-07-20 with independently verified checksums. Checkpoints 2178-2196 are
+  2026-07-20 with independently verified checksums. Checkpoints 2178-2197 are
   source hardening and do not create a new release tag.
 
 ## Prior Checkpoint Evidence - 2026-08-21

@@ -1649,7 +1649,7 @@ enforcement, or pre-execution blocking is claimed.
 
 ## Checkpoint 2197 Secondary Embedded Authenticode
 
-- **Locally verified; hosted integration pending:** Native Engine can enumerate
+- **Verified locally, hosted, merged, and synchronized:** Native Engine can enumerate
   secondary embedded signatures only after one valid primary signature establishes a
   definitive policy result. Primary output is restricted to zero or the
   initialized untouched sentinel, secondary requested/returned indices must
@@ -1658,9 +1658,9 @@ enforcement, or pre-execution blocking is claimed.
   binding are all mandatory. Secondary
   tests pass `14/14`; Native Engine, complete Rust workspaces, Flutter, source
   contracts, strict lint, and the exact `226/226` verifier/validator pass.
-  Implementation head CI and package runs pass across all target platforms with
-  publication skipped. Evidence-head, merge, and synchronized-tree proof remain
-  pending.
+  Implementation and evidence heads, CI and package runs across all target
+  platforms, normal PR merge, merged-main checks, and preconditioned 12-file
+  synchronization pass with publication skipped.
 - **Conservative invalid-primary boundary:** A definitively invalid primary is
   not rescued by a secondary signature. It contributes no embedded publisher
   trust and proceeds only to the existing bounded catalog fallback. This can
@@ -1678,3 +1678,46 @@ enforcement, or pre-execution blocking is claimed.
   remain user-mode TOCTOU limits. No execution authorization, kernel blocking,
   Defender replacement, production accuracy, installed-service, or signed-
   driver claim is introduced.
+
+## Checkpoint 2198 Release Authenticode Isolation
+
+- **Local and implementation-head hosted evidence verified:** Non-debug Native Engine calls are routed
+  through a hidden mode of the exact current Local Core or Guard executable.
+  The strict schema-v1 protocol binds request and response with a random UUID-v4
+  nonce, carries one bounded UTF-16 path plus optional expected SHA-256, and
+  bounds request, stdout, stderr, and diagnostic sizes. Debug builds retain the
+  direct path for deterministic unit tests. Helper isolation passes `4/4`,
+  focused Authenticode passes `26/26`, both host release builds and benign smoke
+  pass, Native Engine passes `452 + 6`, both locked workspace variants pass,
+  Flutter passes `838/838`, source contracts pass `627/627`, and the definitive
+  verifier/validator passes `229/229` in `433s`. Implementation head
+  `10668f17e084187014cc4bfa34a6191c47493d7c` passes CI `32597124365` and
+  package push/PR `32597113497`/`32597124404` with publication skipped.
+  Evidence-head CI/packages, merge, and synchronized-tree evidence remain pending.
+- **Hard-timeout boundary:** The parent retains a regular non-reparse read handle
+  to its bounded current executable, starts it without shell/PATH/network/window,
+  assigns it to a kill-on-close Windows Job, enforces a 15-second deadline, and
+  separately bounds kill/reap. Spawn, assignment, pipe, timeout, kill, reap,
+  protocol, nonce, digest, child, and cleanup failures are visible and supply no
+  Microsoft trust. The deadline begins after synchronous Windows process
+  creation and Job assignment; the process-creation API call itself has no
+  cancellation contract.
+- **Privilege boundary remains partial:** The helper intentionally uses the same
+  token as its Local Core or Guard parent. It isolates lifetime and failure, but
+  is not an AppContainer, restricted-token sandbox, authenticated cross-token
+  service, or least-privilege split. A stronger token boundary needs an explicit
+  IPC and access design plus installed-service evidence.
+- **Current-executable trust boundary:** The running image, operating system
+  loader, Job/process/pipe APIs, installed location ACLs, WinTrust providers,
+  trust stores, and protected catalog state remain in the trusted computing
+  base. Retaining a read handle narrows replacement races but cannot revoke a
+  write or memory-map handle opened earlier or stop post-verdict mutation.
+- **Secondary catalogs remain unsupported:** Reviewed public contracts establish
+  selected secondary signatures for file trust but do not justify applying the
+  same index assumptions to `WTD_CHOICE_CATALOG`. Catalog verification therefore
+  remains the existing one-signer conservative path until a documented contract
+  and benign fixture exist.
+- **Unchanged release blockers:** Production package signing, installed
+  LocalSystem/service/UI E2E, signed-driver IPC, pre-execution blocking,
+  Defender coexistence, and production false-positive/detection-rate evidence
+  remain separate prerequisites. Defender must not be weakened.

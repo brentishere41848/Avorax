@@ -1274,3 +1274,54 @@ selected-signature semantics remain trusted boundaries. In-call cancellation,
 memory-mapped mutation, post-verdict mutation, execution authorization,
 pre-execution blocking, Defender replacement, and detection-rate claims remain
 outside this checkpoint.
+
+## Checkpoint 2198 WinTrust Process-Isolation Boundary
+
+One native `WinVerifyTrust` invocation has no in-call cancellation API. Running
+that call in a long-lived Local Core or Guard process can exceed the caller's
+scan deadline even though network retrieval is disabled. Abruptly killing the
+service or abandoning an in-process thread would create wider state, lifetime,
+and cleanup risks. Checkpoint 2198 therefore scripts a release-only child-
+process lifetime boundary while preserving the direct verifier as the sole
+verdict implementation.
+
+The parent resolves its exact current executable, requires an absolute local-
+drive path and bounded regular non-reparse file, opens it with read sharing only,
+and keeps that handle alive through child execution and response validation. It
+starts the same image with one exact hidden argument, no shell, no ambient PATH
+lookup, no network operation, and no visible window. The child is assigned to a
+Windows Job configured to kill all members when its last handle closes. The
+parent imposes a 15-second decision deadline and a separate two-second reap
+deadline. Spawn, assignment, input, pipe, timeout, kill, reap, and cleanup
+failures remain diagnostics and cannot become a trusted publisher verdict.
+The deadline starts after synchronous Windows process creation and Job
+assignment. The process-creation call itself is not cancellable through this
+design and remains an operating-system boundary.
+
+The protocol accepts exactly one bounded schema-v1 JSON request containing a
+random UUID-v4 nonce, one bounded UTF-16 path, and an optional expected SHA-256.
+The response must match schema and nonce exactly and is accepted only when the
+child exits successfully, emits one bounded response, and reports either the
+real direct verifier verdict or a bounded error. Extra fields, malformed JSON,
+wrong nonce, wrong digest, excess data, invalid path shape, or contradictory
+status/verdict fields fail visibly. Standard error is retained only as bounded
+diagnostic evidence. The helper never executes the inspected fixture.
+
+This boundary contains duration and process failure, not privilege. The child
+uses the same token as its Local Core or Guard parent, so it is neither a
+restricted-token sandbox nor authenticated cross-privilege IPC. The operating
+system loader, Windows Job/process/pipe semantics, current executable and its
+installed ACLs, WinTrust providers, trust stores, and protected catalog state
+remain trusted. A retained read handle cannot revoke a writable or memory-
+mapped handle opened earlier, prevent post-verdict mutation, authorize later
+execution, or provide pre-execution blocking.
+
+Secondary catalog signatures remain conservatively unsupported. The reviewed
+Windows contract documents selected secondary signatures for file trust; it
+does not provide enough evidence to reuse those index assumptions for catalog
+trust. Checkpoint 2198 does not weaken this limitation, Defender, Windows
+security, or the existing conjunction of valid Windows policy, exact Microsoft
+leaf identity, and scanned-content SHA-256 binding. The documented local batch
+passes focused, full, release-smoke, and definitive verification (`229/229` in
+`433s`). Hosted exact-head, merge, and synchronized-tree evidence remain pending
+and no installed, sandbox, production-signing, or pre-execution claim is made.

@@ -13,6 +13,83 @@ Lead-engineer product-hardening pass across the Avorax repository. Goal is to mo
 - The bundled native ML model is treated as development-only unless release metadata and gates prove production readiness.
 - MSI/EXE installers are first-install/repair/recovery/offline paths. Normal in-app updates should use verified `.aup` packages.
 
+## 2026-08-22 continuation checkpoint 2198 scripting
+
+- Selected a bounded release-process isolation boundary for native WinTrust
+  calls. Microsoft documents secondary-signature selection for file trust, but
+  the reviewed contract does not establish equivalent secondary-index behavior
+  for `WTD_CHOICE_CATALOG`; secondary catalogs therefore remain unsupported
+  instead of being enabled through an assumption.
+- Scripted non-debug Native Engine routing through a hidden mode of the exact
+  current Local Core or Guard executable. The parent opens that host as a
+  bounded regular non-reparse file with read sharing only, starts it without a
+  shell, PATH lookup, network, or visible window, assigns it to a Windows Job
+  configured to kill on close, and enforces a 15-second deadline plus a bounded
+  reap interval. Debug builds retain direct verification for unit-test harnesses.
+- Scripted a strict schema-v1 request/response protocol with random UUID-v4
+  nonce, bounded UTF-16 path, optional expected SHA-256, bounded request/stdout/
+  stderr/error text, exact nonce matching, and fail-visible exit/protocol/hash/
+  timeout/kill/reap/cleanup handling. The child executes the existing direct
+  handle-based WinTrust, exact-Microsoft signer, catalog fallback, and digest-
+  binding policy; it does not weaken the verdict conjunction.
+- Scripted exact hidden entry points in Local Core and Guard, rejection of
+  unknown or multiple Guard modes, adversarial native protocol/nonce/timeout/
+  host-lock tests, and a non-installing release smoke using installed Edge,
+  catalog-backed Windows PowerShell, an unsigned temporary text file, and a
+  wrong digest. Fixtures are inspected only and never executed.
+- Scripted verifier/validator changes for exactly 229 steps, source-contract
+  coverage, this run log, the matrix, threat model, blockers, dependency notes,
+  and checkpoint report before any test execution. No checkpoint-2198 build,
+  test, smoke, verifier, or hosted result is claimed at this stage. The child
+  uses the same token and is not a least-privilege sandbox; current-executable
+  integrity, Windows Job/process semantics, WinTrust, and the operating system
+  remain trusted boundaries.
+
+## 2026-08-22 continuation checkpoint 2198 local verification
+
+- PowerShell parsing, rustfmt, `git diff --check`, and Python source contracts
+  passed. Source contracts finished `627/627` after a rustfmt-resistant source
+  marker adjustment.
+- Helper protocol, nonce, timeout, and host-lock regressions passed `4/4`.
+  Focused direct, catalog, secondary, malformed, signer, and hash-binding
+  Authenticode regressions passed `26/26`; exact Local Core and Guard hidden-mode
+  entry tests passed `1/1` each.
+- Strict all-target/all-feature Native Engine Clippy and strict all-target Local
+  Core and Guard Clippy passed. Locked release builds for Local Core and Guard
+  passed. The non-installing release smoke passed for both hosts against
+  embedded-signed Edge, catalog-backed Windows PowerShell, unsigned temporary
+  text, and wrong expected SHA-256. Fixtures were inspected only.
+- Complete Native Engine tests passed `452 + 6`; both standard and all-feature
+  locked Rust workspace suites passed. Flutter analyzer reported no issues and
+  Flutter tests passed `838/838`.
+- The final self-validating verifier report passed exactly `229/229` steps with
+  zero failed or skipped steps from `2026-08-22T20:23:12Z` through
+  `2026-08-22T20:30:25Z` (`433s`). The independent validator accepted it with
+  `-RequireFullSuite`; the same validator rejected stale checkpoint-2197
+  `226`-step evidence with the expected exact-step error.
+- Read-only post-suite inventory again found exactly 16,072 protected vault
+  files, zero directories, 4,522,733 bytes, 5,357 each `.avoraxq`/`.json`/
+  `.auth`, one `.metadata_auth_key`, and zero pending. `.verification` remains
+  untracked. Hosted exact-head CI/packages, commit, merge, and original-tree
+  synchronization remain pending.
+
+## 2026-08-22 continuation checkpoint 2198 implementation-head evidence
+
+- Committed the exact 18-file implementation/test/verifier/documentation batch
+  as `10668f17e084187014cc4bfa34a6191c47493d7c`, pushed only branch
+  `agent/checkpoint-2198-native-catalog-secondary-authenticode`, and opened draft
+  PR `#50`. No direct-main push occurred.
+- Exact-head Avorax CI `32597124365` passed security/protection/performance,
+  Unix quarantine permissions, Flutter/protocol, branding/copy, and Rust Local
+  Core/Guard jobs.
+- Desktop Packages push `32597113497` and PR `32597124404` passed package
+  contracts, Windows x64 MSI/EXE, Linux x64 DEB/tar, macOS x64/arm64 DMG,
+  six-artifact consolidation, SHA-256 checksums, and lockfile CycloneDX SBOM.
+  Both publication jobs were explicitly skipped.
+- No package was installed, released, or published. Evidence-head CI/packages,
+  normal PR merge, merged-main checks, and preconditioned original-tree sync
+  remain pending.
+
 ## 2026-08-22 continuation checkpoint 2197
 
 - Completed the no-test scripting phase for bounded secondary embedded
@@ -64,8 +141,15 @@ Lead-engineer product-hardening pass across the Avorax repository. Goal is to mo
   package contracts, Windows x64 MSI/EXE, Linux x64 DEB/tar, macOS x64/arm64
   DMGs, six-artifact consolidation, checksums, and lockfile SBOM generation.
   Both publication jobs were intentionally skipped. No artifact was installed,
-  published, or released. Evidence-head, merge, merged-main, and safe sync
-  remain pending.
+  published, or released. Evidence head
+  `137ee29052a10696956256629f8d729ec561ba40` passed Avorax CI `32592153314`
+  and Desktop Packages `32592153266`, with publication skipped. PR `#49`
+  merged normally as `736a9f6ccdb6f7512c854aa816361fc322489222`.
+  Merged-main CI `32593102355` and packages `32593102373` passed, again with
+  publication skipped. A preconditioned 12-file sync to the original tree then
+  passed exact old/new blob and destination-hash checks; focused destination
+  secondary tests `3/3`, strict Clippy, rustfmt, parsers, and source contracts
+  `626/626` passed. The protected vault invariant remained unchanged.
 
 ## 2026-08-22 continuation checkpoint 2196
 

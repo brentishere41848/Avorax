@@ -176,3 +176,29 @@ locked workspace variants, the definitive dependency-evidence gate, and the
 consolidation with publication skipped. Evidence-head and merged-main package
 proof plus final release-artifact license/notice review remain pending; source
 API reuse is not final-binary license or notice evidence.
+
+## Native Authenticode Isolation API Surface
+
+Checkpoint 2198 adds no package, registry dependency, network client, parser
+crate, executable artifact, or dependency version. It extends the existing
+pinned `windows-sys 0.61.2` feature surface with
+`Win32_System_JobObjects` and `Win32_System_Threading` for Job lifetime control,
+process termination, and bounded wait/poll behavior. The reviewed registry
+license remains `MIT OR Apache-2.0`. Existing pinned `serde`, `serde_json`, and
+`uuid` workspace dependencies provide strict protocol serialization and UUID-v4
+nonce validation; no new lockfile entry is intended.
+
+The isolation endpoint is compiled into existing Local Core and Guard binaries,
+so it introduces no separately distributed helper that could drift from the
+host package. This reduces artifact inventory but makes the exact current
+executable and its installed ACLs part of the trusted boundary. The child uses
+the parent's token; no sandbox or privilege-separation dependency is claimed.
+
+Local lockfile stability, exact feature resolution, dependency/license gates,
+strict lint, complete locked workspace variants, and the definitive `229/229`
+verifier pass for checkpoint 2198. No dependency version or lockfile entry was
+added. Implementation-head package runs `32597113497`/`32597124404` generate the
+lockfile CycloneDX SBOM and checksum it with all six platform artifacts; both
+pass with publication skipped. Evidence-head and merged-main package proof plus
+final-artifact license, notice, and copyright review remain pending;
+source-level reuse does not replace that review.

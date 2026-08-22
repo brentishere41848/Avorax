@@ -263,7 +263,7 @@ mod tests {
     }
 
     #[test]
-    fn native_direct_authenticode_production_has_no_script_or_json_helper() {
+    fn native_authenticode_trust_boundary_has_no_script_or_shell_probe() {
         let source = include_str!("microsoft_trust.rs");
         let production = source.split("#[cfg(test)]").next().unwrap();
 
@@ -277,7 +277,6 @@ mod tests {
             "powershell.exe",
             "EncodedCommand",
             "PSModulePath",
-            "serde_json",
             "ConvertTo-Json",
             "Get-AuthenticodeSignature",
         ] {
