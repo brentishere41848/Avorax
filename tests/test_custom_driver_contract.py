@@ -243,6 +243,9 @@ SAFE_ALLOWLIST_REMOVAL_SMOKE = (
 RELEASE_LOCAL_CORE_SMOKE = (
     ROOT / "tools" / "testing" / "run-release-local-core-smoke.ps1"
 )
+RELEASE_AUTHENTICODE_HELPER_SMOKE = (
+    ROOT / "tools" / "testing" / "run-release-authenticode-helper-smoke.ps1"
+)
 NO_EICAR_LOCAL_CORE_HARMLESS_THREAT_SMOKE = (
     ROOT
     / "tools"
@@ -19886,6 +19889,12 @@ def test_small_threat_mvp_verifier_is_safe_and_reproducible():
         in source
     )
     assert '"native_secondary_authenticode"' in source
+    assert "native-engine Authenticode helper isolation regressions" in source
+    assert '"native_authenticode_helper"' in source
+    assert "guard-service release binary build" in source
+    assert "release Authenticode isolated helper IPC/hash-binding smoke" in source
+    assert "tools\\testing\\run-release-authenticode-helper-smoke.ps1" in source
+    assert '"-RepoRoot", $repo' in source
     assert "native-engine known-good hash regressions" in source
     assert "known_good" in source
     assert "native-engine known-bad hash regressions" in source
@@ -20030,8 +20039,8 @@ def test_small_threat_mvp_verifier_is_safe_and_reproducible():
         in source
     )
     assert (
-        "Native Engine uses direct handle-based WinVerifyTrust with no script, child "
-        "process, JSON, or network retrieval"
+        "Native Engine uses direct handle-based WinVerifyTrust with no script, shell, "
+        "or network retrieval"
         in source
     )
     assert "a second bounded SHA-256 read matching the bytes already scanned" in source
@@ -20055,8 +20064,24 @@ def test_small_threat_mvp_verifier_is_safe_and_reproducible():
         in source
     )
     assert (
-        "Secondary catalog signatures, memory-mapped mutation, native-call "
-        "hard cancellation, and pre-execution blocking are not claimed"
+        "Release Local Core and Guard isolate native WinTrust work in an "
+        "exact-current-executable child"
+        in source
+    )
+    assert "strict nonce-bound one-request JSON" in source
+    assert "bounded stdin/stdout/stderr" in source
+    assert "a 15-second deadline" in source
+    assert "kill-on-close Windows Job containment" in source
+    assert "bounded kill/reap diagnostics" in source
+    assert "helper errors and timeouts cannot become trust" in source
+    assert (
+        "Debug test builds retain a direct backend for deterministic unit fixtures and "
+        "do not prove release isolation"
+        in source
+    )
+    assert (
+        "Secondary catalog signatures, memory-mapped and post-verdict mutation, "
+        "same-token helper least privilege, and pre-execution blocking are not claimed"
         in source
     )
     assert (
@@ -20785,8 +20810,8 @@ def test_small_threat_mvp_report_validator_is_strict_and_local():
     assert "driver_request_known_good_allows_in_lockdown" in source
     assert "Get-AvoraxGateFile ([System.IO.Path]::GetFullPath($text)) $Description" in source
     assert "-RequireFullSuite requires skip_flutter=false and skip_rust=false" in source
-    assert "if ($steps.Count -ne 226)" in source
-    assert "-RequireFullSuite expected exactly 226 verifier steps" in source
+    assert "if ($steps.Count -ne 229)" in source
+    assert "-RequireFullSuite expected exactly 229 verifier steps" in source
     assert 'Assert-ReportContainsStep $steps "Branding gate"' in source
     assert 'Assert-ReportContainsStep $steps "False-positive gate"' in source
     assert 'Assert-ReportContainsStep $steps "Protection gate without driver feature claim"' in source
@@ -20802,7 +20827,7 @@ def test_small_threat_mvp_report_validator_is_strict_and_local():
     )
     assert (
         'Assert-ReportScopeContains $verifiedScopeText "Native Engine uses direct '
-        'handle-based WinVerifyTrust with no script, child process, JSON, or network '
+        'handle-based WinVerifyTrust with no script, shell, or network '
         'retrieval"'
         in source
     )
@@ -20919,6 +20944,15 @@ def test_small_threat_mvp_report_validator_is_strict_and_local():
     )
     assert (
         'Assert-ReportContainsStep $steps "native-engine secondary embedded Authenticode Microsoft-signed regressions"'
+        in source
+    )
+    assert (
+        'Assert-ReportContainsStep $steps "native-engine Authenticode helper isolation regressions"'
+        in source
+    )
+    assert 'Assert-ReportContainsStep $steps "guard-service release binary build"' in source
+    assert (
+        'Assert-ReportContainsStep $steps "release Authenticode isolated helper IPC/hash-binding smoke"'
         in source
     )
     assert (
@@ -21395,9 +21429,16 @@ def test_small_threat_mvp_report_validator_is_strict_and_local():
         in source
     )
     assert (
+        'Assert-ReportScopeContains $verifiedScopeText "Release Local Core and Guard '
+        'isolate native WinTrust work in an exact-current-executable child using strict '
+        'nonce-bound one-request JSON, bounded stdin/stdout/stderr, a 15-second deadline, '
+        'kill-on-close Windows Job containment, and bounded kill/reap diagnostics"'
+        in source
+    )
+    assert (
         'Assert-ReportScopeContains $verifiedScopeText "Secondary catalog signatures, '
-        'memory-mapped mutation, native-call hard cancellation, and pre-execution '
-        'blocking are not claimed" "verification_scope.verified"'
+        'memory-mapped and post-verdict mutation, same-token helper least privilege, and '
+        'pre-execution blocking are not claimed" "verification_scope.verified"'
         in source
     )
     assert (
@@ -21773,6 +21814,52 @@ def test_release_local_core_smoke_script_uses_release_binary_and_temp_state():
     assert "detect-only scan unexpectedly quarantined files" in source
     assert "Remove-Item -LiteralPath $tempRoot -Recurse -Force -ErrorAction Stop" in source
     assert "Avorax release local-core safe hash fixture smoke test passed." in source
+
+
+def test_release_authenticode_helper_smoke_is_bounded_benign_and_noninstalling():
+    source = read(RELEASE_AUTHENTICODE_HELPER_SMOKE)
+
+    assert '"target\\release"' in source
+    assert '$RepoRoot = Join-Path $PSScriptRoot "..\\.."' in source
+    assert "zentor_local_core" not in source
+    assert "Assert-RepoReleaseBinary $LocalCorePath" in source
+    assert "Assert-RepoReleaseBinary $GuardPath" in source
+    assert '"--avorax-authenticode-client-self-test-v1"' in source
+    assert "UseShellExecute = $false" in source
+    assert "CreateNoWindow = $true" in source
+    assert "RedirectStandardInput = $true" in source
+    assert "RedirectStandardOutput = $true" in source
+    assert "RedirectStandardError = $true" in source
+    assert "ReadToEndAsync()" in source
+    assert "WriteAsync($RequestJson)" in source
+    assert "[DateTime]::UtcNow.AddSeconds($Timeout)" in source
+    assert "WaitForExit($remaining)" in source
+    assert "$process.Kill()" in source
+    assert 'cleanup = "kill=ok; reaped=$reaped"' in source
+    assert "catch {}" not in source
+    assert "stdout.Length -gt 16384" in source
+    assert "schema_version = 1" in source
+    assert '[guid]::NewGuid().ToString("D")' in source
+    assert "path_utf16 = $units" in source
+    assert "Microsoft\\Edge\\Application\\msedge.exe" in source
+    assert "WindowsPowerShell\\v1.0\\powershell.exe" in source
+    assert "benign unsigned Authenticode helper fixture" in source
+    assert 'response.status -ne "ok"' in source
+    assert 'response.status -ne "error"' in source
+    assert "does not match the bytes already scanned" in source
+    assert "isolated Authenticode smoke root escaped" in source
+    assert "Remove-Item -LiteralPath $tempRoot -Recurse -Force -ErrorAction Stop" in source
+    for forbidden in (
+        "Invoke-WebRequest",
+        "Expand-Archive",
+        "Start-Process",
+        "Set-ExecutionPolicy",
+        "Add-MpPreference",
+        "Set-MpPreference",
+        "EICAR-STANDARD-ANTIVIRUS-TEST-FILE",
+        "C:\\ProgramData\\Avorax\\Quarantine",
+    ):
+        assert forbidden not in source
     assert "Invoke-WebRequest" not in source
     assert "Expand-Archive" not in source
     assert "Start-Process" not in source
@@ -24795,6 +24882,8 @@ def test_native_windows_tools_use_native_bounded_system_root():
         "Win32_Security_Cryptography_Sip",
         "Win32_Security_WinTrust",
         "Win32_Storage_FileSystem",
+        "Win32_System_JobObjects",
+        "Win32_System_Threading",
     ):
         assert f'"{feature}"' in cargo
     windows_dependencies = cargo[
@@ -24828,7 +24917,7 @@ def test_native_windows_tools_use_native_bounded_system_root():
     assert "native_windows_system32_file_rejects_unsafe_relative_components" in windows_system
     assert "native_windows_system_directories_are_checked_and_bounded" in windows_system
     assert "native_windows_system32_file_runtime_returns_real_tools" in windows_system
-    assert "native_direct_authenticode_production_has_no_script_or_json_helper" in trust
+    assert "native_authenticode_trust_boundary_has_no_script_or_shell_probe" in trust
 
 
 def test_native_authenticode_uses_direct_hash_bound_file_and_catalog_wintrust():
@@ -24836,6 +24925,9 @@ def test_native_authenticode_uses_direct_hash_bound_file_and_catalog_wintrust():
     trust_production = trust.split("#[cfg(test)]")[0]
     wintrust = read(NATIVE_WINDOWS_AUTHENTICODE)
     production = wintrust.split("#[cfg(test)]")[0]
+    native_lib = read(NATIVE_LIB)
+    local_main = read(LOCAL_CORE_MAIN).split("#[cfg(test)]")[0]
+    guard_main = read(GUARD_MAIN).split("#[cfg(test)]")[0]
 
     assert "pub fn microsoft_signature_verdict_for_sha256(" in trust_production
     assert "microsoft_signature_verdict_inner(path, Some(expected_sha256))" in trust_production
@@ -24844,6 +24936,17 @@ def test_native_authenticode_uses_direct_hash_bound_file_and_catalog_wintrust():
     assert "is_windows_reparse_point(&metadata)" in trust_production
     assert "crate::windows_authenticode::has_valid_microsoft_signature(" in trust_production
     assert "pub(crate) fn has_valid_microsoft_signature(" in production
+    assert "pub fn run_authenticode_helper_stdio()" in native_lib
+    assert "pub fn run_authenticode_client_self_test_stdio()" in native_lib
+    for host in (local_main, guard_main):
+        assert '"--avorax-authenticode-helper-v1"' in host
+        assert "zentor_native_engine::run_authenticode_helper_stdio()" in host
+        assert '"--avorax-authenticode-client-self-test-v1"' in host
+        assert "zentor_native_engine::run_authenticode_client_self_test_stdio()" in host
+        assert "unsupported command-line argument {arg}" in host
+        assert "only one command-line mode may be selected" in host
+    assert "verify_with_isolated_helper(path, expected_sha256)" in production
+    assert "fn verify_direct_microsoft_signature(" in production
     assert "validate_expected_sha256(expected_sha256)?" in production
     assert "path.is_absolute()" in production
     assert "!wide.contains(&0)" in production
@@ -24899,6 +25002,26 @@ def test_native_authenticode_uses_direct_hash_bound_file_and_catalog_wintrust():
     assert "if primary == EmbeddedSignatureVerdict::Invalid" in production
     assert "trust_data.hWVTStateData = null_mut()" in production
     assert "trust_data.dwStateAction = WTD_STATEACTION_VERIFY" in production
+    assert "AUTHENTICODE_HELPER_TIMEOUT: Duration = Duration::from_secs(15)" in production
+    assert "MAX_AUTHENTICODE_HELPER_REQUEST_BYTES: usize = 256 * 1024" in production
+    assert "MAX_AUTHENTICODE_HELPER_RESPONSE_BYTES: usize = 16 * 1024" in production
+    assert "Uuid::new_v4().hyphenated().to_string()" in production
+    assert "#[serde(deny_unknown_fields)]" in production
+    assert "CreateJobObjectW(" in production
+    assert "JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE" in production
+    assert "AssignProcessToJobObject(" in production
+    assert ".creation_flags(CREATE_NO_WINDOW)" in production
+    assert ".share_mode(FILE_SHARE_READ)" in production
+    assert ".spawn()" in production
+    assert "unable to start isolated Authenticode helper" in production
+    assert "child.try_wait()" in production
+    assert "child.kill()" in production
+    assert "wait_for_child_exit(&mut child, AUTHENTICODE_HELPER_REAP_TIMEOUT)" in production
+    assert "recv_timeout(remaining)" in production
+    assert "exceeded the bounded completion deadline" in production
+    assert "helper response nonce mismatch" in production
+    assert "returned unexpected stderr" in production
+    assert "helper errors and timeouts" not in production
     assert "Prefix::Disk(_) | Prefix::VerbatimDisk(_)" in production
     assert "catalog_path.is_absolute() && local_drive" in production
     assert "catalog context cleanup failed" in production
@@ -24928,6 +25051,10 @@ def test_native_authenticode_uses_direct_hash_bound_file_and_catalog_wintrust():
         "native_secondary_authenticode_microsoft_signed_edge_dll_verifies_exact_index"
         in wintrust
     )
+    assert "native_authenticode_helper_protocol_is_strict_bounded_and_nonce_bound" in wintrust
+    assert "native_authenticode_helper_response_cannot_fake_or_cross_nonce_verdicts" in wintrust
+    assert "native_authenticode_helper_timeout_kills_and_reaps_the_isolated_process" in wintrust
+    assert "native_authenticode_helper_locks_a_bounded_non_reparse_current_executable" in wintrust
     assert "catalog_member_tag_is_uppercase_hex_with_one_terminator" in wintrust
     assert "catalog_path_buffer_requires_one_bounded_local_absolute_path" in wintrust
     assert (

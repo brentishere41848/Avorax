@@ -1,24 +1,32 @@
 use std::ffi::c_void;
 use std::ffi::OsString;
 use std::fs::{File, OpenOptions};
-use std::io::{Read, Seek, SeekFrom};
+use std::io::{Read, Seek, SeekFrom, Write};
 use std::mem::size_of;
 use std::os::windows::ffi::{OsStrExt, OsStringExt};
 use std::os::windows::fs::{MetadataExt, OpenOptionsExt};
 use std::os::windows::io::AsRawHandle;
+use std::os::windows::process::CommandExt;
 use std::path::{Component, Path, PathBuf, Prefix};
+use std::process::{Command, ExitStatus, Stdio};
 use std::ptr::null_mut;
+use std::sync::mpsc::{self, Receiver, RecvTimeoutError};
+use std::thread;
+use std::time::{Duration, Instant};
 
 use anyhow::{Context, Result};
+use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
+use uuid::{Uuid, Variant, Version};
 use windows_sys::core::PCSTR;
 use windows_sys::Win32::Foundation::{
-    GetLastError, SetLastError, CERT_E_REVOCATION_FAILURE, CRYPT_E_BAD_ENCODE, CRYPT_E_BAD_MSG,
-    CRYPT_E_NO_MATCH, CRYPT_E_NO_SIGNER, CRYPT_E_NO_TRUSTED_SIGNER, CRYPT_E_REVOKED,
-    CRYPT_E_SIGNER_NOT_FOUND, ERROR_NOT_FOUND, ERROR_SUCCESS, HANDLE, INVALID_HANDLE_VALUE,
-    TRUST_E_BAD_DIGEST, TRUST_E_BASIC_CONSTRAINTS, TRUST_E_CERT_SIGNATURE, TRUST_E_COUNTER_SIGNER,
-    TRUST_E_FAIL, TRUST_E_FINANCIAL_CRITERIA, TRUST_E_MALFORMED_SIGNATURE, TRUST_E_NO_SIGNER_CERT,
-    TRUST_E_SUBJECT_FORM_UNKNOWN, TRUST_E_SUBJECT_NOT_TRUSTED, TRUST_E_TIME_STAMP,
+    CloseHandle, GetLastError, SetLastError, CERT_E_REVOCATION_FAILURE, CRYPT_E_BAD_ENCODE,
+    CRYPT_E_BAD_MSG, CRYPT_E_NO_MATCH, CRYPT_E_NO_SIGNER, CRYPT_E_NO_TRUSTED_SIGNER,
+    CRYPT_E_REVOKED, CRYPT_E_SIGNER_NOT_FOUND, ERROR_NOT_FOUND, ERROR_SUCCESS, HANDLE,
+    INVALID_HANDLE_VALUE, TRUST_E_BAD_DIGEST, TRUST_E_BASIC_CONSTRAINTS, TRUST_E_CERT_SIGNATURE,
+    TRUST_E_COUNTER_SIGNER, TRUST_E_FAIL, TRUST_E_FINANCIAL_CRITERIA, TRUST_E_MALFORMED_SIGNATURE,
+    TRUST_E_NO_SIGNER_CERT, TRUST_E_SUBJECT_FORM_UNKNOWN, TRUST_E_SUBJECT_NOT_TRUSTED,
+    TRUST_E_TIME_STAMP,
 };
 use windows_sys::Win32::Security::Cryptography::Catalog::{
     CryptCATAdminAcquireContext2, CryptCATAdminCalcHashFromFileHandle2,
@@ -41,6 +49,12 @@ use windows_sys::Win32::Storage::FileSystem::{
     FILE_ATTRIBUTE_REPARSE_POINT, FILE_FLAG_OPEN_REPARSE_POINT, FILE_FLAG_SEQUENTIAL_SCAN,
     FILE_SHARE_READ,
 };
+use windows_sys::Win32::System::JobObjects::{
+    AssignProcessToJobObject, CreateJobObjectW, JobObjectExtendedLimitInformation,
+    SetInformationJobObject, JOBOBJECT_EXTENDED_LIMIT_INFORMATION,
+    JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE,
+};
+use windows_sys::Win32::System::Threading::CREATE_NO_WINDOW;
 
 const MAX_AUTHENTICODE_PATH_UTF16_UNITS: usize = 32_767;
 const MAX_SIGNER_ATTRIBUTE_UTF16_UNITS: usize = 2_048;
@@ -49,6 +63,89 @@ const AUTHENTICODE_HASH_BUFFER_BYTES: usize = 128 * 1024;
 const SHA256_CATALOG_HASH_BYTES: usize = 32;
 const MAX_CATALOG_CANDIDATES: usize = 16;
 const MAX_EMBEDDED_SIGNATURES: u32 = 16;
+const AUTHENTICODE_HELPER_SCHEMA_VERSION: u32 = 1;
+const AUTHENTICODE_HELPER_ARGUMENT: &str = "--avorax-authenticode-helper-v1";
+const AUTHENTICODE_HELPER_TIMEOUT: Duration = Duration::from_secs(15);
+const AUTHENTICODE_HELPER_REAP_TIMEOUT: Duration = Duration::from_secs(2);
+const AUTHENTICODE_HELPER_POLL_INTERVAL: Duration = Duration::from_millis(10);
+const MAX_AUTHENTICODE_HELPER_REQUEST_BYTES: usize = 256 * 1024;
+const MAX_AUTHENTICODE_HELPER_RESPONSE_BYTES: usize = 16 * 1024;
+const MAX_AUTHENTICODE_HELPER_STDERR_BYTES: usize = 16 * 1024;
+const MAX_AUTHENTICODE_HELPER_ERROR_CHARS: usize = 4_096;
+const MAX_AUTHENTICODE_HOST_EXE_BYTES: u64 = 256 * 1024 * 1024;
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+struct AuthenticodeHelperRequest {
+    schema_version: u32,
+    nonce: String,
+    path_utf16: Vec<u16>,
+    expected_sha256: Option<String>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+struct AuthenticodeHelperResponse {
+    schema_version: u32,
+    nonce: String,
+    status: String,
+    trusted: Option<bool>,
+    error: Option<String>,
+}
+
+#[derive(Debug)]
+struct AuthenticodeHelperOutput {
+    status: ExitStatus,
+    stdout: Vec<u8>,
+    stderr: Vec<u8>,
+}
+
+struct KillOnCloseJob(HANDLE);
+
+impl KillOnCloseJob {
+    fn create() -> Result<Self> {
+        let handle = unsafe { CreateJobObjectW(null_mut(), null_mut()) };
+        anyhow::ensure!(
+            !handle.is_null(),
+            "unable to create isolated Authenticode helper job: {}",
+            std::io::Error::last_os_error()
+        );
+        let mut limits = JOBOBJECT_EXTENDED_LIMIT_INFORMATION::default();
+        limits.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
+        let configured = unsafe {
+            SetInformationJobObject(
+                handle,
+                JobObjectExtendedLimitInformation,
+                (&limits as *const JOBOBJECT_EXTENDED_LIMIT_INFORMATION).cast::<c_void>(),
+                size_of::<JOBOBJECT_EXTENDED_LIMIT_INFORMATION>() as u32,
+            )
+        };
+        if configured == 0 {
+            let error = std::io::Error::last_os_error();
+            unsafe { CloseHandle(handle) };
+            anyhow::bail!("unable to configure isolated Authenticode helper job: {error}");
+        }
+        Ok(Self(handle))
+    }
+
+    fn assign(&self, process: HANDLE) -> Result<()> {
+        anyhow::ensure!(
+            unsafe { AssignProcessToJobObject(self.0, process) } != 0,
+            "unable to assign Authenticode helper to its kill-on-close job: {}",
+            std::io::Error::last_os_error()
+        );
+        Ok(())
+    }
+}
+
+impl Drop for KillOnCloseJob {
+    fn drop(&mut self) {
+        if !self.0.is_null() {
+            unsafe { CloseHandle(self.0) };
+            self.0 = null_mut();
+        }
+    }
+}
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum EmbeddedSignatureVerdict {
@@ -61,6 +158,13 @@ pub(crate) fn has_valid_microsoft_signature(
     path: &Path,
     expected_sha256: Option<&str>,
 ) -> Result<bool> {
+    if cfg!(debug_assertions) {
+        return verify_direct_microsoft_signature(path, expected_sha256);
+    }
+    verify_with_isolated_helper(path, expected_sha256)
+}
+
+fn verify_direct_microsoft_signature(path: &Path, expected_sha256: Option<&str>) -> Result<bool> {
     if let Some(expected_sha256) = expected_sha256 {
         validate_expected_sha256(expected_sha256)?;
     }
@@ -73,6 +177,423 @@ pub(crate) fn has_valid_microsoft_signature(
         true => Ok(true),
         false => verify_catalog_signatures(path, &path_wide, &mut file, expected_sha256),
     }
+}
+
+pub(crate) fn run_authenticode_helper_stdio() -> Result<()> {
+    run_authenticode_stdio(verify_direct_microsoft_signature)
+}
+
+pub(crate) fn run_authenticode_client_self_test_stdio() -> Result<()> {
+    run_authenticode_stdio(has_valid_microsoft_signature)
+}
+
+fn run_authenticode_stdio(verify: impl FnOnce(&Path, Option<&str>) -> Result<bool>) -> Result<()> {
+    let request = read_authenticode_helper_request(std::io::stdin().lock())?;
+    let nonce = validate_authenticode_helper_request(&request)?;
+    let path = PathBuf::from(OsString::from_wide(&request.path_utf16));
+    let outcome = verify(&path, request.expected_sha256.as_deref());
+    let response = match outcome {
+        Ok(trusted) => AuthenticodeHelperResponse {
+            schema_version: AUTHENTICODE_HELPER_SCHEMA_VERSION,
+            nonce,
+            status: "ok".to_string(),
+            trusted: Some(trusted),
+            error: None,
+        },
+        Err(error) => AuthenticodeHelperResponse {
+            schema_version: AUTHENTICODE_HELPER_SCHEMA_VERSION,
+            nonce,
+            status: "error".to_string(),
+            trusted: None,
+            error: Some(bounded_authenticode_helper_text(&format!("{error:#}"))),
+        },
+    };
+    let encoded = serde_json::to_vec(&response)
+        .context("unable to serialize Authenticode helper response")?;
+    anyhow::ensure!(
+        encoded.len() <= MAX_AUTHENTICODE_HELPER_RESPONSE_BYTES,
+        "AuthentiCode helper response exceeds its byte limit"
+    );
+    let mut stdout = std::io::stdout().lock();
+    stdout.write_all(&encoded)?;
+    stdout.write_all(b"\n")?;
+    stdout.flush()?;
+    Ok(())
+}
+
+fn read_authenticode_helper_request(mut input: impl Read) -> Result<AuthenticodeHelperRequest> {
+    let mut encoded = Vec::new();
+    input
+        .by_ref()
+        .take((MAX_AUTHENTICODE_HELPER_REQUEST_BYTES + 1) as u64)
+        .read_to_end(&mut encoded)
+        .context("unable to read Authenticode helper request")?;
+    anyhow::ensure!(!encoded.is_empty(), "AuthentiCode helper request is empty");
+    anyhow::ensure!(
+        encoded.len() <= MAX_AUTHENTICODE_HELPER_REQUEST_BYTES,
+        "AuthentiCode helper request exceeds {} bytes",
+        MAX_AUTHENTICODE_HELPER_REQUEST_BYTES
+    );
+    serde_json::from_slice(&encoded).context("AuthentiCode helper request is not strict JSON")
+}
+
+fn validate_authenticode_helper_request(request: &AuthenticodeHelperRequest) -> Result<String> {
+    anyhow::ensure!(
+        request.schema_version == AUTHENTICODE_HELPER_SCHEMA_VERSION,
+        "unsupported Authenticode helper schema version {}",
+        request.schema_version
+    );
+    let nonce = Uuid::parse_str(&request.nonce).context("AuthentiCode helper nonce is invalid")?;
+    anyhow::ensure!(
+        nonce.get_variant() == Variant::RFC4122 && nonce.get_version() == Some(Version::Random),
+        "AuthentiCode helper nonce must be an RFC 4122 random UUID"
+    );
+    anyhow::ensure!(
+        !request.path_utf16.is_empty()
+            && request.path_utf16.len() < MAX_AUTHENTICODE_PATH_UTF16_UNITS,
+        "AuthentiCode helper path must contain between 1 and {} UTF-16 units",
+        MAX_AUTHENTICODE_PATH_UTF16_UNITS - 1
+    );
+    anyhow::ensure!(
+        !request.path_utf16.contains(&0),
+        "AuthentiCode helper path contains an embedded NUL"
+    );
+    if let Some(expected) = request.expected_sha256.as_deref() {
+        validate_expected_sha256(expected)?;
+    }
+    Ok(nonce.hyphenated().to_string())
+}
+
+fn verify_with_isolated_helper(path: &Path, expected_sha256: Option<&str>) -> Result<bool> {
+    if let Some(expected) = expected_sha256 {
+        validate_expected_sha256(expected)?;
+    }
+    let path_utf16 = path.as_os_str().encode_wide().collect::<Vec<_>>();
+    let request = AuthenticodeHelperRequest {
+        schema_version: AUTHENTICODE_HELPER_SCHEMA_VERSION,
+        nonce: Uuid::new_v4().hyphenated().to_string(),
+        path_utf16,
+        expected_sha256: expected_sha256.map(str::to_owned),
+    };
+    validate_authenticode_helper_request(&request)?;
+    let encoded =
+        serde_json::to_vec(&request).context("unable to serialize Authenticode helper request")?;
+    anyhow::ensure!(
+        encoded.len() <= MAX_AUTHENTICODE_HELPER_REQUEST_BYTES,
+        "AuthentiCode helper request exceeds {} bytes",
+        MAX_AUTHENTICODE_HELPER_REQUEST_BYTES
+    );
+
+    let (host_path, _host_lock) = open_current_authenticode_host()?;
+    let mut command = Command::new(&host_path);
+    command
+        .arg(AUTHENTICODE_HELPER_ARGUMENT)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .creation_flags(CREATE_NO_WINDOW);
+    let output = run_bounded_authenticode_helper(command, encoded, AUTHENTICODE_HELPER_TIMEOUT)?;
+    interpret_authenticode_helper_output(path, &request.nonce, output)
+}
+
+fn open_current_authenticode_host() -> Result<(PathBuf, File)> {
+    let path =
+        std::env::current_exe().context("unable to locate current Authenticode host executable")?;
+    anyhow::ensure!(
+        path.is_absolute(),
+        "AuthentiCode host executable path is not absolute"
+    );
+    let local_drive = matches!(
+        path.components().next(),
+        Some(Component::Prefix(prefix))
+            if matches!(prefix.kind(), Prefix::Disk(_) | Prefix::VerbatimDisk(_))
+    );
+    anyhow::ensure!(
+        local_drive,
+        "AuthentiCode host executable is not on a local drive"
+    );
+    let units = path.as_os_str().encode_wide().count();
+    anyhow::ensure!(
+        units > 0 && units < MAX_AUTHENTICODE_PATH_UTF16_UNITS,
+        "AuthentiCode host executable path exceeds its UTF-16 limit"
+    );
+    let file = OpenOptions::new()
+        .read(true)
+        .share_mode(FILE_SHARE_READ)
+        .custom_flags(FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_SEQUENTIAL_SCAN)
+        .open(&path)
+        .with_context(|| {
+            format!(
+                "unable to lock Authenticode host executable {}",
+                path.display()
+            )
+        })?;
+    let metadata = file.metadata()?;
+    anyhow::ensure!(
+        metadata.is_file(),
+        "AuthentiCode host executable is not a regular file"
+    );
+    anyhow::ensure!(
+        metadata.file_attributes() & FILE_ATTRIBUTE_REPARSE_POINT == 0,
+        "AuthentiCode host executable is a reparse point"
+    );
+    anyhow::ensure!(
+        metadata.len() > 0 && metadata.len() <= MAX_AUTHENTICODE_HOST_EXE_BYTES,
+        "AuthentiCode host executable size is outside the 1..={} byte bound",
+        MAX_AUTHENTICODE_HOST_EXE_BYTES
+    );
+    Ok((path, file))
+}
+
+fn run_bounded_authenticode_helper(
+    mut command: Command,
+    request: Vec<u8>,
+    timeout: Duration,
+) -> Result<AuthenticodeHelperOutput> {
+    let job = KillOnCloseJob::create()?;
+    let mut child = command
+        .spawn()
+        .context("unable to start isolated Authenticode helper")?;
+    if let Err(error) = job.assign(child.as_raw_handle() as HANDLE) {
+        let kill_result = child.kill();
+        drop(job);
+        let reap_result = wait_for_child_exit(&mut child, AUTHENTICODE_HELPER_REAP_TIMEOUT);
+        anyhow::bail!(
+            "{error:#}; termination request: {}; reap: {}",
+            helper_result_summary(kill_result),
+            helper_result_summary(reap_result)
+        );
+    }
+    let stdin = child
+        .stdin
+        .take()
+        .context("AuthentiCode helper stdin is unavailable")?;
+    let stdout = child
+        .stdout
+        .take()
+        .context("AuthentiCode helper stdout is unavailable")?;
+    let stderr = child
+        .stderr
+        .take()
+        .context("AuthentiCode helper stderr is unavailable")?;
+    let writer = spawn_helper_worker(move || -> Result<()> {
+        let mut stdin = stdin;
+        stdin
+            .write_all(&request)
+            .context("unable to write Authenticode helper request")?;
+        stdin
+            .flush()
+            .context("unable to flush Authenticode helper request")?;
+        Ok(())
+    });
+    let stdout_reader = spawn_bounded_pipe_reader(
+        stdout,
+        MAX_AUTHENTICODE_HELPER_RESPONSE_BYTES,
+        "AuthentiCode helper stdout",
+    );
+    let stderr_reader = spawn_bounded_pipe_reader(
+        stderr,
+        MAX_AUTHENTICODE_HELPER_STDERR_BYTES,
+        "AuthentiCode helper stderr",
+    );
+
+    let started = Instant::now();
+    let status = loop {
+        if let Some(status) = child
+            .try_wait()
+            .context("unable to poll Authenticode helper")?
+        {
+            break status;
+        }
+        if started.elapsed() >= timeout {
+            let kill_result = child.kill();
+            drop(job);
+            let reaped = wait_for_child_exit(&mut child, AUTHENTICODE_HELPER_REAP_TIMEOUT);
+            let worker_deadline = Instant::now() + AUTHENTICODE_HELPER_REAP_TIMEOUT;
+            let writer_result = receive_helper_worker(writer, worker_deadline, "request writer");
+            let stdout_result =
+                receive_helper_worker(stdout_reader, worker_deadline, "stdout reader");
+            let stderr_result =
+                receive_helper_worker(stderr_reader, worker_deadline, "stderr reader");
+            anyhow::bail!(
+                "isolated Authenticode helper timed out after {} ms; termination request: {}; reap: {}; writer: {}; stdout: {}; stderr: {}",
+                timeout.as_millis(),
+                helper_result_summary(kill_result),
+                helper_result_summary(reaped),
+                helper_result_summary(writer_result),
+                helper_result_summary(stdout_result.map(|_| ())),
+                helper_result_summary(stderr_result.map(|_| ()))
+            );
+        }
+        thread::sleep(AUTHENTICODE_HELPER_POLL_INTERVAL);
+    };
+    drop(job);
+    let worker_deadline = Instant::now() + AUTHENTICODE_HELPER_REAP_TIMEOUT;
+    let writer_result = receive_helper_worker(writer, worker_deadline, "request writer");
+    let stdout = receive_helper_worker(stdout_reader, worker_deadline, "stdout reader")?;
+    let stderr = receive_helper_worker(stderr_reader, worker_deadline, "stderr reader")?;
+    writer_result?;
+    Ok(AuthenticodeHelperOutput {
+        status,
+        stdout,
+        stderr,
+    })
+}
+
+fn spawn_bounded_pipe_reader<R: Read + Send + 'static>(
+    mut reader: R,
+    limit: usize,
+    label: &'static str,
+) -> Receiver<Result<Vec<u8>>> {
+    spawn_helper_worker(move || {
+        let mut bytes = Vec::new();
+        reader
+            .by_ref()
+            .take((limit + 1) as u64)
+            .read_to_end(&mut bytes)
+            .with_context(|| format!("unable to read {label}"))?;
+        anyhow::ensure!(bytes.len() <= limit, "{label} exceeds {limit} bytes");
+        Ok(bytes)
+    })
+}
+
+fn spawn_helper_worker<T: Send + 'static>(
+    work: impl FnOnce() -> Result<T> + Send + 'static,
+) -> Receiver<Result<T>> {
+    let (sender, receiver) = mpsc::sync_channel(1);
+    thread::spawn(move || {
+        drop(sender.send(work()));
+    });
+    receiver
+}
+
+fn receive_helper_worker<T>(
+    receiver: Receiver<Result<T>>,
+    deadline: Instant,
+    label: &str,
+) -> Result<T> {
+    let remaining = deadline.saturating_duration_since(Instant::now());
+    anyhow::ensure!(
+        !remaining.is_zero(),
+        "AuthentiCode helper {label} exceeded the bounded completion deadline"
+    );
+    match receiver.recv_timeout(remaining) {
+        Ok(result) => result.with_context(|| format!("AuthentiCode helper {label} failed")),
+        Err(RecvTimeoutError::Timeout) => {
+            anyhow::bail!("AuthentiCode helper {label} exceeded the bounded completion deadline")
+        }
+        Err(RecvTimeoutError::Disconnected) => {
+            anyhow::bail!("AuthentiCode helper {label} panicked or disconnected")
+        }
+    }
+}
+
+fn wait_for_child_exit(child: &mut std::process::Child, timeout: Duration) -> Result<()> {
+    let started = Instant::now();
+    loop {
+        if child.try_wait()?.is_some() {
+            return Ok(());
+        }
+        anyhow::ensure!(
+            started.elapsed() < timeout,
+            "helper did not exit within {} ms after termination",
+            timeout.as_millis()
+        );
+        thread::sleep(AUTHENTICODE_HELPER_POLL_INTERVAL);
+    }
+}
+
+fn helper_result_summary<T, E: std::fmt::Display>(result: std::result::Result<T, E>) -> String {
+    match result {
+        Ok(_) => "ok".to_string(),
+        Err(error) => bounded_authenticode_helper_text(&format!("error: {error:#}")),
+    }
+}
+
+fn interpret_authenticode_helper_output(
+    path: &Path,
+    expected_nonce: &str,
+    output: AuthenticodeHelperOutput,
+) -> Result<bool> {
+    let stderr = bounded_authenticode_helper_text(&String::from_utf8_lossy(&output.stderr));
+    anyhow::ensure!(
+        output.status.success(),
+        "isolated Authenticode helper failed for {} with status {}; stderr: {}",
+        path.display(),
+        output.status,
+        stderr
+    );
+    anyhow::ensure!(
+        stderr.trim().is_empty(),
+        "isolated Authenticode helper returned unexpected stderr for {}: {}",
+        path.display(),
+        stderr
+    );
+    anyhow::ensure!(
+        output.stdout.len() <= MAX_AUTHENTICODE_HELPER_RESPONSE_BYTES,
+        "isolated Authenticode helper response exceeds its byte limit"
+    );
+    let response: AuthenticodeHelperResponse = serde_json::from_slice(&output.stdout)
+        .context("isolated Authenticode helper response is not strict JSON")?;
+    anyhow::ensure!(
+        response.schema_version == AUTHENTICODE_HELPER_SCHEMA_VERSION,
+        "isolated Authenticode helper response schema mismatch"
+    );
+    anyhow::ensure!(
+        response.nonce == expected_nonce,
+        "isolated Authenticode helper response nonce mismatch"
+    );
+    match response.status.as_str() {
+        "ok" => {
+            anyhow::ensure!(
+                response.error.is_none(),
+                "successful Authenticode helper response contains an error"
+            );
+            response
+                .trusted
+                .context("successful Authenticode helper response has no verdict")
+        }
+        "error" => {
+            anyhow::ensure!(
+                response.trusted.is_none(),
+                "failed Authenticode helper response contains a verdict"
+            );
+            let error = response
+                .error
+                .context("failed Authenticode helper response has no diagnostic")?;
+            anyhow::ensure!(
+                !error.trim().is_empty(),
+                "failed Authenticode helper response diagnostic is blank"
+            );
+            anyhow::bail!(
+                "isolated Authenticode verification failed for {}: {}",
+                path.display(),
+                bounded_authenticode_helper_text(&error)
+            )
+        }
+        other => anyhow::bail!("isolated Authenticode helper response has unknown status {other}"),
+    }
+}
+
+fn bounded_authenticode_helper_text(text: &str) -> String {
+    let normalized = text
+        .chars()
+        .map(|character| {
+            if character.is_control() && !matches!(character, '\n' | '\r' | '\t') {
+                '\u{FFFD}'
+            } else {
+                character
+            }
+        })
+        .collect::<String>();
+    if normalized.chars().count() <= MAX_AUTHENTICODE_HELPER_ERROR_CHARS {
+        return normalized;
+    }
+    normalized
+        .chars()
+        .take(MAX_AUTHENTICODE_HELPER_ERROR_CHARS)
+        .collect::<String>()
+        + "...[truncated]"
 }
 
 fn enforce_content_binding_size(path: &Path, file: &File) -> Result<()> {
@@ -924,6 +1445,7 @@ fn canonical_subject_attribute(value: &str) -> String {
 mod tests {
     use super::*;
     use std::fs;
+    use std::os::windows::process::ExitStatusExt;
     use windows_sys::Win32::Foundation::{
         CRYPT_E_FILE_ERROR, CRYPT_E_NO_REVOCATION_CHECK, CRYPT_E_REVOCATION_OFFLINE,
         CRYPT_E_SECURITY_SETTINGS, TRUST_E_ACTION_UNKNOWN, TRUST_E_FAIL, TRUST_E_NOSIGNATURE,
@@ -965,6 +1487,150 @@ mod tests {
         assert!(!definitively_untrusted_status(TRUST_E_SYSTEM_ERROR));
         assert!(!definitively_untrusted_status(TRUST_E_FAIL));
         assert!(!definitively_untrusted_status(0x8123_4567_u32 as i32));
+    }
+
+    fn helper_request(path: &Path, expected_sha256: Option<String>) -> AuthenticodeHelperRequest {
+        AuthenticodeHelperRequest {
+            schema_version: AUTHENTICODE_HELPER_SCHEMA_VERSION,
+            nonce: Uuid::new_v4().hyphenated().to_string(),
+            path_utf16: path.as_os_str().encode_wide().collect(),
+            expected_sha256,
+        }
+    }
+
+    #[test]
+    fn native_authenticode_helper_protocol_is_strict_bounded_and_nonce_bound() {
+        let request = helper_request(
+            Path::new(r"C:\Windows\System32\fixture.exe"),
+            Some("a".repeat(64)),
+        );
+        let encoded = serde_json::to_vec(&request).unwrap();
+        let decoded = read_authenticode_helper_request(encoded.as_slice()).unwrap();
+        assert_eq!(
+            validate_authenticode_helper_request(&decoded).unwrap(),
+            request.nonce
+        );
+
+        let unknown = format!(
+            r#"{{"schema_version":1,"nonce":"{}","path_utf16":[67,58,92,102],"expected_sha256":null,"unknown":true}}"#,
+            request.nonce
+        );
+        assert!(read_authenticode_helper_request(unknown.as_bytes()).is_err());
+        assert!(read_authenticode_helper_request(&[][..]).is_err());
+        assert!(read_authenticode_helper_request(
+            vec![b' '; MAX_AUTHENTICODE_HELPER_REQUEST_BYTES + 1].as_slice()
+        )
+        .is_err());
+
+        let mut invalid = request;
+        invalid.schema_version += 1;
+        assert!(validate_authenticode_helper_request(&invalid).is_err());
+        invalid.schema_version = AUTHENTICODE_HELPER_SCHEMA_VERSION;
+        invalid.nonce = Uuid::nil().hyphenated().to_string();
+        assert!(validate_authenticode_helper_request(&invalid).is_err());
+        invalid.nonce = Uuid::new_v4().hyphenated().to_string();
+        invalid.path_utf16 = vec![b'C' as u16, 0, b'X' as u16];
+        assert!(validate_authenticode_helper_request(&invalid).is_err());
+        invalid.path_utf16 = vec![b'C' as u16];
+        invalid.expected_sha256 = Some("not-a-digest".to_string());
+        assert!(validate_authenticode_helper_request(&invalid).is_err());
+    }
+
+    #[test]
+    fn native_authenticode_helper_response_cannot_fake_or_cross_nonce_verdicts() {
+        let path = Path::new(r"C:\benign-fixture.exe");
+        let nonce = Uuid::new_v4().hyphenated().to_string();
+        let success = AuthenticodeHelperResponse {
+            schema_version: AUTHENTICODE_HELPER_SCHEMA_VERSION,
+            nonce: nonce.clone(),
+            status: "ok".to_string(),
+            trusted: Some(true),
+            error: None,
+        };
+        let output = |response: &AuthenticodeHelperResponse| AuthenticodeHelperOutput {
+            status: ExitStatus::from_raw(0),
+            stdout: serde_json::to_vec(response).unwrap(),
+            stderr: Vec::new(),
+        };
+        assert!(interpret_authenticode_helper_output(path, &nonce, output(&success)).unwrap());
+        assert!(
+            interpret_authenticode_helper_output(path, "wrong-nonce", output(&success)).is_err()
+        );
+
+        let hidden_diagnostic = AuthenticodeHelperOutput {
+            status: ExitStatus::from_raw(0),
+            stdout: serde_json::to_vec(&success).unwrap(),
+            stderr: b"hidden failure".to_vec(),
+        };
+        assert!(interpret_authenticode_helper_output(path, &nonce, hidden_diagnostic).is_err());
+
+        let fake_success = AuthenticodeHelperResponse {
+            error: Some("contradictory".to_string()),
+            ..success
+        };
+        assert!(interpret_authenticode_helper_output(path, &nonce, output(&fake_success)).is_err());
+
+        let failed_with_verdict = AuthenticodeHelperResponse {
+            schema_version: AUTHENTICODE_HELPER_SCHEMA_VERSION,
+            nonce: nonce.clone(),
+            status: "error".to_string(),
+            trusted: Some(false),
+            error: Some("verification failed".to_string()),
+        };
+        assert!(
+            interpret_authenticode_helper_output(path, &nonce, output(&failed_with_verdict))
+                .is_err()
+        );
+
+        let oversized = AuthenticodeHelperOutput {
+            status: ExitStatus::from_raw(0),
+            stdout: vec![b'X'; MAX_AUTHENTICODE_HELPER_RESPONSE_BYTES + 1],
+            stderr: Vec::new(),
+        };
+        assert!(interpret_authenticode_helper_output(path, &nonce, oversized).is_err());
+    }
+
+    #[test]
+    fn native_authenticode_helper_timeout_kills_and_reaps_the_isolated_process() {
+        const CASE_ENV: &str = "AVORAX_TEST_AUTHENTICODE_HELPER_TIMEOUT";
+        if std::env::var_os(CASE_ENV).is_some() {
+            thread::sleep(Duration::from_secs(30));
+            return;
+        }
+        let mut command = Command::new(std::env::current_exe().unwrap());
+        command
+            .arg("--exact")
+            .arg("windows_authenticode::tests::native_authenticode_helper_timeout_kills_and_reaps_the_isolated_process")
+            .arg("--nocapture")
+            .arg("--test-threads=1")
+            .env(CASE_ENV, "1")
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .creation_flags(CREATE_NO_WINDOW);
+        let started = Instant::now();
+        let error = run_bounded_authenticode_helper(
+            command,
+            br#"{"benign":"fixture"}"#.to_vec(),
+            Duration::from_millis(100),
+        )
+        .unwrap_err()
+        .to_string();
+        assert!(error.contains("timed out after 100 ms"));
+        assert!(error.contains("termination request: ok"));
+        assert!(error.contains("reap: ok"));
+        assert!(started.elapsed() < Duration::from_secs(5));
+    }
+
+    #[test]
+    fn native_authenticode_helper_locks_a_bounded_non_reparse_current_executable() {
+        let (path, file) = open_current_authenticode_host().unwrap();
+        assert_eq!(path, std::env::current_exe().unwrap());
+        let metadata = file.metadata().unwrap();
+        assert!(metadata.is_file());
+        assert_eq!(metadata.file_attributes() & FILE_ATTRIBUTE_REPARSE_POINT, 0);
+        assert!(metadata.len() > 0);
+        assert!(metadata.len() <= MAX_AUTHENTICODE_HOST_EXE_BYTES);
     }
 
     #[test]

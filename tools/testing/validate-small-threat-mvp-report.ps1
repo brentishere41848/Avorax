@@ -1904,8 +1904,8 @@ if ($RequireFullSuite) {
   if ($skipFlutter -or $skipRust) {
     throw "-RequireFullSuite requires skip_flutter=false and skip_rust=false."
   }
-  if ($steps.Count -ne 226) {
-    throw "-RequireFullSuite expected exactly 226 verifier steps for this source revision, found $($steps.Count)."
+  if ($steps.Count -ne 229) {
+    throw "-RequireFullSuite expected exactly 229 verifier steps for this source revision, found $($steps.Count)."
   }
   if ($steps[0].name -ne "local-core safe simulator scan reporting") {
     throw "-RequireFullSuite first step mismatch: $($steps[0].name)"
@@ -1940,6 +1940,7 @@ if ($RequireFullSuite) {
   Assert-ReportContainsStep $steps "native-engine direct Authenticode Microsoft-signed/hash-binding regressions"
   Assert-ReportContainsStep $steps "native-engine catalog Authenticode Microsoft-signed/hash-binding regressions"
   Assert-ReportContainsStep $steps "native-engine secondary embedded Authenticode Microsoft-signed regressions"
+  Assert-ReportContainsStep $steps "native-engine Authenticode helper isolation regressions"
   Assert-ReportContainsStep $steps "native-engine ClickOnce carrier heuristic detection"
   Assert-ReportContainsStep $steps "native-engine Java Web Start carrier heuristic detection"
   Assert-ReportContainsStep $steps "native-engine Windows scriptlet carrier heuristic detection"
@@ -1963,6 +1964,8 @@ if ($RequireFullSuite) {
   Assert-ReportContainsStep $steps "local-core Windows Installer carrier review reporting"
   Assert-ReportContainsStep $steps "local-core Windows App Installer carrier review reporting"
   Assert-ReportContainsStep $steps "update-service release binary build"
+  Assert-ReportContainsStep $steps "guard-service release binary build"
+  Assert-ReportContainsStep $steps "release Authenticode isolated helper IPC/hash-binding smoke"
   Assert-ReportContainsStep $steps "release update-service signed package verify/tamper smoke"
   Assert-ReportContainsStep $steps "release update-service apply tamper fail-before-activation smoke"
   Assert-ReportContainsStep $steps "release update-service apply snapshot-failure fail-safe smoke"
@@ -2047,13 +2050,16 @@ if ($RequireFullSuite) {
   Assert-ReportContainsStep $steps "guard-service process collection coverage regressions"
   Assert-ReportContainsStep $steps "guard-service native Windows root regressions"
   Assert-ReportScopeContains $verifiedScopeText "desktop package builder source contracts including bounded macOS DMG transient verification retries" "verification_scope.verified"
-  Assert-ReportScopeContains $verifiedScopeText "Native Engine uses direct handle-based WinVerifyTrust with no script, child process, JSON, or network retrieval" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Native Engine uses direct handle-based WinVerifyTrust with no script, shell, or network retrieval" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "a second bounded SHA-256 read matching the bytes already scanned" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "Catalog lookup is capped at 16 candidates, rejects non-local catalog paths, and fails visibly on API, policy, limit, or cleanup errors" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "valid primary or bounded secondary embedded Authenticode signature" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "Embedded verification requests primary index zero, requires primary output to be zero or untouched, checks every secondary returned index exactly, caps the total at 16, closes each WinTrust state before the next signature, and fails visibly on count drift, API, policy, limit, or cleanup errors" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "An invalid primary embedded signature is not rescued by a secondary signature, but catalog fallback remains available" "verification_scope.verified"
-  Assert-ReportScopeContains $verifiedScopeText "Secondary catalog signatures, memory-mapped mutation, native-call hard cancellation, and pre-execution blocking are not claimed" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Release Local Core and Guard isolate native WinTrust work in an exact-current-executable child using strict nonce-bound one-request JSON, bounded stdin/stdout/stderr, a 15-second deadline, kill-on-close Windows Job containment, and bounded kill/reap diagnostics" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "helper errors and timeouts cannot become trust" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Debug test builds retain a direct backend for deterministic unit fixtures and do not prove release isolation" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Secondary catalog signatures, memory-mapped and post-verdict mutation, same-token helper least privilege, and pre-execution blocking are not claimed" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "Native Engine's disabled test-only legacy quarantine store uses token-derived native DACL application and verification without an external helper" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "production quarantine remains owned by Local Core" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "client UI tab/button/setting source inventory gate" "verification_scope.verified"

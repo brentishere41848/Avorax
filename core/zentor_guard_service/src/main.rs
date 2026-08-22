@@ -210,12 +210,21 @@ struct BoundedGuardClamavCommandOutput {
 
 fn main() -> anyhow::Result<()> {
     let mut args = std::env::args().skip(1);
-    if let Some(arg) = args.next() {
-        match arg.as_str() {
-            "--service" => return run_service(),
-            "--watch" => return run_console_watch(),
-            _ => {}
+    match (args.next(), args.next()) {
+        (None, None) => {}
+        #[cfg(windows)]
+        (Some(arg), None) if arg == "--avorax-authenticode-helper-v1" => {
+            return zentor_native_engine::run_authenticode_helper_stdio()
         }
+        #[cfg(windows)]
+        (Some(arg), None) if arg == "--avorax-authenticode-client-self-test-v1" => {
+            return zentor_native_engine::run_authenticode_client_self_test_stdio()
+        }
+        (Some(arg), None) if arg == "--service" => return run_service(),
+        (Some(arg), None) if arg == "--watch" => return run_console_watch(),
+        (Some(arg), None) => anyhow::bail!("unsupported command-line argument {arg}"),
+        (Some(_), Some(_)) => anyhow::bail!("only one command-line mode may be selected"),
+        (None, Some(_)) => unreachable!("a second argument cannot exist without a first"),
     }
 
     let stdin = io::stdin();
@@ -8388,6 +8397,22 @@ mod tests {
 
         assert!(copy_source.contains("failed to remove invalid guard quarantine destination"));
         assert!(!copy_source.contains("let _ = fs::remove_file(destination);"));
+    }
+
+    #[test]
+    fn native_authenticode_helper_modes_are_exact_and_unknown_arguments_fail() {
+        let source = crate::normalized_test_source(include_str!("main.rs"));
+        let start = source.find("fn main() -> anyhow::Result<()>").unwrap();
+        let end = source.find("fn read_next_guard_command_line").unwrap();
+        let main_source = &source[start..end];
+
+        assert!(main_source.contains("--avorax-authenticode-helper-v1"));
+        assert!(main_source.contains("run_authenticode_helper_stdio()"));
+        assert!(main_source.contains("--avorax-authenticode-client-self-test-v1"));
+        assert!(main_source.contains("run_authenticode_client_self_test_stdio()"));
+        assert!(main_source.contains("unsupported command-line argument {arg}"));
+        assert!(main_source.contains("only one command-line mode may be selected"));
+        assert!(!main_source.contains("_ => {}"));
     }
 
     fn guard_fixture_record(root: &Path, id: &str) -> GuardQuarantineRecord {

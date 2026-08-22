@@ -20,6 +20,18 @@ mod windows_authenticode;
 #[cfg(windows)]
 mod windows_system;
 
+#[cfg(windows)]
+#[doc(hidden)]
+pub fn run_authenticode_helper_stdio() -> anyhow::Result<()> {
+    windows_authenticode::run_authenticode_helper_stdio()
+}
+
+#[cfg(windows)]
+#[doc(hidden)]
+pub fn run_authenticode_client_self_test_stdio() -> anyhow::Result<()> {
+    windows_authenticode::run_authenticode_client_self_test_stdio()
+}
+
 pub use config::EngineConfig;
 pub use detection_provider::{DetectionProviderInfo, DetectionProviderStatus};
 pub use engine::{EngineStatus, SelfTestReport, ZentorNativeEngine};
