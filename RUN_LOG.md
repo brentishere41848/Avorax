@@ -13,6 +13,23 @@ Lead-engineer product-hardening pass across the Avorax repository. Goal is to mo
 - The bundled native ML model is treated as development-only unless release metadata and gates prove production readiness.
 - MSI/EXE installers are first-install/repair/recovery/offline paths. Normal in-app updates should use verified `.aup` packages.
 
+## 2026-08-22 continuation checkpoint 2196
+
+- Implementation head `3eb079cce859b3523dcb22c983ba81628900f9c5`
+  is published on draft PR `#48`. Exact-head Avorax CI run `32586661770`
+  passed all required jobs.
+- Desktop Packages push/PR runs `32586651615`/`32586661643` passed package
+  contracts, Windows x64 MSI/EXE plus non-installing administrative extraction,
+  Linux x64 DEB/tar, macOS arm64/x64 DMGs, six-artifact consolidation,
+  checksums, and lockfile SBOM generation. Both prerelease publication jobs
+  were intentionally skipped. No package was installed, published, or released.
+- Local verification remains `225/225` definitive verifier steps in `577.2s`,
+  with Native Engine `445 + 6`, standard locked Rust workspace `1,489`,
+  all-features workspace `1,490`, Flutter `838/838`, and source contracts
+  `626/626` passing. The protected ProgramData vault remained unchanged.
+- Evidence-head CI/packages, normal PR merge, merged-main checks, and
+  preconditioned original-tree synchronization remain pending.
+
 ## 2026-08-21 continuation checkpoint 2194
 
 - Removed mutable `SystemRoot`/`WINDIR` input from Native Engine Authenticode

@@ -108,8 +108,14 @@ privilege was unavailable.
 The post-suite read-only ProgramData audit matched the protected invariant
 exactly: 16,072 files, zero directories, 4,522,733 bytes, 5,357 each
 `.avoraxq`/`.json`/`.auth`, one `.metadata_auth_key`, and zero pending. Hosted
-exact-head CI/packages, merge, and original-tree synchronization are not yet
-claimed.
+implementation head `3eb079cce859b3523dcb22c983ba81628900f9c5` then passed
+Avorax CI run `32586661770`. Desktop Packages push/PR runs
+`32586651615`/`32586661643` both passed package contracts, Windows x64 MSI/EXE
+plus non-installing administrative extraction, Linux x64 DEB/tar, macOS
+arm64/x64 DMGs, six-artifact consolidation, checksums, and lockfile SBOM
+generation. Both prerelease publication jobs were skipped. No package was
+installed, published, or released. Evidence-head checks, merge, merged-main
+checks, and original-tree synchronization are not yet claimed.
 
 ## Remaining Limits
 
