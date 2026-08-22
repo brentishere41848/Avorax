@@ -1323,5 +1323,48 @@ trust. Checkpoint 2198 does not weaken this limitation, Defender, Windows
 security, or the existing conjunction of valid Windows policy, exact Microsoft
 leaf identity, and scanned-content SHA-256 binding. The documented local batch
 passes focused, full, release-smoke, and definitive verification (`229/229` in
-`433s`). Hosted exact-head, merge, and synchronized-tree evidence remain pending
-and no installed, sandbox, production-signing, or pre-execution claim is made.
+`433s`). Exact-head, merge, merged-main, and synchronized-tree evidence also
+passes with publication skipped. No installed, sandbox, production-signing, or
+pre-execution claim is made.
+
+## Checkpoint 2199 Mandatory Hash And Handle-Identity Boundary
+
+A path-only publisher verdict can be misused by a future caller that has not
+bound trust to bytes already scanned. A nullable helper digest also creates two
+security contracts for one endpoint. Checkpoint 2199 removes the
+unused path-only Microsoft/publisher helper and requires one exact 64-hex
+SHA-256 through public trust, direct WinTrust, helper JSON, embedded signatures,
+catalog fallback, and release smoke. Missing, null, malformed, or mismatched
+digests fail visibly. The scan engine already computes and supplies the full-
+file digest; no extra ambient path trust is introduced.
+
+The no-write/delete-sharing candidate handle is captured before WinTrust and
+retained across the verdict. Before and after the complete embedded/catalog/hash
+operation, the verifier queries volume/file ID, legacy file index, creation,
+write, and change times, attributes, allocation and end size, link count,
+delete-pending, and directory state. It cross-checks independent legacy and
+extended volume, creation/write time, size, link-count, and attribute values.
+Any API failure, internal inconsistency, or before/after drift replaces the
+verdict with a bounded
+diagnostic. If trust and identity checks both fail, both diagnostics survive.
+Last-access time is deliberately excluded because verification reads may update
+it and create false mutation reports.
+
+Benign adversarial tests open only temporary text fixtures. They prove a
+pre-existing writer prevents the verifier's restrictive open, repeated handle
+snapshots are stable, creating a real hardlink changes link-count evidence and
+is rejected, and identity errors cannot become trust or hide a verification
+error. Installed Edge and Windows PowerShell fixtures remain read-only and are
+never executed.
+
+This is detection of common in-verification drift, not atomic execution control.
+A writable mapping created before the verifier opens its handle can still alter
+pages; digest and metadata checks may detect that activity but cannot revoke the
+mapping. Mutation after the verdict remains possible. Filesystems that cannot
+supply required identity information fail conservatively. Same-token helper
+privilege, secondary catalog signatures, production signing, installed service/
+UI behavior, driver IPC, pre-execution blocking, Defender replacement, and
+production detection-rate claims remain outside this checkpoint. The completed
+local verifier/validator passes `230/230` in `504.6s`. Exact implementation-head
+CI/packages pass with publication skipped; evidence-head, merge, and
+synchronized-tree evidence remains pending.

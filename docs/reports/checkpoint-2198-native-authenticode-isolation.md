@@ -129,6 +129,17 @@ x64 MSI/EXE, Linux x64 DEB/tar, macOS x64/arm64 DMG, six-artifact consolidation,
 SHA-256 checksums, and lockfile CycloneDX SBOM. Both prerelease publication jobs
 were explicitly skipped. Draft PR `#50` is open.
 
-Evidence-head CI/packages, normal merge, merged-main checks, and preconditioned
-original-tree synchronization remain pending. No package was installed,
-released, or published, and no production-signing claim is made.
+Evidence head `e14e6dd9d80e77823c1c1db8d968c5f86f598ce0` passes Avorax CI
+`32597873447` and Desktop Packages `32597873398`. PR `#50` merged normally with
+exact-head locking as `ab6bd8908d679a60515bac0cf3ceb56f3b6f8a45`.
+Merged-main CI `32598488946` and Desktop Packages `32598488969` pass; package
+contracts, all six platform artifacts, consolidation/checksums, and lockfile
+SBOM pass and publication is skipped.
+
+All 18 explicit files synchronized to the original tree after every existing
+file matched checkpoint 2197 and both new paths were absent. Destination files
+match merged blobs and raw source SHA-256. Destination source contracts
+(`627/627`), helper tests (`4/4`), rustfmt, strict Native/Local/Guard Clippy,
+locked release builds, and both-host benign smoke pass. The protected vault is
+unchanged. No package was installed, released, or published, and no production-
+signing claim is made.

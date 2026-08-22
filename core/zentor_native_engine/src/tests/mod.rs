@@ -2607,18 +2607,17 @@ mod tests {
         let engine_source = include_str!("../engine.rs");
         let trust_source = include_str!("../trust/microsoft_trust.rs");
         let publisher_source = include_str!("../trust/publisher_trust.rs");
+        let trust_production = trust_source.split("#[cfg(test)]").next().unwrap();
+        let publisher_production = publisher_source.split("#[cfg(test)]").next().unwrap();
 
         assert!(engine_source.contains("microsoft_signature_verdict_for_sha256(&path, &sha256)"));
         assert!(engine_source.contains("publisher_trust_diagnostic"));
         assert!(engine_source.contains("Microsoft publisher trust probe failed"));
         assert!(engine_source.contains("weight: 0"));
         assert!(!engine_source.contains("microsoft_trust::has_valid_microsoft_signature(&path)"));
-        assert!(trust_source
-            .contains("pub fn microsoft_signature_verdict(path: &Path) -> Result<bool>"));
-        assert!(trust_source.contains("pub fn microsoft_signature_verdict_for_sha256("));
-        assert!(publisher_source.contains(
-            "pub fn trusted_publisher_for(path: &Path) -> Result<Option<TrustedPublisher>>"
-        ));
+        assert!(trust_production.contains("pub fn microsoft_signature_verdict_for_sha256("));
+        assert!(!trust_production.contains("pub fn microsoft_signature_verdict(path:"));
+        assert!(!publisher_production.contains("pub fn trusted_publisher_for("));
     }
 
     #[test]

@@ -202,3 +202,27 @@ lockfile CycloneDX SBOM and checksum it with all six platform artifacts; both
 pass with publication skipped. Evidence-head and merged-main package proof plus
 final-artifact license, notice, and copyright review remain pending;
 source-level reuse does not replace that review.
+
+## Native Authenticode File Identity API Surface
+
+Checkpoint 2199 adds no crate, package, registry dependency, network client,
+executable artifact, or dependency version. It reuses the pinned
+`windows-sys 0.61.2` `Win32_Storage_FileSystem` feature already present for
+`GetFileInformationByHandle`, `GetFileInformationByHandleEx`,
+`BY_HANDLE_FILE_INFORMATION`, `FILE_BASIC_INFO`, `FILE_STANDARD_INFO`, and
+`FILE_ID_INFO`. No Cargo feature or lockfile entry is intended to change.
+
+The standard library's stable Windows metadata surface does not expose volume/
+file identity on stable Rust, so the existing pinned raw Win32 binding is used
+instead of adding a parser or wrapper crate. All structures are fixed-size,
+stack-allocated, queried only for an already open bounded regular non-reparse
+handle, and compared without network or package-manager access.
+
+Lockfile stability, exact API feature resolution, strict lint, both complete
+locked workspace variants, and the dependency/license evidence gate pass
+locally. No lockfile changed. Implementation-head package push/PR runs
+`32601253745`/`32601266989` pass lockfile CycloneDX SBOM generation and
+six-artifact checksum consolidation with publication skipped. Evidence-head and
+merged-main package proof plus final release-artifact review remain pending.
+Source-level API reuse remains distinct from final-binary license, notice, and
+copyright review.

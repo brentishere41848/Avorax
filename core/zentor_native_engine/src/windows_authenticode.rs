@@ -46,8 +46,10 @@ use windows_sys::Win32::Security::WinTrust::{
     WTD_STATEACTION_CLOSE, WTD_STATEACTION_VERIFY, WTD_UICONTEXT_EXECUTE, WTD_UI_NONE,
 };
 use windows_sys::Win32::Storage::FileSystem::{
-    FILE_ATTRIBUTE_REPARSE_POINT, FILE_FLAG_OPEN_REPARSE_POINT, FILE_FLAG_SEQUENTIAL_SCAN,
-    FILE_SHARE_READ,
+    FileBasicInfo, FileIdInfo, FileStandardInfo, GetFileInformationByHandle,
+    GetFileInformationByHandleEx, BY_HANDLE_FILE_INFORMATION, FILE_ATTRIBUTE_REPARSE_POINT,
+    FILE_BASIC_INFO, FILE_FLAG_OPEN_REPARSE_POINT, FILE_FLAG_SEQUENTIAL_SCAN, FILE_ID_INFO,
+    FILE_SHARE_READ, FILE_STANDARD_INFO,
 };
 use windows_sys::Win32::System::JobObjects::{
     AssignProcessToJobObject, CreateJobObjectW, JobObjectExtendedLimitInformation,
@@ -80,7 +82,7 @@ struct AuthenticodeHelperRequest {
     schema_version: u32,
     nonce: String,
     path_utf16: Vec<u16>,
-    expected_sha256: Option<String>,
+    expected_sha256: String,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -154,29 +156,42 @@ enum EmbeddedSignatureVerdict {
     Invalid,
 }
 
-pub(crate) fn has_valid_microsoft_signature(
-    path: &Path,
-    expected_sha256: Option<&str>,
-) -> Result<bool> {
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct AuthenticodeFileSnapshot {
+    volume_serial_number: u64,
+    file_id: [u8; 16],
+    file_index: u64,
+    creation_time: i64,
+    last_write_time: i64,
+    change_time: i64,
+    file_attributes: u32,
+    allocation_size: i64,
+    end_of_file: i64,
+    number_of_links: u32,
+    delete_pending: bool,
+    directory: bool,
+}
+
+pub(crate) fn has_valid_microsoft_signature(path: &Path, expected_sha256: &str) -> Result<bool> {
     if cfg!(debug_assertions) {
         return verify_direct_microsoft_signature(path, expected_sha256);
     }
     verify_with_isolated_helper(path, expected_sha256)
 }
 
-fn verify_direct_microsoft_signature(path: &Path, expected_sha256: Option<&str>) -> Result<bool> {
-    if let Some(expected_sha256) = expected_sha256 {
-        validate_expected_sha256(expected_sha256)?;
-    }
+fn verify_direct_microsoft_signature(path: &Path, expected_sha256: &str) -> Result<bool> {
+    validate_expected_sha256(expected_sha256)?;
     let path_wide = absolute_path_wide(path)?;
     let mut file = open_authenticode_candidate(path)?;
-    if expected_sha256.is_some() {
-        enforce_content_binding_size(path, &file)?;
-    }
-    match verify_open_file(path, &path_wide, &mut file, expected_sha256)? {
-        true => Ok(true),
-        false => verify_catalog_signatures(path, &path_wide, &mut file, expected_sha256),
-    }
+    enforce_content_binding_size(path, &file)?;
+    let before = snapshot_authenticode_file(path, &file)?;
+    let verdict = match verify_open_file(path, &path_wide, &mut file, expected_sha256) {
+        Ok(true) => Ok(true),
+        Ok(false) => verify_catalog_signatures(path, &path_wide, &mut file, expected_sha256),
+        Err(error) => Err(error),
+    };
+    let after = snapshot_authenticode_file(path, &file);
+    combine_verdict_and_file_snapshot(path, verdict, before, after)
 }
 
 pub(crate) fn run_authenticode_helper_stdio() -> Result<()> {
@@ -187,11 +202,11 @@ pub(crate) fn run_authenticode_client_self_test_stdio() -> Result<()> {
     run_authenticode_stdio(has_valid_microsoft_signature)
 }
 
-fn run_authenticode_stdio(verify: impl FnOnce(&Path, Option<&str>) -> Result<bool>) -> Result<()> {
+fn run_authenticode_stdio(verify: impl FnOnce(&Path, &str) -> Result<bool>) -> Result<()> {
     let request = read_authenticode_helper_request(std::io::stdin().lock())?;
     let nonce = validate_authenticode_helper_request(&request)?;
     let path = PathBuf::from(OsString::from_wide(&request.path_utf16));
-    let outcome = verify(&path, request.expected_sha256.as_deref());
+    let outcome = verify(&path, &request.expected_sha256);
     let response = match outcome {
         Ok(trusted) => AuthenticodeHelperResponse {
             schema_version: AUTHENTICODE_HELPER_SCHEMA_VERSION,
@@ -258,22 +273,18 @@ fn validate_authenticode_helper_request(request: &AuthenticodeHelperRequest) -> 
         !request.path_utf16.contains(&0),
         "AuthentiCode helper path contains an embedded NUL"
     );
-    if let Some(expected) = request.expected_sha256.as_deref() {
-        validate_expected_sha256(expected)?;
-    }
+    validate_expected_sha256(&request.expected_sha256)?;
     Ok(nonce.hyphenated().to_string())
 }
 
-fn verify_with_isolated_helper(path: &Path, expected_sha256: Option<&str>) -> Result<bool> {
-    if let Some(expected) = expected_sha256 {
-        validate_expected_sha256(expected)?;
-    }
+fn verify_with_isolated_helper(path: &Path, expected_sha256: &str) -> Result<bool> {
+    validate_expected_sha256(expected_sha256)?;
     let path_utf16 = path.as_os_str().encode_wide().collect::<Vec<_>>();
     let request = AuthenticodeHelperRequest {
         schema_version: AUTHENTICODE_HELPER_SCHEMA_VERSION,
         nonce: Uuid::new_v4().hyphenated().to_string(),
         path_utf16,
-        expected_sha256: expected_sha256.map(str::to_owned),
+        expected_sha256: expected_sha256.to_owned(),
     };
     validate_authenticode_helper_request(&request)?;
     let encoded =
@@ -673,11 +684,152 @@ fn open_authenticode_candidate(path: &Path) -> Result<File> {
     Ok(file)
 }
 
+fn snapshot_authenticode_file(path: &Path, file: &File) -> Result<AuthenticodeFileSnapshot> {
+    let handle = file.as_raw_handle() as HANDLE;
+    anyhow::ensure!(
+        !handle.is_null() && handle != INVALID_HANDLE_VALUE,
+        "Authenticode candidate has an invalid file handle while capturing identity: {}",
+        path.display()
+    );
+
+    let mut legacy = BY_HANDLE_FILE_INFORMATION::default();
+    anyhow::ensure!(
+        unsafe { GetFileInformationByHandle(handle, &mut legacy) } != 0,
+        "unable to capture Authenticode file identity for {}: {}",
+        path.display(),
+        std::io::Error::last_os_error()
+    );
+    let basic: FILE_BASIC_INFO = query_authenticode_handle_info(path, handle, FileBasicInfo)?;
+    let standard: FILE_STANDARD_INFO =
+        query_authenticode_handle_info(path, handle, FileStandardInfo)?;
+    let id: FILE_ID_INFO = query_authenticode_handle_info(path, handle, FileIdInfo)?;
+
+    let legacy_size = (u64::from(legacy.nFileSizeHigh) << 32) | u64::from(legacy.nFileSizeLow);
+    let legacy_creation_time = (u64::from(legacy.ftCreationTime.dwHighDateTime) << 32)
+        | u64::from(legacy.ftCreationTime.dwLowDateTime);
+    let legacy_last_write_time = (u64::from(legacy.ftLastWriteTime.dwHighDateTime) << 32)
+        | u64::from(legacy.ftLastWriteTime.dwLowDateTime);
+    anyhow::ensure!(
+        !standard.Directory,
+        "opened Authenticode candidate became a directory: {}",
+        path.display()
+    );
+    anyhow::ensure!(
+        !standard.DeletePending,
+        "opened Authenticode candidate is pending deletion: {}",
+        path.display()
+    );
+    anyhow::ensure!(
+        standard.EndOfFile >= 0
+            && standard.AllocationSize >= 0
+            && standard.EndOfFile as u64 == legacy_size,
+        "inconsistent Authenticode file size metadata for {}",
+        path.display()
+    );
+    anyhow::ensure!(
+        standard.NumberOfLinks > 0 && legacy.nNumberOfLinks > 0,
+        "opened Authenticode candidate has no stable filesystem link: {}",
+        path.display()
+    );
+    anyhow::ensure!(
+        standard.NumberOfLinks == legacy.nNumberOfLinks,
+        "inconsistent Authenticode file link-count metadata for {}",
+        path.display()
+    );
+    anyhow::ensure!(
+        basic.FileAttributes == legacy.dwFileAttributes
+            && basic.FileAttributes & FILE_ATTRIBUTE_REPARSE_POINT == 0,
+        "inconsistent or reparse-point Authenticode file attributes for {}",
+        path.display()
+    );
+    anyhow::ensure!(
+        id.VolumeSerialNumber as u32 == legacy.dwVolumeSerialNumber,
+        "inconsistent Authenticode file volume identity for {}",
+        path.display()
+    );
+    anyhow::ensure!(
+        basic.CreationTime as u64 == legacy_creation_time
+            && basic.LastWriteTime as u64 == legacy_last_write_time,
+        "inconsistent Authenticode file timestamp metadata for {}",
+        path.display()
+    );
+
+    Ok(AuthenticodeFileSnapshot {
+        volume_serial_number: id.VolumeSerialNumber,
+        file_id: id.FileId.Identifier,
+        file_index: (u64::from(legacy.nFileIndexHigh) << 32) | u64::from(legacy.nFileIndexLow),
+        creation_time: basic.CreationTime,
+        last_write_time: basic.LastWriteTime,
+        change_time: basic.ChangeTime,
+        file_attributes: basic.FileAttributes,
+        allocation_size: standard.AllocationSize,
+        end_of_file: standard.EndOfFile,
+        number_of_links: standard.NumberOfLinks,
+        delete_pending: standard.DeletePending,
+        directory: standard.Directory,
+    })
+}
+
+fn query_authenticode_handle_info<T: Default>(
+    path: &Path,
+    handle: HANDLE,
+    class: i32,
+) -> Result<T> {
+    let mut value = T::default();
+    anyhow::ensure!(
+        unsafe {
+            GetFileInformationByHandleEx(
+                handle,
+                class,
+                (&mut value as *mut T).cast::<c_void>(),
+                size_of::<T>() as u32,
+            )
+        } != 0,
+        "unable to capture Authenticode handle information class {} for {}: {}",
+        class,
+        path.display(),
+        std::io::Error::last_os_error()
+    );
+    Ok(value)
+}
+
+fn ensure_authenticode_file_unchanged(
+    path: &Path,
+    before: &AuthenticodeFileSnapshot,
+    after: &AuthenticodeFileSnapshot,
+) -> Result<()> {
+    anyhow::ensure!(
+        before == after,
+        "Authenticode candidate identity or mutation metadata changed while verifying {}",
+        path.display()
+    );
+    Ok(())
+}
+
+fn combine_verdict_and_file_snapshot(
+    path: &Path,
+    verdict: Result<bool>,
+    before: AuthenticodeFileSnapshot,
+    after: Result<AuthenticodeFileSnapshot>,
+) -> Result<bool> {
+    let stability =
+        after.and_then(|after| ensure_authenticode_file_unchanged(path, &before, &after));
+    match (verdict, stability) {
+        (Ok(verdict), Ok(())) => Ok(verdict),
+        (Ok(_), Err(stability_error)) => Err(stability_error),
+        (Err(error), Ok(())) => Err(error),
+        (Err(error), Err(stability_error)) => anyhow::bail!(
+            "{error:#}; Authenticode file identity verification also failed for {}: {stability_error:#}",
+            path.display()
+        ),
+    }
+}
+
 fn verify_open_file(
     path: &Path,
     path_wide: &[u16],
     file: &mut File,
-    expected_sha256: Option<&str>,
+    expected_sha256: &str,
 ) -> Result<bool> {
     let handle = file.as_raw_handle() as HANDLE;
     anyhow::ensure!(
@@ -756,7 +908,7 @@ fn verify_specific_embedded_signature(
     trust_data: &mut WINTRUST_DATA,
     signature_settings: &mut WINTRUST_SIGNATURE_SETTINGS,
     file: &mut File,
-    expected_sha256: Option<&str>,
+    expected_sha256: &str,
 ) -> Result<EmbeddedSignatureVerdict> {
     file.seek(SeekFrom::Start(0)).with_context(|| {
         format!(
@@ -837,7 +989,7 @@ fn verify_wintrust_data(
     path: &Path,
     trust_data: &mut WINTRUST_DATA,
     file: &mut File,
-    expected_sha256: Option<&str>,
+    expected_sha256: &str,
 ) -> Result<bool> {
     verify_wintrust_data_with(path, trust_data, file, false, |trust_data, file| {
         if verified_signer_is_microsoft(trust_data)? {
@@ -983,7 +1135,7 @@ fn verify_catalog_signatures(
     path: &Path,
     path_wide: &[u16],
     file: &mut File,
-    expected_sha256: Option<&str>,
+    expected_sha256: &str,
 ) -> Result<bool> {
     let mut resources = CatalogResources::acquire(path)?;
     let outcome =
@@ -996,7 +1148,7 @@ fn verify_catalog_signatures_inner(
     path: &Path,
     path_wide: &[u16],
     file: &mut File,
-    expected_sha256: Option<&str>,
+    expected_sha256: &str,
     resources: &mut CatalogResources,
 ) -> Result<bool> {
     let hash = calculate_catalog_hash(path, file, resources.admin)?;
@@ -1140,7 +1292,7 @@ fn verify_catalog_candidate(
     path: &Path,
     path_wide: &[u16],
     file: &mut File,
-    expected_sha256: Option<&str>,
+    expected_sha256: &str,
     admin: isize,
     catalog_path_wide: &[u16],
     member_tag: &[u16],
@@ -1200,17 +1352,9 @@ fn combine_catalog_outcome_and_cleanup(
 fn bind_verified_signature_to_expected_hash(
     path: &Path,
     file: &mut File,
-    expected_sha256: Option<&str>,
+    expected_sha256: &str,
 ) -> Result<bool> {
-    let Some(expected_sha256) = expected_sha256 else {
-        return Ok(true);
-    };
-    let before = file.metadata().with_context(|| {
-        format!(
-            "unable to inspect Microsoft-signed file before content binding {}",
-            path.display()
-        )
-    })?;
+    let before = snapshot_authenticode_file(path, file)?;
     enforce_content_binding_size(path, file)?;
     file.seek(SeekFrom::Start(0)).with_context(|| {
         format!(
@@ -1242,19 +1386,8 @@ fn bind_verified_signature_to_expected_hash(
         );
         hasher.update(&buffer[..read]);
     }
-    let after = file.metadata().with_context(|| {
-        format!(
-            "unable to inspect Microsoft-signed file after content binding {}",
-            path.display()
-        )
-    })?;
-    anyhow::ensure!(
-        before.len() == after.len()
-            && before.last_write_time() == after.last_write_time()
-            && before.file_attributes() == after.file_attributes(),
-        "Microsoft-signed file metadata changed during content binding: {}",
-        path.display()
-    );
+    let after = snapshot_authenticode_file(path, file)?;
+    ensure_authenticode_file_unchanged(path, &before, &after)?;
     let actual_sha256 = format!("{:x}", hasher.finalize());
     anyhow::ensure!(
         actual_sha256.eq_ignore_ascii_case(expected_sha256),
@@ -1451,6 +1584,12 @@ mod tests {
         CRYPT_E_SECURITY_SETTINGS, TRUST_E_ACTION_UNKNOWN, TRUST_E_FAIL, TRUST_E_NOSIGNATURE,
         TRUST_E_PROVIDER_UNKNOWN, TRUST_E_SYSTEM_ERROR,
     };
+    use windows_sys::Win32::Storage::FileSystem::{FILE_SHARE_DELETE, FILE_SHARE_WRITE};
+
+    fn fixture_sha256(path: &Path) -> String {
+        let bytes = fs::read(path).unwrap();
+        format!("{:x}", Sha256::digest(bytes))
+    }
 
     #[test]
     fn signer_subject_policy_requires_exact_microsoft_attributes() {
@@ -1489,7 +1628,7 @@ mod tests {
         assert!(!definitively_untrusted_status(0x8123_4567_u32 as i32));
     }
 
-    fn helper_request(path: &Path, expected_sha256: Option<String>) -> AuthenticodeHelperRequest {
+    fn helper_request(path: &Path, expected_sha256: String) -> AuthenticodeHelperRequest {
         AuthenticodeHelperRequest {
             schema_version: AUTHENTICODE_HELPER_SCHEMA_VERSION,
             nonce: Uuid::new_v4().hyphenated().to_string(),
@@ -1502,7 +1641,7 @@ mod tests {
     fn native_authenticode_helper_protocol_is_strict_bounded_and_nonce_bound() {
         let request = helper_request(
             Path::new(r"C:\Windows\System32\fixture.exe"),
-            Some("a".repeat(64)),
+            "a".repeat(64),
         );
         let encoded = serde_json::to_vec(&request).unwrap();
         let decoded = read_authenticode_helper_request(encoded.as_slice()).unwrap();
@@ -1516,6 +1655,11 @@ mod tests {
             request.nonce
         );
         assert!(read_authenticode_helper_request(unknown.as_bytes()).is_err());
+        let null_hash = format!(
+            r#"{{"schema_version":1,"nonce":"{}","path_utf16":[67,58,92,102],"expected_sha256":null}}"#,
+            request.nonce
+        );
+        assert!(read_authenticode_helper_request(null_hash.as_bytes()).is_err());
         assert!(read_authenticode_helper_request(&[][..]).is_err());
         assert!(read_authenticode_helper_request(
             vec![b' '; MAX_AUTHENTICODE_HELPER_REQUEST_BYTES + 1].as_slice()
@@ -1532,8 +1676,30 @@ mod tests {
         invalid.path_utf16 = vec![b'C' as u16, 0, b'X' as u16];
         assert!(validate_authenticode_helper_request(&invalid).is_err());
         invalid.path_utf16 = vec![b'C' as u16];
-        invalid.expected_sha256 = Some("not-a-digest".to_string());
+        invalid.expected_sha256 = "not-a-digest".to_string();
         assert!(validate_authenticode_helper_request(&invalid).is_err());
+
+        let missing_hash = format!(
+            r#"{{"schema_version":1,"nonce":"{}","path_utf16":[67,58,92,102]}}"#,
+            invalid.nonce
+        );
+        assert!(read_authenticode_helper_request(missing_hash.as_bytes()).is_err());
+    }
+
+    #[test]
+    fn native_authenticode_file_identity_requires_a_mandatory_hash() {
+        let nonce = Uuid::new_v4().hyphenated().to_string();
+        let missing_hash =
+            format!(r#"{{"schema_version":1,"nonce":"{nonce}","path_utf16":[67,58,92,102]}}"#);
+        let null_hash = format!(
+            r#"{{"schema_version":1,"nonce":"{nonce}","path_utf16":[67,58,92,102],"expected_sha256":null}}"#
+        );
+        assert!(read_authenticode_helper_request(missing_hash.as_bytes()).is_err());
+        assert!(read_authenticode_helper_request(null_hash.as_bytes()).is_err());
+        assert!(validate_expected_sha256(&"a".repeat(64)).is_ok());
+        assert!(validate_expected_sha256(&"A".repeat(64)).is_ok());
+        assert!(validate_expected_sha256(&"a".repeat(63)).is_err());
+        assert!(validate_expected_sha256(&"g".repeat(64)).is_err());
     }
 
     #[test]
@@ -1810,6 +1976,7 @@ mod tests {
             }
         }
         let path = fixture.expect("no bounded benign multi-signature Edge DLL fixture was found");
+        let sha256 = fixture_sha256(&path);
         let path_wide = absolute_path_wide(&path).unwrap();
         let mut file = open_authenticode_candidate(&path).unwrap();
         let handle = file.as_raw_handle() as HANDLE;
@@ -1852,7 +2019,7 @@ mod tests {
             &mut trust_data,
             &mut signature_settings,
             &mut file,
-            None,
+            &sha256,
         )
         .unwrap();
         assert_eq!(primary, EmbeddedSignatureVerdict::OtherPublisher);
@@ -1874,7 +2041,7 @@ mod tests {
                 &mut trust_data,
                 &mut signature_settings,
                 &mut file,
-                None,
+                &sha256,
             )
             .unwrap();
             assert_eq!(signature_settings.dwVerifiedSigIndex, index);
@@ -1902,6 +2069,89 @@ mod tests {
         assert!(fs::rename(&source, &renamed).is_err());
         drop(file);
         fs::rename(&source, &renamed).unwrap();
+    }
+
+    #[test]
+    fn native_authenticode_file_identity_denies_a_preexisting_writer() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("candidate.exe");
+        fs::write(&path, b"benign fixture").unwrap();
+
+        let mut writer_options = OpenOptions::new();
+        writer_options
+            .write(true)
+            .share_mode(FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE);
+        let writer = writer_options.open(&path).unwrap();
+        assert!(open_authenticode_candidate(&path).is_err());
+        drop(writer);
+        open_authenticode_candidate(&path).unwrap();
+    }
+
+    #[test]
+    fn native_authenticode_file_identity_detects_benign_link_count_drift() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("candidate.exe");
+        let link = dir.path().join("candidate-hardlink.exe");
+        fs::write(&path, b"benign fixture").unwrap();
+
+        let file = open_authenticode_candidate(&path).unwrap();
+        let before = snapshot_authenticode_file(&path, &file).unwrap();
+        let stable = snapshot_authenticode_file(&path, &file).unwrap();
+        ensure_authenticode_file_unchanged(&path, &before, &stable).unwrap();
+        fs::hard_link(&path, &link).unwrap();
+        let after = snapshot_authenticode_file(&path, &file).unwrap();
+        let error = ensure_authenticode_file_unchanged(&path, &before, &after)
+            .unwrap_err()
+            .to_string();
+        assert!(error.contains("identity or mutation metadata changed"));
+        assert_eq!(after.number_of_links, before.number_of_links + 1);
+    }
+
+    #[test]
+    fn native_authenticode_file_identity_failure_cannot_return_or_hide_trust() {
+        let path = Path::new(r"C:\benign-fixture.exe");
+        let stable = AuthenticodeFileSnapshot {
+            volume_serial_number: 1,
+            file_id: [2; 16],
+            file_index: 3,
+            creation_time: 4,
+            last_write_time: 5,
+            change_time: 6,
+            file_attributes: 7,
+            allocation_size: 8,
+            end_of_file: 8,
+            number_of_links: 1,
+            delete_pending: false,
+            directory: false,
+        };
+        let mut changed = stable.clone();
+        changed.change_time += 1;
+        let query_error = combine_verdict_and_file_snapshot(
+            path,
+            Ok(true),
+            stable.clone(),
+            Err(anyhow::anyhow!("final identity query failed")),
+        )
+        .unwrap_err()
+        .to_string();
+        assert!(query_error.contains("final identity query failed"));
+
+        let trust_error =
+            combine_verdict_and_file_snapshot(path, Ok(true), stable.clone(), Ok(changed.clone()))
+                .unwrap_err()
+                .to_string();
+        assert!(trust_error.contains("identity or mutation metadata changed"));
+
+        let combined = combine_verdict_and_file_snapshot(
+            path,
+            Err(anyhow::anyhow!("verification failed")),
+            stable,
+            Ok(changed),
+        )
+        .unwrap_err()
+        .to_string();
+        assert!(combined.contains("verification failed"));
+        assert!(combined.contains("identity verification also failed"));
     }
 
     #[test]
@@ -1970,9 +2220,10 @@ mod tests {
         .unwrap();
         let path_wide = absolute_path_wide(&path).unwrap();
         let mut file = open_authenticode_candidate(&path).unwrap();
+        let sha256 = fixture_sha256(&path);
 
-        assert!(!verify_open_file(&path, &path_wide, &mut file, None).unwrap());
-        assert!(verify_catalog_signatures(&path, &path_wide, &mut file, None).unwrap());
+        assert!(!verify_open_file(&path, &path_wide, &mut file, &sha256).unwrap());
+        assert!(verify_catalog_signatures(&path, &path_wide, &mut file, &sha256).unwrap());
     }
 
     #[test]

@@ -90,6 +90,95 @@ Lead-engineer product-hardening pass across the Avorax repository. Goal is to mo
   normal PR merge, merged-main checks, and preconditioned original-tree sync
   remain pending.
 
+## 2026-08-22 continuation checkpoint 2198 closure
+
+- Evidence head `e14e6dd9d80e77823c1c1db8d968c5f86f598ce0` passed Avorax CI
+  `32597873447` and Desktop Packages `32597873398`; every platform and
+  consolidation passed and prerelease publication was skipped.
+- PR `#50` became ready only after exact-head checks passed, then merged normally
+  with head locking as `ab6bd8908d679a60515bac0cf3ceb56f3b6f8a45`.
+  Merged-main CI `32598488946` and packages `32598488969` passed; publication
+  was skipped.
+- All 18 original-tree preconditions matched checkpoint 2197 or valid absence.
+  Exactly those files synchronized to `C:\Users\Brent\Documents\Avorax-main`;
+  every destination matched the merged Git blob after line-ending normalization
+  and the source file's raw SHA-256. Destination checks passed source contracts
+  `627/627`, helper isolation `4/4`, rustfmt, strict Native/Local/Guard Clippy,
+  locked release Local/Guard builds, and both-host benign release smoke.
+- The protected vault remained exactly 16,072 files, zero directories,
+  4,522,733 bytes, 5,357 each `.avoraxq`/`.json`/`.auth`, one metadata key, and
+  zero pending. `.verification` remained untracked. No package was installed,
+  released, or published.
+
+## 2026-08-22 continuation checkpoint 2199 scripting
+
+- Removed the unused path-only Microsoft/publisher trust API and made the
+  scanner's 64-hex SHA-256 mandatory through public trust, direct WinTrust,
+  strict helper JSON, embedded signatures, catalog fallback, and release smoke.
+  Missing, null, malformed, or mismatched hashes fail visibly and cannot supply
+  trust.
+- Scripted same-handle snapshots before and after the complete trust operation.
+  `GetFileInformationByHandle` plus `GetFileInformationByHandleEx` capture
+  volume/file ID, legacy file index, creation/write/change times, attributes,
+  allocation/end size, link count, delete-pending, and directory state. Internal
+  inconsistency, query failure, or any drift replaces a verdict; combined trust
+  and snapshot failures retain both diagnostics. Last-access time is excluded
+  because reads may update it.
+- Scripted benign tests for mandatory helper hash, writer-sharing denial, stable
+  snapshots, real temporary hardlink/link-count drift, and diagnostic
+  combination. No fixture is executed.
+- Scripted verifier step 230, exact validator requirements, scope assertions,
+  source contracts, matrix, threat model, blockers, dependency notes, this run
+  log, status, and checkpoint report before any checkpoint-2199 test execution.
+- Existing writable mappings can still mutate through a pre-created section,
+  and mutation after the verdict remains possible. Unsupported identity queries
+  fail conservatively. No sandbox, installed-service, production-signing,
+  Defender-replacement, driver, or pre-execution claim is introduced.
+
+## 2026-08-22 continuation checkpoint 2199 local verification
+
+- PowerShell parser checks, final rustfmt and `git diff --check`, and Python
+  source contracts passed (`627/627`). The first format check reported only
+  mechanical layout differences; `cargo fmt` applied them and all rechecks
+  passed. No lockfile changed.
+- Mandatory-hash/file-identity regressions passed `4/4`; helper isolation
+  passed `4/4`; direct embedded, catalog, and secondary Authenticode filters
+  passed `4/4`, `3/3`, and `3/3`. Corrected Local Core and Guard filters each
+  executed and passed `1/1`. Strict Native/Local/Guard Clippy passed.
+- The first full Native run exposed one self-referential source regression after
+  `455` passes: its removed-API string matched the assertion in its own test
+  module. The test was scoped to production source, passed focused `1/1`, and
+  the complete rerun passed `456/456` plus signature compiler `6/6`.
+- Standard and all-feature locked Rust workspace suites passed. Locked release
+  Local Core/Guard builds and the two-host isolated Authenticode smoke passed
+  mandatory hash, embedded Edge, catalog Windows PowerShell, unsigned text,
+  and wrong-hash behavior without executing a fixture or starting a service.
+- Flutter analyzer passed with no issues and the complete client suite passed
+  `838/838`. The definitive verifier passed `230/230`, zero failed/skipped,
+  from `2026-08-22T21:48:54Z` through `2026-08-22T21:57:19Z` (`504.6s`).
+  Independent full-suite validation passed and rejected checkpoint 2198's
+  stale `229`-step report with the expected exact-count diagnostic.
+- Read-only post-suite inventory remained exactly 16,072 protected vault files,
+  zero directories, 4,522,733 bytes, 5,357 each `.avoraxq`/`.json`/`.auth`, one
+  metadata key, and zero pending. `.verification` remains untracked. Hosted
+  exact-head CI/packages, commit, merge, and original-tree sync remain pending.
+
+## 2026-08-23 continuation checkpoint 2199 implementation-head evidence
+
+- Committed the exact 16-file implementation/test/verifier/documentation batch
+  as `d619c0a5ddb627e9d940d12478d5db9589ee5679`, pushed only branch
+  `agent/checkpoint-2199-authenticode-file-identity`, and opened draft PR `#51`.
+- Exact-head Avorax CI `32601267008` passed branding/copy, Unix quarantine
+  permissions, Flutter/protocol, Rust Local Core/Guard, and security/protection/
+  performance jobs.
+- Desktop Packages push `32601253745` and PR `32601266989` passed package
+  contracts, Windows x64 MSI/EXE, Linux x64 DEB/tar, macOS arm64/x64 DMG,
+  six-artifact consolidation, checksums, and lockfile CycloneDX SBOM. Both
+  prerelease publication jobs were explicitly skipped.
+- No package was installed, released, or published. Evidence-head CI/packages,
+  normal merge, merged-main checks, and preconditioned original-tree sync remain
+  pending.
+
 ## 2026-08-22 continuation checkpoint 2197
 
 - Completed the no-test scripting phase for bounded secondary embedded

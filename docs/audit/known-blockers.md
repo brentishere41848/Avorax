@@ -1693,7 +1693,9 @@ enforcement, or pre-execution blocking is claimed.
   verifier/validator passes `229/229` in `433s`. Implementation head
   `10668f17e084187014cc4bfa34a6191c47493d7c` passes CI `32597124365` and
   package push/PR `32597113497`/`32597124404` with publication skipped.
-  Evidence-head CI/packages, merge, and synchronized-tree evidence remain pending.
+  Evidence head `e14e6dd9d80e77823c1c1db8d968c5f86f598ce0`, PR `#50` merge
+  `ab6bd8908d679a60515bac0cf3ceb56f3b6f8a45`, merged-main CI/packages, and
+  exact 18-file synchronized-tree checks pass with publication skipped.
 - **Hard-timeout boundary:** The parent retains a regular non-reparse read handle
   to its bounded current executable, starts it without shell/PATH/network/window,
   assigns it to a kill-on-close Windows Job, enforces a 15-second deadline, and
@@ -1721,3 +1723,33 @@ enforcement, or pre-execution blocking is claimed.
   LocalSystem/service/UI E2E, signed-driver IPC, pre-execution blocking,
   Defender coexistence, and production false-positive/detection-rate evidence
   remain separate prerequisites. Defender must not be weakened.
+
+## Checkpoint 2199 Mandatory Hash And File Identity
+
+- **Locally verified; hosted evidence pending:** Every Microsoft publisher-trust request
+  requires a 64-hex SHA-256 supplied by the scanner. The path-only public helper
+  and unused aggregate publisher function are removed; helper JSON requires a
+  non-null digest. Focused and complete Native, locked workspace, release smoke,
+  Flutter, source-contract, security/dependency, and `230/230` verifier evidence
+  passes locally. Implementation head `d619c0a5ddb627e9d940d12478d5db9589ee5679`
+  passes CI `32601267008` and package push/PR `32601253745`/`32601266989`
+  with publication skipped. Evidence-head, merge, and sync remain pending.
+- **Stable handle evidence:** The candidate's same open handle is queried before
+  and after the complete WinTrust/catalog/hash operation for volume/file ID,
+  legacy index, creation/write/change times, attributes, allocation/end size,
+  link count, delete-pending, and directory state. Query failure, inconsistent
+  APIs, or drift is a visible diagnostic and cannot return trust.
+- **Compatibility trade-off:** Filesystems/providers that cannot supply the
+  required handle identity fail conservatively instead of receiving publisher
+  credit. Last-access time is excluded because the verifier's own reads may
+  update it. Benign tests use only isolated temporary files and installed
+  Microsoft fixtures, never executing candidates.
+- **Residual TOCTOU limit:** A writable mapping created before the read-only
+  handle can still mutate the file, although digest and metadata drift checks
+  detect ordinary changes during verification. The verifier cannot stop a
+  mutation after it returns. Closing that boundary needs execution-control or
+  caller-held handles through later action; no pre-execution claim is made.
+- **Unchanged blockers:** Same-token helper privilege, secondary catalog
+  signatures, production signing/key custody, installed LocalSystem/service/UI
+  E2E, signed-driver IPC, Defender coexistence, and production accuracy remain
+  partial, blocked, or technically limited.
