@@ -1681,7 +1681,7 @@ enforcement, or pre-execution blocking is claimed.
 
 ## Checkpoint 2198 Release Authenticode Isolation
 
-- **Locally verified; hosted evidence pending:** Non-debug Native Engine calls are routed
+- **Local and implementation-head hosted evidence verified:** Non-debug Native Engine calls are routed
   through a hidden mode of the exact current Local Core or Guard executable.
   The strict schema-v1 protocol binds request and response with a random UUID-v4
   nonce, carries one bounded UTF-16 path plus optional expected SHA-256, and
@@ -1690,8 +1690,10 @@ enforcement, or pre-execution blocking is claimed.
   focused Authenticode passes `26/26`, both host release builds and benign smoke
   pass, Native Engine passes `452 + 6`, both locked workspace variants pass,
   Flutter passes `838/838`, source contracts pass `627/627`, and the definitive
-  verifier/validator passes `229/229` in `433s`. Hosted exact-head CI/packages,
-  merge, and synchronized-tree evidence remain pending.
+  verifier/validator passes `229/229` in `433s`. Implementation head
+  `10668f17e084187014cc4bfa34a6191c47493d7c` passes CI `32597124365` and
+  package push/PR `32597113497`/`32597124404` with publication skipped.
+  Evidence-head CI/packages, merge, and synchronized-tree evidence remain pending.
 - **Hard-timeout boundary:** The parent retains a regular non-reparse read handle
   to its bounded current executable, starts it without shell/PATH/network/window,
   assigns it to a kill-on-close Windows Job, enforces a 15-second deadline, and

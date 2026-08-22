@@ -73,6 +73,23 @@ Lead-engineer product-hardening pass across the Avorax repository. Goal is to mo
   untracked. Hosted exact-head CI/packages, commit, merge, and original-tree
   synchronization remain pending.
 
+## 2026-08-22 continuation checkpoint 2198 implementation-head evidence
+
+- Committed the exact 18-file implementation/test/verifier/documentation batch
+  as `10668f17e084187014cc4bfa34a6191c47493d7c`, pushed only branch
+  `agent/checkpoint-2198-native-catalog-secondary-authenticode`, and opened draft
+  PR `#50`. No direct-main push occurred.
+- Exact-head Avorax CI `32597124365` passed security/protection/performance,
+  Unix quarantine permissions, Flutter/protocol, branding/copy, and Rust Local
+  Core/Guard jobs.
+- Desktop Packages push `32597113497` and PR `32597124404` passed package
+  contracts, Windows x64 MSI/EXE, Linux x64 DEB/tar, macOS x64/arm64 DMG,
+  six-artifact consolidation, SHA-256 checksums, and lockfile CycloneDX SBOM.
+  Both publication jobs were explicitly skipped.
+- No package was installed, released, or published. Evidence-head CI/packages,
+  normal PR merge, merged-main checks, and preconditioned original-tree sync
+  remain pending.
+
 ## 2026-08-22 continuation checkpoint 2197
 
 - Completed the no-test scripting phase for bounded secondary embedded

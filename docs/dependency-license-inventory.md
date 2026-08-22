@@ -197,5 +197,8 @@ the parent's token; no sandbox or privilege-separation dependency is claimed.
 Local lockfile stability, exact feature resolution, dependency/license gates,
 strict lint, complete locked workspace variants, and the definitive `229/229`
 verifier pass for checkpoint 2198. No dependency version or lockfile entry was
-added. Hosted package SBOM generation and final-artifact license, notice, and
-copyright review remain pending; source-level reuse does not replace them.
+added. Implementation-head package runs `32597113497`/`32597124404` generate the
+lockfile CycloneDX SBOM and checksum it with all six platform artifacts; both
+pass with publication skipped. Evidence-head and merged-main package proof plus
+final-artifact license, notice, and copyright review remain pending;
+source-level reuse does not replace that review.

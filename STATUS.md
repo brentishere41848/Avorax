@@ -23,8 +23,13 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
   Core/Guard builds pass, and the benign release smoke passes on both hosts. The
   definitive verifier and independent validator pass exactly `229/229` in
   `433s`; the validator rejects stale 226-step evidence. The protected vault
-  remains unchanged. Hosted CI/packages, commit, merge, and original-tree sync
-  remain pending. The helper uses the same token and is a
+  remains unchanged. Exact implementation head
+  `10668f17e084187014cc4bfa34a6191c47493d7c` passes Avorax CI
+  `32597124365` and Desktop Packages push/PR runs
+  `32597113497`/`32597124404`: Windows MSI/EXE, Linux DEB/tar, both macOS DMGs,
+  six-artifact consolidation, checksums, and lockfile SBOM pass; publication is
+  skipped. Draft PR `#50` is open. Evidence-head checks, merge, and original-
+  tree sync remain pending. The helper uses the same token and is a
   hard-timeout boundary, not a least-privilege sandbox; secondary catalog
   signatures remain conservatively unsupported.
 - Checkpoint 2197 secondary embedded Authenticode is implemented and locally
@@ -81,8 +86,10 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
 - Checkpoint 2198 is an uncommitted, locally verified implementation batch on
   `agent/checkpoint-2198-native-catalog-secondary-authenticode`, based on
   merged main `736a9f6ccdb6f7512c854aa816361fc322489222`. The definitive local verifier
-  and independent validator pass `229/229`; hosted exact-head evidence, merge,
-  and original-tree synchronization are still pending. It is not a release head.
+  and independent validator pass `229/229`. Exact implementation-head CI and
+  package runs pass with publication skipped; evidence-head checks, PR `#50`
+  merge, and original-tree synchronization are still pending. It is not a
+  release head.
 - Checkpoint 2197 implementation/evidence heads
   `e4dcb89e9b6fe487713d07283a719ad41317af22` and
   `137ee29052a10696956256629f8d729ec561ba40` merged through PR `#49` as

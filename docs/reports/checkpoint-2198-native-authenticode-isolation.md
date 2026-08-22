@@ -122,6 +122,13 @@ Local evidence on the Windows validation host:
   4,522,733 bytes, 5,357 each payload/metadata/auth extension, one metadata key,
   and zero pending.
 
-No hosted CI run, package build, merge, synchronization, installation, release,
-or publication is claimed yet. Local release builds and smoke are not installed
-package or production-signing evidence.
+Exact implementation head `10668f17e084187014cc4bfa34a6191c47493d7c`
+passes Avorax CI `32597124365` and Desktop Packages push/PR runs
+`32597113497`/`32597124404`. Hosted evidence covers package contracts, Windows
+x64 MSI/EXE, Linux x64 DEB/tar, macOS x64/arm64 DMG, six-artifact consolidation,
+SHA-256 checksums, and lockfile CycloneDX SBOM. Both prerelease publication jobs
+were explicitly skipped. Draft PR `#50` is open.
+
+Evidence-head CI/packages, normal merge, merged-main checks, and preconditioned
+original-tree synchronization remain pending. No package was installed,
+released, or published, and no production-signing claim is made.
