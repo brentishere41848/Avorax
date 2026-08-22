@@ -222,7 +222,32 @@ Lockfile stability, exact API feature resolution, strict lint, both complete
 locked workspace variants, and the dependency/license evidence gate pass
 locally. No lockfile changed. Implementation-head package push/PR runs
 `32601253745`/`32601266989` pass lockfile CycloneDX SBOM generation and
-six-artifact checksum consolidation with publication skipped. Evidence-head and
-merged-main package proof plus final release-artifact review remain pending.
+six-artifact checksum consolidation with publication skipped. Evidence-head
+package run `32602128573` and merged-main package run `32602820702` also pass
+with publication skipped.
 Source-level API reuse remains distinct from final-binary license, notice, and
 copyright review.
+
+## Native Secondary Catalog Signature API Surface
+
+Checkpoint 2200 adds no crate, package, registry dependency, Cargo feature,
+network client, helper executable, or dependency version. It reuses
+`WINTRUST_SIGNATURE_SETTINGS`, `WSS_GET_SECONDARY_SIG_COUNT`, and
+`WSS_VERIFY_SPECIFIC` already exposed by pinned `windows-sys 0.61.2` for the
+embedded-signature work. The catalog member continues to use existing WinTrust
+and Catalog declarations. The reviewed registry license remains
+`MIT OR Apache-2.0`.
+
+Microsoft's structure documentation describes exact requested/verified indexes
+and the returned secondary count; the existing catalog-member structure
+documents the open member handle and calculated member hash. These API
+contracts justify the implementation surface, but they do not replace runtime
+provider evidence. Positive secondary-catalog acceptance is therefore marked
+partial until a controlled benign multi-signed catalog fixture exists.
+
+Both Cargo lockfiles remain byte-unchanged. Lockfile stability, strict Native/
+Local/Guard Clippy, both complete locked workspace variants, dependency
+evidence, package-builder source contracts, and the definitive `231/231`
+verifier pass locally. No dependency version, feature, or lockfile entry was
+added. Hosted package SBOM generation and final-artifact license, notice, and
+copyright review remain pending and are not inferred from local source checks.

@@ -5812,6 +5812,15 @@ mod tests {
 
     #[test]
     fn scan_cancellation_token_uses_staged_write_without_temp_leftover() {
+        const CASE: &str = "scan-cancellation-staged-write";
+        if !is_isolated_environment_case(CASE) {
+            run_isolated_environment_case(
+                "tests::scan_cancellation_token_uses_staged_write_without_temp_leftover",
+                CASE,
+                |_| {},
+            );
+            return;
+        }
         let _lock = env_lock();
         let dir = tempdir().unwrap();
         std::env::set_var("AVORAX_DATA_DIR", dir.path());

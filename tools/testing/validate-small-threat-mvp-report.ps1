@@ -1873,7 +1873,7 @@ Assert-JsonObject $verificationScope "small-threat MVP verification report verif
 $verifiedScopeText = Assert-JsonString (Get-RequiredProperty $verificationScope "verified" "small-threat MVP verification report verification_scope") "verification_scope.verified"
 [void](Assert-JsonString (Get-RequiredProperty $verificationScope "optional" "small-threat MVP verification report verification_scope") "verification_scope.optional")
 [void](Assert-JsonString (Get-RequiredProperty $verificationScope "partial" "small-threat MVP verification report verification_scope") "verification_scope.partial")
-[void](Assert-JsonString (Get-RequiredProperty $verificationScope "technically_limited" "small-threat MVP verification report verification_scope") "verification_scope.technically_limited")
+$technicalLimitText = Assert-JsonString (Get-RequiredProperty $verificationScope "technically_limited" "small-threat MVP verification report verification_scope") "verification_scope.technically_limited"
 
 $errorValue = Get-RequiredProperty $report "error" "small-threat MVP verification report"
 if ($status -eq "passed") {
@@ -1904,8 +1904,8 @@ if ($RequireFullSuite) {
   if ($skipFlutter -or $skipRust) {
     throw "-RequireFullSuite requires skip_flutter=false and skip_rust=false."
   }
-  if ($steps.Count -ne 230) {
-    throw "-RequireFullSuite expected exactly 230 verifier steps for this source revision, found $($steps.Count)."
+  if ($steps.Count -ne 231) {
+    throw "-RequireFullSuite expected exactly 231 verifier steps for this source revision, found $($steps.Count)."
   }
   if ($steps[0].name -ne "local-core safe simulator scan reporting") {
     throw "-RequireFullSuite first step mismatch: $($steps[0].name)"
@@ -1939,6 +1939,7 @@ if ($RequireFullSuite) {
   Assert-ReportContainsStep $steps "native-engine direct Authenticode unsigned/malformed regressions"
   Assert-ReportContainsStep $steps "native-engine direct Authenticode Microsoft-signed/hash-binding regressions"
   Assert-ReportContainsStep $steps "native-engine catalog Authenticode Microsoft-signed/hash-binding regressions"
+  Assert-ReportContainsStep $steps "native-engine secondary catalog Authenticode selection regressions"
   Assert-ReportContainsStep $steps "native-engine secondary embedded Authenticode Microsoft-signed regressions"
   Assert-ReportContainsStep $steps "native-engine Authenticode helper isolation regressions"
   Assert-ReportContainsStep $steps "native-engine Authenticode mandatory-hash/file-identity regressions"
@@ -2053,14 +2054,16 @@ if ($RequireFullSuite) {
   Assert-ReportScopeContains $verifiedScopeText "desktop package builder source contracts including bounded macOS DMG transient verification retries" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "Native Engine uses direct handle-based WinVerifyTrust with no script, shell, or network retrieval" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "a second bounded SHA-256 read matching the bytes already scanned" "verification_scope.verified"
-  Assert-ReportScopeContains $verifiedScopeText "Catalog lookup is capped at 16 candidates, rejects non-local catalog paths, and fails visibly on API, policy, limit, or cleanup errors" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Catalog lookup is capped at 16 candidates and rejects non-local catalog paths" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "valid primary or bounded secondary embedded Authenticode signature" "verification_scope.verified"
-  Assert-ReportScopeContains $verifiedScopeText "Embedded verification requests primary index zero, requires primary output to be zero or untouched, checks every secondary returned index exactly, caps the total at 16, closes each WinTrust state before the next signature, and fails visibly on count drift, API, policy, limit, or cleanup errors" "verification_scope.verified"
-  Assert-ReportScopeContains $verifiedScopeText "An invalid primary embedded signature is not rescued by a secondary signature, but catalog fallback remains available" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Embedded and catalog verification request primary index zero, require primary output to be zero or provider-untouched, check each returned secondary index exactly, cap each candidate at 16 total signatures, close every WinTrust state before the next signature, and fail visibly on count drift, API, policy, limit, or cleanup errors" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "An invalid primary signature is not rescued by a secondary; invalid embedded signatures retain catalog fallback and invalid catalog candidates advance only to the next bounded catalog" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "Release Local Core and Guard isolate native WinTrust work in an exact-current-executable child using strict nonce-bound one-request JSON, bounded stdin/stdout/stderr, a 15-second deadline, kill-on-close Windows Job containment, and bounded kill/reap diagnostics" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "helper errors and timeouts cannot become trust" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "Debug test builds retain a direct backend for deterministic unit fixtures and do not prove release isolation" "verification_scope.verified"
-  Assert-ReportScopeContains $verifiedScopeText "Secondary catalog signatures, memory-mapped and post-verdict mutation, same-token helper least privilege, and pre-execution blocking are not claimed" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "The installed WindowsPowerShell catalog proves the primary catalog path and exact scan-hash binding; bounded secondary-catalog aggregation is unit-verified, but positive acceptance of an actual secondary catalog signature remains partial because no controlled benign multi-signed catalog fixture is available" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Memory-mapped and post-verdict mutation, same-token helper least privilege, and pre-execution blocking are not claimed" "verification_scope.verified"
+  Assert-ReportScopeContains $technicalLimitText "no controlled benign multi-signed system-catalog fixture for positive secondary-catalog acceptance" "verification_scope.technically_limited"
   Assert-ReportScopeContains $verifiedScopeText "Native Engine's disabled test-only legacy quarantine store uses token-derived native DACL application and verification without an external helper" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "production quarantine remains owned by Local Core" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "every Microsoft publisher-trust request requires the scanner's lowercase or uppercase 64-hex SHA-256" "verification_scope.verified"

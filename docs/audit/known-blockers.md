@@ -1726,14 +1726,16 @@ enforcement, or pre-execution blocking is claimed.
 
 ## Checkpoint 2199 Mandatory Hash And File Identity
 
-- **Locally verified; hosted evidence pending:** Every Microsoft publisher-trust request
+- **Local, hosted, merge, and synchronized-tree evidence verified:** Every Microsoft publisher-trust request
   requires a 64-hex SHA-256 supplied by the scanner. The path-only public helper
   and unused aggregate publisher function are removed; helper JSON requires a
   non-null digest. Focused and complete Native, locked workspace, release smoke,
   Flutter, source-contract, security/dependency, and `230/230` verifier evidence
   passes locally. Implementation head `d619c0a5ddb627e9d940d12478d5db9589ee5679`
   passes CI `32601267008` and package push/PR `32601253745`/`32601266989`
-  with publication skipped. Evidence-head, merge, and sync remain pending.
+  with publication skipped. Evidence head `b000b8dfc9e4e7427380ddbe80dba958d9d16e95`,
+  merge `264e4551aa930f75d325ebd3df4522bd4f244941`, merged-main runs, and the exact
+  16-file synchronized-tree checks pass with publication skipped.
 - **Stable handle evidence:** The candidate's same open handle is queried before
   and after the complete WinTrust/catalog/hash operation for volume/file ID,
   legacy index, creation/write/change times, attributes, allocation/end size,
@@ -1749,7 +1751,34 @@ enforcement, or pre-execution blocking is claimed.
   detect ordinary changes during verification. The verifier cannot stop a
   mutation after it returns. Closing that boundary needs execution-control or
   caller-held handles through later action; no pre-execution claim is made.
-- **Unchanged blockers:** Same-token helper privilege, secondary catalog
-  signatures, production signing/key custody, installed LocalSystem/service/UI
+- **Unchanged blockers:** Same-token helper privilege, production signing/key
+  custody, installed LocalSystem/service/UI
   E2E, signed-driver IPC, Defender coexistence, and production accuracy remain
   partial, blocked, or technically limited.
+
+## Checkpoint 2200 Secondary Catalog Authenticode
+
+- **Local evidence verified:** Catalog candidates use exact primary/
+  secondary selection with stable count, close/reset per attempt, a 16-total
+  cap, exact Microsoft signer identity, and mandatory member SHA-256 binding.
+  Invalid primaries cannot be rescued and every error remains fail-visible.
+- **Regression evidence:** Focused secondary catalog logic passes `2/2`, the
+  complete Authenticode module passes `24/24`, Native Engine passes `458 + 6`,
+  both locked workspace variants, release host smoke, Flutter `838/838`, source
+  contracts `628/628`, and strict gates pass. The definitive verifier/validator
+  passes `231/231` in `424.1s` and rejects stale `230`-step evidence. Hosted,
+  merge, and original-tree evidence remain pending.
+- **Partial positive evidence:** The installed WindowsPowerShell fixture can
+  prove real primary-catalog provider compatibility and wrong-hash rejection.
+  The unit fixture can prove bounded secondary decision logic. Neither is a
+  controlled benign catalog with a known valid Microsoft secondary signature,
+  so positive secondary acceptance remains partial until such a fixture or a
+  disposable Windows test image supplies reproducible evidence.
+- **Not a blocking bypass:** The partial fixture does not turn the path into
+  success-by-default. WinTrust must validate the exact requested index and the
+  existing exact signer/hash policy must pass; otherwise the candidate supplies
+  no trust or a visible diagnostic.
+- **Remaining boundaries:** Memory-mapped and post-verdict mutation, same-token
+  helper privilege, production signing/key custody, installed service/UI E2E,
+  signed-driver IPC, Defender coexistence, pre-execution blocking, and
+  production accuracy remain partial, blocked, or technically limited.

@@ -127,5 +127,16 @@ DEB/tar, macOS arm64/x64 DMG, six-artifact consolidation, checksums, and
 lockfile CycloneDX SBOM pass. Both prerelease publication jobs are explicitly
 skipped.
 
-Evidence-head CI/packages, merge, merged-main checks, synchronization,
-installation, release, and publication are not yet claimed.
+Evidence head `b000b8dfc9e4e7427380ddbe80dba958d9d16e95` passes Avorax CI
+`32602128535` and Desktop Packages `32602128573`. PR `#51` merged with exact-
+head locking as `264e4551aa930f75d325ebd3df4522bd4f244941`. Merged-main CI
+`32602820696` and packages `32602820702` pass; package contracts, every platform,
+consolidation, checksums, and lockfile SBOM pass while publication is skipped.
+
+All 16 explicit files synchronized to the original tree only after each
+existing destination matched checkpoint 2198 and the new report was absent.
+Every destination matches the merged Git blob and raw source SHA-256.
+Destination source contracts (`627/627`), identity/helper tests (`4/4` each),
+rustfmt, strict Native/Local/Guard Clippy, locked release builds, and both-host
+benign smoke pass. The protected vault is unchanged. No installation, release,
+publication, service/driver start, or Defender change occurred.

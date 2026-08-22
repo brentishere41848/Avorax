@@ -64,7 +64,7 @@ const MAX_AUTHENTICODE_BIND_BYTES: u64 = 512 * 1024 * 1024;
 const AUTHENTICODE_HASH_BUFFER_BYTES: usize = 128 * 1024;
 const SHA256_CATALOG_HASH_BYTES: usize = 32;
 const MAX_CATALOG_CANDIDATES: usize = 16;
-const MAX_EMBEDDED_SIGNATURES: u32 = 16;
+const MAX_AUTHENTICODE_SIGNATURES: u32 = 16;
 const AUTHENTICODE_HELPER_SCHEMA_VERSION: u32 = 1;
 const AUTHENTICODE_HELPER_ARGUMENT: &str = "--avorax-authenticode-helper-v1";
 const AUTHENTICODE_HELPER_TIMEOUT: Duration = Duration::from_secs(15);
@@ -150,7 +150,7 @@ impl Drop for KillOnCloseJob {
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-enum EmbeddedSignatureVerdict {
+enum AuthenticodeSignatureVerdict {
     Microsoft,
     OtherPublisher,
     Invalid,
@@ -872,21 +872,23 @@ fn verify_open_file(
         pSignatureSettings: &mut signature_settings,
     };
 
-    let primary = verify_specific_embedded_signature(
+    let primary = verify_specific_authenticode_signature(
         path,
+        "embedded",
         &mut trust_data,
         &mut signature_settings,
         file,
         expected_sha256,
     )?;
-    if primary == EmbeddedSignatureVerdict::Invalid {
+    if primary == AuthenticodeSignatureVerdict::Invalid {
         return Ok(false);
     }
     let secondary_count = signature_settings.cSecondarySigs;
-    aggregate_valid_embedded_signatures(path, primary, secondary_count, |index| {
+    aggregate_valid_authenticode_signatures(path, "embedded", primary, secondary_count, |index| {
         signature_settings.dwIndex = index;
-        let verdict = verify_specific_embedded_signature(
+        let verdict = verify_specific_authenticode_signature(
             path,
+            "embedded",
             &mut trust_data,
             &mut signature_settings,
             file,
@@ -903,16 +905,17 @@ fn verify_open_file(
     })
 }
 
-fn verify_specific_embedded_signature(
+fn verify_specific_authenticode_signature(
     path: &Path,
+    signature_source: &str,
     trust_data: &mut WINTRUST_DATA,
     signature_settings: &mut WINTRUST_SIGNATURE_SETTINGS,
     file: &mut File,
     expected_sha256: &str,
-) -> Result<EmbeddedSignatureVerdict> {
+) -> Result<AuthenticodeSignatureVerdict> {
     file.seek(SeekFrom::Start(0)).with_context(|| {
         format!(
-            "unable to rewind Authenticode candidate for embedded signature {} verification: {}",
+            "unable to rewind Authenticode candidate for {signature_source} signature {} verification: {}",
             signature_settings.dwIndex,
             path.display()
         )
@@ -923,23 +926,23 @@ fn verify_specific_embedded_signature(
         path,
         trust_data,
         file,
-        EmbeddedSignatureVerdict::Invalid,
+        AuthenticodeSignatureVerdict::Invalid,
         |trust_data, file| {
             anyhow::ensure!(
                 verified_signature_index_is_acceptable(
                     requested_index,
                     signature_settings.dwVerifiedSigIndex
                 ),
-                "WinVerifyTrust reported unexpected embedded signature index {} for requested index {} for {}",
+                "WinVerifyTrust reported unexpected {signature_source} signature index {} for requested index {} for {}",
                 signature_settings.dwVerifiedSigIndex,
                 requested_index,
                 path.display()
             );
             if verified_signer_is_microsoft(trust_data)? {
                 bind_verified_signature_to_expected_hash(path, file, expected_sha256)?;
-                Ok(EmbeddedSignatureVerdict::Microsoft)
+                Ok(AuthenticodeSignatureVerdict::Microsoft)
             } else {
-                Ok(EmbeddedSignatureVerdict::OtherPublisher)
+                Ok(AuthenticodeSignatureVerdict::OtherPublisher)
             }
         },
     )
@@ -952,52 +955,38 @@ fn verified_signature_index_is_acceptable(requested: u32, reported: u32) -> bool
     reported == requested
 }
 
-fn aggregate_valid_embedded_signatures<F>(
+fn aggregate_valid_authenticode_signatures<F>(
     path: &Path,
-    primary: EmbeddedSignatureVerdict,
+    signature_source: &str,
+    primary: AuthenticodeSignatureVerdict,
     secondary_count: u32,
     mut verify_secondary: F,
 ) -> Result<bool>
 where
-    F: FnMut(u32) -> Result<EmbeddedSignatureVerdict>,
+    F: FnMut(u32) -> Result<AuthenticodeSignatureVerdict>,
 {
-    if primary == EmbeddedSignatureVerdict::Invalid {
+    if primary == AuthenticodeSignatureVerdict::Invalid {
         return Ok(false);
     }
     let total = secondary_count
         .checked_add(1)
-        .context("embedded Authenticode signature count overflowed")?;
+        .with_context(|| format!("{signature_source} Authenticode signature count overflowed"))?;
     anyhow::ensure!(
-        total <= MAX_EMBEDDED_SIGNATURES,
-        "embedded Authenticode signature count {} exceeds the {} signature limit for {}",
+        total <= MAX_AUTHENTICODE_SIGNATURES,
+        "{signature_source} Authenticode signature count {} exceeds the {} signature limit for {}",
         total,
-        MAX_EMBEDDED_SIGNATURES,
+        MAX_AUTHENTICODE_SIGNATURES,
         path.display()
     );
-    if primary == EmbeddedSignatureVerdict::Microsoft {
+    if primary == AuthenticodeSignatureVerdict::Microsoft {
         return Ok(true);
     }
     for index in 1..=secondary_count {
-        if verify_secondary(index)? == EmbeddedSignatureVerdict::Microsoft {
+        if verify_secondary(index)? == AuthenticodeSignatureVerdict::Microsoft {
             return Ok(true);
         }
     }
     Ok(false)
-}
-
-fn verify_wintrust_data(
-    path: &Path,
-    trust_data: &mut WINTRUST_DATA,
-    file: &mut File,
-    expected_sha256: &str,
-) -> Result<bool> {
-    verify_wintrust_data_with(path, trust_data, file, false, |trust_data, file| {
-        if verified_signer_is_microsoft(trust_data)? {
-            bind_verified_signature_to_expected_hash(path, file, expected_sha256)
-        } else {
-            Ok(false)
-        }
-    })
 }
 
 fn verify_wintrust_data_with<T, F>(
@@ -1311,6 +1300,14 @@ fn verify_catalog_candidate(
         pcCatalogContext: null_mut(),
         hCatAdmin: admin,
     };
+    let mut signature_settings = WINTRUST_SIGNATURE_SETTINGS {
+        cbStruct: size_of::<WINTRUST_SIGNATURE_SETTINGS>() as u32,
+        dwIndex: 0,
+        dwFlags: WSS_GET_SECONDARY_SIG_COUNT | WSS_VERIFY_SPECIFIC,
+        cSecondarySigs: 0,
+        dwVerifiedSigIndex: u32::MAX,
+        pCryptoPolicy: null_mut(),
+    };
     let mut trust_data = WINTRUST_DATA {
         cbStruct: size_of::<WINTRUST_DATA>() as u32,
         pPolicyCallbackData: null_mut(),
@@ -1328,9 +1325,39 @@ fn verify_catalog_candidate(
             | WTD_REVOCATION_CHECK_CHAIN_EXCLUDE_ROOT
             | WTD_DISABLE_MD2_MD4,
         dwUIContext: WTD_UICONTEXT_EXECUTE,
-        pSignatureSettings: null_mut(),
+        pSignatureSettings: &mut signature_settings,
     };
-    verify_wintrust_data(path, &mut trust_data, file, expected_sha256)
+    let primary = verify_specific_authenticode_signature(
+        path,
+        "catalog",
+        &mut trust_data,
+        &mut signature_settings,
+        file,
+        expected_sha256,
+    )?;
+    if primary == AuthenticodeSignatureVerdict::Invalid {
+        return Ok(false);
+    }
+    let secondary_count = signature_settings.cSecondarySigs;
+    aggregate_valid_authenticode_signatures(path, "catalog", primary, secondary_count, |index| {
+        signature_settings.dwIndex = index;
+        let verdict = verify_specific_authenticode_signature(
+            path,
+            "catalog",
+            &mut trust_data,
+            &mut signature_settings,
+            file,
+            expected_sha256,
+        )?;
+        anyhow::ensure!(
+                signature_settings.cSecondarySigs == secondary_count,
+                "catalog Authenticode secondary-signature count changed from {} to {} while verifying {}",
+                secondary_count,
+                signature_settings.cSecondarySigs,
+                path.display()
+            );
+        Ok(verdict)
+    })
 }
 
 fn combine_catalog_outcome_and_cleanup(
@@ -1803,16 +1830,17 @@ mod tests {
     fn native_secondary_authenticode_aggregation_is_bounded_ordered_and_fail_visible() {
         let path = Path::new(r"C:\benign-multisigned-fixture.dll");
         let mut requested = Vec::new();
-        let accepted = aggregate_valid_embedded_signatures(
+        let accepted = aggregate_valid_authenticode_signatures(
             path,
-            EmbeddedSignatureVerdict::OtherPublisher,
+            "embedded",
+            AuthenticodeSignatureVerdict::OtherPublisher,
             2,
             |index| {
                 requested.push(index);
                 Ok(if index == 2 {
-                    EmbeddedSignatureVerdict::Microsoft
+                    AuthenticodeSignatureVerdict::Microsoft
                 } else {
-                    EmbeddedSignatureVerdict::Invalid
+                    AuthenticodeSignatureVerdict::Invalid
                 })
             },
         )
@@ -1821,42 +1849,46 @@ mod tests {
         assert_eq!(requested, [1, 2]);
 
         let mut primary_callback_used = false;
-        assert!(aggregate_valid_embedded_signatures(
+        assert!(aggregate_valid_authenticode_signatures(
             path,
-            EmbeddedSignatureVerdict::Microsoft,
+            "embedded",
+            AuthenticodeSignatureVerdict::Microsoft,
             2,
             |_| {
                 primary_callback_used = true;
-                Ok(EmbeddedSignatureVerdict::Invalid)
+                Ok(AuthenticodeSignatureVerdict::Invalid)
             },
         )
         .unwrap());
         assert!(!primary_callback_used);
 
         let mut invalid_primary_callback_used = false;
-        assert!(!aggregate_valid_embedded_signatures(
+        assert!(!aggregate_valid_authenticode_signatures(
             path,
-            EmbeddedSignatureVerdict::Invalid,
+            "embedded",
+            AuthenticodeSignatureVerdict::Invalid,
             u32::MAX,
             |_| {
                 invalid_primary_callback_used = true;
-                Ok(EmbeddedSignatureVerdict::Microsoft)
+                Ok(AuthenticodeSignatureVerdict::Microsoft)
             },
         )
         .unwrap());
         assert!(!invalid_primary_callback_used);
 
-        assert!(!aggregate_valid_embedded_signatures(
+        assert!(!aggregate_valid_authenticode_signatures(
             path,
-            EmbeddedSignatureVerdict::OtherPublisher,
+            "embedded",
+            AuthenticodeSignatureVerdict::OtherPublisher,
             2,
-            |_| Ok(EmbeddedSignatureVerdict::Invalid),
+            |_| Ok(AuthenticodeSignatureVerdict::Invalid),
         )
         .unwrap());
 
-        let error = aggregate_valid_embedded_signatures(
+        let error = aggregate_valid_authenticode_signatures(
             path,
-            EmbeddedSignatureVerdict::OtherPublisher,
+            "embedded",
+            AuthenticodeSignatureVerdict::OtherPublisher,
             1,
             |_| anyhow::bail!("secondary verification failed visibly"),
         )
@@ -1865,18 +1897,83 @@ mod tests {
         assert!(error.contains("secondary verification failed visibly"));
 
         let mut over_limit_callback_used = false;
-        let error = aggregate_valid_embedded_signatures(
+        let error = aggregate_valid_authenticode_signatures(
             path,
-            EmbeddedSignatureVerdict::OtherPublisher,
-            MAX_EMBEDDED_SIGNATURES,
+            "embedded",
+            AuthenticodeSignatureVerdict::OtherPublisher,
+            MAX_AUTHENTICODE_SIGNATURES,
             |_| {
                 over_limit_callback_used = true;
-                Ok(EmbeddedSignatureVerdict::Microsoft)
+                Ok(AuthenticodeSignatureVerdict::Microsoft)
             },
         )
         .unwrap_err()
         .to_string();
         assert!(error.contains("exceeds the 16 signature limit"));
+        assert!(!over_limit_callback_used);
+    }
+
+    #[test]
+    fn native_secondary_catalog_authenticode_aggregation_is_bounded_ordered_and_fail_visible() {
+        let path = Path::new(r"C:\benign-catalog-member.exe");
+        let mut requested = Vec::new();
+        let accepted = aggregate_valid_authenticode_signatures(
+            path,
+            "catalog",
+            AuthenticodeSignatureVerdict::OtherPublisher,
+            2,
+            |index| {
+                requested.push(index);
+                Ok(if index == 2 {
+                    AuthenticodeSignatureVerdict::Microsoft
+                } else {
+                    AuthenticodeSignatureVerdict::OtherPublisher
+                })
+            },
+        )
+        .unwrap();
+        assert!(accepted);
+        assert_eq!(requested, [1, 2]);
+
+        let mut invalid_primary_callback_used = false;
+        assert!(!aggregate_valid_authenticode_signatures(
+            path,
+            "catalog",
+            AuthenticodeSignatureVerdict::Invalid,
+            u32::MAX,
+            |_| {
+                invalid_primary_callback_used = true;
+                Ok(AuthenticodeSignatureVerdict::Microsoft)
+            },
+        )
+        .unwrap());
+        assert!(!invalid_primary_callback_used);
+
+        let visible = aggregate_valid_authenticode_signatures(
+            path,
+            "catalog",
+            AuthenticodeSignatureVerdict::OtherPublisher,
+            1,
+            |_| anyhow::bail!("catalog secondary verification failed visibly"),
+        )
+        .unwrap_err()
+        .to_string();
+        assert!(visible.contains("catalog secondary verification failed visibly"));
+
+        let mut over_limit_callback_used = false;
+        let over_limit = aggregate_valid_authenticode_signatures(
+            path,
+            "catalog",
+            AuthenticodeSignatureVerdict::OtherPublisher,
+            MAX_AUTHENTICODE_SIGNATURES,
+            |_| {
+                over_limit_callback_used = true;
+                Ok(AuthenticodeSignatureVerdict::Microsoft)
+            },
+        )
+        .unwrap_err()
+        .to_string();
+        assert!(over_limit.contains("catalog Authenticode signature count 17"));
         assert!(!over_limit_callback_used);
     }
 
@@ -2014,30 +2111,32 @@ mod tests {
             pSignatureSettings: &mut signature_settings,
         };
 
-        let primary = verify_specific_embedded_signature(
+        let primary = verify_specific_authenticode_signature(
             &path,
+            "embedded",
             &mut trust_data,
             &mut signature_settings,
             &mut file,
             &sha256,
         )
         .unwrap();
-        assert_eq!(primary, EmbeddedSignatureVerdict::OtherPublisher);
+        assert_eq!(primary, AuthenticodeSignatureVerdict::OtherPublisher);
         assert!(verified_signature_index_is_acceptable(
             0,
             signature_settings.dwVerifiedSigIndex
         ));
         let secondary_count = signature_settings.cSecondarySigs;
         assert!(secondary_count > 0);
-        assert!(secondary_count < MAX_EMBEDDED_SIGNATURES);
+        assert!(secondary_count < MAX_AUTHENTICODE_SIGNATURES);
         assert!(trust_data.hWVTStateData.is_null());
         assert_eq!(trust_data.dwStateAction, WTD_STATEACTION_VERIFY);
 
         let mut microsoft_secondary = None;
         for index in 1..=secondary_count {
             signature_settings.dwIndex = index;
-            let secondary = verify_specific_embedded_signature(
+            let secondary = verify_specific_authenticode_signature(
                 &path,
+                "embedded",
                 &mut trust_data,
                 &mut signature_settings,
                 &mut file,
@@ -2048,7 +2147,7 @@ mod tests {
             assert_eq!(signature_settings.cSecondarySigs, secondary_count);
             assert!(trust_data.hWVTStateData.is_null());
             assert_eq!(trust_data.dwStateAction, WTD_STATEACTION_VERIFY);
-            if secondary == EmbeddedSignatureVerdict::Microsoft {
+            if secondary == AuthenticodeSignatureVerdict::Microsoft {
                 microsoft_secondary = Some(index);
             }
         }
@@ -2224,6 +2323,31 @@ mod tests {
 
         assert!(!verify_open_file(&path, &path_wide, &mut file, &sha256).unwrap());
         assert!(verify_catalog_signatures(&path, &path_wide, &mut file, &sha256).unwrap());
+    }
+
+    #[test]
+    fn native_secondary_catalog_authenticode_primary_runtime_is_exact_and_hash_bound() {
+        let path = crate::windows_system::checked_system32_file(
+            &["WindowsPowerShell", "v1.0", "powershell.exe"],
+            "secondary-catalog Authenticode runtime fixture",
+        )
+        .unwrap();
+        let path_wide = absolute_path_wide(&path).unwrap();
+        let mut file = open_authenticode_candidate(&path).unwrap();
+        let sha256 = fixture_sha256(&path);
+
+        assert!(verify_catalog_signatures(&path, &path_wide, &mut file, &sha256).unwrap());
+        let mut wrong_sha256 = sha256.clone();
+        let replacement = if wrong_sha256.as_bytes().first() == Some(&b'0') {
+            "1"
+        } else {
+            "0"
+        };
+        wrong_sha256.replace_range(..1, replacement);
+        let error = verify_catalog_signatures(&path, &path_wide, &mut file, &wrong_sha256)
+            .unwrap_err()
+            .to_string();
+        assert!(error.contains("does not match the bytes already scanned"));
     }
 
     #[test]

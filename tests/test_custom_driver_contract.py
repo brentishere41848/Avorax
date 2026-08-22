@@ -19884,6 +19884,8 @@ def test_small_threat_mvp_verifier_is_safe_and_reproducible():
         in source
     )
     assert '"native_catalog_authenticode"' in source
+    assert "native-engine secondary catalog Authenticode selection regressions" in source
+    assert '"native_secondary_catalog_authenticode"' in source
     assert (
         "native-engine secondary embedded Authenticode Microsoft-signed regressions"
         in source
@@ -20049,20 +20051,20 @@ def test_small_threat_mvp_verifier_is_safe_and_reproducible():
     assert "valid primary or bounded secondary embedded Authenticode signature" in source
     assert "bounded SHA-256 system-catalog membership" in source
     assert "whose verified leaf has the exact Microsoft identity" in source
-    assert "requests primary index zero" in source
-    assert "requires primary output to be zero or untouched" in source
-    assert "checks every secondary returned index exactly" in source
-    assert "caps the total at 16" in source
-    assert "closes each WinTrust state before the next signature" in source
-    assert "fails visibly on count drift" in source
+    assert "verification request primary index zero" in source
+    assert "require primary output to be zero or provider-untouched" in source
+    assert "check each returned secondary index exactly" in source
+    assert "cap each candidate at 16 total signatures" in source
+    assert "close every WinTrust state before the next signature" in source
+    assert "fail visibly on count drift" in source
     assert (
-        "An invalid primary embedded signature is not rescued by a secondary signature, "
-        "but catalog fallback remains available"
+        "An invalid primary signature is not rescued by a secondary; invalid embedded "
+        "signatures retain catalog fallback and invalid catalog candidates advance only "
+        "to the next bounded catalog"
         in source
     )
     assert (
-        "Catalog lookup is capped at 16 candidates, rejects non-local catalog paths, and "
-        "fails visibly on API, policy, limit, or cleanup errors"
+        "Catalog lookup is capped at 16 candidates and rejects non-local catalog paths"
         in source
     )
     assert (
@@ -20082,8 +20084,14 @@ def test_small_threat_mvp_verifier_is_safe_and_reproducible():
         in source
     )
     assert (
-        "Secondary catalog signatures, memory-mapped and post-verdict mutation, "
-        "same-token helper least privilege, and pre-execution blocking are not claimed"
+        "The installed WindowsPowerShell catalog proves the primary catalog path and "
+        "exact scan-hash binding"
+        in source
+    )
+    assert "positive acceptance of an actual secondary catalog signature remains partial" in source
+    assert (
+        "Memory-mapped and post-verdict mutation, same-token helper least privilege, "
+        "and pre-execution blocking are not claimed"
         in source
     )
     assert (
@@ -20818,8 +20826,18 @@ def test_small_threat_mvp_report_validator_is_strict_and_local():
     assert "driver_request_known_good_allows_in_lockdown" in source
     assert "Get-AvoraxGateFile ([System.IO.Path]::GetFullPath($text)) $Description" in source
     assert "-RequireFullSuite requires skip_flutter=false and skip_rust=false" in source
-    assert "if ($steps.Count -ne 230)" in source
-    assert "-RequireFullSuite expected exactly 230 verifier steps" in source
+    assert "if ($steps.Count -ne 231)" in source
+    assert "-RequireFullSuite expected exactly 231 verifier steps" in source
+    assert (
+        'Assert-ReportContainsStep $steps "native-engine secondary catalog '
+        'Authenticode selection regressions"'
+        in source
+    )
+    assert (
+        "no controlled benign multi-signed system-catalog fixture for positive "
+        "secondary-catalog acceptance"
+        in source
+    )
     assert 'Assert-ReportContainsStep $steps "Branding gate"' in source
     assert 'Assert-ReportContainsStep $steps "False-positive gate"' in source
     assert 'Assert-ReportContainsStep $steps "Protection gate without driver feature claim"' in source
@@ -20845,17 +20863,17 @@ def test_small_threat_mvp_report_validator_is_strict_and_local():
         in source
     )
     assert (
-        'Assert-ReportScopeContains $verifiedScopeText "Embedded verification requests '
-        'primary index zero, requires primary output to be zero or untouched, checks '
-        'every secondary returned index exactly, caps the total at 16, closes each '
-        'WinTrust state before the next signature, and fails visibly on count drift, '
-        'API, policy, limit, or cleanup errors"'
+        'Assert-ReportScopeContains $verifiedScopeText "Embedded and catalog verification '
+        'request primary index zero, require primary output to be zero or provider-untouched, '
+        'check each returned secondary index exactly, cap each candidate at 16 total '
+        'signatures, close every WinTrust state before the next signature, and fail visibly '
+        'on count drift, API, policy, limit, or cleanup errors"'
         in source
     )
     assert (
-        'Assert-ReportScopeContains $verifiedScopeText "An invalid primary embedded '
-        'signature is not rescued by a secondary signature, but catalog fallback '
-        'remains available"'
+        'Assert-ReportScopeContains $verifiedScopeText "An invalid primary signature is '
+        'not rescued by a secondary; invalid embedded signatures retain catalog fallback '
+        'and invalid catalog candidates advance only to the next bounded catalog"'
         in source
     )
     assert (
@@ -21436,8 +21454,8 @@ def test_small_threat_mvp_report_validator_is_strict_and_local():
     )
     assert (
         'Assert-ReportScopeContains $verifiedScopeText "Catalog lookup is capped at 16 '
-        'candidates, rejects non-local catalog paths, and fails visibly on API, policy, '
-        'limit, or cleanup errors" "verification_scope.verified"'
+        'candidates and rejects non-local catalog paths" '
+        '"verification_scope.verified"'
         in source
     )
     assert (
@@ -21448,8 +21466,8 @@ def test_small_threat_mvp_report_validator_is_strict_and_local():
         in source
     )
     assert (
-        'Assert-ReportScopeContains $verifiedScopeText "Secondary catalog signatures, '
-        'memory-mapped and post-verdict mutation, same-token helper least privilege, and '
+        'Assert-ReportScopeContains $verifiedScopeText "Memory-mapped and post-verdict '
+        'mutation, same-token helper least privilege, and '
         'pre-execution blocking are not claimed" "verification_scope.verified"'
         in source
     )
@@ -25044,7 +25062,7 @@ def test_native_authenticode_uses_direct_hash_bound_file_and_catalog_wintrust():
     assert "CryptCATAdminReleaseContext(" in production
     assert "SHA256_CATALOG_HASH_BYTES: usize = 32" in production
     assert "MAX_CATALOG_CANDIDATES: usize = 16" in production
-    assert "MAX_EMBEDDED_SIGNATURES: u32 = 16" in production
+    assert "MAX_AUTHENTICODE_SIGNATURES: u32 = 16" in production
     assert "WINTRUST_SIGNATURE_SETTINGS" in production
     assert "WSS_GET_SECONDARY_SIG_COUNT | WSS_VERIFY_SPECIFIC" in production
     assert "pSignatureSettings: &mut signature_settings" in production
@@ -25054,9 +25072,21 @@ def test_native_authenticode_uses_direct_hash_bound_file_and_catalog_wintrust():
     assert "reported == requested" in production
     assert "signature_settings.cSecondarySigs == secondary_count" in production
     assert "for index in 1..=secondary_count" in production
-    assert "if primary == EmbeddedSignatureVerdict::Invalid" in production
+    assert "if primary == AuthenticodeSignatureVerdict::Invalid" in production
     assert "trust_data.hWVTStateData = null_mut()" in production
     assert "trust_data.dwStateAction = WTD_STATEACTION_VERIFY" in production
+    catalog_candidate = production[
+        production.index("fn verify_catalog_candidate"):
+        production.index("fn combine_catalog_outcome_and_cleanup")
+    ]
+    assert "WSS_GET_SECONDARY_SIG_COUNT | WSS_VERIFY_SPECIFIC" in catalog_candidate
+    assert "pSignatureSettings: &mut signature_settings" in catalog_candidate
+    assert '"catalog"' in catalog_candidate
+    assert "signature_settings.dwIndex = index" in catalog_candidate
+    assert "signature_settings.dwVerifiedSigIndex = u32::MAX" in production
+    assert "catalog Authenticode secondary-signature count changed" in catalog_candidate
+    assert "aggregate_valid_authenticode_signatures(" in catalog_candidate
+    assert "if primary == AuthenticodeSignatureVerdict::Invalid" in catalog_candidate
     assert "AUTHENTICODE_HELPER_TIMEOUT: Duration = Duration::from_secs(15)" in production
     assert "MAX_AUTHENTICODE_HELPER_REQUEST_BYTES: usize = 256 * 1024" in production
     assert "MAX_AUTHENTICODE_HELPER_RESPONSE_BYTES: usize = 16 * 1024" in production
@@ -25108,6 +25138,14 @@ def test_native_authenticode_uses_direct_hash_bound_file_and_catalog_wintrust():
         "native_secondary_authenticode_microsoft_signed_edge_dll_verifies_exact_index"
         in wintrust
     )
+    assert (
+        "native_secondary_catalog_authenticode_aggregation_is_bounded_ordered_and_fail_visible"
+        in wintrust
+    )
+    assert (
+        "native_secondary_catalog_authenticode_primary_runtime_is_exact_and_hash_bound"
+        in wintrust
+    )
     assert "native_authenticode_helper_protocol_is_strict_bounded_and_nonce_bound" in wintrust
     assert "native_authenticode_helper_response_cannot_fake_or_cross_nonce_verdicts" in wintrust
     assert "native_authenticode_helper_timeout_kills_and_reaps_the_isolated_process" in wintrust
@@ -25156,6 +25194,32 @@ def test_update_service_control_rejects_parent_traversal_in_system_root():
     assert "collapse_update_windows_system_root_segments(&normalized)" in production
     assert 'match part {\n            "" | "." => {}' in production
     assert "service_control_uses_checked_system32_sc_path_source_marker" in source
+
+
+def test_native_secondary_catalog_authenticode_is_bounded_exact_and_honestly_partial():
+    source = read(NATIVE_WINDOWS_AUTHENTICODE)
+    production = source.split("#[cfg(test)]")[0]
+    candidate = production[
+        production.index("fn verify_catalog_candidate"):
+        production.index("fn combine_catalog_outcome_and_cleanup")
+    ]
+    verifier = read(ROOT / "tools" / "testing" / "verify-small-threat-mvp.ps1")
+    validator = read(ROOT / "tools" / "testing" / "validate-small-threat-mvp-report.ps1")
+
+    assert "MAX_AUTHENTICODE_SIGNATURES: u32 = 16" in production
+    assert "WSS_GET_SECONDARY_SIG_COUNT | WSS_VERIFY_SPECIFIC" in candidate
+    assert "pSignatureSettings: &mut signature_settings" in candidate
+    assert "signature_settings.dwIndex = index" in candidate
+    assert "catalog Authenticode secondary-signature count changed" in candidate
+    assert "aggregate_valid_authenticode_signatures(" in candidate
+    assert "native_secondary_catalog_authenticode_aggregation_is_bounded_ordered_and_fail_visible" in source
+    assert "native_secondary_catalog_authenticode_primary_runtime_is_exact_and_hash_bound" in source
+    assert "native-engine secondary catalog Authenticode selection regressions" in verifier
+    assert '"native_secondary_catalog_authenticode"' in verifier
+    assert "if ($steps.Count -ne 231)" in validator
+    assert "no controlled benign multi-signed system-catalog fixture" in verifier
+    assert "no controlled benign multi-signed system-catalog fixture" in validator
+    assert "$technicalLimitText = Assert-JsonString" in validator
 
 
 def test_update_service_control_uses_bounded_command_runner():
@@ -25629,6 +25693,11 @@ def test_local_core_env_roots_reject_parent_traversal():
     assert '.env(ISOLATED_ENV_CASE, case)' in source
     assert 'command.env("AVORAX_DATA_DIR", "relative-runtime")' in source
     assert "local_core_program_data_root_rejects_parent_traversal_override" in source
+    assert 'const CASE: &str = "scan-cancellation-staged-write"' in source
+    assert (
+        '"tests::scan_cancellation_token_uses_staged_write_without_temp_leftover"'
+        in source
+    )
 
 
 def test_local_core_service_health_client_stays_authenticated_bounded_and_read_only():
