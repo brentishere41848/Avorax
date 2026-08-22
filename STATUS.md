@@ -4,8 +4,30 @@
 
 Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-install, repair, recovery, offline, and manual-install paths only. Normal app updates target signed `.aup` packages applied by Avorax Update Service.
 
+- Checkpoint 2196 catalog Authenticode is implemented and locally verified.
+  Native Engine now has bounded same-handle SHA-256 catalog lookup,
+  at most 16 candidates, local-path validation, cache-only WinTrust, exact
+  Microsoft signer identity, scanned-content digest binding, and fail-visible
+  API/limit/cleanup errors. Boundary tests pass `10/10`, catalog signer/hash/
+  fallback `3/3`, direct trust regressions `5/5`, Native Engine `445 + 6`, Rust
+  workspace `1,489`, Flutter `838/838`, and source contracts `626/626`. The
+  definitive verifier and independent validator pass `225/225` in `577.2s`.
+  The protected vault is unchanged. Exact-head hosted evidence is pending; no
+  hosted or release success is claimed yet. Secondary
+  signatures, hard in-call cancellation, user-mode TOCTOU, installed E2E,
+  production signing, driver IPC, pre-execution protection, and production
+  accuracy remain limited or blocked.
+- Checkpoint 2195 merged as `b2ceb927bb839ae8531d831fc769545564f95314`.
+  Merged-main CI `32583368808` and packages `32583368801` passed with publication
+  skipped; all 19 files synchronized exactly to the original tree and focused
+  rechecks passed. The protected vault invariant remained unchanged.
+
 ## Current Commit
 
+- Checkpoint 2196 is an uncommitted locally verified batch on branch
+  `agent/checkpoint-2196-native-catalog-authenticode`, based on merged main
+  `b2ceb927bb839ae8531d831fc769545564f95314`. Hosted evidence is pending; this
+  is not a release head.
 - Checkpoint 2194 implementation head
   `1dee3e25d5131d9b999cce7580e5df0f59a82f47` is published on draft PR `#46`
   from branch `agent/checkpoint-2194-native-engine-windows-roots`. Exact-head

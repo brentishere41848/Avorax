@@ -1,34 +1,41 @@
 use std::ffi::c_void;
+use std::ffi::OsString;
 use std::fs::{File, OpenOptions};
 use std::io::{Read, Seek, SeekFrom};
 use std::mem::size_of;
-use std::os::windows::ffi::OsStrExt;
+use std::os::windows::ffi::{OsStrExt, OsStringExt};
 use std::os::windows::fs::{MetadataExt, OpenOptionsExt};
 use std::os::windows::io::AsRawHandle;
-use std::path::Path;
+use std::path::{Component, Path, PathBuf, Prefix};
 use std::ptr::null_mut;
 
 use anyhow::{Context, Result};
 use sha2::{Digest, Sha256};
 use windows_sys::core::PCSTR;
 use windows_sys::Win32::Foundation::{
-    CERT_E_REVOCATION_FAILURE, CRYPT_E_BAD_ENCODE, CRYPT_E_BAD_MSG, CRYPT_E_NO_MATCH,
-    CRYPT_E_NO_SIGNER, CRYPT_E_NO_TRUSTED_SIGNER, CRYPT_E_REVOKED, CRYPT_E_SIGNER_NOT_FOUND,
-    HANDLE, INVALID_HANDLE_VALUE, TRUST_E_BAD_DIGEST, TRUST_E_BASIC_CONSTRAINTS,
-    TRUST_E_CERT_SIGNATURE, TRUST_E_COUNTER_SIGNER, TRUST_E_FAIL, TRUST_E_FINANCIAL_CRITERIA,
-    TRUST_E_MALFORMED_SIGNATURE, TRUST_E_NO_SIGNER_CERT, TRUST_E_SUBJECT_FORM_UNKNOWN,
-    TRUST_E_SUBJECT_NOT_TRUSTED, TRUST_E_TIME_STAMP,
+    GetLastError, SetLastError, CERT_E_REVOCATION_FAILURE, CRYPT_E_BAD_ENCODE, CRYPT_E_BAD_MSG,
+    CRYPT_E_NO_MATCH, CRYPT_E_NO_SIGNER, CRYPT_E_NO_TRUSTED_SIGNER, CRYPT_E_REVOKED,
+    CRYPT_E_SIGNER_NOT_FOUND, ERROR_NOT_FOUND, ERROR_SUCCESS, HANDLE, INVALID_HANDLE_VALUE,
+    TRUST_E_BAD_DIGEST, TRUST_E_BASIC_CONSTRAINTS, TRUST_E_CERT_SIGNATURE, TRUST_E_COUNTER_SIGNER,
+    TRUST_E_FAIL, TRUST_E_FINANCIAL_CRITERIA, TRUST_E_MALFORMED_SIGNATURE, TRUST_E_NO_SIGNER_CERT,
+    TRUST_E_SUBJECT_FORM_UNKNOWN, TRUST_E_SUBJECT_NOT_TRUSTED, TRUST_E_TIME_STAMP,
+};
+use windows_sys::Win32::Security::Cryptography::Catalog::{
+    CryptCATAdminAcquireContext2, CryptCATAdminCalcHashFromFileHandle2,
+    CryptCATAdminEnumCatalogFromHash, CryptCATAdminReleaseCatalogContext,
+    CryptCATAdminReleaseContext, CryptCATCatalogInfoFromContext, CATALOG_INFO,
 };
 use windows_sys::Win32::Security::Cryptography::{
-    szOID_COMMON_NAME, szOID_ORGANIZATION_NAME, CertGetNameStringW, CERT_CONTEXT,
-    CERT_NAME_ATTR_TYPE,
+    szOID_COMMON_NAME, szOID_ORGANIZATION_NAME, CertGetNameStringW, BCRYPT_SHA256_ALGORITHM,
+    CERT_CONTEXT, CERT_NAME_ATTR_TYPE,
 };
 use windows_sys::Win32::Security::WinTrust::{
     WTHelperGetProvCertFromChain, WTHelperGetProvSignerFromChain, WTHelperProvDataFromStateData,
-    WinVerifyTrust, WINTRUST_ACTION_GENERIC_VERIFY_V2, WINTRUST_DATA, WINTRUST_DATA_0,
-    WINTRUST_FILE_INFO, WTD_CACHE_ONLY_URL_RETRIEVAL, WTD_CHOICE_FILE, WTD_DISABLE_MD2_MD4,
-    WTD_REVOCATION_CHECK_CHAIN_EXCLUDE_ROOT, WTD_REVOKE_WHOLECHAIN, WTD_STATEACTION_CLOSE,
-    WTD_STATEACTION_VERIFY, WTD_UICONTEXT_EXECUTE, WTD_UI_NONE,
+    WinVerifyTrust, WINTRUST_ACTION_GENERIC_VERIFY_V2, WINTRUST_CATALOG_INFO, WINTRUST_DATA,
+    WINTRUST_DATA_0, WINTRUST_FILE_INFO, WTD_CACHE_ONLY_URL_RETRIEVAL, WTD_CHOICE_CATALOG,
+    WTD_CHOICE_FILE, WTD_DISABLE_MD2_MD4, WTD_REVOCATION_CHECK_CHAIN_EXCLUDE_ROOT,
+    WTD_REVOKE_WHOLECHAIN, WTD_STATEACTION_CLOSE, WTD_STATEACTION_VERIFY, WTD_UICONTEXT_EXECUTE,
+    WTD_UI_NONE,
 };
 use windows_sys::Win32::Storage::FileSystem::{
     FILE_ATTRIBUTE_REPARSE_POINT, FILE_FLAG_OPEN_REPARSE_POINT, FILE_FLAG_SEQUENTIAL_SCAN,
@@ -39,6 +46,8 @@ const MAX_AUTHENTICODE_PATH_UTF16_UNITS: usize = 32_767;
 const MAX_SIGNER_ATTRIBUTE_UTF16_UNITS: usize = 2_048;
 const MAX_AUTHENTICODE_BIND_BYTES: u64 = 512 * 1024 * 1024;
 const AUTHENTICODE_HASH_BUFFER_BYTES: usize = 128 * 1024;
+const SHA256_CATALOG_HASH_BYTES: usize = 32;
+const MAX_CATALOG_CANDIDATES: usize = 16;
 
 pub(crate) fn has_valid_microsoft_signature(
     path: &Path,
@@ -52,7 +61,10 @@ pub(crate) fn has_valid_microsoft_signature(
     if expected_sha256.is_some() {
         enforce_content_binding_size(path, &file)?;
     }
-    verify_open_file(path, &path_wide, &mut file, expected_sha256)
+    match verify_open_file(path, &path_wide, &mut file, expected_sha256)? {
+        true => Ok(true),
+        false => verify_catalog_signatures(path, &path_wide, &mut file, expected_sha256),
+    }
 }
 
 fn enforce_content_binding_size(path: &Path, file: &File) -> Result<()> {
@@ -170,17 +182,26 @@ fn verify_open_file(
         dwUIContext: WTD_UICONTEXT_EXECUTE,
         pSignatureSettings: null_mut(),
     };
+    verify_wintrust_data(path, &mut trust_data, file, expected_sha256)
+}
+
+fn verify_wintrust_data(
+    path: &Path,
+    trust_data: &mut WINTRUST_DATA,
+    file: &mut File,
+    expected_sha256: Option<&str>,
+) -> Result<bool> {
     let mut action = WINTRUST_ACTION_GENERIC_VERIFY_V2;
 
     let verify_status = unsafe {
         WinVerifyTrust(
             INVALID_HANDLE_VALUE,
             &mut action,
-            (&mut trust_data as *mut WINTRUST_DATA).cast::<c_void>(),
+            (trust_data as *mut WINTRUST_DATA).cast::<c_void>(),
         )
     };
     let outcome = if verify_status == 0 {
-        verified_signer_is_microsoft(&trust_data).and_then(|signer_is_microsoft| {
+        verified_signer_is_microsoft(trust_data).and_then(|signer_is_microsoft| {
             if signer_is_microsoft {
                 bind_verified_signature_to_expected_hash(path, file, expected_sha256)
             } else {
@@ -196,10 +217,316 @@ fn verify_open_file(
         WinVerifyTrust(
             INVALID_HANDLE_VALUE,
             &mut action,
-            (&mut trust_data as *mut WINTRUST_DATA).cast::<c_void>(),
+            (trust_data as *mut WINTRUST_DATA).cast::<c_void>(),
         )
     };
     combine_verdict_and_close(path, outcome, close_status)
+}
+
+struct CatalogResources {
+    admin: isize,
+    current: isize,
+}
+
+impl CatalogResources {
+    fn acquire(path: &Path) -> Result<Self> {
+        let mut admin = 0_isize;
+        let acquired = unsafe {
+            CryptCATAdminAcquireContext2(
+                &mut admin,
+                std::ptr::null(),
+                BCRYPT_SHA256_ALGORITHM,
+                std::ptr::null(),
+                0,
+            )
+        };
+        anyhow::ensure!(
+            acquired != 0 && admin != 0,
+            "unable to acquire SHA-256 Authenticode catalog context for {}: {}",
+            path.display(),
+            std::io::Error::last_os_error()
+        );
+        Ok(Self { admin, current: 0 })
+    }
+
+    fn next_catalog(&mut self, path: &Path, hash: &[u8]) -> Result<Option<isize>> {
+        let mut previous = self.current;
+        unsafe { SetLastError(ERROR_SUCCESS) };
+        let next = unsafe {
+            CryptCATAdminEnumCatalogFromHash(
+                self.admin,
+                hash.as_ptr(),
+                hash.len() as u32,
+                0,
+                if previous == 0 {
+                    null_mut()
+                } else {
+                    &mut previous
+                },
+            )
+        };
+        self.current = next;
+        if next != 0 {
+            return Ok(Some(next));
+        }
+        let status = unsafe { GetLastError() };
+        anyhow::ensure!(
+            status == ERROR_SUCCESS || status == ERROR_NOT_FOUND,
+            "Authenticode catalog enumeration failed for {}: status {}",
+            path.display(),
+            status
+        );
+        Ok(None)
+    }
+
+    fn cleanup(&mut self, path: &Path) -> Result<()> {
+        let mut failures = Vec::new();
+        if self.current != 0 {
+            let current = std::mem::replace(&mut self.current, 0);
+            unsafe { SetLastError(ERROR_SUCCESS) };
+            if unsafe { CryptCATAdminReleaseCatalogContext(self.admin, current, 0) } == 0 {
+                failures.push(format!(
+                    "catalog context cleanup failed with status {}",
+                    unsafe { GetLastError() }
+                ));
+            }
+        }
+        if self.admin != 0 {
+            let admin = std::mem::replace(&mut self.admin, 0);
+            unsafe { SetLastError(ERROR_SUCCESS) };
+            if unsafe { CryptCATAdminReleaseContext(admin, 0) } == 0 {
+                failures.push(format!(
+                    "catalog administrator cleanup failed with status {}",
+                    unsafe { GetLastError() }
+                ));
+            }
+        }
+        anyhow::ensure!(
+            failures.is_empty(),
+            "Authenticode catalog cleanup failed for {}: {}",
+            path.display(),
+            failures.join("; ")
+        );
+        Ok(())
+    }
+}
+
+fn verify_catalog_signatures(
+    path: &Path,
+    path_wide: &[u16],
+    file: &mut File,
+    expected_sha256: Option<&str>,
+) -> Result<bool> {
+    let mut resources = CatalogResources::acquire(path)?;
+    let outcome =
+        verify_catalog_signatures_inner(path, path_wide, file, expected_sha256, &mut resources);
+    let cleanup = resources.cleanup(path);
+    combine_catalog_outcome_and_cleanup(path, outcome, cleanup)
+}
+
+fn verify_catalog_signatures_inner(
+    path: &Path,
+    path_wide: &[u16],
+    file: &mut File,
+    expected_sha256: Option<&str>,
+    resources: &mut CatalogResources,
+) -> Result<bool> {
+    let hash = calculate_catalog_hash(path, file, resources.admin)?;
+    let member_tag = catalog_member_tag(&hash);
+
+    for _ in 0..MAX_CATALOG_CANDIDATES {
+        let Some(catalog_handle) = resources.next_catalog(path, &hash)? else {
+            return Ok(false);
+        };
+        let catalog_path_wide = catalog_path_from_context(path, catalog_handle)?;
+        if verify_catalog_candidate(
+            path,
+            path_wide,
+            file,
+            expected_sha256,
+            resources.admin,
+            &catalog_path_wide,
+            &member_tag,
+            &hash,
+        )? {
+            return Ok(true);
+        }
+    }
+    anyhow::bail!(
+        "Authenticode catalog lookup exceeded the {} candidate limit for {}",
+        MAX_CATALOG_CANDIDATES,
+        path.display()
+    )
+}
+
+fn calculate_catalog_hash(path: &Path, file: &mut File, admin: isize) -> Result<Vec<u8>> {
+    file.seek(SeekFrom::Start(0)).with_context(|| {
+        format!(
+            "unable to rewind Authenticode candidate for catalog hashing {}",
+            path.display()
+        )
+    })?;
+    let handle = file.as_raw_handle() as HANDLE;
+    let mut hash_bytes = 0_u32;
+    let sized = unsafe {
+        CryptCATAdminCalcHashFromFileHandle2(admin, handle, &mut hash_bytes, null_mut(), 0)
+    };
+    anyhow::ensure!(
+        sized != 0,
+        "unable to size SHA-256 Authenticode catalog hash for {}: {}",
+        path.display(),
+        std::io::Error::last_os_error()
+    );
+    anyhow::ensure!(
+        hash_bytes as usize == SHA256_CATALOG_HASH_BYTES,
+        "unexpected SHA-256 Authenticode catalog hash size {} for {}",
+        hash_bytes,
+        path.display()
+    );
+    let mut hash = vec![0_u8; hash_bytes as usize];
+    let calculated = unsafe {
+        CryptCATAdminCalcHashFromFileHandle2(admin, handle, &mut hash_bytes, hash.as_mut_ptr(), 0)
+    };
+    anyhow::ensure!(
+        calculated != 0,
+        "unable to calculate SHA-256 Authenticode catalog hash for {}: {}",
+        path.display(),
+        std::io::Error::last_os_error()
+    );
+    anyhow::ensure!(
+        hash_bytes as usize == hash.len(),
+        "SHA-256 Authenticode catalog hash size changed while reading {}",
+        path.display()
+    );
+    Ok(hash)
+}
+
+fn catalog_member_tag(hash: &[u8]) -> Vec<u16> {
+    const HEX: &[u8; 16] = b"0123456789ABCDEF";
+    let mut tag = Vec::with_capacity(hash.len() * 2 + 1);
+    for byte in hash {
+        tag.push(HEX[(byte >> 4) as usize] as u16);
+        tag.push(HEX[(byte & 0x0F) as usize] as u16);
+    }
+    tag.push(0);
+    tag
+}
+
+fn catalog_path_from_context(path: &Path, catalog_handle: isize) -> Result<Vec<u16>> {
+    let mut info = CATALOG_INFO {
+        cbStruct: size_of::<CATALOG_INFO>() as u32,
+        ..Default::default()
+    };
+    let read = unsafe { CryptCATCatalogInfoFromContext(catalog_handle, &mut info, 0) };
+    anyhow::ensure!(
+        read != 0,
+        "unable to read Authenticode catalog path for {}: {}",
+        path.display(),
+        std::io::Error::last_os_error()
+    );
+    validate_catalog_path_buffer(path, &info.wszCatalogFile)
+}
+
+fn validate_catalog_path_buffer(member_path: &Path, buffer: &[u16]) -> Result<Vec<u16>> {
+    let terminator = buffer.iter().position(|unit| *unit == 0).with_context(|| {
+        format!(
+            "Authenticode catalog path is not NUL terminated for {}",
+            member_path.display()
+        )
+    })?;
+    anyhow::ensure!(
+        terminator > 0,
+        "Authenticode catalog path is empty for {}",
+        member_path.display()
+    );
+    anyhow::ensure!(
+        buffer[terminator..].iter().all(|unit| *unit == 0),
+        "Authenticode catalog path contains data after its terminator for {}",
+        member_path.display()
+    );
+    let catalog_path = PathBuf::from(OsString::from_wide(&buffer[..terminator]));
+    let local_drive = matches!(
+        catalog_path.components().next(),
+        Some(Component::Prefix(prefix))
+            if matches!(prefix.kind(), Prefix::Disk(_) | Prefix::VerbatimDisk(_))
+    );
+    anyhow::ensure!(
+        catalog_path.is_absolute() && local_drive,
+        "Authenticode catalog path is not an absolute local-drive path for {}: {}",
+        member_path.display(),
+        catalog_path.display()
+    );
+    let mut validated = buffer[..=terminator].to_vec();
+    anyhow::ensure!(
+        validated.len() <= MAX_AUTHENTICODE_PATH_UTF16_UNITS,
+        "Authenticode catalog path exceeds {} UTF-16 units for {}",
+        MAX_AUTHENTICODE_PATH_UTF16_UNITS - 1,
+        member_path.display()
+    );
+    validated.shrink_to_fit();
+    Ok(validated)
+}
+
+#[allow(clippy::too_many_arguments)]
+fn verify_catalog_candidate(
+    path: &Path,
+    path_wide: &[u16],
+    file: &mut File,
+    expected_sha256: Option<&str>,
+    admin: isize,
+    catalog_path_wide: &[u16],
+    member_tag: &[u16],
+    hash: &[u8],
+) -> Result<bool> {
+    let handle = file.as_raw_handle() as HANDLE;
+    let mut catalog_info = WINTRUST_CATALOG_INFO {
+        cbStruct: size_of::<WINTRUST_CATALOG_INFO>() as u32,
+        dwCatalogVersion: 0,
+        pcwszCatalogFilePath: catalog_path_wide.as_ptr(),
+        pcwszMemberTag: member_tag.as_ptr(),
+        pcwszMemberFilePath: path_wide.as_ptr(),
+        hMemberFile: handle,
+        pbCalculatedFileHash: hash.as_ptr().cast_mut(),
+        cbCalculatedFileHash: hash.len() as u32,
+        pcCatalogContext: null_mut(),
+        hCatAdmin: admin,
+    };
+    let mut trust_data = WINTRUST_DATA {
+        cbStruct: size_of::<WINTRUST_DATA>() as u32,
+        pPolicyCallbackData: null_mut(),
+        pSIPClientData: null_mut(),
+        dwUIChoice: WTD_UI_NONE,
+        fdwRevocationChecks: WTD_REVOKE_WHOLECHAIN,
+        dwUnionChoice: WTD_CHOICE_CATALOG,
+        Anonymous: WINTRUST_DATA_0 {
+            pCatalog: &mut catalog_info,
+        },
+        dwStateAction: WTD_STATEACTION_VERIFY,
+        hWVTStateData: null_mut(),
+        pwszURLReference: null_mut(),
+        dwProvFlags: WTD_CACHE_ONLY_URL_RETRIEVAL
+            | WTD_REVOCATION_CHECK_CHAIN_EXCLUDE_ROOT
+            | WTD_DISABLE_MD2_MD4,
+        dwUIContext: WTD_UICONTEXT_EXECUTE,
+        pSignatureSettings: null_mut(),
+    };
+    verify_wintrust_data(path, &mut trust_data, file, expected_sha256)
+}
+
+fn combine_catalog_outcome_and_cleanup(
+    path: &Path,
+    outcome: Result<bool>,
+    cleanup: Result<()>,
+) -> Result<bool> {
+    match (outcome, cleanup) {
+        (Ok(verdict), Ok(())) => Ok(verdict),
+        (Ok(_), Err(cleanup_error)) => Err(cleanup_error),
+        (Err(error), Ok(())) => Err(error),
+        (Err(error), Err(cleanup_error)) => anyhow::bail!(
+            "{error:#}; Authenticode catalog cleanup also failed for {}: {cleanup_error:#}",
+            path.display()
+        ),
+    }
 }
 
 fn bind_verified_signature_to_expected_hash(
@@ -530,6 +857,61 @@ mod tests {
     }
 
     #[test]
+    fn catalog_member_tag_is_uppercase_hex_with_one_terminator() {
+        assert_eq!(
+            catalog_member_tag(&[0x00, 0xAF, 0x19]),
+            [48, 48, 65, 70, 49, 57, 0]
+        );
+    }
+
+    #[test]
+    fn catalog_path_buffer_requires_one_bounded_local_absolute_path() {
+        let member = Path::new(r"C:\Windows\System32\fixture.exe");
+        let mut local = [0_u16; 260];
+        let local_text: Vec<u16> = OsString::from(r"C:\Windows\System32\CatRoot\fixture.cat")
+            .encode_wide()
+            .collect();
+        local[..local_text.len()].copy_from_slice(&local_text);
+        let validated = validate_catalog_path_buffer(member, &local).unwrap();
+        assert_eq!(validated.last(), Some(&0));
+
+        let mut relative = [0_u16; 260];
+        let relative_text: Vec<u16> = OsString::from(r"CatRoot\fixture.cat")
+            .encode_wide()
+            .collect();
+        relative[..relative_text.len()].copy_from_slice(&relative_text);
+        assert!(validate_catalog_path_buffer(member, &relative).is_err());
+
+        let mut unc = [0_u16; 260];
+        let unc_text: Vec<u16> = OsString::from(r"\\server\share\fixture.cat")
+            .encode_wide()
+            .collect();
+        unc[..unc_text.len()].copy_from_slice(&unc_text);
+        assert!(validate_catalog_path_buffer(member, &unc).is_err());
+
+        let unterminated = [65_u16; 260];
+        assert!(validate_catalog_path_buffer(member, &unterminated).is_err());
+
+        let mut trailing_data = local;
+        trailing_data[local_text.len() + 1] = 65;
+        assert!(validate_catalog_path_buffer(member, &trailing_data).is_err());
+    }
+
+    #[test]
+    fn native_catalog_authenticode_windows_powershell_requires_catalog_fallback() {
+        let path = crate::windows_system::checked_system32_file(
+            &["WindowsPowerShell", "v1.0", "powershell.exe"],
+            "catalog-signed WindowsPowerShell fixture",
+        )
+        .unwrap();
+        let path_wide = absolute_path_wide(&path).unwrap();
+        let mut file = open_authenticode_candidate(&path).unwrap();
+
+        assert!(!verify_open_file(&path, &path_wide, &mut file, None).unwrap());
+        assert!(verify_catalog_signatures(&path, &path_wide, &mut file, None).unwrap());
+    }
+
+    #[test]
     fn content_binding_rejects_oversized_file_before_wintrust() {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("oversized-benign-fixture.exe");
@@ -558,6 +940,26 @@ mod tests {
         .unwrap_err()
         .to_string();
         assert!(combined_error.contains("verification failed"));
+        assert!(combined_error.contains("cleanup also failed"));
+    }
+
+    #[test]
+    fn catalog_cleanup_failure_cannot_return_a_verdict_or_hide_verification_error() {
+        let path = Path::new(r"C:\benign-fixture.exe");
+        let cleanup = || anyhow::anyhow!("catalog administrator cleanup failed");
+        let success_error = combine_catalog_outcome_and_cleanup(path, Ok(true), Err(cleanup()))
+            .unwrap_err()
+            .to_string();
+        assert!(success_error.contains("catalog administrator cleanup failed"));
+
+        let combined_error = combine_catalog_outcome_and_cleanup(
+            path,
+            Err(anyhow::anyhow!("catalog verification failed")),
+            Err(cleanup()),
+        )
+        .unwrap_err()
+        .to_string();
+        assert!(combined_error.contains("catalog verification failed"));
         assert!(combined_error.contains("cleanup also failed"));
     }
 }

@@ -1622,3 +1622,26 @@ enforcement, or pre-execution blocking is claimed.
   production package signing, signed-driver IPC, 32-bit Windows support,
   production false-positive/detection-rate evidence, and Defender coexistence
   remain separate release prerequisites. Defender must not be weakened.
+
+## Checkpoint 2196 Catalog Authenticode
+
+- **Locally verified:** Native Engine now falls back from a
+  definitively untrusted primary embedded signature to bounded SHA-256 Windows
+  catalog lookup on the same open file handle. Up to 16 catalog candidates use
+  cache-only `WinVerifyTrust` and the existing exact Microsoft leaf policy.
+- **Fail-visible boundary:** Inconclusive embedded verification does not fall
+  through. Catalog API, hash-size, path-shape, candidate-limit, WinTrust policy,
+  and normal cleanup failures remain diagnostics. UNC/non-local catalog paths
+  are rejected. Successful scan trust still requires the second bounded digest
+  to match the engine's already-scanned SHA-256.
+- **Verification batch:** Boundary tests pass `10/10`; catalog-backed
+  WindowsPowerShell fallback and right/wrong digest tests pass `3/3`; direct
+  embedded/unsigned/malformed tests pass `5/5`; Native Engine passes `445 + 6`;
+  the Rust workspace passes `1,489`; Flutter passes `838/838`; source contracts pass
+  `626/626`. The all-features workspace also passes `1,490`. The final
+  definitive verifier and independent validator pass `225/225` in `577.2s`;
+  hosted package evidence remains pending.
+- **Still limited / blocked:** Secondary embedded signature enumeration,
+  in-call hard cancellation, memory-mapped and post-verdict mutation,
+  production signing, installed LocalSystem/service/UI E2E, signed-driver IPC,
+  pre-execution blocking, and production accuracy remain separate work.

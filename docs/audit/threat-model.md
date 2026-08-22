@@ -1194,3 +1194,43 @@ detection-only and Local Core stays the authenticated quarantine owner. No
 service, driver, Defender setting, package install, publication, release,
 execution authorization, Defender replacement, pre-execution, or detection-rate
 claim is introduced.
+
+## Checkpoint 2196 Catalog Authenticode Boundary
+
+Checkpoint 2196 adds a bounded catalog fallback only after primary embedded
+verification returns a definitive untrusted result. An inconclusive embedded
+policy, revocation, provider, I/O, or cleanup failure remains visible and does
+not get hidden by a second trust path.
+
+The fallback acquires a SHA-256 catalog administrator context, calculates the
+catalog member hash from the same already-open regular non-reparse file handle,
+and enumerates at most 16 matching system catalogs. Returned catalog paths are
+treated as untrusted fixed-buffer data: they must have one bounded NUL-terminated
+value, no trailing data, and an absolute local-drive path. UNC/network catalog
+paths are rejected. Every candidate is evaluated through noninteractive,
+cache-only `WinVerifyTrust`; the same exact Microsoft leaf organization/common
+name policy applies. A valid catalog and matching hash alone are insufficient if
+the verified signer is not Microsoft.
+
+The normal return path explicitly releases the current catalog context and the
+administrator context. Release failures replace a would-be verdict with a
+diagnostic, and a verification error plus cleanup error preserves both. A valid
+catalog verdict on the scan path still requires the second bounded same-handle
+SHA-256 read to equal the bytes already scanned.
+
+Catalog enumeration improves legitimate Windows-file trust and false-positive
+resistance, but it does not authorize execution. Secondary embedded signatures
+remain unevaluated. In-process WinTrust/catalog calls have no hard cancellation,
+and an earlier writable or memory-mapped handle plus post-verdict mutation remain
+user-mode TOCTOU limits. Windows catalog registration, trust stores,
+cryptographic providers, the Win32 ABI, and protected catalog state remain in
+the trusted computing base. No service, driver, Defender setting, installation,
+publication, release, pre-execution, or detection-rate claim is added.
+
+Local verification covers `10/10` catalog/direct boundary cases, a real benign
+catalog-backed WindowsPowerShell fixture that demonstrably fails the embedded
+path before catalog success, plus correct and incorrect scan hashes,
+the complete Native Engine and workspace suites, all Flutter tests, source
+contracts, and the definitive `225/225` verifier. This is implementation and
+regression evidence, not installed execution-control or production-accuracy
+evidence.

@@ -7338,3 +7338,69 @@ Updates page showed:
 - Both prerelease publication jobs were explicitly skipped. No artifact was
   installed, released, or published. Evidence-head and merged-main checks,
   merge, and original-tree synchronization remain pending.
+
+## 2026-08-22 continuation checkpoint 2195 closure
+
+- Evidence commit `1f0deb80ee3ae3418676e419f38d803ba5158863`
+  passed Avorax CI `32582714242` and Desktop Packages PR run `32582714240`.
+- PR `#47` merged normally as
+  `b2ceb927bb839ae8531d831fc769545564f95314`. Merged-main CI
+  `32583368808` and Desktop Packages `32583368801` passed. The package run built
+  Windows MSI/EXE, Linux DEB/tar, both macOS DMGs, six-artifact checksums, and a
+  lockfile SBOM; publication was skipped.
+- All 19 original-tree preconditions matched checkpoint 2194 or valid absence.
+  Exactly those 19 files synchronized to `C:\Users\Brent\Documents\Avorax-main`
+  and then matched source Git blobs and SHA-256 hashes. Destination checks passed
+  direct boundary `7/7`, direct trust `6/6`, source contracts `626/626`, strict
+  Native Clippy, and rustfmt.
+- The protected vault remained exactly 16,072 files, zero directories,
+  4,522,733 bytes, 5,357 each payload/metadata/auth extension, one metadata key,
+  and zero pending. `.verification` was neither staged nor deleted.
+
+## 2026-08-22 continuation checkpoint 2196 scripting phase
+
+- Started branch `agent/checkpoint-2196-native-catalog-authenticode` from merged
+  main. No direct-main push, installation, release, publication, service/driver
+  start, Defender change, or quarantine mutation occurred.
+- Scripted a SHA-256 catalog fallback after definitive primary embedded
+  non-trust. It hashes the same open handle, caps enumeration at 16 candidates,
+  rejects malformed/non-local catalog paths, applies cache-only WinTrust plus
+  exact Microsoft signer identity, preserves scanned-content SHA-256 binding,
+  and makes normal catalog/admin cleanup failures visible.
+- Scripted benign WindowsPowerShell catalog tests, embedded Edge regressions,
+  malformed/path/limit/cleanup contracts, verifier step 225, independent exact
+  report validation, threat model, blocker matrix, dependency evidence, and this
+  checkpoint report before test execution.
+- Secondary signatures, in-call hard cancellation, memory-mapped/post-verdict
+  mutation, installed service/UI, signing, driver IPC, pre-execution behavior,
+  and production accuracy remain limited or blocked.
+
+## 2026-08-22 continuation checkpoint 2196 local verification
+
+- PowerShell parsing, rustfmt, `git diff --check`, direct/catalog boundary
+  `10/10`, catalog Microsoft/hash binding `3/3`, direct embedded/unsigned/
+  malformed `5/5`, and publisher-diagnostic `1/1` checks passed.
+- The first strict Native Clippy run correctly rejected a
+  `field_reassign_with_default` initialization. `CATALOG_INFO.cbStruct` was
+  initialized in the struct expression; strict Clippy and the affected
+  `10/10` boundary plus the original `2/2` catalog runtime tests then passed
+  again. Final review added an explicit regression proving that the benign
+  WindowsPowerShell fixture fails primary embedded verification before passing
+  catalog verification; the post-review catalog subset passes `3/3`.
+- Before final review, complete Native Engine tests passed `444 + 6`, the
+  locked Rust workspace passed `1,488`, Flutter analyzer/all `838` tests and
+  Python source contracts `626/626` passed, and the initial definitive report
+  passed `225/225` in `552.3s`.
+- After the explicit fallback evidence addition, complete Native Engine passed
+  `445 + 6`, the standard locked workspace passed `1,489`, and the all-features
+  workspace passed `1,490`; strict Clippy, formatting, and source contracts
+  passed again. The final self-validating report passed exactly `225/225` steps
+  with zero failed or skipped verifier steps from `2026-08-22T16:53:12Z`
+  through `2026-08-22T17:02:49Z` (`577.2s`). A separate strict validator
+  invocation accepted the same report. Three package-source symlink cases remained
+  explicitly skipped inside their passing Windows step because this host lacks
+  optional symlink privilege.
+- A read-only post-suite vault audit again found exactly 16,072 files, zero
+  directories, 4,522,733 bytes, 5,357 each `.avoraxq`/`.json`/`.auth`, one
+  `.metadata_auth_key`, and zero pending. Hosted exact-head CI/packages, merge,
+  and original-tree synchronization remain pending.

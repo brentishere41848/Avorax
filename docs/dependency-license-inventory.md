@@ -145,3 +145,16 @@ Both lockfiles remained byte-unchanged and the complete dependency-evidence
 gate passed during checkpoint 2195 local verification. Feature-level source
 inventory is not a final binary SBOM, license notice set, or copyright review;
 those remain release-host requirements.
+
+## Native Catalog API Surface
+
+Checkpoint 2196 adds no dependency, package, feature, or lockfile change. The
+bounded catalog fallback uses the Catalog and WinTrust declarations already
+enabled for pinned `windows-sys 0.61.2`, whose reviewed registry license remains
+`MIT OR Apache-2.0`. It introduces no parser, network, certificate-store, or
+shell dependency. Final-artifact SBOM, notices, and copyright review remain
+release gates; a source-level unchanged-lock statement does not replace them.
+
+Both lockfiles remained byte-unchanged in the checkpoint diff. The definitive
+dependency-evidence step and the complete locked Rust workspace passed locally;
+hosted package SBOM evidence remains pending for the checkpoint head.

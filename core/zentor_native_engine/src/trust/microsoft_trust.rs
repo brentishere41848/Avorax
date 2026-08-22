@@ -212,14 +212,32 @@ mod tests {
 
     #[cfg(windows)]
     #[test]
-    fn native_direct_authenticode_catalog_signed_windows_powershell_is_not_claimed_as_embedded() {
+    fn native_catalog_authenticode_accepts_catalog_signed_windows_powershell() {
         let powershell = crate::windows_system::checked_system32_file(
             &["WindowsPowerShell", "v1.0", "powershell.exe"],
             "catalog-signed WindowsPowerShell fixture",
         )
         .unwrap();
 
-        assert!(!microsoft_signature_verdict(&powershell).unwrap());
+        assert!(microsoft_signature_verdict(&powershell).unwrap());
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn native_catalog_authenticode_verdict_binds_to_scanned_sha256() {
+        let powershell = crate::windows_system::checked_system32_file(
+            &["WindowsPowerShell", "v1.0", "powershell.exe"],
+            "catalog-signed WindowsPowerShell fixture",
+        )
+        .unwrap();
+        let bytes = fs::read(&powershell).unwrap();
+        let sha256 = crate::engine::sha256_bytes(&bytes);
+
+        assert!(microsoft_signature_verdict_for_sha256(&powershell, &sha256).unwrap());
+        let error = microsoft_signature_verdict_for_sha256(&powershell, &"0".repeat(64))
+            .unwrap_err()
+            .to_string();
+        assert!(error.contains("does not match the bytes already scanned"));
     }
 
     #[cfg(windows)]
