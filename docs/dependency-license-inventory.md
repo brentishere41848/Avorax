@@ -171,6 +171,8 @@ pinned `windows-sys 0.61.2`. The reviewed registry license remains
 
 Both lockfiles remain unchanged in the diff. Strict Native Clippy, both complete
 locked workspace variants, the definitive dependency-evidence gate, and the
-226-step local verifier passed. Hosted package SBOM and final built-artifact
-license/notice evidence remain pending; source API reuse is not final-binary
-license or notice evidence.
+226-step local verifier passed. Exact implementation-head package push/PR runs
+`32591426228`/`32591435262` passed lockfile SBOM generation and artifact
+consolidation with publication skipped. Evidence-head and merged-main package
+proof plus final release-artifact license/notice review remain pending; source
+API reuse is not final-binary license or notice evidence.

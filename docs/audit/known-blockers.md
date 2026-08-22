@@ -1657,8 +1657,10 @@ enforcement, or pre-execution blocking is claimed.
   the 16-total cap, exact Microsoft leaf identity, and scanned-content digest
   binding are all mandatory. Secondary
   tests pass `14/14`; Native Engine, complete Rust workspaces, Flutter, source
-  contracts, strict lint, and the exact `226/226` verifier/validator pass. Hosted
-  package/CI, merge, and synchronized-tree proof remain pending.
+  contracts, strict lint, and the exact `226/226` verifier/validator pass.
+  Implementation head CI and package runs pass across all target platforms with
+  publication skipped. Evidence-head, merge, and synchronized-tree proof remain
+  pending.
 - **Conservative invalid-primary boundary:** A definitively invalid primary is
   not rescued by a secondary signature. It contributes no embedded publisher
   trust and proceeds only to the existing bounded catalog fallback. This can

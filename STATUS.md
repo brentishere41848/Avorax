@@ -19,8 +19,11 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
   contracts pass `626/626`, and strict Native Clippy passes. The definitive
   verifier and independent validator pass exactly `226/226` in `480.8s`; an
   older 225-step report is rejected. The protected vault remains unchanged.
-  Hosted exact-head, merge, merged-main, and original-tree synchronization
-  evidence are still pending and are not claimed.
+  Implementation head `e4dcb89e9b6fe487713d07283a719ad41317af22`
+  passes Avorax CI `32591435260` and Desktop Packages push/PR runs
+  `32591426228`/`32591435262`; every platform and consolidation passed and
+  publication was skipped. Evidence-head, merge, merged-main, and original-tree
+  synchronization evidence are still pending and are not claimed.
 - Checkpoint 2196 catalog Authenticode is implemented and locally verified.
   Native Engine now has bounded same-handle SHA-256 catalog lookup,
   at most 16 candidates, local-path validation, cache-only WinTrust, exact
@@ -47,10 +50,12 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
 
 ## Current Commit
 
-- Checkpoint 2197 is an uncommitted locally verified batch on
+- Checkpoint 2197 implementation head
+  `e4dcb89e9b6fe487713d07283a719ad41317af22` is pushed on draft PR `#49` from
   `agent/checkpoint-2197-native-secondary-authenticode`, based on merged main
-  `6d721d5d683c8ee90ccb40945894012ceda76803`. It is not yet pushed, merged,
-  published, released, or synchronized.
+  `6d721d5d683c8ee90ccb40945894012ceda76803`. Exact-head CI/packages pass with
+  publication skipped. It is not yet merged, published, released, or
+  synchronized.
 - Checkpoint 2196 implementation/evidence heads
   `3eb079cce859b3523dcb22c983ba81628900f9c5` and
   `e3b4bdddb1a952c70ef7f4c690f7bff4fac963a0` merged through PR `#48` as

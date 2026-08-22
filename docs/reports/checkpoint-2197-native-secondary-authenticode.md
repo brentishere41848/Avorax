@@ -96,8 +96,16 @@ installing anything.
 
 The protected vault remained exactly 16,072 files, zero directories, 4,522,733
 bytes, 5,357 each `.avoraxq`/`.json`/`.auth`, one `.metadata_auth_key`, and zero
-pending files. Hosted steps 6 and 7 remain pending; no commit, run ID, merge,
-publication, release, installation, or synchronization is claimed yet.
+pending files.
+
+Implementation head `e4dcb89e9b6fe487713d07283a719ad41317af22` is
+pushed on draft PR `#49`. Exact-head Avorax CI `32591435260` passed all five
+jobs. Desktop Packages push/PR runs `32591426228`/`32591435262` passed package
+contracts, Windows x64 MSI/EXE, Linux x64 DEB/tar, macOS x64/arm64 DMGs,
+six-artifact consolidation, checksums, and lockfile SBOM generation. Publish
+jobs `97077392409` and `97077262064` were intentionally skipped. No artifact
+was installed, published, or released. Evidence-head CI/packages, normal merge,
+merged-main checks, and preconditioned synchronization remain pending.
 
 ## Remaining Limits
 
