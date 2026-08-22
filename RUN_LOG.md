@@ -13,6 +13,53 @@ Lead-engineer product-hardening pass across the Avorax repository. Goal is to mo
 - The bundled native ML model is treated as development-only unless release metadata and gates prove production readiness.
 - MSI/EXE installers are first-install/repair/recovery/offline paths. Normal in-app updates should use verified `.aup` packages.
 
+## 2026-08-22 continuation checkpoint 2197
+
+- Completed the no-test scripting phase for bounded secondary embedded
+  Authenticode verification. `WINTRUST_SIGNATURE_SETTINGS` requests primary
+  index zero and the secondary count. Primary output must be zero or remain at
+  the initialized sentinel because the current Windows provider leaves that
+  field untouched; every secondary output must equal its requested index. Every
+  state is closed before reuse, and total embedded signatures are capped at 16.
+- A valid exact-Microsoft primary returns trust immediately. A valid non-
+  Microsoft primary searches secondary indices in order. Invalid signatures
+  continue only within that secondary search; policy/API/I/O/count-drift/cleanup
+  errors remain visible and abort. A definitively invalid primary is not rescued
+  by secondaries, while the existing bounded catalog fallback remains available.
+- Added pure aggregation tests and one bounded read-only runtime fixture using
+  known multi-signed Microsoft Edge DLL names. The fixture is never executed.
+  Verifier/report contracts now require a dedicated secondary-signature step and
+  exactly 226 steps. Audit, threat-model, blocker, dependency, and checkpoint
+  report text are scripted before execution.
+- Focused verification passed after two fixture-contract corrections. The
+  current Windows provider can leave primary `dwVerifiedSigIndex` untouched,
+  so production and tests now require either exact zero or the initialized
+  sentinel for primary only; every secondary still requires an exact returned
+  index. The real bounded Edge fixture has a valid non-Microsoft primary and a
+  later exact-Microsoft secondary, so the runtime test now enumerates every
+  bounded secondary instead of assuming index one is Microsoft. A generic test
+  inference error was also corrected with an explicit result type. No failure
+  was hidden or converted into success.
+- `cargo fmt --check`, verifier/validator parser checks, `git diff --check`,
+  strict Native Clippy, direct/catalog Authenticode regressions (`5/5`, `3/3`),
+  secondary Authenticode (`14/14`), Native Engine (`448 + 6`), both complete
+  locked workspace variants, Flutter analyzer and tests (`838/838`), and Python
+  source contracts (`626/626`) passed. The repository dependency-free source-
+  contract runner was used because global/bundled `pytest` was unavailable; no
+  package was installed.
+- The definitive report
+  `.verification/checkpoint-2197-small-threat-mvp-full-report.json` records
+  `226/226` passed, zero failed/skipped/error steps, from
+  `2026-08-22T18:27:29Z` through `2026-08-22T18:35:30Z` (`480.8s`). Independent
+  `-RequireFullSuite` validation passed, while the checkpoint-2196 225-step
+  report failed the new exact-step contract as expected.
+- Read-only post-suite inventory confirms the protected vault remains exactly
+  16,072 files, zero directories, 4,522,733 bytes, 5,357 each
+  `.avoraxq`/`.json`/`.auth`, one `.metadata_auth_key`, and zero pending files.
+  No install, service/driver start, Defender change, publication, release,
+  original-tree sync, or vault mutation occurred. Hosted evidence remains
+  pending.
+
 ## 2026-08-22 continuation checkpoint 2196
 
 - Implementation head `3eb079cce859b3523dcb22c983ba81628900f9c5`
@@ -27,8 +74,12 @@ Lead-engineer product-hardening pass across the Avorax repository. Goal is to mo
   with Native Engine `445 + 6`, standard locked Rust workspace `1,489`,
   all-features workspace `1,490`, Flutter `838/838`, and source contracts
   `626/626` passing. The protected ProgramData vault remained unchanged.
-- Evidence-head CI/packages, normal PR merge, merged-main checks, and
-  preconditioned original-tree synchronization remain pending.
+- Evidence head `e3b4bdddb1a952c70ef7f4c690f7bff4fac963a0` passed CI
+  `32587698938` and package PR `32587698950`; publication was skipped. PR `#48`
+  merged normally as `6d721d5d683c8ee90ccb40945894012ceda76803`.
+  Merged-main CI `32588501943` and packages `32588501997` passed, publication
+  skipped, and all 12 files synchronized only after old/new preconditions
+  matched. Destination focused checks passed and the vault stayed unchanged.
 
 ## 2026-08-21 continuation checkpoint 2194
 

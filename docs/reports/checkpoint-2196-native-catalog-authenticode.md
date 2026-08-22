@@ -75,8 +75,7 @@ checkpoint test batch. The full-suite report now requires exactly 225 steps and
 adds `native-engine catalog Authenticode Microsoft-signed/hash-binding
 regressions`.
 
-Verification order (local steps 1 through 5 executed; hosted/integration steps
-6 and 7 pending):
+Verification order (all seven steps executed):
 
 1. formatting and PowerShell parser checks;
 2. direct/catalog boundary and benign runtime tests;
@@ -113,9 +112,19 @@ Avorax CI run `32586661770`. Desktop Packages push/PR runs
 `32586651615`/`32586661643` both passed package contracts, Windows x64 MSI/EXE
 plus non-installing administrative extraction, Linux x64 DEB/tar, macOS
 arm64/x64 DMGs, six-artifact consolidation, checksums, and lockfile SBOM
-generation. Both prerelease publication jobs were skipped. No package was
-installed, published, or released. Evidence-head checks, merge, merged-main
-checks, and original-tree synchronization are not yet claimed.
+generation. Both prerelease publication jobs were skipped. Evidence head
+`e3b4bdddb1a952c70ef7f4c690f7bff4fac963a0` passed CI `32587698938` and
+package PR run `32587698950`; publication was skipped. PR `#48` merged normally
+as `6d721d5d683c8ee90ccb40945894012ceda76803`. Merged-main CI
+`32588501943` and Desktop Packages `32588501997` passed, with publication
+skipped. No package was installed, published, or released.
+
+All 12 explicit checkpoint files were synchronized to
+`C:\Users\Brent\Documents\Avorax-main` only after every old/new precondition
+matched. Destination catalog runtime tests passed `3/3`, direct/catalog
+boundary tests passed `11/11`, source contracts passed `626/626`, strict Native
+Clippy passed, and rustfmt passed. The final read-only vault inventory remained
+exactly unchanged.
 
 ## Remaining Limits
 

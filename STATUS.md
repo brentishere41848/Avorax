@@ -4,6 +4,23 @@
 
 Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-install, repair, recovery, offline, and manual-install paths only. Normal app updates target signed `.aup` packages applied by Avorax Update Service.
 
+- Checkpoint 2197 secondary embedded Authenticode is implemented and locally
+  verified. Native Engine requests primary index zero and the signature count,
+  accepts only primary output zero or the documented provider-untouched
+  sentinel, requires every secondary output index exactly, closes each WinTrust
+  state, and searches at most 15 secondaries within a 16-total
+  cap, and applies the same exact Microsoft signer plus scanned-content digest
+  policy. Invalid primary signatures remain untrusted and only retain catalog
+  fallback. New benign Edge DLL, ordering, count-limit, cleanup, verifier,
+  validator, source-contract, threat-model, matrix, blocker, and dependency
+  evidence is present. Secondary Authenticode tests pass `14/14`, direct and
+  catalog regressions pass `5/5` and `3/3`, Native Engine passes `448 + 6`,
+  the standard/all-features workspaces pass, Flutter passes `838/838`, source
+  contracts pass `626/626`, and strict Native Clippy passes. The definitive
+  verifier and independent validator pass exactly `226/226` in `480.8s`; an
+  older 225-step report is rejected. The protected vault remains unchanged.
+  Hosted exact-head, merge, merged-main, and original-tree synchronization
+  evidence are still pending and are not claimed.
 - Checkpoint 2196 catalog Authenticode is implemented and locally verified.
   Native Engine now has bounded same-handle SHA-256 catalog lookup,
   at most 16 candidates, local-path validation, cache-only WinTrust, exact
@@ -16,8 +33,11 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
   `3eb079cce859b3523dcb22c983ba81628900f9c5` passes Avorax CI
   `32586661770` and Desktop Packages push/PR runs
   `32586651615`/`32586661643`; every platform and consolidation passed and
-  publication was skipped. Evidence-head/merge checks remain pending. Secondary
-  signatures, hard in-call cancellation, user-mode TOCTOU, installed E2E,
+  publication was skipped. Evidence head
+  `e3b4bdddb1a952c70ef7f4c690f7bff4fac963a0` passed CI/packages, PR `#48`
+  merged as `6d721d5d683c8ee90ccb40945894012ceda76803`, merged-main CI/packages
+  passed, and all 12 checkpoint files synchronized with focused rechecks.
+  Secondary catalog signatures, hard in-call cancellation, user-mode TOCTOU, installed E2E,
   production signing, driver IPC, pre-execution protection, and production
   accuracy remain limited or blocked.
 - Checkpoint 2195 merged as `b2ceb927bb839ae8531d831fc769545564f95314`.
@@ -27,11 +47,16 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
 
 ## Current Commit
 
-- Checkpoint 2196 implementation head
-  `3eb079cce859b3523dcb22c983ba81628900f9c5` is published on draft PR `#48`
-  from branch `agent/checkpoint-2196-native-catalog-authenticode`, based on
-  merged main `b2ceb927bb839ae8531d831fc769545564f95314`. Exact-head CI and package
-  evidence passes with publication skipped. This is not a release head.
+- Checkpoint 2197 is an uncommitted locally verified batch on
+  `agent/checkpoint-2197-native-secondary-authenticode`, based on merged main
+  `6d721d5d683c8ee90ccb40945894012ceda76803`. It is not yet pushed, merged,
+  published, released, or synchronized.
+- Checkpoint 2196 implementation/evidence heads
+  `3eb079cce859b3523dcb22c983ba81628900f9c5` and
+  `e3b4bdddb1a952c70ef7f4c690f7bff4fac963a0` merged through PR `#48` as
+  `6d721d5d683c8ee90ccb40945894012ceda76803`. Exact-head and merged-main
+  CI/package evidence passes with publication skipped. This is not a release
+  head.
 - Checkpoint 2194 implementation head
   `1dee3e25d5131d9b999cce7580e5df0f59a82f47` is published on draft PR `#46`
   from branch `agent/checkpoint-2194-native-engine-windows-roots`. Exact-head
@@ -51,10 +76,10 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
   transient macOS arm64 DMG verification failure; failed-job rerun attempt 2
   passed and publication remained skipped. Checkpoint 2193 hardens that race.
 - Current public release tag: `v0.1.15-beta.3`, published as a prerelease on
-  2026-07-20 with independently verified checksums. Checkpoints 2178-2194 are
+  2026-07-20 with independently verified checksums. Checkpoints 2178-2196 are
   source hardening and do not create a new release tag.
 
-## Latest Checkpoint Evidence - 2026-08-21
+## Prior Checkpoint Evidence - 2026-08-21
 
 - Current Native Engine Windows-root pass: checkpoint 2194 replaces separately
   validated mutable `SystemRoot`/`WINDIR` candidates in Authenticode helper

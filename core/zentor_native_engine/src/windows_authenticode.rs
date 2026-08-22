@@ -32,10 +32,10 @@ use windows_sys::Win32::Security::Cryptography::{
 use windows_sys::Win32::Security::WinTrust::{
     WTHelperGetProvCertFromChain, WTHelperGetProvSignerFromChain, WTHelperProvDataFromStateData,
     WinVerifyTrust, WINTRUST_ACTION_GENERIC_VERIFY_V2, WINTRUST_CATALOG_INFO, WINTRUST_DATA,
-    WINTRUST_DATA_0, WINTRUST_FILE_INFO, WTD_CACHE_ONLY_URL_RETRIEVAL, WTD_CHOICE_CATALOG,
-    WTD_CHOICE_FILE, WTD_DISABLE_MD2_MD4, WTD_REVOCATION_CHECK_CHAIN_EXCLUDE_ROOT,
-    WTD_REVOKE_WHOLECHAIN, WTD_STATEACTION_CLOSE, WTD_STATEACTION_VERIFY, WTD_UICONTEXT_EXECUTE,
-    WTD_UI_NONE,
+    WINTRUST_DATA_0, WINTRUST_FILE_INFO, WINTRUST_SIGNATURE_SETTINGS, WSS_GET_SECONDARY_SIG_COUNT,
+    WSS_VERIFY_SPECIFIC, WTD_CACHE_ONLY_URL_RETRIEVAL, WTD_CHOICE_CATALOG, WTD_CHOICE_FILE,
+    WTD_DISABLE_MD2_MD4, WTD_REVOCATION_CHECK_CHAIN_EXCLUDE_ROOT, WTD_REVOKE_WHOLECHAIN,
+    WTD_STATEACTION_CLOSE, WTD_STATEACTION_VERIFY, WTD_UICONTEXT_EXECUTE, WTD_UI_NONE,
 };
 use windows_sys::Win32::Storage::FileSystem::{
     FILE_ATTRIBUTE_REPARSE_POINT, FILE_FLAG_OPEN_REPARSE_POINT, FILE_FLAG_SEQUENTIAL_SCAN,
@@ -48,6 +48,14 @@ const MAX_AUTHENTICODE_BIND_BYTES: u64 = 512 * 1024 * 1024;
 const AUTHENTICODE_HASH_BUFFER_BYTES: usize = 128 * 1024;
 const SHA256_CATALOG_HASH_BYTES: usize = 32;
 const MAX_CATALOG_CANDIDATES: usize = 16;
+const MAX_EMBEDDED_SIGNATURES: u32 = 16;
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum EmbeddedSignatureVerdict {
+    Microsoft,
+    OtherPublisher,
+    Invalid,
+}
 
 pub(crate) fn has_valid_microsoft_signature(
     path: &Path,
@@ -163,6 +171,14 @@ fn verify_open_file(
         hFile: handle,
         pgKnownSubject: null_mut(),
     };
+    let mut signature_settings = WINTRUST_SIGNATURE_SETTINGS {
+        cbStruct: size_of::<WINTRUST_SIGNATURE_SETTINGS>() as u32,
+        dwIndex: 0,
+        dwFlags: WSS_GET_SECONDARY_SIG_COUNT | WSS_VERIFY_SPECIFIC,
+        cSecondarySigs: 0,
+        dwVerifiedSigIndex: 0,
+        pCryptoPolicy: null_mut(),
+    };
     let mut trust_data = WINTRUST_DATA {
         cbStruct: size_of::<WINTRUST_DATA>() as u32,
         pPolicyCallbackData: null_mut(),
@@ -180,9 +196,120 @@ fn verify_open_file(
             | WTD_REVOCATION_CHECK_CHAIN_EXCLUDE_ROOT
             | WTD_DISABLE_MD2_MD4,
         dwUIContext: WTD_UICONTEXT_EXECUTE,
-        pSignatureSettings: null_mut(),
+        pSignatureSettings: &mut signature_settings,
     };
-    verify_wintrust_data(path, &mut trust_data, file, expected_sha256)
+
+    let primary = verify_specific_embedded_signature(
+        path,
+        &mut trust_data,
+        &mut signature_settings,
+        file,
+        expected_sha256,
+    )?;
+    if primary == EmbeddedSignatureVerdict::Invalid {
+        return Ok(false);
+    }
+    let secondary_count = signature_settings.cSecondarySigs;
+    aggregate_valid_embedded_signatures(path, primary, secondary_count, |index| {
+        signature_settings.dwIndex = index;
+        let verdict = verify_specific_embedded_signature(
+            path,
+            &mut trust_data,
+            &mut signature_settings,
+            file,
+            expected_sha256,
+        )?;
+        anyhow::ensure!(
+            signature_settings.cSecondarySigs == secondary_count,
+            "embedded Authenticode secondary-signature count changed from {} to {} while verifying {}",
+            secondary_count,
+            signature_settings.cSecondarySigs,
+            path.display()
+        );
+        Ok(verdict)
+    })
+}
+
+fn verify_specific_embedded_signature(
+    path: &Path,
+    trust_data: &mut WINTRUST_DATA,
+    signature_settings: &mut WINTRUST_SIGNATURE_SETTINGS,
+    file: &mut File,
+    expected_sha256: Option<&str>,
+) -> Result<EmbeddedSignatureVerdict> {
+    file.seek(SeekFrom::Start(0)).with_context(|| {
+        format!(
+            "unable to rewind Authenticode candidate for embedded signature {} verification: {}",
+            signature_settings.dwIndex,
+            path.display()
+        )
+    })?;
+    let requested_index = signature_settings.dwIndex;
+    signature_settings.dwVerifiedSigIndex = u32::MAX;
+    verify_wintrust_data_with(
+        path,
+        trust_data,
+        file,
+        EmbeddedSignatureVerdict::Invalid,
+        |trust_data, file| {
+            anyhow::ensure!(
+                verified_signature_index_is_acceptable(
+                    requested_index,
+                    signature_settings.dwVerifiedSigIndex
+                ),
+                "WinVerifyTrust reported unexpected embedded signature index {} for requested index {} for {}",
+                signature_settings.dwVerifiedSigIndex,
+                requested_index,
+                path.display()
+            );
+            if verified_signer_is_microsoft(trust_data)? {
+                bind_verified_signature_to_expected_hash(path, file, expected_sha256)?;
+                Ok(EmbeddedSignatureVerdict::Microsoft)
+            } else {
+                Ok(EmbeddedSignatureVerdict::OtherPublisher)
+            }
+        },
+    )
+}
+
+fn verified_signature_index_is_acceptable(requested: u32, reported: u32) -> bool {
+    if requested == 0 {
+        return reported == 0 || reported == u32::MAX;
+    }
+    reported == requested
+}
+
+fn aggregate_valid_embedded_signatures<F>(
+    path: &Path,
+    primary: EmbeddedSignatureVerdict,
+    secondary_count: u32,
+    mut verify_secondary: F,
+) -> Result<bool>
+where
+    F: FnMut(u32) -> Result<EmbeddedSignatureVerdict>,
+{
+    if primary == EmbeddedSignatureVerdict::Invalid {
+        return Ok(false);
+    }
+    let total = secondary_count
+        .checked_add(1)
+        .context("embedded Authenticode signature count overflowed")?;
+    anyhow::ensure!(
+        total <= MAX_EMBEDDED_SIGNATURES,
+        "embedded Authenticode signature count {} exceeds the {} signature limit for {}",
+        total,
+        MAX_EMBEDDED_SIGNATURES,
+        path.display()
+    );
+    if primary == EmbeddedSignatureVerdict::Microsoft {
+        return Ok(true);
+    }
+    for index in 1..=secondary_count {
+        if verify_secondary(index)? == EmbeddedSignatureVerdict::Microsoft {
+            return Ok(true);
+        }
+    }
+    Ok(false)
 }
 
 fn verify_wintrust_data(
@@ -191,6 +318,25 @@ fn verify_wintrust_data(
     file: &mut File,
     expected_sha256: Option<&str>,
 ) -> Result<bool> {
+    verify_wintrust_data_with(path, trust_data, file, false, |trust_data, file| {
+        if verified_signer_is_microsoft(trust_data)? {
+            bind_verified_signature_to_expected_hash(path, file, expected_sha256)
+        } else {
+            Ok(false)
+        }
+    })
+}
+
+fn verify_wintrust_data_with<T, F>(
+    path: &Path,
+    trust_data: &mut WINTRUST_DATA,
+    file: &mut File,
+    invalid_verdict: T,
+    evaluate_success: F,
+) -> Result<T>
+where
+    F: FnOnce(&WINTRUST_DATA, &mut File) -> Result<T>,
+{
     let mut action = WINTRUST_ACTION_GENERIC_VERIFY_V2;
 
     let verify_status = unsafe {
@@ -201,15 +347,11 @@ fn verify_wintrust_data(
         )
     };
     let outcome = if verify_status == 0 {
-        verified_signer_is_microsoft(trust_data).and_then(|signer_is_microsoft| {
-            if signer_is_microsoft {
-                bind_verified_signature_to_expected_hash(path, file, expected_sha256)
-            } else {
-                Ok(false)
-            }
-        })
+        evaluate_success(trust_data, file)
+    } else if definitively_untrusted_status(verify_status) {
+        Ok(invalid_verdict)
     } else {
-        classify_untrusted_status(path, verify_status)
+        Err(inconclusive_wintrust_error(path, verify_status))
     };
 
     trust_data.dwStateAction = WTD_STATEACTION_CLOSE;
@@ -220,7 +362,12 @@ fn verify_wintrust_data(
             (trust_data as *mut WINTRUST_DATA).cast::<c_void>(),
         )
     };
-    combine_verdict_and_close(path, outcome, close_status)
+    let combined = combine_verdict_and_close(path, outcome, close_status);
+    if close_status == 0 {
+        trust_data.hWVTStateData = null_mut();
+        trust_data.dwStateAction = WTD_STATEACTION_VERIFY;
+    }
+    combined
 }
 
 struct CatalogResources {
@@ -596,11 +743,8 @@ fn bind_verified_signature_to_expected_hash(
     Ok(true)
 }
 
-fn classify_untrusted_status(path: &Path, status: i32) -> Result<bool> {
-    if definitively_untrusted_status(status) {
-        return Ok(false);
-    }
-    anyhow::bail!(
+fn inconclusive_wintrust_error(path: &Path, status: i32) -> anyhow::Error {
+    anyhow::anyhow!(
         "WinVerifyTrust could not establish a definitive verdict for {}: status 0x{:08X}",
         path.display(),
         status as u32
@@ -635,11 +779,7 @@ fn definitively_untrusted_status(status: i32) -> bool {
         )
 }
 
-fn combine_verdict_and_close(
-    path: &Path,
-    outcome: Result<bool>,
-    close_status: i32,
-) -> Result<bool> {
+fn combine_verdict_and_close<T>(path: &Path, outcome: Result<T>, close_status: i32) -> Result<T> {
     if close_status == 0 {
         return outcome;
     }
@@ -670,7 +810,7 @@ fn verified_signer_is_microsoft(trust_data: &WINTRUST_DATA) -> Result<bool> {
     let signer = unsafe { WTHelperGetProvSignerFromChain(provider, 0, 0, 0) };
     anyhow::ensure!(
         !signer.is_null(),
-        "verified Authenticode state is missing its primary signer"
+        "verified Authenticode state is missing its selected signer"
     );
     let signer_ref = unsafe { &*signer };
     anyhow::ensure!(
@@ -828,6 +968,264 @@ mod tests {
     }
 
     #[test]
+    fn native_secondary_authenticode_aggregation_is_bounded_ordered_and_fail_visible() {
+        let path = Path::new(r"C:\benign-multisigned-fixture.dll");
+        let mut requested = Vec::new();
+        let accepted = aggregate_valid_embedded_signatures(
+            path,
+            EmbeddedSignatureVerdict::OtherPublisher,
+            2,
+            |index| {
+                requested.push(index);
+                Ok(if index == 2 {
+                    EmbeddedSignatureVerdict::Microsoft
+                } else {
+                    EmbeddedSignatureVerdict::Invalid
+                })
+            },
+        )
+        .unwrap();
+        assert!(accepted);
+        assert_eq!(requested, [1, 2]);
+
+        let mut primary_callback_used = false;
+        assert!(aggregate_valid_embedded_signatures(
+            path,
+            EmbeddedSignatureVerdict::Microsoft,
+            2,
+            |_| {
+                primary_callback_used = true;
+                Ok(EmbeddedSignatureVerdict::Invalid)
+            },
+        )
+        .unwrap());
+        assert!(!primary_callback_used);
+
+        let mut invalid_primary_callback_used = false;
+        assert!(!aggregate_valid_embedded_signatures(
+            path,
+            EmbeddedSignatureVerdict::Invalid,
+            u32::MAX,
+            |_| {
+                invalid_primary_callback_used = true;
+                Ok(EmbeddedSignatureVerdict::Microsoft)
+            },
+        )
+        .unwrap());
+        assert!(!invalid_primary_callback_used);
+
+        assert!(!aggregate_valid_embedded_signatures(
+            path,
+            EmbeddedSignatureVerdict::OtherPublisher,
+            2,
+            |_| Ok(EmbeddedSignatureVerdict::Invalid),
+        )
+        .unwrap());
+
+        let error = aggregate_valid_embedded_signatures(
+            path,
+            EmbeddedSignatureVerdict::OtherPublisher,
+            1,
+            |_| anyhow::bail!("secondary verification failed visibly"),
+        )
+        .unwrap_err()
+        .to_string();
+        assert!(error.contains("secondary verification failed visibly"));
+
+        let mut over_limit_callback_used = false;
+        let error = aggregate_valid_embedded_signatures(
+            path,
+            EmbeddedSignatureVerdict::OtherPublisher,
+            MAX_EMBEDDED_SIGNATURES,
+            |_| {
+                over_limit_callback_used = true;
+                Ok(EmbeddedSignatureVerdict::Microsoft)
+            },
+        )
+        .unwrap_err()
+        .to_string();
+        assert!(error.contains("exceeds the 16 signature limit"));
+        assert!(!over_limit_callback_used);
+    }
+
+    #[test]
+    fn native_secondary_authenticode_index_policy_is_exact_and_primary_provider_aware() {
+        assert!(verified_signature_index_is_acceptable(0, 0));
+        assert!(verified_signature_index_is_acceptable(0, u32::MAX));
+        assert!(!verified_signature_index_is_acceptable(0, 1));
+        assert!(verified_signature_index_is_acceptable(1, 1));
+        assert!(!verified_signature_index_is_acceptable(1, 0));
+        assert!(!verified_signature_index_is_acceptable(2, u32::MAX));
+    }
+
+    #[test]
+    fn native_secondary_authenticode_microsoft_signed_edge_dll_verifies_exact_index() {
+        const MAX_EDGE_VERSION_DIRECTORIES: usize = 64;
+        const FIXTURE_NAMES: [&str; 8] = [
+            "concrt140.dll",
+            "d3dcompiler_47.dll",
+            "dual_engine_adapter_x64.dll",
+            "dxil.dll",
+            "msvcp140_codecvt_ids.dll",
+            "msvcp140.dll",
+            "prefs_enclave_x64.dll",
+            "vccorlib140.dll",
+        ];
+
+        let edge_root = PathBuf::from(
+            std::env::var_os("ProgramFiles(x86)")
+                .expect("x64 Windows ProgramFiles(x86) is required for the Edge fixture"),
+        )
+        .join("Microsoft")
+        .join("Edge")
+        .join("Application");
+        let root_metadata = fs::symlink_metadata(&edge_root).unwrap();
+        assert!(root_metadata.is_dir());
+        assert_eq!(
+            root_metadata.file_attributes() & FILE_ATTRIBUTE_REPARSE_POINT,
+            0
+        );
+
+        let version_directories = fs::read_dir(&edge_root)
+            .unwrap()
+            .take(MAX_EDGE_VERSION_DIRECTORIES + 1)
+            .collect::<std::io::Result<Vec<_>>>()
+            .unwrap();
+        assert!(
+            version_directories.len() <= MAX_EDGE_VERSION_DIRECTORIES,
+            "Edge fixture discovery exceeded {MAX_EDGE_VERSION_DIRECTORIES} entries"
+        );
+        let mut checked_version_directories = Vec::new();
+        for entry in version_directories {
+            let name = entry.file_name();
+            let text = name.to_string_lossy();
+            if text.is_empty()
+                || !text
+                    .bytes()
+                    .all(|byte| byte.is_ascii_digit() || byte == b'.')
+            {
+                continue;
+            }
+            let metadata = fs::symlink_metadata(entry.path()).unwrap_or_else(|error| {
+                panic!(
+                    "unable to inspect benign Edge version directory {}: {error}",
+                    entry.path().display()
+                )
+            });
+            if metadata.is_dir() && metadata.file_attributes() & FILE_ATTRIBUTE_REPARSE_POINT == 0 {
+                checked_version_directories.push(entry);
+            }
+        }
+        let mut version_directories = checked_version_directories;
+        version_directories.sort_by_key(|entry| std::cmp::Reverse(entry.file_name()));
+
+        let mut fixture = None;
+        for directory in version_directories {
+            for name in FIXTURE_NAMES {
+                let candidate = directory.path().join(name);
+                match fs::symlink_metadata(&candidate) {
+                    Ok(metadata)
+                        if metadata.is_file()
+                            && metadata.file_attributes() & FILE_ATTRIBUTE_REPARSE_POINT == 0 =>
+                    {
+                        fixture = Some(candidate);
+                        break;
+                    }
+                    Ok(_) => {}
+                    Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+                    Err(error) => panic!(
+                        "unable to inspect benign Edge fixture {}: {error}",
+                        candidate.display()
+                    ),
+                }
+            }
+            if fixture.is_some() {
+                break;
+            }
+        }
+        let path = fixture.expect("no bounded benign multi-signature Edge DLL fixture was found");
+        let path_wide = absolute_path_wide(&path).unwrap();
+        let mut file = open_authenticode_candidate(&path).unwrap();
+        let handle = file.as_raw_handle() as HANDLE;
+        let mut file_info = WINTRUST_FILE_INFO {
+            cbStruct: size_of::<WINTRUST_FILE_INFO>() as u32,
+            pcwszFilePath: path_wide.as_ptr(),
+            hFile: handle,
+            pgKnownSubject: null_mut(),
+        };
+        let mut signature_settings = WINTRUST_SIGNATURE_SETTINGS {
+            cbStruct: size_of::<WINTRUST_SIGNATURE_SETTINGS>() as u32,
+            dwIndex: 0,
+            dwFlags: WSS_GET_SECONDARY_SIG_COUNT | WSS_VERIFY_SPECIFIC,
+            cSecondarySigs: 0,
+            dwVerifiedSigIndex: u32::MAX,
+            pCryptoPolicy: null_mut(),
+        };
+        let mut trust_data = WINTRUST_DATA {
+            cbStruct: size_of::<WINTRUST_DATA>() as u32,
+            pPolicyCallbackData: null_mut(),
+            pSIPClientData: null_mut(),
+            dwUIChoice: WTD_UI_NONE,
+            fdwRevocationChecks: WTD_REVOKE_WHOLECHAIN,
+            dwUnionChoice: WTD_CHOICE_FILE,
+            Anonymous: WINTRUST_DATA_0 {
+                pFile: &mut file_info,
+            },
+            dwStateAction: WTD_STATEACTION_VERIFY,
+            hWVTStateData: null_mut(),
+            pwszURLReference: null_mut(),
+            dwProvFlags: WTD_CACHE_ONLY_URL_RETRIEVAL
+                | WTD_REVOCATION_CHECK_CHAIN_EXCLUDE_ROOT
+                | WTD_DISABLE_MD2_MD4,
+            dwUIContext: WTD_UICONTEXT_EXECUTE,
+            pSignatureSettings: &mut signature_settings,
+        };
+
+        let primary = verify_specific_embedded_signature(
+            &path,
+            &mut trust_data,
+            &mut signature_settings,
+            &mut file,
+            None,
+        )
+        .unwrap();
+        assert_eq!(primary, EmbeddedSignatureVerdict::OtherPublisher);
+        assert!(verified_signature_index_is_acceptable(
+            0,
+            signature_settings.dwVerifiedSigIndex
+        ));
+        let secondary_count = signature_settings.cSecondarySigs;
+        assert!(secondary_count > 0);
+        assert!(secondary_count < MAX_EMBEDDED_SIGNATURES);
+        assert!(trust_data.hWVTStateData.is_null());
+        assert_eq!(trust_data.dwStateAction, WTD_STATEACTION_VERIFY);
+
+        let mut microsoft_secondary = None;
+        for index in 1..=secondary_count {
+            signature_settings.dwIndex = index;
+            let secondary = verify_specific_embedded_signature(
+                &path,
+                &mut trust_data,
+                &mut signature_settings,
+                &mut file,
+                None,
+            )
+            .unwrap();
+            assert_eq!(signature_settings.dwVerifiedSigIndex, index);
+            assert_eq!(signature_settings.cSecondarySigs, secondary_count);
+            assert!(trust_data.hWVTStateData.is_null());
+            assert_eq!(trust_data.dwStateAction, WTD_STATEACTION_VERIFY);
+            if secondary == EmbeddedSignatureVerdict::Microsoft {
+                microsoft_secondary = Some(index);
+            }
+        }
+        assert!(
+            microsoft_secondary.is_some(),
+            "benign multi-signed Edge fixture has no exact-Microsoft secondary signature"
+        );
+    }
+
+    #[test]
     fn opened_candidate_denies_rename_until_handle_is_closed() {
         let dir = tempfile::tempdir().unwrap();
         let source = dir.path().join("candidate.exe");
@@ -934,7 +1332,7 @@ mod tests {
 
         let combined_error = combine_verdict_and_close(
             path,
-            Err(anyhow::anyhow!("verification failed")),
+            Err::<bool, _>(anyhow::anyhow!("verification failed")),
             TRUST_E_FAIL,
         )
         .unwrap_err()

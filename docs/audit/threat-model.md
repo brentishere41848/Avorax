@@ -1234,3 +1234,43 @@ the complete Native Engine and workspace suites, all Flutter tests, source
 contracts, and the definitive `225/225` verifier. This is implementation and
 regression evidence, not installed execution-control or production-accuracy
 evidence.
+
+## Checkpoint 2197 Secondary Embedded Authenticode Boundary
+
+Multi-signed PE files can carry a primary embedded Authenticode signature plus
+secondary signatures. Treating only index zero as authoritative can withhold
+legitimate Microsoft publisher trust when another valid publisher occupies the
+primary slot. Conversely, accepting a secondary by name alone, trusting an
+unchecked index, retaining stale provider state, or iterating an attacker-
+controlled count without a cap could turn false-positive reduction into a trust
+bypass or resource-exhaustion surface.
+
+The verifier therefore asks WinTrust for the secondary count while explicitly
+verifying index zero. Before every call the output index is initialized to a
+sentinel. For primary index zero, the current Windows provider leaves that
+output untouched, so only zero or the sentinel is accepted; every secondary
+must report the exact requested index. The state is closed and reset before each
+later index. The primary plus all reported secondaries may total no more than 16, and the count
+must remain unchanged throughout one file decision. Overflow, count drift,
+unexpected index, policy/API/I/O failure, signer parsing failure, content-hash
+mismatch, and cleanup failure are visible errors and supply no clean trust.
+
+Only a signature already accepted by Windows policy is inspected for publisher
+identity. Avorax still requires its exact Microsoft organization/common-name
+pair, and scan-path acceptance still rereads the same bounded handle and
+matches the SHA-256 computed by the detection engine. A valid non-Microsoft
+primary may lead to an ordered bounded secondary search. Invalid secondaries are
+ignored; inconclusive secondaries abort. A definitively invalid primary cannot
+be rescued by secondaries and instead retains only the separate catalog
+fallback. This conservative rule avoids using a damaged primary container as a
+gateway to publisher trust.
+
+The benign runtime fixture is selected from at most 64 direct Edge application
+entries and eight fixed Microsoft DLL names, rejects reparse entries, and is
+read only. It is never executed. Missing host fixture evidence is a visible
+blocker. Secondary catalog signatures are not evaluated. Windows trust stores,
+cryptographic providers, protected Edge installation state, and WinTrust's
+selected-signature semantics remain trusted boundaries. In-call cancellation,
+memory-mapped mutation, post-verdict mutation, execution authorization,
+pre-execution blocking, Defender replacement, and detection-rate claims remain
+outside this checkpoint.
