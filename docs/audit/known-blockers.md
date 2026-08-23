@@ -1969,6 +1969,11 @@ enforcement, or pre-execution blocking is claimed.
   locally. Independent strict validation passes and controlled stale-count,
   missing-step, and missing-scope reports are rejected. Exact-head hosted,
   merged-main, and installed LocalSystem evidence remain separate.
+- **Implementation-head evidence:** `80599a1` passes CI `32629832036` and
+  package push/PR `32629820137`/`32629832031`, including all six desktop
+  artifacts, checksums, and lockfile SBOM with publication skipped. The
+  evidence head, merge, merged main, synchronization, and installed
+  LocalSystem evidence remain separate.
 - **Residual boundary:** the child still keeps parent SID, integrity, desktop,
   window station, and ordinary read access, and can mutate its own environment.
   `CREATE_UNICODE_ENVIRONMENT` is launch-input hardening, not AppContainer,

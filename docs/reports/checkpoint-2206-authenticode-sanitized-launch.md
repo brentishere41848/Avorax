@@ -74,6 +74,17 @@ The final local report is
 Exact-head hosted checks, PR integration, merged-main checks, and
 preconditioned original-tree synchronization remain pending.
 
+## Implementation-Head Hosted Evidence
+
+Exact implementation head
+`80599a13d2ac72b3d9199d40718dc525894839d4` passes Avorax CI
+`32629832036` and Desktop Packages push/PR runs `32629820137`/
+`32629832031`. The package runs pass contracts, Windows x64 MSI/EXE, Linux x64
+DEB/tar, macOS arm64/x64 DMG, six-artifact consolidation, checksums, and
+lockfile SBOM evidence. Publication was skipped in both runs. Evidence-head
+checks, normal PR merge, merged-main checks, and preconditioned original-tree
+synchronization remain pending.
+
 ## Limits
 
 This removes ambient parent environment and current-directory input; it does

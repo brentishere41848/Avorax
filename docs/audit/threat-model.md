@@ -1670,4 +1670,7 @@ compatible, both locked workspace variants and strict lint pass, Flutter passes
 verbatim-device, and embedded-NUL launch paths are rejected. The definitive
 report and strict validator pass exactly `236/236` in `461.7s`; controlled stale-count,
 missing-step, and missing-scope reports are rejected. Exact-head hosted,
-merged-main, and installed LocalSystem evidence remain separate.
+merged-main, and installed LocalSystem evidence remain separate. Exact
+implementation head `80599a1` passes CI `32629832036` and package push/PR
+`32629820137`/`32629832031`, including all six desktop artifacts, checksums,
+and lockfile SBOM with publication skipped.

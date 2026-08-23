@@ -343,6 +343,12 @@ strict lint, complete suites, dependency evidence, package SBOM, and central
 236-step verification pass locally for checkpoint 2206; exact-head hosted and
 merged-main package evidence remain pending.
 
+Exact implementation head `80599a1` passes Desktop Packages push/PR runs
+`32629820137`/`32629832031`. Both runs pass Windows x64 MSI/EXE, Linux x64
+DEB/tar, macOS arm64/x64 DMG, consolidation, checksums, and lockfile SBOM
+generation with publication skipped. Evidence-head and merged-main
+final-artifact review remain pending; no dependency or lockfile changed.
+
 ## Authenticode Restricted Process Token API Surface
 
 Checkpoint 2204 adds no crate, package, registry dependency, network client,
