@@ -550,3 +550,30 @@ lockfile SBOM, and administrative MSI extraction pass, with publication
 skipped. Destination Cargo and Flutter lockfiles match the merge exactly.
 Complete final-artifact license, notice, and copyright review remains a
 release-host requirement.
+
+## Authenticode Job UI-Restriction API Surface
+
+Checkpoint 2211 adds no crate, package, Cargo feature, or lockfile change. It
+reuses `JobObjectBasicUIRestrictions`, `JOBOBJECT_BASIC_UI_RESTRICTIONS`,
+`SetInformationJobObject`, `QueryInformationJobObject`,
+`JOB_OBJECT_UILIMIT_HANDLES`, `JOB_OBJECT_UILIMIT_READCLIPBOARD`,
+`JOB_OBJECT_UILIMIT_WRITECLIPBOARD`, `JOB_OBJECT_UILIMIT_SYSTEMPARAMETERS`,
+`JOB_OBJECT_UILIMIT_DISPLAYSETTINGS`, `JOB_OBJECT_UILIMIT_GLOBALATOMS`,
+`JOB_OBJECT_UILIMIT_DESKTOP`, and `JOB_OBJECT_UILIMIT_EXITWINDOWS` from the
+already enabled `Win32_System_JobObjects` surface in pinned
+`windows-sys 0.61.2` (`MIT OR Apache-2.0`).
+
+No sandbox crate, UI automation package, parser, helper binary, service,
+registry dependency, network client, or test dependency is introduced. The
+verifier adds one Rust filter and the source-contract suite adds one contract.
+Cargo and Flutter lockfiles remain byte-identical. Hosted package/license
+evidence and final-artifact notice review remain pending. Job UI limits are not
+a private desktop or window station and do not change identity or ordinary
+filesystem/registry/network read access.
+
+Local focused/complete Native checks, both locked workspaces, strict
+Native/Local/Guard lint, release Local Core/Guard builds and trust smoke,
+Flutter `838/838`, source contracts `641/641`, no-malware/dependency gates, and
+exact `241/241` verification pass. Cargo and Flutter lockfiles remain exact.
+Hosted package/license evidence and complete final-artifact license, notice,
+and copyright review remain pending.

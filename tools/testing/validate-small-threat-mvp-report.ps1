@@ -1904,8 +1904,8 @@ if ($RequireFullSuite) {
   if ($skipFlutter -or $skipRust) {
     throw "-RequireFullSuite requires skip_flutter=false and skip_rust=false."
   }
-  if ($steps.Count -ne 240) {
-    throw "-RequireFullSuite expected exactly 240 verifier steps for this source revision, found $($steps.Count)."
+  if ($steps.Count -ne 241) {
+    throw "-RequireFullSuite expected exactly 241 verifier steps for this source revision, found $($steps.Count)."
   }
   if ($steps[0].name -ne "local-core safe simulator scan reporting") {
     throw "-RequireFullSuite first step mismatch: $($steps[0].name)"
@@ -1943,6 +1943,7 @@ if ($RequireFullSuite) {
   Assert-ReportContainsStep $steps "native-engine secondary embedded Authenticode Microsoft-signed regressions"
   Assert-ReportContainsStep $steps "native-engine Authenticode helper isolation regressions"
   Assert-ReportContainsStep $steps "native-engine Authenticode helper Job resource-limit regressions"
+  Assert-ReportContainsStep $steps "native-engine Authenticode helper Job UI-restriction regressions"
   Assert-ReportContainsStep $steps "native-engine Authenticode mandatory-hash/file-identity regressions"
   Assert-ReportContainsStep $steps "native-engine risk fusion regressions"
   Assert-ReportContainsStep $steps "native-engine ClickOnce carrier heuristic detection"
@@ -2087,7 +2088,10 @@ if ($RequireFullSuite) {
   Assert-ReportScopeContains $technicalLimitText "no controlled benign multi-signed system-catalog fixture for positive secondary-catalog acceptance" "verification_scope.technically_limited"
   Assert-ReportScopeContains $verifiedScopeText "the release Authenticode helper Windows Job enforces and reads back an exact 12-second per-process user-CPU limit, one-process active limit, and 1 GiB per-process and whole-Job commit ceilings before untrusted candidate processing begins" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "Any SetInformationJobObject, QueryInformationJobObject, or exact-limit mismatch is diagnostic and prevents trust work" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "before the suspended Authenticode helper is assigned and resumed, its Windows Job enables and exactly reads back the returned JOBOBJECT_BASIC_UI_RESTRICTIONS byte count plus all eight JOB_OBJECT_UILIMIT controls for foreign USER handles, clipboard reads and writes, system parameters, display settings, global atoms, desktop creation/switching, and ExitWindows" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Any UI-limit configuration, query, returned-size, exact-flag, Job assignment, or resume failure is diagnostic and cannot become publisher trust" "verification_scope.verified"
   Assert-ReportScopeContains $technicalLimitText "Authenticode helper Job commit ceilings do not bound physical working set or I/O bytes and its user-CPU limit excludes kernel execution" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "Job UI limits constrain documented USER/clipboard/desktop-switch/global-atom/system-setting operations but do not create a private desktop or window station, change identity, remove filesystem/registry/network/read access, or constrain named kernel objects" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "the Authenticode helper keeps the parent SID, profile/registry namespace, desktop, and ordinary read access; its primary token is low integrity and its write-restricted impersonation token adds WinRestrictedCodeSid, but neither boundary changes identity or denies reads" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "its two-variable launch environment is attack-surface reduction rather than identity isolation and same-process code can mutate its own environment" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "process-creation mitigations do not constrain the already mapped helper image or non-image data, do not isolate identity/profile/registry/desktop/read access, and can be incompatible with non-Microsoft trust providers or injected security modules; no weaker retry is configured" "verification_scope.technically_limited"

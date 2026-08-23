@@ -8461,3 +8461,52 @@ Updates page showed:
   audit remains exact at 16,072 files, zero directories, 4,522,733 bytes,
   5,357 each `.avoraxq`/`.json`/`.auth`, one `.metadata_auth_key`, and zero
   pending. Checkpoint 2210 is closed; the full antivirus goal remains active.
+
+## Checkpoint 2211 Authenticode Job UI-Restriction Script Batch
+
+- The implementation, benign tests, verifier, independent validator,
+  source-contract, and documentation batch is scripted before any checkpoint
+  test execution, preserving the requested script-first sequence.
+- The existing one-process kill-on-close Job now requests and exactly reads back
+  all eight documented `JOB_OBJECT_UILIMIT_*` controls: foreign USER handles,
+  clipboard reads/writes, system parameters, display settings, global atoms,
+  desktop creation/switching, and `ExitWindows`.
+- Job UI configuration/query/flag mismatch remains diagnostic. The helper is
+  still created suspended, assigned to the fully configured Job, and resumed
+  only after assignment; no weaker Job or unrestricted-process retry exists.
+- Two benign Native regressions cover exact flag composition, every missing
+  flag, an unknown flag, wrong returned structure size, and real Windows Job
+  read-back. The central verifier
+  gains one mandatory step and the strict report contract rises from `240` to
+  `241`; validator scope and source-contract coverage are scripted with it.
+- This reduces access to selected shared desktop/UI resources but does not
+  create a private desktop/window station, change identity, remove ordinary
+  filesystem/registry/network reads, or constrain named kernel objects. No
+  checkpoint-2211 test or passing result is claimed before execution.
+- After the full script batch, PowerShell parsing, rustfmt, diff checks, source
+  contracts `641/641`, exact UI restrictions `2/2`, adjacent Job limits `1/1`
+  and token flags `2/2`, complete Authenticode `43` passed/`8` ignored, and
+  strict Native/Local/Guard lint pass.
+- Locked release Local Core/Guard builds and two-host embedded/catalog/hash-
+  binding smoke pass. Both locked workspace variants pass; Native reports
+  `479` passed/`8` ignored and the signature compiler `6/6` in each. Flutter
+  analyze and `838/838`, no-malware, and dependency evidence pass.
+- The first `241/241` run was not retained as final evidence: final diff review
+  found that query success and flags were checked without validating the
+  returned structure byte count. Exact size read-back and an adversarial wrong-
+  size regression were added, then all affected focused/full checks were rerun.
+- A subsequent evidence review found that retry 2 exercised the returned-size
+  regression but did not require returned-size wording in the central report
+  scope. The verifier, validator, and source contract were tightened; retry 2 is
+  therefore not the final report.
+- The corrected definitive report
+  `.verification/checkpoint-2211-small-threat-mvp-definitive-retry3-report.json`
+  passes exactly `241/241` in `434.1s` from
+  `2026-08-23T17:21:41.5398675Z` through
+  `2026-08-23T17:28:55.6483598Z`. Independent validation passes. Fresh controlled
+  stale-count, renamed-step, missing verified scope, missing technical-limit,
+  and skipped-step reports are all rejected and retained only under
+  `.verification/`.
+- Cargo/Flutter lockfiles and the protected vault remain exact. Hosted
+  exact-head evidence, merge, guarded original-tree synchronization, and
+  destination verification remain pending.
