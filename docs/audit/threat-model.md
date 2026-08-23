@@ -1674,3 +1674,40 @@ merged-main, and installed LocalSystem evidence remain separate. Exact
 implementation head `80599a1` passes CI `32629832036` and package push/PR
 `32629820137`/`32629832031`, including all six desktop artifacts, checksums,
 and lockfile SBOM with publication skipped.
+
+## Checkpoint 2207 Authenticode Process Mitigation Policy
+
+The one-shot helper already has a privilege-stripped primary token,
+write-restricted request/output threads, exact handle inheritance, Job limits,
+and sanitized launch state, but checkpoint 2206 did not set process-creation
+exploit/image policy. Checkpoint 2207 adds a mandatory
+`PROC_THREAD_ATTRIBUTE_MITIGATION_POLICY` value enabling strict handle checks,
+extension-point disable, dynamic-code prohibition, Microsoft-signed-only image
+loading, remote/low-label image rejection, and System32 image preference.
+
+The policy value has stable storage through attribute-list deletion. Before
+stdin or request parsing, the child reads back binary-signature, dynamic-code,
+extension-point, image-load, and strict-handle groups. Missing Microsoft-only,
+store-only substitution, any missing required image bit, query failure, or
+attribute failure cannot supply trust, and there is no weaker retry.
+
+This reduces post-start executable-image and extension-point attack surface; it
+does not constrain the already mapped helper image or non-image data. It does
+not change identity/integrity, isolate profile/registry/desktop/read access,
+prevent same-process `RevertToSelf`, or create AppContainer/authenticated IPC.
+Microsoft-signed-only loading can be incompatible with non-Microsoft trust
+providers or injected security modules. The real benign child read-back,
+focused mitigation tests `2/2`, complete Authenticode `35/35`, both release
+hosts, locked workspaces, strict lint, Flutter `838/838`, source contracts
+`636/636`, and definitive verifier/validators `237/237` in `462.1s` pass.
+Hosted exact-head/merge evidence, installed enterprise integrations, and
+LocalSystem execution remain unverified.
+
+Final review hardened strict-handle read-back to require both invalid-handle
+exception and permanent-enforcement flags, rejecting temporary debugger-induced
+evidence. The stricter fixture passes `2/2`; complete Authenticode, strict lint,
+source contracts, release smoke, and the fresh definitive `237/237` rerun pass.
+Exact implementation head `a9d930a` passes CI `32634033002` and package
+push/PR `32634021590`/`32634032975`, including all six artifacts, checksums,
+and lockfile SBOM with publication skipped. Evidence-head, merge, merged-main,
+installed enterprise, and LocalSystem evidence remain separate.

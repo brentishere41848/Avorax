@@ -1978,3 +1978,32 @@ enforcement, or pre-execution blocking is claimed.
   window station, and ordinary read access, and can mutate its own environment.
   `CREATE_UNICODE_ENVIRONMENT` is launch-input hardening, not AppContainer,
   identity/profile isolation, driver enforcement, or pre-execution blocking.
+
+## Checkpoint 2207 Authenticode Process Mitigation Status
+
+- **Verified locally:** The helper creation list adds
+  `PROC_THREAD_ATTRIBUTE_MITIGATION_POLICY` with strict-handle,
+  extension-point-disable, dynamic-code-prohibit, Microsoft-signed-only,
+  no-remote, no-low-label, and System32-preference values. The child must read
+  back all required groups before stdin; no weaker retry is implemented. The
+  focused real-child/pure filter passes `2/2`, complete Authenticode passes
+  `35/35`, and both release-host smoke runs pass embedded/catalog trust plus
+  unsigned/wrong-hash rejection.
+- **Evidence status:** Locked workspaces, strict lint, release builds, Flutter
+  `838/838`, source contracts `636/636`, and definitive verification
+  `237/237` in `462.1s` pass. Four malformed evidence copies are rejected.
+  Hosted exact-head, merge, merged-main, installed enterprise security
+  integrations, and LocalSystem remain separate evidence.
+- **Final-review amendment verified locally:** Strict-handle read-back requires both
+  invalid-handle exception and permanent-enforcement flags and rejects
+  temporary-only evidence. The stricter focused regression, complete
+  Authenticode, strict lint, source contracts, and definitive `237/237` rerun
+  pass. Exact implementation-head CI and both package runs pass with publication
+  skipped; evidence-head, merge, merged-main, installed enterprise, and
+  LocalSystem evidence remain pending.
+- **Residual boundary:** Process-creation mitigations do not constrain the
+  already mapped helper image or non-image data and do not isolate identity,
+  integrity, profile, registry, desktop, or ordinary read access.
+  Microsoft-signed-only image loading can conflict with non-Microsoft trust
+  providers or injected security modules. AppContainer, driver enforcement,
+  and pre-execution blocking are not claimed.
