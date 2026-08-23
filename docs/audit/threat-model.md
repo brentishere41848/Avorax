@@ -2018,8 +2018,11 @@ Exact implementation `6c3bad3` later passes Avorax CI `32670186345` and Desktop
 Packages push/PR runs `32670175754`/`32670186350`. The package runs pass six native
 artifacts, checksums, lockfile SBOM, dependency/license evidence, and Windows
 administrative MSI extraction without installation; publication is skipped.
-Evidence-head, merge, merged-main, synchronization, and destination evidence remains
-pending.
+Evidence head `3014c44` passes CI `32671137010` and packages `32671137068`; PR
+`#66` merges normally as `cbf6203`; merged-main CI `32672025315` and packages
+`32672025303` pass. Exact 12-path synchronization and destination runtime, lint,
+workspace, Flutter, safety, dependency, lockfile, and vault checks pass. This closes
+checkpoint integration evidence without changing the residual boundary below.
 
 **Residual risk:** Parent exact-Job and PID-list read-back is point-in-time process
 confinement. The child passes a null Job handle, so its `IsProcessInJob` evidence

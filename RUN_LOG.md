@@ -8792,3 +8792,33 @@ Updates page showed:
   `6c3bad3`. Artifact bundles are present and not expired. Evidence-head checks,
   normal merge, merged-main evidence, guarded synchronization, and destination
   verification remain pending.
+
+## Checkpoint 2214 Integration Closure
+
+- Evidence `3014c44ed1ff2c9df0eda2d43081a241ffe08cb4` passes exact-head Avorax CI
+  `32671137010` and Desktop Packages PR `32671137068`. PR `#66` merges normally
+  as `cbf620371a814c6eb2eea56e0af8eaffc2fac9e6`; merged-main Avorax CI
+  `32672025315` and Desktop Packages `32672025303` pass. All package evidence
+  includes Windows MSI/setup EXE, Linux DEB/tar, macOS x64/arm64 DMGs, six-
+  artifact consolidation, checksums, lockfile SBOM, administrative MSI extraction,
+  dependency/license evidence, and skipped publication.
+- Prior-main preconditions proved every one of the 11 existing destination paths
+  exactly matched `ce80ce2`; the new checkpoint report was absent. The first sync-
+  script parser check found one invalid variable delimiter before execution. After
+  repair, the bounded script exported and atomically synchronized `6,054,982` bytes
+  across exactly 12 paths to `C:\Users\Brent\Documents\Avorax-main`. All raw
+  destination blobs match `cbf6203`; zero sync temp/backup files remain.
+- Destination source contracts pass `644/644`, Job membership `2/2`, Authenticode
+  `49` passed/`11` ignored, strict Native/Local Core/Guard Clippy, locked release
+  builds, two-host trust smoke, no-malware and dependency gates, both locked
+  workspace variants with Native `485`/`11` plus compiler `6/6`, Flutter analyze,
+  and Flutter `838/838`. One first Guard lint invocation named a nonexistent
+  manifest and failed before compilation; the corrected Guard Service invocation
+  passes and is the evidence.
+- Root Cargo, Native Cargo, and Git-filtered Flutter lockfiles exactly match blobs
+  `7ab38f4820b08029c64872360fac7141e2512ac4`,
+  `277dd9fe1edfc45fa5550e8e2831f2a0c121561d`, and
+  `51fa085a41168aa1deadace8b5395614db43649e`. The protected vault remains exactly
+  16,072 files, zero directories, 4,522,733 bytes, 5,357 each payload/metadata/auth,
+  one metadata key, and zero pending. Checkpoint 2214 is closed; the complete
+  antivirus goal remains active.

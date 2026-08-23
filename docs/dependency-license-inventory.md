@@ -708,6 +708,10 @@ definitive verifier passes `244/244` in `464.3s`. Exact implementation `6c3bad3`
 passes package push/PR runs `32670175754`/`32670186350`, including dependency and
 license evidence, six native artifacts, checksums, lockfile SBOM, and Windows
 administrative MSI extraction without installation. Publication is skipped.
-Evidence-head/merged-main package evidence and complete signed final-artifact
-license, notice, and copyright review remain pending. No passing result is claimed
-from source presence alone.
+Evidence head `3014c44` and merged main `cbf6203` subsequently pass CI/package
+runs `32671137010`/`32671137068` and `32672025315`/`32672025303`. Destination
+dependency evidence reports `ok=true` and `partial=false`; exact lockfile blobs are
+unchanged. This closes checkpoint integration, not the complete signed final-
+artifact license, notice, copyright, or binary-resolution release prerequisite.
+Complete signed final-artifact license, notice, copyright, and binary-resolution
+review remains pending. No passing result is claimed from source presence alone.
