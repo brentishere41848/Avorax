@@ -325,6 +325,30 @@ Evidence-head and merged-main final-artifact review remain pending;
 source-level API reuse is not final-binary license, notice, or copyright
 evidence.
 
+## Authenticode Sanitized Launch API Surface
+
+Checkpoint 2206 adds no crate, package, Cargo feature, or lockfile change. It
+reuses pinned `windows-sys 0.61.2`, the existing
+`CREATE_UNICODE_ENVIRONMENT` binding, and the existing Native Engine checked
+Windows-root functions. The environment contains exactly `SystemRoot` and
+`WINDIR`; no environment-building, sandbox, path, parser, IPC, registry, or
+test dependency is introduced.
+
+Microsoft documents that `CreateProcessAsUserW` inherits the caller environment
+and current directory for null pointers and requires
+`CREATE_UNICODE_ENVIRONMENT` for a Unicode block. Avorax constructs and owns the
+bounded UTF-16 block and current-directory buffer until process creation
+returns. Exact dependency resolution, unchanged locks, runtime compatibility,
+strict lint, complete suites, dependency evidence, package SBOM, and central
+236-step verification pass locally for checkpoint 2206; exact-head hosted and
+merged-main package evidence remain pending.
+
+Exact implementation head `80599a1` passes Desktop Packages push/PR runs
+`32629820137`/`32629832031`. Both runs pass Windows x64 MSI/EXE, Linux x64
+DEB/tar, macOS arm64/x64 DMG, consolidation, checksums, and lockfile SBOM
+generation with publication skipped. Evidence-head and merged-main
+final-artifact review remain pending; no dependency or lockfile changed.
+
 ## Authenticode Restricted Process Token API Surface
 
 Checkpoint 2204 adds no crate, package, registry dependency, network client,
@@ -383,7 +407,7 @@ variants, dependency evidence, locked release builds, two-host smoke, and the
 exact `235/235` definitive verifier pass without a lockfile change.
 Implementation-head package push/PR runs `32624842967`/`32624862058` pass
 six-artifact consolidation, checksums, lockfile SBOM generation, and package
-evidence on Windows, Linux, and macOS with publication skipped. Evidence-head
-and merged-main final-artifact review remain pending for checkpoint 2205;
-source-level API reuse is not final-binary license, notice, or copyright
-evidence.
+evidence on Windows, Linux, and macOS with publication skipped. Evidence head
+`ffda3a6` and merged-main packages `32626673323` pass the same final-artifact
+review; source-level API reuse is not final-binary license, notice, or
+copyright evidence.

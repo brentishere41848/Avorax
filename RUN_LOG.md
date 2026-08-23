@@ -8106,3 +8106,50 @@ Updates page showed:
   directories, 4,522,733 bytes, 5,357 each `.avoraxq`/`.json`/`.auth`, one
   `.metadata_auth_key`, and zero pending. Hosted exact-head CI/packages, merge,
   and original-tree synchronization remain pending.
+
+## 2026-08-23 continuation checkpoint 2205 closure and 2206 scripting
+
+- Checkpoint 2205 evidence head `ffda3a682d9d152c5329dee505925b894f2c6637`
+  passed exact-head CI/packages. PR `#57` merged as `757432b`; merged-main CI
+  `32626673331` and packages `32626673323` passed all six platform artifacts,
+  checksums, and lockfile SBOM with publication skipped. Exactly 13
+  preconditioned files synchronized to the original tree and passed focused
+  destination checks. The protected vault remained exact.
+- Started branch `agent/checkpoint-2206-authenticode-sanitized-launch` from that
+  merge. Scripted an explicit `CreateProcessAsUserW` Unicode environment with
+  only checked-native-root `SystemRoot`/`WINDIR` plus a checked non-reparse
+  `System32` current directory. No inherited launch-state fallback exists.
+- Scripted pure malformed-path/encoding cases, a real ignored child-state
+  fixture, dedicated verifier step 236, exact validator scope/count, source
+  contracts, dependency/audit records, and checkpoint report before running
+  tests. No checkpoint-2206 passing result is claimed yet. No malware, install,
+  release, service/driver start, Defender change, or vault mutation occurred.
+
+## 2026-08-23 checkpoint 2206 local verification
+
+- Focused sanitized-launch, restricted-process, and write-restricted-token
+  filters passed `2/2` each. Complete Authenticode passed `33/33` with four
+  intentional ignored child fixtures; strict Native Clippy, locked Local
+  Core/Guard release builds, two-host embedded/catalog/hash-binding smoke, and
+  source contracts `635/635` passed.
+- Standard and all-feature locked workspaces, strict Native/Local/Guard lint,
+  Flutter analyze and `838/838`, package/source/security gates, and full Python
+  source contracts passed. No Cargo feature, dependency, or lockfile changed.
+- Final diff review found and repaired acceptance of a verbatim `\\?\C:\...`
+  device prefix that contradicted the documented local-path policy. The added
+  adversarial fixture, sanitized filter, complete Authenticode suite, strict
+  Native Clippy, and source contracts passed before the full rerun.
+- The fresh definitive report passed exactly `236/236` steps from
+  `2026-08-23T08:50:36Z` through `2026-08-23T08:58:18Z` in `461.7s`; built-in
+  and independent strict validation passed. Controlled `235`-step,
+  missing-sanitized-step, and missing-scope copies were rejected and removed.
+- A read-only vault audit remained exact at 16,072 files, zero directories,
+  4,522,733 bytes, 5,357 each `.avoraxq`/`.json`/`.auth`, one
+  `.metadata_auth_key`, and zero pending. Hosted checks, merge, merged-main,
+  and original-tree synchronization remain pending.
+- Exact implementation head `80599a13d2ac72b3d9199d40718dc525894839d4`
+  passed Avorax CI `32629832036` and Desktop Packages push/PR runs
+  `32629820137`/`32629832031`. Both package runs passed contracts, Windows x64
+  MSI/EXE, Linux x64 DEB/tar, macOS arm64/x64 DMG, consolidation, checksums,
+  and lockfile SBOM; publication was skipped. PR `#58` remains draft pending
+  evidence-head checks.

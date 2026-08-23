@@ -1904,8 +1904,8 @@ if ($RequireFullSuite) {
   if ($skipFlutter -or $skipRust) {
     throw "-RequireFullSuite requires skip_flutter=false and skip_rust=false."
   }
-  if ($steps.Count -ne 235) {
-    throw "-RequireFullSuite expected exactly 235 verifier steps for this source revision, found $($steps.Count)."
+  if ($steps.Count -ne 236) {
+    throw "-RequireFullSuite expected exactly 236 verifier steps for this source revision, found $($steps.Count)."
   }
   if ($steps[0].name -ne "local-core safe simulator scan reporting") {
     throw "-RequireFullSuite first step mismatch: $($steps[0].name)"
@@ -1972,6 +1972,7 @@ if ($RequireFullSuite) {
   Assert-ReportContainsStep $steps "release Authenticode isolated helper IPC/hash-binding smoke"
   Assert-ReportContainsStep $steps "native-engine Authenticode helper restricted-thread-token regressions"
   Assert-ReportContainsStep $steps "native-engine Authenticode helper restricted-process-token regressions"
+  Assert-ReportContainsStep $steps "native-engine Authenticode helper sanitized-launch regressions"
   Assert-ReportContainsStep $steps "native-engine Authenticode helper write-restricted-thread-token regressions"
   Assert-ReportContainsStep $steps "release update-service signed package verify/tamper smoke"
   Assert-ReportContainsStep $steps "release update-service apply tamper fail-before-activation smoke"
@@ -2070,17 +2071,19 @@ if ($RequireFullSuite) {
   Assert-ReportScopeContains $verifiedScopeText "Before stdin or request parsing, release helper code applies a read-back-verified write-restricted SecurityImpersonation token created with DISABLE_MAX_PRIVILEGE plus WRITE_RESTRICTED and exactly one WinRestrictedCodeSid; strict request parsing and read-only candidate open/snapshot remain under that token" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "The token is fail-visibly reverted before WinTrust/catalog compatibility work under the privilege-stripped primary token, and a fresh write-restricted token protects response serialization/output" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "Only SeChangeNotifyPrivilege may remain enabled; ordinary user-owned file mutation is denied while read access and embedded/catalog Microsoft verification remain functional" "verification_scope.verified"
-  Assert-ReportScopeContains $verifiedScopeText "Token/SID creation, process launch, handle-list construction, Job assignment, resume, bounded TokenPrivileges or TokenRestrictedSids inspection, verification, or normal revert failure cannot become trust" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "create the helper suspended with a read-back-verified DISABLE_MAX_PRIVILEGE primary token" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "restrict inheritance to exactly stdin/stdout/stderr through PROC_THREAD_ATTRIBUTE_HANDLE_LIST" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "assign the configured Job before ResumeThread" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "require child-side primary-token validation before request parsing" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "The parent supplies a bounded Unicode environment containing exactly SystemRoot and WINDIR derived from the checked native Windows directory, sets CREATE_UNICODE_ENVIRONMENT, and sets an explicit checked non-reparse System32 current directory; it never falls back to inherited environment or current-directory state" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Environment construction, current-directory validation, token/SID creation, process launch, handle-list construction, Job assignment, resume, bounded TokenPrivileges or TokenRestrictedSids inspection, verification, or normal revert failure cannot become trust" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "Memory-mapped and post-verdict mutation plus pre-execution blocking are not claimed" "verification_scope.verified"
   Assert-ReportScopeContains $technicalLimitText "no controlled benign multi-signed system-catalog fixture for positive secondary-catalog acceptance" "verification_scope.technically_limited"
   Assert-ReportScopeContains $verifiedScopeText "the release Authenticode helper Windows Job enforces and reads back an exact 12-second per-process user-CPU limit, one-process active limit, and 1 GiB per-process and whole-Job commit ceilings before untrusted candidate processing begins" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "Any SetInformationJobObject, QueryInformationJobObject, or exact-limit mismatch is diagnostic and prevents trust work" "verification_scope.verified"
   Assert-ReportScopeContains $technicalLimitText "Authenticode helper Job commit ceilings do not bound physical working set or I/O bytes and its user-CPU limit excludes kernel execution" "verification_scope.technically_limited"
-  Assert-ReportScopeContains $technicalLimitText "the write-restricted Authenticode helper impersonation token keeps the parent SID, integrity level, environment, desktop, and ordinary read access because WinRestrictedCodeSid is evaluated only for write access" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "the write-restricted Authenticode helper impersonation token keeps the parent SID, integrity level, desktop, and ordinary read access because WinRestrictedCodeSid is evaluated only for write access" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "its two-variable launch environment is attack-surface reduction rather than identity isolation and same-process code can mutate its own environment" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "the primary process token is privilege-stripped but not write-restricted and same-process code can technically call RevertToSelf" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "WinTrust/catalog execute under that primary token because the Windows trust stack failed under write restriction with error 127 on the verified host" "verification_scope.technically_limited"
   Assert-ReportScopeContains $verifiedScopeText "Native Engine PUP category inference requires a bounded ASCII-alphanumeric token" "verification_scope.verified"

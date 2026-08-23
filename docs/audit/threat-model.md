@@ -1643,4 +1643,34 @@ missing-scope reports are rejected. The protected-vault read-only audit remains
 exact. Implementation head `a5597d2` passes CI `32624862111` and package
 push/PR `32624842967`/`32624862058`, including all six artifacts, checksums,
 and lockfile SBOM with publication skipped. Evidence-head, merge, merged-main,
-and synchronization evidence is still pending.
+and synchronization evidence subsequently closed through evidence `ffda3a6`,
+PR `#57`, merge `757432b`, green merged-main CI/packages, exact 13-path original-
+tree synchronization, and an unchanged protected vault.
+
+## Checkpoint 2206 Sanitized Authenticode Launch Context
+
+The checkpoint-2205 child still inherited the caller's complete environment and
+current directory because `CreateProcessAsUserW` received null pointers for
+both. Checkpoint 2206 removes those mutable launch inputs. The parent passes a
+double-NUL-terminated Unicode block containing only `SystemRoot` and `WINDIR`,
+derived from the checked native Windows root, sets
+`CREATE_UNICODE_ENVIRONMENT`, and supplies the checked non-reparse native
+`System32` directory as `lpCurrentDirectory`. Construction or validation
+failure has no inherited fallback and cannot supply Microsoft publisher trust.
+
+This reduces configuration/search-path attack surface but is not an identity
+sandbox. The child retains parent SID, integrity, desktop/window station, and
+ordinary read access. It can mutate its own environment after startup, and
+Windows trust components remain in the trusted computing base. AppContainer,
+profile/registry isolation, separate-desktop isolation, installed LocalSystem
+E2E, and authenticated cross-identity IPC are not claimed. Benign focused and
+real-child fixtures pass, embedded/catalog two-host release smoke remains
+compatible, both locked workspace variants and strict lint pass, Flutter passes
+`838/838`, and source contracts pass `635/635`. Relative, traversal, UNC,
+verbatim-device, and embedded-NUL launch paths are rejected. The definitive
+report and strict validator pass exactly `236/236` in `461.7s`; controlled stale-count,
+missing-step, and missing-scope reports are rejected. Exact-head hosted,
+merged-main, and installed LocalSystem evidence remain separate. Exact
+implementation head `80599a1` passes CI `32629832036` and package push/PR
+`32629820137`/`32629832031`, including all six desktop artifacts, checksums,
+and lockfile SBOM with publication skipped.

@@ -19,6 +19,8 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use uuid::{Uuid, Variant, Version};
 use windows_sys::core::PCSTR;
+
+use crate::windows_system::{checked_system_directory, checked_system_windows_directory};
 use windows_sys::Win32::Foundation::{
     CloseHandle, GetLastError, SetHandleInformation, SetLastError, CERT_E_REVOCATION_FAILURE,
     CRYPT_E_BAD_ENCODE, CRYPT_E_BAD_MSG, CRYPT_E_NO_MATCH, CRYPT_E_NO_SIGNER,
@@ -76,8 +78,8 @@ use windows_sys::Win32::System::Threading::{
     CreateProcessAsUserW, DeleteProcThreadAttributeList, GetCurrentProcess, GetCurrentThread,
     GetExitCodeProcess, InitializeProcThreadAttributeList, OpenProcessToken, OpenThreadToken,
     ResumeThread, SetThreadToken, TerminateProcess, UpdateProcThreadAttribute, WaitForSingleObject,
-    CREATE_NO_WINDOW, CREATE_SUSPENDED, EXTENDED_STARTUPINFO_PRESENT, PROCESS_INFORMATION,
-    PROC_THREAD_ATTRIBUTE_HANDLE_LIST, STARTF_USESTDHANDLES, STARTUPINFOEXW,
+    CREATE_NO_WINDOW, CREATE_SUSPENDED, CREATE_UNICODE_ENVIRONMENT, EXTENDED_STARTUPINFO_PRESENT,
+    PROCESS_INFORMATION, PROC_THREAD_ATTRIBUTE_HANDLE_LIST, STARTF_USESTDHANDLES, STARTUPINFOEXW,
 };
 
 const MAX_AUTHENTICODE_PATH_UTF16_UNITS: usize = 32_767;
@@ -109,6 +111,7 @@ const AUTHENTICODE_HELPER_RESTRICTED_SID_ATTRIBUTES: u32 =
 const AUTHENTICODE_HELPER_SID_STORAGE_WORDS: usize =
     (SECURITY_MAX_SID_SIZE as usize).div_ceil(size_of::<usize>());
 const MAX_AUTHENTICODE_HELPER_ATTRIBUTE_LIST_BYTES: usize = 64 * 1024;
+const AUTHENTICODE_HELPER_ENVIRONMENT_NAMES: [&str; 2] = ["SystemRoot", "WINDIR"];
 const AUTHENTICODE_HELPER_TERMINATION_EXIT_CODE: u32 = 0xA710_0001;
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -135,6 +138,11 @@ struct AuthenticodeHelperOutput {
     status: ExitStatus,
     stdout: Vec<u8>,
     stderr: Vec<u8>,
+}
+
+struct SanitizedAuthenticodeLaunchContext {
+    environment: Vec<u16>,
+    current_directory: Vec<u16>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -1372,6 +1380,7 @@ fn spawn_restricted_authenticode_process(
 ) -> Result<RestrictedAuthenticodeProcess> {
     let application_wide = absolute_application_path_wide(application)?;
     let mut command_line = restricted_process_command_line(application, arguments)?;
+    let launch_context = sanitized_authenticode_launch_context()?;
     let token = create_privilege_stripped_primary_token()?;
     let stdin = InheritedPipe::create(false, "stdin")?;
     let stdout = InheritedPipe::create(true, "stdout")?;
@@ -1394,9 +1403,12 @@ fn spawn_restricted_authenticode_process(
             null(),
             null(),
             1,
-            CREATE_NO_WINDOW | CREATE_SUSPENDED | EXTENDED_STARTUPINFO_PRESENT,
-            null(),
-            null(),
+            CREATE_NO_WINDOW
+                | CREATE_SUSPENDED
+                | CREATE_UNICODE_ENVIRONMENT
+                | EXTENDED_STARTUPINFO_PRESENT,
+            launch_context.environment.as_ptr().cast::<c_void>(),
+            launch_context.current_directory.as_ptr(),
             &startup.StartupInfo as *const _,
             &mut process_info,
         )
@@ -1440,6 +1452,70 @@ fn spawn_restricted_authenticode_process(
         stdout: Some(stdout.parent.into_file()),
         stderr: Some(stderr.parent.into_file()),
     })
+}
+
+fn sanitized_authenticode_launch_context() -> Result<SanitizedAuthenticodeLaunchContext> {
+    let windows_root = checked_system_windows_directory()
+        .context("unable to resolve the Authenticode helper sanitized environment root")?;
+    let current_directory = checked_system_directory(
+        "System32",
+        "AuthentiCode helper sanitized current directory",
+    )?;
+    Ok(SanitizedAuthenticodeLaunchContext {
+        environment: build_authenticode_helper_environment_block(&windows_root)?,
+        current_directory: absolute_launch_directory_wide(&current_directory)?,
+    })
+}
+
+fn build_authenticode_helper_environment_block(windows_root: &Path) -> Result<Vec<u16>> {
+    validate_authenticode_launch_directory(
+        windows_root,
+        "AuthentiCode helper sanitized environment root",
+    )?;
+    let value = windows_root.as_os_str().encode_wide().collect::<Vec<_>>();
+    let mut block =
+        Vec::with_capacity(value.len() * AUTHENTICODE_HELPER_ENVIRONMENT_NAMES.len() + 32);
+    for name in AUTHENTICODE_HELPER_ENVIRONMENT_NAMES {
+        block.extend(name.encode_utf16());
+        block.push(b'=' as u16);
+        block.extend_from_slice(&value);
+        block.push(0);
+    }
+    block.push(0);
+    anyhow::ensure!(
+        block.len() <= MAX_AUTHENTICODE_PATH_UTF16_UNITS,
+        "AuthentiCode helper sanitized environment exceeds its UTF-16 bound"
+    );
+    Ok(block)
+}
+
+fn absolute_launch_directory_wide(path: &Path) -> Result<Vec<u16>> {
+    validate_authenticode_launch_directory(
+        path,
+        "AuthentiCode helper sanitized current directory",
+    )?;
+    let mut wide = path.as_os_str().encode_wide().collect::<Vec<_>>();
+    wide.push(0);
+    Ok(wide)
+}
+
+fn validate_authenticode_launch_directory(path: &Path, label: &str) -> Result<()> {
+    let mut components = path.components();
+    anyhow::ensure!(
+        matches!(
+            (components.next(), components.next()),
+            (Some(Component::Prefix(prefix)), Some(Component::RootDir))
+                if matches!(prefix.kind(), Prefix::Disk(_))
+        ) && components.all(|component| matches!(component, Component::Normal(_))),
+        "{label} must be a normalized absolute local drive path"
+    );
+    let wide = path.as_os_str().encode_wide().collect::<Vec<_>>();
+    anyhow::ensure!(
+        !wide.is_empty() && wide.len() < MAX_AUTHENTICODE_PATH_UTF16_UNITS,
+        "{label} is outside its UTF-16 bound"
+    );
+    anyhow::ensure!(!wide.contains(&0), "{label} contains an embedded NUL");
+    Ok(())
 }
 
 fn terminate_and_reap_suspended_authenticode_process(process: &OwnedKernelHandle) -> Result<()> {
@@ -2911,6 +2987,95 @@ mod tests {
     fn authenticode_restricted_primary_child_fixture() {
         validate_current_process_privilege_stripped_primary_token().unwrap();
         println!("AVORAX_RESTRICTED_PRIMARY_TOKEN_OK");
+    }
+
+    #[test]
+    fn native_authenticode_helper_sanitized_launch_context_is_verified_in_child() {
+        let application = std::env::current_exe().unwrap();
+        let arguments = [
+            "--ignored",
+            "--exact",
+            "windows_authenticode::tests::authenticode_sanitized_launch_child_fixture",
+            "--nocapture",
+            "--test-threads=1",
+        ];
+        let output = run_bounded_authenticode_helper(
+            &application,
+            &arguments,
+            Vec::new(),
+            Duration::from_secs(5),
+        )
+        .unwrap();
+        assert!(
+            output.status.success(),
+            "sanitized-launch child failed with {:?}; stdout: {}; stderr: {}",
+            output.status,
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
+        assert!(output.stderr.is_empty());
+        assert!(String::from_utf8(output.stdout)
+            .unwrap()
+            .contains("AVORAX_SANITIZED_LAUNCH_CONTEXT_OK"));
+    }
+
+    #[test]
+    #[ignore = "isolated child fixture invoked by the sanitized-launch regression"]
+    fn authenticode_sanitized_launch_child_fixture() {
+        validate_current_process_privilege_stripped_primary_token().unwrap();
+        let windows_root = checked_system_windows_directory().unwrap();
+        let expected_current = checked_system_directory(
+            "System32",
+            "AuthentiCode helper sanitized current directory fixture",
+        )
+        .unwrap();
+        assert_eq!(std::env::current_dir().unwrap(), expected_current);
+
+        let mut environment = std::env::vars_os()
+            .map(|(name, value)| (name.to_string_lossy().into_owned(), PathBuf::from(value)))
+            .collect::<Vec<_>>();
+        environment.sort_by(|left, right| left.0.cmp(&right.0));
+        assert_eq!(
+            environment,
+            vec![
+                ("SystemRoot".to_string(), windows_root.clone()),
+                ("WINDIR".to_string(), windows_root),
+            ]
+        );
+        println!("AVORAX_SANITIZED_LAUNCH_CONTEXT_OK");
+    }
+
+    #[test]
+    fn native_authenticode_helper_sanitized_environment_block_is_exact_and_bounded() {
+        let block = build_authenticode_helper_environment_block(Path::new(r"C:\Windows")).unwrap();
+        assert_eq!(block.last(), Some(&0));
+        assert_eq!(block[block.len() - 2], 0);
+        let entries = block[..block.len() - 1]
+            .split(|unit| *unit == 0)
+            .filter(|entry| !entry.is_empty())
+            .map(|entry| String::from_utf16(entry).unwrap())
+            .collect::<Vec<_>>();
+        assert_eq!(entries, [r"SystemRoot=C:\Windows", r"WINDIR=C:\Windows"]);
+
+        for invalid in [
+            Path::new(r"relative\Windows"),
+            Path::new(r"C:\Windows\..\Temp"),
+            Path::new(r"\\server\share\Windows"),
+            Path::new(r"\\?\C:\Windows"),
+        ] {
+            assert!(build_authenticode_helper_environment_block(invalid).is_err());
+            assert!(absolute_launch_directory_wide(invalid).is_err());
+        }
+        let embedded_nul = PathBuf::from(OsString::from_wide(&[
+            b'C' as u16,
+            b':' as u16,
+            b'\\' as u16,
+            b'X' as u16,
+            0,
+            b'Y' as u16,
+        ]));
+        assert!(build_authenticode_helper_environment_block(&embedded_nul).is_err());
+        assert!(absolute_launch_directory_wide(&embedded_nul).is_err());
     }
 
     #[test]
