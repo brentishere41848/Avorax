@@ -24,7 +24,12 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
   smokes, security/dependency/package gates, and source contracts `631/631`
   pass. The definitive and independent validators accept `232/232` in `517.3s`;
   stale 2201 evidence is rejected for missing scope. Locks and the protected
-  vault are unchanged. Exact-head hosted checks, follow-up merge, green merged-
+  vault are unchanged. Implementation head
+  `43ce4d462e35a0c638171028d158b5dc08f55805` passes exact-head Avorax CI
+  `32611742164` and Desktop Packages push/PR runs
+  `32611721124`/`32611742152`, including Windows MSI/EXE, Linux DEB/tar,
+  macOS arm64/x64 DMG, consolidation, checksums, and lockfile SBOM evidence;
+  publication is skipped. Evidence-head checks, follow-up merge, green merged-
   main evidence, and original-tree synchronization remain pending. The category
   change affects explanation only; it does not lower the threat verdict or
   weaken detection.

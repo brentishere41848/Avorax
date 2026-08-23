@@ -60,6 +60,13 @@ The definitive report runs from `2026-08-23T01:47:24.8501521Z` to
 `2026-08-23T01:56:02.2284761Z` and passes exactly `232/232` in `517.3s`. Its
 built-in validator and a separate strict invocation pass. The stale checkpoint-
 2201 report has the same step count but lacks the new token-boundary scope and
-is rejected. The protected vault and lockfiles are unchanged. Exact-head hosted
+is rejected. The protected vault and lockfiles are unchanged.
+
+Implementation head `43ce4d462e35a0c638171028d158b5dc08f55805`
+passes exact-head Avorax CI `32611742164` and Desktop Packages push/PR runs
+`32611721124`/`32611742152`. Both package runs pass package contracts, Windows
+x64 MSI/EXE, Linux x64 DEB/tar, macOS arm64/x64 DMG, six-artifact
+consolidation, checksums, and lockfile SBOM evidence. Both publication jobs are
+skipped. No artifact was installed, released, or published. Evidence-head
 checks, follow-up merge, green merged-main evidence, and safe original-tree
 synchronization remain pending.
