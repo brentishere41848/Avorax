@@ -8623,3 +8623,54 @@ Updates page showed:
   `16,072` files, zero directories, `4,522,733` bytes, `5,357` each
   `.avoraxq`/`.json`/`.auth`, one `.metadata_auth_key`, and zero pending.
   Checkpoint 2212 is closed; the complete antivirus goal remains active.
+
+## Checkpoint 2213 Script-First Standard-Handle Binding
+
+- The full implementation, benign/adversarial tests, verifier, strict validator,
+  source contract, dependency review, matrix, threat model, blockers, status, and
+  checkpoint report are scripted before any checkpoint-2213 test execution.
+- Parent `CreatePipe` endpoints now require exact `FILE_TYPE_PIPE` type and parent-
+  zero/child-`HANDLE_FLAG_INHERIT` flags before process creation. `GetNamedPipeInfo`
+  verifies server/read endpoints; exact API return-role assignment binds child stdin
+  to read and stdout/stderr to writes without an unsupported write-handle query.
+- Before private-desktop, token, mitigation, or stdin processing, the child requires
+  exact `STARTF_USESTDHANDLES`, exact `GetStdHandle` identity, three valid distinct
+  anonymous pipes with queried stdin server/read mode and stdout/stderr identity
+  bound to parent-created write handles,
+  and exact initial inheritance. It clears all three inheritance flags and requires
+  exact-zero read-back before continuing.
+- Handle query, type, direction binding, identity, duplicate, initial-flag, mutation, or
+  read-back failure is diagnostic and cannot become publisher trust. There is no
+  weaker, redirected, or inherited-console retry.
+- Verifier step 243, exact-count validator coverage, a real benign child fixture,
+  and pure adversarial evidence are scripted. No checkpoint-2213 passing result is
+  claimed before execution.
+- Exact binding narrows inherited IPC only. Anonymous pipes and the nonce do not
+  provide cross-identity authentication/encryption, prevent same-user handle
+  duplication, or isolate the named-kernel-object namespace.
+- After the complete script batch, PowerShell parse, rustfmt, source contracts
+  `643/643`, focused real-child/adversarial `2/2`, and complete Authenticode
+  `47` passed/`10` ignored succeed.
+- Microsoft API review corrected the untested design before compilation:
+  `GetNamedPipeInfo` queries only server/read endpoints because `CreatePipe` does
+  not promise the extra read-attributes access required on write-only handles.
+  Exact API return roles plus startup/`GetStdHandle` identity bind output handles.
+- The first strict Clippy run rejected a default-then-field startup initializer.
+  A complete initializer repaired it; strict Native/Local/Guard Clippy, locked
+  Local Core/Guard release builds, and two-host trust smoke then pass.
+- Both locked workspace variants pass with Native `483` passed/`10` ignored and
+  compiler `6/6`. Flutter analyze and `838/838` plus no-malware pass. Definitive
+  verifier, adversarial report validation, dependency/lock/vault evidence, hosted
+  checks, merge, and synchronization remain pending.
+- The definitive report
+  `.verification/checkpoint-2213-standard-handle-definitive-report.json` passes
+  exactly `243/243` in `469.2s` from `2026-08-23T20:39:17.9286117Z` through
+  `2026-08-23T20:47:07.1219125Z`; independent full-suite validation passes.
+  Fresh stale-count, renamed-step, missing-child-scope, missing-limit-scope, and
+  skipped-step copies are all rejected.
+- Root Cargo, Native Cargo, and Git-filtered Flutter lockfiles remain exact at
+  `7ab38f4`, `277dd9f`, and `51fa085`. The protected vault remains exactly
+  `16,072` files, zero directories, `4,522,733` bytes, `5,357` each
+  `.avoraxq`/`.json`/`.auth`, one `.metadata_auth_key`, and zero pending.
+  Hosted exact-head checks, merge, synchronization, and destination evidence remain
+  pending.

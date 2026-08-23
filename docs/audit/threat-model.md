@@ -1941,3 +1941,40 @@ descriptor. It does not isolate the station-wide clipboard or global atom table,
 SID/profile/registry/filesystem/network/read access, named kernel objects, or desktop
 heap accounting. It is not AppContainer/LPAC, authenticated cross-identity IPC,
 installed LocalSystem proof, driver interception, or pre-execution blocking.
+
+## Checkpoint 2213: Authenticode Standard-Handle Binding
+
+**Threat addressed:** Restricting process inheritance to three numeric handles is
+not by itself child-side proof that the C runtime's `stdin`, `stdout`, and `stderr`
+still identify three distinct anonymous pipes with the intended direction. Leaving
+their inheritance flags set also needlessly exposes them to any attempted descendant.
+
+**Scripted control:** Every parent `CreatePipe` endpoint is queried through
+`GetFileType` and `GetHandleInformation` before process creation.
+`GetNamedPipeInfo` verifies server/read endpoints; exact API return-role assignment
+binds child stdin to read and stdout/stderr to writes without relying on an
+unsupported write-handle attribute query. Parent endpoints must have zero flags and
+child endpoints exactly `HANDLE_FLAG_INHERIT`. Before private-desktop, token, mitigation, or stdin
+processing, the child requires exact `STARTF_USESTDHANDLES`, exact `GetStdHandle`
+identity against startup state, three valid distinct `FILE_TYPE_PIPE` handles,
+queried stdin server/read mode, stdout/stderr identity bound to parent-created write
+handles, and exact initial inheritance flags. It then clears
+`HANDLE_FLAG_INHERIT` on all three and requires exact-zero read-back. Any handle
+query, type, direction binding, identity, duplicate, initial-flag, mutation, or read-back
+failure is diagnostic and cannot become publisher trust.
+
+A benign real-child fixture, adversarial pure evidence, verifier step 243, strict
+independent report validation, source contracts, and audit documentation were all
+scripted before test execution. No checkpoint-2213 passing result was claimed before
+execution. Focused `2/2`, complete Authenticode `47` passed/`10` ignored, source
+contracts `643/643`, strict lint/release/two-host smoke, both locked workspaces,
+Flutter `838/838`, and no-malware pass. The definitive verifier/validator pass
+`243/243` in `469.2s`; five controlled malformed reports are rejected, exact
+lockfiles and the protected-vault invariant pass, and hosted/integration evidence
+remains pending. Candidate fixtures are never executed.
+
+**Residual risk:** Exact standard-handle binding narrows inherited helper IPC only.
+Anonymous pipes and the nonce do not provide cross-identity authentication or
+encryption, prevent same-user handle duplication, or isolate the named-kernel-object
+namespace. The boundary is not AppContainer, installed LocalSystem evidence, driver
+interception, or pre-execution blocking.

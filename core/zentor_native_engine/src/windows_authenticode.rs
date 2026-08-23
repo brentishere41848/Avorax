@@ -22,9 +22,9 @@ use windows_sys::core::PCSTR;
 
 use crate::windows_system::{checked_system_directory, checked_system_windows_directory};
 use windows_sys::Win32::Foundation::{
-    CloseHandle, GetLastError, SetHandleInformation, SetLastError, CERT_E_REVOCATION_FAILURE,
-    CRYPT_E_BAD_ENCODE, CRYPT_E_BAD_MSG, CRYPT_E_NO_MATCH, CRYPT_E_NO_SIGNER,
-    CRYPT_E_NO_TRUSTED_SIGNER, CRYPT_E_REVOKED, CRYPT_E_SIGNER_NOT_FOUND,
+    CloseHandle, GetHandleInformation, GetLastError, SetHandleInformation, SetLastError,
+    CERT_E_REVOCATION_FAILURE, CRYPT_E_BAD_ENCODE, CRYPT_E_BAD_MSG, CRYPT_E_NO_MATCH,
+    CRYPT_E_NO_SIGNER, CRYPT_E_NO_TRUSTED_SIGNER, CRYPT_E_REVOKED, CRYPT_E_SIGNER_NOT_FOUND,
     ERROR_INSUFFICIENT_BUFFER, ERROR_NOT_FOUND, ERROR_NO_TOKEN, ERROR_SUCCESS, HANDLE,
     HANDLE_FLAG_INHERIT, INVALID_HANDLE_VALUE, LUID, TRUST_E_BAD_DIGEST, TRUST_E_BASIC_CONSTRAINTS,
     TRUST_E_CERT_SIGNATURE, TRUST_E_COUNTER_SIGNER, TRUST_E_FAIL, TRUST_E_FINANCIAL_CRITERIA,
@@ -62,9 +62,12 @@ use windows_sys::Win32::Security::{
 };
 use windows_sys::Win32::Storage::FileSystem::{
     FileBasicInfo, FileIdInfo, FileStandardInfo, GetFileInformationByHandle,
-    GetFileInformationByHandleEx, BY_HANDLE_FILE_INFORMATION, FILE_ATTRIBUTE_REPARSE_POINT,
-    FILE_BASIC_INFO, FILE_FLAG_OPEN_REPARSE_POINT, FILE_FLAG_SEQUENTIAL_SCAN, FILE_ID_INFO,
-    FILE_SHARE_READ, FILE_STANDARD_INFO,
+    GetFileInformationByHandleEx, GetFileType, BY_HANDLE_FILE_INFORMATION,
+    FILE_ATTRIBUTE_REPARSE_POINT, FILE_BASIC_INFO, FILE_FLAG_OPEN_REPARSE_POINT,
+    FILE_FLAG_SEQUENTIAL_SCAN, FILE_ID_INFO, FILE_SHARE_READ, FILE_STANDARD_INFO, FILE_TYPE_PIPE,
+};
+use windows_sys::Win32::System::Console::{
+    GetStdHandle, STD_ERROR_HANDLE, STD_INPUT_HANDLE, STD_OUTPUT_HANDLE,
 };
 use windows_sys::Win32::System::JobObjects::{
     AssignProcessToJobObject, CreateJobObjectW, JobObjectBasicUIRestrictions,
@@ -77,7 +80,7 @@ use windows_sys::Win32::System::JobObjects::{
     JOB_OBJECT_UILIMIT_GLOBALATOMS, JOB_OBJECT_UILIMIT_HANDLES, JOB_OBJECT_UILIMIT_READCLIPBOARD,
     JOB_OBJECT_UILIMIT_SYSTEMPARAMETERS, JOB_OBJECT_UILIMIT_WRITECLIPBOARD,
 };
-use windows_sys::Win32::System::Pipes::CreatePipe;
+use windows_sys::Win32::System::Pipes::{CreatePipe, GetNamedPipeInfo, PIPE_SERVER_END};
 use windows_sys::Win32::System::StationsAndDesktops::{
     CloseDesktop, CreateDesktopW, GetThreadDesktop, GetUserObjectInformationW,
     DESKTOP_CREATEWINDOW, DESKTOP_READOBJECTS, DESKTOP_WRITEOBJECTS, HDESK, UOI_FLAGS, UOI_NAME,
@@ -211,6 +214,17 @@ struct AuthenticodeTokenSafetyFlags {
     virtualization_allowed: u32,
     virtualization_enabled: u32,
     ui_access: u32,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct AuthenticodeStandardHandleEvidence {
+    startup_flags: u32,
+    startup_handles: [usize; 3],
+    standard_handles: [usize; 3],
+    file_types: [u32; 3],
+    queried_pipe_modes: [Option<u32>; 3],
+    inherit_flags_before: [u32; 3],
+    inherit_flags_after: [u32; 3],
 }
 
 struct VerifiedWellKnownSid {
@@ -512,8 +526,183 @@ impl InheritedPipe {
             "unable to make Authenticode helper parent {label} handle non-inheritable: {}",
             std::io::Error::last_os_error()
         );
+        validate_authenticode_pipe_endpoint(
+            parent.0,
+            parent_reads.then_some(PIPE_SERVER_END),
+            0,
+            &format!("AuthentiCode helper parent {label}"),
+        )?;
+        validate_authenticode_pipe_endpoint(
+            child.0,
+            (!parent_reads).then_some(PIPE_SERVER_END),
+            HANDLE_FLAG_INHERIT,
+            &format!("AuthentiCode helper child {label}"),
+        )?;
         Ok(Self { parent, child })
     }
+}
+
+fn query_authenticode_handle_flags(handle: HANDLE, label: &str) -> Result<u32> {
+    let mut flags = u32::MAX;
+    anyhow::ensure!(
+        unsafe { GetHandleInformation(handle, &mut flags) } != 0,
+        "unable to query {label} handle flags: {}",
+        std::io::Error::last_os_error()
+    );
+    Ok(flags)
+}
+
+fn query_authenticode_pipe_mode(handle: HANDLE, label: &str) -> Result<u32> {
+    let mut mode = u32::MAX;
+    anyhow::ensure!(
+        unsafe { GetNamedPipeInfo(handle, &mut mode, null_mut(), null_mut(), null_mut()) } != 0,
+        "unable to query {label} pipe mode: {}",
+        std::io::Error::last_os_error()
+    );
+    Ok(mode)
+}
+
+fn validate_authenticode_pipe_endpoint(
+    handle: HANDLE,
+    expected_queried_mode: Option<u32>,
+    expected_inherit_flags: u32,
+    label: &str,
+) -> Result<()> {
+    anyhow::ensure!(
+        !handle.is_null() && handle != INVALID_HANDLE_VALUE,
+        "{label} handle is invalid"
+    );
+    unsafe { SetLastError(ERROR_SUCCESS) };
+    let file_type = unsafe { GetFileType(handle) };
+    anyhow::ensure!(
+        file_type == FILE_TYPE_PIPE,
+        "{label} handle is not an anonymous pipe: type {}; error {}",
+        file_type,
+        std::io::Error::last_os_error()
+    );
+    if let Some(expected_mode) = expected_queried_mode {
+        anyhow::ensure!(
+            query_authenticode_pipe_mode(handle, label)? == expected_mode,
+            "{label} pipe endpoint direction or mode is unexpected"
+        );
+    }
+    anyhow::ensure!(
+        query_authenticode_handle_flags(handle, label)? == expected_inherit_flags,
+        "{label} handle inheritance flags are unexpected"
+    );
+    Ok(())
+}
+
+fn validate_authenticode_standard_handle_evidence(
+    evidence: AuthenticodeStandardHandleEvidence,
+) -> Result<()> {
+    anyhow::ensure!(
+        evidence.startup_flags == STARTF_USESTDHANDLES,
+        "AuthentiCode helper startup flags do not exactly require standard handles"
+    );
+    anyhow::ensure!(
+        evidence.startup_handles == evidence.standard_handles,
+        "AuthentiCode helper process standard handles do not match startup handles"
+    );
+    anyhow::ensure!(
+        evidence
+            .standard_handles
+            .iter()
+            .all(|handle| { *handle != 0 && *handle != INVALID_HANDLE_VALUE as usize }),
+        "AuthentiCode helper process contains an invalid standard handle"
+    );
+    anyhow::ensure!(
+        evidence.standard_handles[0] != evidence.standard_handles[1]
+            && evidence.standard_handles[0] != evidence.standard_handles[2]
+            && evidence.standard_handles[1] != evidence.standard_handles[2],
+        "AuthentiCode helper process contains duplicate standard handles"
+    );
+    anyhow::ensure!(
+        evidence.file_types == [FILE_TYPE_PIPE, FILE_TYPE_PIPE, FILE_TYPE_PIPE],
+        "AuthentiCode helper standard handles are not all anonymous pipes"
+    );
+    anyhow::ensure!(
+        evidence.queried_pipe_modes == [Some(PIPE_SERVER_END), None, None],
+        "AuthentiCode helper queried standard-handle pipe modes are unexpected"
+    );
+    anyhow::ensure!(
+        evidence.inherit_flags_before
+            == [
+                HANDLE_FLAG_INHERIT,
+                HANDLE_FLAG_INHERIT,
+                HANDLE_FLAG_INHERIT
+            ],
+        "AuthentiCode helper inherited standard handles had unexpected initial flags"
+    );
+    anyhow::ensure!(
+        evidence.inherit_flags_after == [0, 0, 0],
+        "AuthentiCode helper standard handles remained inheritable"
+    );
+    Ok(())
+}
+
+fn validate_current_process_authenticode_standard_handles() -> Result<()> {
+    let mut startup = STARTUPINFOW {
+        cb: size_of::<STARTUPINFOW>() as u32,
+        ..STARTUPINFOW::default()
+    };
+    unsafe { GetStartupInfoW(&mut startup) };
+    let startup_handles = [
+        startup.hStdInput as usize,
+        startup.hStdOutput as usize,
+        startup.hStdError as usize,
+    ];
+    let standard = [
+        unsafe { GetStdHandle(STD_INPUT_HANDLE) },
+        unsafe { GetStdHandle(STD_OUTPUT_HANDLE) },
+        unsafe { GetStdHandle(STD_ERROR_HANDLE) },
+    ];
+    let labels = ["stdin", "stdout", "stderr"];
+    let mut file_types = [0u32; 3];
+    let mut queried_pipe_modes = [None; 3];
+    let mut inherit_flags_before = [0u32; 3];
+    for index in 0..standard.len() {
+        validate_authenticode_pipe_endpoint(
+            standard[index],
+            (index == 0).then_some(PIPE_SERVER_END),
+            HANDLE_FLAG_INHERIT,
+            labels[index],
+        )?;
+        unsafe { SetLastError(ERROR_SUCCESS) };
+        file_types[index] = unsafe { GetFileType(standard[index]) };
+        if index == 0 {
+            queried_pipe_modes[index] = Some(query_authenticode_pipe_mode(
+                standard[index],
+                labels[index],
+            )?);
+        }
+        inherit_flags_before[index] =
+            query_authenticode_handle_flags(standard[index], labels[index])?;
+    }
+    let initial = AuthenticodeStandardHandleEvidence {
+        startup_flags: startup.dwFlags,
+        startup_handles,
+        standard_handles: standard.map(|handle| handle as usize),
+        file_types,
+        queried_pipe_modes,
+        inherit_flags_before,
+        inherit_flags_after: [0, 0, 0],
+    };
+    let mut inherit_flags_after = [u32::MAX; 3];
+    for index in 0..standard.len() {
+        anyhow::ensure!(
+            unsafe { SetHandleInformation(standard[index], HANDLE_FLAG_INHERIT, 0) } != 0,
+            "unable to make Authenticode helper {} non-inheritable: {}",
+            labels[index],
+            std::io::Error::last_os_error()
+        );
+        inherit_flags_after[index] =
+            query_authenticode_handle_flags(standard[index], labels[index])?;
+    }
+    validate_authenticode_standard_handle_evidence(AuthenticodeStandardHandleEvidence {
+        inherit_flags_after,
+        ..initial
+    })
 }
 
 struct ProcessThreadAttributeList {
@@ -1696,6 +1885,7 @@ fn verify_prepared_microsoft_signature(prepared: PreparedAuthenticodeVerificatio
 }
 
 pub(crate) fn run_authenticode_helper_stdio() -> Result<()> {
+    validate_current_process_authenticode_standard_handles()?;
     validate_current_process_authenticode_private_desktop()?;
     validate_current_process_authenticode_primary_token()?;
     validate_current_process_authenticode_mitigations()?;
@@ -4196,6 +4386,117 @@ mod tests {
         assert!(String::from_utf8(output.stdout)
             .unwrap()
             .contains("AVORAX_SANITIZED_LAUNCH_CONTEXT_OK"));
+    }
+
+    #[test]
+    fn native_authenticode_helper_standard_handles_are_exact_and_non_inheritable() {
+        let application = std::env::current_exe().unwrap();
+        let arguments = [
+            "--ignored",
+            "--exact",
+            "windows_authenticode::tests::authenticode_standard_handle_child_fixture",
+            "--nocapture",
+            "--test-threads=1",
+        ];
+        let output = run_bounded_authenticode_helper(
+            &application,
+            &arguments,
+            Vec::new(),
+            Duration::from_secs(5),
+        )
+        .unwrap();
+        assert!(
+            output.status.success(),
+            "standard-handle child failed with {:?}; stdout: {}; stderr: {}",
+            output.status,
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
+        assert!(output.stderr.is_empty());
+        assert!(String::from_utf8(output.stdout)
+            .unwrap()
+            .contains("AVORAX_STANDARD_HANDLE_BINDING_OK"));
+    }
+
+    #[test]
+    #[ignore = "isolated child fixture invoked by the standard-handle regression"]
+    fn authenticode_standard_handle_child_fixture() {
+        validate_current_process_authenticode_standard_handles().unwrap();
+        println!("AVORAX_STANDARD_HANDLE_BINDING_OK");
+    }
+
+    #[test]
+    fn native_authenticode_helper_standard_handle_contract_is_fail_visible() {
+        let valid = AuthenticodeStandardHandleEvidence {
+            startup_flags: STARTF_USESTDHANDLES,
+            startup_handles: [1, 2, 3],
+            standard_handles: [1, 2, 3],
+            file_types: [FILE_TYPE_PIPE, FILE_TYPE_PIPE, FILE_TYPE_PIPE],
+            queried_pipe_modes: [Some(PIPE_SERVER_END), None, None],
+            inherit_flags_before: [
+                HANDLE_FLAG_INHERIT,
+                HANDLE_FLAG_INHERIT,
+                HANDLE_FLAG_INHERIT,
+            ],
+            inherit_flags_after: [0, 0, 0],
+        };
+        validate_authenticode_standard_handle_evidence(valid).unwrap();
+
+        let invalid = [
+            AuthenticodeStandardHandleEvidence {
+                startup_flags: 0,
+                ..valid
+            },
+            AuthenticodeStandardHandleEvidence {
+                startup_flags: STARTF_USESTDHANDLES | 1,
+                ..valid
+            },
+            AuthenticodeStandardHandleEvidence {
+                startup_handles: [1, 2, 4],
+                ..valid
+            },
+            AuthenticodeStandardHandleEvidence {
+                standard_handles: [0, 2, 3],
+                ..valid
+            },
+            AuthenticodeStandardHandleEvidence {
+                standard_handles: [1, INVALID_HANDLE_VALUE as usize, 3],
+                startup_handles: [1, INVALID_HANDLE_VALUE as usize, 3],
+                ..valid
+            },
+            AuthenticodeStandardHandleEvidence {
+                standard_handles: [1, 2, 2],
+                startup_handles: [1, 2, 2],
+                ..valid
+            },
+            AuthenticodeStandardHandleEvidence {
+                file_types: [FILE_TYPE_PIPE, 0, FILE_TYPE_PIPE],
+                ..valid
+            },
+            AuthenticodeStandardHandleEvidence {
+                queried_pipe_modes: [None, None, None],
+                ..valid
+            },
+            AuthenticodeStandardHandleEvidence {
+                queried_pipe_modes: [Some(PIPE_SERVER_END), Some(PIPE_SERVER_END), None],
+                ..valid
+            },
+            AuthenticodeStandardHandleEvidence {
+                inherit_flags_before: [HANDLE_FLAG_INHERIT, 0, HANDLE_FLAG_INHERIT],
+                ..valid
+            },
+            AuthenticodeStandardHandleEvidence {
+                inherit_flags_before: [HANDLE_FLAG_INHERIT, 3, HANDLE_FLAG_INHERIT],
+                ..valid
+            },
+            AuthenticodeStandardHandleEvidence {
+                inherit_flags_after: [0, HANDLE_FLAG_INHERIT, 0],
+                ..valid
+            },
+        ];
+        for evidence in invalid {
+            assert!(validate_authenticode_standard_handle_evidence(evidence).is_err());
+        }
     }
 
     #[test]

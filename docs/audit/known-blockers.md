@@ -2174,3 +2174,32 @@ enforcement, or pre-execution blocking is claimed.
   kernel objects. Desktop heap consumption remains bounded only by helper lifetime
   and existing concurrency. AppContainer/cross-identity IPC, installed LocalSystem,
   signed-driver, and pre-execution evidence remain separate blockers.
+
+## Checkpoint 2213 Authenticode Standard-Handle Binding
+
+- **Scripted boundary:** Parent `CreatePipe` endpoints must be `FILE_TYPE_PIPE`
+  with exact parent-zero/child-`HANDLE_FLAG_INHERIT` flags before process creation.
+  `GetNamedPipeInfo` verifies server/read endpoints; exact API return-role assignment
+  binds child stdin to read and stdout/stderr to writes without an unsupported write-
+  handle query. Before private-
+  desktop, token, mitigation, or stdin processing, the child requires exact
+  `STARTF_USESTDHANDLES`, exact `GetStdHandle` identity, three valid distinct
+  anonymous pipes with queried stdin server/read mode and stdout/stderr identity
+  bound to the parent-created write handles,
+  then clears inheritance and requires exact-zero flag read-back.
+- **Fail-visible policy:** Handle query, type, direction binding, identity, duplicate,
+  initial-flag, mutation, or read-back errors prevent publisher trust. The new
+  real-child and adversarial tests, verifier step 243, validator, source contract,
+  and documentation were scripted before execution. No checkpoint-2213 passing
+  result was claimed before execution. Focused checks pass `2/2`, complete
+  Authenticode passes `47` with `10` intentional ignores, source contracts pass
+  `643/643`, and strict lint/release/two-host smoke/both locked workspaces plus
+  Flutter `838/838` and no-malware pass. The definitive verifier/validator pass
+  `243/243` in `469.2s`; five adversarial report copies are rejected. Exact
+  lockfiles and protected-vault evidence pass. Hosted/integration evidence remains
+  pending.
+- **Residual blocker:** Exact standard-handle binding narrows inherited helper IPC
+  only. Anonymous pipes and the nonce do not provide cross-identity authentication
+  or encryption, prevent same-user handle duplication, or isolate the named-kernel-
+  object namespace. AppContainer, installed LocalSystem, signed-driver, and pre-
+  execution evidence remain separate blockers.

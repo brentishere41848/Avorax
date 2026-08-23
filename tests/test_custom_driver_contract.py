@@ -1,4 +1,4 @@
-﻿import os
+import os
 import json
 from pathlib import Path
 import re
@@ -20869,8 +20869,8 @@ def test_small_threat_mvp_report_validator_is_strict_and_local():
     assert "driver_request_known_good_allows_in_lockdown" in source
     assert "Get-AvoraxGateFile ([System.IO.Path]::GetFullPath($text)) $Description" in source
     assert "-RequireFullSuite requires skip_flutter=false and skip_rust=false" in source
-    assert "if ($steps.Count -ne 242)" in source
-    assert "-RequireFullSuite expected exactly 242 verifier steps" in source
+    assert "if ($steps.Count -ne 243)" in source
+    assert "-RequireFullSuite expected exactly 243 verifier steps" in source
     assert (
         'Assert-ReportContainsStep $steps "native-engine secondary catalog '
         'Authenticode selection regressions"'
@@ -25260,7 +25260,7 @@ def test_native_secondary_catalog_authenticode_is_bounded_exact_and_honestly_par
     assert "native_secondary_catalog_authenticode_primary_runtime_is_exact_and_hash_bound" in source
     assert "native-engine secondary catalog Authenticode selection regressions" in verifier
     assert '"native_secondary_catalog_authenticode"' in verifier
-    assert "if ($steps.Count -ne 242)" in validator
+    assert "if ($steps.Count -ne 243)" in validator
     assert "no controlled benign multi-signed system-catalog fixture" in verifier
     assert "no controlled benign multi-signed system-catalog fixture" in validator
     assert "$technicalLimitText = Assert-JsonString" in validator
@@ -25297,8 +25297,8 @@ def test_native_authenticode_helper_job_resources_are_exact_and_fail_visible():
     )
     assert "native-engine Authenticode helper Job resource-limit regressions" in verifier
     assert '"native_authenticode_helper_job_limits"' in verifier
-    assert "if ($steps.Count -ne 242)" in validator
-    assert "expected exactly 242 verifier steps" in validator
+    assert "if ($steps.Count -ne 243)" in validator
+    assert "expected exactly 243 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper Job '
         'resource-limit regressions"'
@@ -25364,8 +25364,8 @@ def test_native_authenticode_helper_job_ui_restrictions_are_exact_and_fail_visib
     assert "native_authenticode_helper_job_ui_restrictions_are_exact_and_fail_visible" in source
     assert "native-engine Authenticode helper Job UI-restriction regressions" in verifier
     assert '"native_authenticode_helper_job_ui_restrictions"' in verifier
-    assert "if ($steps.Count -ne 242)" in validator
-    assert "expected exactly 242 verifier steps" in validator
+    assert "if ($steps.Count -ne 243)" in validator
+    assert "expected exactly 243 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper Job '
         'UI-restriction regressions"'
@@ -25473,8 +25473,8 @@ def test_native_authenticode_helper_private_desktop_is_exact_and_fail_visible():
     assert "native_authenticode_helper_private_desktop_contract_is_exact_and_fail_visible" in source
     assert "native-engine Authenticode helper private-desktop regressions" in verifier
     assert '"native_authenticode_helper_private_desktop"' in verifier
-    assert "if ($steps.Count -ne 242)" in validator
-    assert "expected exactly 242 verifier steps" in validator
+    assert "if ($steps.Count -ne 243)" in validator
+    assert "expected exactly 243 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper '
         'private-desktop regressions"'
@@ -25512,6 +25512,112 @@ def test_native_authenticode_helper_private_desktop_is_exact_and_fail_visible():
         assert "CreateDesktopW" in normalized_document
         assert "current process window station" in normalized_document
         assert "desktop heap" in normalized_document.lower()
+
+
+def test_native_authenticode_helper_standard_handles_are_exact_and_fail_visible():
+    source = read(NATIVE_WINDOWS_AUTHENTICODE)
+    production = source.split("#[cfg(test)]")[0]
+    manifest = read(ROOT / "core" / "zentor_native_engine" / "Cargo.toml")
+    verifier = read(ROOT / "tools" / "testing" / "verify-small-threat-mvp.ps1")
+    validator = read(ROOT / "tools" / "testing" / "validate-small-threat-mvp-report.ps1")
+    checkpoint = read(
+        ROOT
+        / "docs"
+        / "reports"
+        / "checkpoint-2213-authenticode-standard-handle-binding.md"
+    )
+    matrix = read(ROOT / "docs" / "audit" / "engine-control-matrix.md")
+    threat_model = read(ROOT / "docs" / "audit" / "threat-model.md")
+    blockers = read(ROOT / "docs" / "audit" / "known-blockers.md")
+    dependency_inventory = read(ROOT / "docs" / "dependency-license-inventory.md")
+
+    assert '"Win32_System_Console"' in manifest
+    for contract in [
+        "GetHandleInformation",
+        "GetFileType",
+        "FILE_TYPE_PIPE",
+        "GetStdHandle",
+        "STD_INPUT_HANDLE",
+        "STD_OUTPUT_HANDLE",
+        "STD_ERROR_HANDLE",
+        "GetNamedPipeInfo",
+        "PIPE_SERVER_END",
+        "struct AuthenticodeStandardHandleEvidence",
+        "validate_authenticode_pipe_endpoint(",
+        "validate_authenticode_standard_handle_evidence(",
+        "validate_current_process_authenticode_standard_handles()?",
+        "startup.dwFlags",
+        "startup.hStdInput",
+        "startup.hStdOutput",
+        "startup.hStdError",
+        "SetHandleInformation(standard[index], HANDLE_FLAG_INHERIT, 0)",
+        "evidence.inherit_flags_after == [0, 0, 0]",
+    ]:
+        assert contract in production
+
+    inherited_pipe = production[
+        production.index("impl InheritedPipe"):
+        production.index("struct ProcessThreadAttributeList")
+    ]
+    assert inherited_pipe.index("SetHandleInformation(parent.0") < inherited_pipe.index(
+        "validate_authenticode_pipe_endpoint("
+    )
+    helper = production[
+        production.index("pub(crate) fn run_authenticode_helper_stdio"):
+        production.index("pub(crate) fn run_authenticode_client_self_test_stdio")
+    ]
+    assert helper.index("validate_current_process_authenticode_standard_handles()?") < helper.index(
+        "validate_current_process_authenticode_private_desktop()?"
+    ) < helper.index("validate_current_process_authenticode_primary_token()?") < helper.index(
+        "validate_current_process_authenticode_mitigations()?"
+    ) < helper.index("read_and_prepare_authenticode_helper_request()")
+    assert "native_authenticode_helper_standard_handles_are_exact_and_non_inheritable" in source
+    assert "native_authenticode_helper_standard_handle_contract_is_fail_visible" in source
+    assert "AVORAX_STANDARD_HANDLE_BINDING_OK" in source
+    assert "native-engine Authenticode helper standard-handle binding regressions" in verifier
+    assert '"native_authenticode_helper_standard_handle"' in verifier
+    assert "if ($steps.Count -ne 243)" in validator
+    assert "expected exactly 243 verifier steps" in validator
+    assert (
+        'Assert-ReportContainsStep $steps "native-engine Authenticode helper '
+        'standard-handle binding regressions"'
+        in validator
+    )
+    verified_parent = (
+        "release Local Core and Guard require each Authenticode CreatePipe parent/child endpoint "
+        "to be FILE_TYPE_PIPE with exact parent-zero/child-HANDLE_FLAG_INHERIT flags before process "
+        "creation; GetNamedPipeInfo verifies each server/read endpoint, while exact CreatePipe read/write "
+        "return-role assignment binds stdin to the child read handle and stdout/stderr to child write handles"
+    )
+    verified_child = (
+        "Before private-desktop, token, mitigation, or stdin processing, the child requires exact "
+        "STARTF_USESTDHANDLES startup state, exact GetStdHandle-to-startup identity, three valid "
+        "distinct pipe handles, queried stdin server/read mode, stdout/stderr identities bound to the "
+        "parent-created write handles, and exact initial inheritance flags, then clears HANDLE_FLAG_INHERIT "
+        "on all three handles and reads back exact zero"
+    )
+    failure_contract = (
+        "Handle query, type, direction binding, identity, duplicate, initial-flag, mutation, or read-back "
+        "failure is diagnostic and cannot become publisher trust"
+    )
+    technical_limit = (
+        "Exact standard-handle binding narrows inherited helper IPC only; anonymous pipes and the "
+        "nonce do not provide cross-identity authentication or encryption, prevent same-user "
+        "handle duplication, or isolate the named-kernel-object namespace"
+    )
+    for contract in [verified_parent, verified_child, failure_contract, technical_limit]:
+        assert contract in verifier
+        assert contract in validator
+    for document in [checkpoint, matrix, threat_model, blockers, dependency_inventory]:
+        normalized_document = re.sub(r"\s+", " ", document)
+        assert "GetStdHandle" in normalized_document
+        assert "HANDLE_FLAG_INHERIT" in normalized_document
+        assert "anonymous pipes" in normalized_document.lower()
+        assert "cross-identity" in normalized_document
+    assert "No checkpoint-2213 passing result was claimed before execution" in checkpoint
+    assert "adds no crate, package, or lockfile change" in dependency_inventory
+
+
 def test_native_authenticode_helper_uses_verified_privilege_stripped_thread_token():
     source = read(NATIVE_WINDOWS_AUTHENTICODE)
     production = source.split("#[cfg(test)]")[0]
@@ -25622,8 +25728,8 @@ def test_native_authenticode_helper_uses_restricted_primary_process_token_and_ex
     assert "AVORAX_RESTRICTED_PRIMARY_TOKEN_OK" in source
     assert "native-engine Authenticode helper restricted-process-token regressions" in verifier
     assert '"native_authenticode_helper_restricted_process"' in verifier
-    assert "if ($steps.Count -ne 242)" in validator
-    assert "expected exactly 242 verifier steps" in validator
+    assert "if ($steps.Count -ne 243)" in validator
+    assert "expected exactly 243 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper '
         'restricted-process-token regressions"'
@@ -25691,8 +25797,8 @@ def test_native_authenticode_helper_launch_environment_and_directory_are_sanitiz
     assert "AVORAX_SANITIZED_LAUNCH_CONTEXT_OK" in source
     assert "native-engine Authenticode helper sanitized-launch regressions" in verifier
     assert '"native_authenticode_helper_sanitized"' in verifier
-    assert "if ($steps.Count -ne 242)" in validator
-    assert "expected exactly 242 verifier steps" in validator
+    assert "if ($steps.Count -ne 243)" in validator
+    assert "expected exactly 243 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper '
         'sanitized-launch regressions"'
@@ -25768,8 +25874,8 @@ def test_native_authenticode_helper_process_mitigations_are_applied_and_read_bac
     assert "AVORAX_PROCESS_MITIGATION_POLICY_OK" in source
     assert "native-engine Authenticode helper process-mitigation regressions" in verifier
     assert '"native_authenticode_helper_process_mitigation"' in verifier
-    assert "if ($steps.Count -ne 242)" in validator
-    assert "expected exactly 242 verifier steps" in validator
+    assert "if ($steps.Count -ne 243)" in validator
+    assert "expected exactly 243 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper '
         'process-mitigation regressions"'
@@ -25853,8 +25959,8 @@ def test_native_authenticode_helper_primary_token_is_exact_low_integrity():
     assert "revert_authenticode_helper_thread_token().unwrap()" in source
     assert "native-engine Authenticode helper low-integrity-primary-token regressions" in verifier
     assert '"native_authenticode_helper_low_integrity"' in verifier
-    assert "if ($steps.Count -ne 242)" in validator
-    assert "expected exactly 242 verifier steps" in validator
+    assert "if ($steps.Count -ne 243)" in validator
+    assert "expected exactly 243 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper '
         'low-integrity-primary-token regressions"'
@@ -25929,8 +26035,8 @@ def test_native_authenticode_helper_mandatory_no_write_up_policy_is_inherited_an
     assert "AVORAX_MANDATORY_NO_WRITE_UP_POLICY_OK" in source
     assert "native-engine Authenticode helper mandatory no-write-up policy regressions" in verifier
     assert '"native_authenticode_helper_mandatory_policy"' in verifier
-    assert "if ($steps.Count -ne 242)" in validator
-    assert "expected exactly 242 verifier steps" in validator
+    assert "if ($steps.Count -ne 243)" in validator
+    assert "expected exactly 243 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper '
         'mandatory no-write-up policy regressions"'
@@ -26008,8 +26114,8 @@ def test_native_authenticode_helper_validates_capability_and_disables_active_vir
     assert "AVORAX_TOKEN_VIRTUALIZATION_UIACCESS_DISABLED_OK" in source
     assert "native-engine Authenticode helper virtualization/UIAccess token regressions" in verifier
     assert '"native_authenticode_helper_token_safety_flags"' in verifier
-    assert "if ($steps.Count -ne 242)" in validator
-    assert "expected exactly 242 verifier steps" in validator
+    assert "if ($steps.Count -ne 243)" in validator
+    assert "expected exactly 243 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper '
         'virtualization/UIAccess token regressions"'
@@ -26095,8 +26201,8 @@ def test_native_authenticode_helper_uses_exact_write_restricting_sid_and_readbac
     assert "AVORAX_WRITE_RESTRICTED_MUTATION_DENIED" in source
     assert "native-engine Authenticode helper write-restricted-thread-token regressions" in verifier
     assert '"native_authenticode_helper_write_restricted"' in verifier
-    assert "if ($steps.Count -ne 242)" in validator
-    assert "expected exactly 242 verifier steps" in validator
+    assert "if ($steps.Count -ne 243)" in validator
+    assert "expected exactly 243 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper '
         'write-restricted-thread-token regressions"'
