@@ -1888,8 +1888,10 @@ enforcement, or pre-execution blocking is claimed.
   reading untrusted request data. Process tests `2/2`, helper `9/9`, complete
   Authenticode `29/29` plus two ignored child fixtures, and both release hosts
   pass locally. Exact `234/234` verifier/validator, central gates, and
-  adversarial stale/missing-step/missing-scope report rejection pass; hosted,
-  merge, and synchronized-tree evidence remain pending.
+  adversarial stale/missing-step/missing-scope report rejection pass.
+  Implementation head `a0272a3` passes CI `32620196065` and package push/PR
+  `32620187506`/`32620196066`; evidence-head, merge, merged-main, and
+  synchronized-tree evidence remain pending.
 - **Fail-visible compatibility policy:** There is no same-token fallback. Token,
   pipe, handle-list, process creation, Job assignment, resume, child read-back,
   timeout, termination, reap, or verification failure supplies no publisher

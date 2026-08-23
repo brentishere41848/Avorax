@@ -21,7 +21,11 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
   Source contracts pass `633/633`; central safety/dependency/package gates and
   definitive verification pass exact `234/234` in `454.4s`. Independent strict
   validation passes and stale/missing-step/missing-scope evidence is rejected.
-  Hosted evidence, merge, and synchronized-tree evidence remain pending.
+  Implementation head `a0272a3654c959b68def34025ff7c18d1285e243`
+  passes Avorax CI `32620196065` and Desktop Packages push/PR runs
+  `32620187506`/`32620196066`, including all six platform artifacts,
+  checksums, and lockfile SBOM with publication skipped. Evidence-head checks,
+  merge, and synchronized-tree evidence remain pending.
   The token retains parent SID/integrity/environment/desktop and ordinary
   SID-based access; AppContainer, restricting-SID isolation, installed
   LocalSystem E2E, driver/pre-execution protection, and Defender replacement are

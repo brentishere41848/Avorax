@@ -110,6 +110,19 @@ original-tree synchronization remain pending. No live malware, installation,
 service/driver start, Defender change, release, publication, or protected-vault
 mutation occurred.
 
+## Hosted Implementation-Head Evidence
+
+Implementation head `a0272a3654c959b68def34025ff7c18d1285e243` passes
+exact-head Avorax CI `32620196065`. Desktop Packages push run `32620187506` and
+PR run `32620196066` pass package contracts, Windows x64 MSI/EXE, Linux x64
+DEB/tar, macOS arm64/x64 DMG, six-artifact consolidation, checksums, and
+lockfile SBOM evidence. Both publication jobs are skipped. No artifact was
+installed, released, or published.
+
+The documentation evidence commit, its exact-head CI/package checks, normal PR
+merge, merged-main evidence, and preconditioned original-tree synchronization
+remain pending.
+
 ## Residual Limits
 
 This is privilege stripping, exact handle inheritance, and pre-resume Job

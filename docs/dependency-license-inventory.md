@@ -347,5 +347,9 @@ pinned Windows bindings; it does not introduce a token, sandbox, or IPC crate.
 
 Exact dependency resolution, unchanged Cargo/Flutter lockfiles, strict lint,
 complete locked workspaces, release host builds/smoke, source contracts, the
-dependency gate, and central `234/234` verifier are locally verified. Hosted
-package SBOM and final-artifact review remain pending for this checkpoint.
+dependency gate, and central `234/234` verifier are locally verified.
+Implementation-head package push/PR runs `32620187506`/`32620196066` pass
+six-artifact consolidation, checksums, lockfile SBOM generation, and package
+evidence on Windows, Linux, and macOS. Evidence-head and merged-main
+final-artifact review remain pending; source-level API reuse is not final-binary
+license, notice, or copyright evidence.
