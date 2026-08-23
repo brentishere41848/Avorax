@@ -8364,3 +8364,10 @@ Updates page showed:
   directories, 4,522,733 bytes, 5,357 each `.avoraxq`/`.json`/`.auth`, one
   `.metadata_auth_key`, and zero pending. Hosted exact-head checks, merge,
   synchronization, and destination checks remain pending.
+- Exact implementation head
+  `7034957083a7c7ecb114cc1fe13e460db3133a3d` passes Avorax CI
+  `32645055401` and Desktop Packages push/PR runs
+  `32645042925`/`32645055436`. Both package runs pass contracts, Windows
+  MSI/EXE, Linux DEB/tar, macOS arm64/x64 DMG, required six-artifact
+  consolidation, checksums, lockfile SBOM, and evidence upload. No publication
+  job was triggered. Draft PR `#61` awaits evidence-head checks.

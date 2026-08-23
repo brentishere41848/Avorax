@@ -504,3 +504,9 @@ The no-malware-binaries gate and complete verifier pass after this change. The
 Python source contract runtime-joins marker fragments so an ordinary bytecode
 cache does not reintroduce the contiguous marker. This adds no Python package
 or lockfile entry.
+
+Exact implementation head `7034957` passes Desktop Packages push/PR runs
+`32645042925`/`32645055436`. Both runs generate and upload the lockfile
+CycloneDX SBOM with all six native package artifacts and checksums; no release
+publication job was triggered. Evidence-head, merged-main, and final-artifact
+license/notice review remain separate requirements.

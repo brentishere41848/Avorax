@@ -136,6 +136,17 @@ zero directories, `4,522,733` bytes, `5,357` each `.avoraxq`, `.json`, and
 merged-main evidence, guarded original-tree synchronization, and destination
 verification remain pending.
 
+## Implementation-Head Hosted Evidence
+
+Exact implementation head
+`7034957083a7c7ecb114cc1fe13e460db3133a3d` passes Avorax CI run
+`32645055401` and Desktop Packages push/PR runs
+`32645042925`/`32645055436`. Both package runs pass contracts, Windows x64
+MSI/EXE, Linux x64 DEB/tar, macOS arm64/x64 DMG, required six-artifact
+consolidation, checksums, lockfile SBOM generation, and evidence upload. No
+release publication job was triggered. Draft PR `#61` remains unmerged while
+an evidence-only commit and its exact-head hosted checks are prepared.
+
 ## Limits
 
 The inherited `TOKEN_MANDATORY_POLICY_NO_WRITE_UP` policy is explicitly
