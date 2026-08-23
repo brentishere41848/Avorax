@@ -1803,6 +1803,10 @@ enforcement, or pre-execution blocking is claimed.
   validation pass `232/232` in `441s`; a copy missing only this step is rejected
   with expected 232, found 231. Strict lint, format, dependency, release-build,
   helper-smoke, and lockfile gates pass; the protected vault is unchanged.
+  Implementation `c8673c134c79f2931e9206b424b2d016a19e1cbd` passes CI
+  `32609018123` and package push/PR `32609010416`/`32609018053`, including all
+  six platform artifacts, consolidation, checksums, and lockfile SBOM with
+  publication skipped.
 - **Technically limited:** Commit ceilings bound committed virtual memory, not
   physical working set or I/O bytes. Per-process user CPU excludes kernel time.
   The trusted exact-current-executable process starts before Job assignment but
@@ -1811,5 +1815,5 @@ enforcement, or pre-execution blocking is claimed.
 - **Still blocked or partial:** Restricted-token/authenticated cross-token IPC,
   installed LocalSystem/service/UI E2E, production signing/key custody,
   signed-driver IPC, Defender coexistence, pre-execution blocking, and
-  production accuracy remain separate prerequisites. Exact-head hosted
-  CI/packages, merge, and original-tree synchronization are still pending.
+  production accuracy remain separate prerequisites. Evidence-head checks,
+  merge, and original-tree synchronization are still pending.

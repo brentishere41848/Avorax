@@ -149,6 +149,22 @@ Lead-engineer product-hardening pass across the Avorax repository. Goal is to mo
 - Exact-head hosted CI/packages, evidence commit, merge, and safe original-tree
   synchronization remain pending.
 
+## 2026-08-23 continuation checkpoint 2201 implementation-head hosting
+
+- Committed the 12-file implementation/test/verifier/documentation batch as
+  `c8673c134c79f2931e9206b424b2d016a19e1cbd`, pushed only branch
+  `agent/checkpoint-2201-authenticode-helper-job-limits`, and opened draft PR
+  `#53`. `.verification` remained untracked and unstaged.
+- Exact-head Avorax CI `32609018123` passed branding/copy, Flutter/protocol,
+  Rust Local Core/Guard, security/protection/performance, and Unix quarantine
+  permission jobs.
+- Desktop Packages push `32609010416` and PR `32609018053` passed package
+  contracts, Windows x64 MSI/EXE, Linux x64 DEB/tar, macOS arm64/x64 DMG,
+  six-artifact consolidation, checksums, and lockfile SBOM. Both prerelease
+  publish jobs were skipped. No package was installed, released, or published.
+- Evidence-head checks, exact-head merge, merged-main checks, and safe original-
+  tree synchronization remain pending.
+
 ## 2026-08-22 continuation checkpoint 2198 scripting
 
 - Selected a bounded release-process isolation boundary for native WinTrust

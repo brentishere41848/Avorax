@@ -276,5 +276,8 @@ Source contracts `629/629`, strict Native/Local/Guard Clippy, both complete
 locked workspace variants, dependency and package-source gates, release
 Local Core/Guard builds, and the definitive `232/232` verifier pass locally.
 Both Cargo lockfiles remain byte-unchanged. No dependency version, feature, or
-lockfile entry was added. Exact-head hosted package SBOM generation and final-
-artifact license, notice, and copyright review remain pending.
+lockfile entry was added. Exact implementation-head Desktop Packages push/PR
+runs `32609010416`/`32609018053` pass lockfile CycloneDX SBOM generation,
+six-artifact consolidation/checksums, and all platform package jobs with
+publication skipped. Final-artifact license, notice, and copyright review
+remains distinct from that generated lockfile evidence.

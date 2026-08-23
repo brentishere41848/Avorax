@@ -85,7 +85,13 @@ Local results after that complete scripting phase:
 
 The protected quarantine vault remained exactly 16,072 files, zero
 directories, 4,522,733 bytes, 5,357 each `.avoraxq`/`.json`/`.auth`, one
-metadata key, and zero pending files. Exact-head hosted CI/packages, merge, and
-safe original-tree synchronization remain pending. No release, publication,
-installation, service/driver start, Defender change, fixture execution, or
-quarantine mutation occurred.
+metadata key, and zero pending files.
+
+Implementation head `c8673c134c79f2931e9206b424b2d016a19e1cbd` passes
+Avorax CI `32609018123` and Desktop Packages push/PR runs `32609010416` and
+`32609018053`. Package contracts, Windows x64 MSI/EXE, Linux x64 DEB/tar,
+macOS arm64/x64 DMG, six-artifact consolidation, checksums, and lockfile SBOM
+all pass. Both prerelease publication jobs are skipped. Evidence-head checks,
+exact-head merge, merged-main checks, and safe original-tree synchronization
+remain pending. No release, publication, installation, service/driver start,
+Defender change, fixture execution, or quarantine mutation occurred.

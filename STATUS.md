@@ -18,8 +18,13 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
   rustfmt, lockfile, security, dependency, and package-source gates pass. The
   definitive verifier and independent validator pass exactly `232/232` in
   `441s`; evidence missing only the new step is rejected at `231`. The
-  protected vault is unchanged. Hosted exact-head CI/packages, merge, and
-  original-tree synchronization remain pending.
+  protected vault is unchanged. Implementation head
+  `c8673c134c79f2931e9206b424b2d016a19e1cbd` passes Avorax CI
+  `32609018123` and Desktop Packages push/PR runs
+  `32609010416`/`32609018053`, including Windows MSI/EXE, Linux DEB/tar,
+  macOS arm64/x64 DMG, six-artifact consolidation, checksums, and lockfile
+  SBOM. Publication is skipped. Evidence-head checks, merge, and original-tree
+  synchronization remain pending.
   Commit limits are not physical working-set or I/O-byte limits, user CPU
   excludes kernel execution, and the child still uses the parent's token.
 - Checkpoint 2200 secondary catalog Authenticode selection is implemented and
