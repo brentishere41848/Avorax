@@ -510,3 +510,10 @@ Exact implementation head `7034957` passes Desktop Packages push/PR runs
 CycloneDX SBOM with all six native package artifacts and checksums; no release
 publication job was triggered. Evidence-head, merged-main, and final-artifact
 license/notice review remain separate requirements.
+
+Evidence head `7fd8734` passes package run `32646010931`; merge `d07220c`
+passes merged-main package run `32646774820`. Both require all six artifacts,
+checksums, lockfile CycloneDX SBOM, and evidence upload; beta publication is
+skipped. Original-tree synchronization and destination locked tests preserve
+the unchanged Cargo/Flutter lockfiles. Complete final-artifact license, notice,
+copyright, and binary-resolution review remains a release-host requirement.

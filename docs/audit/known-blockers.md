@@ -2059,8 +2059,10 @@ enforcement, or pre-execution blocking is claimed.
   complete Authenticode, strict Native/Local/Guard lint, both locked workspace
   variants, release builds/two-host smoke, Flutter analyze and `838/838`, source
   contracts `639/639`, and definitive verifier/validators `239/239` in
-  `433.2s` pass. Five malformed reports are rejected. Hosted checks, merge,
-  synchronization, and destination checks remain pending.
+  `433.2s` pass. Five malformed reports are rejected. Evidence `7fd8734`, PR
+  `#61`, merge `d07220c`, merged-main CI `32646774829`, packages
+  `32646774820`, exact 18-path synchronization, destination focused/full
+  checks, and the unchanged vault subsequently close checkpoint 2209.
 - **Residual blocker:** No-write-up policy does not add no-read-up,
   no-execute-up, identity, profile, registry, desktop/window-station,
   AppContainer/LPAC, installed LocalSystem, driver, or pre-execution isolation.

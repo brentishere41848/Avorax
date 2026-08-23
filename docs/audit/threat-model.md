@@ -1806,3 +1806,11 @@ step 233 when an agent-created Python bytecode cache contained the contract's
 compile-time-joined marker; the no-malware gate detected it. The cache was
 removed, the contract now runtime-joins fragments, and the complete retry plus
 the binary gate pass. No Defender exclusion or setting change was made.
+
+Checkpoint 2209 integration is closed through evidence `7fd8734`, PR `#61`,
+merge `d07220c`, exact merged-main CI `32646774829`, packages `32646774820`,
+guarded 18-path original-tree synchronization, destination focused/full
+checks, and an unchanged protected-vault invariant. This closes the mandatory-
+policy and verifier-binary integration evidence only; identity, read, profile,
+registry, desktop, AppContainer, installed LocalSystem, signed-driver,
+pre-execution, and production-accuracy limitations remain unchanged.

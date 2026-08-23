@@ -8371,3 +8371,25 @@ Updates page showed:
   MSI/EXE, Linux DEB/tar, macOS arm64/x64 DMG, required six-artifact
   consolidation, checksums, lockfile SBOM, and evidence upload. No publication
   job was triggered. Draft PR `#61` awaits evidence-head checks.
+
+## 2026-08-23 checkpoint 2209 integration closure
+
+- Evidence head `7fd8734f350585fdd29d9293d222329303b6d577` passes Avorax CI
+  `32646010950` and Desktop Packages `32646010931`, including all six native
+  artifacts, checksums, lockfile SBOM, and skipped beta publication.
+- PR `#61` was marked ready only after exact-head checks and normally merged
+  with head locking as `d07220c446e927d30918e08355a87f13291f7177`.
+  Exact merged-main CI `32646774829` and packages `32646774820` pass; package
+  publication is skipped.
+- All 18 merge paths passed Git-filtered `1076ac3` base-blob preconditions
+  before guarded synchronization to `Avorax-main`, then matched the merge blobs
+  and source raw SHA-256 values. No unrelated destination path changed.
+- Destination contracts `639/639`, mandatory policy `2/2`, complete
+  Authenticode `39` passed with `7` intentional ignores, no-malware gate,
+  strict Native/Local/Guard lint, locked release builds, two-host trust smoke,
+  and the full locked workspace pass. Native reports `475` passed and `7`
+  intentional ignores.
+- The final read-only vault audit remains exact at 16,072 files, zero
+  directories, 4,522,733 bytes, 5,357 each `.avoraxq`/`.json`/`.auth`, one
+  `.metadata_auth_key`, and zero pending. Checkpoint 2209 is closed; the full
+  antivirus goal remains active.

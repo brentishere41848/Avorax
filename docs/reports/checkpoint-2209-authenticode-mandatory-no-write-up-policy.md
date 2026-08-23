@@ -134,7 +134,7 @@ The final read-only protected-vault audit remains exact at `16,072` files,
 zero directories, `4,522,733` bytes, `5,357` each `.avoraxq`, `.json`, and
 `.auth`, one `.metadata_auth_key`, and zero pending. Hosted checks, PR/merge,
 merged-main evidence, guarded original-tree synchronization, and destination
-verification remain pending.
+verification remained pending at that local-evidence stage.
 
 ## Implementation-Head Hosted Evidence
 
@@ -145,7 +145,35 @@ Exact implementation head
 MSI/EXE, Linux x64 DEB/tar, macOS arm64/x64 DMG, required six-artifact
 consolidation, checksums, lockfile SBOM generation, and evidence upload. No
 release publication job was triggered. Draft PR `#61` remains unmerged while
-an evidence-only commit and its exact-head hosted checks are prepared.
+an evidence-only commit and its exact-head hosted checks are prepared at that
+implementation-evidence stage.
+
+## Integration Closure
+
+Evidence head `7fd8734f350585fdd29d9293d222329303b6d577` passes exact-head
+Avorax CI `32646010950` and Desktop Packages `32646010931`. Package contracts,
+Windows MSI/EXE, Linux DEB/tar, both macOS DMGs, six-artifact consolidation,
+checksums, lockfile SBOM, and evidence upload pass; the beta-publication job is
+explicitly skipped. PR `#61` was then marked ready and normally merged with an
+exact-head lock as `d07220c446e927d30918e08355a87f13291f7177`.
+
+Exact merged-main CI `32646774829` and Desktop Packages `32646774820` pass the
+same required jobs, with publication skipped. All `18` paths changed from
+merge base `1076ac3` passed Git-filtered old-blob preconditions before guarded
+synchronization to `C:\Users\Brent\Documents\Avorax-main`; afterward every
+destination path matched the merge blob and source raw SHA-256. The new report
+was required to be absent before creation. No unrelated destination path was
+changed.
+
+Destination source contracts pass `639/639`, mandatory-policy regressions
+`2/2`, complete Authenticode `39` passed with `7` intentional ignores, the
+no-malware-binaries gate, strict Native/Local/Guard Clippy, locked Local Core
+and Guard release builds, two-host embedded/catalog/hash-binding/no-execution
+smoke, and the full locked workspace pass. Native reports `475` passed with
+`7` intentional ignores. The final protected-vault audit remains exact at
+`16,072` files, zero directories, `4,522,733` bytes, `5,357` each payload,
+JSON, and auth record, one metadata-auth key, and zero pending. Checkpoint 2209
+is closed; the complete antivirus goal remains active.
 
 ## Limits
 
