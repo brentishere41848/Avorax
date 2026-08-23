@@ -279,6 +279,7 @@ $verifiedScope += " Additional verified boundary: Native Engine uses direct hand
 $verifiedScope += " Additional verified boundary: every Microsoft publisher-trust request requires the scanner's lowercase or uppercase 64-hex SHA-256, including strict helper IPC; no path-only publisher verdict API remains. The open candidate is snapshotted before and after trust using Windows volume/file identity, legacy file index, creation/write/change times, attributes, allocation/end size, link count, delete-pending, and directory state. Any query failure or drift is diagnostic and cannot become trust. Last-access time is intentionally excluded because reads may update it. Existing writable mappings and mutation after the verdict remain user-mode limitations."
 $verifiedScope += " Additional verified boundary: the release Authenticode helper Windows Job enforces and reads back an exact 12-second per-process user-CPU limit, one-process active limit, and 1 GiB per-process and whole-Job commit ceilings before untrusted candidate processing begins. Unhandled-exception dialogs are suppressed and kill-on-close remains mandatory. Any SetInformationJobObject, QueryInformationJobObject, or exact-limit mismatch is diagnostic and prevents trust work."
 $verifiedScope += " Additional verified boundary: before the suspended Authenticode helper is assigned and resumed, its Windows Job enables and exactly reads back the returned JOBOBJECT_BASIC_UI_RESTRICTIONS byte count plus all eight JOB_OBJECT_UILIMIT controls for foreign USER handles, clipboard reads and writes, system parameters, display settings, global atoms, desktop creation/switching, and ExitWindows. Any UI-limit configuration, query, returned-size, exact-flag, Job assignment, or resume failure is diagnostic and cannot become publisher trust."
+$verifiedScope += " Additional verified boundary: before process creation, release Local Core and Guard create a unique bounded private Authenticode desktop in the current process window station while the parent thread temporarily uses a read-back-verified low-integrity SecurityImpersonation token derived from the exact child primary token, require successful RevertToSelf plus exact name and byte-count read-back plus non-inheritable zero hook flags, pass that exact name through STARTUPINFOEXW.lpDesktop, and retain the desktop handle until child exit. Before token validation or stdin parsing, the child requires its exact startup desktop name to match its queried current-thread desktop. Desktop token duplication/application/read-back/revert, creation, encoding, name/flag/size read-back, process attachment, or child binding failure is diagnostic and cannot become publisher trust."
 $verifiedScope += " Additional verified boundary: Native Engine PUP category inference requires a bounded ASCII-alphanumeric token, so incidental path fragments such as .tmpuPoV59 cannot override stronger downloader/script evidence while an explicit PUP token remains classified as potentially unwanted."
 $verifiedScope = $verifiedScope.Replace(
   "Memory-mapped and post-verdict mutation, same-token helper least privilege, and pre-execution blocking are not claimed.",
@@ -306,7 +307,7 @@ $verifiedScope = $verifiedScope.Replace(
 )
 $verifiedScope = $verifiedScope.Replace(
   "The helper retains the parent SID, integrity level, desktop, and ordinary read access, so this is not an AppContainer, a separate desktop, or authenticated cross-identity IPC.",
-  "The helper retains the parent SID, profile/registry namespace, desktop, and ordinary read access, so low integrity is not an AppContainer, a separate desktop, or authenticated cross-identity IPC."
+  "The helper retains the parent SID, profile/registry namespace, current process window station, and ordinary read access, so low integrity is not an AppContainer or authenticated cross-identity IPC."
 )
 $verifiedScope = $verifiedScope.Replace(
   "Windows direct Authenticode boundary, unsigned/malformed, Microsoft-signed, and scanned-content hash-binding regressions",
@@ -386,7 +387,7 @@ $technicalLimits = $technicalLimits.Replace(
 )
 $technicalLimits = $technicalLimits.Replace(
   "the write-restricted Authenticode helper impersonation token keeps the parent SID, integrity level, desktop, and ordinary read access because WinRestrictedCodeSid is evaluated only for write access",
-  "the Authenticode helper keeps the parent SID, profile/registry namespace, desktop, and ordinary read access; its primary token is low integrity and its write-restricted impersonation token adds WinRestrictedCodeSid, but neither boundary changes identity or denies reads"
+  "the Authenticode helper keeps the parent SID, profile/registry namespace, current process window station, and ordinary read access; its primary token is low integrity and its write-restricted impersonation token adds WinRestrictedCodeSid, but neither token boundary changes identity or denies reads"
 )
 $technicalLimits = $technicalLimits.Replace(
   "the primary process token is privilege-stripped but not write-restricted and same-process code can technically call RevertToSelf",
@@ -398,7 +399,7 @@ $technicalLimits = $technicalLimits.Replace(
 )
 $technicalLimits = $technicalLimits.Replace(
   "no AppContainer, separate desktop, or cross-identity IPC is configured",
-  "Job UI limits constrain documented USER/clipboard/desktop-switch/global-atom/system-setting operations but do not create a private desktop or window station, change identity, remove filesystem/registry/network/read access, or constrain named kernel objects; no AppContainer, separate desktop, or cross-identity IPC is configured"
+  "Job UI limits supplement the private desktop by constraining documented USER/clipboard/desktop-switch/global-atom/system-setting operations but do not create a private window station, change identity, remove filesystem/registry/network/read access, or constrain named kernel objects; the private desktop isolates windows, hooks, menus, and desktop objects only within the current process window station, inherits that station's security descriptor, and does not isolate the station-wide clipboard/global atom table, SID, profile, registry namespace, filesystem/network/read access, or named kernel objects; bounded per-helper desktop heap consumption remains; no AppContainer or cross-identity IPC is configured"
 )
 $pathAdditions = @(
   "C:\Program Files\Git\cmd",
@@ -508,6 +509,7 @@ try {
     $results.Add((Invoke-Step "native-engine Authenticode helper isolation regressions" $repo $cargo @("test", "--manifest-path", "core\zentor_native_engine\Cargo.toml", "native_authenticode_helper", "--", "--test-threads=1")))
     $results.Add((Invoke-Step "native-engine Authenticode helper Job resource-limit regressions" $repo $cargo @("test", "--manifest-path", "core\zentor_native_engine\Cargo.toml", "native_authenticode_helper_job_limits", "--", "--test-threads=1")))
     $results.Add((Invoke-Step "native-engine Authenticode helper Job UI-restriction regressions" $repo $cargo @("test", "--manifest-path", "core\zentor_native_engine\Cargo.toml", "native_authenticode_helper_job_ui_restrictions", "--", "--test-threads=1")))
+    $results.Add((Invoke-Step "native-engine Authenticode helper private-desktop regressions" $repo $cargo @("test", "--manifest-path", "core\zentor_native_engine\Cargo.toml", "native_authenticode_helper_private_desktop", "--", "--test-threads=1")))
     $results.Add((Invoke-Step "native-engine Authenticode helper restricted-thread-token regressions" $repo $cargo @("test", "--manifest-path", "core\zentor_native_engine\Cargo.toml", "native_authenticode_helper_restricted_thread_token", "--", "--test-threads=1")))
     $results.Add((Invoke-Step "native-engine Authenticode helper restricted-process-token regressions" $repo $cargo @("test", "--manifest-path", "core\zentor_native_engine\Cargo.toml", "native_authenticode_helper_restricted_process", "--", "--test-threads=1")))
     $results.Add((Invoke-Step "native-engine Authenticode helper low-integrity-primary-token regressions" $repo $cargo @("test", "--manifest-path", "core\zentor_native_engine\Cargo.toml", "native_authenticode_helper_low_integrity", "--", "--test-threads=1")))

@@ -119,6 +119,37 @@ Evidence-head checks, normal PR `#63` merge, merged-main evidence, guarded
 original-tree synchronization, and destination verification remain pending and
 are not claimed at this implementation-evidence stage.
 
+## Integration Closure
+
+Evidence head `937895530d168c579057fd954d35433ed8c80a85` passes exact-head
+Avorax CI `32655933103` and Desktop Packages `32655933112`. Every required CI
+job, Windows MSI/setup EXE, Linux DEB/tar, macOS x64/arm64 DMGs, administrative
+MSI extraction, six-artifact consolidation, checksums, lockfile SBOM,
+dependency/license evidence, and upload pass. Publication is skipped.
+
+PR `#63` normally merges as `33cafa59953d507cd17649f15e83489e67c32e71`.
+Exact merged-main CI `32656681010` and Desktop Packages `32656681007` pass the
+same required jobs, again with publication skipped.
+
+All `12` paths changed from base `425e663` passed Git-filtered old-blob
+preconditions before synchronization to `C:\Users\Brent\Documents\Avorax-main`.
+The new report was required to be absent. An initial archive extraction wrote
+canonically exact content but converted text to CRLF, so the raw-blob check
+failed visibly. A bounded in-memory `git cat-file` export then wrote only the 12
+validated merge blobs; every destination raw SHA-1 matches merge `33cafa5`.
+
+Destination source contracts pass `641/641`; Job UI restrictions pass `2/2`;
+complete Authenticode passes `43` with `8` intentional child-fixture ignores.
+Strict Native/Local/Guard Clippy, locked Local Core/Guard release builds, the
+two-host trust smoke, no-malware gate, and both locked workspace variants pass.
+Native reports `479` passed with `8` ignored and compiler `6/6` in each. Cargo
+and Flutter lockfiles match the merge exactly.
+
+The protected vault remains exactly `16,072` files, zero directories,
+`4,522,733` bytes, `5,357` each `.avoraxq`, `.json`, and `.auth`, one
+`.metadata_auth_key`, and zero pending. Checkpoint 2211 is closed; the complete
+antivirus goal remains active.
+
 ## Honest Boundary
 
 The controls restrict foreign USER handles, clipboard reads/writes, system

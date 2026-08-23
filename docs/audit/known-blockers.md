@@ -2137,3 +2137,40 @@ enforcement, or pre-execution blocking is claimed.
   UI limits do not change identity/profile, deny filesystem/registry/network
   reads, constrain named kernel objects, prove installed LocalSystem behavior,
   or provide AppContainer, signed-driver, or pre-execution enforcement.
+- **Integration closure:** Evidence `9378955`, PR `#63`, merge `33cafa5`,
+  merged-main CI `32656681010`, packages `32656681007`, exact 12-path guarded
+  synchronization, destination focused/full checks, exact lockfiles, and the
+  unchanged protected vault close checkpoint 2211. Publication was skipped.
+  The residual limitations above remain project-level work, not unreported
+  checkpoint failures.
+
+## Checkpoint 2212 Authenticode Private Desktop
+
+- **Scripted boundary:** Every release helper launch creates a unique bounded
+  `CreateDesktopW` desktop in the current process window station while temporarily
+  applying a read-back-verified low-integrity `SecurityImpersonation` token derived
+  from the exact child primary token. Successful `RevertToSelf`, exact name and
+  byte-count read-back, zero `UOI_FLAGS` inheritance/hook state,
+  `STARTUPINFOEXW.lpDesktop`, handle lifetime, and child actual-desktop binding are
+  mandatory before candidate input. After confirmed child exit, `CloseDesktop`
+  success is checked; RAII remains the failure-path fallback.
+- **Fail-visible policy:** Desktop create/query/size/name/flag/attachment/binding
+  and token duplicate/apply/read-back/revert errors prevent publisher trust. The
+  first medium-integrity creation attempt failed with loader status `0xC0000142`;
+  no broad DACL, default, or interactive desktop retry exists.
+  Benign child and adversarial tests pass, source contracts pass `642/642`, and
+  final review found and repaired unchecked `CloseDesktop` result handling, and
+  the definitive retry verifier plus independent validator pass `242/242` in `473.5s`.
+  Five malformed report copies are rejected. Complete Authenticode, both locked
+  workspaces, strict lint/release/two-host smoke, Flutter, no-malware, dependency,
+  exact-lockfile, and protected-vault checks pass locally. Hosted exact-head,
+  integration, destination, and installed evidence remain pending. Exact
+  implementation `2612b7a` passes CI `32660616609` and package push/PR
+  `32660604610`/`32660616617`, including six artifacts, checksums, lockfile SBOM,
+  administrative MSI extraction, and skipped publication.
+- **Residual blocker:** This is not a private window station. `CreateDesktopW`
+  inherits station security and does not isolate station-wide clipboard/global
+  atoms, identity, profile, registry, filesystem/network/read access, or named
+  kernel objects. Desktop heap consumption remains bounded only by helper lifetime
+  and existing concurrency. AppContainer/cross-identity IPC, installed LocalSystem,
+  signed-driver, and pre-execution evidence remain separate blockers.
