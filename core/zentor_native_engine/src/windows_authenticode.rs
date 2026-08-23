@@ -47,11 +47,13 @@ use windows_sys::Win32::Security::WinTrust::{
     WTD_STATEACTION_CLOSE, WTD_STATEACTION_VERIFY, WTD_UICONTEXT_EXECUTE, WTD_UI_NONE,
 };
 use windows_sys::Win32::Security::{
-    CreateRestrictedToken, DuplicateTokenEx, GetTokenInformation, LookupPrivilegeValueW,
-    RevertToSelf, SecurityImpersonation, TokenImpersonation, TokenImpersonationLevel, TokenPrimary,
-    TokenPrivileges, TokenType, DISABLE_MAX_PRIVILEGE, LUID_AND_ATTRIBUTES, SECURITY_ATTRIBUTES,
-    SE_CHANGE_NOTIFY_NAME, SE_PRIVILEGE_ENABLED, TOKEN_ASSIGN_PRIMARY, TOKEN_DUPLICATE,
-    TOKEN_IMPERSONATE, TOKEN_PRIVILEGES, TOKEN_QUERY,
+    CreateRestrictedToken, CreateWellKnownSid, DuplicateTokenEx, GetLengthSid, GetTokenInformation,
+    IsValidSid, LookupPrivilegeValueW, RevertToSelf, SecurityImpersonation, TokenImpersonation,
+    TokenImpersonationLevel, TokenPrimary, TokenPrivileges, TokenRestrictedSids, TokenType,
+    WinRestrictedCodeSid, DISABLE_MAX_PRIVILEGE, LUID_AND_ATTRIBUTES, SECURITY_ATTRIBUTES,
+    SECURITY_MAX_SID_SIZE, SE_CHANGE_NOTIFY_NAME, SE_PRIVILEGE_ENABLED, SID, SID_AND_ATTRIBUTES,
+    TOKEN_ASSIGN_PRIMARY, TOKEN_DUPLICATE, TOKEN_GROUPS, TOKEN_IMPERSONATE, TOKEN_PRIVILEGES,
+    TOKEN_QUERY, WRITE_RESTRICTED,
 };
 use windows_sys::Win32::Storage::FileSystem::{
     FileBasicInfo, FileIdInfo, FileStandardInfo, GetFileInformationByHandle,
@@ -67,6 +69,9 @@ use windows_sys::Win32::System::JobObjects::{
     JOB_OBJECT_LIMIT_PROCESS_MEMORY, JOB_OBJECT_LIMIT_PROCESS_TIME,
 };
 use windows_sys::Win32::System::Pipes::CreatePipe;
+use windows_sys::Win32::System::SystemServices::{
+    SE_GROUP_ENABLED, SE_GROUP_ENABLED_BY_DEFAULT, SE_GROUP_MANDATORY,
+};
 use windows_sys::Win32::System::Threading::{
     CreateProcessAsUserW, DeleteProcThreadAttributeList, GetCurrentProcess, GetCurrentThread,
     GetExitCodeProcess, InitializeProcThreadAttributeList, OpenProcessToken, OpenThreadToken,
@@ -98,6 +103,11 @@ const MAX_AUTHENTICODE_HELPER_ERROR_CHARS: usize = 4_096;
 const MAX_AUTHENTICODE_HOST_EXE_BYTES: u64 = 256 * 1024 * 1024;
 const MAX_AUTHENTICODE_HELPER_TOKEN_INFO_BYTES: usize = 64 * 1024;
 const MAX_AUTHENTICODE_HELPER_TOKEN_PRIVILEGES: usize = 256;
+const MAX_AUTHENTICODE_HELPER_RESTRICTED_SIDS: usize = 16;
+const AUTHENTICODE_HELPER_RESTRICTED_SID_ATTRIBUTES: u32 =
+    (SE_GROUP_MANDATORY | SE_GROUP_ENABLED_BY_DEFAULT | SE_GROUP_ENABLED) as u32;
+const AUTHENTICODE_HELPER_SID_STORAGE_WORDS: usize =
+    (SECURITY_MAX_SID_SIZE as usize).div_ceil(size_of::<usize>());
 const MAX_AUTHENTICODE_HELPER_ATTRIBUTE_LIST_BYTES: usize = 64 * 1024;
 const AUTHENTICODE_HELPER_TERMINATION_EXIT_CODE: u32 = 0xA710_0001;
 
@@ -125,6 +135,66 @@ struct AuthenticodeHelperOutput {
     status: ExitStatus,
     stdout: Vec<u8>,
     stderr: Vec<u8>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct TokenSidEvidence {
+    sid: Vec<u8>,
+    attributes: u32,
+}
+
+struct RestrictedCodeSid {
+    storage: [usize; AUTHENTICODE_HELPER_SID_STORAGE_WORDS],
+    length: usize,
+}
+
+impl RestrictedCodeSid {
+    fn create() -> Result<Self> {
+        let mut sid = Self {
+            storage: [0; AUTHENTICODE_HELPER_SID_STORAGE_WORDS],
+            length: SECURITY_MAX_SID_SIZE as usize,
+        };
+        let mut length = sid.length as u32;
+        anyhow::ensure!(
+            unsafe {
+                CreateWellKnownSid(
+                    WinRestrictedCodeSid,
+                    null_mut(),
+                    sid.as_mut_ptr(),
+                    &mut length,
+                )
+            } != 0,
+            "unable to create the Authenticode helper Restricted Code SID: {}",
+            std::io::Error::last_os_error()
+        );
+        sid.length = length as usize;
+        anyhow::ensure!(
+            sid.length >= offset_of!(SID, SubAuthority)
+                && sid.length <= SECURITY_MAX_SID_SIZE as usize,
+            "AuthentiCode helper Restricted Code SID length is outside its bound"
+        );
+        anyhow::ensure!(
+            unsafe { IsValidSid(sid.as_ptr()) } != 0,
+            "AuthentiCode helper Restricted Code SID is invalid"
+        );
+        anyhow::ensure!(
+            unsafe { GetLengthSid(sid.as_ptr()) } as usize == sid.length,
+            "AuthentiCode helper Restricted Code SID length changed after validation"
+        );
+        Ok(sid)
+    }
+
+    fn as_ptr(&self) -> *mut c_void {
+        self.storage.as_ptr().cast_mut().cast()
+    }
+
+    fn as_mut_ptr(&mut self) -> *mut c_void {
+        self.storage.as_mut_ptr().cast()
+    }
+
+    fn as_bytes(&self) -> &[u8] {
+        unsafe { std::slice::from_raw_parts(self.storage.as_ptr().cast::<u8>(), self.length) }
+    }
 }
 
 struct OwnedToken(HANDLE);
@@ -333,12 +403,12 @@ fn validate_authenticode_child_handle_list(handles: &[HANDLE; 3]) -> Result<()> 
     Ok(())
 }
 
-struct PrivilegeStrippedThreadToken {
+struct RestrictedAuthenticodeThreadToken {
     token: OwnedToken,
     active: bool,
 }
 
-impl PrivilegeStrippedThreadToken {
+impl RestrictedAuthenticodeThreadToken {
     fn enter() -> Result<Self> {
         anyhow::ensure!(
             open_current_thread_token()?.is_none(),
@@ -382,33 +452,15 @@ impl PrivilegeStrippedThreadToken {
             "unable to duplicate Authenticode helper impersonation token",
         )?;
 
-        let mut restricted_token = null_mut();
-        anyhow::ensure!(
-            unsafe {
-                CreateRestrictedToken(
-                    impersonation_token.0,
-                    DISABLE_MAX_PRIVILEGE,
-                    0,
-                    null(),
-                    0,
-                    null(),
-                    0,
-                    null(),
-                    &mut restricted_token,
-                )
-            } != 0,
-            "unable to create privilege-stripped Authenticode helper token: {}",
-            std::io::Error::last_os_error()
-        );
-        let restricted_token = OwnedToken::from_raw(
-            restricted_token,
-            "unable to create privilege-stripped Authenticode helper token",
+        let restricted_token = create_write_restricted_token(
+            impersonation_token.0,
+            "unable to create the Authenticode helper restricted impersonation token",
         )?;
-        validate_privilege_stripped_impersonation_token(restricted_token.0)?;
+        validate_restricted_authenticode_impersonation_token(restricted_token.0)?;
 
         anyhow::ensure!(
             unsafe { SetThreadToken(null(), restricted_token.0) } != 0,
-            "unable to apply privilege-stripped Authenticode helper token: {}",
+            "unable to apply write-restricted Authenticode helper token: {}",
             std::io::Error::last_os_error()
         );
         let current = match open_current_thread_token() {
@@ -416,22 +468,22 @@ impl PrivilegeStrippedThreadToken {
             Ok(None) => {
                 let cleanup = revert_authenticode_helper_thread_token();
                 anyhow::bail!(
-                    "privilege-stripped Authenticode helper token was not present after assignment; revert: {}",
+                    "restricted Authenticode helper token was not present after assignment; revert: {}",
                     helper_result_summary(cleanup)
                 );
             }
             Err(error) => {
                 let cleanup = revert_authenticode_helper_thread_token();
                 anyhow::bail!(
-                    "unable to read back privilege-stripped Authenticode helper token: {error:#}; revert: {}",
+                    "unable to read back restricted Authenticode helper token: {error:#}; revert: {}",
                     helper_result_summary(cleanup)
                 );
             }
         };
-        if let Err(error) = validate_privilege_stripped_impersonation_token(current.0) {
+        if let Err(error) = validate_restricted_authenticode_impersonation_token(current.0) {
             let cleanup = revert_authenticode_helper_thread_token();
             anyhow::bail!(
-                "privilege-stripped Authenticode helper token read-back failed: {error:#}; revert: {}",
+                "restricted Authenticode helper token read-back failed: {error:#}; revert: {}",
                 helper_result_summary(cleanup)
             );
         }
@@ -452,13 +504,13 @@ impl PrivilegeStrippedThreadToken {
             (Err(error), Ok(())) => Err(error),
             (Ok(_), Err(revert_error)) => Err(revert_error),
             (Err(error), Err(revert_error)) => Err(anyhow::anyhow!(
-                "AuthentiCode verification failed: {error:#}; additionally unable to revert privilege-stripped helper token: {revert_error:#}"
+                "AuthentiCode verification failed: {error:#}; additionally unable to revert restricted helper token: {revert_error:#}"
             )),
         }
     }
 }
 
-impl Drop for PrivilegeStrippedThreadToken {
+impl Drop for RestrictedAuthenticodeThreadToken {
     fn drop(&mut self) {
         let _keep_token_alive = &self.token;
         if self.active {
@@ -488,7 +540,7 @@ fn open_current_thread_token() -> Result<Option<OwnedToken>> {
 fn revert_authenticode_helper_thread_token() -> Result<()> {
     anyhow::ensure!(
         unsafe { RevertToSelf() } != 0,
-        "unable to revert privilege-stripped Authenticode helper token: {}",
+        "unable to revert restricted Authenticode helper token: {}",
         std::io::Error::last_os_error()
     );
     Ok(())
@@ -517,7 +569,7 @@ fn query_token_scalar<T: Copy>(token: HANDLE, class: i32, label: &str) -> Result
     Ok(unsafe { value.assume_init() })
 }
 
-fn validate_privilege_stripped_impersonation_token(token: HANDLE) -> Result<()> {
+fn validate_restricted_authenticode_impersonation_token(token: HANDLE) -> Result<()> {
     let token_type: i32 = query_token_scalar(token, TokenType, "type")?;
     anyhow::ensure!(
         token_type == TokenImpersonation,
@@ -529,7 +581,7 @@ fn validate_privilege_stripped_impersonation_token(token: HANDLE) -> Result<()> 
         "AuthentiCode helper token impersonation level mismatch"
     );
 
-    validate_privilege_stripped_token_privileges(token)
+    validate_restricted_authenticode_token(token)
 }
 
 fn create_privilege_stripped_primary_token() -> Result<OwnedToken> {
@@ -564,15 +616,42 @@ fn create_privilege_stripped_primary_token() -> Result<OwnedToken> {
                 &mut restricted_token,
             )
         } != 0,
-        "unable to create privilege-stripped Authenticode helper primary token: {}",
+        "unable to create the Authenticode helper privilege-stripped primary token: {}",
         std::io::Error::last_os_error()
     );
     let restricted_token = OwnedToken::from_raw(
         restricted_token,
-        "unable to create privilege-stripped Authenticode helper primary token",
+        "unable to create the Authenticode helper privilege-stripped primary token",
     )?;
     validate_privilege_stripped_primary_token(restricted_token.0)?;
     Ok(restricted_token)
+}
+
+fn create_write_restricted_token(existing: HANDLE, operation: &str) -> Result<OwnedToken> {
+    let restricted_code_sid = RestrictedCodeSid::create()?;
+    let sid_to_restrict = SID_AND_ATTRIBUTES {
+        Sid: restricted_code_sid.as_ptr(),
+        Attributes: 0,
+    };
+    let mut restricted_token = null_mut();
+    anyhow::ensure!(
+        unsafe {
+            CreateRestrictedToken(
+                existing,
+                DISABLE_MAX_PRIVILEGE | WRITE_RESTRICTED,
+                0,
+                null(),
+                0,
+                null(),
+                1,
+                &sid_to_restrict,
+                &mut restricted_token,
+            )
+        } != 0,
+        "{operation}: {}",
+        std::io::Error::last_os_error()
+    );
+    OwnedToken::from_raw(restricted_token, operation)
 }
 
 fn validate_current_process_privilege_stripped_primary_token() -> Result<()> {
@@ -596,6 +675,13 @@ fn validate_privilege_stripped_primary_token(token: HANDLE) -> Result<()> {
         "AuthentiCode helper process token is not a primary token"
     );
     validate_privilege_stripped_token_privileges(token)
+}
+
+fn validate_restricted_authenticode_token(token: HANDLE) -> Result<()> {
+    validate_privilege_stripped_token_privileges(token)?;
+    let restricted_sids = query_token_restricted_sids(token)?;
+    let expected = RestrictedCodeSid::create()?;
+    validate_authenticode_restricted_sid_evidence(&restricted_sids, expected.as_bytes())
 }
 
 fn validate_privilege_stripped_token_privileges(token: HANDLE) -> Result<()> {
@@ -664,6 +750,145 @@ fn query_token_privileges(token: HANDLE) -> Result<Vec<LUID_AND_ATTRIBUTES>> {
     );
     let entries = unsafe { std::slice::from_raw_parts(privileges.Privileges.as_ptr(), count) };
     Ok(entries.to_vec())
+}
+
+fn query_token_restricted_sids(token: HANDLE) -> Result<Vec<TokenSidEvidence>> {
+    let mut required = 0u32;
+    unsafe { SetLastError(ERROR_SUCCESS) };
+    let first =
+        unsafe { GetTokenInformation(token, TokenRestrictedSids, null_mut(), 0, &mut required) };
+    let first_error = unsafe { GetLastError() };
+    anyhow::ensure!(
+        first == 0 && first_error == ERROR_INSUFFICIENT_BUFFER,
+        "unable to size Authenticode helper restricting SIDs: {}",
+        std::io::Error::from_raw_os_error(first_error as i32)
+    );
+    let required = required as usize;
+    anyhow::ensure!(
+        required >= size_of::<TOKEN_GROUPS>()
+            && required <= MAX_AUTHENTICODE_HELPER_TOKEN_INFO_BYTES,
+        "AuthentiCode helper restricting SID data is outside its byte bound"
+    );
+    let words = required.div_ceil(size_of::<usize>());
+    let mut buffer = vec![0usize; words];
+    let mut returned = 0u32;
+    anyhow::ensure!(
+        unsafe {
+            GetTokenInformation(
+                token,
+                TokenRestrictedSids,
+                buffer.as_mut_ptr().cast::<c_void>(),
+                required as u32,
+                &mut returned,
+            )
+        } != 0,
+        "unable to query Authenticode helper restricting SIDs: {}",
+        std::io::Error::last_os_error()
+    );
+    let returned = returned as usize;
+    anyhow::ensure!(
+        returned >= size_of::<TOKEN_GROUPS>() && returned <= required,
+        "AuthentiCode helper restricting SID data returned an invalid size"
+    );
+
+    let groups = unsafe { &*buffer.as_ptr().cast::<TOKEN_GROUPS>() };
+    let count = groups.GroupCount as usize;
+    anyhow::ensure!(
+        count > 0 && count <= MAX_AUTHENTICODE_HELPER_RESTRICTED_SIDS,
+        "AuthentiCode helper restricting SID count is outside 1..={} entries",
+        MAX_AUTHENTICODE_HELPER_RESTRICTED_SIDS
+    );
+    let entries_end = count
+        .checked_mul(size_of::<SID_AND_ATTRIBUTES>())
+        .and_then(|bytes| bytes.checked_add(offset_of!(TOKEN_GROUPS, Groups)))
+        .context("AuthentiCode helper restricting SID entry size overflow")?;
+    anyhow::ensure!(
+        entries_end <= returned,
+        "AuthentiCode helper restricting SID count exceeds returned data"
+    );
+    let entries = unsafe {
+        std::slice::from_raw_parts(
+            buffer
+                .as_ptr()
+                .cast::<u8>()
+                .add(offset_of!(TOKEN_GROUPS, Groups))
+                .cast::<SID_AND_ATTRIBUTES>(),
+            count,
+        )
+    };
+    let buffer_start = buffer.as_ptr() as usize;
+    let buffer_end = buffer_start
+        .checked_add(returned)
+        .context("AuthentiCode helper restricting SID buffer size overflow")?;
+    let minimum_sid_bytes = offset_of!(SID, SubAuthority);
+    let mut evidence = Vec::with_capacity(count);
+    for entry in entries {
+        let sid_start = entry.Sid as usize;
+        let sid_header_end = sid_start
+            .checked_add(minimum_sid_bytes)
+            .context("AuthentiCode helper restricting SID header overflow")?;
+        anyhow::ensure!(
+            sid_start >= buffer_start && sid_header_end <= buffer_end,
+            "AuthentiCode helper restricting SID pointer is outside returned data"
+        );
+        let sub_authority_count = unsafe {
+            entry
+                .Sid
+                .cast::<u8>()
+                .add(offset_of!(SID, SubAuthorityCount))
+                .read()
+        } as usize;
+        let sid_length = sub_authority_count
+            .checked_mul(size_of::<u32>())
+            .and_then(|bytes| bytes.checked_add(minimum_sid_bytes))
+            .context("AuthentiCode helper restricting SID length overflow")?;
+        anyhow::ensure!(
+            sid_length >= minimum_sid_bytes && sid_length <= SECURITY_MAX_SID_SIZE as usize,
+            "AuthentiCode helper restricting SID length is outside its byte bound"
+        );
+        let sid_end = sid_start
+            .checked_add(sid_length)
+            .context("AuthentiCode helper restricting SID range overflow")?;
+        anyhow::ensure!(
+            sid_end <= buffer_end,
+            "AuthentiCode helper restricting SID exceeds returned data"
+        );
+        anyhow::ensure!(
+            unsafe { IsValidSid(entry.Sid) } != 0,
+            "AuthentiCode helper restricting SID is invalid"
+        );
+        anyhow::ensure!(
+            unsafe { GetLengthSid(entry.Sid) } as usize == sid_length,
+            "AuthentiCode helper restricting SID length changed after validation"
+        );
+        let sid = unsafe { std::slice::from_raw_parts(entry.Sid.cast::<u8>(), sid_length) };
+        evidence.push(TokenSidEvidence {
+            sid: sid.to_vec(),
+            attributes: entry.Attributes,
+        });
+    }
+    Ok(evidence)
+}
+
+fn validate_authenticode_restricted_sid_evidence(
+    entries: &[TokenSidEvidence],
+    expected_restricted_code_sid: &[u8],
+) -> Result<()> {
+    anyhow::ensure!(
+        entries.len() == 1,
+        "AuthentiCode helper token must contain exactly one restricting SID"
+    );
+    anyhow::ensure!(
+        entries[0].attributes == AUTHENTICODE_HELPER_RESTRICTED_SID_ATTRIBUTES,
+        "AuthentiCode helper restricting SID attributes must be exactly 0x{:08X}, found 0x{:08X}",
+        AUTHENTICODE_HELPER_RESTRICTED_SID_ATTRIBUTES,
+        entries[0].attributes
+    );
+    anyhow::ensure!(
+        entries[0].sid == expected_restricted_code_sid,
+        "AuthentiCode helper token does not contain the exact Restricted Code SID"
+    );
+    Ok(())
 }
 
 fn validate_enabled_authenticode_privileges(
@@ -821,6 +1046,14 @@ struct AuthenticodeFileSnapshot {
     directory: bool,
 }
 
+struct PreparedAuthenticodeVerification {
+    path: PathBuf,
+    expected_sha256: String,
+    path_wide: Vec<u16>,
+    file: File,
+    before: AuthenticodeFileSnapshot,
+}
+
 pub(crate) fn has_valid_microsoft_signature(path: &Path, expected_sha256: &str) -> Result<bool> {
     if cfg!(debug_assertions) {
         return verify_direct_microsoft_signature(path, expected_sha256);
@@ -829,26 +1062,54 @@ pub(crate) fn has_valid_microsoft_signature(path: &Path, expected_sha256: &str) 
 }
 
 fn verify_direct_microsoft_signature(path: &Path, expected_sha256: &str) -> Result<bool> {
+    verify_prepared_microsoft_signature(prepare_microsoft_signature_verification(
+        path,
+        expected_sha256,
+    )?)
+}
+
+fn prepare_microsoft_signature_verification(
+    path: &Path,
+    expected_sha256: &str,
+) -> Result<PreparedAuthenticodeVerification> {
     validate_expected_sha256(expected_sha256)?;
     let path_wide = absolute_path_wide(path)?;
-    let mut file = open_authenticode_candidate(path)?;
+    let file = open_authenticode_candidate(path)?;
     enforce_content_binding_size(path, &file)?;
     let before = snapshot_authenticode_file(path, &file)?;
-    let verdict = match verify_open_file(path, &path_wide, &mut file, expected_sha256) {
+    Ok(PreparedAuthenticodeVerification {
+        path: path.to_path_buf(),
+        expected_sha256: expected_sha256.to_string(),
+        path_wide,
+        file,
+        before,
+    })
+}
+
+fn verify_prepared_microsoft_signature(prepared: PreparedAuthenticodeVerification) -> Result<bool> {
+    let PreparedAuthenticodeVerification {
+        path,
+        expected_sha256,
+        path_wide,
+        mut file,
+        before,
+    } = prepared;
+    let verdict = match verify_open_file(&path, &path_wide, &mut file, &expected_sha256) {
         Ok(true) => Ok(true),
-        Ok(false) => verify_catalog_signatures(path, &path_wide, &mut file, expected_sha256),
+        Ok(false) => verify_catalog_signatures(&path, &path_wide, &mut file, &expected_sha256),
         Err(error) => Err(error),
     };
-    let after = snapshot_authenticode_file(path, &file);
-    combine_verdict_and_file_snapshot(path, verdict, before, after)
+    let after = snapshot_authenticode_file(&path, &file);
+    combine_verdict_and_file_snapshot(&path, verdict, before, after)
 }
 
 pub(crate) fn run_authenticode_helper_stdio() -> Result<()> {
     validate_current_process_privilege_stripped_primary_token()?;
-    run_authenticode_stdio(|path, expected_sha256| {
-        let restricted = PrivilegeStrippedThreadToken::enter()?;
-        restricted.finish(verify_direct_microsoft_signature(path, expected_sha256))
-    })
+    let restricted = RestrictedAuthenticodeThreadToken::enter()?;
+    let (nonce, prepared) = restricted.finish(read_and_prepare_authenticode_helper_request())?;
+    let outcome = prepared.and_then(verify_prepared_microsoft_signature);
+    let restricted = RestrictedAuthenticodeThreadToken::enter()?;
+    restricted.finish(write_authenticode_helper_response(nonce, outcome))
 }
 
 pub(crate) fn run_authenticode_client_self_test_stdio() -> Result<()> {
@@ -860,6 +1121,19 @@ fn run_authenticode_stdio(verify: impl FnOnce(&Path, &str) -> Result<bool>) -> R
     let nonce = validate_authenticode_helper_request(&request)?;
     let path = PathBuf::from(OsString::from_wide(&request.path_utf16));
     let outcome = verify(&path, &request.expected_sha256);
+    write_authenticode_helper_response(nonce, outcome)
+}
+
+fn read_and_prepare_authenticode_helper_request(
+) -> Result<(String, Result<PreparedAuthenticodeVerification>)> {
+    let request = read_authenticode_helper_request(std::io::stdin().lock())?;
+    let nonce = validate_authenticode_helper_request(&request)?;
+    let path = PathBuf::from(OsString::from_wide(&request.path_utf16));
+    let prepared = prepare_microsoft_signature_verification(&path, &request.expected_sha256);
+    Ok((nonce, prepared))
+}
+
+fn write_authenticode_helper_response(nonce: String, outcome: Result<bool>) -> Result<()> {
     let response = match outcome {
         Ok(trusted) => AuthenticodeHelperResponse {
             schema_version: AUTHENTICODE_HELPER_SCHEMA_VERSION,
@@ -2619,7 +2893,13 @@ mod tests {
             Duration::from_secs(5),
         )
         .unwrap();
-        assert!(output.status.success());
+        assert!(
+            output.status.success(),
+            "restricted-primary child failed with {:?}; stdout: {}; stderr: {}",
+            output.status,
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
         assert!(output.stderr.is_empty());
         assert!(String::from_utf8(output.stdout)
             .unwrap()
@@ -2631,6 +2911,107 @@ mod tests {
     fn authenticode_restricted_primary_child_fixture() {
         validate_current_process_privilege_stripped_primary_token().unwrap();
         println!("AVORAX_RESTRICTED_PRIMARY_TOKEN_OK");
+    }
+
+    #[test]
+    fn native_authenticode_helper_write_restricted_access_denies_ordinary_file_mutation() {
+        let directory = tempfile::tempdir().unwrap();
+        let path = directory.path().join("ordinary-user-write-target.txt");
+        let original = b"benign write-restriction fixture\n";
+        fs::write(&path, original).unwrap();
+        let request = helper_request(&path, fixture_sha256(&path));
+        let encoded = serde_json::to_vec(&request).unwrap();
+        let application = std::env::current_exe().unwrap();
+        let arguments = [
+            "--ignored",
+            "--exact",
+            "windows_authenticode::tests::authenticode_write_restricted_child_fixture",
+            "--nocapture",
+            "--test-threads=1",
+        ];
+
+        let output = run_bounded_authenticode_helper(
+            &application,
+            &arguments,
+            encoded,
+            Duration::from_secs(5),
+        )
+        .unwrap();
+        assert!(
+            output.status.success(),
+            "write-restricted child failed with {:?}; stdout: {}; stderr: {}",
+            output.status,
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
+        assert!(output.stderr.is_empty());
+        assert!(String::from_utf8(output.stdout)
+            .unwrap()
+            .contains("AVORAX_WRITE_RESTRICTED_MUTATION_DENIED"));
+        assert_eq!(fs::read(path).unwrap(), original);
+    }
+
+    #[test]
+    #[ignore = "isolated child fixture invoked by the write-restriction regression"]
+    fn authenticode_write_restricted_child_fixture() {
+        validate_current_process_privilege_stripped_primary_token().unwrap();
+        let restricted = RestrictedAuthenticodeThreadToken::enter().unwrap();
+        let operation = (|| -> Result<()> {
+            let request = read_authenticode_helper_request(std::io::stdin().lock())?;
+            validate_authenticode_helper_request(&request)?;
+            let path = PathBuf::from(OsString::from_wide(&request.path_utf16));
+            anyhow::ensure!(
+                fixture_sha256(&path) == request.expected_sha256,
+                "benign write-restriction fixture changed before write-open"
+            );
+            let error = OpenOptions::new().write(true).open(&path).expect_err(
+                "write-restricted helper unexpectedly opened an ordinary file for write",
+            );
+            anyhow::ensure!(
+                error.kind() == std::io::ErrorKind::PermissionDenied,
+                "write-restricted helper returned an unexpected write-open error: {error}"
+            );
+            anyhow::ensure!(
+                fixture_sha256(&path) == request.expected_sha256,
+                "benign write-restriction fixture changed after denied write-open"
+            );
+            println!("AVORAX_WRITE_RESTRICTED_MUTATION_DENIED");
+            Ok(())
+        })();
+        restricted.finish(operation).unwrap();
+    }
+
+    #[test]
+    fn native_authenticode_helper_write_restricted_sid_policy_is_exact() {
+        let expected = RestrictedCodeSid::create().unwrap();
+        let valid = TokenSidEvidence {
+            sid: expected.as_bytes().to_vec(),
+            attributes: AUTHENTICODE_HELPER_RESTRICTED_SID_ATTRIBUTES,
+        };
+        validate_authenticode_restricted_sid_evidence(
+            std::slice::from_ref(&valid),
+            expected.as_bytes(),
+        )
+        .unwrap();
+        assert!(validate_authenticode_restricted_sid_evidence(&[], expected.as_bytes()).is_err());
+        assert!(validate_authenticode_restricted_sid_evidence(
+            &[valid.clone(), valid.clone()],
+            expected.as_bytes(),
+        )
+        .is_err());
+        let mut wrong_sid = valid.clone();
+        *wrong_sid.sid.last_mut().unwrap() ^= 1;
+        assert!(
+            validate_authenticode_restricted_sid_evidence(&[wrong_sid], expected.as_bytes(),)
+                .is_err()
+        );
+        let mut wrong_attributes = valid;
+        wrong_attributes.attributes = 0;
+        assert!(validate_authenticode_restricted_sid_evidence(
+            &[wrong_attributes],
+            expected.as_bytes(),
+        )
+        .is_err());
     }
 
     #[test]
@@ -2731,9 +3112,9 @@ mod tests {
     fn native_authenticode_helper_restricted_thread_token_is_verified_and_reverted() {
         assert!(open_current_thread_token().unwrap().is_none());
 
-        let restricted = PrivilegeStrippedThreadToken::enter().unwrap();
+        let restricted = RestrictedAuthenticodeThreadToken::enter().unwrap();
         let current = open_current_thread_token().unwrap().unwrap();
-        validate_privilege_stripped_impersonation_token(current.0).unwrap();
+        validate_restricted_authenticode_impersonation_token(current.0).unwrap();
         let error = restricted
             .finish::<()>(Err(anyhow::anyhow!(
                 "benign synthetic verification failure"
@@ -2743,7 +3124,7 @@ mod tests {
         assert!(error.contains("benign synthetic verification failure"));
         assert!(open_current_thread_token().unwrap().is_none());
 
-        let restricted = PrivilegeStrippedThreadToken::enter().unwrap();
+        let restricted = RestrictedAuthenticodeThreadToken::enter().unwrap();
         restricted.finish(Ok(())).unwrap();
         assert!(open_current_thread_token().unwrap().is_none());
     }

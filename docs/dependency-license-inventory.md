@@ -350,6 +350,40 @@ complete locked workspaces, release host builds/smoke, source contracts, the
 dependency gate, and central `234/234` verifier are locally verified.
 Implementation-head package push/PR runs `32620187506`/`32620196066` pass
 six-artifact consolidation, checksums, lockfile SBOM generation, and package
-evidence on Windows, Linux, and macOS. Evidence-head and merged-main
-final-artifact review remain pending; source-level API reuse is not final-binary
-license, notice, or copyright evidence.
+evidence on Windows, Linux, and macOS. Evidence-head packages `32620868963` and
+merged-main packages `32621422056` pass the same final-artifact review with
+publication skipped; source-level API reuse is not final-binary license,
+notice, or copyright evidence.
+
+## Authenticode Write-Restricted Token API Surface
+
+Checkpoint 2205 adds no crate, package, registry dependency, network client,
+helper executable, or dependency version. It adds only the `Win32_System_SystemServices` feature to pinned `windows-sys 0.61.2` so the
+Native Engine uses the generated `SE_GROUP_MANDATORY`,
+`SE_GROUP_ENABLED_BY_DEFAULT`, and `SE_GROUP_ENABLED` constants instead of
+local numeric copies. The reviewed crate license remains `MIT OR Apache-2.0`;
+no Cargo or Flutter lockfile change is intended.
+
+The additional API/constants are `CreateWellKnownSid`, `WinRestrictedCodeSid`,
+`WRITE_RESTRICTED`, `TokenRestrictedSids`, `IsValidSid`, `GetLengthSid`,
+`SECURITY_MAX_SID_SIZE`, `TOKEN_GROUPS`, and `SID_AND_ATTRIBUTES`. They create
+one well-known restricting SID and read back bounded native token evidence. No
+SID, token, sandbox, parser, IPC, or test dependency is introduced.
+
+The implementation relies on Microsoft's documented `WRITE_RESTRICTED`
+semantics: restricting SIDs participate only in write-access evaluation. The
+flag is applied to the `SecurityImpersonation` token used before stdin/request
+parsing, not the primary process token: the primary-token prototype stopped in
+the Windows loader with `0xC0000142`. It covers request parsing/read-only
+candidate preparation and is reapplied for response output. WinTrust/catalog
+run under the privilege-stripped primary token because the Windows trust stack
+returned error `127` while write restriction remained active. Local
+focused checks, strict Native/Local/Guard Clippy, both locked workspace
+variants, dependency evidence, locked release builds, two-host smoke, and the
+exact `235/235` definitive verifier pass without a lockfile change.
+Implementation-head package push/PR runs `32624842967`/`32624862058` pass
+six-artifact consolidation, checksums, lockfile SBOM generation, and package
+evidence on Windows, Linux, and macOS with publication skipped. Evidence-head
+and merged-main final-artifact review remain pending for checkpoint 2205;
+source-level API reuse is not final-binary license, notice, or copyright
+evidence.

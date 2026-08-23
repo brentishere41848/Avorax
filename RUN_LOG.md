@@ -82,6 +82,89 @@ Lead-engineer product-hardening pass across the Avorax repository. Goal is to mo
   published. Evidence-head checks, normal merge, merged-main evidence, and safe
   original-tree synchronization remain pending.
 
+## 2026-08-23 continuation checkpoint 2204 closure and 2205 scripting
+
+- Evidence head `930342f59de1b11f458dc33ae8570e1eb7a6fd33` passed
+  Avorax CI `32620868967` and Desktop Packages `32620868963`. PR `#56`
+  merged normally with exact-head locking as
+  `a5f982a993659641d08ff45750894b3bfd969074`.
+- Merged-main CI `32621422088` and packages `32621422056` passed. Windows
+  MSI/EXE, Linux DEB/tar, both macOS DMGs, consolidation/checksums, and lockfile
+  SBOM passed; publication was skipped.
+- All 12 original-tree preconditions matched checkpoint 2203 or valid absence.
+  Exactly those files synchronized to `C:\Users\Brent\Documents\Avorax-main`
+  and matched merged Git blobs plus source SHA-256. Destination contracts
+  `633/633`, process token `2/2`, Authenticode `29/29` plus two ignored child
+  fixtures, rustfmt, strict Native Clippy, release Local Core/Guard builds, and
+  two-host benign smoke passed.
+- The protected vault remained exactly 16,072 files, zero directories,
+  4,522,733 bytes, 5,357 each `.avoraxq`/`.json`/`.auth`, one metadata key, and
+  zero pending. No artifact was installed, released, or published.
+- Checkpoint 2205 is fully scripted before final testing. The helper keeps
+  checkpoint 2204's `DISABLE_MAX_PRIVILEGE` primary process token. Before stdin
+  or request parsing it applies a `SecurityImpersonation` token that also uses
+  `WRITE_RESTRICTED`, contains exactly one zero-attribute
+  `WinRestrictedCodeSid` API input, and requires bounded read-back of that SID
+  with exact mandatory/default-enabled/enabled attributes. An initial primary
+  write-restricted-token attempt prevented the child loader from starting with
+  `0xC0000142`; it was removed instead of adding an unrestricted fallback.
+  A first release smoke then showed that the Windows trust/catalog stack fails
+  under thread write restriction with error `127`. The final scripted scope
+  keeps strict request parsing plus read-only candidate open/snapshot under the
+  restricted token, reverts fail-visibly for WinTrust/catalog under the
+  privilege-stripped primary token, and applies a fresh restricted token for
+  response serialization/output.
+  Benign write-denial/read-continuity and
+  missing/duplicate/wrong-SID/attribute regressions, verifier step 235, strict
+  validator scope, source contracts, and all audit documents are scripted. No
+  checkpoint-2205 passing result was claimed at that point.
+- Final-design focused verification passes: write restriction `2/2`, existing
+  process token `2/2`, existing thread token `2/2`, and complete Authenticode
+  `31/31` with three intentional child fixtures ignored. Rustfmt, strict Native
+  Clippy, and Python source contracts `634/634` pass. Locked release Local Core
+  and Guard builds pass, and the repaired two-host smoke verifies mandatory
+  hash-bound nonce IPC, embedded and catalog Microsoft trust, unsigned
+  rejection, and wrong-hash failure without fixture execution.
+
+## 2026-08-23 continuation checkpoint 2205 local verification
+
+- Standard and all-feature locked Rust workspace suites pass. Native Engine
+  contributes `466` tests plus signature compiler `6/6`, with three isolated
+  benign child fixtures intentionally ignored. Strict Native, Local Core, and
+  Guard Clippy, rustfmt, locked release Local Core/Guard builds, and the final
+  two-host embedded/catalog/hash-binding smoke pass.
+- Flutter analyze reports no issues and the complete Flutter suite passes
+  `838/838`. Python source contracts pass `634/634`. The central security,
+  dependency, package, copy, no-malware, protection, performance, and
+  prerequisite gates included by the definitive verifier pass.
+- The definitive report ran from `2026-08-23T06:52:03Z` through
+  `2026-08-23T06:59:53Z` and passed exactly `235/235` steps in `470.1s` with no
+  failed or skipped verifier step. Built-in and separate strict validation
+  accepted the same report. Controlled adversarial copies were rejected for
+  stale count (`234` instead of `235`), missing the required checkpoint-2205
+  step, and missing the exact pre/post-trust scope; all copies were removed.
+- A read-only audit again found exactly 16,072 protected-vault files, zero
+  directories, 4,522,733 bytes, 5,357 each `.avoraxq`/`.json`/`.auth`, one
+  `.metadata_auth_key`, and zero pending. Hosted exact-head CI/packages, merge,
+  merged-main evidence, and original-tree synchronization remain pending.
+
+## 2026-08-23 continuation checkpoint 2205 implementation-head hosting
+
+- Committed implementation, benign adversarial regressions, verifier/validator,
+  source contracts, and audit evidence as
+  `a5597d263208e3ceeb35f75aa29a09559459f3d3`, pushed only branch
+  `agent/checkpoint-2205-authenticode-write-restricted-token`, and opened draft
+  PR `#57`.
+- Exact implementation-head Avorax CI `32624862111` passed Rust/Clippy,
+  Flutter, security/protection/performance, branding/copy, dependency, and Unix
+  quarantine permission jobs. Desktop Packages push `32624842967` and PR
+  `32624862058` passed package contracts, Windows x64 MSI/EXE, Linux x64
+  DEB/tar, macOS arm64/x64 DMG, six-artifact consolidation, checksums, and
+  lockfile SBOM evidence.
+- Both publication jobs were skipped. No artifact was installed, released, or
+  published. Evidence-head checks, normal merge, merged-main evidence, and safe
+  original-tree synchronization remain pending.
+
 ## 2026-08-23 continuation checkpoint 2199 closure
 
 - Evidence head `b000b8dfc9e4e7427380ddbe80dba958d9d16e95` passed

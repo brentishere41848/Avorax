@@ -1564,7 +1564,83 @@ Defender replacement, and production accuracy remain separate blockers.
 Checkpoint-2204 focused, full Native/workspace, strict lint, release-build,
 two-host smoke, analyzer, protocol, Flutter, source-contract, central-gate, and
 exact `234/234` verifier/validator claims are locally verified. Stale,
-missing-step, and missing-scope evidence is rejected. Hosted, merge, and
-synchronized-tree evidence remains pending. Tests use only ignored benign Rust
-child fixtures, installed read-only Microsoft binaries, and temporary benign
-text; candidates are never executed.
+missing-step, and missing-scope evidence is rejected. Evidence `930342f`, PR
+`#56`, merge `a5f982a`, merged-main CI/packages, exact 12-file synchronization,
+destination checks, and the protected-vault audit pass with publication
+skipped. Tests use only ignored benign Rust child fixtures, installed read-only
+Microsoft binaries, and temporary benign text; candidates are never executed.
+
+## Checkpoint 2205 Authenticode Helper Write-Restriction Boundary
+
+Checkpoint 2205 reduces ordinary write authority without turning publisher
+verification into a broad sandbox claim. The process keeps checkpoint 2204's
+`DISABLE_MAX_PRIVILEGE` primary token, checked before process creation and
+again in the child. Before stdin or request parsing, release helper code calls
+`CreateRestrictedToken` with `DISABLE_MAX_PRIVILEGE | WRITE_RESTRICTED` and
+exactly one zero-attribute `WinRestrictedCodeSid` input, installs that
+`SecurityImpersonation` token on the current thread, and reads it back. Strict
+request parsing plus read-only candidate open, size bound, and identity snapshot
+run under that token. The helper reverts it fail-visibly before WinTrust,
+catalog, signer, and content-hash work under the privilege-stripped primary
+token. A newly created/read-back restricted token then protects response
+serialization and stdout.
+
+`TokenRestrictedSids` evidence is byte-bounded and count-bounded. The parser
+checks count arithmetic, returned-buffer ranges for each SID pointer, structural
+validity, SID length through `SECURITY_MAX_SID_SIZE`, and exact well-known SID
+bytes. Read-back requires exact `SE_GROUP_MANDATORY`,
+`SE_GROUP_ENABLED_BY_DEFAULT`, and `SE_GROUP_ENABLED` attributes; zero is the
+creation input rather than the returned token representation. Missing,
+duplicate, malformed, unexpectedly attributed, or wrong SID evidence cannot
+become Microsoft publisher trust. Privilege validation still allows only
+enabled `SeChangeNotifyPrivilege`; token setup or read-back failure prevents
+publisher trust.
+
+The intended security property is narrow and explainable. `WRITE_RESTRICTED`
+causes the restricting SID to participate only in write-access checks. A benign
+child regression must retain read/hash access to an ordinary user-owned
+temporary file while its write-open request receives access denied and the
+bytes remain unchanged. Existing inherited stdio handles and securable objects
+whose ACLs satisfy both the normal and restricting access checks are not claimed
+inaccessible.
+
+Applying the same write-restricted SID to the primary token was tested first,
+but the child stopped before user code with `0xC0000142`
+(`STATUS_DLL_INIT_FAILED`). The implementation does not hide that compatibility
+failure behind a launch retry or weaker fallback. It instead retains the
+already verified privilege-stripped primary token and narrows the code that
+handles untrusted requests with the write-restricted thread token.
+
+The first release-host smoke with thread restriction held across the Windows
+trust APIs also failed: embedded Edge verification fell through and SHA-256
+catalog hashing returned Windows error `127`. Treating that as unsigned would
+break valid Microsoft publisher trust; retrying after a failed call would hide
+the security boundary. The final design therefore scopes write restriction
+around Avorax-controlled input/candidate preparation and output while running
+the trusted Windows trust/catalog phase once under the privilege-stripped
+primary token.
+
+The helper still retains parent SID, integrity, environment, desktop, and
+ordinary read access. The primary token is privilege-stripped but not
+write-restricted, and same-process native code can technically call
+`RevertToSelf`. This is not AppContainer, identity isolation, environment
+sanitization, a separate desktop, or authenticated cross-identity IPC.
+Installed LocalSystem behavior, writable mappings/post-verdict mutation,
+production signing, driver enforcement, pre-execution blocking, Defender
+replacement, and production accuracy remain separate limitations or blockers.
+Preliminary focused runs established the canonical SID attributes and exposed
+the primary-token loader incompatibility; the first release smoke then exposed
+trust-stack error `127`. The repaired final-design
+implementation/test/verifier/documentation batch is scripted before its next
+test run. Final-design focused evidence now passes: write restriction `2/2`,
+complete Authenticode `31/31` plus three intentional child-fixture ignores,
+strict Native Clippy, source contracts `634/634`, locked release builds, and
+two-host embedded/catalog/hash-binding smoke. Both locked workspace variants,
+strict Native/Local/Guard Clippy, Flutter analyze and `838/838`, source
+contracts `634/634`, and the definitive verifier plus independent validator
+pass exactly `235/235` in `470.1s`. Controlled stale-count, missing-step, and
+missing-scope reports are rejected. The protected-vault read-only audit remains
+exact. Implementation head `a5597d2` passes CI `32624862111` and package
+push/PR `32624842967`/`32624862058`, including all six artifacts, checksums,
+and lockfile SBOM with publication skipped. Evidence-head, merge, merged-main,
+and synchronization evidence is still pending.

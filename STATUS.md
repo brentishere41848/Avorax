@@ -4,6 +4,45 @@
 
 Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-install, repair, recovery, offline, and manual-install paths only. Normal app updates target signed `.aup` packages applied by Avorax Update Service.
 
+- Checkpoint 2205 write-restricting Authenticode token hardening is implemented
+  and fully locally verified. The release helper keeps checkpoint
+  2204's `DISABLE_MAX_PRIVILEGE` primary process token. Before stdin or request
+  parsing it applies a `SecurityImpersonation` token that also uses
+  `WRITE_RESTRICTED`, contains exactly one zero-attribute
+  `WinRestrictedCodeSid` API input, and fails unless bounded
+  `TokenRestrictedSids` read-back proves that SID with exact mandatory,
+  default-enabled, and enabled attributes. Scripted benign regressions require
+  an ordinary user-owned fixture to remain readable/hashable but deny a write
+  open, and reject missing, duplicate, wrong, or unexpectedly attributed
+  restricting-SID evidence. Central verifier count rises to 235.
+  Preliminary focused runs established canonical SID read-back attributes
+  `0x00000007` and exposed the primary-token loader failure. A first release
+  smoke also exposed Windows trust/catalog error `127` while write restriction
+  remained active. The final scripted design restricts input parsing and
+  read-only candidate open/snapshot, reverts fail-visibly for WinTrust/catalog
+  under the privilege-stripped primary token, then reapplies restriction for
+  response output. Final-design focused checks now pass: write restriction
+  `2/2`, process `2/2`, thread `2/2`, complete Authenticode `31/31` plus three
+  intentional ignored child fixtures, strict Native Clippy, source contracts
+  `634/634`, locked release Local Core/Guard builds, and the two-host embedded/
+  catalog/hash-binding smoke. Both locked Rust workspace variants, strict
+  Native/Local/Guard Clippy, Flutter analyze and `838/838`, source contracts
+  `634/634`, and the definitive verifier/validator pass exactly `235/235` in
+  `470.1s`. Stale-count, missing-step, and missing-scope reports are rejected.
+  The protected vault remains exactly 16,072 files, zero directories,
+  4,522,733 bytes, 5,357 each payload/metadata/auth extension, one metadata key,
+  and zero pending. Exact implementation head `a5597d2` passes Avorax CI
+  `32624862111` and Desktop Packages push/PR `32624842967`/`32624862058` on
+  Windows MSI/EXE, Linux DEB/tar, both macOS DMGs, consolidation, checksums,
+  and lockfile SBOM; publication was skipped. Evidence-head checks, merge,
+  merged-main evidence, and synchronization remain pending.
+  A write-restricted primary-token prototype stopped before user code with
+  `0xC0000142`, so it is not claimed. Same-process code can technically call
+  `RevertToSelf` to expose the privilege-stripped but non-write-restricted
+  primary token; WinTrust/catalog intentionally run in that state for Windows
+  compatibility. This is write-access reduction, not AppContainer, identity,
+  integrity, desktop, environment, read-access, installed-service, driver,
+  pre-execution, or Defender-replacement proof.
 - Checkpoint 2204 restricted-process Authenticode hardening is implemented and
   fully locally verified. Release hosts derive a `DISABLE_MAX_PRIVILEGE`
   restricted primary token, create the exact locked executable suspended through
@@ -21,11 +60,11 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
   Source contracts pass `633/633`; central safety/dependency/package gates and
   definitive verification pass exact `234/234` in `454.4s`. Independent strict
   validation passes and stale/missing-step/missing-scope evidence is rejected.
-  Implementation head `a0272a3654c959b68def34025ff7c18d1285e243`
-  passes Avorax CI `32620196065` and Desktop Packages push/PR runs
-  `32620187506`/`32620196066`, including all six platform artifacts,
-  checksums, and lockfile SBOM with publication skipped. Evidence-head checks,
-  merge, and synchronized-tree evidence remain pending.
+  Implementation head `a0272a3` and evidence head `930342f` pass exact-head CI
+  and packages. PR `#56` merged as `a5f982a`; merged-main CI `32621422088` and
+  packages `32621422056` pass with publication skipped. Exactly 12
+  preconditioned files synchronized; destination contracts, process token,
+  Authenticode, strict lint, release builds, and benign two-host smoke pass.
   The token retains parent SID/integrity/environment/desktop and ordinary
   SID-based access; AppContainer, restricting-SID isolation, installed
   LocalSystem E2E, driver/pre-execution protection, and Defender replacement are

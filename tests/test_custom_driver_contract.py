@@ -20089,9 +20089,9 @@ def test_small_threat_mvp_verifier_is_safe_and_reproducible():
         in source
     )
     assert "positive acceptance of an actual secondary catalog signature remains partial" in source
-    assert "privilege-stripped SecurityImpersonation token" in source
+    assert "write-restricted SecurityImpersonation token" in source
     assert "Only SeChangeNotifyPrivilege may remain enabled" in source
-    assert "it is not an AppContainer, a restricting-SID sandbox" in source
+    assert "this is not an AppContainer" in source
     assert "Memory-mapped and post-verdict mutation plus pre-execution blocking" in source
     assert (
         "Native Engine's disabled test-only legacy quarantine store uses token-derived "
@@ -20825,8 +20825,8 @@ def test_small_threat_mvp_report_validator_is_strict_and_local():
     assert "driver_request_known_good_allows_in_lockdown" in source
     assert "Get-AvoraxGateFile ([System.IO.Path]::GetFullPath($text)) $Description" in source
     assert "-RequireFullSuite requires skip_flutter=false and skip_rust=false" in source
-    assert "if ($steps.Count -ne 234)" in source
-    assert "-RequireFullSuite expected exactly 234 verifier steps" in source
+    assert "if ($steps.Count -ne 235)" in source
+    assert "-RequireFullSuite expected exactly 235 verifier steps" in source
     assert (
         'Assert-ReportContainsStep $steps "native-engine secondary catalog '
         'Authenticode selection regressions"'
@@ -21465,8 +21465,9 @@ def test_small_threat_mvp_report_validator_is_strict_and_local():
         in source
     )
     assert (
-        'Assert-ReportScopeContains $verifiedScopeText "Release helper WinTrust runs '
-        'under a read-back-verified privilege-stripped SecurityImpersonation token'
+        'Assert-ReportScopeContains $verifiedScopeText "Before stdin or request parsing, '
+        'release helper code applies a read-back-verified write-restricted '
+        'SecurityImpersonation token'
         in source
     )
     assert (
@@ -25042,12 +25043,12 @@ def test_native_authenticode_uses_direct_hash_bound_file_and_catalog_wintrust():
     assert production.index(
         "let before = snapshot_authenticode_file(path, &file)?;"
     ) < production.index(
-        "let verdict = match verify_open_file(path, &path_wide, &mut file, expected_sha256)"
+        "let verdict = match verify_open_file(&path, &path_wide, &mut file, &expected_sha256)"
     )
     assert production.index(
-        "let after = snapshot_authenticode_file(path, &file);"
+        "let after = snapshot_authenticode_file(&path, &file);"
     ) > production.index(
-        "let verdict = match verify_open_file(path, &path_wide, &mut file, expected_sha256)"
+        "let verdict = match verify_open_file(&path, &path_wide, &mut file, &expected_sha256)"
     )
     assert "actual_sha256.eq_ignore_ascii_case(expected_sha256)" in production
     assert "does not match the bytes already scanned" in production
@@ -25214,7 +25215,7 @@ def test_native_secondary_catalog_authenticode_is_bounded_exact_and_honestly_par
     assert "native_secondary_catalog_authenticode_primary_runtime_is_exact_and_hash_bound" in source
     assert "native-engine secondary catalog Authenticode selection regressions" in verifier
     assert '"native_secondary_catalog_authenticode"' in verifier
-    assert "if ($steps.Count -ne 234)" in validator
+    assert "if ($steps.Count -ne 235)" in validator
     assert "no controlled benign multi-signed system-catalog fixture" in verifier
     assert "no controlled benign multi-signed system-catalog fixture" in validator
     assert "$technicalLimitText = Assert-JsonString" in validator
@@ -25251,8 +25252,8 @@ def test_native_authenticode_helper_job_resources_are_exact_and_fail_visible():
     )
     assert "native-engine Authenticode helper Job resource-limit regressions" in verifier
     assert '"native_authenticode_helper_job_limits"' in verifier
-    assert "if ($steps.Count -ne 234)" in validator
-    assert "expected exactly 234 verifier steps" in validator
+    assert "if ($steps.Count -ne 235)" in validator
+    assert "expected exactly 235 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper Job '
         'resource-limit regressions"'
@@ -25260,7 +25261,7 @@ def test_native_authenticode_helper_job_resources_are_exact_and_fail_visible():
     )
     assert "1 GiB per-process and whole-Job commit ceilings" in verifier
     assert "Job commit ceilings do not bound physical working set or I/O bytes" in verifier
-    assert "restricted Authenticode helper primary token keeps the parent SID" in verifier
+    assert "write-restricted Authenticode helper impersonation token keeps the parent SID" in verifier
     assert "1 GiB per-process and whole-Job commit ceilings" in validator
     assert "Job commit ceilings do not bound physical working set or I/O bytes" in validator
 
@@ -25283,7 +25284,6 @@ def test_native_authenticode_helper_uses_verified_privilege_stripped_thread_toke
         production.index("pub(crate) fn run_authenticode_helper_stdio"):
         production.index("pub(crate) fn run_authenticode_client_self_test_stdio")
     ]
-
     for contract in [
         "CreateRestrictedToken(",
         "DISABLE_MAX_PRIVILEGE",
@@ -25302,8 +25302,9 @@ def test_native_authenticode_helper_uses_verified_privilege_stripped_thread_toke
     ]:
         assert contract in production
     assert "IsTokenRestricted(" not in production
-    assert "let restricted = PrivilegeStrippedThreadToken::enter()?" in helper
-    assert "restricted.finish(verify_direct_microsoft_signature" in helper
+    assert "let restricted = RestrictedAuthenticodeThreadToken::enter()?" in helper
+    assert "restricted.finish(read_and_prepare_authenticode_helper_request())?" in helper
+    assert "restricted.finish(write_authenticode_helper_response(nonce, outcome))" in helper
     assert (
         "native_authenticode_helper_restricted_thread_token_is_verified_and_reverted"
         in source
@@ -25315,7 +25316,7 @@ def test_native_authenticode_helper_uses_verified_privilege_stripped_thread_toke
     assert "native-engine Authenticode helper restricted-thread-token regressions" in verifier
     assert '"native_authenticode_helper_restricted_thread_token"' in verifier
     assert "Only SeChangeNotifyPrivilege may remain enabled" in verifier
-    assert "Release helper WinTrust runs under a read-back-verified" in verifier
+    assert "read-back-verified write-restricted SecurityImpersonation token" in verifier
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper '
         'restricted-thread-token regressions"'
@@ -25374,8 +25375,8 @@ def test_native_authenticode_helper_uses_restricted_primary_process_token_and_ex
     assert "AVORAX_RESTRICTED_PRIMARY_TOKEN_OK" in source
     assert "native-engine Authenticode helper restricted-process-token regressions" in verifier
     assert '"native_authenticode_helper_restricted_process"' in verifier
-    assert "if ($steps.Count -ne 234)" in validator
-    assert "expected exactly 234 verifier steps" in validator
+    assert "if ($steps.Count -ne 235)" in validator
+    assert "expected exactly 235 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper '
         'restricted-process-token regressions"'
@@ -25395,6 +25396,94 @@ def test_native_authenticode_helper_uses_restricted_primary_process_token_and_ex
     assert "Scripted, unverified" in checkpoint
     assert "passing result is claimed" in checkpoint
     assert '"Win32_System_Pipes"' in read(ROOT / "core" / "zentor_native_engine" / "Cargo.toml")
+
+
+def test_native_authenticode_helper_uses_exact_write_restricting_sid_and_readback():
+    source = read(NATIVE_WINDOWS_AUTHENTICODE)
+    production = source.split("#[cfg(test)]")[0]
+    verifier = read(ROOT / "tools" / "testing" / "verify-small-threat-mvp.ps1")
+    validator = read(ROOT / "tools" / "testing" / "validate-small-threat-mvp-report.ps1")
+    checkpoint = read(
+        ROOT
+        / "docs"
+        / "reports"
+        / "checkpoint-2205-authenticode-write-restricted-token.md"
+    )
+    matrix = read(ROOT / "docs" / "audit" / "engine-control-matrix.md")
+    threat_model = read(ROOT / "docs" / "audit" / "threat-model.md")
+    blockers = read(ROOT / "docs" / "audit" / "known-blockers.md")
+    dependency_inventory = read(ROOT / "docs" / "dependency-license-inventory.md")
+    helper = production[
+        production.index("pub(crate) fn run_authenticode_helper_stdio"):
+        production.index("pub(crate) fn run_authenticode_client_self_test_stdio")
+    ]
+
+    for contract in [
+        "CreateWellKnownSid(",
+        "WinRestrictedCodeSid",
+        "DISABLE_MAX_PRIVILEGE | WRITE_RESTRICTED",
+        "TokenRestrictedSids",
+        "MAX_AUTHENTICODE_HELPER_RESTRICTED_SIDS",
+        "AUTHENTICODE_HELPER_RESTRICTED_SID_ATTRIBUTES",
+        "SECURITY_MAX_SID_SIZE",
+        "IsValidSid(",
+        "GetLengthSid(",
+        "offset_of!(SID, SubAuthorityCount)",
+        "validate_authenticode_restricted_sid_evidence(",
+        "entries.len() == 1",
+        "entries[0].attributes == AUTHENTICODE_HELPER_RESTRICTED_SID_ATTRIBUTES",
+        "create_write_restricted_token(",
+        "validate_current_process_privilege_stripped_primary_token()?",
+        "restricted.finish(read_and_prepare_authenticode_helper_request())?",
+        "prepared.and_then(verify_prepared_microsoft_signature)",
+        "restricted.finish(write_authenticode_helper_response(nonce, outcome))",
+    ]:
+        assert contract in production
+    token_entry = "RestrictedAuthenticodeThreadToken::enter()?"
+    assert helper.count(token_entry) == 2
+    first_token = helper.index(token_entry)
+    preparation = helper.index("read_and_prepare_authenticode_helper_request()")
+    verification = helper.index("prepared.and_then(verify_prepared_microsoft_signature)")
+    second_token = helper.rindex(token_entry)
+    response = helper.index("write_authenticode_helper_response(nonce, outcome)")
+    assert first_token < preparation < verification < second_token < response
+    assert "native_authenticode_helper_write_restricted_access_denies_ordinary_file_mutation" in source
+    assert "native_authenticode_helper_write_restricted_sid_policy_is_exact" in source
+    assert "AVORAX_WRITE_RESTRICTED_MUTATION_DENIED" in source
+    assert "native-engine Authenticode helper write-restricted-thread-token regressions" in verifier
+    assert '"native_authenticode_helper_write_restricted"' in verifier
+    assert "if ($steps.Count -ne 235)" in validator
+    assert "expected exactly 235 verifier steps" in validator
+    assert (
+        'Assert-ReportContainsStep $steps "native-engine Authenticode helper '
+        'write-restricted-thread-token regressions"'
+        in validator
+    )
+    for contract in [
+        "Before stdin or request parsing, release helper code applies a read-back-verified write-restricted SecurityImpersonation token created with DISABLE_MAX_PRIVILEGE plus WRITE_RESTRICTED and exactly one WinRestrictedCodeSid; strict request parsing and read-only candidate open/snapshot remain under that token",
+        "The token is fail-visibly reverted before WinTrust/catalog compatibility work under the privilege-stripped primary token, and a fresh write-restricted token protects response serialization/output",
+        "ordinary user-owned file mutation is denied while read access and embedded/catalog Microsoft verification remain functional",
+        "bounded TokenPrivileges or TokenRestrictedSids inspection",
+        "WinRestrictedCodeSid is evaluated only for write access",
+        "the primary process token is privilege-stripped but not write-restricted and same-process code can technically call RevertToSelf",
+        "WinTrust/catalog execute under that primary token because the Windows trust stack failed under write restriction with error 127 on the verified host",
+    ]:
+        assert contract in verifier
+        assert contract in validator
+    for document in [checkpoint, matrix, threat_model, blockers, dependency_inventory]:
+        assert "WRITE_RESTRICTED" in document
+        assert "WinRestrictedCodeSid" in document
+    assert "Verified locally, `235/235`" in checkpoint
+    assert "## Full Local Evidence" in checkpoint
+    assert "a5597d263208e3ceeb35f75aa29a09559459f3d3" in checkpoint
+    assert "32624862111" in checkpoint
+    assert "32624842967" in checkpoint
+    assert "32624862058" in checkpoint
+    assert "No final-design passing result is claimed" in checkpoint
+    assert '"Win32_System_SystemServices"' in read(
+        ROOT / "core" / "zentor_native_engine" / "Cargo.toml"
+    )
+    assert "adds only the `Win32_System_SystemServices` feature" in dependency_inventory
 
 
 def test_native_risk_fusion_pup_category_requires_a_bounded_token():
