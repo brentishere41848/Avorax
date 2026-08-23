@@ -1754,3 +1754,11 @@ Desktop Packages push/PR `32638895902`/`32638907670`. Both package runs pass
 Windows MSI/EXE, Linux DEB/tar, both macOS DMGs, six-artifact consolidation,
 checksums, and lockfile SBOM; publication is skipped. Evidence-head, merge,
 merged-main, installed enterprise, and LocalSystem evidence remain separate.
+
+Checkpoint 2208 integration is closed through evidence `fa7574f`, PR `#60`,
+merge `1076ac3`, exact merged-main CI `32640506209`, packages `32640506192`,
+guarded 12-path original-tree synchronization, destination runtime checks, and
+an unchanged protected-vault invariant. This closes the implementation and
+integration evidence only; the identity/profile/registry/desktop/read,
+AppContainer, installed LocalSystem, driver, and pre-execution limitations
+above remain unchanged.

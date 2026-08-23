@@ -2030,7 +2030,10 @@ enforcement, or pre-execution blocking is claimed.
   exact-head CI `32638907677` and package push/PR
   `32638895902`/`32638907670` with all six artifacts, checksums, lockfile
   SBOM, and publication skipped. Evidence-head, merge, merged-main, and
-  original-tree synchronization remain pending.
+  original-tree synchronization subsequently passed: evidence `fa7574f`, PR
+  `#60`, merge `1076ac3`, merged-main CI `32640506209`, packages
+  `32640506192`, exact 12-path synchronization, destination verification, and
+  the unchanged protected-vault invariant close checkpoint 2208.
 - **Residual blocker:** Windows Mandatory Integrity Control/no-write-up is not
   identity or read isolation. Parent SID, profile/registry namespace, desktop,
   ordinary read access, and explicitly low-writable objects remain reachable.

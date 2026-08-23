@@ -146,3 +146,31 @@ checksums, and lockfile SBOM; publication is skipped. PR `#60` remains draft
 until this evidence commit itself passes exact-head checks. Evidence-head,
 normal merge, merged-main, and original-tree synchronization are not yet
 claimed.
+
+## Integration Closure
+
+Evidence head `fa7574fe509f76885b7533492eff527607d4eacd` passed exact-head
+Avorax CI `32639848599` and Desktop Packages `32639848607`. PR `#60` was
+marked ready only after those checks passed and merged normally with the exact
+head lock as `1076ac385488b071da769f3f3123253d0c6e4395`. Exact merged-main
+Avorax CI `32640506209` and Desktop Packages `32640506192` passed. Package
+contracts, Windows x64 MSI/EXE, Linux x64 DEB/tar, macOS arm64/x64 DMG,
+six-artifact consolidation, checksums, and lockfile SBOM all passed;
+prerelease publication was skipped.
+
+Exactly 12 paths were synchronized to `C:\Users\Brent\Documents\Avorax-main`
+only after each existing destination matched merge parent `c1d7e969` through
+Git-filtered blob comparison and the new checkpoint report was confirmed
+absent. Every synchronized destination then matched both the merge blob and
+the source file's raw SHA-256. Destination verification passed source contracts
+`637/637`, the low-integrity filter `2/2`, complete Authenticode `37/37` with
+six intentional isolated child-fixture ignores, strict Native Clippy, locked
+Local Core and Guard release builds, and the two-host release trust smoke for
+embedded/catalog trust, unsigned rejection, hash-mismatch failure, and no
+candidate execution.
+
+The final read-only protected-vault audit remained exact at 16,072 files, zero
+directories, 4,522,733 bytes, 5,357 each `.avoraxq`/`.json`/`.auth`, one
+`.metadata_auth_key`, and zero pending. `.verification/` remained the sole
+unrelated untracked source-worktree content and was not staged or modified.
+Checkpoint 2208 is fully closed; the antivirus project as a whole is not.
