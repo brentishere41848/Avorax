@@ -2094,9 +2094,12 @@ enforcement, or pre-execution blocking is claimed.
 - **Fail-closed intent:** Query failure, unexpected size, noncanonical
   capability, enabled virtualization/UIAccess, or child-state drift must prevent
   publisher trust. No setter, extra privilege, or weaker retry exists.
-- **Integration pending:** Exact-head hosted CI/package/SBOM evidence, normal
-  merge, merged-main evidence, and guarded original-tree synchronization remain
-  open; local success is not represented as hosted or installed proof.
+- **Implementation-head hosted evidence passed:** Exact `c744fa9` passes CI
+  `32649764260` and package push/PR `32649749634`/`32649764310`, including all
+  six artifacts, checksums, lockfile SBOM, and skipped publication.
+- **Integration pending:** Evidence-head checks, normal merge, merged-main
+  evidence, and guarded original-tree synchronization remain open; hosted
+  source/package success is not represented as installed proof.
 - **Residual blocker:** `TokenVirtualizationAllowed` may remain one; trusted
   helper code has no enable path, but capability is not removed. Inactive
   virtualization and disabled UIAccess do not change SID, credentials, profile, registry namespace,

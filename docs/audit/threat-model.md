@@ -1839,8 +1839,10 @@ repaired filter passes `2/2`, all adjacent filters and complete Authenticode
 pass, source contracts pass `640/640`, and strict lint, locked workspaces,
 release-host smoke, Flutter, no-malware, and dependency gates pass. The
 definitive verifier and independent validator pass `240/240` in `458s`; five
-malformed reports are rejected. Exact-head hosted and installed evidence remain
-pending.
+malformed reports are rejected. Exact implementation `c744fa9` passes hosted CI
+`32649764260` and package push/PR `32649749634`/`32649764310`, with six
+artifacts, checksums, lockfile SBOM, and publication skipped. Evidence-head,
+merged-main, and installed evidence remain pending.
 
 **Residual risk:** `TokenVirtualizationAllowed` may remain one because it is an
 inherited capability. Trusted helper code has no enable path, but the

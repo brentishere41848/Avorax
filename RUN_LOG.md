@@ -8433,3 +8433,9 @@ Updates page showed:
 - A final read-only audit preserves the protected vault at 16,072 files, zero
   directories, 4,522,733 bytes, 5,357 each `.avoraxq`/`.json`/`.auth`, one
   `.metadata_auth_key`, and zero pending.
+- Exact implementation head `c744fa9` passes hosted CI `32649764260` and
+  Desktop Packages push/PR runs `32649749634`/`32649764310`. Both package runs
+  pass Windows MSI/EXE, Linux DEB/tar, macOS x64/arm64 DMG, six-artifact
+  consolidation, checksums, lockfile SBOM, and evidence upload. Publication is
+  skipped. Evidence-head checks, merge, merged-main evidence, and guarded
+  original-tree synchronization remain pending.

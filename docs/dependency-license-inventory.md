@@ -536,6 +536,9 @@ Local formatting, focused Windows execution, both locked workspaces, strict
 Native/Local/Guard lint, release builds/two-host trust smoke, source contracts
 `640/640`, dependency/no-malware gates, Flutter `838/838`, and exact `240/240`
 verification pass. Cargo and Flutter lockfiles are unchanged. Exact-head hosted
-package/SBOM evidence and final-artifact license/notice review remain pending;
-source-level API reuse is not final-binary license, notice, or copyright
-evidence.
+CI `32649764260` and package push/PR `32649749634`/`32649764310` pass at
+implementation `c744fa9`; both package runs require all six artifacts, checksums,
+lockfile SBOM, dependency/license evidence, and evidence upload, with publication
+skipped. Evidence-head/merged-main package evidence and complete final-artifact
+license/notice review remain pending; source-level API reuse is not final-binary
+license, notice, or copyright evidence.

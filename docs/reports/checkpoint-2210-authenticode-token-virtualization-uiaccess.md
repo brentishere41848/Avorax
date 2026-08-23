@@ -87,7 +87,22 @@ filter then passed `2/2`.
   zero directories, `4,522,733` bytes, `5,357` each `.avoraxq`/`.json`/`.auth`,
   one `.metadata_auth_key`, and zero pending files.
 
-Exact-head hosted CI/package evidence, merge, merged-main evidence, and guarded
+## Hosted Implementation-Head Evidence
+
+Exact implementation head `c744fa90cf3ac9802e8055780a5d05e804b8b39d`
+passes:
+
+- Avorax CI pull-request run `32649764260`: Rust/Native lint and tests, Flutter,
+  Unix quarantine permissions, security/protection/performance gates, branding,
+  dependency evidence, and no-malware checks all succeed.
+- Desktop Packages push run `32649749634` and pull-request run `32649764310`:
+  Windows x64 MSI/setup EXE, Linux x64 DEB/tar, macOS x64/arm64 DMGs, package
+  contracts, dependency/license evidence, administrative MSI extraction without
+  installation, six-artifact consolidation, lockfile SBOM, checksums, and
+  evidence upload all succeed. The prerelease publication job is skipped in
+  both runs.
+
+Evidence-head checks, normal merge, merged-main evidence, and guarded
 original-tree synchronization remain pending and are not claimed here.
 
 ## Honest Boundary
