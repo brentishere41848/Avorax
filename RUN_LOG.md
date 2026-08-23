@@ -8394,6 +8394,33 @@ Updates page showed:
   `.metadata_auth_key`, and zero pending. Checkpoint 2209 is closed; the full
   antivirus goal remains active.
 
+## Checkpoint 2215 Script-First Pipe Peer Binding
+
+- Created `agent/checkpoint-2215-authenticode-pipe-peer-binding` from local
+  checkpoint-2214 closure `de24be0`; `.verification/` remains untracked and is not
+  staged, deleted, moved, or rewritten.
+- Audited existing `CreatePipe` roles and `windows-sys 0.61.2` bindings. Anonymous
+  endpoints are created/connected in the parent before inheritance, so peer PID
+  APIs defensibly prove the parent creator from child handles but cannot be claimed
+  as parent-side proof of the inheriting child PID.
+- Scripted a third exact launch-environment value containing canonical nonzero
+  parent PID evidence. The child validates stdin through
+  `GetNamedPipeClientProcessId` and stdout/stderr through
+  `GetNamedPipeServerProcessId` after exact standard-handle validation and before
+  private desktop, token, mitigation, stdin, request, candidate, or trust work.
+- Scripted a benign isolated real-child check, zero/self/mismatched and malformed-
+  PID adversarial evidence, verifier step 245, exact-245 validator requirements,
+  source contract 645, control matrix, blocker register, threat model, dependency
+  review, checkpoint report, and status/run-log evidence.
+- Per the requested sequence, no checkpoint-2215 parser, format, compile, focused
+  runtime, full suite, lint, build, verifier, lockfile, vault, package, or hosted
+  command has run during scripting. No passing result is claimed. The protected
+  vault has not been accessed or changed by this scripting phase.
+- Technical limit: the PID environment value is not secret, and anonymous-pipe
+  creator binding does not prevent same-user handle duplication or provide
+  encrypted, durable, authenticated cross-identity IPC, AppContainer, installed
+  LocalSystem, driver, or pre-execution enforcement.
+
 ## Checkpoint 2210 Authenticode Token Virtualization/UIAccess Script Batch
 
 - The full implementation, benign test, central-verifier, independent-validator,
@@ -8822,3 +8849,38 @@ Updates page showed:
   16,072 files, zero directories, 4,522,733 bytes, 5,357 each payload/metadata/auth,
   one metadata key, and zero pending. Checkpoint 2214 is closed; the complete
   antivirus goal remains active.
+
+## Checkpoint 2215 Authenticode Pipe-Peer Local Evidence
+
+- The complete implementation/test/verifier/validator/source-contract/documentation
+  batch was scripted before tests as requested. The child now reads one canonical
+  parent PID from the exact three-variable environment and requires stdin
+  `GetNamedPipeClientProcessId` plus stdout/stderr
+  `GetNamedPipeServerProcessId` to identify that exact live parent, distinct from
+  the child, after standard-handle validation and before remaining trust work.
+- PowerShell parsers, final rustfmt, and `git diff --check` pass. The host lacks
+  optional `pytest`; the dependency-free runner passes `645/645`. Initial rustfmt
+  and two whitespace-coupled contracts failed visibly and were repaired before
+  final evidence.
+- Focused real-child/adversarial checks pass `2/2`; Authenticode passes `59` with
+  `12` intentional ignores. Strict Native/Local Core/Guard Clippy, locked release
+  builds, and the two-host embedded/catalog/hash-binding smoke pass.
+- Both locked workspace variants pass with Native `487`/`12` plus compiler `6/6`.
+  Flutter analyze and `838/838`, no-malware, and dependency evidence pass. First
+  manual no-malware/dependency invocations were rejected before inspection for a
+  relative Python path and malformed report path; corrected absolute invocations
+  are the evidence.
+- Definitive report `.verification/checkpoint-2215-pipe-peer-definitive-report.json`
+  passes exactly `245/245`, zero failed/skipped, in `469.4s`; embedded and separate
+  validators pass. Seven fresh stale/renamed/missing-scope/skipped copies are
+  rejected.
+- Exact root Cargo, Native Cargo, and Git-filtered Flutter lockfile blobs remain
+  `7ab38f4820b08029c64872360fac7141e2512ac4`,
+  `277dd9fe1edfc45fa5550e8e2831f2a0c121561d`, and
+  `51fa085a41168aa1deadace8b5395614db43649e`. The protected vault remains exactly
+  16,072 files, zero directories, 4,522,733 bytes, 5,357 each payload/metadata/auth,
+  one metadata key, and zero pending.
+- Hosted exact-head/evidence-head checks, normal merge, merged-main evidence,
+  guarded original-tree synchronization, and destination verification remain
+  pending. No release, publication, install, service/driver start, Defender change,
+  candidate execution, or protected-vault mutation occurred.

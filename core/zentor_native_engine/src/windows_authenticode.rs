@@ -81,7 +81,10 @@ use windows_sys::Win32::System::JobObjects::{
     JOB_OBJECT_UILIMIT_READCLIPBOARD, JOB_OBJECT_UILIMIT_SYSTEMPARAMETERS,
     JOB_OBJECT_UILIMIT_WRITECLIPBOARD,
 };
-use windows_sys::Win32::System::Pipes::{CreatePipe, GetNamedPipeInfo, PIPE_SERVER_END};
+use windows_sys::Win32::System::Pipes::{
+    CreatePipe, GetNamedPipeClientProcessId, GetNamedPipeInfo, GetNamedPipeServerProcessId,
+    PIPE_SERVER_END,
+};
 use windows_sys::Win32::System::StationsAndDesktops::{
     CloseDesktop, CreateDesktopW, GetThreadDesktop, GetUserObjectInformationW,
     DESKTOP_CREATEWINDOW, DESKTOP_READOBJECTS, DESKTOP_WRITEOBJECTS, HDESK, UOI_FLAGS, UOI_NAME,
@@ -113,6 +116,7 @@ const MAX_CATALOG_CANDIDATES: usize = 16;
 const MAX_AUTHENTICODE_SIGNATURES: u32 = 16;
 const AUTHENTICODE_HELPER_SCHEMA_VERSION: u32 = 1;
 const AUTHENTICODE_HELPER_ARGUMENT: &str = "--avorax-authenticode-helper-v1";
+const AUTHENTICODE_HELPER_PARENT_PID_ENV: &str = "AVORAX_AUTHENTICODE_PARENT_PID";
 const AUTHENTICODE_HELPER_TIMEOUT: Duration = Duration::from_secs(15);
 const AUTHENTICODE_HELPER_REAP_TIMEOUT: Duration = Duration::from_secs(2);
 const AUTHENTICODE_HELPER_POLL_INTERVAL: Duration = Duration::from_millis(10);
@@ -227,6 +231,13 @@ struct AuthenticodeStandardHandleEvidence {
     queried_pipe_modes: [Option<u32>; 3],
     inherit_flags_before: [u32; 3],
     inherit_flags_after: [u32; 3],
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct AuthenticodePipePeerProcessEvidence {
+    expected_parent_process_id: u32,
+    current_process_id: u32,
+    peer_process_ids: [u32; 3],
 }
 
 struct VerifiedWellKnownSid {
@@ -705,6 +716,104 @@ fn validate_current_process_authenticode_standard_handles() -> Result<()> {
         inherit_flags_after,
         ..initial
     })
+}
+
+fn query_authenticode_pipe_peer_process_id(
+    handle: HANDLE,
+    query_client: bool,
+    label: &str,
+) -> Result<u32> {
+    let mut process_id = 0u32;
+    let queried = if query_client {
+        unsafe { GetNamedPipeClientProcessId(handle, &mut process_id) }
+    } else {
+        unsafe { GetNamedPipeServerProcessId(handle, &mut process_id) }
+    };
+    anyhow::ensure!(
+        queried != 0,
+        "unable to query Authenticode helper {label} pipe peer process ID: {}",
+        std::io::Error::last_os_error()
+    );
+    anyhow::ensure!(
+        process_id != 0,
+        "AuthentiCode helper {label} pipe peer returned a zero process ID"
+    );
+    Ok(process_id)
+}
+
+fn expected_authenticode_parent_process_id() -> Result<u32> {
+    let raw = std::env::var_os(AUTHENTICODE_HELPER_PARENT_PID_ENV)
+        .context("AuthentiCode helper sanitized parent process ID is missing")?;
+    let units = raw.encode_wide().collect::<Vec<_>>();
+    parse_authenticode_parent_process_id(&units)
+}
+
+fn parse_authenticode_parent_process_id(units: &[u16]) -> Result<u32> {
+    anyhow::ensure!(
+        !units.is_empty() && units.len() <= 10,
+        "AuthentiCode helper sanitized parent process ID is outside its length bound"
+    );
+    anyhow::ensure!(
+        units
+            .iter()
+            .all(|unit| *unit <= u8::MAX as u16 && (*unit as u8).is_ascii_digit()),
+        "AuthentiCode helper sanitized parent process ID is not canonical ASCII decimal"
+    );
+    let text = String::from_utf16(units)
+        .context("AuthentiCode helper sanitized parent process ID is not valid UTF-16")?;
+    let process_id = text
+        .parse::<u32>()
+        .context("AuthentiCode helper sanitized parent process ID is outside the u32 range")?;
+    anyhow::ensure!(
+        process_id != 0 && process_id.to_string() == text,
+        "AuthentiCode helper sanitized parent process ID is not canonical nonzero decimal"
+    );
+    Ok(process_id)
+}
+
+fn validate_authenticode_pipe_peer_process_evidence(
+    evidence: AuthenticodePipePeerProcessEvidence,
+) -> Result<()> {
+    anyhow::ensure!(
+        evidence.expected_parent_process_id != 0,
+        "AuthentiCode helper expected parent process ID is zero"
+    );
+    anyhow::ensure!(
+        evidence.current_process_id != 0,
+        "AuthentiCode helper current process ID is zero during pipe peer validation"
+    );
+    anyhow::ensure!(
+        evidence.expected_parent_process_id != evidence.current_process_id,
+        "AuthentiCode helper pipe peer unexpectedly identifies the helper itself as parent"
+    );
+    anyhow::ensure!(
+        evidence
+            .peer_process_ids
+            .iter()
+            .all(|process_id| *process_id == evidence.expected_parent_process_id),
+        "AuthentiCode helper stdin/stdout/stderr pipe peers do not all identify the expected parent process"
+    );
+    Ok(())
+}
+
+fn validate_current_process_authenticode_pipe_peer_processes() -> Result<()> {
+    let expected_parent_process_id = expected_authenticode_parent_process_id()?;
+    let current_process_id = unsafe { GetCurrentProcessId() };
+    let standard = [
+        unsafe { GetStdHandle(STD_INPUT_HANDLE) },
+        unsafe { GetStdHandle(STD_OUTPUT_HANDLE) },
+        unsafe { GetStdHandle(STD_ERROR_HANDLE) },
+    ];
+    let evidence = AuthenticodePipePeerProcessEvidence {
+        expected_parent_process_id,
+        current_process_id,
+        peer_process_ids: [
+            query_authenticode_pipe_peer_process_id(standard[0], true, "stdin client")?,
+            query_authenticode_pipe_peer_process_id(standard[1], false, "stdout server")?,
+            query_authenticode_pipe_peer_process_id(standard[2], false, "stderr server")?,
+        ],
+    };
+    validate_authenticode_pipe_peer_process_evidence(evidence)
 }
 
 struct ProcessThreadAttributeList {
@@ -2010,6 +2119,7 @@ fn verify_prepared_microsoft_signature(prepared: PreparedAuthenticodeVerificatio
 pub(crate) fn run_authenticode_helper_stdio() -> Result<()> {
     validate_current_process_authenticode_job_membership()?;
     validate_current_process_authenticode_standard_handles()?;
+    validate_current_process_authenticode_pipe_peer_processes()?;
     validate_current_process_authenticode_private_desktop()?;
     validate_current_process_authenticode_primary_token()?;
     validate_current_process_authenticode_mitigations()?;
@@ -2542,20 +2652,37 @@ fn sanitized_authenticode_launch_context() -> Result<SanitizedAuthenticodeLaunch
         "System32",
         "AuthentiCode helper sanitized current directory",
     )?;
+    let parent_process_id = unsafe { GetCurrentProcessId() };
+    anyhow::ensure!(
+        parent_process_id != 0,
+        "unable to obtain a nonzero Authenticode helper parent process ID"
+    );
     Ok(SanitizedAuthenticodeLaunchContext {
-        environment: build_authenticode_helper_environment_block(&windows_root)?,
+        environment: build_authenticode_helper_environment_block(&windows_root, parent_process_id)?,
         current_directory: absolute_launch_directory_wide(&current_directory)?,
     })
 }
 
-fn build_authenticode_helper_environment_block(windows_root: &Path) -> Result<Vec<u16>> {
+fn build_authenticode_helper_environment_block(
+    windows_root: &Path,
+    parent_process_id: u32,
+) -> Result<Vec<u16>> {
     validate_authenticode_launch_directory(
         windows_root,
         "AuthentiCode helper sanitized environment root",
     )?;
     let value = windows_root.as_os_str().encode_wide().collect::<Vec<_>>();
+    anyhow::ensure!(
+        parent_process_id != 0,
+        "AuthentiCode helper sanitized parent process ID must be nonzero"
+    );
+    let parent_process_id = parent_process_id.to_string();
     let mut block =
-        Vec::with_capacity(value.len() * AUTHENTICODE_HELPER_ENVIRONMENT_NAMES.len() + 32);
+        Vec::with_capacity(value.len() * AUTHENTICODE_HELPER_ENVIRONMENT_NAMES.len() + 64);
+    block.extend(AUTHENTICODE_HELPER_PARENT_PID_ENV.encode_utf16());
+    block.push(b'=' as u16);
+    block.extend(parent_process_id.encode_utf16());
+    block.push(0);
     for name in AUTHENTICODE_HELPER_ENVIRONMENT_NAMES {
         block.extend(name.encode_utf16());
         block.push(b'=' as u16);
@@ -4550,6 +4677,36 @@ mod tests {
     }
 
     #[test]
+    fn native_authenticode_helper_pipe_peer_processes_identify_exact_parent() {
+        let application = std::env::current_exe().unwrap();
+        let arguments = [
+            "--ignored",
+            "--exact",
+            "windows_authenticode::tests::authenticode_pipe_peer_process_child_fixture",
+            "--nocapture",
+            "--test-threads=1",
+        ];
+        let output = run_bounded_authenticode_helper(
+            &application,
+            &arguments,
+            Vec::new(),
+            Duration::from_secs(5),
+        )
+        .unwrap();
+        assert!(
+            output.status.success(),
+            "pipe-peer child failed with {:?}; stdout: {}; stderr: {}",
+            output.status,
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
+        assert!(output.stderr.is_empty());
+        assert!(String::from_utf8(output.stdout)
+            .unwrap()
+            .contains("AVORAX_PIPE_PEER_PARENT_BINDING_OK"));
+    }
+
+    #[test]
     fn native_authenticode_helper_job_membership_is_exact_and_child_verified() {
         let application = std::env::current_exe().unwrap();
         let arguments = [
@@ -4660,6 +4817,14 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "isolated child fixture invoked by the pipe-peer process regression"]
+    fn authenticode_pipe_peer_process_child_fixture() {
+        validate_current_process_authenticode_standard_handles().unwrap();
+        validate_current_process_authenticode_pipe_peer_processes().unwrap();
+        println!("AVORAX_PIPE_PEER_PARENT_BINDING_OK");
+    }
+
+    #[test]
     fn native_authenticode_helper_standard_handle_contract_is_fail_visible() {
         let valid = AuthenticodeStandardHandleEvidence {
             startup_flags: STARTF_USESTDHANDLES,
@@ -4734,6 +4899,68 @@ mod tests {
     }
 
     #[test]
+    fn native_authenticode_helper_pipe_peer_process_contract_is_fail_visible() {
+        let valid = AuthenticodePipePeerProcessEvidence {
+            expected_parent_process_id: 4_242,
+            current_process_id: 4_243,
+            peer_process_ids: [4_242, 4_242, 4_242],
+        };
+        validate_authenticode_pipe_peer_process_evidence(valid).unwrap();
+        for evidence in [
+            AuthenticodePipePeerProcessEvidence {
+                expected_parent_process_id: 0,
+                ..valid
+            },
+            AuthenticodePipePeerProcessEvidence {
+                current_process_id: 0,
+                ..valid
+            },
+            AuthenticodePipePeerProcessEvidence {
+                current_process_id: 4_242,
+                ..valid
+            },
+            AuthenticodePipePeerProcessEvidence {
+                peer_process_ids: [0, 4_242, 4_242],
+                ..valid
+            },
+            AuthenticodePipePeerProcessEvidence {
+                peer_process_ids: [4_242, 4_243, 4_242],
+                ..valid
+            },
+            AuthenticodePipePeerProcessEvidence {
+                peer_process_ids: [4_242, 4_242, 4_243],
+                ..valid
+            },
+        ] {
+            assert!(validate_authenticode_pipe_peer_process_evidence(evidence).is_err());
+        }
+        assert_eq!(
+            parse_authenticode_parent_process_id(&"4294967295".encode_utf16().collect::<Vec<_>>())
+                .unwrap(),
+            u32::MAX
+        );
+        for invalid in [
+            "",
+            "0",
+            "00",
+            "01",
+            "+1",
+            " 1",
+            "1 ",
+            "1a",
+            "4294967296",
+            "12345678901",
+        ] {
+            assert!(parse_authenticode_parent_process_id(
+                &invalid.encode_utf16().collect::<Vec<_>>()
+            )
+            .is_err());
+        }
+        assert!(parse_authenticode_parent_process_id(&[b'1' as u16, 0, b'2' as u16]).is_err());
+        assert!(parse_authenticode_parent_process_id(&[0x0131]).is_err());
+    }
+
+    #[test]
     #[ignore = "isolated child fixture invoked by the sanitized-launch regression"]
     fn authenticode_sanitized_launch_child_fixture() {
         validate_current_process_authenticode_primary_token().unwrap();
@@ -4749,9 +4976,15 @@ mod tests {
             .map(|(name, value)| (name.to_string_lossy().into_owned(), PathBuf::from(value)))
             .collect::<Vec<_>>();
         environment.sort_by(|left, right| left.0.cmp(&right.0));
+        let expected_parent_process_id = expected_authenticode_parent_process_id().unwrap();
+        assert_ne!(expected_parent_process_id, unsafe { GetCurrentProcessId() });
         assert_eq!(
             environment,
             vec![
+                (
+                    AUTHENTICODE_HELPER_PARENT_PID_ENV.to_string(),
+                    PathBuf::from(expected_parent_process_id.to_string())
+                ),
                 ("SystemRoot".to_string(), windows_root.clone()),
                 ("WINDIR".to_string(), windows_root),
             ]
@@ -4761,7 +4994,8 @@ mod tests {
 
     #[test]
     fn native_authenticode_helper_sanitized_environment_block_is_exact_and_bounded() {
-        let block = build_authenticode_helper_environment_block(Path::new(r"C:\Windows")).unwrap();
+        let block =
+            build_authenticode_helper_environment_block(Path::new(r"C:\Windows"), 4_242).unwrap();
         assert_eq!(block.last(), Some(&0));
         assert_eq!(block[block.len() - 2], 0);
         let entries = block[..block.len() - 1]
@@ -4769,7 +5003,15 @@ mod tests {
             .filter(|entry| !entry.is_empty())
             .map(|entry| String::from_utf16(entry).unwrap())
             .collect::<Vec<_>>();
-        assert_eq!(entries, [r"SystemRoot=C:\Windows", r"WINDIR=C:\Windows"]);
+        assert_eq!(
+            entries,
+            [
+                "AVORAX_AUTHENTICODE_PARENT_PID=4242",
+                r"SystemRoot=C:\Windows",
+                r"WINDIR=C:\Windows"
+            ]
+        );
+        assert!(build_authenticode_helper_environment_block(Path::new(r"C:\Windows"), 0).is_err());
 
         for invalid in [
             Path::new(r"relative\Windows"),
@@ -4777,7 +5019,7 @@ mod tests {
             Path::new(r"\\server\share\Windows"),
             Path::new(r"\\?\C:\Windows"),
         ] {
-            assert!(build_authenticode_helper_environment_block(invalid).is_err());
+            assert!(build_authenticode_helper_environment_block(invalid, 4_242).is_err());
             assert!(absolute_launch_directory_wide(invalid).is_err());
         }
         let embedded_nul = PathBuf::from(OsString::from_wide(&[
@@ -4788,7 +5030,7 @@ mod tests {
             0,
             b'Y' as u16,
         ]));
-        assert!(build_authenticode_helper_environment_block(&embedded_nul).is_err());
+        assert!(build_authenticode_helper_environment_block(&embedded_nul, 4_242).is_err());
         assert!(absolute_launch_directory_wide(&embedded_nul).is_err());
     }
 

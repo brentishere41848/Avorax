@@ -2208,6 +2208,29 @@ enforcement, or pre-execution blocking is claimed.
   object namespace. AppContainer, installed LocalSystem, signed-driver, and pre-
   execution evidence remain separate blockers.
 
+## Checkpoint 2215: Authenticode Pipe Peer Binding Is Locally Verified
+
+- **Verified local boundary:** The sanitized helper environment now carries canonical
+  nonzero parent-PID evidence alongside `SystemRoot` and `WINDIR`. After standard-
+  handle validation, the child requires `GetNamedPipeClientProcessId` for stdin
+  and `GetNamedPipeServerProcessId` for stdout/stderr to return that exact parent
+  creator PID, distinct from the child PID, before private-desktop, token,
+  mitigation, stdin, request, candidate, or trust work.
+- **Evidence status:** Real benign-child and malformed/mismatched checks pass `2/2`;
+  Authenticode passes `59`/`12`; both locked workspaces pass with Native `487`/`12`
+  plus compiler `6/6`; source contracts pass `645/645`; Flutter passes `838/838`;
+  strict lint, release/two-host smoke, no-malware, dependency, exact-lockfile, and
+  protected-vault gates pass. Verifier/validator pass `245/245` in `469.4s`, and
+  seven malformed reports are rejected. No checkpoint-2215 passing result is
+  claimed before execution; these are later execution results. Hosted, merge,
+  synchronization, and destination evidence remain pending.
+- **Residual blocker:** Anonymous `CreatePipe` endpoints are created and connected
+  in the parent. The process-ID APIs identify that parent creator from inherited
+  child handles but cannot prove the inheriting child PID back to the parent. The
+  launch PID is not secret. Same-user handle duplication, authenticated/encrypted
+  cross-identity IPC, AppContainer, installed LocalSystem, signed-driver, and pre-
+  execution proof remain separate blockers.
+
 ## Checkpoint 2214: Authenticode Job Membership Is Locally Verified
 
 - **Parent boundary:** After assignment and before `ResumeThread`, the parent is
