@@ -2030,10 +2030,47 @@ enforcement, or pre-execution blocking is claimed.
   exact-head CI `32638907677` and package push/PR
   `32638895902`/`32638907670` with all six artifacts, checksums, lockfile
   SBOM, and publication skipped. Evidence-head, merge, merged-main, and
-  original-tree synchronization remain pending.
+  original-tree synchronization subsequently passed: evidence `fa7574f`, PR
+  `#60`, merge `1076ac3`, merged-main CI `32640506209`, packages
+  `32640506192`, exact 12-path synchronization, destination verification, and
+  the unchanged protected-vault invariant close checkpoint 2208.
 - **Residual blocker:** Windows Mandatory Integrity Control/no-write-up is not
   identity or read isolation. Parent SID, profile/registry namespace, desktop,
   ordinary read access, and explicitly low-writable objects remain reachable.
   AppContainer/LPAC, authenticated cross-identity IPC, installed LocalSystem
   compatibility, signed-driver enforcement, and pre-execution blocking remain
   unverified, blocked, or technically limited.
+
+## Checkpoint 2209 Authenticode Mandatory Policy Status
+
+- **Focused verified after redesign:** The helper requires the
+  LSA-created policy inherited through `CreateRestrictedToken` to contain
+  `TOKEN_MANDATORY_POLICY_NO_WRITE_UP`. Parent read-back precedes
+  `CreateProcessAsUserW`; child read-back precedes stdin.
+- **Privilege boundary:** The initial direct
+  `SetTokenInformation(TokenMandatoryPolicy)` attempt failed visibly with
+  `ERROR_PRIVILEGE_NOT_HELD` (1314). The setter was removed rather than adding
+  privilege, weakening Windows, or swallowing the failure.
+- **Fail-closed policy:** `TOKEN_MANDATORY_POLICY_NO_WRITE_UP` is required;
+  only the documented optional `TOKEN_MANDATORY_POLICY_NEW_PROCESS_MIN` bit is
+  allowed beside it. Policy off, new-process-minimum alone, unknown bits, query
+  failure, or unexpected result size cannot become publisher trust.
+- **Local evidence passed:** The benign real-child and pure policy filters,
+  complete Authenticode, strict Native/Local/Guard lint, both locked workspace
+  variants, release builds/two-host smoke, Flutter analyze and `838/838`, source
+  contracts `639/639`, and definitive verifier/validators `239/239` in
+  `433.2s` pass. Five malformed reports are rejected. Hosted checks, merge,
+  synchronization, and destination checks remain pending.
+- **Residual blocker:** No-write-up policy does not add no-read-up,
+  no-execute-up, identity, profile, registry, desktop/window-station,
+  AppContainer/LPAC, installed LocalSystem, driver, or pre-execution isolation.
+- **Definitive-verifier failure retained:** The first full attempt stopped after
+  38 recorded steps because Defender removed the Native Rust test executable
+  containing a compile-time standard EICAR marker (Cargo OS error 225). No
+  Defender setting or exclusion was changed.
+- **Remediation verified locally:** Native and Local Core share a bounded
+  XOR-encoded marker decoded once at runtime, and both test executables reject
+  static marker inclusion. A first retry also remains failed after 233 steps
+  because an agent-created Python bytecode cache contained a compile-time-
+  joined marker; the contract now runtime-joins fragments. The final `239/239`
+  retry and no-malware gate pass. Neither failed report is success evidence.

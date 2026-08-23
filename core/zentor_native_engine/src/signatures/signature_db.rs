@@ -30,7 +30,7 @@ impl SignatureDb {
                 confidence: Confidence::Confirmed,
                 severity: "test".to_string(),
                 signature_type: SignatureType::EicarTestSignature,
-                pattern: eicar_signature::EICAR_ASCII.to_string(),
+                pattern: eicar_signature::eicar_test_string(),
                 mask: None,
                 offset: None,
                 file_types: vec!["*".to_string()],

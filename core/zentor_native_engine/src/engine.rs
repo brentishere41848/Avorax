@@ -521,7 +521,7 @@ impl ZentorNativeEngine {
     pub fn engine_self_test(&mut self) -> Result<SelfTestReport> {
         let verdict = self.scan_bytes_for_test(
             PathBuf::from("eicar.com.txt"),
-            crate::signatures::eicar_signature::EICAR_ASCII.as_bytes(),
+            crate::signatures::eicar_signature::eicar_test_bytes(),
             ScanActionMode::DetectOnly,
         )?;
         let eicar_detected = matches!(

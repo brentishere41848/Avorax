@@ -1754,3 +1754,55 @@ Desktop Packages push/PR `32638895902`/`32638907670`. Both package runs pass
 Windows MSI/EXE, Linux DEB/tar, both macOS DMGs, six-artifact consolidation,
 checksums, and lockfile SBOM; publication is skipped. Evidence-head, merge,
 merged-main, installed enterprise, and LocalSystem evidence remain separate.
+
+Checkpoint 2208 integration is closed through evidence `fa7574f`, PR `#60`,
+merge `1076ac3`, exact merged-main CI `32640506209`, packages `32640506192`,
+guarded 12-path original-tree synchronization, destination runtime checks, and
+an unchanged protected-vault invariant. This closes the implementation and
+integration evidence only; the identity/profile/registry/desktop/read,
+AppContainer, installed LocalSystem, driver, and pre-execution limitations
+above remain unchanged.
+
+## Checkpoint 2209 Mandatory No-Write-Up Token Policy
+
+Checkpoint 2208 verified the helper's exact Low Mandatory SID, but Windows also
+stores a mandatory integrity policy in `TOKEN_MANDATORY_POLICY`. A low SID must
+not be reported as enforced no-write-up when that separate policy is off.
+Checkpoint 2209 therefore requires the LSA-created policy inherited through
+`CreateRestrictedToken` to contain `TOKEN_MANDATORY_POLICY_NO_WRITE_UP`. Full
+parent read-back occurs before `CreateProcessAsUserW`, and the child repeats it
+before stdin or untrusted request processing. An attempted direct
+`SetTokenInformation(TokenMandatoryPolicy)` call failed with
+`ERROR_PRIVILEGE_NOT_HELD` (1314); it was removed rather than granting the
+helper another privilege.
+
+The evidence parser requires no-write-up and rejects every bit outside
+`TOKEN_MANDATORY_POLICY_VALID_MASK`. It accepts the documented optional
+`TOKEN_MANDATORY_POLICY_NEW_PROCESS_MIN` bit only when no-write-up is also
+present. Pure off/new-process-only/unknown-bit cases and a real benign child are
+verified. Both locked workspace variants, strict lint, release trust smoke,
+Flutter analyze and `838/838`, source contracts `639/639`, and the definitive
+verifier/validators pass exactly `239/239` in `433.2s`. Five malformed reports
+are rejected. Hosted and installed evidence remain separate.
+
+This makes no-write-up policy explicit but does not set no-read-up or
+no-execute-up and does not change identity, credentials, profile/registry,
+desktop/window station, ordinary reads, or explicitly low-writable objects. It
+is not AppContainer/LPAC, private-desktop isolation, authenticated cross-user
+IPC, installed LocalSystem proof, driver enforcement, or pre-execution
+blocking.
+
+The first definitive checkpoint-2209 verifier exposed a host-interaction risk:
+an exact compile-time EICAR marker made the otherwise benign Native test
+executable a Defender target, causing OS error 225 after 38 steps. Defender
+must not be weakened to accommodate tests. Native therefore stores only a
+bounded XOR-encoded vector, decodes it once in memory, and shares the matcher
+with Local Core. Both test executables reject static exact-marker inclusion.
+This preserves EICAR detection but does not claim that an opt-in standard EICAR
+file will bypass, replace, or outrun Defender.
+
+The initial Defender failure remains explicit. A later retry also failed at
+step 233 when an agent-created Python bytecode cache contained the contract's
+compile-time-joined marker; the no-malware gate detected it. The cache was
+removed, the contract now runtime-joins fragments, and the complete retry plus
+the binary gate pass. No Defender exclusion or setting change was made.

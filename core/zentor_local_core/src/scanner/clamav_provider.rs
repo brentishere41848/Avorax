@@ -13,6 +13,7 @@ use chrono::Utc;
 use sha2::{Digest, Sha256};
 #[cfg(test)]
 use uuid::Uuid;
+use zentor_native_engine::signatures::eicar_signature;
 
 use super::{ScanResult, ScanStatus, ScannerProvider};
 
@@ -148,8 +149,6 @@ impl ScannerProvider for ClamAvProvider {
     }
 }
 
-const EICAR_TEST_SIGNATURE: &str =
-    "X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*";
 const ZENTOR_SAFE_EICAR_SIMULATOR: &str = "ZENTOR-SAFE-EICAR-SIMULATOR-FILE";
 const LOCAL_SIGNATURE_SAMPLE_LIMIT_BYTES: u64 = 1_048_576;
 const MAX_CLAMAV_HASH_BYTES: u64 = 1024 * 1024 * 1024;
@@ -283,9 +282,8 @@ fn local_eicar_signature_match(path: &Path) -> Result<bool> {
 }
 
 fn local_eicar_signature_match_reader<R: Read>(mut reader: R, limit: u64) -> io::Result<bool> {
-    let max_signature_len = EICAR_TEST_SIGNATURE
-        .len()
-        .max(ZENTOR_SAFE_EICAR_SIMULATOR.len());
+    let max_signature_len =
+        eicar_signature::EICAR_TEST_BYTES_LEN.max(ZENTOR_SAFE_EICAR_SIMULATOR.len());
     let overlap_len = max_signature_len.saturating_sub(1);
     let mut overlap = Vec::new();
     let mut buffer = vec![0_u8; 8192];
@@ -314,9 +312,7 @@ fn local_eicar_signature_match_reader<R: Read>(mut reader: R, limit: u64) -> io:
 }
 
 fn local_eicar_signature_match_bytes(bytes: &[u8]) -> bool {
-    bytes
-        .windows(EICAR_TEST_SIGNATURE.len())
-        .any(|window| window == EICAR_TEST_SIGNATURE.as_bytes())
+    eicar_signature::contains_eicar(bytes)
         || bytes
             .windows(ZENTOR_SAFE_EICAR_SIMULATOR.len())
             .any(|window| window == ZENTOR_SAFE_EICAR_SIMULATOR.as_bytes())
@@ -562,7 +558,7 @@ mod tests {
     #[test]
     fn local_eicar_signature_bytes_are_detected() {
         assert!(local_eicar_signature_match_bytes(
-            EICAR_TEST_SIGNATURE.as_bytes()
+            eicar_signature::eicar_test_bytes()
         ));
         assert!(local_eicar_signature_match_bytes(
             ZENTOR_SAFE_EICAR_SIMULATOR.as_bytes()
@@ -573,14 +569,14 @@ mod tests {
     #[test]
     fn local_eicar_signature_reader_detects_chunk_boundary_match() {
         let mut bytes = vec![b'A'; 8190];
-        bytes.extend_from_slice(EICAR_TEST_SIGNATURE.as_bytes());
+        bytes.extend_from_slice(eicar_signature::eicar_test_bytes());
         assert!(local_eicar_signature_match_reader(bytes.as_slice(), 16 * 1024).unwrap());
     }
 
     #[test]
     fn local_eicar_signature_reader_uses_bounded_sample() {
         let mut bytes = vec![b'A'; LOCAL_SIGNATURE_SAMPLE_LIMIT_BYTES as usize + 1];
-        bytes.extend_from_slice(EICAR_TEST_SIGNATURE.as_bytes());
+        bytes.extend_from_slice(eicar_signature::eicar_test_bytes());
         assert!(!local_eicar_signature_match_reader(
             bytes.as_slice(),
             LOCAL_SIGNATURE_SAMPLE_LIMIT_BYTES
@@ -669,7 +665,7 @@ mod tests {
     fn clamav_infected_exit_always_has_detection_name() {
         let source = include_str!("clamav_provider.rs");
         let scan_start = source.find("fn scan_file(&self").unwrap();
-        let scan_end = source.find("const EICAR_TEST_SIGNATURE").unwrap();
+        let scan_end = source.find("const ZENTOR_SAFE_EICAR_SIMULATOR").unwrap();
         let scan_source = &source[scan_start..scan_end];
 
         assert!(scan_source.contains("if infected"));
@@ -679,6 +675,15 @@ mod tests {
         assert!(scan_source.contains("signature_name: threat.clone()"));
         assert!(scan_source.contains("threat_name: threat"));
         assert!(!scan_source.contains(".filter(|value| !value.is_empty())\n        } else"));
+    }
+
+    #[test]
+    fn local_clamav_test_binary_omits_static_eicar_indicator() {
+        let executable = std::fs::read(std::env::current_exe().unwrap()).unwrap();
+        let marker = eicar_signature::eicar_test_bytes();
+        assert!(!executable
+            .windows(marker.len())
+            .any(|window| window == marker));
     }
 
     #[test]
