@@ -667,5 +667,12 @@ release-host trust smokes, both locked workspaces, source contracts `643/643`,
 Flutter analyze and `838/838`, and no-malware pass. The first strict Clippy run
 rejected a field-reassigned default initializer; the corrected complete initializer
 passes. Dependency evidence and the definitive `243/243` verifier/validator pass;
-five malformed report copies are rejected. Hosted package/SBOM evidence and final
-signed-artifact review remain pending.
+five malformed report copies are rejected.
+
+Exact implementation head `f0f4c3b82dcb30b6851b26db7a88ab2b6e9a4af8`
+passes Desktop Packages push/PR runs `32665646920`/`32665658257`. Both pass all
+six native artifacts, Windows administrative MSI extraction without installation,
+checksums, a 569-component lockfile CycloneDX SBOM, dependency/license evidence,
+and artifact upload. Prerelease publication is skipped. Evidence-head/merged-main
+package evidence and complete signed final-artifact license, notice, and copyright
+review remain pending.

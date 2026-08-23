@@ -1970,8 +1970,11 @@ execution. Focused `2/2`, complete Authenticode `47` passed/`10` ignored, source
 contracts `643/643`, strict lint/release/two-host smoke, both locked workspaces,
 Flutter `838/838`, and no-malware pass. The definitive verifier/validator pass
 `243/243` in `469.2s`; five controlled malformed reports are rejected, exact
-lockfiles and the protected-vault invariant pass, and hosted/integration evidence
-remains pending. Candidate fixtures are never executed.
+lockfiles and the protected-vault invariant pass. Exact implementation `f0f4c3b`
+passes CI `32665658235` and package push/PR `32665646920`/`32665658257`, with six
+artifacts, checksums, lockfile SBOM, administrative MSI extraction, and skipped
+publication. Evidence-head/integration, destination, installed, and complete final-
+artifact license evidence remain pending. Candidate fixtures are never executed.
 
 **Residual risk:** Exact standard-handle binding narrows inherited helper IPC only.
 Anonymous pipes and the nonce do not provide cross-identity authentication or

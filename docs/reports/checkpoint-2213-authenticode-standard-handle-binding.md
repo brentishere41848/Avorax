@@ -6,8 +6,9 @@ Implementation and definitive local verification are complete. The complete impl
 benign/adversarial tests, verifier step, strict report validator, source contract,
 dependency review, and audit documentation were written before any checkpoint-2213
 test execution. No checkpoint-2213 passing result was claimed before execution.
-The definitive verifier and independent validator pass `243/243`; integration
-evidence remains pending.
+The definitive verifier and independent validator pass `243/243`. Exact
+implementation head `f0f4c3b82dcb30b6851b26db7a88ab2b6e9a4af8` passes hosted
+CI and package evidence; evidence-head checks and integration remain pending.
 
 ## Scripted Boundary
 
@@ -89,8 +90,15 @@ mutation is permitted.
 - The protected vault remains exactly `16,072` files, zero directories,
   `4,522,733` bytes, `5,357` each `.avoraxq`/`.json`/`.auth`, one
   `.metadata_auth_key`, and zero pending.
+- Exact implementation head `f0f4c3b82dcb30b6851b26db7a88ab2b6e9a4af8`
+  passes Avorax CI pull-request run `32665658235` and Desktop Packages push/PR
+  runs `32665646920`/`32665658257`. Both package runs build and upload Windows
+  x64 MSI/setup EXE, Linux x64 DEB/tar, and macOS x64/arm64 DMGs, then require
+  all six artifacts, checksums, dependency/license evidence, and the 569-component
+  lockfile SBOM. Windows administrative MSI extraction passes without installation.
+  License review remains partial and prerelease publication is skipped.
 
 ## Pending Verification
 
-Hosted exact-head evidence, normal
-merge, guarded original-tree synchronization, and destination checks remain pending.
+Evidence-head hosted CI and package evidence, normal merge, merged-main evidence,
+guarded original-tree synchronization, and destination checks remain pending.

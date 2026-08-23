@@ -2196,8 +2196,12 @@ enforcement, or pre-execution blocking is claimed.
   `643/643`, and strict lint/release/two-host smoke/both locked workspaces plus
   Flutter `838/838` and no-malware pass. The definitive verifier/validator pass
   `243/243` in `469.2s`; five adversarial report copies are rejected. Exact
-  lockfiles and protected-vault evidence pass. Hosted/integration evidence remains
-  pending.
+  lockfiles and protected-vault evidence pass. Exact implementation `f0f4c3b`
+  passes CI `32665658235` and package push/PR `32665646920`/`32665658257`,
+  including all six artifacts, checksums, a 569-component lockfile SBOM,
+  administrative MSI extraction, and skipped publication. Evidence-head,
+  integration, destination, and installed evidence remain pending; complete
+  final-artifact license review remains partial.
 - **Residual blocker:** Exact standard-handle binding narrows inherited helper IPC
   only. Anonymous pipes and the nonce do not provide cross-identity authentication
   or encryption, prevent same-user handle duplication, or isolate the named-kernel-
