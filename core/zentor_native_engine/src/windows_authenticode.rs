@@ -5,10 +5,10 @@ use std::io::{Read, Seek, SeekFrom, Write};
 use std::mem::{offset_of, size_of};
 use std::os::windows::ffi::{OsStrExt, OsStringExt};
 use std::os::windows::fs::{MetadataExt, OpenOptionsExt};
-use std::os::windows::io::AsRawHandle;
-use std::os::windows::process::CommandExt;
+use std::os::windows::io::{AsRawHandle, FromRawHandle};
+use std::os::windows::process::ExitStatusExt;
 use std::path::{Component, Path, PathBuf, Prefix};
-use std::process::{Command, ExitStatus, Stdio};
+use std::process::ExitStatus;
 use std::ptr::{null, null_mut};
 use std::sync::mpsc::{self, Receiver, RecvTimeoutError};
 use std::thread;
@@ -20,13 +20,14 @@ use sha2::{Digest, Sha256};
 use uuid::{Uuid, Variant, Version};
 use windows_sys::core::PCSTR;
 use windows_sys::Win32::Foundation::{
-    CloseHandle, GetLastError, SetLastError, CERT_E_REVOCATION_FAILURE, CRYPT_E_BAD_ENCODE,
-    CRYPT_E_BAD_MSG, CRYPT_E_NO_MATCH, CRYPT_E_NO_SIGNER, CRYPT_E_NO_TRUSTED_SIGNER,
-    CRYPT_E_REVOKED, CRYPT_E_SIGNER_NOT_FOUND, ERROR_INSUFFICIENT_BUFFER, ERROR_NOT_FOUND,
-    ERROR_NO_TOKEN, ERROR_SUCCESS, HANDLE, INVALID_HANDLE_VALUE, LUID, TRUST_E_BAD_DIGEST,
-    TRUST_E_BASIC_CONSTRAINTS, TRUST_E_CERT_SIGNATURE, TRUST_E_COUNTER_SIGNER, TRUST_E_FAIL,
-    TRUST_E_FINANCIAL_CRITERIA, TRUST_E_MALFORMED_SIGNATURE, TRUST_E_NO_SIGNER_CERT,
-    TRUST_E_SUBJECT_FORM_UNKNOWN, TRUST_E_SUBJECT_NOT_TRUSTED, TRUST_E_TIME_STAMP,
+    CloseHandle, GetLastError, SetHandleInformation, SetLastError, CERT_E_REVOCATION_FAILURE,
+    CRYPT_E_BAD_ENCODE, CRYPT_E_BAD_MSG, CRYPT_E_NO_MATCH, CRYPT_E_NO_SIGNER,
+    CRYPT_E_NO_TRUSTED_SIGNER, CRYPT_E_REVOKED, CRYPT_E_SIGNER_NOT_FOUND,
+    ERROR_INSUFFICIENT_BUFFER, ERROR_NOT_FOUND, ERROR_NO_TOKEN, ERROR_SUCCESS, HANDLE,
+    HANDLE_FLAG_INHERIT, INVALID_HANDLE_VALUE, LUID, TRUST_E_BAD_DIGEST, TRUST_E_BASIC_CONSTRAINTS,
+    TRUST_E_CERT_SIGNATURE, TRUST_E_COUNTER_SIGNER, TRUST_E_FAIL, TRUST_E_FINANCIAL_CRITERIA,
+    TRUST_E_MALFORMED_SIGNATURE, TRUST_E_NO_SIGNER_CERT, TRUST_E_SUBJECT_FORM_UNKNOWN,
+    TRUST_E_SUBJECT_NOT_TRUSTED, TRUST_E_TIME_STAMP, WAIT_FAILED, WAIT_OBJECT_0, WAIT_TIMEOUT,
 };
 use windows_sys::Win32::Security::Cryptography::Catalog::{
     CryptCATAdminAcquireContext2, CryptCATAdminCalcHashFromFileHandle2,
@@ -47,9 +48,10 @@ use windows_sys::Win32::Security::WinTrust::{
 };
 use windows_sys::Win32::Security::{
     CreateRestrictedToken, DuplicateTokenEx, GetTokenInformation, LookupPrivilegeValueW,
-    RevertToSelf, SecurityImpersonation, TokenImpersonation, TokenImpersonationLevel,
-    TokenPrivileges, TokenType, DISABLE_MAX_PRIVILEGE, LUID_AND_ATTRIBUTES, SE_CHANGE_NOTIFY_NAME,
-    SE_PRIVILEGE_ENABLED, TOKEN_DUPLICATE, TOKEN_IMPERSONATE, TOKEN_PRIVILEGES, TOKEN_QUERY,
+    RevertToSelf, SecurityImpersonation, TokenImpersonation, TokenImpersonationLevel, TokenPrimary,
+    TokenPrivileges, TokenType, DISABLE_MAX_PRIVILEGE, LUID_AND_ATTRIBUTES, SECURITY_ATTRIBUTES,
+    SE_CHANGE_NOTIFY_NAME, SE_PRIVILEGE_ENABLED, TOKEN_ASSIGN_PRIMARY, TOKEN_DUPLICATE,
+    TOKEN_IMPERSONATE, TOKEN_PRIVILEGES, TOKEN_QUERY,
 };
 use windows_sys::Win32::Storage::FileSystem::{
     FileBasicInfo, FileIdInfo, FileStandardInfo, GetFileInformationByHandle,
@@ -64,9 +66,13 @@ use windows_sys::Win32::System::JobObjects::{
     JOB_OBJECT_LIMIT_JOB_MEMORY, JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE,
     JOB_OBJECT_LIMIT_PROCESS_MEMORY, JOB_OBJECT_LIMIT_PROCESS_TIME,
 };
+use windows_sys::Win32::System::Pipes::CreatePipe;
 use windows_sys::Win32::System::Threading::{
-    GetCurrentProcess, GetCurrentThread, OpenProcessToken, OpenThreadToken, SetThreadToken,
-    CREATE_NO_WINDOW,
+    CreateProcessAsUserW, DeleteProcThreadAttributeList, GetCurrentProcess, GetCurrentThread,
+    GetExitCodeProcess, InitializeProcThreadAttributeList, OpenProcessToken, OpenThreadToken,
+    ResumeThread, SetThreadToken, TerminateProcess, UpdateProcThreadAttribute, WaitForSingleObject,
+    CREATE_NO_WINDOW, CREATE_SUSPENDED, EXTENDED_STARTUPINFO_PRESENT, PROCESS_INFORMATION,
+    PROC_THREAD_ATTRIBUTE_HANDLE_LIST, STARTF_USESTDHANDLES, STARTUPINFOEXW,
 };
 
 const MAX_AUTHENTICODE_PATH_UTF16_UNITS: usize = 32_767;
@@ -92,6 +98,8 @@ const MAX_AUTHENTICODE_HELPER_ERROR_CHARS: usize = 4_096;
 const MAX_AUTHENTICODE_HOST_EXE_BYTES: u64 = 256 * 1024 * 1024;
 const MAX_AUTHENTICODE_HELPER_TOKEN_INFO_BYTES: usize = 64 * 1024;
 const MAX_AUTHENTICODE_HELPER_TOKEN_PRIVILEGES: usize = 256;
+const MAX_AUTHENTICODE_HELPER_ATTRIBUTE_LIST_BYTES: usize = 64 * 1024;
+const AUTHENTICODE_HELPER_TERMINATION_EXIT_CODE: u32 = 0xA710_0001;
 
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
@@ -139,6 +147,190 @@ impl Drop for OwnedToken {
             self.0 = null_mut();
         }
     }
+}
+
+struct OwnedKernelHandle(HANDLE);
+
+impl OwnedKernelHandle {
+    fn from_raw(handle: HANDLE, operation: &str) -> Result<Self> {
+        anyhow::ensure!(
+            !handle.is_null() && handle != INVALID_HANDLE_VALUE,
+            "{operation}: {}",
+            std::io::Error::last_os_error()
+        );
+        Ok(Self(handle))
+    }
+
+    fn into_file(mut self) -> File {
+        let handle = std::mem::replace(&mut self.0, null_mut());
+        unsafe { File::from_raw_handle(handle) }
+    }
+}
+
+impl Drop for OwnedKernelHandle {
+    fn drop(&mut self) {
+        if !self.0.is_null() && self.0 != INVALID_HANDLE_VALUE {
+            unsafe { CloseHandle(self.0) };
+            self.0 = null_mut();
+        }
+    }
+}
+
+struct InheritedPipe {
+    parent: OwnedKernelHandle,
+    child: OwnedKernelHandle,
+}
+
+impl InheritedPipe {
+    fn create(parent_reads: bool, label: &str) -> Result<Self> {
+        let attributes = SECURITY_ATTRIBUTES {
+            nLength: size_of::<SECURITY_ATTRIBUTES>() as u32,
+            lpSecurityDescriptor: null_mut(),
+            bInheritHandle: 1,
+        };
+        let mut read = null_mut();
+        let mut write = null_mut();
+        anyhow::ensure!(
+            unsafe { CreatePipe(&mut read, &mut write, &attributes, 0) } != 0,
+            "unable to create Authenticode helper {label} pipe: {}",
+            std::io::Error::last_os_error()
+        );
+        let read = OwnedKernelHandle::from_raw(
+            read,
+            &format!("unable to create Authenticode helper {label} read handle"),
+        )?;
+        let write = OwnedKernelHandle::from_raw(
+            write,
+            &format!("unable to create Authenticode helper {label} write handle"),
+        )?;
+        let (parent, child) = if parent_reads {
+            (read, write)
+        } else {
+            (write, read)
+        };
+        anyhow::ensure!(
+            unsafe { SetHandleInformation(parent.0, HANDLE_FLAG_INHERIT, 0) } != 0,
+            "unable to make Authenticode helper parent {label} handle non-inheritable: {}",
+            std::io::Error::last_os_error()
+        );
+        Ok(Self { parent, child })
+    }
+}
+
+struct ProcessThreadAttributeList {
+    storage: Vec<usize>,
+    pointer: *mut c_void,
+}
+
+impl ProcessThreadAttributeList {
+    fn for_handle_list(handles: &[HANDLE; 3]) -> Result<Self> {
+        validate_authenticode_child_handle_list(handles)?;
+        let mut required = 0usize;
+        unsafe { SetLastError(ERROR_SUCCESS) };
+        let sized = unsafe { InitializeProcThreadAttributeList(null_mut(), 1, 0, &mut required) };
+        let size_error = unsafe { GetLastError() };
+        anyhow::ensure!(
+            sized == 0 && size_error == ERROR_INSUFFICIENT_BUFFER,
+            "unable to size Authenticode helper process attribute list: {}",
+            std::io::Error::from_raw_os_error(size_error as i32)
+        );
+        anyhow::ensure!(
+            required > 0 && required <= MAX_AUTHENTICODE_HELPER_ATTRIBUTE_LIST_BYTES,
+            "AuthentiCode helper process attribute list is outside its byte bound"
+        );
+        let words = required.div_ceil(size_of::<usize>());
+        let mut storage = vec![0usize; words];
+        let pointer = storage.as_mut_ptr().cast::<c_void>();
+        anyhow::ensure!(
+            unsafe { InitializeProcThreadAttributeList(pointer.cast(), 1, 0, &mut required) } != 0,
+            "unable to initialize Authenticode helper process attribute list: {}",
+            std::io::Error::last_os_error()
+        );
+        let updated = unsafe {
+            UpdateProcThreadAttribute(
+                pointer.cast(),
+                0,
+                PROC_THREAD_ATTRIBUTE_HANDLE_LIST as usize,
+                handles.as_ptr().cast::<c_void>(),
+                size_of::<[HANDLE; 3]>(),
+                null_mut(),
+                null(),
+            )
+        };
+        if updated == 0 {
+            let error = std::io::Error::last_os_error();
+            unsafe { DeleteProcThreadAttributeList(pointer.cast()) };
+            anyhow::bail!("unable to restrict Authenticode helper inherited handles: {error}");
+        }
+        Ok(Self { storage, pointer })
+    }
+
+    fn pointer(&self) -> *mut c_void {
+        let _keep_storage_alive = &self.storage;
+        self.pointer
+    }
+}
+
+impl Drop for ProcessThreadAttributeList {
+    fn drop(&mut self) {
+        if !self.pointer.is_null() {
+            unsafe { DeleteProcThreadAttributeList(self.pointer.cast()) };
+            self.pointer = null_mut();
+        }
+    }
+}
+
+struct RestrictedAuthenticodeProcess {
+    process: OwnedKernelHandle,
+    stdin: Option<File>,
+    stdout: Option<File>,
+    stderr: Option<File>,
+}
+
+impl RestrictedAuthenticodeProcess {
+    fn try_wait(&self) -> Result<Option<ExitStatus>> {
+        match unsafe { WaitForSingleObject(self.process.0, 0) } {
+            WAIT_TIMEOUT => Ok(None),
+            WAIT_OBJECT_0 => {
+                let mut code = 0u32;
+                anyhow::ensure!(
+                    unsafe { GetExitCodeProcess(self.process.0, &mut code) } != 0,
+                    "unable to read Authenticode helper exit code: {}",
+                    std::io::Error::last_os_error()
+                );
+                Ok(Some(ExitStatus::from_raw(code)))
+            }
+            WAIT_FAILED => anyhow::bail!(
+                "unable to poll Authenticode helper: {}",
+                std::io::Error::last_os_error()
+            ),
+            status => anyhow::bail!("unexpected Authenticode helper wait status {status}"),
+        }
+    }
+
+    fn terminate(&self) -> Result<()> {
+        anyhow::ensure!(
+            unsafe { TerminateProcess(self.process.0, AUTHENTICODE_HELPER_TERMINATION_EXIT_CODE) }
+                != 0,
+            "unable to terminate Authenticode helper: {}",
+            std::io::Error::last_os_error()
+        );
+        Ok(())
+    }
+}
+
+fn validate_authenticode_child_handle_list(handles: &[HANDLE; 3]) -> Result<()> {
+    for handle in handles {
+        anyhow::ensure!(
+            !handle.is_null() && *handle != INVALID_HANDLE_VALUE,
+            "AuthentiCode helper inherited handle list contains an invalid handle"
+        );
+    }
+    anyhow::ensure!(
+        handles[0] != handles[1] && handles[0] != handles[2] && handles[1] != handles[2],
+        "AuthentiCode helper inherited handle list contains a duplicate handle"
+    );
+    Ok(())
 }
 
 struct PrivilegeStrippedThreadToken {
@@ -337,6 +529,76 @@ fn validate_privilege_stripped_impersonation_token(token: HANDLE) -> Result<()> 
         "AuthentiCode helper token impersonation level mismatch"
     );
 
+    validate_privilege_stripped_token_privileges(token)
+}
+
+fn create_privilege_stripped_primary_token() -> Result<OwnedToken> {
+    let mut process_token = null_mut();
+    anyhow::ensure!(
+        unsafe {
+            OpenProcessToken(
+                GetCurrentProcess(),
+                TOKEN_ASSIGN_PRIMARY | TOKEN_DUPLICATE | TOKEN_QUERY,
+                &mut process_token,
+            )
+        } != 0,
+        "unable to open Authenticode parent process token for restricted launch: {}",
+        std::io::Error::last_os_error()
+    );
+    let process_token = OwnedToken::from_raw(
+        process_token,
+        "unable to open Authenticode parent process token for restricted launch",
+    )?;
+    let mut restricted_token = null_mut();
+    anyhow::ensure!(
+        unsafe {
+            CreateRestrictedToken(
+                process_token.0,
+                DISABLE_MAX_PRIVILEGE,
+                0,
+                null(),
+                0,
+                null(),
+                0,
+                null(),
+                &mut restricted_token,
+            )
+        } != 0,
+        "unable to create privilege-stripped Authenticode helper primary token: {}",
+        std::io::Error::last_os_error()
+    );
+    let restricted_token = OwnedToken::from_raw(
+        restricted_token,
+        "unable to create privilege-stripped Authenticode helper primary token",
+    )?;
+    validate_privilege_stripped_primary_token(restricted_token.0)?;
+    Ok(restricted_token)
+}
+
+fn validate_current_process_privilege_stripped_primary_token() -> Result<()> {
+    let mut token = null_mut();
+    anyhow::ensure!(
+        unsafe { OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &mut token) } != 0,
+        "unable to open Authenticode helper process token for read-back: {}",
+        std::io::Error::last_os_error()
+    );
+    let token = OwnedToken::from_raw(
+        token,
+        "unable to open Authenticode helper process token for read-back",
+    )?;
+    validate_privilege_stripped_primary_token(token.0)
+}
+
+fn validate_privilege_stripped_primary_token(token: HANDLE) -> Result<()> {
+    let token_type: i32 = query_token_scalar(token, TokenType, "type")?;
+    anyhow::ensure!(
+        token_type == TokenPrimary,
+        "AuthentiCode helper process token is not a primary token"
+    );
+    validate_privilege_stripped_token_privileges(token)
+}
+
+fn validate_privilege_stripped_token_privileges(token: HANDLE) -> Result<()> {
     let entries = query_token_privileges(token)?;
     let mut allowed = LUID::default();
     anyhow::ensure!(
@@ -582,6 +844,7 @@ fn verify_direct_microsoft_signature(path: &Path, expected_sha256: &str) -> Resu
 }
 
 pub(crate) fn run_authenticode_helper_stdio() -> Result<()> {
+    validate_current_process_privilege_stripped_primary_token()?;
     run_authenticode_stdio(|path, expected_sha256| {
         let restricted = PrivilegeStrippedThreadToken::enter()?;
         restricted.finish(verify_direct_microsoft_signature(path, expected_sha256))
@@ -686,14 +949,12 @@ fn verify_with_isolated_helper(path: &Path, expected_sha256: &str) -> Result<boo
     );
 
     let (host_path, _host_lock) = open_current_authenticode_host()?;
-    let mut command = Command::new(&host_path);
-    command
-        .arg(AUTHENTICODE_HELPER_ARGUMENT)
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .creation_flags(CREATE_NO_WINDOW);
-    let output = run_bounded_authenticode_helper(command, encoded, AUTHENTICODE_HELPER_TIMEOUT)?;
+    let output = run_bounded_authenticode_helper(
+        &host_path,
+        &[AUTHENTICODE_HELPER_ARGUMENT],
+        encoded,
+        AUTHENTICODE_HELPER_TIMEOUT,
+    )?;
     interpret_authenticode_helper_output(path, &request.nonce, output)
 }
 
@@ -747,24 +1008,13 @@ fn open_current_authenticode_host() -> Result<(PathBuf, File)> {
 }
 
 fn run_bounded_authenticode_helper(
-    mut command: Command,
+    application: &Path,
+    arguments: &[&str],
     request: Vec<u8>,
     timeout: Duration,
 ) -> Result<AuthenticodeHelperOutput> {
     let job = KillOnCloseJob::create()?;
-    let mut child = command
-        .spawn()
-        .context("unable to start isolated Authenticode helper")?;
-    if let Err(error) = job.assign(child.as_raw_handle() as HANDLE) {
-        let kill_result = child.kill();
-        drop(job);
-        let reap_result = wait_for_child_exit(&mut child, AUTHENTICODE_HELPER_REAP_TIMEOUT);
-        anyhow::bail!(
-            "{error:#}; termination request: {}; reap: {}",
-            helper_result_summary(kill_result),
-            helper_result_summary(reap_result)
-        );
-    }
+    let mut child = spawn_restricted_authenticode_process(application, arguments, &job)?;
     let stdin = child
         .stdin
         .take()
@@ -807,9 +1057,9 @@ fn run_bounded_authenticode_helper(
             break status;
         }
         if started.elapsed() >= timeout {
-            let kill_result = child.kill();
+            let kill_result = child.terminate();
             drop(job);
-            let reaped = wait_for_child_exit(&mut child, AUTHENTICODE_HELPER_REAP_TIMEOUT);
+            let reaped = wait_for_child_exit(&child, AUTHENTICODE_HELPER_REAP_TIMEOUT);
             let worker_deadline = Instant::now() + AUTHENTICODE_HELPER_REAP_TIMEOUT;
             let writer_result = receive_helper_worker(writer, worker_deadline, "request writer");
             let stdout_result =
@@ -839,6 +1089,154 @@ fn run_bounded_authenticode_helper(
         stdout,
         stderr,
     })
+}
+
+fn spawn_restricted_authenticode_process(
+    application: &Path,
+    arguments: &[&str],
+    job: &KillOnCloseJob,
+) -> Result<RestrictedAuthenticodeProcess> {
+    let application_wide = absolute_application_path_wide(application)?;
+    let mut command_line = restricted_process_command_line(application, arguments)?;
+    let token = create_privilege_stripped_primary_token()?;
+    let stdin = InheritedPipe::create(false, "stdin")?;
+    let stdout = InheritedPipe::create(true, "stdout")?;
+    let stderr = InheritedPipe::create(true, "stderr")?;
+    let inherited = [stdin.child.0, stdout.child.0, stderr.child.0];
+    let attributes = ProcessThreadAttributeList::for_handle_list(&inherited)?;
+    let mut startup = STARTUPINFOEXW::default();
+    startup.StartupInfo.cb = size_of::<STARTUPINFOEXW>() as u32;
+    startup.StartupInfo.dwFlags = STARTF_USESTDHANDLES;
+    startup.StartupInfo.hStdInput = stdin.child.0;
+    startup.StartupInfo.hStdOutput = stdout.child.0;
+    startup.StartupInfo.hStdError = stderr.child.0;
+    startup.lpAttributeList = attributes.pointer().cast();
+    let mut process_info = PROCESS_INFORMATION::default();
+    let created = unsafe {
+        CreateProcessAsUserW(
+            token.0,
+            application_wide.as_ptr(),
+            command_line.as_mut_ptr(),
+            null(),
+            null(),
+            1,
+            CREATE_NO_WINDOW | CREATE_SUSPENDED | EXTENDED_STARTUPINFO_PRESENT,
+            null(),
+            null(),
+            &startup.StartupInfo as *const _,
+            &mut process_info,
+        )
+    };
+    anyhow::ensure!(
+        created != 0,
+        "unable to start Authenticode helper with a privilege-stripped primary token: {}",
+        std::io::Error::last_os_error()
+    );
+    let process = OwnedKernelHandle::from_raw(
+        process_info.hProcess,
+        "AuthentiCode restricted process creation returned no process handle",
+    )?;
+    let thread_handle = OwnedKernelHandle::from_raw(
+        process_info.hThread,
+        "AuthentiCode restricted process creation returned no thread handle",
+    )?;
+    drop(stdin.child);
+    drop(stdout.child);
+    drop(stderr.child);
+
+    if let Err(error) = job.assign(process.0) {
+        let termination = terminate_and_reap_suspended_authenticode_process(&process);
+        anyhow::bail!(
+            "{error:#}; restricted suspended-process cleanup: {}",
+            helper_result_summary(termination)
+        );
+    }
+    if unsafe { ResumeThread(thread_handle.0) } == u32::MAX {
+        let error = std::io::Error::last_os_error();
+        let termination = terminate_and_reap_suspended_authenticode_process(&process);
+        anyhow::bail!(
+            "unable to resume job-assigned restricted Authenticode helper: {error}; cleanup: {}",
+            helper_result_summary(termination)
+        );
+    }
+    drop(thread_handle);
+    Ok(RestrictedAuthenticodeProcess {
+        process,
+        stdin: Some(stdin.parent.into_file()),
+        stdout: Some(stdout.parent.into_file()),
+        stderr: Some(stderr.parent.into_file()),
+    })
+}
+
+fn terminate_and_reap_suspended_authenticode_process(process: &OwnedKernelHandle) -> Result<()> {
+    anyhow::ensure!(
+        unsafe { TerminateProcess(process.0, AUTHENTICODE_HELPER_TERMINATION_EXIT_CODE) } != 0,
+        "unable to terminate suspended Authenticode helper after launch failure: {}",
+        std::io::Error::last_os_error()
+    );
+    let wait = unsafe {
+        WaitForSingleObject(
+            process.0,
+            AUTHENTICODE_HELPER_REAP_TIMEOUT.as_millis() as u32,
+        )
+    };
+    anyhow::ensure!(
+        wait == WAIT_OBJECT_0,
+        "suspended Authenticode helper did not terminate within {} ms (wait status {})",
+        AUTHENTICODE_HELPER_REAP_TIMEOUT.as_millis(),
+        wait
+    );
+    Ok(())
+}
+
+fn absolute_application_path_wide(path: &Path) -> Result<Vec<u16>> {
+    anyhow::ensure!(
+        path.is_absolute(),
+        "AuthentiCode helper application path is not absolute"
+    );
+    let mut wide = path.as_os_str().encode_wide().collect::<Vec<_>>();
+    anyhow::ensure!(
+        !wide.is_empty() && wide.len() < MAX_AUTHENTICODE_PATH_UTF16_UNITS,
+        "AuthentiCode helper application path is outside its UTF-16 bound"
+    );
+    anyhow::ensure!(
+        !wide.contains(&0) && !wide.contains(&(b'"' as u16)),
+        "AuthentiCode helper application path contains an invalid command-line character"
+    );
+    wide.push(0);
+    Ok(wide)
+}
+
+fn restricted_process_command_line(application: &Path, arguments: &[&str]) -> Result<Vec<u16>> {
+    let application_units = application.as_os_str().encode_wide().collect::<Vec<_>>();
+    anyhow::ensure!(
+        !application_units.is_empty()
+            && !application_units.contains(&0)
+            && !application_units.contains(&(b'"' as u16)),
+        "AuthentiCode helper application path cannot be encoded safely"
+    );
+    let mut command = Vec::with_capacity(application_units.len() + 64);
+    command.push(b'"' as u16);
+    command.extend(application_units);
+    command.push(b'"' as u16);
+    for argument in arguments {
+        anyhow::ensure!(
+            !argument.is_empty()
+                && argument.is_ascii()
+                && !argument
+                    .bytes()
+                    .any(|byte| byte.is_ascii_whitespace() || byte == b'"' || byte == 0),
+            "AuthentiCode helper argument is outside the strict ASCII token policy"
+        );
+        command.push(b' ' as u16);
+        command.extend(argument.encode_utf16());
+    }
+    command.push(0);
+    anyhow::ensure!(
+        command.len() <= MAX_AUTHENTICODE_PATH_UTF16_UNITS,
+        "AuthentiCode helper command line exceeds its UTF-16 bound"
+    );
+    Ok(command)
 }
 
 fn spawn_bounded_pipe_reader<R: Read + Send + 'static>(
@@ -889,7 +1287,7 @@ fn receive_helper_worker<T>(
     }
 }
 
-fn wait_for_child_exit(child: &mut std::process::Child, timeout: Duration) -> Result<()> {
+fn wait_for_child_exit(child: &RestrictedAuthenticodeProcess, timeout: Duration) -> Result<()> {
     let started = Instant::now();
     loop {
         if child.try_wait()?.is_some() {
@@ -2175,25 +2573,18 @@ mod tests {
 
     #[test]
     fn native_authenticode_helper_timeout_kills_and_reaps_the_isolated_process() {
-        const CASE_ENV: &str = "AVORAX_TEST_AUTHENTICODE_HELPER_TIMEOUT";
-        if std::env::var_os(CASE_ENV).is_some() {
-            thread::sleep(Duration::from_secs(30));
-            return;
-        }
-        let mut command = Command::new(std::env::current_exe().unwrap());
-        command
-            .arg("--exact")
-            .arg("windows_authenticode::tests::native_authenticode_helper_timeout_kills_and_reaps_the_isolated_process")
-            .arg("--nocapture")
-            .arg("--test-threads=1")
-            .env(CASE_ENV, "1")
-            .stdin(Stdio::piped())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .creation_flags(CREATE_NO_WINDOW);
+        let application = std::env::current_exe().unwrap();
+        let arguments = [
+            "--ignored",
+            "--exact",
+            "windows_authenticode::tests::authenticode_timeout_child_fixture",
+            "--nocapture",
+            "--test-threads=1",
+        ];
         let started = Instant::now();
         let error = run_bounded_authenticode_helper(
-            command,
+            &application,
+            &arguments,
             br#"{"benign":"fixture"}"#.to_vec(),
             Duration::from_millis(100),
         )
@@ -2203,6 +2594,78 @@ mod tests {
         assert!(error.contains("termination request: ok"));
         assert!(error.contains("reap: ok"));
         assert!(started.elapsed() < Duration::from_secs(5));
+    }
+
+    #[test]
+    #[ignore = "isolated child fixture invoked by the bounded timeout regression"]
+    fn authenticode_timeout_child_fixture() {
+        thread::sleep(Duration::from_secs(30));
+    }
+
+    #[test]
+    fn native_authenticode_helper_restricted_process_token_is_verified_in_child() {
+        let application = std::env::current_exe().unwrap();
+        let arguments = [
+            "--ignored",
+            "--exact",
+            "windows_authenticode::tests::authenticode_restricted_primary_child_fixture",
+            "--nocapture",
+            "--test-threads=1",
+        ];
+        let output = run_bounded_authenticode_helper(
+            &application,
+            &arguments,
+            Vec::new(),
+            Duration::from_secs(5),
+        )
+        .unwrap();
+        assert!(output.status.success());
+        assert!(output.stderr.is_empty());
+        assert!(String::from_utf8(output.stdout)
+            .unwrap()
+            .contains("AVORAX_RESTRICTED_PRIMARY_TOKEN_OK"));
+    }
+
+    #[test]
+    #[ignore = "isolated child fixture invoked by the restricted-process regression"]
+    fn authenticode_restricted_primary_child_fixture() {
+        validate_current_process_privilege_stripped_primary_token().unwrap();
+        println!("AVORAX_RESTRICTED_PRIMARY_TOKEN_OK");
+    }
+
+    #[test]
+    fn native_authenticode_helper_restricted_process_handle_and_command_contract_is_strict() {
+        let handles = [1usize as HANDLE, 2usize as HANDLE, 3usize as HANDLE];
+        validate_authenticode_child_handle_list(&handles).unwrap();
+        assert!(validate_authenticode_child_handle_list(&[
+            null_mut(),
+            2usize as HANDLE,
+            3usize as HANDLE,
+        ])
+        .is_err());
+        assert!(validate_authenticode_child_handle_list(&[
+            1usize as HANDLE,
+            1usize as HANDLE,
+            3usize as HANDLE,
+        ])
+        .is_err());
+
+        let command = restricted_process_command_line(
+            Path::new(r"C:\Program Files\Avorax\avorax_core_service.exe"),
+            &[AUTHENTICODE_HELPER_ARGUMENT],
+        )
+        .unwrap();
+        assert_eq!(command.last(), Some(&0));
+        let text = String::from_utf16(&command[..command.len() - 1]).unwrap();
+        assert_eq!(
+            text,
+            r#""C:\Program Files\Avorax\avorax_core_service.exe" --avorax-authenticode-helper-v1"#
+        );
+        assert!(restricted_process_command_line(
+            Path::new(r"C:\Avorax\core.exe"),
+            &["argument with spaces"],
+        )
+        .is_err());
     }
 
     #[test]

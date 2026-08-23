@@ -20091,7 +20091,7 @@ def test_small_threat_mvp_verifier_is_safe_and_reproducible():
     assert "positive acceptance of an actual secondary catalog signature remains partial" in source
     assert "privilege-stripped SecurityImpersonation token" in source
     assert "Only SeChangeNotifyPrivilege may remain enabled" in source
-    assert "it is not an AppContainer or authenticated cross-token sandbox" in source
+    assert "it is not an AppContainer, a restricting-SID sandbox" in source
     assert "Memory-mapped and post-verdict mutation plus pre-execution blocking" in source
     assert (
         "Native Engine's disabled test-only legacy quarantine store uses token-derived "
@@ -20825,8 +20825,8 @@ def test_small_threat_mvp_report_validator_is_strict_and_local():
     assert "driver_request_known_good_allows_in_lockdown" in source
     assert "Get-AvoraxGateFile ([System.IO.Path]::GetFullPath($text)) $Description" in source
     assert "-RequireFullSuite requires skip_flutter=false and skip_rust=false" in source
-    assert "if ($steps.Count -ne 233)" in source
-    assert "-RequireFullSuite expected exactly 233 verifier steps" in source
+    assert "if ($steps.Count -ne 234)" in source
+    assert "-RequireFullSuite expected exactly 234 verifier steps" in source
     assert (
         'Assert-ReportContainsStep $steps "native-engine secondary catalog '
         'Authenticode selection regressions"'
@@ -25095,13 +25095,13 @@ def test_native_authenticode_uses_direct_hash_bound_file_and_catalog_wintrust():
     assert "CreateJobObjectW(" in production
     assert "JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE" in production
     assert "AssignProcessToJobObject(" in production
-    assert ".creation_flags(CREATE_NO_WINDOW)" in production
+    assert "CREATE_NO_WINDOW | CREATE_SUSPENDED | EXTENDED_STARTUPINFO_PRESENT" in production
     assert ".share_mode(FILE_SHARE_READ)" in production
-    assert ".spawn()" in production
-    assert "unable to start isolated Authenticode helper" in production
+    assert "CreateProcessAsUserW(" in production
+    assert "unable to start Authenticode helper with a privilege-stripped primary token" in production
     assert "child.try_wait()" in production
-    assert "child.kill()" in production
-    assert "wait_for_child_exit(&mut child, AUTHENTICODE_HELPER_REAP_TIMEOUT)" in production
+    assert "child.terminate()" in production
+    assert "wait_for_child_exit(&child, AUTHENTICODE_HELPER_REAP_TIMEOUT)" in production
     assert "recv_timeout(remaining)" in production
     assert "exceeded the bounded completion deadline" in production
     assert "helper response nonce mismatch" in production
@@ -25214,7 +25214,7 @@ def test_native_secondary_catalog_authenticode_is_bounded_exact_and_honestly_par
     assert "native_secondary_catalog_authenticode_primary_runtime_is_exact_and_hash_bound" in source
     assert "native-engine secondary catalog Authenticode selection regressions" in verifier
     assert '"native_secondary_catalog_authenticode"' in verifier
-    assert "if ($steps.Count -ne 233)" in validator
+    assert "if ($steps.Count -ne 234)" in validator
     assert "no controlled benign multi-signed system-catalog fixture" in verifier
     assert "no controlled benign multi-signed system-catalog fixture" in validator
     assert "$technicalLimitText = Assert-JsonString" in validator
@@ -25251,8 +25251,8 @@ def test_native_authenticode_helper_job_resources_are_exact_and_fail_visible():
     )
     assert "native-engine Authenticode helper Job resource-limit regressions" in verifier
     assert '"native_authenticode_helper_job_limits"' in verifier
-    assert "if ($steps.Count -ne 233)" in validator
-    assert "expected exactly 233 verifier steps" in validator
+    assert "if ($steps.Count -ne 234)" in validator
+    assert "expected exactly 234 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper Job '
         'resource-limit regressions"'
@@ -25260,7 +25260,7 @@ def test_native_authenticode_helper_job_resources_are_exact_and_fail_visible():
     )
     assert "1 GiB per-process and whole-Job commit ceilings" in verifier
     assert "Job commit ceilings do not bound physical working set or I/O bytes" in verifier
-    assert "the helper retains its parent process token, SID, integrity level, and desktop" in verifier
+    assert "restricted Authenticode helper primary token keeps the parent SID" in verifier
     assert "1 GiB per-process and whole-Job commit ceilings" in validator
     assert "Job commit ceilings do not bound physical working set or I/O bytes" in validator
 
@@ -25315,20 +25315,86 @@ def test_native_authenticode_helper_uses_verified_privilege_stripped_thread_toke
     assert "native-engine Authenticode helper restricted-thread-token regressions" in verifier
     assert '"native_authenticode_helper_restricted_thread_token"' in verifier
     assert "Only SeChangeNotifyPrivilege may remain enabled" in verifier
-    assert "same-process native code could technically revert impersonation" in verifier
+    assert "Release helper WinTrust runs under a read-back-verified" in verifier
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper '
         'restricted-thread-token regressions"'
         in validator
     )
     assert "Only SeChangeNotifyPrivilege may remain enabled" in validator
-    assert "authenticated cross-token sandbox" in validator
+    assert "require child-side primary-token validation before request parsing" in validator
     for document in [checkpoint, matrix, threat_model, dependency_inventory]:
         assert "DISABLE_MAX_PRIVILEGE" in document
         assert "SeChangeNotifyPrivilege" in document
-    assert "Verified locally; hosted pending" in matrix
+    assert "Verified, hosted, merged, and synchronized" in matrix
+    assert "evidence `1a9703d`" in matrix
     assert "passed exactly `233/233` steps" in checkpoint
     assert "adds no crate, package, registry dependency, Cargo feature" in dependency_inventory
+
+
+def test_native_authenticode_helper_uses_restricted_primary_process_token_and_exact_handles():
+    source = read(NATIVE_WINDOWS_AUTHENTICODE)
+    production = source.split("#[cfg(test)]")[0]
+    verifier = read(ROOT / "tools" / "testing" / "verify-small-threat-mvp.ps1")
+    validator = read(ROOT / "tools" / "testing" / "validate-small-threat-mvp-report.ps1")
+    checkpoint = read(
+        ROOT
+        / "docs"
+        / "reports"
+        / "checkpoint-2204-authenticode-restricted-process-token.md"
+    )
+    matrix = read(ROOT / "docs" / "audit" / "engine-control-matrix.md")
+    threat_model = read(ROOT / "docs" / "audit" / "threat-model.md")
+    blockers = read(ROOT / "docs" / "audit" / "known-blockers.md")
+    dependency_inventory = read(ROOT / "docs" / "dependency-license-inventory.md")
+
+    for contract in [
+        "create_privilege_stripped_primary_token()",
+        "TOKEN_ASSIGN_PRIMARY | TOKEN_DUPLICATE | TOKEN_QUERY",
+        "CreateRestrictedToken(",
+        "TokenPrimary",
+        "CreateProcessAsUserW(",
+        "CREATE_NO_WINDOW | CREATE_SUSPENDED | EXTENDED_STARTUPINFO_PRESENT",
+        "PROC_THREAD_ATTRIBUTE_HANDLE_LIST",
+        "STARTF_USESTDHANDLES",
+        "ProcessThreadAttributeList::for_handle_list(&inherited)?",
+        "job.assign(process.0)",
+        "ResumeThread(thread_handle.0)",
+        "validate_current_process_privilege_stripped_primary_token()?",
+        "AUTHENTICODE_HELPER_TERMINATION_EXIT_CODE",
+    ]:
+        assert contract in production
+    assert "Command::new(&host_path)" not in production
+    assert "std::process::Command" not in production
+    assert "native_authenticode_helper_restricted_process_token_is_verified_in_child" in source
+    assert (
+        "native_authenticode_helper_restricted_process_handle_and_command_contract_is_strict"
+        in source
+    )
+    assert "AVORAX_RESTRICTED_PRIMARY_TOKEN_OK" in source
+    assert "native-engine Authenticode helper restricted-process-token regressions" in verifier
+    assert '"native_authenticode_helper_restricted_process"' in verifier
+    assert "if ($steps.Count -ne 234)" in validator
+    assert "expected exactly 234 verifier steps" in validator
+    assert (
+        'Assert-ReportContainsStep $steps "native-engine Authenticode helper '
+        'restricted-process-token regressions"'
+        in validator
+    )
+    for contract in [
+        "create the helper suspended with a read-back-verified DISABLE_MAX_PRIVILEGE primary token",
+        "restrict inheritance to exactly stdin/stdout/stderr through PROC_THREAD_ATTRIBUTE_HANDLE_LIST",
+        "assign the configured Job before ResumeThread",
+        "require child-side primary-token validation before request parsing",
+    ]:
+        assert contract in verifier
+        assert contract in validator
+    for document in [checkpoint, matrix, threat_model, blockers, dependency_inventory]:
+        assert "restricted primary token" in document.lower()
+        assert "PROC_THREAD_ATTRIBUTE_HANDLE_LIST" in document
+    assert "Scripted, unverified" in checkpoint
+    assert "passing result is claimed" in checkpoint
+    assert '"Win32_System_Pipes"' in read(ROOT / "core" / "zentor_native_engine" / "Cargo.toml")
 
 
 def test_native_risk_fusion_pup_category_requires_a_bounded_token():

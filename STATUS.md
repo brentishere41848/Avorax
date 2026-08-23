@@ -4,6 +4,40 @@
 
 Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-install, repair, recovery, offline, and manual-install paths only. Normal app updates target signed `.aup` packages applied by Avorax Update Service.
 
+- Checkpoint 2204 restricted-process Authenticode hardening is implemented and
+  fully locally verified. Release hosts derive a `DISABLE_MAX_PRIVILEGE`
+  restricted primary token, create the exact locked executable suspended through
+  `CreateProcessAsUserW`, inherit only three validated stdio handles through
+  `PROC_THREAD_ATTRIBUTE_HANDLE_LIST`, assign the configured Job before
+  `ResumeThread`, and require child-side primary-token read-back before request
+  parsing. Existing restricted thread impersonation remains defense in depth.
+  Token/pipe/attribute/process/Job/resume/read-back/timeout/cleanup failures
+  cannot become publisher trust; no unrestricted process-token fallback exists.
+  Restricted-process tests pass `2/2`, the helper filter passes `9/9`, complete
+  Authenticode passes `29/29` with two intentional child fixtures ignored, and
+  Native Engine passes `464 + 6` with the same two fixtures ignored. Strict
+  Native/Local/Guard lint, both locked workspace variants, release builds and
+  two-host smoke, analyzer, protocol `14/14`, and Flutter `838/838` pass.
+  Source contracts pass `633/633`; central safety/dependency/package gates and
+  definitive verification pass exact `234/234` in `454.4s`. Independent strict
+  validation passes and stale/missing-step/missing-scope evidence is rejected.
+  Implementation head `a0272a3654c959b68def34025ff7c18d1285e243`
+  passes Avorax CI `32620196065` and Desktop Packages push/PR runs
+  `32620187506`/`32620196066`, including all six platform artifacts,
+  checksums, and lockfile SBOM with publication skipped. Evidence-head checks,
+  merge, and synchronized-tree evidence remain pending.
+  The token retains parent SID/integrity/environment/desktop and ordinary
+  SID-based access; AppContainer, restricting-SID isolation, installed
+  LocalSystem E2E, driver/pre-execution protection, and Defender replacement are
+  not claimed.
+- Checkpoint 2203 is fully hosted, merged, and synchronized. Evidence head
+  `1a9703d` passed CI/packages; PR `#55` merged as `b70298a`; merged-main CI
+  `32617710173` and packages `32617710182` passed with publication skipped.
+  Exactly 12 preconditioned files synchronized and destination contracts,
+  restricted-token tests, complete Authenticode, strict Native lint, release
+  builds, and benign two-host smoke passed. The protected vault remains exactly
+  16,072 files, zero directories, 4,522,733 bytes, and zero pending.
+
 - Checkpoint 2203 Authenticode helper privilege reduction is implemented and
   locally verified. Before opening a candidate, the one-shot release helper now
   derives a `DISABLE_MAX_PRIVILEGE` `SecurityImpersonation` token, validates
@@ -23,8 +57,9 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
   Implementation head `710e38ad78616b09736eafae14fd92f65b8b8b5c` passes
   Avorax CI `32616072172` and Desktop Packages push/PR runs
   `32616060448`/`32616072173`, including all six platform artifacts,
-  checksums, and lockfile SBOM with publication skipped. Evidence-head checks,
-  merge, and original-tree synchronization remain pending.
+  checksums, and lockfile SBOM with publication skipped. Evidence head
+  `1a9703d`, PR `#55`, merge `b70298a`, merged-main CI/packages, exact 12-file
+  original-tree synchronization, destination checks, and vault audit also pass.
 - Checkpoint 2202 is now fully hosted, merged, and synchronized. Evidence head
   `dee97b4` passed CI/packages; PR `#54` merged as `4e24e47`; merged-main CI
   `32613299479` and packages `32613299509` passed with publication skipped.

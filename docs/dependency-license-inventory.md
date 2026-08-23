@@ -324,3 +324,32 @@ lockfile SBOM generation, and package evidence on Windows, Linux, and macOS.
 Evidence-head and merged-main final-artifact review remain pending;
 source-level API reuse is not final-binary license, notice, or copyright
 evidence.
+
+## Authenticode Restricted Process Token API Surface
+
+Checkpoint 2204 adds no crate, package, registry dependency, network client,
+helper executable, or dependency version. It adds only the
+`Win32_System_Pipes` feature to the existing pinned `windows-sys 0.61.2`
+dependency so the Native Engine can call `CreatePipe`. The reviewed crate
+license remains `MIT OR Apache-2.0`; no lockfile change is intended.
+
+The process boundary also uses existing `Win32_Security`,
+`Win32_System_Threading`, and `Win32_System_JobObjects` APIs:
+`CreateRestrictedToken`, `CreateProcessAsUserW`,
+`InitializeProcThreadAttributeList`, `UpdateProcThreadAttribute` with
+`PROC_THREAD_ATTRIBUTE_HANDLE_LIST`, `DeleteProcThreadAttributeList`,
+`ResumeThread`, `TerminateProcess`, and bounded wait/exit-code calls. No shell,
+PATH lookup, network process, token helper, or third-party IPC dependency is
+introduced.
+
+The restricted primary token behavior is implemented entirely through those
+pinned Windows bindings; it does not introduce a token, sandbox, or IPC crate.
+
+Exact dependency resolution, unchanged Cargo/Flutter lockfiles, strict lint,
+complete locked workspaces, release host builds/smoke, source contracts, the
+dependency gate, and central `234/234` verifier are locally verified.
+Implementation-head package push/PR runs `32620187506`/`32620196066` pass
+six-artifact consolidation, checksums, lockfile SBOM generation, and package
+evidence on Windows, Linux, and macOS. Evidence-head and merged-main
+final-artifact review remain pending; source-level API reuse is not final-binary
+license, notice, or copyright evidence.
