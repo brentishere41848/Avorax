@@ -1902,3 +1902,39 @@ merged-main CI `32656681010`, packages `32656681007`, exact 12-path guarded
 synchronization, destination source/focused/full/release checks, exact lockfiles,
 and the unchanged vault pass. Publication was skipped. This closes the Job UI
 checkpoint, not the residual isolation risks or the complete antivirus goal.
+
+## Checkpoint 2212: Private Authenticode Desktop
+
+**Threat addressed:** A one-shot trust helper attached to the caller's interactive
+desktop can share windows, hooks, menus, and desktop objects with unrelated GUI
+processes. Job UI restrictions reduce operations but do not establish a separate
+desktop namespace.
+
+**Scripted control:** Before process creation, the parent creates a unique bounded
+desktop with `CreateDesktopW` in the current process window station while temporarily
+using a read-back-verified low-integrity `SecurityImpersonation` token derived from
+the exact child primary token. Successful `RevertToSelf` is mandatory. The parent
+reads back the exact name/byte count and non-inheritable zero-hook flags, passes the
+exact name via `STARTUPINFOEXW.lpDesktop`, and retains the handle through child exit.
+After confirmed child exit, `CloseDesktop` success is checked and failure remains
+diagnostic; RAII is retained as a failure-path fallback.
+Before token validation or stdin, the child compares startup state with
+`GetThreadDesktop(GetCurrentThreadId())`. Any failure remains diagnostic and cannot
+become publisher trust. Private-desktop tests pass `2/2`, complete Authenticode
+passes `45` with `9` intentional ignores, and both locked workspaces report Native
+`481` passed/`9` ignored plus compiler `6/6`. Strict lint/release/two-host smoke,
+Flutter analyze and `838/838`, source contracts `642/642`, no-malware, dependency,
+exact-lockfile, and protected-vault checks pass. The definitive report and independent
+validator pass `242/242` in `473.5s` after final review found and repaired unchecked
+`CloseDesktop` result handling; five malformed reports are rejected. Hosted,
+integration, destination, and installed evidence remain pending.
+
+The first parent-integrity desktop attempt failed visibly at loader status
+`0xC0000142`. The repair does not introduce a permissive DACL or a default-desktop
+fallback.
+
+**Residual risk:** The desktop inherits the current window station's security
+descriptor. It does not isolate the station-wide clipboard or global atom table,
+SID/profile/registry/filesystem/network/read access, named kernel objects, or desktop
+heap accounting. It is not AppContainer/LPAC, authenticated cross-identity IPC,
+installed LocalSystem proof, driver interception, or pre-execution blocking.

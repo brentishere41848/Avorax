@@ -8544,3 +8544,47 @@ Updates page showed:
   exactly `16,072` files, zero directories, `4,522,733` bytes, `5,357` each
   `.avoraxq`/`.json`/`.auth`, one `.metadata_auth_key`, and zero pending.
   Checkpoint 2211 is closed; the complete antivirus goal remains active.
+
+## Checkpoint 2212 Script-First Private Desktop
+
+- Added a uniquely named, bounded `CreateDesktopW` desktop in the current process
+  window station for each release Authenticode helper. Parent read-back requires
+  exact name/byte count and non-inheritable zero hook flags.
+- The first real child failed visibly at loader status `0xC0000142` when the desktop
+  was created at parent integrity. Creation now temporarily uses a read-back-verified
+  low-integrity `SecurityImpersonation` token derived from the exact child primary
+  token and requires successful `RevertToSelf`; no broad DACL/default retry exists.
+- The exact name is supplied through `STARTUPINFOEXW.lpDesktop`; the RAII handle is
+  retained until child exit. Child code validates its startup name against the
+  actual current-thread desktop before token checks or stdin parsing.
+- Scripted a real benign child fixture, adversarial name/binding/flag tests, central
+  verifier step `242`, exact validator and source-contract `642` changes, and the
+  complete documentation batch. No tests have run in this scripting phase.
+- Residual limits are explicit: this remains the current process window station,
+  with inherited station security and station-wide clipboard/global atoms; SID,
+  profile, registry, filesystem/network/read access, named objects, and bounded
+  desktop heap consumption are not isolated by `CreateDesktopW`.
+- After the complete scripting batch, private-desktop checks pass `2/2`, complete
+  Authenticode passes `45` with `9` intentional child-fixture ignores, and source
+  contracts pass `642/642`. Strict Native/Local Core/Guard Clippy, locked release
+  Local Core/Guard builds, and both release-host trust smokes pass.
+- Both locked workspace variants pass with Native Engine `481` passed/`9` ignored
+  and signature compiler `6/6`. Flutter analyze and `838/838`, no-malware, and
+  dependency evidence pass.
+- Final review found that `CloseDesktop` success was not checked outside `Drop`,
+  despite the fail-visible cleanup contract. Explicit checked close after confirmed
+  helper exit plus a source-order contract were added; the earlier passing report
+  is therefore not final evidence. Focused private-desktop `2/2`, source contracts
+  `642/642`, and broad Authenticode `53` passed/`9` ignored pass after repair.
+- The definitive retry report
+  `.verification/checkpoint-2212-private-desktop-definitive-retry2-report.json`
+  passes exactly `242/242` in `473.5s` from `2026-08-23T19:03:30.5313301Z`
+  through `2026-08-23T19:11:24.0609659Z`; independent full-suite validation
+  passes. Fresh controlled
+  stale-count, renamed-step, missing-scope, missing-limit, and skipped-step reports
+  are all rejected.
+- Cargo and Flutter lockfiles remain exact at blobs `277dd9f` and `51fa085`. The
+  protected vault remains exactly `16,072` files, zero directories, `4,522,733`
+  bytes, `5,357` each `.avoraxq`/`.json`/`.auth`, one `.metadata_auth_key`, and
+  zero pending. Hosted exact-head evidence, merge, guarded synchronization, and
+  destination verification remain pending.

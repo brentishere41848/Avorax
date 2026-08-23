@@ -78,20 +78,25 @@ use windows_sys::Win32::System::JobObjects::{
     JOB_OBJECT_UILIMIT_SYSTEMPARAMETERS, JOB_OBJECT_UILIMIT_WRITECLIPBOARD,
 };
 use windows_sys::Win32::System::Pipes::CreatePipe;
+use windows_sys::Win32::System::StationsAndDesktops::{
+    CloseDesktop, CreateDesktopW, GetThreadDesktop, GetUserObjectInformationW,
+    DESKTOP_CREATEWINDOW, DESKTOP_READOBJECTS, DESKTOP_WRITEOBJECTS, HDESK, UOI_FLAGS, UOI_NAME,
+    USEROBJECTFLAGS,
+};
 use windows_sys::Win32::System::SystemServices::{
     SE_GROUP_ENABLED, SE_GROUP_ENABLED_BY_DEFAULT, SE_GROUP_INTEGRITY, SE_GROUP_INTEGRITY_ENABLED,
     SE_GROUP_MANDATORY,
 };
 use windows_sys::Win32::System::Threading::{
     CreateProcessAsUserW, DeleteProcThreadAttributeList, GetCurrentProcess, GetCurrentThread,
-    GetExitCodeProcess, GetProcessMitigationPolicy, InitializeProcThreadAttributeList,
-    OpenProcessToken, OpenThreadToken, ProcessDynamicCodePolicy,
+    GetCurrentThreadId, GetExitCodeProcess, GetProcessMitigationPolicy, GetStartupInfoW,
+    InitializeProcThreadAttributeList, OpenProcessToken, OpenThreadToken, ProcessDynamicCodePolicy,
     ProcessExtensionPointDisablePolicy, ProcessImageLoadPolicy, ProcessSignaturePolicy,
     ProcessStrictHandleCheckPolicy, ResumeThread, SetThreadToken, TerminateProcess,
     UpdateProcThreadAttribute, WaitForSingleObject, CREATE_NO_WINDOW, CREATE_SUSPENDED,
     CREATE_UNICODE_ENVIRONMENT, EXTENDED_STARTUPINFO_PRESENT, PROCESS_INFORMATION,
     PROC_THREAD_ATTRIBUTE_HANDLE_LIST, PROC_THREAD_ATTRIBUTE_MITIGATION_POLICY,
-    STARTF_USESTDHANDLES, STARTUPINFOEXW,
+    STARTF_USESTDHANDLES, STARTUPINFOEXW, STARTUPINFOW,
 };
 
 const MAX_AUTHENTICODE_PATH_UTF16_UNITS: usize = 32_767;
@@ -126,6 +131,10 @@ const AUTHENTICODE_HELPER_READBACK_INTEGRITY_SID_ATTRIBUTES: u32 =
 const AUTHENTICODE_HELPER_SID_STORAGE_WORDS: usize =
     (SECURITY_MAX_SID_SIZE as usize).div_ceil(size_of::<usize>());
 const MAX_AUTHENTICODE_HELPER_ATTRIBUTE_LIST_BYTES: usize = 64 * 1024;
+const AUTHENTICODE_HELPER_DESKTOP_PREFIX: &str = "Avorax.Authenticode.";
+const AUTHENTICODE_HELPER_DESKTOP_RANDOM_HEX_UNITS: usize = 32;
+const AUTHENTICODE_HELPER_DESKTOP_NAME_UNITS: usize =
+    AUTHENTICODE_HELPER_DESKTOP_PREFIX.len() + AUTHENTICODE_HELPER_DESKTOP_RANDOM_HEX_UNITS;
 const AUTHENTICODE_HELPER_ATTRIBUTE_COUNT: u32 = 2;
 // windows-sys 0.61.2 binds the attribute key but not these documented policy values.
 const AUTHENTICODE_HELPER_STRICT_HANDLE_CHECKS: u64 = 1u64 << 24;
@@ -292,6 +301,171 @@ impl OwnedKernelHandle {
     }
 }
 
+struct PrivateAuthenticodeDesktop {
+    handle: HDESK,
+    name: Vec<u16>,
+}
+
+impl PrivateAuthenticodeDesktop {
+    fn create(low_integrity_primary_token: HANDLE) -> Result<Self> {
+        let impersonation = LowIntegrityDesktopCreationToken::enter(low_integrity_primary_token)?;
+        impersonation.finish(Self::create_under_current_token())
+    }
+
+    fn create_under_current_token() -> Result<Self> {
+        let name = build_authenticode_private_desktop_name();
+        validate_authenticode_private_desktop_name(&name[..name.len() - 1])?;
+        let attributes = SECURITY_ATTRIBUTES {
+            nLength: size_of::<SECURITY_ATTRIBUTES>() as u32,
+            lpSecurityDescriptor: null_mut(),
+            bInheritHandle: 0,
+        };
+        let handle = unsafe {
+            CreateDesktopW(
+                name.as_ptr(),
+                null(),
+                null(),
+                0,
+                DESKTOP_CREATEWINDOW | DESKTOP_READOBJECTS | DESKTOP_WRITEOBJECTS,
+                &attributes,
+            )
+        };
+        anyhow::ensure!(
+            !handle.is_null(),
+            "unable to create the private Authenticode helper desktop: {}",
+            std::io::Error::last_os_error()
+        );
+        let desktop = Self { handle, name };
+        desktop.validate_read_back()?;
+        Ok(desktop)
+    }
+
+    fn startup_name(&mut self) -> *mut u16 {
+        self.name.as_mut_ptr()
+    }
+
+    fn validate_read_back(&self) -> Result<()> {
+        let actual =
+            query_authenticode_desktop_name(self.handle, "private Authenticode helper desktop")?;
+        validate_authenticode_private_desktop_binding(&self.name[..self.name.len() - 1], &actual)?;
+        validate_authenticode_private_desktop_flags(query_authenticode_desktop_flags(
+            self.handle,
+            "private Authenticode helper desktop",
+        )?)
+    }
+
+    fn close(&mut self) -> Result<()> {
+        if self.handle.is_null() {
+            return Ok(());
+        }
+        anyhow::ensure!(
+            unsafe { CloseDesktop(self.handle) } != 0,
+            "unable to close the private Authenticode helper desktop: {}",
+            std::io::Error::last_os_error()
+        );
+        self.handle = null_mut();
+        Ok(())
+    }
+}
+
+struct LowIntegrityDesktopCreationToken {
+    token: OwnedToken,
+    active: bool,
+}
+
+impl LowIntegrityDesktopCreationToken {
+    fn enter(low_integrity_primary_token: HANDLE) -> Result<Self> {
+        anyhow::ensure!(
+            open_current_thread_token()?.is_none(),
+            "AuthentiCode desktop-creation thread already has an impersonation token"
+        );
+        validate_authenticode_primary_token(low_integrity_primary_token)?;
+        let mut token = null_mut();
+        anyhow::ensure!(
+            unsafe {
+                DuplicateTokenEx(
+                    low_integrity_primary_token,
+                    TOKEN_IMPERSONATE | TOKEN_QUERY,
+                    null(),
+                    SecurityImpersonation,
+                    TokenImpersonation,
+                    &mut token,
+                )
+            } != 0,
+            "unable to duplicate the low-integrity Authenticode desktop-creation token: {}",
+            std::io::Error::last_os_error()
+        );
+        let token = OwnedToken::from_raw(
+            token,
+            "unable to duplicate the low-integrity Authenticode desktop-creation token",
+        )?;
+        validate_low_integrity_authenticode_impersonation_token(token.0)?;
+        anyhow::ensure!(
+            unsafe { SetThreadToken(null(), token.0) } != 0,
+            "unable to apply the low-integrity Authenticode desktop-creation token: {}",
+            std::io::Error::last_os_error()
+        );
+        let current = match open_current_thread_token() {
+            Ok(Some(current)) => current,
+            Ok(None) => {
+                let cleanup = revert_authenticode_helper_thread_token();
+                anyhow::bail!(
+                    "low-integrity Authenticode desktop-creation token was absent after assignment; revert: {}",
+                    helper_result_summary(cleanup)
+                );
+            }
+            Err(error) => {
+                let cleanup = revert_authenticode_helper_thread_token();
+                anyhow::bail!(
+                    "unable to read back the low-integrity Authenticode desktop-creation token: {error:#}; revert: {}",
+                    helper_result_summary(cleanup)
+                );
+            }
+        };
+        if let Err(error) = validate_low_integrity_authenticode_impersonation_token(current.0) {
+            let cleanup = revert_authenticode_helper_thread_token();
+            anyhow::bail!(
+                "low-integrity Authenticode desktop-creation token read-back failed: {error:#}; revert: {}",
+                helper_result_summary(cleanup)
+            );
+        }
+        Ok(Self {
+            token,
+            active: true,
+        })
+    }
+
+    fn finish<T>(mut self, operation: Result<T>) -> Result<T> {
+        let reverted = revert_authenticode_helper_thread_token();
+        if reverted.is_ok() {
+            self.active = false;
+        }
+        match (operation, reverted) {
+            (Ok(value), Ok(())) => Ok(value),
+            (Err(error), Ok(())) => Err(error),
+            (Ok(_), Err(revert_error)) => Err(revert_error),
+            (Err(error), Err(revert_error)) => Err(anyhow::anyhow!(
+                "private Authenticode desktop creation failed: {error:#}; additionally unable to revert its low-integrity token: {revert_error:#}"
+            )),
+        }
+    }
+}
+
+impl Drop for LowIntegrityDesktopCreationToken {
+    fn drop(&mut self) {
+        let _keep_token_alive = &self.token;
+        if self.active {
+            let _ = revert_authenticode_helper_thread_token();
+        }
+    }
+}
+
+impl Drop for PrivateAuthenticodeDesktop {
+    fn drop(&mut self) {
+        let _ = self.close();
+    }
+}
+
 impl Drop for OwnedKernelHandle {
     fn drop(&mut self) {
         if !self.0.is_null() && self.0 != INVALID_HANDLE_VALUE {
@@ -446,6 +620,7 @@ impl Drop for ProcessThreadAttributeList {
 
 struct RestrictedAuthenticodeProcess {
     process: OwnedKernelHandle,
+    private_desktop: PrivateAuthenticodeDesktop,
     stdin: Option<File>,
     stdout: Option<File>,
     stderr: Option<File>,
@@ -480,6 +655,10 @@ impl RestrictedAuthenticodeProcess {
             std::io::Error::last_os_error()
         );
         Ok(())
+    }
+
+    fn close_private_desktop(&mut self) -> Result<()> {
+        self.private_desktop.close()
     }
 }
 
@@ -676,6 +855,27 @@ fn validate_restricted_authenticode_impersonation_token(token: HANDLE) -> Result
     );
 
     validate_restricted_authenticode_token(token)
+}
+
+fn validate_low_integrity_authenticode_impersonation_token(token: HANDLE) -> Result<()> {
+    let token_type: i32 = query_token_scalar(token, TokenType, "type")?;
+    anyhow::ensure!(
+        token_type == TokenImpersonation,
+        "AuthentiCode desktop-creation token is not an impersonation token"
+    );
+    let level: i32 = query_token_scalar(token, TokenImpersonationLevel, "impersonation level")?;
+    anyhow::ensure!(
+        level == SecurityImpersonation,
+        "AuthentiCode desktop-creation token impersonation level mismatch"
+    );
+    validate_privilege_stripped_token_privileges(token)?;
+    let integrity = query_token_integrity_label(token)?;
+    let expected = VerifiedWellKnownSid::create(WinLowLabelSid, "Low Mandatory Level")?;
+    validate_authenticode_integrity_label_evidence(&integrity, expected.as_bytes())?;
+    let mandatory_policy: TOKEN_MANDATORY_POLICY =
+        query_token_scalar(token, TokenMandatoryPolicy, "mandatory integrity policy")?;
+    validate_authenticode_mandatory_policy(mandatory_policy.Policy)?;
+    validate_authenticode_token_safety_flags(query_authenticode_token_safety_flags(token)?)
 }
 
 fn create_low_integrity_privilege_stripped_primary_token() -> Result<OwnedToken> {
@@ -1496,6 +1696,7 @@ fn verify_prepared_microsoft_signature(prepared: PreparedAuthenticodeVerificatio
 }
 
 pub(crate) fn run_authenticode_helper_stdio() -> Result<()> {
+    validate_current_process_authenticode_private_desktop()?;
     validate_current_process_authenticode_primary_token()?;
     validate_current_process_authenticode_mitigations()?;
     let restricted = RestrictedAuthenticodeThreadToken::enter()?;
@@ -1727,6 +1928,13 @@ fn run_bounded_authenticode_helper(
             let kill_result = child.terminate();
             drop(job);
             let reaped = wait_for_child_exit(&child, AUTHENTICODE_HELPER_REAP_TIMEOUT);
+            let desktop_close = if reaped.is_ok() {
+                child.close_private_desktop()
+            } else {
+                Err(anyhow::anyhow!(
+                    "desktop close deferred because the helper was not confirmed exited"
+                ))
+            };
             let worker_deadline = Instant::now() + AUTHENTICODE_HELPER_REAP_TIMEOUT;
             let writer_result = receive_helper_worker(writer, worker_deadline, "request writer");
             let stdout_result =
@@ -1734,10 +1942,11 @@ fn run_bounded_authenticode_helper(
             let stderr_result =
                 receive_helper_worker(stderr_reader, worker_deadline, "stderr reader");
             anyhow::bail!(
-                "isolated Authenticode helper timed out after {} ms; termination request: {}; reap: {}; writer: {}; stdout: {}; stderr: {}",
+                "isolated Authenticode helper timed out after {} ms; termination request: {}; reap: {}; private desktop: {}; writer: {}; stdout: {}; stderr: {}",
                 timeout.as_millis(),
                 helper_result_summary(kill_result),
                 helper_result_summary(reaped),
+                helper_result_summary(desktop_close),
                 helper_result_summary(writer_result),
                 helper_result_summary(stdout_result.map(|_| ())),
                 helper_result_summary(stderr_result.map(|_| ()))
@@ -1745,6 +1954,9 @@ fn run_bounded_authenticode_helper(
         }
         thread::sleep(AUTHENTICODE_HELPER_POLL_INTERVAL);
     };
+    child
+        .close_private_desktop()
+        .context("unable to release the private Authenticode desktop after helper exit")?;
     drop(job);
     let worker_deadline = Instant::now() + AUTHENTICODE_HELPER_REAP_TIMEOUT;
     let writer_result = receive_helper_worker(writer, worker_deadline, "request writer");
@@ -1767,6 +1979,7 @@ fn spawn_restricted_authenticode_process(
     let mut command_line = restricted_process_command_line(application, arguments)?;
     let launch_context = sanitized_authenticode_launch_context()?;
     let token = create_low_integrity_privilege_stripped_primary_token()?;
+    let mut private_desktop = PrivateAuthenticodeDesktop::create(token.0)?;
     let stdin = InheritedPipe::create(false, "stdin")?;
     let stdout = InheritedPipe::create(true, "stdout")?;
     let stderr = InheritedPipe::create(true, "stderr")?;
@@ -1778,6 +1991,7 @@ fn spawn_restricted_authenticode_process(
     startup.StartupInfo.hStdInput = stdin.child.0;
     startup.StartupInfo.hStdOutput = stdout.child.0;
     startup.StartupInfo.hStdError = stderr.child.0;
+    startup.StartupInfo.lpDesktop = private_desktop.startup_name();
     startup.lpAttributeList = attributes.pointer().cast();
     let mut process_info = PROCESS_INFORMATION::default();
     let created = unsafe {
@@ -1833,10 +2047,171 @@ fn spawn_restricted_authenticode_process(
     drop(thread_handle);
     Ok(RestrictedAuthenticodeProcess {
         process,
+        private_desktop,
         stdin: Some(stdin.parent.into_file()),
         stdout: Some(stdout.parent.into_file()),
         stderr: Some(stderr.parent.into_file()),
     })
+}
+
+fn build_authenticode_private_desktop_name() -> Vec<u16> {
+    let mut name = format!(
+        "{}{}",
+        AUTHENTICODE_HELPER_DESKTOP_PREFIX,
+        Uuid::new_v4().simple()
+    )
+    .encode_utf16()
+    .collect::<Vec<_>>();
+    name.push(0);
+    name
+}
+
+fn validate_authenticode_private_desktop_name(name: &[u16]) -> Result<()> {
+    anyhow::ensure!(
+        name.len() == AUTHENTICODE_HELPER_DESKTOP_NAME_UNITS,
+        "AuthentiCode helper private desktop name has an unexpected length"
+    );
+    let text = String::from_utf16(name)
+        .context("AuthentiCode helper private desktop name is not valid UTF-16")?;
+    anyhow::ensure!(
+        text.starts_with(AUTHENTICODE_HELPER_DESKTOP_PREFIX),
+        "AuthentiCode helper private desktop name has an unexpected prefix"
+    );
+    let suffix = &text[AUTHENTICODE_HELPER_DESKTOP_PREFIX.len()..];
+    anyhow::ensure!(
+        suffix.len() == AUTHENTICODE_HELPER_DESKTOP_RANDOM_HEX_UNITS
+            && suffix
+                .bytes()
+                .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte)),
+        "AuthentiCode helper private desktop name has an invalid random suffix"
+    );
+    Ok(())
+}
+
+fn validate_authenticode_private_desktop_binding(expected: &[u16], actual: &[u16]) -> Result<()> {
+    validate_authenticode_private_desktop_name(expected)?;
+    validate_authenticode_private_desktop_name(actual)?;
+    anyhow::ensure!(
+        expected == actual,
+        "AuthentiCode helper is attached to an unexpected desktop"
+    );
+    Ok(())
+}
+
+fn query_authenticode_desktop_name(handle: HDESK, label: &str) -> Result<Vec<u16>> {
+    anyhow::ensure!(!handle.is_null(), "{label} handle is null");
+    let mut required = 0u32;
+    unsafe { SetLastError(ERROR_SUCCESS) };
+    let sized =
+        unsafe { GetUserObjectInformationW(handle, UOI_NAME, null_mut(), 0, &mut required) };
+    let size_error = unsafe { GetLastError() };
+    anyhow::ensure!(
+        sized == 0 && size_error == ERROR_INSUFFICIENT_BUFFER,
+        "unable to size {label} name: {}",
+        std::io::Error::from_raw_os_error(size_error as i32)
+    );
+    anyhow::ensure!(
+        required == ((AUTHENTICODE_HELPER_DESKTOP_NAME_UNITS + 1) * size_of::<u16>()) as u32,
+        "{label} name returned an unexpected byte count"
+    );
+    let mut name = vec![0u16; required as usize / size_of::<u16>()];
+    let mut returned = required;
+    anyhow::ensure!(
+        unsafe {
+            GetUserObjectInformationW(
+                handle,
+                UOI_NAME,
+                name.as_mut_ptr().cast::<c_void>(),
+                required,
+                &mut returned,
+            )
+        } != 0,
+        "unable to query {label} name: {}",
+        std::io::Error::last_os_error()
+    );
+    anyhow::ensure!(
+        returned == required,
+        "{label} name query returned an unexpected byte count"
+    );
+    anyhow::ensure!(
+        name.last() == Some(&0) && !name[..name.len() - 1].contains(&0),
+        "{label} name is not exactly NUL terminated"
+    );
+    name.pop();
+    validate_authenticode_private_desktop_name(&name)?;
+    Ok(name)
+}
+
+fn query_authenticode_desktop_flags(handle: HDESK, label: &str) -> Result<USEROBJECTFLAGS> {
+    anyhow::ensure!(!handle.is_null(), "{label} handle is null");
+    let mut flags = USEROBJECTFLAGS::default();
+    let mut returned = 0u32;
+    anyhow::ensure!(
+        unsafe {
+            GetUserObjectInformationW(
+                handle,
+                UOI_FLAGS,
+                (&mut flags as *mut USEROBJECTFLAGS).cast::<c_void>(),
+                size_of::<USEROBJECTFLAGS>() as u32,
+                &mut returned,
+            )
+        } != 0,
+        "unable to query {label} inheritance flags: {}",
+        std::io::Error::last_os_error()
+    );
+    anyhow::ensure!(
+        returned == size_of::<USEROBJECTFLAGS>() as u32,
+        "{label} inheritance flags returned an unexpected byte count"
+    );
+    Ok(flags)
+}
+
+fn validate_authenticode_private_desktop_flags(flags: USEROBJECTFLAGS) -> Result<()> {
+    anyhow::ensure!(
+        flags.fInherit == 0 && flags.fReserved == 0 && flags.dwFlags == 0,
+        "AuthentiCode helper private desktop has unexpected inheritance or hook flags"
+    );
+    Ok(())
+}
+
+fn startup_authenticode_private_desktop_name() -> Result<Vec<u16>> {
+    let mut startup = STARTUPINFOW::default();
+    unsafe { GetStartupInfoW(&mut startup) };
+    anyhow::ensure!(
+        !startup.lpDesktop.is_null(),
+        "AuthentiCode helper startup desktop is absent"
+    );
+    let mut name = Vec::with_capacity(AUTHENTICODE_HELPER_DESKTOP_NAME_UNITS);
+    for index in 0..=AUTHENTICODE_HELPER_DESKTOP_NAME_UNITS {
+        let unit = unsafe { *startup.lpDesktop.add(index) };
+        if index == AUTHENTICODE_HELPER_DESKTOP_NAME_UNITS {
+            anyhow::ensure!(
+                unit == 0,
+                "AuthentiCode helper startup desktop is not exactly NUL terminated"
+            );
+        } else {
+            anyhow::ensure!(
+                unit != 0,
+                "AuthentiCode helper startup desktop ended before its exact bound"
+            );
+            name.push(unit);
+        }
+    }
+    validate_authenticode_private_desktop_name(&name)?;
+    Ok(name)
+}
+
+fn validate_current_process_authenticode_private_desktop() -> Result<()> {
+    let expected = startup_authenticode_private_desktop_name()?;
+    let current = unsafe { GetThreadDesktop(GetCurrentThreadId()) };
+    anyhow::ensure!(
+        !current.is_null(),
+        "unable to obtain the Authenticode helper current-thread desktop: {}",
+        std::io::Error::last_os_error()
+    );
+    let actual =
+        query_authenticode_desktop_name(current, "AuthentiCode helper current-thread desktop")?;
+    validate_authenticode_private_desktop_binding(&expected, &actual)
 }
 
 fn sanitized_authenticode_launch_context() -> Result<SanitizedAuthenticodeLaunchContext> {
@@ -3335,6 +3710,99 @@ mod tests {
     #[ignore = "isolated child fixture invoked by the bounded timeout regression"]
     fn authenticode_timeout_child_fixture() {
         thread::sleep(Duration::from_secs(30));
+    }
+
+    #[test]
+    fn native_authenticode_helper_private_desktop_is_created_and_verified_in_child() {
+        let application = std::env::current_exe().unwrap();
+        let arguments = [
+            "--ignored",
+            "--exact",
+            "windows_authenticode::tests::authenticode_private_desktop_child_fixture",
+            "--nocapture",
+            "--test-threads=1",
+        ];
+        let output = run_bounded_authenticode_helper(
+            &application,
+            &arguments,
+            Vec::new(),
+            Duration::from_secs(5),
+        )
+        .unwrap();
+        assert!(
+            output.status.success(),
+            "private-desktop child failed with {:?}; stdout: {}; stderr: {}",
+            output.status,
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
+        assert!(output.stderr.is_empty());
+        assert!(String::from_utf8(output.stdout)
+            .unwrap()
+            .contains("AVORAX_PRIVATE_DESKTOP_OK"));
+    }
+
+    #[test]
+    #[ignore = "isolated child fixture invoked by the private-desktop regression"]
+    fn authenticode_private_desktop_child_fixture() {
+        validate_current_process_authenticode_private_desktop().unwrap();
+        println!("AVORAX_PRIVATE_DESKTOP_OK");
+    }
+
+    #[test]
+    fn native_authenticode_helper_private_desktop_contract_is_exact_and_fail_visible() {
+        let generated = build_authenticode_private_desktop_name();
+        assert_eq!(generated.last(), Some(&0));
+        let valid = &generated[..generated.len() - 1];
+        validate_authenticode_private_desktop_name(valid).unwrap();
+        validate_authenticode_private_desktop_binding(valid, valid).unwrap();
+        validate_authenticode_private_desktop_flags(USEROBJECTFLAGS::default()).unwrap();
+
+        let mut wrong_name = valid.to_vec();
+        let replacement = if wrong_name.last() == Some(&(b'a' as u16)) {
+            b'b' as u16
+        } else {
+            b'a' as u16
+        };
+        *wrong_name.last_mut().unwrap() = replacement;
+        assert!(validate_authenticode_private_desktop_binding(valid, &wrong_name).is_err());
+
+        let invalid_names = [
+            Vec::new(),
+            "Default".encode_utf16().collect::<Vec<_>>(),
+            format!("{}{}", AUTHENTICODE_HELPER_DESKTOP_PREFIX, "A".repeat(32))
+                .encode_utf16()
+                .collect::<Vec<_>>(),
+            format!("{}{}", AUTHENTICODE_HELPER_DESKTOP_PREFIX, "g".repeat(32))
+                .encode_utf16()
+                .collect::<Vec<_>>(),
+            format!("{}{}", AUTHENTICODE_HELPER_DESKTOP_PREFIX, "a".repeat(31))
+                .encode_utf16()
+                .collect::<Vec<_>>(),
+            format!("{}\\{}", AUTHENTICODE_HELPER_DESKTOP_PREFIX, "a".repeat(32))
+                .encode_utf16()
+                .collect::<Vec<_>>(),
+        ];
+        for invalid in invalid_names {
+            assert!(validate_authenticode_private_desktop_name(&invalid).is_err());
+        }
+
+        for flags in [
+            USEROBJECTFLAGS {
+                fInherit: 1,
+                ..USEROBJECTFLAGS::default()
+            },
+            USEROBJECTFLAGS {
+                fReserved: 1,
+                ..USEROBJECTFLAGS::default()
+            },
+            USEROBJECTFLAGS {
+                dwFlags: 1,
+                ..USEROBJECTFLAGS::default()
+            },
+        ] {
+            assert!(validate_authenticode_private_desktop_flags(flags).is_err());
+        }
     }
 
     #[test]

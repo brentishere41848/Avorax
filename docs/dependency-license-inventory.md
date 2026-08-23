@@ -593,3 +593,38 @@ All six artifacts, dependency/license evidence, checksums, lockfile SBOM, and
 administrative MSI extraction pass, with publication skipped. Destination Cargo
 and Flutter lockfiles match the merge exactly. Complete signed final-artifact
 license, notice, and copyright review remains a release approval requirement.
+
+## Checkpoint 2212 Windows Desktop API Feature Review
+
+Checkpoint 2212 adds no package and changes no version. The existing pinned
+`windows-sys 0.61.2` dependency enables `Win32_Graphics_Gdi` and
+`Win32_System_StationsAndDesktops` so Native Engine can call `CreateDesktopW`,
+`CloseDesktop`, `GetUserObjectInformationW`, `GetThreadDesktop`, and related
+constants. These are feature-gated bindings to Windows system APIs in the current
+process window station; no native DLL, runtime, machine-wide component, network
+content, or executable fixture is added. Cargo lockfile identity should remain
+unchanged and will be verified after scripting.
+
+`CloseDesktop` success is explicitly checked after confirmed helper exit; the RAII
+drop path is retained only as failure-path best effort. This changes no dependency
+or license conclusion.
+
+Desktop creation temporarily uses existing `Win32_Security`/thread-token bindings to
+duplicate and read back a low-integrity `SecurityImpersonation` token from the exact
+child primary token and then require `RevertToSelf`. This adds no dependency. The
+first medium-integrity-created desktop failed the benign child at `0xC0000142`; the
+repair does not add a permissive DACL or fallback desktop.
+
+The boundary retains the station security descriptor and station-wide
+clipboard/global atoms. It does not change identity/profile/registry/filesystem or
+network read access, and per-helper desktop heap consumption remains an operational
+limit. Existing MIT/Apache-2.0 `windows-sys` licensing remains recorded; final signed
+artifact notices and license review remain a release prerequisite.
+
+Local dependency and no-malware gates, strict Native/Local Core/Guard lint, locked
+release builds, both trust smokes, both locked workspaces, Flutter `838/838`, source
+contracts `642/642`, and definitive `242/242` verification pass. No package version
+or lockfile entry changed. Cargo and Flutter lockfiles remain exact at Git blobs
+`277dd9fe1edfc45fa5550e8e2831f2a0c121561d` and
+`51fa085a41168aa1deadace8b5395614db43649e`. Hosted package/SBOM evidence and
+complete final-artifact license, notice, and copyright review remain pending.

@@ -1904,8 +1904,8 @@ if ($RequireFullSuite) {
   if ($skipFlutter -or $skipRust) {
     throw "-RequireFullSuite requires skip_flutter=false and skip_rust=false."
   }
-  if ($steps.Count -ne 241) {
-    throw "-RequireFullSuite expected exactly 241 verifier steps for this source revision, found $($steps.Count)."
+  if ($steps.Count -ne 242) {
+    throw "-RequireFullSuite expected exactly 242 verifier steps for this source revision, found $($steps.Count)."
   }
   if ($steps[0].name -ne "local-core safe simulator scan reporting") {
     throw "-RequireFullSuite first step mismatch: $($steps[0].name)"
@@ -1944,6 +1944,7 @@ if ($RequireFullSuite) {
   Assert-ReportContainsStep $steps "native-engine Authenticode helper isolation regressions"
   Assert-ReportContainsStep $steps "native-engine Authenticode helper Job resource-limit regressions"
   Assert-ReportContainsStep $steps "native-engine Authenticode helper Job UI-restriction regressions"
+  Assert-ReportContainsStep $steps "native-engine Authenticode helper private-desktop regressions"
   Assert-ReportContainsStep $steps "native-engine Authenticode mandatory-hash/file-identity regressions"
   Assert-ReportContainsStep $steps "native-engine risk fusion regressions"
   Assert-ReportContainsStep $steps "native-engine ClickOnce carrier heuristic detection"
@@ -2090,9 +2091,13 @@ if ($RequireFullSuite) {
   Assert-ReportScopeContains $verifiedScopeText "Any SetInformationJobObject, QueryInformationJobObject, or exact-limit mismatch is diagnostic and prevents trust work" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "before the suspended Authenticode helper is assigned and resumed, its Windows Job enables and exactly reads back the returned JOBOBJECT_BASIC_UI_RESTRICTIONS byte count plus all eight JOB_OBJECT_UILIMIT controls for foreign USER handles, clipboard reads and writes, system parameters, display settings, global atoms, desktop creation/switching, and ExitWindows" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "Any UI-limit configuration, query, returned-size, exact-flag, Job assignment, or resume failure is diagnostic and cannot become publisher trust" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "before process creation, release Local Core and Guard create a unique bounded private Authenticode desktop in the current process window station while the parent thread temporarily uses a read-back-verified low-integrity SecurityImpersonation token derived from the exact child primary token, require successful RevertToSelf plus exact name and byte-count read-back plus non-inheritable zero hook flags, pass that exact name through STARTUPINFOEXW.lpDesktop, and retain the desktop handle until child exit" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Before token validation or stdin parsing, the child requires its exact startup desktop name to match its queried current-thread desktop" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Desktop token duplication/application/read-back/revert, creation, encoding, name/flag/size read-back, process attachment, or child binding failure is diagnostic and cannot become publisher trust" "verification_scope.verified"
   Assert-ReportScopeContains $technicalLimitText "Authenticode helper Job commit ceilings do not bound physical working set or I/O bytes and its user-CPU limit excludes kernel execution" "verification_scope.technically_limited"
-  Assert-ReportScopeContains $technicalLimitText "Job UI limits constrain documented USER/clipboard/desktop-switch/global-atom/system-setting operations but do not create a private desktop or window station, change identity, remove filesystem/registry/network/read access, or constrain named kernel objects" "verification_scope.technically_limited"
-  Assert-ReportScopeContains $technicalLimitText "the Authenticode helper keeps the parent SID, profile/registry namespace, desktop, and ordinary read access; its primary token is low integrity and its write-restricted impersonation token adds WinRestrictedCodeSid, but neither boundary changes identity or denies reads" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "Job UI limits supplement the private desktop by constraining documented USER/clipboard/desktop-switch/global-atom/system-setting operations but do not create a private window station, change identity, remove filesystem/registry/network/read access, or constrain named kernel objects" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "the private desktop isolates windows, hooks, menus, and desktop objects only within the current process window station, inherits that station's security descriptor, and does not isolate the station-wide clipboard/global atom table, SID, profile, registry namespace, filesystem/network/read access, or named kernel objects; bounded per-helper desktop heap consumption remains; no AppContainer or cross-identity IPC is configured" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "the Authenticode helper keeps the parent SID, profile/registry namespace, current process window station, and ordinary read access; its primary token is low integrity and its write-restricted impersonation token adds WinRestrictedCodeSid, but neither token boundary changes identity or denies reads" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "its two-variable launch environment is attack-surface reduction rather than identity isolation and same-process code can mutate its own environment" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "process-creation mitigations do not constrain the already mapped helper image or non-image data, do not isolate identity/profile/registry/desktop/read access, and can be incompatible with non-Microsoft trust providers or injected security modules; no weaker retry is configured" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "the inherited and read-back-verified TOKEN_MANDATORY_POLICY_NO_WRITE_UP policy enforces no-write-up but does not add no-read-up, no-execute-up, identity, profile, registry, desktop, or AppContainer isolation; TOKEN_MANDATORY_POLICY_NEW_PROCESS_MIN may also be present as a documented valid bit; unprivileged SetTokenInformation(TokenMandatoryPolicy) is not used because Windows rejected it with ERROR_PRIVILEGE_NOT_HELD and policy creation remains LSA-owned" "verification_scope.technically_limited"
