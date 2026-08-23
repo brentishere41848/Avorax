@@ -1746,5 +1746,11 @@ release embedded/catalog/hash-binding smoke, Flutter `838/838`, and source
 contracts `637/637`. The corrected definitive verifier and built-in plus
 independent validators pass exactly `238/238` in `429.7s`; controlled
 237-step, missing-step, missing-verified-scope, and missing-technical-limit
-reports are rejected. Hosted exact-head, merge, merged-main, installed
-LocalSystem, AppContainer, driver, and pre-execution evidence remain separate.
+reports are rejected. Evidence-head, merge, merged-main, installed LocalSystem,
+AppContainer, driver, and pre-execution evidence remain separate.
+
+Exact implementation head `c7ff9b7` passes Avorax CI `32638907677` and
+Desktop Packages push/PR `32638895902`/`32638907670`. Both package runs pass
+Windows MSI/EXE, Linux DEB/tar, both macOS DMGs, six-artifact consolidation,
+checksums, and lockfile SBOM; publication is skipped. Evidence-head, merge,
+merged-main, installed enterprise, and LocalSystem evidence remain separate.

@@ -8262,3 +8262,10 @@ Updates page showed:
   `.avoraxq`/`.json`/`.auth`, one `.metadata_auth_key`, and zero pending.
   Exact-head hosted checks/package evidence, merge, merged-main checks, and safe
   original-tree synchronization remain pending.
+- Exact implementation head
+  `c7ff9b78f52b306d15f397425972411ad6b3cd49` passed Avorax CI
+  `32638907677` and Desktop Packages push/PR runs
+  `32638895902`/`32638907670`. Both package runs passed contracts, Windows
+  MSI/EXE, Linux DEB/tar, both macOS DMGs, six-artifact consolidation,
+  checksums, and lockfile SBOM; publication was skipped. Draft PR `#60` awaits
+  evidence-head checks.

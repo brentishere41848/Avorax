@@ -383,16 +383,23 @@ These APIs implement and read back Windows Mandatory Integrity Control on an
 existing restricted token. They add no helper binary, parser, network client,
 registry component, build script, transitive package, notice, or license. This
 source-level reuse does not replace hosted package lockfile-SBOM evidence or
-final production artifact license review. No checkpoint-2208 package or SBOM
-success is claimed before its exact-head hosted runs execute.
+final production artifact license review. The pre-execution design claimed no
+checkpoint-2208 package or SBOM success before its exact-head hosted runs.
 
 Local dependency evidence now passes without a Cargo or Flutter lockfile
 change: rustfmt, strict Native/Local Core/Guard Clippy, both locked workspace
 test variants, locked Local Core/Guard release builds, release Authenticode
 smoke, Flutter analyze and `838/838`, source contracts `637/637`, and the
-definitive verifier/validators `238/238` in `429.7s`. Exact-head hosted
-package/SBOM output and final-artifact license/notice review remain pending;
-this local API-reuse proof does not substitute for them.
+definitive verifier/validators `238/238` in `429.7s`. At local-batch completion,
+hosted package/SBOM output and final-artifact license/notice review remained
+pending; this local API-reuse proof does not substitute for them.
+
+Exact implementation head `c7ff9b7` passes package push/PR runs
+`32638895902`/`32638907670`. Both runs pass package contracts, Windows x64
+MSI/EXE, Linux x64 DEB/tar, macOS arm64/x64 DMG, six-artifact consolidation,
+checksums, and lockfile SBOM generation with publication skipped.
+Evidence-head and merged-main final-artifact review remain pending; no
+dependency or lockfile changed.
 
 Final review strengthened the existing four-byte strict-handle policy
 read-back to require both invalid-handle exception and permanent-enforcement

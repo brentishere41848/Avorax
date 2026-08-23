@@ -132,6 +132,17 @@ remained unchanged.
 The final read-only protected-vault audit remained exact at 16,072 files, zero
 directories, 4,522,733 bytes, 5,357 each
 `.avoraxq`/`.json`/`.auth`, one `.metadata_auth_key`, and zero pending.
-Exact-head hosted CI/package evidence, evidence-head checks, normal PR merge,
-merged-main checks, and safe original-tree synchronization remain pending and
-are not claimed by this local result.
+At completion of the local-only batch, exact-head hosted CI/package evidence,
+evidence-head checks, normal PR merge, merged-main checks, and safe
+original-tree synchronization remained pending and were not claimed by that
+local result. The subsequent exact implementation-head results follow.
+
+Exact implementation head
+`c7ff9b78f52b306d15f397425972411ad6b3cd49` passes Avorax CI
+`32638907677` and Desktop Packages push/PR runs
+`32638895902`/`32638907670`. Both package runs pass contracts, Windows x64
+MSI/EXE, Linux x64 DEB/tar, macOS arm64/x64 DMG, six-artifact consolidation,
+checksums, and lockfile SBOM; publication is skipped. PR `#60` remains draft
+until this evidence commit itself passes exact-head checks. Evidence-head,
+normal merge, merged-main, and original-tree synchronization are not yet
+claimed.
