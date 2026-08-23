@@ -1890,8 +1890,9 @@ enforcement, or pre-execution blocking is claimed.
   pass locally. Exact `234/234` verifier/validator, central gates, and
   adversarial stale/missing-step/missing-scope report rejection pass.
   Implementation head `a0272a3` passes CI `32620196065` and package push/PR
-  `32620187506`/`32620196066`; evidence-head, merge, merged-main, and
-  synchronized-tree evidence remain pending.
+  `32620187506`/`32620196066`. Evidence `930342f`, PR `#56`, merge `a5f982a`,
+  merged-main CI/packages, exact 12-file sync, destination checks, and vault
+  audit also pass with publication skipped.
 - **Fail-visible compatibility policy:** There is no same-token fallback. Token,
   pipe, handle-list, process creation, Job assignment, resume, child read-back,
   timeout, termination, reap, or verification failure supplies no publisher
@@ -1908,3 +1909,47 @@ enforcement, or pre-execution blocking is claimed.
   and driver signing, signed-driver IPC, pre-execution enforcement, Defender
   coexistence, and production detection/false-positive evidence remain separate
   prerequisites.
+
+## Checkpoint 2205 Authenticode Write-Restricted Token
+
+- **Locally verified write-access reduction:** The process keeps checkpoint 2204's
+  read-back-verified `DISABLE_MAX_PRIVILEGE` primary token. Before stdin or
+  request parsing, the helper applies a `SecurityImpersonation` token created
+  with `DISABLE_MAX_PRIVILEGE | WRITE_RESTRICTED` and exactly one
+  zero-attribute `WinRestrictedCodeSid` API input. Thread read-back validation
+  is fail-visible. It protects strict request parsing and read-only candidate
+  open/snapshot, is reverted before WinTrust/catalog, and is applied again for
+  response output. Focused and complete local runtime evidence passes. Both
+  locked workspace variants, strict lint, Flutter `838/838`, source contracts
+  `634/634`, and exact verifier/validator `235/235` pass; hosted exact-head,
+  merge, merged-main, and synchronization evidence remains pending.
+- **Bounded restricting-SID evidence:** `TokenRestrictedSids` responses are
+  capped at 64 KiB and 16 entries, then require exactly one in-buffer, valid,
+  bounded SID byte-equal to Restricted Code with exact mandatory,
+  default-enabled, and enabled read-back attributes. API, pointer, length,
+  count, attribute, or identity failure cannot supply publisher trust.
+- **Benign supported claim:** An isolated child fixture is scripted to retain
+  read/hash access to an ordinary user-owned temporary file while a write-open
+  is denied and parent-observed bytes remain unchanged. The dedicated filter
+  passes `2/2`. This uses no malware and does not execute a candidate.
+- **Primary-token compatibility blocker:** Applying the same write-restricted
+  SID to the primary token caused the Windows child to terminate before user
+  code with `0xC0000142` (`STATUS_DLL_INIT_FAILED`). The implementation keeps
+  the privilege-stripped primary token and does not retry with weaker launch
+  settings.
+- **Windows trust-stack compatibility blocker:** Keeping write restriction
+  active through WinTrust/catalog caused release smoke to fail with Windows
+  error `127`. The helper now performs only that trusted OS phase under the
+  privilege-stripped primary token; token revert and reapplication failures are
+  fatal. Full WinTrust write restriction is not claimed.
+- **Residual access limit:** `WRITE_RESTRICTED` evaluates restricting SIDs only
+  for write access. The impersonation token retains parent SID, integrity,
+  environment, desktop, and ordinary read access. Inherited handles and ACLs
+  satisfying both access checks can remain usable. The primary token is not
+  write-restricted and same-process code can technically call `RevertToSelf`;
+  WinTrust/catalog deliberately use that primary token. AppContainer and
+  identity isolation are not claimed.
+- **Unchanged blockers:** Installed LocalSystem/service/UI E2E, production code
+  and driver signing, signed-driver IPC, pre-execution enforcement, Defender
+  coexistence, writable mapping/post-verdict mutation, and production
+  detection/false-positive evidence remain separate prerequisites.
