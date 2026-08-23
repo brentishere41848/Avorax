@@ -2059,8 +2059,10 @@ enforcement, or pre-execution blocking is claimed.
   complete Authenticode, strict Native/Local/Guard lint, both locked workspace
   variants, release builds/two-host smoke, Flutter analyze and `838/838`, source
   contracts `639/639`, and definitive verifier/validators `239/239` in
-  `433.2s` pass. Five malformed reports are rejected. Hosted checks, merge,
-  synchronization, and destination checks remain pending.
+  `433.2s` pass. Five malformed reports are rejected. Evidence `7fd8734`, PR
+  `#61`, merge `d07220c`, merged-main CI `32646774829`, packages
+  `32646774820`, exact 18-path synchronization, destination focused/full
+  checks, and the unchanged vault subsequently close checkpoint 2209.
 - **Residual blocker:** No-write-up policy does not add no-read-up,
   no-execute-up, identity, profile, registry, desktop/window-station,
   AppContainer/LPAC, installed LocalSystem, driver, or pre-execution isolation.
@@ -2074,3 +2076,34 @@ enforcement, or pre-execution blocking is claimed.
   because an agent-created Python bytecode cache contained a compile-time-
   joined marker; the contract now runtime-joins fragments. The final `239/239`
   retry and no-malware gate pass. Neither failed report is success evidence.
+
+## Checkpoint 2210 Authenticode Token-Flag Status
+
+- **Verified locally:** Canonical fixed-size
+  `TokenVirtualizationAllowed` plus exact-zero `TokenVirtualizationEnabled` and
+  `TokenUIAccess` parent/child read-back, pure rejection cases, a real isolated child, a mandatory
+  verifier step, independent-validator checks, and documentation pass focused,
+  adjacent, complete Authenticode, strict lint, locked workspace, release-host,
+  Flutter, source-contract, no-malware, and dependency checks. The definitive
+  report passes `240/240` in `458s`; five malformed reports are rejected.
+- **Failed first design retained:** The first compiled child returned
+  `TokenVirtualizationAllowed=1` and correctly failed the original all-zero
+  policy. Microsoft defines that field as capability, not active state; the
+  result is not success evidence and the policy now accepts only canonical
+  capability values while active virtualization/UIAccess remain forbidden.
+- **Fail-closed intent:** Query failure, unexpected size, noncanonical
+  capability, enabled virtualization/UIAccess, or child-state drift must prevent
+  publisher trust. No setter, extra privilege, or weaker retry exists.
+- **Implementation-head hosted evidence passed:** Exact `c744fa9` passes CI
+  `32649764260` and package push/PR `32649749634`/`32649764310`, including all
+  six artifacts, checksums, lockfile SBOM, and skipped publication.
+- **Integration pending:** Evidence-head checks, normal merge, merged-main
+  evidence, and guarded original-tree synchronization remain open; hosted
+  source/package success is not represented as installed proof.
+- **Residual blocker:** `TokenVirtualizationAllowed` may remain one; trusted
+  helper code has no enable path, but capability is not removed. Inactive
+  virtualization and disabled UIAccess do not change SID, credentials, profile, registry namespace,
+  desktop/window station, ordinary reads, or intended inherited standard
+  handles. AppContainer/LPAC, private desktop, authenticated cross-identity
+  IPC, installed LocalSystem, signed-driver enforcement, and pre-execution
+  blocking remain partial, blocked, or technically limited.

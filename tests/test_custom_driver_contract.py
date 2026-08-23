@@ -20869,8 +20869,8 @@ def test_small_threat_mvp_report_validator_is_strict_and_local():
     assert "driver_request_known_good_allows_in_lockdown" in source
     assert "Get-AvoraxGateFile ([System.IO.Path]::GetFullPath($text)) $Description" in source
     assert "-RequireFullSuite requires skip_flutter=false and skip_rust=false" in source
-    assert "if ($steps.Count -ne 239)" in source
-    assert "-RequireFullSuite expected exactly 239 verifier steps" in source
+    assert "if ($steps.Count -ne 240)" in source
+    assert "-RequireFullSuite expected exactly 240 verifier steps" in source
     assert (
         'Assert-ReportContainsStep $steps "native-engine secondary catalog '
         'Authenticode selection regressions"'
@@ -25260,7 +25260,7 @@ def test_native_secondary_catalog_authenticode_is_bounded_exact_and_honestly_par
     assert "native_secondary_catalog_authenticode_primary_runtime_is_exact_and_hash_bound" in source
     assert "native-engine secondary catalog Authenticode selection regressions" in verifier
     assert '"native_secondary_catalog_authenticode"' in verifier
-    assert "if ($steps.Count -ne 239)" in validator
+    assert "if ($steps.Count -ne 240)" in validator
     assert "no controlled benign multi-signed system-catalog fixture" in verifier
     assert "no controlled benign multi-signed system-catalog fixture" in validator
     assert "$technicalLimitText = Assert-JsonString" in validator
@@ -25297,8 +25297,8 @@ def test_native_authenticode_helper_job_resources_are_exact_and_fail_visible():
     )
     assert "native-engine Authenticode helper Job resource-limit regressions" in verifier
     assert '"native_authenticode_helper_job_limits"' in verifier
-    assert "if ($steps.Count -ne 239)" in validator
-    assert "expected exactly 239 verifier steps" in validator
+    assert "if ($steps.Count -ne 240)" in validator
+    assert "expected exactly 240 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper Job '
         'resource-limit regressions"'
@@ -25368,7 +25368,7 @@ def test_native_authenticode_helper_uses_verified_privilege_stripped_thread_toke
         in validator
     )
     assert "Only SeChangeNotifyPrivilege may remain enabled" in validator
-    assert "read back the label and enforced no-write-up policy in the parent before CreateProcessAsUserW and in the child before stdin or request parsing" in validator
+    assert "read back the label, enforced no-write-up policy, canonical legacy virtualization capability evidence, inactive legacy virtualization state, and disabled UIAccess in the parent before CreateProcessAsUserW and in the child before stdin or request parsing" in validator
     for document in [checkpoint, matrix, threat_model, dependency_inventory]:
         assert "DISABLE_MAX_PRIVILEGE" in document
         assert "SeChangeNotifyPrivilege" in document
@@ -25421,8 +25421,8 @@ def test_native_authenticode_helper_uses_restricted_primary_process_token_and_ex
     assert "AVORAX_RESTRICTED_PRIMARY_TOKEN_OK" in source
     assert "native-engine Authenticode helper restricted-process-token regressions" in verifier
     assert '"native_authenticode_helper_restricted_process"' in verifier
-    assert "if ($steps.Count -ne 239)" in validator
-    assert "expected exactly 239 verifier steps" in validator
+    assert "if ($steps.Count -ne 240)" in validator
+    assert "expected exactly 240 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper '
         'restricted-process-token regressions"'
@@ -25490,8 +25490,8 @@ def test_native_authenticode_helper_launch_environment_and_directory_are_sanitiz
     assert "AVORAX_SANITIZED_LAUNCH_CONTEXT_OK" in source
     assert "native-engine Authenticode helper sanitized-launch regressions" in verifier
     assert '"native_authenticode_helper_sanitized"' in verifier
-    assert "if ($steps.Count -ne 239)" in validator
-    assert "expected exactly 239 verifier steps" in validator
+    assert "if ($steps.Count -ne 240)" in validator
+    assert "expected exactly 240 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper '
         'sanitized-launch regressions"'
@@ -25567,8 +25567,8 @@ def test_native_authenticode_helper_process_mitigations_are_applied_and_read_bac
     assert "AVORAX_PROCESS_MITIGATION_POLICY_OK" in source
     assert "native-engine Authenticode helper process-mitigation regressions" in verifier
     assert '"native_authenticode_helper_process_mitigation"' in verifier
-    assert "if ($steps.Count -ne 239)" in validator
-    assert "expected exactly 239 verifier steps" in validator
+    assert "if ($steps.Count -ne 240)" in validator
+    assert "expected exactly 240 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper '
         'process-mitigation regressions"'
@@ -25652,8 +25652,8 @@ def test_native_authenticode_helper_primary_token_is_exact_low_integrity():
     assert "revert_authenticode_helper_thread_token().unwrap()" in source
     assert "native-engine Authenticode helper low-integrity-primary-token regressions" in verifier
     assert '"native_authenticode_helper_low_integrity"' in verifier
-    assert "if ($steps.Count -ne 239)" in validator
-    assert "expected exactly 239 verifier steps" in validator
+    assert "if ($steps.Count -ne 240)" in validator
+    assert "expected exactly 240 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper '
         'low-integrity-primary-token regressions"'
@@ -25661,7 +25661,7 @@ def test_native_authenticode_helper_primary_token_is_exact_low_integrity():
     )
     for contract in [
         "set its mandatory label to the exact WinLowLabelSid through SetTokenInformation(TokenIntegrityLevel)",
-        "read back the label and enforced no-write-up policy in the parent before CreateProcessAsUserW and in the child before stdin or request parsing",
+        "read back the label, enforced no-write-up policy, canonical legacy virtualization capability evidence, inactive legacy virtualization state, and disabled UIAccess in the parent before CreateProcessAsUserW and in the child before stdin or request parsing",
         "low-integrity MIC/no-write-up denies ordinary medium-integrity file mutation even after RevertToSelf",
         "low integrity is not an AppContainer",
         "same-process RevertToSelf returns to that low-integrity primary token",
@@ -25671,7 +25671,8 @@ def test_native_authenticode_helper_primary_token_is_exact_low_integrity():
     assert (
         "require the LSA-created mandatory policy inherited through CreateRestrictedToken to contain TOKEN_MANDATORY_POLICY_NO_WRITE_UP, "
         "allow only the documented optional TOKEN_MANDATORY_POLICY_NEW_PROCESS_MIN read-back bit, "
-        "read back the label and enforced no-write-up policy in the parent before CreateProcessAsUserW and in the child before stdin or request parsing, "
+        "require TokenVirtualizationAllowed to be a canonical Boolean and TokenVirtualizationEnabled and TokenUIAccess to be zero, "
+        "read back the label, enforced no-write-up policy, canonical legacy virtualization capability evidence, inactive legacy virtualization state, and disabled UIAccess in the parent before CreateProcessAsUserW and in the child before stdin or request parsing, "
         "restrict inheritance to exactly stdin/stdout/stderr through PROC_THREAD_ATTRIBUTE_HANDLE_LIST, "
         "assign the configured Job before ResumeThread, and require child-side primary-token validation before request parsing"
         in verifier
@@ -25727,8 +25728,8 @@ def test_native_authenticode_helper_mandatory_no_write_up_policy_is_inherited_an
     assert "AVORAX_MANDATORY_NO_WRITE_UP_POLICY_OK" in source
     assert "native-engine Authenticode helper mandatory no-write-up policy regressions" in verifier
     assert '"native_authenticode_helper_mandatory_policy"' in verifier
-    assert "if ($steps.Count -ne 239)" in validator
-    assert "expected exactly 239 verifier steps" in validator
+    assert "if ($steps.Count -ne 240)" in validator
+    assert "expected exactly 240 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper '
         'mandatory no-write-up policy regressions"'
@@ -25737,8 +25738,9 @@ def test_native_authenticode_helper_mandatory_no_write_up_policy_is_inherited_an
     for contract in [
         "require the LSA-created mandatory policy inherited through CreateRestrictedToken to contain TOKEN_MANDATORY_POLICY_NO_WRITE_UP",
         "allow only the documented optional TOKEN_MANDATORY_POLICY_NEW_PROCESS_MIN read-back bit",
-        "read back the label and enforced no-write-up policy in the parent before CreateProcessAsUserW and in the child before stdin or request parsing",
-        "fixed-size TokenMandatoryPolicy inspection",
+        "require TokenVirtualizationAllowed to be a canonical Boolean and TokenVirtualizationEnabled and TokenUIAccess to be zero",
+        "read back the label, enforced no-write-up policy, canonical legacy virtualization capability evidence, inactive legacy virtualization state, and disabled UIAccess in the parent before CreateProcessAsUserW and in the child before stdin or request parsing",
+        "fixed-size TokenMandatoryPolicy, or fixed-size token virtualization/UIAccess inspection",
     ]:
         assert contract in verifier
         assert contract in validator
@@ -25756,6 +25758,85 @@ def test_native_authenticode_helper_mandatory_no_write_up_policy_is_inherited_an
         assert "TOKEN_MANDATORY_POLICY_NO_WRITE_UP" in document
         assert "TokenMandatoryPolicy" in document
     assert "No checkpoint-2209 passing result is claimed before execution" in checkpoint
+    assert "adds no crate, package, Cargo feature, or lockfile change" in dependency_inventory
+
+
+def test_native_authenticode_helper_validates_capability_and_disables_active_virtualization_and_uiaccess():
+    source = read(NATIVE_WINDOWS_AUTHENTICODE)
+    production = source.split("#[cfg(test)]")[0]
+    verifier = read(ROOT / "tools" / "testing" / "verify-small-threat-mvp.ps1")
+    validator = read(
+        ROOT / "tools" / "testing" / "validate-small-threat-mvp-report.ps1"
+    )
+    checkpoint = read(
+        ROOT
+        / "docs"
+        / "reports"
+        / "checkpoint-2210-authenticode-token-virtualization-uiaccess.md"
+    )
+    matrix = read(ROOT / "docs" / "audit" / "engine-control-matrix.md")
+    threat_model = read(ROOT / "docs" / "audit" / "threat-model.md")
+    blockers = read(ROOT / "docs" / "audit" / "known-blockers.md")
+    dependency_inventory = read(ROOT / "docs" / "dependency-license-inventory.md")
+
+    for contract in [
+        "TokenVirtualizationAllowed",
+        "TokenVirtualizationEnabled",
+        "TokenUIAccess",
+        "struct AuthenticodeTokenSafetyFlags",
+        "fn query_authenticode_token_safety_flags",
+        "fn validate_authenticode_token_safety_flags",
+        '"virtualization-allowed flag"',
+        '"virtualization-enabled flag"',
+        '"UIAccess flag"',
+        "primary token virtualization-allowed flag is not canonical",
+        "primary token has legacy virtualization enabled",
+        "primary token has UIAccess enabled",
+    ]:
+        assert contract in production
+    primary_validator = production[
+        production.index("fn validate_authenticode_primary_token"):
+        production.index("fn validate_restricted_authenticode_token")
+    ]
+    assert primary_validator.index("validate_authenticode_mandatory_policy") < primary_validator.index(
+        "validate_authenticode_token_safety_flags(query_authenticode_token_safety_flags(token)?)"
+    )
+    assert "native_authenticode_helper_token_safety_flags_are_verified_in_child" in source
+    assert "authenticode_token_safety_flags_child_fixture" in source
+    assert "native_authenticode_helper_token_safety_flags_reject_noncanonical_or_enabled_state" in source
+    assert "AVORAX_TOKEN_VIRTUALIZATION_UIACCESS_DISABLED_OK" in source
+    assert "native-engine Authenticode helper virtualization/UIAccess token regressions" in verifier
+    assert '"native_authenticode_helper_token_safety_flags"' in verifier
+    assert "if ($steps.Count -ne 240)" in validator
+    assert "expected exactly 240 verifier steps" in validator
+    assert (
+        'Assert-ReportContainsStep $steps "native-engine Authenticode helper '
+        'virtualization/UIAccess token regressions"'
+        in validator
+    )
+    verified_contract = (
+        "require TokenVirtualizationAllowed to be a canonical Boolean and TokenVirtualizationEnabled and TokenUIAccess to be zero, "
+        "read back the label, enforced no-write-up policy, canonical legacy virtualization capability evidence, "
+        "inactive legacy virtualization state, and disabled UIAccess in the parent before CreateProcessAsUserW and in the child before stdin or request parsing"
+    )
+    technical_limit = (
+        "canonical TokenVirtualizationAllowed may remain one because it describes inherited capability, "
+        "while exact-zero TokenVirtualizationEnabled and TokenUIAccess prove inactive legacy virtualization "
+        "and disabled UIAccess; trusted helper code has no enable path, but this does not remove the capability "
+        "or isolate SID, profile, registry namespace, desktop/window station, ordinary reads, or inherited standard handles"
+    )
+    for contract in [verified_contract, "fixed-size token virtualization/UIAccess inspection"]:
+        assert contract in verifier
+        assert contract in validator
+    assert technical_limit in verifier
+    assert technical_limit in validator
+    for document in [checkpoint, matrix, threat_model, blockers, dependency_inventory]:
+        assert "TokenVirtualizationAllowed" in document
+        assert "TokenVirtualizationEnabled" in document
+        assert "TokenUIAccess" in document
+    assert "scripted before running any check, as requested" in checkpoint
+    assert "exactly `240/240` steps" in checkpoint
+    assert "five controlled" in checkpoint.lower()
     assert "adds no crate, package, Cargo feature, or lockfile change" in dependency_inventory
 
 
@@ -25813,8 +25894,8 @@ def test_native_authenticode_helper_uses_exact_write_restricting_sid_and_readbac
     assert "AVORAX_WRITE_RESTRICTED_MUTATION_DENIED" in source
     assert "native-engine Authenticode helper write-restricted-thread-token regressions" in verifier
     assert '"native_authenticode_helper_write_restricted"' in verifier
-    assert "if ($steps.Count -ne 239)" in validator
-    assert "expected exactly 239 verifier steps" in validator
+    assert "if ($steps.Count -ne 240)" in validator
+    assert "expected exactly 240 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper '
         'write-restricted-thread-token regressions"'
@@ -25824,7 +25905,7 @@ def test_native_authenticode_helper_uses_exact_write_restricting_sid_and_readbac
         "Before stdin or request parsing, release helper code applies a read-back-verified write-restricted SecurityImpersonation token created with DISABLE_MAX_PRIVILEGE plus WRITE_RESTRICTED and exactly one WinRestrictedCodeSid; strict request parsing and read-only candidate open/snapshot remain under that token",
         "The token is fail-visibly reverted before WinTrust/catalog compatibility work under the privilege-stripped primary token, and a fresh write-restricted token protects response serialization/output",
         "low-integrity MIC/no-write-up denies ordinary medium-integrity file mutation even after RevertToSelf while read access and embedded/catalog Microsoft verification remain functional",
-        "bounded TokenPrivileges, TokenRestrictedSids, TokenIntegrityLevel, or fixed-size TokenMandatoryPolicy inspection",
+        "bounded TokenPrivileges, TokenRestrictedSids, TokenIntegrityLevel, fixed-size TokenMandatoryPolicy, or fixed-size token virtualization/UIAccess inspection",
         "its write-restricted impersonation token adds WinRestrictedCodeSid",
         "the primary process token is low-integrity and privilege-stripped but not WRITE_RESTRICTED; same-process RevertToSelf returns to that low-integrity primary token",
         "WinTrust/catalog execute under that low-integrity primary token because the Windows trust stack failed under write restriction with error 127 on the verified host",

@@ -52,13 +52,13 @@ use windows_sys::Win32::Security::{
     CreateRestrictedToken, CreateWellKnownSid, DuplicateTokenEx, GetLengthSid, GetTokenInformation,
     IsValidSid, LookupPrivilegeValueW, RevertToSelf, SecurityImpersonation, SetTokenInformation,
     TokenImpersonation, TokenImpersonationLevel, TokenIntegrityLevel, TokenMandatoryPolicy,
-    TokenPrimary, TokenPrivileges, TokenRestrictedSids, TokenType, WinLowLabelSid,
-    WinRestrictedCodeSid, DISABLE_MAX_PRIVILEGE, LUID_AND_ATTRIBUTES, SECURITY_ATTRIBUTES,
-    SECURITY_MAX_SID_SIZE, SE_CHANGE_NOTIFY_NAME, SE_PRIVILEGE_ENABLED, SID, SID_AND_ATTRIBUTES,
-    TOKEN_ADJUST_DEFAULT, TOKEN_ASSIGN_PRIMARY, TOKEN_DUPLICATE, TOKEN_GROUPS, TOKEN_IMPERSONATE,
-    TOKEN_MANDATORY_LABEL, TOKEN_MANDATORY_POLICY, TOKEN_MANDATORY_POLICY_NO_WRITE_UP,
-    TOKEN_MANDATORY_POLICY_VALID_MASK, TOKEN_PRIVILEGES, TOKEN_QUERY, WELL_KNOWN_SID_TYPE,
-    WRITE_RESTRICTED,
+    TokenPrimary, TokenPrivileges, TokenRestrictedSids, TokenType, TokenUIAccess,
+    TokenVirtualizationAllowed, TokenVirtualizationEnabled, WinLowLabelSid, WinRestrictedCodeSid,
+    DISABLE_MAX_PRIVILEGE, LUID_AND_ATTRIBUTES, SECURITY_ATTRIBUTES, SECURITY_MAX_SID_SIZE,
+    SE_CHANGE_NOTIFY_NAME, SE_PRIVILEGE_ENABLED, SID, SID_AND_ATTRIBUTES, TOKEN_ADJUST_DEFAULT,
+    TOKEN_ASSIGN_PRIMARY, TOKEN_DUPLICATE, TOKEN_GROUPS, TOKEN_IMPERSONATE, TOKEN_MANDATORY_LABEL,
+    TOKEN_MANDATORY_POLICY, TOKEN_MANDATORY_POLICY_NO_WRITE_UP, TOKEN_MANDATORY_POLICY_VALID_MASK,
+    TOKEN_PRIVILEGES, TOKEN_QUERY, WELL_KNOWN_SID_TYPE, WRITE_RESTRICTED,
 };
 use windows_sys::Win32::Storage::FileSystem::{
     FileBasicInfo, FileIdInfo, FileStandardInfo, GetFileInformationByHandle,
@@ -191,6 +191,13 @@ struct AuthenticodeProcessMitigationEvidence {
     extension_point: u32,
     image_load: u32,
     strict_handle: u32,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct AuthenticodeTokenSafetyFlags {
+    virtualization_allowed: u32,
+    virtualization_enabled: u32,
+    ui_access: u32,
 }
 
 struct VerifiedWellKnownSid {
@@ -863,7 +870,40 @@ fn validate_authenticode_primary_token(token: HANDLE) -> Result<()> {
     validate_authenticode_integrity_label_evidence(&integrity, expected.as_bytes())?;
     let mandatory_policy: TOKEN_MANDATORY_POLICY =
         query_token_scalar(token, TokenMandatoryPolicy, "mandatory integrity policy")?;
-    validate_authenticode_mandatory_policy(mandatory_policy.Policy)
+    validate_authenticode_mandatory_policy(mandatory_policy.Policy)?;
+    validate_authenticode_token_safety_flags(query_authenticode_token_safety_flags(token)?)
+}
+
+fn query_authenticode_token_safety_flags(token: HANDLE) -> Result<AuthenticodeTokenSafetyFlags> {
+    Ok(AuthenticodeTokenSafetyFlags {
+        virtualization_allowed: query_token_scalar(
+            token,
+            TokenVirtualizationAllowed,
+            "virtualization-allowed flag",
+        )?,
+        virtualization_enabled: query_token_scalar(
+            token,
+            TokenVirtualizationEnabled,
+            "virtualization-enabled flag",
+        )?,
+        ui_access: query_token_scalar(token, TokenUIAccess, "UIAccess flag")?,
+    })
+}
+
+fn validate_authenticode_token_safety_flags(evidence: AuthenticodeTokenSafetyFlags) -> Result<()> {
+    anyhow::ensure!(
+        evidence.virtualization_allowed <= 1,
+        "AuthentiCode helper primary token virtualization-allowed flag is not canonical"
+    );
+    anyhow::ensure!(
+        evidence.virtualization_enabled == 0,
+        "AuthentiCode helper primary token has legacy virtualization enabled"
+    );
+    anyhow::ensure!(
+        evidence.ui_access == 0,
+        "AuthentiCode helper primary token has UIAccess enabled"
+    );
+    Ok(())
 }
 
 fn validate_restricted_authenticode_token(token: HANDLE) -> Result<()> {
@@ -3411,6 +3451,75 @@ mod tests {
             TOKEN_MANDATORY_POLICY_NO_WRITE_UP | 0x8000_0000,
         ] {
             assert!(validate_authenticode_mandatory_policy(invalid).is_err());
+        }
+    }
+
+    #[test]
+    fn native_authenticode_helper_token_safety_flags_are_verified_in_child() {
+        let application = std::env::current_exe().unwrap();
+        let arguments = [
+            "--ignored",
+            "--exact",
+            "windows_authenticode::tests::authenticode_token_safety_flags_child_fixture",
+            "--nocapture",
+            "--test-threads=1",
+        ];
+        let output = run_bounded_authenticode_helper(
+            &application,
+            &arguments,
+            Vec::new(),
+            Duration::from_secs(5),
+        )
+        .unwrap();
+        assert!(
+            output.status.success(),
+            "status={:?}, stdout={}, stderr={}",
+            output.status,
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
+        assert!(output.stderr.is_empty());
+        assert!(String::from_utf8(output.stdout)
+            .unwrap()
+            .contains("AVORAX_TOKEN_VIRTUALIZATION_UIACCESS_DISABLED_OK"));
+    }
+
+    #[test]
+    #[ignore = "isolated child fixture invoked by the token-safety-flags regression"]
+    fn authenticode_token_safety_flags_child_fixture() {
+        validate_current_process_authenticode_primary_token().unwrap();
+        println!("AVORAX_TOKEN_VIRTUALIZATION_UIACCESS_DISABLED_OK");
+    }
+
+    #[test]
+    fn native_authenticode_helper_token_safety_flags_reject_noncanonical_or_enabled_state() {
+        let disabled = AuthenticodeTokenSafetyFlags {
+            virtualization_allowed: 0,
+            virtualization_enabled: 0,
+            ui_access: 0,
+        };
+        validate_authenticode_token_safety_flags(disabled).unwrap();
+        validate_authenticode_token_safety_flags(AuthenticodeTokenSafetyFlags {
+            virtualization_allowed: 1,
+            ..disabled
+        })
+        .unwrap();
+
+        for invalid in [
+            AuthenticodeTokenSafetyFlags {
+                virtualization_enabled: 1,
+                ..disabled
+            },
+            AuthenticodeTokenSafetyFlags {
+                ui_access: 1,
+                ..disabled
+            },
+            AuthenticodeTokenSafetyFlags {
+                virtualization_allowed: u32::MAX,
+                ..disabled
+            },
+        ] {
+            assert!(validate_authenticode_token_safety_flags(invalid).is_err());
         }
     }
 
