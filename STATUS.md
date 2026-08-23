@@ -4,6 +4,34 @@
 
 Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-install, repair, recovery, offline, and manual-install paths only. Normal app updates target signed `.aup` packages applied by Avorax Update Service.
 
+- Checkpoint 2203 Authenticode helper privilege reduction is implemented and
+  locally verified. Before opening a candidate, the one-shot release helper now
+  derives a `DISABLE_MAX_PRIVILEGE` `SecurityImpersonation` token, validates
+  exact type/level plus a 64 KiB/256-entry bounded `TokenPrivileges` read,
+  permits only enabled `SeChangeNotifyPrivilege`, assigns it to the current
+  thread, and verifies the effective token again. Normal success/error paths
+  report `RevertToSelf` failure; token API, bound, sensitive privilege,
+  assignment, read-back, verification, or cleanup failure cannot become trust.
+  The real-token and sensitive-privilege regressions pass `2/2`, complete
+  Authenticode tests pass `27/27`, Native Engine passes `462 + 6`, both locked
+  workspace variants pass, Flutter passes `838/838`, and source contracts pass
+  `632/632`. The definitive verifier and strict validator pass exactly
+  `233/233` in `473.5s`; stale 232-step and missing-scope evidence are rejected.
+  This is thread privilege reduction, not an
+  AppContainer or restricted-process sandbox; the process retains its parent
+  token/SID/integrity/desktop and same-process code can technically revert.
+  Implementation head `710e38ad78616b09736eafae14fd92f65b8b8b5c` passes
+  Avorax CI `32616072172` and Desktop Packages push/PR runs
+  `32616060448`/`32616072173`, including all six platform artifacts,
+  checksums, and lockfile SBOM with publication skipped. Evidence-head checks,
+  merge, and original-tree synchronization remain pending.
+- Checkpoint 2202 is now fully hosted, merged, and synchronized. Evidence head
+  `dee97b4` passed CI/packages; PR `#54` merged as `4e24e47`; merged-main CI
+  `32613299479` and packages `32613299509` passed with publication skipped.
+  Exactly 15 preconditioned files synchronized to the original tree and matched
+  merged Git blobs/SHA-256. Destination focused checks and the two-host release
+  Authenticode smoke passed. The protected vault remains exactly 16,072 files,
+  zero directories, 4,522,733 bytes, and zero pending.
 - Checkpoint 2202 deterministic Native Engine PUP category inference is
   implemented and locally verified. Merged-main CI `32610442133` exposed a
   real pre-existing flaky Local Core archive regression: a randomized positive-
@@ -29,8 +57,8 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
   `32611742164` and Desktop Packages push/PR runs
   `32611721124`/`32611742152`, including Windows MSI/EXE, Linux DEB/tar,
   macOS arm64/x64 DMG, consolidation, checksums, and lockfile SBOM evidence;
-  publication is skipped. Evidence-head checks, follow-up merge, green merged-
-  main evidence, and original-tree synchronization remain pending. The category
+  publication is skipped. The evidence head, exact PR merge, green merged-main
+  runs, and original-tree synchronization are closed above. The category
   change affects explanation only; it does not lower the threat verdict or
   weaken detection.
 - Checkpoint 2201 Authenticode helper Job resource limits is implemented and

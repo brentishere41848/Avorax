@@ -70,3 +70,27 @@ consolidation, checksums, and lockfile SBOM evidence. Both publication jobs are
 skipped. No artifact was installed, released, or published. Evidence-head
 checks, follow-up merge, green merged-main evidence, and safe original-tree
 synchronization remain pending.
+
+## Integration Closure
+
+Evidence head `dee97b41eab002e2c15e5ba4c9102f992fe0b17c` passed Avorax CI
+`32612516929` and Desktop Packages PR run `32612516881`; publication was
+skipped. PR `#54` merged that exact head as
+`4e24e47fc2732fd83d6f2fa403766aff46796d5c`. Merged-main Avorax CI
+`32613299479` passed every job, including the previously nondeterministic Local
+Core archive gate. Merged-main Desktop Packages `32613299509` passed package
+contracts, Windows MSI/EXE, Linux DEB/tar, both macOS architectures,
+consolidation, checksums, and lockfile SBOM generation with publication skipped.
+
+Exactly 15 changed files were synchronized to
+`C:\Users\Brent\Documents\Avorax-main` only after all existing destinations
+matched the prior merged Git blobs and both new report paths were absent. Every
+destination then matched merged-main Git blob and source SHA-256 evidence.
+Destination source contracts `631/631`, rustfmt, risk fusion `7/7`, asset
+locator `4/4`, Job limit `1/1`, helper isolation `5/5`, five repeats of the
+triggering archive regression, strict Native/Local Clippy, and the release
+Local Core/Guard Authenticode helper smoke passed. The read-only quarantine
+audit remained exactly 16,072 files, zero directories, 4,522,733 bytes, 5,357
+each `.avoraxq`/`.json`/`.auth`, one `.metadata_auth_key`, and zero pending.
+No release, publication, installation, service/driver start, Defender change,
+or protected-vault mutation occurred.

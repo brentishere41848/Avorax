@@ -235,6 +235,86 @@ Lead-engineer product-hardening pass across the Avorax repository. Goal is to mo
 - Evidence-head checks, exact-head merge, green merged-main CI/packages, and
   safe original-tree synchronization remain pending.
 
+## 2026-08-23 continuation checkpoint 2202 closure
+
+- Evidence head `dee97b41eab002e2c15e5ba4c9102f992fe0b17c` passed CI
+  `32612516929` and Desktop Packages PR `32612516881`. PR `#54` merged with
+  exact-head locking as `4e24e47fc2732fd83d6f2fa403766aff46796d5c`.
+- Merged-main CI `32613299479` passed the prior archive regression and every
+  other job. Desktop Packages `32613299509` passed package contracts, all six
+  platform artifacts, consolidation, checksums, and lockfile SBOM; publication
+  was skipped.
+- All 13 existing destination files matched base `baa39ac`, and two new report
+  paths were absent. Exactly 15 files synchronized to the original tree; every
+  destination matched merged Git blob and source SHA-256. Destination source
+  contracts `631/631`, rustfmt, focused risk/asset/Job/helper/archive checks,
+  strict Native/Local Clippy, and release Local Core/Guard helper smoke passed.
+- The protected vault read-only audit remained exactly 16,072 files, zero
+  directories, 4,522,733 bytes, 5,357 each `.avoraxq`/`.json`/`.auth`, one key,
+  and zero pending. No release, installation, publication, service/driver start,
+  Defender change, or vault mutation occurred.
+
+## 2026-08-23 continuation checkpoint 2203 scripting
+
+- Selected helper thread privilege reduction as the highest-value unblocked
+  continuation after process/time/resource isolation. The LocalSystem case
+  should not expose unnecessary enabled process-token privileges to WinTrust.
+- Scripted a real `SecurityImpersonation` derivative token created through
+  `DISABLE_MAX_PRIVILEGE` before candidate opening. Exact type/level and bounded
+  effective `TokenPrivileges` read-back allow only `SeChangeNotifyPrivilege`.
+  Token setup, bounds, unexpected privilege, assignment, read-back, verification,
+  or normal revert failure cannot supply trust.
+- Scripted a real apply/read-back/revert/repeat regression plus adversarial
+  enabled-sensitive-LUID rejection, central verifier step 233, exact validator
+  count/scope enforcement, Python source contracts, checkpoint report, engine
+  matrix, threat model, blocker, dependency, status, and run-log changes.
+- No test, formatter, parser, build, smoke, verifier, or validator was run during
+  this complete scripting phase. The process token/SID/integrity/desktop remain
+  unchanged and same-process code can technically revert impersonation; no
+  AppContainer, restricted-process, cross-token IPC, or pre-execution claim is
+  introduced.
+
+## 2026-08-23 continuation checkpoint 2203 local verification
+
+- Focused restricted-token regressions passed `2/2`; the complete Windows
+  Authenticode module passed `27/27`. Complete Native Engine passed `462 + 6`,
+  strict Native/Local/Guard Clippy and rustfmt passed, and release Local Core and
+  Guard builds plus the two-host Authenticode helper smoke passed. The smoke
+  verified embedded Edge trust, catalog-backed WindowsPowerShell trust,
+  unsigned rejection, and wrong-hash rejection without executing fixtures.
+- Standard and all-feature locked Rust workspace suites passed. Flutter analyze
+  reported no issues, Dart protocol tests passed `14/14`, and the complete
+  Flutter suite passed `838/838`. Python source contracts passed `632/632`.
+- The definitive verifier ran from `2026-08-23T03:30:00.4835295Z` through
+  `2026-08-23T03:37:54.0647224Z` and passed exactly `233/233` steps with zero
+  failed verifier steps in `473.5s`. Its built-in strict validator and a
+  separate `-RequireFullSuite` invocation passed.
+- Adversarial validation rejected checkpoint 2202's stale `232`-step report and
+  a temporary 233-step copy missing the exact privilege-stripped-token scope.
+  Both Cargo lockfiles remained unchanged. A read-only vault audit remained
+  exactly 16,072 files, zero directories, 4,522,733 bytes, 5,357 each
+  `.avoraxq`/`.json`/`.auth`, one `.metadata_auth_key`, and zero pending.
+- Exact-head hosted CI/packages, PR/merge, merged-main evidence, and safe
+  original-tree synchronization remain pending. No release, publication,
+  installation, service/driver start, Defender change, or vault mutation
+  occurred.
+
+## 2026-08-23 continuation checkpoint 2203 implementation-head hosting
+
+- Committed implementation, adversarial regressions, verifier/validator,
+  source contracts, and audit evidence as
+  `710e38ad78616b09736eafae14fd92f65b8b8b5c`, pushed only branch
+  `agent/checkpoint-2203-authenticode-restricted-thread`, and opened draft PR
+  `#55`.
+- Exact implementation-head Avorax CI `32616072172` passed Rust/Clippy, Flutter,
+  security/protection/performance, branding/copy, and Unix quarantine permission
+  jobs. Desktop Packages push `32616060448` and PR `32616072173` passed package
+  contracts, Windows x64 MSI/EXE, Linux x64 DEB/tar, macOS arm64/x64 DMG,
+  six-artifact consolidation, checksums, and lockfile SBOM evidence.
+- Both publication jobs were skipped. No artifact was installed, released, or
+  published. Evidence-head checks, normal merge, merged-main evidence, and safe
+  original-tree synchronization remain pending.
+
 ## 2026-08-22 continuation checkpoint 2198 scripting
 
 - Selected a bounded release-process isolation boundary for native WinTrust
