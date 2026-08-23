@@ -8153,3 +8153,55 @@ Updates page showed:
   MSI/EXE, Linux x64 DEB/tar, macOS arm64/x64 DMG, consolidation, checksums,
   and lockfile SBOM; publication was skipped. PR `#58` remains draft pending
   evidence-head checks.
+
+## 2026-08-23 checkpoint 2206 closure and 2207 scripting
+
+- Checkpoint 2206 evidence head `5bbe6bd7285e1f8a47f22949bc27b2206a73ae54`
+  passed CI `32630589688` and packages `32630589681`. PR `#58` merged as
+  `8e9b672`; merged-main CI `32631277590` and packages `32631277605` passed all
+  six artifacts, checksums, and lockfile SBOM with publication skipped.
+- Exactly 12 preconditioned paths synchronized to the original tree and
+  matched merged blobs plus raw SHA-256. Destination contracts `635/635`,
+  sanitized launch `2/2`, Authenticode `33/33`, strict Native Clippy, locked
+  release builds, and two-host smoke passed. The vault remained exact.
+- Started checkpoint 2207 from merge `8e9b672`. Scripted a second process
+  attribute, `PROC_THREAD_ATTRIBUTE_MITIGATION_POLICY`, with strict-handle,
+  extension-point-disable, dynamic-code-prohibit, Microsoft-signed-only,
+  no-remote, no-low-label, and System32-preference bits. Scripted child-side
+  read-back before stdin, exact/failure fixtures, verifier step 237, strict
+  validator scope/count, source contracts, and audit records. No checkpoint-
+  2207 passing result is claimed before the complete batch executes.
+
+## 2026-08-23 checkpoint 2207 local verification
+
+- PowerShell parsing and rustfmt passed. Process-mitigation, restricted-process,
+  sanitized-launch, and write-restricted filters passed `2/2` each. Complete
+  Authenticode passed `35/35` with five intentional ignored benign child
+  fixtures; strict Native Clippy and source contracts `636/636` passed.
+- Locked Local Core/Guard release builds and both embedded/catalog/hash-binding
+  release smoke runs passed without executing candidate fixtures. Standard and
+  all-feature locked Rust workspaces, strict Native/Local/Guard lint, Flutter
+  analyze, and all `838/838` Flutter tests passed. Both lockfiles stayed
+  unchanged.
+- The definitive report passed exactly `237/237` steps from
+  `2026-08-23T10:04:41.4062026Z` through
+  `2026-08-23T10:12:12.5488076Z` in `451.1s`; built-in and independent strict
+  validation passed. Controlled 236-step, missing-step, missing-verified-scope,
+  and missing-limit-scope copies were rejected and removed.
+- A read-only vault audit remained exactly 16,072 files, zero directories,
+  4,522,733 bytes, 5,357 each `.avoraxq`/`.json`/`.auth`, one
+  `.metadata_auth_key`, and zero pending. Hosted exact-head checks, merge,
+  merged-main evidence, and original-tree synchronization remain pending.
+- Final review found that strict-handle read-back accepted debugger-induced
+  temporary exception evidence without requiring the permanent-enforcement
+  flag. The source now requires both flags and scripts a temporary-only
+  rejection fixture plus exact verifier/validator/audit contracts. No passing
+  result for this amendment is claimed before its complete rerun.
+- The stricter real-child/pure mitigation filter passed `2/2`, complete
+  Authenticode passed `35/35` with five intentional ignores, strict Native
+  Clippy and source contracts `636/636` passed. The fresh definitive report
+  passed `237/237` from `2026-08-23T10:20:56.5184238Z` through
+  `2026-08-23T10:28:38.6621624Z` in `462.1s`; built-in and independent
+  validation passed. Controlled 236-step, missing-step,
+  missing-permanent-verified-scope, and missing-limit-scope reports were
+  rejected and removed. Lockfiles and the protected vault stayed exact.

@@ -109,3 +109,19 @@ Tests use ignored benign Rust child fixtures, installed read-only Microsoft
 binaries, and temporary benign text only. Candidate fixtures are never
 executed. No live malware, download, install, service/driver start, Defender
 change, release, publication, or protected-quarantine mutation is permitted.
+
+## Final Integration Closure
+
+Evidence head `5bbe6bd7285e1f8a47f22949bc27b2206a73ae54` passed exact-head
+CI `32630589688` and Desktop Packages `32630589681`; PR `#58` merged normally
+as `8e9b6720c17711e39a4e4d31604728d5a61c1bf1`. Merged-main Avorax CI
+`32631277590` and Desktop Packages `32631277605` passed all six desktop
+artifacts, consolidation, checksums, and lockfile SBOM with publication
+skipped.
+
+Exactly 12 preconditioned paths synchronized to the original tree and matched
+merged blobs plus source SHA-256. Destination contracts, sanitized/complete
+Authenticode checks, strict lint, locked release builds, and two-host smoke
+passed. The protected vault remained exactly 16,072 files, zero directories,
+4,522,733 bytes, 5,357 each `.avoraxq`/`.json`/`.auth`, one metadata key, and
+zero pending files.

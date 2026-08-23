@@ -76,10 +76,14 @@ use windows_sys::Win32::System::SystemServices::{
 };
 use windows_sys::Win32::System::Threading::{
     CreateProcessAsUserW, DeleteProcThreadAttributeList, GetCurrentProcess, GetCurrentThread,
-    GetExitCodeProcess, InitializeProcThreadAttributeList, OpenProcessToken, OpenThreadToken,
-    ResumeThread, SetThreadToken, TerminateProcess, UpdateProcThreadAttribute, WaitForSingleObject,
-    CREATE_NO_WINDOW, CREATE_SUSPENDED, CREATE_UNICODE_ENVIRONMENT, EXTENDED_STARTUPINFO_PRESENT,
-    PROCESS_INFORMATION, PROC_THREAD_ATTRIBUTE_HANDLE_LIST, STARTF_USESTDHANDLES, STARTUPINFOEXW,
+    GetExitCodeProcess, GetProcessMitigationPolicy, InitializeProcThreadAttributeList,
+    OpenProcessToken, OpenThreadToken, ProcessDynamicCodePolicy,
+    ProcessExtensionPointDisablePolicy, ProcessImageLoadPolicy, ProcessSignaturePolicy,
+    ProcessStrictHandleCheckPolicy, ResumeThread, SetThreadToken, TerminateProcess,
+    UpdateProcThreadAttribute, WaitForSingleObject, CREATE_NO_WINDOW, CREATE_SUSPENDED,
+    CREATE_UNICODE_ENVIRONMENT, EXTENDED_STARTUPINFO_PRESENT, PROCESS_INFORMATION,
+    PROC_THREAD_ATTRIBUTE_HANDLE_LIST, PROC_THREAD_ATTRIBUTE_MITIGATION_POLICY,
+    STARTF_USESTDHANDLES, STARTUPINFOEXW,
 };
 
 const MAX_AUTHENTICODE_PATH_UTF16_UNITS: usize = 32_767;
@@ -111,6 +115,28 @@ const AUTHENTICODE_HELPER_RESTRICTED_SID_ATTRIBUTES: u32 =
 const AUTHENTICODE_HELPER_SID_STORAGE_WORDS: usize =
     (SECURITY_MAX_SID_SIZE as usize).div_ceil(size_of::<usize>());
 const MAX_AUTHENTICODE_HELPER_ATTRIBUTE_LIST_BYTES: usize = 64 * 1024;
+const AUTHENTICODE_HELPER_ATTRIBUTE_COUNT: u32 = 2;
+// windows-sys 0.61.2 binds the attribute key but not these documented policy values.
+const AUTHENTICODE_HELPER_STRICT_HANDLE_CHECKS: u64 = 1u64 << 24;
+const AUTHENTICODE_HELPER_EXTENSION_POINT_DISABLE: u64 = 1u64 << 32;
+const AUTHENTICODE_HELPER_PROHIBIT_DYNAMIC_CODE: u64 = 1u64 << 36;
+const AUTHENTICODE_HELPER_MICROSOFT_SIGNED_ONLY: u64 = 1u64 << 44;
+const AUTHENTICODE_HELPER_NO_REMOTE_IMAGES: u64 = 1u64 << 52;
+const AUTHENTICODE_HELPER_NO_LOW_LABEL_IMAGES: u64 = 1u64 << 56;
+const AUTHENTICODE_HELPER_PREFER_SYSTEM32_IMAGES: u64 = 1u64 << 60;
+const AUTHENTICODE_HELPER_PROCESS_MITIGATION_POLICY: u64 = AUTHENTICODE_HELPER_STRICT_HANDLE_CHECKS
+    | AUTHENTICODE_HELPER_EXTENSION_POINT_DISABLE
+    | AUTHENTICODE_HELPER_PROHIBIT_DYNAMIC_CODE
+    | AUTHENTICODE_HELPER_MICROSOFT_SIGNED_ONLY
+    | AUTHENTICODE_HELPER_NO_REMOTE_IMAGES
+    | AUTHENTICODE_HELPER_NO_LOW_LABEL_IMAGES
+    | AUTHENTICODE_HELPER_PREFER_SYSTEM32_IMAGES;
+const AUTHENTICODE_HELPER_SIGNATURE_REQUIRED_FLAGS: u32 = 0b0001;
+const AUTHENTICODE_HELPER_SIGNATURE_SELECTION_MASK: u32 = 0b0011;
+const AUTHENTICODE_HELPER_DYNAMIC_CODE_REQUIRED_FLAGS: u32 = 0b0001;
+const AUTHENTICODE_HELPER_EXTENSION_POINT_REQUIRED_FLAGS: u32 = 0b0001;
+const AUTHENTICODE_HELPER_IMAGE_LOAD_REQUIRED_FLAGS: u32 = 0b0111;
+const AUTHENTICODE_HELPER_STRICT_HANDLE_REQUIRED_FLAGS: u32 = 0b0011;
 const AUTHENTICODE_HELPER_ENVIRONMENT_NAMES: [&str; 2] = ["SystemRoot", "WINDIR"];
 const AUTHENTICODE_HELPER_TERMINATION_EXIT_CODE: u32 = 0xA710_0001;
 
@@ -149,6 +175,15 @@ struct SanitizedAuthenticodeLaunchContext {
 struct TokenSidEvidence {
     sid: Vec<u8>,
     attributes: u32,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct AuthenticodeProcessMitigationEvidence {
+    signature: u32,
+    dynamic_code: u32,
+    extension_point: u32,
+    image_load: u32,
+    strict_handle: u32,
 }
 
 struct RestrictedCodeSid {
@@ -298,14 +333,23 @@ impl InheritedPipe {
 struct ProcessThreadAttributeList {
     storage: Vec<usize>,
     pointer: *mut c_void,
+    mitigation_policy: Box<u64>,
 }
 
 impl ProcessThreadAttributeList {
-    fn for_handle_list(handles: &[HANDLE; 3]) -> Result<Self> {
+    fn for_authenticode_helper(handles: &[HANDLE; 3]) -> Result<Self> {
         validate_authenticode_child_handle_list(handles)?;
+        let mitigation_policy = Box::new(AUTHENTICODE_HELPER_PROCESS_MITIGATION_POLICY);
         let mut required = 0usize;
         unsafe { SetLastError(ERROR_SUCCESS) };
-        let sized = unsafe { InitializeProcThreadAttributeList(null_mut(), 1, 0, &mut required) };
+        let sized = unsafe {
+            InitializeProcThreadAttributeList(
+                null_mut(),
+                AUTHENTICODE_HELPER_ATTRIBUTE_COUNT,
+                0,
+                &mut required,
+            )
+        };
         let size_error = unsafe { GetLastError() };
         anyhow::ensure!(
             sized == 0 && size_error == ERROR_INSUFFICIENT_BUFFER,
@@ -320,7 +364,14 @@ impl ProcessThreadAttributeList {
         let mut storage = vec![0usize; words];
         let pointer = storage.as_mut_ptr().cast::<c_void>();
         anyhow::ensure!(
-            unsafe { InitializeProcThreadAttributeList(pointer.cast(), 1, 0, &mut required) } != 0,
+            unsafe {
+                InitializeProcThreadAttributeList(
+                    pointer.cast(),
+                    AUTHENTICODE_HELPER_ATTRIBUTE_COUNT,
+                    0,
+                    &mut required,
+                )
+            } != 0,
             "unable to initialize Authenticode helper process attribute list: {}",
             std::io::Error::last_os_error()
         );
@@ -340,11 +391,34 @@ impl ProcessThreadAttributeList {
             unsafe { DeleteProcThreadAttributeList(pointer.cast()) };
             anyhow::bail!("unable to restrict Authenticode helper inherited handles: {error}");
         }
-        Ok(Self { storage, pointer })
+        let updated = unsafe {
+            UpdateProcThreadAttribute(
+                pointer.cast(),
+                0,
+                PROC_THREAD_ATTRIBUTE_MITIGATION_POLICY as usize,
+                mitigation_policy.as_ref() as *const u64 as *mut c_void,
+                size_of::<u64>(),
+                null_mut(),
+                null(),
+            )
+        };
+        if updated == 0 {
+            let error = std::io::Error::last_os_error();
+            unsafe { DeleteProcThreadAttributeList(pointer.cast()) };
+            anyhow::bail!(
+                "unable to apply the Authenticode helper process mitigation policy: {error}"
+            );
+        }
+        Ok(Self {
+            storage,
+            pointer,
+            mitigation_policy,
+        })
     }
 
     fn pointer(&self) -> *mut c_void {
         let _keep_storage_alive = &self.storage;
+        let _keep_mitigation_policy_alive = &self.mitigation_policy;
         self.pointer
     }
 }
@@ -674,6 +748,77 @@ fn validate_current_process_privilege_stripped_primary_token() -> Result<()> {
         "unable to open Authenticode helper process token for read-back",
     )?;
     validate_privilege_stripped_primary_token(token.0)
+}
+
+fn validate_current_process_authenticode_mitigations() -> Result<()> {
+    let evidence = AuthenticodeProcessMitigationEvidence {
+        signature: query_current_process_mitigation_flags(
+            ProcessSignaturePolicy,
+            "binary-signature",
+        )?,
+        dynamic_code: query_current_process_mitigation_flags(
+            ProcessDynamicCodePolicy,
+            "dynamic-code",
+        )?,
+        extension_point: query_current_process_mitigation_flags(
+            ProcessExtensionPointDisablePolicy,
+            "extension-point",
+        )?,
+        image_load: query_current_process_mitigation_flags(ProcessImageLoadPolicy, "image-load")?,
+        strict_handle: query_current_process_mitigation_flags(
+            ProcessStrictHandleCheckPolicy,
+            "strict-handle",
+        )?,
+    };
+    validate_authenticode_process_mitigation_evidence(evidence)
+}
+
+fn query_current_process_mitigation_flags(policy: i32, label: &str) -> Result<u32> {
+    let mut flags = 0u32;
+    anyhow::ensure!(
+        unsafe {
+            GetProcessMitigationPolicy(
+                GetCurrentProcess(),
+                policy,
+                (&mut flags as *mut u32).cast::<c_void>(),
+                size_of::<u32>(),
+            )
+        } != 0,
+        "unable to read back Authenticode helper {label} mitigation policy: {}",
+        std::io::Error::last_os_error()
+    );
+    Ok(flags)
+}
+
+fn validate_authenticode_process_mitigation_evidence(
+    evidence: AuthenticodeProcessMitigationEvidence,
+) -> Result<()> {
+    anyhow::ensure!(
+        evidence.signature & AUTHENTICODE_HELPER_SIGNATURE_SELECTION_MASK
+            == AUTHENTICODE_HELPER_SIGNATURE_REQUIRED_FLAGS,
+        "AuthentiCode helper Microsoft-signed-only image policy is not active"
+    );
+    anyhow::ensure!(
+        evidence.dynamic_code & AUTHENTICODE_HELPER_DYNAMIC_CODE_REQUIRED_FLAGS
+            == AUTHENTICODE_HELPER_DYNAMIC_CODE_REQUIRED_FLAGS,
+        "AuthentiCode helper dynamic-code prohibition is not active"
+    );
+    anyhow::ensure!(
+        evidence.extension_point & AUTHENTICODE_HELPER_EXTENSION_POINT_REQUIRED_FLAGS
+            == AUTHENTICODE_HELPER_EXTENSION_POINT_REQUIRED_FLAGS,
+        "AuthentiCode helper extension-point disable policy is not active"
+    );
+    anyhow::ensure!(
+        evidence.image_load & AUTHENTICODE_HELPER_IMAGE_LOAD_REQUIRED_FLAGS
+            == AUTHENTICODE_HELPER_IMAGE_LOAD_REQUIRED_FLAGS,
+        "AuthentiCode helper remote/low-label/System32 image policy is incomplete"
+    );
+    anyhow::ensure!(
+        evidence.strict_handle & AUTHENTICODE_HELPER_STRICT_HANDLE_REQUIRED_FLAGS
+            == AUTHENTICODE_HELPER_STRICT_HANDLE_REQUIRED_FLAGS,
+        "AuthentiCode helper permanent strict-handle policy is not active"
+    );
+    Ok(())
 }
 
 fn validate_privilege_stripped_primary_token(token: HANDLE) -> Result<()> {
@@ -1113,6 +1258,7 @@ fn verify_prepared_microsoft_signature(prepared: PreparedAuthenticodeVerificatio
 
 pub(crate) fn run_authenticode_helper_stdio() -> Result<()> {
     validate_current_process_privilege_stripped_primary_token()?;
+    validate_current_process_authenticode_mitigations()?;
     let restricted = RestrictedAuthenticodeThreadToken::enter()?;
     let (nonce, prepared) = restricted.finish(read_and_prepare_authenticode_helper_request())?;
     let outcome = prepared.and_then(verify_prepared_microsoft_signature);
@@ -1386,7 +1532,7 @@ fn spawn_restricted_authenticode_process(
     let stdout = InheritedPipe::create(true, "stdout")?;
     let stderr = InheritedPipe::create(true, "stderr")?;
     let inherited = [stdin.child.0, stdout.child.0, stderr.child.0];
-    let attributes = ProcessThreadAttributeList::for_handle_list(&inherited)?;
+    let attributes = ProcessThreadAttributeList::for_authenticode_helper(&inherited)?;
     let mut startup = STARTUPINFOEXW::default();
     startup.StartupInfo.cb = size_of::<STARTUPINFOEXW>() as u32;
     startup.StartupInfo.dwFlags = STARTF_USESTDHANDLES;
@@ -2987,6 +3133,108 @@ mod tests {
     fn authenticode_restricted_primary_child_fixture() {
         validate_current_process_privilege_stripped_primary_token().unwrap();
         println!("AVORAX_RESTRICTED_PRIMARY_TOKEN_OK");
+    }
+
+    #[test]
+    fn native_authenticode_helper_process_mitigations_are_verified_in_child() {
+        let application = std::env::current_exe().unwrap();
+        let arguments = [
+            "--ignored",
+            "--exact",
+            "windows_authenticode::tests::authenticode_process_mitigation_child_fixture",
+            "--nocapture",
+            "--test-threads=1",
+        ];
+        let output = run_bounded_authenticode_helper(
+            &application,
+            &arguments,
+            Vec::new(),
+            Duration::from_secs(5),
+        )
+        .unwrap();
+        assert!(
+            output.status.success(),
+            "mitigation-policy child failed with {:?}; stdout: {}; stderr: {}",
+            output.status,
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
+        assert!(output.stderr.is_empty());
+        assert!(String::from_utf8(output.stdout)
+            .unwrap()
+            .contains("AVORAX_PROCESS_MITIGATION_POLICY_OK"));
+    }
+
+    #[test]
+    #[ignore = "isolated child fixture invoked by the process-mitigation regression"]
+    fn authenticode_process_mitigation_child_fixture() {
+        validate_current_process_privilege_stripped_primary_token().unwrap();
+        validate_current_process_authenticode_mitigations().unwrap();
+        println!("AVORAX_PROCESS_MITIGATION_POLICY_OK");
+    }
+
+    #[test]
+    fn native_authenticode_helper_process_mitigation_policy_is_exact_and_fail_closed() {
+        assert_eq!(
+            AUTHENTICODE_HELPER_PROCESS_MITIGATION_POLICY,
+            (1u64 << 24)
+                | (1u64 << 32)
+                | (1u64 << 36)
+                | (1u64 << 44)
+                | (1u64 << 52)
+                | (1u64 << 56)
+                | (1u64 << 60)
+        );
+        let expected = AuthenticodeProcessMitigationEvidence {
+            signature: AUTHENTICODE_HELPER_SIGNATURE_REQUIRED_FLAGS,
+            dynamic_code: AUTHENTICODE_HELPER_DYNAMIC_CODE_REQUIRED_FLAGS,
+            extension_point: AUTHENTICODE_HELPER_EXTENSION_POINT_REQUIRED_FLAGS,
+            image_load: AUTHENTICODE_HELPER_IMAGE_LOAD_REQUIRED_FLAGS,
+            strict_handle: AUTHENTICODE_HELPER_STRICT_HANDLE_REQUIRED_FLAGS,
+        };
+        validate_authenticode_process_mitigation_evidence(expected).unwrap();
+
+        let invalid = [
+            AuthenticodeProcessMitigationEvidence {
+                signature: 0,
+                ..expected
+            },
+            AuthenticodeProcessMitigationEvidence {
+                signature: 0b0010,
+                ..expected
+            },
+            AuthenticodeProcessMitigationEvidence {
+                dynamic_code: 0,
+                ..expected
+            },
+            AuthenticodeProcessMitigationEvidence {
+                extension_point: 0,
+                ..expected
+            },
+            AuthenticodeProcessMitigationEvidence {
+                image_load: 0b0110,
+                ..expected
+            },
+            AuthenticodeProcessMitigationEvidence {
+                image_load: 0b0101,
+                ..expected
+            },
+            AuthenticodeProcessMitigationEvidence {
+                image_load: 0b0011,
+                ..expected
+            },
+            AuthenticodeProcessMitigationEvidence {
+                strict_handle: 0,
+                ..expected
+            },
+            AuthenticodeProcessMitigationEvidence {
+                strict_handle: 0b0001,
+                ..expected
+            },
+        ];
+        for evidence in invalid {
+            assert!(validate_authenticode_process_mitigation_evidence(evidence).is_err());
+        }
     }
 
     #[test]

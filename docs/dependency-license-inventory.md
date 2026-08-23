@@ -349,6 +349,32 @@ DEB/tar, macOS arm64/x64 DMG, consolidation, checksums, and lockfile SBOM
 generation with publication skipped. Evidence-head and merged-main
 final-artifact review remain pending; no dependency or lockfile changed.
 
+## Authenticode Process Mitigation API Surface
+
+Checkpoint 2207 adds no crate, package, Cargo feature, or lockfile change. It
+reuses pinned `windows-sys 0.61.2` Threading bindings for
+`PROC_THREAD_ATTRIBUTE_MITIGATION_POLICY`, `UpdateProcThreadAttribute`,
+`GetProcessMitigationPolicy`, and the signature/dynamic-code/extension-point/
+image-load/strict-handle policy selectors. The reviewed crate license remains
+`MIT OR Apache-2.0`.
+
+`windows-sys 0.61.2` does not generate the documented process-creation
+mitigation bit constants, so the Native Engine defines only the seven reviewed
+Microsoft values locally: strict handle checks, extension-point disable,
+dynamic-code prohibition, Microsoft-signed-only loading, no remote images, no
+low-label images, and System32 preference. Pure exact-word/source contracts and
+real child read-back pass locally. No dynamic loader, mitigation crate,
+sandbox library, registry dependency, network client, or helper executable is
+added. Both lockfiles are unchanged; strict lint, locked release hosts and
+workspaces, source contracts `636/636`, and exact `237/237` verification pass.
+Hosted package/SBOM evidence remains pending for checkpoint 2207.
+
+Final review strengthened the existing four-byte strict-handle policy
+read-back to require both invalid-handle exception and permanent-enforcement
+flags. This adds no API, feature, dependency, package, or lockfile change; the
+amended local verification and exact `237/237` rerun pass. Hosted package/SBOM
+evidence remains pending.
+
 ## Authenticode Restricted Process Token API Surface
 
 Checkpoint 2204 adds no crate, package, registry dependency, network client,
