@@ -2207,3 +2207,37 @@ enforcement, or pre-execution blocking is claimed.
   or encryption, prevent same-user handle duplication, or isolate the named-kernel-
   object namespace. AppContainer, installed LocalSystem, signed-driver, and pre-
   execution evidence remain separate blockers.
+
+## Checkpoint 2214: Authenticode Job Membership Is Locally Verified
+
+- **Parent boundary:** After assignment and before `ResumeThread`, the parent is
+  scripted to require a nonzero exact match between `PROCESS_INFORMATION.dwProcessId`
+  and `GetProcessId`, exact-parent-Job `IsProcessInJob`, and an exact-size
+  `JOBOBJECT_BASIC_PROCESS_ID_LIST` with one assigned/listed process and the helper
+  PID as its sole entry. Any failure terminates and reaps the suspended helper.
+- **Child boundary:** Before standard handles, private desktop, token, mitigation,
+  stdin, request, or candidate work, the child is scripted to require nonzero
+  `GetCurrentProcessId` and successful null-Job `IsProcessInJob` membership. A false
+  result or API error is diagnostic and cannot become trust.
+- **Evidence status:** Benign/adversarial checks pass `2/2`; complete Authenticode
+  passes `49` with `11` intentional ignores; both locked workspace variants pass
+  with Native `485`/`11` plus compiler `6/6`; source contracts pass `644/644`;
+  Flutter passes `838/838`; and strict lint, release builds, two-host trust smoke,
+  no-malware, dependency, exact-lockfile, and protected-vault gates pass. The
+  definitive verifier and standalone validator pass exactly `244/244` in `464.3s`.
+  Six adversarial report copies are rejected. No checkpoint-2214 passing result is
+  claimed before execution; every passing claim here is from the later execution
+  phase. At this local-evidence point, hosted and integration evidence remained
+  pending; the later hosted result is recorded immediately below.
+- **Hosted status:** Exact implementation `6c3bad3` passes Avorax CI
+  `32670186345` and Desktop Packages push/PR runs
+  `32670175754`/`32670186350`, including six native artifacts, checksums,
+  lockfile SBOM, dependency/license evidence, and administrative MSI extraction.
+  Publication is skipped. PR `#66` is clean and mergeable; evidence-head, merge,
+  merged-main, synchronization, and destination evidence remains pending.
+- **Residual blocker:** Parent exact-Job/PID-list read-back is point-in-time. The
+  child's null-Job check proves only membership in some Job because it does not own
+  the unnamed parent Job handle. `IsProcessInJob` and
+  `JOBOBJECT_BASIC_PROCESS_ID_LIST` do not authenticate IPC, change identity, or
+  provide AppContainer, installed LocalSystem, signed-driver, or pre-execution
+  evidence. Those remain separate blockers.

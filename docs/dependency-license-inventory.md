@@ -676,3 +676,38 @@ checksums, a 569-component lockfile CycloneDX SBOM, dependency/license evidence,
 and artifact upload. Prerelease publication is skipped. Evidence-head/merged-main
 package evidence and complete signed final-artifact license, notice, and copyright
 review remain pending.
+
+## Checkpoint 2214 Windows Job Membership API Review
+
+Checkpoint 2214 adds no crate, package, feature, or lockfile change. Existing
+`windows-sys 0.61.2` features `Win32_System_JobObjects` and
+`Win32_System_Threading` already expose `IsProcessInJob`,
+`QueryInformationJobObject`, `JobObjectBasicProcessIdList`,
+`JOBOBJECT_BASIC_PROCESS_ID_LIST`, `GetProcessId`, and `GetCurrentProcessId`.
+These are bindings to Windows `Kernel32.dll`; no DLL, runtime, machine-wide
+component, network content, or executable candidate fixture is added.
+
+Microsoft documents that a non-null Job handle makes `IsProcessInJob` test that
+specific Job, while a null Job handle tests membership in any Job. It also documents
+the variable process-ID list and count semantics. The implementation uses the
+existing active-process limit of one, a one-entry structure, exact returned byte
+count, and exact PID/handle identity before resuming the suspended child.
+
+This evidence is point-in-time. The child null-Job query cannot identify the unnamed
+parent Job and neither `IsProcessInJob` nor `JOBOBJECT_BASIC_PROCESS_ID_LIST`
+authenticates IPC or changes process identity. Existing MIT/Apache-2.0
+`windows-sys` licensing is unchanged. Complete signed final-artifact notice,
+license, and copyright review remains a release prerequisite.
+
+No checkpoint-2214 package, crate, feature, or lockfile change was required. In the
+later execution phase, locked standard/all-feature workspaces, strict Native/Local
+Core/Guard lint, locked release Local Core/Guard builds, the two-host trust smoke,
+no-malware and dependency-evidence gates, source contracts `644/644`, and exact
+root Cargo, Native Cargo, and Git-filtered Flutter lockfile blobs pass. The
+definitive verifier passes `244/244` in `464.3s`. Exact implementation `6c3bad3`
+passes package push/PR runs `32670175754`/`32670186350`, including dependency and
+license evidence, six native artifacts, checksums, lockfile SBOM, and Windows
+administrative MSI extraction without installation. Publication is skipped.
+Evidence-head/merged-main package evidence and complete signed final-artifact
+license, notice, and copyright review remain pending. No passing result is claimed
+from source presence alone.

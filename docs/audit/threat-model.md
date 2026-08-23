@@ -1981,3 +1981,50 @@ Anonymous pipes and the nonce do not provide cross-identity authentication or
 encryption, prevent same-user handle duplication, or isolate the named-kernel-object
 namespace. The boundary is not AppContainer, installed LocalSystem evidence, driver
 interception, or pre-execution blocking.
+
+## Checkpoint 2214 Job Membership and Process Identity
+
+**Threat:** A successful `AssignProcessToJobObject` call alone does not read back
+that the intended process handle and `PROCESS_INFORMATION` refer to the same live
+helper, that the helper is a member of the exact Job, or that it is the Job's sole
+member before execution resumes. The child also previously assumed parent
+assignment without checking whether it actually runs under a Job before trust work.
+
+**Scripted control:** After assignment and before `ResumeThread`, the parent requires
+nonzero matching `PROCESS_INFORMATION.dwProcessId` and `GetProcessId` identities,
+exact-Job `IsProcessInJob`, and an exact-size
+`JOBOBJECT_BASIC_PROCESS_ID_LIST` containing exactly one assigned/listed process
+whose sole PID is the helper. Identity, exact-membership, query, returned-size,
+count, or PID failure terminates and reaps the still-suspended helper. As its first
+in-process action, the child requires nonzero `GetCurrentProcessId` and successful
+null-Job `IsProcessInJob` evidence before standard handles, private desktop, token,
+mitigation, stdin, request, or candidate processing. No weaker retry exists.
+
+A benign real child, pure adversarial evidence, verifier step 244, independent
+exact-count/scope validation, source contract 644, and audit documentation are
+scripted before execution. No checkpoint-2214 passing result is claimed before
+execution. Candidate fixtures are never executed.
+
+The later execution phase passes the focused real-child/adversarial checks `2/2`,
+complete Authenticode `49` passed/`11` intentional ignored, both locked workspace
+variants with Native `485`/`11` and compiler `6/6`, source contracts `644/644`,
+strict lint/release/two-host trust smoke, Flutter analyze and `838/838`, no-malware,
+dependency, exact-lockfile, and protected-vault gates. The definitive verifier and
+independent validator pass exactly `244/244` in `464.3s`; six adversarial report
+mutations are rejected. At this local-evidence point, hosted and integration
+evidence remained pending; the later hosted result is recorded immediately below.
+
+Exact implementation `6c3bad3` later passes Avorax CI `32670186345` and Desktop
+Packages push/PR runs `32670175754`/`32670186350`. The package runs pass six native
+artifacts, checksums, lockfile SBOM, dependency/license evidence, and Windows
+administrative MSI extraction without installation; publication is skipped.
+Evidence-head, merge, merged-main, synchronization, and destination evidence remains
+pending.
+
+**Residual risk:** Parent exact-Job and PID-list read-back is point-in-time process
+confinement. The child passes a null Job handle, so its `IsProcessInJob` evidence
+proves membership only in some Job, not independently in the unnamed parent Job.
+The parent keeps the process handle alive, but PID state is not an authenticated IPC
+identity. Job membership neither authenticates/encrypts pipes nor changes SID,
+profile, registry, filesystem, network, or ordinary read access. It is not
+AppContainer/LPAC, installed LocalSystem, driver, or pre-execution evidence.
