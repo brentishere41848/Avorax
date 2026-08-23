@@ -2007,3 +2007,33 @@ enforcement, or pre-execution blocking is claimed.
   Microsoft-signed-only image loading can conflict with non-Microsoft trust
   providers or injected security modules. AppContainer, driver enforcement,
   and pre-execution blocking are not claimed.
+
+## Checkpoint 2208 Authenticode Low-Integrity Primary Token Status
+
+- **Checkpoint 2207 closed:** Evidence `b36b6eb`, PR `#59`, merge
+  `c1d7e969`, merged-main CI `32636058192`, packages `32636058140`, exact
+  12-path original-tree synchronization, destination verification, and the
+  unchanged vault invariant are complete. Publication was skipped.
+- **Verified locally:** The Authenticode helper's privilege-stripped
+  primary token is assigned exact `WinLowLabelSid` through
+  `SetTokenInformation(TokenIntegrityLevel)` before `CreateProcessAsUserW`.
+  Parent and child bounded read-back pass before process launch or stdin;
+  no higher-integrity fallback is present.
+- **Adversarial evidence:** Pure policy cases reject a wrong SID,
+  missing `SE_GROUP_INTEGRITY`, enabled-only evidence, and unrelated
+  attributes. A benign child calls `RevertToSelf` and remains unable to
+  write an ordinary medium-integrity text fixture while preserving read/hash
+  access. Focused filters, complete Authenticode, strict lint, locked builds and
+  workspaces, release trust smoke, Flutter `838/838`, source contracts
+  `637/637`, and the central verifier/validators `238/238` in `429.7s`
+  pass. Four malformed reports are rejected. Implementation `c7ff9b7` passes
+  exact-head CI `32638907677` and package push/PR
+  `32638895902`/`32638907670` with all six artifacts, checksums, lockfile
+  SBOM, and publication skipped. Evidence-head, merge, merged-main, and
+  original-tree synchronization remain pending.
+- **Residual blocker:** Windows Mandatory Integrity Control/no-write-up is not
+  identity or read isolation. Parent SID, profile/registry namespace, desktop,
+  ordinary read access, and explicitly low-writable objects remain reachable.
+  AppContainer/LPAC, authenticated cross-identity IPC, installed LocalSystem
+  compatibility, signed-driver enforcement, and pre-execution blocking remain
+  unverified, blocked, or technically limited.
