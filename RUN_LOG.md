@@ -8292,3 +8292,75 @@ Updates page showed:
   directories, 4,522,733 bytes, 5,357 each `.avoraxq`/`.json`/`.auth`, one
   `.metadata_auth_key`, and zero pending. `.verification/` remained untouched.
   Checkpoint 2208 is closed; the full antivirus goal remains active.
+
+## 2026-08-23 checkpoint 2209 mandatory-policy scripting
+
+- Selected the next adjacent fail-closed MIC gap: a Low Mandatory token also
+  has a separate mandatory policy, and policy `OFF` must not be inferred as
+  no-write-up from the integrity SID alone.
+- Scripted explicit `TOKEN_MANDATORY_POLICY_NO_WRITE_UP` assignment through
+  `SetTokenInformation(TokenMandatoryPolicy)` after Low-IL assignment and
+  before complete parent validation/`CreateProcessAsUserW`. Child validation
+  repeats before stdin; there is no weaker-policy retry.
+- Scripted exact fixed-size policy read-back. No-write-up is mandatory, the
+  documented `TOKEN_MANDATORY_POLICY_NEW_PROCESS_MIN` bit is optionally
+  accepted, and off/new-process-only/unknown-bit evidence is rejected.
+- Added a real ignored benign child fixture, pure adversarial cases, dedicated
+  verifier step 239, strict validator scope/count contracts, source contract
+  638, checkpoint report, matrix, blocker, threat-model, dependency, and status
+  updates. No checkpoint-2209 passing result is claimed before the complete
+  scripted batch is executed.
+- Initial execution kept failure visible: source contracts passed `638/638`,
+  but the real benign-child policy filter rejected the explicit setter with
+  `ERROR_PRIVILEGE_NOT_HELD` (1314); its pure policy parser test passed. The
+  failed filter is not counted as success.
+- Revised the implementation without adding privilege: LSA remains the policy
+  owner, `CreateRestrictedToken` inherits that policy, and exact fixed-size
+  parent/child read-back requires `TOKEN_MANDATORY_POLICY_NO_WRITE_UP` before
+  launch/stdin. The unprivileged setter was removed, while off,
+  new-process-only, unknown-bit, query-failure, and size-drift evidence remain
+  fail-closed.
+- Focused redesigned evidence passes: formatting/diff/PowerShell AST checks;
+  source contracts `638/638`; mandatory-policy `2/2`; six adjacent isolation
+  filters `2/2` each; complete Authenticode `39` passed with `7` intentional
+  child-fixture ignores; strict Native Clippy; locked Local Core and Guard
+  release builds; and unchanged Cargo/Flutter lockfiles.
+- The two-host release helper smoke passes embedded/catalog Microsoft trust,
+  unsigned rejection, wrong-hash failure, and no candidate execution. Its first
+  invocation used relative binary paths and was correctly rejected before
+  product execution; the repeated absolute-path invocation passed. Full local,
+  definitive verifier, hosted, merge, synchronization, and destination
+  evidence remain pending.
+- Full locked Rust workspace and all-features workspace passed; Native reached
+  `474` passed with `7` intentional ignores in each. Strict Local Core/Guard
+  Clippy passed, Flutter analyze reported no issues, and Flutter tests passed
+  `838/838`.
+- The first definitive verifier retained an honest failed report after `38`
+  steps: Defender removed the Native test executable before `native-engine
+  indicator regressions`, producing Cargo OS error 225. No Defender setting or
+  exclusion was changed.
+- Root cause was an exact compile-time standard EICAR marker in Native and
+  Local Core Rust sources. Scripted a single bounded XOR-encoded vector,
+  one-time `OnceLock` runtime decode, shared Native/Local matching, removal of
+  every exact Rust literal, self-executable static-marker regressions, central
+  scope/validator contracts, and documentation before retrying any test.
+- The remediated locked workspace and all-features workspace pass; Native now
+  reports `475` passed and `7` intentional ignores in each. Source contracts
+  pass `639/639`; strict Native/Local/Guard lint, rustfmt, PowerShell AST,
+  release builds, two-host Authenticode smoke, unchanged lockfiles, Flutter
+  analyze, and Flutter `838/838` pass.
+- The first retry is retained as failed after `233` steps in `477.5s`: an
+  incorrect earlier Python invocation generated a `cpython-314.pyc` cache
+  containing the compile-time-joined contract marker, which the no-malware
+  gate correctly rejected. Only that invocation-created cache was removed;
+  the contract now runtime-joins its marker fragments and the gate passes.
+- The definitive retry passes exactly `239/239` from
+  `2026-08-23T14:04:23.3050782Z` through
+  `2026-08-23T14:11:36.525807Z` in `433.2s`. Built-in and independent strict
+  validation pass. Controlled 238-step, renamed-step, missing mandatory scope,
+  missing setter-limit scope, and missing runtime-EICAR scope reports are all
+  rejected and retained only under `.verification/`.
+- A final read-only vault audit remains exact at 16,072 files, zero
+  directories, 4,522,733 bytes, 5,357 each `.avoraxq`/`.json`/`.auth`, one
+  `.metadata_auth_key`, and zero pending. Hosted exact-head checks, merge,
+  synchronization, and destination checks remain pending.

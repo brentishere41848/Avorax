@@ -14,7 +14,7 @@ mod tests {
     use crate::rules::{NativeRule, RuleCondition, RuleDb};
     use crate::scan::quick_scan_planner;
     use crate::scan::ScanActionMode;
-    use crate::signatures::eicar_signature::EICAR_ASCII;
+    use crate::signatures::eicar_signature::{eicar_test_bytes, eicar_test_string};
     use crate::signatures::pack_format::SignaturePack;
     use crate::signatures::{NativeSignature, SignatureDb, SignatureType};
     use crate::threat_intel::{IndicatorType, ThreatIntelIndicator};
@@ -189,7 +189,7 @@ mod tests {
         let verdict = engine
             .scan_bytes_for_test(
                 std::path::PathBuf::from("eicar.txt"),
-                EICAR_ASCII.as_bytes(),
+                eicar_test_bytes(),
                 ScanActionMode::DetectOnly,
             )
             .unwrap();
@@ -203,7 +203,7 @@ mod tests {
         let verdict = engine
             .scan_bytes_for_test(
                 std::path::PathBuf::from("eicar-archive.zip"),
-                &zip_with_stored_entries(&[(b"payload/eicar.txt", EICAR_ASCII.as_bytes())]),
+                &zip_with_stored_entries(&[(b"payload/eicar.txt", eicar_test_bytes())]),
                 ScanActionMode::DetectOnly,
             )
             .unwrap();
@@ -223,7 +223,7 @@ mod tests {
         let verdict = engine
             .scan_bytes_for_test(
                 std::path::PathBuf::from("support-library.jar"),
-                &zip_with_stored_entries(&[(b"payload/eicar.txt", EICAR_ASCII.as_bytes())]),
+                &zip_with_stored_entries(&[(b"payload/eicar.txt", eicar_test_bytes())]),
                 ScanActionMode::DetectOnly,
             )
             .unwrap();
@@ -244,7 +244,7 @@ mod tests {
         let verdict = engine
             .scan_bytes_for_test(
                 std::path::PathBuf::from("mobile-package.apk"),
-                &zip_with_stored_entries(&[(b"assets/eicar.txt", EICAR_ASCII.as_bytes())]),
+                &zip_with_stored_entries(&[(b"assets/eicar.txt", eicar_test_bytes())]),
                 ScanActionMode::DetectOnly,
             )
             .unwrap();
@@ -265,7 +265,7 @@ mod tests {
         let verdict = engine
             .scan_bytes_for_test(
                 std::path::PathBuf::from("browser-extension.xpi"),
-                &zip_with_stored_entries(&[(b"assets/eicar.txt", EICAR_ASCII.as_bytes())]),
+                &zip_with_stored_entries(&[(b"assets/eicar.txt", eicar_test_bytes())]),
                 ScanActionMode::DetectOnly,
             )
             .unwrap();
@@ -286,10 +286,7 @@ mod tests {
         let verdict = engine
             .scan_bytes_for_test(
                 std::path::PathBuf::from("editor-extension.vsix"),
-                &zip_with_stored_entries(&[(
-                    b"extension/assets/eicar.txt",
-                    EICAR_ASCII.as_bytes(),
-                )]),
+                &zip_with_stored_entries(&[(b"extension/assets/eicar.txt", eicar_test_bytes())]),
                 ScanActionMode::DetectOnly,
             )
             .unwrap();
@@ -312,7 +309,7 @@ mod tests {
                 std::path::PathBuf::from("library-package.nupkg"),
                 &zip_with_stored_entries(&[(
                     b"contentfiles/any/any/eicar.txt",
-                    EICAR_ASCII.as_bytes(),
+                    eicar_test_bytes(),
                 )]),
                 ScanActionMode::DetectOnly,
             )
@@ -344,7 +341,7 @@ mod tests {
             let verdict = engine
                 .scan_bytes_for_test(
                     std::path::PathBuf::from(package_name),
-                    &zip_with_stored_entries(&[(entry_name, EICAR_ASCII.as_bytes())]),
+                    &zip_with_stored_entries(&[(entry_name, eicar_test_bytes())]),
                     ScanActionMode::DetectOnly,
                 )
                 .unwrap();
@@ -380,7 +377,7 @@ mod tests {
             let package_text = String::from_utf8_lossy(package_entry_name);
             let payload_text = String::from_utf8_lossy(payload_entry_name);
             let inner_package =
-                zip_with_stored_entries(&[(payload_entry_name, EICAR_ASCII.as_bytes())]);
+                zip_with_stored_entries(&[(payload_entry_name, eicar_test_bytes())]);
             let outer_bundle = zip_with_stored_entries(&[(package_entry_name, &inner_package)]);
             let verdict = engine
                 .scan_bytes_for_test(
@@ -405,8 +402,7 @@ mod tests {
     #[test]
     fn eicar_inside_nested_zip_entry_is_detected_without_extracting_archive() {
         let (_dir, mut engine) = test_engine();
-        let inner_zip =
-            zip_with_deflated_entries(&[(b"payload/eicar.txt", EICAR_ASCII.as_bytes())]);
+        let inner_zip = zip_with_deflated_entries(&[(b"payload/eicar.txt", eicar_test_bytes())]);
         let outer_zip = zip_with_stored_entries(&[(b"archives/inner.zip", &inner_zip)]);
         let verdict = engine
             .scan_bytes_for_test(
@@ -885,11 +881,7 @@ mod tests {
         let (dir, mut engine) = test_engine();
         let file = dir.path().join("eicar-memory.txt");
         let verdict = engine
-            .scan_bytes_for_test(
-                file.clone(),
-                EICAR_ASCII.as_bytes(),
-                ScanActionMode::DetectOnly,
-            )
+            .scan_bytes_for_test(file.clone(), eicar_test_bytes(), ScanActionMode::DetectOnly)
             .unwrap();
         assert!(verdict.quarantine_record.is_none());
     }
@@ -1410,7 +1402,7 @@ mod tests {
             confidence: Confidence::Confirmed,
             severity: "test".to_string(),
             signature_type: SignatureType::EicarTestSignature,
-            pattern: EICAR_ASCII.to_string(),
+            pattern: eicar_test_string(),
             mask: None,
             offset: None,
             file_types: vec!["text".to_string()],

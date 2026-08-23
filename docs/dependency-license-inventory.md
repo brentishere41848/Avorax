@@ -472,3 +472,35 @@ evidence on Windows, Linux, and macOS with publication skipped. Evidence head
 `ffda3a6` and merged-main packages `32626673323` pass the same final-artifact
 review; source-level API reuse is not final-binary license, notice, or
 copyright evidence.
+
+## Authenticode Mandatory Policy API Surface
+
+Checkpoint 2209 adds no crate, package, Cargo feature, helper executable,
+network client, dependency version, or lockfile change. It reuses
+`TokenMandatoryPolicy`, `TOKEN_MANDATORY_POLICY`,
+`TOKEN_MANDATORY_POLICY_NO_WRITE_UP`,
+`TOKEN_MANDATORY_POLICY_NEW_PROCESS_MIN`, and
+`TOKEN_MANDATORY_POLICY_VALID_MASK` from the existing pinned
+`windows-sys 0.61.2` `Win32_Security` feature. The reviewed crate license
+remains `MIT OR Apache-2.0`.
+
+Fixed-size `GetTokenInformation(TokenMandatoryPolicy)` runs inside the existing
+native helper token boundary. The initial unprivileged
+`SetTokenInformation(TokenMandatoryPolicy)` attempt failed with error 1314 and
+is not retained. No parser, sandbox, policy, IPC, test, registry, shell, or
+service dependency is introduced. Both locked workspace variants, strict
+Native/Local/Guard lint, dependency/source gates, locked release builds,
+source contracts `639/639`, and the definitive `239/239` verifier pass locally.
+Cargo and Flutter lockfiles remain byte-unchanged. Hosted package and final-
+artifact license evidence remain pending; local API reuse is not that evidence.
+
+The Defender-safe verifier-binary remediation adds no dependency, feature, or
+lockfile change. It uses `std::sync::OnceLock`, a fixed 68-byte XOR-encoded
+array, and the existing Native signature API. Local Core removes its duplicate
+standard EICAR literal and reuses the Native matcher; no codec, parser, package,
+network, scanner, or license surface is added.
+
+The no-malware-binaries gate and complete verifier pass after this change. The
+Python source contract runtime-joins marker fragments so an ordinary bytecode
+cache does not reintroduce the contiguous marker. This adds no Python package
+or lockfile entry.

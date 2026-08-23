@@ -51,12 +51,14 @@ use windows_sys::Win32::Security::WinTrust::{
 use windows_sys::Win32::Security::{
     CreateRestrictedToken, CreateWellKnownSid, DuplicateTokenEx, GetLengthSid, GetTokenInformation,
     IsValidSid, LookupPrivilegeValueW, RevertToSelf, SecurityImpersonation, SetTokenInformation,
-    TokenImpersonation, TokenImpersonationLevel, TokenIntegrityLevel, TokenPrimary,
-    TokenPrivileges, TokenRestrictedSids, TokenType, WinLowLabelSid, WinRestrictedCodeSid,
-    DISABLE_MAX_PRIVILEGE, LUID_AND_ATTRIBUTES, SECURITY_ATTRIBUTES, SECURITY_MAX_SID_SIZE,
-    SE_CHANGE_NOTIFY_NAME, SE_PRIVILEGE_ENABLED, SID, SID_AND_ATTRIBUTES, TOKEN_ADJUST_DEFAULT,
-    TOKEN_ASSIGN_PRIMARY, TOKEN_DUPLICATE, TOKEN_GROUPS, TOKEN_IMPERSONATE, TOKEN_MANDATORY_LABEL,
-    TOKEN_PRIVILEGES, TOKEN_QUERY, WELL_KNOWN_SID_TYPE, WRITE_RESTRICTED,
+    TokenImpersonation, TokenImpersonationLevel, TokenIntegrityLevel, TokenMandatoryPolicy,
+    TokenPrimary, TokenPrivileges, TokenRestrictedSids, TokenType, WinLowLabelSid,
+    WinRestrictedCodeSid, DISABLE_MAX_PRIVILEGE, LUID_AND_ATTRIBUTES, SECURITY_ATTRIBUTES,
+    SECURITY_MAX_SID_SIZE, SE_CHANGE_NOTIFY_NAME, SE_PRIVILEGE_ENABLED, SID, SID_AND_ATTRIBUTES,
+    TOKEN_ADJUST_DEFAULT, TOKEN_ASSIGN_PRIMARY, TOKEN_DUPLICATE, TOKEN_GROUPS, TOKEN_IMPERSONATE,
+    TOKEN_MANDATORY_LABEL, TOKEN_MANDATORY_POLICY, TOKEN_MANDATORY_POLICY_NO_WRITE_UP,
+    TOKEN_MANDATORY_POLICY_VALID_MASK, TOKEN_PRIVILEGES, TOKEN_QUERY, WELL_KNOWN_SID_TYPE,
+    WRITE_RESTRICTED,
 };
 use windows_sys::Win32::Storage::FileSystem::{
     FileBasicInfo, FileIdInfo, FileStandardInfo, GetFileInformationByHandle,
@@ -858,7 +860,10 @@ fn validate_authenticode_primary_token(token: HANDLE) -> Result<()> {
     validate_privilege_stripped_token_privileges(token)?;
     let integrity = query_token_integrity_label(token)?;
     let expected = VerifiedWellKnownSid::create(WinLowLabelSid, "Low Mandatory Level")?;
-    validate_authenticode_integrity_label_evidence(&integrity, expected.as_bytes())
+    validate_authenticode_integrity_label_evidence(&integrity, expected.as_bytes())?;
+    let mandatory_policy: TOKEN_MANDATORY_POLICY =
+        query_token_scalar(token, TokenMandatoryPolicy, "mandatory integrity policy")?;
+    validate_authenticode_mandatory_policy(mandatory_policy.Policy)
 }
 
 fn validate_restricted_authenticode_token(token: HANDLE) -> Result<()> {
@@ -1126,6 +1131,18 @@ fn validate_authenticode_integrity_label_evidence(
     anyhow::ensure!(
         evidence.attributes & !AUTHENTICODE_HELPER_READBACK_INTEGRITY_SID_ATTRIBUTES == 0,
         "AuthentiCode helper primary token integrity label has unexpected attributes"
+    );
+    Ok(())
+}
+
+fn validate_authenticode_mandatory_policy(policy: u32) -> Result<()> {
+    anyhow::ensure!(
+        policy & TOKEN_MANDATORY_POLICY_NO_WRITE_UP == TOKEN_MANDATORY_POLICY_NO_WRITE_UP,
+        "AuthentiCode helper primary token mandatory policy does not enforce no-write-up"
+    );
+    anyhow::ensure!(
+        policy & !TOKEN_MANDATORY_POLICY_VALID_MASK == 0,
+        "AuthentiCode helper primary token mandatory policy contains unknown bits"
     );
     Ok(())
 }
@@ -3339,6 +3356,61 @@ mod tests {
                 validate_authenticode_integrity_label_evidence(&invalid, expected.as_bytes(),)
                     .is_err()
             );
+        }
+    }
+
+    #[test]
+    fn native_authenticode_helper_mandatory_policy_is_verified_in_child() {
+        let application = std::env::current_exe().unwrap();
+        let arguments = [
+            "--ignored",
+            "--exact",
+            "windows_authenticode::tests::authenticode_mandatory_policy_child_fixture",
+            "--nocapture",
+            "--test-threads=1",
+        ];
+        let output = run_bounded_authenticode_helper(
+            &application,
+            &arguments,
+            Vec::new(),
+            Duration::from_secs(5),
+        )
+        .unwrap();
+        assert!(
+            output.status.success(),
+            "mandatory-policy child failed with {:?}; stdout: {}; stderr: {}",
+            output.status,
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
+        assert!(output.stderr.is_empty());
+        assert!(String::from_utf8(output.stdout)
+            .unwrap()
+            .contains("AVORAX_MANDATORY_NO_WRITE_UP_POLICY_OK"));
+    }
+
+    #[test]
+    #[ignore = "isolated child fixture invoked by the mandatory-policy regression"]
+    fn authenticode_mandatory_policy_child_fixture() {
+        validate_current_process_authenticode_primary_token().unwrap();
+        println!("AVORAX_MANDATORY_NO_WRITE_UP_POLICY_OK");
+    }
+
+    #[test]
+    fn native_authenticode_helper_mandatory_policy_rejects_off_new_process_only_and_unknown_bits() {
+        validate_authenticode_mandatory_policy(TOKEN_MANDATORY_POLICY_NO_WRITE_UP).unwrap();
+        validate_authenticode_mandatory_policy(
+            TOKEN_MANDATORY_POLICY_NO_WRITE_UP
+                | windows_sys::Win32::Security::TOKEN_MANDATORY_POLICY_NEW_PROCESS_MIN,
+        )
+        .unwrap();
+
+        for invalid in [
+            0,
+            windows_sys::Win32::Security::TOKEN_MANDATORY_POLICY_NEW_PROCESS_MIN,
+            TOKEN_MANDATORY_POLICY_NO_WRITE_UP | 0x8000_0000,
+        ] {
+            assert!(validate_authenticode_mandatory_policy(invalid).is_err());
         }
     }
 

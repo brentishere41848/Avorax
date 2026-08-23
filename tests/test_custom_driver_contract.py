@@ -128,6 +128,9 @@ NATIVE_MICROSOFT_TRUST = ROOT / "core" / "zentor_native_engine" / "src" / "trust
 NATIVE_SIGNATURE_DB = (
     ROOT / "core" / "zentor_native_engine" / "src" / "signatures" / "signature_db.rs"
 )
+NATIVE_EICAR_SIGNATURE = (
+    ROOT / "core" / "zentor_native_engine" / "src" / "signatures" / "eicar_signature.rs"
+)
 NATIVE_RULE_PARSER = (
     ROOT / "core" / "zentor_native_engine" / "src" / "rules" / "rule_parser.rs"
 )
@@ -13069,7 +13072,7 @@ def test_local_clamav_command_output_reader_drains_while_bounded():
     local_eicar_start = source.index("fn local_eicar_signature_match")
     reader = source[reader_start:local_eicar_start]
     scan_start = source.index("fn scan_file")
-    signatures_start = source.index("const EICAR_TEST_SIGNATURE")
+    signatures_start = source.index("const ZENTOR_SAFE_EICAR_SIMULATOR")
     scanner = source[scan_start:signatures_start]
 
     assert "run_clamav_command(&mut process)?" in scanner
@@ -13133,7 +13136,7 @@ def test_guard_clamav_infected_exit_has_fallback_detection():
 def test_local_clamav_infected_exit_has_fallback_detection():
     clamav_source = read(LOCAL_CLAMAV_PROVIDER)
     scan_start = clamav_source.index("fn scan_file(&self")
-    scan_end = clamav_source.index("const EICAR_TEST_SIGNATURE")
+    scan_end = clamav_source.index("const ZENTOR_SAFE_EICAR_SIMULATOR")
     scan_source = clamav_source[scan_start:scan_end]
 
     assert "let threat = if infected {\n            Some(" in scan_source
@@ -13146,6 +13149,47 @@ def test_local_clamav_infected_exit_has_fallback_detection():
     assert "threat_name: threat" in scan_source
     assert "clamav_infected_exit_always_has_detection_name" in clamav_source
     assert ".filter(|value| !value.is_empty())\n        } else" not in scan_source
+
+
+def test_standard_eicar_marker_is_runtime_decoded_not_static_in_rust_binaries():
+    native_eicar = read(NATIVE_EICAR_SIGNATURE)
+    native_engine = read(NATIVE_ENGINE)
+    native_tests = read(NATIVE_ENGINE_TESTS)
+    native_signatures = read(NATIVE_SIGNATURE_DB)
+    local_clamav = read(LOCAL_CLAMAV_PROVIDER)
+    local_main = read(LOCAL_CORE_MAIN)
+    verifier = read(ROOT / "tools" / "testing" / "verify-small-threat-mvp.ps1")
+    validator = read(ROOT / "tools" / "testing" / "validate-small-threat-mvp-report.ps1")
+
+    marker = "".join(
+        (
+            "X5O!P%@AP[4\\PZX54(P^)7CC)7}$",
+            "EICAR-STANDARD-ANTIVIRUS-",
+            "TEST-FILE!$H+H*",
+        )
+    )
+    for source in [native_eicar, native_engine, native_tests, native_signatures, local_clamav, local_main]:
+        assert marker not in source
+    for contract in [
+        "EICAR_TEST_BYTES_XOR_A5",
+        "pub fn eicar_test_bytes() -> &'static [u8]",
+        "pub fn eicar_test_string() -> String",
+        "fn native_test_binary_omits_static_eicar_indicator()",
+    ]:
+        assert contract in native_eicar
+    assert "eicar_signature::eicar_test_string()" in native_signatures
+    assert "OnceLock<[u8; EICAR_TEST_BYTES_LEN]>" in native_eicar
+    assert "eicar_signature::contains_eicar(bytes)" in local_clamav
+    assert "eicar_signature::EICAR_TEST_BYTES_LEN" in local_clamav
+    assert "fn local_clamav_test_binary_omits_static_eicar_indicator()" in local_clamav
+    assert "eicar_signature::eicar_test_bytes()" in local_main
+    scope = (
+        "Native Engine and Local Core runtime-decode the standard EICAR test marker "
+        "from non-signature bytes and regression-scan their own test executables to "
+        "prevent a static EICAR marker from making benign verifier binaries Defender targets"
+    )
+    assert scope in verifier
+    assert scope in validator
 
 
 def test_local_clamav_test_temp_paths_use_uuid_not_timestamp_default():
@@ -20825,8 +20869,8 @@ def test_small_threat_mvp_report_validator_is_strict_and_local():
     assert "driver_request_known_good_allows_in_lockdown" in source
     assert "Get-AvoraxGateFile ([System.IO.Path]::GetFullPath($text)) $Description" in source
     assert "-RequireFullSuite requires skip_flutter=false and skip_rust=false" in source
-    assert "if ($steps.Count -ne 238)" in source
-    assert "-RequireFullSuite expected exactly 238 verifier steps" in source
+    assert "if ($steps.Count -ne 239)" in source
+    assert "-RequireFullSuite expected exactly 239 verifier steps" in source
     assert (
         'Assert-ReportContainsStep $steps "native-engine secondary catalog '
         'Authenticode selection regressions"'
@@ -25216,7 +25260,7 @@ def test_native_secondary_catalog_authenticode_is_bounded_exact_and_honestly_par
     assert "native_secondary_catalog_authenticode_primary_runtime_is_exact_and_hash_bound" in source
     assert "native-engine secondary catalog Authenticode selection regressions" in verifier
     assert '"native_secondary_catalog_authenticode"' in verifier
-    assert "if ($steps.Count -ne 238)" in validator
+    assert "if ($steps.Count -ne 239)" in validator
     assert "no controlled benign multi-signed system-catalog fixture" in verifier
     assert "no controlled benign multi-signed system-catalog fixture" in validator
     assert "$technicalLimitText = Assert-JsonString" in validator
@@ -25253,8 +25297,8 @@ def test_native_authenticode_helper_job_resources_are_exact_and_fail_visible():
     )
     assert "native-engine Authenticode helper Job resource-limit regressions" in verifier
     assert '"native_authenticode_helper_job_limits"' in verifier
-    assert "if ($steps.Count -ne 238)" in validator
-    assert "expected exactly 238 verifier steps" in validator
+    assert "if ($steps.Count -ne 239)" in validator
+    assert "expected exactly 239 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper Job '
         'resource-limit regressions"'
@@ -25324,7 +25368,7 @@ def test_native_authenticode_helper_uses_verified_privilege_stripped_thread_toke
         in validator
     )
     assert "Only SeChangeNotifyPrivilege may remain enabled" in validator
-    assert "read it back in the parent before CreateProcessAsUserW and in the child before stdin or request parsing" in validator
+    assert "read back the label and enforced no-write-up policy in the parent before CreateProcessAsUserW and in the child before stdin or request parsing" in validator
     for document in [checkpoint, matrix, threat_model, dependency_inventory]:
         assert "DISABLE_MAX_PRIVILEGE" in document
         assert "SeChangeNotifyPrivilege" in document
@@ -25377,8 +25421,8 @@ def test_native_authenticode_helper_uses_restricted_primary_process_token_and_ex
     assert "AVORAX_RESTRICTED_PRIMARY_TOKEN_OK" in source
     assert "native-engine Authenticode helper restricted-process-token regressions" in verifier
     assert '"native_authenticode_helper_restricted_process"' in verifier
-    assert "if ($steps.Count -ne 238)" in validator
-    assert "expected exactly 238 verifier steps" in validator
+    assert "if ($steps.Count -ne 239)" in validator
+    assert "expected exactly 239 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper '
         'restricted-process-token regressions"'
@@ -25446,8 +25490,8 @@ def test_native_authenticode_helper_launch_environment_and_directory_are_sanitiz
     assert "AVORAX_SANITIZED_LAUNCH_CONTEXT_OK" in source
     assert "native-engine Authenticode helper sanitized-launch regressions" in verifier
     assert '"native_authenticode_helper_sanitized"' in verifier
-    assert "if ($steps.Count -ne 238)" in validator
-    assert "expected exactly 238 verifier steps" in validator
+    assert "if ($steps.Count -ne 239)" in validator
+    assert "expected exactly 239 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper '
         'sanitized-launch regressions"'
@@ -25523,8 +25567,8 @@ def test_native_authenticode_helper_process_mitigations_are_applied_and_read_bac
     assert "AVORAX_PROCESS_MITIGATION_POLICY_OK" in source
     assert "native-engine Authenticode helper process-mitigation regressions" in verifier
     assert '"native_authenticode_helper_process_mitigation"' in verifier
-    assert "if ($steps.Count -ne 238)" in validator
-    assert "expected exactly 238 verifier steps" in validator
+    assert "if ($steps.Count -ne 239)" in validator
+    assert "expected exactly 239 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper '
         'process-mitigation regressions"'
@@ -25608,8 +25652,8 @@ def test_native_authenticode_helper_primary_token_is_exact_low_integrity():
     assert "revert_authenticode_helper_thread_token().unwrap()" in source
     assert "native-engine Authenticode helper low-integrity-primary-token regressions" in verifier
     assert '"native_authenticode_helper_low_integrity"' in verifier
-    assert "if ($steps.Count -ne 238)" in validator
-    assert "expected exactly 238 verifier steps" in validator
+    assert "if ($steps.Count -ne 239)" in validator
+    assert "expected exactly 239 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper '
         'low-integrity-primary-token regressions"'
@@ -25617,7 +25661,7 @@ def test_native_authenticode_helper_primary_token_is_exact_low_integrity():
     )
     for contract in [
         "set its mandatory label to the exact WinLowLabelSid through SetTokenInformation(TokenIntegrityLevel)",
-        "read it back in the parent before CreateProcessAsUserW and in the child before stdin or request parsing",
+        "read back the label and enforced no-write-up policy in the parent before CreateProcessAsUserW and in the child before stdin or request parsing",
         "low-integrity MIC/no-write-up denies ordinary medium-integrity file mutation even after RevertToSelf",
         "low integrity is not an AppContainer",
         "same-process RevertToSelf returns to that low-integrity primary token",
@@ -25625,7 +25669,9 @@ def test_native_authenticode_helper_primary_token_is_exact_low_integrity():
         assert contract in verifier
         assert contract in validator or contract == "low integrity is not an AppContainer"
     assert (
-        "read it back in the parent before CreateProcessAsUserW and in the child before stdin or request parsing, "
+        "require the LSA-created mandatory policy inherited through CreateRestrictedToken to contain TOKEN_MANDATORY_POLICY_NO_WRITE_UP, "
+        "allow only the documented optional TOKEN_MANDATORY_POLICY_NEW_PROCESS_MIN read-back bit, "
+        "read back the label and enforced no-write-up policy in the parent before CreateProcessAsUserW and in the child before stdin or request parsing, "
         "restrict inheritance to exactly stdin/stdout/stderr through PROC_THREAD_ATTRIBUTE_HANDLE_LIST, "
         "assign the configured Job before ResumeThread, and require child-side primary-token validation before request parsing"
         in verifier
@@ -25635,6 +25681,81 @@ def test_native_authenticode_helper_primary_token_is_exact_low_integrity():
         assert "TokenIntegrityLevel" in document
         assert "Mandatory Integrity Control" in document
     assert "No checkpoint-2208 passing result is claimed before execution" in checkpoint
+    assert "adds no crate, package, Cargo feature, or lockfile change" in dependency_inventory
+
+
+def test_native_authenticode_helper_mandatory_no_write_up_policy_is_inherited_and_verified():
+    source = read(NATIVE_WINDOWS_AUTHENTICODE)
+    production = source.split("#[cfg(test)]")[0]
+    verifier = read(ROOT / "tools" / "testing" / "verify-small-threat-mvp.ps1")
+    validator = read(ROOT / "tools" / "testing" / "validate-small-threat-mvp-report.ps1")
+    checkpoint = read(
+        ROOT
+        / "docs"
+        / "reports"
+        / "checkpoint-2209-authenticode-mandatory-no-write-up-policy.md"
+    )
+    matrix = read(ROOT / "docs" / "audit" / "engine-control-matrix.md")
+    threat_model = read(ROOT / "docs" / "audit" / "threat-model.md")
+    blockers = read(ROOT / "docs" / "audit" / "known-blockers.md")
+    dependency_inventory = read(ROOT / "docs" / "dependency-license-inventory.md")
+
+    for contract in [
+        "TokenMandatoryPolicy",
+        "TOKEN_MANDATORY_POLICY",
+        "TOKEN_MANDATORY_POLICY_NO_WRITE_UP",
+        "TOKEN_MANDATORY_POLICY_VALID_MASK",
+        'query_token_scalar(token, TokenMandatoryPolicy, "mandatory integrity policy")?',
+        "validate_authenticode_mandatory_policy(mandatory_policy.Policy)",
+        "mandatory policy does not enforce no-write-up",
+        "mandatory policy contains unknown bits",
+    ]:
+        assert contract in production
+    token_creation = production[
+        production.index("fn create_low_integrity_privilege_stripped_primary_token"):
+        production.index("fn create_write_restricted_token")
+    ]
+    assert token_creation.index("set_authenticode_token_low_integrity(restricted_token.0)?") < token_creation.index(
+        "validate_authenticode_primary_token(restricted_token.0)?"
+    )
+    assert "set_authenticode_token_no_write_up_policy" not in production
+    assert "SetTokenInformation(\n                token,\n                TokenMandatoryPolicy" not in production
+    assert "TOKEN_MANDATORY_POLICY_NEW_PROCESS_MIN" in source
+    assert "native_authenticode_helper_mandatory_policy_is_verified_in_child" in source
+    assert "authenticode_mandatory_policy_child_fixture" in source
+    assert "native_authenticode_helper_mandatory_policy_rejects_off_new_process_only_and_unknown_bits" in source
+    assert "AVORAX_MANDATORY_NO_WRITE_UP_POLICY_OK" in source
+    assert "native-engine Authenticode helper mandatory no-write-up policy regressions" in verifier
+    assert '"native_authenticode_helper_mandatory_policy"' in verifier
+    assert "if ($steps.Count -ne 239)" in validator
+    assert "expected exactly 239 verifier steps" in validator
+    assert (
+        'Assert-ReportContainsStep $steps "native-engine Authenticode helper '
+        'mandatory no-write-up policy regressions"'
+        in validator
+    )
+    for contract in [
+        "require the LSA-created mandatory policy inherited through CreateRestrictedToken to contain TOKEN_MANDATORY_POLICY_NO_WRITE_UP",
+        "allow only the documented optional TOKEN_MANDATORY_POLICY_NEW_PROCESS_MIN read-back bit",
+        "read back the label and enforced no-write-up policy in the parent before CreateProcessAsUserW and in the child before stdin or request parsing",
+        "fixed-size TokenMandatoryPolicy inspection",
+    ]:
+        assert contract in verifier
+        assert contract in validator
+    technical_limit = (
+        "the inherited and read-back-verified TOKEN_MANDATORY_POLICY_NO_WRITE_UP policy enforces no-write-up "
+        "but does not add no-read-up, no-execute-up, identity, profile, registry, desktop, or "
+        "AppContainer isolation; TOKEN_MANDATORY_POLICY_NEW_PROCESS_MIN may also be present as "
+        "a documented valid bit; unprivileged SetTokenInformation(TokenMandatoryPolicy) is not "
+        "used because Windows rejected it with ERROR_PRIVILEGE_NOT_HELD and policy creation "
+        "remains LSA-owned"
+    )
+    assert technical_limit in verifier
+    assert technical_limit in validator
+    for document in [checkpoint, matrix, threat_model, blockers, dependency_inventory]:
+        assert "TOKEN_MANDATORY_POLICY_NO_WRITE_UP" in document
+        assert "TokenMandatoryPolicy" in document
+    assert "No checkpoint-2209 passing result is claimed before execution" in checkpoint
     assert "adds no crate, package, Cargo feature, or lockfile change" in dependency_inventory
 
 
@@ -25692,8 +25813,8 @@ def test_native_authenticode_helper_uses_exact_write_restricting_sid_and_readbac
     assert "AVORAX_WRITE_RESTRICTED_MUTATION_DENIED" in source
     assert "native-engine Authenticode helper write-restricted-thread-token regressions" in verifier
     assert '"native_authenticode_helper_write_restricted"' in verifier
-    assert "if ($steps.Count -ne 238)" in validator
-    assert "expected exactly 238 verifier steps" in validator
+    assert "if ($steps.Count -ne 239)" in validator
+    assert "expected exactly 239 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper '
         'write-restricted-thread-token regressions"'
@@ -25703,7 +25824,7 @@ def test_native_authenticode_helper_uses_exact_write_restricting_sid_and_readbac
         "Before stdin or request parsing, release helper code applies a read-back-verified write-restricted SecurityImpersonation token created with DISABLE_MAX_PRIVILEGE plus WRITE_RESTRICTED and exactly one WinRestrictedCodeSid; strict request parsing and read-only candidate open/snapshot remain under that token",
         "The token is fail-visibly reverted before WinTrust/catalog compatibility work under the privilege-stripped primary token, and a fresh write-restricted token protects response serialization/output",
         "low-integrity MIC/no-write-up denies ordinary medium-integrity file mutation even after RevertToSelf while read access and embedded/catalog Microsoft verification remain functional",
-        "bounded TokenPrivileges, TokenRestrictedSids, or TokenIntegrityLevel inspection",
+        "bounded TokenPrivileges, TokenRestrictedSids, TokenIntegrityLevel, or fixed-size TokenMandatoryPolicy inspection",
         "its write-restricted impersonation token adds WinRestrictedCodeSid",
         "the primary process token is low-integrity and privilege-stripped but not WRITE_RESTRICTED; same-process RevertToSelf returns to that low-integrity primary token",
         "WinTrust/catalog execute under that low-integrity primary token because the Windows trust stack failed under write restriction with error 127 on the verified host",
