@@ -1640,5 +1640,7 @@ strict Native/Local/Guard Clippy, Flutter analyze and `838/838`, source
 contracts `634/634`, and the definitive verifier plus independent validator
 pass exactly `235/235` in `470.1s`. Controlled stale-count, missing-step, and
 missing-scope reports are rejected. The protected-vault read-only audit remains
-exact. Hosted exact-head, merge, merged-main, and synchronization evidence is
-still pending.
+exact. Implementation head `a5597d2` passes CI `32624862111` and package
+push/PR `32624842967`/`32624862058`, including all six artifacts, checksums,
+and lockfile SBOM with publication skipped. Evidence-head, merge, merged-main,
+and synchronization evidence is still pending.

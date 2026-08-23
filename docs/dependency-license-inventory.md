@@ -380,5 +380,10 @@ run under the privilege-stripped primary token because the Windows trust stack
 returned error `127` while write restriction remained active. Local
 focused checks, strict Native/Local/Guard Clippy, both locked workspace
 variants, dependency evidence, locked release builds, two-host smoke, and the
-exact `235/235` definitive verifier pass without a lockfile change. Hosted
-package SBOM and final-artifact review remain pending for checkpoint 2205.
+exact `235/235` definitive verifier pass without a lockfile change.
+Implementation-head package push/PR runs `32624842967`/`32624862058` pass
+six-artifact consolidation, checksums, lockfile SBOM generation, and package
+evidence on Windows, Linux, and macOS with publication skipped. Evidence-head
+and merged-main final-artifact review remain pending for checkpoint 2205;
+source-level API reuse is not final-binary license, notice, or copyright
+evidence.

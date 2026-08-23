@@ -31,8 +31,11 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
   `470.1s`. Stale-count, missing-step, and missing-scope reports are rejected.
   The protected vault remains exactly 16,072 files, zero directories,
   4,522,733 bytes, 5,357 each payload/metadata/auth extension, one metadata key,
-  and zero pending. Hosted exact-head CI/packages, merge, merged-main evidence,
-  and synchronization remain pending.
+  and zero pending. Exact implementation head `a5597d2` passes Avorax CI
+  `32624862111` and Desktop Packages push/PR `32624842967`/`32624862058` on
+  Windows MSI/EXE, Linux DEB/tar, both macOS DMGs, consolidation, checksums,
+  and lockfile SBOM; publication was skipped. Evidence-head checks, merge,
+  merged-main evidence, and synchronization remain pending.
   A write-restricted primary-token prototype stopped before user code with
   `0xC0000142`, so it is not claimed. Same-process code can technically call
   `RevertToSelf` to expose the privilege-stripped but non-write-restricted

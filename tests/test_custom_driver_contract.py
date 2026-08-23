@@ -25475,7 +25475,10 @@ def test_native_authenticode_helper_uses_exact_write_restricting_sid_and_readbac
         assert "WinRestrictedCodeSid" in document
     assert "Verified locally, `235/235`" in checkpoint
     assert "## Full Local Evidence" in checkpoint
-    assert "Hosted exact-head CI/packages" in checkpoint
+    assert "a5597d263208e3ceeb35f75aa29a09559459f3d3" in checkpoint
+    assert "32624862111" in checkpoint
+    assert "32624842967" in checkpoint
+    assert "32624862058" in checkpoint
     assert "No final-design passing result is claimed" in checkpoint
     assert '"Win32_System_SystemServices"' in read(
         ROOT / "core" / "zentor_native_engine" / "Cargo.toml"

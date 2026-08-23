@@ -1921,8 +1921,10 @@ enforcement, or pre-execution blocking is claimed.
   open/snapshot, is reverted before WinTrust/catalog, and is applied again for
   response output. Focused and complete local runtime evidence passes. Both
   locked workspace variants, strict lint, Flutter `838/838`, source contracts
-  `634/634`, and exact verifier/validator `235/235` pass; hosted exact-head,
-  merge, merged-main, and synchronization evidence remains pending.
+  `634/634`, and exact verifier/validator `235/235` pass. Implementation head
+  `a5597d2` passes CI `32624862111` and package push/PR
+  `32624842967`/`32624862058`; evidence-head, merge, merged-main, and
+  synchronization evidence remains pending.
 - **Bounded restricting-SID evidence:** `TokenRestrictedSids` responses are
   capped at 64 KiB and 16 entries, then require exactly one in-buffer, valid,
   bounded SID byte-equal to Restricted Code with exact mandatory,

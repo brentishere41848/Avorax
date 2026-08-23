@@ -132,8 +132,12 @@ The smoke executes no candidate.
   bytes, 5,357 each `.avoraxq`/`.json`/`.auth`, one `.metadata_auth_key`, zero
   pending.
 
-Hosted exact-head CI/packages, package/SBOM evidence, merge, merged-main, and
-original-tree synchronization remain pending.
+Exact implementation head `a5597d263208e3ceeb35f75aa29a09559459f3d3`
+passes Avorax CI `32624862111` and Desktop Packages push/PR runs
+`32624842967`/`32624862058`. Package contracts, Windows x64 MSI/EXE, Linux x64
+DEB/tar, macOS arm64/x64 DMG, six-artifact consolidation, checksums, and
+lockfile SBOM evidence pass. Publication was skipped. Evidence-head checks,
+merge, merged-main, and original-tree synchronization remain pending.
 
 Reproducible focused and definitive commands include:
 
