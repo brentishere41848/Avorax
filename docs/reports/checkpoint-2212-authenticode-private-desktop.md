@@ -2,11 +2,10 @@
 
 ## Status
 
-Implementation and local verification are complete. The definitive report passes
-exactly `242/242` checks in `473.5s`, and the independent validator accepts it.
-Exact implementation head `2612b7af77700a47558a638b017f3b5dac9fd0ce`
-passes hosted CI and package evidence. Evidence-head checks, integration, and
-destination synchronization remain pending. No candidate fixture was executed.
+Implementation, local verification, hosted evidence, normal integration, guarded
+destination synchronization, and destination verification are complete. The
+definitive report passes exactly `242/242` checks in `473.5s`, and the independent
+validator accepts it. No candidate fixture was executed.
 
 ## Implemented Boundary
 
@@ -72,6 +71,45 @@ destination synchronization remain pending. No candidate fixture was executed.
   Windows administrative MSI extraction passes without installation. Prerelease
   publication is skipped.
 
+## Integration Closure
+
+Evidence head `e73a56df16ba9922deaa1515880454ebf4525a9e` passes exact-head
+Avorax CI `32661792977` and Desktop Packages pull-request run `32661792980`.
+Every required CI job, Windows x64 MSI/setup EXE, Linux x64 DEB/tar, macOS
+x64/arm64 DMGs, administrative MSI extraction, six-artifact consolidation,
+checksums, lockfile SBOM, dependency/license evidence, and upload pass.
+Publication is skipped. A separate evidence-head push package run was not
+expected because that commit changed documentation only.
+
+PR `#64` normally merges as `744c4926bbb68782fb5bcc8a7bcce1bbd4bbd1c4`.
+Exact merged-main Avorax CI `32662681992` and Desktop Packages `32662682077`
+pass the same required evidence, again with publication skipped.
+
+The merge changes exactly `13` paths from prior main
+`33cafa59953d507cd17649f15e83489e67c32e71`: the 12 checkpoint-2212 paths plus
+the checkpoint-2211 report closure carried by normal integration. Every existing
+destination path first matched its prior-main Git-filtered blob, while the new
+checkpoint-2212 report was absent. A bounded in-memory `git cat-file` export
+wrote only those validated blobs through same-directory temporary files and
+atomic replacement. All 13 destination raw blob hashes then matched merge
+`744c492` exactly.
+
+In `C:\Users\Brent\Documents\Avorax-main`, source contracts pass `642/642`,
+private-desktop checks pass `2/2`, and complete Authenticode passes `45` with
+`9` intentional child-fixture ignores. Strict Native/Local Core/Guard Clippy,
+locked Local Core/Guard release builds, the two-host release trust smoke, the
+no-malware gate, and both locked workspace variants pass. Native reports `481`
+passed with `9` ignored and the signature compiler passes `6/6` in each variant.
+
+The native Cargo and Flutter lockfiles match merge blobs
+`277dd9fe1edfc45fa5550e8e2831f2a0c121561d` and
+`51fa085a41168aa1deadace8b5395614db43649e`; the root workspace Cargo lock also
+matches merge blob `7ab38f4820b08029c64872360fac7141e2512ac4`.
+The protected vault remains exactly `16,072` files, zero directories,
+`4,522,733` bytes, `5,357` each `.avoraxq`/`.json`/`.auth`, one
+`.metadata_auth_key`, and zero pending. Checkpoint 2212 is closed; the complete
+antivirus goal remains active.
+
 ## Technical Limits
 
 The private desktop isolates windows, hooks, menus, and desktop objects only within
@@ -83,9 +121,10 @@ existing scan concurrency and helper lifetime but is not a Windows Job memory
 accounting claim. This is not AppContainer, authenticated cross-identity IPC,
 installed LocalSystem proof, driver enforcement, or pre-execution blocking.
 
-## Remaining Verification Sequence
+## Remaining Program Work
 
-Evidence-head hosted CI and package evidence, normal PR merge, merged-main evidence,
-guarded original-tree synchronization, and destination checks remain. Publication
-must stay skipped. The evidence above is not installed LocalSystem, signed-driver,
-production-signing, or pre-execution proof.
+Checkpoint 2212 has no remaining integration work. The larger antivirus program
+still lacks installed LocalSystem and authenticated cross-identity IPC evidence,
+production signing, a signed kernel driver, demonstrated pre-execution blocking,
+and production false-positive/detection-rate evidence. Those limits remain tracked
+as partial, blocked, or technically limited and are not implied by this closure.

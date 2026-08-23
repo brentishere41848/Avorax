@@ -8595,3 +8595,90 @@ Updates page showed:
   administrative MSI extraction without installation, and uploads. Prerelease
   publication is skipped. Evidence-head checks, merge, synchronization, and
   destination verification remain pending.
+
+## Checkpoint 2212 Integration Closure
+
+- Evidence head `e73a56df16ba9922deaa1515880454ebf4525a9e` passes exact-head
+  Avorax CI `32661792977` and Desktop Packages PR run `32661792980`. All required
+  CI jobs, six platform artifacts, administrative MSI extraction, consolidation,
+  checksums, lockfile SBOM, dependency/license evidence, and uploads pass;
+  prerelease publication is skipped. The documentation-only evidence commit does
+  not trigger a separate push package run.
+- PR `#64` normally merges as `744c4926bbb68782fb5bcc8a7bcce1bbd4bbd1c4`.
+  Exact merged-main CI `32662681992` and Desktop Packages `32662682077` pass the
+  same required evidence, again with publication skipped.
+- Exactly `13` paths changed from prior main `33cafa59953d507cd17649f15e83489e67c32e71`:
+  12 checkpoint-2212 paths plus the checkpoint-2211 closure update carried by
+  normal integration. All existing original-tree paths matched prior-main
+  Git-filtered blobs and the new report was absent before a bounded in-memory
+  Git-blob export atomically synchronized only those paths. Every destination
+  raw blob then matched merge `744c492`.
+- Destination source contracts pass `642/642`; private-desktop checks pass `2/2`;
+  complete Authenticode passes `45` with `9` intentional child-fixture ignores.
+  Strict Native/Local/Guard Clippy, locked Local Core/Guard release builds, the
+  two-host trust smoke, no-malware gate, and both locked workspace variants pass.
+  Native reports `481` passed/`9` ignored and compiler `6/6` in each.
+- Native Cargo, root workspace Cargo, and Flutter lockfiles match merge blobs
+  `277dd9f`, `7ab38f4`, and `51fa085`. The protected vault remains exactly
+  `16,072` files, zero directories, `4,522,733` bytes, `5,357` each
+  `.avoraxq`/`.json`/`.auth`, one `.metadata_auth_key`, and zero pending.
+  Checkpoint 2212 is closed; the complete antivirus goal remains active.
+
+## Checkpoint 2213 Script-First Standard-Handle Binding
+
+- The full implementation, benign/adversarial tests, verifier, strict validator,
+  source contract, dependency review, matrix, threat model, blockers, status, and
+  checkpoint report are scripted before any checkpoint-2213 test execution.
+- Parent `CreatePipe` endpoints now require exact `FILE_TYPE_PIPE` type and parent-
+  zero/child-`HANDLE_FLAG_INHERIT` flags before process creation. `GetNamedPipeInfo`
+  verifies server/read endpoints; exact API return-role assignment binds child stdin
+  to read and stdout/stderr to writes without an unsupported write-handle query.
+- Before private-desktop, token, mitigation, or stdin processing, the child requires
+  exact `STARTF_USESTDHANDLES`, exact `GetStdHandle` identity, three valid distinct
+  anonymous pipes with queried stdin server/read mode and stdout/stderr identity
+  bound to parent-created write handles,
+  and exact initial inheritance. It clears all three inheritance flags and requires
+  exact-zero read-back before continuing.
+- Handle query, type, direction binding, identity, duplicate, initial-flag, mutation, or
+  read-back failure is diagnostic and cannot become publisher trust. There is no
+  weaker, redirected, or inherited-console retry.
+- Verifier step 243, exact-count validator coverage, a real benign child fixture,
+  and pure adversarial evidence are scripted. No checkpoint-2213 passing result is
+  claimed before execution.
+- Exact binding narrows inherited IPC only. Anonymous pipes and the nonce do not
+  provide cross-identity authentication/encryption, prevent same-user handle
+  duplication, or isolate the named-kernel-object namespace.
+- After the complete script batch, PowerShell parse, rustfmt, source contracts
+  `643/643`, focused real-child/adversarial `2/2`, and complete Authenticode
+  `47` passed/`10` ignored succeed.
+- Microsoft API review corrected the untested design before compilation:
+  `GetNamedPipeInfo` queries only server/read endpoints because `CreatePipe` does
+  not promise the extra read-attributes access required on write-only handles.
+  Exact API return roles plus startup/`GetStdHandle` identity bind output handles.
+- The first strict Clippy run rejected a default-then-field startup initializer.
+  A complete initializer repaired it; strict Native/Local/Guard Clippy, locked
+  Local Core/Guard release builds, and two-host trust smoke then pass.
+- Both locked workspace variants pass with Native `483` passed/`10` ignored and
+  compiler `6/6`. Flutter analyze and `838/838` plus no-malware pass. Definitive
+  verifier, adversarial report validation, dependency/lock/vault evidence, hosted
+  checks, merge, and synchronization remain pending.
+- The definitive report
+  `.verification/checkpoint-2213-standard-handle-definitive-report.json` passes
+  exactly `243/243` in `469.2s` from `2026-08-23T20:39:17.9286117Z` through
+  `2026-08-23T20:47:07.1219125Z`; independent full-suite validation passes.
+  Fresh stale-count, renamed-step, missing-child-scope, missing-limit-scope, and
+  skipped-step copies are all rejected.
+- Root Cargo, Native Cargo, and Git-filtered Flutter lockfiles remain exact at
+  `7ab38f4`, `277dd9f`, and `51fa085`. The protected vault remains exactly
+  `16,072` files, zero directories, `4,522,733` bytes, `5,357` each
+  `.avoraxq`/`.json`/`.auth`, one `.metadata_auth_key`, and zero pending.
+  Hosted exact-head checks, merge, synchronization, and destination evidence remain
+  pending.
+- Exact implementation head `f0f4c3b82dcb30b6851b26db7a88ab2b6e9a4af8`
+  passes Avorax CI pull-request run `32665658235` and Desktop Packages push/PR
+  runs `32665646920`/`32665658257`. Both package runs pass Windows x64 MSI/setup
+  EXE, Linux x64 DEB/tar, macOS x64/arm64 DMGs, six-artifact consolidation,
+  checksums, a 569-component lockfile SBOM, dependency/license evidence, Windows
+  administrative MSI extraction without installation, and uploads. License review
+  remains partial and prerelease publication is skipped. Evidence-head checks,
+  merge, guarded synchronization, and destination verification remain pending.

@@ -635,3 +635,44 @@ dependency/license evidence, all six native artifacts, Windows administrative MS
 extraction without installation, checksums, lockfile CycloneDX SBOM, and artifact
 upload. Prerelease publication is skipped. Evidence-head/merged-main package
 evidence and complete signed final-artifact review remain pending.
+
+## Checkpoint 2213 Windows Console/Pipe API Feature Review
+
+Checkpoint 2213 adds no crate, package, or lockfile change. It enables only the
+`Win32_System_Console` feature on the existing pinned `windows-sys 0.61.2`
+dependency so Native Engine can call `GetStdHandle` and use the documented
+`STD_INPUT_HANDLE`, `STD_OUTPUT_HANDLE`, and `STD_ERROR_HANDLE` selectors. Existing
+Foundation, FileSystem, and Pipes features provide `GetHandleInformation`,
+`GetFileType`, `FILE_TYPE_PIPE`, `GetNamedPipeInfo`, `PIPE_SERVER_END`, and
+`HANDLE_FLAG_INHERIT`.
+
+These are feature-gated bindings to Windows system APIs. No native DLL, runtime,
+network content, machine-wide component, executable fixture, or new license is
+introduced. Existing MIT/Apache-2.0 `windows-sys` licensing remains recorded.
+The dependency set and lockfile entries remain unchanged in the checkpoint diff.
+Root Cargo, Native Cargo, and Git-filtered Flutter lockfiles remain exact at blobs
+`7ab38f4820b08029c64872360fac7141e2512ac4`,
+`277dd9fe1edfc45fa5550e8e2831f2a0c121561d`, and
+`51fa085a41168aa1deadace8b5395614db43649e`.
+
+The feature proves exact parent/child API return-role binding, queries server/read
+endpoint mode where Windows permits it, verifies startup-to-`GetStdHandle` identity,
+and clears inheritance. It does not turn anonymous pipes
+or the nonce into cross-identity authentication or encryption, prevent same-user
+handle duplication, or isolate the named-kernel-object namespace. Final signed-
+artifact notices and complete license/copyright review remain release prerequisites.
+
+Strict Native/Local Core/Guard lint, locked release Local Core/Guard builds, both
+release-host trust smokes, both locked workspaces, source contracts `643/643`,
+Flutter analyze and `838/838`, and no-malware pass. The first strict Clippy run
+rejected a field-reassigned default initializer; the corrected complete initializer
+passes. Dependency evidence and the definitive `243/243` verifier/validator pass;
+five malformed report copies are rejected.
+
+Exact implementation head `f0f4c3b82dcb30b6851b26db7a88ab2b6e9a4af8`
+passes Desktop Packages push/PR runs `32665646920`/`32665658257`. Both pass all
+six native artifacts, Windows administrative MSI extraction without installation,
+checksums, a 569-component lockfile CycloneDX SBOM, dependency/license evidence,
+and artifact upload. Prerelease publication is skipped. Evidence-head/merged-main
+package evidence and complete signed final-artifact license, notice, and copyright
+review remain pending.
