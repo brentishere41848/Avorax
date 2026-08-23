@@ -113,8 +113,14 @@ or dynamic API loader is introduced.
   directories, 4,522,733 bytes, 5,357 each `.avoraxq`/`.json`/`.auth`, one
   `.metadata_auth_key`, and zero pending.
 
-Exact-head hosted CI/packages, evidence-head checks, normal PR merge,
-merged-main checks, and safe original-tree synchronization remain pending.
+Exact implementation head
+`a9d930a63c4e453bfdea2e2e41d99a9004287e56` passed Avorax CI
+`32634033002` and Desktop Packages push/PR runs
+`32634021590`/`32634032975`. Both package runs passed contracts, Windows x64
+MSI/EXE, Linux x64 DEB/tar, macOS arm64/x64 DMG, consolidation, six-artifact
+checksums, and lockfile SBOM; publication was skipped. Evidence-head checks,
+normal PR merge, merged-main checks, and safe original-tree synchronization
+remain pending.
 
 Final review compared read-back flags with the Windows SDK and Microsoft strict
 handle policy contract. The source now requires both invalid-handle exception

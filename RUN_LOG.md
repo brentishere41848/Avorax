@@ -8205,3 +8205,10 @@ Updates page showed:
   validation passed. Controlled 236-step, missing-step,
   missing-permanent-verified-scope, and missing-limit-scope reports were
   rejected and removed. Lockfiles and the protected vault stayed exact.
+- Exact implementation head
+  `a9d930a63c4e453bfdea2e2e41d99a9004287e56` passed Avorax CI
+  `32634033002` and Desktop Packages push/PR runs
+  `32634021590`/`32634032975`. Both package runs passed Windows MSI/EXE,
+  Linux DEB/tar, both macOS DMGs, six-artifact consolidation, checksums, and
+  lockfile SBOM; publication was skipped. PR `#59` remains draft pending
+  evidence-head checks.

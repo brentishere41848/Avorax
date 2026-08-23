@@ -372,8 +372,11 @@ Hosted package/SBOM evidence remains pending for checkpoint 2207.
 Final review strengthened the existing four-byte strict-handle policy
 read-back to require both invalid-handle exception and permanent-enforcement
 flags. This adds no API, feature, dependency, package, or lockfile change; the
-amended local verification and exact `237/237` rerun pass. Hosted package/SBOM
-evidence remains pending.
+amended local verification and exact `237/237` rerun pass. Exact implementation
+head `a9d930a` passes package push/PR runs `32634021590`/`32634032975` with
+Windows MSI/EXE, Linux DEB/tar, both macOS DMGs, six-artifact consolidation,
+checksums, and lockfile SBOM. Publication was skipped; evidence-head and
+merged-main package evidence remain pending.
 
 ## Authenticode Restricted Process Token API Surface
 

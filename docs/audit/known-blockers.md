@@ -1998,7 +1998,9 @@ enforcement, or pre-execution blocking is claimed.
   invalid-handle exception and permanent-enforcement flags and rejects
   temporary-only evidence. The stricter focused regression, complete
   Authenticode, strict lint, source contracts, and definitive `237/237` rerun
-  pass; hosted evidence remains pending.
+  pass. Exact implementation-head CI and both package runs pass with publication
+  skipped; evidence-head, merge, merged-main, installed enterprise, and
+  LocalSystem evidence remain pending.
 - **Residual boundary:** Process-creation mitigations do not constrain the
   already mapped helper image or non-image data and do not isolate identity,
   integrity, profile, registry, desktop, or ordinary read access.

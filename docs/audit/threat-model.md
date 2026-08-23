@@ -1707,3 +1707,7 @@ Final review hardened strict-handle read-back to require both invalid-handle
 exception and permanent-enforcement flags, rejecting temporary debugger-induced
 evidence. The stricter fixture passes `2/2`; complete Authenticode, strict lint,
 source contracts, release smoke, and the fresh definitive `237/237` rerun pass.
+Exact implementation head `a9d930a` passes CI `32634033002` and package
+push/PR `32634021590`/`32634032975`, including all six artifacts, checksums,
+and lockfile SBOM with publication skipped. Evidence-head, merge, merged-main,
+installed enterprise, and LocalSystem evidence remain separate.
