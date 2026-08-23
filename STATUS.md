@@ -4,6 +4,35 @@
 
 Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-install, repair, recovery, offline, and manual-install paths only. Normal app updates target signed `.aup` packages applied by Avorax Update Service.
 
+- Checkpoint 2202 deterministic Native Engine PUP category inference is
+  implemented and locally verified. Merged-main CI `32610442133` exposed a
+  real pre-existing flaky Local Core archive regression: a randomized positive-
+  evidence path `.tmpuPoV59` accidentally matched the unbounded substring
+  `pup`, changing a downloader/script category to `PotentiallyUnwantedApp`.
+  The risk-fusion engine now requires `pup` as an exact ASCII-alphanumeric
+  token, while preserving explicit `pup_indicator` classification. Positive
+  and negative regressions, mandatory existing risk-fusion verifier-step and
+  scope validation, source contracts, and audit/dependency docs are present.
+  The first locked parallel workspace run then exposed a second pre-existing
+  test race: asset-locator tests changed `AVORAX_ENGINE_ROOT` process-wide
+  while a JAR scan initialized. Those two env cases now use the existing
+  isolated child-test harness; production code is unchanged. Direct token
+  regression passes `1/1`, risk fusion `7/7`, the triggering archive test
+  passes 25 consecutive runs, asset isolation `4/4`, and Local Core passes
+  `535/535` three parallel runs. Native passes `460 + 6`, both locked workspace
+  variants, strict Native/Local/Guard Clippy, Flutter/analyzer, release builds/
+  smokes, security/dependency/package gates, and source contracts `631/631`
+  pass. The definitive and independent validators accept `232/232` in `517.3s`;
+  stale 2201 evidence is rejected for missing scope. Locks and the protected
+  vault are unchanged. Implementation head
+  `43ce4d462e35a0c638171028d158b5dc08f55805` passes exact-head Avorax CI
+  `32611742164` and Desktop Packages push/PR runs
+  `32611721124`/`32611742152`, including Windows MSI/EXE, Linux DEB/tar,
+  macOS arm64/x64 DMG, consolidation, checksums, and lockfile SBOM evidence;
+  publication is skipped. Evidence-head checks, follow-up merge, green merged-
+  main evidence, and original-tree synchronization remain pending. The category
+  change affects explanation only; it does not lower the threat verdict or
+  weaken detection.
 - Checkpoint 2201 Authenticode helper Job resource limits is implemented and
   locally verified. Before accepting candidate input, the Windows
   Job now sets and reads back exact limits: 12 seconds of per-process user CPU,
@@ -24,7 +53,13 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
   `32609010416`/`32609018053`, including Windows MSI/EXE, Linux DEB/tar,
   macOS arm64/x64 DMG, six-artifact consolidation, checksums, and lockfile
   SBOM. Publication is skipped. Evidence-head checks, merge, and original-tree
-  synchronization remain pending.
+  synchronization remain pending. PR `#53` later merged exact evidence head
+  `030ce2e6845f6ee6fbfdee81c04a52cba7284bc1` as
+  `75bd64bdcf9f59a7a4020b4d373ca01b46ae42ee`; merged-main packages
+  `32610442139` pass all platforms/consolidation with publication skipped,
+  while merged-main CI `32610442133` failed only the newly discovered
+  unrelated archive category flake now addressed by checkpoint 2202. No
+  original-tree synchronization occurred after that failure.
   Commit limits are not physical working-set or I/O-byte limits, user CPU
   excludes kernel execution, and the child still uses the parent's token.
 - Checkpoint 2200 secondary catalog Authenticode selection is implemented and

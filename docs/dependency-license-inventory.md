@@ -281,3 +281,20 @@ runs `32609010416`/`32609018053` pass lockfile CycloneDX SBOM generation,
 six-artifact consolidation/checksums, and all platform package jobs with
 publication skipped. Final-artifact license, notice, and copyright review
 remains distinct from that generated lockfile evidence.
+
+## Risk-Fusion PUP Token Boundary
+
+Checkpoint 2202 adds no crate, package, registry dependency, Cargo feature,
+network client, model, rule pack, or executable. The implementation uses Rust
+standard-library `str::split` and ASCII-alphanumeric classification inside the
+existing Native Engine risk-fusion module. No lockfile change is intended.
+
+The change narrows one category keyword from arbitrary substring matching to a
+bounded token. It does not alter evidence weights, verdict thresholds, action
+policy, signature/rule content, or external data handling. Source contracts,
+strict lint, complete locked workspaces, dependency gates, definitive verifier,
+and final artifact review pass locally: source contracts `631/631`, both locked
+workspace variants, strict Native/Local/Guard Clippy, dependency/package-source
+gates, and definitive `232/232` validation pass. Both Cargo lockfiles remain
+byte-unchanged. Hosted checkpoint-2202 package SBOM and final-artifact review
+remain pending.

@@ -95,3 +95,15 @@ all pass. Both prerelease publication jobs are skipped. Evidence-head checks,
 exact-head merge, merged-main checks, and safe original-tree synchronization
 remain pending. No release, publication, installation, service/driver start,
 Defender change, fixture execution, or quarantine mutation occurred.
+
+Evidence head `030ce2e6845f6ee6fbfdee81c04a52cba7284bc1` later passed CI
+`32609881931` and packages `32609881942`; PR `#53` merged exact-head as
+`75bd64bdcf9f59a7a4020b4d373ca01b46ae42ee`. Merged-main CI `32610442133`
+then failed an unrelated pre-existing nondeterministic archive category test,
+now tracked by checkpoint 2202. No original-tree synchronization is claimed
+while that merged-main regression remains open.
+
+Merged-main packages `32610442139` pass every platform, six-artifact
+consolidation/checksums, and lockfile SBOM with publication skipped. This does
+not override the failed merged-main CI gate or permit synchronization before
+the checkpoint-2202 follow-up is green.

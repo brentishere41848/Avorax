@@ -4528,9 +4528,25 @@ mod tests {
 
     #[test]
     fn engine_asset_locator_prefers_explicit_installed_engine_dir() {
-        let _guard = env_lock();
-        let previous_engine_dir = std::env::var_os("AVORAX_ENGINE_DIR");
-        let previous_engine_root = std::env::var_os("AVORAX_ENGINE_ROOT");
+        const CASE: &str = "engine-dir-explicit";
+        if is_isolated_environment_case(CASE) {
+            let engine_dir = PathBuf::from(std::env::var_os("AVORAX_ENGINE_DIR").unwrap());
+            let locator = EngineAssetLocator::discover().unwrap();
+            let expected_root = engine_dir.parent().unwrap().canonicalize().unwrap();
+            let expected_engine_dir = engine_dir.canonicalize().unwrap();
+            assert_eq!(locator.asset_root, expected_root);
+            assert_eq!(locator.installed_engine_dir, expected_engine_dir);
+            assert_eq!(
+                locator.signatures_dir,
+                locator.installed_engine_dir.join("signatures")
+            );
+            assert!(locator
+                .paths_checked
+                .iter()
+                .any(|path| path == &locator.asset_root));
+            return;
+        }
+
         let dir = tempdir().unwrap();
         let engine_dir = dir.path().join("engine");
         fs::create_dir_all(engine_dir.join("signatures")).unwrap();
@@ -4538,57 +4554,35 @@ mod tests {
         fs::create_dir_all(engine_dir.join("ml")).unwrap();
         fs::create_dir_all(engine_dir.join("trust")).unwrap();
         fs::create_dir_all(engine_dir.join("config")).unwrap();
-
-        std::env::set_var("AVORAX_ENGINE_DIR", &engine_dir);
-        std::env::remove_var("AVORAX_ENGINE_ROOT");
-
-        let locator = EngineAssetLocator::discover().unwrap();
-
-        match previous_engine_dir {
-            Some(value) => std::env::set_var("AVORAX_ENGINE_DIR", value),
-            None => std::env::remove_var("AVORAX_ENGINE_DIR"),
-        }
-        match previous_engine_root {
-            Some(value) => std::env::set_var("AVORAX_ENGINE_ROOT", value),
-            None => std::env::remove_var("AVORAX_ENGINE_ROOT"),
-        }
-        let expected_root = dir.path().canonicalize().unwrap();
-        let expected_engine_dir = engine_dir.canonicalize().unwrap();
-        assert_eq!(locator.asset_root, expected_root);
-        assert_eq!(locator.installed_engine_dir, expected_engine_dir);
-        assert_eq!(
-            locator.signatures_dir,
-            locator.installed_engine_dir.join("signatures")
+        run_isolated_environment_case(
+            "tests::engine_asset_locator_prefers_explicit_installed_engine_dir",
+            CASE,
+            |command| {
+                command
+                    .env("AVORAX_ENGINE_DIR", engine_dir)
+                    .env_remove("AVORAX_ENGINE_ROOT");
+            },
         );
-        assert!(locator
-            .paths_checked
-            .iter()
-            .any(|path| path == &locator.asset_root));
     }
 
     #[test]
     fn engine_asset_locator_rejects_relative_engine_root_override() {
-        let _guard = env_lock();
-        let previous_engine_dir = std::env::var_os("AVORAX_ENGINE_DIR");
-        let previous_engine_root = std::env::var_os("AVORAX_ENGINE_ROOT");
-
-        std::env::remove_var("AVORAX_ENGINE_DIR");
-        std::env::set_var("AVORAX_ENGINE_ROOT", "relative-engine-root");
-
-        let result = EngineAssetLocator::discover();
-
-        match previous_engine_dir {
-            Some(value) => std::env::set_var("AVORAX_ENGINE_DIR", value),
-            None => std::env::remove_var("AVORAX_ENGINE_DIR"),
+        const CASE: &str = "engine-root-relative";
+        if is_isolated_environment_case(CASE) {
+            let error = EngineAssetLocator::discover().unwrap_err().to_string();
+            assert!(error.contains("AVORAX_ENGINE_ROOT"));
+            assert!(error.contains("absolute local path"));
+            return;
         }
-        match previous_engine_root {
-            Some(value) => std::env::set_var("AVORAX_ENGINE_ROOT", value),
-            None => std::env::remove_var("AVORAX_ENGINE_ROOT"),
-        }
-
-        let error = result.unwrap_err().to_string();
-        assert!(error.contains("AVORAX_ENGINE_ROOT"));
-        assert!(error.contains("absolute local path"));
+        run_isolated_environment_case(
+            "tests::engine_asset_locator_rejects_relative_engine_root_override",
+            CASE,
+            |command| {
+                command
+                    .env_remove("AVORAX_ENGINE_DIR")
+                    .env("AVORAX_ENGINE_ROOT", "relative-engine-root");
+            },
+        );
     }
 
     #[test]

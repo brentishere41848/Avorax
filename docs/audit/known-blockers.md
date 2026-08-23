@@ -1817,3 +1817,32 @@ enforcement, or pre-execution blocking is claimed.
   signed-driver IPC, Defender coexistence, pre-execution blocking, and
   production accuracy remain separate prerequisites. Evidence-head checks,
   merge, and original-tree synchronization are still pending.
+
+## Checkpoint 2202 Deterministic PUP Category Inference
+
+- **Merged-main regression:** CI `32610442133` failed Local Core test
+  `zip_entry_script_rule_and_heuristics_are_reported_without_confirmed_quarantine`
+  after 534 tests passed. The report remained `ProbableMalware`, detected, and
+  carried both expected downloader/script reasons; only its category changed to
+  PUA because randomized path `.tmpuPoV59` contained lowercase substring `pup`.
+- **Scripted repair:** PUP inference now requires an exact ASCII-alphanumeric
+  token. The exact path fragment is a negative fixture and explicit
+  `pup_indicator` is a positive fixture. Score, verdict, action, and evidence
+  are not weakened.
+- **Local evidence verified:** Direct token boundary passes `1/1`, risk fusion
+  `7/7`, the triggering archive test 25 repeats, Local Core three parallel
+  `535/535` runs, Native `460 + 6`, both locked workspaces, strict gates, source
+  contracts `631/631`, and definitive/independent validation `232/232` in
+  `517.3s`. Stale same-count evidence without scope is rejected.
+- **Additional test race found:** The first default-parallel locked workspace
+  run caught an asset-locator negative test exposing
+  `AVORAX_ENGINE_ROOT=relative-engine-root` to a concurrent JAR scan. Both
+  asset-locator env cases are now isolated in exact child-test processes.
+  Production validation remains unchanged; isolation `4/4` and all parallel
+  full reruns pass.
+- **Unchanged limitations:** Category inference remains keyword-based
+  explainability rather than a family classifier. Detection efficacy,
+  production false-positive rates, installed E2E, driver/pre-execution
+  behavior, and Defender replacement remain separate limits or blockers.
+  Hosted checkpoint-2202 evidence, follow-up merge, green merged-main checks,
+  and original-tree synchronization remain pending.
