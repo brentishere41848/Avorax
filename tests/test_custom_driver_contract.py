@@ -20825,8 +20825,8 @@ def test_small_threat_mvp_report_validator_is_strict_and_local():
     assert "driver_request_known_good_allows_in_lockdown" in source
     assert "Get-AvoraxGateFile ([System.IO.Path]::GetFullPath($text)) $Description" in source
     assert "-RequireFullSuite requires skip_flutter=false and skip_rust=false" in source
-    assert "if ($steps.Count -ne 235)" in source
-    assert "-RequireFullSuite expected exactly 235 verifier steps" in source
+    assert "if ($steps.Count -ne 236)" in source
+    assert "-RequireFullSuite expected exactly 236 verifier steps" in source
     assert (
         'Assert-ReportContainsStep $steps "native-engine secondary catalog '
         'Authenticode selection regressions"'
@@ -25096,7 +25096,8 @@ def test_native_authenticode_uses_direct_hash_bound_file_and_catalog_wintrust():
     assert "CreateJobObjectW(" in production
     assert "JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE" in production
     assert "AssignProcessToJobObject(" in production
-    assert "CREATE_NO_WINDOW | CREATE_SUSPENDED | EXTENDED_STARTUPINFO_PRESENT" in production
+    assert "CREATE_UNICODE_ENVIRONMENT" in production
+    assert "EXTENDED_STARTUPINFO_PRESENT" in production
     assert ".share_mode(FILE_SHARE_READ)" in production
     assert "CreateProcessAsUserW(" in production
     assert "unable to start Authenticode helper with a privilege-stripped primary token" in production
@@ -25215,7 +25216,7 @@ def test_native_secondary_catalog_authenticode_is_bounded_exact_and_honestly_par
     assert "native_secondary_catalog_authenticode_primary_runtime_is_exact_and_hash_bound" in source
     assert "native-engine secondary catalog Authenticode selection regressions" in verifier
     assert '"native_secondary_catalog_authenticode"' in verifier
-    assert "if ($steps.Count -ne 235)" in validator
+    assert "if ($steps.Count -ne 236)" in validator
     assert "no controlled benign multi-signed system-catalog fixture" in verifier
     assert "no controlled benign multi-signed system-catalog fixture" in validator
     assert "$technicalLimitText = Assert-JsonString" in validator
@@ -25252,8 +25253,8 @@ def test_native_authenticode_helper_job_resources_are_exact_and_fail_visible():
     )
     assert "native-engine Authenticode helper Job resource-limit regressions" in verifier
     assert '"native_authenticode_helper_job_limits"' in verifier
-    assert "if ($steps.Count -ne 235)" in validator
-    assert "expected exactly 235 verifier steps" in validator
+    assert "if ($steps.Count -ne 236)" in validator
+    assert "expected exactly 236 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper Job '
         'resource-limit regressions"'
@@ -25355,7 +25356,8 @@ def test_native_authenticode_helper_uses_restricted_primary_process_token_and_ex
         "CreateRestrictedToken(",
         "TokenPrimary",
         "CreateProcessAsUserW(",
-        "CREATE_NO_WINDOW | CREATE_SUSPENDED | EXTENDED_STARTUPINFO_PRESENT",
+        "CREATE_UNICODE_ENVIRONMENT",
+        "EXTENDED_STARTUPINFO_PRESENT",
         "PROC_THREAD_ATTRIBUTE_HANDLE_LIST",
         "STARTF_USESTDHANDLES",
         "ProcessThreadAttributeList::for_handle_list(&inherited)?",
@@ -25375,8 +25377,8 @@ def test_native_authenticode_helper_uses_restricted_primary_process_token_and_ex
     assert "AVORAX_RESTRICTED_PRIMARY_TOKEN_OK" in source
     assert "native-engine Authenticode helper restricted-process-token regressions" in verifier
     assert '"native_authenticode_helper_restricted_process"' in verifier
-    assert "if ($steps.Count -ne 235)" in validator
-    assert "expected exactly 235 verifier steps" in validator
+    assert "if ($steps.Count -ne 236)" in validator
+    assert "expected exactly 236 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper '
         'restricted-process-token regressions"'
@@ -25396,6 +25398,75 @@ def test_native_authenticode_helper_uses_restricted_primary_process_token_and_ex
     assert "Scripted, unverified" in checkpoint
     assert "passing result is claimed" in checkpoint
     assert '"Win32_System_Pipes"' in read(ROOT / "core" / "zentor_native_engine" / "Cargo.toml")
+
+
+def test_native_authenticode_helper_launch_environment_and_directory_are_sanitized():
+    source = read(NATIVE_WINDOWS_AUTHENTICODE)
+    production = source.split("#[cfg(test)]")[0]
+    verifier = read(ROOT / "tools" / "testing" / "verify-small-threat-mvp.ps1")
+    validator = read(ROOT / "tools" / "testing" / "validate-small-threat-mvp-report.ps1")
+    checkpoint = read(
+        ROOT
+        / "docs"
+        / "reports"
+        / "checkpoint-2206-authenticode-sanitized-launch.md"
+    )
+    matrix = read(ROOT / "docs" / "audit" / "engine-control-matrix.md")
+    threat_model = read(ROOT / "docs" / "audit" / "threat-model.md")
+    blockers = read(ROOT / "docs" / "audit" / "known-blockers.md")
+    dependency_inventory = read(ROOT / "docs" / "dependency-license-inventory.md")
+
+    for contract in [
+        'AUTHENTICODE_HELPER_ENVIRONMENT_NAMES: [&str; 2] = ["SystemRoot", "WINDIR"]',
+        "sanitized_authenticode_launch_context()?",
+        "build_authenticode_helper_environment_block(&windows_root)?",
+        "checked_system_windows_directory()",
+        'checked_system_directory(\n        "System32"',
+        "CREATE_UNICODE_ENVIRONMENT",
+        "launch_context.environment.as_ptr().cast::<c_void>()",
+        "launch_context.current_directory.as_ptr()",
+        "must be a normalized absolute local drive path",
+        "sanitized environment exceeds its UTF-16 bound",
+        "contains an embedded NUL",
+    ]:
+        assert contract in production
+    process_call = production[
+        production.index("CreateProcessAsUserW("):
+        production.index("anyhow::ensure!(\n        created != 0")
+    ]
+    assert "CREATE_UNICODE_ENVIRONMENT" in process_call
+    assert (
+        "| EXTENDED_STARTUPINFO_PRESENT,\n"
+        "            launch_context.environment.as_ptr().cast::<c_void>(),\n"
+        "            launch_context.current_directory.as_ptr(),"
+        in process_call
+    )
+    assert "native_authenticode_helper_sanitized_launch_context_is_verified_in_child" in source
+    assert "native_authenticode_helper_sanitized_environment_block_is_exact_and_bounded" in source
+    assert "AVORAX_SANITIZED_LAUNCH_CONTEXT_OK" in source
+    assert "native-engine Authenticode helper sanitized-launch regressions" in verifier
+    assert '"native_authenticode_helper_sanitized"' in verifier
+    assert "if ($steps.Count -ne 236)" in validator
+    assert "expected exactly 236 verifier steps" in validator
+    assert (
+        'Assert-ReportContainsStep $steps "native-engine Authenticode helper '
+        'sanitized-launch regressions"'
+        in validator
+    )
+    for contract in [
+        "bounded Unicode environment containing exactly SystemRoot and WINDIR derived from the checked native Windows directory",
+        "explicit checked non-reparse System32 current directory",
+        "never falls back to inherited environment or current-directory state",
+        "two-variable launch environment is attack-surface reduction rather than identity isolation",
+    ]:
+        assert contract in verifier
+        assert contract in validator
+    for document in [checkpoint, matrix, threat_model, blockers, dependency_inventory]:
+        assert "CREATE_UNICODE_ENVIRONMENT" in document
+        assert "SystemRoot" in document
+        assert "WINDIR" in document
+    assert "No checkpoint-2206 passing result is claimed before execution" in checkpoint
+    assert "adds no crate, package, Cargo feature, or lockfile change" in dependency_inventory
 
 
 def test_native_authenticode_helper_uses_exact_write_restricting_sid_and_readback():
@@ -25452,8 +25523,8 @@ def test_native_authenticode_helper_uses_exact_write_restricting_sid_and_readbac
     assert "AVORAX_WRITE_RESTRICTED_MUTATION_DENIED" in source
     assert "native-engine Authenticode helper write-restricted-thread-token regressions" in verifier
     assert '"native_authenticode_helper_write_restricted"' in verifier
-    assert "if ($steps.Count -ne 235)" in validator
-    assert "expected exactly 235 verifier steps" in validator
+    assert "if ($steps.Count -ne 236)" in validator
+    assert "expected exactly 236 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper '
         'write-restricted-thread-token regressions"'

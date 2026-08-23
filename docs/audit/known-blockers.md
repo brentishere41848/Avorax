@@ -1955,3 +1955,21 @@ enforcement, or pre-execution blocking is claimed.
   and driver signing, signed-driver IPC, pre-execution enforcement, Defender
   coexistence, writable mapping/post-verdict mutation, and production
   detection/false-positive evidence remain separate prerequisites.
+
+## Checkpoint 2206 Authenticode Sanitized Launch Status
+
+- **Locally runtime-verified:** `CreateProcessAsUserW` receives an
+  explicit bounded Unicode environment with exactly native-root `SystemRoot`
+  and `WINDIR`, `CREATE_UNICODE_ENVIRONMENT`, and an explicit checked
+  non-reparse `System32` current directory. No inherited environment/current-
+  directory fallback is implemented.
+- **Compatibility evidence:** benign child state, embedded Edge,
+  catalog-backed WindowsPowerShell, unsigned rejection, wrong-hash failure,
+  complete Authenticode/workspace suites, and exact `236/236` verification pass
+  locally. Independent strict validation passes and controlled stale-count,
+  missing-step, and missing-scope reports are rejected. Exact-head hosted,
+  merged-main, and installed LocalSystem evidence remain separate.
+- **Residual boundary:** the child still keeps parent SID, integrity, desktop,
+  window station, and ordinary read access, and can mutate its own environment.
+  `CREATE_UNICODE_ENVIRONMENT` is launch-input hardening, not AppContainer,
+  identity/profile isolation, driver enforcement, or pre-execution blocking.
