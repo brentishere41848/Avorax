@@ -167,6 +167,11 @@ fn inferred_or_unknown_category(evidence: &[Evidence]) -> ThreatCategory {
     }
 }
 
+fn contains_ascii_token(text: &str, expected: &str) -> bool {
+    text.split(|character: char| !character.is_ascii_alphanumeric())
+        .any(|token| token == expected)
+}
+
 fn infer_category(evidence: &[Evidence]) -> Option<ThreatCategory> {
     let text = evidence
         .iter()
@@ -192,7 +197,10 @@ fn infer_category(evidence: &[Evidence]) -> Option<ThreatCategory> {
         Some(ThreatCategory::Infostealer)
     } else if text.contains("miner") || text.contains("mining") || text.contains("stratum") {
         Some(ThreatCategory::Miner)
-    } else if text.contains("adware") || text.contains("pup") || text.contains("unwanted") {
+    } else if text.contains("adware")
+        || contains_ascii_token(&text, "pup")
+        || text.contains("unwanted")
+    {
         Some(ThreatCategory::PotentiallyUnwantedApp)
     } else if text.contains("persistence") || text.contains("autorun") {
         Some(ThreatCategory::PersistenceIndicator)
@@ -425,5 +433,35 @@ mod tests {
 
         assert_eq!(verdict.category, ThreatCategory::MaliciousMacro);
         assert_eq!(verdict.verdict, Verdict::Suspicious);
+    }
+
+    #[test]
+    fn risk_fusion_pup_category_requires_a_bounded_token() {
+        let downloader = RiskFusion::fuse(
+            vec![Evidence {
+                id: "download_execute_script".to_string(),
+                title: "Downloader plus execution script pattern".to_string(),
+                detail: "Archive C:\\Temp\\.tmpuPoV59\\sample.zip contains downloader evidence."
+                    .to_string(),
+                weight: 45,
+                source: EvidenceSource::NativeHeuristic,
+            }],
+            false,
+            false,
+        );
+        assert_eq!(downloader.category, ThreatCategory::SuspiciousDownloader);
+
+        let pup = RiskFusion::fuse(
+            vec![Evidence {
+                id: "pup_indicator".to_string(),
+                title: "PUP policy indicator".to_string(),
+                detail: "Explicit potentially unwanted software classification.".to_string(),
+                weight: 45,
+                source: EvidenceSource::NativeHeuristic,
+            }],
+            false,
+            false,
+        );
+        assert_eq!(pup.category, ThreatCategory::PotentiallyUnwantedApp);
     }
 }

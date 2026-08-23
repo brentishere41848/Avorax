@@ -165,6 +165,61 @@ Lead-engineer product-hardening pass across the Avorax repository. Goal is to mo
 - Evidence-head checks, exact-head merge, merged-main checks, and safe original-
   tree synchronization remain pending.
 
+## 2026-08-23 continuation checkpoint 2201 merge and checkpoint 2202 scripting
+
+- Evidence head `030ce2e6845f6ee6fbfdee81c04a52cba7284bc1` passed Avorax CI
+  `32609881931` and Desktop Packages PR `32609881942`, including all platform
+  artifacts, consolidation/checksums, lockfile SBOM, and skipped publication.
+  PR `#53` merged with exact-head locking as
+  `75bd64bdcf9f59a7a4020b4d373ca01b46ae42ee`.
+- Merged-main CI `32610442133` failed visibly in one pre-existing Local Core
+  archive test after 534 peers passed. Its valid `ProbableMalware` report
+  contained the expected downloader/script reasons, but randomized temporary
+  path `.tmpuPoV59` made unbounded `text.contains("pup")` select the PUA
+  category. PR-head CI had passed because its random path lacked that fragment.
+- Created `agent/checkpoint-2202-stable-risk-category` from the exact merge.
+  Scripted ASCII-alphanumeric token matching for `pup`, a regression proving
+  incidental path text cannot override downloader classification, and a
+  positive explicit-PUP regression. The verdict threshold and evidence remain
+  unchanged.
+- Scripted source contracts, mandatory validation of the existing 232-step
+  risk-fusion verifier step and scope, status, matrix, blocker, threat-model,
+  dependency, and checkpoint-report evidence before the first checkpoint-2202
+  test. Merged-main packages are still running. Synchronization remains blocked
+  until a follow-up exact-head merge and green merged-main evidence.
+- Initial focused verification passed token boundary `1/1`, all risk-fusion
+  tests `7/7`, the exact merged-main archive test 25 consecutive times, Local
+  Core `535/535`, Native Engine `460 + 6`, strict Local/Native Clippy, parsers,
+  formatting, and source contracts `630/630`.
+- The first default-parallel locked workspace run exposed another pre-existing
+  test-only env race: `engine_asset_locator_rejects_relative_engine_root_override`
+  set `AVORAX_ENGINE_ROOT=relative-engine-root` while a JAR scan discovered
+  assets. Both asset-locator env tests are now scripted through the existing
+  isolated child harness. Production asset discovery is unchanged. Final
+  reruns remain pending.
+
+## 2026-08-23 continuation checkpoint 2202 local verification
+
+- Asset-locator child isolation passes `4/4`; the complete Local Core suite
+  then passes three default-parallel runs at `535/535` each. Both locked
+  workspace variants pass, including Native `460 + 6`; strict Native/Local/
+  Guard Clippy and rustfmt pass.
+- The direct PUP boundary passes `1/1`, complete risk fusion `7/7`, and the
+  exact triggering archive regression passes 25 consecutive invocations.
+  Source contracts pass `631/631`; PowerShell parsers, diff, unchanged-lockfile,
+  security, dependency, package-source, release-build/smoke, Flutter/analyzer,
+  and all central gates pass.
+- The definitive report runs from `2026-08-23T01:47:24.8501521Z` through
+  `2026-08-23T01:56:02.2284761Z`, passing exactly `232/232` in `517.3s`. Its
+  built-in validator and a separate strict invocation pass. The 2201 report,
+  which has the same count but lacks the new PUP scope, is rejected as expected.
+- Merged-main package run `32610442139` for checkpoint 2201 finishes green on
+  all platforms/consolidation with publication skipped. A read-only vault audit
+  remains exactly 16,072 files, zero directories, 4,522,733 bytes, 5,357 each
+  payload/metadata/auth extension, one metadata key, and zero pending.
+- Hosted checkpoint-2202 exact-head evidence, follow-up merge, green merged-main
+  CI/packages, and safe original-tree synchronization remain pending.
+
 ## 2026-08-22 continuation checkpoint 2198 scripting
 
 - Selected a bounded release-process isolation boundary for native WinTrust

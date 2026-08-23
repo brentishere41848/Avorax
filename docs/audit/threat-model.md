@@ -1451,3 +1451,39 @@ validator pass exactly `232/232` in `441s`; a report missing only the new Job
 step is rejected at 231. This verifies the configured user-mode resource
 boundary on this Windows host, not restricted-token isolation, kernel
 interception, installed-service behavior, or production protection efficacy.
+
+## Checkpoint 2202 Evidence-Text Category Boundary
+
+Risk-fusion category inference joins positive-weight evidence identifiers,
+titles, and details. Details intentionally explain archive members and paths,
+but those untrusted strings must not masquerade as a category marker. Merged-
+main CI `32610442133` proved the previous unbounded `pup` substring check could
+read randomized temporary path `.tmpuPoV59` as PUP and override the otherwise
+correct downloader/script category. The threat verdict remained
+`ProbableMalware`; this was an explainability and deterministic-testing defect,
+not a clean-verdict bypass.
+
+Checkpoint 2202 requires `pup` as a complete token separated by non-ASCII-
+alphanumeric boundaries. This preserves identifiers such as `pup_indicator`
+while rejecting incidental fragments inside a longer path component. A direct
+negative/positive unit regression, the existing complete risk-fusion verifier
+step, strict validator scope checks, and source contracts are scripted. This
+does not claim a semantic malware-family classifier: other category rules
+remain keyword heuristics, and production category/false-positive accuracy
+still needs corpus evidence. No file or fixture is executed.
+
+The first default-parallel locked workspace run also showed that Local Core
+asset-locator tests could temporarily expose an intentionally invalid engine
+root to unrelated scan tests. Checkpoint 2202 moves the explicit installed-dir
+and relative-root env cases into exact child-test processes. This is test
+isolation, not a production configuration fallback: relative roots remain
+rejected and production discovery code is unchanged.
+
+Local evidence passes the direct boundary `1/1`, risk fusion `7/7`, the
+triggering archive regression 25 repeats, asset isolation `4/4`, three parallel
+Local Core suites at `535/535`, Native `460 + 6`, both locked workspaces,
+strict lint/format/security/dependency gates, Flutter/analyzer, and exact
+`232/232` definitive plus independent validation in `517.3s`. Stale same-count
+evidence without the new scope is rejected. This proves deterministic behavior
+for the bounded PUP case and test isolation on this host, not production family
+classification accuracy.

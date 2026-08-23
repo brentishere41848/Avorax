@@ -25267,6 +25267,50 @@ def test_native_authenticode_helper_job_resources_are_exact_and_fail_visible():
     assert "Job commit ceilings do not bound physical working set or I/O bytes" in validator
 
 
+def test_native_risk_fusion_pup_category_requires_a_bounded_token():
+    source = read(NATIVE_RISK_FUSION)
+    production = source.split("#[cfg(test)]")[0]
+    verifier = read(ROOT / "tools" / "testing" / "verify-small-threat-mvp.ps1")
+    validator = read(ROOT / "tools" / "testing" / "validate-small-threat-mvp-report.ps1")
+
+    assert "fn contains_ascii_token(text: &str, expected: &str) -> bool" in production
+    assert 'contains_ascii_token(&text, "pup")' in production
+    assert 'text.contains("pup")' not in production
+    assert "risk_fusion_pup_category_requires_a_bounded_token" in source
+    assert ".tmpuPoV59" in source
+    assert "ThreatCategory::SuspiciousDownloader" in source
+    assert "ThreatCategory::PotentiallyUnwantedApp" in source
+    assert (
+        'Assert-ReportContainsStep $steps "native-engine risk fusion regressions"'
+        in validator
+    )
+    assert (
+        "Native Engine PUP category inference requires a bounded ASCII-alphanumeric token"
+        in verifier
+    )
+    assert "incidental path fragments such as .tmpuPoV59" in verifier
+    assert (
+        "Native Engine PUP category inference requires a bounded ASCII-alphanumeric token"
+        in validator
+    )
+
+
+def test_local_core_engine_asset_env_overrides_run_in_isolated_children():
+    source = read(LOCAL_CORE_MAIN)
+    start = source.index("fn engine_asset_locator_prefers_explicit_installed_engine_dir")
+    end = source.index("fn engine_asset_marker_dir_accepts_regular_directory")
+    tests = source[start:end]
+
+    assert 'const CASE: &str = "engine-dir-explicit"' in tests
+    assert 'const CASE: &str = "engine-root-relative"' in tests
+    assert tests.count("run_isolated_environment_case(") == 2
+    assert tests.count("is_isolated_environment_case(CASE)") == 2
+    assert '.env("AVORAX_ENGINE_DIR", engine_dir)' in tests
+    assert '.env("AVORAX_ENGINE_ROOT", "relative-engine-root")' in tests
+    assert 'std::env::set_var("AVORAX_ENGINE_ROOT", "relative-engine-root")' not in tests
+    assert 'std::env::remove_var("AVORAX_ENGINE_DIR")' not in tests
+
+
 def test_update_service_control_uses_bounded_command_runner():
     source = read(UPDATE_SERVICE_CONTROL)
     production = source.split("#[cfg(test)]")[0]
