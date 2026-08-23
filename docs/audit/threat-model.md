@@ -1532,3 +1532,39 @@ Local Core/Guard helper smoke, strict gates, and the exact `233/233` verifier in
 reports. This verifies the configured thread-privilege boundary on this host;
 hosted exact-head, installed LocalSystem, and stronger process sandbox evidence
 remain pending.
+
+## Checkpoint 2204 Authenticode Helper Restricted-Process Boundary
+
+The release helper no longer starts with the Local Core or Guard process token.
+The parent derives a restricted primary token with
+`CreateRestrictedToken(DISABLE_MAX_PRIVILEGE)`, validates exact primary type and
+bounded enabled privileges, and passes it to `CreateProcessAsUserW`. The child
+starts suspended. `PROC_THREAD_ATTRIBUTE_HANDLE_LIST` permits exactly three
+validated stdin/stdout/stderr handles; parent pipe ends are explicitly
+non-inheritable.
+
+The parent assigns the already configured one-process, CPU, commit, crash-UI,
+and kill-on-close Job before `ResumeThread`. Assignment or resume failure
+terminates and reaps the suspended process. Before request parsing, the child
+reads back its process token and requires exact primary type plus only enabled
+`SeChangeNotifyPrivilege`. The restricted thread token remains defense in depth
+for candidate open, WinTrust, catalog, signer, and content-hash work. There is no
+unrestricted-process fallback, and any token, pipe, attribute-list, launch, Job,
+resume, read-back, timeout, termination, reap, protocol, or verification error
+cannot become publisher trust.
+
+This is not an AppContainer or cross-identity sandbox. The restricted primary
+token retains the parent SID, integrity level, environment, desktop, and
+ordinary SID-based access because restricting SIDs are not added. Windows token,
+process, pipe, Job, loader, trust-provider, and protected-catalog semantics stay
+in the trusted computing base. Installed LocalSystem behavior remains planned
+evidence, while production signing, driver enforcement, pre-execution blocking,
+Defender replacement, and production accuracy remain separate blockers.
+
+Checkpoint-2204 focused, full Native/workspace, strict lint, release-build,
+two-host smoke, analyzer, protocol, Flutter, source-contract, central-gate, and
+exact `234/234` verifier/validator claims are locally verified. Stale,
+missing-step, and missing-scope evidence is rejected. Hosted, merge, and
+synchronized-tree evidence remains pending. Tests use only ignored benign Rust
+child fixtures, installed read-only Microsoft binaries, and temporary benign
+text; candidates are never executed.

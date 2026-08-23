@@ -1865,9 +1865,10 @@ enforcement, or pre-execution blocking is claimed.
   become trust. Focused real-token and synthetic sensitive-privilege tests pass
   `2/2`, Authenticode passes `27/27`, Native passes `462 + 6`, Flutter passes
   `838/838`, source contracts pass `632/632`, and the definitive verifier plus
-  validator pass `233/233` in `473.5s`. Implementation head `710e38a` passes
-  Avorax CI `32616072172` and package push/PR runs
-  `32616060448`/`32616072173`; evidence-head and merge checks remain pending.
+  validator pass `233/233` in `473.5s`. Implementation `710e38a`, evidence
+  `1a9703d`, PR `#55`, merge `b70298a`, merged-main CI/packages, exact original-
+  tree synchronization, destination checks, and vault audit pass. Publication
+  was skipped.
 - **Still partial:** The helper process retains the parent process token, SID,
   integrity level, desktop, environment, and ACL access. Same-process native
   code can technically revert thread impersonation. This is not AppContainer,
@@ -1876,3 +1877,32 @@ enforcement, or pre-execution blocking is claimed.
 - **Unchanged blockers:** Production code/driver signing, installed service/UI
   E2E, signed-driver IPC, pre-execution enforcement, Defender coexistence, and
   production detection/false-positive evidence remain separate prerequisites.
+
+## Checkpoint 2204 Authenticode Restricted Process Token
+
+- **Locally verified process privilege boundary:** Release Local Core and Guard
+  derive a restricted primary token with `DISABLE_MAX_PRIVILEGE`, create the exact helper
+  suspended through `CreateProcessAsUserW`, restrict inheritance to the three
+  stdio pipes with `PROC_THREAD_ATTRIBUTE_HANDLE_LIST`, assign the validated Job,
+  and only then resume. The child validates its effective primary token before
+  reading untrusted request data. Process tests `2/2`, helper `9/9`, complete
+  Authenticode `29/29` plus two ignored child fixtures, and both release hosts
+  pass locally. Exact `234/234` verifier/validator, central gates, and
+  adversarial stale/missing-step/missing-scope report rejection pass; hosted,
+  merge, and synchronized-tree evidence remain pending.
+- **Fail-visible compatibility policy:** There is no same-token fallback. Token,
+  pipe, handle-list, process creation, Job assignment, resume, child read-back,
+  timeout, termination, reap, or verification failure supplies no publisher
+  trust. This may conservatively withhold Microsoft publisher credit on a host
+  that cannot create a process with a restricted version of its own token. The
+  current Windows development host proves compatibility for Local Core and
+  Guard; installed LocalSystem compatibility remains unproved.
+- **Residual identity/access limit:** The restricted primary token keeps the
+  parent SID, integrity level, environment, desktop, and ordinary SID-based
+  access. `PROC_THREAD_ATTRIBUTE_HANDLE_LIST` prevents unrelated handle
+  inheritance but is not AppContainer, restricting-SID isolation, a separate
+  desktop, or authenticated cross-identity IPC.
+- **Unchanged blockers:** Installed LocalSystem/service/UI E2E, production code
+  and driver signing, signed-driver IPC, pre-execution enforcement, Defender
+  coexistence, and production detection/false-positive evidence remain separate
+  prerequisites.

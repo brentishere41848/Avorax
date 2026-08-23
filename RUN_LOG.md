@@ -13,6 +13,59 @@ Lead-engineer product-hardening pass across the Avorax repository. Goal is to mo
 - The bundled native ML model is treated as development-only unless release metadata and gates prove production readiness.
 - MSI/EXE installers are first-install/repair/recovery/offline paths. Normal in-app updates should use verified `.aup` packages.
 
+## 2026-08-23 continuation checkpoint 2203 closure and 2204 scripting
+
+- Checkpoint 2203 evidence head `1a9703d97902dbe87eae829895a694a06c979d8a`
+  passed exact-head CI/packages and merged through PR `#55` as
+  `b70298aa3b442aa6aef225d05be90930db069f54`. Merged-main Avorax CI
+  `32617710173` and Desktop Packages `32617710182` passed; all six artifacts,
+  checksum consolidation, and lockfile SBOM passed while publication was
+  skipped.
+- Exactly 12 preconditioned files synchronized to
+  `C:\Users\Brent\Documents\Avorax-main`. Every destination matched the merged
+  Git blob and source SHA-256. Destination source contracts `632/632`,
+  restricted thread token `2/2`, Authenticode `27/27`, rustfmt, strict Native
+  Clippy, release Local Core/Guard builds, and two-host benign smoke passed.
+  The first smoke command was visibly rejected for relative executable paths;
+  the required absolute-path invocation passed.
+- The protected vault remained exactly 16,072 files, zero directories,
+  4,522,733 bytes, 5,357 each `.avoraxq`/`.json`/`.auth`, one metadata key, and
+  zero pending. No package was installed, released, or published.
+- Checkpoint 2204 is fully scripted before testing. Release helpers derive a
+  restricted primary token, start suspended through `CreateProcessAsUserW`,
+  inherit exactly stdin/stdout/stderr through
+  `PROC_THREAD_ATTRIBUTE_HANDLE_LIST`, join the configured Job before resume,
+  and validate the child process token before request parsing. Benign child
+  tests, verifier step 234, exact validator scope, source contracts, dependency
+  accounting, matrix, threat model, blockers, and checkpoint report are
+  scripted. No checkpoint-2204 passing result is claimed yet.
+
+## 2026-08-23 continuation checkpoint 2204 local focused verification
+
+- Restricted-process regressions pass `2/2`; the complete helper filter passes
+  `9/9`; Authenticode passes `29/29` with two intentional child fixtures
+  ignored. Complete Native Engine passes `464` with those two fixtures ignored,
+  plus signature compiler `6/6`.
+- Rustfmt and strict Native/Local/Guard Clippy pass. Locked release Local Core
+  and Guard builds pass, and the two-host benign release smoke verifies hash-
+  bound nonce IPC, embedded Edge and catalog Windows PowerShell trust, unsigned
+  rejection, and wrong-hash failure without executing a candidate.
+- Both standard and all-feature locked Rust workspace variants pass. Flutter
+  analyze reports no issues, Dart protocol passes `14/14`, and complete Flutter
+  passes `838/838`.
+- Python source contracts pass `633/633`; package source contracts pass `21/21`
+  with three privilege-dependent symlink cases skipped. Branding, product-copy,
+  no-malware, false-positive, protection, performance, prerequisite, pack, and
+  dependency gates pass. The definitive report runs from
+  `2026-08-23T05:07:31.2524711Z` through `2026-08-23T05:15:05.704596Z` and
+  passes exact `234/234` with zero failures in `454.4s`; built-in and independent
+  strict validation pass.
+- The validator rejects stale 233-step evidence, a temporary 234-step report
+  missing the new required step, and a temporary 234-step report missing exact
+  handle-list scope. Adversarial copies were removed. The protected vault stays
+  exact at 16,072 files, zero directories, 4,522,733 bytes, 5,357 each payload/
+  metadata/auth, one key, and zero pending. Hosted/merge/sync remain pending.
+
 ## 2026-08-23 continuation checkpoint 2199 closure
 
 - Evidence head `b000b8dfc9e4e7427380ddbe80dba958d9d16e95` passed
