@@ -1842,7 +1842,12 @@ definitive verifier and independent validator pass `240/240` in `458s`; five
 malformed reports are rejected. Exact implementation `c744fa9` passes hosted CI
 `32649764260` and package push/PR `32649749634`/`32649764310`, with six
 artifacts, checksums, lockfile SBOM, and publication skipped. Evidence-head,
-merged-main, and installed evidence remain pending.
+merged-main, and installed evidence remained pending at that implementation
+stage. Evidence `8228daf`, PR `#62`, merge `425e663`, exact merged-main CI
+`32651609367`, packages `32651609388`, 12-path guarded synchronization, and
+destination contracts/token/Authenticode/no-malware/lint/release/smoke/full-
+workspace checks now pass. Lockfiles and the protected vault remain exact;
+installed LocalSystem evidence remains pending.
 
 **Residual risk:** `TokenVirtualizationAllowed` may remain one because it is an
 inherited capability. Trusted helper code has no enable path, but the
@@ -1852,3 +1857,42 @@ already mapped code/data, or post-verdict mutation. They are not AppContainer,
 LPAC, private-desktop isolation, authenticated cross-user IPC, installed
 LocalSystem evidence, kernel interception, driver enforcement, or pre-execution
 blocking.
+
+## Checkpoint 2211 Job UI Resource Boundary
+
+**Threat:** Even with low integrity and UIAccess disabled, a same-desktop helper
+can attempt selected USER-handle, clipboard, global-atom, desktop-switch, display,
+system-parameter, or shutdown operations that are irrelevant to hash-bound
+publisher verification and enlarge the impact of a parser or trust-stack flaw.
+
+**Scripted control:** Before the helper is assigned or resumed, its Job is
+configured through `JobObjectBasicUIRestrictions` with exact
+`JOB_OBJECT_UILIMIT_HANDLES`, `JOB_OBJECT_UILIMIT_READCLIPBOARD`,
+`JOB_OBJECT_UILIMIT_WRITECLIPBOARD`, `JOB_OBJECT_UILIMIT_SYSTEMPARAMETERS`,
+`JOB_OBJECT_UILIMIT_DISPLAYSETTINGS`, `JOB_OBJECT_UILIMIT_GLOBALATOMS`,
+`JOB_OBJECT_UILIMIT_DESKTOP`, and `JOB_OBJECT_UILIMIT_EXITWINDOWS`. Exact
+parent read-back of the exact returned structure size and exact flags is
+mandatory. Configuration, query, returned-size, exact-flag, assignment, or
+resume failure cannot become trust and has no weaker retry.
+
+**Evidence state:** Two benign Windows regressions pass `2/2`; complete
+Authenticode passes `43` with `8` ignored and release Local Core/Guard trust
+smoke remains compatible. Both locked workspaces, strict Native/Local/Guard
+lint, Flutter analyze and `838/838`, source contracts `641/641`, and
+no-malware/dependency gates pass. Final review found missing returned-size
+validation, then found that retry 2 did not require returned-size wording in the
+central scope; neither earlier passing run is final evidence. After both repairs
+and full affected reruns, corrected retry 3 and its independent validator pass
+`241/241` in `434.1s`; five fresh malformed reports are rejected.
+Exact implementation `024d63f` passes CI `32655155577` plus Desktop Packages
+push/PR `32655130037`/`32655155628`, including all six platform artifacts,
+checksums, lockfile SBOM, administrative MSI extraction, and skipped
+publication. Evidence-head, merge, destination, and installed evidence remains
+pending.
+
+**Residual risk:** Job UI limits constrain documented shared UI operations but
+do not create a private desktop or window station, change SID/profile, remove
+filesystem/registry/network/read access, constrain named kernel objects, or
+isolate already mapped code/data. They are not AppContainer/LPAC, authenticated
+cross-identity IPC, installed LocalSystem proof, driver enforcement, kernel
+interception, or pre-execution blocking.

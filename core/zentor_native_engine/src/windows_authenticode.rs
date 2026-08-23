@@ -67,11 +67,15 @@ use windows_sys::Win32::Storage::FileSystem::{
     FILE_SHARE_READ, FILE_STANDARD_INFO,
 };
 use windows_sys::Win32::System::JobObjects::{
-    AssignProcessToJobObject, CreateJobObjectW, JobObjectExtendedLimitInformation,
-    QueryInformationJobObject, SetInformationJobObject, JOBOBJECT_EXTENDED_LIMIT_INFORMATION,
+    AssignProcessToJobObject, CreateJobObjectW, JobObjectBasicUIRestrictions,
+    JobObjectExtendedLimitInformation, QueryInformationJobObject, SetInformationJobObject,
+    JOBOBJECT_BASIC_UI_RESTRICTIONS, JOBOBJECT_EXTENDED_LIMIT_INFORMATION,
     JOB_OBJECT_LIMIT_ACTIVE_PROCESS, JOB_OBJECT_LIMIT_DIE_ON_UNHANDLED_EXCEPTION,
     JOB_OBJECT_LIMIT_JOB_MEMORY, JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE,
-    JOB_OBJECT_LIMIT_PROCESS_MEMORY, JOB_OBJECT_LIMIT_PROCESS_TIME,
+    JOB_OBJECT_LIMIT_PROCESS_MEMORY, JOB_OBJECT_LIMIT_PROCESS_TIME, JOB_OBJECT_UILIMIT_DESKTOP,
+    JOB_OBJECT_UILIMIT_DISPLAYSETTINGS, JOB_OBJECT_UILIMIT_EXITWINDOWS,
+    JOB_OBJECT_UILIMIT_GLOBALATOMS, JOB_OBJECT_UILIMIT_HANDLES, JOB_OBJECT_UILIMIT_READCLIPBOARD,
+    JOB_OBJECT_UILIMIT_SYSTEMPARAMETERS, JOB_OBJECT_UILIMIT_WRITECLIPBOARD,
 };
 use windows_sys::Win32::System::Pipes::CreatePipe;
 use windows_sys::Win32::System::SystemServices::{
@@ -1249,7 +1253,27 @@ impl KillOnCloseJob {
             unsafe { CloseHandle(handle) };
             anyhow::bail!("unable to configure isolated Authenticode helper job: {error}");
         }
+        let ui_restrictions = required_authenticode_helper_job_ui_restrictions();
+        let configured = unsafe {
+            SetInformationJobObject(
+                handle,
+                JobObjectBasicUIRestrictions,
+                (&ui_restrictions as *const JOBOBJECT_BASIC_UI_RESTRICTIONS).cast::<c_void>(),
+                size_of::<JOBOBJECT_BASIC_UI_RESTRICTIONS>() as u32,
+            )
+        };
+        if configured == 0 {
+            let error = std::io::Error::last_os_error();
+            unsafe { CloseHandle(handle) };
+            anyhow::bail!(
+                "unable to configure isolated Authenticode helper Job UI restrictions: {error}"
+            );
+        }
         if let Err(error) = query_and_validate_authenticode_helper_job_limits(handle) {
+            unsafe { CloseHandle(handle) };
+            return Err(error);
+        }
+        if let Err(error) = query_and_validate_authenticode_helper_job_ui_restrictions(handle) {
             unsafe { CloseHandle(handle) };
             return Err(error);
         }
@@ -1327,6 +1351,57 @@ fn validate_authenticode_helper_job_limits(
     anyhow::ensure!(
         actual.JobMemoryLimit == required.JobMemoryLimit,
         "isolated Authenticode helper job commit limit mismatch"
+    );
+    Ok(())
+}
+
+fn required_authenticode_helper_job_ui_restrictions() -> JOBOBJECT_BASIC_UI_RESTRICTIONS {
+    JOBOBJECT_BASIC_UI_RESTRICTIONS {
+        UIRestrictionsClass: JOB_OBJECT_UILIMIT_HANDLES
+            | JOB_OBJECT_UILIMIT_READCLIPBOARD
+            | JOB_OBJECT_UILIMIT_WRITECLIPBOARD
+            | JOB_OBJECT_UILIMIT_SYSTEMPARAMETERS
+            | JOB_OBJECT_UILIMIT_DISPLAYSETTINGS
+            | JOB_OBJECT_UILIMIT_GLOBALATOMS
+            | JOB_OBJECT_UILIMIT_DESKTOP
+            | JOB_OBJECT_UILIMIT_EXITWINDOWS,
+    }
+}
+
+fn query_and_validate_authenticode_helper_job_ui_restrictions(
+    handle: HANDLE,
+) -> Result<JOBOBJECT_BASIC_UI_RESTRICTIONS> {
+    let mut actual = JOBOBJECT_BASIC_UI_RESTRICTIONS::default();
+    let mut returned = 0u32;
+    anyhow::ensure!(
+        unsafe {
+            QueryInformationJobObject(
+                handle,
+                JobObjectBasicUIRestrictions,
+                (&mut actual as *mut JOBOBJECT_BASIC_UI_RESTRICTIONS).cast::<c_void>(),
+                size_of::<JOBOBJECT_BASIC_UI_RESTRICTIONS>() as u32,
+                &mut returned,
+            )
+        } != 0,
+        "unable to query isolated Authenticode helper Job UI restrictions: {}",
+        std::io::Error::last_os_error()
+    );
+    validate_authenticode_helper_job_ui_restrictions(&actual, returned)?;
+    Ok(actual)
+}
+
+fn validate_authenticode_helper_job_ui_restrictions(
+    actual: &JOBOBJECT_BASIC_UI_RESTRICTIONS,
+    returned: u32,
+) -> Result<()> {
+    anyhow::ensure!(
+        returned as usize == size_of::<JOBOBJECT_BASIC_UI_RESTRICTIONS>(),
+        "isolated Authenticode helper Job UI restrictions returned an unexpected size"
+    );
+    let required = required_authenticode_helper_job_ui_restrictions();
+    anyhow::ensure!(
+        actual.UIRestrictionsClass == required.UIRestrictionsClass,
+        "isolated Authenticode helper Job UI restriction flags mismatch"
     );
     Ok(())
 }
@@ -3908,6 +3983,64 @@ mod tests {
             .unwrap_err()
             .to_string()
             .contains("job commit limit mismatch"));
+    }
+
+    #[test]
+    fn native_authenticode_helper_job_ui_restrictions_are_queryable() {
+        let job = KillOnCloseJob::create().unwrap();
+        let actual = query_and_validate_authenticode_helper_job_ui_restrictions(job.0).unwrap();
+        assert_eq!(
+            actual.UIRestrictionsClass,
+            required_authenticode_helper_job_ui_restrictions().UIRestrictionsClass
+        );
+    }
+
+    #[test]
+    fn native_authenticode_helper_job_ui_restrictions_are_exact_and_fail_visible() {
+        let required = required_authenticode_helper_job_ui_restrictions();
+        let flags = [
+            JOB_OBJECT_UILIMIT_HANDLES,
+            JOB_OBJECT_UILIMIT_READCLIPBOARD,
+            JOB_OBJECT_UILIMIT_WRITECLIPBOARD,
+            JOB_OBJECT_UILIMIT_SYSTEMPARAMETERS,
+            JOB_OBJECT_UILIMIT_DISPLAYSETTINGS,
+            JOB_OBJECT_UILIMIT_GLOBALATOMS,
+            JOB_OBJECT_UILIMIT_DESKTOP,
+            JOB_OBJECT_UILIMIT_EXITWINDOWS,
+        ];
+        assert_eq!(
+            required.UIRestrictionsClass,
+            flags.into_iter().fold(0, |combined, flag| combined | flag)
+        );
+        let expected_size = size_of::<JOBOBJECT_BASIC_UI_RESTRICTIONS>() as u32;
+        validate_authenticode_helper_job_ui_restrictions(&required, expected_size).unwrap();
+
+        assert!(
+            validate_authenticode_helper_job_ui_restrictions(&required, expected_size + 1)
+                .unwrap_err()
+                .to_string()
+                .contains("Job UI restrictions returned an unexpected size")
+        );
+
+        for flag in flags {
+            let mut mismatched = required;
+            mismatched.UIRestrictionsClass &= !flag;
+            assert!(
+                validate_authenticode_helper_job_ui_restrictions(&mismatched, expected_size)
+                    .unwrap_err()
+                    .to_string()
+                    .contains("Job UI restriction flags mismatch")
+            );
+        }
+
+        let mut mismatched = required;
+        mismatched.UIRestrictionsClass |= 1 << 8;
+        assert!(
+            validate_authenticode_helper_job_ui_restrictions(&mismatched, expected_size)
+                .unwrap_err()
+                .to_string()
+                .contains("Job UI restriction flags mismatch")
+        );
     }
 
     #[test]

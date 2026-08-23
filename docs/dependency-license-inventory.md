@@ -542,3 +542,47 @@ lockfile SBOM, dependency/license evidence, and evidence upload, with publicatio
 skipped. Evidence-head/merged-main package evidence and complete final-artifact
 license/notice review remain pending; source-level API reuse is not final-binary
 license, notice, or copyright evidence.
+
+Evidence head `8228daf` passes CI `32650692083` and packages `32650692145`;
+merge `425e663` passes exact merged-main CI `32651609367` and packages
+`32651609388`. All six artifacts, dependency/license evidence, checksums,
+lockfile SBOM, and administrative MSI extraction pass, with publication
+skipped. Destination Cargo and Flutter lockfiles match the merge exactly.
+Complete final-artifact license, notice, and copyright review remains a
+release-host requirement.
+
+## Authenticode Job UI-Restriction API Surface
+
+Checkpoint 2211 adds no crate, package, Cargo feature, or lockfile change. It
+reuses `JobObjectBasicUIRestrictions`, `JOBOBJECT_BASIC_UI_RESTRICTIONS`,
+`SetInformationJobObject`, `QueryInformationJobObject`,
+`JOB_OBJECT_UILIMIT_HANDLES`, `JOB_OBJECT_UILIMIT_READCLIPBOARD`,
+`JOB_OBJECT_UILIMIT_WRITECLIPBOARD`, `JOB_OBJECT_UILIMIT_SYSTEMPARAMETERS`,
+`JOB_OBJECT_UILIMIT_DISPLAYSETTINGS`, `JOB_OBJECT_UILIMIT_GLOBALATOMS`,
+`JOB_OBJECT_UILIMIT_DESKTOP`, and `JOB_OBJECT_UILIMIT_EXITWINDOWS` from the
+already enabled `Win32_System_JobObjects` surface in pinned
+`windows-sys 0.61.2` (`MIT OR Apache-2.0`).
+
+No sandbox crate, UI automation package, parser, helper binary, service,
+registry dependency, network client, or test dependency is introduced. The
+verifier adds one Rust filter and the source-contract suite adds one contract.
+Cargo and Flutter lockfiles remain byte-identical. Final signed-artifact notice
+review remains pending. Job UI limits are not a private desktop or window
+station and do not change identity or ordinary filesystem/registry/network read
+access.
+
+Local focused/complete Native checks, both locked workspaces, strict
+Native/Local/Guard lint, release Local Core/Guard builds and trust smoke,
+Flutter `838/838`, source contracts `641/641`, no-malware/dependency gates, and
+exact `241/241` verification pass. Cargo and Flutter lockfiles remain exact.
+Complete final signed-artifact license, notice, and copyright review remains
+pending.
+
+Exact implementation head `024d63fb4268a2a1a8094b1cc61c0ddbe4335ff4`
+passes Desktop Packages push run `32655130037` and pull-request run
+`32655155628`. Both verify package contracts, pinned dependency/license
+evidence, Windows MSI/setup EXE, Linux DEB/tar, macOS x64/arm64 DMGs,
+administrative MSI extraction without installation, six-artifact checksums,
+lockfile SBOM, and artifact upload. The prerelease publication job is skipped in
+both runs. Final signed-artifact license, notice, and copyright review remains a
+release approval requirement.

@@ -2097,9 +2097,11 @@ enforcement, or pre-execution blocking is claimed.
 - **Implementation-head hosted evidence passed:** Exact `c744fa9` passes CI
   `32649764260` and package push/PR `32649749634`/`32649764310`, including all
   six artifacts, checksums, lockfile SBOM, and skipped publication.
-- **Integration pending:** Evidence-head checks, normal merge, merged-main
-  evidence, and guarded original-tree synchronization remain open; hosted
-  source/package success is not represented as installed proof.
+- **Integration closed:** Evidence `8228daf`, PR `#62`, merge `425e663`,
+  merged-main CI `32651609367`, packages `32651609388`, exact 12-path guarded
+  synchronization, destination runtime/source checks, exact lockfiles, and the
+  unchanged vault all pass. Package publication was skipped. This is verified
+  development/destination evidence, not installed LocalSystem proof.
 - **Residual blocker:** `TokenVirtualizationAllowed` may remain one; trusted
   helper code has no enable path, but capability is not removed. Inactive
   virtualization and disabled UIAccess do not change SID, credentials, profile, registry namespace,
@@ -2107,3 +2109,31 @@ enforcement, or pre-execution blocking is claimed.
   handles. AppContainer/LPAC, private desktop, authenticated cross-identity
   IPC, installed LocalSystem, signed-driver enforcement, and pre-execution
   blocking remain partial, blocked, or technically limited.
+
+## Checkpoint 2211 Authenticode Job UI-Restriction Status
+
+- **Verified locally:** The helper Job requests exact
+  `JOB_OBJECT_UILIMIT_HANDLES`, `JOB_OBJECT_UILIMIT_READCLIPBOARD`,
+  `JOB_OBJECT_UILIMIT_WRITECLIPBOARD`, `JOB_OBJECT_UILIMIT_SYSTEMPARAMETERS`,
+  `JOB_OBJECT_UILIMIT_DISPLAYSETTINGS`, `JOB_OBJECT_UILIMIT_GLOBALATOMS`,
+  `JOB_OBJECT_UILIMIT_DESKTOP`, and `JOB_OBJECT_UILIMIT_EXITWINDOWS`, with
+  parent query/read-back of both exact flags and exact returned structure size
+  before the suspended child is assigned and resumed.
+  Exact/adversarial UI checks pass `2/2`; release Local Core/Guard helper smoke,
+  complete Authenticode, both locked workspaces, strict lint, Flutter, and
+  corrected central `241/241` verification pass in `434.1s`. Final review found
+  and repaired missing returned-size validation, then tightened the central scope
+  to require that evidence; neither earlier pass is counted as final evidence.
+- **Fail-visible policy:** Configuration, query, exact-flag, assignment, or
+  resume failure prevents publisher trust. No reduced-flag or unrestricted
+  retry is implemented. Five malformed reports are rejected. Exact
+  implementation `024d63f` passes CI `32655155577` and package push/PR
+  `32655130037`/`32655155628`, including all six platform artifacts, checksums,
+  lockfile SBOM, administrative MSI extraction, and skipped publication.
+  Evidence-head, merge, synchronization, and destination evidence remains
+  pending.
+- **Residual blocker:** `JOB_OBJECT_UILIMIT_DESKTOP` prevents desktop creation
+  and switching; it does not create a private desktop or window station. These
+  UI limits do not change identity/profile, deny filesystem/registry/network
+  reads, constrain named kernel objects, prove installed LocalSystem behavior,
+  or provide AppContainer, signed-driver, or pre-execution enforcement.
