@@ -1366,5 +1366,50 @@ privilege, secondary catalog signatures, production signing, installed service/
 UI behavior, driver IPC, pre-execution blocking, Defender replacement, and
 production detection-rate claims remain outside this checkpoint. The completed
 local verifier/validator passes `230/230` in `504.6s`. Exact implementation-head
-CI/packages pass with publication skipped; evidence-head, merge, and
-synchronized-tree evidence remains pending.
+and evidence-head CI/packages pass with publication skipped. PR `#51` merges as
+`264e4551aa930f75d325ebd3df4522bd4f244941`; merged-main CI/packages and exact
+16-file synchronized-tree checks pass. The protected vault remains unchanged.
+
+## Checkpoint 2200 Secondary Catalog Signature Boundary
+
+A catalog file may itself contain a primary and secondary Authenticode
+signature. Accepting only its primary can withhold legitimate Microsoft trust;
+accepting a secondary by name or assumed position could instead create a trust
+bypass. The Windows `WINTRUST_SIGNATURE_SETTINGS` contract exposes requested
+index, returned verified index, and secondary count. Checkpoint 2200 applies
+that contract to the existing `WTD_CHOICE_CATALOG` verification while retaining
+the already open catalog-member handle and calculated SHA-256 evidence.
+
+The primary request uses index zero plus count retrieval. A successful primary
+must report zero or retain the initialized provider-untouched sentinel; every
+secondary must report exactly its requested index. The count must remain stable
+across calls, total signatures are capped at 16, and each state is closed before
+the next request. A definitively invalid primary is never rescued. A valid
+other-publisher primary may search bounded secondaries, but only a WinTrust-
+valid exact-Microsoft leaf with the mandatory scanned-member SHA-256 can return
+publisher trust. Errors, count drift, wrong indexes, limits, hash mismatch, and
+state/catalog cleanup failures remain diagnostic.
+
+The controlled evidence is deliberately split. Deterministic benign unit data
+proves aggregation and failure semantics. A read-only installed
+WindowsPowerShell member proves real catalog-provider compatibility and hash
+binding, but its primary path does not prove positive acceptance of a real
+secondary catalog signature. No controlled benign multi-signed system catalog
+is available in the repository or guaranteed on this host, so that positive
+route remains partial. The code remains fail-closed at that boundary; no trust
+is synthesized from the unit fixture.
+
+Windows trust stores, cryptographic providers, catalog registration, protected
+catalog state, and WinTrust selected-signature semantics remain trusted.
+Memory-mapped and post-verdict mutation, same-token helper privilege,
+production signing, installed service/UI behavior, signed-driver IPC,
+pre-execution blocking, Defender replacement, and production detection-rate
+claims remain outside this checkpoint. No candidate fixture is executed.
+
+Local evidence passes the secondary-catalog filter `2/2`, the complete
+Authenticode module `24/24`, Native Engine `458 + 6`, both locked workspace
+variants, release helper smoke on Local Core and Guard, Flutter `838/838`,
+source contracts `628/628`, and all strict safety/dependency gates. The
+definitive verifier and independent validator pass `231/231` in `424.1s`; stale
+`230`-step evidence is rejected. This verifies bounded fail-closed selection and
+primary catalog compatibility, not a positive real secondary signature.

@@ -13,6 +13,72 @@ Lead-engineer product-hardening pass across the Avorax repository. Goal is to mo
 - The bundled native ML model is treated as development-only unless release metadata and gates prove production readiness.
 - MSI/EXE installers are first-install/repair/recovery/offline paths. Normal in-app updates should use verified `.aup` packages.
 
+## 2026-08-23 continuation checkpoint 2199 closure
+
+- Evidence head `b000b8dfc9e4e7427380ddbe80dba958d9d16e95` passed
+  Avorax CI `32602128535` and Desktop Packages `32602128573`; Windows,
+  Linux, macOS arm64/x64, consolidation/checksums, and package contracts passed
+  while publication was skipped.
+- PR `#51` merged with exact-head locking as
+  `264e4551aa930f75d325ebd3df4522bd4f244941`. Merged-main CI
+  `32602820696` and packages `32602820702` passed with publication skipped.
+- All 16 original-tree preconditions matched checkpoint 2198 or valid absence.
+  Exactly those files synchronized to `C:\Users\Brent\Documents\Avorax-main`;
+  every normalized Git blob and raw source/destination SHA-256 matched.
+  Destination source contracts `627/627`, identity `4/4`, helper `4/4`,
+  rustfmt, strict Native/Local/Guard Clippy, locked release builds, and the
+  two-host benign release smoke passed.
+- The protected vault remained exactly 16,072 files, zero directories,
+  4,522,733 bytes, 5,357 each `.avoraxq`/`.json`/`.auth`, one metadata key,
+  and zero pending. No package was installed, released, or published.
+
+## 2026-08-23 continuation checkpoint 2200 scripting
+
+- Selected bounded secondary catalog Authenticode selection as the next trust
+  hardening boundary. The official Windows structure contract exposes exact
+  signature index, verified index, and secondary count through
+  `WINTRUST_SIGNATURE_SETTINGS`; the existing catalog member structure keeps
+  the same open member handle and calculated SHA-256 binding.
+- Catalog candidates now script primary index zero plus bounded secondary
+  enumeration, exact/provider-untouched index rules, stable secondary count,
+  state close/reset between signatures, a 16-total cap, and fail-visible
+  errors. An invalid primary is never rescued by a secondary.
+- Added benign aggregation and installed WindowsPowerShell primary-catalog/hash
+  tests, a dedicated verifier step, exact 231-step validation, source contracts,
+  and audit/dependency documentation. A controlled benign catalog with a known
+  valid Microsoft secondary is not available, so that positive route remains
+  explicitly partial rather than being claimed from synthetic logic.
+- Per user-requested sequence, the complete implementation/test/verifier/docs
+  batch was scripted before running any checkpoint-2200 test.
+
+## 2026-08-23 continuation checkpoint 2200 local verification
+
+- Focused secondary catalog, existing catalog, secondary embedded, helper, and
+  file-identity filters passed `2/2`, `3/3`, `3/3`, `4/4`, and `4/4`; the full
+  Authenticode module passed `24/24`, Native Engine passed `458 + 6`, and both
+  locked workspace variants passed.
+- The first parallel workspace run exposed test contamination from the
+  cancellation regression's process-wide `AVORAX_DATA_DIR`. That case now uses
+  the existing isolated child-test harness. Focused cancellation/EICAR reruns
+  and both complete workspace reruns passed; production behavior was unchanged.
+- Release Local Core/Guard builds and two-host Authenticode smoke passed.
+  Flutter analyze and `838/838`, Python source contracts `628/628`, rustfmt,
+  strict Native/Local/Guard Clippy, branding, product-copy, no-malware,
+  dependency, package-source, and unchanged-lockfile gates passed.
+- The first 231-step verifier run exposed that the validator checked an
+  unassigned `$technicalLimitText`; it failed visibly after all substantive
+  steps. The validator assignment and source contract were fixed. A clean rerun
+  plus independent validation passed `231/231` in `424.1s`; stale checkpoint-
+  2199 evidence with 230 steps was rejected as expected.
+- The protected vault remained exactly 16,072 files, zero directories,
+  4,522,733 bytes, 5,357 each `.avoraxq`/`.json`/`.auth`, one metadata key, and
+  zero pending. Hosted, merge, and original-tree evidence remain pending.
+- Implementation head `882f24d45c13b60b952cfacb94d3eee2563fb0f8`
+  passed Avorax CI `32605433795` and Desktop Packages push/PR runs
+  `32605424354`/`32605433783`. Every platform package, package contracts,
+  six-artifact consolidation, checksums, and lockfile SBOM passed; publication
+  was skipped. Evidence-head, merge, and synchronization remain pending.
+
 ## 2026-08-22 continuation checkpoint 2198 scripting
 
 - Selected a bounded release-process isolation boundary for native WinTrust

@@ -4,6 +4,31 @@
 
 Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-install, repair, recovery, offline, and manual-install paths only. Normal app updates target signed `.aup` packages applied by Avorax Update Service.
 
+- Checkpoint 2200 secondary catalog Authenticode selection is implemented and
+  locally verified. Each catalog candidate now requests
+  primary index zero and the returned secondary count, requires exact or
+  provider-untouched primary index evidence and exact secondary indexes, caps
+  the candidate at 16 total signatures, checks count stability, and closes
+  WinTrust state before each next signature. Invalid primary signatures are
+  not rescued. Unit/adversarial logic, installed WindowsPowerShell primary-
+  catalog/hash binding, a mandatory verifier step, exact 231-step validator,
+  source contracts, and audit docs are verified. Positive acceptance of an
+  actual secondary catalog signature remains partial because no controlled
+  benign multi-signed catalog fixture is available. Focused secondary catalog,
+  catalog, secondary embedded, helper, and identity filters pass `2/2`, `3/3`,
+  `3/3`, `4/4`, and `4/4`; Authenticode passes `24/24`, Native Engine passes
+  `458 + 6`, both locked workspace variants and release host smoke pass,
+  Flutter passes `838/838`, and source contracts pass `628/628`. The definitive
+  verifier and validator pass exactly `231/231` in `424.1s`; stale `230`-step
+  evidence is rejected. A process-wide test-environment race and a validator
+  variable-wiring defect found during verification were fixed and regression-
+  covered. Strict lint, format, security, dependency, and lockfile gates pass,
+  and the protected vault is unchanged. Implementation head
+  `882f24d45c13b60b952cfacb94d3eee2563fb0f8` passes CI `32605433795`
+  and Desktop Packages push/PR `32605424354`/`32605433783`, including all six
+  platform artifacts, consolidation, checksums, and lockfile SBOM; publication
+  is skipped. Evidence-head, merge, merged-main, and original-tree evidence
+  remain pending.
 - Checkpoint 2199 mandatory hash-bound Authenticode and stable handle identity is
   implemented and locally verified. Every Microsoft publisher-trust
   request now requires the scanner's exact 64-hex SHA-256; the unused path-only
@@ -23,7 +48,12 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
   passes Avorax CI `32601267008` and Desktop Packages push/PR
   `32601253745`/`32601266989`, including all six platform artifacts,
   consolidation/checksums, and lockfile SBOM with publication skipped. Draft
-  PR `#51` is open; evidence-head checks, merge, and sync remain pending.
+  Evidence head `b000b8dfc9e4e7427380ddbe80dba958d9d16e95` passes CI
+  `32602128535` and packages `32602128573`. PR `#51` merged as
+  `264e4551aa930f75d325ebd3df4522bd4f244941`; merged-main CI
+  `32602820696` and packages `32602820702` pass with publication skipped.
+  All 16 explicit files synchronized after exact preconditions; focused
+  destination checks and post-sync hashes pass, and the vault is unchanged.
   Unsupported file-identity queries fail conservatively. Writable mappings,
   post-verdict mutation, same-token helper privilege, secondary catalog
   signatures, installed E2E, and pre-execution protection remain limited.
@@ -112,12 +142,19 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
 
 ## Current Commit
 
+- Checkpoint 2200 implementation head
+  `882f24d45c13b60b952cfacb94d3eee2563fb0f8` is locally and hosted-verified on
+  `agent/checkpoint-2200-secondary-catalog-authenticode`, based on merged main
+  `264e4551aa930f75d325ebd3df4522bd4f244941`. The definitive verifier and
+  validator pass `231/231`; implementation-head CI/packages pass with
+  publication skipped. Evidence-head and merge evidence remain pending.
 - Checkpoint 2199 implementation head
   `d619c0a5ddb627e9d940d12478d5db9589ee5679` is locally verified on
   `agent/checkpoint-2199-authenticode-file-identity`, based on merged main
   `ab6bd8908d679a60515bac0cf3ceb56f3b6f8a45`. The definitive local verifier
-  and validator pass `230/230`; exact implementation-head CI and package runs
-  pass with publication skipped. Evidence-head/merge/sync remain pending.
+  and validator pass `230/230`; implementation/evidence and merged-main CI and
+  package runs pass with publication skipped. PR `#51` merged as `264e4551` and
+  the exact 16-file original-tree sync plus focused checks pass.
 - Checkpoint 2198 implementation/evidence heads
   `10668f17e084187014cc4bfa34a6191c47493d7c` and
   `e14e6dd9d80e77823c1c1db8d968c5f86f598ce0` pass the definitive local
