@@ -2076,3 +2076,31 @@ enforcement, or pre-execution blocking is claimed.
   because an agent-created Python bytecode cache contained a compile-time-
   joined marker; the contract now runtime-joins fragments. The final `239/239`
   retry and no-malware gate pass. Neither failed report is success evidence.
+
+## Checkpoint 2210 Authenticode Token-Flag Status
+
+- **Verified locally:** Canonical fixed-size
+  `TokenVirtualizationAllowed` plus exact-zero `TokenVirtualizationEnabled` and
+  `TokenUIAccess` parent/child read-back, pure rejection cases, a real isolated child, a mandatory
+  verifier step, independent-validator checks, and documentation pass focused,
+  adjacent, complete Authenticode, strict lint, locked workspace, release-host,
+  Flutter, source-contract, no-malware, and dependency checks. The definitive
+  report passes `240/240` in `458s`; five malformed reports are rejected.
+- **Failed first design retained:** The first compiled child returned
+  `TokenVirtualizationAllowed=1` and correctly failed the original all-zero
+  policy. Microsoft defines that field as capability, not active state; the
+  result is not success evidence and the policy now accepts only canonical
+  capability values while active virtualization/UIAccess remain forbidden.
+- **Fail-closed intent:** Query failure, unexpected size, noncanonical
+  capability, enabled virtualization/UIAccess, or child-state drift must prevent
+  publisher trust. No setter, extra privilege, or weaker retry exists.
+- **Integration pending:** Exact-head hosted CI/package/SBOM evidence, normal
+  merge, merged-main evidence, and guarded original-tree synchronization remain
+  open; local success is not represented as hosted or installed proof.
+- **Residual blocker:** `TokenVirtualizationAllowed` may remain one; trusted
+  helper code has no enable path, but capability is not removed. Inactive
+  virtualization and disabled UIAccess do not change SID, credentials, profile, registry namespace,
+  desktop/window station, ordinary reads, or intended inherited standard
+  handles. AppContainer/LPAC, private desktop, authenticated cross-identity
+  IPC, installed LocalSystem, signed-driver enforcement, and pre-execution
+  blocking remain partial, blocked, or technically limited.

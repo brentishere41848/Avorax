@@ -1814,3 +1814,39 @@ checks, and an unchanged protected-vault invariant. This closes the mandatory-
 policy and verifier-binary integration evidence only; identity, read, profile,
 registry, desktop, AppContainer, installed LocalSystem, signed-driver,
 pre-execution, and production-accuracy limitations remain unchanged.
+
+## Checkpoint 2210 Token Virtualization and UIAccess Boundary
+
+**Threat:** A helper token that permits or enables legacy virtualization can
+observe redirected/merged per-user registry state or redirect eligible writes,
+making actual behavior differ from the documented low-integrity boundary. A
+token with UIAccess can interact across UI privilege-isolation boundaries that
+ordinary desktop processes cannot cross.
+
+**Redesigned control:** The prepared primary token and actual child token must
+return a canonical Boolean for `TokenVirtualizationAllowed` and exact zero for
+`TokenVirtualizationEnabled` and `TokenUIAccess` through fixed-size
+`GetTokenInformation` queries before launch or stdin. Any noncanonical,
+enabled, query, size, or inherited-state mismatch is fail-visible and cannot
+become trust. There is no capability setter, privilege addition, or weaker
+launch retry.
+
+**Evidence state:** Pure cases reject enabled state and malformed non-Boolean
+capability evidence; a benign isolated child validates real process state. The
+first compiled child exposed `TokenVirtualizationAllowed=1`, so the original
+all-zero capability policy failed and was corrected; it is not success. The
+repaired filter passes `2/2`, all adjacent filters and complete Authenticode
+pass, source contracts pass `640/640`, and strict lint, locked workspaces,
+release-host smoke, Flutter, no-malware, and dependency gates pass. The
+definitive verifier and independent validator pass `240/240` in `458s`; five
+malformed reports are rejected. Exact-head hosted and installed evidence remain
+pending.
+
+**Residual risk:** `TokenVirtualizationAllowed` may remain one because it is an
+inherited capability. Trusted helper code has no enable path, but the
+capability is not removed. The flags do not isolate identity, profile, registry
+namespace, desktop/window station, ordinary reads, inherited standard handles,
+already mapped code/data, or post-verdict mutation. They are not AppContainer,
+LPAC, private-desktop isolation, authenticated cross-user IPC, installed
+LocalSystem evidence, kernel interception, driver enforcement, or pre-execution
+blocking.

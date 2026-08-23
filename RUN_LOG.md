@@ -8393,3 +8393,43 @@ Updates page showed:
   directories, 4,522,733 bytes, 5,357 each `.avoraxq`/`.json`/`.auth`, one
   `.metadata_auth_key`, and zero pending. Checkpoint 2209 is closed; the full
   antivirus goal remains active.
+
+## Checkpoint 2210 Authenticode Token Virtualization/UIAccess Script Batch
+
+- The full implementation, benign test, central-verifier, independent-validator,
+  source-contract, and documentation batch was scripted before test execution,
+  following the requested checkpoint sequence.
+- Native primary-token validation now queries exact fixed-size
+  `TokenVirtualizationAllowed`, `TokenVirtualizationEnabled`, and
+  `TokenUIAccess` values. Capability must be a canonical Boolean; active
+  virtualization and UIAccess must be zero. The existing shared validator
+  covers the prepared parent token before `CreateProcessAsUserW` and the actual
+  child before stdin/request parsing.
+- Pure adversarial cases reject enabled state and a non-Boolean capability. A
+  dedicated isolated benign child provides real token read-back without
+  executing any candidate fixture.
+- The definitive verifier now contains a mandatory virtualization/UIAccess
+  filter and its independent validator requires exactly `240` steps plus exact
+  verified/technical-limit scope. The Python source-contract suite gains one
+  checkpoint contract and now contains `640` passing tests.
+- The repaired focused filter passes `2/2`; all six adjacent isolation/launch
+  filters pass `2/2` each. Complete Authenticode passes `41` with `8` intentional
+  child-fixture ignores, and full Native passes `477` with `8` ignores plus
+  signature compiler `6/6`.
+- Strict Native/Local/Guard Clippy, release Local Core/Guard builds, benign
+  two-host release trust smoke, locked Rust workspaces (`1,524` and `1,525`
+  passed with `8` ignored), Flutter analyze and `838/838`, source contracts
+  `640/640`, and no-malware/dependency gates pass. Lockfiles are unchanged.
+- The definitive verifier and separate validator pass exactly `240/240` in
+  `458s` (`2026-08-23T15:35:08.5267528Z` to
+  `2026-08-23T15:42:46.5568341Z`). Five controlled malformed reports are
+  rejected. Hosted exact-head evidence, merge, and synchronization remain
+  pending.
+- The first compiled child attempt failed visibly because Windows returned
+  `TokenVirtualizationAllowed=1`; that capability-only zero requirement was
+  corrected before the passing evidence and is not success evidence. Inactive virtualization and disabled
+  UIAccess do not remove the capability or isolate SID, profile, registry namespace,
+  desktop/window station, ordinary reads, or inherited standard handles.
+- A final read-only audit preserves the protected vault at 16,072 files, zero
+  directories, 4,522,733 bytes, 5,357 each `.avoraxq`/`.json`/`.auth`, one
+  `.metadata_auth_key`, and zero pending.

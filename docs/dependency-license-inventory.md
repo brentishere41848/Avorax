@@ -517,3 +517,25 @@ checksums, lockfile CycloneDX SBOM, and evidence upload; beta publication is
 skipped. Original-tree synchronization and destination locked tests preserve
 the unchanged Cargo/Flutter lockfiles. Complete final-artifact license, notice,
 copyright, and binary-resolution review remains a release-host requirement.
+
+## Authenticode Token Virtualization/UIAccess API Surface
+
+Checkpoint 2210 adds no crate, package, Cargo feature, or lockfile change. It
+reuses `TokenVirtualizationAllowed`, `TokenVirtualizationEnabled`,
+`TokenUIAccess`, and fixed-size `GetTokenInformation` from the already enabled
+`Win32_Security` surface in pinned `windows-sys 0.61.2`. The reviewed crate
+license remains `MIT OR Apache-2.0`.
+
+No token setter, sandbox crate, UI automation package, parser, helper binary,
+service, registry dependency, network client, or test dependency is introduced.
+The central verifier gains one Rust test invocation and the Python source suite
+gains one contract only. Cargo and Flutter lockfiles are intended to remain
+byte-identical.
+
+Local formatting, focused Windows execution, both locked workspaces, strict
+Native/Local/Guard lint, release builds/two-host trust smoke, source contracts
+`640/640`, dependency/no-malware gates, Flutter `838/838`, and exact `240/240`
+verification pass. Cargo and Flutter lockfiles are unchanged. Exact-head hosted
+package/SBOM evidence and final-artifact license/notice review remain pending;
+source-level API reuse is not final-binary license, notice, or copyright
+evidence.
