@@ -94,6 +94,19 @@ exact-head CI/package evidence, PR/merge, merged-main evidence, and safe
 original-tree synchronization remain pending. No release, publication,
 installation, service/driver start, Defender change, or vault mutation occurred.
 
+## Hosted Implementation-Head Evidence
+
+Implementation head `710e38ad78616b09736eafae14fd92f65b8b8b5c` passes
+exact-head Avorax CI `32616072172`. Desktop Packages push run `32616060448` and
+PR run `32616072173` pass package contracts, Windows x64 MSI/EXE, Linux x64
+DEB/tar, macOS arm64/x64 DMG, six-artifact consolidation, checksums, and
+lockfile SBOM evidence. Both publication jobs are skipped. No artifact was
+installed, released, or published.
+
+The documentation evidence commit, its exact-head CI/package checks, normal PR
+merge, merged-main evidence, and preconditioned original-tree synchronization
+remain pending.
+
 ## Residual Limits
 
 This is thread privilege reduction, not a sandbox. The helper process retains

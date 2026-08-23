@@ -318,6 +318,9 @@ or sandbox dependency is introduced.
 Source contracts `632/632`, exact dependency resolution, unchanged Cargo and
 Flutter lockfiles, strict Native/Local/Guard lint, both complete locked
 workspaces, the dependency gate, and package-source contracts pass locally.
-The definitive verifier passes `233/233`. Hosted package SBOM generation and
-final-artifact license review remain pending; source-level API reuse is not
-final-binary license, notice, or copyright evidence.
+The definitive verifier passes `233/233`. Implementation-head package push/PR
+runs `32616060448`/`32616072173` pass six-artifact consolidation, checksums,
+lockfile SBOM generation, and package evidence on Windows, Linux, and macOS.
+Evidence-head and merged-main final-artifact review remain pending;
+source-level API reuse is not final-binary license, notice, or copyright
+evidence.

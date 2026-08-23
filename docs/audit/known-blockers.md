@@ -1865,7 +1865,9 @@ enforcement, or pre-execution blocking is claimed.
   become trust. Focused real-token and synthetic sensitive-privilege tests pass
   `2/2`, Authenticode passes `27/27`, Native passes `462 + 6`, Flutter passes
   `838/838`, source contracts pass `632/632`, and the definitive verifier plus
-  validator pass `233/233` in `473.5s`. Hosted exact-head evidence is pending.
+  validator pass `233/233` in `473.5s`. Implementation head `710e38a` passes
+  Avorax CI `32616072172` and package push/PR runs
+  `32616060448`/`32616072173`; evidence-head and merge checks remain pending.
 - **Still partial:** The helper process retains the parent process token, SID,
   integrity level, desktop, environment, and ACL access. Same-process native
   code can technically revert thread impersonation. This is not AppContainer,

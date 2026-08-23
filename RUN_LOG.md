@@ -299,6 +299,22 @@ Lead-engineer product-hardening pass across the Avorax repository. Goal is to mo
   installation, service/driver start, Defender change, or vault mutation
   occurred.
 
+## 2026-08-23 continuation checkpoint 2203 implementation-head hosting
+
+- Committed implementation, adversarial regressions, verifier/validator,
+  source contracts, and audit evidence as
+  `710e38ad78616b09736eafae14fd92f65b8b8b5c`, pushed only branch
+  `agent/checkpoint-2203-authenticode-restricted-thread`, and opened draft PR
+  `#55`.
+- Exact implementation-head Avorax CI `32616072172` passed Rust/Clippy, Flutter,
+  security/protection/performance, branding/copy, and Unix quarantine permission
+  jobs. Desktop Packages push `32616060448` and PR `32616072173` passed package
+  contracts, Windows x64 MSI/EXE, Linux x64 DEB/tar, macOS arm64/x64 DMG,
+  six-artifact consolidation, checksums, and lockfile SBOM evidence.
+- Both publication jobs were skipped. No artifact was installed, released, or
+  published. Evidence-head checks, normal merge, merged-main evidence, and safe
+  original-tree synchronization remain pending.
+
 ## 2026-08-22 continuation checkpoint 2198 scripting
 
 - Selected a bounded release-process isolation boundary for native WinTrust

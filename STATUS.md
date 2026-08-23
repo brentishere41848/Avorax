@@ -20,8 +20,11 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
   This is thread privilege reduction, not an
   AppContainer or restricted-process sandbox; the process retains its parent
   token/SID/integrity/desktop and same-process code can technically revert.
-  Hosted exact-head CI/packages, merge, and original-tree synchronization remain
-  pending.
+  Implementation head `710e38ad78616b09736eafae14fd92f65b8b8b5c` passes
+  Avorax CI `32616072172` and Desktop Packages push/PR runs
+  `32616060448`/`32616072173`, including all six platform artifacts,
+  checksums, and lockfile SBOM with publication skipped. Evidence-head checks,
+  merge, and original-tree synchronization remain pending.
 - Checkpoint 2202 is now fully hosted, merged, and synchronized. Evidence head
   `dee97b4` passed CI/packages; PR `#54` merged as `4e24e47`; merged-main CI
   `32613299479` and packages `32613299509` passed with publication skipped.
