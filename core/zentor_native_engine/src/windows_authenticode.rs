@@ -70,15 +70,16 @@ use windows_sys::Win32::System::Console::{
     GetStdHandle, STD_ERROR_HANDLE, STD_INPUT_HANDLE, STD_OUTPUT_HANDLE,
 };
 use windows_sys::Win32::System::JobObjects::{
-    AssignProcessToJobObject, CreateJobObjectW, JobObjectBasicUIRestrictions,
-    JobObjectExtendedLimitInformation, QueryInformationJobObject, SetInformationJobObject,
-    JOBOBJECT_BASIC_UI_RESTRICTIONS, JOBOBJECT_EXTENDED_LIMIT_INFORMATION,
-    JOB_OBJECT_LIMIT_ACTIVE_PROCESS, JOB_OBJECT_LIMIT_DIE_ON_UNHANDLED_EXCEPTION,
-    JOB_OBJECT_LIMIT_JOB_MEMORY, JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE,
-    JOB_OBJECT_LIMIT_PROCESS_MEMORY, JOB_OBJECT_LIMIT_PROCESS_TIME, JOB_OBJECT_UILIMIT_DESKTOP,
-    JOB_OBJECT_UILIMIT_DISPLAYSETTINGS, JOB_OBJECT_UILIMIT_EXITWINDOWS,
-    JOB_OBJECT_UILIMIT_GLOBALATOMS, JOB_OBJECT_UILIMIT_HANDLES, JOB_OBJECT_UILIMIT_READCLIPBOARD,
-    JOB_OBJECT_UILIMIT_SYSTEMPARAMETERS, JOB_OBJECT_UILIMIT_WRITECLIPBOARD,
+    AssignProcessToJobObject, CreateJobObjectW, IsProcessInJob, JobObjectBasicProcessIdList,
+    JobObjectBasicUIRestrictions, JobObjectExtendedLimitInformation, QueryInformationJobObject,
+    SetInformationJobObject, JOBOBJECT_BASIC_PROCESS_ID_LIST, JOBOBJECT_BASIC_UI_RESTRICTIONS,
+    JOBOBJECT_EXTENDED_LIMIT_INFORMATION, JOB_OBJECT_LIMIT_ACTIVE_PROCESS,
+    JOB_OBJECT_LIMIT_DIE_ON_UNHANDLED_EXCEPTION, JOB_OBJECT_LIMIT_JOB_MEMORY,
+    JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE, JOB_OBJECT_LIMIT_PROCESS_MEMORY,
+    JOB_OBJECT_LIMIT_PROCESS_TIME, JOB_OBJECT_UILIMIT_DESKTOP, JOB_OBJECT_UILIMIT_DISPLAYSETTINGS,
+    JOB_OBJECT_UILIMIT_EXITWINDOWS, JOB_OBJECT_UILIMIT_GLOBALATOMS, JOB_OBJECT_UILIMIT_HANDLES,
+    JOB_OBJECT_UILIMIT_READCLIPBOARD, JOB_OBJECT_UILIMIT_SYSTEMPARAMETERS,
+    JOB_OBJECT_UILIMIT_WRITECLIPBOARD,
 };
 use windows_sys::Win32::System::Pipes::{CreatePipe, GetNamedPipeInfo, PIPE_SERVER_END};
 use windows_sys::Win32::System::StationsAndDesktops::{
@@ -91,9 +92,10 @@ use windows_sys::Win32::System::SystemServices::{
     SE_GROUP_MANDATORY,
 };
 use windows_sys::Win32::System::Threading::{
-    CreateProcessAsUserW, DeleteProcThreadAttributeList, GetCurrentProcess, GetCurrentThread,
-    GetCurrentThreadId, GetExitCodeProcess, GetProcessMitigationPolicy, GetStartupInfoW,
-    InitializeProcThreadAttributeList, OpenProcessToken, OpenThreadToken, ProcessDynamicCodePolicy,
+    CreateProcessAsUserW, DeleteProcThreadAttributeList, GetCurrentProcess, GetCurrentProcessId,
+    GetCurrentThread, GetCurrentThreadId, GetExitCodeProcess, GetProcessId,
+    GetProcessMitigationPolicy, GetStartupInfoW, InitializeProcThreadAttributeList,
+    OpenProcessToken, OpenThreadToken, ProcessDynamicCodePolicy,
     ProcessExtensionPointDisablePolicy, ProcessImageLoadPolicy, ProcessSignaturePolicy,
     ProcessStrictHandleCheckPolicy, ResumeThread, SetThreadToken, TerminateProcess,
     UpdateProcThreadAttribute, WaitForSingleObject, CREATE_NO_WINDOW, CREATE_SUSPENDED,
@@ -1620,6 +1622,17 @@ fn validate_enabled_authenticode_privileges(
 
 struct KillOnCloseJob(HANDLE);
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct AuthenticodeJobMembershipEvidence {
+    returned_bytes: u32,
+    assigned_processes: u32,
+    listed_processes: u32,
+    listed_process_id: usize,
+    process_information_id: u32,
+    process_handle_id: u32,
+    exact_job_membership: i32,
+}
+
 impl KillOnCloseJob {
     fn create() -> Result<Self> {
         let handle = unsafe { CreateJobObjectW(null_mut(), null_mut()) };
@@ -1677,6 +1690,116 @@ impl KillOnCloseJob {
         );
         Ok(())
     }
+
+    fn query_and_validate_member(
+        &self,
+        process: HANDLE,
+        process_information_id: u32,
+    ) -> Result<AuthenticodeJobMembershipEvidence> {
+        anyhow::ensure!(
+            process_information_id != 0,
+            "AuthentiCode helper PROCESS_INFORMATION contains a zero process identifier"
+        );
+        let process_handle_id = unsafe { GetProcessId(process) };
+        anyhow::ensure!(
+            process_handle_id != 0,
+            "unable to query the Authenticode helper process-handle identifier: {}",
+            std::io::Error::last_os_error()
+        );
+        let mut exact_job_membership = 0;
+        anyhow::ensure!(
+            unsafe { IsProcessInJob(process, self.0, &mut exact_job_membership) } != 0,
+            "unable to query exact Authenticode helper Job membership: {}",
+            std::io::Error::last_os_error()
+        );
+        let mut actual = JOBOBJECT_BASIC_PROCESS_ID_LIST::default();
+        let mut returned_bytes = 0u32;
+        anyhow::ensure!(
+            unsafe {
+                QueryInformationJobObject(
+                    self.0,
+                    JobObjectBasicProcessIdList,
+                    (&mut actual as *mut JOBOBJECT_BASIC_PROCESS_ID_LIST).cast::<c_void>(),
+                    size_of::<JOBOBJECT_BASIC_PROCESS_ID_LIST>() as u32,
+                    &mut returned_bytes,
+                )
+            } != 0,
+            "unable to query isolated Authenticode helper Job process membership: {}",
+            std::io::Error::last_os_error()
+        );
+        let evidence = AuthenticodeJobMembershipEvidence {
+            returned_bytes,
+            assigned_processes: actual.NumberOfAssignedProcesses,
+            listed_processes: actual.NumberOfProcessIdsInList,
+            listed_process_id: actual.ProcessIdList[0],
+            process_information_id,
+            process_handle_id,
+            exact_job_membership,
+        };
+        validate_authenticode_helper_job_membership(evidence)?;
+        Ok(evidence)
+    }
+}
+
+fn validate_authenticode_helper_job_membership(
+    evidence: AuthenticodeJobMembershipEvidence,
+) -> Result<()> {
+    anyhow::ensure!(
+        evidence.returned_bytes as usize == size_of::<JOBOBJECT_BASIC_PROCESS_ID_LIST>(),
+        "isolated Authenticode helper Job process membership returned an unexpected size"
+    );
+    anyhow::ensure!(
+        evidence.process_information_id != 0,
+        "AuthentiCode helper PROCESS_INFORMATION contains a zero process identifier"
+    );
+    anyhow::ensure!(
+        evidence.process_handle_id != 0,
+        "AuthentiCode helper process handle contains a zero process identifier"
+    );
+    anyhow::ensure!(
+        evidence.process_handle_id == evidence.process_information_id,
+        "AuthentiCode helper process-handle identifier does not match PROCESS_INFORMATION"
+    );
+    anyhow::ensure!(
+        evidence.exact_job_membership != 0,
+        "AuthentiCode helper is not a member of the exact parent-created Job"
+    );
+    anyhow::ensure!(
+        evidence.assigned_processes == 1,
+        "isolated Authenticode helper Job does not contain exactly one assigned process"
+    );
+    anyhow::ensure!(
+        evidence.listed_processes == 1,
+        "isolated Authenticode helper Job did not return exactly one process identifier"
+    );
+    anyhow::ensure!(
+        evidence.listed_process_id == evidence.process_information_id as usize,
+        "isolated Authenticode helper Job returned an unexpected process identifier"
+    );
+    Ok(())
+}
+
+fn validate_current_process_authenticode_job_membership() -> Result<()> {
+    let current_process_id = unsafe { GetCurrentProcessId() };
+    anyhow::ensure!(
+        current_process_id != 0,
+        "AuthentiCode helper current process identifier is zero"
+    );
+    let mut in_job = 0;
+    anyhow::ensure!(
+        unsafe { IsProcessInJob(GetCurrentProcess(), null_mut(), &mut in_job) } != 0,
+        "unable to query current Authenticode helper Job membership: {}",
+        std::io::Error::last_os_error()
+    );
+    validate_authenticode_child_job_membership(in_job)
+}
+
+fn validate_authenticode_child_job_membership(in_job: i32) -> Result<()> {
+    anyhow::ensure!(
+        in_job != 0,
+        "AuthentiCode helper is not running under a Windows Job"
+    );
+    Ok(())
 }
 
 fn required_authenticode_helper_job_limits() -> JOBOBJECT_EXTENDED_LIMIT_INFORMATION {
@@ -1885,6 +2008,7 @@ fn verify_prepared_microsoft_signature(prepared: PreparedAuthenticodeVerificatio
 }
 
 pub(crate) fn run_authenticode_helper_stdio() -> Result<()> {
+    validate_current_process_authenticode_job_membership()?;
     validate_current_process_authenticode_standard_handles()?;
     validate_current_process_authenticode_private_desktop()?;
     validate_current_process_authenticode_primary_token()?;
@@ -2220,6 +2344,13 @@ fn spawn_restricted_authenticode_process(
     drop(stderr.child);
 
     if let Err(error) = job.assign(process.0) {
+        let termination = terminate_and_reap_suspended_authenticode_process(&process);
+        anyhow::bail!(
+            "{error:#}; restricted suspended-process cleanup: {}",
+            helper_result_summary(termination)
+        );
+    }
+    if let Err(error) = job.query_and_validate_member(process.0, process_info.dwProcessId) {
         let termination = terminate_and_reap_suspended_authenticode_process(&process);
         anyhow::bail!(
             "{error:#}; restricted suspended-process cleanup: {}",
@@ -4416,6 +4547,109 @@ mod tests {
         assert!(String::from_utf8(output.stdout)
             .unwrap()
             .contains("AVORAX_STANDARD_HANDLE_BINDING_OK"));
+    }
+
+    #[test]
+    fn native_authenticode_helper_job_membership_is_exact_and_child_verified() {
+        let application = std::env::current_exe().unwrap();
+        let arguments = [
+            "--ignored",
+            "--exact",
+            "windows_authenticode::tests::authenticode_job_membership_child_fixture",
+            "--nocapture",
+            "--test-threads=1",
+        ];
+        let output = run_bounded_authenticode_helper(
+            &application,
+            &arguments,
+            Vec::new(),
+            Duration::from_secs(5),
+        )
+        .unwrap();
+        assert!(
+            output.status.success(),
+            "Job-membership child failed with {:?}; stdout: {}; stderr: {}",
+            output.status,
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
+        assert!(output.stderr.is_empty());
+        assert!(String::from_utf8(output.stdout)
+            .unwrap()
+            .contains("AVORAX_JOB_MEMBERSHIP_OK"));
+    }
+
+    #[test]
+    #[ignore = "isolated child fixture invoked by the Job-membership regression"]
+    fn authenticode_job_membership_child_fixture() {
+        validate_current_process_authenticode_job_membership().unwrap();
+        println!("AVORAX_JOB_MEMBERSHIP_OK");
+    }
+
+    #[test]
+    fn native_authenticode_helper_job_membership_contract_is_fail_visible() {
+        let valid = AuthenticodeJobMembershipEvidence {
+            returned_bytes: size_of::<JOBOBJECT_BASIC_PROCESS_ID_LIST>() as u32,
+            assigned_processes: 1,
+            listed_processes: 1,
+            listed_process_id: 4_242,
+            process_information_id: 4_242,
+            process_handle_id: 4_242,
+            exact_job_membership: 1,
+        };
+        validate_authenticode_helper_job_membership(valid).unwrap();
+        validate_authenticode_child_job_membership(1).unwrap();
+
+        let invalid = [
+            AuthenticodeJobMembershipEvidence {
+                returned_bytes: valid.returned_bytes + 1,
+                ..valid
+            },
+            AuthenticodeJobMembershipEvidence {
+                assigned_processes: 0,
+                ..valid
+            },
+            AuthenticodeJobMembershipEvidence {
+                assigned_processes: 2,
+                ..valid
+            },
+            AuthenticodeJobMembershipEvidence {
+                listed_processes: 0,
+                ..valid
+            },
+            AuthenticodeJobMembershipEvidence {
+                listed_processes: 2,
+                ..valid
+            },
+            AuthenticodeJobMembershipEvidence {
+                listed_process_id: 0,
+                ..valid
+            },
+            AuthenticodeJobMembershipEvidence {
+                listed_process_id: 4_243,
+                ..valid
+            },
+            AuthenticodeJobMembershipEvidence {
+                process_information_id: 0,
+                ..valid
+            },
+            AuthenticodeJobMembershipEvidence {
+                process_handle_id: 0,
+                ..valid
+            },
+            AuthenticodeJobMembershipEvidence {
+                process_handle_id: 4_243,
+                ..valid
+            },
+            AuthenticodeJobMembershipEvidence {
+                exact_job_membership: 0,
+                ..valid
+            },
+        ];
+        for evidence in invalid {
+            assert!(validate_authenticode_helper_job_membership(evidence).is_err());
+        }
+        assert!(validate_authenticode_child_job_membership(0).is_err());
     }
 
     #[test]

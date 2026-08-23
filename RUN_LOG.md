@@ -8711,3 +8711,69 @@ Updates page showed:
   `16,072` files, zero directories, `4,522,733` bytes, `5,357` each
   `.avoraxq`/`.json`/`.auth`, one `.metadata_auth_key`, and zero pending.
   Checkpoint 2213 is closed; the complete antivirus goal remains active.
+
+## Checkpoint 2214 Script-First Job Membership
+
+- Created `agent/checkpoint-2214-authenticode-job-membership` from local checkpoint-
+  2213 integration closure `c25ec5c`; `.verification/` remains untracked and is not
+  staged, deleted, moved, or rewritten.
+- Confirmed existing pinned `windows-sys 0.61.2` bindings for
+  `IsProcessInJob`, `JobObjectBasicProcessIdList`,
+  `JOBOBJECT_BASIC_PROCESS_ID_LIST`, `GetProcessId`, and
+  `GetCurrentProcessId`. No dependency feature or lockfile change is required.
+- Scripted parent post-assignment/pre-resume validation: nonzero matching process-
+  information/handle PIDs, exact-parent-Job membership, exact returned structure
+  size, one assigned/listed process, and the helper as the sole PID. Failure uses
+  existing suspended-process terminate/reap handling with no weaker retry.
+- Scripted child-first any-Job membership validation before standard handles,
+  private desktop, token, mitigation, stdin, request, or candidate work.
+- Scripted a benign real-child regression, pure adversarial evidence, verifier step
+  244, exact-244 validator requirements, source contract 644, dependency review,
+  control matrix, threat model, blocker record, and checkpoint report.
+- Per the requested sequence, no checkpoint-2214 parser, format, compile, test,
+  lint, build, verifier, lockfile, vault, package, or hosted command has run during
+  this scripting phase. No checkpoint-2214 passing result is claimed before
+  execution. The protected vault has not been accessed or changed by scripting.
+- Technical limit: parent exact-Job and PID-list read-back is point-in-time; child
+  null-Job `IsProcessInJob` proves only some Job. Neither authenticates IPC, changes
+  identity, or proves AppContainer, installed LocalSystem, driver, or pre-execution
+  enforcement.
+
+## Checkpoint 2214 Local Execution Evidence
+
+- After the complete script batch, corrected literal PowerShell parser commands pass
+  for verifier and validator. The first outer-shell command form expanded `$`
+  variables and failed before file parsing. Initial `rustfmt --check` found only
+  import wrapping; `cargo fmt` and the repeated check pass. `git diff --check` passes.
+- The user Python does not contain optional `pytest`; `python -m pytest` therefore
+  fails before collection. The repository's standalone source-contract runner is
+  the required path and passes `644/644`.
+- Focused real-child/adversarial Job membership passes `2/2`; complete Windows
+  Authenticode passes `49` with `11` intentional isolated-child ignores. Native
+  Engine passes `485` with `11` intentional ignores and the signature compiler
+  passes `6/6` in both locked standard and all-feature workspace variants.
+- Strict all-target/all-feature Clippy with warnings denied passes for Native,
+  Local Core, and Guard. Locked release Local Core and Guard builds pass. The first
+  manual trust-smoke form rejected relative executable paths before fixture work;
+  the corrected absolute-path two-host smoke passes embedded/catalog Microsoft
+  trust, unsigned rejection, scanned-hash mismatch failure, and no fixture execution.
+- Flutter analyze reports no issues and the full suite passes `838/838`. No-malware
+  and dependency-evidence gates pass.
+- Definitive report
+  `.verification/checkpoint-2214-job-membership-definitive-report.json` passes
+  exactly `244/244`, zero failed/skipped, from
+  `2026-08-23T22:04:41.5595827Z` through `2026-08-23T22:12:25.8846277Z`
+  (`464.3s`). Its embedded validator and a separate full-suite validator pass.
+- Six fresh generated copies are rejected independently: stale `243` count,
+  renamed required step, missing parent scope, missing child scope, missing
+  technical-limit scope, and a skipped required step. The definitive report is not
+  modified.
+- Root Cargo, Native Cargo, and Git-filtered Flutter lockfiles remain exact at
+  `7ab38f4820b08029c64872360fac7141e2512ac4`,
+  `277dd9fe1edfc45fa5550e8e2831f2a0c121561d`, and
+  `51fa085a41168aa1deadace8b5395614db43649e`. The protected vault remains exactly
+  `16,072` files, zero directories, `4,522,733` bytes, `5,357` each
+  `.avoraxq`/`.json`/`.auth`, one `.metadata_auth_key`, and zero pending.
+- Hosted exact-head/evidence-head checks, PR/merge, merged-main evidence, guarded
+  original-tree synchronization, and destination verification remain pending. No
+  release, publication, install, service/driver start, or direct-main push occurs.
