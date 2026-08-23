@@ -2137,3 +2137,9 @@ enforcement, or pre-execution blocking is claimed.
   UI limits do not change identity/profile, deny filesystem/registry/network
   reads, constrain named kernel objects, prove installed LocalSystem behavior,
   or provide AppContainer, signed-driver, or pre-execution enforcement.
+- **Integration closure:** Evidence `9378955`, PR `#63`, merge `33cafa5`,
+  merged-main CI `32656681010`, packages `32656681007`, exact 12-path guarded
+  synchronization, destination focused/full checks, exact lockfiles, and the
+  unchanged protected vault close checkpoint 2211. Publication was skipped.
+  The residual limitations above remain project-level work, not unreported
+  checkpoint failures.

@@ -8518,3 +8518,29 @@ Updates page showed:
   dependency/license evidence, and uploads pass. Publication is skipped.
 - Evidence-head checks, normal PR `#63` merge, merged-main evidence, guarded
   synchronization, and destination verification remain pending.
+
+## Checkpoint 2211 Integration Closure
+
+- Evidence head `937895530d168c579057fd954d35433ed8c80a85` passes exact-head
+  Avorax CI `32655933103` and Desktop Packages `32655933112`. All required CI
+  jobs, six platform artifacts, administrative MSI extraction, consolidation,
+  checksums, lockfile SBOM, dependency/license evidence, and uploads pass;
+  prerelease publication is skipped.
+- PR `#63` normally merges as `33cafa59953d507cd17649f15e83489e67c32e71`.
+  Exact merged-main CI `32656681010` and Desktop Packages `32656681007` pass the
+  same required evidence, again with publication skipped.
+- Exactly `12` paths changed from base `425e663`. Every existing destination
+  path first matched its old Git-filtered blob and the added report was absent.
+  A first archive extraction preserved canonical content but converted text to
+  CRLF, so its stricter raw-blob check failed visibly. Direct in-memory
+  Git-blob export then wrote only those validated paths; every destination raw
+  hash matches merge `33cafa5`.
+- Destination source contracts pass `641/641`; Job UI restrictions pass `2/2`;
+  complete Authenticode passes `43` with `8` intentional child-fixture ignores.
+  Strict Native/Local/Guard Clippy, locked Local Core/Guard release builds, the
+  two-host trust smoke, no-malware gate, and both locked workspace variants
+  pass. Native reports `479` passed/`8` ignored and compiler `6/6` in each.
+- Cargo and Flutter lockfiles match the merge. The protected vault remains
+  exactly `16,072` files, zero directories, `4,522,733` bytes, `5,357` each
+  `.avoraxq`/`.json`/`.auth`, one `.metadata_auth_key`, and zero pending.
+  Checkpoint 2211 is closed; the complete antivirus goal remains active.

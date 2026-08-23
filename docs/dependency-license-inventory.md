@@ -586,3 +586,10 @@ administrative MSI extraction without installation, six-artifact checksums,
 lockfile SBOM, and artifact upload. The prerelease publication job is skipped in
 both runs. Final signed-artifact license, notice, and copyright review remains a
 release approval requirement.
+
+Evidence head `9378955` passes CI `32655933103` and packages `32655933112`;
+merge `33cafa5` passes merged-main CI `32656681010` and packages `32656681007`.
+All six artifacts, dependency/license evidence, checksums, lockfile SBOM, and
+administrative MSI extraction pass, with publication skipped. Destination Cargo
+and Flutter lockfiles match the merge exactly. Complete signed final-artifact
+license, notice, and copyright review remains a release approval requirement.

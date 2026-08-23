@@ -1896,3 +1896,9 @@ filesystem/registry/network/read access, constrain named kernel objects, or
 isolate already mapped code/data. They are not AppContainer/LPAC, authenticated
 cross-identity IPC, installed LocalSystem proof, driver enforcement, kernel
 interception, or pre-execution blocking.
+
+**Integration closure:** Evidence head `9378955`, PR `#63`, merge `33cafa5`,
+merged-main CI `32656681010`, packages `32656681007`, exact 12-path guarded
+synchronization, destination source/focused/full/release checks, exact lockfiles,
+and the unchanged vault pass. Publication was skipped. This closes the Job UI
+checkpoint, not the residual isolation risks or the complete antivirus goal.
