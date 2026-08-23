@@ -89,6 +89,10 @@ Implementation head `882f24d45c13b60b952cfacb94d3eee2563fb0f8` passes
 Avorax CI `32605433795` and Desktop Packages push/PR runs `32605424354` and
 `32605433783`. Windows MSI/EXE, Linux DEB/tar, macOS arm64/x64 DMG, package
 contracts, six-artifact consolidation, checksums, and lockfile CycloneDX SBOM
-all pass. Both prerelease publication jobs are skipped. Evidence-head checks,
-guarded PR merge, merged-main evidence, and preconditioned original-tree
-synchronization remain pending and are not claimed by this report.
+all pass. Both prerelease publication jobs are skipped. Evidence head
+`e863332dec8a646909ba1945aca32875288df76c` passes CI `32606194450` and package
+PR run `32606194213`. PR `#52` merged with exact-head locking as
+`baa39ac316c58b010cb7805785a1fef47c4f0c19`; merged-main CI `32606989492` and
+packages `32606989456` pass with publication skipped. Exactly 13 files
+synchronized after base/absence preconditions; merge blobs and raw hashes,
+focused destination checks, and the protected vault invariant pass.

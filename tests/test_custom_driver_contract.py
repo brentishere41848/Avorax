@@ -20826,8 +20826,8 @@ def test_small_threat_mvp_report_validator_is_strict_and_local():
     assert "driver_request_known_good_allows_in_lockdown" in source
     assert "Get-AvoraxGateFile ([System.IO.Path]::GetFullPath($text)) $Description" in source
     assert "-RequireFullSuite requires skip_flutter=false and skip_rust=false" in source
-    assert "if ($steps.Count -ne 231)" in source
-    assert "-RequireFullSuite expected exactly 231 verifier steps" in source
+    assert "if ($steps.Count -ne 232)" in source
+    assert "-RequireFullSuite expected exactly 232 verifier steps" in source
     assert (
         'Assert-ReportContainsStep $steps "native-engine secondary catalog '
         'Authenticode selection regressions"'
@@ -25216,10 +25216,55 @@ def test_native_secondary_catalog_authenticode_is_bounded_exact_and_honestly_par
     assert "native_secondary_catalog_authenticode_primary_runtime_is_exact_and_hash_bound" in source
     assert "native-engine secondary catalog Authenticode selection regressions" in verifier
     assert '"native_secondary_catalog_authenticode"' in verifier
-    assert "if ($steps.Count -ne 231)" in validator
+    assert "if ($steps.Count -ne 232)" in validator
     assert "no controlled benign multi-signed system-catalog fixture" in verifier
     assert "no controlled benign multi-signed system-catalog fixture" in validator
     assert "$technicalLimitText = Assert-JsonString" in validator
+
+
+def test_native_authenticode_helper_job_resources_are_exact_and_fail_visible():
+    source = read(NATIVE_WINDOWS_AUTHENTICODE)
+    production = source.split("#[cfg(test)]")[0]
+    verifier = read(ROOT / "tools" / "testing" / "verify-small-threat-mvp.ps1")
+    validator = read(ROOT / "tools" / "testing" / "validate-small-threat-mvp-report.ps1")
+
+    for contract in [
+        "AUTHENTICODE_HELPER_USER_CPU_100NS: i64 = 12 * 10_000_000",
+        "AUTHENTICODE_HELPER_PROCESS_MEMORY_BYTES: usize = 1024 * 1024 * 1024",
+        "AUTHENTICODE_HELPER_JOB_MEMORY_BYTES: usize = 1024 * 1024 * 1024",
+        "AUTHENTICODE_HELPER_ACTIVE_PROCESS_LIMIT: u32 = 1",
+        "JOB_OBJECT_LIMIT_PROCESS_TIME",
+        "JOB_OBJECT_LIMIT_ACTIVE_PROCESS",
+        "JOB_OBJECT_LIMIT_PROCESS_MEMORY",
+        "JOB_OBJECT_LIMIT_JOB_MEMORY",
+        "JOB_OBJECT_LIMIT_DIE_ON_UNHANDLED_EXCEPTION",
+        "QueryInformationJobObject(",
+        "query_and_validate_authenticode_helper_job_limits(handle)",
+        "validate_authenticode_helper_job_limits(&actual)?",
+        "isolated Authenticode helper per-process user-CPU limit mismatch",
+        "isolated Authenticode helper active-process limit mismatch",
+        "isolated Authenticode helper per-process commit limit mismatch",
+        "isolated Authenticode helper job commit limit mismatch",
+    ]:
+        assert contract in production
+    assert (
+        "native_authenticode_helper_job_limits_are_exact_queryable_and_fail_visible"
+        in source
+    )
+    assert "native-engine Authenticode helper Job resource-limit regressions" in verifier
+    assert '"native_authenticode_helper_job_limits"' in verifier
+    assert "if ($steps.Count -ne 232)" in validator
+    assert "expected exactly 232 verifier steps" in validator
+    assert (
+        'Assert-ReportContainsStep $steps "native-engine Authenticode helper Job '
+        'resource-limit regressions"'
+        in validator
+    )
+    assert "1 GiB per-process and whole-Job commit ceilings" in verifier
+    assert "Job commit ceilings do not bound physical working set or I/O bytes" in verifier
+    assert "the helper still uses its parent's security token" in verifier
+    assert "1 GiB per-process and whole-Job commit ceilings" in validator
+    assert "Job commit ceilings do not bound physical working set or I/O bytes" in validator
 
 
 def test_update_service_control_uses_bounded_command_runner():

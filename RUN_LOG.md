@@ -79,6 +79,76 @@ Lead-engineer product-hardening pass across the Avorax repository. Goal is to mo
   six-artifact consolidation, checksums, and lockfile SBOM passed; publication
   was skipped. Evidence-head, merge, and synchronization remain pending.
 
+## 2026-08-23 continuation checkpoint 2200 closure
+
+- Evidence head `e863332dec8a646909ba1945aca32875288df76c` passed Avorax CI
+  `32606194450` and Desktop Packages PR run `32606194213`; all six platform
+  artifacts, checksums, package contracts, and lockfile SBOM passed while
+  publication was skipped.
+- PR `#52` was marked ready only after exact-head checks and merged with head
+  locking as `baa39ac316c58b010cb7805785a1fef47c4f0c19`. Merged-main CI
+  `32606989492` and Desktop Packages `32606989456` passed. The publish job was
+  skipped; no release or installation occurred.
+- All 12 existing original-tree files matched base
+  `264e4551aa930f75d325ebd3df4522bd4f244941`, and the new checkpoint report was
+  absent. Exactly 13 files synchronized to `C:\Users\Brent\Documents\Avorax-main`.
+  Every merge blob and raw source/destination SHA-256 matched before and after
+  destination checks.
+- Destination source contracts `628/628`, secondary catalog `2/2`, catalog
+  `3/3`, helper `4/4`, identity `4/4`, rustfmt, strict Native/Local/Guard
+  Clippy, release Local Core/Guard builds, two-host helper smoke, and PowerShell
+  parsing passed.
+- The protected vault remained exactly 16,072 files, zero directories,
+  4,522,733 bytes, 5,357 each `.avoraxq`/`.json`/`.auth`, one metadata key, and
+  zero pending. `.verification` was neither staged nor deleted.
+
+## 2026-08-23 continuation checkpoint 2201 scripting
+
+- Selected release Authenticode helper resource containment as the next
+  unblocked user-mode risk. The existing 15-second parent wall timeout bounds
+  elapsed time but did not cap committed memory, user CPU, or active processes.
+- Scripted one exact extended Windows Job policy: kill-on-close, no unhandled-
+  exception dialog, 12 seconds per-process user CPU, one active process, and
+  1 GiB per-process plus whole-Job commit ceilings. The Job is configured,
+  queried, and compared exactly before assignment/input; any API or value
+  mismatch fails visibly and no trust work receives the request.
+- Scripted a benign OS read-back test plus adversarial flag, CPU, process-count,
+  process-commit, and job-commit mismatch cases. Added a dedicated verifier
+  step, exact 232-step validator, source contracts, status, matrix, threat
+  model, blocker, dependency, and checkpoint-report changes.
+- Commit ceilings are not physical working-set or I/O-byte ceilings, the CPU
+  limit excludes kernel execution, and process setup occurs before Job
+  assignment while the trusted helper blocks on stdin. The child still uses
+  the parent's token. These limits do not establish sandboxing, installed
+  service identity, driver enforcement, or pre-execution blocking.
+- Per the requested sequence, no checkpoint-2201 test, parser, formatter,
+  build, smoke, verifier, or validator was run before this complete scripted
+  batch.
+
+## 2026-08-23 continuation checkpoint 2201 local verification
+
+- PowerShell parsing, `git diff --check`, and rustfmt pass. The first rustfmt
+  check found only a two-line layout and `cargo fmt --all` normalized it. An
+  attempted Python class selector was invalid because the source contracts are
+  module functions; the correct complete runner then passed `629/629`.
+- The real Job read-back/adversarial limit filter passes `1/1`, helper
+  isolation passes `5/5`, Authenticode passes `25/25`, and Native Engine passes
+  `459 + 6`. Strict Native Clippy, release Local Core/Guard builds, two-host
+  release helper smoke, both complete locked workspace variants, and strict
+  Local/Guard Clippy pass. No lockfile changed.
+- Flutter analyze reports no issues and the complete client suite passes
+  `838/838`. The definitive report runs from
+  `2026-08-23T00:42:57.2282152Z` through
+  `2026-08-23T00:50:18.2720889Z` and passes exactly `232/232` steps in `441s`.
+  Its built-in validator and a separate `-RequireFullSuite` run pass. A copy
+  missing only the new Job step is rejected with expected 232, found 231.
+- A read-only protected-vault audit remains exactly 16,072 files, zero
+  directories, 4,522,733 bytes, 5,357 each `.avoraxq`/`.json`/`.auth`, one
+  `.metadata_auth_key`, and zero pending. No release, publication, installation,
+  service/driver start, Defender change, or quarantine mutation occurred.
+- Exact-head hosted CI/packages, evidence commit, merge, and safe original-tree
+  synchronization remain pending.
+
 ## 2026-08-22 continuation checkpoint 2198 scripting
 
 - Selected a bounded release-process isolation boundary for native WinTrust

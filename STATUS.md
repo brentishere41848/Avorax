@@ -4,6 +4,24 @@
 
 Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-install, repair, recovery, offline, and manual-install paths only. Normal app updates target signed `.aup` packages applied by Avorax Update Service.
 
+- Checkpoint 2201 Authenticode helper Job resource limits is implemented and
+  locally verified. Before accepting candidate input, the Windows
+  Job now sets and reads back exact limits: 12 seconds of per-process user CPU,
+  one active process, and 1 GiB per-process and whole-Job commit ceilings. It
+  also retains kill-on-close and suppresses unhandled-exception dialogs. Set,
+  query, or exact-value mismatch is diagnostic and prevents verification.
+  Benign OS read-back/mismatch regressions pass `1/1`, helper isolation passes
+  `5/5`, the complete Authenticode module passes `25/25`, Native Engine passes
+  `459 + 6`, both locked workspace variants pass, release Local Core/Guard
+  builds and two-host helper smoke pass, Flutter analyze and `838/838` pass,
+  and source contracts pass `629/629`. Strict Native/Local/Guard Clippy,
+  rustfmt, lockfile, security, dependency, and package-source gates pass. The
+  definitive verifier and independent validator pass exactly `232/232` in
+  `441s`; evidence missing only the new step is rejected at `231`. The
+  protected vault is unchanged. Hosted exact-head CI/packages, merge, and
+  original-tree synchronization remain pending.
+  Commit limits are not physical working-set or I/O-byte limits, user CPU
+  excludes kernel execution, and the child still uses the parent's token.
 - Checkpoint 2200 secondary catalog Authenticode selection is implemented and
   locally verified. Each catalog candidate now requests
   primary index zero and the returned secondary count, requires exact or
@@ -27,8 +45,13 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
   `882f24d45c13b60b952cfacb94d3eee2563fb0f8` passes CI `32605433795`
   and Desktop Packages push/PR `32605424354`/`32605433783`, including all six
   platform artifacts, consolidation, checksums, and lockfile SBOM; publication
-  is skipped. Evidence-head, merge, merged-main, and original-tree evidence
-  remain pending.
+  is skipped. Evidence head `e863332dec8a646909ba1945aca32875288df76c`
+  passes CI `32606194450` and packages `32606194213`. PR `#52` merged with
+  exact-head locking as `baa39ac316c58b010cb7805785a1fef47c4f0c19`;
+  merged-main CI `32606989492` and packages `32606989456` pass with publication
+  skipped. All 13 explicit files synchronized after old/new preconditions;
+  source/destination blobs and SHA-256, focused destination checks, and the
+  protected vault invariant pass.
 - Checkpoint 2199 mandatory hash-bound Authenticode and stable handle identity is
   implemented and locally verified. Every Microsoft publisher-trust
   request now requires the scanner's exact 64-hex SHA-256; the unused path-only
@@ -142,12 +165,16 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
 
 ## Current Commit
 
+- Checkpoint 2201 is an uncommitted, fully scripted, untested batch on
+  `agent/checkpoint-2201-authenticode-helper-job-limits`, based on merged main
+  `baa39ac316c58b010cb7805785a1fef47c4f0c19`. The next exact task is the first
+  focused Job-limit regression run, followed by complete local verification.
 - Checkpoint 2200 implementation head
-  `882f24d45c13b60b952cfacb94d3eee2563fb0f8` is locally and hosted-verified on
-  `agent/checkpoint-2200-secondary-catalog-authenticode`, based on merged main
-  `264e4551aa930f75d325ebd3df4522bd4f244941`. The definitive verifier and
-  validator pass `231/231`; implementation-head CI/packages pass with
-  publication skipped. Evidence-head and merge evidence remain pending.
+  `882f24d45c13b60b952cfacb94d3eee2563fb0f8` and evidence head
+  `e863332dec8a646909ba1945aca32875288df76c` pass exact-head CI/packages. PR
+  `#52` merged as `baa39ac316c58b010cb7805785a1fef47c4f0c19`; merged-main
+  CI/packages, exact 13-file synchronization, focused destination checks, and
+  the protected vault invariant pass. Publication was skipped.
 - Checkpoint 2199 implementation head
   `d619c0a5ddb627e9d940d12478d5db9589ee5679` is locally verified on
   `agent/checkpoint-2199-authenticode-file-identity`, based on merged main

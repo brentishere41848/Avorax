@@ -1904,8 +1904,8 @@ if ($RequireFullSuite) {
   if ($skipFlutter -or $skipRust) {
     throw "-RequireFullSuite requires skip_flutter=false and skip_rust=false."
   }
-  if ($steps.Count -ne 231) {
-    throw "-RequireFullSuite expected exactly 231 verifier steps for this source revision, found $($steps.Count)."
+  if ($steps.Count -ne 232) {
+    throw "-RequireFullSuite expected exactly 232 verifier steps for this source revision, found $($steps.Count)."
   }
   if ($steps[0].name -ne "local-core safe simulator scan reporting") {
     throw "-RequireFullSuite first step mismatch: $($steps[0].name)"
@@ -1942,6 +1942,7 @@ if ($RequireFullSuite) {
   Assert-ReportContainsStep $steps "native-engine secondary catalog Authenticode selection regressions"
   Assert-ReportContainsStep $steps "native-engine secondary embedded Authenticode Microsoft-signed regressions"
   Assert-ReportContainsStep $steps "native-engine Authenticode helper isolation regressions"
+  Assert-ReportContainsStep $steps "native-engine Authenticode helper Job resource-limit regressions"
   Assert-ReportContainsStep $steps "native-engine Authenticode mandatory-hash/file-identity regressions"
   Assert-ReportContainsStep $steps "native-engine ClickOnce carrier heuristic detection"
   Assert-ReportContainsStep $steps "native-engine Java Web Start carrier heuristic detection"
@@ -2064,6 +2065,10 @@ if ($RequireFullSuite) {
   Assert-ReportScopeContains $verifiedScopeText "The installed WindowsPowerShell catalog proves the primary catalog path and exact scan-hash binding; bounded secondary-catalog aggregation is unit-verified, but positive acceptance of an actual secondary catalog signature remains partial because no controlled benign multi-signed catalog fixture is available" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "Memory-mapped and post-verdict mutation, same-token helper least privilege, and pre-execution blocking are not claimed" "verification_scope.verified"
   Assert-ReportScopeContains $technicalLimitText "no controlled benign multi-signed system-catalog fixture for positive secondary-catalog acceptance" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $verifiedScopeText "the release Authenticode helper Windows Job enforces and reads back an exact 12-second per-process user-CPU limit, one-process active limit, and 1 GiB per-process and whole-Job commit ceilings before untrusted candidate processing begins" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Any SetInformationJobObject, QueryInformationJobObject, or exact-limit mismatch is diagnostic and prevents trust work" "verification_scope.verified"
+  Assert-ReportScopeContains $technicalLimitText "Authenticode helper Job commit ceilings do not bound physical working set or I/O bytes and its user-CPU limit excludes kernel execution" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "the helper still uses its parent's security token" "verification_scope.technically_limited"
   Assert-ReportScopeContains $verifiedScopeText "Native Engine's disabled test-only legacy quarantine store uses token-derived native DACL application and verification without an external helper" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "production quarantine remains owned by Local Core" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "every Microsoft publisher-trust request requires the scanner's lowercase or uppercase 64-hex SHA-256" "verification_scope.verified"

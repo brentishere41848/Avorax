@@ -53,8 +53,10 @@ use windows_sys::Win32::Storage::FileSystem::{
 };
 use windows_sys::Win32::System::JobObjects::{
     AssignProcessToJobObject, CreateJobObjectW, JobObjectExtendedLimitInformation,
-    SetInformationJobObject, JOBOBJECT_EXTENDED_LIMIT_INFORMATION,
-    JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE,
+    QueryInformationJobObject, SetInformationJobObject, JOBOBJECT_EXTENDED_LIMIT_INFORMATION,
+    JOB_OBJECT_LIMIT_ACTIVE_PROCESS, JOB_OBJECT_LIMIT_DIE_ON_UNHANDLED_EXCEPTION,
+    JOB_OBJECT_LIMIT_JOB_MEMORY, JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE,
+    JOB_OBJECT_LIMIT_PROCESS_MEMORY, JOB_OBJECT_LIMIT_PROCESS_TIME,
 };
 use windows_sys::Win32::System::Threading::CREATE_NO_WINDOW;
 
@@ -70,6 +72,10 @@ const AUTHENTICODE_HELPER_ARGUMENT: &str = "--avorax-authenticode-helper-v1";
 const AUTHENTICODE_HELPER_TIMEOUT: Duration = Duration::from_secs(15);
 const AUTHENTICODE_HELPER_REAP_TIMEOUT: Duration = Duration::from_secs(2);
 const AUTHENTICODE_HELPER_POLL_INTERVAL: Duration = Duration::from_millis(10);
+const AUTHENTICODE_HELPER_USER_CPU_100NS: i64 = 12 * 10_000_000;
+const AUTHENTICODE_HELPER_PROCESS_MEMORY_BYTES: usize = 1024 * 1024 * 1024;
+const AUTHENTICODE_HELPER_JOB_MEMORY_BYTES: usize = 1024 * 1024 * 1024;
+const AUTHENTICODE_HELPER_ACTIVE_PROCESS_LIMIT: u32 = 1;
 const MAX_AUTHENTICODE_HELPER_REQUEST_BYTES: usize = 256 * 1024;
 const MAX_AUTHENTICODE_HELPER_RESPONSE_BYTES: usize = 16 * 1024;
 const MAX_AUTHENTICODE_HELPER_STDERR_BYTES: usize = 16 * 1024;
@@ -112,8 +118,7 @@ impl KillOnCloseJob {
             "unable to create isolated Authenticode helper job: {}",
             std::io::Error::last_os_error()
         );
-        let mut limits = JOBOBJECT_EXTENDED_LIMIT_INFORMATION::default();
-        limits.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
+        let limits = required_authenticode_helper_job_limits();
         let configured = unsafe {
             SetInformationJobObject(
                 handle,
@@ -127,6 +132,10 @@ impl KillOnCloseJob {
             unsafe { CloseHandle(handle) };
             anyhow::bail!("unable to configure isolated Authenticode helper job: {error}");
         }
+        if let Err(error) = query_and_validate_authenticode_helper_job_limits(handle) {
+            unsafe { CloseHandle(handle) };
+            return Err(error);
+        }
         Ok(Self(handle))
     }
 
@@ -138,6 +147,71 @@ impl KillOnCloseJob {
         );
         Ok(())
     }
+}
+
+fn required_authenticode_helper_job_limits() -> JOBOBJECT_EXTENDED_LIMIT_INFORMATION {
+    let mut limits = JOBOBJECT_EXTENDED_LIMIT_INFORMATION::default();
+    limits.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
+        | JOB_OBJECT_LIMIT_DIE_ON_UNHANDLED_EXCEPTION
+        | JOB_OBJECT_LIMIT_PROCESS_TIME
+        | JOB_OBJECT_LIMIT_ACTIVE_PROCESS
+        | JOB_OBJECT_LIMIT_PROCESS_MEMORY
+        | JOB_OBJECT_LIMIT_JOB_MEMORY;
+    limits.BasicLimitInformation.PerProcessUserTimeLimit = AUTHENTICODE_HELPER_USER_CPU_100NS;
+    limits.BasicLimitInformation.ActiveProcessLimit = AUTHENTICODE_HELPER_ACTIVE_PROCESS_LIMIT;
+    limits.ProcessMemoryLimit = AUTHENTICODE_HELPER_PROCESS_MEMORY_BYTES;
+    limits.JobMemoryLimit = AUTHENTICODE_HELPER_JOB_MEMORY_BYTES;
+    limits
+}
+
+fn query_and_validate_authenticode_helper_job_limits(
+    handle: HANDLE,
+) -> Result<JOBOBJECT_EXTENDED_LIMIT_INFORMATION> {
+    let mut actual = JOBOBJECT_EXTENDED_LIMIT_INFORMATION::default();
+    anyhow::ensure!(
+        unsafe {
+            QueryInformationJobObject(
+                handle,
+                JobObjectExtendedLimitInformation,
+                (&mut actual as *mut JOBOBJECT_EXTENDED_LIMIT_INFORMATION).cast::<c_void>(),
+                size_of::<JOBOBJECT_EXTENDED_LIMIT_INFORMATION>() as u32,
+                null_mut(),
+            )
+        } != 0,
+        "unable to query isolated Authenticode helper job limits: {}",
+        std::io::Error::last_os_error()
+    );
+    validate_authenticode_helper_job_limits(&actual)?;
+    Ok(actual)
+}
+
+fn validate_authenticode_helper_job_limits(
+    actual: &JOBOBJECT_EXTENDED_LIMIT_INFORMATION,
+) -> Result<()> {
+    let required = required_authenticode_helper_job_limits();
+    anyhow::ensure!(
+        actual.BasicLimitInformation.LimitFlags == required.BasicLimitInformation.LimitFlags,
+        "isolated Authenticode helper job limit flags mismatch"
+    );
+    anyhow::ensure!(
+        actual.BasicLimitInformation.PerProcessUserTimeLimit
+            == required.BasicLimitInformation.PerProcessUserTimeLimit,
+        "isolated Authenticode helper per-process user-CPU limit mismatch"
+    );
+    anyhow::ensure!(
+        actual.BasicLimitInformation.ActiveProcessLimit
+            == required.BasicLimitInformation.ActiveProcessLimit,
+        "isolated Authenticode helper active-process limit mismatch"
+    );
+    anyhow::ensure!(
+        actual.ProcessMemoryLimit == required.ProcessMemoryLimit,
+        "isolated Authenticode helper per-process commit limit mismatch"
+    );
+    anyhow::ensure!(
+        actual.JobMemoryLimit == required.JobMemoryLimit,
+        "isolated Authenticode helper job commit limit mismatch"
+    );
+    Ok(())
 }
 
 impl Drop for KillOnCloseJob {
@@ -1813,6 +1887,65 @@ mod tests {
         assert!(error.contains("termination request: ok"));
         assert!(error.contains("reap: ok"));
         assert!(started.elapsed() < Duration::from_secs(5));
+    }
+
+    #[test]
+    fn native_authenticode_helper_job_limits_are_exact_queryable_and_fail_visible() {
+        let job = KillOnCloseJob::create().unwrap();
+        let actual = query_and_validate_authenticode_helper_job_limits(job.0).unwrap();
+        let required = required_authenticode_helper_job_limits();
+        assert_eq!(
+            actual.BasicLimitInformation.LimitFlags,
+            required.BasicLimitInformation.LimitFlags
+        );
+        assert_eq!(
+            actual.BasicLimitInformation.PerProcessUserTimeLimit,
+            AUTHENTICODE_HELPER_USER_CPU_100NS
+        );
+        assert_eq!(
+            actual.BasicLimitInformation.ActiveProcessLimit,
+            AUTHENTICODE_HELPER_ACTIVE_PROCESS_LIMIT
+        );
+        assert_eq!(
+            actual.ProcessMemoryLimit,
+            AUTHENTICODE_HELPER_PROCESS_MEMORY_BYTES
+        );
+        assert_eq!(actual.JobMemoryLimit, AUTHENTICODE_HELPER_JOB_MEMORY_BYTES);
+
+        let mut mismatched = actual;
+        mismatched.BasicLimitInformation.LimitFlags ^= JOB_OBJECT_LIMIT_PROCESS_TIME;
+        assert!(validate_authenticode_helper_job_limits(&mismatched)
+            .unwrap_err()
+            .to_string()
+            .contains("job limit flags mismatch"));
+
+        let mut mismatched = actual;
+        mismatched.BasicLimitInformation.PerProcessUserTimeLimit += 1;
+        assert!(validate_authenticode_helper_job_limits(&mismatched)
+            .unwrap_err()
+            .to_string()
+            .contains("user-CPU limit mismatch"));
+
+        let mut mismatched = actual;
+        mismatched.BasicLimitInformation.ActiveProcessLimit += 1;
+        assert!(validate_authenticode_helper_job_limits(&mismatched)
+            .unwrap_err()
+            .to_string()
+            .contains("active-process limit mismatch"));
+
+        let mut mismatched = actual;
+        mismatched.ProcessMemoryLimit += 1;
+        assert!(validate_authenticode_helper_job_limits(&mismatched)
+            .unwrap_err()
+            .to_string()
+            .contains("per-process commit limit mismatch"));
+
+        let mut mismatched = actual;
+        mismatched.JobMemoryLimit += 1;
+        assert!(validate_authenticode_helper_job_limits(&mismatched)
+            .unwrap_err()
+            .to_string()
+            .contains("job commit limit mismatch"));
     }
 
     #[test]

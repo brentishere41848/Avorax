@@ -253,5 +253,28 @@ added. Hosted package SBOM generation and final-artifact license, notice, and
 copyright review remain distinct from local source checks. Implementation-head
 package push/PR runs `32605424354`/`32605433783` pass lockfile CycloneDX SBOM
 generation, six-artifact checksum consolidation, and package evidence upload
-with publication skipped. Evidence-head and merged-main package proof remain
-pending.
+with publication skipped. Evidence-head package run `32606194213` and merged-
+main package run `32606989456` also pass every platform and consolidation with
+publication skipped.
+
+## Authenticode Helper Job Resource API Surface
+
+Checkpoint 2201 adds no crate, package, registry dependency, Cargo feature,
+network client, helper executable, or dependency version. It reuses
+`SetInformationJobObject`, `QueryInformationJobObject`, and extended Job-limit
+constants already exposed by pinned `windows-sys 0.61.2` through the existing
+`Win32_System_JobObjects` and `Win32_System_Threading` features. The reviewed
+registry license remains `MIT OR Apache-2.0`; no lockfile change is intended.
+
+Microsoft's Job structures distinguish committed-memory ceilings from working
+set and user-mode CPU from elapsed or kernel time. The code therefore records
+exact commit/user-CPU/process limits and retains the separate parent wall-clock
+timeout rather than introducing a new wrapper dependency or broader claim.
+I/O rate/byte control and restricted-token process creation are not added.
+
+Source contracts `629/629`, strict Native/Local/Guard Clippy, both complete
+locked workspace variants, dependency and package-source gates, release
+Local Core/Guard builds, and the definitive `232/232` verifier pass locally.
+Both Cargo lockfiles remain byte-unchanged. No dependency version, feature, or
+lockfile entry was added. Exact-head hosted package SBOM generation and final-
+artifact license, notice, and copyright review remain pending.

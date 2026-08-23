@@ -1769,8 +1769,10 @@ enforcement, or pre-execution blocking is claimed.
   passes `231/231` in `424.1s` and rejects stale `230`-step evidence.
   Implementation head `882f24d45c13b60b952cfacb94d3eee2563fb0f8`
   passes CI `32605433795` and package push/PR `32605424354`/`32605433783`
-  with publication skipped. Evidence-head, merge, and original-tree evidence
-  remain pending.
+  with publication skipped. Evidence head `e863332dec8a646909ba1945aca32875288df76c`
+  passes CI/packages, PR `#52` merges with exact-head locking as
+  `baa39ac316c58b010cb7805785a1fef47c4f0c19`, merged-main CI/packages pass,
+  and all 13 synchronized files plus focused destination checks pass.
 - **Partial positive evidence:** The installed WindowsPowerShell fixture can
   prove real primary-catalog provider compatibility and wrong-hash rejection.
   The unit fixture can prove bounded secondary decision logic. Neither is a
@@ -1785,3 +1787,29 @@ enforcement, or pre-execution blocking is claimed.
   helper privilege, production signing/key custody, installed service/UI E2E,
   signed-driver IPC, Defender coexistence, pre-execution blocking, and
   production accuracy remain partial, blocked, or technically limited.
+
+## Checkpoint 2201 Authenticode Helper Job Resource Limits
+
+- **Local evidence verified:** The release helper Job now requests an exact
+  12-second per-process user-CPU ceiling, one active process, 1 GiB per-process
+  and whole-Job commit ceilings, kill-on-close, and unhandled-exception dialog
+  suppression. It queries and compares every value before candidate input is
+  written. API or mismatch failures remain diagnostic and cannot supply trust.
+- **Regression evidence:** A real unnamed Job read-back plus mutated
+  flag, CPU, process-count, per-process commit, and whole-Job commit values are
+  covered by a focused benign test that passes `1/1`. Helper isolation passes
+  `5/5`, Authenticode `25/25`, Native Engine `459 + 6`, Flutter `838/838`, and
+  source contracts `629/629`. Verifier step 232 and exact full-report
+  validation pass `232/232` in `441s`; a copy missing only this step is rejected
+  with expected 232, found 231. Strict lint, format, dependency, release-build,
+  helper-smoke, and lockfile gates pass; the protected vault is unchanged.
+- **Technically limited:** Commit ceilings bound committed virtual memory, not
+  physical working set or I/O bytes. Per-process user CPU excludes kernel time.
+  The trusted exact-current-executable process starts before Job assignment but
+  blocks on stdin; candidate processing begins only after configuration,
+  read-back, and assignment. The child still uses the parent's security token.
+- **Still blocked or partial:** Restricted-token/authenticated cross-token IPC,
+  installed LocalSystem/service/UI E2E, production signing/key custody,
+  signed-driver IPC, Defender coexistence, pre-execution blocking, and
+  production accuracy remain separate prerequisites. Exact-head hosted
+  CI/packages, merge, and original-tree synchronization are still pending.

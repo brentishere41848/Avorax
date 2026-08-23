@@ -1413,3 +1413,41 @@ source contracts `628/628`, and all strict safety/dependency gates. The
 definitive verifier and independent validator pass `231/231` in `424.1s`; stale
 `230`-step evidence is rejected. This verifies bounded fail-closed selection and
 primary catalog compatibility, not a positive real secondary signature.
+
+## Checkpoint 2201 Authenticode Helper Resource Boundary
+
+The release helper's parent-enforced 15-second wall timeout bounds elapsed
+verification time, but it did not independently cap committed memory,
+user-mode CPU, or process fan-out. A malformed candidate or a defective trust
+provider could therefore consume substantial host resources before the parent
+deadline. Checkpoint 2201 configures the existing unnamed Windows Job before
+the strict request is written.
+
+The Job requires kill-on-close, unhandled-exception dialog suppression, 12
+seconds of per-process user-mode CPU, one active process, 1 GiB per-process
+commit, and 1 GiB whole-Job commit. Avorax reads the structure back through
+`QueryInformationJobObject` and requires exact flags and values. Create, set,
+query, value mismatch, assignment, timeout, kill, or reap failure remains a
+diagnostic and cannot become Microsoft trust. The exact current executable
+blocks reading stdin until the parent has configured, validated, and assigned
+the Job, so untrusted candidate handling begins after the limits apply.
+
+This is resource and lifetime containment, not a security-token sandbox. Job
+commit limits are not physical working-set or I/O-byte limits, and user CPU
+does not include kernel execution. The short process/runtime startup before
+assignment remains inside the trusted-current-executable boundary. The helper
+retains the parent's token, while Windows Job/process semantics and WinTrust
+remain trusted. Installed-service identity, authenticated cross-token IPC,
+production signing, driver/pre-execution enforcement, Defender replacement,
+and production accuracy are not established. No live malware or executable
+fixture is used.
+
+Local evidence passes the real Job read-back/mismatch filter `1/1`, helper
+isolation `5/5`, the complete Authenticode module `25/25`, Native Engine
+`459 + 6`, both locked workspace variants, release Local Core/Guard builds and
+helper smoke, Flutter `838/838`, source contracts `629/629`, and strict safety,
+dependency, formatting, and lint gates. The definitive report and independent
+validator pass exactly `232/232` in `441s`; a report missing only the new Job
+step is rejected at 231. This verifies the configured user-mode resource
+boundary on this Windows host, not restricted-token isolation, kernel
+interception, installed-service behavior, or production protection efficacy.
