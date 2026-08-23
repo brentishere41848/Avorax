@@ -4,6 +4,7 @@
 
 Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-install, repair, recovery, offline, and manual-install paths only. Normal app updates target signed `.aup` packages applied by Avorax Update Service.
 
+- Current Authenticode helper private-desktop closure: checkpoint 2212 is fully closed through evidence `e73a56d`, PR `#64`, merge `744c492`, merged-main CI `32662681992`, packages `32662682077`, exact 13-path original-tree synchronization, destination contracts/private-desktop/Authenticode/lint/release/trust-smoke/no-malware/full-workspace checks, exact Native/root Cargo and Flutter lockfiles, and an unchanged protected vault. Six artifacts, checksums, administrative MSI extraction, and lockfile SBOM passed; publication was skipped. A private desktop remains distinct from private-window-station, identity/read/profile/registry/network/AppContainer/driver/pre-execution isolation, so the complete antivirus goal remains active.
 - Checkpoint 2205 write-restricting Authenticode token hardening is implemented
   and fully locally verified. The release helper keeps checkpoint
   2204's `DISABLE_MAX_PRIVILEGE` primary process token. Before stdin or request

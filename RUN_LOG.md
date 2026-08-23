@@ -8595,3 +8595,31 @@ Updates page showed:
   administrative MSI extraction without installation, and uploads. Prerelease
   publication is skipped. Evidence-head checks, merge, synchronization, and
   destination verification remain pending.
+
+## Checkpoint 2212 Integration Closure
+
+- Evidence head `e73a56df16ba9922deaa1515880454ebf4525a9e` passes exact-head
+  Avorax CI `32661792977` and Desktop Packages PR run `32661792980`. All required
+  CI jobs, six platform artifacts, administrative MSI extraction, consolidation,
+  checksums, lockfile SBOM, dependency/license evidence, and uploads pass;
+  prerelease publication is skipped. The documentation-only evidence commit does
+  not trigger a separate push package run.
+- PR `#64` normally merges as `744c4926bbb68782fb5bcc8a7bcce1bbd4bbd1c4`.
+  Exact merged-main CI `32662681992` and Desktop Packages `32662682077` pass the
+  same required evidence, again with publication skipped.
+- Exactly `13` paths changed from prior main `33cafa59953d507cd17649f15e83489e67c32e71`:
+  12 checkpoint-2212 paths plus the checkpoint-2211 closure update carried by
+  normal integration. All existing original-tree paths matched prior-main
+  Git-filtered blobs and the new report was absent before a bounded in-memory
+  Git-blob export atomically synchronized only those paths. Every destination
+  raw blob then matched merge `744c492`.
+- Destination source contracts pass `642/642`; private-desktop checks pass `2/2`;
+  complete Authenticode passes `45` with `9` intentional child-fixture ignores.
+  Strict Native/Local/Guard Clippy, locked Local Core/Guard release builds, the
+  two-host trust smoke, no-malware gate, and both locked workspace variants pass.
+  Native reports `481` passed/`9` ignored and compiler `6/6` in each.
+- Native Cargo, root workspace Cargo, and Flutter lockfiles match merge blobs
+  `277dd9f`, `7ab38f4`, and `51fa085`. The protected vault remains exactly
+  `16,072` files, zero directories, `4,522,733` bytes, `5,357` each
+  `.avoraxq`/`.json`/`.auth`, one `.metadata_auth_key`, and zero pending.
+  Checkpoint 2212 is closed; the complete antivirus goal remains active.
