@@ -50,12 +50,13 @@ use windows_sys::Win32::Security::WinTrust::{
 };
 use windows_sys::Win32::Security::{
     CreateRestrictedToken, CreateWellKnownSid, DuplicateTokenEx, GetLengthSid, GetTokenInformation,
-    IsValidSid, LookupPrivilegeValueW, RevertToSelf, SecurityImpersonation, TokenImpersonation,
-    TokenImpersonationLevel, TokenPrimary, TokenPrivileges, TokenRestrictedSids, TokenType,
-    WinRestrictedCodeSid, DISABLE_MAX_PRIVILEGE, LUID_AND_ATTRIBUTES, SECURITY_ATTRIBUTES,
-    SECURITY_MAX_SID_SIZE, SE_CHANGE_NOTIFY_NAME, SE_PRIVILEGE_ENABLED, SID, SID_AND_ATTRIBUTES,
-    TOKEN_ASSIGN_PRIMARY, TOKEN_DUPLICATE, TOKEN_GROUPS, TOKEN_IMPERSONATE, TOKEN_PRIVILEGES,
-    TOKEN_QUERY, WRITE_RESTRICTED,
+    IsValidSid, LookupPrivilegeValueW, RevertToSelf, SecurityImpersonation, SetTokenInformation,
+    TokenImpersonation, TokenImpersonationLevel, TokenIntegrityLevel, TokenPrimary,
+    TokenPrivileges, TokenRestrictedSids, TokenType, WinLowLabelSid, WinRestrictedCodeSid,
+    DISABLE_MAX_PRIVILEGE, LUID_AND_ATTRIBUTES, SECURITY_ATTRIBUTES, SECURITY_MAX_SID_SIZE,
+    SE_CHANGE_NOTIFY_NAME, SE_PRIVILEGE_ENABLED, SID, SID_AND_ATTRIBUTES, TOKEN_ADJUST_DEFAULT,
+    TOKEN_ASSIGN_PRIMARY, TOKEN_DUPLICATE, TOKEN_GROUPS, TOKEN_IMPERSONATE, TOKEN_MANDATORY_LABEL,
+    TOKEN_PRIVILEGES, TOKEN_QUERY, WELL_KNOWN_SID_TYPE, WRITE_RESTRICTED,
 };
 use windows_sys::Win32::Storage::FileSystem::{
     FileBasicInfo, FileIdInfo, FileStandardInfo, GetFileInformationByHandle,
@@ -72,7 +73,8 @@ use windows_sys::Win32::System::JobObjects::{
 };
 use windows_sys::Win32::System::Pipes::CreatePipe;
 use windows_sys::Win32::System::SystemServices::{
-    SE_GROUP_ENABLED, SE_GROUP_ENABLED_BY_DEFAULT, SE_GROUP_MANDATORY,
+    SE_GROUP_ENABLED, SE_GROUP_ENABLED_BY_DEFAULT, SE_GROUP_INTEGRITY, SE_GROUP_INTEGRITY_ENABLED,
+    SE_GROUP_MANDATORY,
 };
 use windows_sys::Win32::System::Threading::{
     CreateProcessAsUserW, DeleteProcThreadAttributeList, GetCurrentProcess, GetCurrentThread,
@@ -112,6 +114,9 @@ const MAX_AUTHENTICODE_HELPER_TOKEN_PRIVILEGES: usize = 256;
 const MAX_AUTHENTICODE_HELPER_RESTRICTED_SIDS: usize = 16;
 const AUTHENTICODE_HELPER_RESTRICTED_SID_ATTRIBUTES: u32 =
     (SE_GROUP_MANDATORY | SE_GROUP_ENABLED_BY_DEFAULT | SE_GROUP_ENABLED) as u32;
+const AUTHENTICODE_HELPER_SET_INTEGRITY_SID_ATTRIBUTES: u32 = SE_GROUP_INTEGRITY as u32;
+const AUTHENTICODE_HELPER_READBACK_INTEGRITY_SID_ATTRIBUTES: u32 =
+    (SE_GROUP_INTEGRITY | SE_GROUP_INTEGRITY_ENABLED) as u32;
 const AUTHENTICODE_HELPER_SID_STORAGE_WORDS: usize =
     (SECURITY_MAX_SID_SIZE as usize).div_ceil(size_of::<usize>());
 const MAX_AUTHENTICODE_HELPER_ATTRIBUTE_LIST_BYTES: usize = 64 * 1024;
@@ -186,43 +191,37 @@ struct AuthenticodeProcessMitigationEvidence {
     strict_handle: u32,
 }
 
-struct RestrictedCodeSid {
+struct VerifiedWellKnownSid {
     storage: [usize; AUTHENTICODE_HELPER_SID_STORAGE_WORDS],
     length: usize,
 }
 
-impl RestrictedCodeSid {
-    fn create() -> Result<Self> {
+impl VerifiedWellKnownSid {
+    fn create(sid_type: WELL_KNOWN_SID_TYPE, label: &str) -> Result<Self> {
         let mut sid = Self {
             storage: [0; AUTHENTICODE_HELPER_SID_STORAGE_WORDS],
             length: SECURITY_MAX_SID_SIZE as usize,
         };
         let mut length = sid.length as u32;
         anyhow::ensure!(
-            unsafe {
-                CreateWellKnownSid(
-                    WinRestrictedCodeSid,
-                    null_mut(),
-                    sid.as_mut_ptr(),
-                    &mut length,
-                )
-            } != 0,
-            "unable to create the Authenticode helper Restricted Code SID: {}",
+            unsafe { CreateWellKnownSid(sid_type, null_mut(), sid.as_mut_ptr(), &mut length,) }
+                != 0,
+            "unable to create the Authenticode helper {label} SID: {}",
             std::io::Error::last_os_error()
         );
         sid.length = length as usize;
         anyhow::ensure!(
             sid.length >= offset_of!(SID, SubAuthority)
                 && sid.length <= SECURITY_MAX_SID_SIZE as usize,
-            "AuthentiCode helper Restricted Code SID length is outside its bound"
+            "AuthentiCode helper {label} SID length is outside its bound"
         );
         anyhow::ensure!(
             unsafe { IsValidSid(sid.as_ptr()) } != 0,
-            "AuthentiCode helper Restricted Code SID is invalid"
+            "AuthentiCode helper {label} SID is invalid"
         );
         anyhow::ensure!(
             unsafe { GetLengthSid(sid.as_ptr()) } as usize == sid.length,
-            "AuthentiCode helper Restricted Code SID length changed after validation"
+            "AuthentiCode helper {label} SID length changed after validation"
         );
         Ok(sid)
     }
@@ -666,13 +665,13 @@ fn validate_restricted_authenticode_impersonation_token(token: HANDLE) -> Result
     validate_restricted_authenticode_token(token)
 }
 
-fn create_privilege_stripped_primary_token() -> Result<OwnedToken> {
+fn create_low_integrity_privilege_stripped_primary_token() -> Result<OwnedToken> {
     let mut process_token = null_mut();
     anyhow::ensure!(
         unsafe {
             OpenProcessToken(
                 GetCurrentProcess(),
-                TOKEN_ASSIGN_PRIMARY | TOKEN_DUPLICATE | TOKEN_QUERY,
+                TOKEN_ADJUST_DEFAULT | TOKEN_ASSIGN_PRIMARY | TOKEN_DUPLICATE | TOKEN_QUERY,
                 &mut process_token,
             )
         } != 0,
@@ -705,12 +704,41 @@ fn create_privilege_stripped_primary_token() -> Result<OwnedToken> {
         restricted_token,
         "unable to create the Authenticode helper privilege-stripped primary token",
     )?;
-    validate_privilege_stripped_primary_token(restricted_token.0)?;
+    set_authenticode_token_low_integrity(restricted_token.0)?;
+    validate_authenticode_primary_token(restricted_token.0)?;
     Ok(restricted_token)
 }
 
+fn set_authenticode_token_low_integrity(token: HANDLE) -> Result<()> {
+    let low_integrity_sid = VerifiedWellKnownSid::create(WinLowLabelSid, "Low Mandatory Level")?;
+    let label = TOKEN_MANDATORY_LABEL {
+        Label: SID_AND_ATTRIBUTES {
+            Sid: low_integrity_sid.as_ptr(),
+            Attributes: AUTHENTICODE_HELPER_SET_INTEGRITY_SID_ATTRIBUTES,
+        },
+    };
+    let information_length = size_of::<TOKEN_MANDATORY_LABEL>()
+        .checked_add(low_integrity_sid.length)
+        .and_then(|length| u32::try_from(length).ok())
+        .context("AuthentiCode helper low-integrity token information size overflow")?;
+    anyhow::ensure!(
+        unsafe {
+            SetTokenInformation(
+                token,
+                TokenIntegrityLevel,
+                (&label as *const TOKEN_MANDATORY_LABEL).cast::<c_void>(),
+                information_length,
+            )
+        } != 0,
+        "unable to set the Authenticode helper primary token to low integrity: {}",
+        std::io::Error::last_os_error()
+    );
+    Ok(())
+}
+
 fn create_write_restricted_token(existing: HANDLE, operation: &str) -> Result<OwnedToken> {
-    let restricted_code_sid = RestrictedCodeSid::create()?;
+    let restricted_code_sid =
+        VerifiedWellKnownSid::create(WinRestrictedCodeSid, "Restricted Code")?;
     let sid_to_restrict = SID_AND_ATTRIBUTES {
         Sid: restricted_code_sid.as_ptr(),
         Attributes: 0,
@@ -736,7 +764,7 @@ fn create_write_restricted_token(existing: HANDLE, operation: &str) -> Result<Ow
     OwnedToken::from_raw(restricted_token, operation)
 }
 
-fn validate_current_process_privilege_stripped_primary_token() -> Result<()> {
+fn validate_current_process_authenticode_primary_token() -> Result<()> {
     let mut token = null_mut();
     anyhow::ensure!(
         unsafe { OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &mut token) } != 0,
@@ -747,7 +775,7 @@ fn validate_current_process_privilege_stripped_primary_token() -> Result<()> {
         token,
         "unable to open Authenticode helper process token for read-back",
     )?;
-    validate_privilege_stripped_primary_token(token.0)
+    validate_authenticode_primary_token(token.0)
 }
 
 fn validate_current_process_authenticode_mitigations() -> Result<()> {
@@ -821,19 +849,22 @@ fn validate_authenticode_process_mitigation_evidence(
     Ok(())
 }
 
-fn validate_privilege_stripped_primary_token(token: HANDLE) -> Result<()> {
+fn validate_authenticode_primary_token(token: HANDLE) -> Result<()> {
     let token_type: i32 = query_token_scalar(token, TokenType, "type")?;
     anyhow::ensure!(
         token_type == TokenPrimary,
         "AuthentiCode helper process token is not a primary token"
     );
-    validate_privilege_stripped_token_privileges(token)
+    validate_privilege_stripped_token_privileges(token)?;
+    let integrity = query_token_integrity_label(token)?;
+    let expected = VerifiedWellKnownSid::create(WinLowLabelSid, "Low Mandatory Level")?;
+    validate_authenticode_integrity_label_evidence(&integrity, expected.as_bytes())
 }
 
 fn validate_restricted_authenticode_token(token: HANDLE) -> Result<()> {
     validate_privilege_stripped_token_privileges(token)?;
     let restricted_sids = query_token_restricted_sids(token)?;
-    let expected = RestrictedCodeSid::create()?;
+    let expected = VerifiedWellKnownSid::create(WinRestrictedCodeSid, "Restricted Code")?;
     validate_authenticode_restricted_sid_evidence(&restricted_sids, expected.as_bytes())
 }
 
@@ -846,6 +877,48 @@ fn validate_privilege_stripped_token_privileges(token: HANDLE) -> Result<()> {
         std::io::Error::last_os_error()
     );
     validate_enabled_authenticode_privileges(&entries, allowed)
+}
+
+fn query_token_integrity_label(token: HANDLE) -> Result<TokenSidEvidence> {
+    let mut required = 0u32;
+    unsafe { SetLastError(ERROR_SUCCESS) };
+    let first =
+        unsafe { GetTokenInformation(token, TokenIntegrityLevel, null_mut(), 0, &mut required) };
+    let first_error = unsafe { GetLastError() };
+    anyhow::ensure!(
+        first == 0 && first_error == ERROR_INSUFFICIENT_BUFFER,
+        "unable to size Authenticode helper token integrity label: {}",
+        std::io::Error::from_raw_os_error(first_error as i32)
+    );
+    let required = required as usize;
+    anyhow::ensure!(
+        required >= size_of::<TOKEN_MANDATORY_LABEL>()
+            && required <= MAX_AUTHENTICODE_HELPER_TOKEN_INFO_BYTES,
+        "AuthentiCode helper token integrity-label data is outside its byte bound"
+    );
+    let words = required.div_ceil(size_of::<usize>());
+    let mut buffer = vec![0usize; words];
+    let mut returned = 0u32;
+    anyhow::ensure!(
+        unsafe {
+            GetTokenInformation(
+                token,
+                TokenIntegrityLevel,
+                buffer.as_mut_ptr().cast::<c_void>(),
+                required as u32,
+                &mut returned,
+            )
+        } != 0,
+        "unable to query Authenticode helper token integrity label: {}",
+        std::io::Error::last_os_error()
+    );
+    let returned = returned as usize;
+    anyhow::ensure!(
+        returned >= size_of::<TOKEN_MANDATORY_LABEL>() && returned <= required,
+        "AuthentiCode helper token integrity-label data returned an invalid size"
+    );
+    let mandatory_label = unsafe { &*buffer.as_ptr().cast::<TOKEN_MANDATORY_LABEL>() };
+    token_sid_evidence_from_entry(&buffer, returned, &mandatory_label.Label, "integrity label")
 }
 
 fn query_token_privileges(token: HANDLE) -> Result<Vec<LUID_AND_ATTRIBUTES>> {
@@ -969,58 +1042,92 @@ fn query_token_restricted_sids(token: HANDLE) -> Result<Vec<TokenSidEvidence>> {
             count,
         )
     };
+    let mut evidence = Vec::with_capacity(count);
+    for entry in entries {
+        evidence.push(token_sid_evidence_from_entry(
+            &buffer,
+            returned,
+            entry,
+            "restricting SID",
+        )?);
+    }
+    Ok(evidence)
+}
+
+fn token_sid_evidence_from_entry(
+    buffer: &[usize],
+    returned: usize,
+    entry: &SID_AND_ATTRIBUTES,
+    label: &str,
+) -> Result<TokenSidEvidence> {
     let buffer_start = buffer.as_ptr() as usize;
     let buffer_end = buffer_start
         .checked_add(returned)
-        .context("AuthentiCode helper restricting SID buffer size overflow")?;
+        .context("AuthentiCode helper token SID buffer size overflow")?;
     let minimum_sid_bytes = offset_of!(SID, SubAuthority);
-    let mut evidence = Vec::with_capacity(count);
-    for entry in entries {
-        let sid_start = entry.Sid as usize;
-        let sid_header_end = sid_start
-            .checked_add(minimum_sid_bytes)
-            .context("AuthentiCode helper restricting SID header overflow")?;
-        anyhow::ensure!(
-            sid_start >= buffer_start && sid_header_end <= buffer_end,
-            "AuthentiCode helper restricting SID pointer is outside returned data"
-        );
-        let sub_authority_count = unsafe {
-            entry
-                .Sid
-                .cast::<u8>()
-                .add(offset_of!(SID, SubAuthorityCount))
-                .read()
-        } as usize;
-        let sid_length = sub_authority_count
-            .checked_mul(size_of::<u32>())
-            .and_then(|bytes| bytes.checked_add(minimum_sid_bytes))
-            .context("AuthentiCode helper restricting SID length overflow")?;
-        anyhow::ensure!(
-            sid_length >= minimum_sid_bytes && sid_length <= SECURITY_MAX_SID_SIZE as usize,
-            "AuthentiCode helper restricting SID length is outside its byte bound"
-        );
-        let sid_end = sid_start
-            .checked_add(sid_length)
-            .context("AuthentiCode helper restricting SID range overflow")?;
-        anyhow::ensure!(
-            sid_end <= buffer_end,
-            "AuthentiCode helper restricting SID exceeds returned data"
-        );
-        anyhow::ensure!(
-            unsafe { IsValidSid(entry.Sid) } != 0,
-            "AuthentiCode helper restricting SID is invalid"
-        );
-        anyhow::ensure!(
-            unsafe { GetLengthSid(entry.Sid) } as usize == sid_length,
-            "AuthentiCode helper restricting SID length changed after validation"
-        );
-        let sid = unsafe { std::slice::from_raw_parts(entry.Sid.cast::<u8>(), sid_length) };
-        evidence.push(TokenSidEvidence {
-            sid: sid.to_vec(),
-            attributes: entry.Attributes,
-        });
-    }
-    Ok(evidence)
+    let sid_start = entry.Sid as usize;
+    let sid_header_end = sid_start
+        .checked_add(minimum_sid_bytes)
+        .context("AuthentiCode helper token SID header overflow")?;
+    anyhow::ensure!(
+        sid_start >= buffer_start && sid_header_end <= buffer_end,
+        "AuthentiCode helper token {label} pointer is outside returned data"
+    );
+    let sub_authority_count = unsafe {
+        entry
+            .Sid
+            .cast::<u8>()
+            .add(offset_of!(SID, SubAuthorityCount))
+            .read()
+    } as usize;
+    let sid_length = sub_authority_count
+        .checked_mul(size_of::<u32>())
+        .and_then(|bytes| bytes.checked_add(minimum_sid_bytes))
+        .context("AuthentiCode helper token SID length overflow")?;
+    anyhow::ensure!(
+        sid_length >= minimum_sid_bytes && sid_length <= SECURITY_MAX_SID_SIZE as usize,
+        "AuthentiCode helper token {label} length is outside its byte bound"
+    );
+    let sid_end = sid_start
+        .checked_add(sid_length)
+        .context("AuthentiCode helper token SID range overflow")?;
+    anyhow::ensure!(
+        sid_end <= buffer_end,
+        "AuthentiCode helper token {label} exceeds returned data"
+    );
+    anyhow::ensure!(
+        unsafe { IsValidSid(entry.Sid) } != 0,
+        "AuthentiCode helper token {label} is invalid"
+    );
+    anyhow::ensure!(
+        unsafe { GetLengthSid(entry.Sid) } as usize == sid_length,
+        "AuthentiCode helper token {label} length changed after validation"
+    );
+    let sid = unsafe { std::slice::from_raw_parts(entry.Sid.cast::<u8>(), sid_length) };
+    Ok(TokenSidEvidence {
+        sid: sid.to_vec(),
+        attributes: entry.Attributes,
+    })
+}
+
+fn validate_authenticode_integrity_label_evidence(
+    evidence: &TokenSidEvidence,
+    expected_low_integrity_sid: &[u8],
+) -> Result<()> {
+    anyhow::ensure!(
+        evidence.sid == expected_low_integrity_sid,
+        "AuthentiCode helper primary token does not contain the exact Low Mandatory Level SID"
+    );
+    anyhow::ensure!(
+        evidence.attributes & AUTHENTICODE_HELPER_SET_INTEGRITY_SID_ATTRIBUTES
+            == AUTHENTICODE_HELPER_SET_INTEGRITY_SID_ATTRIBUTES,
+        "AuthentiCode helper primary token integrity label is not marked as an integrity SID"
+    );
+    anyhow::ensure!(
+        evidence.attributes & !AUTHENTICODE_HELPER_READBACK_INTEGRITY_SID_ATTRIBUTES == 0,
+        "AuthentiCode helper primary token integrity label has unexpected attributes"
+    );
+    Ok(())
 }
 
 fn validate_authenticode_restricted_sid_evidence(
@@ -1257,7 +1364,7 @@ fn verify_prepared_microsoft_signature(prepared: PreparedAuthenticodeVerificatio
 }
 
 pub(crate) fn run_authenticode_helper_stdio() -> Result<()> {
-    validate_current_process_privilege_stripped_primary_token()?;
+    validate_current_process_authenticode_primary_token()?;
     validate_current_process_authenticode_mitigations()?;
     let restricted = RestrictedAuthenticodeThreadToken::enter()?;
     let (nonce, prepared) = restricted.finish(read_and_prepare_authenticode_helper_request())?;
@@ -1527,7 +1634,7 @@ fn spawn_restricted_authenticode_process(
     let application_wide = absolute_application_path_wide(application)?;
     let mut command_line = restricted_process_command_line(application, arguments)?;
     let launch_context = sanitized_authenticode_launch_context()?;
-    let token = create_privilege_stripped_primary_token()?;
+    let token = create_low_integrity_privilege_stripped_primary_token()?;
     let stdin = InheritedPipe::create(false, "stdin")?;
     let stdout = InheritedPipe::create(true, "stdout")?;
     let stderr = InheritedPipe::create(true, "stderr")?;
@@ -3131,8 +3238,108 @@ mod tests {
     #[test]
     #[ignore = "isolated child fixture invoked by the restricted-process regression"]
     fn authenticode_restricted_primary_child_fixture() {
-        validate_current_process_privilege_stripped_primary_token().unwrap();
+        validate_current_process_authenticode_primary_token().unwrap();
         println!("AVORAX_RESTRICTED_PRIMARY_TOKEN_OK");
+    }
+
+    #[test]
+    fn native_authenticode_helper_low_integrity_primary_denies_medium_file_mutation() {
+        let directory = tempfile::tempdir().unwrap();
+        let path = directory.path().join("medium-integrity-write-target.txt");
+        let original = b"benign low-integrity fixture\n";
+        fs::write(&path, original).unwrap();
+        let request = helper_request(&path, fixture_sha256(&path));
+        let encoded = serde_json::to_vec(&request).unwrap();
+        let application = std::env::current_exe().unwrap();
+        let arguments = [
+            "--ignored",
+            "--exact",
+            "windows_authenticode::tests::authenticode_low_integrity_child_fixture",
+            "--nocapture",
+            "--test-threads=1",
+        ];
+
+        let output = run_bounded_authenticode_helper(
+            &application,
+            &arguments,
+            encoded,
+            Duration::from_secs(5),
+        )
+        .unwrap();
+        assert!(
+            output.status.success(),
+            "low-integrity child failed with {:?}; stdout: {}; stderr: {}",
+            output.status,
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
+        assert!(output.stderr.is_empty());
+        assert!(String::from_utf8(output.stdout)
+            .unwrap()
+            .contains("AVORAX_LOW_INTEGRITY_MUTATION_DENIED"));
+        assert_eq!(fs::read(path).unwrap(), original);
+    }
+
+    #[test]
+    #[ignore = "isolated child fixture invoked by the low-integrity regression"]
+    fn authenticode_low_integrity_child_fixture() {
+        revert_authenticode_helper_thread_token().unwrap();
+        validate_current_process_authenticode_primary_token().unwrap();
+        let request = read_authenticode_helper_request(std::io::stdin().lock()).unwrap();
+        validate_authenticode_helper_request(&request).unwrap();
+        let path = PathBuf::from(OsString::from_wide(&request.path_utf16));
+        assert_eq!(fixture_sha256(&path), request.expected_sha256);
+        let error = OpenOptions::new().write(true).open(&path).expect_err(
+            "low-integrity helper unexpectedly opened a medium-integrity file for write",
+        );
+        assert_eq!(error.kind(), std::io::ErrorKind::PermissionDenied);
+        assert_eq!(fixture_sha256(&path), request.expected_sha256);
+        println!("AVORAX_LOW_INTEGRITY_MUTATION_DENIED");
+    }
+
+    #[test]
+    fn native_authenticode_helper_low_integrity_sid_policy_is_exact() {
+        let expected = VerifiedWellKnownSid::create(WinLowLabelSid, "Low Mandatory Level").unwrap();
+        for attributes in [
+            AUTHENTICODE_HELPER_SET_INTEGRITY_SID_ATTRIBUTES,
+            AUTHENTICODE_HELPER_READBACK_INTEGRITY_SID_ATTRIBUTES,
+        ] {
+            validate_authenticode_integrity_label_evidence(
+                &TokenSidEvidence {
+                    sid: expected.as_bytes().to_vec(),
+                    attributes,
+                },
+                expected.as_bytes(),
+            )
+            .unwrap();
+        }
+
+        let mut wrong_sid = expected.as_bytes().to_vec();
+        *wrong_sid.last_mut().unwrap() ^= 1;
+        for invalid in [
+            TokenSidEvidence {
+                sid: wrong_sid,
+                attributes: AUTHENTICODE_HELPER_READBACK_INTEGRITY_SID_ATTRIBUTES,
+            },
+            TokenSidEvidence {
+                sid: expected.as_bytes().to_vec(),
+                attributes: 0,
+            },
+            TokenSidEvidence {
+                sid: expected.as_bytes().to_vec(),
+                attributes: SE_GROUP_INTEGRITY_ENABLED as u32,
+            },
+            TokenSidEvidence {
+                sid: expected.as_bytes().to_vec(),
+                attributes: AUTHENTICODE_HELPER_READBACK_INTEGRITY_SID_ATTRIBUTES
+                    | SE_GROUP_ENABLED as u32,
+            },
+        ] {
+            assert!(
+                validate_authenticode_integrity_label_evidence(&invalid, expected.as_bytes(),)
+                    .is_err()
+            );
+        }
     }
 
     #[test]
@@ -3168,7 +3375,7 @@ mod tests {
     #[test]
     #[ignore = "isolated child fixture invoked by the process-mitigation regression"]
     fn authenticode_process_mitigation_child_fixture() {
-        validate_current_process_privilege_stripped_primary_token().unwrap();
+        validate_current_process_authenticode_primary_token().unwrap();
         validate_current_process_authenticode_mitigations().unwrap();
         println!("AVORAX_PROCESS_MITIGATION_POLICY_OK");
     }
@@ -3270,7 +3477,7 @@ mod tests {
     #[test]
     #[ignore = "isolated child fixture invoked by the sanitized-launch regression"]
     fn authenticode_sanitized_launch_child_fixture() {
-        validate_current_process_privilege_stripped_primary_token().unwrap();
+        validate_current_process_authenticode_primary_token().unwrap();
         let windows_root = checked_system_windows_directory().unwrap();
         let expected_current = checked_system_directory(
             "System32",
@@ -3367,7 +3574,7 @@ mod tests {
     #[test]
     #[ignore = "isolated child fixture invoked by the write-restriction regression"]
     fn authenticode_write_restricted_child_fixture() {
-        validate_current_process_privilege_stripped_primary_token().unwrap();
+        validate_current_process_authenticode_primary_token().unwrap();
         let restricted = RestrictedAuthenticodeThreadToken::enter().unwrap();
         let operation = (|| -> Result<()> {
             let request = read_authenticode_helper_request(std::io::stdin().lock())?;
@@ -3396,7 +3603,8 @@ mod tests {
 
     #[test]
     fn native_authenticode_helper_write_restricted_sid_policy_is_exact() {
-        let expected = RestrictedCodeSid::create().unwrap();
+        let expected =
+            VerifiedWellKnownSid::create(WinRestrictedCodeSid, "Restricted Code").unwrap();
         let valid = TokenSidEvidence {
             sid: expected.as_bytes().to_vec(),
             attributes: AUTHENTICODE_HELPER_RESTRICTED_SID_ATTRIBUTES,

@@ -369,6 +369,31 @@ added. Both lockfiles are unchanged; strict lint, locked release hosts and
 workspaces, source contracts `636/636`, and exact `237/237` verification pass.
 Hosted package/SBOM evidence remains pending for checkpoint 2207.
 
+## Checkpoint 2208 Low-Integrity Token API Reuse
+
+Checkpoint 2208 adds no crate, package, Cargo feature, or lockfile change. It
+reuses pinned `windows-sys 0.61.2` bindings already enabled through
+`Win32_Security` and `Win32_System_SystemServices`: `SetTokenInformation`,
+`TokenIntegrityLevel`, `TOKEN_MANDATORY_LABEL`, `TOKEN_ADJUST_DEFAULT`,
+`CreateWellKnownSid`, `WinLowLabelSid`, `SE_GROUP_INTEGRITY`, and
+`SE_GROUP_INTEGRITY_ENABLED`. The reviewed crate license remains
+`MIT OR Apache-2.0`.
+
+These APIs implement and read back Windows Mandatory Integrity Control on an
+existing restricted token. They add no helper binary, parser, network client,
+registry component, build script, transitive package, notice, or license. This
+source-level reuse does not replace hosted package lockfile-SBOM evidence or
+final production artifact license review. No checkpoint-2208 package or SBOM
+success is claimed before its exact-head hosted runs execute.
+
+Local dependency evidence now passes without a Cargo or Flutter lockfile
+change: rustfmt, strict Native/Local Core/Guard Clippy, both locked workspace
+test variants, locked Local Core/Guard release builds, release Authenticode
+smoke, Flutter analyze and `838/838`, source contracts `637/637`, and the
+definitive verifier/validators `238/238` in `429.7s`. Exact-head hosted
+package/SBOM output and final-artifact license/notice review remain pending;
+this local API-reuse proof does not substitute for them.
+
 Final review strengthened the existing four-byte strict-handle policy
 read-back to require both invalid-handle exception and permanent-enforcement
 flags. This adds no API, feature, dependency, package, or lockfile change; the

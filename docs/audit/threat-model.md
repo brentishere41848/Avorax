@@ -1711,3 +1711,40 @@ Exact implementation head `a9d930a` passes CI `32634033002` and package
 push/PR `32634021590`/`32634032975`, including all six artifacts, checksums,
 and lockfile SBOM with publication skipped. Evidence-head, merge, merged-main,
 installed enterprise, and LocalSystem evidence remain separate.
+
+## Checkpoint 2208 Low-Integrity Authenticode Helper
+
+The remaining high-value helper boundary is the primary token used for loader
+and trust-provider compatibility. A same-user helper running at medium, high,
+or system integrity could use its parent SID to modify ordinary objects even
+after privilege removal. Checkpoint 2208 scripts Windows Mandatory Integrity Control
+for that process: `SetTokenInformation(TokenIntegrityLevel)` assigns
+exact `WinLowLabelSid` after `DISABLE_MAX_PRIVILEGE`, parent read-back occurs
+before `CreateProcessAsUserW`, and child read-back occurs before stdin or any
+untrusted request processing. Missing, malformed, differently attributed, or
+non-low integrity evidence prevents trust; there is no weaker retry.
+
+MIC's default no-write-up evaluation occurs before DACL evaluation. The benign
+regression therefore creates an ordinary medium-integrity text object, starts
+the real restricted helper child, explicitly calls `RevertToSelf`, retains
+read/hash access, and requires write-open denial plus unchanged bytes. This
+addresses same-process escape from the write-restricted impersonation token:
+reversion reaches only the low-integrity primary token.
+
+This boundary does not change identity, credentials, profile/registry
+namespace, desktop/window station, or normal read rights. It does not prevent
+writes to objects deliberately labelled for low-integrity mutation and does not
+constrain existing mappings or post-verdict mutation. Mandatory Integrity
+Control with `WinLowLabelSid` is not AppContainer/LPAC, authenticated IPC,
+installed LocalSystem proof, kernel interception, driver enforcement, or
+pre-execution blocking.
+
+Local evidence passes the focused low-integrity and adjacent token/launch
+filters, complete Authenticode `37/37` with six intentional child-fixture
+ignores, strict Native/Local/Guard lint, both locked workspace variants,
+release embedded/catalog/hash-binding smoke, Flutter `838/838`, and source
+contracts `637/637`. The corrected definitive verifier and built-in plus
+independent validators pass exactly `238/238` in `429.7s`; controlled
+237-step, missing-step, missing-verified-scope, and missing-technical-limit
+reports are rejected. Hosted exact-head, merge, merged-main, installed
+LocalSystem, AppContainer, driver, and pre-execution evidence remain separate.

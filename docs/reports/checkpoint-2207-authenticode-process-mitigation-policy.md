@@ -152,3 +152,29 @@ Tests use ignored benign Rust child fixtures, installed read-only Microsoft
 binaries, and temporary benign text only. Candidate fixtures are never
 executed. No live malware, download, install, service/driver start, Defender
 change, release, publication, or protected-quarantine mutation is permitted.
+
+## Final Integration Closure
+
+Evidence head `b36b6eb6005ded062c857ec3c408ca79908ae7e2` passed exact-head
+Avorax CI `32635222240` and Desktop Packages PR run `32635222261`.
+Package contracts, Windows x64 MSI/EXE, Linux x64 DEB/tar, macOS arm64/x64
+DMGs, six-artifact consolidation, checksums, and lockfile SBOM passed;
+publication was skipped. PR `#59` was marked ready only after those results and
+merged normally with exact-head locking as
+`c1d7e9694ee1176cee30388856936e51a7a8ee73`.
+
+Merged-main Avorax CI `32636058192` and Desktop Packages `32636058140` passed
+on that exact merge. Publication was again skipped. Exactly 12 paths were
+synchronized to `C:\Users\Brent\Documents\Avorax-main` only after every
+destination matched merge parent `8e9b672` through Git attribute-normalized
+blob preconditions. Every synchronized destination then matched both the merge
+blob and the source raw SHA-256.
+
+Destination source contracts passed `636/636`, process-mitigation regressions
+passed `2/2`, complete Authenticode passed `35/35` with five intentional
+isolated child-fixture ignores, strict Native Clippy passed, locked Local Core
+and Guard release builds passed, and the two-host release Authenticode smoke
+passed embedded/catalog Microsoft trust, unsigned rejection, and wrong-hash
+rejection without executing a candidate. The final read-only protected-vault
+audit remained exact at 16,072 files, zero directories, 4,522,733 bytes, 5,357
+each `.avoraxq`/`.json`/`.auth`, one `.metadata_auth_key`, and zero pending.

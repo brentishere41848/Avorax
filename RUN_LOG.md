@@ -8212,3 +8212,53 @@ Updates page showed:
   Linux DEB/tar, both macOS DMGs, six-artifact consolidation, checksums, and
   lockfile SBOM; publication was skipped. PR `#59` remains draft pending
   evidence-head checks.
+
+## 2026-08-23 checkpoint 2207 closure and 2208 scripting
+
+- Evidence head `b36b6eb` passed CI `32635222240` and Desktop Packages
+  `32635222261`. PR `#59` merged normally with exact-head locking as
+  `c1d7e969`; merged-main CI `32636058192` and packages `32636058140` passed,
+  all six artifacts/checksums/SBOM passed, and publication was skipped.
+- Exactly 12 base-preconditioned paths synchronized to `Avorax-main` and
+  matched merge blobs plus raw source SHA-256. Destination contracts passed
+  `636/636`, process mitigations `2/2`, complete Authenticode `35/35` with five
+  intentional ignores, strict Native Clippy, locked Local Core/Guard release
+  builds, and two-host trust smoke passed. The protected vault remained exact.
+- Started checkpoint 2208 from merge `c1d7e969`. Scripted exact
+  `WinLowLabelSid` assignment with `SetTokenInformation(TokenIntegrityLevel)`,
+  bounded parent/child read-back, no weaker launch retry, pure SID/attribute
+  rejection, and a benign `RevertToSelf`/medium-integrity write-denial child
+  fixture. Windows Mandatory Integrity Control is documented as no-write-up,
+  not identity, read, desktop, profile, AppContainer, or IPC isolation.
+- Added the dedicated central verifier step, strict `238`-step validator,
+  source contracts, checkpoint report, engine/control matrix, blocker,
+  threat-model, dependency, and status contracts. No checkpoint-2208 passing
+  result is claimed before this complete scripted batch is executed.
+
+## 2026-08-23 checkpoint 2208 local verification
+
+- PowerShell parsing, rustfmt, strict Native/Local Core/Guard Clippy, locked
+  Local Core/Guard release builds, both locked workspace test variants, and
+  release embedded/catalog/hash-binding smoke passed. Focused low-integrity,
+  restricted-process, restricted-thread, process-mitigation, sanitized-launch,
+  and write-restricted filters each passed `2/2`; complete Authenticode passed
+  `37/37` with six intentional isolated child-fixture ignores.
+- Flutter analyze passed with no issues, Flutter tests passed `838/838`, and
+  Python source contracts passed `637/637`. Cargo and Flutter lockfiles stayed
+  unchanged.
+- The first central run executed all `238` steps successfully, then correctly
+  failed because the strict validator found that a verified-scope replacement
+  had removed the exact retained child-token-validation phrase. The producer
+  was repaired and a source regression now binds the low-integrity replacement
+  to that phrase; the rejected report was never counted as a pass.
+- The corrected definitive report passed `238/238` from
+  `2026-08-23T12:00:59.3029036Z` through
+  `2026-08-23T12:08:07.2346200Z` in `429.7s`. Built-in and independent strict
+  validation passed. Controlled 237-step, renamed-low-integrity-step,
+  missing-verified-scope, and missing-technical-limit reports were rejected and
+  removed.
+- A final read-only protected-vault audit remained exact at 16,072 files, zero
+  directories, 4,522,733 bytes, 5,357 each
+  `.avoraxq`/`.json`/`.auth`, one `.metadata_auth_key`, and zero pending.
+  Exact-head hosted checks/package evidence, merge, merged-main checks, and safe
+  original-tree synchronization remain pending.
