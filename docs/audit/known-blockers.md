@@ -2097,9 +2097,11 @@ enforcement, or pre-execution blocking is claimed.
 - **Implementation-head hosted evidence passed:** Exact `c744fa9` passes CI
   `32649764260` and package push/PR `32649749634`/`32649764310`, including all
   six artifacts, checksums, lockfile SBOM, and skipped publication.
-- **Integration pending:** Evidence-head checks, normal merge, merged-main
-  evidence, and guarded original-tree synchronization remain open; hosted
-  source/package success is not represented as installed proof.
+- **Integration closed:** Evidence `8228daf`, PR `#62`, merge `425e663`,
+  merged-main CI `32651609367`, packages `32651609388`, exact 12-path guarded
+  synchronization, destination runtime/source checks, exact lockfiles, and the
+  unchanged vault all pass. Package publication was skipped. This is verified
+  development/destination evidence, not installed LocalSystem proof.
 - **Residual blocker:** `TokenVirtualizationAllowed` may remain one; trusted
   helper code has no enable path, but capability is not removed. Inactive
   virtualization and disabled UIAccess do not change SID, credentials, profile, registry namespace,

@@ -103,7 +103,43 @@ passes:
   both runs.
 
 Evidence-head checks, normal merge, merged-main evidence, and guarded
-original-tree synchronization remain pending and are not claimed here.
+original-tree synchronization remained pending at that implementation-evidence
+stage and were not claimed there.
+
+## Integration Closure
+
+Evidence head `8228daf6812038ec08cb9c4afd325f915e164512` passes exact-head
+Avorax CI `32650692083` and Desktop Packages `32650692145`. Package contracts,
+Windows MSI/setup EXE, Linux DEB/tar, macOS x64/arm64 DMGs, administrative MSI
+extraction without installation, six-artifact consolidation, checksums,
+lockfile SBOM, dependency/license evidence, and evidence upload all pass. The
+prerelease publication job is explicitly skipped.
+
+PR `#62` normally merged as
+`425e663d3f861e33f471c59a3bda9e24f8d3083c`. Exact merged-main CI
+`32651609367` and Desktop Packages `32651609388` pass the same required jobs,
+again with publication skipped.
+
+All `12` paths changed from merge base `d07220c` passed Git-filtered old-blob
+preconditions before guarded synchronization to
+`C:\Users\Brent\Documents\Avorax-main`. The added report path was required to
+be absent or already exact. Every destination path then matched both its merge
+blob and source raw SHA-256; no unrelated destination path changed.
+
+Destination source contracts pass `640/640`; the token-safety filter passes
+`2/2`; the broad Authenticode selection passes `49` with `8` intentional child
+fixture ignores. Strict Native/Local/Guard Clippy, locked Local Core and Guard
+release builds, the two-host embedded/catalog/hash-binding/no-execution smoke,
+the no-malware gate, and the full locked workspace pass. Native reports `477`
+passed with `8` intentional ignores and the signature compiler adds `6/6`.
+The no-malware gate first rejected the WindowsApps Python alias because its
+path traversed a reparse point; the unchanged gate then passed with the real
+local Python 3.14 executable. Cargo and Flutter lockfiles match the merge.
+
+The final read-only protected-vault audit remains exact at `16,072` files,
+zero directories, `4,522,733` bytes, `5,357` each `.avoraxq`, `.json`, and
+`.auth`, one `.metadata_auth_key`, and zero pending. Checkpoint 2210 is closed;
+the complete antivirus goal remains active.
 
 ## Honest Boundary
 

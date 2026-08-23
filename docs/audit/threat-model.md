@@ -1842,7 +1842,12 @@ definitive verifier and independent validator pass `240/240` in `458s`; five
 malformed reports are rejected. Exact implementation `c744fa9` passes hosted CI
 `32649764260` and package push/PR `32649749634`/`32649764310`, with six
 artifacts, checksums, lockfile SBOM, and publication skipped. Evidence-head,
-merged-main, and installed evidence remain pending.
+merged-main, and installed evidence remained pending at that implementation
+stage. Evidence `8228daf`, PR `#62`, merge `425e663`, exact merged-main CI
+`32651609367`, packages `32651609388`, 12-path guarded synchronization, and
+destination contracts/token/Authenticode/no-malware/lint/release/smoke/full-
+workspace checks now pass. Lockfiles and the protected vault remain exact;
+installed LocalSystem evidence remains pending.
 
 **Residual risk:** `TokenVirtualizationAllowed` may remain one because it is an
 inherited capability. Trusted helper code has no enable path, but the

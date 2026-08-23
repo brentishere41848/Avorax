@@ -542,3 +542,11 @@ lockfile SBOM, dependency/license evidence, and evidence upload, with publicatio
 skipped. Evidence-head/merged-main package evidence and complete final-artifact
 license/notice review remain pending; source-level API reuse is not final-binary
 license, notice, or copyright evidence.
+
+Evidence head `8228daf` passes CI `32650692083` and packages `32650692145`;
+merge `425e663` passes exact merged-main CI `32651609367` and packages
+`32651609388`. All six artifacts, dependency/license evidence, checksums,
+lockfile SBOM, and administrative MSI extraction pass, with publication
+skipped. Destination Cargo and Flutter lockfiles match the merge exactly.
+Complete final-artifact license, notice, and copyright review remains a
+release-host requirement.

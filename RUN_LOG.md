@@ -8439,3 +8439,25 @@ Updates page showed:
   consolidation, checksums, lockfile SBOM, and evidence upload. Publication is
   skipped. Evidence-head checks, merge, merged-main evidence, and guarded
   original-tree synchronization remain pending.
+
+## 2026-08-23 checkpoint 2210 integration closure
+
+- Evidence head `8228daf6812038ec08cb9c4afd325f915e164512` passes Avorax CI
+  `32650692083` and Desktop Packages `32650692145`, including all six native
+  artifacts, checksums, lockfile SBOM, administrative MSI extraction, and
+  skipped beta publication.
+- PR `#62` normally merged as
+  `425e663d3f861e33f471c59a3bda9e24f8d3083c`. Exact merged-main CI
+  `32651609367` and packages `32651609388` pass; publication is skipped.
+- All 12 merge paths passed Git-filtered `d07220c` base-blob preconditions
+  before guarded synchronization to `Avorax-main`, then matched both merge
+  blobs and source raw SHA-256 values. No unrelated destination path changed.
+- Destination source contracts pass `640/640`, token-safety regressions `2/2`,
+  the broad Authenticode selection `49` passed with `8` intentional ignores,
+  no-malware, strict Native/Local/Guard lint, locked release builds, two-host
+  trust smoke, and the full locked workspace. Native reports `477` passed and
+  `8` intentional ignores; the signature compiler adds `6/6`.
+- Cargo and Flutter lockfiles match the merge exactly. The final read-only vault
+  audit remains exact at 16,072 files, zero directories, 4,522,733 bytes,
+  5,357 each `.avoraxq`/`.json`/`.auth`, one `.metadata_auth_key`, and zero
+  pending. Checkpoint 2210 is closed; the full antivirus goal remains active.
