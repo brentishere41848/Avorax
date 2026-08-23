@@ -1904,8 +1904,8 @@ if ($RequireFullSuite) {
   if ($skipFlutter -or $skipRust) {
     throw "-RequireFullSuite requires skip_flutter=false and skip_rust=false."
   }
-  if ($steps.Count -ne 232) {
-    throw "-RequireFullSuite expected exactly 232 verifier steps for this source revision, found $($steps.Count)."
+  if ($steps.Count -ne 233) {
+    throw "-RequireFullSuite expected exactly 233 verifier steps for this source revision, found $($steps.Count)."
   }
   if ($steps[0].name -ne "local-core safe simulator scan reporting") {
     throw "-RequireFullSuite first step mismatch: $($steps[0].name)"
@@ -1970,6 +1970,7 @@ if ($RequireFullSuite) {
   Assert-ReportContainsStep $steps "update-service release binary build"
   Assert-ReportContainsStep $steps "guard-service release binary build"
   Assert-ReportContainsStep $steps "release Authenticode isolated helper IPC/hash-binding smoke"
+  Assert-ReportContainsStep $steps "native-engine Authenticode helper restricted-thread-token regressions"
   Assert-ReportContainsStep $steps "release update-service signed package verify/tamper smoke"
   Assert-ReportContainsStep $steps "release update-service apply tamper fail-before-activation smoke"
   Assert-ReportContainsStep $steps "release update-service apply snapshot-failure fail-safe smoke"
@@ -2064,12 +2065,15 @@ if ($RequireFullSuite) {
   Assert-ReportScopeContains $verifiedScopeText "helper errors and timeouts cannot become trust" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "Debug test builds retain a direct backend for deterministic unit fixtures and do not prove release isolation" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "The installed WindowsPowerShell catalog proves the primary catalog path and exact scan-hash binding; bounded secondary-catalog aggregation is unit-verified, but positive acceptance of an actual secondary catalog signature remains partial because no controlled benign multi-signed catalog fixture is available" "verification_scope.verified"
-  Assert-ReportScopeContains $verifiedScopeText "Memory-mapped and post-verdict mutation, same-token helper least privilege, and pre-execution blocking are not claimed" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Release helper WinTrust runs under a read-back-verified privilege-stripped SecurityImpersonation token created with DISABLE_MAX_PRIVILEGE before any candidate path is opened" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Only SeChangeNotifyPrivilege may remain enabled; token creation, assignment, bounded TokenPrivileges inspection, verification, or normal revert failure cannot become trust" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "same-process native code could technically revert impersonation; it is not an AppContainer or authenticated cross-token sandbox" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Memory-mapped and post-verdict mutation plus pre-execution blocking are not claimed" "verification_scope.verified"
   Assert-ReportScopeContains $technicalLimitText "no controlled benign multi-signed system-catalog fixture for positive secondary-catalog acceptance" "verification_scope.technically_limited"
   Assert-ReportScopeContains $verifiedScopeText "the release Authenticode helper Windows Job enforces and reads back an exact 12-second per-process user-CPU limit, one-process active limit, and 1 GiB per-process and whole-Job commit ceilings before untrusted candidate processing begins" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "Any SetInformationJobObject, QueryInformationJobObject, or exact-limit mismatch is diagnostic and prevents trust work" "verification_scope.verified"
   Assert-ReportScopeContains $technicalLimitText "Authenticode helper Job commit ceilings do not bound physical working set or I/O bytes and its user-CPU limit excludes kernel execution" "verification_scope.technically_limited"
-  Assert-ReportScopeContains $technicalLimitText "the helper still uses its parent's security token" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "the helper retains its parent process token, SID, integrity level, and desktop while only the WinTrust thread impersonates a privilege-stripped derivative token" "verification_scope.technically_limited"
   Assert-ReportScopeContains $verifiedScopeText "Native Engine PUP category inference requires a bounded ASCII-alphanumeric token" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "incidental path fragments such as .tmpuPoV59 cannot override stronger downloader/script evidence" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "Native Engine's disabled test-only legacy quarantine store uses token-derived native DACL application and verification without an external helper" "verification_scope.verified"

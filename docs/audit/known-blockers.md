@@ -1846,3 +1846,31 @@ enforcement, or pre-execution blocking is claimed.
   behavior, and Defender replacement remain separate limits or blockers.
   Hosted checkpoint-2202 evidence, follow-up merge, green merged-main checks,
   and original-tree synchronization remain pending.
+
+## Checkpoint 2202 Integration Closure
+
+- **Resolved:** Evidence-head CI/packages, PR `#54`, exact merge `4e24e47`,
+  merged-main CI/packages, preconditioned 15-file original-tree synchronization,
+  destination focused checks, release Authenticode helper smoke, and protected-
+  vault read-only verification all pass. Publication was skipped and no package
+  was installed. This also closes checkpoint 2201's stale evidence-head/merge/
+  sync wording.
+
+## Checkpoint 2203 Authenticode Restricted Thread Token
+
+- **Verified locally:** Release-helper WinTrust derives and applies a
+  `DISABLE_MAX_PRIVILEGE` `SecurityImpersonation` token before opening the
+  candidate. Exact type/level and bounded `TokenPrivileges` read-back allow only
+  enabled `SeChangeNotifyPrivilege`; failures and normal revert errors cannot
+  become trust. Focused real-token and synthetic sensitive-privilege tests pass
+  `2/2`, Authenticode passes `27/27`, Native passes `462 + 6`, Flutter passes
+  `838/838`, source contracts pass `632/632`, and the definitive verifier plus
+  validator pass `233/233` in `473.5s`. Hosted exact-head evidence is pending.
+- **Still partial:** The helper process retains the parent process token, SID,
+  integrity level, desktop, environment, and ACL access. Same-process native
+  code can technically revert thread impersonation. This is not AppContainer,
+  a restricted process, a separate desktop, authenticated cross-token IPC, or
+  installed LocalSystem service evidence.
+- **Unchanged blockers:** Production code/driver signing, installed service/UI
+  E2E, signed-driver IPC, pre-execution enforcement, Defender coexistence, and
+  production detection/false-positive evidence remain separate prerequisites.

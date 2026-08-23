@@ -20089,11 +20089,10 @@ def test_small_threat_mvp_verifier_is_safe_and_reproducible():
         in source
     )
     assert "positive acceptance of an actual secondary catalog signature remains partial" in source
-    assert (
-        "Memory-mapped and post-verdict mutation, same-token helper least privilege, "
-        "and pre-execution blocking are not claimed"
-        in source
-    )
+    assert "privilege-stripped SecurityImpersonation token" in source
+    assert "Only SeChangeNotifyPrivilege may remain enabled" in source
+    assert "it is not an AppContainer or authenticated cross-token sandbox" in source
+    assert "Memory-mapped and post-verdict mutation plus pre-execution blocking" in source
     assert (
         "Native Engine's disabled test-only legacy quarantine store uses token-derived "
         "native DACL application and verification without an external helper"
@@ -20826,8 +20825,8 @@ def test_small_threat_mvp_report_validator_is_strict_and_local():
     assert "driver_request_known_good_allows_in_lockdown" in source
     assert "Get-AvoraxGateFile ([System.IO.Path]::GetFullPath($text)) $Description" in source
     assert "-RequireFullSuite requires skip_flutter=false and skip_rust=false" in source
-    assert "if ($steps.Count -ne 232)" in source
-    assert "-RequireFullSuite expected exactly 232 verifier steps" in source
+    assert "if ($steps.Count -ne 233)" in source
+    assert "-RequireFullSuite expected exactly 233 verifier steps" in source
     assert (
         'Assert-ReportContainsStep $steps "native-engine secondary catalog '
         'Authenticode selection regressions"'
@@ -21466,9 +21465,8 @@ def test_small_threat_mvp_report_validator_is_strict_and_local():
         in source
     )
     assert (
-        'Assert-ReportScopeContains $verifiedScopeText "Memory-mapped and post-verdict '
-        'mutation, same-token helper least privilege, and '
-        'pre-execution blocking are not claimed" "verification_scope.verified"'
+        'Assert-ReportScopeContains $verifiedScopeText "Release helper WinTrust runs '
+        'under a read-back-verified privilege-stripped SecurityImpersonation token'
         in source
     )
     assert (
@@ -25216,7 +25214,7 @@ def test_native_secondary_catalog_authenticode_is_bounded_exact_and_honestly_par
     assert "native_secondary_catalog_authenticode_primary_runtime_is_exact_and_hash_bound" in source
     assert "native-engine secondary catalog Authenticode selection regressions" in verifier
     assert '"native_secondary_catalog_authenticode"' in verifier
-    assert "if ($steps.Count -ne 232)" in validator
+    assert "if ($steps.Count -ne 233)" in validator
     assert "no controlled benign multi-signed system-catalog fixture" in verifier
     assert "no controlled benign multi-signed system-catalog fixture" in validator
     assert "$technicalLimitText = Assert-JsonString" in validator
@@ -25253,8 +25251,8 @@ def test_native_authenticode_helper_job_resources_are_exact_and_fail_visible():
     )
     assert "native-engine Authenticode helper Job resource-limit regressions" in verifier
     assert '"native_authenticode_helper_job_limits"' in verifier
-    assert "if ($steps.Count -ne 232)" in validator
-    assert "expected exactly 232 verifier steps" in validator
+    assert "if ($steps.Count -ne 233)" in validator
+    assert "expected exactly 233 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper Job '
         'resource-limit regressions"'
@@ -25262,9 +25260,75 @@ def test_native_authenticode_helper_job_resources_are_exact_and_fail_visible():
     )
     assert "1 GiB per-process and whole-Job commit ceilings" in verifier
     assert "Job commit ceilings do not bound physical working set or I/O bytes" in verifier
-    assert "the helper still uses its parent's security token" in verifier
+    assert "the helper retains its parent process token, SID, integrity level, and desktop" in verifier
     assert "1 GiB per-process and whole-Job commit ceilings" in validator
     assert "Job commit ceilings do not bound physical working set or I/O bytes" in validator
+
+
+def test_native_authenticode_helper_uses_verified_privilege_stripped_thread_token():
+    source = read(NATIVE_WINDOWS_AUTHENTICODE)
+    production = source.split("#[cfg(test)]")[0]
+    verifier = read(ROOT / "tools" / "testing" / "verify-small-threat-mvp.ps1")
+    validator = read(ROOT / "tools" / "testing" / "validate-small-threat-mvp-report.ps1")
+    checkpoint = read(
+        ROOT
+        / "docs"
+        / "reports"
+        / "checkpoint-2203-authenticode-restricted-thread-token.md"
+    )
+    matrix = read(ROOT / "docs" / "audit" / "engine-control-matrix.md")
+    threat_model = read(ROOT / "docs" / "audit" / "threat-model.md")
+    dependency_inventory = read(ROOT / "docs" / "dependency-license-inventory.md")
+    helper = production[
+        production.index("pub(crate) fn run_authenticode_helper_stdio"):
+        production.index("pub(crate) fn run_authenticode_client_self_test_stdio")
+    ]
+
+    for contract in [
+        "CreateRestrictedToken(",
+        "DISABLE_MAX_PRIVILEGE",
+        "DuplicateTokenEx(",
+        "SecurityImpersonation",
+        "TokenImpersonation",
+        "SetThreadToken(null(), restricted_token.0)",
+        "GetTokenInformation(",
+        "TokenPrivileges",
+        "SE_CHANGE_NOTIFY_NAME",
+        "SE_PRIVILEGE_ENABLED",
+        "MAX_AUTHENTICODE_HELPER_TOKEN_INFO_BYTES: usize = 64 * 1024",
+        "MAX_AUTHENTICODE_HELPER_TOKEN_PRIVILEGES: usize = 256",
+        "RevertToSelf()",
+        "privilege-stripped Authenticode helper token retained an unexpected enabled privilege",
+    ]:
+        assert contract in production
+    assert "IsTokenRestricted(" not in production
+    assert "let restricted = PrivilegeStrippedThreadToken::enter()?" in helper
+    assert "restricted.finish(verify_direct_microsoft_signature" in helper
+    assert (
+        "native_authenticode_helper_restricted_thread_token_is_verified_and_reverted"
+        in source
+    )
+    assert (
+        "native_authenticode_helper_restricted_thread_token_rejects_sensitive_privilege"
+        in source
+    )
+    assert "native-engine Authenticode helper restricted-thread-token regressions" in verifier
+    assert '"native_authenticode_helper_restricted_thread_token"' in verifier
+    assert "Only SeChangeNotifyPrivilege may remain enabled" in verifier
+    assert "same-process native code could technically revert impersonation" in verifier
+    assert (
+        'Assert-ReportContainsStep $steps "native-engine Authenticode helper '
+        'restricted-thread-token regressions"'
+        in validator
+    )
+    assert "Only SeChangeNotifyPrivilege may remain enabled" in validator
+    assert "authenticated cross-token sandbox" in validator
+    for document in [checkpoint, matrix, threat_model, dependency_inventory]:
+        assert "DISABLE_MAX_PRIVILEGE" in document
+        assert "SeChangeNotifyPrivilege" in document
+    assert "Verified locally; hosted pending" in matrix
+    assert "passed exactly `233/233` steps" in checkpoint
+    assert "adds no crate, package, registry dependency, Cargo feature" in dependency_inventory
 
 
 def test_native_risk_fusion_pup_category_requires_a_bounded_token():

@@ -1487,3 +1487,48 @@ strict lint/format/security/dependency gates, Flutter/analyzer, and exact
 evidence without the new scope is rejected. This proves deterministic behavior
 for the bounded PUP case and test isolation on this host, not production family
 classification accuracy.
+
+## Checkpoint 2203 Authenticode Helper Thread-Privilege Boundary
+
+The isolated Authenticode helper previously inherited every enabled privilege
+of its parent. That is most consequential when Guard or Core runs as
+LocalSystem: candidate parsing and Windows trust-provider work do not require
+backup, restore, debug, ownership, service, or other administrative privileges.
+A malformed candidate or defective provider should therefore run with a smaller
+effective token even though the one-shot process and Job already bound lifetime
+and resources.
+
+Before opening the requested path, the helper duplicates its process token as a
+`SecurityImpersonation` token and calls `CreateRestrictedToken` with
+`DISABLE_MAX_PRIVILEGE`. It validates the returned token type and impersonation
+level, reads at most 64 KiB and 256 `TokenPrivileges` entries, and permits only
+the documented `SeChangeNotifyPrivilege` exception to remain enabled. It then
+assigns the token to the current thread and repeats the same validation on the
+effective read-back token. `IsTokenRestricted` is not evidence here because the
+Windows API checks only restricting SIDs, while this design intentionally keeps
+the parent's SIDs for file and trust-store compatibility.
+
+All setup/read-back failures prevent candidate verification. Normal success and
+verification-error paths call `RevertToSelf`; a revert failure is combined with
+the operation diagnostic and cannot return trust. Benign tests exercise actual
+token application/reversion and synthetic unexpected-enabled-privilege
+rejection. Release smoke must still prove embedded and catalog Microsoft trust,
+unsigned rejection, and wrong-hash failure on Local Core and Guard without
+executing fixtures.
+
+This narrows enabled thread privileges, not the process security boundary. The
+helper retains the parent process token, SID, integrity level, desktop,
+environment, and ordinary ACL access. Native code in the same process could
+technically revert impersonation. AppContainer/restricted-process isolation,
+separate desktop, authenticated cross-token IPC, installed LocalSystem E2E,
+production signing, driver/pre-execution enforcement, Defender replacement,
+and production accuracy remain partial, blocked, or technically limited.
+
+Local evidence passes the actual restricted-token and sensitive-privilege tests
+`2/2`, complete Authenticode tests `27/27`, Native Engine `462 + 6`, both locked
+workspace variants, Flutter `838/838`, source contracts `632/632`, release
+Local Core/Guard helper smoke, strict gates, and the exact `233/233` verifier in
+`473.5s`. The strict validator also rejects stale 232-step and missing-scope
+reports. This verifies the configured thread-privilege boundary on this host;
+hosted exact-head, installed LocalSystem, and stronger process sandbox evidence
+remain pending.

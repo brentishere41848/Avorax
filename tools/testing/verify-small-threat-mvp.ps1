@@ -280,6 +280,10 @@ $verifiedScope += " Additional verified boundary: every Microsoft publisher-trus
 $verifiedScope += " Additional verified boundary: the release Authenticode helper Windows Job enforces and reads back an exact 12-second per-process user-CPU limit, one-process active limit, and 1 GiB per-process and whole-Job commit ceilings before untrusted candidate processing begins. Unhandled-exception dialogs are suppressed and kill-on-close remains mandatory. Any SetInformationJobObject, QueryInformationJobObject, or exact-limit mismatch is diagnostic and prevents trust work."
 $verifiedScope += " Additional verified boundary: Native Engine PUP category inference requires a bounded ASCII-alphanumeric token, so incidental path fragments such as .tmpuPoV59 cannot override stronger downloader/script evidence while an explicit PUP token remains classified as potentially unwanted."
 $verifiedScope = $verifiedScope.Replace(
+  "Memory-mapped and post-verdict mutation, same-token helper least privilege, and pre-execution blocking are not claimed.",
+  "Release helper WinTrust runs under a read-back-verified privilege-stripped SecurityImpersonation token created with DISABLE_MAX_PRIVILEGE before any candidate path is opened. Only SeChangeNotifyPrivilege may remain enabled; token creation, assignment, bounded TokenPrivileges inspection, verification, or normal revert failure cannot become trust. This reduces enabled thread privileges but does not change the helper process SID, integrity level, desktop, or parent process token, and same-process native code could technically revert impersonation; it is not an AppContainer or authenticated cross-token sandbox. Memory-mapped and post-verdict mutation plus pre-execution blocking are not claimed."
+)
+$verifiedScope = $verifiedScope.Replace(
   "Windows direct Authenticode boundary, unsigned/malformed, Microsoft-signed, and scanned-content hash-binding regressions",
   "Windows direct Authenticode file/catalog boundary, unsigned/malformed, Microsoft-signed, and scanned-content hash-binding regressions"
 )
@@ -350,6 +354,10 @@ $verifiedScope = $verifiedScope.Replace(
 $optionalDefenderScope = "Optional: standard EICAR file/Defender integration is skipped by default to avoid repeated Microsoft Defender DOS/EICAR_Test_File alerts; rerun with -IncludeDefenderEicar for that host integration proof."
 $partialScope = "Partial: packaged desktop click-through E2E, installed local-core/service E2E, installer-owned service repair/install E2E, installed update/rollback E2E, installed UI filesystem picker flows, installed log export filesystem E2E, installed realtime watcher smoke/E2E, installed process observation service/driver loop/E2E, full release-host SBOM/license output, release-host performance baselines, and production false-positive-rate evidence."
 $technicalLimits = "Technically limited: no live malware, no controlled benign multi-signed system-catalog fixture for positive secondary-catalog acceptance, Authenticode helper Job commit ceilings do not bound physical working set or I/O bytes and its user-CPU limit excludes kernel execution, the helper still uses its parent's security token, no pre-execution blocking claim without a signed installed driver, no kernel realtime blocking claim, polling can miss processes that start and exit between snapshots, Guard process enumeration is disabled on unsupported non-Windows/non-Linux platforms, no installed service or OS-level polling-loop claim from app-lifetime snapshot observation, no driver-latency claim from synthetic user-mode performance evidence, no Windows Scheduled Task/background-service scheduling claim, no secure-erase claim, no machine-wide dependency installation, and no enterprise update/deployment approval claim."
+$technicalLimits = $technicalLimits.Replace(
+  "the helper still uses its parent's security token",
+  "the helper retains its parent process token, SID, integrity level, and desktop while only the WinTrust thread impersonates a privilege-stripped derivative token"
+)
 
 $pathAdditions = @(
   "C:\Program Files\Git\cmd",
@@ -458,6 +466,7 @@ try {
     $results.Add((Invoke-Step "native-engine secondary embedded Authenticode Microsoft-signed regressions" $repo $cargo @("test", "--manifest-path", "core\zentor_native_engine\Cargo.toml", "native_secondary_authenticode", "--", "--test-threads=1")))
     $results.Add((Invoke-Step "native-engine Authenticode helper isolation regressions" $repo $cargo @("test", "--manifest-path", "core\zentor_native_engine\Cargo.toml", "native_authenticode_helper", "--", "--test-threads=1")))
     $results.Add((Invoke-Step "native-engine Authenticode helper Job resource-limit regressions" $repo $cargo @("test", "--manifest-path", "core\zentor_native_engine\Cargo.toml", "native_authenticode_helper_job_limits", "--", "--test-threads=1")))
+    $results.Add((Invoke-Step "native-engine Authenticode helper restricted-thread-token regressions" $repo $cargo @("test", "--manifest-path", "core\zentor_native_engine\Cargo.toml", "native_authenticode_helper_restricted_thread_token", "--", "--test-threads=1")))
     $results.Add((Invoke-Step "native-engine Authenticode mandatory-hash/file-identity regressions" $repo $cargo @("test", "--manifest-path", "core\zentor_native_engine\Cargo.toml", "native_authenticode_file_identity", "--", "--test-threads=1")))
     $results.Add((Invoke-Step "native-engine known-good hash regressions" $repo $cargo @("test", "--manifest-path", "core\zentor_native_engine\Cargo.toml", "known_good", "--", "--test-threads=1")))
     $results.Add((Invoke-Step "native-engine known-bad hash regressions" $repo $cargo @("test", "--manifest-path", "core\zentor_native_engine\Cargo.toml", "known_bad", "--", "--test-threads=1")))

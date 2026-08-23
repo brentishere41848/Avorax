@@ -298,3 +298,26 @@ workspace variants, strict Native/Local/Guard Clippy, dependency/package-source
 gates, and definitive `232/232` validation pass. Both Cargo lockfiles remain
 byte-unchanged. Hosted checkpoint-2202 package SBOM and final-artifact review
 remain pending.
+
+## Authenticode Restricted Thread Token API Surface
+
+Checkpoint 2203 adds no crate, package, registry dependency, Cargo feature,
+network client, helper executable, or dependency version. It reuses the pinned
+`windows-sys 0.61.2` `Win32_Security` and `Win32_System_Threading` features
+already required by the Native Engine. The reviewed registry license remains
+`MIT OR Apache-2.0`; no lockfile change is intended.
+
+The added API surface is limited to `OpenProcessToken`, `DuplicateTokenEx`,
+`CreateRestrictedToken`, `SetThreadToken`, `OpenThreadToken`,
+`GetTokenInformation`, `LookupPrivilegeValueW`, and `RevertToSelf`. Microsoft
+documents `DISABLE_MAX_PRIVILEGE` as disabling every privilege except
+`SeChangeNotifyPrivilege`; runtime code still reads back and bounds the actual
+enabled privilege evidence instead of trusting the flag alone. No token-wrapper
+or sandbox dependency is introduced.
+
+Source contracts `632/632`, exact dependency resolution, unchanged Cargo and
+Flutter lockfiles, strict Native/Local/Guard lint, both complete locked
+workspaces, the dependency gate, and package-source contracts pass locally.
+The definitive verifier passes `233/233`. Hosted package SBOM generation and
+final-artifact license review remain pending; source-level API reuse is not
+final-binary license, notice, or copyright evidence.
