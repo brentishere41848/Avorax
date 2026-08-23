@@ -2011,8 +2011,15 @@ variants with Native `485`/`11` and compiler `6/6`, source contracts `644/644`,
 strict lint/release/two-host trust smoke, Flutter analyze and `838/838`, no-malware,
 dependency, exact-lockfile, and protected-vault gates. The definitive verifier and
 independent validator pass exactly `244/244` in `464.3s`; six adversarial report
-mutations are rejected. Hosted exact-head/evidence-head, integration,
-synchronization, and destination evidence remains pending.
+mutations are rejected. At this local-evidence point, hosted and integration
+evidence remained pending; the later hosted result is recorded immediately below.
+
+Exact implementation `6c3bad3` later passes Avorax CI `32670186345` and Desktop
+Packages push/PR runs `32670175754`/`32670186350`. The package runs pass six native
+artifacts, checksums, lockfile SBOM, dependency/license evidence, and Windows
+administrative MSI extraction without installation; publication is skipped.
+Evidence-head, merge, merged-main, synchronization, and destination evidence remains
+pending.
 
 **Residual risk:** Parent exact-Job and PID-list read-back is point-in-time process
 confinement. The child passes a null Job handle, so its `IsProcessInJob` evidence

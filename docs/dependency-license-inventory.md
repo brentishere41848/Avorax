@@ -704,7 +704,10 @@ later execution phase, locked standard/all-feature workspaces, strict Native/Loc
 Core/Guard lint, locked release Local Core/Guard builds, the two-host trust smoke,
 no-malware and dependency-evidence gates, source contracts `644/644`, and exact
 root Cargo, Native Cargo, and Git-filtered Flutter lockfile blobs pass. The
-definitive verifier passes `244/244` in `464.3s`. Hosted package construction,
-artifact checksums, lockfile SBOM, and administrative MSI extraction for the exact
-implementation head remain pending. No passing result is claimed from source
-presence alone.
+definitive verifier passes `244/244` in `464.3s`. Exact implementation `6c3bad3`
+passes package push/PR runs `32670175754`/`32670186350`, including dependency and
+license evidence, six native artifacts, checksums, lockfile SBOM, and Windows
+administrative MSI extraction without installation. Publication is skipped.
+Evidence-head/merged-main package evidence and complete signed final-artifact
+license, notice, and copyright review remain pending. No passing result is claimed
+from source presence alone.

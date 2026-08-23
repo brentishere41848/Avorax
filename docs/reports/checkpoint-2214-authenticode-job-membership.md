@@ -2,9 +2,10 @@
 
 ## Status
 
-Implementation and definitive local verification are complete. Hosted exact-head,
-evidence-head, PR/merge, merged-main, original-tree synchronization, and destination
-verification remain pending, so the checkpoint is not integrated or closed.
+Implementation, definitive local verification, and hosted exact-implementation-head
+verification are complete. Evidence-head, PR/merge, merged-main, original-tree
+synchronization, and destination verification remain pending, so the checkpoint is
+not integrated or closed.
 No checkpoint-2214 passing result is claimed before execution; every passing claim
 below comes from the later execution phase.
 
@@ -95,16 +96,26 @@ change, release, publication, or protected-quarantine mutation is permitted.
 
 ## Hosted Evidence
 
-Implementation commit, exact-head CI/package workflows, evidence-head, normal
-PR/merge, merged-main checks, guarded synchronization, and destination rechecks
-remain pending. No release, publication, install, service/driver start, or direct
-main push is authorized.
+Exact implementation commit `6c3bad3f5ab3f1e16efdd8d6769f995dfaa50929`
+passes Avorax CI PR run `32670186345` and Desktop Packages push/PR runs
+`32670175754`/`32670186350`. CI passes security/protection/performance, branding,
+Flutter/protocol, Unix quarantine permissions, and Rust component tests/lints.
+Both package runs pass Windows x64 MSI/setup EXE, Linux x64 DEB/tar, macOS
+x64/arm64 DMG, dependency/license evidence, Windows administrative MSI extraction
+without installation, six-artifact consolidation, checksums, lockfile SBOM, and
+artifact upload. Prerelease publication is skipped in both runs.
+
+PR `#66` is open, clean, and mergeable at that exact head. Evidence-head, normal
+merge, merged-main checks, guarded synchronization, and destination rechecks remain
+pending. No release, publication, install, service/driver start, or direct-main push
+is authorized.
 
 ## Current Classification
 
-- Verified: checkpoint-2214 implementation and definitive local evidence above.
-- Partial: hosted, integration, synchronization, destination, installed, and final-
-  artifact evidence remains pending.
+- Verified: checkpoint-2214 implementation, definitive local evidence, and exact-
+  implementation-head hosted CI/package evidence above.
+- Partial: evidence-head, integration, synchronization, destination, installed, and
+  complete signed final-artifact evidence remains pending.
 - Disabled/blocked: installed service/driver and pre-execution claims remain
   unavailable; no weaker fallback is enabled.
 - Technically limited: parent exact-Job/PID-list state is point-in-time and child

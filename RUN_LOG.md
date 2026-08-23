@@ -8777,3 +8777,18 @@ Updates page showed:
 - Hosted exact-head/evidence-head checks, PR/merge, merged-main evidence, guarded
   original-tree synchronization, and destination verification remain pending. No
   release, publication, install, service/driver start, or direct-main push occurs.
+
+## Checkpoint 2214 Exact-Implementation-Head Evidence
+
+- Exact implementation `6c3bad3f5ab3f1e16efdd8d6769f995dfaa50929`
+  passes Avorax CI PR run `32670186345`. Security/protection/performance, branding,
+  Flutter/protocol, Unix quarantine permission, and Rust component jobs all pass.
+- Desktop Packages push `32670175754` and PR `32670186350` pass Windows x64
+  MSI/setup EXE, Linux x64 DEB/tar, macOS x64/arm64 DMG, dependency/license
+  evidence, Windows administrative MSI extraction without installation, six-
+  artifact consolidation, checksums, lockfile SBOM, and artifact upload.
+  Prerelease publication is skipped in both runs.
+- GitHub reports PR `#66` clean and mergeable with base `ce80ce2` and exact head
+  `6c3bad3`. Artifact bundles are present and not expired. Evidence-head checks,
+  normal merge, merged-main evidence, guarded synchronization, and destination
+  verification remain pending.

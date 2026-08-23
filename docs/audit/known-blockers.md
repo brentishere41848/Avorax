@@ -2227,8 +2227,14 @@ enforcement, or pre-execution blocking is claimed.
   definitive verifier and standalone validator pass exactly `244/244` in `464.3s`.
   Six adversarial report copies are rejected. No checkpoint-2214 passing result is
   claimed before execution; every passing claim here is from the later execution
-  phase. Hosted exact-head/evidence-head, integration, synchronization, and
-  destination evidence remains pending.
+  phase. At this local-evidence point, hosted and integration evidence remained
+  pending; the later hosted result is recorded immediately below.
+- **Hosted status:** Exact implementation `6c3bad3` passes Avorax CI
+  `32670186345` and Desktop Packages push/PR runs
+  `32670175754`/`32670186350`, including six native artifacts, checksums,
+  lockfile SBOM, dependency/license evidence, and administrative MSI extraction.
+  Publication is skipped. PR `#66` is clean and mergeable; evidence-head, merge,
+  merged-main, synchronization, and destination evidence remains pending.
 - **Residual blocker:** Parent exact-Job/PID-list read-back is point-in-time. The
   child's null-Job check proves only membership in some Job because it does not own
   the unnamed parent Job handle. `IsProcessInJob` and
