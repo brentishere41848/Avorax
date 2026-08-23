@@ -8510,3 +8510,11 @@ Updates page showed:
 - Cargo/Flutter lockfiles and the protected vault remain exact. Hosted
   exact-head evidence, merge, guarded original-tree synchronization, and
   destination verification remain pending.
+- Exact implementation head `024d63fb4268a2a1a8094b1cc61c0ddbe4335ff4`
+  passes Avorax CI pull-request run `32655155577` and Desktop Packages push/PR
+  runs `32655130037`/`32655155628`. Windows x64 MSI/setup EXE, Linux x64
+  DEB/tar, macOS x64/arm64 DMGs, administrative MSI extraction without
+  installation, six-artifact consolidation, checksums, lockfile SBOM,
+  dependency/license evidence, and uploads pass. Publication is skipped.
+- Evidence-head checks, normal PR `#63` merge, merged-main evidence, guarded
+  synchronization, and destination verification remain pending.

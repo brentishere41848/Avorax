@@ -100,6 +100,25 @@ Hosted exact-head checks, normal PR merge, merged-main checks, guarded
 original-tree synchronization, and destination verification remain pending and
 are not claimed.
 
+## Hosted Implementation-Head Evidence
+
+Exact implementation head `024d63fb4268a2a1a8094b1cc61c0ddbe4335ff4`
+passes:
+
+- Avorax CI pull-request run `32655155577`: Rust/Native lint and tests, Flutter,
+  Unix quarantine permissions, security/protection/performance gates, branding,
+  dependency evidence, and no-malware checks all succeed.
+- Desktop Packages push run `32655130037` and pull-request run `32655155628`:
+  Windows x64 MSI/setup EXE, Linux x64 DEB/tar, macOS x64/arm64 DMGs, package
+  contracts, dependency/license evidence, administrative MSI extraction without
+  installation, six-artifact consolidation, lockfile SBOM, checksums, and
+  evidence upload all succeed. The prerelease publication job is skipped in
+  both runs.
+
+Evidence-head checks, normal PR `#63` merge, merged-main evidence, guarded
+original-tree synchronization, and destination verification remain pending and
+are not claimed at this implementation-evidence stage.
+
 ## Honest Boundary
 
 The controls restrict foreign USER handles, clipboard reads/writes, system

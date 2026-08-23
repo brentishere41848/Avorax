@@ -2126,8 +2126,12 @@ enforcement, or pre-execution blocking is claimed.
   to require that evidence; neither earlier pass is counted as final evidence.
 - **Fail-visible policy:** Configuration, query, exact-flag, assignment, or
   resume failure prevents publisher trust. No reduced-flag or unrestricted
-  retry is implemented. Five malformed reports are rejected. Hosted exact-head,
-  merge, synchronization, and destination evidence remains pending.
+  retry is implemented. Five malformed reports are rejected. Exact
+  implementation `024d63f` passes CI `32655155577` and package push/PR
+  `32655130037`/`32655155628`, including all six platform artifacts, checksums,
+  lockfile SBOM, administrative MSI extraction, and skipped publication.
+  Evidence-head, merge, synchronization, and destination evidence remains
+  pending.
 - **Residual blocker:** `JOB_OBJECT_UILIMIT_DESKTOP` prevents desktop creation
   and switching; it does not create a private desktop or window station. These
   UI limits do not change identity/profile, deny filesystem/registry/network

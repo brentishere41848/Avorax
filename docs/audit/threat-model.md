@@ -1884,7 +1884,11 @@ validation, then found that retry 2 did not require returned-size wording in the
 central scope; neither earlier passing run is final evidence. After both repairs
 and full affected reruns, corrected retry 3 and its independent validator pass
 `241/241` in `434.1s`; five fresh malformed reports are rejected.
-Hosted exact-head, merge, destination, and installed evidence remains pending.
+Exact implementation `024d63f` passes CI `32655155577` plus Desktop Packages
+push/PR `32655130037`/`32655155628`, including all six platform artifacts,
+checksums, lockfile SBOM, administrative MSI extraction, and skipped
+publication. Evidence-head, merge, destination, and installed evidence remains
+pending.
 
 **Residual risk:** Job UI limits constrain documented shared UI operations but
 do not create a private desktop or window station, change SID/profile, remove
