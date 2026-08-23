@@ -8588,3 +8588,10 @@ Updates page showed:
   bytes, `5,357` each `.avoraxq`/`.json`/`.auth`, one `.metadata_auth_key`, and
   zero pending. Hosted exact-head evidence, merge, guarded synchronization, and
   destination verification remain pending.
+- Exact implementation head `2612b7af77700a47558a638b017f3b5dac9fd0ce`
+  passes Avorax CI pull-request run `32660616609` and Desktop Packages push/PR
+  runs `32660604610`/`32660616617`. Both package runs pass six-platform-artifact
+  consolidation, checksums, lockfile SBOM, dependency/license evidence, Windows
+  administrative MSI extraction without installation, and uploads. Prerelease
+  publication is skipped. Evidence-head checks, merge, synchronization, and
+  destination verification remain pending.

@@ -1927,7 +1927,10 @@ Flutter analyze and `838/838`, source contracts `642/642`, no-malware, dependenc
 exact-lockfile, and protected-vault checks pass. The definitive report and independent
 validator pass `242/242` in `473.5s` after final review found and repaired unchecked
 `CloseDesktop` result handling; five malformed reports are rejected. Hosted,
-integration, destination, and installed evidence remain pending.
+integration, destination, and installed evidence remain pending. Exact
+implementation `2612b7a` passes CI `32660616609` and package push/PR
+`32660604610`/`32660616617`, including all six artifacts, checksums, lockfile
+SBOM, administrative MSI extraction, and skipped publication.
 
 The first parent-integrity desktop attempt failed visibly at loader status
 `0xC0000142`. The repair does not introduce a permissive DACL or a default-desktop

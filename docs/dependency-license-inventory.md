@@ -628,3 +628,10 @@ or lockfile entry changed. Cargo and Flutter lockfiles remain exact at Git blobs
 `277dd9fe1edfc45fa5550e8e2831f2a0c121561d` and
 `51fa085a41168aa1deadace8b5395614db43649e`. Hosted package/SBOM evidence and
 complete final-artifact license, notice, and copyright review remain pending.
+
+Exact implementation head `2612b7af77700a47558a638b017f3b5dac9fd0ce`
+passes Desktop Packages push/PR runs `32660604610`/`32660616617`. Both runs pass
+dependency/license evidence, all six native artifacts, Windows administrative MSI
+extraction without installation, checksums, lockfile CycloneDX SBOM, and artifact
+upload. Prerelease publication is skipped. Evidence-head/merged-main package
+evidence and complete signed final-artifact review remain pending.

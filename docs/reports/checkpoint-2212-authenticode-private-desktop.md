@@ -4,8 +4,9 @@
 
 Implementation and local verification are complete. The definitive report passes
 exactly `242/242` checks in `473.5s`, and the independent validator accepts it.
-Hosted exact-head CI/package evidence, integration, and destination synchronization
-remain pending. No candidate fixture was executed.
+Exact implementation head `2612b7af77700a47558a638b017f3b5dac9fd0ce`
+passes hosted CI and package evidence. Evidence-head checks, integration, and
+destination synchronization remain pending. No candidate fixture was executed.
 
 ## Implemented Boundary
 
@@ -63,6 +64,13 @@ remain pending. No candidate fixture was executed.
   and `51fa085a41168aa1deadace8b5395614db43649e`. The protected vault remains
   exactly `16,072` files, zero directories, `4,522,733` bytes, `5,357` each
   `.avoraxq`/`.json`/`.auth`, one `.metadata_auth_key`, and zero pending.
+- Exact implementation head `2612b7af77700a47558a638b017f3b5dac9fd0ce`
+  passes Avorax CI pull-request run `32660616609` and Desktop Packages push/PR
+  runs `32660604610`/`32660616617`. Both package runs build and upload Windows
+  x64 MSI/setup EXE, Linux x64 DEB/tar, and macOS x64/arm64 DMGs, then require
+  all six artifacts, dependency/license evidence, checksums, and lockfile SBOM.
+  Windows administrative MSI extraction passes without installation. Prerelease
+  publication is skipped.
 
 ## Technical Limits
 
@@ -77,7 +85,7 @@ installed LocalSystem proof, driver enforcement, or pre-execution blocking.
 
 ## Remaining Verification Sequence
 
-Exact-head hosted CI and package evidence, normal PR merge, merged-main evidence,
+Evidence-head hosted CI and package evidence, normal PR merge, merged-main evidence,
 guarded original-tree synchronization, and destination checks remain. Publication
-must stay skipped. The local evidence above is development-host proof, not installed
-LocalSystem, signed-driver, production-signing, or pre-execution proof.
+must stay skipped. The evidence above is not installed LocalSystem, signed-driver,
+production-signing, or pre-execution proof.

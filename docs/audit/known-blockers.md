@@ -2164,7 +2164,10 @@ enforcement, or pre-execution blocking is claimed.
   Five malformed report copies are rejected. Complete Authenticode, both locked
   workspaces, strict lint/release/two-host smoke, Flutter, no-malware, dependency,
   exact-lockfile, and protected-vault checks pass locally. Hosted exact-head,
-  integration, destination, and installed evidence remain pending.
+  integration, destination, and installed evidence remain pending. Exact
+  implementation `2612b7a` passes CI `32660616609` and package push/PR
+  `32660604610`/`32660616617`, including six artifacts, checksums, lockfile SBOM,
+  administrative MSI extraction, and skipped publication.
 - **Residual blocker:** This is not a private window station. `CreateDesktopW`
   inherits station security and does not isolate station-wide clipboard/global
   atoms, identity, profile, registry, filesystem/network/read access, or named
