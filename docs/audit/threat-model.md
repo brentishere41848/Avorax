@@ -2018,8 +2018,11 @@ Exact implementation `6c3bad3` later passes Avorax CI `32670186345` and Desktop
 Packages push/PR runs `32670175754`/`32670186350`. The package runs pass six native
 artifacts, checksums, lockfile SBOM, dependency/license evidence, and Windows
 administrative MSI extraction without installation; publication is skipped.
-Evidence-head, merge, merged-main, synchronization, and destination evidence remains
-pending.
+Evidence head `3014c44` passes CI `32671137010` and packages `32671137068`; PR
+`#66` merges normally as `cbf6203`; merged-main CI `32672025315` and packages
+`32672025303` pass. Exact 12-path synchronization and destination runtime, lint,
+workspace, Flutter, safety, dependency, lockfile, and vault checks pass. This closes
+checkpoint integration evidence without changing the residual boundary below.
 
 **Residual risk:** Parent exact-Job and PID-list read-back is point-in-time process
 confinement. The child passes a null Job handle, so its `IsProcessInJob` evidence
@@ -2028,3 +2031,34 @@ The parent keeps the process handle alive, but PID state is not an authenticated
 identity. Job membership neither authenticates/encrypts pipes nor changes SID,
 profile, registry, filesystem, network, or ordinary read access. It is not
 AppContainer/LPAC, installed LocalSystem, driver, or pre-execution evidence.
+
+## Checkpoint 2215 Anonymous-Pipe Parent-Creator Binding
+
+**Threat:** Exact inherited handle identity and direction do not independently
+prove which process created the connected opposite endpoint. Unchecked peer-owner
+state must not reach publisher-trust request parsing.
+
+**Verified local control:** The parent places canonical nonzero `GetCurrentProcessId`
+evidence in the exact sanitized launch environment. After standard-handle type,
+direction, startup identity, and inheritance checks, the child requires
+`GetNamedPipeClientProcessId` on its inherited stdin server/read handle and
+`GetNamedPipeServerProcessId` on inherited stdout/stderr client/write handles to
+all equal that parent PID and differ from child PID. Missing, malformed, zero,
+self, API-failed, or mismatched evidence is diagnostic before private desktop,
+token, mitigation, stdin, request, candidate, or WinTrust work.
+
+A real benign isolated child and malformed/mismatched adversarial evidence pass
+`2/2`; source contracts pass `645/645`; complete Authenticode passes `59` with
+`12` intentional ignores; both locked workspaces report Native `487`/`12` plus
+compiler `6/6`; and verifier/validator pass exactly `245/245` in `469.4s`. Seven
+fresh malformed reports are rejected. No checkpoint-2215 passing result is claimed
+before execution; these results come from the later execution phase. Candidate
+fixtures are not executed. Hosted and integration evidence remain pending.
+
+**Residual risk:** Anonymous `CreatePipe` endpoints are both created and connected
+in the parent before inheritance. The process-ID APIs bind the child's inherited
+handles to that parent creator; they do not report the later inheriting child back
+to the parent. The environment PID is an expectation rather than a secret. This
+does not prevent same-user handle duplication and is not encrypted, durable, or
+authenticated cross-identity IPC. AppContainer, installed LocalSystem, driver, and
+pre-execution limitations remain unchanged.

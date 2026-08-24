@@ -708,6 +708,42 @@ definitive verifier passes `244/244` in `464.3s`. Exact implementation `6c3bad3`
 passes package push/PR runs `32670175754`/`32670186350`, including dependency and
 license evidence, six native artifacts, checksums, lockfile SBOM, and Windows
 administrative MSI extraction without installation. Publication is skipped.
-Evidence-head/merged-main package evidence and complete signed final-artifact
-license, notice, and copyright review remain pending. No passing result is claimed
-from source presence alone.
+Evidence head `3014c44` and merged main `cbf6203` subsequently pass CI/package
+runs `32671137010`/`32671137068` and `32672025315`/`32672025303`. Destination
+dependency evidence reports `ok=true` and `partial=false`; exact lockfile blobs are
+unchanged. This closes checkpoint integration, not the complete signed final-
+artifact license, notice, copyright, or binary-resolution release prerequisite.
+Complete signed final-artifact license, notice, copyright, and binary-resolution
+review remains pending. No passing result is claimed from source presence alone.
+
+## Checkpoint 2215 Windows Pipe Process-ID API Review
+
+Checkpoint 2215 adds no crate, package, feature, or lockfile change. Existing
+`windows-sys 0.61.2` feature `Win32_System_Pipes` already exposes
+`GetNamedPipeClientProcessId` and `GetNamedPipeServerProcessId`, while the existing
+`Win32_System_Threading` feature exposes `GetCurrentProcessId`. These are bindings
+to Windows `Kernel32.dll`; no DLL, runtime, machine-wide component, network
+content, executable candidate fixture, or dependency is added.
+
+The API roles match the existing `CreatePipe` contract: child stdin inherits the
+server/read endpoint and therefore queries its client creator; child stdout and
+stderr inherit client/write endpoints and query their server creator. Because both
+anonymous-pipe endpoints are created and connected in the parent before inheritance,
+the evidence identifies that parent creator. It does not identify the inheriting
+child back to the parent, prevent same-user handle duplication, or provide secret,
+encrypted, durable, or cross-identity IPC.
+
+Focused runtime, complete Authenticode, strict lint, release builds/two-host smoke,
+both locked workspace variants, Flutter, no-malware, and dependency evidence pass.
+Source contracts pass `645/645`, definitive verification passes `245/245`, and
+the exact root Cargo, Native Cargo, and Git-filtered Flutter lockfile blobs remain
+`7ab38f4820b08029c64872360fac7141e2512ac4`,
+`277dd9fe1edfc45fa5550e8e2831f2a0c121561d`, and
+`51fa085a41168aa1deadace8b5395614db43649e`. No checkpoint-2215 passing result is
+claimed before execution; these results come from the later execution phase.
+Exact implementation `cf9055b` passes Desktop Packages push/PR runs
+`32675035927`/`32675048000`. Each run verifies dependency/license evidence,
+requires all six native artifacts, creates checksums and the lockfile SBOM, and
+uploads five unexpired artifact bundles bound to the exact SHA. Publication is
+skipped. Complete signed final-artifact license/notice and binary-resolution
+review remains pending.

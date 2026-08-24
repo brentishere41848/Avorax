@@ -105,18 +105,53 @@ x64/arm64 DMG, dependency/license evidence, Windows administrative MSI extractio
 without installation, six-artifact consolidation, checksums, lockfile SBOM, and
 artifact upload. Prerelease publication is skipped in both runs.
 
-PR `#66` is open, clean, and mergeable at that exact head. Evidence-head, normal
-merge, merged-main checks, guarded synchronization, and destination rechecks remain
-pending. No release, publication, install, service/driver start, or direct-main push
-is authorized.
+## Integration Closure
 
-## Current Classification
+Evidence head `3014c44ed1ff2c9df0eda2d43081a241ffe08cb4` passes exact-head
+Avorax CI `32671137010` and Desktop Packages pull-request run `32671137068`.
+Every required CI job, Windows x64 MSI/setup EXE, Linux x64 DEB/tar, macOS
+x64/arm64 DMGs, administrative MSI extraction, six-artifact consolidation,
+checksums, lockfile SBOM, dependency/license evidence, and upload pass.
+Publication is skipped. A separate evidence-head push package run was not expected
+because that commit changed documentation only.
 
-- Verified: checkpoint-2214 implementation, definitive local evidence, and exact-
-  implementation-head hosted CI/package evidence above.
-- Partial: evidence-head, integration, synchronization, destination, installed, and
-  complete signed final-artifact evidence remains pending.
-- Disabled/blocked: installed service/driver and pre-execution claims remain
-  unavailable; no weaker fallback is enabled.
-- Technically limited: parent exact-Job/PID-list state is point-in-time and child
-  null-Job membership identifies only some Job; IPC and identity are unchanged.
+PR `#66` normally merges as `cbf620371a814c6eb2eea56e0af8eaffc2fac9e6`.
+Exact merged-main Avorax CI `32672025315` and Desktop Packages `32672025303`
+pass the same required evidence, again with publication skipped.
+
+The merge changes exactly `12` paths from prior main
+`ce80ce2d1355537ab88f1bf581a26d8ff36e5076`: 11 modified paths plus this new
+checkpoint report. Every existing destination path first matched its prior-main raw
+Git blob, while this report was absent. The first synchronization script parse
+found one invalid delimited-variable reference before any destination write; the
+repaired script parsed and then exported `6,054,982` bytes only to those validated
+paths through same-directory temporary files and atomic replacement. All 12
+destination raw blobs match merge `cbf6203`, and no temporary or backup file remains.
+
+In `C:\Users\Brent\Documents\Avorax-main`, source contracts pass `644/644`,
+Job-membership checks pass `2/2`, and complete Windows Authenticode passes `49`
+with `11` intentional child-fixture ignores. Strict Native/Local Core/Guard Clippy,
+locked Local Core/Guard release builds, the two-host release trust smoke, the
+no-malware and dependency-evidence gates, and both locked workspace variants pass.
+Native reports `485` passed with `11` ignored and the signature compiler passes
+`6/6` in each variant. Flutter analyze reports no issues and Flutter passes
+`838/838`. One initial Guard lint command named the nonexistent `zentor_guard`
+manifest and failed before compilation; the corrected `zentor_guard_service`
+command is the passing evidence.
+
+The root Cargo, Native Cargo, and Git-filtered Flutter lockfiles match merge blobs
+`7ab38f4820b08029c64872360fac7141e2512ac4`,
+`277dd9fe1edfc45fa5550e8e2831f2a0c121561d`, and
+`51fa085a41168aa1deadace8b5395614db43649e`. The protected vault remains exactly
+`16,072` files, zero directories, `4,522,733` bytes, `5,357` each
+`.avoraxq`/`.json`/`.auth`, one `.metadata_auth_key`, and zero pending.
+Checkpoint 2214 is closed; the complete antivirus goal remains active.
+
+## Remaining Program Work
+
+Checkpoint 2214 has no remaining integration work. Installed LocalSystem evidence,
+authenticated cross-identity IPC, production signing, a signed kernel driver,
+demonstrated pre-execution blocking, complete final-artifact license/notice review,
+and production false-positive and detection-rate evidence remain partial, blocked,
+or technically limited. Parent membership evidence remains point-in-time, and the
+child null-Job query still identifies only some Job.
