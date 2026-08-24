@@ -9648,3 +9648,21 @@ Updates page showed:
   strict validation pass and nine adversarial report mutations are rejected.
   Hosted, merge, guarded synchronization, and destination evidence remain
   pending.
+
+## 2026-08-24 continuation checkpoint 2223 implementation-head hosting
+
+- Exact implementation `561ac536a55257b05f9c04ada55756d1ab676749`
+  passes Avorax CI `32744796324` and Desktop Packages PR/push runs
+  `32744796274`/`32744754697` without reruns.
+- Both package runs pass package contracts, Windows x64 MSI/EXE, Linux x64
+  DEB/tar, macOS arm64/x64 DMG, and consolidation. Publication is explicitly
+  skipped in both runs.
+- Independent in-ZIP verification proves eight entries per consolidated
+  bundle, exactly seven checksum rows with all seven SHA-256 values matching,
+  and CycloneDX 1.6 lockfile SBOMs with 569 components.
+- Ordinary local extraction completed but Defender removed both Windows files
+  from each extracted directory. Defender was not changed; complete evidence
+  comes from the untouched ZIP streams, which retain and hash-verify the MSI
+  and EXE. Nothing was installed, executed, released, or published.
+- Evidence-head CI/packages, normal merge, merged-main evidence, guarded
+  synchronization, and destination verification remain pending.

@@ -1025,3 +1025,13 @@ Guarded destination synchronization and full destination verification preserve
 all three exact lock blobs. This closes checkpoint package integration only;
 complete signed final-artifact license, notice, copyright, and binary-
 resolution review remains a production-release prerequisite.
+
+Checkpoint 2223 exact implementation `561ac536a55257b05f9c04ada55756d1ab676749`
+passes CI `32744796324` and package PR/push `32744796274`/`32744754697` with no
+dependency or lockfile change. Independent checks over both untouched
+consolidated ZIP streams verify all six platform files, all seven manifest
+SHA-256 values, and CycloneDX 1.6 lockfile SBOMs with 569 components.
+Publication is skipped. Defender removed locally extracted MSI/EXE copies but
+was not weakened; stream verification used the retained original ZIP entries.
+Evidence-head/merged-main proof and complete signed final-artifact license,
+notice, copyright, and binary-resolution review remain pending.

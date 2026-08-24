@@ -85,6 +85,34 @@ same exact check was immediately rerun from the repository root and passed in
 `2.76s`; this was a command work-directory error, not a source or test failure.
 
 All three lock blobs remain exact. The protected quarantine inventory is
-rechecked separately before commit. Exact implementation-head hosting, package
-evidence, normal PR/merge, guarded synchronization, and destination proof
-remain pending, so checkpoint 2223 is locally verified but not closed.
+rechecked separately before commit. Normal PR/merge, guarded synchronization,
+and destination proof remain pending, so checkpoint 2223 is locally and at its
+implementation head verified but not closed.
+
+## Implementation-Head Hosted Evidence
+
+Exact implementation commit
+`561ac536a55257b05f9c04ada55756d1ab676749` passes Avorax CI run
+`32744796324` and Desktop Packages pull-request/push runs `32744796274` and
+`32744754697`. The CI run completed all five jobs. Both package runs completed
+package contracts, Windows x64 MSI/EXE, Linux x64 DEB/tar, macOS arm64/x64
+DMG, and consolidation successfully. Prerelease publication was explicitly
+skipped in both runs.
+
+The original consolidated artifact ZIP from each package run was downloaded
+without extracting its candidate executables. Independent stream-based checks
+proved exactly eight archive entries: six platform artifacts, one CycloneDX
+lockfile SBOM, and `SHA256SUMS.txt`. Each manifest had exactly seven rows and
+all seven SHA-256 values matched the corresponding ZIP entry. Both SBOMs are
+CycloneDX 1.6 with 569 components.
+
+An ordinary `gh run download` extraction completed with success but local
+Defender removed the Windows MSI and EXE from both extracted directories. No
+Defender setting was changed. This endpoint event is not represented as an
+artifact-integrity failure because the untouched GitHub ZIP streams retained
+both entries and their hashes independently matched; the extracted directories
+are not used as complete-package evidence.
+
+Evidence-head CI/packages, normal merge, merged-main checks, guarded original-
+tree synchronization, and destination verification remain pending. Nothing
+was installed, executed, released, or published.

@@ -2322,3 +2322,13 @@ workspaces, strict lint, Flutter `838/838`, and definitive exact `253/253` in
 window on this host; it does not alter the same-session, cross-identity,
 AppContainer/LPAC, installed LocalSystem, signed-driver, or pre-execution
 residual threats. Hosted and destination evidence remain pending.
+
+Exact implementation `561ac536a55257b05f9c04ada55756d1ab676749`
+passes CI `32744796324` and both package runs `32744796274`/`32744754697`.
+Independent checks over each untouched consolidated ZIP verify all six
+platform artifacts, seven exact SHA-256 rows, and a CycloneDX 1.6 lockfile SBOM
+with 569 components; publication is skipped. Defender removed the Windows
+files only from ordinary local extraction, was not weakened, and the incomplete
+extracted directories are not treated as complete evidence. Hosted proof does
+not expand the point-window boundary or any residual threat above. Evidence-
+head, merged-main, synchronization, and destination evidence remain pending.

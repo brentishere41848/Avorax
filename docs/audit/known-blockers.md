@@ -2491,3 +2491,12 @@ enforcement, or pre-execution blocking is claimed.
   closure. Same-session injection/handle duplication, cross-identity IPC,
   AppContainer/LPAC, installed LocalSystem, signing, driver, and pre-execution
   limits remain external or technical blockers for the larger goal.
+- **Checkpoint 2223 implementation-head hosted blocker closed:** exact
+  `561ac536a55257b05f9c04ada55756d1ab676749` passes CI `32744796324` and
+  package PR/push `32744796274`/`32744754697`. Both untouched consolidated ZIP
+  streams independently pass the six-platform-artifact, seven-checksum, and
+  CycloneDX 1.6/569-component SBOM contract; publication is skipped. Local
+  Defender removed extracted MSI/EXE copies and was not weakened. Remaining
+  checkpoint blockers are evidence-head checks, normal merge, merged-main
+  checks, guarded synchronization, and destination verification. The larger
+  installed/cross-identity/signing/driver/pre-execution blockers remain.

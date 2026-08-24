@@ -5762,5 +5762,13 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   token stability `2/2`, Authenticode `71/13`, Native `499/13`, compiler `6/6`,
   source contracts `653/653`, Flutter `838/838`, and strict lint. Definitive
   verification passes exact `253/253` in `492.9s`, the new target in `0.2s`,
-  both validators, and nine negative report mutations. Hosted exact-head,
-  package, integration, synchronization, and destination proof remain pending.
+  both validators, and nine negative report mutations. Integration,
+  synchronization, and destination proof remain pending.
+- **Implementation-head hosted verified:** exact `561ac536` passes Avorax CI
+  `32744796324` and package PR/push runs `32744796274`/`32744754697`. Both
+  consolidated ZIPs contain six platform artifacts, seven matching SHA-256
+  rows, and CycloneDX 1.6/569-component SBOM evidence; publication is skipped.
+  Local Defender removed extracted MSI/EXE copies, so complete-package evidence
+  was verified directly against both untouched ZIP streams without weakening
+  Defender. Evidence-head, merge, merged-main, guarded sync, and destination
+  evidence remain pending.
