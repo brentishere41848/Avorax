@@ -1045,3 +1045,21 @@ Guarded destination synchronization and full verification preserve all three
 exact lock blobs. This closes checkpoint package integration only; complete
 signed final-artifact license, notice, copyright, and binary-resolution review
 remains a production-release prerequisite.
+
+Checkpoint 2224 launch-primary token stability uses only the already pinned
+`windows-sys` `TOKEN_STATISTICS`/process APIs and existing repository test and
+verification tooling. The implementation captures and rechecks `TokenId` and
+`ModifiedId` on the same parent-held token handle around process creation and
+authenticated handshake; no new binary, script host, network source, or
+runtime component is introduced. This batch adds no crate, package, feature,
+or lockfile change.
+
+Local verification passes both locked workspaces, strict lint, standalone
+locked/offline Native, Flutter lock enforcement/analyze/`838`, source contracts
+`654/654`, dependency evidence, and exact verifier `254/254`. All three lock
+blobs remain unchanged. Exact-head package SBOM/checksum evidence, merge,
+synchronization, and destination proof remain pending. The control does not
+prove the child process token remains identical or expand cross-identity,
+AppContainer/LPAC, installed LocalSystem, signed-driver, or pre-execution
+guarantees. Complete signed final-artifact license, notice, copyright, and
+binary-resolution review remains a production-release prerequisite.

@@ -411,6 +411,7 @@ struct AuthenticodeParentChildHandshake {
     token: String,
     expected_user_sid: String,
     expected_logon_session: AuthenticodeTokenLogonSessionEvidence,
+    expected_launch_token_stability: AuthenticodeTokenStabilityEvidence,
     connect_pending: bool,
 }
 
@@ -422,6 +423,8 @@ impl AuthenticodeParentChildHandshake {
             expected_client_token,
             "launch primary logon session",
         )?;
+        let expected_launch_token_stability =
+            query_authenticode_token_stability(expected_client_token, "launch primary pre-pipe")?;
         let pipe_name = format!(
             "{}{}",
             AUTHENTICODE_HELPER_HANDSHAKE_PIPE_PREFIX,
@@ -492,13 +495,25 @@ impl AuthenticodeParentChildHandshake {
             token,
             expected_user_sid,
             expected_logon_session,
+            expected_launch_token_stability,
             connect_pending,
         })
+    }
+
+    fn validate_launch_token_stability(&self, launch_token: HANDLE, phase: &str) -> Result<()> {
+        let current =
+            query_authenticode_token_stability(launch_token, &format!("launch primary {phase}"))?;
+        validate_authenticode_launch_token_stability_evidence(
+            self.expected_launch_token_stability,
+            current,
+            phase,
+        )
     }
 
     fn complete(
         mut self,
         process: HANDLE,
+        launch_token: HANDLE,
         expected_child_process_id: u32,
         timeout: Duration,
     ) -> Result<()> {
@@ -564,7 +579,8 @@ impl AuthenticodeParentChildHandshake {
         validate_authenticode_handshake_token_bytes(
             self.token.as_bytes(),
             &received[..transferred as usize],
-        )
+        )?;
+        self.validate_launch_token_stability(launch_token, "after authenticated handshake")
     }
 
     fn wait_for_operation(
@@ -1855,6 +1871,28 @@ fn validate_authenticode_token_stability_evidence(
         after.modified_id_low == before.modified_id_low
             && after.modified_id_high == before.modified_id_high,
         "AuthentiCode handshake client token was modified during validation"
+    );
+    Ok(())
+}
+
+fn validate_authenticode_launch_token_stability_evidence(
+    initial: AuthenticodeTokenStabilityEvidence,
+    current: AuthenticodeTokenStabilityEvidence,
+    phase: &str,
+) -> Result<()> {
+    anyhow::ensure!(
+        initial.token_id_low != 0 || initial.token_id_high != 0,
+        "AuthentiCode launch primary initial token ID is empty"
+    );
+    anyhow::ensure!(
+        current.token_id_low == initial.token_id_low
+            && current.token_id_high == initial.token_id_high,
+        "AuthentiCode launch primary token instance changed {phase}"
+    );
+    anyhow::ensure!(
+        current.modified_id_low == initial.modified_id_low
+            && current.modified_id_high == initial.modified_id_high,
+        "AuthentiCode launch primary token was modified {phase}"
     );
     Ok(())
 }
@@ -3500,6 +3538,15 @@ fn spawn_restricted_authenticode_process(
     drop(stdout.child);
     drop(stderr.child);
 
+    if let Err(error) = handshake.validate_launch_token_stability(token.0, "after process creation")
+    {
+        let termination = terminate_and_reap_suspended_authenticode_process(&process);
+        anyhow::bail!(
+            "{error:#}; unstable Authenticode launch-token cleanup: {}",
+            helper_result_summary(termination)
+        );
+    }
+
     if let Err(error) = job.assign(process.0) {
         let termination = terminate_and_reap_suspended_authenticode_process(&process);
         anyhow::bail!(
@@ -3525,6 +3572,7 @@ fn spawn_restricted_authenticode_process(
     drop(thread_handle);
     if let Err(error) = handshake.complete(
         process.0,
+        token.0,
         process_info.dwProcessId,
         AUTHENTICODE_HELPER_HANDSHAKE_TIMEOUT,
     ) {
@@ -6707,6 +6755,84 @@ mod tests {
                 ..stable
             },
             stable,
+        )
+        .is_err());
+    }
+
+    #[test]
+    fn native_authenticode_launch_token_stability_spans_process_creation_and_handshake() {
+        assert!(open_current_thread_token().unwrap().is_none());
+        let application = std::env::current_exe().unwrap();
+        let arguments = [
+            "--ignored",
+            "--exact",
+            "windows_authenticode::tests::authenticode_parent_child_handshake_child_fixture",
+            "--nocapture",
+            "--test-threads=1",
+        ];
+        let output = run_bounded_authenticode_helper(
+            &application,
+            &arguments,
+            Vec::new(),
+            Duration::from_secs(5),
+        )
+        .unwrap();
+        assert!(output.status.success());
+        assert!(output.stderr.is_empty());
+        assert!(String::from_utf8(output.stdout)
+            .unwrap()
+            .contains("AVORAX_PARENT_CHILD_PROCESS_BINDING_OK"));
+        assert!(open_current_thread_token().unwrap().is_none());
+    }
+
+    #[test]
+    fn native_authenticode_launch_token_stability_contract_is_fail_visible() {
+        let stable = AuthenticodeTokenStabilityEvidence {
+            token_id_low: 0x1234_5678,
+            token_id_high: 0x1020_3040,
+            modified_id_low: 0x5566_7788,
+            modified_id_high: 0x1122_3344,
+        };
+        validate_authenticode_launch_token_stability_evidence(
+            stable,
+            stable,
+            "after authenticated handshake",
+        )
+        .unwrap();
+
+        for current in [
+            AuthenticodeTokenStabilityEvidence {
+                token_id_low: stable.token_id_low ^ 1,
+                ..stable
+            },
+            AuthenticodeTokenStabilityEvidence {
+                token_id_high: stable.token_id_high ^ 1,
+                ..stable
+            },
+            AuthenticodeTokenStabilityEvidence {
+                modified_id_low: stable.modified_id_low ^ 1,
+                ..stable
+            },
+            AuthenticodeTokenStabilityEvidence {
+                modified_id_high: stable.modified_id_high ^ 1,
+                ..stable
+            },
+        ] {
+            assert!(validate_authenticode_launch_token_stability_evidence(
+                stable,
+                current,
+                "after process creation",
+            )
+            .is_err());
+        }
+        assert!(validate_authenticode_launch_token_stability_evidence(
+            AuthenticodeTokenStabilityEvidence {
+                token_id_low: 0,
+                token_id_high: 0,
+                ..stable
+            },
+            stable,
+            "after process creation",
         )
         .is_err());
     }

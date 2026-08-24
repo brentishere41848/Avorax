@@ -5780,3 +5780,30 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   checksums, CycloneDX 1.6/569-component SBOMs, exact locks, and protected vault
   pass; publication is skipped. Checkpoint 2223 is closed while its explicit
   identity/isolation/driver limits and the complete antivirus goal remain open.
+
+## Checkpoint 2224 - Authenticode launch token stability (2026-08-24)
+
+- **Locally verified; hosted integration pending:** the parent records exact launch-primary
+  `TokenId` and `ModifiedId` before pipe creation from the same parent-held
+  handle used by `CreateProcessAsUserW`, then rechecks it after process
+  creation while suspended and after authenticated handshake completion.
+- **Fail-visible boundary:** empty initial identity, fixed-size query failure,
+  token-instance drift, or modified-context drift fails. Post-creation errors
+  terminate and reap the helper; they cannot become publisher trust.
+- **Contracts verified:** benign/adversarial Rust tests, source contract 654,
+  mandatory verifier step 254, exact 254-step validator assertions, and all
+  checkpoint/audit/dependency records are present before test execution.
+- **Technically limited:** this does not prove the child process token remains
+  identical after creation, bind launch-primary and impersonation objects, or
+  prevent transient mutation, same-session injection, handle duplication, or
+  process injection. Cross-identity IPC, AppContainer/LPAC, installed
+  LocalSystem, signed-driver, and pre-execution enforcement remain separate.
+- **Local evidence:** target `2/2`, Authenticode `65/13`, Native `501/13` plus
+  compiler `6/6`, both locked workspaces, strict lint, source contracts
+  `654/654`, and Flutter `838/838` pass. Definitive verification passes exact
+  `254/254` in `489.6s`, the target in `0.2s`, both validators, and nine
+  malformed-report rejections.
+- Locks and vault remain exact. No dependency/lock change, installation,
+  Defender change, or publication occurred. Exact-head hosting, merge,
+  synchronization, and destination proof remain pending; the overall antivirus
+  goal remains active.

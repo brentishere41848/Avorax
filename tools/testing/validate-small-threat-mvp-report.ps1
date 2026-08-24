@@ -1904,8 +1904,8 @@ if ($RequireFullSuite) {
   if ($skipFlutter -or $skipRust) {
     throw "-RequireFullSuite requires skip_flutter=false and skip_rust=false."
   }
-  if ($steps.Count -ne 253) {
-    throw "-RequireFullSuite expected exactly 253 verifier steps for this source revision, found $($steps.Count)."
+  if ($steps.Count -ne 254) {
+    throw "-RequireFullSuite expected exactly 254 verifier steps for this source revision, found $($steps.Count)."
   }
   if ($steps[0].name -ne "local-core safe simulator scan reporting") {
     throw "-RequireFullSuite first step mismatch: $($steps[0].name)"
@@ -1956,6 +1956,7 @@ if ($RequireFullSuite) {
   Assert-ReportContainsStep $steps "native-engine Authenticode handshake pipe client-token regressions"
   Assert-ReportContainsStep $steps "native-engine Authenticode handshake client logon-session regressions"
   Assert-ReportContainsStep $steps "native-engine Authenticode handshake client token-stability regressions"
+  Assert-ReportContainsStep $steps "native-engine Authenticode launch token-stability regressions"
   Assert-ReportContainsStep $steps "native-engine Authenticode mandatory-hash/file-identity regressions"
   Assert-ReportContainsStep $steps "native-engine risk fusion regressions"
   Assert-ReportContainsStep $steps "native-engine ClickOnce carrier heuristic detection"
@@ -2114,8 +2115,13 @@ if ($RequireFullSuite) {
   Assert-ReportScopeContains $verifiedScopeText "Empty expected authentication IDs, fixed-size query failures, authentication-ID drift, or session-ID drift are diagnostic and cannot become publisher trust" "verification_scope.verified"
   Assert-ReportScopeContains $technicalLimitText "AuthenticationId and TokenSessionId binding narrows same-user cross-logon-session substitution but remains point-in-time; it does not prove token uniqueness, prevent same-logon-session injection or handle duplication, encrypt IPC, change identity, provide cross-identity authentication or AppContainer/LPAC, or demonstrate driver/pre-execution enforcement" "verification_scope.technically_limited"
   Assert-ReportScopeContains $verifiedScopeText "after named-pipe client impersonation, the parent snapshots the exact TokenStatistics.TokenId and ModifiedId before all client-token property checks and queries both again after every successful check" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "before handshake pipe creation, the parent snapshots the exact launch primary TokenStatistics.TokenId and ModifiedId from the same parent-held token handle later passed to CreateProcessAsUserW" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "It queries that same handle after successful process creation while the helper remains suspended and again after exact child-process, connected-client-token, and random-token handshake authentication" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "An empty initial launch token ID, fixed-size query failure, token-instance drift, or modified-context drift fails visibly; post-creation failure terminates and reaps the helper and cannot become publisher trust" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "An empty initial token ID, fixed-size query failure, token-instance drift, or token-modification drift is diagnostic and cannot become publisher trust" "verification_scope.verified"
   Assert-ReportScopeContains $technicalLimitText "TokenId and ModifiedId stability detects token replacement or mutation only across one successful client-token validation" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "Launch-primary TokenId and ModifiedId stability is point-in-time evidence over one parent-held handle from pre-pipe capture through post-handshake read-back" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "It does not prove that the created child process token remains identical after creation, bind the distinct launch-primary and impersonation token objects, prevent transient mutation between snapshots or mutation after the final read-back" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "It does not bind the impersonation token object to the launch primary-token object, prevent mutation wholly before or after that window, prevent same-session injection or handle duplication, encrypt IPC, provide cross-identity authentication or AppContainer/LPAC, or demonstrate driver/pre-execution enforcement" "verification_scope.technically_limited"
   Assert-ReportScopeContains $verifiedScopeText "Before CreateProcessAsUserW, the parent supplies an immutable DWORD64 process-creation mitigation policy enabling strict handle checks, extension-point disable, dynamic-code prohibition, Microsoft-signed-only binary loading, no remote images, no low-label images, and System32 image preference; the child requires both invalid-handle exception and permanent-enforcement read-back flags plus every other required policy before stdin or request parsing, and attribute construction, application, or read-back failure cannot become trust" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "Environment construction, current-directory validation, mitigation-policy construction/application/read-back, token/SID creation, process launch, handle-list construction, Job assignment, resume, bounded TokenPrivileges, TokenRestrictedSids, TokenIntegrityLevel, fixed-size TokenMandatoryPolicy, or fixed-size token virtualization/UIAccess inspection, verification, or normal revert failure cannot become trust" "verification_scope.verified"

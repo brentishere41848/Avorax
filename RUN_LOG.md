@@ -9690,3 +9690,39 @@ Updates page showed:
   4,522,733 bytes, 5,357 each payload/metadata/auth, one key, and zero pending.
   Nothing was installed, executed, released, or published. Checkpoint 2223 is
   closed; the complete antivirus goal remains active.
+
+## 2026-08-24 continuation checkpoint 2224 scripting
+
+- Started `agent/checkpoint-2224-authenticode-launch-token-stability` from the
+  local checkpoint-2223 closure `cffbd9a`.
+- Scripted pre-pipe `TokenStatistics.TokenId`/`ModifiedId` capture from the
+  same parent-held launch token passed to `CreateProcessAsUserW`, then exact
+  same-handle checks after process creation while suspended and after the
+  authenticated handshake. Empty identity, query failure, token-instance
+  drift, or modified-context drift fails visibly; post-creation failure
+  terminates and reaps the helper.
+- Added benign full-path and adversarial four-field/empty-ID Rust regressions,
+  source contract 654, verifier step 254, strict report-validation scope, and
+  checkpoint/audit/status/dependency documentation.
+- No checkpoint-2224 passing result is claimed during scripting. The check is
+  point-in-time evidence and does not prove the child process token remains
+  identical, bind primary and impersonation token objects, prevent transient
+  mutation, same-session injection or handle duplication, or establish cross-
+  identity IPC, AppContainer/LPAC, driver, or pre-execution enforcement.
+- No dependency or lockfile change is intended. No service/driver was started,
+  Defender was not changed, and protected quarantine content was not touched.
+- Focused/full local verification passes: parsers `2/2`, source contracts
+  `654/654`, launch-token stability `2/2`, Authenticode `65/13`, Native
+  `501/13` plus compiler `6/6`, both locked root workspaces, strict Native/
+  Local/Guard Clippy, standalone locked/offline Native, Flutter analysis and
+  `838/838`. Three initial support-command issues remain recorded in the
+  checkpoint report and were corrected without dependency installation or
+  test weakening.
+- Definitive verification ran from `2026-08-24T17:16:01.686336Z` through
+  `2026-08-24T17:24:11.3481687Z` and passed exact `254/254`, zero failed or
+  skipped, in `489.6s`; the new target passed in `0.2s`. Embedded/independent
+  strict validation passes and nine malformed reports are rejected.
+- Three lock blobs and the protected-vault invariant remain exact. Hosted
+  exact-head evidence, normal integration, guarded synchronization, and
+  destination proof remain pending, so checkpoint 2224 and the overall goal
+  remain active.

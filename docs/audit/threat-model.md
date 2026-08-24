@@ -2342,3 +2342,34 @@ payload, signing, smoke, and DMG creation checks passed; failed-job-only attempt
 2 passed unchanged. This strengthens deployment evidence but does not expand
 the token-stability window or any identity, isolation, driver, or pre-execution
 boundary above. Publication was skipped and no package was installed.
+
+### Authenticode launch-primary token stability (checkpoint 2224)
+
+Before exposing the handshake pipe, the parent now snapshots exact
+`TokenStatistics.TokenId` and `ModifiedId` from the same parent-held low-
+integrity, privilege-stripped token handle later passed to
+`CreateProcessAsUserW`. The same handle is queried after successful process
+creation while the child is suspended and after exact child-process, connected-
+client-token, and random-token handshake authentication. Empty initial token
+identity, exact-size query failure, token-instance drift, or modified-context
+drift fails visibly; post-creation failure terminates and reaps the helper.
+
+This narrows persistent launch-token replacement or mutation across the launch
+window. It is not proof that the child process token remains identical after
+creation and does not bind the distinct launch-primary and impersonation token
+objects. Transient mutation between snapshots, mutation after final read-back,
+same-session injection, privileged handle duplication, and process injection
+remain possible within the user-mode threat boundary. Cross-identity
+authenticated IPC, AppContainer/LPAC, installed LocalSystem isolation, signed-
+driver enforcement, and demonstrated pre-execution protection remain separate
+technical or external prerequisites.
+
+Code, regressions, source contract 654, exact verifier step 254, report
+validation, and documentation were scripted before execution. Local evidence
+now passes target `2/2`, complete Authenticode `65/13`, Native `501/13`, both
+locked workspaces, strict lint, Flutter `838/838`, and exact definitive
+`254/254` in `489.6s`; nine malformed reports are rejected. This verifies the
+implemented point-in-time boundary on this host but does not change the child-
+token, transient-mutation, identity, injection, isolation, driver, or pre-
+execution residual threats. Hosted, merge, synchronization, and destination
+evidence remain pending.
