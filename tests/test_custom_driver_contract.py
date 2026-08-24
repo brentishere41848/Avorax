@@ -25893,7 +25893,17 @@ def test_native_authenticode_handshake_pipe_security_is_read_back_exactly():
     normalized_checkpoint = re.sub(r"\s+", " ", checkpoint)
     assert "passed exactly `247/247`" in normalized_checkpoint
     assert "Seven isolated malformed reports are rejected" in normalized_checkpoint
-    assert "Hosted exact-head CI/package evidence" in normalized_checkpoint
+    for hosted_evidence in [
+        "a518e93d42e9d2dad3e3898f463c455d71156528",
+        "32687717433",
+        "32687664061",
+        "32687717444",
+        "CycloneDX 1.6",
+        "All seven entries match",
+        "Publish desktop beta prerelease",
+    ]:
+        assert hosted_evidence in normalized_checkpoint
+    assert "Evidence-head checks" in normalized_checkpoint
     assert "remain pending" in normalized_checkpoint
     assert "adds no crate, package, feature, or lockfile change" in re.sub(
         r"\s+", " ", documents[-1]

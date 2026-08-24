@@ -9066,3 +9066,20 @@ Updates page showed:
   each payload/metadata/auth, one key, and zero pending.
 - Hosted exact-head CI/packages, normal PR/merge, guarded original-tree sync, and
   destination verification remain pending. `.verification` is not staged.
+
+## 2026-08-24 - Checkpoint 2217 hosted implementation evidence
+
+- Committed exact implementation as `a518e93d42e9d2dad3e3898f463c455d71156528`,
+  pushed only the feature branch, and opened draft PR `#69`.
+- Exact-head Avorax CI `32687717433` passes all five branding, Rust, Unix
+  quarantine-permission, Flutter/protocol, and security/protection/performance
+  jobs.
+- Desktop Packages push `32687664061` and PR `32687717444` pass contracts,
+  Windows MSI/EXE, Linux DEB/tar, macOS arm64/x64 DMG, administrative MSI
+  extraction, dependency/license evidence, and consolidation.
+- The downloaded push artifact contains six platform packages plus CycloneDX 1.6
+  lockfile SBOM with `569` components; all seven `SHA256SUMS.txt` rows match.
+  Both prerelease publication jobs are skipped. No package was installed,
+  released, or published.
+- Evidence-head CI/packages, normal merge, merged-main evidence, guarded sync, and
+  destination verification remain pending. `.verification` remains untracked.

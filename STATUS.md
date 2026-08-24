@@ -5510,8 +5510,11 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   contracts `647/647` pass.
 - The definitive verifier and both strict validators pass exactly `247/247` in
   `467.6s`; seven malformed reports are rejected. All three lock hashes and the
-  protected-vault invariant remain exact. Hosted exact-head CI/packages,
-  PR/merge, guarded synchronization, and destination verification remain pending.
+  protected-vault invariant remain exact. Exact implementation `a518e93` passes
+  CI `32687717433` and package push/PR `32687664061`/`32687717444`, including six
+  platform packages, seven matching checksums, CycloneDX 1.6 SBOM, administrative
+  MSI extraction, and skipped publication. Evidence-head checks, PR merge,
+  guarded synchronization, and destination verification remain pending.
 - Point-in-time read-back remains user-mode same-user evidence, not cross-identity IPC,
   AppContainer, installed LocalSystem, driver, or pre-execution protection. The
   overall antivirus hardening goal remains active.

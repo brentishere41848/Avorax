@@ -809,5 +809,7 @@ pre-execution protection. Dependency evidence, strict locked workspaces, and the
 complete local verifier pass. Root Cargo, Native Cargo, and Flutter lock hashes
 remain `7ab38f4820b08029c64872360fac7141e2512ac4`,
 `277dd9fe1edfc45fa5550e8e2831f2a0c121561d`, and
-`51fa085a41168aa1deadace8b5395614db43649e`; hosted dependency/package evidence
-remains pending.
+`51fa085a41168aa1deadace8b5395614db43649e`. Exact implementation package runs
+`32687664061` and `32687717444` pass dependency/license evidence and consolidation;
+the downloaded push artifact has a CycloneDX 1.6 lockfile SBOM with `569`
+components and all seven checksum rows match. Publication is skipped.

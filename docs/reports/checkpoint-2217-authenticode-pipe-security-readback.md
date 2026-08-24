@@ -7,8 +7,9 @@ Date: 2026-08-24
 Implementation, benign and adversarial tests, verifier step 247, exact validator
 contracts, source contract 647, and audit documentation were scripted as one batch
 before execution. The corrected implementation and complete local regression are
-verified. Hosted exact-head CI/package evidence, PR/merge, guarded original-tree
-synchronization, and destination verification remain pending.
+verified. Exact implementation-head CI and package evidence is also verified.
+Evidence-head checks, PR merge, guarded original-tree synchronization, merged-main
+evidence, and destination verification remain pending.
 
 ## Threat
 
@@ -106,6 +107,22 @@ of this checkpoint.
 - Read-only protected-vault evidence remains exactly `16,072` files, zero
   directories, `4,522,733` bytes, `5,357` each `.avoraxq`/`.json`/`.auth`, one
   `.metadata_auth_key`, and zero pending.
+
+## Hosted Implementation Evidence
+
+- Exact implementation `a518e93d42e9d2dad3e3898f463c455d71156528` is on
+  draft PR `#69`.
+- Avorax CI `32687717433` passes all five jobs at that exact head: branding/copy,
+  Rust Local Core/Native/Guard/update/API tests and lint, Unix quarantine
+  permissions, Flutter/protocol, and security/protection/performance gates.
+- Desktop Packages push `32687664061` and PR `32687717444` pass package contracts,
+  Windows x64 MSI/EXE, Linux x64 DEB/tar, macOS arm64/x64 DMG, dependency/license
+  evidence, administrative MSI extraction, and consolidation.
+- The downloaded exact push artifact contains the six platform packages plus a
+  CycloneDX 1.6 lockfile SBOM with `569` components. All seven entries match
+  `SHA256SUMS.txt` exactly.
+- Both `Publish desktop beta prerelease` jobs are skipped. No package was
+  installed, released, or published.
 
 ## Initial Execution Finding
 

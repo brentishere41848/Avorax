@@ -2120,5 +2120,7 @@ in-process code, SYSTEM, or kernel compromise. It is not encrypted cross-identit
 IPC, AppContainer/LPAC, installed LocalSystem, production signing, a driver, or
 pre-execution protection. Focused and adjacent runtime tests, complete
 Authenticode, strict lint, locked workspaces, release smoke, source contracts, and
-the exact `247/247` definitive verifier pass locally; hosted and integration
-evidence remain pending.
+the exact `247/247` definitive verifier pass locally. Exact implementation
+`a518e93` passes hosted CI `32687717433` and package push/PR
+`32687664061`/`32687717444`; evidence-head and integration evidence remain
+pending.

@@ -2308,8 +2308,11 @@ enforcement, or pre-execution blocking is claimed.
 - Corrected focused `1/1`, adjacent handshake `2/2`, complete Authenticode
   `54/13`, source contracts `647/647`, Flutter `838/838`, locked workspaces,
   release builds/smoke, and definitive verifier `247/247` in `467.6s` pass. Seven
-  malformed reports are rejected. Hosted, merge, synchronization, and destination
-  evidence remain pending.
+  malformed reports are rejected. Exact implementation `a518e93` passes CI
+  `32687717433` and package push/PR `32687664061`/`32687717444`, including all six
+  packages, checksums, SBOM, and administrative MSI extraction with publication
+  skipped. Evidence-head, merge, synchronization, and destination evidence remain
+  pending.
 - The control intentionally does not request the full SACL,
   `ACCESS_SYSTEM_SECURITY`, or `SeSecurityPrivilege`. `LABEL_SECURITY_INFORMATION`
   is mandatory-label-only evidence. Same-user privileged mutation/inspection,
