@@ -2247,3 +2247,20 @@ report validates exact `250/250`, zero failed/skipped, in `494.3s`. Three lock
 blobs and the protected-vault invariant remain exact. This closes checkpoint
 integration without changing the residual same-user, point-in-time,
 cross-identity, privileged-adversary, or pre-execution boundaries.
+
+### Authenticode handshake client token (checkpoint 2221)
+
+The child now opens its dedicated handshake endpoint with explicit
+`SECURITY_SQOS_PRESENT | SECURITY_IMPERSONATION`. After the one bounded token
+message is read, the parent calls `ImpersonateNamedPipeClient`, validates exact
+`SecurityImpersonation`, launch user SID, low-integrity/no-write-up state,
+privilege stripping, zero restricting SIDs, virtualization and UIAccess state,
+then requires `RevertToSelf` and no remaining thread token. Any failure stops
+publisher trust. Focused runtime, adversarial, full regression, and exact
+`251/251` definitive verifier evidence pass locally.
+
+The boundary remains same-user and message-scoped. It does not resist a
+privileged same-user injector or handle duplicator, encrypt the pipe, change
+identity/logon session, implement cross-identity service IPC, create
+AppContainer/LPAC, or demonstrate driver/pre-execution protection. Those limits
+remain explicit even when checkpoint verification succeeds.

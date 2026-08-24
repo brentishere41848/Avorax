@@ -930,3 +930,24 @@ destination sync and full destination verification preserve all three exact
 lock blobs. This closes checkpoint package integration only; complete signed
 final-artifact license, notice, copyright, and binary-resolution review remains
 a production-release prerequisite.
+
+## Checkpoint 2221 - Named-pipe client-token binding
+
+The `ImpersonateNamedPipeClient`, exact `SecurityImpersonation` token
+readback, and fail-visible `RevertToSelf` path use the already pinned
+`windows-sys` Win32 Pipes, Security, Threading, and FileSystem features. This
+adds no crate, package, feature, or lockfile change. Source contracts `651/651`
+and the exact `251/251` verifier plus embedded/standalone strict validators pass.
+The control remains same-user and does not provide
+cross-identity IPC, AppContainer/LPAC, signing, driver, or pre-execution proof;
+complete signed final-artifact license and notice review remains blocked on a
+production release host.
+
+Focused and full local execution preserves exact root Cargo, Native Cargo, and
+Flutter lock blobs `7ab38f4820b08029c64872360fac7141e2512ac4`,
+`277dd9fe1edfc45fa5550e8e2831f2a0c121561d`, and
+`51fa085a41168aa1deadace8b5395614db43649e`. Locked/offline Native check, both
+locked root workspaces, strict Rust lint, Flutter analyze, and Flutter `838/838`
+pass. Flutter reported 33 newer versions outside current constraints but no
+upgrade or lock change occurred. Definitive local verification passes in
+`487.9s`; hosted and final-artifact license evidence remain pending.

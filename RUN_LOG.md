@@ -9383,3 +9383,74 @@ Updates page showed:
   auth, one key, and zero pending/temp. No package was installed, executed,
   released, or published. Checkpoint 2220 is closed; the overall antivirus goal
   remains active.
+
+## 2026-08-24 continuation checkpoint 2221 scripting
+
+- Started from checkpoint-2220 closure `45cb7da` on branch
+  `agent/checkpoint-2221-authenticode-pipe-client-token`; `.verification` remains
+  untracked and untouched.
+- Scripted explicit `SECURITY_SQOS_PRESENT | SECURITY_IMPERSONATION` client open,
+  post-message `ImpersonateNamedPipeClient`, exact launch-user/low-integrity/
+  no-write-up/privilege/zero-restricting-SID/virtualization/UIAccess readback,
+  and mandatory fail-visible `RevertToSelf` plus empty-thread-token proof.
+- Scripted real benign runtime and adversarial evidence tests, source contract
+  651, verifier step 251, strict report validation, and checkpoint/audit docs.
+  The boundary is same-user message authentication, not encrypted or
+  cross-identity IPC, AppContainer/LPAC, driver, or pre-execution enforcement.
+- No checkpoint-2221 test has run and no passing result is claimed during this
+  scripting phase. No dependency, lockfile, live-malware, package, install,
+  service/driver, release, publication, Defender, or protected-vault action is
+  part of the batch.
+- First focused execution: compilation succeeded and the adversarial evidence
+  test passed, while the real benign pipe-token test failed closed because a
+  zero-count Windows `TokenRestrictedSids` result is a DWORD header smaller than
+  Rust's flexible-array `TOKEN_GROUPS` size. No trust verdict was reached. The
+  parser was corrected to read the bounded count header first, return empty only
+  for zero, and retain full offset/entry bounds for nonempty data; rerun pending.
+- The next combined rerun stopped before Rust execution at source contract 651:
+  its new zero-count assertions searched a validator-only slice although the
+  parser is a later shared function. The assertion scope now uses the complete
+  production module. That failed contract attempt is not passing/runtime proof.
+- Corrected verification passes source contracts `651/651`, focused client-token
+  `2/2`, handshake `6/6`, Authenticode `67/13`, Native `495/13`, compiler `6/6`,
+  and locked/offline all-target/all-feature check. The first strict Clippy run
+  then failed on test-only immediate pushes after `Vec::new()`; the fixture now
+  uses `vec![]`, and that failed lint run is not counted pending rerun.
+- Final focused/full local reruns pass: source contracts `651/651`, client token
+  `2/2`, handshake `6/6`, Authenticode `67/13`, Native `495/13`, compiler `6/6`,
+  Local Core `536/536`, Guard `248/248` and `249/249`, strict lint, locked/offline
+  Native check, both locked root workspaces, Flutter analyze, and Flutter
+  `838/838`. All three lock blobs remain exact.
+- Read-only protected-vault inventory remains 16,072 files, zero directories,
+  4,522,733 bytes, 5,357 each payload/metadata/auth, one key, and zero pending/
+  temp. Definitive 251-step and hosted/integration evidence remain pending.
+- The first definitive invocation used the WindowsApps Python reparse alias
+  returned by `Get-Command`. The security gate rejected it at the signed
+  hash-intel package smoke and emitted a failed partial report. That run is not
+  definitive success evidence. The corrected full rerun will use the bundled
+  regular-file Python runtime from `.cache\codex-runtimes`.
+
+## 2026-08-24 continuation checkpoint 2221 definitive local verification
+
+- The corrected definitive report ran from `2026-08-24T11:22:40.5122436Z`
+  through `2026-08-24T11:30:48.4898041Z` and passed exact `251/251` in
+  `487.9s`, with zero failed or skipped steps. The new
+  `native-engine Authenticode handshake pipe client-token regressions` step
+  passed in `0.3s`; Defender/EICAR remained deliberately opt-in, while neither
+  Rust nor Flutter was skipped.
+- The verifier's embedded strict validator and an independent
+  `-RequireFullSuite` invocation accepted the same report. Nine controlled
+  copies under untracked `.verification` were rejected for stale 250-step
+  evidence, a renamed required step, missing SQOS/token-validation/failure or
+  residual-limitation scope, failed/skipped target status, and
+  `skip_rust=true`.
+- Post-verifier root Cargo, Native Cargo, and Flutter lock blobs remain exactly
+  `7ab38f4820b08029c64872360fac7141e2512ac4`,
+  `277dd9fe1edfc45fa5550e8e2831f2a0c121561d`, and
+  `51fa085a41168aa1deadace8b5395614db43649e`. The read-only protected vault
+  remains exactly 16,072 files, zero directories, 4,522,733 bytes, 5,357 each
+  payload/metadata/auth, one key, and zero pending.
+- Hosted exact-head evidence, normal PR integration, merged-main evidence,
+  guarded original-tree synchronization, and destination verification remain
+  pending. No package was installed, released, or published, and the complete
+  antivirus goal remains active.

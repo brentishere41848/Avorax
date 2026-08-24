@@ -2412,3 +2412,18 @@ enforcement, or pre-execution blocking is claimed.
   signed-driver enforcement, and demonstrated pre-execution protection remain
   technically limited or require external prerequisites; the overall antivirus
   goal remains active.
+
+## Checkpoint 2221 - Handshake client-token binding
+
+- **Local code path verified; hosted evidence pending:** the helper explicitly requests
+  `SecurityImpersonation`; after reading its bounded message the parent uses
+  `ImpersonateNamedPipeClient`, exact token state validation, and fail-visible
+  `RevertToSelf`. Source contract `651/651`, exact verifier `251/251`, embedded
+  and standalone strict validation, and nine malformed-report rejections pass.
+  Exact-head hosted, integration, synchronization, and destination evidence
+  remain pending.
+- **Residual technical blocker:** this authenticates one connected same-user
+  token. It does not prevent privileged process injection/handle duplication,
+  encrypt IPC, change logon identity, establish a cross-identity service/UI
+  protocol, provide AppContainer/LPAC, or prove signed-driver/pre-execution
+  enforcement. Those installed and signing prerequisites remain external.
