@@ -5653,3 +5653,35 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   release files, seven independently matching SHA-256 rows, and a CycloneDX
   1.6 lockfile SBOM with 569 components. Evidence-head, merge, merged-main,
   guarded synchronization, and destination verification remain pending.
+- **Integrated and destination verified:** evidence SHA `a99b03a` passes CI/
+  packages `32715458349`/`32715458329`; PR `#72` merged as `2bd8956`, whose
+  main CI/packages `32716511799`/`32716511838` pass with publication skipped.
+  Guarded sync produced 12/12 exact destination blobs and no staging residue.
+  Destination full Rust/Flutter suites and exact verifier/validator `250/250`
+  pass in `494.3s`; locks and the protected vault remain exact. Checkpoint 2220
+  is closed, while cross-identity IPC, driver/pre-execution protection, and the
+  complete antivirus hardening goal remain open.
+
+## Checkpoint 2221 - Authenticode pipe client-token binding (2026-08-24)
+
+- **Implemented and locally verified:** explicit `SecurityImpersonation` SQOS and
+  post-read `ImpersonateNamedPipeClient` bind the connected helper's exact user,
+  low-integrity, no-write-up, privilege, restricting-SID, virtualization, and
+  UIAccess token state before launch-token acceptance. `RevertToSelf` and an
+  empty parent thread token are mandatory and fail-visible.
+- Benign runtime/adversarial tests, source contract 651, verifier/validator
+  251-step contracts, and audit documents are present and exercised.
+- Classification: locally verified. This remains same-user, point-in-time
+  message authentication, not encrypted or cross-identity IPC, AppContainer/
+  LPAC, installed LocalSystem, signed-driver, or pre-execution protection.
+- **Locally verified through full suites:** client-token `2/2`, handshake `6/6`,
+  Authenticode `67/13`, Native `495/13`, compiler `6/6`, Local Core `536/536`,
+  Guard `248/249`, both locked workspaces, strict lint, Flutter analyze and
+  `838/838`, plus source contracts `651/651` pass. Locks and the protected vault
+  remain exact. Definitive verification passes `251/251` with no failures or
+  skips in `487.9s`; embedded and standalone strict validation pass, and nine
+  malformed reports are rejected. Exact implementation `014e5b9` passes Avorax
+  CI `32722684598` and Desktop Packages push/PR `32722662492`/`32722684574`.
+  Six release files, seven matching SHA-256 rows, and CycloneDX 1.6/569-component
+  lockfile SBOM evidence pass in both package runs; publication is skipped.
+  Evidence-head, merge, sync, and destination proof remain pending.

@@ -921,3 +921,36 @@ inspection of the push artifact recomputed all seven SHA-256 rows and confirmed
 CycloneDX 1.6 with 569 components. No dependency or lockfile changed.
 Evidence-head/merged-main package proof and complete signed final-artifact
 license, notice, copyright, and binary-resolution review remain pending.
+
+Evidence head `a99b03a` passes package run `32715458329`; merged main
+`2bd8956` passes package run `32716511838`. Both require all six native
+artifacts, dependency/license evidence, checksums, a 569-component CycloneDX
+1.6 lockfile SBOM, and consolidation, while publication is skipped. Guarded
+destination sync and full destination verification preserve all three exact
+lock blobs. This closes checkpoint package integration only; complete signed
+final-artifact license, notice, copyright, and binary-resolution review remains
+a production-release prerequisite.
+
+## Checkpoint 2221 - Named-pipe client-token binding
+
+The `ImpersonateNamedPipeClient`, exact `SecurityImpersonation` token
+readback, and fail-visible `RevertToSelf` path use the already pinned
+`windows-sys` Win32 Pipes, Security, Threading, and FileSystem features. This
+adds no crate, package, feature, or lockfile change. Source contracts `651/651`
+and the exact `251/251` verifier plus embedded/standalone strict validators pass.
+The control remains same-user and does not provide
+cross-identity IPC, AppContainer/LPAC, signing, driver, or pre-execution proof;
+complete signed final-artifact license and notice review remains blocked on a
+production release host.
+
+Focused and full local execution preserves exact root Cargo, Native Cargo, and
+Flutter lock blobs `7ab38f4820b08029c64872360fac7141e2512ac4`,
+`277dd9fe1edfc45fa5550e8e2831f2a0c121561d`, and
+`51fa085a41168aa1deadace8b5395614db43649e`. Locked/offline Native check, both
+locked root workspaces, strict Rust lint, Flutter analyze, and Flutter `838/838`
+pass. Flutter reported 33 newer versions outside current constraints but no
+upgrade or lock change occurred. Definitive local verification passes in
+`487.9s`. Exact implementation-head package push/PR runs contain matching
+CycloneDX 1.6 lockfile SBOMs with 569 components and seven verified SHA-256
+rows. Publication is skipped; evidence-head and complete signed final-artifact
+license review remain pending.

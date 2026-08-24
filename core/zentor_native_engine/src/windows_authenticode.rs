@@ -78,6 +78,7 @@ use windows_sys::Win32::Storage::FileSystem::{
     FILE_FLAG_OPEN_REPARSE_POINT, FILE_FLAG_OVERLAPPED, FILE_FLAG_SEQUENTIAL_SCAN,
     FILE_GENERIC_EXECUTE, FILE_GENERIC_READ, FILE_GENERIC_WRITE, FILE_ID_INFO, FILE_SHARE_READ,
     FILE_STANDARD_INFO, FILE_TYPE_PIPE, OPEN_EXISTING, PIPE_ACCESS_INBOUND, READ_CONTROL,
+    SECURITY_IMPERSONATION, SECURITY_SQOS_PRESENT,
 };
 use windows_sys::Win32::System::Console::{
     GetStdHandle, STD_ERROR_HANDLE, STD_INPUT_HANDLE, STD_OUTPUT_HANDLE,
@@ -96,8 +97,8 @@ use windows_sys::Win32::System::JobObjects::{
 };
 use windows_sys::Win32::System::Pipes::{
     ConnectNamedPipe, CreateNamedPipeW, CreatePipe, GetNamedPipeClientProcessId, GetNamedPipeInfo,
-    GetNamedPipeServerProcessId, PIPE_CLIENT_END, PIPE_READMODE_BYTE, PIPE_REJECT_REMOTE_CLIENTS,
-    PIPE_SERVER_END, PIPE_TYPE_BYTE, PIPE_WAIT,
+    GetNamedPipeServerProcessId, ImpersonateNamedPipeClient, PIPE_CLIENT_END, PIPE_READMODE_BYTE,
+    PIPE_REJECT_REMOTE_CLIENTS, PIPE_SERVER_END, PIPE_TYPE_BYTE, PIPE_WAIT,
 };
 use windows_sys::Win32::System::StationsAndDesktops::{
     CloseDesktop, CreateDesktopW, GetThreadDesktop, GetUserObjectInformationW,
@@ -139,6 +140,8 @@ const AUTHENTICODE_HELPER_HANDSHAKE_PIPE_PREFIX: &str = r"\\.\pipe\Avorax.Authen
 const AUTHENTICODE_HELPER_HANDSHAKE_TIMEOUT: Duration = Duration::from_secs(5);
 const AUTHENTICODE_HELPER_HANDSHAKE_TOKEN_BYTES: usize = 36;
 const AUTHENTICODE_HELPER_HANDSHAKE_PIPE_BUFFER_BYTES: u32 = 64;
+const AUTHENTICODE_HELPER_HANDSHAKE_CLIENT_SQOS_FLAGS: u32 =
+    SECURITY_SQOS_PRESENT | SECURITY_IMPERSONATION;
 const MAX_AUTHENTICODE_HANDSHAKE_SECURITY_ACES: u32 = 8;
 const MAX_AUTHENTICODE_HANDSHAKE_SECURITY_ACL_BYTES: u32 = 4_096;
 const MAX_AUTHENTICODE_HELPER_TOKEN_USER_BYTES: usize = 64 * 1024;
@@ -273,6 +276,17 @@ struct AuthenticodeParentChildHandshakeEvidence {
     actual_client_process_id: u32,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct AuthenticodePipeClientTokenEvidence {
+    token_type: i32,
+    impersonation_level: i32,
+    user_sid: String,
+    restricting_sids: Vec<TokenSidEvidence>,
+    integrity: TokenSidEvidence,
+    mandatory_policy: u32,
+    safety: AuthenticodeTokenSafetyFlags,
+}
+
 struct VerifiedWellKnownSid {
     storage: [usize; AUTHENTICODE_HELPER_SID_STORAGE_WORDS],
     length: usize,
@@ -378,6 +392,7 @@ struct AuthenticodeParentChildHandshake {
     overlapped: Box<OVERLAPPED>,
     pipe_name: String,
     token: String,
+    expected_user_sid: String,
     connect_pending: bool,
 }
 
@@ -447,6 +462,7 @@ impl AuthenticodeParentChildHandshake {
             overlapped,
             pipe_name,
             token,
+            expected_user_sid: current_user_sid,
             connect_pending,
         })
     }
@@ -510,6 +526,8 @@ impl AuthenticodeParentChildHandshake {
             transferred as usize <= received.len(),
             "AuthentiCode parent-child handshake token read exceeded its buffer"
         );
+        verify_authenticode_handshake_client_token(self.server.0, &self.expected_user_sid)
+            .context("unable to authenticate the Authenticode handshake client token")?;
         validate_authenticode_handshake_token_bytes(
             self.token.as_bytes(),
             &received[..transferred as usize],
@@ -1476,38 +1494,46 @@ fn current_process_user_sid_string() -> Result<String> {
         token,
         "unable to open the Authenticode current process token for handshake security",
     )?;
+    query_token_user_sid_string(token.0, "current process user")
+}
+
+fn query_token_user_sid_string(token: HANDLE, sid_label: &str) -> Result<String> {
     let mut required = 0u32;
     unsafe { SetLastError(ERROR_SUCCESS) };
-    let queried = unsafe { GetTokenInformation(token.0, TokenUser, null_mut(), 0, &mut required) };
+    let queried = unsafe { GetTokenInformation(token, TokenUser, null_mut(), 0, &mut required) };
     let error = unsafe { GetLastError() };
     anyhow::ensure!(
         queried == 0
             && error == ERROR_INSUFFICIENT_BUFFER
             && required as usize >= size_of::<TOKEN_USER>()
             && required as usize <= MAX_AUTHENTICODE_HELPER_TOKEN_USER_BYTES,
-        "unable to size the Authenticode current process user SID: {}",
+        "unable to size the Authenticode {sid_label} SID: {}",
         std::io::Error::from_raw_os_error(error as i32)
     );
-    let mut storage = vec![0usize; (required as usize).div_ceil(size_of::<usize>())];
+    let capacity = required as usize;
+    let mut storage = vec![0usize; capacity.div_ceil(size_of::<usize>())];
+    let mut returned = 0u32;
     anyhow::ensure!(
         unsafe {
             GetTokenInformation(
-                token.0,
+                token,
                 TokenUser,
                 storage.as_mut_ptr().cast(),
-                required,
-                &mut required,
+                capacity as u32,
+                &mut returned,
             )
         } != 0,
-        "unable to read the Authenticode current process user SID: {}",
+        "unable to read the Authenticode {sid_label} SID: {}",
         std::io::Error::last_os_error()
     );
-    let user = unsafe { &*storage.as_ptr().cast::<TOKEN_USER>() };
+    let returned = returned as usize;
     anyhow::ensure!(
-        !user.User.Sid.is_null() && unsafe { IsValidSid(user.User.Sid) } != 0,
-        "AuthentiCode current process user SID is invalid"
+        returned >= size_of::<TOKEN_USER>() && returned <= capacity,
+        "AuthentiCode {sid_label} SID data returned an invalid size"
     );
-    windows_sid_string(user.User.Sid, "current process user")
+    let user = unsafe { &*storage.as_ptr().cast::<TOKEN_USER>() };
+    token_sid_evidence_from_entry(&storage, returned, &user.User, sid_label)?;
+    windows_sid_string(user.User.Sid, sid_label)
 }
 
 fn windows_sid_string(sid: windows_sys::Win32::Security::PSID, sid_label: &str) -> Result<String> {
@@ -1548,7 +1574,7 @@ fn complete_current_process_authenticode_parent_child_handshake() -> Result<()> 
                 0,
                 null(),
                 OPEN_EXISTING,
-                0,
+                AUTHENTICODE_HELPER_HANDSHAKE_CLIENT_SQOS_FLAGS,
                 null_mut(),
             )
         },
@@ -1594,6 +1620,108 @@ fn complete_current_process_authenticode_parent_child_handshake() -> Result<()> 
         "AuthentiCode parent-child handshake token write was incomplete"
     );
     Ok(())
+}
+
+fn verify_authenticode_handshake_client_token(pipe: HANDLE, expected_user_sid: &str) -> Result<()> {
+    anyhow::ensure!(
+        !expected_user_sid.is_empty(),
+        "AuthentiCode handshake expected client user SID is empty"
+    );
+    anyhow::ensure!(
+        open_current_thread_token()?.is_none(),
+        "AuthentiCode handshake server thread already has an impersonation token"
+    );
+    anyhow::ensure!(
+        unsafe { ImpersonateNamedPipeClient(pipe) } != 0,
+        "unable to impersonate the Authenticode handshake client: {}",
+        std::io::Error::last_os_error()
+    );
+
+    let verification = (|| -> Result<()> {
+        let token = open_current_thread_token()?.context(
+            "AuthentiCode handshake client impersonation did not produce a thread token",
+        )?;
+        validate_authenticode_pipe_client_token(token.0, expected_user_sid)
+    })();
+    let revert = revert_authenticode_handshake_client_token();
+    match (verification, revert) {
+        (Ok(()), Ok(())) => Ok(()),
+        (Err(error), Ok(())) => Err(error),
+        (Ok(()), Err(revert_error)) => Err(revert_error),
+        (Err(error), Err(revert_error)) => Err(anyhow::anyhow!(
+            "AuthentiCode handshake client token validation failed: {error:#}; additionally unable to prove RevertToSelf: {revert_error:#}"
+        )),
+    }
+}
+
+fn revert_authenticode_handshake_client_token() -> Result<()> {
+    anyhow::ensure!(
+        unsafe { RevertToSelf() } != 0,
+        "unable to revert Authenticode handshake client impersonation: {}",
+        std::io::Error::last_os_error()
+    );
+    anyhow::ensure!(
+        open_current_thread_token()?.is_none(),
+        "AuthentiCode handshake client token remained active after RevertToSelf"
+    );
+    Ok(())
+}
+
+fn validate_authenticode_pipe_client_token(token: HANDLE, expected_user_sid: &str) -> Result<()> {
+    validate_privilege_stripped_token_privileges(token)?;
+    let evidence = AuthenticodePipeClientTokenEvidence {
+        token_type: query_token_scalar(token, TokenType, "handshake client type")?,
+        impersonation_level: query_token_scalar(
+            token,
+            TokenImpersonationLevel,
+            "handshake client impersonation level",
+        )?,
+        user_sid: query_token_user_sid_string(token, "handshake client user")?,
+        restricting_sids: query_token_restricted_sids(token)?,
+        integrity: query_token_integrity_label(token)?,
+        mandatory_policy: query_token_scalar::<TOKEN_MANDATORY_POLICY>(
+            token,
+            TokenMandatoryPolicy,
+            "handshake client mandatory integrity policy",
+        )?
+        .Policy,
+        safety: query_authenticode_token_safety_flags(token)?,
+    };
+    let low_integrity = VerifiedWellKnownSid::create(WinLowLabelSid, "Low Mandatory Level")?;
+    validate_authenticode_pipe_client_token_evidence(
+        &evidence,
+        expected_user_sid,
+        low_integrity.as_bytes(),
+    )
+}
+
+fn validate_authenticode_pipe_client_token_evidence(
+    evidence: &AuthenticodePipeClientTokenEvidence,
+    expected_user_sid: &str,
+    expected_low_integrity_sid: &[u8],
+) -> Result<()> {
+    anyhow::ensure!(
+        evidence.token_type == TokenImpersonation,
+        "AuthentiCode handshake client token is not an impersonation token"
+    );
+    anyhow::ensure!(
+        evidence.impersonation_level == SecurityImpersonation,
+        "AuthentiCode handshake client token does not have exact SecurityImpersonation level"
+    );
+    anyhow::ensure!(
+        !expected_user_sid.is_empty() && evidence.user_sid == expected_user_sid,
+        "AuthentiCode handshake client token user SID does not match the launch identity"
+    );
+    anyhow::ensure!(
+        evidence.restricting_sids.is_empty(),
+        "AuthentiCode handshake client primary-token view unexpectedly contains restricting SIDs"
+    );
+    validate_authenticode_integrity_label_evidence(
+        &evidence.integrity,
+        expected_low_integrity_sid,
+    )?;
+    validate_authenticode_mandatory_policy(evidence.mandatory_policy)?;
+    validate_authenticode_token_safety_flags(evidence.safety)
 }
 
 struct ProcessThreadAttributeList {
@@ -2320,8 +2448,7 @@ fn query_token_restricted_sids(token: HANDLE) -> Result<Vec<TokenSidEvidence>> {
     );
     let required = required as usize;
     anyhow::ensure!(
-        required >= size_of::<TOKEN_GROUPS>()
-            && required <= MAX_AUTHENTICODE_HELPER_TOKEN_INFO_BYTES,
+        required >= size_of::<u32>() && required <= MAX_AUTHENTICODE_HELPER_TOKEN_INFO_BYTES,
         "AuthentiCode helper restricting SID data is outside its byte bound"
     );
     let words = required.div_ceil(size_of::<usize>());
@@ -2342,17 +2469,19 @@ fn query_token_restricted_sids(token: HANDLE) -> Result<Vec<TokenSidEvidence>> {
     );
     let returned = returned as usize;
     anyhow::ensure!(
-        returned >= size_of::<TOKEN_GROUPS>() && returned <= required,
+        returned >= size_of::<u32>() && returned <= required,
         "AuthentiCode helper restricting SID data returned an invalid size"
     );
 
-    let groups = unsafe { &*buffer.as_ptr().cast::<TOKEN_GROUPS>() };
-    let count = groups.GroupCount as usize;
+    let count = unsafe { buffer.as_ptr().cast::<u32>().read() } as usize;
     anyhow::ensure!(
-        count > 0 && count <= MAX_AUTHENTICODE_HELPER_RESTRICTED_SIDS,
-        "AuthentiCode helper restricting SID count is outside 1..={} entries",
+        count <= MAX_AUTHENTICODE_HELPER_RESTRICTED_SIDS,
+        "AuthentiCode helper restricting SID count exceeds {} entries",
         MAX_AUTHENTICODE_HELPER_RESTRICTED_SIDS
     );
+    if count == 0 {
+        return Ok(Vec::new());
+    }
     let entries_end = count
         .checked_mul(size_of::<SID_AND_ATTRIBUTES>())
         .and_then(|bytes| bytes.checked_add(offset_of!(TOKEN_GROUPS, Groups)))
@@ -6143,6 +6272,147 @@ mod tests {
         assert!(validate_authenticode_handshake_pipe_security_readback(
             &wrong_order,
             &current_user_sid
+        )
+        .is_err());
+    }
+
+    #[test]
+    fn native_authenticode_handshake_pipe_client_token_is_exact_and_reverted() {
+        assert_eq!(
+            AUTHENTICODE_HELPER_HANDSHAKE_CLIENT_SQOS_FLAGS,
+            SECURITY_SQOS_PRESENT | SECURITY_IMPERSONATION
+        );
+        assert!(open_current_thread_token().unwrap().is_none());
+        let application = std::env::current_exe().unwrap();
+        let arguments = [
+            "--ignored",
+            "--exact",
+            "windows_authenticode::tests::authenticode_parent_child_handshake_child_fixture",
+            "--nocapture",
+            "--test-threads=1",
+        ];
+        let output = run_bounded_authenticode_helper(
+            &application,
+            &arguments,
+            Vec::new(),
+            Duration::from_secs(5),
+        )
+        .unwrap();
+        assert!(output.status.success());
+        assert!(output.stderr.is_empty());
+        assert!(String::from_utf8(output.stdout)
+            .unwrap()
+            .contains("AVORAX_PARENT_CHILD_PROCESS_BINDING_OK"));
+        assert!(open_current_thread_token().unwrap().is_none());
+    }
+
+    #[test]
+    fn native_authenticode_handshake_pipe_client_token_contract_is_fail_visible() {
+        let low_integrity = VerifiedWellKnownSid::create(
+            WinLowLabelSid,
+            "Low Mandatory Level client-token fixture",
+        )
+        .unwrap();
+        let expected_user_sid = "S-1-5-21-1-2-3-1001";
+        let valid = AuthenticodePipeClientTokenEvidence {
+            token_type: TokenImpersonation,
+            impersonation_level: SecurityImpersonation,
+            user_sid: expected_user_sid.to_string(),
+            restricting_sids: Vec::new(),
+            integrity: TokenSidEvidence {
+                sid: low_integrity.as_bytes().to_vec(),
+                attributes: AUTHENTICODE_HELPER_READBACK_INTEGRITY_SID_ATTRIBUTES,
+            },
+            mandatory_policy: TOKEN_MANDATORY_POLICY_NO_WRITE_UP,
+            safety: AuthenticodeTokenSafetyFlags {
+                virtualization_allowed: 1,
+                virtualization_enabled: 0,
+                ui_access: 0,
+            },
+        };
+        validate_authenticode_pipe_client_token_evidence(
+            &valid,
+            expected_user_sid,
+            low_integrity.as_bytes(),
+        )
+        .unwrap();
+
+        let mut invalid = vec![
+            AuthenticodePipeClientTokenEvidence {
+                token_type: TokenPrimary,
+                ..valid.clone()
+            },
+            AuthenticodePipeClientTokenEvidence {
+                impersonation_level: SecurityImpersonation - 1,
+                ..valid.clone()
+            },
+            AuthenticodePipeClientTokenEvidence {
+                user_sid: String::new(),
+                ..valid.clone()
+            },
+            AuthenticodePipeClientTokenEvidence {
+                user_sid: "S-1-5-21-1-2-3-1002".to_string(),
+                ..valid.clone()
+            },
+            AuthenticodePipeClientTokenEvidence {
+                restricting_sids: vec![TokenSidEvidence {
+                    sid: vec![1, 2, 3, 4],
+                    attributes: 0,
+                }],
+                ..valid.clone()
+            },
+        ];
+        let mut wrong_integrity = valid.clone();
+        wrong_integrity.integrity.sid[0] ^= 1;
+        invalid.push(wrong_integrity);
+        invalid.push(AuthenticodePipeClientTokenEvidence {
+            integrity: TokenSidEvidence {
+                attributes: 0,
+                ..valid.integrity.clone()
+            },
+            ..valid.clone()
+        });
+        invalid.push(AuthenticodePipeClientTokenEvidence {
+            mandatory_policy: 0,
+            ..valid.clone()
+        });
+        invalid.push(AuthenticodePipeClientTokenEvidence {
+            mandatory_policy: TOKEN_MANDATORY_POLICY_NO_WRITE_UP | (1 << 31),
+            ..valid.clone()
+        });
+        invalid.push(AuthenticodePipeClientTokenEvidence {
+            safety: AuthenticodeTokenSafetyFlags {
+                virtualization_allowed: 2,
+                ..valid.safety
+            },
+            ..valid.clone()
+        });
+        invalid.push(AuthenticodePipeClientTokenEvidence {
+            safety: AuthenticodeTokenSafetyFlags {
+                virtualization_enabled: 1,
+                ..valid.safety
+            },
+            ..valid.clone()
+        });
+        invalid.push(AuthenticodePipeClientTokenEvidence {
+            safety: AuthenticodeTokenSafetyFlags {
+                ui_access: 1,
+                ..valid.safety
+            },
+            ..valid.clone()
+        });
+        for evidence in invalid {
+            assert!(validate_authenticode_pipe_client_token_evidence(
+                &evidence,
+                expected_user_sid,
+                low_integrity.as_bytes(),
+            )
+            .is_err());
+        }
+        assert!(validate_authenticode_pipe_client_token_evidence(
+            &valid,
+            "",
+            low_integrity.as_bytes(),
         )
         .is_err());
     }
