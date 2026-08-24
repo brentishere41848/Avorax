@@ -2178,7 +2178,10 @@ adversarial benign masks, exact verifier step 249, validator clauses, and source
 contract 649 pass. Exact implementation `5171fb4e` passes CI `32702550130` and
 package push/PR `32702466511`/`32702550182`, including all six packages, seven
 checksums, the 569-component lockfile SBOM, and administrative MSI extraction;
-publication is skipped. Integration and destination evidence remain pending.
+publication is skipped. Evidence `be122479`, PR `#71`, merge `e6caf818`,
+evidence/merged-main CI and packages, exact 12-path synchronization, destination
+full workspaces/lint/release/trust-smoke/Flutter checks, and destination
+verifier/validator `249/249` in `486.9s` complete integration.
 
 **Residual risk:** The pipe creator's token default owner is not changed or
 independently read back. If the current user owns the named pipe, Windows

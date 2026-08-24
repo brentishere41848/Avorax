@@ -9274,3 +9274,26 @@ Updates page showed:
   seven checksum rows. No artifact was installed, released, or published.
 - Evidence-head checks, normal merge, merged-main checks, guarded synchronization,
   and destination verification remain pending. `.verification` stays untracked.
+
+## 2026-08-24 - Checkpoint 2219 integration closure
+
+- Evidence `be122479dea324df96ac9b866381819e4136d612` passes CI
+  `32704723284` and packages `32704723183`. PR `#71` merged normally as
+  `e6caf8187c8ae99a7ad392e7ff4b8c606cf8a850`; merged-main CI `32706023688`
+  and packages `32706023644` pass with publication skipped.
+- Eleven existing destination preconditions matched prior merge `1e453005`, and
+  the new report was absent. After one policy-rejected command, one caught parser
+  error, and one pre-staging duplicate-`git.exe` failure, corrected raw-blob
+  staging and atomic replacement synchronized exactly 12 paths. All 12 match the
+  merge and zero staging files remain; no failed attempt is counted as success.
+- Destination parsers, `649/649` source contracts, formatting, focused DACL
+  `1/1`, Authenticode `56/13`, Native `492/13`, compiler `6/6`, Local Core
+  `536/536`, Guard `248/248` standard and `249/249` all-feature, both locked
+  workspaces, strict lint, release/trust smoke, safety/dependency gates, Flutter
+  analyze, and `838/838` pass. Initial zero-test, script-policy, Python-path, and
+  PowerShell-runtime attempts were corrected and are not success evidence.
+- The destination report passed exact `249/249`, zero failed/skipped, in `486.9s`
+  from `2026-08-24T08:54:17.6603197Z` through
+  `2026-08-24T09:02:24.5591800Z`; embedded and corrected standalone Windows
+  PowerShell validation pass. Lock blobs and the protected vault remain exact.
+  Checkpoint 2219 is closed while the complete antivirus goal remains active.

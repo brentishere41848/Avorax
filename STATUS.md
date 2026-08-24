@@ -5605,3 +5605,13 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   normal merge, merged-main checks, original-tree synchronization, and
   destination verification remain pending, so checkpoint 2219 is not integrated
   yet and the overall antivirus goal remains active.
+- **Verified and integrated:** evidence `be122479` passes CI `32704723284` and
+  packages `32704723183`. PR `#71` merged normally as `e6caf818`; merged-main CI
+  `32706023688` and packages `32706023644` pass with publication skipped.
+  Exactly 12 guarded raw Git blobs synchronized and remain exact with zero
+  staging files. Destination contracts `649/649`, DACL `1/1`, Authenticode
+  `56/13`, Native `492/13`, compiler `6/6`, Local Core `536/536`, Guard
+  `248/249`, strict lint, both locked workspaces, release/trust smoke, safety and
+  dependency gates, Flutter `838/838`, and exact verifier/validator `249/249` in
+  `486.9s` pass. Locks and the protected vault remain exact. Checkpoint 2219 is
+  closed; the overall antivirus hardening goal remains active.

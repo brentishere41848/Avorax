@@ -873,3 +873,11 @@ evidence, administrative MSI extraction, and a CycloneDX 1.6 lockfile SBOM with
 `569` components pass. Publication is skipped. Evidence-head, merge, and
 destination evidence remain pending; complete signed final-artifact notice and
 binary-resolution review remains a production-release requirement.
+
+Evidence `be122479`, PR `#71`, merge `e6caf818`, evidence-head package run
+`32704723183`, and merged-main package run `32706023644` complete checkpoint
+2219 integration without changing a dependency or lockfile. Exact 12-path
+destination synchronization and destination dependency evidence pass; root
+Cargo, Native Cargo, and Flutter lock blobs remain unchanged. Complete signed
+final-artifact notice and binary-resolution review remains a production-release
+requirement.

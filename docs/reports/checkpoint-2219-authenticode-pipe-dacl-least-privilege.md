@@ -164,3 +164,45 @@ remain later phases and cannot be inferred from local scripting.
 - No package was installed, released, or published. Evidence-head CI/packages,
   normal PR integration, merged-main evidence, guarded original-tree
   synchronization, and destination verification remain pending.
+
+## Integration And Destination Evidence
+
+- Evidence head `be122479dea324df96ac9b866381819e4136d612` passes Avorax CI
+  `32704723284` and Desktop Packages `32704723183`. PR `#71` merged normally as
+  `e6caf8187c8ae99a7ad392e7ff4b8c606cf8a850`; merged-main CI `32706023688`
+  and packages `32706023644` pass every mandatory job, all six platform
+  packages, consolidation, checksums, dependency evidence, and administrative
+  MSI extraction. Publication is skipped throughout.
+- Guarded preconditions proved eleven existing original-tree targets byte-exact
+  to prior merge `1e453005a01782e9bed887ba9ad489d5b6e51894` and the new checkpoint
+  report absent. The first combined sync command was policy-rejected before
+  execution; the replacement script's first parser run found an invalid
+  `$path:` interpolation, and its first execution found two `git.exe` candidates
+  before staging. Corrected execution materialized direct raw Git blobs, verified
+  every staged hash, atomically replaced exactly twelve paths, verified all
+  twelve destination blobs, and left zero staging files. None of the rejected or
+  failed attempts is counted as success.
+- The first focused destination command selected zero tests because `--exact`
+  lacked the module-qualified test name. The corrected command passes `1/1`.
+  Initial direct safety-script launches were blocked by the host signed-script
+  policy; process-local execution of only the trusted repository scripts passes.
+  The no-malware gate rejected both an omitted Python path and the WindowsApps
+  reparse alias before passing with the fixed non-reparse local Python path.
+- Destination parsers `2/2`, source contracts `649/649`, formatting, complete
+  Authenticode `56/13`, Native `492/13`, compiler `6/6`, Local Core `536/536`,
+  Guard `248/248` standard and `249/249` all-feature, both locked workspaces,
+  strict Native/Local/Guard Clippy, release builds and benign two-host trust
+  smoke, branding/product/no-malware/dependency gates, Flutter analyze, and
+  Flutter `838/838` pass.
+- The destination definitive report ran from
+  `2026-08-24T08:54:17.6603197Z` through
+  `2026-08-24T09:02:24.5591800Z` and passed exactly `249/249`, zero failed and
+  zero skipped, in `486.9s`. Its embedded validator passes. A first standalone
+  PowerShell 7 invocation parsed ISO timestamps as `DateTime` instead of the
+  validator's Windows PowerShell string contract and is not success evidence;
+  the separately invoked Windows PowerShell `-RequireFullSuite` validator passes.
+- Root Cargo, Native Cargo, and Flutter lock blobs remain exact. The protected
+  vault remains 16,072 files, zero directories, 4,522,733 bytes, 5,357 each
+  payload/metadata/auth, one metadata key, and zero pending. Checkpoint 2219 is
+  closed without installation, service/driver start, Defender change, release,
+  or publication; the complete antivirus hardening goal remains active.
