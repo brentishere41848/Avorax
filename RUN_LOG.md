@@ -8975,3 +8975,29 @@ Updates page showed:
   was performed.
 - Normal merge, merged-main hosted evidence, guarded synchronization, and
   destination verification remain pending.
+
+## 2026-08-24 - Checkpoint 2216 integration closure
+
+- Evidence `b1c5b4e1d8cf69cef9c35efc78f81bd33405bab6` passes Avorax CI
+  `32682023654` and Desktop Packages PR `32682023625`. PR `#68` merged normally
+  as `e883c187449eec9323da29b5cec0a0ee40395006`; merged-main CI `32682998536`
+  and packages `32682998541` pass with six artifacts, checksums, lockfile SBOM,
+  dependency/license evidence, administrative MSI extraction, and publication
+  skipped.
+- Exact old/new and reparse/containment preconditions passed before an atomic
+  13-path original-tree synchronization. All 13 post-move raw blobs equal merged
+  main and zero synchronization temporary files remain.
+- Destination parsers `2/2`, source contracts `646/646`, format, focused handshake
+  `2/2`, Authenticode `53/13`, strict Native/Local/Guard Clippy, both locked
+  workspaces with Native `489/13` and compiler `6/6`, Flutter analyze and
+  `838/838`, release builds, and Authenticode trust smoke pass.
+- Destination definitive verification passes exact `246/246`, zero failed/skipped,
+  in `489.4s`; embedded and standalone `-RequireFullSuite` validation pass. The
+  first source-test command used `unittest` against pytest-style functions and the
+  first Local Core Clippy command used an obsolete path; both failed visibly as
+  operator invocation errors before the repository-owned runner/current manifests
+  passed.
+- Post-suite lock hashes remain exact and the protected vault remains `16,072`
+  files, zero directories, `4,522,733` bytes, `5,357` each payload/metadata/auth,
+  one key, and zero pending. Checkpoint 2216 is closed; the complete antivirus goal
+  remains active.

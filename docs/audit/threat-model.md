@@ -2088,3 +2088,11 @@ implementation `472b478c10dad6683ea867616f21c3636fe446de` also passes hosted CI
 `32680555167` and package push/PR `32680536082`/`32680555166`, with publication
 skipped. Merge, merged-main, synchronization, and destination evidence remain
 pending.
+
+**Integration closure:** Evidence `b1c5b4e`, PR `#68`, merge `e883c187`,
+merged-main CI `32682998536`, packages `32682998541`, exact 13-path guarded
+synchronization, destination source/runtime/lint/release/full-workspace/Flutter
+checks, and destination verifier/validator `246/246` in `489.4s` pass. Lockfiles
+and the protected vault remain exact and publication was skipped. This closes the
+checkpoint integration, not the same-user/cross-identity, AppContainer,
+installed-service, driver, pre-execution, or complete-antivirus limitations.

@@ -5483,8 +5483,12 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   `32680536082`/`32680555166`. All platform jobs, six-artifact checksum/SBOM,
   dependency/license, and administrative MSI-extraction evidence pass;
   prerelease publication is skipped.
-- Classification: **verified locally and at the implementation head; merge and
-  destination integration pending**. This is
-  same-user process binding, not encrypted cross-identity IPC, AppContainer,
-  driver, installed LocalSystem, or pre-execution evidence. The overall antivirus
-  hardening goal remains active.
+- Integration is closed through evidence `b1c5b4e`, PR `#68`, merge `e883c187`,
+  merged-main CI `32682998536`, packages `32682998541`, exact 13-path guarded
+  original-tree synchronization, destination contracts/handshake/Authenticode/
+  lint/release/trust-smoke/full-workspace/Flutter checks, and exact destination
+  verifier/validator `246/246` in `489.4s`. Lockfiles and the protected vault
+  remain exact; publication was skipped.
+- Classification: **verified and integrated**. This is same-user process binding,
+  not encrypted cross-identity IPC, AppContainer, driver, installed LocalSystem,
+  or pre-execution evidence. The overall antivirus hardening goal remains active.
