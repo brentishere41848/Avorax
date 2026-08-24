@@ -2500,3 +2500,13 @@ enforcement, or pre-execution blocking is claimed.
   checkpoint blockers are evidence-head checks, normal merge, merged-main
   checks, guarded synchronization, and destination verification. The larger
   installed/cross-identity/signing/driver/pre-execution blockers remain.
+- **Checkpoint 2223 integration blockers closed:** evidence `6223ad2`, PR
+  `#75`, merge `252a9ade`, exact evidence-head and merged-main CI/packages,
+  guarded 12-path sync, full destination suites, and exact destination
+  `253/253` validation in `484.8s` pass. A transient evidence-head arm64
+  `hdiutil` failure remains recorded before the unchanged failed-job-only retry
+  passed. The checkpoint has no remaining integration blocker. Same-session
+  injection/handle duplication, cross-identity IPC, AppContainer/LPAC or
+  installed LocalSystem isolation, production signing, driver enforcement,
+  and demonstrated pre-execution protection remain technically limited or
+  require external prerequisites; the overall antivirus goal remains active.

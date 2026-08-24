@@ -1035,3 +1035,13 @@ Publication is skipped. Defender removed locally extracted MSI/EXE copies but
 was not weakened; stream verification used the retained original ZIP entries.
 Evidence-head/merged-main proof and complete signed final-artifact license,
 notice, copyright, and binary-resolution review remain pending.
+
+Checkpoint 2223 evidence `6223ad2`, merge `252a9ade`, evidence-head package run
+`32748118314`, and merged-main package run `32750490746` pass after one retained
+transient arm64 `hdiutil` failure and an unchanged failed-job-only retry. Both
+final bundles require all six platform artifacts, seven matching SHA-256 rows,
+and CycloneDX 1.6 lockfile SBOMs with 569 components; publication is skipped.
+Guarded destination synchronization and full verification preserve all three
+exact lock blobs. This closes checkpoint package integration only; complete
+signed final-artifact license, notice, copyright, and binary-resolution review
+remains a production-release prerequisite.

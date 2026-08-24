@@ -116,3 +116,42 @@ are not used as complete-package evidence.
 Evidence-head CI/packages, normal merge, merged-main checks, guarded original-
 tree synchronization, and destination verification remain pending. Nothing
 was installed, executed, released, or published.
+
+## Integration And Destination Closure
+
+Evidence head `6223ad2ef7916a63ed01d7fbd058f0dd4f28a547` passes Avorax CI
+`32748118330`. Desktop Packages run `32748118314` first failed only its macOS
+arm64 job after the app build, payload/signing checks, packaged-engine smoke,
+and DMG creation had passed; all five bounded `hdiutil verify` attempts returned
+`Resource temporarily unavailable`. Failed-job-only attempt 2 passed unchanged,
+then consolidation passed. The first failure remains recorded and is not called
+a pass. The attempt-2 raw ZIP independently passes the same exact eight-entry,
+seven-hash, CycloneDX 1.6/569-component checks; publication was skipped.
+
+PR `#75` became ready only after exact-head checks and merged normally with
+head locking as `252a9adef07ecb7588221ad51cc459d6188357de`.
+Merged-main CI `32750490734` and Desktop Packages `32750490746` pass without a
+retry. The merged raw ZIP again contains all six platform artifacts, seven
+matching SHA-256 rows, and the CycloneDX 1.6/569-component lockfile SBOM;
+publication was skipped.
+
+All 12 destination preconditions matched merge parent `e644d77` or valid
+absence. Exactly those 12 paths were synchronized to
+`C:\Users\Brent\Documents\Avorax-main`; every normalized Git blob matched merge
+`252a9ade`, every raw SHA-256 matched the source, and no path was deleted.
+
+Destination parsers `2/2`, source contracts `653/653`, token stability `2/2`,
+direct Authenticode `63/13`, Native `499/13`, compiler `6/6`, both locked
+workspaces, strict Native/Local/Guard Clippy, standalone locked/offline Native,
+Flutter analyze, and Flutter `838/838` pass. Destination definitive verification
+ran from `2026-08-24T16:49:05.1108073Z` through
+`2026-08-24T16:57:09.9326371Z` and passed exact `253/253`, zero failed/skipped,
+in `484.8s`; the token-stability target passed in `0.3s`. Embedded and
+independent Windows PowerShell strict validation pass.
+
+The three lock blobs and read-only protected-vault invariant remain exact:
+16,072 files, zero directories, 4,522,733 bytes, 5,357 each payload/metadata/
+auth extension, one metadata key, and zero pending. Nothing was installed,
+executed, released, or published. Checkpoint 2223 is closed; its documented
+same-session/cross-identity/AppContainer/driver/pre-execution limits and the
+complete antivirus hardening goal remain open.

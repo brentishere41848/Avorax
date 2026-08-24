@@ -2332,3 +2332,13 @@ files only from ordinary local extraction, was not weakened, and the incomplete
 extracted directories are not treated as complete evidence. Hosted proof does
 not expand the point-window boundary or any residual threat above. Evidence-
 head, merged-main, synchronization, and destination evidence remain pending.
+
+Evidence `6223ad2`, PR `#75`, merge `252a9ade`, exact evidence-head and
+merged-main CI/packages, guarded 12-path synchronization, full destination
+Rust/Flutter checks, and destination verifier/validator `253/253` in `484.8s`
+close checkpoint integration. The retained first evidence-head arm64 attempt
+failed only on bounded `hdiutil verify` resource-busy retries after the build,
+payload, signing, smoke, and DMG creation checks passed; failed-job-only attempt
+2 passed unchanged. This strengthens deployment evidence but does not expand
+the token-stability window or any identity, isolation, driver, or pre-execution
+boundary above. Publication was skipped and no package was installed.

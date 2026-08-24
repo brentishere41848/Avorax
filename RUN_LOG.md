@@ -9666,3 +9666,27 @@ Updates page showed:
   and EXE. Nothing was installed, executed, released, or published.
 - Evidence-head CI/packages, normal merge, merged-main evidence, guarded
   synchronization, and destination verification remain pending.
+
+## 2026-08-24 continuation checkpoint 2223 integration closure
+
+- Evidence `6223ad2` passes CI `32748118330`. Package run `32748118314`
+  retained one arm64 `hdiutil verify` resource-busy failure after successful
+  build/payload/signing/smoke/DMG creation; failed-job-only attempt 2 passed on
+  the unchanged head and completed consolidation. The failed attempt remains
+  evidence and is not called a pass.
+- PR `#75` merged normally with exact head locking as `252a9ade`. Merged-main
+  CI `32750490734` and packages `32750490746` pass without retry. Evidence-head
+  and merged bundles independently pass six artifacts, seven checksums, and
+  CycloneDX 1.6/569-component SBOM checks; publication is skipped.
+- All 12 destination preconditions matched parent `e644d77` or valid absence.
+  Exactly those paths synchronized to `C:\Users\Brent\Documents\Avorax-main`;
+  normalized blobs and raw SHA-256 values match merge/source, with no delete.
+- Destination parsers, contracts `653/653`, token stability `2/2`, direct
+  Authenticode `63/13`, Native `499/13`, compiler `6/6`, both locked
+  workspaces, strict Clippy, offline Native, Flutter analyze and `838/838`
+  pass. Exact destination verification passes `253/253` in `484.8s`, target
+  `0.3s`, both validators, and zero failed/skipped steps.
+- Locks and the protected vault remain exact at 16,072 files, zero directories,
+  4,522,733 bytes, 5,357 each payload/metadata/auth, one key, and zero pending.
+  Nothing was installed, executed, released, or published. Checkpoint 2223 is
+  closed; the complete antivirus goal remains active.

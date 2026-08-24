@@ -5772,3 +5772,11 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   was verified directly against both untouched ZIP streams without weakening
   Defender. Evidence-head, merge, merged-main, guarded sync, and destination
   evidence remain pending.
+- **Integrated and destination verified:** evidence `6223ad2`, PR `#75`, merge
+  `252a9ade`, exact evidence/merged-main CI and package checks, one retained
+  transient arm64 `hdiutil` failure followed by a bounded failed-job-only pass,
+  exact 12-path guarded synchronization, full destination Rust/Flutter checks,
+  and destination verifier `253/253` in `484.8s` pass. Six artifacts, seven
+  checksums, CycloneDX 1.6/569-component SBOMs, exact locks, and protected vault
+  pass; publication is skipped. Checkpoint 2223 is closed while its explicit
+  identity/isolation/driver limits and the complete antivirus goal remain open.
