@@ -9991,3 +9991,19 @@ Updates page showed:
 - Hosted exact-head CI/package evidence, normal merge, guarded synchronization,
   and destination proof remain pending. No installation, candidate execution,
   release, publication, Defender change, or protected-vault mutation occurred.
+
+## 2026-08-24 continuation checkpoint 2226 implementation-head hosting
+
+- Exact implementation `74d7d96313402fe313a6c2bc9f7d6e9ab7020849`
+  passes all five CI jobs in run `32780511368`. Desktop Packages push/PR runs
+  `32780474053`/`32780511318` pass contracts, Windows MSI/EXE, Linux DEB/tar,
+  both macOS DMGs, and consolidation; publication is skipped.
+- Untouched consolidated artifacts `9539926286`/`9540008859` have SHA-256
+  `66884bbe57321548699b91597ccbf1794f9cba1e1a76879836d9f795c945c520`/
+  `41edbc1601896374bd5a1ceb5ffb561de3bc7f050b0471999243e687a39d62ce`.
+  Both pass exact eight-entry, six-platform-file, seven-checksum, and CycloneDX
+  1.6/569-component in-stream validation without extraction or execution.
+- The first stream check rejected stale `windows-x64` filename assumptions;
+  exact current `x64.msi`/`x64-setup.exe` names then pass. The failed check is
+  retained and uncredited. Draft PR `#78` remains exact; evidence-head checks,
+  merge, merged-main evidence, synchronization, and destination proof remain.

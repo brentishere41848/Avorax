@@ -5900,6 +5900,11 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   `256/256`, zero failed/skipped, in `459.6s`; the new target is `0.3s` and ten
   malformed reports are rejected. Lock blobs and the read-only protected-vault
   invariant remain exact.
+- **Implementation-head hosted evidence:** exact `74d7d963` passes CI
+  `32780511368` and package push/PR `32780474053`/`32780511318`, including all
+  six platform artifacts, checksums and a 569-component lockfile SBOM;
+  publication is skipped. Draft PR `#78` is exact. Evidence-head, merge,
+  synchronization, and destination proof remain pending.
 - **Technically limited:** this remains point-in-time and does not bind the
   distinct impersonation token object, cryptographically bind response bytes
   to token snapshots, prevent every transient or mutation after final ACK, or

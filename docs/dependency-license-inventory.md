@@ -1111,3 +1111,9 @@ exact `256/256` definitive evidence; the three lock blobs remain exact. Complete
 signed final-artifact license,
 notice, copyright, and binary-resolution review remains a production-release
 prerequisite.
+
+Checkpoint 2226 implementation-head package runs `32780474053` and
+`32780511318` generate versioned CycloneDX 1.6 lockfile SBOMs with 569
+components. Untouched consolidated artifacts `9539926286`/`9540008859` pass
+seven-checksum and exact-SBOM in-stream validation; publication is skipped.
+This is dependency evidence, not complete final binary/license approval.

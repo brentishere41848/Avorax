@@ -143,3 +143,29 @@ payload/metadata/auth, one metadata key, and zero pending/temp.
 Exact-head hosted CI/package evidence, normal PR integration, guarded original-
 tree synchronization, and destination verification remain pending. Nothing was
 installed, executed as candidate content, released, or published.
+
+## Implementation-Head Hosted Evidence
+
+Exact implementation `74d7d96313402fe313a6c2bc9f7d6e9ab7020849`
+passes all five Avorax CI jobs in run `32780511368`. Desktop Packages push/PR
+runs `32780474053`/`32780511318` pass package contracts, Windows MSI/EXE,
+Linux DEB/tar, macOS arm64/x64 DMG, and consolidation; both publication jobs
+are skipped.
+
+Consolidated artifacts `9539926286` and `9540008859` were retained as untouched
+ZIP streams with SHA-256
+`66884bbe57321548699b91597ccbf1794f9cba1e1a76879836d9f795c945c520` and
+`41edbc1601896374bd5a1ceb5ffb561de3bc7f050b0471999243e687a39d62ce`.
+In-stream checks prove exactly six platform files, seven matching checksum rows,
+and one CycloneDX 1.6 lockfile SBOM with 569 components in each ZIP, without
+extracting or executing candidate installers.
+
+The first artifact inspection correctly rejected a stale expectation that the
+Windows names contained `windows-x64`; current package-contract names are
+`x64.msi` and `x64-setup.exe`. The corrected exact-name check passes both
+streams. The failed attempt is not credited as evidence and changed no product
+or artifact bytes.
+
+Draft PR `#78` remains head-locked to the implementation commit. Evidence-head
+checks, normal merge, merged-main evidence, guarded synchronization, and
+destination verification remain pending.
