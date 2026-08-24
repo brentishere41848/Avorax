@@ -9666,3 +9666,82 @@ Updates page showed:
   and EXE. Nothing was installed, executed, released, or published.
 - Evidence-head CI/packages, normal merge, merged-main evidence, guarded
   synchronization, and destination verification remain pending.
+
+## 2026-08-24 continuation checkpoint 2223 integration closure
+
+- Evidence `6223ad2` passes CI `32748118330`. Package run `32748118314`
+  retained one arm64 `hdiutil verify` resource-busy failure after successful
+  build/payload/signing/smoke/DMG creation; failed-job-only attempt 2 passed on
+  the unchanged head and completed consolidation. The failed attempt remains
+  evidence and is not called a pass.
+- PR `#75` merged normally with exact head locking as `252a9ade`. Merged-main
+  CI `32750490734` and packages `32750490746` pass without retry. Evidence-head
+  and merged bundles independently pass six artifacts, seven checksums, and
+  CycloneDX 1.6/569-component SBOM checks; publication is skipped.
+- All 12 destination preconditions matched parent `e644d77` or valid absence.
+  Exactly those paths synchronized to `C:\Users\Brent\Documents\Avorax-main`;
+  normalized blobs and raw SHA-256 values match merge/source, with no delete.
+- Destination parsers, contracts `653/653`, token stability `2/2`, direct
+  Authenticode `63/13`, Native `499/13`, compiler `6/6`, both locked
+  workspaces, strict Clippy, offline Native, Flutter analyze and `838/838`
+  pass. Exact destination verification passes `253/253` in `484.8s`, target
+  `0.3s`, both validators, and zero failed/skipped steps.
+- Locks and the protected vault remain exact at 16,072 files, zero directories,
+  4,522,733 bytes, 5,357 each payload/metadata/auth, one key, and zero pending.
+  Nothing was installed, executed, released, or published. Checkpoint 2223 is
+  closed; the complete antivirus goal remains active.
+
+## 2026-08-24 continuation checkpoint 2224 scripting
+
+- Started `agent/checkpoint-2224-authenticode-launch-token-stability` from the
+  local checkpoint-2223 closure `cffbd9a`.
+- Scripted pre-pipe `TokenStatistics.TokenId`/`ModifiedId` capture from the
+  same parent-held launch token passed to `CreateProcessAsUserW`, then exact
+  same-handle checks after process creation while suspended and after the
+  authenticated handshake. Empty identity, query failure, token-instance
+  drift, or modified-context drift fails visibly; post-creation failure
+  terminates and reaps the helper.
+- Added benign full-path and adversarial four-field/empty-ID Rust regressions,
+  source contract 654, verifier step 254, strict report-validation scope, and
+  checkpoint/audit/status/dependency documentation.
+- No checkpoint-2224 passing result is claimed during scripting. The check is
+  point-in-time evidence and does not prove the child process token remains
+  identical, bind primary and impersonation token objects, prevent transient
+  mutation, same-session injection or handle duplication, or establish cross-
+  identity IPC, AppContainer/LPAC, driver, or pre-execution enforcement.
+- No dependency or lockfile change is intended. No service/driver was started,
+  Defender was not changed, and protected quarantine content was not touched.
+- Focused/full local verification passes: parsers `2/2`, source contracts
+  `654/654`, launch-token stability `2/2`, Authenticode `65/13`, Native
+  `501/13` plus compiler `6/6`, both locked root workspaces, strict Native/
+  Local/Guard Clippy, standalone locked/offline Native, Flutter analysis and
+  `838/838`. Three initial support-command issues remain recorded in the
+  checkpoint report and were corrected without dependency installation or
+  test weakening.
+- Definitive verification ran from `2026-08-24T17:16:01.686336Z` through
+  `2026-08-24T17:24:11.3481687Z` and passed exact `254/254`, zero failed or
+  skipped, in `489.6s`; the new target passed in `0.2s`. Embedded/independent
+  strict validation passes and nine malformed reports are rejected.
+- Three lock blobs and the protected-vault invariant remain exact. Hosted
+  exact-head evidence, normal integration, guarded synchronization, and
+  destination proof remain pending, so checkpoint 2224 and the overall goal
+  remain active.
+
+## 2026-08-24 continuation checkpoint 2224 implementation-head hosting
+
+- Exact implementation `c83114908c64e9a9c0f21be68d2612fe85895fda` passes
+  Avorax CI `32756812158` and Desktop Packages push/PR runs `32756761690`/
+  `32756812207` without reruns. CI completes all five jobs; both package runs
+  pass contracts, Windows MSI/EXE, Linux DEB/tar, macOS arm64/x64 DMG, and
+  consolidation. Both publication jobs are skipped.
+- Original consolidated artifacts `9532117732` and `9531753034` were retained
+  as untouched ZIP streams with SHA-256
+  `0305f2a0439195829ab7f3a1888a132637fcd5efb4f5e2f3ce8982eb384e8a37` and
+  `a666dce5767f367b27dc14a6232dcb14117b5728bbef71e0eed58c6286d16ace`.
+  In-stream checks, without extracting or executing candidate installers,
+  prove exactly eight entries each, seven exact manifest rows, seven matching
+  entry hashes, and CycloneDX 1.6 lockfile SBOMs with 569 components.
+- Draft PR `#76` remains clean at the implementation head. Evidence-head
+  checks, normal merge, merged-main evidence, guarded original-tree
+  synchronization, and independent destination verification remain pending.
+  Nothing was installed, executed, released, or published.

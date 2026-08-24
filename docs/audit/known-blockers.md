@@ -2500,3 +2500,33 @@ enforcement, or pre-execution blocking is claimed.
   checkpoint blockers are evidence-head checks, normal merge, merged-main
   checks, guarded synchronization, and destination verification. The larger
   installed/cross-identity/signing/driver/pre-execution blockers remain.
+- **Checkpoint 2223 integration blockers closed:** evidence `6223ad2`, PR
+  `#75`, merge `252a9ade`, exact evidence-head and merged-main CI/packages,
+  guarded 12-path sync, full destination suites, and exact destination
+  `253/253` validation in `484.8s` pass. A transient evidence-head arm64
+  `hdiutil` failure remains recorded before the unchanged failed-job-only retry
+  passed. The checkpoint has no remaining integration blocker. Same-session
+  injection/handle duplication, cross-identity IPC, AppContainer/LPAC or
+  installed LocalSystem isolation, production signing, driver enforcement,
+  and demonstrated pre-execution protection remain technically limited or
+  require external prerequisites; the overall antivirus goal remains active.
+- **Checkpoint 2224 local verification blocker closed:** exact
+  launch-primary `TokenId`/`ModifiedId` capture and same parent-held handle
+  read-back after process creation and authenticated handshake, bounded cleanup,
+  benign/adversarial tests, source contract 654, verifier step 254, validator,
+  and documentation pass locally. Target `2/2`, complete Authenticode `65/13`,
+  Native `501/13`, both locked workspaces, strict lint, Flutter `838/838`, and
+  exact definitive `254/254` in `489.6s` pass; nine malformed reports are
+  rejected.
+- **Checkpoint 2224 residual technical blocker:** same-handle point-in-time
+  evidence does not prove the created child process token remains identical,
+  bind launch-primary and impersonation token objects, or prevent transient
+  mutation, same-session injection, privileged handle duplication, or process
+  injection. Cross-identity IPC, AppContainer/LPAC, installed LocalSystem,
+  production signing, signed-driver enforcement, and demonstrated pre-execution
+  protection remain technical or external prerequisites.
+- Hosted exact-head CI/packages, evidence commit, normal merge, merged-main
+  checks, guarded destination synchronization, and destination verification
+  remain required before checkpoint 2224 can close. No passing result was
+  claimed during scripting; locks/vault remain exact and the overall antivirus
+  goal remains active.

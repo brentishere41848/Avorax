@@ -5772,3 +5772,43 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   was verified directly against both untouched ZIP streams without weakening
   Defender. Evidence-head, merge, merged-main, guarded sync, and destination
   evidence remain pending.
+- **Integrated and destination verified:** evidence `6223ad2`, PR `#75`, merge
+  `252a9ade`, exact evidence/merged-main CI and package checks, one retained
+  transient arm64 `hdiutil` failure followed by a bounded failed-job-only pass,
+  exact 12-path guarded synchronization, full destination Rust/Flutter checks,
+  and destination verifier `253/253` in `484.8s` pass. Six artifacts, seven
+  checksums, CycloneDX 1.6/569-component SBOMs, exact locks, and protected vault
+  pass; publication is skipped. Checkpoint 2223 is closed while its explicit
+  identity/isolation/driver limits and the complete antivirus goal remain open.
+
+## Checkpoint 2224 - Authenticode launch token stability (2026-08-24)
+
+- **Locally verified; hosted integration pending:** the parent records exact launch-primary
+  `TokenId` and `ModifiedId` before pipe creation from the same parent-held
+  handle used by `CreateProcessAsUserW`, then rechecks it after process
+  creation while suspended and after authenticated handshake completion.
+- **Fail-visible boundary:** empty initial identity, fixed-size query failure,
+  token-instance drift, or modified-context drift fails. Post-creation errors
+  terminate and reap the helper; they cannot become publisher trust.
+- **Contracts verified:** benign/adversarial Rust tests, source contract 654,
+  mandatory verifier step 254, exact 254-step validator assertions, and all
+  checkpoint/audit/dependency records are present before test execution.
+- **Technically limited:** this does not prove the child process token remains
+  identical after creation, bind launch-primary and impersonation objects, or
+  prevent transient mutation, same-session injection, handle duplication, or
+  process injection. Cross-identity IPC, AppContainer/LPAC, installed
+  LocalSystem, signed-driver, and pre-execution enforcement remain separate.
+- **Local evidence:** target `2/2`, Authenticode `65/13`, Native `501/13` plus
+  compiler `6/6`, both locked workspaces, strict lint, source contracts
+  `654/654`, and Flutter `838/838` pass. Definitive verification passes exact
+  `254/254` in `489.6s`, the target in `0.2s`, both validators, and nine
+  malformed-report rejections.
+- Locks and vault remain exact. No dependency/lock change, installation,
+  Defender change, or publication occurred.
+- **Implementation-head hosted verified:** exact `c8311490` passes Avorax CI
+  `32756812158` and package push/PR runs `32756761690`/`32756812207` without
+  retry. Both untouched consolidated ZIP streams contain six platform
+  artifacts, exactly seven matching checksum rows, and CycloneDX 1.6 SBOMs
+  with 569 components; publication is skipped. Evidence-head checks, normal
+  merge, merged-main evidence, guarded synchronization, and destination proof
+  remain pending. The overall antivirus goal remains active.
