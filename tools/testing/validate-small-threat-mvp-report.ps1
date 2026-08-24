@@ -1904,8 +1904,8 @@ if ($RequireFullSuite) {
   if ($skipFlutter -or $skipRust) {
     throw "-RequireFullSuite requires skip_flutter=false and skip_rust=false."
   }
-  if ($steps.Count -ne 254) {
-    throw "-RequireFullSuite expected exactly 254 verifier steps for this source revision, found $($steps.Count)."
+  if ($steps.Count -ne 255) {
+    throw "-RequireFullSuite expected exactly 255 verifier steps for this source revision, found $($steps.Count)."
   }
   if ($steps[0].name -ne "local-core safe simulator scan reporting") {
     throw "-RequireFullSuite first step mismatch: $($steps[0].name)"
@@ -1957,6 +1957,7 @@ if ($RequireFullSuite) {
   Assert-ReportContainsStep $steps "native-engine Authenticode handshake client logon-session regressions"
   Assert-ReportContainsStep $steps "native-engine Authenticode handshake client token-stability regressions"
   Assert-ReportContainsStep $steps "native-engine Authenticode launch token-stability regressions"
+  Assert-ReportContainsStep $steps "native-engine Authenticode child process-token binding regressions"
   Assert-ReportContainsStep $steps "native-engine Authenticode mandatory-hash/file-identity regressions"
   Assert-ReportContainsStep $steps "native-engine risk fusion regressions"
   Assert-ReportContainsStep $steps "native-engine ClickOnce carrier heuristic detection"
@@ -2098,9 +2099,9 @@ if ($RequireFullSuite) {
   Assert-ReportScopeContains $verifiedScopeText "Bounded structured ACL reads require a protected nondefault DACL containing exactly ordered zero-flag access-allowed ACEs for SYSTEM with normalized full control and the current user with normalized generic read plus generic write, plus one nondefault zero-flag low-integrity no-write-up mandatory-label ACE; generic pipe/file rights are normalized with MapGenericMask before exact evidence comparison" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "A current-user full-control, read-only, write-only, execute, delete, write-owner, or otherwise mismatched ACE fails both endpoint read-backs before token exchange or publisher trust" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "without enabling SeSecurityPrivilege, requesting ACCESS_SYSTEM_SECURITY, reading the full SACL, or retrying with weaker security" "verification_scope.verified"
-  Assert-ReportScopeContains $verifiedScopeText "after the Authenticode helper opens the dedicated handshake client with exactly GENERIC_WRITE plus READ_CONTROL, validates its client endpoint, and binds the server PID to the exact parent, but before writing the launch token" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "after the Authenticode helper opens the dedicated duplex handshake client with exactly GENERIC_READ plus GENERIC_WRITE plus READ_CONTROL, validates its client endpoint, and binds the server PID to the exact parent, but before writing the launch token" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "the child resolves its current process-token SID and performs the same GetSecurityInfo DACL and mandatory-label read-back on the actually opened client handle" "verification_scope.verified"
-  Assert-ReportScopeContains $verifiedScopeText "Client access, SID, query, descriptor, ACL, ACE, policy, or label failure is diagnostic and cannot reach token exchange or publisher trust; there is no write-only or weaker retry" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Client access, SID, query, descriptor, ACL, ACE, policy, or label failure is diagnostic and cannot reach token exchange or publisher trust; there is no weaker retry" "verification_scope.verified"
   Assert-ReportScopeContains $technicalLimitText "This second endpoint check narrows creation-to-connect descriptor drift but is still point-in-time same-user evidence, not cross-identity authentication, encryption, AppContainer, installed LocalSystem, driver, or pre-execution enforcement" "verification_scope.technically_limited"
   Assert-ReportScopeContains $verifiedScopeText "the handshake descriptor sets and reads back the exact current process-token user SID as owner and contains a third ordered zero-flag Owner Rights S-1-3-4 allow ACE granting only READ_CONTROL" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "Windows owner-rights semantics suppress the owner's otherwise implicit READ_CONTROL and WRITE_DAC; a benign same-user CreateFileW reopen requesting only WRITE_DAC must fail with ERROR_ACCESS_DENIED while exact parent/client protocol access and both read-backs remain functional" "verification_scope.verified"
@@ -2122,6 +2123,11 @@ if ($RequireFullSuite) {
   Assert-ReportScopeContains $technicalLimitText "TokenId and ModifiedId stability detects token replacement or mutation only across one successful client-token validation" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "Launch-primary TokenId and ModifiedId stability is point-in-time evidence over one parent-held handle from pre-pipe capture through post-handshake read-back" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "It does not prove that the created child process token remains identical after creation, bind the distinct launch-primary and impersonation token objects, prevent transient mutation between snapshots or mutation after the final read-back" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $verifiedScopeText "the Authenticode handshake is duplex and the child cannot proceed beyond its random-token write until it receives the exact one-byte parent ACK" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "the parent opens the token currently attached to the exact child process with TOKEN_QUERY, requires exact primary type, launch user SID, AuthenticationId and session, privilege stripping, zero restricting SIDs, low integrity, mandatory no-write-up, canonical virtualization state, disabled UIAccess, and a nonempty child TokenId" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "the parent repeats the complete child-token profile validation and requires exact equality with the captured child TokenId and ModifiedId before ACK" "verification_scope.verified"
+  Assert-ReportScopeContains $technicalLimitText "CreateProcessAsUserW produced a distinct child token object on the verified Windows host, so launch-primary and child TokenId equality is technically unavailable and is not claimed" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "it does not bind the distinct named-pipe impersonation token object to either primary token, prevent replacement or mutation after ACK, exclude transient between-snapshot mutation" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "It does not bind the impersonation token object to the launch primary-token object, prevent mutation wholly before or after that window, prevent same-session injection or handle duplication, encrypt IPC, provide cross-identity authentication or AppContainer/LPAC, or demonstrate driver/pre-execution enforcement" "verification_scope.technically_limited"
   Assert-ReportScopeContains $verifiedScopeText "Before CreateProcessAsUserW, the parent supplies an immutable DWORD64 process-creation mitigation policy enabling strict handle checks, extension-point disable, dynamic-code prohibition, Microsoft-signed-only binary loading, no remote images, no low-label images, and System32 image preference; the child requires both invalid-handle exception and permanent-enforcement read-back flags plus every other required policy before stdin or request parsing, and attribute construction, application, or read-back failure cannot become trust" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "Environment construction, current-directory validation, mitigation-policy construction/application/read-back, token/SID creation, process launch, handle-list construction, Job assignment, resume, bounded TokenPrivileges, TokenRestrictedSids, TokenIntegrityLevel, fixed-size TokenMandatoryPolicy, or fixed-size token virtualization/UIAccess inspection, verification, or normal revert failure cannot become trust" "verification_scope.verified"

@@ -1057,9 +1057,32 @@ or lockfile change.
 Local verification passes both locked workspaces, strict lint, standalone
 locked/offline Native, Flutter lock enforcement/analyze/`838`, source contracts
 `654/654`, dependency evidence, and exact verifier `254/254`. All three lock
-blobs remain unchanged. Exact-head package SBOM/checksum evidence, merge,
-synchronization, and destination proof remain pending. The control does not
+blobs remain unchanged. Implementation/evidence/merged-main package evidence,
+normal merge, guarded synchronization, and destination proof now pass. Exact
+evidence `42d8c7c`, merge `243bc84`, evidence-head package run `32760087347`,
+and merged-main package run `32761688853` preserve all six platform artifacts,
+seven matching checksums, and the CycloneDX 1.6/569-component lockfile SBOM;
+publication is skipped. The control does not
 prove the child process token remains identical or expand cross-identity,
 AppContainer/LPAC, installed LocalSystem, signed-driver, or pre-execution
 guarantees. Complete signed final-artifact license, notice, copyright, and
 binary-resolution review remains a production-release prerequisite.
+
+Checkpoint 2225 child process-token binding uses only the already pinned
+`windows-sys` duplex named-pipe, `OpenProcessToken`, `TOKEN_QUERY`,
+`TOKEN_STATISTICS`, overlapped I/O, wait, and cancellation APIs. Exact
+child `TokenId`/`ModifiedId` stability comparison, existing bounded token-
+profile queries, and one-byte ACK flow control introduce no crate, package,
+feature, binary, script host, network source, or runtime component. This batch
+adds no crate, package, feature, or lockfile change.
+
+The first focused runtime showed a distinct child versus launch-primary
+`TokenId` on this Windows host; exact cross-object equality is technically
+unavailable and not claimed. The repair reuses already linked token APIs to
+bind identity/restricted profile and the child token's own stability. Focused,
+full local, exact `255/255` verifier, and independent report validation pass;
+all three monitored lock blobs remain exact. This point-in-time control does not add cross-
+identity authentication, encryption, AppContainer/LPAC, installed LocalSystem,
+signed-driver, or pre-execution guarantees. Complete signed final-artifact
+license, notice, copyright, and binary-resolution review remains a production-
+release prerequisite.

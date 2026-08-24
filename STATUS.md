@@ -5812,3 +5812,54 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   with 569 components; publication is skipped. Evidence-head checks, normal
   merge, merged-main evidence, guarded synchronization, and destination proof
   remain pending. The overall antivirus goal remains active.
+- **Integrated and destination verified:** evidence `42d8c7c`, PR `#76`, merge
+  `243bc84`, exact evidence/merged-main CI and package checks, exact 12-path
+  guarded synchronization, and full destination Rust/Flutter checks pass.
+  Destination verifier/validator passes `254/254` in `494.5s`; both main and
+  evidence artifacts contain six platform files, seven matching checksums, and
+  CycloneDX 1.6/569-component SBOMs, with publication skipped. Locks and the
+  protected vault remain exact. Checkpoint 2224 is closed, while its explicit
+  identity/isolation/driver limits and the complete antivirus goal remain open.
+
+## Checkpoint 2225 - Authenticode child process-token binding (2026-08-24)
+
+- **Locally and implementation-head hosted verified:** the handshake is duplex and the child waits
+  after its nonce write for an exact one-byte ACK. The parent queries the token
+  attached to the exact child process with `TOKEN_QUERY` while suspended and
+  again after PID/client-token/nonce/launch-token authentication. Both require
+  the launch SID/logon session and exact restricted low-integrity safety
+  profile; the second must match the child token's own `TokenId` and `ModifiedId`
+  captured while suspended before ACK.
+- **Fail-visible contract:** invalid process/token handles, query failure, empty
+  IDs, four-field mismatch, malformed/missing/incomplete ACK, timeout,
+  unsettled cancellation, or cleanup failure cannot become publisher trust.
+  Post-creation failures terminate and reap the child without weaker retry.
+- **Contracts scripted:** benign production-path and adversarial Rust tests,
+  source contract 655, mandatory verifier step 255, exact 255-step report
+  validation, and audit/dependency documentation are complete before execution.
+- **Initial runtime failure retained:** compilation succeeded and the pure
+  adversarial case passed, but the production path correctly failed because
+  `CreateProcessAsUserW` produced a child token with a distinct `TokenId` from
+  the supplied launch token on this host; cleanup was `ok`. Exact cross-object
+  equality is technically unavailable and is not claimed. The repair binds
+  identity/profile and captures/rechecks the child token's own IDs.
+- **Local evidence:** repair target `2/2`, complete Authenticode `52/52`, Native
+  `503/13` plus compiler `6/6`, source contracts `655/655`, both locked
+  workspaces, strict affected-crate Clippy, offline Native, Flutter analysis and
+  `838/838` pass. Definitive verification passes exact `255/255` in `521.1s`,
+  target `0.3s`, both validators, and nine malformed-report rejections. Locks
+  and the read-only protected-vault inventory remain exact.
+- **Technically limited:** this is point-
+  in-time and does not bind the distinct named-pipe impersonation token object
+  to either primary token, prevent replacement/mutation after ACK, detect every
+  transient, or stop same-session injection/privileged handle duplication. ACK
+  is not secret/encrypted. Cross-identity IPC, AppContainer/LPAC, installed
+  LocalSystem, signed-driver, and pre-execution enforcement remain separate;
+  evidence-head checks, merge, guarded synchronization, and destination proof
+  remain pending, and the overall antivirus goal remains active.
+- **Implementation-head hosted verified:** exact `311d9a2` passes CI
+  `32769512557` and package push/PR runs `32769502849`/`32769512526`. Both
+  untouched consolidated ZIP streams contain six platform artifacts, seven
+  exact checksum rows, and CycloneDX 1.6 SBOMs with 569 components; publication
+  is skipped. Draft PR `#77` is open. Evidence-head, merge, merged-main,
+  guarded synchronization, and destination proof remain pending.

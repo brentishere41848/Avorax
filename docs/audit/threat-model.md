@@ -2371,5 +2371,50 @@ locked workspaces, strict lint, Flutter `838/838`, and exact definitive
 `254/254` in `489.6s`; nine malformed reports are rejected. This verifies the
 implemented point-in-time boundary on this host but does not change the child-
 token, transient-mutation, identity, injection, isolation, driver, or pre-
-execution residual threats. Hosted, merge, synchronization, and destination
-evidence remain pending.
+execution residual threats.
+
+Implementation `c831149`, evidence `42d8c7c`, PR `#76`, merge `243bc84`, exact
+evidence-head and merged-main CI/packages, guarded 12-path synchronization,
+full destination Rust/Flutter checks, and destination verifier/validator
+`254/254` in `494.5s` close checkpoint 2224 integration. Publication was
+skipped; locks and the protected vault remain exact. This closure does not
+expand the point-in-time identity, isolation, driver, or pre-execution boundary.
+
+### Authenticode child process-token binding (checkpoint 2225)
+
+The handshake pipe is now duplex. After writing the random launch token, the
+child waits for an exact one-byte ACK and cannot continue into token/request/
+candidate work. Parent `OpenProcessToken(process, TOKEN_QUERY)` first queries
+the token attached to the exact `PROCESS_INFORMATION` child while suspended,
+then reopens it after exact child PID, connected-client-token, nonce, and
+launch-token authentication while the child waits for ACK. Both queries require
+primary type, the launch user SID and AuthenticationId/session, stripped
+privileges, zero restricting SIDs, low integrity/no-write-up, canonical
+virtualization, disabled UIAccess, and nonempty `TokenStatistics.TokenId`. The
+second query must exactly match the child token's own `TokenId`/`ModifiedId`
+captured while suspended before ACK or publisher trust.
+
+The first focused runtime proved that `CreateProcessAsUserW` produced a distinct
+child token `TokenId` from the supplied launch-primary token on this host. Exact
+cross-object `TokenId` equality is technically unavailable and is not claimed;
+the viable control binds launch identity/security properties and then proves
+the child token object is stable across the ACK-gated window. This closes the
+simple child-exit race and detects persistent wrong-profile attachment or child
+token replacement/modification at two point-in-time boundaries. It does not
+bind the distinct named-pipe impersonation token object to either primary token,
+prevent replacement or mutation after ACK, detect every transient between
+snapshots, or prevent same-session process injection and privileged handle
+duplication. ACK is bounded flow control, not a secret, encryption, or cross-
+identity authentication. AppContainer/LPAC, installed LocalSystem isolation,
+production signing, signed-driver enforcement, and demonstrated pre-execution
+protection remain separate.
+
+Production code, benign/adversarial regressions, source contract 655, verifier
+step 255, strict report assertions, and documentation were scripted before
+execution. The first focused run compiled; the adversarial test passed and the
+production-path test rejected the infeasible launch/child `TokenId` equality
+with successful cleanup. That failure is retained and not counted as a pass;
+the repaired focused path passes `2/2`, complete Authenticode passes `52/52`,
+and definitive verification passes exact `255/255` in `521.1s` with both strict
+validators and nine malformed-report rejections. Hosted integration and
+destination proof remain pending.
