@@ -4,12 +4,15 @@ Date: 2026-08-24
 
 ## Status
 
-Implemented, locally verified, and implementation-head hosted verified. The production implementation, benign and
-adversarial tests, verifier, validator, source contract, dependency record, threat
-model, and audit records were written as one batch before tests, as requested. No
-checkpoint-2216 passing result is claimed before execution. Exact implementation
-`472b478c10dad6683ea867616f21c3636fe446de` passes hosted CI and both package
-events. Merge, synchronization, and destination verification remain pending.
+Implemented, locally verified, hosted verified, merged, and synchronized to the
+original tree. The production implementation, benign and adversarial tests,
+verifier, validator, source contract, dependency record, threat model, and audit
+records were written as one batch before tests, as requested. No checkpoint-2216
+passing result is claimed before execution. Exact implementation
+`472b478c10dad6683ea867616f21c3636fe446de`, evidence
+`b1c5b4e1d8cf69cef9c35efc78f81bd33405bab6`, merge
+`e883c187449eec9323da29b5cec0a0ee40395006`, and the exact destination tree all
+pass their required verification.
 
 ## Threat
 
@@ -130,13 +133,40 @@ of this checkpoint.
   installation, service/driver start, Defender change, or protected-vault mutation
   occurred.
 
+## Integration And Destination Evidence
+
+- Evidence head `b1c5b4e1d8cf69cef9c35efc78f81bd33405bab6` passes Avorax CI
+  `32682023654` and Desktop Packages PR run `32682023625`. PR `#68` merged
+  normally as `e883c187449eec9323da29b5cec0a0ee40395006`.
+- Merged main passes Avorax CI `32682998536` and Desktop Packages
+  `32682998541`, including all six platform artifacts, checksums, lockfile SBOM,
+  dependency/license evidence, and administrative MSI extraction. Publication
+  remained skipped.
+- Guarded synchronization changed exactly 13 allowlisted paths after root,
+  containment, reparse, old-blob, new-blob, and per-move checks. Every destination
+  file matches the merged-main blob and no synchronization temporary file remains.
+- Destination parsers `2/2`, source contracts `646/646`, format, focused handshake
+  `2/2`, complete Authenticode `53/13`, strict Native/Local Core/Guard Clippy,
+  both locked workspace variants with Native `489/13` plus compiler `6/6`, Flutter
+  analyze and `838/838`, release builds, and two-host Authenticode trust smoke pass.
+- Destination report
+  `.verification/checkpoint-2216-destination-definitive-report.json` passes exactly
+  `246/246`, zero failed/skipped, in `489.4s`; its embedded validator and a separate
+  `-RequireFullSuite` validator pass. An initial `unittest` invocation correctly
+  reported zero pytest-style tests and an initial Local Core Clippy invocation used
+  an obsolete manifest path; both operator-command errors stopped visibly and the
+  repository-owned source runner plus current manifests then passed.
+- Lockfile hashes and the protected vault remain exact. No install, release,
+  publication, service/driver start, Defender change, or vault mutation occurred.
+
 ## Current Classification
 
-- Verified: local implementation, focused/adversarial runtime, complete regression,
-  definitive verifier/validator, exact lockfiles/protected-vault invariant, and
-  exact implementation-head hosted CI/package matrices.
-- Partial: merge, merged-main hosted evidence, guarded synchronization, and
-  destination verification remain pending.
+- Verified: implementation, focused/adversarial runtime, complete regression,
+  definitive verifier/validator, exact lockfiles/protected-vault invariant,
+  exact-head and merged-main CI/package matrices, normal merge, guarded
+  synchronization, and destination verification.
+- Partial: installed LocalSystem/service/UI end-to-end and cross-identity isolation
+  remain outside this checkpoint.
 - Disabled/blocked: no weaker fallback is enabled if handshake evidence fails.
 - Technically limited: same-user PID/token binding is not cross-identity IPC,
   AppContainer, installed-service, driver, or pre-execution evidence.

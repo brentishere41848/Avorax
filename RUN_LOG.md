@@ -8975,3 +8975,111 @@ Updates page showed:
   was performed.
 - Normal merge, merged-main hosted evidence, guarded synchronization, and
   destination verification remain pending.
+
+## 2026-08-24 - Checkpoint 2216 integration closure
+
+- Evidence `b1c5b4e1d8cf69cef9c35efc78f81bd33405bab6` passes Avorax CI
+  `32682023654` and Desktop Packages PR `32682023625`. PR `#68` merged normally
+  as `e883c187449eec9323da29b5cec0a0ee40395006`; merged-main CI `32682998536`
+  and packages `32682998541` pass with six artifacts, checksums, lockfile SBOM,
+  dependency/license evidence, administrative MSI extraction, and publication
+  skipped.
+- Exact old/new and reparse/containment preconditions passed before an atomic
+  13-path original-tree synchronization. All 13 post-move raw blobs equal merged
+  main and zero synchronization temporary files remain.
+- Destination parsers `2/2`, source contracts `646/646`, format, focused handshake
+  `2/2`, Authenticode `53/13`, strict Native/Local/Guard Clippy, both locked
+  workspaces with Native `489/13` and compiler `6/6`, Flutter analyze and
+  `838/838`, release builds, and Authenticode trust smoke pass.
+- Destination definitive verification passes exact `246/246`, zero failed/skipped,
+  in `489.4s`; embedded and standalone `-RequireFullSuite` validation pass. The
+  first source-test command used `unittest` against pytest-style functions and the
+  first Local Core Clippy command used an obsolete path; both failed visibly as
+  operator invocation errors before the repository-owned runner/current manifests
+  passed.
+- Post-suite lock hashes remain exact and the protected vault remains `16,072`
+  files, zero directories, `4,522,733` bytes, `5,357` each payload/metadata/auth,
+  one key, and zero pending. Checkpoint 2216 is closed; the complete antivirus goal
+  remains active.
+
+## 2026-08-24 - Checkpoint 2217 scripting: pipe security read-back
+
+- Audited checkpoint 2216's named-pipe creation boundary, existing quarantine ACL
+  read-back pattern, pinned `windows-sys 0.61.2` bindings, and current verifier,
+  validator, source-contract, threat-model, dependency, and audit surfaces.
+- Microsoft documentation establishes that `DACL_SECURITY_INFORMATION` and
+  `LABEL_SECURITY_INFORMATION` require `READ_CONTROL` to query, while a full SACL
+  query requires `ACCESS_SYSTEM_SECURITY`. The safer design uses only the former
+  two through `GetSecurityInfo(SE_KERNEL_OBJECT)` and does not enable
+  `SeSecurityPrivilege` or expand the named-pipe handle.
+- Scripted immediate pre-connect/pre-launch applied-descriptor read-back, bounded
+  structured ACL/ACE inspection, generic-right normalization, protected-DACL
+  enforcement, exact current-user/SYSTEM ACE and low-integrity no-write-up label
+  comparison, and fail-visible cleanup.
+- Scripted a real benign child path, adversarial descriptor/control contracts,
+  verifier step 247, exact-247 validator assertions, source contract 647, and all
+  checkpoint/audit/dependency documentation.
+- Per the requested sequence, no parser, formatter, compiler, test, verifier, or
+  validator has run during this scripting phase. No checkpoint-2217 passing
+  result is claimed before execution.
+- No live malware, candidate execution, network retrieval, machine-wide install,
+  service/driver start, Defender change, release/publication, `.verification`
+  staging, or protected-vault mutation occurred. This remains point-in-time
+  user-mode evidence, not a full SACL audit, cross-identity authentication,
+  AppContainer, installed LocalSystem, driver, or pre-execution protection.
+
+## 2026-08-24 - Checkpoint 2217 initial focused execution
+
+- Parsers `2/2`, Python compile, source contracts `647/647`, and diff check passed;
+  the first format check requested mechanical Rust layout, which was applied and
+  the format/contract/diff gates then passed.
+- The first focused runtime compiled but failed visibly before child launch because
+  exact SDDL text differed: Windows mapped `GA` to pipe/file `FA` and displayed the
+  unchanged label ACL with `S:AI`. This was not accepted as a pass.
+- Replaced the representation-sensitive comparison with bounded structured
+  `GetSecurityDescriptorDacl`/`GetSecurityDescriptorSacl`/`GetAclInformation`/
+  `GetAce` evidence, exact ACE/SID validation, and `MapGenericMask` normalization.
+  Adversarial tests now mutate every security-evidence field. Corrected focused
+  execution remains pending; no full SACL, privilege expansion, candidate
+  execution, Defender change, installation, or protected-vault mutation occurred.
+
+## 2026-08-24 - Checkpoint 2217 corrected local verification
+
+- Corrected structured read-back passes focused `1/1`; parent-child handshake
+  passes `2/2`; complete Authenticode passes `54` with `13` intentional ignores.
+  PowerShell parsers `2/2`, Python compilation, final Rust formatting, diff check,
+  and source contracts `647/647` pass.
+- Strict Native/Local Core/Guard Clippy, both locked standard/all-feature
+  workspaces with Native `490/13` and signature compiler `6/6`, Flutter analyze
+  and `838/838`, release Local Core/Guard builds, and two-host benign
+  Authenticode smoke pass. The first smoke command used relative paths and was
+  correctly rejected; its absolute-path rerun passed.
+- The definitive verifier ran from `2026-08-24T03:33:43.0094933Z` through
+  `2026-08-24T03:41:30.6365127Z` and passed exact `247/247`, zero failed/skipped,
+  in `467.6s`. Embedded and independent `-RequireFullSuite` validation pass.
+- Seven isolated malformed reports are rejected for missing/renamed step,
+  missing immediate/structured/least-privilege scope, or failed/skipped status.
+- Lock hashes remain `7ab38f4820b08029c64872360fac7141e2512ac4`,
+  `277dd9fe1edfc45fa5550e8e2831f2a0c121561d`, and
+  `51fa085a41168aa1deadace8b5395614db43649e`. Read-only protected-vault evidence
+  remains exactly `16,072` files, zero directories, `4,522,733` bytes, `5,357`
+  each payload/metadata/auth, one key, and zero pending.
+- Hosted exact-head CI/packages, normal PR/merge, guarded original-tree sync, and
+  destination verification remain pending. `.verification` is not staged.
+
+## 2026-08-24 - Checkpoint 2217 hosted implementation evidence
+
+- Committed exact implementation as `a518e93d42e9d2dad3e3898f463c455d71156528`,
+  pushed only the feature branch, and opened draft PR `#69`.
+- Exact-head Avorax CI `32687717433` passes all five branding, Rust, Unix
+  quarantine-permission, Flutter/protocol, and security/protection/performance
+  jobs.
+- Desktop Packages push `32687664061` and PR `32687717444` pass contracts,
+  Windows MSI/EXE, Linux DEB/tar, macOS arm64/x64 DMG, administrative MSI
+  extraction, dependency/license evidence, and consolidation.
+- The downloaded push artifact contains six platform packages plus CycloneDX 1.6
+  lockfile SBOM with `569` components; all seven `SHA256SUMS.txt` rows match.
+  Both prerelease publication jobs are skipped. No package was installed,
+  released, or published.
+- Evidence-head CI/packages, normal merge, merged-main evidence, guarded sync, and
+  destination verification remain pending. `.verification` remains untracked.

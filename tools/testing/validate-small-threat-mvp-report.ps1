@@ -1904,8 +1904,8 @@ if ($RequireFullSuite) {
   if ($skipFlutter -or $skipRust) {
     throw "-RequireFullSuite requires skip_flutter=false and skip_rust=false."
   }
-  if ($steps.Count -ne 246) {
-    throw "-RequireFullSuite expected exactly 246 verifier steps for this source revision, found $($steps.Count)."
+  if ($steps.Count -ne 247) {
+    throw "-RequireFullSuite expected exactly 247 verifier steps for this source revision, found $($steps.Count)."
   }
   if ($steps[0].name -ne "local-core safe simulator scan reporting") {
     throw "-RequireFullSuite first step mismatch: $($steps[0].name)"
@@ -1949,6 +1949,7 @@ if ($RequireFullSuite) {
   Assert-ReportContainsStep $steps "native-engine Authenticode helper standard-handle binding regressions"
   Assert-ReportContainsStep $steps "native-engine Authenticode helper pipe-peer process regressions"
   Assert-ReportContainsStep $steps "native-engine Authenticode helper parent-child handshake regressions"
+  Assert-ReportContainsStep $steps "native-engine Authenticode handshake pipe security read-back regressions"
   Assert-ReportContainsStep $steps "native-engine Authenticode mandatory-hash/file-identity regressions"
   Assert-ReportContainsStep $steps "native-engine risk fusion regressions"
   Assert-ReportContainsStep $steps "native-engine ClickOnce carrier heuristic detection"
@@ -2086,6 +2087,9 @@ if ($RequireFullSuite) {
   Assert-ReportScopeContains $verifiedScopeText "assign the configured Job before ResumeThread" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "require child-side primary-token validation before request parsing" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "The parent supplies a bounded Unicode environment containing exactly a canonical parent PID, canonical parent-child handshake pipe and token, plus SystemRoot and WINDIR derived from the checked native Windows directory, sets CREATE_UNICODE_ENVIRONMENT, and sets an explicit checked non-reparse System32 current directory; it never falls back to inherited environment or current-directory state" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "immediately after creating and validating the Authenticode handshake server endpoint and before event creation, connection, or helper launch, the parent uses GetSecurityInfo with SE_KERNEL_OBJECT plus DACL_SECURITY_INFORMATION and LABEL_SECURITY_INFORMATION to read back exactly the applied descriptor under existing READ_CONTROL access" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Bounded structured ACL reads require a protected nondefault DACL containing exactly ordered zero-flag full-control access-allowed ACEs for SYSTEM and the current user, plus one nondefault zero-flag low-integrity no-write-up mandatory-label ACE; generic pipe/file rights are normalized with MapGenericMask before exact evidence comparison" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "without enabling SeSecurityPrivilege, requesting ACCESS_SYSTEM_SECURITY, reading the full SACL, or retrying with weaker security" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "Before CreateProcessAsUserW, the parent supplies an immutable DWORD64 process-creation mitigation policy enabling strict handle checks, extension-point disable, dynamic-code prohibition, Microsoft-signed-only binary loading, no remote images, no low-label images, and System32 image preference; the child requires both invalid-handle exception and permanent-enforcement read-back flags plus every other required policy before stdin or request parsing, and attribute construction, application, or read-back failure cannot become trust" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "Environment construction, current-directory validation, mitigation-policy construction/application/read-back, token/SID creation, process launch, handle-list construction, Job assignment, resume, bounded TokenPrivileges, TokenRestrictedSids, TokenIntegrityLevel, fixed-size TokenMandatoryPolicy, or fixed-size token virtualization/UIAccess inspection, verification, or normal revert failure cannot become trust" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "Native Engine and Local Core runtime-decode the standard EICAR test marker from non-signature bytes and regression-scan their own test executables to prevent a static EICAR marker from making benign verifier binaries Defender targets" "verification_scope.verified"

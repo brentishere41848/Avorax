@@ -781,3 +781,35 @@ The parent-child handshake is same-user process binding, not encrypted
 cross-identity IPC, AppContainer, installed LocalSystem, driver, or pre-execution
 evidence. `GetNamedPipeClientProcessId` and `GetNamedPipeServerProcessId` are used
 only as live process-binding evidence and do not expand publisher trust.
+
+Integration evidence `b1c5b4e`, PR `#68`, merge `e883c187`, merged-main CI
+`32682998536`, and packages `32682998541` pass. The package matrix again verifies
+all six native artifacts, dependency/license evidence, checksums, lockfile SBOM,
+and administrative MSI extraction with publication skipped. Exact 13-path
+destination synchronization, both locked workspace variants, destination verifier
+`246/246`, and unchanged lock hashes pass. No dependency, package, or license
+classification changed; complete signed final-artifact notice and binary-resolution
+review remains a release-host requirement.
+
+## Checkpoint 2217 dependency delta
+
+Checkpoint 2217 adds no crate, package, feature, or lockfile change. Existing
+pinned `windows-sys 0.61.2` feature `Win32_Security_Authorization` already supplies
+`GetSecurityInfo`, `SE_KERNEL_OBJECT`, and security-descriptor conversion; existing
+`Win32_Security` supplies `DACL_SECURITY_INFORMATION`,
+`LABEL_SECURITY_INFORMATION`, `GetSecurityDescriptorControl`, and
+`SE_DACL_PROTECTED`. Existing MIT OR Apache-2.0 licensing is unchanged.
+
+The runtime query uses existing named-pipe `READ_CONTROL` and intentionally avoids
+the full SACL, `ACCESS_SYSTEM_SECURITY`, `SeSecurityPrivilege`, network content,
+new DLLs, executable candidate fixtures, machine-wide components, and privilege
+expansion. This point-in-time ACL/MIC read-back is not encrypted cross-identity
+IPC, AppContainer/LPAC, installed LocalSystem, production signing, a driver, or
+pre-execution protection. Dependency evidence, strict locked workspaces, and the
+complete local verifier pass. Root Cargo, Native Cargo, and Flutter lock hashes
+remain `7ab38f4820b08029c64872360fac7141e2512ac4`,
+`277dd9fe1edfc45fa5550e8e2831f2a0c121561d`, and
+`51fa085a41168aa1deadace8b5395614db43649e`. Exact implementation package runs
+`32687664061` and `32687717444` pass dependency/license evidence and consolidation;
+the downloaded push artifact has a CycloneDX 1.6 lockfile SBOM with `569`
+components and all seven checksum rows match. Publication is skipped.

@@ -2278,7 +2278,7 @@ enforcement, or pre-execution blocking is claimed.
   `JOBOBJECT_BASIC_PROCESS_ID_LIST` do not authenticate IPC, change identity, or
   provide AppContainer, installed LocalSystem, signed-driver, or pre-execution
   evidence. Those remain separate blockers.
-## Checkpoint 2216 parent-child handshake integration pending
+## Checkpoint 2216 parent-child handshake integration closure
 
 - The dedicated Authenticode parent-child handshake is scripted with exact
   `GetNamedPipeServerProcessId` parent and `GetNamedPipeClientProcessId` child
@@ -2289,8 +2289,33 @@ enforcement, or pre-execution blocking is claimed.
   `472b478c10dad6683ea867616f21c3636fe446de` passes Avorax CI `32680555167`
   and package push/PR `32680536082`/`32680555166`, including all platform jobs,
   six artifacts, checksums, lockfile SBOM, dependency/license evidence, and
-  administrative MSI extraction. Publication is skipped. Merge, merged-main,
-  synchronization, and destination evidence remain pending.
+  administrative MSI extraction. Evidence `b1c5b4e`, PR `#68`, merge
+  `e883c187`, merged-main CI `32682998536`, packages `32682998541`, exact
+  13-path guarded synchronization, and destination focused/full verification now
+  pass. The destination verifier and standalone validator pass `246/246` in
+  `489.4s`; lockfiles and the protected vault remain exact. Publication is
+  skipped. Checkpoint 2216 has no remaining integration blocker.
 - Same-user process-memory inspection, cross-identity authenticated/encrypted IPC,
   AppContainer/LPAC, installed LocalSystem, production signing, driver, and
   pre-execution proof remain technically limited or require external prerequisites.
+
+## Checkpoint 2217 pipe-security read-back status
+
+- Implemented and locally verified `GetSecurityInfo(SE_KERNEL_OBJECT)` read-back of exactly
+  `DACL_SECURITY_INFORMATION | LABEL_SECURITY_INFORMATION` under `READ_CONTROL`,
+  before event/connect/helper launch. Exact protected SYSTEM/current-user DACL and
+  low-integrity no-write-up label mismatches are fail-visible.
+- Corrected focused `1/1`, adjacent handshake `2/2`, complete Authenticode
+  `54/13`, source contracts `647/647`, Flutter `838/838`, locked workspaces,
+  release builds/smoke, and definitive verifier `247/247` in `467.6s` pass. Seven
+  malformed reports are rejected. Exact implementation `a518e93` passes CI
+  `32687717433` and package push/PR `32687664061`/`32687717444`, including all six
+  packages, checksums, SBOM, and administrative MSI extraction with publication
+  skipped. Evidence-head, merge, synchronization, and destination evidence remain
+  pending.
+- The control intentionally does not request the full SACL,
+  `ACCESS_SYSTEM_SECURITY`, or `SeSecurityPrivilege`. `LABEL_SECURITY_INFORMATION`
+  is mandatory-label-only evidence. Same-user privileged mutation/inspection,
+  trusted in-process code, SYSTEM/kernel compromise, encrypted cross-identity IPC,
+  AppContainer/LPAC, installed LocalSystem, production signing, driver, and
+  pre-execution protection remain blocked or technically limited.
