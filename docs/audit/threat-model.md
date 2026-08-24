@@ -98,6 +98,13 @@ bounded by the existing 10-second duration, 512-file pass, depth-eight, and
 persistent service, OS notification subscription, kernel blocking, or
 pre-execution protection.
 
+**Local execution:** Focused real-child and adversarial masks, complete
+Authenticode, both locked workspaces, strict lint, release trust smoke, Flutter
+`838/838`, source contracts `649/649`, safety/dependency gates, and exact
+verifier/validator `249/249` in `470.3s` pass. Eight malformed reports are
+rejected. Hosted, merge, synchronization, and destination evidence remain
+pending; the ownership and cross-identity limitations above remain unchanged.
+
 ## Checkpoint 2172 Process Command Truncation Threat-Model Note
 
 The Windows process snapshot path no longer discards every command-line
@@ -2154,3 +2161,26 @@ in-process mutation/inspection, SYSTEM, process-memory access, or kernel comprom
 provide encryption or cross-identity authentication; create AppContainer/LPAC;
 prove installed LocalSystem or production signing; add driver enforcement; or
 provide pre-execution protection.
+
+## Checkpoint 2219: least-privilege handshake-pipe DACL
+
+**Threat:** The earlier protected DACL gave both SYSTEM and the current user full
+control even though the protocol needs only parent read and child write plus
+descriptor read-back. Extra execute/delete/owner-management rights enlarge the
+same-user attack surface without improving Authenticode trust evidence.
+
+**Scripted control:** The exact DACL grants SYSTEM normalized full control and
+the current user normalized generic read plus generic write. Both endpoint
+read-backs normalize generic pipe/file masks and reject current-user full-control,
+read-only, write-only, execute, delete, `WRITE_DAC`, `WRITE_OWNER`, or any other
+mismatch before token exchange or publisher trust. The real child fixture and
+adversarial benign masks, exact verifier step 249, validator clauses, and source
+contract 649 are scripted. No checkpoint-2219 pass is claimed before execution.
+
+**Residual risk:** The pipe creator's token default owner is not changed or
+independently read back. If the current user owns the named pipe, Windows
+ownership supplies implicit `READ_CONTROL` and `WRITE_DAC` independently of the
+narrower ACE. Parent and child checks remain point-in-time evidence and cannot
+prevent same-user descriptor mutation between checks. This does not provide
+encryption, authenticated cross-identity IPC, AppContainer/LPAC, installed
+LocalSystem, production signing, driver enforcement, or pre-execution protection.

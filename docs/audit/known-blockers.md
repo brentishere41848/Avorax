@@ -2343,3 +2343,21 @@ enforcement, or pre-execution blocking is claimed.
   kernel compromise, encrypted cross-identity IPC, AppContainer/LPAC, installed
   LocalSystem, production signing, driver, and pre-execution protection remain
   blocked or technically limited.
+
+## Checkpoint 2219 handshake-DACL least-privilege status
+
+- **Locally verified; integration pending:** SYSTEM retains normalized full control, while
+  the current-user ACE is reduced to normalized generic read plus generic write.
+  Exact parent and child descriptor read-backs reject broader or narrower rights,
+  including execute, delete, `WRITE_DAC`, and `WRITE_OWNER`. Source contract 649
+  and definitive step 249 pass. Exact verifier/validator `249/249` in `470.3s`,
+  source contracts `649/649`, and eight malformed-report rejections pass; hosted,
+  merge, synchronization, and destination evidence remain pending.
+- **Ownership blocker:** the creator's token default owner is not changed or
+  independently read back. If the current user owns the pipe, Windows ownership
+  gives implicit `READ_CONTROL` and `WRITE_DAC` regardless of the narrower ACE.
+  Point-in-time dual read-backs detect sampled drift but cannot prevent same-user
+  descriptor mutation between checks.
+- Authenticated/encrypted cross-identity IPC, AppContainer/LPAC, an installed
+  LocalSystem boundary, production signing, driver enforcement, and pre-execution
+  protection remain technically limited or require external prerequisites.

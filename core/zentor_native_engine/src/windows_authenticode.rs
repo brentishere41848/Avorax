@@ -26,8 +26,8 @@ use windows_sys::Win32::Foundation::{
     CERT_E_REVOCATION_FAILURE, CRYPT_E_BAD_ENCODE, CRYPT_E_BAD_MSG, CRYPT_E_NO_MATCH,
     CRYPT_E_NO_SIGNER, CRYPT_E_NO_TRUSTED_SIGNER, CRYPT_E_REVOKED, CRYPT_E_SIGNER_NOT_FOUND,
     ERROR_INSUFFICIENT_BUFFER, ERROR_IO_PENDING, ERROR_NOT_FOUND, ERROR_NO_TOKEN,
-    ERROR_OPERATION_ABORTED, ERROR_PIPE_CONNECTED, ERROR_SUCCESS, GENERIC_ALL, GENERIC_WRITE,
-    HANDLE, HANDLE_FLAG_INHERIT, INVALID_HANDLE_VALUE, LUID, TRUST_E_BAD_DIGEST,
+    ERROR_OPERATION_ABORTED, ERROR_PIPE_CONNECTED, ERROR_SUCCESS, GENERIC_ALL, GENERIC_READ,
+    GENERIC_WRITE, HANDLE, HANDLE_FLAG_INHERIT, INVALID_HANDLE_VALUE, LUID, TRUST_E_BAD_DIGEST,
     TRUST_E_BASIC_CONSTRAINTS, TRUST_E_CERT_SIGNATURE, TRUST_E_COUNTER_SIGNER, TRUST_E_FAIL,
     TRUST_E_FINANCIAL_CRITERIA, TRUST_E_MALFORMED_SIGNATURE, TRUST_E_NO_SIGNER_CERT,
     TRUST_E_SUBJECT_FORM_UNKNOWN, TRUST_E_SUBJECT_NOT_TRUSTED, TRUST_E_TIME_STAMP, WAIT_FAILED,
@@ -1162,7 +1162,7 @@ fn validate_authenticode_handshake_token_bytes(expected: &[u8], actual: &[u8]) -
 fn create_authenticode_handshake_security_descriptor(
 ) -> Result<(OwnedLocalSecurityDescriptor, String)> {
     let user_sid = current_process_user_sid_string()?;
-    let sddl = format!("D:P(A;;GA;;;SY)(A;;GA;;;{user_sid})S:(ML;;NW;;;LW)");
+    let sddl = format!("D:P(A;;GA;;;SY)(A;;GRGW;;;{user_sid})S:(ML;;NW;;;LW)");
     let mut sddl_wide = sddl.encode_utf16().collect::<Vec<_>>();
     sddl_wide.push(0);
     let mut descriptor = null_mut();
@@ -1393,8 +1393,20 @@ fn expected_authenticode_handshake_pipe_security(
         current_user_sid.starts_with("S-1-"),
         "AuthentiCode parent-child handshake current-user SID contract is invalid"
     );
-    let mut full_control = GENERIC_ALL;
-    unsafe { MapGenericMask(&mut full_control, &authenticode_pipe_generic_mapping()) };
+    let mut system_full_control = GENERIC_ALL;
+    unsafe {
+        MapGenericMask(
+            &mut system_full_control,
+            &authenticode_pipe_generic_mapping(),
+        )
+    };
+    let mut current_user_read_write = GENERIC_READ | GENERIC_WRITE;
+    unsafe {
+        MapGenericMask(
+            &mut current_user_read_write,
+            &authenticode_pipe_generic_mapping(),
+        )
+    };
     Ok(AuthenticodeHandshakePipeSecurityEvidence {
         dacl_protected: true,
         dacl_present: true,
@@ -1403,13 +1415,13 @@ fn expected_authenticode_handshake_pipe_security(
             AuthenticodeHandshakeSecurityAceEvidence {
                 ace_type: ACCESS_ALLOWED_ACE_TYPE as u8,
                 ace_flags: 0,
-                access_mask: full_control,
+                access_mask: system_full_control,
                 sid: "S-1-5-18".to_string(),
             },
             AuthenticodeHandshakeSecurityAceEvidence {
                 ace_type: ACCESS_ALLOWED_ACE_TYPE as u8,
                 ace_flags: 0,
-                access_mask: full_control,
+                access_mask: current_user_read_write,
                 sid: current_user_sid.to_string(),
             },
         ],
@@ -4741,7 +4753,9 @@ mod tests {
         CRYPT_E_SECURITY_SETTINGS, TRUST_E_ACTION_UNKNOWN, TRUST_E_FAIL, TRUST_E_NOSIGNATURE,
         TRUST_E_PROVIDER_UNKNOWN, TRUST_E_SYSTEM_ERROR,
     };
-    use windows_sys::Win32::Storage::FileSystem::{FILE_SHARE_DELETE, FILE_SHARE_WRITE};
+    use windows_sys::Win32::Storage::FileSystem::{
+        DELETE, FILE_SHARE_DELETE, FILE_SHARE_WRITE, WRITE_DAC, WRITE_OWNER,
+    };
 
     fn fixture_sha256(path: &Path) -> String {
         let bytes = fs::read(path).unwrap();
@@ -5972,6 +5986,53 @@ mod tests {
         assert!(String::from_utf8(output.stdout)
             .unwrap()
             .contains("AVORAX_PARENT_CHILD_PROCESS_BINDING_OK"));
+    }
+
+    #[test]
+    fn native_authenticode_handshake_pipe_dacl_least_privilege_is_exact_and_fail_visible() {
+        let application = std::env::current_exe().unwrap();
+        let arguments = [
+            "--ignored",
+            "--exact",
+            "windows_authenticode::tests::authenticode_parent_child_handshake_child_fixture",
+            "--nocapture",
+            "--test-threads=1",
+        ];
+        let output = run_bounded_authenticode_helper(
+            &application,
+            &arguments,
+            Vec::new(),
+            Duration::from_secs(5),
+        )
+        .unwrap();
+        assert!(output.status.success());
+        assert!(output.stderr.is_empty());
+
+        let user_sid = "S-1-5-21-1-2-3-1001";
+        let valid = expected_authenticode_handshake_pipe_security(user_sid).unwrap();
+        let mut full_control = GENERIC_ALL;
+        unsafe { MapGenericMask(&mut full_control, &authenticode_pipe_generic_mapping()) };
+        let mut read_write = GENERIC_READ | GENERIC_WRITE;
+        unsafe { MapGenericMask(&mut read_write, &authenticode_pipe_generic_mapping()) };
+        assert_eq!(valid.dacl_aces[0].access_mask, full_control);
+        assert_eq!(valid.dacl_aces[1].access_mask, read_write);
+        assert_ne!(read_write, full_control);
+
+        for mask in [
+            full_control,
+            FILE_GENERIC_READ,
+            FILE_GENERIC_WRITE,
+            read_write | FILE_GENERIC_EXECUTE,
+            read_write | DELETE,
+            read_write | WRITE_DAC,
+            read_write | WRITE_OWNER,
+        ] {
+            let mut invalid = valid.clone();
+            invalid.dacl_aces[1].access_mask = mask;
+            assert!(
+                validate_authenticode_handshake_pipe_security_readback(&invalid, user_sid).is_err()
+            );
+        }
     }
 
     #[test]

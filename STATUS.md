@@ -5570,3 +5570,32 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   production signing, driver enforcement, or pre-execution protection.
 - Classification: **verified and integrated**. Checkpoint 2218 is closed; the
   overall antivirus hardening goal remains active.
+
+## Checkpoint 2219 - Authenticode pipe DACL least privilege (2026-08-24)
+
+- **Scripted, execution pending:** the protected handshake DACL now keeps SYSTEM
+  normalized full control while reducing the current-user ACE to normalized
+  generic read plus generic write. Both existing endpoint read-backs reject a
+  broader, narrower, execute, delete, `WRITE_DAC`, `WRITE_OWNER`, or otherwise
+  mismatched current-user mask before token exchange or publisher trust.
+- A real child-path test, adversarial benign masks, definitive-verifier step 249,
+  exact-249 independent validation, source contract 649, and all audit documents
+  are scripted. No checkpoint-2219 passing result is claimed during scripting.
+- The creator's token default owner is not independently read back. If the current
+  user owns the object, Windows still grants implicit `READ_CONTROL` and
+  `WRITE_DAC`; the dual checks are point-in-time and do not provide encrypted or
+  authenticated cross-identity IPC, AppContainer/LPAC, installed LocalSystem,
+  driver enforcement, or pre-execution protection.
+- **Corrected local evidence:** source contracts `649/649`, focused real child
+  `1/1`, Authenticode `56/13`, Native `492/13`, compiler `6/6`, Local Core `536`,
+  Guard `248/249`, both locked workspaces, strict Native/Local/Guard Clippy,
+  release two-host trust smoke, Flutter analyze and `838/838`, exact lock blobs,
+  and the unchanged protected vault pass. Initial runner/format/contract/import
+  findings were corrected and are not counted as success. Definitive verifier,
+  hosted, merge, synchronization, and destination evidence remain pending.
+- **Locally verified:** definitive verifier and standalone validator pass exact
+  `249/249`, zero failed/skipped, in `470.3s`; all safety/dependency gates pass
+  and eight malformed reports are rejected. Locks and the protected vault remain
+  exact. Hosted CI/packages, normal merge, original-tree synchronization, and
+  destination verification remain pending, so checkpoint 2219 is not integrated
+  yet and the overall antivirus goal remains active.

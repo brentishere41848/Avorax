@@ -9202,3 +9202,59 @@ Updates page showed:
   in `484.1s`; embedded and independent validation pass. Lock blobs and the
   protected vault remain exact. Checkpoint 2218 is closed while the complete
   antivirus goal remains active.
+
+## 2026-08-24 - Checkpoint 2219 scripting: handshake-pipe DACL least privilege
+
+- Completed the full scripting batch before execution. The protected handshake
+  DACL now grants SYSTEM normalized full control and the current user only
+  normalized generic read plus generic write; exact parent and child read-backs
+  reject full-control, read-only, write-only, execute, delete, `WRITE_DAC`,
+  `WRITE_OWNER`, or otherwise mismatched current-user ACEs before token exchange.
+- Added a real benign child-path regression, adversarial mask cases, a dedicated
+  definitive-verifier step, exact-249 independent-validator requirements, source
+  contract 649, and synchronized audit/threat/dependency documentation.
+- The pipe creator's token default owner is not changed or independently read
+  back. If the current user owns the object, implicit `READ_CONTROL` and
+  `WRITE_DAC` remain; dual endpoint checks are point-in-time and do not establish
+  encrypted or authenticated cross-identity IPC, AppContainer, driver, or
+  pre-execution protection.
+- No checkpoint-2219 passing result is claimed during scripting. Tests, hosted
+  evidence, merge, synchronization, and destination verification remain pending.
+
+## 2026-08-24 - Checkpoint 2219 corrected local verification
+
+- Initial parser-command variable setup, import formatting, unavailable pytest,
+  one new contract slice, and test-only import warnings all failed visibly and
+  were corrected; none is counted as passing evidence. The repository's
+  dependency-free source contracts now pass `649/649`.
+- Parsers `2/2`, Python compilation, formatting/diff checks, focused real child
+  `1/1`, complete Authenticode `56/13`, both locked workspaces with Native
+  `492/13`, compiler `6/6`, Local Core `536`, Guard `248` standard/`249`
+  all-feature, and strict Native/Local/Guard Clippy pass.
+- Flutter analyze and `838/838` pass. Locked release Local Core/Guard builds and
+  benign two-host trust smoke pass embedded/catalog Microsoft trust, exact hash
+  binding, unsigned rejection, and wrong-hash failure without fixture execution.
+- Exact root Cargo, Native Cargo, and Flutter lock blobs remain
+  `7ab38f4820b08029c64872360fac7141e2512ac4`,
+  `277dd9fe1edfc45fa5550e8e2831f2a0c121561d`, and
+  `51fa085a41168aa1deadace8b5395614db43649e`. The protected vault remains exactly
+  16,072 files, zero directories, 4,522,733 bytes, 5,357 each payload/metadata/
+  auth, one metadata key, and zero pending.
+- Safety/dependency gates and the definitive exact-249 verifier are still
+  pending; hosted, merge, synchronization, and destination evidence are not yet
+  claimed.
+
+## 2026-08-24 - Checkpoint 2219 definitive local evidence
+
+- Branding/product-copy/no-malware, false-positive, protection, synthetic
+  performance, release-prerequisite, pack/package-source, and dependency gates
+  pass. The definitive run from `2026-08-24T07:27:49.3271263Z` through
+  `2026-08-24T07:35:39.6799467Z` passed exact `249/249`, zero failed/skipped, in
+  `470.3s`; embedded and standalone strict validators pass.
+- Eight isolated malformed reports are rejected for missing/renamed step,
+  missing either verified ACL scope, missing ownership limit, failed/skipped
+  target status, and skipped Rust coverage.
+- Locks and the protected vault remain exact. Checkpoint 2219 is locally verified;
+  hosted exact-head evidence, normal merge, guarded synchronization, and
+  destination verification remain pending. The overall antivirus goal remains
+  active.
