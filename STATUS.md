@@ -5812,3 +5812,11 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   with 569 components; publication is skipped. Evidence-head checks, normal
   merge, merged-main evidence, guarded synchronization, and destination proof
   remain pending. The overall antivirus goal remains active.
+- **Integrated and destination verified:** evidence `42d8c7c`, PR `#76`, merge
+  `243bc84`, exact evidence/merged-main CI and package checks, exact 12-path
+  guarded synchronization, and full destination Rust/Flutter checks pass.
+  Destination verifier/validator passes `254/254` in `494.5s`; both main and
+  evidence artifacts contain six platform files, seven matching checksums, and
+  CycloneDX 1.6/569-component SBOMs, with publication skipped. Locks and the
+  protected vault remain exact. Checkpoint 2224 is closed, while its explicit
+  identity/isolation/driver limits and the complete antivirus goal remain open.

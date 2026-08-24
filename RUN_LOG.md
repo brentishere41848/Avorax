@@ -9745,3 +9745,32 @@ Updates page showed:
   checks, normal merge, merged-main evidence, guarded original-tree
   synchronization, and independent destination verification remain pending.
   Nothing was installed, executed, released, or published.
+
+## 2026-08-24 continuation checkpoint 2224 integration closure
+
+- Evidence `42d8c7cbce6d06a988e44c9359116e6ca5afc961` passes CI
+  `32760087362` and packages `32760087347`. PR `#76` became ready only after
+  exact-head checks and merged normally with head locking as `243bc84d`.
+  Merged-main CI `32761688896` and packages `32761688853` pass; publication is
+  skipped in both package runs.
+- Evidence/main consolidated artifacts `9532855811`/`9533505060` were retained
+  as untouched ZIP streams with SHA-256 `12fdec083382b65a649b46c4a5416c98618d9fc183891ad74121b5ffc045f07f`/
+  `16d13bc6ca39dd3679273ed0531d9f34739f5c2e9370df5bba60ad81b9db6137`.
+  Both pass exact six-platform-artifact, seven-checksum, and CycloneDX 1.6/569-
+  component SBOM checks without extracting or executing candidate installers.
+- Eleven destination files matched parent `252a9ade` and the new report was
+  absent. Exactly 12 paths synchronized to `C:\Users\Brent\Documents\Avorax-main`
+  with zero deletes; all normalized blobs match merge `243bc84d` and raw
+  SHA-256 values match source.
+- Destination parsers, contracts `654/654`, launch-token `2/2`, Native
+  `501/13` plus compiler `6/6`, Local `536/536`, Guard `249/249`, both locked
+  workspaces, formatting, strict Clippy, offline Native, Flutter analyze and
+  `838/838` pass. Definitive verification ran from
+  `2026-08-24T18:40:04.7310075Z` through `2026-08-24T18:48:19.2737858Z` and
+  passed exact `254/254`, zero failed/skipped, in `494.5s`; both validators pass.
+- Four local closure wrappers initially had formatting/output spacing errors;
+  none started a workflow or changed product behavior, none is counted as a
+  pass, and each complete corrected rerun passes. Locks and protected vault
+  remain exact. Nothing was installed, executed as candidate content, released,
+  or published. Checkpoint 2224 is closed; the overall antivirus goal remains
+  active.

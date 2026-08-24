@@ -121,3 +121,53 @@ evidence commit and its exact-head checks, normal PR/merge, merged-main
 evidence, guarded original-tree synchronization, and independent destination
 verification remain pending. Nothing was installed, executed, released, or
 published.
+
+## Integration And Destination Closure
+
+Evidence commit `42d8c7cbce6d06a988e44c9359116e6ca5afc961` passes Avorax
+CI `32760087362` and Desktop Packages `32760087347`. Consolidated artifact
+`9532855811`, retained as an untouched ZIP with SHA-256
+`12fdec083382b65a649b46c4a5416c98618d9fc183891ad74121b5ffc045f07f`,
+passes the exact eight-entry, seven-manifest-row, seven-hash, and CycloneDX
+1.6/569-component checks. Its publication job is skipped.
+
+PR `#76` became ready only after those exact-head checks and merged normally
+with head locking as `243bc84d34120af67f2bec1b93e1f5a0e8e92f3c`. Merged-main
+Avorax CI `32761688896` and Desktop Packages `32761688853` pass. The main
+consolidated artifact `9533505060` has untouched ZIP SHA-256
+`16d13bc6ca39dd3679273ed0531d9f34739f5c2e9370df5bba60ad81b9db6137`
+and independently passes the same eight-entry, seven-hash, CycloneDX 1.6/569-
+component contract. Main publication is also skipped.
+
+All 11 modified destination files exactly matched merge parent `252a9ade` and
+the new checkpoint report was absent. Exactly those 12 paths were copied to
+`C:\Users\Brent\Documents\Avorax-main`, with zero deletes. Every destination
+normalized Git blob matches merge `243bc84d`, and every raw SHA-256 matches the
+source.
+
+Destination parsers `2/2`, source contracts `654/654`, launch-token stability
+`2/2`, Native Engine `501/13` plus compiler `6/6`, Local Core `536/536`, Guard
+`249/249`, both locked root-workspace variants, root/Native formatting, strict
+Native/Local/Guard Clippy, standalone locked/offline Native, Flutter lock
+enforcement and analysis, and Flutter `838/838` pass. Destination definitive
+verification ran from `2026-08-24T18:40:04.7310075Z` through
+`2026-08-24T18:48:19.2737858Z` and passed exact `254/254`, zero failed/skipped,
+in `494.5s`; the launch-token target passed in `0.2s`. Embedded and independent
+Windows PowerShell strict validation pass.
+
+Four closure-support wrapper mistakes remain explicit. One malformed watcher
+format expression exited before observing or starting a workflow; the corrected
+watcher followed the already-created main runs. Two separate read-only wrappers
+completed their substantive ZIP/path checks but each omitted a space before
+`Write-Output`; neither is counted as a pass, and each complete corrected rerun
+passes. A final parser/source-contract wrapper had the same output-spacing typo
+and exited before the source-contract runner; its corrected complete rerun
+passes both parsers and `654/654`. No production code, test contract, or
+security policy was weakened.
+
+The three lock blobs and protected-vault invariant remain exact at 16,072 files,
+zero directories, 4,522,733 bytes, 5,357 each payload/metadata/auth extension,
+one metadata key, and zero pending. Nothing was installed, executed as candidate
+content, released, or published. Checkpoint 2224 is closed; its documented
+point-in-time identity limits and the complete antivirus hardening goal remain
+open.
