@@ -9615,3 +9615,36 @@ Updates page showed:
   payload/metadata/auth, one key, and zero pending. Nothing was installed,
   released, or published. Checkpoint 2222 is closed; the complete antivirus
   hardening goal remains active.
+
+## 2026-08-24 continuation checkpoint 2223 scripting
+
+- Started branch `agent/checkpoint-2223-authenticode-client-token-stability`
+  from local checkpoint-2222 closure `3107ffc`.
+- Scripted exact `TokenStatistics.TokenId` and `ModifiedId` snapshots before
+  and after all successful named-pipe client-token property validation. Empty
+  initial token IDs, exact-size query failures, token-instance drift, and token-
+  modification drift fail visibly and cannot become publisher trust.
+- Added isolated handshake/revert and adversarial four-field drift/empty-ID
+  Rust regressions, source contract 653, a mandatory token-stability verifier
+  step, exact 253-step report validation, and complete checkpoint/audit/status/
+  dependency documentation.
+- No checkpoint-2223 test has run yet, by the requested scripting-first
+  sequence. The check does not bind the impersonation token object to the
+  launch primary-token object or solve same-session injection, handle
+  duplication, cross-identity IPC, AppContainer/LPAC, driver, or pre-execution
+  limits. No dependency or lockfile change is intended.
+- Focused verification passed: parsers `2/2`, format, token stability `2/2`,
+  logon session `2/2`, source contracts `653/653`, Authenticode `71/13`, Native
+  `499/13` plus compiler `6/6`, both locked workspaces, strict Native/Local/
+  Guard Clippy, standalone locked/offline Native, Flutter analyze and
+  `838/838`.
+- The first standalone offline-check invocation used a repository-relative
+  manifest from the Flutter subdirectory and failed path resolution. It was
+  rerun unchanged from the repository root and passed in `2.76s`; no source
+  failure or retry weakening occurred.
+- Definitive verification ran from `2026-08-24T15:13:23.6533587Z` through
+  `2026-08-24T15:21:36.5966555Z` and passed exact `253/253`, zero failed or
+  skipped, in `492.9s`; the new target passed in `0.2s`. Embedded and standalone
+  strict validation pass and nine adversarial report mutations are rejected.
+  Hosted, merge, guarded synchronization, and destination evidence remain
+  pending.

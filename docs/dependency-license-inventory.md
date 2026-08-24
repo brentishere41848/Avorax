@@ -977,6 +977,22 @@ AppContainer/LPAC, production signing, driver, and pre-execution proof.
 Complete signed final-artifact license, notice, copyright, and binary-
 resolution review remains a production-release prerequisite.
 
+Checkpoint 2223's `TokenStatistics.TokenId`/`ModifiedId` stability boundary,
+same-session and cross-identity limitations, pre-execution disclaimer, Rust
+regressions, source contract 653, verifier step 253, and validator assertions
+use the already pinned `windows-sys` surface and repository tooling. The batch
+adds no crate, package, feature, or lockfile change. Runtime, exact-head,
+package, merge, synchronization, and destination evidence remain pending; the
+complete signed final-artifact license and binary-resolution review remains a
+production-release prerequisite.
+
+Local checkpoint-2223 verification passes both locked workspace variants,
+standalone locked/offline Native, dependency evidence, exact verifier
+`253/253`, and all three unchanged lock blobs. The `TokenId`/`ModifiedId`
+implementation therefore adds no dependency or license delta. Exact-head and
+merged package SBOM/checksum proof remain pending; same-session, cross-identity,
+and pre-execution limitations remain unchanged.
+
 Full local execution preserves exact root Cargo, Native Cargo, and Flutter lock
 blobs `7ab38f4820b08029c64872360fac7141e2512ac4`,
 `277dd9fe1edfc45fa5550e8e2831f2a0c121561d`, and

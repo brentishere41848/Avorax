@@ -296,6 +296,14 @@ struct AuthenticodeTokenLogonSessionEvidence {
     session_id: u32,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct AuthenticodeTokenStabilityEvidence {
+    token_id_low: u32,
+    token_id_high: i32,
+    modified_id_low: u32,
+    modified_id_high: i32,
+}
+
 struct VerifiedWellKnownSid {
     storage: [usize; AUTHENTICODE_HELPER_SID_STORAGE_WORDS],
     length: usize,
@@ -1701,6 +1709,8 @@ fn validate_authenticode_pipe_client_token(
     expected_user_sid: &str,
     expected_logon_session: AuthenticodeTokenLogonSessionEvidence,
 ) -> Result<()> {
+    let stability_before =
+        query_authenticode_token_stability(token, "handshake client pre-validation")?;
     validate_privilege_stripped_token_privileges(token)?;
     let evidence = AuthenticodePipeClientTokenEvidence {
         token_type: query_token_scalar(token, TokenType, "handshake client type")?,
@@ -1730,7 +1740,10 @@ fn validate_authenticode_pipe_client_token(
         expected_user_sid,
         expected_logon_session,
         low_integrity.as_bytes(),
-    )
+    )?;
+    let stability_after =
+        query_authenticode_token_stability(token, "handshake client post-validation")?;
+    validate_authenticode_token_stability_evidence(stability_before, stability_after)
 }
 
 fn validate_authenticode_pipe_client_token_evidence(
@@ -1803,6 +1816,45 @@ fn validate_authenticode_token_logon_session_evidence(
     anyhow::ensure!(
         actual.session_id == expected.session_id,
         "AuthentiCode handshake client token session ID does not match the launch token"
+    );
+    Ok(())
+}
+
+fn query_authenticode_token_stability(
+    token: HANDLE,
+    label: &str,
+) -> Result<AuthenticodeTokenStabilityEvidence> {
+    let statistics: TOKEN_STATISTICS =
+        query_token_scalar(token, TokenStatistics, &format!("{label} statistics"))?;
+    let evidence = AuthenticodeTokenStabilityEvidence {
+        token_id_low: statistics.TokenId.LowPart,
+        token_id_high: statistics.TokenId.HighPart,
+        modified_id_low: statistics.ModifiedId.LowPart,
+        modified_id_high: statistics.ModifiedId.HighPart,
+    };
+    anyhow::ensure!(
+        evidence.token_id_low != 0 || evidence.token_id_high != 0,
+        "AuthentiCode {label} returned an empty token ID"
+    );
+    Ok(evidence)
+}
+
+fn validate_authenticode_token_stability_evidence(
+    before: AuthenticodeTokenStabilityEvidence,
+    after: AuthenticodeTokenStabilityEvidence,
+) -> Result<()> {
+    anyhow::ensure!(
+        before.token_id_low != 0 || before.token_id_high != 0,
+        "AuthentiCode handshake client pre-validation token ID is empty"
+    );
+    anyhow::ensure!(
+        after.token_id_low == before.token_id_low && after.token_id_high == before.token_id_high,
+        "AuthentiCode handshake client token instance changed during validation"
+    );
+    anyhow::ensure!(
+        after.modified_id_low == before.modified_id_low
+            && after.modified_id_high == before.modified_id_high,
+        "AuthentiCode handshake client token was modified during validation"
     );
     Ok(())
 }
@@ -6588,6 +6640,73 @@ mod tests {
                 authentication_id_high: 0,
                 session_id: expected.session_id,
             },
+        )
+        .is_err());
+    }
+
+    #[test]
+    fn native_authenticode_handshake_client_token_stability_is_exact_and_reverted() {
+        assert!(open_current_thread_token().unwrap().is_none());
+        let application = std::env::current_exe().unwrap();
+        let arguments = [
+            "--ignored",
+            "--exact",
+            "windows_authenticode::tests::authenticode_parent_child_handshake_child_fixture",
+            "--nocapture",
+            "--test-threads=1",
+        ];
+        let output = run_bounded_authenticode_helper(
+            &application,
+            &arguments,
+            Vec::new(),
+            Duration::from_secs(5),
+        )
+        .unwrap();
+        assert!(output.status.success());
+        assert!(output.stderr.is_empty());
+        assert!(String::from_utf8(output.stdout)
+            .unwrap()
+            .contains("AVORAX_PARENT_CHILD_PROCESS_BINDING_OK"));
+        assert!(open_current_thread_token().unwrap().is_none());
+    }
+
+    #[test]
+    fn native_authenticode_handshake_client_token_stability_contract_is_fail_visible() {
+        let stable = AuthenticodeTokenStabilityEvidence {
+            token_id_low: 0x1234_5678,
+            token_id_high: 0x1020_3040,
+            modified_id_low: 0x5566_7788,
+            modified_id_high: 0x1122_3344,
+        };
+        validate_authenticode_token_stability_evidence(stable, stable).unwrap();
+
+        for after in [
+            AuthenticodeTokenStabilityEvidence {
+                token_id_low: stable.token_id_low ^ 1,
+                ..stable
+            },
+            AuthenticodeTokenStabilityEvidence {
+                token_id_high: stable.token_id_high ^ 1,
+                ..stable
+            },
+            AuthenticodeTokenStabilityEvidence {
+                modified_id_low: stable.modified_id_low ^ 1,
+                ..stable
+            },
+            AuthenticodeTokenStabilityEvidence {
+                modified_id_high: stable.modified_id_high ^ 1,
+                ..stable
+            },
+        ] {
+            assert!(validate_authenticode_token_stability_evidence(stable, after).is_err());
+        }
+        assert!(validate_authenticode_token_stability_evidence(
+            AuthenticodeTokenStabilityEvidence {
+                token_id_low: 0,
+                token_id_high: 0,
+                ..stable
+            },
+            stable,
         )
         .is_err());
     }

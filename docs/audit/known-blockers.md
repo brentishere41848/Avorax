@@ -2474,3 +2474,20 @@ enforcement, or pre-execution blocking is claimed.
   production signing, driver enforcement, and demonstrated pre-execution
   protection remain technically limited or require external prerequisites;
   the overall antivirus goal remains active.
+- **Checkpoint 2223 residual boundary:** exact `TokenId`/`ModifiedId`
+  before/after stability, adversarial regressions, source contract 653,
+  verifier step 253, validator assertions, and documentation pass locally. The
+  stability window does not
+  bind the impersonation token object to the launch primary-token object,
+  detect mutation wholly outside the window, prevent same-session injection or
+  handle duplication, authenticate cross-identity IPC, provide
+  AppContainer/LPAC or installed LocalSystem isolation, or establish signed-
+  driver/pre-execution enforcement.
+- **Checkpoint 2223 local verification blocker closed:** focused/full Rust and
+  Flutter checks plus exact definitive `253/253` validation in `492.9s` pass,
+  and nine malformed reports are rejected. Exact implementation-head CI/
+  package evidence, evidence head, normal merge, merged-main checks, guarded
+  synchronization, and destination verification still block checkpoint
+  closure. Same-session injection/handle duplication, cross-identity IPC,
+  AppContainer/LPAC, installed LocalSystem, signing, driver, and pre-execution
+  limits remain external or technical blockers for the larger goal.

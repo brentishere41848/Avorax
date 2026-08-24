@@ -5742,3 +5742,25 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   vault invariant remain exact. Definitive and implementation-head hosted
   evidence also pass; integration, synchronization, and destination evidence
   remain pending.
+
+## Checkpoint 2223 - Authenticode client token stability (2026-08-24)
+
+- **Scripting complete and locally verified:** Native Engine now snapshots
+  exact `TokenStatistics.TokenId` and `ModifiedId` before and after all
+  successful named-pipe client-token property checks. Empty token IDs, exact-
+  size query errors, token-instance drift, and token-modification drift fail
+  visibly before publisher trust.
+- **Contracts scripted:** isolated handshake and adversarial drift tests,
+  source contract 653, mandatory verifier step 253, independent validator
+  scope assertions, and audit/dependency documentation are present. No result
+  was claimed before execution; the completed local evidence is listed below.
+- **Limits unchanged:** this is a point-window stability check, not launch-
+  token object identity. Same-session injection/handle duplication, cross-
+  identity IPC, AppContainer/LPAC, installed LocalSystem, signed driver, and
+  pre-execution enforcement remain technically limited or blocked.
+- **Locally verified:** focused and full Rust/Flutter checks pass, including
+  token stability `2/2`, Authenticode `71/13`, Native `499/13`, compiler `6/6`,
+  source contracts `653/653`, Flutter `838/838`, and strict lint. Definitive
+  verification passes exact `253/253` in `492.9s`, the new target in `0.2s`,
+  both validators, and nine negative report mutations. Hosted exact-head,
+  package, integration, synchronization, and destination proof remain pending.
