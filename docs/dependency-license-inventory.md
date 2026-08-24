@@ -747,3 +747,37 @@ requires all six native artifacts, creates checksums and the lockfile SBOM, and
 uploads five unexpired artifact bundles bound to the exact SHA. Publication is
 skipped. Complete signed final-artifact license/notice and binary-resolution
 review remains pending.
+
+Evidence head `79e865c` and merged main `c298c3a` pass Desktop Packages runs
+`32675987151` and `32676733940`. Each requires six native artifacts, dependency/
+license evidence, checksums, lockfile SBOM, administrative MSI extraction, and
+five exact-SHA artifact bundles; publication is skipped. Destination root Cargo,
+Native Cargo, and Git-filtered Flutter lock blobs remain exactly
+`7ab38f4820b08029c64872360fac7141e2512ac4`,
+`277dd9fe1edfc45fa5550e8e2831f2a0c121561d`, and
+`51fa085a41168aa1deadace8b5395614db43649e`. Complete signed final-artifact
+license/notice and binary-resolution review remains pending.
+## Checkpoint 2216 dependency delta
+
+The Authenticode parent-child handshake adds two `windows-sys` feature gates but
+no new crate or package: `Win32_Security_Authorization` supplies bounded Windows
+security-descriptor/SID conversion and `Win32_System_IO` supplies overlapped I/O
+cancellation/completion APIs. The repository remains on pinned `windows-sys
+0.61.2`; its existing MIT OR Apache-2.0 license classification is unchanged.
+No network dependency, executable payload, machine-wide component, or lockfile
+version update is introduced. Runtime and exact-lock evidence now pass: source
+contracts `646/646`, verifier/validator `246/246`, both locked workspace variants,
+and exact lock hashes `7ab38f4820b08029c64872360fac7141e2512ac4`,
+`277dd9fe1edfc45fa5550e8e2831f2a0c121561d`, and
+`51fa085a41168aa1deadace8b5395614db43649e`.
+
+Exact implementation `472b478c10dad6683ea867616f21c3636fe446de`
+passes Avorax CI `32680555167` and Desktop Packages push/PR
+`32680536082`/`32680555166`. Both package events pass dependency/license
+evidence, all six native artifacts, checksums, lockfile SBOM, and administrative
+MSI extraction without installation; prerelease publication is skipped.
+
+The parent-child handshake is same-user process binding, not encrypted
+cross-identity IPC, AppContainer, installed LocalSystem, driver, or pre-execution
+evidence. `GetNamedPipeClientProcessId` and `GetNamedPipeServerProcessId` are used
+only as live process-binding evidence and do not expand publisher trust.

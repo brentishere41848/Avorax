@@ -8899,3 +8899,79 @@ Updates page showed:
   in both runs. No release, publication, install, or machine-wide change occurred.
 - Evidence-head checks, normal PR merge, merged-main evidence, guarded original-
   tree synchronization, and destination reruns remain pending.
+
+## Checkpoint 2215 Integration Closure
+
+- Evidence `79e865cb21a26cf42e4a5dab849c5f0ea44d10c6` passes exact-head
+  Avorax CI `32675987165` and Desktop Packages PR `32675987151`. PR `#67`
+  was clean/mergeable against `cbf6203` and merged normally as
+  `c298c3a1c80bf186a88f1b0e6385733e8d83798b`.
+- Merged-main Avorax CI `32676733841` and Desktop Packages `32676733940` pass.
+  Both evidence-head and merged-main package runs pass Windows MSI/setup EXE,
+  Linux DEB/tar, macOS x64/arm64 DMGs, dependency/license evidence, administrative
+  MSI extraction, six-artifact consolidation, checksums, lockfile SBOM, and five
+  unexpired exact-SHA artifact bundles. Publication is skipped.
+- All 11 existing destination files exactly matched prior main and the new report
+  was absent. A first complex synchronization command was rejected by command
+  policy before execution. The simplified bounded path/root/reparse/hash-checked
+  route atomically synchronized exactly 12 files (`6,113,948` bytes) to
+  `C:\Users\Brent\Documents\Avorax-main`; all final blobs match the merge and
+  zero sync temporary files remain.
+- The destination definitive verifier/validator passes exactly `245/245`, zero
+  failed/skipped, from `2026-08-24T00:46:28.6908011Z` through
+  `2026-08-24T00:55:23.5541237Z` (`534.8s`). Complete Authenticode passes
+  `59`/`12`; strict Native/Local/Guard Clippy passes; both locked standard and
+  all-feature workspaces pass Native `487`/`12` plus compiler `6/6`; release
+  builds/two-host trust smoke, Flutter analyze and `838/838`, and no-malware,
+  dependency, source, package, performance, and protection gates pass.
+- Root Cargo, Native Cargo, and Git-filtered Flutter lockfiles remain exact at
+  `7ab38f4820b08029c64872360fac7141e2512ac4`,
+  `277dd9fe1edfc45fa5550e8e2831f2a0c121561d`, and
+  `51fa085a41168aa1deadace8b5395614db43649e`. The protected vault remains exactly
+  16,072 files, zero directories, 4,522,733 bytes, 5,357 each payload/metadata/
+  auth, one metadata key, and zero pending. Checkpoint 2215 is closed; the full
+  antivirus goal remains active.
+## 2026-08-24 - Checkpoint 2216 scripting: Authenticode parent-child handshake
+
+- Audited checkpoint 2215, the restricted helper launch, all isolated child
+  fixtures, local `windows-sys 0.61.2` APIs/features, verifier/validator, source
+  contracts, and residual threat-model boundary.
+- Scripted a first-instance, one-instance, remote-rejecting local named pipe with
+  current-user/SYSTEM DACL, low-integrity label, random canonical pipe/token UUIDs,
+  exact parent-server and launched-child-client PID checks, bounded overlapped
+  connect/read, cancellation settlement, and helper cleanup on failure.
+- Scripted migration of every isolated helper child fixture, a benign mutual-PID
+  runtime regression, pure malformed/mismatch contracts, verifier step 246,
+  exact-246 validator assertions, source contract 646, and all audit documents.
+- Per the requested sequence, no parser, formatter, compiler, test, verifier, or
+  validator was run during this scripting phase. No passing result is claimed.
+- No live malware, candidate execution, network retrieval, installation,
+  service/driver start, Defender change, release/publication, or protected-vault
+  mutation occurred.
+
+## 2026-08-24 - Checkpoint 2216 local execution
+
+- Initial parsers/Python compile/diff checks passed; rustfmt requested only
+  mechanical layout. The first focused runtime exposed the named-pipe remote-
+  rejection read-back bit and one stale source marker; both were repaired visibly.
+- Focused handshake passes `2/2`, source contracts `646/646`, complete
+  Authenticode passes `53/13`, and strict Native/Local/Guard Clippy passes.
+- Both locked workspace variants pass with Native `489/13` and compiler `6/6`;
+  Flutter analyze and full `838/838` pass. Release Local Core/Guard builds and the
+  two-host isolated Authenticode/hash-binding smoke pass.
+- Definitive report `.verification/checkpoint-2216-parent-child-handshake-definitive-report.json`
+  passes exact `246/246`, zero failed/skipped, in `508.1s`; embedded and standalone
+  validators pass. Seven malformed report variants are rejected.
+- Lockfile hashes remain `7ab38f4820b08029c64872360fac7141e2512ac4`,
+  `277dd9fe1edfc45fa5550e8e2831f2a0c121561d`, and
+  `51fa085a41168aa1deadace8b5395614db43649e`. Protected vault read-only evidence
+  remains exact at `16,072` files, zero directories, `4,522,733` bytes, `5,357`
+  each payload/metadata/auth, one key, and zero pending.
+- Exact implementation `472b478c10dad6683ea867616f21c3636fe446de` passes hosted
+  Avorax CI `32680555167` and Desktop Packages push/PR
+  `32680536082`/`32680555166`. All jobs pass across Windows, Linux, macOS arm64/x64,
+  six-artifact checksums/SBOM, dependency/license evidence, and administrative MSI
+  extraction. Both prerelease jobs are skipped; no publication or machine change
+  was performed.
+- Normal merge, merged-main hosted evidence, guarded synchronization, and
+  destination verification remain pending.

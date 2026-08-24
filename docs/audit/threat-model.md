@@ -2062,3 +2062,29 @@ to the parent. The environment PID is an expectation rather than a secret. This
 does not prevent same-user handle duplication and is not encrypted, durable, or
 authenticated cross-identity IPC. AppContainer, installed LocalSystem, driver, and
 pre-execution limitations remain unchanged.
+## Checkpoint 2216: Authenticode parent-child handshake
+
+Checkpoint 2215's anonymous pipes prove the exact parent creator to the child but
+cannot prove the inheriting child back to the parent. Checkpoint 2216 scripts a
+separate random local named-pipe handshake before trust work. The child requires
+`GetNamedPipeServerProcessId` to equal the canonical parent PID; the parent
+requires `GetNamedPipeClientProcessId` to equal the exact live launched child PID.
+The distinct random token must match exactly. A current-user/SYSTEM DACL,
+low-integrity mandatory label, remote rejection, one-instance policy, bounded
+overlapped I/O, cancellation settlement, and terminate/reap behavior reduce
+substitution, namespace guessing, hangs, and unsafe in-flight cleanup.
+
+Residual risk remains explicit: this is same-user process binding, not encrypted
+or durable cross-identity IPC. It does not defeat privileged same-user memory or
+process access, trusted code already inside either process, or kernel compromise.
+It is not AppContainer/LPAC, installed LocalSystem, production signing, driver
+interception, or pre-execution evidence. No checkpoint-2216 passing result is
+claimed before execution.
+
+Local execution now passes focused mutual-PID/adversarial runtime, complete
+Authenticode, release two-host trust smoke, source contracts `646/646`, and exact
+verifier/validator `246/246`; seven malformed reports are rejected. Exact
+implementation `472b478c10dad6683ea867616f21c3636fe446de` also passes hosted CI
+`32680555167` and package push/PR `32680536082`/`32680555166`, with publication
+skipped. Merge, merged-main, synchronization, and destination evidence remain
+pending.
