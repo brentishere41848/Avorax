@@ -5535,3 +5535,23 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
 - Classification: **verified and integrated**. The same user-mode, installed-
   service, production-signing, cross-identity IPC, driver, and pre-execution
   limitations remain. The overall antivirus hardening goal is still active.
+
+## Checkpoint 2218 - Authenticode client pipe security read-back (2026-08-24)
+
+- **Locally verified; hosted/integration pending:** the child opens the dedicated handshake client
+  with exactly `GENERIC_WRITE | READ_CONTROL`, validates the client endpoint and
+  exact parent server PID, resolves its current process-token SID, and applies the
+  same bounded `GetSecurityInfo` DACL/mandatory-label read-back before token write.
+- Any access, SID, query, descriptor, ACL/ACE, policy, label, or ordering failure
+  is diagnostic and cannot reach token exchange or publisher trust. No write-only
+  or weaker retry exists.
+- Real benign-child `1/1`, parent read-back `1/1`, handshake `2/2`, complete
+  Authenticode `63/13`, source contracts `648/648`, strict lint, both locked
+  workspaces with Native `491/13`, release builds/two-host smoke, Flutter analyze
+  and `838/838`, and safety/dependency gates pass. Definitive verifier/validator
+  passes exact `248/248` in `470.1s`; eight malformed reports are rejected, lock
+  blobs and the protected vault remain exact. Hosted/integration evidence remains
+  pending.
+- The check narrows creation-to-connect drift but remains point-in-time same-user
+  evidence, not encrypted/cross-identity IPC, AppContainer, installed LocalSystem,
+  production signing, driver enforcement, or pre-execution protection.

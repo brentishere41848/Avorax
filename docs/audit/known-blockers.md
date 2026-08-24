@@ -2321,3 +2321,22 @@ enforcement, or pre-execution blocking is claimed.
   trusted in-process code, SYSTEM/kernel compromise, encrypted cross-identity IPC,
   AppContainer/LPAC, installed LocalSystem, production signing, driver, and
   pre-execution protection remain blocked or technically limited.
+
+## Checkpoint 2218 client-security read-back status
+
+- **Locally verified; hosted/integration pending:** after exact client endpoint and parent-PID
+  validation, the low-integrity helper uses a `GENERIC_WRITE | READ_CONTROL`
+  handle and its current process-token SID to read back the exact DACL and
+  mandatory label before token transfer. Failure is visible and has no weaker
+  retry. Benign client `1/1`, complete Authenticode `63/13`, source contracts
+  `648/648`, strict lint, locked workspaces, release trust smoke, Flutter
+  `838/838`, and safety/dependency gates pass. Definitive verifier/validator
+  passes `248/248` in `470.1s`; eight malformed reports are rejected, locks and
+  vault remain exact. Hosted and integration evidence remain pending.
+- `READ_CONTROL` does not add `WRITE_DAC`, `WRITE_OWNER`, full-SACL access,
+  `ACCESS_SYSTEM_SECURITY`, or `SeSecurityPrivilege`. No dependency or lockfile
+  change is required.
+- Same-user privileged mutation/inspection, trusted in-process code, SYSTEM or
+  kernel compromise, encrypted cross-identity IPC, AppContainer/LPAC, installed
+  LocalSystem, production signing, driver, and pre-execution protection remain
+  blocked or technically limited.

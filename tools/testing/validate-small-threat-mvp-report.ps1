@@ -1904,8 +1904,8 @@ if ($RequireFullSuite) {
   if ($skipFlutter -or $skipRust) {
     throw "-RequireFullSuite requires skip_flutter=false and skip_rust=false."
   }
-  if ($steps.Count -ne 247) {
-    throw "-RequireFullSuite expected exactly 247 verifier steps for this source revision, found $($steps.Count)."
+  if ($steps.Count -ne 248) {
+    throw "-RequireFullSuite expected exactly 248 verifier steps for this source revision, found $($steps.Count)."
   }
   if ($steps[0].name -ne "local-core safe simulator scan reporting") {
     throw "-RequireFullSuite first step mismatch: $($steps[0].name)"
@@ -1950,6 +1950,7 @@ if ($RequireFullSuite) {
   Assert-ReportContainsStep $steps "native-engine Authenticode helper pipe-peer process regressions"
   Assert-ReportContainsStep $steps "native-engine Authenticode helper parent-child handshake regressions"
   Assert-ReportContainsStep $steps "native-engine Authenticode handshake pipe security read-back regressions"
+  Assert-ReportContainsStep $steps "native-engine Authenticode handshake client security read-back regressions"
   Assert-ReportContainsStep $steps "native-engine Authenticode mandatory-hash/file-identity regressions"
   Assert-ReportContainsStep $steps "native-engine risk fusion regressions"
   Assert-ReportContainsStep $steps "native-engine ClickOnce carrier heuristic detection"
@@ -2090,6 +2091,10 @@ if ($RequireFullSuite) {
   Assert-ReportScopeContains $verifiedScopeText "immediately after creating and validating the Authenticode handshake server endpoint and before event creation, connection, or helper launch, the parent uses GetSecurityInfo with SE_KERNEL_OBJECT plus DACL_SECURITY_INFORMATION and LABEL_SECURITY_INFORMATION to read back exactly the applied descriptor under existing READ_CONTROL access" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "Bounded structured ACL reads require a protected nondefault DACL containing exactly ordered zero-flag full-control access-allowed ACEs for SYSTEM and the current user, plus one nondefault zero-flag low-integrity no-write-up mandatory-label ACE; generic pipe/file rights are normalized with MapGenericMask before exact evidence comparison" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "without enabling SeSecurityPrivilege, requesting ACCESS_SYSTEM_SECURITY, reading the full SACL, or retrying with weaker security" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "after the Authenticode helper opens the dedicated handshake client with exactly GENERIC_WRITE plus READ_CONTROL, validates its client endpoint, and binds the server PID to the exact parent, but before writing the launch token" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "the child resolves its current process-token SID and performs the same GetSecurityInfo DACL and mandatory-label read-back on the actually opened client handle" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Client access, SID, query, descriptor, ACL, ACE, policy, or label failure is diagnostic and cannot reach token exchange or publisher trust; there is no write-only or weaker retry" "verification_scope.verified"
+  Assert-ReportScopeContains $technicalLimitText "This second endpoint check narrows creation-to-connect descriptor drift but is still point-in-time same-user evidence, not cross-identity authentication, encryption, AppContainer, installed LocalSystem, driver, or pre-execution enforcement" "verification_scope.technically_limited"
   Assert-ReportScopeContains $verifiedScopeText "Before CreateProcessAsUserW, the parent supplies an immutable DWORD64 process-creation mitigation policy enabling strict handle checks, extension-point disable, dynamic-code prohibition, Microsoft-signed-only binary loading, no remote images, no low-label images, and System32 image preference; the child requires both invalid-handle exception and permanent-enforcement read-back flags plus every other required policy before stdin or request parsing, and attribute construction, application, or read-back failure cannot become trust" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "Environment construction, current-directory validation, mitigation-policy construction/application/read-back, token/SID creation, process launch, handle-list construction, Job assignment, resume, bounded TokenPrivileges, TokenRestrictedSids, TokenIntegrityLevel, fixed-size TokenMandatoryPolicy, or fixed-size token virtualization/UIAccess inspection, verification, or normal revert failure cannot become trust" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "Native Engine and Local Core runtime-decode the standard EICAR test marker from non-signature bytes and regression-scan their own test executables to prevent a static EICAR marker from making benign verifier binaries Defender targets" "verification_scope.verified"
