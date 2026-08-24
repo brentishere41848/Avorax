@@ -9473,3 +9473,118 @@ Updates page showed:
   published.
 - Evidence-head CI/packages, normal merge, merged-main evidence, guarded
   original-tree synchronization, and destination verification remain pending.
+
+## 2026-08-24 continuation checkpoint 2221 integration closure
+
+- Evidence head `b60f500d59629682d84f532c7e0f16d623f6b6b4` passed Avorax CI
+  `32724454733` and Desktop Packages `32724454722`. PR `#73` was made ready
+  only after exact-head checks and merged normally with head locking as
+  `c4d997510cf698209b72c83c7a80b2d82524505f`.
+- Merged-main Avorax CI `32725907346` and Desktop Packages `32725907352`
+  passed. Windows MSI/EXE, Linux DEB/tar, macOS arm64/x64 DMG, consolidation,
+  seven exact checksums, and CycloneDX 1.6/569-component lockfile SBOM evidence
+  passed; publication was skipped in every package run.
+- All 12 original-tree preconditions matched merge parent `2bd8956` or valid
+  absence. Exactly those paths synchronized to
+  `C:\Users\Brent\Documents\Avorax-main`; every destination normalized Git
+  blob and raw SHA-256 matched merge `c4d9975`.
+- Destination parsers, source contracts `651/651`, client-token `2/2`, complete
+  Authenticode, release Local Core/Guard and benign two-host smoke, both locked
+  Rust workspace variants, strict Native/Local/Guard Clippy, Flutter analyze
+  and `838/838` passed. Destination definitive verification ran from
+  `2026-08-24T12:38:04.9752085Z` through
+  `2026-08-24T12:45:48.5598504Z` and passed exact `251/251` with zero failed or
+  skipped steps in `463.5s`; embedded and standalone strict validation passed.
+- Three destination lock blobs and the read-only protected-vault invariant
+  remain exact at 16,072 files, zero directories, 4,522,733 bytes, 5,357 each
+  payload/metadata/auth, one key, and zero pending. No artifact was installed,
+  executed, released, or published. Checkpoint 2221 is closed; the complete
+  antivirus hardening goal remains active.
+
+## 2026-08-24 continuation checkpoint 2222 scripting
+
+- Started from checkpoint-2221 closure `4e5666f` on branch
+  `agent/checkpoint-2222-authenticode-client-logon-session`; `.verification`
+  remains untracked and untouched.
+- Scripted pre-pipe capture of the low-integrity, privilege-stripped launch
+  primary token's exact user SID, `TokenStatistics.AuthenticationId`, and
+  `TokenSessionId`. The launch SID must equal the pipe owner.
+- Scripted connected-client readback after `ImpersonateNamedPipeClient`, exact
+  comparison of both authentication-LUID halves and session ID, empty-ID and
+  fixed-size-query rejection, and preservation of fail-visible `RevertToSelf`.
+- Scripted benign runtime and adversarial regressions, source contract 652,
+  verifier step 252, strict report clauses, and the complete audit/document
+  batch. No checkpoint-2222 passing result is claimed during scripting.
+- The control narrows same-user cross-logon-session substitution only. It is
+  point-in-time, not token uniqueness, encryption, cross-identity IPC,
+  AppContainer/LPAC, installed LocalSystem, driver, or pre-execution proof.
+  Focused and full tests, definitive evidence, hosted checks, integration,
+  guarded synchronization, and destination verification remain pending.
+- This batch adds no crate, package, feature, or lockfile change and performs no
+  live-malware/EICAR operation, Defender change, install, service/driver start,
+  release/publication, or protected-vault mutation.
+
+## 2026-08-24 continuation checkpoint 2222 focused execution
+
+- PowerShell parser `2/2`, Python compile, corrected `rustfmt --check`, and the
+  dependency-free source-contract runner `652/652` pass. The first format check
+  found two formatting-only diffs. A bundled Python lacked `pytest`, so that
+  invocation ran no test. The first full contract run then rejected a wrong
+  slice terminator and stale two-argument checkpoint-2221 expectation; these
+  failed attempts are not counted as passing evidence.
+- Corrected runtime evidence passes new logon-session `2/2`, existing pipe
+  client-token `2/2`, parent/child process binding `2/2`, complete Authenticode
+  `69/13`, and locked Native Engine `497/13` plus compiler `6/6`.
+- Strict locked Native all-target/all-feature Clippy passes with warnings
+  denied. All fixtures are existing benign helper fixtures and none is executed
+  as malware. Broader product suites and definitive/hosted/integration/
+  destination evidence remain pending.
+
+## 2026-08-24 continuation checkpoint 2222 full local regression
+
+- Both locked root workspaces pass. Local Core is `536/536`; Guard is
+  `248/248` standard and `249/249` all-feature. Strict Native/Local/Guard Clippy
+  passes with warnings denied.
+- Flutter analyze reports no issues and the complete suite passes `838/838`.
+  Resolution reports 33 newer incompatible versions but changes no lockfile.
+- Root Cargo, Native Cargo, and Flutter lock blobs remain exact at
+  `7ab38f4820b08029c64872360fac7141e2512ac4`,
+  `277dd9fe1edfc45fa5550e8e2831f2a0c121561d`, and
+  `51fa085a41168aa1deadace8b5395614db43649e`.
+- Read-only vault inventory remains exactly 16,072 files, zero directories,
+  4,522,733 bytes, 5,357 each payload/metadata/auth extension, one metadata key,
+  and zero pending/temp. Definitive 252-step and all later evidence remain
+  pending; no package was installed, executed, released, or published.
+
+## 2026-08-24 continuation checkpoint 2222 definitive local verification
+
+- Definitive report ran `2026-08-24T13:11:31.6208659Z` through
+  `2026-08-24T13:19:59.4049555Z` and passed exact `252/252` in `507.8s`, with
+  zero failed/skipped steps. The logon-session target passed in `0.3s`;
+  Defender/EICAR was false and Rust/Flutter were not skipped.
+- Embedded validation and independent Windows PowerShell `-RequireFullSuite`
+  validation pass. Two PowerShell 7 invocations rejected ISO timestamps after
+  host-side `DateTime` materialization; they are host-mismatch failures, not
+  success evidence, and the validator contract was not weakened.
+- Nine untracked adversarial copies are rejected for stale count, renamed
+  target, three missing verified scopes, missing technical limit, failed or
+  skipped target, and `skip_rust=true`.
+- Exact-head hosting, normal PR integration, merged-main evidence, guarded
+  original-tree synchronization, and destination verification remain pending.
+  Nothing was installed, released, or published.
+
+## 2026-08-24 continuation checkpoint 2222 implementation-head hosting
+
+- Exact implementation `0a24ac25fcdedf1ef50af8acb9b71499caf9ac69`
+  passes Avorax CI `32732523250` and Desktop Packages PR run `32732523189`.
+- Desktop Packages push run `32732497575` first encountered five bounded
+  `hdiutil verify` failures with `Resource temporarily unavailable` on the
+  arm64 runner after the app, payload, signing, smoke, and DMG creation checks
+  had passed. The identical PR job passed; failed-job-only push attempt 2 then
+  passed arm64 in `6m24s` and completed consolidation on the unchanged head.
+  The failed first attempt is retained as evidence and is not called a pass.
+- Both final package runs provide Windows MSI/EXE, Linux DEB/tar, macOS arm64/
+  x64 DMGs, seven independently matching SHA-256 rows, and a CycloneDX 1.6
+  lockfile SBOM with 569 components. Publication is skipped. Evidence-head,
+  merge, merged-main, guarded synchronization, and destination proof remain
+  pending; nothing was installed, executed, released, or published.

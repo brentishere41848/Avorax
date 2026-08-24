@@ -5684,4 +5684,55 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   CI `32722684598` and Desktop Packages push/PR `32722662492`/`32722684574`.
   Six release files, seven matching SHA-256 rows, and CycloneDX 1.6/569-component
   lockfile SBOM evidence pass in both package runs; publication is skipped.
-  Evidence-head, merge, sync, and destination proof remain pending.
+  Evidence `b60f500`, PR `#73`, merge `c4d9975`, merged-main CI/packages, exact
+  12-path guarded synchronization, destination focused/full checks, and exact
+  destination verifier `251/251` in `463.5s` all pass. Locks and the protected
+  vault remain exact. Checkpoint 2221 is closed; cross-identity IPC,
+  AppContainer/LPAC, driver/pre-execution protection, and the complete antivirus
+  goal remain open.
+
+## Checkpoint 2222 - Authenticode client logon-session binding (2026-08-24)
+
+- **Scripted, execution pending:** before creating the handshake pipe, the
+  parent captures the launch primary token's exact user SID,
+  `TokenStatistics.AuthenticationId`, and `TokenSessionId`; the launch SID must
+  equal the pipe owner.
+- After the bounded message read and named-pipe impersonation, the connected
+  thread token must match both authentication-LUID halves and the exact session
+  ID before launch-token acceptance. Empty expected IDs, exact-size query
+  failures, drift, impersonation, validation, or reversion failure are
+  diagnostic and have no success fallback.
+- Benign runtime/adversarial tests, source contract 652, verifier step 252,
+  exact-252 strict validation, and audit documents are scripted. No
+  checkpoint-2222 pass is claimed; execution and all hosted/integration/
+  destination phases remain pending.
+- Classification: partial until verified. This narrows same-user
+  cross-logon-session substitution but remains point-in-time. It is not token
+  uniqueness, same-session injection/handle-duplication prevention, encrypted
+  or cross-identity IPC, AppContainer/LPAC, installed LocalSystem, driver, or
+  pre-execution protection. No dependency or lockfile changes are introduced.
+- **Focused locally verified:** corrected parsers/format/compile and source
+  contracts `652/652`, logon-session `2/2`, client-token `2/2`, parent/child
+  binding `2/2`, Authenticode `69/13`, locked Native `497/13`, compiler `6/6`,
+  and strict Native Clippy pass. Initial format/runtime-selection/stale-contract
+  findings are documented and are not success evidence. Full product suites,
+  definitive validation, hosted integration, synchronization, and destination
+  verification remain pending.
+- **Definitive locally verified:** exact `252/252`, zero failed/skipped, passes
+  in `507.8s`; the target passes in `0.3s`. Embedded and independent Windows
+  PowerShell strict validation pass, and nine malformed reports are rejected.
+  Integration/synchronization/destination evidence remains pending, so
+  checkpoint 2222 and the overall antivirus goal remain active.
+- **Implementation-head hosted verified:** exact `0a24ac2` passes Avorax CI
+  `32732523250` and Desktop Packages PR/push runs `32732523189`/
+  `32732497575` (push attempt 2 after one documented transient arm64
+  `hdiutil` resource failure). Six platform artifacts, seven recomputed
+  checksums, and CycloneDX 1.6/569-component SBOM evidence pass; publication is
+  skipped. Evidence-head, merge, merged-main, synchronization, and destination
+  proof remain pending.
+- **Full local regressions verified:** both locked Rust
+  workspaces, Local Core `536/536`, Guard `248/249`, strict Native/Local/Guard
+  lint, Flutter analyze and `838/838` pass. The three lock blobs and protected
+  vault invariant remain exact. Definitive and implementation-head hosted
+  evidence also pass; integration, synchronization, and destination evidence
+  remain pending.

@@ -2420,11 +2420,48 @@ enforcement, or pre-execution blocking is claimed.
   `ImpersonateNamedPipeClient`, exact token state validation, and fail-visible
   `RevertToSelf`. Source contract `651/651`, exact verifier `251/251`, embedded
   and standalone strict validation, and nine malformed-report rejections pass.
-  Exact implementation-head CI and package push/PR evidence passes on
-  `014e5b9`; evidence-head, integration, synchronization, and destination
-  evidence remain pending.
+  Exact implementation head `014e5b9`, evidence `b60f500`, merge `c4d9975`,
+  hosted CI/packages, 12-path guarded synchronization, destination full suites,
+  and exact destination verifier `251/251` pass. This checkpoint is closed.
 - **Residual technical blocker:** this authenticates one connected same-user
   token. It does not prevent privileged process injection/handle duplication,
   encrypt IPC, change logon identity, establish a cross-identity service/UI
   protocol, provide AppContainer/LPAC, or prove signed-driver/pre-execution
   enforcement. Those installed and signing prerequisites remain external.
+
+## Checkpoint 2222 - Client logon-session binding
+
+- **Local and implementation-head hosted evidence verified:** launch-token and connected-client
+  `TokenStatistics.AuthenticationId` plus `TokenSessionId` must match exactly,
+  and the launch user SID must equal the pipe owner. Empty IDs, fixed-size
+  query failures, drift, or reversion failure stop trust. Source contract 652,
+  benign/adversarial tests, exact verifier step 252, strict validation, CI, and
+  both final package workflows pass.
+- **Residual technical blocker:** same-user cross-logon-session substitution is
+  narrowed, but same-logon-session injection or handle duplication is not
+  prevented and token uniqueness is not proven. IPC encryption, cross-identity
+  authentication, AppContainer/LPAC, installed LocalSystem isolation,
+  production signing, signed-driver enforcement, and demonstrated
+  pre-execution protection remain technically limited or externally blocked.
+- Normal integration, merged-main checks, guarded synchronization, and
+  destination verification remain required before checkpoint closure. The
+  overall antivirus goal remains active.
+- **Full local regression blocker closed:** source contracts
+  `652/652`, logon-session `2/2`, Authenticode `69/13`, Native `497/13` plus
+  compiler `6/6`, Local Core `536/536`, Guard `248/249`, both locked workspaces,
+  strict lint, and Flutter `838/838` pass. Locks and vault remain exact.
+  Definitive/malformed-report and implementation-head hosted evidence also
+  pass; integration, synchronization, and destination blockers remain.
+- **Definitive local blocker closed:** exact `252/252` in `507.8s`, both strict
+  validators, and nine malformed-report rejections pass. Remaining checkpoint
+  blockers are normal merge, merged-main checks, guarded original-tree
+  synchronization, and destination verification. The
+  same-session/cross-identity/driver/pre-execution limits remain.
+- **Implementation-head hosted blocker closed:** exact `0a24ac2` passes CI
+  `32732523250` and package PR/push `32732523189`/`32732497575`. Push attempt 1
+  retained a transient arm64 `hdiutil` resource failure after successful build
+  and payload checks; failed-job-only attempt 2 passed unchanged. Both final
+  bundles provide six artifacts, seven matching checksums, and CycloneDX
+  1.6/569-component SBOM evidence with publication skipped. Normal merge,
+  merged-main checks, guarded synchronization, and destination verification
+  remain blockers to checkpoint closure.

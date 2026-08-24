@@ -2264,3 +2264,34 @@ privileged same-user injector or handle duplicator, encrypt the pipe, change
 identity/logon session, implement cross-identity service IPC, create
 AppContainer/LPAC, or demonstrate driver/pre-execution protection. Those limits
 remain explicit even when checkpoint verification succeeds.
+
+### Authenticode client logon session (checkpoint 2222)
+
+Before creating the dedicated pipe, the parent now captures the exact
+low-integrity, privilege-stripped launch token's user SID,
+`TokenStatistics.AuthenticationId`, and `TokenSessionId`; the user SID must
+also equal the pipe owner. After the bounded client message is read and
+impersonated, the connected thread token must match both authentication-LUID
+halves and the exact session ID. Empty expected authentication IDs, fixed-size
+query failure, authentication-ID drift, session-ID drift, or failed cleanup
+cannot become publisher trust. These controls and their benign/adversarial
+tests are scripted; execution evidence is pending.
+
+This narrows the same-user cross-logon-session substitution threat but is only
+point-in-time evidence. It does not prove token uniqueness, stop privileged
+same-logon-session injection or handle duplication, encrypt the channel,
+change identity, authenticate cross-identity service IPC, provide
+AppContainer/LPAC, or establish signed-driver/pre-execution enforcement.
+
+Focused and full local evidence now passes: source contracts `652/652`, exact
+logon-session `2/2`, Authenticode `69/13`, Native `497/13` plus compiler `6/6`,
+Local Core `536/536`, Guard `248/249`, both locked workspaces, strict lint, and
+Flutter `838/838`. Locks and the read-only protected vault remain exact.
+Definitive, hosted, integration, synchronization, and destination proof remain
+pending, so the residual threat classification is unchanged.
+
+Definitive local verification now passes exact `252/252` in `507.8s`, including
+the exact logon-session target. Both strict validators pass and nine malformed
+reports are rejected. This strengthens evidence for the implemented boundary;
+it does not alter the same-session, cross-identity, AppContainer/LPAC, driver,
+or pre-execution limitations above.
