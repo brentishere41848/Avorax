@@ -5538,7 +5538,7 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
 
 ## Checkpoint 2218 - Authenticode client pipe security read-back (2026-08-24)
 
-- **Locally verified; hosted/integration pending:** the child opens the dedicated handshake client
+- **Implementation head verified; integration pending:** the child opens the dedicated handshake client
   with exactly `GENERIC_WRITE | READ_CONTROL`, validates the client endpoint and
   exact parent server PID, resolves its current process-token SID, and applies the
   same bounded `GetSecurityInfo` DACL/mandatory-label read-back before token write.
@@ -5550,8 +5550,14 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   workspaces with Native `491/13`, release builds/two-host smoke, Flutter analyze
   and `838/838`, and safety/dependency gates pass. Definitive verifier/validator
   passes exact `248/248` in `470.1s`; eight malformed reports are rejected, lock
-  blobs and the protected vault remain exact. Hosted/integration evidence remains
-  pending.
+  blobs and the protected vault remain exact.
+- Exact implementation `54dbb58` on draft PR `#70` passes Avorax CI
+  `32695037132` and Desktop Packages push/PR `32694996063`/`32695037192`.
+  Package contracts, Windows MSI/EXE, Linux DEB/tar, both macOS DMGs,
+  administrative MSI extraction, dependency/license evidence, six-artifact
+  consolidation, seven exact checksums, and a 569-component CycloneDX 1.6
+  lockfile SBOM pass. Both publication jobs are skipped. Evidence-head, merge,
+  merged-main, guarded sync, and destination verification remain pending.
 - The check narrows creation-to-connect drift but remains point-in-time same-user
   evidence, not encrypted/cross-identity IPC, AppContainer, installed LocalSystem,
   production signing, driver enforcement, or pre-execution protection.

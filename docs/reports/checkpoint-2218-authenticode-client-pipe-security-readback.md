@@ -7,7 +7,8 @@ Date: 2026-08-24
 Implementation, benign runtime test, verifier step 248, exact validator contract,
 source contract 648, and audit documentation are scripted as one batch before
 execution. No checkpoint-2218 passing result is claimed during that scripting
-phase. Corrected focused, broad, and definitive local verification pass. Hosted,
+phase. Corrected focused, broad, and definitive local verification pass. Exact
+implementation-head CI and package evidence pass. Evidence-head verification,
 merge, synchronization, and destination evidence remain pending.
 
 ## Threat
@@ -122,5 +123,25 @@ corrected source-contract execution remains pending.
   bytes differ only through Git line-ending filtering and have no Git diff.
 - Read-only protected-vault evidence remains exactly 16,072 files, zero
   directories, 4,522,733 bytes, 5,357 each `.avoraxq`/`.json`/`.auth`, one
-  `.metadata_auth_key`, and zero pending. Commit and hosted evidence remain
-  pending.
+  `.metadata_auth_key`, and zero pending. At the end of local verification,
+  commit and hosted evidence had not yet run; the next section records them.
+
+## Hosted Implementation Evidence
+
+- Exact implementation `54dbb5812e10aeb149a7f9da2031f9caf570ab92` is pushed
+  only on `agent/checkpoint-2218-authenticode-client-pipe-security-readback` and
+  is the head of draft PR `#70`.
+- Avorax CI `32695037132` passes all five jobs at that exact head: branding/copy,
+  Rust Local Core/Native/Guard/update/API tests and lint, Unix quarantine
+  permissions, Flutter/protocol, and security/protection/performance gates.
+- Desktop Packages push `32694996063` and PR `32695037192` pass package
+  contracts, Windows x64 MSI/EXE, Linux x64 DEB/tar, macOS arm64/x64 DMG,
+  dependency/license evidence, administrative MSI extraction, and consolidated
+  checksums.
+- The downloaded exact push artifact contains all six platform packages and one
+  CycloneDX 1.6 lockfile SBOM with `569` components. Every one of the seven
+  package/SBOM entries matches `SHA256SUMS.txt`.
+- Both `Publish desktop beta prerelease` jobs are `skipped`. No package was
+  installed, released, or published. Evidence-head CI/packages, normal merge,
+  merged-main evidence, guarded original-tree synchronization, and destination
+  verification remain pending.

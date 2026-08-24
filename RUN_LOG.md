@@ -9159,3 +9159,22 @@ Updates page showed:
   vault remains exactly 16,072 files, zero directories, 4,522,733 bytes, 5,357
   each payload/metadata/auth, one key, and zero pending. No hosted or integration
   result is claimed yet.
+
+## 2026-08-24 - Checkpoint 2218 hosted implementation evidence
+
+- Committed exact implementation as
+  `54dbb5812e10aeb149a7f9da2031f9caf570ab92`, pushed only the feature branch,
+  and opened draft PR `#70`.
+- Exact-head Avorax CI `32695037132` passes all five branding, Rust, Unix
+  quarantine-permission, Flutter/protocol, and security/protection/performance
+  jobs.
+- Desktop Packages push `32694996063` and PR `32695037192` pass package
+  contracts, Windows MSI/EXE, Linux DEB/tar, macOS arm64/x64 DMG,
+  administrative MSI extraction, dependency/license evidence, consolidation,
+  and checksums. Both prerelease-publication jobs are skipped.
+- The downloaded exact push artifact contains six platform packages plus one
+  CycloneDX 1.6 lockfile SBOM with `569` components; all seven checksum rows
+  match. No artifact was installed, released, or published.
+- Evidence-head CI/packages, normal merge, merged-main evidence, guarded sync,
+  and destination verification remain pending. `.verification` remains
+  untracked.
