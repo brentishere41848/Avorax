@@ -2096,3 +2096,29 @@ checks, and destination verifier/validator `246/246` in `489.4s` pass. Lockfiles
 and the protected vault remain exact and publication was skipped. This closes the
 checkpoint integration, not the same-user/cross-identity, AppContainer,
 installed-service, driver, pre-execution, or complete-antivirus limitations.
+
+## Checkpoint 2217: applied handshake-pipe security
+
+**Threat:** Passing intended SDDL into `CreateNamedPipeW` is not runtime evidence
+that the endpoint received the exact protected DACL and low-integrity label.
+
+**Verified control:** Immediately after endpoint validation and before any event,
+connect, process creation, or helper launch, the parent calls `GetSecurityInfo`
+with `SE_KERNEL_OBJECT` and exactly `DACL_SECURITY_INFORMATION |
+LABEL_SECURITY_INFORMATION`. Both components require existing `READ_CONTROL`.
+Bounded structured ACL/ACE evidence, with generic pipe/file masks normalized by
+`MapGenericMask`, must exactly prove ordered SYSTEM and current-user full-control
+ACEs, `SE_DACL_PROTECTED`, and one low-integrity no-write-up mandatory label. Any
+API, ACL bound/count, ACE type/size/flag/mask/SID, principal, policy, or label
+mismatch fails visibly with no weaker retry.
+
+**Least privilege and residual risk:** The check intentionally does not query the
+full SACL, request `ACCESS_SYSTEM_SECURITY`, or enable `SeSecurityPrivilege`;
+`LABEL_SECURITY_INFORMATION` exposes only mandatory-label evidence. Read-back is
+point-in-time and cannot defeat privileged same-user mutation/inspection, trusted
+in-process code, SYSTEM, or kernel compromise. It is not encrypted cross-identity
+IPC, AppContainer/LPAC, installed LocalSystem, production signing, a driver, or
+pre-execution protection. Focused and adjacent runtime tests, complete
+Authenticode, strict lint, locked workspaces, release smoke, source contracts, and
+the exact `247/247` definitive verifier pass locally; hosted and integration
+evidence remain pending.

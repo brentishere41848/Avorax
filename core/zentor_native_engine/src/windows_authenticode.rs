@@ -26,14 +26,16 @@ use windows_sys::Win32::Foundation::{
     CERT_E_REVOCATION_FAILURE, CRYPT_E_BAD_ENCODE, CRYPT_E_BAD_MSG, CRYPT_E_NO_MATCH,
     CRYPT_E_NO_SIGNER, CRYPT_E_NO_TRUSTED_SIGNER, CRYPT_E_REVOKED, CRYPT_E_SIGNER_NOT_FOUND,
     ERROR_INSUFFICIENT_BUFFER, ERROR_IO_PENDING, ERROR_NOT_FOUND, ERROR_NO_TOKEN,
-    ERROR_OPERATION_ABORTED, ERROR_PIPE_CONNECTED, ERROR_SUCCESS, GENERIC_WRITE, HANDLE,
-    HANDLE_FLAG_INHERIT, INVALID_HANDLE_VALUE, LUID, TRUST_E_BAD_DIGEST, TRUST_E_BASIC_CONSTRAINTS,
-    TRUST_E_CERT_SIGNATURE, TRUST_E_COUNTER_SIGNER, TRUST_E_FAIL, TRUST_E_FINANCIAL_CRITERIA,
-    TRUST_E_MALFORMED_SIGNATURE, TRUST_E_NO_SIGNER_CERT, TRUST_E_SUBJECT_FORM_UNKNOWN,
-    TRUST_E_SUBJECT_NOT_TRUSTED, TRUST_E_TIME_STAMP, WAIT_FAILED, WAIT_OBJECT_0, WAIT_TIMEOUT,
+    ERROR_OPERATION_ABORTED, ERROR_PIPE_CONNECTED, ERROR_SUCCESS, GENERIC_ALL, GENERIC_WRITE,
+    HANDLE, HANDLE_FLAG_INHERIT, INVALID_HANDLE_VALUE, LUID, TRUST_E_BAD_DIGEST,
+    TRUST_E_BASIC_CONSTRAINTS, TRUST_E_CERT_SIGNATURE, TRUST_E_COUNTER_SIGNER, TRUST_E_FAIL,
+    TRUST_E_FINANCIAL_CRITERIA, TRUST_E_MALFORMED_SIGNATURE, TRUST_E_NO_SIGNER_CERT,
+    TRUST_E_SUBJECT_FORM_UNKNOWN, TRUST_E_SUBJECT_NOT_TRUSTED, TRUST_E_TIME_STAMP, WAIT_FAILED,
+    WAIT_OBJECT_0, WAIT_TIMEOUT,
 };
 use windows_sys::Win32::Security::Authorization::{
-    ConvertSidToStringSidW, ConvertStringSecurityDescriptorToSecurityDescriptorW, SDDL_REVISION_1,
+    ConvertSidToStringSidW, ConvertStringSecurityDescriptorToSecurityDescriptorW, GetSecurityInfo,
+    SDDL_REVISION_1, SE_KERNEL_OBJECT,
 };
 use windows_sys::Win32::Security::Cryptography::Catalog::{
     CryptCATAdminAcquireContext2, CryptCATAdminCalcHashFromFileHandle2,
@@ -53,23 +55,29 @@ use windows_sys::Win32::Security::WinTrust::{
     WTD_STATEACTION_CLOSE, WTD_STATEACTION_VERIFY, WTD_UICONTEXT_EXECUTE, WTD_UI_NONE,
 };
 use windows_sys::Win32::Security::{
-    CreateRestrictedToken, CreateWellKnownSid, DuplicateTokenEx, GetLengthSid, GetTokenInformation,
-    IsValidSid, LookupPrivilegeValueW, RevertToSelf, SecurityImpersonation, SetTokenInformation,
-    TokenImpersonation, TokenImpersonationLevel, TokenIntegrityLevel, TokenMandatoryPolicy,
-    TokenPrimary, TokenPrivileges, TokenRestrictedSids, TokenType, TokenUIAccess, TokenUser,
+    AclSizeInformation, CreateRestrictedToken, CreateWellKnownSid, DuplicateTokenEx, GetAce,
+    GetAclInformation, GetLengthSid, GetSecurityDescriptorControl, GetSecurityDescriptorDacl,
+    GetSecurityDescriptorSacl, GetTokenInformation, IsValidSid, LookupPrivilegeValueW,
+    MapGenericMask, RevertToSelf, SecurityImpersonation, SetTokenInformation, TokenImpersonation,
+    TokenImpersonationLevel, TokenIntegrityLevel, TokenMandatoryPolicy, TokenPrimary,
+    TokenPrivileges, TokenRestrictedSids, TokenType, TokenUIAccess, TokenUser,
     TokenVirtualizationAllowed, TokenVirtualizationEnabled, WinLowLabelSid, WinRestrictedCodeSid,
-    DISABLE_MAX_PRIVILEGE, LUID_AND_ATTRIBUTES, SECURITY_ATTRIBUTES, SECURITY_MAX_SID_SIZE,
-    SE_CHANGE_NOTIFY_NAME, SE_PRIVILEGE_ENABLED, SID, SID_AND_ATTRIBUTES, TOKEN_ADJUST_DEFAULT,
-    TOKEN_ASSIGN_PRIMARY, TOKEN_DUPLICATE, TOKEN_GROUPS, TOKEN_IMPERSONATE, TOKEN_MANDATORY_LABEL,
-    TOKEN_MANDATORY_POLICY, TOKEN_MANDATORY_POLICY_NO_WRITE_UP, TOKEN_MANDATORY_POLICY_VALID_MASK,
-    TOKEN_PRIVILEGES, TOKEN_QUERY, TOKEN_USER, WELL_KNOWN_SID_TYPE, WRITE_RESTRICTED,
+    ACCESS_ALLOWED_ACE, ACE_HEADER, ACL, ACL_SIZE_INFORMATION, DACL_SECURITY_INFORMATION,
+    DISABLE_MAX_PRIVILEGE, GENERIC_MAPPING, LABEL_SECURITY_INFORMATION, LUID_AND_ATTRIBUTES,
+    PSECURITY_DESCRIPTOR, SECURITY_ATTRIBUTES, SECURITY_MAX_SID_SIZE, SE_CHANGE_NOTIFY_NAME,
+    SE_DACL_PROTECTED, SE_PRIVILEGE_ENABLED, SID, SID_AND_ATTRIBUTES, SYSTEM_MANDATORY_LABEL_ACE,
+    TOKEN_ADJUST_DEFAULT, TOKEN_ASSIGN_PRIMARY, TOKEN_DUPLICATE, TOKEN_GROUPS, TOKEN_IMPERSONATE,
+    TOKEN_MANDATORY_LABEL, TOKEN_MANDATORY_POLICY, TOKEN_MANDATORY_POLICY_NO_WRITE_UP,
+    TOKEN_MANDATORY_POLICY_VALID_MASK, TOKEN_PRIVILEGES, TOKEN_QUERY, TOKEN_USER,
+    WELL_KNOWN_SID_TYPE, WRITE_RESTRICTED,
 };
 use windows_sys::Win32::Storage::FileSystem::{
     CreateFileW, FileBasicInfo, FileIdInfo, FileStandardInfo, GetFileInformationByHandle,
     GetFileInformationByHandleEx, GetFileType, ReadFile, WriteFile, BY_HANDLE_FILE_INFORMATION,
-    FILE_ATTRIBUTE_REPARSE_POINT, FILE_BASIC_INFO, FILE_FLAG_FIRST_PIPE_INSTANCE,
-    FILE_FLAG_OPEN_REPARSE_POINT, FILE_FLAG_OVERLAPPED, FILE_FLAG_SEQUENTIAL_SCAN, FILE_ID_INFO,
-    FILE_SHARE_READ, FILE_STANDARD_INFO, FILE_TYPE_PIPE, OPEN_EXISTING, PIPE_ACCESS_INBOUND,
+    FILE_ALL_ACCESS, FILE_ATTRIBUTE_REPARSE_POINT, FILE_BASIC_INFO, FILE_FLAG_FIRST_PIPE_INSTANCE,
+    FILE_FLAG_OPEN_REPARSE_POINT, FILE_FLAG_OVERLAPPED, FILE_FLAG_SEQUENTIAL_SCAN,
+    FILE_GENERIC_EXECUTE, FILE_GENERIC_READ, FILE_GENERIC_WRITE, FILE_ID_INFO, FILE_SHARE_READ,
+    FILE_STANDARD_INFO, FILE_TYPE_PIPE, OPEN_EXISTING, PIPE_ACCESS_INBOUND,
 };
 use windows_sys::Win32::System::Console::{
     GetStdHandle, STD_ERROR_HANDLE, STD_INPUT_HANDLE, STD_OUTPUT_HANDLE,
@@ -97,8 +105,9 @@ use windows_sys::Win32::System::StationsAndDesktops::{
     USEROBJECTFLAGS,
 };
 use windows_sys::Win32::System::SystemServices::{
-    SE_GROUP_ENABLED, SE_GROUP_ENABLED_BY_DEFAULT, SE_GROUP_INTEGRITY, SE_GROUP_INTEGRITY_ENABLED,
-    SE_GROUP_MANDATORY,
+    ACCESS_ALLOWED_ACE_TYPE, SE_GROUP_ENABLED, SE_GROUP_ENABLED_BY_DEFAULT, SE_GROUP_INTEGRITY,
+    SE_GROUP_INTEGRITY_ENABLED, SE_GROUP_MANDATORY, SYSTEM_MANDATORY_LABEL_ACE_TYPE,
+    SYSTEM_MANDATORY_LABEL_NO_WRITE_UP,
 };
 use windows_sys::Win32::System::Threading::{
     CreateEventW, CreateProcessAsUserW, DeleteProcThreadAttributeList, GetCurrentProcess,
@@ -130,6 +139,8 @@ const AUTHENTICODE_HELPER_HANDSHAKE_PIPE_PREFIX: &str = r"\\.\pipe\Avorax.Authen
 const AUTHENTICODE_HELPER_HANDSHAKE_TIMEOUT: Duration = Duration::from_secs(5);
 const AUTHENTICODE_HELPER_HANDSHAKE_TOKEN_BYTES: usize = 36;
 const AUTHENTICODE_HELPER_HANDSHAKE_PIPE_BUFFER_BYTES: u32 = 64;
+const MAX_AUTHENTICODE_HANDSHAKE_SECURITY_ACES: u32 = 8;
+const MAX_AUTHENTICODE_HANDSHAKE_SECURITY_ACL_BYTES: u32 = 4_096;
 const MAX_AUTHENTICODE_HELPER_TOKEN_USER_BYTES: usize = 64 * 1024;
 const AUTHENTICODE_HELPER_TIMEOUT: Duration = Duration::from_secs(15);
 const AUTHENTICODE_HELPER_REAP_TIMEOUT: Duration = Duration::from_secs(2);
@@ -381,7 +392,8 @@ impl AuthenticodeParentChildHandshake {
         validate_authenticode_handshake_launch_values(&pipe_name, &token)?;
         let mut pipe_name_wide = pipe_name.encode_utf16().collect::<Vec<_>>();
         pipe_name_wide.push(0);
-        let security_descriptor = create_authenticode_handshake_security_descriptor()?;
+        let (security_descriptor, current_user_sid) =
+            create_authenticode_handshake_security_descriptor()?;
         let attributes = SECURITY_ATTRIBUTES {
             nLength: size_of::<SECURITY_ATTRIBUTES>() as u32,
             lpSecurityDescriptor: security_descriptor.0,
@@ -409,6 +421,7 @@ impl AuthenticodeParentChildHandshake {
             0,
             "AuthentiCode parent-child handshake server",
         )?;
+        verify_authenticode_handshake_pipe_security(server.0, &current_user_sid)?;
         let event = OwnedKernelHandle::from_raw(
             unsafe { CreateEventW(null(), 1, 0, null()) },
             "unable to create the Authenticode parent-child handshake event",
@@ -1146,7 +1159,8 @@ fn validate_authenticode_handshake_token_bytes(expected: &[u8], actual: &[u8]) -
     Ok(())
 }
 
-fn create_authenticode_handshake_security_descriptor() -> Result<OwnedLocalSecurityDescriptor> {
+fn create_authenticode_handshake_security_descriptor(
+) -> Result<(OwnedLocalSecurityDescriptor, String)> {
     let user_sid = current_process_user_sid_string()?;
     let sddl = format!("D:P(A;;GA;;;SY)(A;;GA;;;{user_sid})S:(ML;;NW;;;LW)");
     let mut sddl_wide = sddl.encode_utf16().collect::<Vec<_>>();
@@ -1168,7 +1182,258 @@ fn create_authenticode_handshake_security_descriptor() -> Result<OwnedLocalSecur
         !descriptor.is_null(),
         "AuthentiCode parent-child handshake security descriptor is null"
     );
-    Ok(OwnedLocalSecurityDescriptor(descriptor.cast()))
+    Ok((OwnedLocalSecurityDescriptor(descriptor.cast()), user_sid))
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct AuthenticodeHandshakeSecurityAceEvidence {
+    ace_type: u8,
+    ace_flags: u8,
+    access_mask: u32,
+    sid: String,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct AuthenticodeHandshakePipeSecurityEvidence {
+    dacl_protected: bool,
+    dacl_present: bool,
+    dacl_defaulted: bool,
+    dacl_aces: Vec<AuthenticodeHandshakeSecurityAceEvidence>,
+    label_present: bool,
+    label_defaulted: bool,
+    label_aces: Vec<AuthenticodeHandshakeSecurityAceEvidence>,
+}
+
+fn verify_authenticode_handshake_pipe_security(pipe: HANDLE, current_user_sid: &str) -> Result<()> {
+    let mut actual = null_mut();
+    let status = unsafe {
+        GetSecurityInfo(
+            pipe,
+            SE_KERNEL_OBJECT,
+            DACL_SECURITY_INFORMATION | LABEL_SECURITY_INFORMATION,
+            null_mut(),
+            null_mut(),
+            null_mut(),
+            null_mut(),
+            &mut actual,
+        )
+    };
+    anyhow::ensure!(
+        status == ERROR_SUCCESS,
+        "unable to read back the Authenticode parent-child handshake pipe security descriptor: {}",
+        std::io::Error::from_raw_os_error(status as i32)
+    );
+    anyhow::ensure!(
+        !actual.is_null(),
+        "AuthentiCode parent-child handshake pipe security descriptor read-back is null"
+    );
+    let actual = OwnedLocalSecurityDescriptor(actual.cast());
+    let evidence = read_authenticode_handshake_pipe_security_evidence(actual.0)?;
+    validate_authenticode_handshake_pipe_security_readback(&evidence, current_user_sid)
+}
+
+fn read_authenticode_handshake_pipe_security_evidence(
+    descriptor: PSECURITY_DESCRIPTOR,
+) -> Result<AuthenticodeHandshakePipeSecurityEvidence> {
+    let mut control = 0u16;
+    let mut revision = 0u32;
+    anyhow::ensure!(
+        unsafe { GetSecurityDescriptorControl(descriptor, &mut control, &mut revision) } != 0,
+        "unable to inspect the Authenticode parent-child handshake pipe security control flags: {}",
+        std::io::Error::last_os_error()
+    );
+    let (dacl_present, dacl_defaulted, dacl_aces) =
+        read_authenticode_handshake_security_acl(descriptor, false)?;
+    let (label_present, label_defaulted, label_aces) =
+        read_authenticode_handshake_security_acl(descriptor, true)?;
+    Ok(AuthenticodeHandshakePipeSecurityEvidence {
+        dacl_protected: control & SE_DACL_PROTECTED != 0,
+        dacl_present,
+        dacl_defaulted,
+        dacl_aces,
+        label_present,
+        label_defaulted,
+        label_aces,
+    })
+}
+
+fn read_authenticode_handshake_security_acl(
+    descriptor: PSECURITY_DESCRIPTOR,
+    mandatory_label: bool,
+) -> Result<(bool, bool, Vec<AuthenticodeHandshakeSecurityAceEvidence>)> {
+    let acl_label = if mandatory_label { "label ACL" } else { "DACL" };
+    let mut present = 0;
+    let mut defaulted = 0;
+    let mut acl: *mut ACL = null_mut();
+    let queried = if mandatory_label {
+        unsafe { GetSecurityDescriptorSacl(descriptor, &mut present, &mut acl, &mut defaulted) }
+    } else {
+        unsafe { GetSecurityDescriptorDacl(descriptor, &mut present, &mut acl, &mut defaulted) }
+    };
+    anyhow::ensure!(
+        queried != 0,
+        "unable to inspect the Authenticode parent-child handshake pipe {acl_label}: {}",
+        std::io::Error::last_os_error()
+    );
+    if present == 0 {
+        return Ok((false, defaulted != 0, Vec::new()));
+    }
+    anyhow::ensure!(
+        !acl.is_null(),
+        "AuthentiCode parent-child handshake pipe {acl_label} is null"
+    );
+    let mut information = ACL_SIZE_INFORMATION::default();
+    anyhow::ensure!(
+        unsafe {
+            GetAclInformation(
+                acl,
+                (&mut information as *mut ACL_SIZE_INFORMATION).cast(),
+                size_of::<ACL_SIZE_INFORMATION>() as u32,
+                AclSizeInformation,
+            )
+        } != 0,
+        "unable to size the Authenticode parent-child handshake pipe {acl_label}: {}",
+        std::io::Error::last_os_error()
+    );
+    anyhow::ensure!(
+        information.AceCount <= MAX_AUTHENTICODE_HANDSHAKE_SECURITY_ACES
+            && information.AclBytesInUse >= size_of::<ACL>() as u32
+            && information.AclBytesInUse <= MAX_AUTHENTICODE_HANDSHAKE_SECURITY_ACL_BYTES,
+        "AuthentiCode parent-child handshake pipe {acl_label} size or ACE count is invalid"
+    );
+    let acl_start = acl as usize;
+    let acl_end = acl_start
+        .checked_add(information.AclBytesInUse as usize)
+        .context("AuthentiCode parent-child handshake pipe ACL bound overflow")?;
+    let mut evidence = Vec::with_capacity(information.AceCount as usize);
+    for index in 0..information.AceCount {
+        let mut raw_ace = null_mut();
+        anyhow::ensure!(
+            unsafe { GetAce(acl, index, &mut raw_ace) } != 0 && !raw_ace.is_null(),
+            "unable to read Authenticode parent-child handshake pipe {acl_label} ACE {index}: {}",
+            std::io::Error::last_os_error()
+        );
+        let ace_start = raw_ace as usize;
+        let header_end = ace_start
+            .checked_add(size_of::<ACE_HEADER>())
+            .context("AuthentiCode parent-child handshake pipe ACE header bound overflow")?;
+        anyhow::ensure!(
+            ace_start >= acl_start && header_end <= acl_end,
+            "AuthentiCode parent-child handshake pipe {acl_label} ACE {index} is out of bounds"
+        );
+        let header = unsafe { &*raw_ace.cast::<ACE_HEADER>() };
+        let expected_type = if mandatory_label {
+            SYSTEM_MANDATORY_LABEL_ACE_TYPE as u8
+        } else {
+            ACCESS_ALLOWED_ACE_TYPE as u8
+        };
+        let sid_offset = if mandatory_label {
+            offset_of!(SYSTEM_MANDATORY_LABEL_ACE, SidStart)
+        } else {
+            offset_of!(ACCESS_ALLOWED_ACE, SidStart)
+        };
+        let ace_end = ace_start
+            .checked_add(header.AceSize as usize)
+            .context("AuthentiCode parent-child handshake pipe ACE bound overflow")?;
+        let sid_start = ace_start
+            .checked_add(sid_offset)
+            .context("AuthentiCode parent-child handshake pipe ACE SID bound overflow")?;
+        anyhow::ensure!(
+            header.AceType == expected_type
+                && header.AceSize as usize >= sid_offset + size_of::<u32>()
+                && ace_end <= acl_end
+                && sid_start < ace_end,
+            "AuthentiCode parent-child handshake pipe {acl_label} ACE {index} type or size is invalid"
+        );
+        let (mut access_mask, sid) = if mandatory_label {
+            let ace = unsafe { &*raw_ace.cast::<SYSTEM_MANDATORY_LABEL_ACE>() };
+            (ace.Mask, (&ace.SidStart as *const u32).cast_mut().cast())
+        } else {
+            let ace = unsafe { &*raw_ace.cast::<ACCESS_ALLOWED_ACE>() };
+            (ace.Mask, (&ace.SidStart as *const u32).cast_mut().cast())
+        };
+        anyhow::ensure!(
+            unsafe { IsValidSid(sid) } != 0,
+            "AuthentiCode parent-child handshake pipe {acl_label} ACE {index} SID is invalid"
+        );
+        let sid_bytes = unsafe { GetLengthSid(sid) } as usize;
+        let sid_end = sid_start
+            .checked_add(sid_bytes)
+            .context("AuthentiCode parent-child handshake pipe ACE SID length overflow")?;
+        anyhow::ensure!(
+            sid_bytes > 0 && sid_end <= ace_end,
+            "AuthentiCode parent-child handshake pipe {acl_label} ACE {index} SID is out of bounds"
+        );
+        if !mandatory_label {
+            unsafe { MapGenericMask(&mut access_mask, &authenticode_pipe_generic_mapping()) };
+        }
+        evidence.push(AuthenticodeHandshakeSecurityAceEvidence {
+            ace_type: header.AceType,
+            ace_flags: header.AceFlags,
+            access_mask,
+            sid: windows_sid_string(sid, acl_label)?,
+        });
+    }
+    Ok((true, defaulted != 0, evidence))
+}
+
+fn authenticode_pipe_generic_mapping() -> GENERIC_MAPPING {
+    GENERIC_MAPPING {
+        GenericRead: FILE_GENERIC_READ,
+        GenericWrite: FILE_GENERIC_WRITE,
+        GenericExecute: FILE_GENERIC_EXECUTE,
+        GenericAll: FILE_ALL_ACCESS,
+    }
+}
+
+fn expected_authenticode_handshake_pipe_security(
+    current_user_sid: &str,
+) -> Result<AuthenticodeHandshakePipeSecurityEvidence> {
+    anyhow::ensure!(
+        current_user_sid.starts_with("S-1-"),
+        "AuthentiCode parent-child handshake current-user SID contract is invalid"
+    );
+    let mut full_control = GENERIC_ALL;
+    unsafe { MapGenericMask(&mut full_control, &authenticode_pipe_generic_mapping()) };
+    Ok(AuthenticodeHandshakePipeSecurityEvidence {
+        dacl_protected: true,
+        dacl_present: true,
+        dacl_defaulted: false,
+        dacl_aces: vec![
+            AuthenticodeHandshakeSecurityAceEvidence {
+                ace_type: ACCESS_ALLOWED_ACE_TYPE as u8,
+                ace_flags: 0,
+                access_mask: full_control,
+                sid: "S-1-5-18".to_string(),
+            },
+            AuthenticodeHandshakeSecurityAceEvidence {
+                ace_type: ACCESS_ALLOWED_ACE_TYPE as u8,
+                ace_flags: 0,
+                access_mask: full_control,
+                sid: current_user_sid.to_string(),
+            },
+        ],
+        label_present: true,
+        label_defaulted: false,
+        label_aces: vec![AuthenticodeHandshakeSecurityAceEvidence {
+            ace_type: SYSTEM_MANDATORY_LABEL_ACE_TYPE as u8,
+            ace_flags: 0,
+            access_mask: SYSTEM_MANDATORY_LABEL_NO_WRITE_UP,
+            sid: "S-1-16-4096".to_string(),
+        }],
+    })
+}
+
+fn validate_authenticode_handshake_pipe_security_readback(
+    actual: &AuthenticodeHandshakePipeSecurityEvidence,
+    current_user_sid: &str,
+) -> Result<()> {
+    let expected = expected_authenticode_handshake_pipe_security(current_user_sid)?;
+    anyhow::ensure!(
+        actual == &expected,
+        "AuthentiCode parent-child handshake applied DACL or mandatory label does not match the exact launch contract: expected {expected:?}, actual {actual:?}"
+    );
+    Ok(())
 }
 
 fn current_process_user_sid_string() -> Result<String> {
@@ -1213,18 +1478,25 @@ fn current_process_user_sid_string() -> Result<String> {
         !user.User.Sid.is_null() && unsafe { IsValidSid(user.User.Sid) } != 0,
         "AuthentiCode parent user SID is invalid"
     );
+    windows_sid_string(user.User.Sid, "parent user")
+}
+
+fn windows_sid_string(sid: windows_sys::Win32::Security::PSID, sid_label: &str) -> Result<String> {
     let mut sid_text = null_mut();
     anyhow::ensure!(
-        unsafe { ConvertSidToStringSidW(user.User.Sid, &mut sid_text) } != 0 && !sid_text.is_null(),
-        "unable to format the Authenticode parent user SID: {}",
+        !sid.is_null()
+            && unsafe { IsValidSid(sid) } != 0
+            && unsafe { ConvertSidToStringSidW(sid, &mut sid_text) } != 0
+            && !sid_text.is_null(),
+        "unable to format the Authenticode {sid_label} SID: {}",
         std::io::Error::last_os_error()
     );
     let length_result = (0..256usize)
         .find(|index| unsafe { *sid_text.add(*index) } == 0)
-        .context("AuthentiCode parent user SID text exceeds its bound");
+        .with_context(|| format!("AuthentiCode {sid_label} SID text exceeds its bound"));
     let result = length_result.and_then(|length| {
         String::from_utf16(unsafe { std::slice::from_raw_parts(sid_text, length) })
-            .context("AuthentiCode parent user SID text is invalid UTF-16")
+            .with_context(|| format!("AuthentiCode {sid_label} SID text is invalid UTF-16"))
     });
     unsafe { LocalFree(sid_text.cast()) };
     result
@@ -5576,6 +5848,102 @@ mod tests {
         let mut wrong = token.as_bytes().to_vec();
         wrong[0] = b'3';
         assert!(validate_authenticode_handshake_token_bytes(token.as_bytes(), &wrong).is_err());
+    }
+
+    #[test]
+    fn native_authenticode_handshake_pipe_security_readback_is_exact_and_fail_visible() {
+        let application = std::env::current_exe().unwrap();
+        let arguments = [
+            "--ignored",
+            "--exact",
+            "windows_authenticode::tests::authenticode_parent_child_handshake_child_fixture",
+            "--nocapture",
+            "--test-threads=1",
+        ];
+        let output = run_bounded_authenticode_helper(
+            &application,
+            &arguments,
+            Vec::new(),
+            Duration::from_secs(5),
+        )
+        .unwrap();
+        assert!(output.status.success());
+        assert!(output.stderr.is_empty());
+        assert!(String::from_utf8(output.stdout)
+            .unwrap()
+            .contains("AVORAX_PARENT_CHILD_PROCESS_BINDING_OK"));
+
+        let user_sid = "S-1-5-21-1-2-3-1001";
+        let valid = expected_authenticode_handshake_pipe_security(user_sid).unwrap();
+        validate_authenticode_handshake_pipe_security_readback(&valid, user_sid).unwrap();
+
+        let mut invalid = Vec::new();
+        let mut evidence = valid.clone();
+        evidence.dacl_protected = false;
+        invalid.push(evidence);
+        let mut evidence = valid.clone();
+        evidence.dacl_present = false;
+        invalid.push(evidence);
+        let mut evidence = valid.clone();
+        evidence.dacl_defaulted = true;
+        invalid.push(evidence);
+        let mut evidence = valid.clone();
+        evidence.dacl_aces.pop();
+        invalid.push(evidence);
+        let mut evidence = valid.clone();
+        evidence.dacl_aces[1].sid = "S-1-5-21-1-2-3-1002".to_string();
+        invalid.push(evidence);
+        let mut evidence = valid.clone();
+        evidence
+            .dacl_aces
+            .push(AuthenticodeHandshakeSecurityAceEvidence {
+                sid: "S-1-5-32-544".to_string(),
+                ..valid.dacl_aces[0].clone()
+            });
+        invalid.push(evidence);
+        let mut evidence = valid.clone();
+        evidence.dacl_aces.swap(0, 1);
+        invalid.push(evidence);
+        let mut evidence = valid.clone();
+        evidence.dacl_aces[0].ace_type = 1;
+        invalid.push(evidence);
+        let mut evidence = valid.clone();
+        evidence.dacl_aces[0].ace_flags = 1;
+        invalid.push(evidence);
+        let mut evidence = valid.clone();
+        evidence.dacl_aces[0].access_mask = FILE_GENERIC_READ;
+        invalid.push(evidence);
+        let mut evidence = valid.clone();
+        evidence.label_present = false;
+        invalid.push(evidence);
+        let mut evidence = valid.clone();
+        evidence.label_defaulted = true;
+        invalid.push(evidence);
+        let mut evidence = valid.clone();
+        evidence.label_aces.clear();
+        invalid.push(evidence);
+        let mut evidence = valid.clone();
+        evidence.label_aces[0].ace_type = ACCESS_ALLOWED_ACE_TYPE as u8;
+        invalid.push(evidence);
+        let mut evidence = valid.clone();
+        evidence.label_aces[0].ace_flags = 1;
+        invalid.push(evidence);
+        let mut evidence = valid.clone();
+        evidence.label_aces[0].access_mask = 0;
+        invalid.push(evidence);
+        let mut evidence = valid.clone();
+        evidence.label_aces[0].sid = "S-1-16-8192".to_string();
+        invalid.push(evidence);
+        let mut evidence = valid.clone();
+        evidence.label_aces.push(valid.label_aces[0].clone());
+        invalid.push(evidence);
+        for evidence in invalid {
+            assert!(
+                validate_authenticode_handshake_pipe_security_readback(&evidence, user_sid,)
+                    .is_err()
+            );
+        }
+        assert!(validate_authenticode_handshake_pipe_security_readback(&valid, "").is_err());
     }
 
     #[test]

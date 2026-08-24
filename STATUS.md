@@ -5492,3 +5492,26 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
 - Classification: **verified and integrated**. This is same-user process binding,
   not encrypted cross-identity IPC, AppContainer, driver, installed LocalSystem,
   or pre-execution evidence. The overall antivirus hardening goal remains active.
+
+## Checkpoint 2217 - Authenticode pipe security read-back (2026-08-24)
+
+- Implemented immediate `GetSecurityInfo(SE_KERNEL_OBJECT)` read-back with exact
+  `DACL_SECURITY_INFORMATION | LABEL_SECURITY_INFORMATION` under existing
+  `READ_CONTROL` before event, connection, process creation, or helper launch.
+- Implemented bounded structured ACL evidence with `SE_DACL_PROTECTED`, exact ordered
+  SYSTEM/current-user full-control ACEs, and one low-integrity no-write-up label.
+  Generic pipe/file masks are normalized through `MapGenericMask`; every query,
+  ACL bound/count, ACE type/size/flag/mask/SID, principal/order/policy/label
+  mismatch fails visibly without retry.
+- No full SACL read, `ACCESS_SYSTEM_SECURITY`, `SeSecurityPrivilege`, crate,
+  package, feature, or lockfile change is introduced. Corrected focused `1/1`,
+  handshake `2/2`, complete Authenticode `54/13`, strict lint, both locked
+  workspaces, release builds/two-host smoke, Flutter `838/838`, and source
+  contracts `647/647` pass.
+- The definitive verifier and both strict validators pass exactly `247/247` in
+  `467.6s`; seven malformed reports are rejected. All three lock hashes and the
+  protected-vault invariant remain exact. Hosted exact-head CI/packages,
+  PR/merge, guarded synchronization, and destination verification remain pending.
+- Point-in-time read-back remains user-mode same-user evidence, not cross-identity IPC,
+  AppContainer, installed LocalSystem, driver, or pre-execution protection. The
+  overall antivirus hardening goal remains active.

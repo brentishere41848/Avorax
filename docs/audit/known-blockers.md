@@ -2298,3 +2298,21 @@ enforcement, or pre-execution blocking is claimed.
 - Same-user process-memory inspection, cross-identity authenticated/encrypted IPC,
   AppContainer/LPAC, installed LocalSystem, production signing, driver, and
   pre-execution proof remain technically limited or require external prerequisites.
+
+## Checkpoint 2217 pipe-security read-back status
+
+- Implemented and locally verified `GetSecurityInfo(SE_KERNEL_OBJECT)` read-back of exactly
+  `DACL_SECURITY_INFORMATION | LABEL_SECURITY_INFORMATION` under `READ_CONTROL`,
+  before event/connect/helper launch. Exact protected SYSTEM/current-user DACL and
+  low-integrity no-write-up label mismatches are fail-visible.
+- Corrected focused `1/1`, adjacent handshake `2/2`, complete Authenticode
+  `54/13`, source contracts `647/647`, Flutter `838/838`, locked workspaces,
+  release builds/smoke, and definitive verifier `247/247` in `467.6s` pass. Seven
+  malformed reports are rejected. Hosted, merge, synchronization, and destination
+  evidence remain pending.
+- The control intentionally does not request the full SACL,
+  `ACCESS_SYSTEM_SECURITY`, or `SeSecurityPrivilege`. `LABEL_SECURITY_INFORMATION`
+  is mandatory-label-only evidence. Same-user privileged mutation/inspection,
+  trusted in-process code, SYSTEM/kernel compromise, encrypted cross-identity IPC,
+  AppContainer/LPAC, installed LocalSystem, production signing, driver, and
+  pre-execution protection remain blocked or technically limited.

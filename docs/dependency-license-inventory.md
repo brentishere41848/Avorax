@@ -790,3 +790,24 @@ destination synchronization, both locked workspace variants, destination verifie
 `246/246`, and unchanged lock hashes pass. No dependency, package, or license
 classification changed; complete signed final-artifact notice and binary-resolution
 review remains a release-host requirement.
+
+## Checkpoint 2217 dependency delta
+
+Checkpoint 2217 adds no crate, package, feature, or lockfile change. Existing
+pinned `windows-sys 0.61.2` feature `Win32_Security_Authorization` already supplies
+`GetSecurityInfo`, `SE_KERNEL_OBJECT`, and security-descriptor conversion; existing
+`Win32_Security` supplies `DACL_SECURITY_INFORMATION`,
+`LABEL_SECURITY_INFORMATION`, `GetSecurityDescriptorControl`, and
+`SE_DACL_PROTECTED`. Existing MIT OR Apache-2.0 licensing is unchanged.
+
+The runtime query uses existing named-pipe `READ_CONTROL` and intentionally avoids
+the full SACL, `ACCESS_SYSTEM_SECURITY`, `SeSecurityPrivilege`, network content,
+new DLLs, executable candidate fixtures, machine-wide components, and privilege
+expansion. This point-in-time ACL/MIC read-back is not encrypted cross-identity
+IPC, AppContainer/LPAC, installed LocalSystem, production signing, a driver, or
+pre-execution protection. Dependency evidence, strict locked workspaces, and the
+complete local verifier pass. Root Cargo, Native Cargo, and Flutter lock hashes
+remain `7ab38f4820b08029c64872360fac7141e2512ac4`,
+`277dd9fe1edfc45fa5550e8e2831f2a0c121561d`, and
+`51fa085a41168aa1deadace8b5395614db43649e`; hosted dependency/package evidence
+remains pending.
