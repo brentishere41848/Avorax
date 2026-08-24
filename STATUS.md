@@ -5730,6 +5730,12 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   checksums, and CycloneDX 1.6/569-component SBOM evidence pass; publication is
   skipped. Evidence-head, merge, merged-main, synchronization, and destination
   proof remain pending.
+- **Integrated and destination verified:** evidence `2f02714`, PR `#74`, merge
+  `e644d77`, evidence-head and merged-main CI/packages, exact 12-path guarded
+  synchronization, destination full Rust/Flutter checks, and exact destination
+  verifier `252/252` in `496.7s` all pass. Locks and protected vault remain
+  exact; publication is skipped. Checkpoint 2222 is closed, while its explicit
+  IPC/identity/driver limits and the complete antivirus goal remain open.
 - **Full local regressions verified:** both locked Rust
   workspaces, Local Core `536/536`, Guard `248/249`, strict Native/Local/Guard
   lint, Flutter analyze and `838/838` pass. The three lock blobs and protected

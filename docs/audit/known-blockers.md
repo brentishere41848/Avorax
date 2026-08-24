@@ -2465,3 +2465,12 @@ enforcement, or pre-execution blocking is claimed.
   1.6/569-component SBOM evidence with publication skipped. Normal merge,
   merged-main checks, guarded synchronization, and destination verification
   remain blockers to checkpoint closure.
+- **Checkpoint integration blockers closed:** evidence `2f02714`, PR `#74`,
+  merge `e644d77`, exact evidence-head and merged-main CI/packages, guarded
+  12-path synchronization, full destination suites, and exact destination
+  `252/252` validation in `496.7s` pass. The checkpoint has no remaining
+  integration blocker. Same-session injection/handle duplication,
+  cross-identity IPC, AppContainer/LPAC or installed LocalSystem isolation,
+  production signing, driver enforcement, and demonstrated pre-execution
+  protection remain technically limited or require external prerequisites;
+  the overall antivirus goal remains active.

@@ -1000,3 +1000,12 @@ SBOM with 569 components. Publication is skipped and no dependency or lockfile
 changes. Evidence-head/merged-main package proof and complete signed final-
 artifact license, notice, copyright, and binary-resolution review remain
 pending.
+
+Evidence-head package run `32735762385` and merged-main package run
+`32737920822` pass on `2f02714` and `e644d77`. Both require all six native
+artifacts, dependency/license evidence, checksums, a CycloneDX 1.6 lockfile
+SBOM with 569 components, and consolidation, while publication is skipped.
+Guarded destination synchronization and full destination verification preserve
+all three exact lock blobs. This closes checkpoint package integration only;
+complete signed final-artifact license, notice, copyright, and binary-
+resolution review remains a production-release prerequisite.
