@@ -5684,4 +5684,9 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   CI `32722684598` and Desktop Packages push/PR `32722662492`/`32722684574`.
   Six release files, seven matching SHA-256 rows, and CycloneDX 1.6/569-component
   lockfile SBOM evidence pass in both package runs; publication is skipped.
-  Evidence-head, merge, sync, and destination proof remain pending.
+  Evidence `b60f500`, PR `#73`, merge `c4d9975`, merged-main CI/packages, exact
+  12-path guarded synchronization, destination focused/full checks, and exact
+  destination verifier `251/251` in `463.5s` all pass. Locks and the protected
+  vault remain exact. Checkpoint 2221 is closed; cross-identity IPC,
+  AppContainer/LPAC, driver/pre-execution protection, and the complete antivirus
+  goal remain open.

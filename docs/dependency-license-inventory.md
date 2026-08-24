@@ -952,5 +952,12 @@ pass. Flutter reported 33 newer versions outside current constraints but no
 upgrade or lock change occurred. Definitive local verification passes in
 `487.9s`. Exact implementation-head package push/PR runs contain matching
 CycloneDX 1.6 lockfile SBOMs with 569 components and seven verified SHA-256
-rows. Publication is skipped; evidence-head and complete signed final-artifact
-license review remain pending.
+rows. Publication is skipped; complete signed final-artifact license review
+remains pending.
+
+Evidence-head and merged-main package workflows also pass with publication
+skipped. The merged-main consolidated bundle retains seven matching SHA-256
+rows and the CycloneDX 1.6/569-component lockfile SBOM. The three destination
+lock blobs match merge `c4d9975`; no dependency or machine-wide component was
+installed. Complete signed final-artifact license and notice review remains a
+production-release prerequisite.

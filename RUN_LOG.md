@@ -9473,3 +9473,30 @@ Updates page showed:
   published.
 - Evidence-head CI/packages, normal merge, merged-main evidence, guarded
   original-tree synchronization, and destination verification remain pending.
+
+## 2026-08-24 continuation checkpoint 2221 integration closure
+
+- Evidence head `b60f500d59629682d84f532c7e0f16d623f6b6b4` passed Avorax CI
+  `32724454733` and Desktop Packages `32724454722`. PR `#73` was made ready
+  only after exact-head checks and merged normally with head locking as
+  `c4d997510cf698209b72c83c7a80b2d82524505f`.
+- Merged-main Avorax CI `32725907346` and Desktop Packages `32725907352`
+  passed. Windows MSI/EXE, Linux DEB/tar, macOS arm64/x64 DMG, consolidation,
+  seven exact checksums, and CycloneDX 1.6/569-component lockfile SBOM evidence
+  passed; publication was skipped in every package run.
+- All 12 original-tree preconditions matched merge parent `2bd8956` or valid
+  absence. Exactly those paths synchronized to
+  `C:\Users\Brent\Documents\Avorax-main`; every destination normalized Git
+  blob and raw SHA-256 matched merge `c4d9975`.
+- Destination parsers, source contracts `651/651`, client-token `2/2`, complete
+  Authenticode, release Local Core/Guard and benign two-host smoke, both locked
+  Rust workspace variants, strict Native/Local/Guard Clippy, Flutter analyze
+  and `838/838` passed. Destination definitive verification ran from
+  `2026-08-24T12:38:04.9752085Z` through
+  `2026-08-24T12:45:48.5598504Z` and passed exact `251/251` with zero failed or
+  skipped steps in `463.5s`; embedded and standalone strict validation passed.
+- Three destination lock blobs and the read-only protected-vault invariant
+  remain exact at 16,072 files, zero directories, 4,522,733 bytes, 5,357 each
+  payload/metadata/auth, one key, and zero pending. No artifact was installed,
+  executed, released, or published. Checkpoint 2221 is closed; the complete
+  antivirus hardening goal remains active.
