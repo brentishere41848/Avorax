@@ -8,8 +8,9 @@ Implementation, benign runtime test, verifier step 248, exact validator contract
 source contract 648, and audit documentation are scripted as one batch before
 execution. No checkpoint-2218 passing result is claimed during that scripting
 phase. Corrected focused, broad, and definitive local verification pass. Exact
-implementation-head CI and package evidence pass. Evidence-head verification,
-merge, synchronization, and destination evidence remain pending.
+implementation/evidence-head CI and package evidence, normal merge, merged-main
+evidence, guarded synchronization, and destination verification pass. Checkpoint
+2218 is closed; the complete antivirus hardening goal remains active.
 
 ## Threat
 
@@ -142,6 +143,37 @@ corrected source-contract execution remains pending.
   CycloneDX 1.6 lockfile SBOM with `569` components. Every one of the seven
   package/SBOM entries matches `SHA256SUMS.txt`.
 - Both `Publish desktop beta prerelease` jobs are `skipped`. No package was
-  installed, released, or published. Evidence-head CI/packages, normal merge,
-  merged-main evidence, guarded original-tree synchronization, and destination
-  verification remain pending.
+  installed, released, or published. At that implementation-head stage,
+  evidence-head CI/packages, normal merge, merged-main evidence, guarded
+  original-tree synchronization, and destination verification had not yet run;
+  the next section records their closure.
+
+## Integration And Destination Evidence
+
+- Evidence head `eb11c81b75095974e3655aa5b4220c4259a44d86` passes Avorax CI
+  `32696503967` and Desktop Packages `32696503980`. PR `#70` merged normally as
+  `1e453005a01782e9bed887ba9ad489d5b6e51894`; merged-main CI `32697573728` and
+  packages `32697573735` pass every mandatory job and package consolidation.
+  Publication remains skipped.
+- Guarded preconditions proved all 11 existing targets byte-exact against prior
+  merge `3fe2b872258f7bfb5388112a3574b31e7564cdb3` and the one new report absent.
+  Direct `git cat-file blob` materialization, pre-write hash validation, and
+  same-directory atomic replacement synchronized exactly 12 paths to
+  `C:\Users\Brent\Documents\Avorax-main`; all 12 destination blobs are exact and
+  zero sync staging files remain.
+- Destination parsers, source contracts `648/648`, product-copy/no-malware gates,
+  formatting, real client read-back `1/1`, Native `491/13`, compiler `6/6`, Local
+  Core `536/536`, Guard `248/248` standard and `249/249` all-feature, strict
+  Native/Local/Guard Clippy, release builds and benign two-host trust smoke,
+  Flutter analyze and `838/838`, and both locked workspace variants pass.
+- The destination definitive report ran from
+  `2026-08-24T06:45:58.0672811Z` through
+  `2026-08-24T06:54:02.1725176Z` and passed exact `248/248`, zero failed/skipped,
+  in `484.1s`. Embedded and independent `-RequireFullSuite` validation pass.
+- Root Cargo, Native Cargo, and Flutter lock blobs remain
+  `7ab38f4820b08029c64872360fac7141e2512ac4`,
+  `277dd9fe1edfc45fa5550e8e2831f2a0c121561d`, and
+  `51fa085a41168aa1deadace8b5395614db43649e`. The protected vault remains exactly
+  16,072 files, zero directories, 4,522,733 bytes, 5,357 each payload/metadata/
+  auth, one metadata key, and zero pending. Checkpoint 2218 is closed without a
+  release, installation, service/driver start, Defender change, or publication.

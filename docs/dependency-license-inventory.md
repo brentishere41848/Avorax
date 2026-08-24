@@ -837,5 +837,39 @@ installed LocalSystem, driver, or pre-execution behavior. Source dependency
 evidence and both locked workspace variants pass. Root Cargo, Native Cargo, and
 filtered Flutter lock blobs remain `7ab38f4820b08029c64872360fac7141e2512ac4`,
 `277dd9fe1edfc45fa5550e8e2831f2a0c121561d`, and
-`51fa085a41168aa1deadace8b5395614db43649e`; hosted package evidence remains
-pending for this checkpoint.
+`51fa085a41168aa1deadace8b5395614db43649e`. Evidence `eb11c81`, PR `#70`, merge
+`1e453005`, evidence/merged-main CI and Desktop Packages, exact 12-path
+destination synchronization, destination dependency gates, and the same exact
+lock blobs close checkpoint 2218 without a dependency or license delta.
+Complete signed final-artifact notice and binary-resolution review remains a
+production-release requirement.
+
+## Checkpoint 2219 dependency delta
+
+Checkpoint 2219 adds no crate, package, feature, or lockfile change. The existing
+pinned `windows-sys 0.61.2` features already supply `GENERIC_READ`,
+`GENERIC_WRITE`, `FILE_GENERIC_*`, `DELETE`, `WRITE_DAC`, `WRITE_OWNER`, SDDL
+conversion, `GetSecurityInfo`, and `MapGenericMask`. Existing MIT OR Apache-2.0
+licensing is unchanged.
+
+The protected handshake DACL keeps SYSTEM normalized full control and reduces
+the current-user ACE to normalized generic read plus generic write. Exact
+point-in-time endpoint read-backs reject broader or narrower masks. The creator's
+token default owner is not independently read back; if the current user owns the
+pipe, Windows supplies implicit `READ_CONTROL` and `WRITE_DAC`. This is not
+encrypted/authenticated cross-identity IPC, AppContainer/LPAC, installed
+LocalSystem, driver enforcement, or pre-execution protection. No new network
+content, executable fixture, machine-wide component, or license obligation is
+introduced. Runtime, lock, hosted, and destination evidence remain pending until
+the scripted batch is executed.
+
+Local dependency and license evidence now passes, as do source contracts
+`649/649`, both locked workspaces, strict lint, exact verifier/validator
+`249/249`, and unchanged root Cargo, Native Cargo, and Flutter lock blobs. No
+dependency or license classification changed. Exact implementation `5171fb4e`
+passes package push/PR `32702466511`/`32702550182`: all six native package
+artifacts, seven independently rechecked checksum rows, dependency/license
+evidence, administrative MSI extraction, and a CycloneDX 1.6 lockfile SBOM with
+`569` components pass. Publication is skipped. Evidence-head, merge, and
+destination evidence remain pending; complete signed final-artifact notice and
+binary-resolution review remains a production-release requirement.

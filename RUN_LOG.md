@@ -9178,3 +9178,99 @@ Updates page showed:
 - Evidence-head CI/packages, normal merge, merged-main evidence, guarded sync,
   and destination verification remain pending. `.verification` remains
   untracked.
+
+## 2026-08-24 - Checkpoint 2218 integration closure
+
+- Evidence `eb11c81b75095974e3655aa5b4220c4259a44d86` passes CI
+  `32696503967` and packages `32696503980`. PR `#70` merged normally as
+  `1e453005a01782e9bed887ba9ad489d5b6e51894`; merged-main CI `32697573728` and
+  packages `32697573735` pass. Six platform artifacts, checksums,
+  administrative MSI extraction, consolidation, and the 569-component lockfile
+  SBOM pass; publication is skipped.
+- Read-only preconditions proved all 11 existing original-tree targets exact to
+  prior merge `3fe2b8722` and the one new report absent. Direct raw Git blobs were
+  staged and hash-verified before same-directory atomic replacement. Exactly 12
+  paths synchronized, all 12 destination blobs match, and zero sync temp files
+  remain.
+- Destination parsers, `648/648` source contracts, formatting, product/no-malware
+  gates, client read-back `1/1`, Native `491/13`, compiler `6/6`, Local Core
+  `536/536`, Guard `248/248` standard and `249/249` all-feature, strict lint,
+  both locked workspaces, release builds/two-host trust smoke, Flutter analyze
+  and `838/838` pass.
+- The destination verifier ran from `2026-08-24T06:45:58.0672811Z` through
+  `2026-08-24T06:54:02.1725176Z` and passed exact `248/248`, zero failed/skipped,
+  in `484.1s`; embedded and independent validation pass. Lock blobs and the
+  protected vault remain exact. Checkpoint 2218 is closed while the complete
+  antivirus goal remains active.
+
+## 2026-08-24 - Checkpoint 2219 scripting: handshake-pipe DACL least privilege
+
+- Completed the full scripting batch before execution. The protected handshake
+  DACL now grants SYSTEM normalized full control and the current user only
+  normalized generic read plus generic write; exact parent and child read-backs
+  reject full-control, read-only, write-only, execute, delete, `WRITE_DAC`,
+  `WRITE_OWNER`, or otherwise mismatched current-user ACEs before token exchange.
+- Added a real benign child-path regression, adversarial mask cases, a dedicated
+  definitive-verifier step, exact-249 independent-validator requirements, source
+  contract 649, and synchronized audit/threat/dependency documentation.
+- The pipe creator's token default owner is not changed or independently read
+  back. If the current user owns the object, implicit `READ_CONTROL` and
+  `WRITE_DAC` remain; dual endpoint checks are point-in-time and do not establish
+  encrypted or authenticated cross-identity IPC, AppContainer, driver, or
+  pre-execution protection.
+- No checkpoint-2219 passing result is claimed during scripting. Tests, hosted
+  evidence, merge, synchronization, and destination verification remain pending.
+
+## 2026-08-24 - Checkpoint 2219 corrected local verification
+
+- Initial parser-command variable setup, import formatting, unavailable pytest,
+  one new contract slice, and test-only import warnings all failed visibly and
+  were corrected; none is counted as passing evidence. The repository's
+  dependency-free source contracts now pass `649/649`.
+- Parsers `2/2`, Python compilation, formatting/diff checks, focused real child
+  `1/1`, complete Authenticode `56/13`, both locked workspaces with Native
+  `492/13`, compiler `6/6`, Local Core `536`, Guard `248` standard/`249`
+  all-feature, and strict Native/Local/Guard Clippy pass.
+- Flutter analyze and `838/838` pass. Locked release Local Core/Guard builds and
+  benign two-host trust smoke pass embedded/catalog Microsoft trust, exact hash
+  binding, unsigned rejection, and wrong-hash failure without fixture execution.
+- Exact root Cargo, Native Cargo, and Flutter lock blobs remain
+  `7ab38f4820b08029c64872360fac7141e2512ac4`,
+  `277dd9fe1edfc45fa5550e8e2831f2a0c121561d`, and
+  `51fa085a41168aa1deadace8b5395614db43649e`. The protected vault remains exactly
+  16,072 files, zero directories, 4,522,733 bytes, 5,357 each payload/metadata/
+  auth, one metadata key, and zero pending.
+- Safety/dependency gates and the definitive exact-249 verifier are still
+  pending; hosted, merge, synchronization, and destination evidence are not yet
+  claimed.
+
+## 2026-08-24 - Checkpoint 2219 definitive local evidence
+
+- Branding/product-copy/no-malware, false-positive, protection, synthetic
+  performance, release-prerequisite, pack/package-source, and dependency gates
+  pass. The definitive run from `2026-08-24T07:27:49.3271263Z` through
+  `2026-08-24T07:35:39.6799467Z` passed exact `249/249`, zero failed/skipped, in
+  `470.3s`; embedded and standalone strict validators pass.
+- Eight isolated malformed reports are rejected for missing/renamed step,
+  missing either verified ACL scope, missing ownership limit, failed/skipped
+  target status, and skipped Rust coverage.
+- Locks and the protected vault remain exact. Checkpoint 2219 is locally verified;
+  hosted exact-head evidence, normal merge, guarded synchronization, and
+  destination verification remain pending. The overall antivirus goal remains
+  active.
+
+## 2026-08-24 - Checkpoint 2219 hosted implementation evidence
+
+- Committed exact implementation as
+  `5171fb4e1076de74eb03c5adab7f12f2c1f20a6f`, pushed only the feature branch,
+  and opened draft PR `#71`.
+- Exact-head Avorax CI `32702550130` passes all five jobs. Desktop Packages push
+  `32702466511` and PR `32702550182` pass package contracts, Windows MSI/EXE,
+  Linux DEB/tar, both macOS DMGs, administrative MSI extraction,
+  dependency/license evidence, consolidation, and checksums. Both publication
+  jobs are skipped.
+- The downloaded push artifact contains six platform packages and one CycloneDX
+  1.6 lockfile SBOM with `569` components; independent recomputation matches all
+  seven checksum rows. No artifact was installed, released, or published.
+- Evidence-head checks, normal merge, merged-main checks, guarded synchronization,
+  and destination verification remain pending. `.verification` stays untracked.

@@ -98,6 +98,13 @@ bounded by the existing 10-second duration, 512-file pass, depth-eight, and
 persistent service, OS notification subscription, kernel blocking, or
 pre-execution protection.
 
+**Local execution:** Focused real-child and adversarial masks, complete
+Authenticode, both locked workspaces, strict lint, release trust smoke, Flutter
+`838/838`, source contracts `649/649`, safety/dependency gates, and exact
+verifier/validator `249/249` in `470.3s` pass. Eight malformed reports are
+rejected. Hosted, merge, synchronization, and destination evidence remain
+pending; the ownership and cross-identity limitations above remain unchanged.
+
 ## Checkpoint 2172 Process Command Truncation Threat-Model Note
 
 The Windows process snapshot path no longer discards every command-line
@@ -2133,7 +2140,7 @@ complete integration. The residual risks above remain unchanged.
 prove that the later low-integrity child observes the same exact protected DACL
 and mandatory label on its opened client endpoint before token exchange.
 
-**Locally verified control; hosted/integration pending:** The child requests exactly
+**Verified and integrated control:** The child requests exactly
 `GENERIC_WRITE | READ_CONTROL`, validates the client endpoint and exact parent
 server PID, resolves its current process-token SID, then performs the same bounded
 `GetSecurityInfo(SE_KERNEL_OBJECT)` DACL and mandatory-label read-back before
@@ -2142,8 +2149,11 @@ failure is diagnostic and cannot reach token exchange or publisher trust. No
 write-only or weaker retry exists. Real child `1/1`, Authenticode `63/13`, source
 contracts `648/648`, strict lint, locked workspaces, release smoke, Flutter
 `838/838`, and safety/dependency gates pass. Verifier/validator passes `248/248`
-in `470.1s`; eight malformed reports are rejected, locks and the protected vault
-remain exact. Hosted and integration evidence remain pending.
+in `470.1s`; eight malformed reports are rejected. Evidence `eb11c81`, PR `#70`,
+merge `1e453005`, evidence/merged-main CI and packages, exact 12-path sync,
+destination full workspaces/lint/release/trust-smoke/Flutter checks, and destination
+verifier `248/248` in `484.1s` pass. Locks and the protected vault remain exact;
+publication is skipped.
 
 **Residual risk:** This narrows creation-to-connect descriptor drift but remains a
 point-in-time same-user control. It does not defeat privileged same-user or trusted
@@ -2151,3 +2161,29 @@ in-process mutation/inspection, SYSTEM, process-memory access, or kernel comprom
 provide encryption or cross-identity authentication; create AppContainer/LPAC;
 prove installed LocalSystem or production signing; add driver enforcement; or
 provide pre-execution protection.
+
+## Checkpoint 2219: least-privilege handshake-pipe DACL
+
+**Threat:** The earlier protected DACL gave both SYSTEM and the current user full
+control even though the protocol needs only parent read and child write plus
+descriptor read-back. Extra execute/delete/owner-management rights enlarge the
+same-user attack surface without improving Authenticode trust evidence.
+
+**Locally and exact-head hosted verified control:** The exact DACL grants SYSTEM normalized full control and
+the current user normalized generic read plus generic write. Both endpoint
+read-backs normalize generic pipe/file masks and reject current-user full-control,
+read-only, write-only, execute, delete, `WRITE_DAC`, `WRITE_OWNER`, or any other
+mismatch before token exchange or publisher trust. The real child fixture and
+adversarial benign masks, exact verifier step 249, validator clauses, and source
+contract 649 pass. Exact implementation `5171fb4e` passes CI `32702550130` and
+package push/PR `32702466511`/`32702550182`, including all six packages, seven
+checksums, the 569-component lockfile SBOM, and administrative MSI extraction;
+publication is skipped. Integration and destination evidence remain pending.
+
+**Residual risk:** The pipe creator's token default owner is not changed or
+independently read back. If the current user owns the named pipe, Windows
+ownership supplies implicit `READ_CONTROL` and `WRITE_DAC` independently of the
+narrower ACE. Parent and child checks remain point-in-time evidence and cannot
+prevent same-user descriptor mutation between checks. This does not provide
+encryption, authenticated cross-identity IPC, AppContainer/LPAC, installed
+LocalSystem, production signing, driver enforcement, or pre-execution protection.
