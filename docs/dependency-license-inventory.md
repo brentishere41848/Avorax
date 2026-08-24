@@ -1117,3 +1117,14 @@ Checkpoint 2226 implementation-head package runs `32780474053` and
 components. Untouched consolidated artifacts `9539926286`/`9540008859` pass
 seven-checksum and exact-SBOM in-stream validation; publication is skipped.
 This is dependency evidence, not complete final binary/license approval.
+
+Checkpoint 2226 evidence `bacf1cc`, merge `bab872d`, evidence/merged-main
+package runs `32782113878`/`32784751652`, guarded destination synchronization,
+and destination `256/256` verification preserve the exact three lock blobs.
+The evidence run's first macOS arm64 attempt failed on a hosted Flutter
+toolcache architecture mismatch and is uncredited; its unchanged failed-job-
+only retry passed. Untouched package artifacts `9540950441`/`9541445838` retain
+six platform files, seven matching checksums, and CycloneDX 1.6/569-component
+SBOMs; publication is skipped. No dependency, lockfile, or machine-wide
+component changed. Complete signed final-artifact license, notice, copyright,
+and binary-resolution review remains a production-release prerequisite.

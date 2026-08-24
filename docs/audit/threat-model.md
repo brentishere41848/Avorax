@@ -2429,7 +2429,7 @@ suspended creation and authenticated handshake, but the helper could still
 experience persistent token replacement or modification after initial ACK while
 performing trust work or writing its response.
 
-**Implemented and locally verified control:** The same duplex channel now remains
+**Verified and integrated control:** The same duplex channel now remains
 open through candidate trust and response flush. After writing and flushing
 bounded stdout, the child sends an exact response-ready marker and blocks for a
 distinct final ACK. Before that ACK, the parent queries the same launch
@@ -2443,8 +2443,12 @@ Post-response regressions pass `3/3`, complete Authenticode passes `55/55`,
 Native passes `506/15` plus compiler `6/6`, both locked workspaces and strict
 lint/offline checks pass, and Flutter passes `838/838`. Definitive verifier and
 strict validation pass exact `256/256` in `459.6s`; ten malformed reports are
-rejected. Hosted, integration, synchronization, and destination evidence remain
-pending.
+rejected. Evidence `bacf1cc`, PR `#78`, normal merge `bab872d`, exact evidence-
+head and merged-main CI/packages, exact 12-path guarded synchronization, full
+destination Rust/Flutter checks, and destination verifier/validator `256/256`
+in `438.4s` close checkpoint 2226 integration. The initial arm64 hosted attempt
+and support-wrapper failures remain uncredited; publication was skipped and
+locks and the protected vault remain exact.
 
 **Residual risk:** This third snapshot narrows persistent drift through flushed
 response production but remains point-in-time. It does not cryptographically

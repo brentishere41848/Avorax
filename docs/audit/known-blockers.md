@@ -2563,7 +2563,7 @@ enforcement, or pre-execution blocking is claimed.
   secret or encryption boundary. Cross-identity IPC, AppContainer/LPAC,
   installed LocalSystem, production signing, signed-driver enforcement, and
   demonstrated pre-execution protection remain technical/external blockers.
-- **Checkpoint 2226 locally verified boundary:** the exact duplex handshake now remains
+- **Checkpoint 2226 verified and integrated boundary:** the exact duplex handshake now remains
   open through trust work and response flush. Child emits one exact response-
   ready byte and waits for a distinct final ACK. Parent then revalidates the
   same launch `TokenId`/`ModifiedId` and exact live child `TOKEN_QUERY` identity,
@@ -2573,8 +2573,14 @@ enforcement, or pre-execution blocking is claimed.
   Native `506/15` plus compiler `6/6`, both locked workspaces, strict lint,
   release/two-host smoke, and Flutter `838/838` pass. Definitive verifier and
   validator pass `256/256` in `459.6s`, and ten malformed reports are rejected.
-  Hosted, integration, synchronization, and destination evidence remain
-  pending.
+- **Checkpoint 2226 integration blockers closed:** evidence `bacf1cc`, PR
+  `#78`, merge `bab872d`, evidence/merged-main CI and package runs, exact 12-
+  path guarded synchronization, full destination Rust/Flutter suites, and
+  destination verifier/validator `256/256` in `438.4s` pass. The evidence arm64
+  retry and all support-wrapper failures remain retained and uncredited.
+  Publication was skipped; locks and the protected vault remain exact.
+  Checkpoint 2226 has no integration blocker, while its technical limits and
+  the larger goal remain.
 - **Checkpoint 2226 residual technical blocker:** this closes persistent
   post-initial-ACK drift only at a third point-in-time response-ready boundary.
   It does not cryptographically bind response bytes to token snapshots, bind

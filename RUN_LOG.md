@@ -10007,3 +10007,47 @@ Updates page showed:
   exact current `x64.msi`/`x64-setup.exe` names then pass. The failed check is
   retained and uncredited. Draft PR `#78` remains exact; evidence-head checks,
   merge, merged-main evidence, synchronization, and destination proof remain.
+
+## 2026-08-24 continuation checkpoint 2226 integration closure
+
+- Evidence `bacf1ccb8f0f47020ee0798522a01f6a3ca0ffca` passes CI
+  `32782113876`. Package run `32782113878` passes on failed-job-only attempt 2:
+  attempt 1 failed only macOS arm64 when hosted Flutter tried a darwin-x64
+  `impellerc`; the unchanged retry passed. The failed attempt is uncredited.
+- Untouched evidence artifact `9540950441` has SHA-256
+  `14e45afec7639b698cc3b0d6733bf43e633c0a970731a5cf5776783226dbadcf`
+  and passes exact six-platform-file, seven-checksum, and CycloneDX 1.6/569-
+  component in-stream validation. Publication is skipped.
+- PR `#78` was made ready and head-locked, then normally merged as
+  `bab872d50daf5bbcc775a53e3c0788c51770ca33`. Merged-main CI
+  `32784751719` and packages `32784751652` pass. Untouched artifact
+  `9541445838` has SHA-256
+  `c10e9e0cd43798431d9b398fea1bbec8b7d78b12e8b872f49f0598e2cea0ba40`
+  and passes the same exact stream checks; publication is skipped.
+- The merge changed exactly 12 paths from parent `5792c22f` with zero deletes.
+  Eleven existing destination paths matched the parent and the new report was
+  absent. Exact atomic synchronization to `C:\Users\Brent\Documents\Avorax-main`
+  preserves all unrelated files; normalized blobs and raw hashes match source.
+- Destination parsers `2/2`, contracts `656/656`, focused `3/3`, complete
+  Authenticode `70/15`, Native `506/15` plus compiler `6/6`, Local `536/536`,
+  Guard `248/248`, both locked workspaces, strict Clippy, offline Native,
+  formatting, release/two-host smoke, Flutter analyze, and Flutter `838/838`
+  pass. Definitive verification ran from `2026-08-24T22:54:38.3164086Z`
+  through `2026-08-24T23:01:56.7274772Z` and passed exact `256/256`, zero
+  failed/skipped, in `438.4s`; target `0.3s` and both validators pass.
+- Support failures remain retained and uncredited: stale Windows artifact names,
+  a JavaScript/PowerShell parse failure, a pre-execution command-policy sync
+  rejection, and a destination Cargo helper's accidental automatic `$args`
+  false positive. Corrected exact wrappers ran and passed; none changed product
+  behavior, copied files, or counts as evidence.
+- Closure-document validation first invoked `unittest` and discovered zero
+  tests, then found no optional `pytest` in either available Python runtime;
+  neither attempt is evidence. The no-malware gate also correctly refused an
+  ambient `PATH` Python. The dependency-free source-contract runner passes
+  `656/656`; explicit bundled-Python no-malware, branding, product-copy,
+  formatting, and diff gates pass.
+- Lock blobs and the read-only protected vault remain exact at 16,072 files,
+  zero directories, 4,522,733 bytes, 5,357 each payload/metadata/auth, one key,
+  and zero pending. `.verification` remains untracked/unstaged. Nothing was
+  installed, executed as candidate content, released, or published. Checkpoint
+  2226 is closed; its explicit limits and the overall antivirus goal remain.

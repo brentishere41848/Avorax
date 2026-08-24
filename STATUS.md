@@ -5876,7 +5876,7 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
 
 ## Checkpoint 2226 - Authenticode post-response token stability (2026-08-24)
 
-- **Implemented and locally verified:** the same duplex handshake now remains open
+- **Verified and integrated:** the same duplex handshake now remains open
   through candidate trust work and response flush. The child flushes stdout,
   sends an exact one-byte response-ready marker, and blocks for a distinct
   final ACK.
@@ -5903,13 +5903,25 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
 - **Implementation-head hosted evidence:** exact `74d7d963` passes CI
   `32780511368` and package push/PR `32780474053`/`32780511318`, including all
   six platform artifacts, checksums and a 569-component lockfile SBOM;
-  publication is skipped. Draft PR `#78` is exact. Evidence-head, merge,
-  synchronization, and destination proof remain pending.
+  publication is skipped.
 - **Technically limited:** this remains point-in-time and does not bind the
   distinct impersonation token object, cryptographically bind response bytes
   to token snapshots, prevent every transient or mutation after final ACK, or
   stop same-session injection/privileged handle duplication. Response-ready
   and final ACK are not secret/encrypted. Cross-identity IPC, AppContainer/
   LPAC, installed LocalSystem, signed-driver, and pre-execution enforcement
-  remain separate. Definitive verifier, hosted/package, merge, synchronization,
-  and destination evidence remain pending.
+  remain separate, and the complete antivirus goal remains active.
+- **Integration and destination closure:** evidence `bacf1cc`, PR `#78`, and
+  normal merge `bab872d` are complete. Evidence-head CI/packages
+  `32782113876`/`32782113878` and merged-main CI/packages
+  `32784751719`/`32784751652` pass with publication skipped. The evidence arm64
+  job passed an unchanged failed-job-only retry after a hosted Flutter toolcache
+  architecture mismatch; the failed first attempt is retained and uncredited.
+  Untouched artifacts `9540950441`/`9541445838` each contain six platform
+  files, seven matching checksums, and a CycloneDX 1.6/569-component SBOM.
+  Exactly 12 paths synchronized with zero deletes and match merge/source.
+  Destination Native `506/15` plus compiler `6/6`, Local `536/536`, Guard
+  `248/248`, both locked workspaces, strict lint, offline Native, Flutter
+  analyze and `838/838`, and exact verifier/validator `256/256` in `438.4s`
+  pass. Locks and the protected vault remain exact. Checkpoint 2226 is closed;
+  the complete antivirus goal remains active.
