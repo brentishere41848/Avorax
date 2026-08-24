@@ -2525,8 +2525,36 @@ enforcement, or pre-execution blocking is claimed.
   injection. Cross-identity IPC, AppContainer/LPAC, installed LocalSystem,
   production signing, signed-driver enforcement, and demonstrated pre-execution
   protection remain technical or external prerequisites.
-- Hosted exact-head CI/packages, evidence commit, normal merge, merged-main
-  checks, guarded destination synchronization, and destination verification
-  remain required before checkpoint 2224 can close. No passing result was
-  claimed during scripting; locks/vault remain exact and the overall antivirus
-  goal remains active.
+- **Checkpoint 2224 integration blockers closed:** implementation `c831149`,
+  evidence `42d8c7c`, PR `#76`, merge `243bc84`, exact evidence-head and
+  merged-main CI/packages, guarded 12-path synchronization, full destination
+  Rust/Flutter suites, and destination verifier/validator `254/254` in `494.5s`
+  pass. Publication was skipped; locks and the protected vault remain exact.
+  The residual identity/isolation/driver limits above and the overall antivirus
+  goal remain open, but checkpoint 2224 has no integration blocker.
+- **Checkpoint 2225 scripted boundary:** the handshake is now duplex and the
+  child waits for exact ACK flow control after its nonce write. Parent
+  `TOKEN_QUERY` reads of the exact child process token at suspended creation and
+  after authenticated handshake require primary type, launch SID/logon session,
+  stripped restricted low-integrity safety state, and exact stability of the
+  child token's own `TokenId` and `ModifiedId`; any process/token/profile/ACK/
+  timeout/cleanup failure is fail-visible. Benign/adversarial tests, source
+  contract 655, verifier step 255, validator, and documentation are scripted.
+- **Checkpoint 2225 blocked design replaced:** the first focused runtime failed
+  visibly because `CreateProcessAsUserW` produced a child token object with a
+  distinct `TokenId` from the supplied launch-primary token on this host.
+  Cleanup returned `ok`; the failed exact cross-object equality design is not
+  counted as a pass. The repair binds launch identity/security properties and
+  captures/rechecks the child token's own object identity instead. Repair tests
+  pass `2/2`, complete Authenticode passes `52/52`, and definitive verification
+  passes exact `255/255` in `521.1s`; hosted integration and destination proof
+  remain pending.
+- **Checkpoint 2225 residual technical blocker:** this remains point-in-time.
+  Exact launch-primary/child `TokenId` equality is technically unavailable and
+  not claimed. The viable control does not bind the distinct named-pipe
+  impersonation token object to either primary token, prevent replacement or
+  mutation after ACK, detect every transient between snapshots, or stop same-
+  session process injection or privileged handle duplication. ACK is not a
+  secret or encryption boundary. Cross-identity IPC, AppContainer/LPAC,
+  installed LocalSystem, production signing, signed-driver enforcement, and
+  demonstrated pre-execution protection remain technical/external blockers.

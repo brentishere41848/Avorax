@@ -9774,3 +9774,83 @@ Updates page showed:
   remain exact. Nothing was installed, executed as candidate content, released,
   or published. Checkpoint 2224 is closed; the overall antivirus goal remains
   active.
+
+## 2026-08-24 continuation checkpoint 2225 scripting
+
+- Started `agent/checkpoint-2225-authenticode-child-process-token-binding` from
+  local checkpoint-2224 closure `86704a4`.
+- Scripted a duplex parent-child handshake with exact one-byte ACK flow control.
+  The child opens with generic read/write plus `READ_CONTROL`, writes its nonce,
+  then waits for ACK. Parent bounded overlapped ACK I/O retains timeout and
+  cancellation settlement; missing, malformed, or incomplete ACK fails visibly.
+- Parent `OpenProcessToken(process, TOKEN_QUERY)` now compares the exact child
+  process token's nonempty `TokenId`/`ModifiedId` with launch-primary evidence
+  while suspended before Job/resume and again after PID, connected-client-token,
+  nonce, and launch-token authentication while the child waits for ACK.
+- Scripted benign full-path and adversarial drift/empty-ID/invalid-handle/
+  malformed-ACK regressions, source contract 655, verifier step 255, strict
+  exact-255 report validation, and checkpoint/audit/status/dependency docs.
+- Final scripting review aligned the legacy Owner Rights fixture with duplex
+  production pipe direction and updated the cumulative client-security report
+  contract from stale write-only rights to exact generic read/write plus
+  `READ_CONTROL`. It also reconciled stale checkpoint-2224 pending text with
+  the already verified evidence/merge/destination closure.
+- No checkpoint-2225 parser, formatter, build, lint, test, or verifier has run
+  yet. The boundary remains point-in-time, does not bind the distinct named-pipe
+  impersonation token, and does not solve post-ACK mutation, transient mutation,
+  same-session injection, privileged handle duplication, cross-identity IPC,
+  AppContainer/LPAC, signed-driver, or pre-execution limits. No dependency or
+  lockfile change is intended; no service/driver was started, Defender was not
+  changed, and protected quarantine content was not touched.
+
+## 2026-08-24 continuation checkpoint 2225 initial execution and repair
+
+- `git diff --check`, two PowerShell parsers, bundled-Python compilation, and
+  formatting pass after two mechanical rustfmt edits. Optional `pytest` was
+  absent from both existing Python runtimes; nothing was installed. The
+  dependency-free repository runner first exposed two source-contract slice/
+  rustfmt assumptions, both were corrected, and all `655/655` then passed.
+- The first focused Rust run compiled. Its pure adversarial case passed, while
+  the benign production path failed visibly before resume because the process
+  token `TokenId` did not equal the supplied launch-primary `TokenId`; suspended
+  cleanup reported `ok`. This failed design is retained as evidence and is not
+  counted as a pass.
+- The repair acknowledges the verified Windows cross-object behavior instead
+  of weakening failures: exact process-handle `TOKEN_QUERY` now requires the
+  launch SID and AuthenticationId/session plus primary, privilege-stripped,
+  zero-restricting-SID, low-integrity/no-write-up, canonical virtualization and
+  disabled-UIAccess evidence. It captures the child token's own nonempty
+  `TokenId`/`ModifiedId` before resume and requires that exact pair plus the full
+  profile again after authenticated handshake while the child waits for ACK.
+- Adversarial token-type, identity, logon-session, restricting-SID, policy,
+  UIAccess, empty-ID, four-field drift, invalid-handle, and malformed-ACK tests;
+  cumulative verifier/validator claims; and all audit/dependency/status docs
+  were updated together.
+
+## 2026-08-24 continuation checkpoint 2225 local verification
+
+- The repaired production/adversarial target passes `2/2`; complete
+  Authenticode passes `52/52`; Native passes `503` with `13` ignored plus
+  signature compiler `6/6`. Both locked root-workspace variants, strict Native/
+  Local/Guard Clippy, standalone locked/offline Native all-target checking,
+  Flutter analyze and `838/838`, source contracts `655/655`, both PowerShell
+  parsers, formatting, and diff checks pass.
+- Definitive verification ran from `2026-08-24T19:26:42.1793451Z` through
+  `2026-08-24T19:35:23.2776529Z` and passed exact `255/255`, zero failed or
+  skipped, in `521.1s`; the new target passed in `0.3s`. Embedded and
+  independently repeated strict validation pass. Nine isolated malformed
+  reports covering schema, status, Defender option, both skip flags, missing
+  target, missing verified/technical scope, and a failed final step were all
+  rejected with exit code 1 and removed.
+- The first adversarial wrapper command was rejected by command policy before
+  execution because it contained recursive shell cleanup. It created no files
+  and is not counted as evidence; the corrected isolated .NET-cleanup wrapper
+  passed `9/9`.
+- Root Cargo, Native Cargo, and Flutter lock blobs remain exactly
+  `7ab38f4820b08029c64872360fac7141e2512ac4`,
+  `277dd9fe1edfc45fa5550e8e2831f2a0c121561d`, and
+  `51fa085a41168aa1deadace8b5395614db43649e`. Read-only protected-vault
+  inventory remains 16,072 files, zero directories, 4,522,733 bytes, 5,357 each
+  payload/metadata/auth, one key, and zero pending/temp. Nothing was installed,
+  executed as candidate content, released, or published. Hosted exact-head,
+  merge, guarded synchronization, and destination evidence remain pending.
