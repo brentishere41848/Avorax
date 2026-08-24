@@ -9875,3 +9875,42 @@ Updates page showed:
   normal merge, merged-main evidence, guarded original-tree synchronization,
   and destination verification remain pending. Nothing was installed, executed
   as candidate content, released, or published.
+
+## 2026-08-24 continuation checkpoint 2225 integration closure
+
+- Evidence `d1a1e147386c64b085920414bf80f8030a480965` passes CI
+  `32771093960` and packages `32771093928`. Its untouched consolidated artifact
+  `9536921340` has SHA-256
+  `c07b8cfc65f7c5e2e99ba7c9c141f6dbb8cf966b489400922c7fe92ec8c406e6`
+  and passes exact six-platform-file, seven-checksum, and CycloneDX 1.6/569-
+  component in-stream validation.
+- PR `#77` was clean and head-locked, then merged normally as `5792c22f`.
+  Merged-main CI `32773257838` and packages `32773257841` pass all jobs except
+  the intentionally skipped publication job. Artifact `9537511908` has SHA-256
+  `0c169ba2bbb561801834509b059db27472e5dd54744915d13ad8f87b57a21047`
+  and passes the same untouched-stream checks. No candidate installer was
+  extracted or executed.
+- All existing destination preconditions matched parent `243bc84d` and the new
+  report was absent. Exactly the merge's 12 changed paths synchronized to
+  `C:\Users\Brent\Documents\Avorax-main` with zero deletes; normalized blobs
+  match merge `5792c22` and raw SHA-256 values match source. No unrelated
+  destination change was overwritten.
+- Destination parsers `2/2`, contracts `655/655`, target `2/2`, Authenticode
+  `52/52`, Native `503/13` plus compiler `6/6`, Local `536/536`, Guard
+  `248/248`, both locked workspaces, strict Native/Local/Guard Clippy, offline
+  Native, Flutter analyze, and Flutter `838/838` pass. Definitive verification
+  ran from `2026-08-24T20:44:58.0820536Z` through
+  `2026-08-24T20:52:54.3725037Z` and passed exact `255/255`, zero failed or
+  skipped, in `476.3s`; target `0.3s` and embedded/independent Windows
+  PowerShell 5.1 validators pass.
+- Support failures remain retained and uncredited: recursive-cleanup command
+  policy rejection, JavaScript/backtick parse failure, stale generic SBOM name,
+  synchronization-wrapper interpolation failure, and a standalone PowerShell 7
+  validator mismatch caused by automatic ISO timestamp conversion. Corrected
+  bounded wrappers pass; none of the failed attempts changed product behavior,
+  copied files, started workflows, or counts as evidence.
+- Lock blobs and the read-only protected vault remain exact at 16,072 files,
+  zero directories, 4,522,733 bytes, 5,357 each payload/metadata/auth, one key,
+  and zero pending. Nothing was installed, executed as candidate content,
+  released, or published. Checkpoint 2225 is closed; its explicit limits and
+  the overall antivirus goal remain active.

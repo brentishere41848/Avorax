@@ -5823,7 +5823,7 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
 
 ## Checkpoint 2225 - Authenticode child process-token binding (2026-08-24)
 
-- **Locally and implementation-head hosted verified:** the handshake is duplex and the child waits
+- **Verified and integrated:** the handshake is duplex and the child waits
   after its nonce write for an exact one-byte ACK. The parent queries the token
   attached to the exact child process with `TOKEN_QUERY` while suspended and
   again after PID/client-token/nonce/launch-token authentication. Both require
@@ -5854,12 +5854,22 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   to either primary token, prevent replacement/mutation after ACK, detect every
   transient, or stop same-session injection/privileged handle duplication. ACK
   is not secret/encrypted. Cross-identity IPC, AppContainer/LPAC, installed
-  LocalSystem, signed-driver, and pre-execution enforcement remain separate;
-  evidence-head checks, merge, guarded synchronization, and destination proof
-  remain pending, and the overall antivirus goal remains active.
+  LocalSystem, signed-driver, and pre-execution enforcement remain separate,
+  and the overall antivirus goal remains active.
 - **Implementation-head hosted verified:** exact `311d9a2` passes CI
   `32769512557` and package push/PR runs `32769502849`/`32769512526`. Both
   untouched consolidated ZIP streams contain six platform artifacts, seven
   exact checksum rows, and CycloneDX 1.6 SBOMs with 569 components; publication
-  is skipped. Draft PR `#77` is open. Evidence-head, merge, merged-main,
-  guarded synchronization, and destination proof remain pending.
+  is skipped.
+- **Integration and destination closure:** evidence `d1a1e14`, PR `#77`, and
+  normal merge `5792c22` are complete. Evidence-head CI/packages
+  `32771093960`/`32771093928` and merged-main CI/packages
+  `32773257838`/`32773257841` pass with publication skipped. Exact in-stream
+  verification passes artifacts `9536921340` and `9537511908`, each with six
+  platform files, seven matching checksums, and a CycloneDX 1.6/569-component
+  SBOM. Exactly 12 paths synchronized with zero deletes and match merge/source.
+  Destination Native `503/13` plus compiler `6/6`, Local `536/536`, Guard
+  `248/248`, both locked workspaces, strict lint, offline Native, Flutter
+  analyze and `838/838`, and exact verifier/validator `255/255` in `476.3s`
+  pass. Locks and the protected vault remain exact. Checkpoint 2225 is closed;
+  the complete antivirus goal remains active.

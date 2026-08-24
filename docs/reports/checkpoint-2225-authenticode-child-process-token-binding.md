@@ -111,9 +111,8 @@ Root Cargo, Native Cargo, and Flutter lock blobs remain exactly
 `51fa085a41168aa1deadace8b5395614db43649e`. Read-only inventory confirms the
 protected vault remains exactly 16,072 files, zero directories, 4,522,733
 bytes, 5,357 each `.avoraxq`/`.json`/`.auth`, one `.metadata_auth_key`, and zero
-pending/temp. Implementation-head hosting is recorded below; evidence-head
-checks, normal merge, guarded original-tree synchronization, and destination
-verification remain pending, so checkpoint 2225 is not yet closed.
+pending/temp. Implementation-head hosting and complete integration closure are
+recorded below.
 
 ## Implementation-Head Hosted Evidence
 
@@ -138,7 +137,58 @@ failed to parse before execution because PowerShell backticks conflicted with
 its template literal and created nothing. The corrected wrapper first rejected
 a stale generic SBOM filename assumption after reading the first ZIP; selecting
 the exact versioned `*-lockfile.cdx.json` entry then validated both complete
-streams. Neither failed attempt is counted as evidence. Draft PR `#77` remains
-at the exact implementation head. Evidence-head checks, normal merge, merged-
-main evidence, guarded synchronization, and destination verification remain
-pending; nothing was installed, executed, released, or published.
+streams. Neither failed attempt is counted as evidence. Nothing was installed,
+executed, released, or published.
+
+## Integration And Destination Closure
+
+Evidence commit `d1a1e147386c64b085920414bf80f8030a480965` passes Avorax
+CI `32771093960` and Desktop Packages PR run `32771093928`; its publication job
+is skipped. Untouched consolidated artifact `9536921340` has SHA-256
+`c07b8cfc65f7c5e2e99ba7c9c141f6dbb8cf966b489400922c7fe92ec8c406e6`
+and passes the same exact eight-entry, seven-checksum, CycloneDX 1.6, and 569-
+component in-stream checks.
+
+PR `#77` was clean and head-locked to the evidence commit, then merged normally
+without a direct-main push as merge `5792c22f3815f4eccbc97a78d5ae9e01873193f5`.
+Merged-main CI `32773257838` and Desktop Packages `32773257841` pass all CI,
+contract, Windows x64 MSI/EXE, Linux x64 DEB/tar, macOS arm64/x64 DMG, and
+consolidation jobs; publication is skipped. Merged artifact `9537511908` has
+SHA-256 `0c169ba2bbb561801834509b059db27472e5dd54744915d13ad8f87b57a21047`
+and independently passes the exact eight-entry, seven-checksum, and 569-
+component SBOM checks without extraction or execution.
+
+The merge changed exactly 12 paths from parent `243bc84d34120af67f2bec1b93e1f5a0e8e92f3c`.
+Every existing destination path first matched that parent and the new report
+was absent. Exactly those 12 paths were copied with zero deletes to
+`C:\Users\Brent\Documents\Avorax-main`; every normalized destination blob
+matches the merge and every raw SHA-256 matches the source. No unrelated
+destination change was overwritten.
+
+Destination parsers `2/2`, source contracts `655/655`, target `2/2`, complete
+Authenticode `52/52`, Native `503` passed/`13` ignored plus compiler `6/6`,
+Local Core `536/536`, Guard `248/248`, both locked workspaces, strict Native/
+Local/Guard Clippy, standalone locked/offline Native all-targets/all-features,
+Flutter analysis, and Flutter `838/838` pass. Definitive destination
+verification ran from `2026-08-24T20:44:58.0820536Z` through
+`2026-08-24T20:52:54.3725037Z` and passed exact `255/255`, zero failed or
+skipped, in `476.3s`; the checkpoint step passed in `0.3s`. Its embedded and an
+independent Windows PowerShell 5.1 `-RequireFullSuite` validator pass.
+
+Support-wrapper failures remain explicit and are not counted as product
+evidence: one adversarial-report command was blocked before execution by its
+recursive cleanup shape; one artifact JavaScript wrapper failed parsing and
+created nothing; one artifact inspection rejected a stale generic SBOM name;
+and one synchronization JavaScript wrapper failed interpolation before copying
+anything. Corrected bounded reruns passed. A standalone validator invocation
+under PowerShell 7 also rejected ISO timestamps because that interpreter
+auto-converted JSON strings to `DateTime`; the exact supported Windows
+PowerShell 5.1 invocation then passed `255/255`, matching the verifier's
+embedded validator. The PowerShell 7 mismatch is not counted as a pass.
+
+Final read-only checks retain the three exact lock blobs and protected-vault
+invariant above. No service or driver was installed or started, Defender was
+not weakened, candidate installers were not extracted or executed, and no
+release or publication occurred. Checkpoint 2225 is closed; its documented
+point-in-time, identity, isolation, signed-driver, and pre-execution limits and
+the complete antivirus goal remain active.
