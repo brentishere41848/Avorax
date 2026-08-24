@@ -8899,3 +8899,35 @@ Updates page showed:
   in both runs. No release, publication, install, or machine-wide change occurred.
 - Evidence-head checks, normal PR merge, merged-main evidence, guarded original-
   tree synchronization, and destination reruns remain pending.
+
+## Checkpoint 2215 Integration Closure
+
+- Evidence `79e865cb21a26cf42e4a5dab849c5f0ea44d10c6` passes exact-head
+  Avorax CI `32675987165` and Desktop Packages PR `32675987151`. PR `#67`
+  was clean/mergeable against `cbf6203` and merged normally as
+  `c298c3a1c80bf186a88f1b0e6385733e8d83798b`.
+- Merged-main Avorax CI `32676733841` and Desktop Packages `32676733940` pass.
+  Both evidence-head and merged-main package runs pass Windows MSI/setup EXE,
+  Linux DEB/tar, macOS x64/arm64 DMGs, dependency/license evidence, administrative
+  MSI extraction, six-artifact consolidation, checksums, lockfile SBOM, and five
+  unexpired exact-SHA artifact bundles. Publication is skipped.
+- All 11 existing destination files exactly matched prior main and the new report
+  was absent. A first complex synchronization command was rejected by command
+  policy before execution. The simplified bounded path/root/reparse/hash-checked
+  route atomically synchronized exactly 12 files (`6,113,948` bytes) to
+  `C:\Users\Brent\Documents\Avorax-main`; all final blobs match the merge and
+  zero sync temporary files remain.
+- The destination definitive verifier/validator passes exactly `245/245`, zero
+  failed/skipped, from `2026-08-24T00:46:28.6908011Z` through
+  `2026-08-24T00:55:23.5541237Z` (`534.8s`). Complete Authenticode passes
+  `59`/`12`; strict Native/Local/Guard Clippy passes; both locked standard and
+  all-feature workspaces pass Native `487`/`12` plus compiler `6/6`; release
+  builds/two-host trust smoke, Flutter analyze and `838/838`, and no-malware,
+  dependency, source, package, performance, and protection gates pass.
+- Root Cargo, Native Cargo, and Git-filtered Flutter lockfiles remain exact at
+  `7ab38f4820b08029c64872360fac7141e2512ac4`,
+  `277dd9fe1edfc45fa5550e8e2831f2a0c121561d`, and
+  `51fa085a41168aa1deadace8b5395614db43649e`. The protected vault remains exactly
+  16,072 files, zero directories, 4,522,733 bytes, 5,357 each payload/metadata/
+  auth, one metadata key, and zero pending. Checkpoint 2215 is closed; the full
+  antivirus goal remains active.

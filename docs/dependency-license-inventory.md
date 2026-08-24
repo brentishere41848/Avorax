@@ -747,3 +747,13 @@ requires all six native artifacts, creates checksums and the lockfile SBOM, and
 uploads five unexpired artifact bundles bound to the exact SHA. Publication is
 skipped. Complete signed final-artifact license/notice and binary-resolution
 review remains pending.
+
+Evidence head `79e865c` and merged main `c298c3a` pass Desktop Packages runs
+`32675987151` and `32676733940`. Each requires six native artifacts, dependency/
+license evidence, checksums, lockfile SBOM, administrative MSI extraction, and
+five exact-SHA artifact bundles; publication is skipped. Destination root Cargo,
+Native Cargo, and Git-filtered Flutter lock blobs remain exactly
+`7ab38f4820b08029c64872360fac7141e2512ac4`,
+`277dd9fe1edfc45fa5550e8e2831f2a0c121561d`, and
+`51fa085a41168aa1deadace8b5395614db43649e`. Complete signed final-artifact
+license/notice and binary-resolution review remains pending.

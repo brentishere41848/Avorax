@@ -2233,6 +2233,13 @@ enforcement, or pre-execution blocking is claimed.
   launch PID is not secret. Same-user handle duplication, authenticated/encrypted
   cross-identity IPC, AppContainer, installed LocalSystem, signed-driver, and pre-
   execution proof remain separate blockers.
+- **Integration closure:** Evidence `79e865c` passes CI `32675987165` and packages
+  `32675987151`; PR `#67` merges normally as `c298c3a`; merged-main CI
+  `32676733841` and packages `32676733940` pass. Exact 12-path original-tree
+  synchronization and destination verifier `245/245`, Authenticode `59`/`12`,
+  strict lint, both locked workspaces, Flutter `838/838`, no-malware/dependency,
+  exact lockfile, and protected-vault checks pass. Publication is skipped.
+  Checkpoint 2215 has no remaining integration blocker.
 
 ## Checkpoint 2214: Authenticode Job Membership Is Locally Verified
 

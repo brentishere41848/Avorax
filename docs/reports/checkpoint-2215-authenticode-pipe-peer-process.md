@@ -116,19 +116,48 @@ lockfile SBOM, and artifact upload. Each has five unexpired artifact bundles
 bound to the exact implementation SHA. Prerelease publication is skipped in
 both runs.
 
-Evidence-head checks, normal merge, merged-main evidence, guarded original-tree
-synchronization, and destination verification remain pending. No release,
+At the exact-implementation evidence point, evidence-head checks, normal merge,
+merged-main evidence, guarded original-tree synchronization, and destination
+verification remained pending; the closure is recorded below. No release,
 publication, install, service/driver start, Defender change, candidate execution,
 or protected-vault mutation occurred.
 
 ## Current Classification
 
 - Verified: local implementation, focused/adversarial runtime, complete regression,
-  definitive report/validator, exact lockfiles, protected-vault invariant, and
-  exact-implementation-head hosted CI/package evidence.
-- Partial: evidence-head, merge, merged-main, original-tree synchronization,
-  destination, installed LocalSystem, and production-signed evidence remain pending.
+  definitive report/validator, exact lockfiles, protected-vault invariant,
+  exact-implementation/evidence/merged-main hosted CI/package evidence, normal
+  merge, exact original-tree synchronization, and destination verification.
+- Partial: installed LocalSystem and production-signed evidence remain pending.
 - Disabled/blocked: no weaker fallback is enabled if peer-process evidence is
   unavailable.
 - Technically limited: child-side parent-creator binding is not parent-side child
   authentication, secret IPC, encryption, or same-user duplication prevention.
+
+## Integration Closure
+
+- Evidence head `79e865cb21a26cf42e4a5dab849c5f0ea44d10c6` passes
+  Avorax CI `32675987165` and Desktop Packages PR `32675987151`. The package
+  run passes Windows MSI/setup EXE, Linux DEB/tar, both macOS DMGs, six-artifact
+  consolidation, checksums, lockfile SBOM, administrative MSI extraction, and
+  five exact-head artifact bundles; publication is skipped.
+- PR `#67` was `CLEAN` and `MERGEABLE` at base `cbf6203` and evidence head
+  `79e865c`, then merged normally as
+  `c298c3a1c80bf186a88f1b0e6385733e8d83798b`. Merged-main Avorax CI
+  `32676733841` and Desktop Packages `32676733940` pass with five unexpired
+  merge-SHA artifact bundles and skipped publication.
+- All 11 existing original-tree destinations byte-matched prior main before any
+  write; the new report was absent. Exactly 12 bounded paths totaling `6,113,948`
+  bytes were atomically synchronized to `C:\Users\Brent\Documents\Avorax-main`.
+  Every destination now matches the merge blob and zero sync temporary files remain.
+- Destination verification passes the exact `245/245` full verifier/validator in
+  `534.8s`, Authenticode `59` passed/`12` ignored, strict Native/Local/Guard
+  Clippy, both locked workspace variants with Native `487`/`12` plus compiler
+  `6/6`, release builds/two-host trust smoke, Flutter analyze and `838/838`, and
+  all no-malware/dependency/package/source gates. Lockfile blobs and the protected
+  vault invariant remain exact.
+
+Checkpoint 2215 is integrated and synchronized. Installed LocalSystem,
+production-signed, AppContainer, cross-identity IPC, driver, and pre-execution
+evidence remain partial, blocked, or technically limited; the complete antivirus
+goal remains active.
