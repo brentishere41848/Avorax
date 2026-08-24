@@ -2311,8 +2311,10 @@ enforcement, or pre-execution blocking is claimed.
   malformed reports are rejected. Exact implementation `a518e93` passes CI
   `32687717433` and package push/PR `32687664061`/`32687717444`, including all six
   packages, checksums, SBOM, and administrative MSI extraction with publication
-  skipped. Evidence-head, merge, synchronization, and destination evidence remain
-  pending.
+  skipped. Evidence `5fe8dd2`, PR `#69`, merge `3fe2b87`, evidence-head and
+  merged-main CI/packages, exact 12-path synchronization, destination
+  Authenticode `62/13`, and destination verifier/validator `247/247` now pass.
+  Checkpoint 2217 has no remaining integration blocker.
 - The control intentionally does not request the full SACL,
   `ACCESS_SYSTEM_SECURITY`, or `SeSecurityPrivilege`. `LABEL_SECURITY_INFORMATION`
   is mandatory-label-only evidence. Same-user privileged mutation/inspection,

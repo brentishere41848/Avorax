@@ -25903,8 +25903,19 @@ def test_native_authenticode_handshake_pipe_security_is_read_back_exactly():
         "Publish desktop beta prerelease",
     ]:
         assert hosted_evidence in normalized_checkpoint
-    assert "Evidence-head checks" in normalized_checkpoint
-    assert "remain pending" in normalized_checkpoint
+    for integration_evidence in [
+        "5fe8dd288ec403da08197148b67b9a71b9d4dd0e",
+        "3fe2b872258f7bfb5388112a3574b31e7564cdb3",
+        "32689308547",
+        "32689308533",
+        "32690610422",
+        "32690610424",
+        "all 12 destination blobs exact",
+        "passed exact `247/247`",
+        "Checkpoint 2217 is closed",
+    ]:
+        assert integration_evidence in normalized_checkpoint
+    assert "destination verification remain pending" not in normalized_checkpoint
     assert "adds no crate, package, feature, or lockfile change" in re.sub(
         r"\s+", " ", documents[-1]
     )

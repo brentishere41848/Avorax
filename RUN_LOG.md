@@ -9083,3 +9083,32 @@ Updates page showed:
   released, or published.
 - Evidence-head CI/packages, normal merge, merged-main evidence, guarded sync, and
   destination verification remain pending. `.verification` remains untracked.
+
+## 2026-08-24 - Checkpoint 2217 integration closure
+
+- Evidence `5fe8dd288ec403da08197148b67b9a71b9d4dd0e` passes CI
+  `32689308547` and packages `32689308533`. PR `#69` merged normally as
+  `3fe2b872258f7bfb5388112a3574b31e7564cdb3`; merged-main CI
+  `32690610422` and packages `32690610424` pass. All six platform artifacts,
+  checksums, administrative MSI extraction, consolidation, and the 569-component
+  lockfile SBOM pass; publication is skipped.
+- Read-only sync preconditions proved the original tree was exactly checkpoint-
+  2216 evidence `b1c5b4e` for every existing target. A first `git archive`
+  staging source changed line endings and was rejected before any target write.
+  Direct `git cat-file blob` materialization preserved raw Git content; exactly
+  12 merge-delta files were atomically synchronized, all 12 post-sync blobs match,
+  and zero temporary staging files remain.
+- Destination parsers `2/2`, source contracts `647/647`, rustfmt, focused
+  read-back `1/1`, complete Authenticode `62/13`, strict Native/Local/Guard
+  Clippy, both locked workspaces, release Local Core/Guard builds, two-host benign
+  smoke, Flutter analyze and `838/838`, and the full safety/dependency/package-
+  source gates pass.
+- The first post-closure source-contract run correctly failed because its old
+  document assertion still required pending integration; the repaired contract
+  pins exact closure evidence and `647/647` pass. The first standalone no-malware
+  invocation refused ambient Python; its explicit bundled-Python rerun passes.
+- The destination verifier ran from `2026-08-24T05:11:13.9731668Z` through
+  `2026-08-24T05:18:45.0068295Z` and passed exact `247/247`, zero failed/skipped,
+  in `451.0s`; embedded and independent strict validation pass. Lock blobs and
+  the protected vault remain exact. Checkpoint 2217 is closed, while the complete
+  antivirus goal remains active.

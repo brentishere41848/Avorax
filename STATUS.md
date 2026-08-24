@@ -5518,3 +5518,20 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
 - Point-in-time read-back remains user-mode same-user evidence, not cross-identity IPC,
   AppContainer, installed LocalSystem, driver, or pre-execution protection. The
   overall antivirus hardening goal remains active.
+
+## Checkpoint 2217 - Integration closure (2026-08-24)
+
+- Evidence `5fe8dd288` passes CI `32689308547` and packages `32689308533`.
+  PR `#69` merged normally as `3fe2b8722`; merged-main CI `32690610422` and
+  packages `32690610424` pass with publication skipped.
+- Exactly 12 preconditioned merge-delta paths were synchronized to the original
+  tree. An archive source with transformed line endings was rejected before any
+  write; direct raw Git blobs were then atomically installed and all 12 match.
+- Destination verification passes parsers, `647/647` source contracts, formatting,
+  focused read-back `1/1`, Authenticode `62/13`, strict lint, both locked Rust
+  workspaces, release builds and two-host smoke, Flutter analyze and `838/838`,
+  plus exact verifier/validator `247/247` in `451.0s`. Lock blobs and the protected
+  vault remain exact.
+- Classification: **verified and integrated**. The same user-mode, installed-
+  service, production-signing, cross-identity IPC, driver, and pre-execution
+  limitations remain. The overall antivirus hardening goal is still active.

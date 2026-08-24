@@ -813,3 +813,10 @@ remain `7ab38f4820b08029c64872360fac7141e2512ac4`,
 `32687664061` and `32687717444` pass dependency/license evidence and consolidation;
 the downloaded push artifact has a CycloneDX 1.6 lockfile SBOM with `569`
 components and all seven checksum rows match. Publication is skipped.
+
+Evidence `5fe8dd2`, PR `#69`, merge `3fe2b87`, evidence-head package run
+`32689308533`, and merged-main package run `32690610424` complete checkpoint-
+2217 integration without changing any dependency or lockfile. Exact 12-path
+destination synchronization and the destination dependency gate pass; the three
+recorded lock blobs remain unchanged. Complete signed final-artifact notice and
+binary-resolution review remains a production-release requirement.
