@@ -7,9 +7,10 @@ Date: 2026-08-24
 Implementation, benign and adversarial tests, verifier step 247, exact validator
 contracts, source contract 647, and audit documentation were scripted as one batch
 before execution. The corrected implementation and complete local regression are
-verified. Exact implementation-head CI and package evidence is also verified.
-Evidence-head checks, PR merge, guarded original-tree synchronization, merged-main
-evidence, and destination verification remain pending.
+verified. Exact implementation-head and evidence-head CI/package evidence, normal
+PR merge, guarded original-tree synchronization, merged-main evidence, and
+destination verification are verified. Checkpoint 2217 is closed; the broader
+antivirus hardening goal remains active.
 
 ## Threat
 
@@ -123,6 +124,42 @@ of this checkpoint.
   `SHA256SUMS.txt` exactly.
 - Both `Publish desktop beta prerelease` jobs are skipped. No package was
   installed, released, or published.
+
+## Integration And Destination Evidence
+
+- Evidence commit `5fe8dd288ec403da08197148b67b9a71b9d4dd0e` passes Avorax CI
+  `32689308547` and Desktop Packages PR `32689308533`. PR `#69` merged normally
+  as `3fe2b872258f7bfb5388112a3574b31e7564cdb3`; merged-main CI
+  `32690610422` and packages `32690610424` pass all mandatory jobs and package
+  consolidation. Publication remains skipped.
+- The guarded sync proved that `C:\Users\Brent\Documents\Avorax-main` matched
+  checkpoint-2216 evidence `b1c5b4e1d8cf69cef9c35efc78f81bd33405bab6` for
+  every existing target, then synchronized exactly the 12 merge-delta paths.
+  A first `git archive` staging attempt changed checkout line endings and was
+  rejected before any destination write. Direct `git cat-file blob`
+  materialization preserved raw Git bytes; same-directory atomic replacement
+  then succeeded with all 12 destination blobs exact and zero staging files left.
+- Destination parsers `2/2`, source contracts `647/647`, formatting, focused
+  read-back `1/1`, complete Authenticode `62` passed/`13` ignored, strict
+  Native/Local Core/Guard Clippy, both locked workspace variants, release Local
+  Core/Guard builds, two-host trust smoke, Flutter analyze and `838/838`, and all
+  verifier safety/dependency/package-source gates pass.
+- The first post-closure source-contract run correctly rejected its stale
+  assertion that integration remained pending; the contract now requires the
+  exact evidence/merge/run IDs and closed status, and `647/647` pass. A first
+  standalone no-malware invocation also refused ambient Python as designed; the
+  explicit bundled-Python rerun passes.
+- The destination definitive report ran from
+  `2026-08-24T05:11:13.9731668Z` through
+  `2026-08-24T05:18:45.0068295Z` and passed exact `247/247`, zero failed/skipped,
+  in `451.0s`. Its embedded validator and a separate `-RequireFullSuite`
+  invocation pass.
+- Root Cargo, Native Cargo, and Flutter Git blob hashes remain
+  `7ab38f4820b08029c64872360fac7141e2512ac4`,
+  `277dd9fe1edfc45fa5550e8e2831f2a0c121561d`, and
+  `51fa085a41168aa1deadace8b5395614db43649e`. The protected vault remains exactly
+  16,072 files, zero directories, 4,522,733 bytes, 5,357 each payload/metadata/
+  auth, one metadata key, and zero pending.
 
 ## Initial Execution Finding
 

@@ -5518,3 +5518,46 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
 - Point-in-time read-back remains user-mode same-user evidence, not cross-identity IPC,
   AppContainer, installed LocalSystem, driver, or pre-execution protection. The
   overall antivirus hardening goal remains active.
+
+## Checkpoint 2217 - Integration closure (2026-08-24)
+
+- Evidence `5fe8dd288` passes CI `32689308547` and packages `32689308533`.
+  PR `#69` merged normally as `3fe2b8722`; merged-main CI `32690610422` and
+  packages `32690610424` pass with publication skipped.
+- Exactly 12 preconditioned merge-delta paths were synchronized to the original
+  tree. An archive source with transformed line endings was rejected before any
+  write; direct raw Git blobs were then atomically installed and all 12 match.
+- Destination verification passes parsers, `647/647` source contracts, formatting,
+  focused read-back `1/1`, Authenticode `62/13`, strict lint, both locked Rust
+  workspaces, release builds and two-host smoke, Flutter analyze and `838/838`,
+  plus exact verifier/validator `247/247` in `451.0s`. Lock blobs and the protected
+  vault remain exact.
+- Classification: **verified and integrated**. The same user-mode, installed-
+  service, production-signing, cross-identity IPC, driver, and pre-execution
+  limitations remain. The overall antivirus hardening goal is still active.
+
+## Checkpoint 2218 - Authenticode client pipe security read-back (2026-08-24)
+
+- **Implementation head verified; integration pending:** the child opens the dedicated handshake client
+  with exactly `GENERIC_WRITE | READ_CONTROL`, validates the client endpoint and
+  exact parent server PID, resolves its current process-token SID, and applies the
+  same bounded `GetSecurityInfo` DACL/mandatory-label read-back before token write.
+- Any access, SID, query, descriptor, ACL/ACE, policy, label, or ordering failure
+  is diagnostic and cannot reach token exchange or publisher trust. No write-only
+  or weaker retry exists.
+- Real benign-child `1/1`, parent read-back `1/1`, handshake `2/2`, complete
+  Authenticode `63/13`, source contracts `648/648`, strict lint, both locked
+  workspaces with Native `491/13`, release builds/two-host smoke, Flutter analyze
+  and `838/838`, and safety/dependency gates pass. Definitive verifier/validator
+  passes exact `248/248` in `470.1s`; eight malformed reports are rejected, lock
+  blobs and the protected vault remain exact.
+- Exact implementation `54dbb58` on draft PR `#70` passes Avorax CI
+  `32695037132` and Desktop Packages push/PR `32694996063`/`32695037192`.
+  Package contracts, Windows MSI/EXE, Linux DEB/tar, both macOS DMGs,
+  administrative MSI extraction, dependency/license evidence, six-artifact
+  consolidation, seven exact checksums, and a 569-component CycloneDX 1.6
+  lockfile SBOM pass. Both publication jobs are skipped. Evidence-head, merge,
+  merged-main, guarded sync, and destination verification remain pending.
+- The check narrows creation-to-connect drift but remains point-in-time same-user
+  evidence, not encrypted/cross-identity IPC, AppContainer, installed LocalSystem,
+  production signing, driver enforcement, or pre-execution protection.

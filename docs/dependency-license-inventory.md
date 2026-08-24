@@ -813,3 +813,29 @@ remain `7ab38f4820b08029c64872360fac7141e2512ac4`,
 `32687664061` and `32687717444` pass dependency/license evidence and consolidation;
 the downloaded push artifact has a CycloneDX 1.6 lockfile SBOM with `569`
 components and all seven checksum rows match. Publication is skipped.
+
+Evidence `5fe8dd2`, PR `#69`, merge `3fe2b87`, evidence-head package run
+`32689308533`, and merged-main package run `32690610424` complete checkpoint-
+2217 integration without changing any dependency or lockfile. Exact 12-path
+destination synchronization and the destination dependency gate pass; the three
+recorded lock blobs remain unchanged. Complete signed final-artifact notice and
+binary-resolution review remains a production-release requirement.
+
+## Checkpoint 2218 dependency delta
+
+Checkpoint 2218 adds no crate, package, feature, or lockfile change. The existing
+pinned `windows-sys 0.61.2` `Win32_Storage_FileSystem` feature supplies
+`READ_CONTROL` and `GENERIC_WRITE`/`CreateFileW`; existing `Win32_Security` and
+`Win32_Security_Authorization` features supply current process-token SID and
+bounded `GetSecurityInfo` DACL/mandatory-label read-back. Existing MIT OR
+Apache-2.0 licensing is unchanged.
+
+The child requests no `WRITE_DAC`, `WRITE_OWNER`, full-SACL access,
+`ACCESS_SYSTEM_SECURITY`, or `SeSecurityPrivilege`. It adds no network content,
+DLL, executable candidate fixture, machine-wide component, AppContainer,
+installed LocalSystem, driver, or pre-execution behavior. Source dependency
+evidence and both locked workspace variants pass. Root Cargo, Native Cargo, and
+filtered Flutter lock blobs remain `7ab38f4820b08029c64872360fac7141e2512ac4`,
+`277dd9fe1edfc45fa5550e8e2831f2a0c121561d`, and
+`51fa085a41168aa1deadace8b5395614db43649e`; hosted package evidence remains
+pending for this checkpoint.

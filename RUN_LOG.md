@@ -9083,3 +9083,98 @@ Updates page showed:
   released, or published.
 - Evidence-head CI/packages, normal merge, merged-main evidence, guarded sync, and
   destination verification remain pending. `.verification` remains untracked.
+
+## 2026-08-24 - Checkpoint 2217 integration closure
+
+- Evidence `5fe8dd288ec403da08197148b67b9a71b9d4dd0e` passes CI
+  `32689308547` and packages `32689308533`. PR `#69` merged normally as
+  `3fe2b872258f7bfb5388112a3574b31e7564cdb3`; merged-main CI
+  `32690610422` and packages `32690610424` pass. All six platform artifacts,
+  checksums, administrative MSI extraction, consolidation, and the 569-component
+  lockfile SBOM pass; publication is skipped.
+- Read-only sync preconditions proved the original tree was exactly checkpoint-
+  2216 evidence `b1c5b4e` for every existing target. A first `git archive`
+  staging source changed line endings and was rejected before any target write.
+  Direct `git cat-file blob` materialization preserved raw Git content; exactly
+  12 merge-delta files were atomically synchronized, all 12 post-sync blobs match,
+  and zero temporary staging files remain.
+- Destination parsers `2/2`, source contracts `647/647`, rustfmt, focused
+  read-back `1/1`, complete Authenticode `62/13`, strict Native/Local/Guard
+  Clippy, both locked workspaces, release Local Core/Guard builds, two-host benign
+  smoke, Flutter analyze and `838/838`, and the full safety/dependency/package-
+  source gates pass.
+- The first post-closure source-contract run correctly failed because its old
+  document assertion still required pending integration; the repaired contract
+  pins exact closure evidence and `647/647` pass. The first standalone no-malware
+  invocation refused ambient Python; its explicit bundled-Python rerun passes.
+- The destination verifier ran from `2026-08-24T05:11:13.9731668Z` through
+  `2026-08-24T05:18:45.0068295Z` and passed exact `247/247`, zero failed/skipped,
+  in `451.0s`; embedded and independent strict validation pass. Lock blobs and
+  the protected vault remain exact. Checkpoint 2217 is closed, while the complete
+  antivirus goal remains active.
+
+## 2026-08-24 - Checkpoint 2218 scripting: client pipe security read-back
+
+- Identified the next unblocked handshake risk: parent-side applied-security
+  read-back does not independently verify the descriptor on the exact client
+  handle later opened by the low-integrity child.
+- Scripted exact `GENERIC_WRITE | READ_CONTROL` client open, endpoint and parent-
+  PID binding, current process-token SID resolution, and reuse of the bounded
+  `GetSecurityInfo` DACL/mandatory-label validator before `WriteFile` can transfer
+  the launch token. Failure cannot reach token exchange or publisher trust and
+  there is no write-only or weaker retry.
+- Scripted a real benign restricted-child regression, verifier step 248, exact-
+  248 validator requirements, Python source contract 648, checkpoint report,
+  matrix, threat model, blockers, status, and dependency evidence.
+- No parser, formatter, compiler, test, verifier, or validator has run for this
+  checkpoint during the scripting phase. No checkpoint-2218 passing result is
+  claimed. This remains point-in-time same-user evidence, not encryption,
+  cross-identity IPC, AppContainer, installed LocalSystem, driver, or pre-execution
+  protection.
+
+## 2026-08-24 - Checkpoint 2218 initial execution
+
+- PowerShell parsers `2/2`, Python compilation, rustfmt, and diff checks pass.
+- The first source-contract run executed all `648` tests and failed 17 because
+  older Authenticode contracts still pinned the previous current validator count
+  of 247. The failed run is not success evidence. All 17 stale count assertions
+  were updated mechanically to 248 before any Rust runtime test. A second run
+  exposed 16 corresponding stale validator-message assertions; those were also
+  updated to 248. Neither failed run is success evidence; corrected source
+  contracts remain pending.
+
+## 2026-08-24 - Checkpoint 2218 corrected local verification
+
+- Corrected source contracts pass `648/648`. New client read-back `1/1`, parent
+  read-back `1/1`, handshake `2/2`, and complete Authenticode `63/13` pass.
+- Strict Native/Local/Guard Clippy, both locked workspace variants with Native
+  `491/13` plus compiler `6/6`, Flutter analyze and `838/838`, locked release
+  Local Core/Guard builds, and two-host benign trust smoke pass.
+- Branding, product-copy, no-malware, and dependency gates pass. The definitive
+  verifier runs from `2026-08-24T05:36:38.7395267Z` through
+  `2026-08-24T05:44:28.8973301Z` and passes exact `248/248`, zero failed/skipped,
+  in `470.1s`; embedded and independent validation pass.
+- Eight malformed reports are rejected for count/step/scope/status defects. Root
+  Cargo, Native Cargo, and filtered Flutter lock blobs remain exact. The protected
+  vault remains exactly 16,072 files, zero directories, 4,522,733 bytes, 5,357
+  each payload/metadata/auth, one key, and zero pending. No hosted or integration
+  result is claimed yet.
+
+## 2026-08-24 - Checkpoint 2218 hosted implementation evidence
+
+- Committed exact implementation as
+  `54dbb5812e10aeb149a7f9da2031f9caf570ab92`, pushed only the feature branch,
+  and opened draft PR `#70`.
+- Exact-head Avorax CI `32695037132` passes all five branding, Rust, Unix
+  quarantine-permission, Flutter/protocol, and security/protection/performance
+  jobs.
+- Desktop Packages push `32694996063` and PR `32695037192` pass package
+  contracts, Windows MSI/EXE, Linux DEB/tar, macOS arm64/x64 DMG,
+  administrative MSI extraction, dependency/license evidence, consolidation,
+  and checksums. Both prerelease-publication jobs are skipped.
+- The downloaded exact push artifact contains six platform packages plus one
+  CycloneDX 1.6 lockfile SBOM with `569` components; all seven checksum rows
+  match. No artifact was installed, released, or published.
+- Evidence-head CI/packages, normal merge, merged-main evidence, guarded sync,
+  and destination verification remain pending. `.verification` remains
+  untracked.

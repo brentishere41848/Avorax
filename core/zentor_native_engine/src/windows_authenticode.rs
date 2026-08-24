@@ -77,7 +77,7 @@ use windows_sys::Win32::Storage::FileSystem::{
     FILE_ALL_ACCESS, FILE_ATTRIBUTE_REPARSE_POINT, FILE_BASIC_INFO, FILE_FLAG_FIRST_PIPE_INSTANCE,
     FILE_FLAG_OPEN_REPARSE_POINT, FILE_FLAG_OVERLAPPED, FILE_FLAG_SEQUENTIAL_SCAN,
     FILE_GENERIC_EXECUTE, FILE_GENERIC_READ, FILE_GENERIC_WRITE, FILE_ID_INFO, FILE_SHARE_READ,
-    FILE_STANDARD_INFO, FILE_TYPE_PIPE, OPEN_EXISTING, PIPE_ACCESS_INBOUND,
+    FILE_STANDARD_INFO, FILE_TYPE_PIPE, OPEN_EXISTING, PIPE_ACCESS_INBOUND, READ_CONTROL,
 };
 use windows_sys::Win32::System::Console::{
     GetStdHandle, STD_ERROR_HANDLE, STD_INPUT_HANDLE, STD_OUTPUT_HANDLE,
@@ -1440,12 +1440,12 @@ fn current_process_user_sid_string() -> Result<String> {
     let mut token = null_mut();
     anyhow::ensure!(
         unsafe { OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &mut token) } != 0,
-        "unable to open the Authenticode parent token for handshake ACL creation: {}",
+        "unable to open the Authenticode current process token for handshake security: {}",
         std::io::Error::last_os_error()
     );
     let token = OwnedToken::from_raw(
         token,
-        "unable to open the Authenticode parent token for handshake ACL creation",
+        "unable to open the Authenticode current process token for handshake security",
     )?;
     let mut required = 0u32;
     unsafe { SetLastError(ERROR_SUCCESS) };
@@ -1456,7 +1456,7 @@ fn current_process_user_sid_string() -> Result<String> {
             && error == ERROR_INSUFFICIENT_BUFFER
             && required as usize >= size_of::<TOKEN_USER>()
             && required as usize <= MAX_AUTHENTICODE_HELPER_TOKEN_USER_BYTES,
-        "unable to size the Authenticode parent user SID: {}",
+        "unable to size the Authenticode current process user SID: {}",
         std::io::Error::from_raw_os_error(error as i32)
     );
     let mut storage = vec![0usize; (required as usize).div_ceil(size_of::<usize>())];
@@ -1470,15 +1470,15 @@ fn current_process_user_sid_string() -> Result<String> {
                 &mut required,
             )
         } != 0,
-        "unable to read the Authenticode parent user SID: {}",
+        "unable to read the Authenticode current process user SID: {}",
         std::io::Error::last_os_error()
     );
     let user = unsafe { &*storage.as_ptr().cast::<TOKEN_USER>() };
     anyhow::ensure!(
         !user.User.Sid.is_null() && unsafe { IsValidSid(user.User.Sid) } != 0,
-        "AuthentiCode parent user SID is invalid"
+        "AuthentiCode current process user SID is invalid"
     );
-    windows_sid_string(user.User.Sid, "parent user")
+    windows_sid_string(user.User.Sid, "current process user")
 }
 
 fn windows_sid_string(sid: windows_sys::Win32::Security::PSID, sid_label: &str) -> Result<String> {
@@ -1515,7 +1515,7 @@ fn complete_current_process_authenticode_parent_child_handshake() -> Result<()> 
         unsafe {
             CreateFileW(
                 pipe_name_wide.as_ptr(),
-                GENERIC_WRITE,
+                GENERIC_WRITE | READ_CONTROL,
                 0,
                 null(),
                 OPEN_EXISTING,
@@ -1542,6 +1542,10 @@ fn complete_current_process_authenticode_parent_child_handshake() -> Result<()> 
             actual_client_process_id: current_process_id,
         },
     )?;
+    let current_user_sid = current_process_user_sid_string()
+        .context("unable to resolve the Authenticode helper user SID for client pipe security")?;
+    verify_authenticode_handshake_pipe_security(pipe.0, &current_user_sid)
+        .context("unable to verify the Authenticode handshake client pipe security")?;
     let mut transferred = 0u32;
     anyhow::ensure!(
         unsafe {
@@ -5944,6 +5948,30 @@ mod tests {
             );
         }
         assert!(validate_authenticode_handshake_pipe_security_readback(&valid, "").is_err());
+    }
+
+    #[test]
+    fn native_authenticode_handshake_client_pipe_security_readback_precedes_token_exchange() {
+        let application = std::env::current_exe().unwrap();
+        let arguments = [
+            "--ignored",
+            "--exact",
+            "windows_authenticode::tests::authenticode_parent_child_handshake_child_fixture",
+            "--nocapture",
+            "--test-threads=1",
+        ];
+        let output = run_bounded_authenticode_helper(
+            &application,
+            &arguments,
+            Vec::new(),
+            Duration::from_secs(5),
+        )
+        .unwrap();
+        assert!(output.status.success());
+        assert!(output.stderr.is_empty());
+        assert!(String::from_utf8(output.stdout)
+            .unwrap()
+            .contains("AVORAX_PARENT_CHILD_PROCESS_BINDING_OK"));
     }
 
     #[test]

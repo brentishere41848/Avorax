@@ -2311,11 +2311,32 @@ enforcement, or pre-execution blocking is claimed.
   malformed reports are rejected. Exact implementation `a518e93` passes CI
   `32687717433` and package push/PR `32687664061`/`32687717444`, including all six
   packages, checksums, SBOM, and administrative MSI extraction with publication
-  skipped. Evidence-head, merge, synchronization, and destination evidence remain
-  pending.
+  skipped. Evidence `5fe8dd2`, PR `#69`, merge `3fe2b87`, evidence-head and
+  merged-main CI/packages, exact 12-path synchronization, destination
+  Authenticode `62/13`, and destination verifier/validator `247/247` now pass.
+  Checkpoint 2217 has no remaining integration blocker.
 - The control intentionally does not request the full SACL,
   `ACCESS_SYSTEM_SECURITY`, or `SeSecurityPrivilege`. `LABEL_SECURITY_INFORMATION`
   is mandatory-label-only evidence. Same-user privileged mutation/inspection,
   trusted in-process code, SYSTEM/kernel compromise, encrypted cross-identity IPC,
   AppContainer/LPAC, installed LocalSystem, production signing, driver, and
   pre-execution protection remain blocked or technically limited.
+
+## Checkpoint 2218 client-security read-back status
+
+- **Locally verified; hosted/integration pending:** after exact client endpoint and parent-PID
+  validation, the low-integrity helper uses a `GENERIC_WRITE | READ_CONTROL`
+  handle and its current process-token SID to read back the exact DACL and
+  mandatory label before token transfer. Failure is visible and has no weaker
+  retry. Benign client `1/1`, complete Authenticode `63/13`, source contracts
+  `648/648`, strict lint, locked workspaces, release trust smoke, Flutter
+  `838/838`, and safety/dependency gates pass. Definitive verifier/validator
+  passes `248/248` in `470.1s`; eight malformed reports are rejected, locks and
+  vault remain exact. Hosted and integration evidence remain pending.
+- `READ_CONTROL` does not add `WRITE_DAC`, `WRITE_OWNER`, full-SACL access,
+  `ACCESS_SYSTEM_SECURITY`, or `SeSecurityPrivilege`. No dependency or lockfile
+  change is required.
+- Same-user privileged mutation/inspection, trusted in-process code, SYSTEM or
+  kernel compromise, encrypted cross-identity IPC, AppContainer/LPAC, installed
+  LocalSystem, production signing, driver, and pre-execution protection remain
+  blocked or technically limited.
