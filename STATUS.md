@@ -5925,3 +5925,45 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   analyze and `838/838`, and exact verifier/validator `256/256` in `438.4s`
   pass. Locks and the protected vault remain exact. Checkpoint 2226 is closed;
   the complete antivirus goal remains active.
+
+## Checkpoint 2227 - Authenticode response client reauthentication (2026-08-25)
+
+- **Scripted control:** after exact response-ready validation and before launch/
+  child token read-back or final ACK, the parent binds
+  `GetNamedPipeClientProcessId` on the retained connection to `GetProcessId` on
+  the exact retained child handle, then freshly calls
+  `ImpersonateNamedPipeClient` on that connection.
+- **Repeated security evidence:** the fresh client token must repeat exact
+  SecurityImpersonation type/level, launch SID, AuthenticationId/session,
+  privilege stripping, zero restricting SIDs, low integrity/no-write-up,
+  canonical virtualization, disabled UIAccess, and within-validation
+  `TokenId`/`ModifiedId` stability. `RevertToSelf` and an empty parent thread
+  token remain mandatory.
+- **Fail-visible contract:** process-handle/PID/pipe query, process binding,
+  impersonation, token profile/stability, revert, launch/child token read-back,
+  final ACK, timeout, cancellation, terminate/reap, desktop, or worker failure
+  cannot become publisher trust and has no weaker retry.
+- **Evidence scripted:** benign production and invalid-handle Rust regressions,
+  source contract 657, one mandatory verifier step, exact 257-step validation,
+  and report/control/threat/blocker/dependency/run-log records are complete.
+  Initial runtime `2/2`, both parsers, and diff check pass. Initial formatting
+  and one of 657 source contracts failed on call layout and missing literal
+  blocker wording; both are repaired and remain uncredited. The corrected
+  focused rerun passes, as do source contracts `657/657`, complete Authenticode
+  `72/15`, Native `508/15` plus compiler `6/6`, Local Core `536/536`, Guard
+  `248/248`, both locked workspaces, strict affected-crate Clippy, standalone
+  locked/offline Native, locked release/two-host smoke, Flutter analysis, and
+  Flutter `838/838`. Definitive, hosted, integration, synchronization, and
+  destination evidence remain pending. Definitive local verification now passes
+  exact `257/257` in `453.2s`, target `0.2s`, both strict validators, and 12
+  malformed-report rejections. Locks and the protected-vault invariant remain
+  exact; hosted, integration, synchronization, and destination proof remain
+  pending.
+- **Technically limited:** each impersonation call may yield a distinct token
+  object, so cross-snapshot impersonation `TokenId` equality is unavailable and
+  not claimed. This remains point-in-time, not durable or cryptographically
+  response-bound, and does not stop every transient, privileged same-session
+  injection/handle duplication, or provide cross-identity IPC, AppContainer/
+  LPAC, installed LocalSystem, signed-driver, or pre-execution enforcement.
+  Local, hosted, integration, synchronization, and destination evidence remain
+  pending; the complete antivirus goal remains active.

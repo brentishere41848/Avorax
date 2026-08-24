@@ -708,6 +708,13 @@ impl AuthenticodeParentChildHandshake {
             "AuthentiCode response-ready read exceeded its buffer"
         );
         validate_authenticode_response_ready_bytes(&received[..transferred as usize])?;
+        verify_authenticode_response_client_binding(
+            process,
+            self.server.0,
+            &self.expected_user_sid,
+            self.expected_logon_session,
+        )
+        .context("unable to reauthenticate the Authenticode response-ready client")?;
         self.validate_launch_token_stability(launch_token, "after response flush")?;
         self.validate_child_process_token_binding(process, "after response flush")?;
 
@@ -1249,6 +1256,33 @@ fn query_authenticode_pipe_peer_process_id(
         "AuthentiCode helper {label} pipe peer returned a zero process ID"
     );
     Ok(process_id)
+}
+
+fn verify_authenticode_response_client_binding(
+    process: HANDLE,
+    pipe: HANDLE,
+    expected_user_sid: &str,
+    expected_logon_session: AuthenticodeTokenLogonSessionEvidence,
+) -> Result<()> {
+    let expected_child_process_id = unsafe { GetProcessId(process) };
+    anyhow::ensure!(
+        expected_child_process_id != 0,
+        "unable to query the Authenticode response-ready process-handle identifier: {}",
+        std::io::Error::last_os_error()
+    );
+    let actual_client_process_id =
+        query_authenticode_pipe_peer_process_id(pipe, true, "response-ready client")?;
+    validate_authenticode_parent_child_handshake_evidence(
+        AuthenticodeParentChildHandshakeEvidence {
+            expected_parent_process_id: unsafe { GetCurrentProcessId() },
+            actual_server_process_id: unsafe { GetCurrentProcessId() },
+            expected_child_process_id,
+            actual_client_process_id,
+        },
+    )
+    .context("AuthentiCode response-ready pipe client process binding changed")?;
+    verify_authenticode_handshake_client_token(pipe, expected_user_sid, expected_logon_session)
+        .context("AuthentiCode response-ready pipe client token reauthentication failed")
 }
 
 fn expected_authenticode_parent_process_id() -> Result<u32> {
@@ -7564,6 +7598,62 @@ mod tests {
             assert!(error.contains("response-ready"));
             assert!(error.contains("post-response token-binding cleanup"));
         }
+    }
+
+    #[test]
+    fn native_authenticode_post_response_client_reauthentication_spans_response_flush() {
+        assert!(open_current_thread_token().unwrap().is_none());
+        let application = std::env::current_exe().unwrap();
+        let arguments = [
+            "--ignored",
+            "--exact",
+            "windows_authenticode::tests::authenticode_parent_child_handshake_child_fixture",
+            "--nocapture",
+            "--test-threads=1",
+        ];
+        let output = run_bounded_authenticode_helper(
+            &application,
+            &arguments,
+            Vec::new(),
+            Duration::from_secs(5),
+        )
+        .unwrap();
+        assert!(output.status.success());
+        assert!(output.stderr.is_empty());
+        assert!(String::from_utf8(output.stdout)
+            .unwrap()
+            .contains("AVORAX_PARENT_CHILD_PROCESS_BINDING_OK"));
+        assert!(open_current_thread_token().unwrap().is_none());
+    }
+
+    #[test]
+    fn native_authenticode_post_response_client_reauthentication_contract_is_fail_visible() {
+        let expected_logon_session = AuthenticodeTokenLogonSessionEvidence {
+            authentication_id_low: 1,
+            authentication_id_high: 0,
+            session_id: 1,
+        };
+        let error = verify_authenticode_response_client_binding(
+            null_mut(),
+            null_mut(),
+            "S-1-5-21-1-2-3-1001",
+            expected_logon_session,
+        )
+        .unwrap_err()
+        .to_string();
+        assert!(error.contains("response-ready process-handle identifier"));
+        assert!(open_current_thread_token().unwrap().is_none());
+
+        let error = verify_authenticode_response_client_binding(
+            unsafe { GetCurrentProcess() },
+            null_mut(),
+            "S-1-5-21-1-2-3-1001",
+            expected_logon_session,
+        )
+        .unwrap_err()
+        .to_string();
+        assert!(error.contains("response-ready client pipe peer process ID"));
+        assert!(open_current_thread_token().unwrap().is_none());
     }
 
     #[test]

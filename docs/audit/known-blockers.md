@@ -2589,3 +2589,21 @@ enforcement, or pre-execution blocking is claimed.
   duplication, encrypt/authenticate cross-identity IPC, provide AppContainer/
   LPAC or installed LocalSystem isolation, or establish signed-driver/pre-
   execution enforcement. External signing/installation prerequisites remain.
+- **Checkpoint 2227 locally verified client reauthentication boundary:** after exact response-ready validation,
+  parent binds the still-connected pipe client PID to the exact retained child
+  process handle, freshly impersonates that connection, and repeats the full
+  launch SID/logon-session/restricted low-integrity profile plus within-check
+  token stability and mandatory revert proof before final ACK. Benign/adversarial
+  tests, source contract 657, verifier step 257, validator, and documentation are
+  scripted. Focused `2/2`, source contracts `657/657`, complete affected Rust,
+  locked workspaces, strict lint/offline/release smoke, and Flutter `838/838`
+  pass locally. Definitive verifier/validator passes exact `257/257` in `453.2s`
+  and 12 malformed reports are rejected. Hosted, integration, synchronization,
+  and destination evidence remain pending.
+- **Checkpoint 2227 residual technical blocker:** Windows may create a distinct
+  impersonation token object per impersonation call, so cross-snapshot token-
+  object identity is technically unavailable and not claimed. The control is
+  point-in-time and does not cryptographically bind response bytes, catch every
+  transient, prevent privileged same-session injection/handle duplication,
+  encrypt/authenticate cross-identity IPC, provide AppContainer/LPAC or installed
+  LocalSystem isolation, or establish signed-driver/pre-execution enforcement.

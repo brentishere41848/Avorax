@@ -10051,3 +10051,76 @@ Updates page showed:
   and zero pending. `.verification` remains untracked/unstaged. Nothing was
   installed, executed as candidate content, released, or published. Checkpoint
   2226 is closed; its explicit limits and the overall antivirus goal remain.
+
+## 2026-08-25 continuation checkpoint 2227 scripting
+
+- Started `agent/checkpoint-2227-authenticode-response-client-reauthentication`
+  from local checkpoint-2226 closure `caf6cca`.
+- Scripted response-boundary binding between `GetProcessId` on the exact retained
+  child handle and `GetNamedPipeClientProcessId` on the still-connected retained
+  handshake pipe, followed by fresh `ImpersonateNamedPipeClient` validation.
+- The second token snapshot repeats exact type/level, launch SID, logon session,
+  privilege/restricted-SID/integrity/policy/safety profile, within-check
+  `TokenId`/`ModifiedId` stability, `RevertToSelf`, and empty-thread-token proof
+  before launch/child read-back and final ACK. Every failure enters existing
+  terminate/reap/desktop/worker cleanup with no weaker retry.
+- Scripted a benign bounded production regression, invalid process/pipe-handle
+  adversarial checks, source contract 657, mandatory verifier step 257, exact
+  257-step report validation, and checkpoint/audit/threat/blocker/dependency/
+  status documentation.
+- Fresh impersonation can produce a distinct Windows token object, so cross-
+  snapshot impersonation `TokenId` equality is unavailable and not claimed.
+  This remains point-in-time flow binding, not encrypted/durable cross-identity
+  IPC, AppContainer/LPAC, installed LocalSystem, driver, or pre-execution proof.
+- No checkpoint-2227 parser, formatter, build, lint, test, smoke, or verifier has
+  run yet. No dependency/lock change, installation, Defender change, candidate
+  execution, protected-vault mutation, release, or publication is intended.
+
+## 2026-08-25 continuation checkpoint 2227 initial execution
+
+- The real response-client reauthentication target compiles and passes `2/2`;
+  both PowerShell parsers and `git diff --check` pass.
+- The first formatting check rejected one noncanonical multiline call layout.
+  The first source-contract run executed `657` and failed one new documentation
+  assertion because the known-blockers text lacked the literal `reauth` term.
+  Both failures remain uncredited; exact formatting and wording repairs are
+  scripted without changing behavior or weakening any contract.
+
+## 2026-08-25 continuation checkpoint 2227 full local verification
+
+- The corrected focused rerun passes both PowerShell parsers, formatting, diff
+  validation, source contracts `657/657`, and the response-client
+  reauthentication regressions `2/2`.
+- Complete Authenticode passes `72/15`; Native passes `508/15` plus signature
+  compiler `6/6`; Local Core passes `536/536`; Guard passes `248/248`. Both
+  standard and all-feature locked workspace suites pass.
+- Strict all-target/all-feature Clippy passes for Native, Local Core, and Guard;
+  standalone Native locked/offline checking passes. Locked Local Core and Guard
+  release builds and the benign two-host Authenticode helper smoke pass without
+  executing candidate content.
+- Flutter analysis reports no issues and all `838/838` tests pass. The earlier
+  formatter and source-contract failures remain retained and uncredited.
+- Definitive 257-step verification, exact lock/vault reconfirmation, hosted and
+  package evidence, integration, guarded synchronization, and destination proof
+  remain pending. The complete antivirus goal remains active.
+
+## 2026-08-25 continuation checkpoint 2227 definitive local evidence
+
+- The no-skip, no-Defender/EICAR verifier ran from
+  `2026-08-24T23:39:54.4842664Z` through `2026-08-24T23:47:27.7479027Z` and
+  passed exact `257/257`, zero failed/skipped, in `453.2s`; the new target
+  passed in `0.2s`. Embedded and independent Windows PowerShell 5.1 strict
+  validators pass.
+- Twelve isolated malformed reports covering schema, status, Defender, both
+  skips, target, two verified scopes, two technical limits, final-step status,
+  and stale 256 count are rejected with exit 1. Two exact cleanup commands were
+  policy-rejected before execution, so these untracked `.verification` copies
+  remain; no source or protected-vault content was removed.
+- Root Cargo, Native Cargo, and Flutter lock blobs remain
+  `7ab38f4820b08029c64872360fac7141e2512ac4`,
+  `277dd9fe1edfc45fa5550e8e2831f2a0c121561d`, and
+  `51fa085a41168aa1deadace8b5395614db43649e`. The read-only protected vault
+  remains 16,072 files, zero directories, 4,522,733 bytes, 5,357 each payload/
+  metadata/auth, one key, and zero pending/temp.
+- Hosted/package evidence, integration, guarded synchronization, and
+  destination proof remain pending; the complete antivirus goal remains active.

@@ -1128,3 +1128,21 @@ six platform files, seven matching checksums, and CycloneDX 1.6/569-component
 SBOMs; publication is skipped. No dependency, lockfile, or machine-wide
 component changed. Complete signed final-artifact license, notice, copyright,
 and binary-resolution review remains a production-release prerequisite.
+
+Checkpoint 2227 response-client reauthentication reuses the already pinned
+`windows-sys` `GetProcessId`, `GetNamedPipeClientProcessId`,
+`ImpersonateNamedPipeClient`, token-information, and revert APIs plus existing
+repository testing and verification tooling. The exact process/pipe PID binding,
+fresh token-profile validation, and source/verifier/validator contracts add no
+crate, package, feature, binary, script host, network source, runtime component,
+or lockfile change. Both locked workspaces, strict affected-crate Clippy,
+standalone Native locked/offline checking, locked release builds, and Flutter
+analysis/`838` pass locally. Definitive exact `257/257` passes and the root
+Cargo, Native Cargo, and Flutter lock blobs remain respectively
+`7ab38f4820b08029c64872360fac7141e2512ac4`,
+`277dd9fe1edfc45fa5550e8e2831f2a0c121561d`, and
+`51fa085a41168aa1deadace8b5395614db43649e`. Hosted package/SBOM evidence remains pending. The control
+does not add encryption, cross-identity IPC, AppContainer/LPAC, installed
+LocalSystem, signing, signed-driver, or pre-execution guarantees. Complete signed
+final-artifact license, notice, copyright, and binary-resolution review remains
+a production-release prerequisite.
