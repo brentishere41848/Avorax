@@ -2133,7 +2133,7 @@ complete integration. The residual risks above remain unchanged.
 prove that the later low-integrity child observes the same exact protected DACL
 and mandatory label on its opened client endpoint before token exchange.
 
-**Locally verified control; hosted/integration pending:** The child requests exactly
+**Verified and integrated control:** The child requests exactly
 `GENERIC_WRITE | READ_CONTROL`, validates the client endpoint and exact parent
 server PID, resolves its current process-token SID, then performs the same bounded
 `GetSecurityInfo(SE_KERNEL_OBJECT)` DACL and mandatory-label read-back before
@@ -2142,8 +2142,11 @@ failure is diagnostic and cannot reach token exchange or publisher trust. No
 write-only or weaker retry exists. Real child `1/1`, Authenticode `63/13`, source
 contracts `648/648`, strict lint, locked workspaces, release smoke, Flutter
 `838/838`, and safety/dependency gates pass. Verifier/validator passes `248/248`
-in `470.1s`; eight malformed reports are rejected, locks and the protected vault
-remain exact. Hosted and integration evidence remain pending.
+in `470.1s`; eight malformed reports are rejected. Evidence `eb11c81`, PR `#70`,
+merge `1e453005`, evidence/merged-main CI and packages, exact 12-path sync,
+destination full workspaces/lint/release/trust-smoke/Flutter checks, and destination
+verifier `248/248` in `484.1s` pass. Locks and the protected vault remain exact;
+publication is skipped.
 
 **Residual risk:** This narrows creation-to-connect descriptor drift but remains a
 point-in-time same-user control. It does not defeat privileged same-user or trusted

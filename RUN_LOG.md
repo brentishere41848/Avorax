@@ -9178,3 +9178,27 @@ Updates page showed:
 - Evidence-head CI/packages, normal merge, merged-main evidence, guarded sync,
   and destination verification remain pending. `.verification` remains
   untracked.
+
+## 2026-08-24 - Checkpoint 2218 integration closure
+
+- Evidence `eb11c81b75095974e3655aa5b4220c4259a44d86` passes CI
+  `32696503967` and packages `32696503980`. PR `#70` merged normally as
+  `1e453005a01782e9bed887ba9ad489d5b6e51894`; merged-main CI `32697573728` and
+  packages `32697573735` pass. Six platform artifacts, checksums,
+  administrative MSI extraction, consolidation, and the 569-component lockfile
+  SBOM pass; publication is skipped.
+- Read-only preconditions proved all 11 existing original-tree targets exact to
+  prior merge `3fe2b8722` and the one new report absent. Direct raw Git blobs were
+  staged and hash-verified before same-directory atomic replacement. Exactly 12
+  paths synchronized, all 12 destination blobs match, and zero sync temp files
+  remain.
+- Destination parsers, `648/648` source contracts, formatting, product/no-malware
+  gates, client read-back `1/1`, Native `491/13`, compiler `6/6`, Local Core
+  `536/536`, Guard `248/248` standard and `249/249` all-feature, strict lint,
+  both locked workspaces, release builds/two-host trust smoke, Flutter analyze
+  and `838/838` pass.
+- The destination verifier ran from `2026-08-24T06:45:58.0672811Z` through
+  `2026-08-24T06:54:02.1725176Z` and passed exact `248/248`, zero failed/skipped,
+  in `484.1s`; embedded and independent validation pass. Lock blobs and the
+  protected vault remain exact. Checkpoint 2218 is closed while the complete
+  antivirus goal remains active.

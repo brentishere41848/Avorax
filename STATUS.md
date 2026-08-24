@@ -5538,7 +5538,7 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
 
 ## Checkpoint 2218 - Authenticode client pipe security read-back (2026-08-24)
 
-- **Implementation head verified; integration pending:** the child opens the dedicated handshake client
+- **Verified and integrated:** the child opens the dedicated handshake client
   with exactly `GENERIC_WRITE | READ_CONTROL`, validates the client endpoint and
   exact parent server PID, resolves its current process-token SID, and applies the
   same bounded `GetSecurityInfo` DACL/mandatory-label read-back before token write.
@@ -5556,8 +5556,17 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   Package contracts, Windows MSI/EXE, Linux DEB/tar, both macOS DMGs,
   administrative MSI extraction, dependency/license evidence, six-artifact
   consolidation, seven exact checksums, and a 569-component CycloneDX 1.6
-  lockfile SBOM pass. Both publication jobs are skipped. Evidence-head, merge,
-  merged-main, guarded sync, and destination verification remain pending.
+  lockfile SBOM pass. Both publication jobs are skipped.
+- Evidence `eb11c81` passes CI `32696503967` and packages `32696503980`. PR `#70`
+  merged normally as `1e453005`; merged-main CI `32697573728` and packages
+  `32697573735` pass with publication skipped. Exactly 12 preconditioned raw Git
+  blobs synchronized to the original tree and all 12 match after testing.
+  Destination contracts `648/648`, Native `491/13`, compiler `6/6`, Local Core
+  `536/536`, Guard `248/249`, strict lint, locked workspaces, release/trust smoke,
+  Flutter `838/838`, and exact verifier/validator `248/248` in `484.1s` pass.
+  Lock blobs and the protected vault remain exact.
 - The check narrows creation-to-connect drift but remains point-in-time same-user
   evidence, not encrypted/cross-identity IPC, AppContainer, installed LocalSystem,
   production signing, driver enforcement, or pre-execution protection.
+- Classification: **verified and integrated**. Checkpoint 2218 is closed; the
+  overall antivirus hardening goal remains active.

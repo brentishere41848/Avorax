@@ -25993,6 +25993,27 @@ def test_native_authenticode_handshake_client_security_is_read_back_before_token
     assert "No checkpoint-2218 passing result is claimed" in normalized_checkpoint
     assert "exactly 248" in normalized_checkpoint
     assert "source contract 648" in normalized_checkpoint
+    for hosted_evidence in [
+        "54dbb5812e10aeb149a7f9da2031f9caf570ab92",
+        "32695037132",
+        "32694996063",
+        "32695037192",
+        "CycloneDX 1.6",
+    ]:
+        assert hosted_evidence in normalized_checkpoint
+    for integration_evidence in [
+        "eb11c81b75095974e3655aa5b4220c4259a44d86",
+        "1e453005a01782e9bed887ba9ad489d5b6e51894",
+        "32696503967",
+        "32696503980",
+        "32697573728",
+        "32697573735",
+        "all 12 destination blobs are exact",
+        "passed exact `248/248`",
+        "Checkpoint 2218 is closed",
+    ]:
+        assert integration_evidence in normalized_checkpoint
+    assert "destination verification remain pending" not in normalized_checkpoint
     assert "adds no crate, package, feature, or lockfile change" in re.sub(
         r"\s+", " ", documents[-1]
     )

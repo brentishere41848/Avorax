@@ -837,5 +837,9 @@ installed LocalSystem, driver, or pre-execution behavior. Source dependency
 evidence and both locked workspace variants pass. Root Cargo, Native Cargo, and
 filtered Flutter lock blobs remain `7ab38f4820b08029c64872360fac7141e2512ac4`,
 `277dd9fe1edfc45fa5550e8e2831f2a0c121561d`, and
-`51fa085a41168aa1deadace8b5395614db43649e`; hosted package evidence remains
-pending for this checkpoint.
+`51fa085a41168aa1deadace8b5395614db43649e`. Evidence `eb11c81`, PR `#70`, merge
+`1e453005`, evidence/merged-main CI and Desktop Packages, exact 12-path
+destination synchronization, destination dependency gates, and the same exact
+lock blobs close checkpoint 2218 without a dependency or license delta.
+Complete signed final-artifact notice and binary-resolution review remains a
+production-release requirement.

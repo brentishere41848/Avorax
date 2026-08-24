@@ -2324,15 +2324,18 @@ enforcement, or pre-execution blocking is claimed.
 
 ## Checkpoint 2218 client-security read-back status
 
-- **Locally verified; hosted/integration pending:** after exact client endpoint and parent-PID
+- **Verified and integrated:** after exact client endpoint and parent-PID
   validation, the low-integrity helper uses a `GENERIC_WRITE | READ_CONTROL`
   handle and its current process-token SID to read back the exact DACL and
   mandatory label before token transfer. Failure is visible and has no weaker
   retry. Benign client `1/1`, complete Authenticode `63/13`, source contracts
   `648/648`, strict lint, locked workspaces, release trust smoke, Flutter
   `838/838`, and safety/dependency gates pass. Definitive verifier/validator
-  passes `248/248` in `470.1s`; eight malformed reports are rejected, locks and
-  vault remain exact. Hosted and integration evidence remain pending.
+  passes `248/248` in `470.1s`; eight malformed reports are rejected. Evidence
+  `eb11c81`, PR `#70`, merge `1e453005`, evidence/merged-main CI and packages,
+  exact 12-path synchronization, destination Native/Local/Guard/Flutter/lint/
+  release/trust-smoke checks, and destination verifier `248/248` in `484.1s`
+  pass. Locks and the vault remain exact; publication is skipped.
 - `READ_CONTROL` does not add `WRITE_DAC`, `WRITE_OWNER`, full-SACL access,
   `ACCESS_SYSTEM_SECURITY`, or `SeSecurityPrivilege`. No dependency or lockfile
   change is required.
