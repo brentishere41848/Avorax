@@ -120,6 +120,24 @@ head hosted evidence, integration, guarded destination sync, and destination
 verification remain pending. Local suites do not complete the checkpoint or the
 overall antivirus goal.
 
+## Implementation-Head Hosted Evidence
+
+Implementation commit `014e5b98ec703e30b8c59a7d26f6511f1c5aa7ed`
+was pushed only to the checkpoint branch and opened as draft PR `#73`. Exact-
+head Avorax CI `32722684598` and Desktop Packages push/PR runs `32722662492`
+and `32722684574` pass. The CI run covers Rust/Clippy, Unix quarantine
+permissions, security/protection/performance, branding/copy, and Flutter/
+protocol jobs.
+
+Both package runs pass package contracts, Windows x64 MSI/EXE, Linux x64
+DEB/tar, macOS arm64/x64 DMG, and consolidation/checksum jobs; publication is
+explicitly skipped. Each downloaded consolidated evidence bundle contains six
+platform release files, one CycloneDX 1.6 lockfile SBOM with 569 components,
+and seven SHA-256 rows that all match. Nothing was installed, executed,
+released, or published. Evidence-head checks, normal merge, merged-main checks,
+guarded destination synchronization, and destination verification remain
+pending.
+
 The first definitive invocation selected
 `C:\Users\Brent\AppData\Local\Microsoft\WindowsApps\python.exe` through
 `Get-Command`. The security gate correctly rejected that reparse-point alias at

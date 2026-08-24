@@ -950,4 +950,7 @@ Flutter lock blobs `7ab38f4820b08029c64872360fac7141e2512ac4`,
 locked root workspaces, strict Rust lint, Flutter analyze, and Flutter `838/838`
 pass. Flutter reported 33 newer versions outside current constraints but no
 upgrade or lock change occurred. Definitive local verification passes in
-`487.9s`; hosted and final-artifact license evidence remain pending.
+`487.9s`. Exact implementation-head package push/PR runs contain matching
+CycloneDX 1.6 lockfile SBOMs with 569 components and seven verified SHA-256
+rows. Publication is skipped; evidence-head and complete signed final-artifact
+license review remain pending.

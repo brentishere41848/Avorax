@@ -5680,5 +5680,8 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   `838/838`, plus source contracts `651/651` pass. Locks and the protected vault
   remain exact. Definitive verification passes `251/251` with no failures or
   skips in `487.9s`; embedded and standalone strict validation pass, and nine
-  malformed reports are rejected. Hosted, merge, sync, and destination proof
-  remain pending, so checkpoint classification is still local-only.
+  malformed reports are rejected. Exact implementation `014e5b9` passes Avorax
+  CI `32722684598` and Desktop Packages push/PR `32722662492`/`32722684574`.
+  Six release files, seven matching SHA-256 rows, and CycloneDX 1.6/569-component
+  lockfile SBOM evidence pass in both package runs; publication is skipped.
+  Evidence-head, merge, sync, and destination proof remain pending.

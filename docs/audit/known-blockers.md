@@ -2420,8 +2420,9 @@ enforcement, or pre-execution blocking is claimed.
   `ImpersonateNamedPipeClient`, exact token state validation, and fail-visible
   `RevertToSelf`. Source contract `651/651`, exact verifier `251/251`, embedded
   and standalone strict validation, and nine malformed-report rejections pass.
-  Exact-head hosted, integration, synchronization, and destination evidence
-  remain pending.
+  Exact implementation-head CI and package push/PR evidence passes on
+  `014e5b9`; evidence-head, integration, synchronization, and destination
+  evidence remain pending.
 - **Residual technical blocker:** this authenticates one connected same-user
   token. It does not prevent privileged process injection/handle duplication,
   encrypt IPC, change logon identity, establish a cross-identity service/UI

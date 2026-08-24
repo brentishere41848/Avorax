@@ -9454,3 +9454,22 @@ Updates page showed:
   guarded original-tree synchronization, and destination verification remain
   pending. No package was installed, released, or published, and the complete
   antivirus goal remains active.
+
+## 2026-08-24 continuation checkpoint 2221 implementation-head hosting
+
+- Pushed only branch `agent/checkpoint-2221-authenticode-pipe-client-token` and
+  opened draft PR `#73`. Exact implementation head
+  `014e5b98ec703e30b8c59a7d26f6511f1c5aa7ed` passes Avorax CI
+  `32722684598` and Desktop Packages push/PR runs `32722662492` and
+  `32722684574`.
+- Rust/Clippy, Unix quarantine permissions, security/protection/performance,
+  branding/copy, Flutter/protocol, package contracts, Windows x64 MSI/EXE,
+  Linux x64 DEB/tar, macOS arm64/x64 DMG, and consolidation/checksum jobs pass.
+  Both publication jobs are explicitly skipped.
+- Each consolidated hosted bundle contains six platform release files, one
+  CycloneDX 1.6 lockfile SBOM with 569 components, and seven exact SHA-256 rows;
+  every downloaded row matches its file. Artifacts were inspected only under
+  untracked `.verification`; none was installed, executed, released, or
+  published.
+- Evidence-head CI/packages, normal merge, merged-main evidence, guarded
+  original-tree synchronization, and destination verification remain pending.
