@@ -9726,3 +9726,22 @@ Updates page showed:
   exact-head evidence, normal integration, guarded synchronization, and
   destination proof remain pending, so checkpoint 2224 and the overall goal
   remain active.
+
+## 2026-08-24 continuation checkpoint 2224 implementation-head hosting
+
+- Exact implementation `c83114908c64e9a9c0f21be68d2612fe85895fda` passes
+  Avorax CI `32756812158` and Desktop Packages push/PR runs `32756761690`/
+  `32756812207` without reruns. CI completes all five jobs; both package runs
+  pass contracts, Windows MSI/EXE, Linux DEB/tar, macOS arm64/x64 DMG, and
+  consolidation. Both publication jobs are skipped.
+- Original consolidated artifacts `9532117732` and `9531753034` were retained
+  as untouched ZIP streams with SHA-256
+  `0305f2a0439195829ab7f3a1888a132637fcd5efb4f5e2f3ce8982eb384e8a37` and
+  `a666dce5767f367b27dc14a6232dcb14117b5728bbef71e0eed58c6286d16ace`.
+  In-stream checks, without extracting or executing candidate installers,
+  prove exactly eight entries each, seven exact manifest rows, seven matching
+  entry hashes, and CycloneDX 1.6 lockfile SBOMs with 569 components.
+- Draft PR `#76` remains clean at the implementation head. Evidence-head
+  checks, normal merge, merged-main evidence, guarded original-tree
+  synchronization, and independent destination verification remain pending.
+  Nothing was installed, executed, released, or published.

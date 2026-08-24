@@ -5804,6 +5804,11 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   `254/254` in `489.6s`, the target in `0.2s`, both validators, and nine
   malformed-report rejections.
 - Locks and vault remain exact. No dependency/lock change, installation,
-  Defender change, or publication occurred. Exact-head hosting, merge,
-  synchronization, and destination proof remain pending; the overall antivirus
-  goal remains active.
+  Defender change, or publication occurred.
+- **Implementation-head hosted verified:** exact `c8311490` passes Avorax CI
+  `32756812158` and package push/PR runs `32756761690`/`32756812207` without
+  retry. Both untouched consolidated ZIP streams contain six platform
+  artifacts, exactly seven matching checksum rows, and CycloneDX 1.6 SBOMs
+  with 569 components; publication is skipped. Evidence-head checks, normal
+  merge, merged-main evidence, guarded synchronization, and destination proof
+  remain pending. The overall antivirus goal remains active.

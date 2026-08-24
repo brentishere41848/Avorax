@@ -96,7 +96,28 @@ Exact lock blobs remain `7ab38f4820b08029c64872360fac7141e2512ac4`,
 at 16,072 files, zero directories, 4,522,733 bytes, 5,357 each
 `.avoraxq`/`.json`/`.auth`, one metadata key, and zero pending.
 
-Checkpoint 2224 is locally verified but not closed. Exact-head hosted
-CI/packages, evidence commit, normal PR/merge, merged-main evidence, guarded
-original-tree synchronization, and independent destination verification remain
-pending. Nothing was installed, released, or published.
+## Implementation-Head Hosted Evidence
+
+Exact implementation commit
+`c83114908c64e9a9c0f21be68d2612fe85895fda` passes Avorax CI run
+`32756812158` and Desktop Packages push/pull-request runs `32756761690` and
+`32756812207` without a retry. All five CI jobs pass. Both package runs pass
+package contracts, Windows x64 MSI/EXE, Linux x64 DEB/tar, macOS arm64/x64
+DMG, and consolidation. Both prerelease-publication jobs are explicitly
+skipped.
+
+The untouched consolidated artifacts `9532117732` and `9531753034` were
+downloaded as original GitHub ZIP streams. Their ZIP SHA-256 values are
+`0305f2a0439195829ab7f3a1888a132637fcd5efb4f5e2f3ce8982eb384e8a37` and
+`a666dce5767f367b27dc14a6232dcb14117b5728bbef71e0eed58c6286d16ace`.
+Independent in-stream inspection, without extracting or executing any
+candidate installer, proves exactly eight entries in each ZIP: six platform
+artifacts, one CycloneDX lockfile SBOM, and `SHA256SUMS.txt`. Each manifest has
+exactly seven rows and all seven SHA-256 values match their archive entries.
+Both SBOMs are CycloneDX 1.6 with 569 components.
+
+Checkpoint 2224 is implementation-head hosted verified but not closed. The
+evidence commit and its exact-head checks, normal PR/merge, merged-main
+evidence, guarded original-tree synchronization, and independent destination
+verification remain pending. Nothing was installed, executed, released, or
+published.
