@@ -4,12 +4,12 @@ Date: 2026-08-24
 
 ## Status
 
-Implemented and locally verified. The production implementation, benign and
+Implemented, locally verified, and implementation-head hosted verified. The production implementation, benign and
 adversarial tests, verifier, validator, source contract, dependency record, threat
 model, and audit records were written as one batch before tests, as requested. No
-checkpoint-2216 passing result is claimed before execution. Exact-head hosted CI,
-package evidence, merge, synchronization, and destination verification remain
-pending.
+checkpoint-2216 passing result is claimed before execution. Exact implementation
+`472b478c10dad6683ea867616f21c3636fe446de` passes hosted CI and both package
+events. Merge, synchronization, and destination verification remain pending.
 
 ## Threat
 
@@ -114,11 +114,28 @@ of this checkpoint.
   `16,072` files, zero directories, `4,522,733` bytes, `5,357` each
   `.avoraxq`/`.json`/`.auth`, one `.metadata_auth_key`, and zero pending.
 
+## Implementation-Head Hosted Evidence
+
+- PR `#68` targets `main` from the checkpoint branch. Exact implementation
+  `472b478c10dad6683ea867616f21c3636fe446de` passes Avorax CI pull-request run
+  `32680555167` from `2026-08-24T01:40:43Z` through `2026-08-24T01:48:34Z`.
+  Branding/copy, Rust Local Core/Native/Guard/update/backend, Flutter/protocol,
+  security/protection/performance, and Unix quarantine-permission jobs all pass.
+- Desktop Packages push run `32680536082` and pull-request run `32680555166`
+  pass on the same exact SHA. Both pass package contracts, Windows x64 MSI/EXE,
+  Linux x64 DEB/tar, macOS arm64/x64 DMGs, consolidated six-artifact checksums,
+  lockfile SBOM, dependency/license evidence, and administrative MSI extraction
+  without installation. Their prerelease-publication jobs are skipped.
+- Hosted artifacts are workflow evidence only. No release, publication,
+  installation, service/driver start, Defender change, or protected-vault mutation
+  occurred.
+
 ## Current Classification
 
 - Verified: local implementation, focused/adversarial runtime, complete regression,
-  definitive verifier/validator, exact lockfiles, and protected-vault invariant.
-- Partial: exact-head hosted CI/packages, merge, guarded synchronization, and
+  definitive verifier/validator, exact lockfiles/protected-vault invariant, and
+  exact implementation-head hosted CI/package matrices.
+- Partial: merge, merged-main hosted evidence, guarded synchronization, and
   destination verification remain pending.
 - Disabled/blocked: no weaker fallback is enabled if handshake evidence fails.
 - Technically limited: same-user PID/token binding is not cross-identity IPC,

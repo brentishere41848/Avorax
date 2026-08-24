@@ -2083,5 +2083,8 @@ claimed before execution.
 
 Local execution now passes focused mutual-PID/adversarial runtime, complete
 Authenticode, release two-host trust smoke, source contracts `646/646`, and exact
-verifier/validator `246/246`; seven malformed reports are rejected. Exact-head
-hosted, merged-main, synchronization, and destination evidence remain pending.
+verifier/validator `246/246`; seven malformed reports are rejected. Exact
+implementation `472b478c10dad6683ea867616f21c3636fe446de` also passes hosted CI
+`32680555167` and package push/PR `32680536082`/`32680555166`, with publication
+skipped. Merge, merged-main, synchronization, and destination evidence remain
+pending.

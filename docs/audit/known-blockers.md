@@ -2278,15 +2278,19 @@ enforcement, or pre-execution blocking is claimed.
   `JOBOBJECT_BASIC_PROCESS_ID_LIST` do not authenticate IPC, change identity, or
   provide AppContainer, installed LocalSystem, signed-driver, or pre-execution
   evidence. Those remain separate blockers.
-## Checkpoint 2216 parent-child handshake evidence pending
+## Checkpoint 2216 parent-child handshake integration pending
 
 - The dedicated Authenticode parent-child handshake is scripted with exact
   `GetNamedPipeServerProcessId` parent and `GetNamedPipeClientProcessId` child
   binding, random launch token, restrictive low-integrity-compatible ACL,
   bounded overlapped I/O, cancellation settlement, and fail-visible cleanup.
 - Local compile/runtime, full verifier `246/246`, and seven malformed-report
-  rejection cases now pass. Hosted exact-head, merge, synchronization, and
-  destination evidence remain pending; no integration passing claim is made yet.
+  rejection cases pass. Exact implementation
+  `472b478c10dad6683ea867616f21c3636fe446de` passes Avorax CI `32680555167`
+  and package push/PR `32680536082`/`32680555166`, including all platform jobs,
+  six artifacts, checksums, lockfile SBOM, dependency/license evidence, and
+  administrative MSI extraction. Publication is skipped. Merge, merged-main,
+  synchronization, and destination evidence remain pending.
 - Same-user process-memory inspection, cross-identity authenticated/encrypted IPC,
   AppContainer/LPAC, installed LocalSystem, production signing, driver, and
   pre-execution proof remain technically limited or require external prerequisites.

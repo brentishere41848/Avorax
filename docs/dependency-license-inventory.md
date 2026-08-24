@@ -771,6 +771,12 @@ and exact lock hashes `7ab38f4820b08029c64872360fac7141e2512ac4`,
 `277dd9fe1edfc45fa5550e8e2831f2a0c121561d`, and
 `51fa085a41168aa1deadace8b5395614db43649e`.
 
+Exact implementation `472b478c10dad6683ea867616f21c3636fe446de`
+passes Avorax CI `32680555167` and Desktop Packages push/PR
+`32680536082`/`32680555166`. Both package events pass dependency/license
+evidence, all six native artifacts, checksums, lockfile SBOM, and administrative
+MSI extraction without installation; prerelease publication is skipped.
+
 The parent-child handshake is same-user process binding, not encrypted
 cross-identity IPC, AppContainer, installed LocalSystem, driver, or pre-execution
 evidence. `GetNamedPipeClientProcessId` and `GetNamedPipeServerProcessId` are used

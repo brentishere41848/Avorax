@@ -5478,7 +5478,13 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   `6/6`, Flutter `838/838` plus analyze, strict Native/Local/Guard Clippy, release
   two-host trust smoke, and definitive verifier/validator `246/246` in `508.1s`.
   Seven malformed reports are rejected and lock/vault invariants remain exact.
-- Classification: **verified locally; hosted integration pending**. This is
+- Exact implementation `472b478c10dad6683ea867616f21c3636fe446de` passes hosted
+  Avorax CI `32680555167` and Desktop Packages push/PR
+  `32680536082`/`32680555166`. All platform jobs, six-artifact checksum/SBOM,
+  dependency/license, and administrative MSI-extraction evidence pass;
+  prerelease publication is skipped.
+- Classification: **verified locally and at the implementation head; merge and
+  destination integration pending**. This is
   same-user process binding, not encrypted cross-identity IPC, AppContainer,
   driver, installed LocalSystem, or pre-execution evidence. The overall antivirus
   hardening goal remains active.

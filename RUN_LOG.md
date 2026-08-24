@@ -8967,6 +8967,11 @@ Updates page showed:
   `51fa085a41168aa1deadace8b5395614db43649e`. Protected vault read-only evidence
   remains exact at `16,072` files, zero directories, `4,522,733` bytes, `5,357`
   each payload/metadata/auth, one key, and zero pending.
-- Hosted exact-head evidence, normal merge, guarded synchronization, and
-  destination verification remain pending; no publication or machine change was
-  performed.
+- Exact implementation `472b478c10dad6683ea867616f21c3636fe446de` passes hosted
+  Avorax CI `32680555167` and Desktop Packages push/PR
+  `32680536082`/`32680555166`. All jobs pass across Windows, Linux, macOS arm64/x64,
+  six-artifact checksums/SBOM, dependency/license evidence, and administrative MSI
+  extraction. Both prerelease jobs are skipped; no publication or machine change
+  was performed.
+- Normal merge, merged-main hosted evidence, guarded synchronization, and
+  destination verification remain pending.
