@@ -970,11 +970,12 @@ package, feature, or lockfile change. `AuthenticationId` and `TokenSessionId`
 are compared only as local Windows token evidence; no network, rule, signature,
 or executable dependency is introduced.
 
-Source contract 652 and exact verifier step 252 are scripted but not yet run.
-The same-user cross-logon-session control remains distinct from cross-identity
-IPC, AppContainer/LPAC, production signing, driver, and pre-execution proof.
-Complete signed final-artifact license, notice, copyright, and binary-resolution
-review remains a production-release prerequisite.
+Source contract 652, exact verifier step 252, strict validation, and
+implementation-head CI/package evidence pass. The same-user
+cross-logon-session control remains distinct from cross-identity IPC,
+AppContainer/LPAC, production signing, driver, and pre-execution proof.
+Complete signed final-artifact license, notice, copyright, and binary-
+resolution review remains a production-release prerequisite.
 
 Full local execution preserves exact root Cargo, Native Cargo, and Flutter lock
 blobs `7ab38f4820b08029c64872360fac7141e2512ac4`,
@@ -982,9 +983,20 @@ blobs `7ab38f4820b08029c64872360fac7141e2512ac4`,
 `51fa085a41168aa1deadace8b5395614db43649e`. Both locked Rust workspaces,
 strict lint, Flutter analyze, and Flutter `838/838` pass. Flutter reports 33
 newer versions outside current constraints, but no dependency or lock change
-occurs. Definitive and final-artifact evidence remain pending.
+occurs. Definitive and implementation-head final-artifact evidence pass;
+evidence-head and merged-main evidence remain pending.
 
 Definitive local verification passes `252/252` in `507.8s`, including the
 dependency evidence gate and unchanged lockfile checks. No dependency or
-machine-wide component is installed. Hosted package/SBOM evidence and complete
-signed final-artifact license review remain pending.
+machine-wide component is installed. Complete signed final-artifact license
+review remains pending.
+
+Exact implementation-head package PR/push runs `32732523189`/`32732497575`
+pass on SHA `0a24ac25fcdedf1ef50af8acb9b71499caf9ac69`; the push result is
+failed-job-only attempt 2 after a documented transient arm64 `hdiutil` resource
+failure. Independently inspected consolidated bundles each contain all six
+platform artifacts, seven matching SHA-256 rows, and a CycloneDX 1.6 lockfile
+SBOM with 569 components. Publication is skipped and no dependency or lockfile
+changes. Evidence-head/merged-main package proof and complete signed final-
+artifact license, notice, copyright, and binary-resolution review remain
+pending.

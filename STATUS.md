@@ -5721,10 +5721,18 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
 - **Definitive locally verified:** exact `252/252`, zero failed/skipped, passes
   in `507.8s`; the target passes in `0.3s`. Embedded and independent Windows
   PowerShell strict validation pass, and nine malformed reports are rejected.
-  Hosted/integration/synchronization/destination evidence remains pending, so
+  Integration/synchronization/destination evidence remains pending, so
   checkpoint 2222 and the overall antivirus goal remain active.
-- **Full local regressions verified, definitive pending:** both locked Rust
+- **Implementation-head hosted verified:** exact `0a24ac2` passes Avorax CI
+  `32732523250` and Desktop Packages PR/push runs `32732523189`/
+  `32732497575` (push attempt 2 after one documented transient arm64
+  `hdiutil` resource failure). Six platform artifacts, seven recomputed
+  checksums, and CycloneDX 1.6/569-component SBOM evidence pass; publication is
+  skipped. Evidence-head, merge, merged-main, synchronization, and destination
+  proof remain pending.
+- **Full local regressions verified:** both locked Rust
   workspaces, Local Core `536/536`, Guard `248/249`, strict Native/Local/Guard
   lint, Flutter analyze and `838/838` pass. The three lock blobs and protected
-  vault invariant remain exact. Definitive 252-step validation and all hosted,
-  integration, synchronization, and destination evidence remain pending.
+  vault invariant remain exact. Definitive and implementation-head hosted
+  evidence also pass; integration, synchronization, and destination evidence
+  remain pending.

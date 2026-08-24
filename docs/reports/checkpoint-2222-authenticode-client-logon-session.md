@@ -133,3 +133,27 @@ scope, missing failure scope, missing residual-limit scope, failed target,
 skipped target, and `skip_rust=true`. Hosted exact-head evidence, normal PR
 integration, merged-main checks, guarded original-tree synchronization, and
 destination verification remain pending.
+
+## Implementation-Head Hosted Evidence
+
+Implementation commit `0a24ac25fcdedf1ef50af8acb9b71499caf9ac69`
+was pushed only to the checkpoint branch and opened as draft PR `#74`. Exact-
+head Avorax CI `32732523250` passes all branding/copy, security/protection/
+performance, Flutter/protocol, Rust, and Unix quarantine-permission jobs.
+
+Desktop Packages PR run `32732523189` passes package contracts, Windows x64
+MSI/EXE, Linux x64 DEB/tar, macOS arm64/x64 DMG, and consolidation/checksum
+jobs. Push run `32732497575` initially failed only because the arm64 runner's
+`hdiutil verify` returned `Resource temporarily unavailable` for all five
+bounded retries after app build, payload validation, signing checks, benign
+package smoke, and DMG creation had passed. The identical PR job passed. A
+failed-job-only rerun of the unchanged push head passed arm64 in `6m24s`, then
+passed consolidation; the final push run is attempt 2 with success. This
+transient first attempt is not counted as passing evidence.
+
+Both final package runs explicitly skip prerelease publication. Independently
+downloaded consolidated bundles each contain six platform release files, a
+CycloneDX 1.6 lockfile SBOM with 569 components, and seven SHA-256 rows that all
+match recomputed hashes. Nothing was installed, executed, released, or
+published. Evidence-head checks, normal merge, merged-main checks, guarded
+original-tree synchronization, and destination verification remain pending.

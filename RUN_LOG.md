@@ -9572,3 +9572,19 @@ Updates page showed:
 - Exact-head hosting, normal PR integration, merged-main evidence, guarded
   original-tree synchronization, and destination verification remain pending.
   Nothing was installed, released, or published.
+
+## 2026-08-24 continuation checkpoint 2222 implementation-head hosting
+
+- Exact implementation `0a24ac25fcdedf1ef50af8acb9b71499caf9ac69`
+  passes Avorax CI `32732523250` and Desktop Packages PR run `32732523189`.
+- Desktop Packages push run `32732497575` first encountered five bounded
+  `hdiutil verify` failures with `Resource temporarily unavailable` on the
+  arm64 runner after the app, payload, signing, smoke, and DMG creation checks
+  had passed. The identical PR job passed; failed-job-only push attempt 2 then
+  passed arm64 in `6m24s` and completed consolidation on the unchanged head.
+  The failed first attempt is retained as evidence and is not called a pass.
+- Both final package runs provide Windows MSI/EXE, Linux DEB/tar, macOS arm64/
+  x64 DMGs, seven independently matching SHA-256 rows, and a CycloneDX 1.6
+  lockfile SBOM with 569 components. Publication is skipped. Evidence-head,
+  merge, merged-main, guarded synchronization, and destination proof remain
+  pending; nothing was installed, executed, released, or published.
