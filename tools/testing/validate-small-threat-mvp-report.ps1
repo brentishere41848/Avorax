@@ -1904,8 +1904,8 @@ if ($RequireFullSuite) {
   if ($skipFlutter -or $skipRust) {
     throw "-RequireFullSuite requires skip_flutter=false and skip_rust=false."
   }
-  if ($steps.Count -ne 255) {
-    throw "-RequireFullSuite expected exactly 255 verifier steps for this source revision, found $($steps.Count)."
+  if ($steps.Count -ne 256) {
+    throw "-RequireFullSuite expected exactly 256 verifier steps for this source revision, found $($steps.Count)."
   }
   if ($steps[0].name -ne "local-core safe simulator scan reporting") {
     throw "-RequireFullSuite first step mismatch: $($steps[0].name)"
@@ -1958,6 +1958,7 @@ if ($RequireFullSuite) {
   Assert-ReportContainsStep $steps "native-engine Authenticode handshake client token-stability regressions"
   Assert-ReportContainsStep $steps "native-engine Authenticode launch token-stability regressions"
   Assert-ReportContainsStep $steps "native-engine Authenticode child process-token binding regressions"
+  Assert-ReportContainsStep $steps "native-engine Authenticode post-response token-stability regressions"
   Assert-ReportContainsStep $steps "native-engine Authenticode mandatory-hash/file-identity regressions"
   Assert-ReportContainsStep $steps "native-engine risk fusion regressions"
   Assert-ReportContainsStep $steps "native-engine ClickOnce carrier heuristic detection"
@@ -2126,8 +2127,12 @@ if ($RequireFullSuite) {
   Assert-ReportScopeContains $verifiedScopeText "the Authenticode handshake is duplex and the child cannot proceed beyond its random-token write until it receives the exact one-byte parent ACK" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "the parent opens the token currently attached to the exact child process with TOKEN_QUERY, requires exact primary type, launch user SID, AuthenticationId and session, privilege stripping, zero restricting SIDs, low integrity, mandatory no-write-up, canonical virtualization state, disabled UIAccess, and a nonempty child TokenId" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "the parent repeats the complete child-token profile validation and requires exact equality with the captured child TokenId and ModifiedId before ACK" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "the same duplex handshake remains open through candidate trust work and bounded response production" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "After the helper writes and flushes stdout, it sends an exact one-byte response-ready marker and blocks for a distinct final ACK" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Before that ACK, the parent revalidates the same parent-held launch TokenId and ModifiedId, reopens the exact live child process token with TOKEN_QUERY, repeats its complete launch identity and restricted security profile, and requires the child token's captured TokenId and ModifiedId to remain exact" "verification_scope.verified"
   Assert-ReportScopeContains $technicalLimitText "CreateProcessAsUserW produced a distinct child token object on the verified Windows host, so launch-primary and child TokenId equality is technically unavailable and is not claimed" "verification_scope.technically_limited"
-  Assert-ReportScopeContains $technicalLimitText "it does not bind the distinct named-pipe impersonation token object to either primary token, prevent replacement or mutation after ACK, exclude transient between-snapshot mutation" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "The post-response phase extends those launch/child snapshots through flushed response production, but remains point-in-time" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "does not bind the distinct named-pipe impersonation token object to either primary token, cryptographically bind the response bytes to the token snapshots, prevent transient replacement or mutation between snapshots or mutation after the final ACK" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "It does not bind the impersonation token object to the launch primary-token object, prevent mutation wholly before or after that window, prevent same-session injection or handle duplication, encrypt IPC, provide cross-identity authentication or AppContainer/LPAC, or demonstrate driver/pre-execution enforcement" "verification_scope.technically_limited"
   Assert-ReportScopeContains $verifiedScopeText "Before CreateProcessAsUserW, the parent supplies an immutable DWORD64 process-creation mitigation policy enabling strict handle checks, extension-point disable, dynamic-code prohibition, Microsoft-signed-only binary loading, no remote images, no low-label images, and System32 image preference; the child requires both invalid-handle exception and permanent-enforcement read-back flags plus every other required policy before stdin or request parsing, and attribute construction, application, or read-back failure cannot become trust" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "Environment construction, current-directory validation, mitigation-policy construction/application/read-back, token/SID creation, process launch, handle-list construction, Job assignment, resume, bounded TokenPrivileges, TokenRestrictedSids, TokenIntegrityLevel, fixed-size TokenMandatoryPolicy, or fixed-size token virtualization/UIAccess inspection, verification, or normal revert failure cannot become trust" "verification_scope.verified"

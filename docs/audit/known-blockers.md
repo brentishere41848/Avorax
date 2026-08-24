@@ -2547,8 +2547,13 @@ enforcement, or pre-execution blocking is claimed.
   counted as a pass. The repair binds launch identity/security properties and
   captures/rechecks the child token's own object identity instead. Repair tests
   pass `2/2`, complete Authenticode passes `52/52`, and definitive verification
-  passes exact `255/255` in `521.1s`; hosted integration and destination proof
-  remain pending.
+  passes exact `255/255` in `521.1s`.
+- **Checkpoint 2225 integration blockers closed:** evidence `d1a1e14`, PR
+  `#77`, merge `5792c22`, evidence/merged-main CI and package runs, exact 12-
+  path guarded synchronization, full destination Rust/Flutter suites, and
+  destination verifier/validator `255/255` in `476.3s` pass. Publication was
+  skipped; locks and the protected vault remain exact. Checkpoint 2225 has no
+  integration blocker, while its technical limits and the larger goal remain.
 - **Checkpoint 2225 residual technical blocker:** this remains point-in-time.
   Exact launch-primary/child `TokenId` equality is technically unavailable and
   not claimed. The viable control does not bind the distinct named-pipe
@@ -2558,3 +2563,23 @@ enforcement, or pre-execution blocking is claimed.
   secret or encryption boundary. Cross-identity IPC, AppContainer/LPAC,
   installed LocalSystem, production signing, signed-driver enforcement, and
   demonstrated pre-execution protection remain technical/external blockers.
+- **Checkpoint 2226 locally verified boundary:** the exact duplex handshake now remains
+  open through trust work and response flush. Child emits one exact response-
+  ready byte and waits for a distinct final ACK. Parent then revalidates the
+  same launch `TokenId`/`ModifiedId` and exact live child `TOKEN_QUERY` identity,
+  full restricted profile, and captured `TokenId`/`ModifiedId`. Source contract
+  656, verifier step 256, exact validator scope, benign/adversarial tests, and
+  documentation are implemented. Post-response `3/3`, Authenticode `55/55`,
+  Native `506/15` plus compiler `6/6`, both locked workspaces, strict lint,
+  release/two-host smoke, and Flutter `838/838` pass. Definitive verifier and
+  validator pass `256/256` in `459.6s`, and ten malformed reports are rejected.
+  Hosted, integration, synchronization, and destination evidence remain
+  pending.
+- **Checkpoint 2226 residual technical blocker:** this closes persistent
+  post-initial-ACK drift only at a third point-in-time response-ready boundary.
+  It does not cryptographically bind response bytes to token snapshots, bind
+  the distinct impersonation token object, detect all transients, prevent
+  mutation after final ACK or privileged same-session injection/handle
+  duplication, encrypt/authenticate cross-identity IPC, provide AppContainer/
+  LPAC or installed LocalSystem isolation, or establish signed-driver/pre-
+  execution enforcement. External signing/installation prerequisites remain.

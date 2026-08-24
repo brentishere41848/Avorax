@@ -2416,5 +2416,41 @@ production-path test rejected the infeasible launch/child `TokenId` equality
 with successful cleanup. That failure is retained and not counted as a pass;
 the repaired focused path passes `2/2`, complete Authenticode passes `52/52`,
 and definitive verification passes exact `255/255` in `521.1s` with both strict
-validators and nine malformed-report rejections. Hosted integration and
-destination proof remain pending.
+validators and nine malformed-report rejections. Evidence `d1a1e14`, PR `#77`,
+merge `5792c22`, exact evidence/merged-main CI and package checks, guarded 12-
+path synchronization, full destination Rust/Flutter checks, and exact
+destination verifier/validator `255/255` in `476.3s` close checkpoint 2225.
+Publication was skipped; locks and the protected vault remain exact.
+
+### Authenticode post-response token stability (checkpoint 2226)
+
+**Threat:** Checkpoint 2225 proves launch and exact child process-token state at
+suspended creation and authenticated handshake, but the helper could still
+experience persistent token replacement or modification after initial ACK while
+performing trust work or writing its response.
+
+**Implemented and locally verified control:** The same duplex channel now remains
+open through candidate trust and response flush. After writing and flushing
+bounded stdout, the child sends an exact response-ready marker and blocks for a
+distinct final ACK. Before that ACK, the parent queries the same launch
+`TokenId`/`ModifiedId`, reopens the exact live child token with `TOKEN_QUERY`,
+repeats its complete launch identity/restricted profile, and requires the
+captured child `TokenId`/`ModifiedId` to remain exact. Bounded overlapped I/O,
+process-exit waits, cancellation settlement, terminate/reap, private-desktop,
+and worker diagnostics remain fail-visible without a weaker retry. Source
+contract 656 and exact verifier step 256 were scripted before execution.
+Post-response regressions pass `3/3`, complete Authenticode passes `55/55`,
+Native passes `506/15` plus compiler `6/6`, both locked workspaces and strict
+lint/offline checks pass, and Flutter passes `838/838`. Definitive verifier and
+strict validation pass exact `256/256` in `459.6s`; ten malformed reports are
+rejected. Hosted, integration, synchronization, and destination evidence remain
+pending.
+
+**Residual risk:** This third snapshot narrows persistent drift through flushed
+response production but remains point-in-time. It does not cryptographically
+bind response bytes to token snapshots, bind the distinct named-pipe
+impersonation token object, catch every transient between snapshots, prevent
+mutation after final ACK or privileged same-session injection/handle
+duplication, encrypt IPC, create cross-identity authentication or AppContainer/
+LPAC, prove installed LocalSystem, or demonstrate signed-driver/pre-execution
+enforcement. Response-ready and final ACK are flow control, not secrets.

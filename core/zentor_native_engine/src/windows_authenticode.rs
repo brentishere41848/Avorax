@@ -141,6 +141,8 @@ const AUTHENTICODE_HELPER_HANDSHAKE_PIPE_PREFIX: &str = r"\\.\pipe\Avorax.Authen
 const AUTHENTICODE_HELPER_HANDSHAKE_TIMEOUT: Duration = Duration::from_secs(5);
 const AUTHENTICODE_HELPER_HANDSHAKE_TOKEN_BYTES: usize = 36;
 const AUTHENTICODE_HELPER_HANDSHAKE_ACK: [u8; 1] = [0xA5];
+const AUTHENTICODE_HELPER_RESPONSE_READY: [u8; 1] = [0x5A];
+const AUTHENTICODE_HELPER_RESPONSE_ACK: [u8; 1] = [0xC3];
 const AUTHENTICODE_HELPER_HANDSHAKE_PIPE_BUFFER_BYTES: u32 = 64;
 const AUTHENTICODE_HELPER_HANDSHAKE_CLIENT_SQOS_FLAGS: u32 =
     SECURITY_SQOS_PRESENT | SECURITY_IMPERSONATION;
@@ -553,13 +555,13 @@ impl AuthenticodeParentChildHandshake {
         validate_authenticode_child_process_token_stability_evidence(expected, current, phase)
     }
 
-    fn complete(
+    fn complete_initial(
         mut self,
         process: HANDLE,
         launch_token: HANDLE,
         expected_child_process_id: u32,
         timeout: Duration,
-    ) -> Result<()> {
+    ) -> Result<Self> {
         let deadline = Instant::now() + timeout.min(AUTHENTICODE_HELPER_HANDSHAKE_TIMEOUT);
         if self.connect_pending {
             if let Err(error) = self.wait_for_operation(process, deadline, "connection") {
@@ -660,6 +662,89 @@ impl AuthenticodeParentChildHandshake {
             transferred as usize == AUTHENTICODE_HELPER_HANDSHAKE_ACK.len(),
             "AuthentiCode parent-child handshake ACK write was incomplete"
         );
+        Ok(self)
+    }
+
+    fn complete_after_response(
+        mut self,
+        process: HANDLE,
+        launch_token: HANDLE,
+        timeout: Duration,
+    ) -> Result<()> {
+        let deadline = Instant::now() + timeout.min(AUTHENTICODE_HELPER_TIMEOUT);
+        anyhow::ensure!(
+            unsafe { ResetEvent(self.event.0) } != 0,
+            "unable to reset the Authenticode response-ready event: {}",
+            std::io::Error::last_os_error()
+        );
+        *self.overlapped = OVERLAPPED::default();
+        self.overlapped.hEvent = self.event.0;
+        let mut received = [0u8; AUTHENTICODE_HELPER_RESPONSE_READY.len() + 1];
+        let mut transferred = 0u32;
+        let read = unsafe {
+            ReadFile(
+                self.server.0,
+                received.as_mut_ptr(),
+                received.len() as u32,
+                &mut transferred,
+                self.overlapped.as_mut(),
+            )
+        };
+        if read == 0 {
+            let error = unsafe { GetLastError() };
+            if error != ERROR_IO_PENDING {
+                anyhow::bail!(
+                    "unable to read the Authenticode response-ready marker: {}",
+                    std::io::Error::from_raw_os_error(error as i32)
+                );
+            }
+            if let Err(error) = self.wait_for_operation(process, deadline, "response-ready read") {
+                return self.fail_after_pending_operation(error, "response-ready read");
+            }
+            transferred = self.finish_overlapped("response-ready read")?;
+        }
+        anyhow::ensure!(
+            transferred as usize <= received.len(),
+            "AuthentiCode response-ready read exceeded its buffer"
+        );
+        validate_authenticode_response_ready_bytes(&received[..transferred as usize])?;
+        self.validate_launch_token_stability(launch_token, "after response flush")?;
+        self.validate_child_process_token_binding(process, "after response flush")?;
+
+        anyhow::ensure!(
+            unsafe { ResetEvent(self.event.0) } != 0,
+            "unable to reset the Authenticode response ACK event: {}",
+            std::io::Error::last_os_error()
+        );
+        *self.overlapped = OVERLAPPED::default();
+        self.overlapped.hEvent = self.event.0;
+        transferred = 0;
+        let wrote = unsafe {
+            WriteFile(
+                self.server.0,
+                AUTHENTICODE_HELPER_RESPONSE_ACK.as_ptr(),
+                AUTHENTICODE_HELPER_RESPONSE_ACK.len() as u32,
+                &mut transferred,
+                self.overlapped.as_mut(),
+            )
+        };
+        if wrote == 0 {
+            let error = unsafe { GetLastError() };
+            if error != ERROR_IO_PENDING {
+                anyhow::bail!(
+                    "unable to write the Authenticode response ACK: {}",
+                    std::io::Error::from_raw_os_error(error as i32)
+                );
+            }
+            if let Err(error) = self.wait_for_operation(process, deadline, "response ACK write") {
+                return self.fail_after_pending_operation(error, "response ACK write");
+            }
+            transferred = self.finish_overlapped("response ACK write")?;
+        }
+        anyhow::ensure!(
+            transferred as usize == AUTHENTICODE_HELPER_RESPONSE_ACK.len(),
+            "AuthentiCode response ACK write was incomplete"
+        );
         Ok(())
     }
 
@@ -693,7 +778,7 @@ impl AuthenticodeParentChildHandshake {
         }
     }
 
-    fn fail_after_pending_operation(mut self, error: anyhow::Error, label: &str) -> Result<()> {
+    fn fail_after_pending_operation<T>(mut self, error: anyhow::Error, label: &str) -> Result<T> {
         match self.cancel_and_reap_overlapped(label) {
             Ok(()) => Err(error.context(format!(
                 "AuthentiCode parent-child handshake {label} cancellation settled"
@@ -1314,6 +1399,22 @@ fn validate_authenticode_handshake_ack_bytes(actual: &[u8]) -> Result<()> {
     Ok(())
 }
 
+fn validate_authenticode_response_ready_bytes(actual: &[u8]) -> Result<()> {
+    anyhow::ensure!(
+        actual == AUTHENTICODE_HELPER_RESPONSE_READY,
+        "AuthentiCode response-ready marker is missing or invalid"
+    );
+    Ok(())
+}
+
+fn validate_authenticode_response_ack_bytes(actual: &[u8]) -> Result<()> {
+    anyhow::ensure!(
+        actual == AUTHENTICODE_HELPER_RESPONSE_ACK,
+        "AuthentiCode response ACK is missing or invalid"
+    );
+    Ok(())
+}
+
 fn create_authenticode_handshake_security_descriptor(
 ) -> Result<(OwnedLocalSecurityDescriptor, String)> {
     let user_sid = current_process_user_sid_string()?;
@@ -1694,7 +1795,55 @@ fn windows_sid_string(sid: windows_sys::Win32::Security::PSID, sid_label: &str) 
     result
 }
 
-fn complete_current_process_authenticode_parent_child_handshake() -> Result<()> {
+struct AuthenticodeChildHandshake {
+    pipe: OwnedKernelHandle,
+}
+
+impl AuthenticodeChildHandshake {
+    fn complete_after_response(self) -> Result<()> {
+        std::io::stdout()
+            .lock()
+            .flush()
+            .context("unable to flush the Authenticode helper response before token binding")?;
+        let mut transferred = 0u32;
+        anyhow::ensure!(
+            unsafe {
+                WriteFile(
+                    self.pipe.0,
+                    AUTHENTICODE_HELPER_RESPONSE_READY.as_ptr(),
+                    AUTHENTICODE_HELPER_RESPONSE_READY.len() as u32,
+                    &mut transferred,
+                    null_mut(),
+                )
+            } != 0,
+            "unable to write the Authenticode response-ready marker: {}",
+            std::io::Error::last_os_error()
+        );
+        anyhow::ensure!(
+            transferred as usize == AUTHENTICODE_HELPER_RESPONSE_READY.len(),
+            "AuthentiCode response-ready marker write was incomplete"
+        );
+        let mut ack = [0u8; AUTHENTICODE_HELPER_RESPONSE_ACK.len() + 1];
+        transferred = 0;
+        anyhow::ensure!(
+            unsafe {
+                ReadFile(
+                    self.pipe.0,
+                    ack.as_mut_ptr(),
+                    ack.len() as u32,
+                    &mut transferred,
+                    null_mut(),
+                )
+            } != 0,
+            "unable to read the Authenticode response ACK: {}",
+            std::io::Error::last_os_error()
+        );
+        validate_authenticode_response_ack_bytes(&ack[..transferred as usize])
+    }
+}
+
+fn complete_current_process_authenticode_parent_child_handshake(
+) -> Result<AuthenticodeChildHandshake> {
     let pipe_name = std::env::var(AUTHENTICODE_HELPER_HANDSHAKE_PIPE_ENV)
         .context("AuthentiCode helper handshake pipe environment is missing or non-Unicode")?;
     let token = std::env::var(AUTHENTICODE_HELPER_HANDSHAKE_TOKEN_ENV)
@@ -1772,7 +1921,7 @@ fn complete_current_process_authenticode_parent_child_handshake() -> Result<()> 
         std::io::Error::last_os_error()
     );
     validate_authenticode_handshake_ack_bytes(&ack[..transferred as usize])?;
-    Ok(())
+    Ok(AuthenticodeChildHandshake { pipe })
 }
 
 fn verify_authenticode_handshake_client_token(
@@ -2215,6 +2364,8 @@ impl Drop for ProcessThreadAttributeList {
 
 struct RestrictedAuthenticodeProcess {
     process: OwnedKernelHandle,
+    launch_token: OwnedToken,
+    handshake: Option<AuthenticodeParentChildHandshake>,
     private_desktop: PrivateAuthenticodeDesktop,
     stdin: Option<File>,
     stdout: Option<File>,
@@ -2222,6 +2373,13 @@ struct RestrictedAuthenticodeProcess {
 }
 
 impl RestrictedAuthenticodeProcess {
+    fn complete_post_response_binding(&mut self, timeout: Duration) -> Result<()> {
+        let handshake = self
+            .handshake
+            .take()
+            .context("AuthentiCode post-response handshake is unavailable")?;
+        handshake.complete_after_response(self.process.0, self.launch_token.0, timeout)
+    }
     fn try_wait(&self) -> Result<Option<ExitStatus>> {
         match unsafe { WaitForSingleObject(self.process.0, 0) } {
             WAIT_TIMEOUT => Ok(None),
@@ -3413,7 +3571,7 @@ fn verify_prepared_microsoft_signature(prepared: PreparedAuthenticodeVerificatio
 }
 
 pub(crate) fn run_authenticode_helper_stdio() -> Result<()> {
-    complete_current_process_authenticode_parent_child_handshake()?;
+    let handshake = complete_current_process_authenticode_parent_child_handshake()?;
     validate_current_process_authenticode_job_membership()?;
     validate_current_process_authenticode_standard_handles()?;
     validate_current_process_authenticode_pipe_peer_processes()?;
@@ -3424,7 +3582,8 @@ pub(crate) fn run_authenticode_helper_stdio() -> Result<()> {
     let (nonce, prepared) = restricted.finish(read_and_prepare_authenticode_helper_request())?;
     let outcome = prepared.and_then(verify_prepared_microsoft_signature);
     let restricted = RestrictedAuthenticodeThreadToken::enter()?;
-    restricted.finish(write_authenticode_helper_response(nonce, outcome))
+    restricted.finish(write_authenticode_helper_response(nonce, outcome))?;
+    handshake.complete_after_response()
 }
 
 pub(crate) fn run_authenticode_client_self_test_stdio() -> Result<()> {
@@ -3638,6 +3797,31 @@ fn run_bounded_authenticode_helper(
     );
 
     let started = Instant::now();
+    if let Err(error) = child.complete_post_response_binding(timeout) {
+        let kill_result = child.terminate();
+        drop(job);
+        let reaped = wait_for_child_exit(&child, AUTHENTICODE_HELPER_REAP_TIMEOUT);
+        let desktop_close = if reaped.is_ok() {
+            child.close_private_desktop()
+        } else {
+            Err(anyhow::anyhow!(
+                "desktop close deferred because the helper was not confirmed exited"
+            ))
+        };
+        let worker_deadline = Instant::now() + AUTHENTICODE_HELPER_REAP_TIMEOUT;
+        let writer_result = receive_helper_worker(writer, worker_deadline, "request writer");
+        let stdout_result = receive_helper_worker(stdout_reader, worker_deadline, "stdout reader");
+        let stderr_result = receive_helper_worker(stderr_reader, worker_deadline, "stderr reader");
+        anyhow::bail!(
+            "{error:#}; AuthentiCode post-response token-binding cleanup: termination request: {}; reap: {}; private desktop: {}; writer: {}; stdout: {}; stderr: {}",
+            helper_result_summary(kill_result),
+            helper_result_summary(reaped),
+            helper_result_summary(desktop_close),
+            helper_result_summary(writer_result),
+            helper_result_summary(stdout_result.map(|_| ())),
+            helper_result_summary(stderr_result.map(|_| ()))
+        );
+    }
     let status = loop {
         if let Some(status) = child
             .try_wait()
@@ -3793,20 +3977,25 @@ fn spawn_restricted_authenticode_process(
         );
     }
     drop(thread_handle);
-    if let Err(error) = handshake.complete(
+    let handshake = match handshake.complete_initial(
         process.0,
         token.0,
         process_info.dwProcessId,
         AUTHENTICODE_HELPER_HANDSHAKE_TIMEOUT,
     ) {
-        let termination = terminate_and_reap_suspended_authenticode_process(&process);
-        anyhow::bail!(
-            "{error:#}; AuthentiCode parent-child handshake process cleanup: {}",
-            helper_result_summary(termination)
-        );
-    }
+        Ok(handshake) => handshake,
+        Err(error) => {
+            let termination = terminate_and_reap_suspended_authenticode_process(&process);
+            anyhow::bail!(
+                "{error:#}; AuthentiCode parent-child handshake process cleanup: {}",
+                helper_result_summary(termination)
+            );
+        }
+    };
     Ok(RestrictedAuthenticodeProcess {
         process,
+        launch_token: token,
+        handshake: Some(handshake),
         private_desktop,
         stdin: Some(stdin.parent.into_file()),
         stdout: Some(stdout.parent.into_file()),
@@ -5498,7 +5687,10 @@ mod tests {
         )
         .unwrap_err()
         .to_string();
-        assert!(error.contains("timed out after 100 ms"));
+        assert!(
+            error.contains("response-ready read timed out after"),
+            "unexpected timeout diagnostic: {error}"
+        );
         assert!(error.contains("termination request: ok"));
         assert!(error.contains("reap: ok"));
         assert!(started.elapsed() < Duration::from_secs(5));
@@ -5507,7 +5699,7 @@ mod tests {
     #[test]
     #[ignore = "isolated child fixture invoked by the bounded timeout regression"]
     fn authenticode_timeout_child_fixture() {
-        complete_current_process_authenticode_parent_child_handshake().unwrap();
+        let _handshake = complete_current_process_authenticode_parent_child_handshake().unwrap();
         thread::sleep(Duration::from_secs(30));
     }
 
@@ -5544,9 +5736,10 @@ mod tests {
     #[test]
     #[ignore = "isolated child fixture invoked by the private-desktop regression"]
     fn authenticode_private_desktop_child_fixture() {
-        complete_current_process_authenticode_parent_child_handshake().unwrap();
+        let handshake = complete_current_process_authenticode_parent_child_handshake().unwrap();
         validate_current_process_authenticode_private_desktop().unwrap();
         println!("AVORAX_PRIVATE_DESKTOP_OK");
+        handshake.complete_after_response().unwrap();
     }
 
     #[test]
@@ -5638,9 +5831,10 @@ mod tests {
     #[test]
     #[ignore = "isolated child fixture invoked by the restricted-process regression"]
     fn authenticode_restricted_primary_child_fixture() {
-        complete_current_process_authenticode_parent_child_handshake().unwrap();
+        let handshake = complete_current_process_authenticode_parent_child_handshake().unwrap();
         validate_current_process_authenticode_primary_token().unwrap();
         println!("AVORAX_RESTRICTED_PRIMARY_TOKEN_OK");
+        handshake.complete_after_response().unwrap();
     }
 
     #[test]
@@ -5684,7 +5878,7 @@ mod tests {
     #[test]
     #[ignore = "isolated child fixture invoked by the low-integrity regression"]
     fn authenticode_low_integrity_child_fixture() {
-        complete_current_process_authenticode_parent_child_handshake().unwrap();
+        let handshake = complete_current_process_authenticode_parent_child_handshake().unwrap();
         revert_authenticode_helper_thread_token().unwrap();
         validate_current_process_authenticode_primary_token().unwrap();
         let request = read_authenticode_helper_request(std::io::stdin().lock()).unwrap();
@@ -5697,6 +5891,7 @@ mod tests {
         assert_eq!(error.kind(), std::io::ErrorKind::PermissionDenied);
         assert_eq!(fixture_sha256(&path), request.expected_sha256);
         println!("AVORAX_LOW_INTEGRITY_MUTATION_DENIED");
+        handshake.complete_after_response().unwrap();
     }
 
     #[test]
@@ -5777,9 +5972,10 @@ mod tests {
     #[test]
     #[ignore = "isolated child fixture invoked by the mandatory-policy regression"]
     fn authenticode_mandatory_policy_child_fixture() {
-        complete_current_process_authenticode_parent_child_handshake().unwrap();
+        let handshake = complete_current_process_authenticode_parent_child_handshake().unwrap();
         validate_current_process_authenticode_primary_token().unwrap();
         println!("AVORAX_MANDATORY_NO_WRITE_UP_POLICY_OK");
+        handshake.complete_after_response().unwrap();
     }
 
     #[test]
@@ -5833,9 +6029,10 @@ mod tests {
     #[test]
     #[ignore = "isolated child fixture invoked by the token-safety-flags regression"]
     fn authenticode_token_safety_flags_child_fixture() {
-        complete_current_process_authenticode_parent_child_handshake().unwrap();
+        let handshake = complete_current_process_authenticode_parent_child_handshake().unwrap();
         validate_current_process_authenticode_primary_token().unwrap();
         println!("AVORAX_TOKEN_VIRTUALIZATION_UIACCESS_DISABLED_OK");
+        handshake.complete_after_response().unwrap();
     }
 
     #[test]
@@ -5903,10 +6100,11 @@ mod tests {
     #[test]
     #[ignore = "isolated child fixture invoked by the process-mitigation regression"]
     fn authenticode_process_mitigation_child_fixture() {
-        complete_current_process_authenticode_parent_child_handshake().unwrap();
+        let handshake = complete_current_process_authenticode_parent_child_handshake().unwrap();
         validate_current_process_authenticode_primary_token().unwrap();
         validate_current_process_authenticode_mitigations().unwrap();
         println!("AVORAX_PROCESS_MITIGATION_POLICY_OK");
+        handshake.complete_after_response().unwrap();
     }
 
     #[test]
@@ -6096,9 +6294,10 @@ mod tests {
     #[test]
     #[ignore = "isolated child fixture invoked by the Job-membership regression"]
     fn authenticode_job_membership_child_fixture() {
-        complete_current_process_authenticode_parent_child_handshake().unwrap();
+        let handshake = complete_current_process_authenticode_parent_child_handshake().unwrap();
         validate_current_process_authenticode_job_membership().unwrap();
         println!("AVORAX_JOB_MEMBERSHIP_OK");
+        handshake.complete_after_response().unwrap();
     }
 
     #[test]
@@ -6170,18 +6369,20 @@ mod tests {
     #[test]
     #[ignore = "isolated child fixture invoked by the standard-handle regression"]
     fn authenticode_standard_handle_child_fixture() {
-        complete_current_process_authenticode_parent_child_handshake().unwrap();
+        let handshake = complete_current_process_authenticode_parent_child_handshake().unwrap();
         validate_current_process_authenticode_standard_handles().unwrap();
         println!("AVORAX_STANDARD_HANDLE_BINDING_OK");
+        handshake.complete_after_response().unwrap();
     }
 
     #[test]
     #[ignore = "isolated child fixture invoked by the pipe-peer process regression"]
     fn authenticode_pipe_peer_process_child_fixture() {
-        complete_current_process_authenticode_parent_child_handshake().unwrap();
+        let handshake = complete_current_process_authenticode_parent_child_handshake().unwrap();
         validate_current_process_authenticode_standard_handles().unwrap();
         validate_current_process_authenticode_pipe_peer_processes().unwrap();
         println!("AVORAX_PIPE_PEER_PARENT_BINDING_OK");
+        handshake.complete_after_response().unwrap();
     }
 
     #[test]
@@ -6347,8 +6548,9 @@ mod tests {
     #[test]
     #[ignore = "isolated child fixture invoked by the parent-child handshake regression"]
     fn authenticode_parent_child_handshake_child_fixture() {
-        complete_current_process_authenticode_parent_child_handshake().unwrap();
+        let handshake = complete_current_process_authenticode_parent_child_handshake().unwrap();
         println!("AVORAX_PARENT_CHILD_PROCESS_BINDING_OK");
+        handshake.complete_after_response().unwrap();
     }
 
     #[test]
@@ -7280,9 +7482,123 @@ mod tests {
     }
 
     #[test]
+    fn native_authenticode_post_response_token_stability_spans_response_flush() {
+        assert!(open_current_thread_token().unwrap().is_none());
+        let application = std::env::current_exe().unwrap();
+        let arguments = [
+            "--ignored",
+            "--exact",
+            "windows_authenticode::tests::authenticode_parent_child_handshake_child_fixture",
+            "--nocapture",
+            "--test-threads=1",
+        ];
+        let output = run_bounded_authenticode_helper(
+            &application,
+            &arguments,
+            Vec::new(),
+            Duration::from_secs(5),
+        )
+        .unwrap();
+        assert!(output.status.success());
+        assert!(output.stderr.is_empty());
+        assert!(String::from_utf8(output.stdout)
+            .unwrap()
+            .contains("AVORAX_PARENT_CHILD_PROCESS_BINDING_OK"));
+        assert!(open_current_thread_token().unwrap().is_none());
+    }
+
+    #[test]
+    fn native_authenticode_post_response_token_stability_contract_is_fail_visible() {
+        validate_authenticode_response_ready_bytes(&AUTHENTICODE_HELPER_RESPONSE_READY).unwrap();
+        validate_authenticode_response_ack_bytes(&AUTHENTICODE_HELPER_RESPONSE_ACK).unwrap();
+        for marker in [
+            Vec::new(),
+            vec![AUTHENTICODE_HELPER_RESPONSE_READY[0] ^ 1],
+            vec![AUTHENTICODE_HELPER_RESPONSE_READY[0], 0],
+        ] {
+            assert!(validate_authenticode_response_ready_bytes(&marker).is_err());
+        }
+        for ack in [
+            Vec::new(),
+            vec![AUTHENTICODE_HELPER_RESPONSE_ACK[0] ^ 1],
+            vec![AUTHENTICODE_HELPER_RESPONSE_ACK[0], 0],
+        ] {
+            assert!(validate_authenticode_response_ack_bytes(&ack).is_err());
+        }
+        assert_ne!(
+            AUTHENTICODE_HELPER_RESPONSE_READY,
+            AUTHENTICODE_HELPER_HANDSHAKE_ACK
+        );
+        assert_ne!(
+            AUTHENTICODE_HELPER_RESPONSE_ACK,
+            AUTHENTICODE_HELPER_HANDSHAKE_ACK
+        );
+        assert_ne!(
+            AUTHENTICODE_HELPER_RESPONSE_READY,
+            AUTHENTICODE_HELPER_RESPONSE_ACK
+        );
+    }
+
+    #[test]
+    fn native_authenticode_post_response_token_stability_rejects_missing_or_malformed_ready() {
+        for fixture in [
+            "windows_authenticode::tests::authenticode_missing_response_ready_child_fixture",
+            "windows_authenticode::tests::authenticode_malformed_response_ready_child_fixture",
+        ] {
+            let application = std::env::current_exe().unwrap();
+            let arguments = [
+                "--ignored",
+                "--exact",
+                fixture,
+                "--nocapture",
+                "--test-threads=1",
+            ];
+            let error = run_bounded_authenticode_helper(
+                &application,
+                &arguments,
+                Vec::new(),
+                Duration::from_secs(5),
+            )
+            .unwrap_err()
+            .to_string();
+            assert!(error.contains("response-ready"));
+            assert!(error.contains("post-response token-binding cleanup"));
+        }
+    }
+
+    #[test]
+    #[ignore = "isolated child fixture invoked by the missing response-ready regression"]
+    fn authenticode_missing_response_ready_child_fixture() {
+        let _handshake = complete_current_process_authenticode_parent_child_handshake().unwrap();
+    }
+
+    #[test]
+    #[ignore = "isolated child fixture invoked by the malformed response-ready regression"]
+    fn authenticode_malformed_response_ready_child_fixture() {
+        let handshake = complete_current_process_authenticode_parent_child_handshake().unwrap();
+        std::io::stdout().lock().flush().unwrap();
+        let malformed = [AUTHENTICODE_HELPER_RESPONSE_READY[0] ^ 1];
+        let mut transferred = 0u32;
+        assert_ne!(
+            unsafe {
+                WriteFile(
+                    handshake.pipe.0,
+                    malformed.as_ptr(),
+                    malformed.len() as u32,
+                    &mut transferred,
+                    null_mut(),
+                )
+            },
+            0
+        );
+        assert_eq!(transferred as usize, malformed.len());
+        thread::sleep(Duration::from_secs(30));
+    }
+
+    #[test]
     #[ignore = "isolated child fixture invoked by the sanitized-launch regression"]
     fn authenticode_sanitized_launch_child_fixture() {
-        complete_current_process_authenticode_parent_child_handshake().unwrap();
+        let handshake = complete_current_process_authenticode_parent_child_handshake().unwrap();
         validate_current_process_authenticode_primary_token().unwrap();
         let windows_root = checked_system_windows_directory().unwrap();
         let expected_current = checked_system_directory(
@@ -7321,6 +7637,7 @@ mod tests {
             ]
         );
         println!("AVORAX_SANITIZED_LAUNCH_CONTEXT_OK");
+        handshake.complete_after_response().unwrap();
     }
 
     #[test]
@@ -7425,7 +7742,7 @@ mod tests {
     #[test]
     #[ignore = "isolated child fixture invoked by the write-restriction regression"]
     fn authenticode_write_restricted_child_fixture() {
-        complete_current_process_authenticode_parent_child_handshake().unwrap();
+        let handshake = complete_current_process_authenticode_parent_child_handshake().unwrap();
         validate_current_process_authenticode_primary_token().unwrap();
         let restricted = RestrictedAuthenticodeThreadToken::enter().unwrap();
         let operation = (|| -> Result<()> {
@@ -7451,6 +7768,7 @@ mod tests {
             Ok(())
         })();
         restricted.finish(operation).unwrap();
+        handshake.complete_after_response().unwrap();
     }
 
     #[test]
