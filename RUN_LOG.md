@@ -8884,3 +8884,18 @@ Updates page showed:
   guarded original-tree synchronization, and destination verification remain
   pending. No release, publication, install, service/driver start, Defender change,
   candidate execution, or protected-vault mutation occurred.
+
+## Checkpoint 2215 Exact-Implementation-Head Evidence
+
+- Exact implementation `cf9055bbb43b4bb3802094f4f1250e73005a9e3a`
+  passes Avorax CI PR run `32675047983`; all security/protection/performance,
+  Flutter/protocol, Rust, branding, and Unix quarantine-permission jobs pass.
+- Desktop Packages push `32675035927` and PR `32675048000` pass package contracts,
+  Windows x64 MSI/setup EXE, Linux x64 DEB/tar, macOS x64/arm64 DMG, dependency/
+  license evidence, administrative MSI extraction without installation, six-
+  artifact consolidation, checksums, lockfile SBOM, and uploads.
+- Each package run exposes five unexpired artifact bundles whose workflow metadata
+  is bound to exact head `cf9055b`. Prerelease publication is explicitly skipped
+  in both runs. No release, publication, install, or machine-wide change occurred.
+- Evidence-head checks, normal PR merge, merged-main evidence, guarded original-
+  tree synchronization, and destination reruns remain pending.

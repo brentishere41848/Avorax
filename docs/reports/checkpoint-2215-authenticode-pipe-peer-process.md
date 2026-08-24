@@ -107,17 +107,27 @@ machine-wide dependency change is permitted.
   `16,072` files, zero directories, `4,522,733` bytes, `5,357` each
   `.avoraxq`/`.json`/`.auth`, one `.metadata_auth_key`, and zero pending.
 
-Hosted exact-head/evidence-head checks, normal merge, merged-main evidence,
-guarded original-tree synchronization, and destination verification remain
-pending. No release, publication, install, service/driver start, Defender change,
-candidate execution, or protected-vault mutation occurred.
+Exact implementation `cf9055bbb43b4bb3802094f4f1250e73005a9e3a`
+passes Avorax CI PR run `32675047983` and Desktop Packages push/PR runs
+`32675035927`/`32675048000`. Both package runs pass package contracts, Windows
+x64 MSI/setup EXE, Linux x64 DEB/tar, macOS x64/arm64 DMG, administrative MSI
+extraction without installation, six-native-artifact consolidation, checksums,
+lockfile SBOM, and artifact upload. Each has five unexpired artifact bundles
+bound to the exact implementation SHA. Prerelease publication is skipped in
+both runs.
+
+Evidence-head checks, normal merge, merged-main evidence, guarded original-tree
+synchronization, and destination verification remain pending. No release,
+publication, install, service/driver start, Defender change, candidate execution,
+or protected-vault mutation occurred.
 
 ## Current Classification
 
 - Verified: local implementation, focused/adversarial runtime, complete regression,
-  definitive report/validator, exact lockfiles, and protected-vault invariant.
-- Partial: hosted exact-head, merge, original-tree synchronization, destination,
-  installed LocalSystem, and production-signed evidence remain pending.
+  definitive report/validator, exact lockfiles, protected-vault invariant, and
+  exact-implementation-head hosted CI/package evidence.
+- Partial: evidence-head, merge, merged-main, original-tree synchronization,
+  destination, installed LocalSystem, and production-signed evidence remain pending.
 - Disabled/blocked: no weaker fallback is enabled if peer-process evidence is
   unavailable.
 - Technically limited: child-side parent-creator binding is not parent-side child

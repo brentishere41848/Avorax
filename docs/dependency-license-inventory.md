@@ -741,5 +741,9 @@ the exact root Cargo, Native Cargo, and Git-filtered Flutter lockfile blobs rema
 `277dd9fe1edfc45fa5550e8e2831f2a0c121561d`, and
 `51fa085a41168aa1deadace8b5395614db43649e`. No checkpoint-2215 passing result is
 claimed before execution; these results come from the later execution phase.
-Hosted packages/SBOM and complete signed final-artifact license review remain
-pending.
+Exact implementation `cf9055b` passes Desktop Packages push/PR runs
+`32675035927`/`32675048000`. Each run verifies dependency/license evidence,
+requires all six native artifacts, creates checksums and the lockfile SBOM, and
+uploads five unexpired artifact bundles bound to the exact SHA. Publication is
+skipped. Complete signed final-artifact license/notice and binary-resolution
+review remains pending.

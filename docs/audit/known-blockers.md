@@ -2222,8 +2222,11 @@ enforcement, or pre-execution blocking is claimed.
   strict lint, release/two-host smoke, no-malware, dependency, exact-lockfile, and
   protected-vault gates pass. Verifier/validator pass `245/245` in `469.4s`, and
   seven malformed reports are rejected. No checkpoint-2215 passing result is
-  claimed before execution; these are later execution results. Hosted, merge,
-  synchronization, and destination evidence remain pending.
+  claimed before execution; these are later execution results. Exact implementation
+  `cf9055b` passes CI `32675047983` and package push/PR runs
+  `32675035927`/`32675048000`, including all six native artifacts, checksums,
+  lockfile SBOM, administrative MSI extraction, and skipped publication. Evidence-
+  head, merge, merged-main, synchronization, and destination evidence remain pending.
 - **Residual blocker:** Anonymous `CreatePipe` endpoints are created and connected
   in the parent. The process-ID APIs identify that parent creator from inherited
   child handles but cannot prove the inheriting child PID back to the parent. The
