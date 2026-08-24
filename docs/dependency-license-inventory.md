@@ -757,3 +757,21 @@ Native Cargo, and Git-filtered Flutter lock blobs remain exactly
 `277dd9fe1edfc45fa5550e8e2831f2a0c121561d`, and
 `51fa085a41168aa1deadace8b5395614db43649e`. Complete signed final-artifact
 license/notice and binary-resolution review remains pending.
+## Checkpoint 2216 dependency delta
+
+The Authenticode parent-child handshake adds two `windows-sys` feature gates but
+no new crate or package: `Win32_Security_Authorization` supplies bounded Windows
+security-descriptor/SID conversion and `Win32_System_IO` supplies overlapped I/O
+cancellation/completion APIs. The repository remains on pinned `windows-sys
+0.61.2`; its existing MIT OR Apache-2.0 license classification is unchanged.
+No network dependency, executable payload, machine-wide component, or lockfile
+version update is introduced. Runtime and exact-lock evidence now pass: source
+contracts `646/646`, verifier/validator `246/246`, both locked workspace variants,
+and exact lock hashes `7ab38f4820b08029c64872360fac7141e2512ac4`,
+`277dd9fe1edfc45fa5550e8e2831f2a0c121561d`, and
+`51fa085a41168aa1deadace8b5395614db43649e`.
+
+The parent-child handshake is same-user process binding, not encrypted
+cross-identity IPC, AppContainer, installed LocalSystem, driver, or pre-execution
+evidence. `GetNamedPipeClientProcessId` and `GetNamedPipeServerProcessId` are used
+only as live process-binding evidence and do not expand publisher trust.

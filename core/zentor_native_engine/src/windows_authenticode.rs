@@ -22,14 +22,18 @@ use windows_sys::core::PCSTR;
 
 use crate::windows_system::{checked_system_directory, checked_system_windows_directory};
 use windows_sys::Win32::Foundation::{
-    CloseHandle, GetHandleInformation, GetLastError, SetHandleInformation, SetLastError,
+    CloseHandle, GetHandleInformation, GetLastError, LocalFree, SetHandleInformation, SetLastError,
     CERT_E_REVOCATION_FAILURE, CRYPT_E_BAD_ENCODE, CRYPT_E_BAD_MSG, CRYPT_E_NO_MATCH,
     CRYPT_E_NO_SIGNER, CRYPT_E_NO_TRUSTED_SIGNER, CRYPT_E_REVOKED, CRYPT_E_SIGNER_NOT_FOUND,
-    ERROR_INSUFFICIENT_BUFFER, ERROR_NOT_FOUND, ERROR_NO_TOKEN, ERROR_SUCCESS, HANDLE,
+    ERROR_INSUFFICIENT_BUFFER, ERROR_IO_PENDING, ERROR_NOT_FOUND, ERROR_NO_TOKEN,
+    ERROR_OPERATION_ABORTED, ERROR_PIPE_CONNECTED, ERROR_SUCCESS, GENERIC_WRITE, HANDLE,
     HANDLE_FLAG_INHERIT, INVALID_HANDLE_VALUE, LUID, TRUST_E_BAD_DIGEST, TRUST_E_BASIC_CONSTRAINTS,
     TRUST_E_CERT_SIGNATURE, TRUST_E_COUNTER_SIGNER, TRUST_E_FAIL, TRUST_E_FINANCIAL_CRITERIA,
     TRUST_E_MALFORMED_SIGNATURE, TRUST_E_NO_SIGNER_CERT, TRUST_E_SUBJECT_FORM_UNKNOWN,
     TRUST_E_SUBJECT_NOT_TRUSTED, TRUST_E_TIME_STAMP, WAIT_FAILED, WAIT_OBJECT_0, WAIT_TIMEOUT,
+};
+use windows_sys::Win32::Security::Authorization::{
+    ConvertSidToStringSidW, ConvertStringSecurityDescriptorToSecurityDescriptorW, SDDL_REVISION_1,
 };
 use windows_sys::Win32::Security::Cryptography::Catalog::{
     CryptCATAdminAcquireContext2, CryptCATAdminCalcHashFromFileHandle2,
@@ -52,19 +56,20 @@ use windows_sys::Win32::Security::{
     CreateRestrictedToken, CreateWellKnownSid, DuplicateTokenEx, GetLengthSid, GetTokenInformation,
     IsValidSid, LookupPrivilegeValueW, RevertToSelf, SecurityImpersonation, SetTokenInformation,
     TokenImpersonation, TokenImpersonationLevel, TokenIntegrityLevel, TokenMandatoryPolicy,
-    TokenPrimary, TokenPrivileges, TokenRestrictedSids, TokenType, TokenUIAccess,
+    TokenPrimary, TokenPrivileges, TokenRestrictedSids, TokenType, TokenUIAccess, TokenUser,
     TokenVirtualizationAllowed, TokenVirtualizationEnabled, WinLowLabelSid, WinRestrictedCodeSid,
     DISABLE_MAX_PRIVILEGE, LUID_AND_ATTRIBUTES, SECURITY_ATTRIBUTES, SECURITY_MAX_SID_SIZE,
     SE_CHANGE_NOTIFY_NAME, SE_PRIVILEGE_ENABLED, SID, SID_AND_ATTRIBUTES, TOKEN_ADJUST_DEFAULT,
     TOKEN_ASSIGN_PRIMARY, TOKEN_DUPLICATE, TOKEN_GROUPS, TOKEN_IMPERSONATE, TOKEN_MANDATORY_LABEL,
     TOKEN_MANDATORY_POLICY, TOKEN_MANDATORY_POLICY_NO_WRITE_UP, TOKEN_MANDATORY_POLICY_VALID_MASK,
-    TOKEN_PRIVILEGES, TOKEN_QUERY, WELL_KNOWN_SID_TYPE, WRITE_RESTRICTED,
+    TOKEN_PRIVILEGES, TOKEN_QUERY, TOKEN_USER, WELL_KNOWN_SID_TYPE, WRITE_RESTRICTED,
 };
 use windows_sys::Win32::Storage::FileSystem::{
-    FileBasicInfo, FileIdInfo, FileStandardInfo, GetFileInformationByHandle,
-    GetFileInformationByHandleEx, GetFileType, BY_HANDLE_FILE_INFORMATION,
-    FILE_ATTRIBUTE_REPARSE_POINT, FILE_BASIC_INFO, FILE_FLAG_OPEN_REPARSE_POINT,
-    FILE_FLAG_SEQUENTIAL_SCAN, FILE_ID_INFO, FILE_SHARE_READ, FILE_STANDARD_INFO, FILE_TYPE_PIPE,
+    CreateFileW, FileBasicInfo, FileIdInfo, FileStandardInfo, GetFileInformationByHandle,
+    GetFileInformationByHandleEx, GetFileType, ReadFile, WriteFile, BY_HANDLE_FILE_INFORMATION,
+    FILE_ATTRIBUTE_REPARSE_POINT, FILE_BASIC_INFO, FILE_FLAG_FIRST_PIPE_INSTANCE,
+    FILE_FLAG_OPEN_REPARSE_POINT, FILE_FLAG_OVERLAPPED, FILE_FLAG_SEQUENTIAL_SCAN, FILE_ID_INFO,
+    FILE_SHARE_READ, FILE_STANDARD_INFO, FILE_TYPE_PIPE, OPEN_EXISTING, PIPE_ACCESS_INBOUND,
 };
 use windows_sys::Win32::System::Console::{
     GetStdHandle, STD_ERROR_HANDLE, STD_INPUT_HANDLE, STD_OUTPUT_HANDLE,
@@ -82,8 +87,9 @@ use windows_sys::Win32::System::JobObjects::{
     JOB_OBJECT_UILIMIT_WRITECLIPBOARD,
 };
 use windows_sys::Win32::System::Pipes::{
-    CreatePipe, GetNamedPipeClientProcessId, GetNamedPipeInfo, GetNamedPipeServerProcessId,
-    PIPE_SERVER_END,
+    ConnectNamedPipe, CreateNamedPipeW, CreatePipe, GetNamedPipeClientProcessId, GetNamedPipeInfo,
+    GetNamedPipeServerProcessId, PIPE_CLIENT_END, PIPE_READMODE_BYTE, PIPE_REJECT_REMOTE_CLIENTS,
+    PIPE_SERVER_END, PIPE_TYPE_BYTE, PIPE_WAIT,
 };
 use windows_sys::Win32::System::StationsAndDesktops::{
     CloseDesktop, CreateDesktopW, GetThreadDesktop, GetUserObjectInformationW,
@@ -95,17 +101,18 @@ use windows_sys::Win32::System::SystemServices::{
     SE_GROUP_MANDATORY,
 };
 use windows_sys::Win32::System::Threading::{
-    CreateProcessAsUserW, DeleteProcThreadAttributeList, GetCurrentProcess, GetCurrentProcessId,
-    GetCurrentThread, GetCurrentThreadId, GetExitCodeProcess, GetProcessId,
+    CreateEventW, CreateProcessAsUserW, DeleteProcThreadAttributeList, GetCurrentProcess,
+    GetCurrentProcessId, GetCurrentThread, GetCurrentThreadId, GetExitCodeProcess, GetProcessId,
     GetProcessMitigationPolicy, GetStartupInfoW, InitializeProcThreadAttributeList,
     OpenProcessToken, OpenThreadToken, ProcessDynamicCodePolicy,
     ProcessExtensionPointDisablePolicy, ProcessImageLoadPolicy, ProcessSignaturePolicy,
-    ProcessStrictHandleCheckPolicy, ResumeThread, SetThreadToken, TerminateProcess,
-    UpdateProcThreadAttribute, WaitForSingleObject, CREATE_NO_WINDOW, CREATE_SUSPENDED,
-    CREATE_UNICODE_ENVIRONMENT, EXTENDED_STARTUPINFO_PRESENT, PROCESS_INFORMATION,
-    PROC_THREAD_ATTRIBUTE_HANDLE_LIST, PROC_THREAD_ATTRIBUTE_MITIGATION_POLICY,
-    STARTF_USESTDHANDLES, STARTUPINFOEXW, STARTUPINFOW,
+    ProcessStrictHandleCheckPolicy, ResetEvent, ResumeThread, SetThreadToken, TerminateProcess,
+    UpdateProcThreadAttribute, WaitForMultipleObjects, WaitForSingleObject, CREATE_NO_WINDOW,
+    CREATE_SUSPENDED, CREATE_UNICODE_ENVIRONMENT, EXTENDED_STARTUPINFO_PRESENT,
+    PROCESS_INFORMATION, PROC_THREAD_ATTRIBUTE_HANDLE_LIST,
+    PROC_THREAD_ATTRIBUTE_MITIGATION_POLICY, STARTF_USESTDHANDLES, STARTUPINFOEXW, STARTUPINFOW,
 };
+use windows_sys::Win32::System::IO::{CancelIoEx, GetOverlappedResult, OVERLAPPED};
 
 const MAX_AUTHENTICODE_PATH_UTF16_UNITS: usize = 32_767;
 const MAX_SIGNER_ATTRIBUTE_UTF16_UNITS: usize = 2_048;
@@ -117,6 +124,13 @@ const MAX_AUTHENTICODE_SIGNATURES: u32 = 16;
 const AUTHENTICODE_HELPER_SCHEMA_VERSION: u32 = 1;
 const AUTHENTICODE_HELPER_ARGUMENT: &str = "--avorax-authenticode-helper-v1";
 const AUTHENTICODE_HELPER_PARENT_PID_ENV: &str = "AVORAX_AUTHENTICODE_PARENT_PID";
+const AUTHENTICODE_HELPER_HANDSHAKE_PIPE_ENV: &str = "AVORAX_AUTHENTICODE_HANDSHAKE_PIPE";
+const AUTHENTICODE_HELPER_HANDSHAKE_TOKEN_ENV: &str = "AVORAX_AUTHENTICODE_HANDSHAKE_TOKEN";
+const AUTHENTICODE_HELPER_HANDSHAKE_PIPE_PREFIX: &str = r"\\.\pipe\Avorax.Authenticode.";
+const AUTHENTICODE_HELPER_HANDSHAKE_TIMEOUT: Duration = Duration::from_secs(5);
+const AUTHENTICODE_HELPER_HANDSHAKE_TOKEN_BYTES: usize = 36;
+const AUTHENTICODE_HELPER_HANDSHAKE_PIPE_BUFFER_BYTES: u32 = 64;
+const MAX_AUTHENTICODE_HELPER_TOKEN_USER_BYTES: usize = 64 * 1024;
 const AUTHENTICODE_HELPER_TIMEOUT: Duration = Duration::from_secs(15);
 const AUTHENTICODE_HELPER_REAP_TIMEOUT: Duration = Duration::from_secs(2);
 const AUTHENTICODE_HELPER_POLL_INTERVAL: Duration = Duration::from_millis(10);
@@ -240,6 +254,14 @@ struct AuthenticodePipePeerProcessEvidence {
     peer_process_ids: [u32; 3],
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct AuthenticodeParentChildHandshakeEvidence {
+    expected_parent_process_id: u32,
+    actual_server_process_id: u32,
+    expected_child_process_id: u32,
+    actual_client_process_id: u32,
+}
+
 struct VerifiedWellKnownSid {
     storage: [usize; AUTHENTICODE_HELPER_SID_STORAGE_WORDS],
     length: usize,
@@ -325,6 +347,249 @@ impl OwnedKernelHandle {
     fn into_file(mut self) -> File {
         let handle = std::mem::replace(&mut self.0, null_mut());
         unsafe { File::from_raw_handle(handle) }
+    }
+}
+
+struct OwnedLocalSecurityDescriptor(*mut c_void);
+
+impl Drop for OwnedLocalSecurityDescriptor {
+    fn drop(&mut self) {
+        if !self.0.is_null() {
+            unsafe { LocalFree(self.0) };
+            self.0 = null_mut();
+        }
+    }
+}
+
+struct AuthenticodeParentChildHandshake {
+    server: OwnedKernelHandle,
+    event: OwnedKernelHandle,
+    overlapped: Box<OVERLAPPED>,
+    pipe_name: String,
+    token: String,
+    connect_pending: bool,
+}
+
+impl AuthenticodeParentChildHandshake {
+    fn create() -> Result<Self> {
+        let pipe_name = format!(
+            "{}{}",
+            AUTHENTICODE_HELPER_HANDSHAKE_PIPE_PREFIX,
+            Uuid::new_v4().hyphenated()
+        );
+        let token = Uuid::new_v4().hyphenated().to_string();
+        validate_authenticode_handshake_launch_values(&pipe_name, &token)?;
+        let mut pipe_name_wide = pipe_name.encode_utf16().collect::<Vec<_>>();
+        pipe_name_wide.push(0);
+        let security_descriptor = create_authenticode_handshake_security_descriptor()?;
+        let attributes = SECURITY_ATTRIBUTES {
+            nLength: size_of::<SECURITY_ATTRIBUTES>() as u32,
+            lpSecurityDescriptor: security_descriptor.0,
+            bInheritHandle: 0,
+        };
+        let server = unsafe {
+            CreateNamedPipeW(
+                pipe_name_wide.as_ptr(),
+                PIPE_ACCESS_INBOUND | FILE_FLAG_FIRST_PIPE_INSTANCE | FILE_FLAG_OVERLAPPED,
+                PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT | PIPE_REJECT_REMOTE_CLIENTS,
+                1,
+                AUTHENTICODE_HELPER_HANDSHAKE_PIPE_BUFFER_BYTES,
+                AUTHENTICODE_HELPER_HANDSHAKE_PIPE_BUFFER_BYTES,
+                AUTHENTICODE_HELPER_HANDSHAKE_TIMEOUT.as_millis() as u32,
+                &attributes,
+            )
+        };
+        let server = OwnedKernelHandle::from_raw(
+            server,
+            "unable to create the Authenticode parent-child handshake pipe",
+        )?;
+        validate_authenticode_pipe_endpoint(
+            server.0,
+            Some(PIPE_SERVER_END | PIPE_REJECT_REMOTE_CLIENTS),
+            0,
+            "AuthentiCode parent-child handshake server",
+        )?;
+        let event = OwnedKernelHandle::from_raw(
+            unsafe { CreateEventW(null(), 1, 0, null()) },
+            "unable to create the Authenticode parent-child handshake event",
+        )?;
+        let mut overlapped = Box::<OVERLAPPED>::default();
+        overlapped.hEvent = event.0;
+        let connected = unsafe { ConnectNamedPipe(server.0, overlapped.as_mut()) };
+        let connect_pending = if connected != 0 {
+            false
+        } else {
+            match unsafe { GetLastError() } {
+                ERROR_IO_PENDING => true,
+                ERROR_PIPE_CONNECTED => false,
+                error => anyhow::bail!(
+                    "unable to begin the Authenticode parent-child handshake connection: {}",
+                    std::io::Error::from_raw_os_error(error as i32)
+                ),
+            }
+        };
+        Ok(Self {
+            server,
+            event,
+            overlapped,
+            pipe_name,
+            token,
+            connect_pending,
+        })
+    }
+
+    fn complete(
+        mut self,
+        process: HANDLE,
+        expected_child_process_id: u32,
+        timeout: Duration,
+    ) -> Result<()> {
+        let deadline = Instant::now() + timeout.min(AUTHENTICODE_HELPER_HANDSHAKE_TIMEOUT);
+        if self.connect_pending {
+            if let Err(error) = self.wait_for_operation(process, deadline, "connection") {
+                return self.fail_after_pending_operation(error, "connection");
+            }
+            self.finish_overlapped("connection")?;
+        }
+        let actual_client_process_id =
+            query_authenticode_pipe_peer_process_id(self.server.0, true, "handshake client")?;
+        validate_authenticode_parent_child_handshake_evidence(
+            AuthenticodeParentChildHandshakeEvidence {
+                expected_parent_process_id: unsafe { GetCurrentProcessId() },
+                actual_server_process_id: unsafe { GetCurrentProcessId() },
+                expected_child_process_id,
+                actual_client_process_id,
+            },
+        )?;
+
+        anyhow::ensure!(
+            unsafe { ResetEvent(self.event.0) } != 0,
+            "unable to reset the Authenticode parent-child handshake event: {}",
+            std::io::Error::last_os_error()
+        );
+        *self.overlapped = OVERLAPPED::default();
+        self.overlapped.hEvent = self.event.0;
+        let mut received = [0u8; AUTHENTICODE_HELPER_HANDSHAKE_TOKEN_BYTES + 1];
+        let mut transferred = 0u32;
+        let read = unsafe {
+            ReadFile(
+                self.server.0,
+                received.as_mut_ptr(),
+                received.len() as u32,
+                &mut transferred,
+                self.overlapped.as_mut(),
+            )
+        };
+        if read == 0 {
+            let error = unsafe { GetLastError() };
+            if error != ERROR_IO_PENDING {
+                anyhow::bail!(
+                    "unable to read the Authenticode parent-child handshake token: {}",
+                    std::io::Error::from_raw_os_error(error as i32)
+                );
+            }
+            if let Err(error) = self.wait_for_operation(process, deadline, "token read") {
+                return self.fail_after_pending_operation(error, "token read");
+            }
+            transferred = self.finish_overlapped("token read")?;
+        }
+        anyhow::ensure!(
+            transferred as usize <= received.len(),
+            "AuthentiCode parent-child handshake token read exceeded its buffer"
+        );
+        validate_authenticode_handshake_token_bytes(
+            self.token.as_bytes(),
+            &received[..transferred as usize],
+        )
+    }
+
+    fn wait_for_operation(
+        &mut self,
+        process: HANDLE,
+        deadline: Instant,
+        label: &str,
+    ) -> Result<()> {
+        let remaining = deadline.saturating_duration_since(Instant::now());
+        let timeout_ms = u32::try_from(remaining.as_millis().max(1)).unwrap_or(u32::MAX - 1);
+        let handles = [self.event.0, process];
+        match unsafe {
+            WaitForMultipleObjects(handles.len() as u32, handles.as_ptr(), 0, timeout_ms)
+        } {
+            WAIT_OBJECT_0 => Ok(()),
+            status if status == WAIT_OBJECT_0 + 1 => {
+                anyhow::bail!("AuthentiCode helper exited before parent-child handshake {label}")
+            }
+            WAIT_TIMEOUT => anyhow::bail!(
+                "AuthentiCode parent-child handshake {label} timed out after {} ms",
+                timeout_ms
+            ),
+            WAIT_FAILED => anyhow::bail!(
+                "unable to wait for Authenticode parent-child handshake {label}: {}",
+                std::io::Error::last_os_error()
+            ),
+            status => anyhow::bail!(
+                "unexpected Authenticode parent-child handshake {label} wait status {status}"
+            ),
+        }
+    }
+
+    fn fail_after_pending_operation(mut self, error: anyhow::Error, label: &str) -> Result<()> {
+        match self.cancel_and_reap_overlapped(label) {
+            Ok(()) => Err(error.context(format!(
+                "AuthentiCode parent-child handshake {label} cancellation settled"
+            ))),
+            Err(cleanup_error) => {
+                let combined = anyhow::anyhow!(
+                    "{error:#}; AuthentiCode parent-child handshake {label} cancellation could not be proven settled: {cleanup_error:#}; pipe resources intentionally retained to avoid freeing in-flight OVERLAPPED state"
+                );
+                std::mem::forget(self);
+                Err(combined)
+            }
+        }
+    }
+
+    fn finish_overlapped(&self, label: &str) -> Result<u32> {
+        let mut transferred = 0u32;
+        anyhow::ensure!(
+            unsafe {
+                GetOverlappedResult(self.server.0, self.overlapped.as_ref(), &mut transferred, 0)
+            } != 0,
+            "AuthentiCode parent-child handshake {label} failed: {}",
+            std::io::Error::last_os_error()
+        );
+        Ok(transferred)
+    }
+
+    fn cancel_and_reap_overlapped(&mut self, label: &str) -> Result<()> {
+        let cancelled = unsafe { CancelIoEx(self.server.0, self.overlapped.as_ref()) };
+        if cancelled == 0 && unsafe { GetLastError() } != ERROR_NOT_FOUND {
+            anyhow::bail!(
+                "unable to cancel Authenticode parent-child handshake {label}: {}",
+                std::io::Error::last_os_error()
+            );
+        }
+        anyhow::ensure!(
+            unsafe {
+                WaitForSingleObject(
+                    self.event.0,
+                    AUTHENTICODE_HELPER_REAP_TIMEOUT.as_millis() as u32,
+                )
+            } == WAIT_OBJECT_0,
+            "AuthentiCode parent-child handshake {label} cancellation did not settle"
+        );
+        let mut transferred = 0u32;
+        let completed = unsafe {
+            GetOverlappedResult(self.server.0, self.overlapped.as_ref(), &mut transferred, 0)
+        };
+        if completed == 0 {
+            let error = unsafe { GetLastError() };
+            anyhow::ensure!(
+                error == ERROR_OPERATION_ABORTED,
+                "AuthentiCode parent-child handshake {label} cancellation settled with an unexpected error: {}",
+                std::io::Error::from_raw_os_error(error as i32)
+            );
+        }
+        Ok(())
     }
 }
 
@@ -814,6 +1079,216 @@ fn validate_current_process_authenticode_pipe_peer_processes() -> Result<()> {
         ],
     };
     validate_authenticode_pipe_peer_process_evidence(evidence)
+}
+
+fn validate_authenticode_parent_child_handshake_evidence(
+    evidence: AuthenticodeParentChildHandshakeEvidence,
+) -> Result<()> {
+    anyhow::ensure!(
+        evidence.expected_parent_process_id != 0 && evidence.expected_child_process_id != 0,
+        "AuthentiCode parent-child handshake contains a zero expected process ID"
+    );
+    anyhow::ensure!(
+        evidence.expected_parent_process_id != evidence.expected_child_process_id,
+        "AuthentiCode parent-child handshake parent and child process IDs are identical"
+    );
+    anyhow::ensure!(
+        evidence.actual_server_process_id == evidence.expected_parent_process_id,
+        "AuthentiCode child handshake server does not identify the expected parent process"
+    );
+    anyhow::ensure!(
+        evidence.actual_client_process_id == evidence.expected_child_process_id,
+        "AuthentiCode parent handshake client does not identify the expected child process"
+    );
+    Ok(())
+}
+
+fn validate_authenticode_handshake_launch_values(pipe_name: &str, token: &str) -> Result<()> {
+    let suffix = pipe_name
+        .strip_prefix(AUTHENTICODE_HELPER_HANDSHAKE_PIPE_PREFIX)
+        .context("AuthentiCode parent-child handshake pipe has an unexpected prefix")?;
+    let pipe_id = Uuid::parse_str(suffix)
+        .context("AuthentiCode parent-child handshake pipe identifier is invalid")?;
+    let token_id =
+        Uuid::parse_str(token).context("AuthentiCode parent-child handshake token is invalid")?;
+    anyhow::ensure!(
+        pipe_id.get_variant() == Variant::RFC4122
+            && pipe_id.get_version() == Some(Version::Random)
+            && pipe_id.hyphenated().to_string() == suffix,
+        "AuthentiCode parent-child handshake pipe identifier must be a canonical RFC 4122 random UUID"
+    );
+    anyhow::ensure!(
+        token_id.get_variant() == Variant::RFC4122
+            && token_id.get_version() == Some(Version::Random)
+            && token_id.hyphenated().to_string() == token,
+        "AuthentiCode parent-child handshake token must be a canonical RFC 4122 random UUID"
+    );
+    anyhow::ensure!(
+        pipe_id != token_id,
+        "AuthentiCode parent-child handshake pipe identifier and token must differ"
+    );
+    Ok(())
+}
+
+fn validate_authenticode_handshake_token_bytes(expected: &[u8], actual: &[u8]) -> Result<()> {
+    anyhow::ensure!(
+        expected.len() == AUTHENTICODE_HELPER_HANDSHAKE_TOKEN_BYTES,
+        "AuthentiCode parent-child handshake expected token length is invalid"
+    );
+    anyhow::ensure!(
+        actual.len() == AUTHENTICODE_HELPER_HANDSHAKE_TOKEN_BYTES,
+        "AuthentiCode parent-child handshake token length is invalid"
+    );
+    anyhow::ensure!(
+        expected == actual,
+        "AuthentiCode parent-child handshake token does not match this launch"
+    );
+    Ok(())
+}
+
+fn create_authenticode_handshake_security_descriptor() -> Result<OwnedLocalSecurityDescriptor> {
+    let user_sid = current_process_user_sid_string()?;
+    let sddl = format!("D:P(A;;GA;;;SY)(A;;GA;;;{user_sid})S:(ML;;NW;;;LW)");
+    let mut sddl_wide = sddl.encode_utf16().collect::<Vec<_>>();
+    sddl_wide.push(0);
+    let mut descriptor = null_mut();
+    anyhow::ensure!(
+        unsafe {
+            ConvertStringSecurityDescriptorToSecurityDescriptorW(
+                sddl_wide.as_ptr(),
+                SDDL_REVISION_1,
+                &mut descriptor,
+                null_mut(),
+            )
+        } != 0,
+        "unable to build the Authenticode parent-child handshake security descriptor: {}",
+        std::io::Error::last_os_error()
+    );
+    anyhow::ensure!(
+        !descriptor.is_null(),
+        "AuthentiCode parent-child handshake security descriptor is null"
+    );
+    Ok(OwnedLocalSecurityDescriptor(descriptor.cast()))
+}
+
+fn current_process_user_sid_string() -> Result<String> {
+    let mut token = null_mut();
+    anyhow::ensure!(
+        unsafe { OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &mut token) } != 0,
+        "unable to open the Authenticode parent token for handshake ACL creation: {}",
+        std::io::Error::last_os_error()
+    );
+    let token = OwnedToken::from_raw(
+        token,
+        "unable to open the Authenticode parent token for handshake ACL creation",
+    )?;
+    let mut required = 0u32;
+    unsafe { SetLastError(ERROR_SUCCESS) };
+    let queried = unsafe { GetTokenInformation(token.0, TokenUser, null_mut(), 0, &mut required) };
+    let error = unsafe { GetLastError() };
+    anyhow::ensure!(
+        queried == 0
+            && error == ERROR_INSUFFICIENT_BUFFER
+            && required as usize >= size_of::<TOKEN_USER>()
+            && required as usize <= MAX_AUTHENTICODE_HELPER_TOKEN_USER_BYTES,
+        "unable to size the Authenticode parent user SID: {}",
+        std::io::Error::from_raw_os_error(error as i32)
+    );
+    let mut storage = vec![0usize; (required as usize).div_ceil(size_of::<usize>())];
+    anyhow::ensure!(
+        unsafe {
+            GetTokenInformation(
+                token.0,
+                TokenUser,
+                storage.as_mut_ptr().cast(),
+                required,
+                &mut required,
+            )
+        } != 0,
+        "unable to read the Authenticode parent user SID: {}",
+        std::io::Error::last_os_error()
+    );
+    let user = unsafe { &*storage.as_ptr().cast::<TOKEN_USER>() };
+    anyhow::ensure!(
+        !user.User.Sid.is_null() && unsafe { IsValidSid(user.User.Sid) } != 0,
+        "AuthentiCode parent user SID is invalid"
+    );
+    let mut sid_text = null_mut();
+    anyhow::ensure!(
+        unsafe { ConvertSidToStringSidW(user.User.Sid, &mut sid_text) } != 0 && !sid_text.is_null(),
+        "unable to format the Authenticode parent user SID: {}",
+        std::io::Error::last_os_error()
+    );
+    let length_result = (0..256usize)
+        .find(|index| unsafe { *sid_text.add(*index) } == 0)
+        .context("AuthentiCode parent user SID text exceeds its bound");
+    let result = length_result.and_then(|length| {
+        String::from_utf16(unsafe { std::slice::from_raw_parts(sid_text, length) })
+            .context("AuthentiCode parent user SID text is invalid UTF-16")
+    });
+    unsafe { LocalFree(sid_text.cast()) };
+    result
+}
+
+fn complete_current_process_authenticode_parent_child_handshake() -> Result<()> {
+    let pipe_name = std::env::var(AUTHENTICODE_HELPER_HANDSHAKE_PIPE_ENV)
+        .context("AuthentiCode helper handshake pipe environment is missing or non-Unicode")?;
+    let token = std::env::var(AUTHENTICODE_HELPER_HANDSHAKE_TOKEN_ENV)
+        .context("AuthentiCode helper handshake token environment is missing or non-Unicode")?;
+    validate_authenticode_handshake_launch_values(&pipe_name, &token)?;
+    let expected_parent_process_id = expected_authenticode_parent_process_id()?;
+    let mut pipe_name_wide = pipe_name.encode_utf16().collect::<Vec<_>>();
+    pipe_name_wide.push(0);
+    let pipe = OwnedKernelHandle::from_raw(
+        unsafe {
+            CreateFileW(
+                pipe_name_wide.as_ptr(),
+                GENERIC_WRITE,
+                0,
+                null(),
+                OPEN_EXISTING,
+                0,
+                null_mut(),
+            )
+        },
+        "unable to open the Authenticode parent-child handshake pipe",
+    )?;
+    validate_authenticode_pipe_endpoint(
+        pipe.0,
+        Some(PIPE_CLIENT_END | PIPE_REJECT_REMOTE_CLIENTS),
+        0,
+        "AuthentiCode parent-child handshake client",
+    )?;
+    let current_process_id = unsafe { GetCurrentProcessId() };
+    let actual_server_process_id =
+        query_authenticode_pipe_peer_process_id(pipe.0, false, "handshake server")?;
+    validate_authenticode_parent_child_handshake_evidence(
+        AuthenticodeParentChildHandshakeEvidence {
+            expected_parent_process_id,
+            actual_server_process_id,
+            expected_child_process_id: current_process_id,
+            actual_client_process_id: current_process_id,
+        },
+    )?;
+    let mut transferred = 0u32;
+    anyhow::ensure!(
+        unsafe {
+            WriteFile(
+                pipe.0,
+                token.as_ptr(),
+                token.len() as u32,
+                &mut transferred,
+                null_mut(),
+            )
+        } != 0,
+        "unable to write the Authenticode parent-child handshake token: {}",
+        std::io::Error::last_os_error()
+    );
+    anyhow::ensure!(
+        transferred as usize == AUTHENTICODE_HELPER_HANDSHAKE_TOKEN_BYTES,
+        "AuthentiCode parent-child handshake token write was incomplete"
+    );
+    Ok(())
 }
 
 struct ProcessThreadAttributeList {
@@ -2117,6 +2592,7 @@ fn verify_prepared_microsoft_signature(prepared: PreparedAuthenticodeVerificatio
 }
 
 pub(crate) fn run_authenticode_helper_stdio() -> Result<()> {
+    complete_current_process_authenticode_parent_child_handshake()?;
     validate_current_process_authenticode_job_membership()?;
     validate_current_process_authenticode_standard_handles()?;
     validate_current_process_authenticode_pipe_peer_processes()?;
@@ -2401,8 +2877,10 @@ fn spawn_restricted_authenticode_process(
 ) -> Result<RestrictedAuthenticodeProcess> {
     let application_wide = absolute_application_path_wide(application)?;
     let mut command_line = restricted_process_command_line(application, arguments)?;
-    let launch_context = sanitized_authenticode_launch_context()?;
     let token = create_low_integrity_privilege_stripped_primary_token()?;
+    let handshake = AuthenticodeParentChildHandshake::create()?;
+    let launch_context =
+        sanitized_authenticode_launch_context(&handshake.pipe_name, &handshake.token)?;
     let mut private_desktop = PrivateAuthenticodeDesktop::create(token.0)?;
     let stdin = InheritedPipe::create(false, "stdin")?;
     let stdout = InheritedPipe::create(true, "stdout")?;
@@ -2476,6 +2954,17 @@ fn spawn_restricted_authenticode_process(
         );
     }
     drop(thread_handle);
+    if let Err(error) = handshake.complete(
+        process.0,
+        process_info.dwProcessId,
+        AUTHENTICODE_HELPER_HANDSHAKE_TIMEOUT,
+    ) {
+        let termination = terminate_and_reap_suspended_authenticode_process(&process);
+        anyhow::bail!(
+            "{error:#}; AuthentiCode parent-child handshake process cleanup: {}",
+            helper_result_summary(termination)
+        );
+    }
     Ok(RestrictedAuthenticodeProcess {
         process,
         private_desktop,
@@ -2645,7 +3134,10 @@ fn validate_current_process_authenticode_private_desktop() -> Result<()> {
     validate_authenticode_private_desktop_binding(&expected, &actual)
 }
 
-fn sanitized_authenticode_launch_context() -> Result<SanitizedAuthenticodeLaunchContext> {
+fn sanitized_authenticode_launch_context(
+    handshake_pipe_name: &str,
+    handshake_token: &str,
+) -> Result<SanitizedAuthenticodeLaunchContext> {
     let windows_root = checked_system_windows_directory()
         .context("unable to resolve the Authenticode helper sanitized environment root")?;
     let current_directory = checked_system_directory(
@@ -2658,7 +3150,12 @@ fn sanitized_authenticode_launch_context() -> Result<SanitizedAuthenticodeLaunch
         "unable to obtain a nonzero Authenticode helper parent process ID"
     );
     Ok(SanitizedAuthenticodeLaunchContext {
-        environment: build_authenticode_helper_environment_block(&windows_root, parent_process_id)?,
+        environment: build_authenticode_helper_environment_block(
+            &windows_root,
+            parent_process_id,
+            handshake_pipe_name,
+            handshake_token,
+        )?,
         current_directory: absolute_launch_directory_wide(&current_directory)?,
     })
 }
@@ -2666,6 +3163,8 @@ fn sanitized_authenticode_launch_context() -> Result<SanitizedAuthenticodeLaunch
 fn build_authenticode_helper_environment_block(
     windows_root: &Path,
     parent_process_id: u32,
+    handshake_pipe_name: &str,
+    handshake_token: &str,
 ) -> Result<Vec<u16>> {
     validate_authenticode_launch_directory(
         windows_root,
@@ -2676,9 +3175,18 @@ fn build_authenticode_helper_environment_block(
         parent_process_id != 0,
         "AuthentiCode helper sanitized parent process ID must be nonzero"
     );
+    validate_authenticode_handshake_launch_values(handshake_pipe_name, handshake_token)?;
     let parent_process_id = parent_process_id.to_string();
     let mut block =
         Vec::with_capacity(value.len() * AUTHENTICODE_HELPER_ENVIRONMENT_NAMES.len() + 64);
+    block.extend(AUTHENTICODE_HELPER_HANDSHAKE_PIPE_ENV.encode_utf16());
+    block.push(b'=' as u16);
+    block.extend(handshake_pipe_name.encode_utf16());
+    block.push(0);
+    block.extend(AUTHENTICODE_HELPER_HANDSHAKE_TOKEN_ENV.encode_utf16());
+    block.push(b'=' as u16);
+    block.extend(handshake_token.encode_utf16());
+    block.push(0);
     block.extend(AUTHENTICODE_HELPER_PARENT_PID_ENV.encode_utf16());
     block.push(b'=' as u16);
     block.extend(parent_process_id.encode_utf16());
@@ -4157,6 +4665,7 @@ mod tests {
     #[test]
     #[ignore = "isolated child fixture invoked by the bounded timeout regression"]
     fn authenticode_timeout_child_fixture() {
+        complete_current_process_authenticode_parent_child_handshake().unwrap();
         thread::sleep(Duration::from_secs(30));
     }
 
@@ -4193,6 +4702,7 @@ mod tests {
     #[test]
     #[ignore = "isolated child fixture invoked by the private-desktop regression"]
     fn authenticode_private_desktop_child_fixture() {
+        complete_current_process_authenticode_parent_child_handshake().unwrap();
         validate_current_process_authenticode_private_desktop().unwrap();
         println!("AVORAX_PRIVATE_DESKTOP_OK");
     }
@@ -4286,6 +4796,7 @@ mod tests {
     #[test]
     #[ignore = "isolated child fixture invoked by the restricted-process regression"]
     fn authenticode_restricted_primary_child_fixture() {
+        complete_current_process_authenticode_parent_child_handshake().unwrap();
         validate_current_process_authenticode_primary_token().unwrap();
         println!("AVORAX_RESTRICTED_PRIMARY_TOKEN_OK");
     }
@@ -4331,6 +4842,7 @@ mod tests {
     #[test]
     #[ignore = "isolated child fixture invoked by the low-integrity regression"]
     fn authenticode_low_integrity_child_fixture() {
+        complete_current_process_authenticode_parent_child_handshake().unwrap();
         revert_authenticode_helper_thread_token().unwrap();
         validate_current_process_authenticode_primary_token().unwrap();
         let request = read_authenticode_helper_request(std::io::stdin().lock()).unwrap();
@@ -4423,6 +4935,7 @@ mod tests {
     #[test]
     #[ignore = "isolated child fixture invoked by the mandatory-policy regression"]
     fn authenticode_mandatory_policy_child_fixture() {
+        complete_current_process_authenticode_parent_child_handshake().unwrap();
         validate_current_process_authenticode_primary_token().unwrap();
         println!("AVORAX_MANDATORY_NO_WRITE_UP_POLICY_OK");
     }
@@ -4478,6 +4991,7 @@ mod tests {
     #[test]
     #[ignore = "isolated child fixture invoked by the token-safety-flags regression"]
     fn authenticode_token_safety_flags_child_fixture() {
+        complete_current_process_authenticode_parent_child_handshake().unwrap();
         validate_current_process_authenticode_primary_token().unwrap();
         println!("AVORAX_TOKEN_VIRTUALIZATION_UIACCESS_DISABLED_OK");
     }
@@ -4547,6 +5061,7 @@ mod tests {
     #[test]
     #[ignore = "isolated child fixture invoked by the process-mitigation regression"]
     fn authenticode_process_mitigation_child_fixture() {
+        complete_current_process_authenticode_parent_child_handshake().unwrap();
         validate_current_process_authenticode_primary_token().unwrap();
         validate_current_process_authenticode_mitigations().unwrap();
         println!("AVORAX_PROCESS_MITIGATION_POLICY_OK");
@@ -4739,6 +5254,7 @@ mod tests {
     #[test]
     #[ignore = "isolated child fixture invoked by the Job-membership regression"]
     fn authenticode_job_membership_child_fixture() {
+        complete_current_process_authenticode_parent_child_handshake().unwrap();
         validate_current_process_authenticode_job_membership().unwrap();
         println!("AVORAX_JOB_MEMBERSHIP_OK");
     }
@@ -4812,6 +5328,7 @@ mod tests {
     #[test]
     #[ignore = "isolated child fixture invoked by the standard-handle regression"]
     fn authenticode_standard_handle_child_fixture() {
+        complete_current_process_authenticode_parent_child_handshake().unwrap();
         validate_current_process_authenticode_standard_handles().unwrap();
         println!("AVORAX_STANDARD_HANDLE_BINDING_OK");
     }
@@ -4819,6 +5336,7 @@ mod tests {
     #[test]
     #[ignore = "isolated child fixture invoked by the pipe-peer process regression"]
     fn authenticode_pipe_peer_process_child_fixture() {
+        complete_current_process_authenticode_parent_child_handshake().unwrap();
         validate_current_process_authenticode_standard_handles().unwrap();
         validate_current_process_authenticode_pipe_peer_processes().unwrap();
         println!("AVORAX_PIPE_PEER_PARENT_BINDING_OK");
@@ -4961,8 +5479,109 @@ mod tests {
     }
 
     #[test]
+    fn native_authenticode_helper_parent_child_handshake_binds_both_process_ids() {
+        let application = std::env::current_exe().unwrap();
+        let arguments = [
+            "--ignored",
+            "--exact",
+            "windows_authenticode::tests::authenticode_parent_child_handshake_child_fixture",
+            "--nocapture",
+            "--test-threads=1",
+        ];
+        let output = run_bounded_authenticode_helper(
+            &application,
+            &arguments,
+            Vec::new(),
+            Duration::from_secs(5),
+        )
+        .unwrap();
+        assert!(output.status.success());
+        assert!(output.stderr.is_empty());
+        assert!(String::from_utf8(output.stdout)
+            .unwrap()
+            .contains("AVORAX_PARENT_CHILD_PROCESS_BINDING_OK"));
+    }
+
+    #[test]
+    #[ignore = "isolated child fixture invoked by the parent-child handshake regression"]
+    fn authenticode_parent_child_handshake_child_fixture() {
+        complete_current_process_authenticode_parent_child_handshake().unwrap();
+        println!("AVORAX_PARENT_CHILD_PROCESS_BINDING_OK");
+    }
+
+    #[test]
+    fn native_authenticode_helper_parent_child_handshake_contract_is_fail_visible() {
+        let valid = AuthenticodeParentChildHandshakeEvidence {
+            expected_parent_process_id: 4_242,
+            actual_server_process_id: 4_242,
+            expected_child_process_id: 4_243,
+            actual_client_process_id: 4_243,
+        };
+        validate_authenticode_parent_child_handshake_evidence(valid).unwrap();
+        for invalid in [
+            AuthenticodeParentChildHandshakeEvidence {
+                expected_parent_process_id: 0,
+                ..valid
+            },
+            AuthenticodeParentChildHandshakeEvidence {
+                actual_server_process_id: 0,
+                ..valid
+            },
+            AuthenticodeParentChildHandshakeEvidence {
+                expected_child_process_id: 0,
+                ..valid
+            },
+            AuthenticodeParentChildHandshakeEvidence {
+                actual_client_process_id: 0,
+                ..valid
+            },
+            AuthenticodeParentChildHandshakeEvidence {
+                expected_child_process_id: 4_242,
+                actual_client_process_id: 4_242,
+                ..valid
+            },
+            AuthenticodeParentChildHandshakeEvidence {
+                actual_server_process_id: 4_244,
+                ..valid
+            },
+            AuthenticodeParentChildHandshakeEvidence {
+                actual_client_process_id: 4_244,
+                ..valid
+            },
+        ] {
+            assert!(validate_authenticode_parent_child_handshake_evidence(invalid).is_err());
+        }
+
+        let pipe = r"\\.\pipe\Avorax.Authenticode.11111111-1111-4111-8111-111111111111";
+        let token = "22222222-2222-4222-8222-222222222222";
+        validate_authenticode_handshake_launch_values(pipe, token).unwrap();
+        validate_authenticode_handshake_token_bytes(token.as_bytes(), token.as_bytes()).unwrap();
+        for invalid_pipe in [
+            "",
+            r"\\.\pipe\Other.11111111-1111-4111-8111-111111111111",
+            r"\\.\pipe\Avorax.Authenticode.11111111111141118111111111111111",
+            r"\\.\pipe\Avorax.Authenticode.11111111-1111-1111-8111-111111111111",
+        ] {
+            assert!(validate_authenticode_handshake_launch_values(invalid_pipe, token).is_err());
+        }
+        for invalid_token in [
+            "",
+            "11111111-1111-4111-8111-111111111111",
+            "22222222222242228222222222222222",
+            "22222222-2222-1222-8222-222222222222",
+        ] {
+            assert!(validate_authenticode_handshake_launch_values(pipe, invalid_token).is_err());
+        }
+        assert!(validate_authenticode_handshake_token_bytes(token.as_bytes(), b"short").is_err());
+        let mut wrong = token.as_bytes().to_vec();
+        wrong[0] = b'3';
+        assert!(validate_authenticode_handshake_token_bytes(token.as_bytes(), &wrong).is_err());
+    }
+
+    #[test]
     #[ignore = "isolated child fixture invoked by the sanitized-launch regression"]
     fn authenticode_sanitized_launch_child_fixture() {
+        complete_current_process_authenticode_parent_child_handshake().unwrap();
         validate_current_process_authenticode_primary_token().unwrap();
         let windows_root = checked_system_windows_directory().unwrap();
         let expected_current = checked_system_directory(
@@ -4977,10 +5596,21 @@ mod tests {
             .collect::<Vec<_>>();
         environment.sort_by(|left, right| left.0.cmp(&right.0));
         let expected_parent_process_id = expected_authenticode_parent_process_id().unwrap();
+        let expected_pipe = std::env::var(AUTHENTICODE_HELPER_HANDSHAKE_PIPE_ENV).unwrap();
+        let expected_token = std::env::var(AUTHENTICODE_HELPER_HANDSHAKE_TOKEN_ENV).unwrap();
+        validate_authenticode_handshake_launch_values(&expected_pipe, &expected_token).unwrap();
         assert_ne!(expected_parent_process_id, unsafe { GetCurrentProcessId() });
         assert_eq!(
             environment,
             vec![
+                (
+                    AUTHENTICODE_HELPER_HANDSHAKE_PIPE_ENV.to_string(),
+                    PathBuf::from(expected_pipe)
+                ),
+                (
+                    AUTHENTICODE_HELPER_HANDSHAKE_TOKEN_ENV.to_string(),
+                    PathBuf::from(expected_token)
+                ),
                 (
                     AUTHENTICODE_HELPER_PARENT_PID_ENV.to_string(),
                     PathBuf::from(expected_parent_process_id.to_string())
@@ -4994,8 +5624,15 @@ mod tests {
 
     #[test]
     fn native_authenticode_helper_sanitized_environment_block_is_exact_and_bounded() {
-        let block =
-            build_authenticode_helper_environment_block(Path::new(r"C:\Windows"), 4_242).unwrap();
+        let pipe = r"\\.\pipe\Avorax.Authenticode.11111111-1111-4111-8111-111111111111";
+        let token = "22222222-2222-4222-8222-222222222222";
+        let block = build_authenticode_helper_environment_block(
+            Path::new(r"C:\Windows"),
+            4_242,
+            pipe,
+            token,
+        )
+        .unwrap();
         assert_eq!(block.last(), Some(&0));
         assert_eq!(block[block.len() - 2], 0);
         let entries = block[..block.len() - 1]
@@ -5006,12 +5643,20 @@ mod tests {
         assert_eq!(
             entries,
             [
+                r"AVORAX_AUTHENTICODE_HANDSHAKE_PIPE=\\.\pipe\Avorax.Authenticode.11111111-1111-4111-8111-111111111111",
+                "AVORAX_AUTHENTICODE_HANDSHAKE_TOKEN=22222222-2222-4222-8222-222222222222",
                 "AVORAX_AUTHENTICODE_PARENT_PID=4242",
                 r"SystemRoot=C:\Windows",
                 r"WINDIR=C:\Windows"
             ]
         );
-        assert!(build_authenticode_helper_environment_block(Path::new(r"C:\Windows"), 0).is_err());
+        assert!(build_authenticode_helper_environment_block(
+            Path::new(r"C:\Windows"),
+            0,
+            pipe,
+            token,
+        )
+        .is_err());
 
         for invalid in [
             Path::new(r"relative\Windows"),
@@ -5019,7 +5664,9 @@ mod tests {
             Path::new(r"\\server\share\Windows"),
             Path::new(r"\\?\C:\Windows"),
         ] {
-            assert!(build_authenticode_helper_environment_block(invalid, 4_242).is_err());
+            assert!(
+                build_authenticode_helper_environment_block(invalid, 4_242, pipe, token).is_err()
+            );
             assert!(absolute_launch_directory_wide(invalid).is_err());
         }
         let embedded_nul = PathBuf::from(OsString::from_wide(&[
@@ -5030,7 +5677,9 @@ mod tests {
             0,
             b'Y' as u16,
         ]));
-        assert!(build_authenticode_helper_environment_block(&embedded_nul, 4_242).is_err());
+        assert!(
+            build_authenticode_helper_environment_block(&embedded_nul, 4_242, pipe, token).is_err()
+        );
         assert!(absolute_launch_directory_wide(&embedded_nul).is_err());
     }
 
@@ -5075,6 +5724,7 @@ mod tests {
     #[test]
     #[ignore = "isolated child fixture invoked by the write-restriction regression"]
     fn authenticode_write_restricted_child_fixture() {
+        complete_current_process_authenticode_parent_child_handshake().unwrap();
         validate_current_process_authenticode_primary_token().unwrap();
         let restricted = RestrictedAuthenticodeThreadToken::enter().unwrap();
         let operation = (|| -> Result<()> {

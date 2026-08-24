@@ -8931,3 +8931,42 @@ Updates page showed:
   16,072 files, zero directories, 4,522,733 bytes, 5,357 each payload/metadata/
   auth, one metadata key, and zero pending. Checkpoint 2215 is closed; the full
   antivirus goal remains active.
+## 2026-08-24 - Checkpoint 2216 scripting: Authenticode parent-child handshake
+
+- Audited checkpoint 2215, the restricted helper launch, all isolated child
+  fixtures, local `windows-sys 0.61.2` APIs/features, verifier/validator, source
+  contracts, and residual threat-model boundary.
+- Scripted a first-instance, one-instance, remote-rejecting local named pipe with
+  current-user/SYSTEM DACL, low-integrity label, random canonical pipe/token UUIDs,
+  exact parent-server and launched-child-client PID checks, bounded overlapped
+  connect/read, cancellation settlement, and helper cleanup on failure.
+- Scripted migration of every isolated helper child fixture, a benign mutual-PID
+  runtime regression, pure malformed/mismatch contracts, verifier step 246,
+  exact-246 validator assertions, source contract 646, and all audit documents.
+- Per the requested sequence, no parser, formatter, compiler, test, verifier, or
+  validator was run during this scripting phase. No passing result is claimed.
+- No live malware, candidate execution, network retrieval, installation,
+  service/driver start, Defender change, release/publication, or protected-vault
+  mutation occurred.
+
+## 2026-08-24 - Checkpoint 2216 local execution
+
+- Initial parsers/Python compile/diff checks passed; rustfmt requested only
+  mechanical layout. The first focused runtime exposed the named-pipe remote-
+  rejection read-back bit and one stale source marker; both were repaired visibly.
+- Focused handshake passes `2/2`, source contracts `646/646`, complete
+  Authenticode passes `53/13`, and strict Native/Local/Guard Clippy passes.
+- Both locked workspace variants pass with Native `489/13` and compiler `6/6`;
+  Flutter analyze and full `838/838` pass. Release Local Core/Guard builds and the
+  two-host isolated Authenticode/hash-binding smoke pass.
+- Definitive report `.verification/checkpoint-2216-parent-child-handshake-definitive-report.json`
+  passes exact `246/246`, zero failed/skipped, in `508.1s`; embedded and standalone
+  validators pass. Seven malformed report variants are rejected.
+- Lockfile hashes remain `7ab38f4820b08029c64872360fac7141e2512ac4`,
+  `277dd9fe1edfc45fa5550e8e2831f2a0c121561d`, and
+  `51fa085a41168aa1deadace8b5395614db43649e`. Protected vault read-only evidence
+  remains exact at `16,072` files, zero directories, `4,522,733` bytes, `5,357`
+  each payload/metadata/auth, one key, and zero pending.
+- Hosted exact-head evidence, normal merge, guarded synchronization, and
+  destination verification remain pending; no publication or machine change was
+  performed.

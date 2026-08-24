@@ -2278,3 +2278,15 @@ enforcement, or pre-execution blocking is claimed.
   `JOBOBJECT_BASIC_PROCESS_ID_LIST` do not authenticate IPC, change identity, or
   provide AppContainer, installed LocalSystem, signed-driver, or pre-execution
   evidence. Those remain separate blockers.
+## Checkpoint 2216 parent-child handshake evidence pending
+
+- The dedicated Authenticode parent-child handshake is scripted with exact
+  `GetNamedPipeServerProcessId` parent and `GetNamedPipeClientProcessId` child
+  binding, random launch token, restrictive low-integrity-compatible ACL,
+  bounded overlapped I/O, cancellation settlement, and fail-visible cleanup.
+- Local compile/runtime, full verifier `246/246`, and seven malformed-report
+  rejection cases now pass. Hosted exact-head, merge, synchronization, and
+  destination evidence remain pending; no integration passing claim is made yet.
+- Same-user process-memory inspection, cross-identity authenticated/encrypted IPC,
+  AppContainer/LPAC, installed LocalSystem, production signing, driver, and
+  pre-execution proof remain technically limited or require external prerequisites.
