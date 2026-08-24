@@ -9914,3 +9914,80 @@ Updates page showed:
   and zero pending. Nothing was installed, executed as candidate content,
   released, or published. Checkpoint 2225 is closed; its explicit limits and
   the overall antivirus goal remain active.
+
+## 2026-08-24 continuation checkpoint 2226 scripting
+
+- Started `agent/checkpoint-2226-authenticode-post-response-token-stability`
+  from local checkpoint-2225 closure `feb7d16`.
+- Scripted a retained second duplex phase across candidate trust and response
+  flush. The child flushes stdout, sends an exact response-ready byte, and
+  waits for a distinct final ACK; the parent keeps exact process, launch-token,
+  handshake, event, and overlapped state alive.
+- Before final ACK, parent rechecks the same launch `TokenId`/`ModifiedId` and
+  the exact live child token's launch identity, complete restricted profile,
+  and captured `TokenId`/`ModifiedId`. All read/write/timeout/cancel/cleanup
+  failures remain diagnostic with no weaker retry.
+- Scripted benign production-path and malformed marker/ACK regressions, source
+  contract 656, verifier step 256, exact 256-step validation, and checkpoint/
+  audit/threat/blocker/dependency/status documentation.
+- This remains point-in-time. It does not cryptographically bind response bytes
+  to token snapshots, bind the distinct impersonation token, prevent every
+  transient or post-final-ACK mutation, stop privileged same-session injection,
+  or establish cross-identity IPC, AppContainer/LPAC, installed LocalSystem,
+  signed-driver, or pre-execution enforcement.
+- No checkpoint-2226 parser, formatter, build, lint, test, smoke, or verifier
+  has run yet. No crate/package/feature/lock change, installation, Defender
+  weakening, candidate execution, release, or publication is intended.
+
+## 2026-08-24 continuation checkpoint 2226 initial execution
+
+- Formatting, diff checks, and both PowerShell parsers pass. The production
+  post-response target passes `3/3`, including missing/malformed response-ready
+  cleanup, while prior child binding remains `2/2`.
+- The first source-contract run executed 656 and rejected four stale source-
+  slice assumptions caused by the intentional method/session split. Corrected
+  exact slices then pass `656/656`; the initial four failures are not passes.
+- The first complete Authenticode filter passed `54/55`. Its sole failure was
+  a legacy exact-text assertion for `100 ms`; bounded overlapped timing reports
+  remaining integer milliseconds and can accurately say `99`. The assertion
+  now requires the response-ready timeout phase plus unchanged terminate/reap
+  proof. No timeout bound, cleanup, or product behavior was weakened.
+
+## 2026-08-24 continuation checkpoint 2226 full local verification
+
+- The repaired timeout target passes `1/1`; complete Authenticode passes
+  `55/55`. Native passes `506` with `15` intentional ignored child fixtures
+  plus signature compiler `6/6`; Local Core passes `536/536`; Guard passes
+  `248/248`.
+- Both locked workspace variants pass with Native `506/15` plus compiler `6/6`.
+  Strict Native/Local/Guard all-target/all-feature Clippy and standalone
+  locked/offline Native all-target/all-feature checking pass.
+- Locked release Local Core/Guard builds and the benign two-host Authenticode
+  smoke pass embedded/catalog Microsoft trust, mandatory hash-bound nonce IPC,
+  unsigned rejection, and hash-mismatch failure without candidate execution.
+  Flutter analyze and all `838/838` tests pass; source contracts pass
+  `656/656`; both PowerShell parsers, formatting, and diff checks pass.
+- The initial four stale source-contract failures and the legacy timeout-text
+  failure remain recorded and uncredited. Definitive 256-step evidence,
+  hosted/package evidence, integration, synchronization, and destination proof
+  remain pending; the complete antivirus goal remains active.
+
+## 2026-08-24 continuation checkpoint 2226 definitive local evidence
+
+- The definitive verifier ran from `2026-08-24T21:25:06.3091111Z` through
+  `2026-08-24T21:32:45.9605883Z` and passed exact `256/256`, zero failed or
+  skipped, in `459.6s`; the new target passed in `0.3s`. Embedded and
+  independently repeated Windows PowerShell 5.1 validators pass.
+- Ten isolated adversarial reports covering schema, status, Defender option,
+  both skip options, missing target, missing verified/technical scope, failed
+  final step, and stale count were rejected with exit code 1 and exactly
+  cleaned up.
+- Root Cargo, Native Cargo, and Flutter lock blobs remain
+  `7ab38f4820b08029c64872360fac7141e2512ac4`,
+  `277dd9fe1edfc45fa5550e8e2831f2a0c121561d`, and
+  `51fa085a41168aa1deadace8b5395614db43649e`. The read-only protected vault
+  remains 16,072 files, zero directories, 4,522,733 bytes, 5,357 each payload/
+  metadata/auth, one key, and zero pending/temp.
+- Hosted exact-head CI/package evidence, normal merge, guarded synchronization,
+  and destination proof remain pending. No installation, candidate execution,
+  release, publication, Defender change, or protected-vault mutation occurred.

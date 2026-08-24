@@ -5873,3 +5873,38 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   analyze and `838/838`, and exact verifier/validator `255/255` in `476.3s`
   pass. Locks and the protected vault remain exact. Checkpoint 2225 is closed;
   the complete antivirus goal remains active.
+
+## Checkpoint 2226 - Authenticode post-response token stability (2026-08-24)
+
+- **Implemented and locally verified:** the same duplex handshake now remains open
+  through candidate trust work and response flush. The child flushes stdout,
+  sends an exact one-byte response-ready marker, and blocks for a distinct
+  final ACK.
+- **Exact live-token boundary:** before final ACK, the parent revalidates the
+  same parent-held launch `TokenId`/`ModifiedId`, reopens the exact live child
+  token with `TOKEN_QUERY`, repeats launch SID/logon-session and the complete
+  restricted low-integrity profile, and requires the captured child IDs to be
+  unchanged.
+- **Fail-visible:** malformed/missing/oversized markers or ACKs, early exit,
+  timeout, query/profile/token drift, cancellation settlement, terminate/reap,
+  desktop, or worker failure cannot become publisher trust; no weaker retry is
+  present.
+- **Verification:** benign/adversarial Rust tests, source contract 656,
+  mandatory verifier step 256, exact 256-step validation, and all checkpoint,
+  control-matrix, threat-model, blocker, dependency, and run-log records are
+  complete. Post-response tests pass `3/3`, complete Authenticode `55/55`,
+  Native `506/15` plus compiler `6/6`, Local Core `536/536`, Guard `248/248`,
+  both locked workspaces, strict lint/offline checks, release/two-host smoke,
+  Flutter analyze, and Flutter `838/838` pass. Source contracts pass `656/656`.
+- **Definitive local evidence:** verifier and strict validator pass exact
+  `256/256`, zero failed/skipped, in `459.6s`; the new target is `0.3s` and ten
+  malformed reports are rejected. Lock blobs and the read-only protected-vault
+  invariant remain exact.
+- **Technically limited:** this remains point-in-time and does not bind the
+  distinct impersonation token object, cryptographically bind response bytes
+  to token snapshots, prevent every transient or mutation after final ACK, or
+  stop same-session injection/privileged handle duplication. Response-ready
+  and final ACK are not secret/encrypted. Cross-identity IPC, AppContainer/
+  LPAC, installed LocalSystem, signed-driver, and pre-execution enforcement
+  remain separate. Definitive verifier, hosted/package, merge, synchronization,
+  and destination evidence remain pending.

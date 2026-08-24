@@ -1086,3 +1086,28 @@ identity authentication, encryption, AppContainer/LPAC, installed LocalSystem,
 signed-driver, or pre-execution guarantees. Complete signed final-artifact
 license, notice, copyright, and binary-resolution review remains a production-
 release prerequisite.
+
+Checkpoint 2225 evidence `d1a1e14`, merge `5792c22`, evidence/merged-main
+package runs `32771093928`/`32773257841`, guarded destination synchronization,
+and destination `255/255` verification preserve the exact three lock blobs.
+Both package bundles retain six platform artifacts, seven matching checksums,
+and CycloneDX 1.6/569-component SBOMs; publication is skipped. No dependency or
+machine-wide component was installed.
+
+Checkpoint 2226 post-response token stability reuses the already pinned
+`windows-sys` named-pipe, process-token, wait, overlapped I/O, and cancellation
+APIs plus existing `std` flush support. Retaining the handshake/process/launch-
+token handles through response flush, exchanging exact response-ready/final ACK
+bytes, and rechecking `TokenId`/`ModifiedId` adds no crate, package, feature,
+binary, script host, network source, runtime component, or lockfile change. This
+batch adds no crate, package, feature, or lockfile change.
+
+The control remains point-in-time and does not cryptographically bind response
+bytes, provide cross-identity IPC, AppContainer/LPAC, installed LocalSystem,
+signed-driver, or pre-execution guarantees. Source contract 656 passes
+`656/656`; strict locked/offline/all-feature dependency checks pass; and the
+Cargo and Flutter lockfiles remain unchanged. Verifier step 256 passes inside
+exact `256/256` definitive evidence; the three lock blobs remain exact. Complete
+signed final-artifact license,
+notice, copyright, and binary-resolution review remains a production-release
+prerequisite.
