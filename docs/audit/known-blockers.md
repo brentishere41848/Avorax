@@ -2367,3 +2367,32 @@ enforcement, or pre-execution blocking is claimed.
 - Authenticated/encrypted cross-identity IPC, AppContainer/LPAC, an installed
   LocalSystem boundary, production signing, driver enforcement, and pre-execution
   protection remain technically limited or require external prerequisites.
+
+## Checkpoint 2220 handshake Owner Rights status
+
+- **Scripted, not yet verified:** the pipe explicitly names and reads back the
+  current process-token user as owner and applies exact Owner Rights `S-1-3-4`
+  with only `READ_CONTROL`. A benign same-user reopen must prove `WRITE_DAC`
+  denial while the existing parent/client protocol remains functional.
+- Owner/SID/mask/flag/order adversarial tests, verifier step 250, exact validator
+  scope, stale-249 rejection, source contract 650, and audit documents are
+  scripted. No runtime, hosted, merge, synchronization, or destination result is
+  claimed yet.
+- Remaining blocker: this is still point-in-time same-user control, not
+  encrypted cross-identity IPC. Existing handles, trusted same-user code,
+  privileged ownership changes, injection/duplication, SYSTEM/administrators,
+  kernel compromise, AppContainer/LPAC, installed LocalSystem, signing, driver
+  enforcement, and pre-execution protection remain technically limited or need
+  external prerequisites.
+- **Local runtime verified, definitive pending:** corrected source contracts
+  `650/650`, Owner Rights denial `1/1`, handshake `4/4`, Authenticode `57/13`,
+  Native `493/13`, Local Core `536/536`, Guard `248/249`, strict lint, both
+  locked workspaces, release/two-host trust smoke, and Flutter `838/838` pass.
+  Definitive report/validator, lock/vault, hosted, integration, synchronization,
+  and destination evidence are still blockers to checkpoint closure.
+- **Definitive local evidence now verified:** exact `250/250` in `452.7s`, both
+  validators, and nine malformed-report rejections pass. Lock blobs and the
+  read-only protected-vault invariant remain exact. Remaining checkpoint
+  blockers are hosted exact-head checks, normal merge, merged-main checks,
+  guarded synchronization, and destination verification; the cross-identity
+  and pre-execution technical limits remain.

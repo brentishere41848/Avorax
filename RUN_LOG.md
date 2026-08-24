@@ -9297,3 +9297,46 @@ Updates page showed:
   `2026-08-24T09:02:24.5591800Z`; embedded and corrected standalone Windows
   PowerShell validation pass. Lock blobs and the protected vault remain exact.
   Checkpoint 2219 is closed while the complete antivirus goal remains active.
+
+## 2026-08-24 - Checkpoint 2220 scripting: handshake-pipe Owner Rights
+
+- Scripted an explicit current process-token owner plus ordered `S-1-3-4`
+  Owner Rights ACE granting only `READ_CONTROL`. Both parent and child now
+  request and compare exact owner, protected DACL, and mandatory-label evidence.
+- Scripted a benign random-pipe reopen proving same-user `WRITE_DAC` is denied,
+  plus wrong-owner/SID/mask/flag/order regressions. The central verifier gains
+  step 250 and the independent validator rejects stale or incomplete evidence;
+  source contract 650 and all audit documents are updated.
+- Owner Rights removes implicit owner `WRITE_DAC`, but remains a point-in-time
+  same-user control, not cross-identity isolation, encryption, AppContainer,
+  installed LocalSystem, driver, or pre-execution protection.
+- No checkpoint-2220 passing result is claimed during scripting. Tests, hosted
+  evidence, merge, synchronization, and destination verification remain pending.
+
+## 2026-08-24 - Checkpoint 2220 corrected local verification
+
+- Initial Rust formatting and two stale historical source assertions failed
+  visibly, were corrected, and are not counted as success. Parsers `2/2`, Python
+  compilation, formatting, and source contracts `650/650` now pass.
+- Exact Owner Rights denial `1/1`, handshake security `4/4`, Authenticode
+  `57/13`, Native `493/13`, compiler `6/6`, Local Core `536/536`, Guard
+  `248/248` standard and `249/249` all-feature, both locked workspaces,
+  locked/offline Native checks, and strict Native/Local/Guard Clippy pass.
+- Release Local Core/Guard builds and benign two-host embedded/catalog/hash-
+  binding smoke pass without fixture execution. Flutter analyze and `838/838`
+  pass. Definitive verifier, report validation, locks/vault, hosted, integration,
+  synchronization, and destination evidence remain pending.
+
+## 2026-08-24 - Checkpoint 2220 definitive local evidence
+
+- Definitive verification ran `09:26:52.1091780Z` to `09:34:24.8241696Z` and
+  passed exact `250/250`, zero failed/skipped, in `452.7s`; the target step plus
+  embedded and standalone full-suite validators pass.
+- Nine malformed reports are rejected for stale count, renamed step, three
+  missing verified scopes, missing residual scope, failed/skipped target, and
+  skipped Rust. One inline generator quoting failure created no variants and is
+  not counted; the corrected isolated structured generator passes `9/9`.
+- All three lock blobs remain exact. Read-only vault inventory remains 16,072
+  files, zero directories, 4,522,733 bytes, 5,357 each payload/metadata/auth,
+  one key, and zero pending/temp. Checkpoint 2220 is locally verified; hosted,
+  merge, synchronization, and destination evidence remain pending.

@@ -881,3 +881,33 @@ destination synchronization and destination dependency evidence pass; root
 Cargo, Native Cargo, and Flutter lock blobs remain unchanged. Complete signed
 final-artifact notice and binary-resolution review remains a production-release
 requirement.
+
+## Checkpoint 2220 dependency delta
+
+Checkpoint 2220 adds no crate, package, feature, or lockfile change. Existing
+`windows-sys 0.61.2` features supply `OWNER_SECURITY_INFORMATION`, SDDL `OW`,
+SID validation/string conversion, `CreateNamedPipeW`, `CreateFileW`,
+`READ_CONTROL`, `WRITE_DAC`, and `ERROR_ACCESS_DENIED`; existing MIT OR
+Apache-2.0 licensing is unchanged.
+
+The descriptor sets and reads back the current process-token owner and adds
+Owner Rights `S-1-3-4` with only `READ_CONTROL`. Runtime evidence is deliberately
+pending until the complete scripting batch is closed. This point-in-time
+same-user control is not encrypted cross-identity IPC, AppContainer/LPAC,
+installed LocalSystem, production signing, driver enforcement, or pre-execution
+protection. No network content, executable fixture, machine-wide component,
+privilege enablement, or new license obligation is introduced.
+
+Corrected source contracts `650/650`, both locked workspace variants,
+locked/offline Native all-target checking, strict Native/Local Core/Guard lint,
+release Local Core/Guard builds, benign two-host trust smoke, and Flutter
+`838/838` pass without a dependency or lockfile edit. Exact lock hashes and the
+dependency evidence gate remain to be rechecked with the definitive verifier;
+hosted and integration evidence remain pending.
+
+The definitive dependency gate and full verifier now pass exact `250/250` in
+`452.7s`; nine malformed reports are rejected. Root Cargo, Native Cargo, and
+Flutter lock blobs remain exactly `7ab38f4820b08029c64872360fac7141e2512ac4`,
+`277dd9fe1edfc45fa5550e8e2831f2a0c121561d`, and
+`51fa085a41168aa1deadace8b5395614db43649e`. No dependency or license
+classification changed. Hosted and integration evidence remain pending.

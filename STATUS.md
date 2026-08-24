@@ -5615,3 +5615,34 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   dependency gates, Flutter `838/838`, and exact verifier/validator `249/249` in
   `486.9s` pass. Locks and the protected vault remain exact. Checkpoint 2219 is
   closed; the overall antivirus hardening goal remains active.
+
+## Checkpoint 2220 - Authenticode pipe Owner Rights (2026-08-24)
+
+- **Scripted, execution pending:** the descriptor explicitly sets and reads back
+  the current process-token user SID as owner, and adds exact ordered Owner
+  Rights SID `S-1-3-4` with only `READ_CONTROL`. Microsoft documents that this
+  ACE suppresses the owner's implicit `READ_CONTROL` and `WRITE_DAC`.
+- The real parent/child path must retain protocol access and exact read-backs. A
+  separate benign random-pipe regression requires a same-user `WRITE_DAC`-only
+  reopen to fail with `ERROR_ACCESS_DENIED`; owner/SID/mask/flag/order mutation
+  evidence must fail visibly.
+- Verifier step 250, exact-250 validation, stale-report rejection, source
+  contract 650, and the complete documentation batch are scripted. No
+  checkpoint-2220 passing result is claimed during scripting.
+- The control remains point-in-time and same-user, not encrypted or
+  cross-identity IPC, AppContainer/LPAC, installed LocalSystem, production
+  signing, driver enforcement, or pre-execution protection. Focused/full/local,
+  hosted, merge, synchronization, and destination evidence remain pending.
+- **Corrected local evidence:** parsers, compilation, formatting, source
+  contracts `650/650`, exact Owner Rights `1/1`, handshake `4/4`, Authenticode
+  `57/13`, Native `493/13`, compiler `6/6`, Local Core `536/536`, Guard
+  `248/249`, both locked workspaces, strict lint, release/two-host trust smoke,
+  Flutter analyze and `838/838` pass. Initial format and stale-contract findings
+  were corrected and are not success evidence. Definitive and later phases
+  remain pending.
+- **Locally verified:** definitive verifier/validator passes exact `250/250`,
+  zero failed/skipped, in `452.7s`; nine malformed reports are rejected. Root
+  Cargo, Native Cargo, and Flutter lock blobs remain exact, and the read-only
+  protected vault remains 16,072 files, zero directories, 4,522,733 bytes,
+  5,357 each payload/metadata/auth, one key, and zero pending/temp. Hosted,
+  integration, synchronization, and destination evidence remain pending.
