@@ -9854,3 +9854,24 @@ Updates page showed:
   payload/metadata/auth, one key, and zero pending/temp. Nothing was installed,
   executed as candidate content, released, or published. Hosted exact-head,
   merge, guarded synchronization, and destination evidence remain pending.
+
+## 2026-08-24 continuation checkpoint 2225 implementation-head hosting
+
+- Exact implementation `311d9a26c3781843bc9208c9adf4747f56b22168` passes
+  all five Avorax CI jobs in run `32769512557`. Desktop Packages push/PR runs
+  `32769502849`/`32769512526` pass contracts, Windows MSI/EXE, Linux DEB/tar,
+  macOS arm64/x64 DMG, and consolidation; both publication jobs are skipped.
+- Consolidated artifacts `9536055246`/`9536052725` were retained as untouched
+  ZIP streams with SHA-256 `cb6f82d7074c3e69fcf48cb9414dbad73508328807a06f9bf591a42b5ac92911`/
+  `f69f08c600f05509dd930e438355ea304d7edb6b4ecd1bbbada871e5344a69fc`.
+  In-stream checks prove exactly six platform artifacts, seven matching
+  checksum rows, and one CycloneDX 1.6 lockfile SBOM with 569 components in
+  each ZIP, without extracting or executing candidate installers.
+- The first inspection wrapper failed JavaScript parsing before execution and
+  created nothing. The next correctly rejected a stale generic SBOM filename
+  assumption after reading the first ZIP. Exact versioned SBOM selection then
+  passed both streams; neither failed attempt is counted as evidence.
+- Draft PR `#77` remains exact at the implementation head. Evidence-head checks,
+  normal merge, merged-main evidence, guarded original-tree synchronization,
+  and destination verification remain pending. Nothing was installed, executed
+  as candidate content, released, or published.

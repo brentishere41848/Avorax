@@ -5823,7 +5823,7 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
 
 ## Checkpoint 2225 - Authenticode child process-token binding (2026-08-24)
 
-- **Locally verified; hosted integration pending:** the handshake is duplex and the child waits
+- **Locally and implementation-head hosted verified:** the handshake is duplex and the child waits
   after its nonce write for an exact one-byte ACK. The parent queries the token
   attached to the exact child process with `TOKEN_QUERY` while suspended and
   again after PID/client-token/nonce/launch-token authentication. Both require
@@ -5855,5 +5855,11 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   transient, or stop same-session injection/privileged handle duplication. ACK
   is not secret/encrypted. Cross-identity IPC, AppContainer/LPAC, installed
   LocalSystem, signed-driver, and pre-execution enforcement remain separate;
-  hosted exact-head evidence, merge, guarded synchronization, and destination
-  proof remain pending, and the overall antivirus goal remains active.
+  evidence-head checks, merge, guarded synchronization, and destination proof
+  remain pending, and the overall antivirus goal remains active.
+- **Implementation-head hosted verified:** exact `311d9a2` passes CI
+  `32769512557` and package push/PR runs `32769502849`/`32769512526`. Both
+  untouched consolidated ZIP streams contain six platform artifacts, seven
+  exact checksum rows, and CycloneDX 1.6 SBOMs with 569 components; publication
+  is skipped. Draft PR `#77` is open. Evidence-head, merge, merged-main,
+  guarded synchronization, and destination proof remain pending.

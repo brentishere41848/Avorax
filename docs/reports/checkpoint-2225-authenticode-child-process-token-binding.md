@@ -111,6 +111,34 @@ Root Cargo, Native Cargo, and Flutter lock blobs remain exactly
 `51fa085a41168aa1deadace8b5395614db43649e`. Read-only inventory confirms the
 protected vault remains exactly 16,072 files, zero directories, 4,522,733
 bytes, 5,357 each `.avoraxq`/`.json`/`.auth`, one `.metadata_auth_key`, and zero
-pending/temp. Hosted exact-head evidence, normal merge, guarded original-tree
-synchronization, and destination verification remain pending; checkpoint 2225
-is locally verified but not yet closed.
+pending/temp. Implementation-head hosting is recorded below; evidence-head
+checks, normal merge, guarded original-tree synchronization, and destination
+verification remain pending, so checkpoint 2225 is not yet closed.
+
+## Implementation-Head Hosted Evidence
+
+Exact implementation `311d9a26c3781843bc9208c9adf4747f56b22168` passes
+Avorax CI `32769512557` and Desktop Packages push/PR runs `32769502849`/
+`32769512526` without reruns. CI completes all five jobs. Both package runs pass
+contracts, Windows x64 MSI/EXE, Linux x64 DEB/tar, macOS arm64/x64 DMG, and
+consolidation; both publication jobs are explicitly skipped.
+
+Consolidated artifacts `9536055246` and `9536052725` were retained as untouched
+ZIP streams with SHA-256
+`cb6f82d7074c3e69fcf48cb9414dbad73508328807a06f9bf591a42b5ac92911` and
+`f69f08c600f05509dd930e438355ea304d7edb6b4ecd1bbbada871e5344a69fc`.
+In-stream inspection, without extracting or executing candidate installers,
+proves exactly eight entries each: six platform artifacts, one versioned
+CycloneDX 1.6 lockfile SBOM, and `SHA256SUMS.txt`. All seven checksum rows name
+present entries and match streamed SHA-256 values; each SBOM has exactly 569
+components.
+
+Two inspection-wrapper issues remain explicit. The first JavaScript wrapper
+failed to parse before execution because PowerShell backticks conflicted with
+its template literal and created nothing. The corrected wrapper first rejected
+a stale generic SBOM filename assumption after reading the first ZIP; selecting
+the exact versioned `*-lockfile.cdx.json` entry then validated both complete
+streams. Neither failed attempt is counted as evidence. Draft PR `#77` remains
+at the exact implementation head. Evidence-head checks, normal merge, merged-
+main evidence, guarded synchronization, and destination verification remain
+pending; nothing was installed, executed, released, or published.
