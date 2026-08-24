@@ -157,3 +157,35 @@ CycloneDX 1.6 lockfile SBOM with 569 components, and seven SHA-256 rows that all
 match recomputed hashes. Nothing was installed, executed, released, or
 published. Evidence-head checks, normal merge, merged-main checks, guarded
 original-tree synchronization, and destination verification remain pending.
+
+## Integration And Destination Closure
+
+Evidence commit `2f027145ae02319599535f6e122bc9db98f67441` passed exact-
+head Avorax CI `32735762338` and Desktop Packages `32735762385`. Draft PR
+`#74` was made ready only after those checks and merged normally with exact-
+head locking as `e644d77e2b22a60d7c08e20fbb465cc5a7c8253a`. Merged-main
+CI `32737920931` and Desktop Packages `32737920822` pass. The package run
+passes all platforms and consolidation, its seven checksums independently
+match, its lockfile SBOM is CycloneDX 1.6 with 569 components, and publication
+is skipped.
+
+All 12 original-tree preconditions matched merge parent `c4d9975` or valid
+absence. Exactly those paths were synchronized to
+`C:\Users\Brent\Documents\Avorax-main`; every destination normalized Git blob
+matched merge `e644d77` and every raw SHA-256 matched the authoritative source
+file. No unrelated destination file was copied or removed.
+
+Destination parsers, source contracts `652/652`, logon-session `2/2`, complete
+Authenticode `69/13`, Native Engine `497/13` plus compiler `6/6`, both locked
+workspace variants, strict Native/Local/Guard Clippy, Flutter analyze, and
+Flutter `838/838` pass. The destination definitive report ran from
+`2026-08-24T14:49:47.4149338Z` through
+`2026-08-24T14:58:04.1411084Z` and passed exact `252/252` in `496.7s`, with
+zero failed or skipped steps; the new target passed in `0.2s`. Embedded and
+independent Windows PowerShell strict validation pass.
+
+The three destination lock blobs and protected-vault invariant remain exact.
+No artifact was installed, executed as an installer, released, or published.
+Checkpoint 2222 is closed; its documented same-session, cross-identity,
+AppContainer/LPAC, installed LocalSystem, driver, and pre-execution limits, and
+the complete antivirus hardening goal, remain active.

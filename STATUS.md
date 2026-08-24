@@ -5730,9 +5730,45 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   checksums, and CycloneDX 1.6/569-component SBOM evidence pass; publication is
   skipped. Evidence-head, merge, merged-main, synchronization, and destination
   proof remain pending.
+- **Integrated and destination verified:** evidence `2f02714`, PR `#74`, merge
+  `e644d77`, evidence-head and merged-main CI/packages, exact 12-path guarded
+  synchronization, destination full Rust/Flutter checks, and exact destination
+  verifier `252/252` in `496.7s` all pass. Locks and protected vault remain
+  exact; publication is skipped. Checkpoint 2222 is closed, while its explicit
+  IPC/identity/driver limits and the complete antivirus goal remain open.
 - **Full local regressions verified:** both locked Rust
   workspaces, Local Core `536/536`, Guard `248/249`, strict Native/Local/Guard
   lint, Flutter analyze and `838/838` pass. The three lock blobs and protected
   vault invariant remain exact. Definitive and implementation-head hosted
   evidence also pass; integration, synchronization, and destination evidence
   remain pending.
+
+## Checkpoint 2223 - Authenticode client token stability (2026-08-24)
+
+- **Scripting complete and locally verified:** Native Engine now snapshots
+  exact `TokenStatistics.TokenId` and `ModifiedId` before and after all
+  successful named-pipe client-token property checks. Empty token IDs, exact-
+  size query errors, token-instance drift, and token-modification drift fail
+  visibly before publisher trust.
+- **Contracts scripted:** isolated handshake and adversarial drift tests,
+  source contract 653, mandatory verifier step 253, independent validator
+  scope assertions, and audit/dependency documentation are present. No result
+  was claimed before execution; the completed local evidence is listed below.
+- **Limits unchanged:** this is a point-window stability check, not launch-
+  token object identity. Same-session injection/handle duplication, cross-
+  identity IPC, AppContainer/LPAC, installed LocalSystem, signed driver, and
+  pre-execution enforcement remain technically limited or blocked.
+- **Locally verified:** focused and full Rust/Flutter checks pass, including
+  token stability `2/2`, Authenticode `71/13`, Native `499/13`, compiler `6/6`,
+  source contracts `653/653`, Flutter `838/838`, and strict lint. Definitive
+  verification passes exact `253/253` in `492.9s`, the new target in `0.2s`,
+  both validators, and nine negative report mutations. Integration,
+  synchronization, and destination proof remain pending.
+- **Implementation-head hosted verified:** exact `561ac536` passes Avorax CI
+  `32744796324` and package PR/push runs `32744796274`/`32744754697`. Both
+  consolidated ZIPs contain six platform artifacts, seven matching SHA-256
+  rows, and CycloneDX 1.6/569-component SBOM evidence; publication is skipped.
+  Local Defender removed extracted MSI/EXE copies, so complete-package evidence
+  was verified directly against both untouched ZIP streams without weakening
+  Defender. Evidence-head, merge, merged-main, guarded sync, and destination
+  evidence remain pending.

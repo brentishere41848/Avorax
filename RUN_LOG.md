@@ -9588,3 +9588,81 @@ Updates page showed:
   lockfile SBOM with 569 components. Publication is skipped. Evidence-head,
   merge, merged-main, guarded synchronization, and destination proof remain
   pending; nothing was installed, executed, released, or published.
+
+## 2026-08-24 continuation checkpoint 2222 integration closure
+
+- Evidence head `2f027145ae02319599535f6e122bc9db98f67441` passed Avorax CI
+  `32735762338` and Desktop Packages `32735762385`. PR `#74` became ready only
+  after exact-head checks and merged normally with head locking as
+  `e644d77e2b22a60d7c08e20fbb465cc5a7c8253a`.
+- Merged-main Avorax CI `32737920931` and Desktop Packages `32737920822`
+  passed. Windows MSI/EXE, Linux DEB/tar, macOS arm64/x64 DMG, consolidation,
+  seven exact checksums, and CycloneDX 1.6/569-component lockfile SBOM evidence
+  passed; publication was skipped.
+- All 12 original-tree preconditions matched merge parent `c4d9975` or valid
+  absence. Exactly those paths synchronized to
+  `C:\Users\Brent\Documents\Avorax-main`; every destination normalized Git
+  blob matched merge `e644d77` and every raw SHA-256 matched source.
+- Destination parsers, source contracts `652/652`, logon-session `2/2`,
+  complete Authenticode `69/13`, Native `497/13`, compiler `6/6`, both locked
+  workspaces, strict Native/Local/Guard Clippy, Flutter analyze and `838/838`
+  passed. Destination definitive verification ran from
+  `2026-08-24T14:49:47.4149338Z` through
+  `2026-08-24T14:58:04.1411084Z` and passed exact `252/252` with zero failed or
+  skipped steps in `496.7s`; embedded and standalone strict validation passed.
+- Three destination lock blobs and the read-only protected-vault invariant
+  remain exact at 16,072 files, zero directories, 4,522,733 bytes, 5,357 each
+  payload/metadata/auth, one key, and zero pending. Nothing was installed,
+  released, or published. Checkpoint 2222 is closed; the complete antivirus
+  hardening goal remains active.
+
+## 2026-08-24 continuation checkpoint 2223 scripting
+
+- Started branch `agent/checkpoint-2223-authenticode-client-token-stability`
+  from local checkpoint-2222 closure `3107ffc`.
+- Scripted exact `TokenStatistics.TokenId` and `ModifiedId` snapshots before
+  and after all successful named-pipe client-token property validation. Empty
+  initial token IDs, exact-size query failures, token-instance drift, and token-
+  modification drift fail visibly and cannot become publisher trust.
+- Added isolated handshake/revert and adversarial four-field drift/empty-ID
+  Rust regressions, source contract 653, a mandatory token-stability verifier
+  step, exact 253-step report validation, and complete checkpoint/audit/status/
+  dependency documentation.
+- No checkpoint-2223 test has run yet, by the requested scripting-first
+  sequence. The check does not bind the impersonation token object to the
+  launch primary-token object or solve same-session injection, handle
+  duplication, cross-identity IPC, AppContainer/LPAC, driver, or pre-execution
+  limits. No dependency or lockfile change is intended.
+- Focused verification passed: parsers `2/2`, format, token stability `2/2`,
+  logon session `2/2`, source contracts `653/653`, Authenticode `71/13`, Native
+  `499/13` plus compiler `6/6`, both locked workspaces, strict Native/Local/
+  Guard Clippy, standalone locked/offline Native, Flutter analyze and
+  `838/838`.
+- The first standalone offline-check invocation used a repository-relative
+  manifest from the Flutter subdirectory and failed path resolution. It was
+  rerun unchanged from the repository root and passed in `2.76s`; no source
+  failure or retry weakening occurred.
+- Definitive verification ran from `2026-08-24T15:13:23.6533587Z` through
+  `2026-08-24T15:21:36.5966555Z` and passed exact `253/253`, zero failed or
+  skipped, in `492.9s`; the new target passed in `0.2s`. Embedded and standalone
+  strict validation pass and nine adversarial report mutations are rejected.
+  Hosted, merge, guarded synchronization, and destination evidence remain
+  pending.
+
+## 2026-08-24 continuation checkpoint 2223 implementation-head hosting
+
+- Exact implementation `561ac536a55257b05f9c04ada55756d1ab676749`
+  passes Avorax CI `32744796324` and Desktop Packages PR/push runs
+  `32744796274`/`32744754697` without reruns.
+- Both package runs pass package contracts, Windows x64 MSI/EXE, Linux x64
+  DEB/tar, macOS arm64/x64 DMG, and consolidation. Publication is explicitly
+  skipped in both runs.
+- Independent in-ZIP verification proves eight entries per consolidated
+  bundle, exactly seven checksum rows with all seven SHA-256 values matching,
+  and CycloneDX 1.6 lockfile SBOMs with 569 components.
+- Ordinary local extraction completed but Defender removed both Windows files
+  from each extracted directory. Defender was not changed; complete evidence
+  comes from the untouched ZIP streams, which retain and hash-verify the MSI
+  and EXE. Nothing was installed, executed, released, or published.
+- Evidence-head CI/packages, normal merge, merged-main evidence, guarded
+  synchronization, and destination verification remain pending.

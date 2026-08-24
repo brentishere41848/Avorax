@@ -2465,3 +2465,38 @@ enforcement, or pre-execution blocking is claimed.
   1.6/569-component SBOM evidence with publication skipped. Normal merge,
   merged-main checks, guarded synchronization, and destination verification
   remain blockers to checkpoint closure.
+- **Checkpoint integration blockers closed:** evidence `2f02714`, PR `#74`,
+  merge `e644d77`, exact evidence-head and merged-main CI/packages, guarded
+  12-path synchronization, full destination suites, and exact destination
+  `252/252` validation in `496.7s` pass. The checkpoint has no remaining
+  integration blocker. Same-session injection/handle duplication,
+  cross-identity IPC, AppContainer/LPAC or installed LocalSystem isolation,
+  production signing, driver enforcement, and demonstrated pre-execution
+  protection remain technically limited or require external prerequisites;
+  the overall antivirus goal remains active.
+- **Checkpoint 2223 residual boundary:** exact `TokenId`/`ModifiedId`
+  before/after stability, adversarial regressions, source contract 653,
+  verifier step 253, validator assertions, and documentation pass locally. The
+  stability window does not
+  bind the impersonation token object to the launch primary-token object,
+  detect mutation wholly outside the window, prevent same-session injection or
+  handle duplication, authenticate cross-identity IPC, provide
+  AppContainer/LPAC or installed LocalSystem isolation, or establish signed-
+  driver/pre-execution enforcement.
+- **Checkpoint 2223 local verification blocker closed:** focused/full Rust and
+  Flutter checks plus exact definitive `253/253` validation in `492.9s` pass,
+  and nine malformed reports are rejected. Exact implementation-head CI/
+  package evidence, evidence head, normal merge, merged-main checks, guarded
+  synchronization, and destination verification still block checkpoint
+  closure. Same-session injection/handle duplication, cross-identity IPC,
+  AppContainer/LPAC, installed LocalSystem, signing, driver, and pre-execution
+  limits remain external or technical blockers for the larger goal.
+- **Checkpoint 2223 implementation-head hosted blocker closed:** exact
+  `561ac536a55257b05f9c04ada55756d1ab676749` passes CI `32744796324` and
+  package PR/push `32744796274`/`32744754697`. Both untouched consolidated ZIP
+  streams independently pass the six-platform-artifact, seven-checksum, and
+  CycloneDX 1.6/569-component SBOM contract; publication is skipped. Local
+  Defender removed extracted MSI/EXE copies and was not weakened. Remaining
+  checkpoint blockers are evidence-head checks, normal merge, merged-main
+  checks, guarded synchronization, and destination verification. The larger
+  installed/cross-identity/signing/driver/pre-execution blockers remain.

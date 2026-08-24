@@ -2295,3 +2295,40 @@ the exact logon-session target. Both strict validators pass and nine malformed
 reports are rejected. This strengthens evidence for the implemented boundary;
 it does not alter the same-session, cross-identity, AppContainer/LPAC, driver,
 or pre-execution limitations above.
+
+### Authenticode client token stability window (checkpoint 2223)
+
+After successful named-pipe impersonation, the parent now snapshots exact
+`TokenStatistics.TokenId` and `ModifiedId` before querying privileges, type,
+level, SID, logon session, restricted SIDs, integrity, mandatory policy,
+virtualization, and UIAccess. It queries both identifiers again only after all
+property checks pass. Empty initial token identity, exact-size query failure,
+token-instance drift, or token-modification drift fails visibly and cannot
+become publisher trust; `RevertToSelf` remains mandatory on every path.
+
+This narrows token replacement or mutation during the successful validation
+window. It intentionally does not compare the impersonation `TokenId` with the
+launch primary token because they are distinct token-object instances. It does
+not detect mutation wholly before or after the window, prevent same-session
+injection or handle duplication, encrypt the channel, authenticate cross-
+identity service IPC, provide AppContainer/LPAC, or demonstrate signed-driver/
+pre-execution enforcement. Scripting is complete; runtime and hosted evidence
+remain pending.
+
+Local runtime evidence now passes the isolated real handshake and adversarial
+drift cases `2/2`, Authenticode `71/13`, Native `499/13`, both locked
+workspaces, strict lint, Flutter `838/838`, and definitive exact `253/253` in
+`492.9s`. Nine malformed reports are rejected. This verifies the implemented
+window on this host; it does not alter the same-session, cross-identity,
+AppContainer/LPAC, installed LocalSystem, signed-driver, or pre-execution
+residual threats. Hosted and destination evidence remain pending.
+
+Exact implementation `561ac536a55257b05f9c04ada55756d1ab676749`
+passes CI `32744796324` and both package runs `32744796274`/`32744754697`.
+Independent checks over each untouched consolidated ZIP verify all six
+platform artifacts, seven exact SHA-256 rows, and a CycloneDX 1.6 lockfile SBOM
+with 569 components; publication is skipped. Defender removed the Windows
+files only from ordinary local extraction, was not weakened, and the incomplete
+extracted directories are not treated as complete evidence. Hosted proof does
+not expand the point-window boundary or any residual threat above. Evidence-
+head, merged-main, synchronization, and destination evidence remain pending.
