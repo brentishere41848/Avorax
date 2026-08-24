@@ -145,3 +145,22 @@ remain later phases and cannot be inferred from local scripting.
   normal PR integration, merged-main evidence, guarded original-tree
   synchronization, and destination verification remain pending; local checkpoint
   completion is not complete-antivirus completion.
+
+## Hosted Implementation Evidence
+
+- Exact implementation `5171fb4e1076de74eb03c5adab7f12f2c1f20a6f` is
+  pushed only on `agent/checkpoint-2219-authenticode-pipe-dacl-least-privilege`
+  and is the head of draft PR `#71`.
+- Avorax CI PR run `32702550130` passes all five jobs at that exact SHA:
+  branding/copy, Rust Local Core/Native/Guard/update/API, Unix quarantine
+  permissions, Flutter/protocol, and security/protection/performance gates.
+- Desktop Packages push run `32702466511` and PR run `32702550182` pass package
+  contracts, Windows x64 MSI/EXE, Linux x64 DEB/tar, macOS arm64/x64 DMG,
+  dependency/license evidence, administrative MSI extraction, consolidation,
+  and checksums. Both `Publish desktop beta prerelease` jobs are skipped.
+- The downloaded exact push artifact contains all six platform packages and one
+  CycloneDX 1.6 lockfile SBOM with `569` components. Independent local
+  recomputation matches all seven rows in `SHA256SUMS.txt`.
+- No package was installed, released, or published. Evidence-head CI/packages,
+  normal PR integration, merged-main evidence, guarded original-tree
+  synchronization, and destination verification remain pending.

@@ -5596,6 +5596,12 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
 - **Locally verified:** definitive verifier and standalone validator pass exact
   `249/249`, zero failed/skipped, in `470.3s`; all safety/dependency gates pass
   and eight malformed reports are rejected. Locks and the protected vault remain
-  exact. Hosted CI/packages, normal merge, original-tree synchronization, and
+  exact.
+- **Hosted implementation verified:** exact SHA `5171fb4e` on draft PR `#71`
+  passes Avorax CI `32702550130` and Desktop Packages push/PR
+  `32702466511`/`32702550182`. Six platform packages, seven checksums, a
+  569-component CycloneDX 1.6 lockfile SBOM, administrative MSI extraction, and
+  dependency evidence pass; publication is skipped. Evidence-head checks,
+  normal merge, merged-main checks, original-tree synchronization, and
   destination verification remain pending, so checkpoint 2219 is not integrated
   yet and the overall antivirus goal remains active.

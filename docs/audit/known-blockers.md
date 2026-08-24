@@ -2346,12 +2346,15 @@ enforcement, or pre-execution blocking is claimed.
 
 ## Checkpoint 2219 handshake-DACL least-privilege status
 
-- **Locally verified; integration pending:** SYSTEM retains normalized full control, while
+- **Locally and exact-head hosted verified; integration pending:** SYSTEM retains normalized full control, while
   the current-user ACE is reduced to normalized generic read plus generic write.
   Exact parent and child descriptor read-backs reject broader or narrower rights,
   including execute, delete, `WRITE_DAC`, and `WRITE_OWNER`. Source contract 649
   and definitive step 249 pass. Exact verifier/validator `249/249` in `470.3s`,
-  source contracts `649/649`, and eight malformed-report rejections pass; hosted,
+  source contracts `649/649`, and eight malformed-report rejections pass. Exact
+  SHA `5171fb4e` passes CI `32702550130` and package push/PR
+  `32702466511`/`32702550182`; all six packages, checksums, lockfile SBOM, and
+  administrative MSI extraction pass with publication skipped. Evidence-head,
   merge, synchronization, and destination evidence remain pending.
 - **Ownership blocker:** the creator's token default owner is not changed or
   independently read back. If the current user owns the pipe, Windows ownership

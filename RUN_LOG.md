@@ -9258,3 +9258,19 @@ Updates page showed:
   hosted exact-head evidence, normal merge, guarded synchronization, and
   destination verification remain pending. The overall antivirus goal remains
   active.
+
+## 2026-08-24 - Checkpoint 2219 hosted implementation evidence
+
+- Committed exact implementation as
+  `5171fb4e1076de74eb03c5adab7f12f2c1f20a6f`, pushed only the feature branch,
+  and opened draft PR `#71`.
+- Exact-head Avorax CI `32702550130` passes all five jobs. Desktop Packages push
+  `32702466511` and PR `32702550182` pass package contracts, Windows MSI/EXE,
+  Linux DEB/tar, both macOS DMGs, administrative MSI extraction,
+  dependency/license evidence, consolidation, and checksums. Both publication
+  jobs are skipped.
+- The downloaded push artifact contains six platform packages and one CycloneDX
+  1.6 lockfile SBOM with `569` components; independent recomputation matches all
+  seven checksum rows. No artifact was installed, released, or published.
+- Evidence-head checks, normal merge, merged-main checks, guarded synchronization,
+  and destination verification remain pending. `.verification` stays untracked.

@@ -2169,13 +2169,16 @@ control even though the protocol needs only parent read and child write plus
 descriptor read-back. Extra execute/delete/owner-management rights enlarge the
 same-user attack surface without improving Authenticode trust evidence.
 
-**Scripted control:** The exact DACL grants SYSTEM normalized full control and
+**Locally and exact-head hosted verified control:** The exact DACL grants SYSTEM normalized full control and
 the current user normalized generic read plus generic write. Both endpoint
 read-backs normalize generic pipe/file masks and reject current-user full-control,
 read-only, write-only, execute, delete, `WRITE_DAC`, `WRITE_OWNER`, or any other
 mismatch before token exchange or publisher trust. The real child fixture and
 adversarial benign masks, exact verifier step 249, validator clauses, and source
-contract 649 are scripted. No checkpoint-2219 pass is claimed before execution.
+contract 649 pass. Exact implementation `5171fb4e` passes CI `32702550130` and
+package push/PR `32702466511`/`32702550182`, including all six packages, seven
+checksums, the 569-component lockfile SBOM, and administrative MSI extraction;
+publication is skipped. Integration and destination evidence remain pending.
 
 **Residual risk:** The pipe creator's token default owner is not changed or
 independently read back. If the current user owns the named pipe, Windows

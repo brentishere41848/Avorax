@@ -866,6 +866,10 @@ the scripted batch is executed.
 Local dependency and license evidence now passes, as do source contracts
 `649/649`, both locked workspaces, strict lint, exact verifier/validator
 `249/249`, and unchanged root Cargo, Native Cargo, and Flutter lock blobs. No
-dependency or license classification changed. Hosted package/SBOM, merge, and
+dependency or license classification changed. Exact implementation `5171fb4e`
+passes package push/PR `32702466511`/`32702550182`: all six native package
+artifacts, seven independently rechecked checksum rows, dependency/license
+evidence, administrative MSI extraction, and a CycloneDX 1.6 lockfile SBOM with
+`569` components pass. Publication is skipped. Evidence-head, merge, and
 destination evidence remain pending; complete signed final-artifact notice and
 binary-resolution review remains a production-release requirement.
