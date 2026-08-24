@@ -911,3 +911,13 @@ Flutter lock blobs remain exactly `7ab38f4820b08029c64872360fac7141e2512ac4`,
 `277dd9fe1edfc45fa5550e8e2831f2a0c121561d`, and
 `51fa085a41168aa1deadace8b5395614db43649e`. No dependency or license
 classification changed. Hosted and integration evidence remain pending.
+
+Exact implementation SHA `6f90f9234375ceb22107aba426401e38838ec9b8`
+passes Desktop Packages push/PR runs `32712856310`/`32712875850`. Both runs
+build all six native artifacts and pass dependency/license evidence,
+administrative MSI extraction without installation, consolidation, checksums,
+and lockfile SBOM generation; prerelease publication is skipped. Independent
+inspection of the push artifact recomputed all seven SHA-256 rows and confirmed
+CycloneDX 1.6 with 569 components. No dependency or lockfile changed.
+Evidence-head/merged-main package proof and complete signed final-artifact
+license, notice, copyright, and binary-resolution review remain pending.

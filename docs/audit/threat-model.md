@@ -2228,3 +2228,13 @@ Flutter lock blobs, and the read-only protected-vault invariant remain exact.
 This closes local evidence only; hosted, integration, synchronization, and
 destination checks remain pending, and the point-in-time/cross-identity/
 pre-execution limitations remain unchanged.
+
+**Implementation-head hosted evidence:** Exact SHA
+`6f90f9234375ceb22107aba426401e38838ec9b8` passes all five CI jobs in run
+`32712875828` and package push/PR runs `32712856310`/`32712875850`. The push
+artifact has six release files, seven independently matching SHA-256 rows, and
+a CycloneDX 1.6 lockfile SBOM with 569 components. Both publication jobs are
+skipped. This confirms build and hosted regression behavior; it does not expand
+the control beyond the same-user, point-in-time boundary described above.
+Evidence-head, merge, merged-main, synchronization, and destination checks
+remain pending.

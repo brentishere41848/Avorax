@@ -140,3 +140,21 @@ release, or publication is part of this checkpoint.
   normal PR integration, merged-main evidence, guarded original-tree
   synchronization, and destination verification remain pending. Local
   checkpoint completion is not completion of the antivirus project.
+
+## Implementation-Head Hosted Evidence
+
+- Exact SHA `6f90f9234375ceb22107aba426401e38838ec9b8` passes Avorax CI PR run
+  `32712875828`: Rust, Flutter/protocol, security/protection/performance, Unix
+  quarantine permissions, and branding all succeed.
+- Desktop Packages push run `32712856310` and PR run `32712875850` pass package
+  contracts, Windows x64 MSI/EXE, Linux x64 DEB/tar, macOS x64/arm64 DMGs, and
+  consolidated checksum/SBOM evidence. Both prerelease publication jobs are
+  explicitly skipped.
+- The downloaded push artifact contains exactly six release files. Its seven
+  non-empty `SHA256SUMS.txt` rows all match independent SHA-256 recomputation.
+  The checksummed lockfile SBOM is CycloneDX 1.6 with 569 components and metadata
+  component `Avorax Anti-Virus`.
+- Draft PR `#72` is clean and points at the exact implementation SHA. No package
+  was installed, executed, released, or published. Evidence-head checks, normal
+  merge, merged-main evidence, guarded original-tree synchronization, and
+  destination verification remain pending.

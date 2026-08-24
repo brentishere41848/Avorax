@@ -2396,3 +2396,11 @@ enforcement, or pre-execution blocking is claimed.
   blockers are hosted exact-head checks, normal merge, merged-main checks,
   guarded synchronization, and destination verification; the cross-identity
   and pre-execution technical limits remain.
+- **Implementation-head hosted evidence now verified:** exact SHA
+  `6f90f9234375ceb22107aba426401e38838ec9b8` passes CI `32712875828` and package
+  push/PR runs `32712856310`/`32712875850`; both publication jobs are skipped.
+  Six artifacts, all seven checksum rows, and the CycloneDX 1.6/569-component
+  lockfile SBOM were independently checked. Remaining checkpoint blockers are
+  evidence-head checks, normal merge, merged-main checks, guarded sync, and
+  destination verification. Cross-identity IPC and pre-execution protection
+  remain technically limited.

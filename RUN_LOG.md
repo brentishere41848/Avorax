@@ -9340,3 +9340,19 @@ Updates page showed:
   files, zero directories, 4,522,733 bytes, 5,357 each payload/metadata/auth,
   one key, and zero pending/temp. Checkpoint 2220 is locally verified; hosted,
   merge, synchronization, and destination evidence remain pending.
+
+## 2026-08-24 continuation checkpoint 2220 implementation-head hosting
+
+- Exact implementation head `6f90f9234375ceb22107aba426401e38838ec9b8`
+  passes Avorax CI PR run `32712875828` across all five jobs.
+- Desktop Packages push/PR runs `32712856310`/`32712875850` pass package
+  contracts, Windows x64 MSI/EXE, Linux x64 DEB/tar, macOS x64/arm64 DMGs,
+  consolidation, checksums, and lockfile SBOM generation. Both prerelease
+  publication jobs are skipped.
+- The exact push artifact contains six release files plus a CycloneDX 1.6
+  lockfile SBOM with 569 components. All seven `SHA256SUMS.txt` rows were
+  independently recomputed and matched. No artifact was installed, executed,
+  released, or published.
+- Draft PR `#72` remains clean at the exact implementation head. Evidence-head
+  checks, normal merge, merged-main evidence, guarded original-tree
+  synchronization, and destination verification remain pending.

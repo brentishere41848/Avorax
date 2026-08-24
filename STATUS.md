@@ -5646,3 +5646,10 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   protected vault remains 16,072 files, zero directories, 4,522,733 bytes,
   5,357 each payload/metadata/auth, one key, and zero pending/temp. Hosted,
   integration, synchronization, and destination evidence remain pending.
+- **Implementation-head hosted verified:** exact SHA `6f90f9234375ceb22107aba426401e38838ec9b8`
+  passes CI `32712875828` and Desktop Packages push/PR runs
+  `32712856310`/`32712875850`. All platform jobs and consolidation pass; both
+  publication jobs are skipped. The downloaded push artifact contains six
+  release files, seven independently matching SHA-256 rows, and a CycloneDX
+  1.6 lockfile SBOM with 569 components. Evidence-head, merge, merged-main,
+  guarded synchronization, and destination verification remain pending.
