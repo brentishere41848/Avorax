@@ -60,16 +60,17 @@ use windows_sys::Win32::Security::{
     GetSecurityDescriptorSacl, GetTokenInformation, IsValidSid, LookupPrivilegeValueW,
     MapGenericMask, RevertToSelf, SecurityImpersonation, SetTokenInformation, TokenImpersonation,
     TokenImpersonationLevel, TokenIntegrityLevel, TokenMandatoryPolicy, TokenPrimary,
-    TokenPrivileges, TokenRestrictedSids, TokenType, TokenUIAccess, TokenUser,
-    TokenVirtualizationAllowed, TokenVirtualizationEnabled, WinLowLabelSid, WinRestrictedCodeSid,
-    ACCESS_ALLOWED_ACE, ACE_HEADER, ACL, ACL_SIZE_INFORMATION, DACL_SECURITY_INFORMATION,
-    DISABLE_MAX_PRIVILEGE, GENERIC_MAPPING, LABEL_SECURITY_INFORMATION, LUID_AND_ATTRIBUTES,
-    OWNER_SECURITY_INFORMATION, PSECURITY_DESCRIPTOR, SECURITY_ATTRIBUTES, SECURITY_MAX_SID_SIZE,
-    SE_CHANGE_NOTIFY_NAME, SE_DACL_PROTECTED, SE_PRIVILEGE_ENABLED, SID, SID_AND_ATTRIBUTES,
-    SYSTEM_MANDATORY_LABEL_ACE, TOKEN_ADJUST_DEFAULT, TOKEN_ASSIGN_PRIMARY, TOKEN_DUPLICATE,
-    TOKEN_GROUPS, TOKEN_IMPERSONATE, TOKEN_MANDATORY_LABEL, TOKEN_MANDATORY_POLICY,
-    TOKEN_MANDATORY_POLICY_NO_WRITE_UP, TOKEN_MANDATORY_POLICY_VALID_MASK, TOKEN_PRIVILEGES,
-    TOKEN_QUERY, TOKEN_USER, WELL_KNOWN_SID_TYPE, WRITE_RESTRICTED,
+    TokenPrivileges, TokenRestrictedSids, TokenSessionId, TokenStatistics, TokenType,
+    TokenUIAccess, TokenUser, TokenVirtualizationAllowed, TokenVirtualizationEnabled,
+    WinLowLabelSid, WinRestrictedCodeSid, ACCESS_ALLOWED_ACE, ACE_HEADER, ACL,
+    ACL_SIZE_INFORMATION, DACL_SECURITY_INFORMATION, DISABLE_MAX_PRIVILEGE, GENERIC_MAPPING,
+    LABEL_SECURITY_INFORMATION, LUID_AND_ATTRIBUTES, OWNER_SECURITY_INFORMATION,
+    PSECURITY_DESCRIPTOR, SECURITY_ATTRIBUTES, SECURITY_MAX_SID_SIZE, SE_CHANGE_NOTIFY_NAME,
+    SE_DACL_PROTECTED, SE_PRIVILEGE_ENABLED, SID, SID_AND_ATTRIBUTES, SYSTEM_MANDATORY_LABEL_ACE,
+    TOKEN_ADJUST_DEFAULT, TOKEN_ASSIGN_PRIMARY, TOKEN_DUPLICATE, TOKEN_GROUPS, TOKEN_IMPERSONATE,
+    TOKEN_MANDATORY_LABEL, TOKEN_MANDATORY_POLICY, TOKEN_MANDATORY_POLICY_NO_WRITE_UP,
+    TOKEN_MANDATORY_POLICY_VALID_MASK, TOKEN_PRIVILEGES, TOKEN_QUERY, TOKEN_STATISTICS, TOKEN_USER,
+    WELL_KNOWN_SID_TYPE, WRITE_RESTRICTED,
 };
 use windows_sys::Win32::Storage::FileSystem::{
     CreateFileW, FileBasicInfo, FileIdInfo, FileStandardInfo, GetFileInformationByHandle,
@@ -281,10 +282,18 @@ struct AuthenticodePipeClientTokenEvidence {
     token_type: i32,
     impersonation_level: i32,
     user_sid: String,
+    logon_session: AuthenticodeTokenLogonSessionEvidence,
     restricting_sids: Vec<TokenSidEvidence>,
     integrity: TokenSidEvidence,
     mandatory_policy: u32,
     safety: AuthenticodeTokenSafetyFlags,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct AuthenticodeTokenLogonSessionEvidence {
+    authentication_id_low: u32,
+    authentication_id_high: i32,
+    session_id: u32,
 }
 
 struct VerifiedWellKnownSid {
@@ -393,11 +402,18 @@ struct AuthenticodeParentChildHandshake {
     pipe_name: String,
     token: String,
     expected_user_sid: String,
+    expected_logon_session: AuthenticodeTokenLogonSessionEvidence,
     connect_pending: bool,
 }
 
 impl AuthenticodeParentChildHandshake {
-    fn create() -> Result<Self> {
+    fn create(expected_client_token: HANDLE) -> Result<Self> {
+        let expected_user_sid =
+            query_token_user_sid_string(expected_client_token, "launch primary user")?;
+        let expected_logon_session = query_authenticode_token_logon_session(
+            expected_client_token,
+            "launch primary logon session",
+        )?;
         let pipe_name = format!(
             "{}{}",
             AUTHENTICODE_HELPER_HANDSHAKE_PIPE_PREFIX,
@@ -409,6 +425,10 @@ impl AuthenticodeParentChildHandshake {
         pipe_name_wide.push(0);
         let (security_descriptor, current_user_sid) =
             create_authenticode_handshake_security_descriptor()?;
+        anyhow::ensure!(
+            !expected_user_sid.is_empty() && expected_user_sid == current_user_sid,
+            "AuthentiCode handshake launch token user SID does not match the pipe owner"
+        );
         let attributes = SECURITY_ATTRIBUTES {
             nLength: size_of::<SECURITY_ATTRIBUTES>() as u32,
             lpSecurityDescriptor: security_descriptor.0,
@@ -462,7 +482,8 @@ impl AuthenticodeParentChildHandshake {
             overlapped,
             pipe_name,
             token,
-            expected_user_sid: current_user_sid,
+            expected_user_sid,
+            expected_logon_session,
             connect_pending,
         })
     }
@@ -526,8 +547,12 @@ impl AuthenticodeParentChildHandshake {
             transferred as usize <= received.len(),
             "AuthentiCode parent-child handshake token read exceeded its buffer"
         );
-        verify_authenticode_handshake_client_token(self.server.0, &self.expected_user_sid)
-            .context("unable to authenticate the Authenticode handshake client token")?;
+        verify_authenticode_handshake_client_token(
+            self.server.0,
+            &self.expected_user_sid,
+            self.expected_logon_session,
+        )
+        .context("unable to authenticate the Authenticode handshake client token")?;
         validate_authenticode_handshake_token_bytes(
             self.token.as_bytes(),
             &received[..transferred as usize],
@@ -1622,7 +1647,11 @@ fn complete_current_process_authenticode_parent_child_handshake() -> Result<()> 
     Ok(())
 }
 
-fn verify_authenticode_handshake_client_token(pipe: HANDLE, expected_user_sid: &str) -> Result<()> {
+fn verify_authenticode_handshake_client_token(
+    pipe: HANDLE,
+    expected_user_sid: &str,
+    expected_logon_session: AuthenticodeTokenLogonSessionEvidence,
+) -> Result<()> {
     anyhow::ensure!(
         !expected_user_sid.is_empty(),
         "AuthentiCode handshake expected client user SID is empty"
@@ -1641,7 +1670,7 @@ fn verify_authenticode_handshake_client_token(pipe: HANDLE, expected_user_sid: &
         let token = open_current_thread_token()?.context(
             "AuthentiCode handshake client impersonation did not produce a thread token",
         )?;
-        validate_authenticode_pipe_client_token(token.0, expected_user_sid)
+        validate_authenticode_pipe_client_token(token.0, expected_user_sid, expected_logon_session)
     })();
     let revert = revert_authenticode_handshake_client_token();
     match (verification, revert) {
@@ -1667,7 +1696,11 @@ fn revert_authenticode_handshake_client_token() -> Result<()> {
     Ok(())
 }
 
-fn validate_authenticode_pipe_client_token(token: HANDLE, expected_user_sid: &str) -> Result<()> {
+fn validate_authenticode_pipe_client_token(
+    token: HANDLE,
+    expected_user_sid: &str,
+    expected_logon_session: AuthenticodeTokenLogonSessionEvidence,
+) -> Result<()> {
     validate_privilege_stripped_token_privileges(token)?;
     let evidence = AuthenticodePipeClientTokenEvidence {
         token_type: query_token_scalar(token, TokenType, "handshake client type")?,
@@ -1677,6 +1710,10 @@ fn validate_authenticode_pipe_client_token(token: HANDLE, expected_user_sid: &st
             "handshake client impersonation level",
         )?,
         user_sid: query_token_user_sid_string(token, "handshake client user")?,
+        logon_session: query_authenticode_token_logon_session(
+            token,
+            "handshake client logon session",
+        )?,
         restricting_sids: query_token_restricted_sids(token)?,
         integrity: query_token_integrity_label(token)?,
         mandatory_policy: query_token_scalar::<TOKEN_MANDATORY_POLICY>(
@@ -1691,6 +1728,7 @@ fn validate_authenticode_pipe_client_token(token: HANDLE, expected_user_sid: &st
     validate_authenticode_pipe_client_token_evidence(
         &evidence,
         expected_user_sid,
+        expected_logon_session,
         low_integrity.as_bytes(),
     )
 }
@@ -1698,6 +1736,7 @@ fn validate_authenticode_pipe_client_token(token: HANDLE, expected_user_sid: &st
 fn validate_authenticode_pipe_client_token_evidence(
     evidence: &AuthenticodePipeClientTokenEvidence,
     expected_user_sid: &str,
+    expected_logon_session: AuthenticodeTokenLogonSessionEvidence,
     expected_low_integrity_sid: &[u8],
 ) -> Result<()> {
     anyhow::ensure!(
@@ -1712,6 +1751,10 @@ fn validate_authenticode_pipe_client_token_evidence(
         !expected_user_sid.is_empty() && evidence.user_sid == expected_user_sid,
         "AuthentiCode handshake client token user SID does not match the launch identity"
     );
+    validate_authenticode_token_logon_session_evidence(
+        evidence.logon_session,
+        expected_logon_session,
+    )?;
     anyhow::ensure!(
         evidence.restricting_sids.is_empty(),
         "AuthentiCode handshake client primary-token view unexpectedly contains restricting SIDs"
@@ -1722,6 +1765,46 @@ fn validate_authenticode_pipe_client_token_evidence(
     )?;
     validate_authenticode_mandatory_policy(evidence.mandatory_policy)?;
     validate_authenticode_token_safety_flags(evidence.safety)
+}
+
+fn query_authenticode_token_logon_session(
+    token: HANDLE,
+    label: &str,
+) -> Result<AuthenticodeTokenLogonSessionEvidence> {
+    let statistics: TOKEN_STATISTICS =
+        query_token_scalar(token, TokenStatistics, &format!("{label} statistics"))?;
+    let session_id: u32 =
+        query_token_scalar(token, TokenSessionId, &format!("{label} session ID"))?;
+    let evidence = AuthenticodeTokenLogonSessionEvidence {
+        authentication_id_low: statistics.AuthenticationId.LowPart,
+        authentication_id_high: statistics.AuthenticationId.HighPart,
+        session_id,
+    };
+    anyhow::ensure!(
+        evidence.authentication_id_low != 0 || evidence.authentication_id_high != 0,
+        "AuthentiCode {label} returned an empty authentication ID"
+    );
+    Ok(evidence)
+}
+
+fn validate_authenticode_token_logon_session_evidence(
+    actual: AuthenticodeTokenLogonSessionEvidence,
+    expected: AuthenticodeTokenLogonSessionEvidence,
+) -> Result<()> {
+    anyhow::ensure!(
+        expected.authentication_id_low != 0 || expected.authentication_id_high != 0,
+        "AuthentiCode handshake expected authentication ID is empty"
+    );
+    anyhow::ensure!(
+        actual.authentication_id_low == expected.authentication_id_low
+            && actual.authentication_id_high == expected.authentication_id_high,
+        "AuthentiCode handshake client token authentication ID does not match the launch logon session"
+    );
+    anyhow::ensure!(
+        actual.session_id == expected.session_id,
+        "AuthentiCode handshake client token session ID does not match the launch token"
+    );
+    Ok(())
 }
 
 struct ProcessThreadAttributeList {
@@ -3312,7 +3395,7 @@ fn spawn_restricted_authenticode_process(
     let application_wide = absolute_application_path_wide(application)?;
     let mut command_line = restricted_process_command_line(application, arguments)?;
     let token = create_low_integrity_privilege_stripped_primary_token()?;
-    let handshake = AuthenticodeParentChildHandshake::create()?;
+    let handshake = AuthenticodeParentChildHandshake::create(token.0)?;
     let launch_context =
         sanitized_authenticode_launch_context(&handshake.pipe_name, &handshake.token)?;
     let mut private_desktop = PrivateAuthenticodeDesktop::create(token.0)?;
@@ -6314,10 +6397,16 @@ mod tests {
         )
         .unwrap();
         let expected_user_sid = "S-1-5-21-1-2-3-1001";
+        let expected_logon_session = AuthenticodeTokenLogonSessionEvidence {
+            authentication_id_low: 0x1234_5678,
+            authentication_id_high: 0x1020_3040,
+            session_id: 7,
+        };
         let valid = AuthenticodePipeClientTokenEvidence {
             token_type: TokenImpersonation,
             impersonation_level: SecurityImpersonation,
             user_sid: expected_user_sid.to_string(),
+            logon_session: expected_logon_session,
             restricting_sids: Vec::new(),
             integrity: TokenSidEvidence {
                 sid: low_integrity.as_bytes().to_vec(),
@@ -6333,6 +6422,7 @@ mod tests {
         validate_authenticode_pipe_client_token_evidence(
             &valid,
             expected_user_sid,
+            expected_logon_session,
             low_integrity.as_bytes(),
         )
         .unwrap();
@@ -6359,6 +6449,27 @@ mod tests {
                     sid: vec![1, 2, 3, 4],
                     attributes: 0,
                 }],
+                ..valid.clone()
+            },
+            AuthenticodePipeClientTokenEvidence {
+                logon_session: AuthenticodeTokenLogonSessionEvidence {
+                    authentication_id_low: expected_logon_session.authentication_id_low ^ 1,
+                    ..expected_logon_session
+                },
+                ..valid.clone()
+            },
+            AuthenticodePipeClientTokenEvidence {
+                logon_session: AuthenticodeTokenLogonSessionEvidence {
+                    authentication_id_high: expected_logon_session.authentication_id_high ^ 1,
+                    ..expected_logon_session
+                },
+                ..valid.clone()
+            },
+            AuthenticodePipeClientTokenEvidence {
+                logon_session: AuthenticodeTokenLogonSessionEvidence {
+                    session_id: expected_logon_session.session_id + 1,
+                    ..expected_logon_session
+                },
                 ..valid.clone()
             },
         ];
@@ -6405,6 +6516,7 @@ mod tests {
             assert!(validate_authenticode_pipe_client_token_evidence(
                 &evidence,
                 expected_user_sid,
+                expected_logon_session,
                 low_integrity.as_bytes(),
             )
             .is_err());
@@ -6412,7 +6524,70 @@ mod tests {
         assert!(validate_authenticode_pipe_client_token_evidence(
             &valid,
             "",
+            expected_logon_session,
             low_integrity.as_bytes(),
+        )
+        .is_err());
+    }
+
+    #[test]
+    fn native_authenticode_handshake_client_logon_session_is_exact_and_reverted() {
+        assert!(open_current_thread_token().unwrap().is_none());
+        let application = std::env::current_exe().unwrap();
+        let arguments = [
+            "--ignored",
+            "--exact",
+            "windows_authenticode::tests::authenticode_parent_child_handshake_child_fixture",
+            "--nocapture",
+            "--test-threads=1",
+        ];
+        let output = run_bounded_authenticode_helper(
+            &application,
+            &arguments,
+            Vec::new(),
+            Duration::from_secs(5),
+        )
+        .unwrap();
+        assert!(output.status.success());
+        assert!(output.stderr.is_empty());
+        assert!(String::from_utf8(output.stdout)
+            .unwrap()
+            .contains("AVORAX_PARENT_CHILD_PROCESS_BINDING_OK"));
+        assert!(open_current_thread_token().unwrap().is_none());
+    }
+
+    #[test]
+    fn native_authenticode_handshake_client_logon_session_contract_is_fail_visible() {
+        let expected = AuthenticodeTokenLogonSessionEvidence {
+            authentication_id_low: 0x1234_5678,
+            authentication_id_high: 0x1020_3040,
+            session_id: 7,
+        };
+        validate_authenticode_token_logon_session_evidence(expected, expected).unwrap();
+
+        for actual in [
+            AuthenticodeTokenLogonSessionEvidence {
+                authentication_id_low: expected.authentication_id_low ^ 1,
+                ..expected
+            },
+            AuthenticodeTokenLogonSessionEvidence {
+                authentication_id_high: expected.authentication_id_high ^ 1,
+                ..expected
+            },
+            AuthenticodeTokenLogonSessionEvidence {
+                session_id: expected.session_id + 1,
+                ..expected
+            },
+        ] {
+            assert!(validate_authenticode_token_logon_session_evidence(actual, expected).is_err());
+        }
+        assert!(validate_authenticode_token_logon_session_evidence(
+            expected,
+            AuthenticodeTokenLogonSessionEvidence {
+                authentication_id_low: 0,
+                authentication_id_high: 0,
+                session_id: expected.session_id,
+            },
         )
         .is_err());
     }

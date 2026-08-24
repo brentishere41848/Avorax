@@ -5690,3 +5690,41 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   vault remain exact. Checkpoint 2221 is closed; cross-identity IPC,
   AppContainer/LPAC, driver/pre-execution protection, and the complete antivirus
   goal remain open.
+
+## Checkpoint 2222 - Authenticode client logon-session binding (2026-08-24)
+
+- **Scripted, execution pending:** before creating the handshake pipe, the
+  parent captures the launch primary token's exact user SID,
+  `TokenStatistics.AuthenticationId`, and `TokenSessionId`; the launch SID must
+  equal the pipe owner.
+- After the bounded message read and named-pipe impersonation, the connected
+  thread token must match both authentication-LUID halves and the exact session
+  ID before launch-token acceptance. Empty expected IDs, exact-size query
+  failures, drift, impersonation, validation, or reversion failure are
+  diagnostic and have no success fallback.
+- Benign runtime/adversarial tests, source contract 652, verifier step 252,
+  exact-252 strict validation, and audit documents are scripted. No
+  checkpoint-2222 pass is claimed; execution and all hosted/integration/
+  destination phases remain pending.
+- Classification: partial until verified. This narrows same-user
+  cross-logon-session substitution but remains point-in-time. It is not token
+  uniqueness, same-session injection/handle-duplication prevention, encrypted
+  or cross-identity IPC, AppContainer/LPAC, installed LocalSystem, driver, or
+  pre-execution protection. No dependency or lockfile changes are introduced.
+- **Focused locally verified:** corrected parsers/format/compile and source
+  contracts `652/652`, logon-session `2/2`, client-token `2/2`, parent/child
+  binding `2/2`, Authenticode `69/13`, locked Native `497/13`, compiler `6/6`,
+  and strict Native Clippy pass. Initial format/runtime-selection/stale-contract
+  findings are documented and are not success evidence. Full product suites,
+  definitive validation, hosted integration, synchronization, and destination
+  verification remain pending.
+- **Definitive locally verified:** exact `252/252`, zero failed/skipped, passes
+  in `507.8s`; the target passes in `0.3s`. Embedded and independent Windows
+  PowerShell strict validation pass, and nine malformed reports are rejected.
+  Hosted/integration/synchronization/destination evidence remains pending, so
+  checkpoint 2222 and the overall antivirus goal remain active.
+- **Full local regressions verified, definitive pending:** both locked Rust
+  workspaces, Local Core `536/536`, Guard `248/249`, strict Native/Local/Guard
+  lint, Flutter analyze and `838/838` pass. The three lock blobs and protected
+  vault invariant remain exact. Definitive 252-step validation and all hosted,
+  integration, synchronization, and destination evidence remain pending.

@@ -1904,8 +1904,8 @@ if ($RequireFullSuite) {
   if ($skipFlutter -or $skipRust) {
     throw "-RequireFullSuite requires skip_flutter=false and skip_rust=false."
   }
-  if ($steps.Count -ne 251) {
-    throw "-RequireFullSuite expected exactly 251 verifier steps for this source revision, found $($steps.Count)."
+  if ($steps.Count -ne 252) {
+    throw "-RequireFullSuite expected exactly 252 verifier steps for this source revision, found $($steps.Count)."
   }
   if ($steps[0].name -ne "local-core safe simulator scan reporting") {
     throw "-RequireFullSuite first step mismatch: $($steps[0].name)"
@@ -1954,6 +1954,7 @@ if ($RequireFullSuite) {
   Assert-ReportContainsStep $steps "native-engine Authenticode handshake pipe least-privilege DACL regressions"
   Assert-ReportContainsStep $steps "native-engine Authenticode handshake pipe owner-rights regressions"
   Assert-ReportContainsStep $steps "native-engine Authenticode handshake pipe client-token regressions"
+  Assert-ReportContainsStep $steps "native-engine Authenticode handshake client logon-session regressions"
   Assert-ReportContainsStep $steps "native-engine Authenticode mandatory-hash/file-identity regressions"
   Assert-ReportContainsStep $steps "native-engine risk fusion regressions"
   Assert-ReportContainsStep $steps "native-engine ClickOnce carrier heuristic detection"
@@ -2107,6 +2108,10 @@ if ($RequireFullSuite) {
   Assert-ReportScopeContains $verifiedScopeText "After the parent reads the bounded launch-token message, it calls ImpersonateNamedPipeClient on the verified server endpoint and requires an exact SecurityImpersonation thread token with the launch user SID, low-integrity label, no-write-up mandatory policy, privilege stripping, zero restricting SIDs, canonical virtualization state, and UIAccess disabled before the token can be accepted" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "Impersonation failure, bounded token query/size/pointer/type/level/SID/privilege/restricting-SID/integrity/policy/safety mismatch, or inability to prove RevertToSelf and an empty parent thread token is diagnostic and cannot reach publisher trust" "verification_scope.verified"
   Assert-ReportScopeContains $technicalLimitText "Named-pipe client-token impersonation authenticates the connected same-user helper token at one handshake message; it does not prevent same-user process injection or handle duplication, encrypt IPC, change identity or logon session, provide AppContainer/LPAC or cross-identity service authentication, or demonstrate driver/pre-execution enforcement" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $verifiedScopeText "before handshake pipe creation, the parent queries exact TokenStatistics.AuthenticationId and TokenSessionId from the low-integrity privilege-stripped launch primary token" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "After named-pipe client impersonation, it requires the connected token to match both values before the launch token can be accepted" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Empty expected authentication IDs, fixed-size query failures, authentication-ID drift, or session-ID drift are diagnostic and cannot become publisher trust" "verification_scope.verified"
+  Assert-ReportScopeContains $technicalLimitText "AuthenticationId and TokenSessionId binding narrows same-user cross-logon-session substitution but remains point-in-time; it does not prove token uniqueness, prevent same-logon-session injection or handle duplication, encrypt IPC, change identity, provide cross-identity authentication or AppContainer/LPAC, or demonstrate driver/pre-execution enforcement" "verification_scope.technically_limited"
   Assert-ReportScopeContains $verifiedScopeText "Before CreateProcessAsUserW, the parent supplies an immutable DWORD64 process-creation mitigation policy enabling strict handle checks, extension-point disable, dynamic-code prohibition, Microsoft-signed-only binary loading, no remote images, no low-label images, and System32 image preference; the child requires both invalid-handle exception and permanent-enforcement read-back flags plus every other required policy before stdin or request parsing, and attribute construction, application, or read-back failure cannot become trust" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "Environment construction, current-directory validation, mitigation-policy construction/application/read-back, token/SID creation, process launch, handle-list construction, Job assignment, resume, bounded TokenPrivileges, TokenRestrictedSids, TokenIntegrityLevel, fixed-size TokenMandatoryPolicy, or fixed-size token virtualization/UIAccess inspection, verification, or normal revert failure cannot become trust" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "Native Engine and Local Core runtime-decode the standard EICAR test marker from non-signature bytes and regression-scan their own test executables to prevent a static EICAR marker from making benign verifier binaries Defender targets" "verification_scope.verified"

@@ -2428,3 +2428,33 @@ enforcement, or pre-execution blocking is claimed.
   encrypt IPC, change logon identity, establish a cross-identity service/UI
   protocol, provide AppContainer/LPAC, or prove signed-driver/pre-execution
   enforcement. Those installed and signing prerequisites remain external.
+
+## Checkpoint 2222 - Client logon-session binding
+
+- **Scripted; execution blocker remains:** launch-token and connected-client
+  `TokenStatistics.AuthenticationId` plus `TokenSessionId` must match exactly,
+  and the launch user SID must equal the pipe owner. Empty IDs, fixed-size
+  query failures, drift, or reversion failure stop trust. Source contract 652,
+  benign/adversarial tests, verifier step 252, and strict validation are
+  present but have not run in this checkpoint.
+- **Residual technical blocker:** same-user cross-logon-session substitution is
+  narrowed, but same-logon-session injection or handle duplication is not
+  prevented and token uniqueness is not proven. IPC encryption, cross-identity
+  authentication, AppContainer/LPAC, installed LocalSystem isolation,
+  production signing, signed-driver enforcement, and demonstrated
+  pre-execution protection remain technically limited or externally blocked.
+- Focused/full regressions, definitive/malformed-report evidence, exact-head
+  hosted checks, normal integration, guarded synchronization, and destination
+  verification remain required before checkpoint closure. The overall
+  antivirus goal remains active.
+- **Full local regression blocker closed; definitive pending:** source contracts
+  `652/652`, logon-session `2/2`, Authenticode `69/13`, Native `497/13` plus
+  compiler `6/6`, Local Core `536/536`, Guard `248/249`, both locked workspaces,
+  strict lint, and Flutter `838/838` pass. Locks and vault remain exact.
+  Definitive/malformed-report, hosted, integration, synchronization, and
+  destination blockers remain.
+- **Definitive local blocker closed:** exact `252/252` in `507.8s`, both strict
+  validators, and nine malformed-report rejections pass. Remaining checkpoint
+  blockers are exact-head hosted CI/packages, normal merge, merged-main checks,
+  guarded original-tree synchronization, and destination verification. The
+  same-session/cross-identity/driver/pre-execution limits remain.
