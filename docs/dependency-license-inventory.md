@@ -921,3 +921,12 @@ inspection of the push artifact recomputed all seven SHA-256 rows and confirmed
 CycloneDX 1.6 with 569 components. No dependency or lockfile changed.
 Evidence-head/merged-main package proof and complete signed final-artifact
 license, notice, copyright, and binary-resolution review remain pending.
+
+Evidence head `a99b03a` passes package run `32715458329`; merged main
+`2bd8956` passes package run `32716511838`. Both require all six native
+artifacts, dependency/license evidence, checksums, a 569-component CycloneDX
+1.6 lockfile SBOM, and consolidation, while publication is skipped. Guarded
+destination sync and full destination verification preserve all three exact
+lock blobs. This closes checkpoint package integration only; complete signed
+final-artifact license, notice, copyright, and binary-resolution review remains
+a production-release prerequisite.

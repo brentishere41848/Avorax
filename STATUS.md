@@ -5653,3 +5653,11 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   release files, seven independently matching SHA-256 rows, and a CycloneDX
   1.6 lockfile SBOM with 569 components. Evidence-head, merge, merged-main,
   guarded synchronization, and destination verification remain pending.
+- **Integrated and destination verified:** evidence SHA `a99b03a` passes CI/
+  packages `32715458349`/`32715458329`; PR `#72` merged as `2bd8956`, whose
+  main CI/packages `32716511799`/`32716511838` pass with publication skipped.
+  Guarded sync produced 12/12 exact destination blobs and no staging residue.
+  Destination full Rust/Flutter suites and exact verifier/validator `250/250`
+  pass in `494.3s`; locks and the protected vault remain exact. Checkpoint 2220
+  is closed, while cross-identity IPC, driver/pre-execution protection, and the
+  complete antivirus hardening goal remain open.

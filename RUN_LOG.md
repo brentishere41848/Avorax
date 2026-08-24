@@ -9356,3 +9356,30 @@ Updates page showed:
 - Draft PR `#72` remains clean at the exact implementation head. Evidence-head
   checks, normal merge, merged-main evidence, guarded original-tree
   synchronization, and destination verification remain pending.
+
+## 2026-08-24 continuation checkpoint 2220 integration closure
+
+- Evidence head `a99b03a957980df2666ecd8e3cba71a26d8ea1db` passes CI
+  `32715458349` and packages `32715458329`. PR `#72` merged normally as
+  `2bd895641bc7f29fbbd1bfcee03cec8945a19fb2`; merged-main CI `32716511799`
+  and packages `32716511838` pass with publication skipped.
+- Eleven existing destination files exactly matched prior main `e6caf818`; the
+  new checkpoint report was absent. Guarded raw-Git-blob staging synchronized
+  exactly 12 paths, all 12 match the merge, and zero staging files remain.
+- Destination parsers, Python compile, source contracts `650/650`, formatting,
+  Owner Rights `1/1`, Authenticode `65/13`, Native `493/13`, compiler `6/6`,
+  Local Core `536/536`, Guard `248/248` standard and `249/249` all-feature,
+  both locked workspaces, locked/offline Native check, strict lint,
+  release/trust smoke, safety/dependency gates, Flutter analyze, and `838/838`
+  pass.
+- The destination verifier ran `2026-08-24T10:41:00.9894962Z` through
+  `2026-08-24T10:49:15.3327130Z` and passed exact `250/250`, zero failed or
+  skipped, in `494.3s`; embedded and standalone full-suite validation pass. A
+  first post-validator hash inventory used the non-Git destination as its Git
+  context and stopped before inventory evidence; the corrected authoritative-
+  worktree invocation passes and the first attempt is not counted.
+- All three lock blobs and the read-only protected-vault invariant remain exact:
+  16,072 files, zero directories, 4,522,733 bytes, 5,357 each payload/metadata/
+  auth, one key, and zero pending/temp. No package was installed, executed,
+  released, or published. Checkpoint 2220 is closed; the overall antivirus goal
+  remains active.

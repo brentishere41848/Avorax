@@ -2404,3 +2404,11 @@ enforcement, or pre-execution blocking is claimed.
   evidence-head checks, normal merge, merged-main checks, guarded sync, and
   destination verification. Cross-identity IPC and pre-execution protection
   remain technically limited.
+- **Checkpoint integration blockers closed:** evidence `a99b03a`, merge
+  `2bd8956`, exact-head and merged-main CI/packages, guarded 12-path sync, full
+  destination suites, and exact destination `250/250` validation pass. The
+  checkpoint has no remaining integration blocker. Authenticated cross-identity
+  IPC, AppContainer/LPAC or installed LocalSystem isolation, production signing,
+  signed-driver enforcement, and demonstrated pre-execution protection remain
+  technically limited or require external prerequisites; the overall antivirus
+  goal remains active.

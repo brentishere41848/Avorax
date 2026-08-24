@@ -158,3 +158,35 @@ release, or publication is part of this checkpoint.
   was installed, executed, released, or published. Evidence-head checks, normal
   merge, merged-main evidence, guarded original-tree synchronization, and
   destination verification remain pending.
+
+## Integration And Destination Closure
+
+- Evidence head `a99b03a957980df2666ecd8e3cba71a26d8ea1db` passes CI
+  `32715458349` and package run `32715458329`. PR `#72` merged normally as
+  `2bd895641bc7f29fbbd1bfcee03cec8945a19fb2`; merged-main CI `32716511799`
+  and packages `32716511838` pass. Both package publication jobs are skipped.
+- Eleven existing destination paths exactly matched prior main `e6caf818`; the
+  new report was absent. The guarded raw-blob sync stages and verifies every
+  source before replacement, then leaves 12/12 exact merge blobs and zero
+  staging files in `C:\Users\Brent\Documents\Avorax-main`.
+- Destination parsers, Python compilation, source contracts `650/650`, rustfmt,
+  Owner Rights `1/1`, Authenticode `65/13`, Native `493/13`, compiler `6/6`,
+  Local Core `536/536`, Guard `248/248` and `249/249`, both locked root
+  workspaces, locked/offline Native checking, strict Native/Local/Guard Clippy,
+  release/trust smoke, safety/dependency gates, Flutter analyze, and Flutter
+  `838/838` pass.
+- The destination verifier ran from `2026-08-24T10:41:00.9894962Z` through
+  `2026-08-24T10:49:15.3327130Z` and passes exact `250/250`, zero failed/skipped,
+  in `494.3s`; embedded and standalone full-suite validators pass. A first
+  post-validator inventory selected the non-Git destination as Git context and
+  stopped before inventory proof; the corrected authoritative-worktree
+  invocation passes and the first attempt is not success evidence.
+- Root Cargo, Native Cargo, and Flutter lock blobs remain exact. Read-only vault
+  evidence remains 16,072 files, zero directories, 4,522,733 bytes, 5,357 each
+  `.avoraxq`/`.json`/`.auth`, one metadata key, and zero pending/temp. No package
+  was installed, executed, released, or published.
+- Checkpoint 2220 is closed. Owner Rights removes the implicit owner `WRITE_DAC`
+  path under the verified descriptor, but does not create encrypted or
+  authenticated cross-identity IPC, AppContainer/LPAC, installed LocalSystem,
+  driver enforcement, or pre-execution blocking. The overall antivirus goal
+  remains active.

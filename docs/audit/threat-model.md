@@ -2238,3 +2238,12 @@ skipped. This confirms build and hosted regression behavior; it does not expand
 the control beyond the same-user, point-in-time boundary described above.
 Evidence-head, merge, merged-main, synchronization, and destination checks
 remain pending.
+
+**Integration and destination evidence:** Evidence `a99b03a` and merged main
+`2bd8956` pass exact-head and merged-main CI/packages; package publication is
+skipped. Guarded synchronization leaves 12/12 exact destination blobs and no
+staging files. Full destination Rust/Flutter checks pass, and the destination
+report validates exact `250/250`, zero failed/skipped, in `494.3s`. Three lock
+blobs and the protected-vault invariant remain exact. This closes checkpoint
+integration without changing the residual same-user, point-in-time,
+cross-identity, privileged-adversary, or pre-execution boundaries.
