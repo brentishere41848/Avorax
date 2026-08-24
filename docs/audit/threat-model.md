@@ -2178,7 +2178,10 @@ adversarial benign masks, exact verifier step 249, validator clauses, and source
 contract 649 pass. Exact implementation `5171fb4e` passes CI `32702550130` and
 package push/PR `32702466511`/`32702550182`, including all six packages, seven
 checksums, the 569-component lockfile SBOM, and administrative MSI extraction;
-publication is skipped. Integration and destination evidence remain pending.
+publication is skipped. Evidence `be122479`, PR `#71`, merge `e6caf818`,
+evidence/merged-main CI and packages, exact 12-path synchronization, destination
+full workspaces/lint/release/trust-smoke/Flutter checks, and destination
+verifier/validator `249/249` in `486.9s` complete integration.
 
 **Residual risk:** The pipe creator's token default owner is not changed or
 independently read back. If the current user owns the named pipe, Windows
@@ -2187,3 +2190,51 @@ narrower ACE. Parent and child checks remain point-in-time evidence and cannot
 prevent same-user descriptor mutation between checks. This does not provide
 encryption, authenticated cross-identity IPC, AppContainer/LPAC, installed
 LocalSystem, production signing, driver enforcement, or pre-execution protection.
+
+## Checkpoint 2220: handshake-pipe Owner Rights
+
+**Threat:** A narrower current-user ACE alone did not remove the owner's
+automatic `WRITE_DAC`, allowing same-user descriptor management independently of
+the visible ACE contract.
+
+**Scripted control, verification pending:** The creation descriptor explicitly
+sets the current process-token user SID as owner and adds ordered Owner Rights
+`S-1-3-4` with only `READ_CONTROL`. Both endpoint checks request and validate
+the exact owner alongside protected DACL and mandatory-label evidence. Microsoft
+documents that an applied Owner Rights ACE suppresses implicit owner
+`READ_CONTROL` and `WRITE_DAC`. A benign local random-pipe test must prove a
+same-user `WRITE_DAC`-only reopen returns `ERROR_ACCESS_DENIED`; adversarial
+owner/SID/mask/flag/order evidence must fail before trust. Verifier step 250,
+exact validation, and source contract 650 are scripted, not yet passed.
+
+**Residual risk:** The current-user ACE intentionally retains protocol
+read/write. Existing handles, trusted same-user code, privileged ownership
+changes, injection, duplication, and descriptor mutation between point-in-time
+checks remain in scope, as do SYSTEM/administrator/kernel compromise. This is
+not encryption, cross-identity IPC, AppContainer/LPAC, installed LocalSystem,
+production signing, driver enforcement, or pre-execution protection.
+
+**Corrected local evidence:** The exact same-user `WRITE_DAC` denial passes
+`1/1`; all four handshake security filters and Authenticode `57/13` pass. Native
+`493/13`, compiler `6/6`, Local Core `536/536`, Guard `248/249`, strict lint,
+both locked workspaces, release/two-host embedded/catalog/hash-binding smoke,
+source contracts `650/650`, Flutter analyze, and Flutter `838/838` pass. The
+definitive report, malformed validation, lock/vault, hosted, integration,
+synchronization, and destination evidence remain pending.
+
+**Definitive local evidence:** Exact verifier/validator `250/250` passes in
+`452.7s`, and nine malformed reports are rejected. Root Cargo, Native Cargo,
+Flutter lock blobs, and the read-only protected-vault invariant remain exact.
+This closes local evidence only; hosted, integration, synchronization, and
+destination checks remain pending, and the point-in-time/cross-identity/
+pre-execution limitations remain unchanged.
+
+**Implementation-head hosted evidence:** Exact SHA
+`6f90f9234375ceb22107aba426401e38838ec9b8` passes all five CI jobs in run
+`32712875828` and package push/PR runs `32712856310`/`32712875850`. The push
+artifact has six release files, seven independently matching SHA-256 rows, and
+a CycloneDX 1.6 lockfile SBOM with 569 components. Both publication jobs are
+skipped. This confirms build and hosted regression behavior; it does not expand
+the control beyond the same-user, point-in-time boundary described above.
+Evidence-head, merge, merged-main, synchronization, and destination checks
+remain pending.

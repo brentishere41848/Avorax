@@ -5605,3 +5605,51 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   normal merge, merged-main checks, original-tree synchronization, and
   destination verification remain pending, so checkpoint 2219 is not integrated
   yet and the overall antivirus goal remains active.
+- **Verified and integrated:** evidence `be122479` passes CI `32704723284` and
+  packages `32704723183`. PR `#71` merged normally as `e6caf818`; merged-main CI
+  `32706023688` and packages `32706023644` pass with publication skipped.
+  Exactly 12 guarded raw Git blobs synchronized and remain exact with zero
+  staging files. Destination contracts `649/649`, DACL `1/1`, Authenticode
+  `56/13`, Native `492/13`, compiler `6/6`, Local Core `536/536`, Guard
+  `248/249`, strict lint, both locked workspaces, release/trust smoke, safety and
+  dependency gates, Flutter `838/838`, and exact verifier/validator `249/249` in
+  `486.9s` pass. Locks and the protected vault remain exact. Checkpoint 2219 is
+  closed; the overall antivirus hardening goal remains active.
+
+## Checkpoint 2220 - Authenticode pipe Owner Rights (2026-08-24)
+
+- **Scripted, execution pending:** the descriptor explicitly sets and reads back
+  the current process-token user SID as owner, and adds exact ordered Owner
+  Rights SID `S-1-3-4` with only `READ_CONTROL`. Microsoft documents that this
+  ACE suppresses the owner's implicit `READ_CONTROL` and `WRITE_DAC`.
+- The real parent/child path must retain protocol access and exact read-backs. A
+  separate benign random-pipe regression requires a same-user `WRITE_DAC`-only
+  reopen to fail with `ERROR_ACCESS_DENIED`; owner/SID/mask/flag/order mutation
+  evidence must fail visibly.
+- Verifier step 250, exact-250 validation, stale-report rejection, source
+  contract 650, and the complete documentation batch are scripted. No
+  checkpoint-2220 passing result is claimed during scripting.
+- The control remains point-in-time and same-user, not encrypted or
+  cross-identity IPC, AppContainer/LPAC, installed LocalSystem, production
+  signing, driver enforcement, or pre-execution protection. Focused/full/local,
+  hosted, merge, synchronization, and destination evidence remain pending.
+- **Corrected local evidence:** parsers, compilation, formatting, source
+  contracts `650/650`, exact Owner Rights `1/1`, handshake `4/4`, Authenticode
+  `57/13`, Native `493/13`, compiler `6/6`, Local Core `536/536`, Guard
+  `248/249`, both locked workspaces, strict lint, release/two-host trust smoke,
+  Flutter analyze and `838/838` pass. Initial format and stale-contract findings
+  were corrected and are not success evidence. Definitive and later phases
+  remain pending.
+- **Locally verified:** definitive verifier/validator passes exact `250/250`,
+  zero failed/skipped, in `452.7s`; nine malformed reports are rejected. Root
+  Cargo, Native Cargo, and Flutter lock blobs remain exact, and the read-only
+  protected vault remains 16,072 files, zero directories, 4,522,733 bytes,
+  5,357 each payload/metadata/auth, one key, and zero pending/temp. Hosted,
+  integration, synchronization, and destination evidence remain pending.
+- **Implementation-head hosted verified:** exact SHA `6f90f9234375ceb22107aba426401e38838ec9b8`
+  passes CI `32712875828` and Desktop Packages push/PR runs
+  `32712856310`/`32712875850`. All platform jobs and consolidation pass; both
+  publication jobs are skipped. The downloaded push artifact contains six
+  release files, seven independently matching SHA-256 rows, and a CycloneDX
+  1.6 lockfile SBOM with 569 components. Evidence-head, merge, merged-main,
+  guarded synchronization, and destination verification remain pending.

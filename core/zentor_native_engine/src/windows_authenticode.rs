@@ -64,12 +64,12 @@ use windows_sys::Win32::Security::{
     TokenVirtualizationAllowed, TokenVirtualizationEnabled, WinLowLabelSid, WinRestrictedCodeSid,
     ACCESS_ALLOWED_ACE, ACE_HEADER, ACL, ACL_SIZE_INFORMATION, DACL_SECURITY_INFORMATION,
     DISABLE_MAX_PRIVILEGE, GENERIC_MAPPING, LABEL_SECURITY_INFORMATION, LUID_AND_ATTRIBUTES,
-    PSECURITY_DESCRIPTOR, SECURITY_ATTRIBUTES, SECURITY_MAX_SID_SIZE, SE_CHANGE_NOTIFY_NAME,
-    SE_DACL_PROTECTED, SE_PRIVILEGE_ENABLED, SID, SID_AND_ATTRIBUTES, SYSTEM_MANDATORY_LABEL_ACE,
-    TOKEN_ADJUST_DEFAULT, TOKEN_ASSIGN_PRIMARY, TOKEN_DUPLICATE, TOKEN_GROUPS, TOKEN_IMPERSONATE,
-    TOKEN_MANDATORY_LABEL, TOKEN_MANDATORY_POLICY, TOKEN_MANDATORY_POLICY_NO_WRITE_UP,
-    TOKEN_MANDATORY_POLICY_VALID_MASK, TOKEN_PRIVILEGES, TOKEN_QUERY, TOKEN_USER,
-    WELL_KNOWN_SID_TYPE, WRITE_RESTRICTED,
+    OWNER_SECURITY_INFORMATION, PSECURITY_DESCRIPTOR, SECURITY_ATTRIBUTES, SECURITY_MAX_SID_SIZE,
+    SE_CHANGE_NOTIFY_NAME, SE_DACL_PROTECTED, SE_PRIVILEGE_ENABLED, SID, SID_AND_ATTRIBUTES,
+    SYSTEM_MANDATORY_LABEL_ACE, TOKEN_ADJUST_DEFAULT, TOKEN_ASSIGN_PRIMARY, TOKEN_DUPLICATE,
+    TOKEN_GROUPS, TOKEN_IMPERSONATE, TOKEN_MANDATORY_LABEL, TOKEN_MANDATORY_POLICY,
+    TOKEN_MANDATORY_POLICY_NO_WRITE_UP, TOKEN_MANDATORY_POLICY_VALID_MASK, TOKEN_PRIVILEGES,
+    TOKEN_QUERY, TOKEN_USER, WELL_KNOWN_SID_TYPE, WRITE_RESTRICTED,
 };
 use windows_sys::Win32::Storage::FileSystem::{
     CreateFileW, FileBasicInfo, FileIdInfo, FileStandardInfo, GetFileInformationByHandle,
@@ -1162,7 +1162,8 @@ fn validate_authenticode_handshake_token_bytes(expected: &[u8], actual: &[u8]) -
 fn create_authenticode_handshake_security_descriptor(
 ) -> Result<(OwnedLocalSecurityDescriptor, String)> {
     let user_sid = current_process_user_sid_string()?;
-    let sddl = format!("D:P(A;;GA;;;SY)(A;;GRGW;;;{user_sid})S:(ML;;NW;;;LW)");
+    let sddl =
+        format!("O:{user_sid}D:P(A;;GA;;;SY)(A;;GRGW;;;{user_sid})(A;;RC;;;OW)S:(ML;;NW;;;LW)");
     let mut sddl_wide = sddl.encode_utf16().collect::<Vec<_>>();
     sddl_wide.push(0);
     let mut descriptor = null_mut();
@@ -1195,6 +1196,7 @@ struct AuthenticodeHandshakeSecurityAceEvidence {
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 struct AuthenticodeHandshakePipeSecurityEvidence {
+    owner_sid: String,
     dacl_protected: bool,
     dacl_present: bool,
     dacl_defaulted: bool,
@@ -1205,13 +1207,14 @@ struct AuthenticodeHandshakePipeSecurityEvidence {
 }
 
 fn verify_authenticode_handshake_pipe_security(pipe: HANDLE, current_user_sid: &str) -> Result<()> {
+    let mut owner = null_mut();
     let mut actual = null_mut();
     let status = unsafe {
         GetSecurityInfo(
             pipe,
             SE_KERNEL_OBJECT,
-            DACL_SECURITY_INFORMATION | LABEL_SECURITY_INFORMATION,
-            null_mut(),
+            OWNER_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION | LABEL_SECURITY_INFORMATION,
+            &mut owner,
             null_mut(),
             null_mut(),
             null_mut(),
@@ -1228,12 +1231,18 @@ fn verify_authenticode_handshake_pipe_security(pipe: HANDLE, current_user_sid: &
         "AuthentiCode parent-child handshake pipe security descriptor read-back is null"
     );
     let actual = OwnedLocalSecurityDescriptor(actual.cast());
-    let evidence = read_authenticode_handshake_pipe_security_evidence(actual.0)?;
+    anyhow::ensure!(
+        !owner.is_null() && unsafe { IsValidSid(owner) } != 0,
+        "AuthentiCode parent-child handshake pipe owner SID read-back is null or invalid"
+    );
+    let owner_sid = windows_sid_string(owner, "owner")?;
+    let evidence = read_authenticode_handshake_pipe_security_evidence(actual.0, owner_sid)?;
     validate_authenticode_handshake_pipe_security_readback(&evidence, current_user_sid)
 }
 
 fn read_authenticode_handshake_pipe_security_evidence(
     descriptor: PSECURITY_DESCRIPTOR,
+    owner_sid: String,
 ) -> Result<AuthenticodeHandshakePipeSecurityEvidence> {
     let mut control = 0u16;
     let mut revision = 0u32;
@@ -1247,6 +1256,7 @@ fn read_authenticode_handshake_pipe_security_evidence(
     let (label_present, label_defaulted, label_aces) =
         read_authenticode_handshake_security_acl(descriptor, true)?;
     Ok(AuthenticodeHandshakePipeSecurityEvidence {
+        owner_sid,
         dacl_protected: control & SE_DACL_PROTECTED != 0,
         dacl_present,
         dacl_defaulted,
@@ -1408,6 +1418,7 @@ fn expected_authenticode_handshake_pipe_security(
         )
     };
     Ok(AuthenticodeHandshakePipeSecurityEvidence {
+        owner_sid: current_user_sid.to_string(),
         dacl_protected: true,
         dacl_present: true,
         dacl_defaulted: false,
@@ -1423,6 +1434,12 @@ fn expected_authenticode_handshake_pipe_security(
                 ace_flags: 0,
                 access_mask: current_user_read_write,
                 sid: current_user_sid.to_string(),
+            },
+            AuthenticodeHandshakeSecurityAceEvidence {
+                ace_type: ACCESS_ALLOWED_ACE_TYPE as u8,
+                ace_flags: 0,
+                access_mask: READ_CONTROL,
+                sid: "S-1-3-4".to_string(),
             },
         ],
         label_present: true,
@@ -4750,8 +4767,8 @@ mod tests {
     use std::os::windows::process::ExitStatusExt;
     use windows_sys::Win32::Foundation::{
         CRYPT_E_FILE_ERROR, CRYPT_E_NO_REVOCATION_CHECK, CRYPT_E_REVOCATION_OFFLINE,
-        CRYPT_E_SECURITY_SETTINGS, TRUST_E_ACTION_UNKNOWN, TRUST_E_FAIL, TRUST_E_NOSIGNATURE,
-        TRUST_E_PROVIDER_UNKNOWN, TRUST_E_SYSTEM_ERROR,
+        CRYPT_E_SECURITY_SETTINGS, ERROR_ACCESS_DENIED, TRUST_E_ACTION_UNKNOWN, TRUST_E_FAIL,
+        TRUST_E_NOSIGNATURE, TRUST_E_PROVIDER_UNKNOWN, TRUST_E_SYSTEM_ERROR,
     };
     use windows_sys::Win32::Storage::FileSystem::{
         DELETE, FILE_SHARE_DELETE, FILE_SHARE_WRITE, WRITE_DAC, WRITE_OWNER,
@@ -5897,6 +5914,9 @@ mod tests {
 
         let mut invalid = Vec::new();
         let mut evidence = valid.clone();
+        evidence.owner_sid = "S-1-5-21-1-2-3-1002".to_string();
+        invalid.push(evidence);
+        let mut evidence = valid.clone();
         evidence.dacl_protected = false;
         invalid.push(evidence);
         let mut evidence = valid.clone();
@@ -6016,6 +6036,7 @@ mod tests {
         unsafe { MapGenericMask(&mut read_write, &authenticode_pipe_generic_mapping()) };
         assert_eq!(valid.dacl_aces[0].access_mask, full_control);
         assert_eq!(valid.dacl_aces[1].access_mask, read_write);
+        assert_eq!(valid.dacl_aces[2].access_mask, READ_CONTROL);
         assert_ne!(read_write, full_control);
 
         for mask in [
@@ -6033,6 +6054,97 @@ mod tests {
                 validate_authenticode_handshake_pipe_security_readback(&invalid, user_sid).is_err()
             );
         }
+    }
+
+    #[test]
+    fn native_authenticode_handshake_pipe_owner_rights_deny_implicit_write_dac() {
+        let pipe_name = format!(
+            "{}{}",
+            AUTHENTICODE_HELPER_HANDSHAKE_PIPE_PREFIX,
+            Uuid::new_v4().hyphenated()
+        );
+        let mut pipe_name_wide = pipe_name.encode_utf16().collect::<Vec<_>>();
+        pipe_name_wide.push(0);
+        let (security_descriptor, current_user_sid) =
+            create_authenticode_handshake_security_descriptor().unwrap();
+        let attributes = SECURITY_ATTRIBUTES {
+            nLength: size_of::<SECURITY_ATTRIBUTES>() as u32,
+            lpSecurityDescriptor: security_descriptor.0,
+            bInheritHandle: 0,
+        };
+        let server = OwnedKernelHandle::from_raw(
+            unsafe {
+                CreateNamedPipeW(
+                    pipe_name_wide.as_ptr(),
+                    PIPE_ACCESS_INBOUND | FILE_FLAG_FIRST_PIPE_INSTANCE,
+                    PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT | PIPE_REJECT_REMOTE_CLIENTS,
+                    1,
+                    AUTHENTICODE_HELPER_HANDSHAKE_PIPE_BUFFER_BYTES,
+                    AUTHENTICODE_HELPER_HANDSHAKE_PIPE_BUFFER_BYTES,
+                    AUTHENTICODE_HELPER_HANDSHAKE_TIMEOUT.as_millis() as u32,
+                    &attributes,
+                )
+            },
+            "unable to create the Authenticode owner-rights test pipe",
+        )
+        .unwrap();
+        verify_authenticode_handshake_pipe_security(server.0, &current_user_sid).unwrap();
+
+        unsafe { SetLastError(ERROR_SUCCESS) };
+        let write_dac_handle = unsafe {
+            CreateFileW(
+                pipe_name_wide.as_ptr(),
+                WRITE_DAC,
+                0,
+                null(),
+                OPEN_EXISTING,
+                0,
+                null_mut(),
+            )
+        };
+        let write_dac_error = unsafe { GetLastError() };
+        if write_dac_handle != INVALID_HANDLE_VALUE {
+            unsafe { CloseHandle(write_dac_handle) };
+        }
+        assert_eq!(write_dac_handle, INVALID_HANDLE_VALUE);
+        assert_eq!(write_dac_error, ERROR_ACCESS_DENIED);
+
+        let valid = expected_authenticode_handshake_pipe_security(&current_user_sid).unwrap();
+        assert_eq!(valid.owner_sid, current_user_sid);
+        assert_eq!(valid.dacl_aces.len(), 3);
+        assert_eq!(valid.dacl_aces[2].sid, "S-1-3-4");
+        assert_eq!(valid.dacl_aces[2].access_mask, READ_CONTROL);
+
+        let mut wrong_owner = valid.clone();
+        wrong_owner.owner_sid = "S-1-5-18".to_string();
+        assert!(validate_authenticode_handshake_pipe_security_readback(
+            &wrong_owner,
+            &current_user_sid
+        )
+        .is_err());
+        for (sid, mask, flags) in [
+            ("S-1-3-0", READ_CONTROL, 0),
+            ("S-1-3-4", 0, 0),
+            ("S-1-3-4", READ_CONTROL | WRITE_DAC, 0),
+            ("S-1-3-4", READ_CONTROL, 1),
+        ] {
+            let mut invalid = valid.clone();
+            invalid.dacl_aces[2].sid = sid.to_string();
+            invalid.dacl_aces[2].access_mask = mask;
+            invalid.dacl_aces[2].ace_flags = flags;
+            assert!(validate_authenticode_handshake_pipe_security_readback(
+                &invalid,
+                &current_user_sid
+            )
+            .is_err());
+        }
+        let mut wrong_order = valid.clone();
+        wrong_order.dacl_aces.swap(1, 2);
+        assert!(validate_authenticode_handshake_pipe_security_readback(
+            &wrong_order,
+            &current_user_sid
+        )
+        .is_err());
     }
 
     #[test]

@@ -9274,3 +9274,85 @@ Updates page showed:
   seven checksum rows. No artifact was installed, released, or published.
 - Evidence-head checks, normal merge, merged-main checks, guarded synchronization,
   and destination verification remain pending. `.verification` stays untracked.
+
+## 2026-08-24 - Checkpoint 2219 integration closure
+
+- Evidence `be122479dea324df96ac9b866381819e4136d612` passes CI
+  `32704723284` and packages `32704723183`. PR `#71` merged normally as
+  `e6caf8187c8ae99a7ad392e7ff4b8c606cf8a850`; merged-main CI `32706023688`
+  and packages `32706023644` pass with publication skipped.
+- Eleven existing destination preconditions matched prior merge `1e453005`, and
+  the new report was absent. After one policy-rejected command, one caught parser
+  error, and one pre-staging duplicate-`git.exe` failure, corrected raw-blob
+  staging and atomic replacement synchronized exactly 12 paths. All 12 match the
+  merge and zero staging files remain; no failed attempt is counted as success.
+- Destination parsers, `649/649` source contracts, formatting, focused DACL
+  `1/1`, Authenticode `56/13`, Native `492/13`, compiler `6/6`, Local Core
+  `536/536`, Guard `248/248` standard and `249/249` all-feature, both locked
+  workspaces, strict lint, release/trust smoke, safety/dependency gates, Flutter
+  analyze, and `838/838` pass. Initial zero-test, script-policy, Python-path, and
+  PowerShell-runtime attempts were corrected and are not success evidence.
+- The destination report passed exact `249/249`, zero failed/skipped, in `486.9s`
+  from `2026-08-24T08:54:17.6603197Z` through
+  `2026-08-24T09:02:24.5591800Z`; embedded and corrected standalone Windows
+  PowerShell validation pass. Lock blobs and the protected vault remain exact.
+  Checkpoint 2219 is closed while the complete antivirus goal remains active.
+
+## 2026-08-24 - Checkpoint 2220 scripting: handshake-pipe Owner Rights
+
+- Scripted an explicit current process-token owner plus ordered `S-1-3-4`
+  Owner Rights ACE granting only `READ_CONTROL`. Both parent and child now
+  request and compare exact owner, protected DACL, and mandatory-label evidence.
+- Scripted a benign random-pipe reopen proving same-user `WRITE_DAC` is denied,
+  plus wrong-owner/SID/mask/flag/order regressions. The central verifier gains
+  step 250 and the independent validator rejects stale or incomplete evidence;
+  source contract 650 and all audit documents are updated.
+- Owner Rights removes implicit owner `WRITE_DAC`, but remains a point-in-time
+  same-user control, not cross-identity isolation, encryption, AppContainer,
+  installed LocalSystem, driver, or pre-execution protection.
+- No checkpoint-2220 passing result is claimed during scripting. Tests, hosted
+  evidence, merge, synchronization, and destination verification remain pending.
+
+## 2026-08-24 - Checkpoint 2220 corrected local verification
+
+- Initial Rust formatting and two stale historical source assertions failed
+  visibly, were corrected, and are not counted as success. Parsers `2/2`, Python
+  compilation, formatting, and source contracts `650/650` now pass.
+- Exact Owner Rights denial `1/1`, handshake security `4/4`, Authenticode
+  `57/13`, Native `493/13`, compiler `6/6`, Local Core `536/536`, Guard
+  `248/248` standard and `249/249` all-feature, both locked workspaces,
+  locked/offline Native checks, and strict Native/Local/Guard Clippy pass.
+- Release Local Core/Guard builds and benign two-host embedded/catalog/hash-
+  binding smoke pass without fixture execution. Flutter analyze and `838/838`
+  pass. Definitive verifier, report validation, locks/vault, hosted, integration,
+  synchronization, and destination evidence remain pending.
+
+## 2026-08-24 - Checkpoint 2220 definitive local evidence
+
+- Definitive verification ran `09:26:52.1091780Z` to `09:34:24.8241696Z` and
+  passed exact `250/250`, zero failed/skipped, in `452.7s`; the target step plus
+  embedded and standalone full-suite validators pass.
+- Nine malformed reports are rejected for stale count, renamed step, three
+  missing verified scopes, missing residual scope, failed/skipped target, and
+  skipped Rust. One inline generator quoting failure created no variants and is
+  not counted; the corrected isolated structured generator passes `9/9`.
+- All three lock blobs remain exact. Read-only vault inventory remains 16,072
+  files, zero directories, 4,522,733 bytes, 5,357 each payload/metadata/auth,
+  one key, and zero pending/temp. Checkpoint 2220 is locally verified; hosted,
+  merge, synchronization, and destination evidence remain pending.
+
+## 2026-08-24 continuation checkpoint 2220 implementation-head hosting
+
+- Exact implementation head `6f90f9234375ceb22107aba426401e38838ec9b8`
+  passes Avorax CI PR run `32712875828` across all five jobs.
+- Desktop Packages push/PR runs `32712856310`/`32712875850` pass package
+  contracts, Windows x64 MSI/EXE, Linux x64 DEB/tar, macOS x64/arm64 DMGs,
+  consolidation, checksums, and lockfile SBOM generation. Both prerelease
+  publication jobs are skipped.
+- The exact push artifact contains six release files plus a CycloneDX 1.6
+  lockfile SBOM with 569 components. All seven `SHA256SUMS.txt` rows were
+  independently recomputed and matched. No artifact was installed, executed,
+  released, or published.
+- Draft PR `#72` remains clean at the exact implementation head. Evidence-head
+  checks, normal merge, merged-main evidence, guarded original-tree
+  synchronization, and destination verification remain pending.

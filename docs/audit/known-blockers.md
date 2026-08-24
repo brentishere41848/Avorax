@@ -2346,7 +2346,7 @@ enforcement, or pre-execution blocking is claimed.
 
 ## Checkpoint 2219 handshake-DACL least-privilege status
 
-- **Locally and exact-head hosted verified; integration pending:** SYSTEM retains normalized full control, while
+- **Verified and integrated:** SYSTEM retains normalized full control, while
   the current-user ACE is reduced to normalized generic read plus generic write.
   Exact parent and child descriptor read-backs reject broader or narrower rights,
   including execute, delete, `WRITE_DAC`, and `WRITE_OWNER`. Source contract 649
@@ -2354,8 +2354,11 @@ enforcement, or pre-execution blocking is claimed.
   source contracts `649/649`, and eight malformed-report rejections pass. Exact
   SHA `5171fb4e` passes CI `32702550130` and package push/PR
   `32702466511`/`32702550182`; all six packages, checksums, lockfile SBOM, and
-  administrative MSI extraction pass with publication skipped. Evidence-head,
-  merge, synchronization, and destination evidence remain pending.
+  administrative MSI extraction pass with publication skipped. Evidence
+  `be122479`, PR `#71`, merge `e6caf818`, evidence/merged-main CI and packages,
+  exact 12-path synchronization, destination full workspaces/lint/release/
+  trust-smoke/Flutter checks, and destination verifier `249/249` in `486.9s`
+  pass. Checkpoint 2219 has no remaining integration blocker.
 - **Ownership blocker:** the creator's token default owner is not changed or
   independently read back. If the current user owns the pipe, Windows ownership
   gives implicit `READ_CONTROL` and `WRITE_DAC` regardless of the narrower ACE.
@@ -2364,3 +2367,40 @@ enforcement, or pre-execution blocking is claimed.
 - Authenticated/encrypted cross-identity IPC, AppContainer/LPAC, an installed
   LocalSystem boundary, production signing, driver enforcement, and pre-execution
   protection remain technically limited or require external prerequisites.
+
+## Checkpoint 2220 handshake Owner Rights status
+
+- **Scripted, not yet verified:** the pipe explicitly names and reads back the
+  current process-token user as owner and applies exact Owner Rights `S-1-3-4`
+  with only `READ_CONTROL`. A benign same-user reopen must prove `WRITE_DAC`
+  denial while the existing parent/client protocol remains functional.
+- Owner/SID/mask/flag/order adversarial tests, verifier step 250, exact validator
+  scope, stale-249 rejection, source contract 650, and audit documents are
+  scripted. No runtime, hosted, merge, synchronization, or destination result is
+  claimed yet.
+- Remaining blocker: this is still point-in-time same-user control, not
+  encrypted cross-identity IPC. Existing handles, trusted same-user code,
+  privileged ownership changes, injection/duplication, SYSTEM/administrators,
+  kernel compromise, AppContainer/LPAC, installed LocalSystem, signing, driver
+  enforcement, and pre-execution protection remain technically limited or need
+  external prerequisites.
+- **Local runtime verified, definitive pending:** corrected source contracts
+  `650/650`, Owner Rights denial `1/1`, handshake `4/4`, Authenticode `57/13`,
+  Native `493/13`, Local Core `536/536`, Guard `248/249`, strict lint, both
+  locked workspaces, release/two-host trust smoke, and Flutter `838/838` pass.
+  Definitive report/validator, lock/vault, hosted, integration, synchronization,
+  and destination evidence are still blockers to checkpoint closure.
+- **Definitive local evidence now verified:** exact `250/250` in `452.7s`, both
+  validators, and nine malformed-report rejections pass. Lock blobs and the
+  read-only protected-vault invariant remain exact. Remaining checkpoint
+  blockers are hosted exact-head checks, normal merge, merged-main checks,
+  guarded synchronization, and destination verification; the cross-identity
+  and pre-execution technical limits remain.
+- **Implementation-head hosted evidence now verified:** exact SHA
+  `6f90f9234375ceb22107aba426401e38838ec9b8` passes CI `32712875828` and package
+  push/PR runs `32712856310`/`32712875850`; both publication jobs are skipped.
+  Six artifacts, all seven checksum rows, and the CycloneDX 1.6/569-component
+  lockfile SBOM were independently checked. Remaining checkpoint blockers are
+  evidence-head checks, normal merge, merged-main checks, guarded sync, and
+  destination verification. Cross-identity IPC and pre-execution protection
+  remain technically limited.
