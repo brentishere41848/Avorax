@@ -99,8 +99,30 @@ Root/Native/Flutter lock blobs remain exact. No test process remains. The
 read-only protected vault remains 16,072 files, zero directories, 4,522,733
 bytes, 5,357 each `.avoraxq`/`.json`/`.auth`, one `.metadata_auth_key`, and zero
 pending/temp/reparse. Nothing was installed, published, executed as candidate
-content, or changed in Defender. Hosted exact-head, integration,
-synchronization, and destination evidence remain pending.
+content, or changed in Defender. Integration, synchronization, and destination
+evidence remain pending.
+
+## Exact Implementation-Head Hosted Evidence
+
+Implementation commit `d54ff0f08db944fa846b3137c5ebe52bca7adde6`
+was pushed only to the checkpoint branch and opened as PR `#82` against `main`.
+The PR is mergeable/clean and binds to that exact head. Avorax CI run
+`32825256842` passes all five jobs. Desktop Packages runs `32825194396` (push)
+and `32825256832` (PR) pass contracts, Windows x64 MSI/EXE, Linux x64 DEB/tar,
+macOS x64/arm64 DMGs, and consolidation. Both publication jobs are explicitly
+skipped; no release or prerelease was created.
+
+Consolidated artifact `9555004994` is 131,593,453 bytes with GitHub/downloaded
+SHA-256
+`9e688b1072b3fb06595b114a196f94062dc4f02f15189e5993df2e7bb21f837f`.
+Artifact `9555032779` is 132,130,178 bytes with SHA-256
+`8442677ce8f60a50ea895c4b11f14f8da768da796b533c5d570483adc2d3b197`.
+Both bind to the exact implementation head. Without extracting or executing
+them, in-stream validation passes exact eight unique regular entries, exact six
+release files, one CycloneDX 1.6 lockfile SBOM, one manifest covering all seven
+payload/SBOM entries, all internal SHA-256 values, ZIP CRC, and rejection guards
+for directories, symlinks, absolute paths, and parent traversal. Hosted
+integration-head, merge, synchronization, and destination proof remain pending.
 
 ## Technical Limits
 

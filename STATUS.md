@@ -6120,7 +6120,7 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
 
 ## Checkpoint 2230 - Pipe-Delivered Authenticode Launch Key
 
-- **Scripted; execution pending:** the restricted Authenticode child no longer
+- **Scripted phase complete:** the restricted Authenticode child no longer
   inherits the random launch/MAC key through its environment. Its exact sanitized
   environment contains only the canonical handshake pipe, canonical parent PID,
   and checked native `SystemRoot`/`WINDIR` values.
@@ -6132,7 +6132,8 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
 - Implementation, benign fixture, source contract 660, exact 260-step verifier
   and strict validator changes, and synchronized documentation are scripted.
   No checkpoint-2230 formatter, parser, compiler, test, verifier, hosted,
-  integration, synchronization, or destination result is claimed yet.
+  integration, synchronization, or destination result was claimed during that
+  scripting phase.
 - **Technically limited:** removing the key from the environment narrows passive
   disclosure, but the key remains in parent/child memory and crosses the
   authenticated same-user pipe. Process-memory access, privileged injection,
@@ -6143,11 +6144,20 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   pipe/identity/token/MAC targets, Native `513/18 + 6/6`, Local `536/536`, Guard
   `248/248 + 249/249`, both workspaces, strict Clippy, offline resolution,
   release builds/smoke, Flutter analyze and `838/838` pass. Locks remain exact.
-  Definitive, hosted, integration, synchronization, and destination evidence is
-  still pending; checkpoint 2230 and the complete antivirus project remain open.
+  At that stage definitive, hosted, integration, synchronization, and
+  destination evidence remained pending; later evidence is recorded below.
 - **Definitive local verified:** exact `260/260` passes in `459.9s`, including
   the new target in `0.2s`; embedded and independent PS5 strict validation pass,
   and `16/16` isolated adversarial reports are rejected. Three package-source
   symlink fixtures remain explicitly skipped on Windows due optional symlink
   privilege. Locks, processes, and protected-vault invariants remain exact.
-  Hosted/integration/destination evidence is still pending.
+  Integration/destination evidence is still pending.
+- **Exact implementation-head hosted verified:** PR `#82` and all three runs
+  bind to `d54ff0f08db944fa846b3137c5ebe52bca7adde6`. CI run `32825256842`,
+  PR package run `32825256832`, and push package run `32825194396` pass. Both
+  package runs build and verify Windows MSI/EXE, Linux DEB/tar, and macOS
+  x64/arm64 DMGs, consolidate exact six release files plus lockfile SBOM and
+  checksums, and skip publication. Both consolidated ZIP digests match GitHub;
+  in-stream validation passes exact entries, CRC, internal SHA-256, CycloneDX,
+  and path/type guards without extraction or execution. Integration,
+  synchronization, and destination evidence remain pending.

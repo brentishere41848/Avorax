@@ -10636,4 +10636,29 @@ Updates page showed:
 - Final read-only reconciliation proves zero active test processes, exact lock
   blobs, and the protected vault invariant: 16,072 files, zero directories,
   4,522,733 bytes, 5,357 each payload/metadata/auth, one metadata key, zero
-  pending/temp/reparse. Hosted/integration/destination work remains pending.
+  pending/temp/reparse. Integration/destination work remains pending.
+
+## Checkpoint 2230 Exact-Head Hosted Evidence
+
+- Implementation commit `d54ff0f08db944fa846b3137c5ebe52bca7adde6`
+  was pushed only to `agent/checkpoint-2230-authenticode-pipe-delivered-launch-key`;
+  PR `#82` targets `main`, is mergeable/clean, and binds its head to that exact
+  commit.
+- Exact-head CI run `32825256842` passes all five jobs: branding/copy, Flutter
+  client/protocol, security/protection/performance, Rust local-core/guard/update/
+  backend, and Unix quarantine permissions.
+- Exact-head Desktop Packages runs `32825194396` (push) and `32825256832` (PR)
+  both pass package contracts, Windows x64 MSI/EXE, Linux x64 DEB/tar, macOS
+  x64 DMG, macOS arm64 DMG, and consolidation/checksums. Their publication jobs
+  are explicitly `skipped`; no release or prerelease was created.
+- Consolidated artifacts `9555004994` and `9555032779` bind to the exact
+  implementation head. Downloaded untracked ZIPs are 131,593,453 and
+  132,130,178 bytes and match GitHub SHA-256 digests
+  `9e688b1072b3fb06595b114a196f94062dc4f02f15189e5993df2e7bb21f837f`
+  and `8442677ce8f60a50ea895c4b11f14f8da768da796b533c5d570483adc2d3b197`.
+- In-stream checks, without extraction or execution, pass for both ZIPs: exact
+  eight unique regular entries, exact six release files, one CycloneDX 1.6
+  lockfile SBOM, one checksum manifest covering all seven payload/SBOM entries,
+  matching internal SHA-256, clean CRC, and no directory, symlink, absolute,
+  or parent-traversal entry. Hosted integration-head evidence and guarded
+  destination synchronization remain pending.
