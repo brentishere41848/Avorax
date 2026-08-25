@@ -6118,6 +6118,23 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   AppContainer/LPAC, installed LocalSystem, signed-driver, or pre-execution
   enforcement. The complete antivirus project remains active.
 
+## Checkpoint 2235 Integration Closure
+
+- Evidence `57ce163` and merged main `5fc30c9` pass exact-head CI and Desktop
+  Packages. PR `#87` merged normally; every publication job was skipped.
+  Evidence and merged artifacts match GitHub SHA-256 and pass bounded
+  8-root/6-release/7-checksum/CycloneDX 1.6/569-component inspection.
+- Guarded synchronization copied exactly 13 merge-delta paths and 6,511,924
+  bytes with zero deletes or residue. Destination source `665/665`, focused and
+  broad Native/Local, both workspace modes, Flutter analyze/`838/838`, exact
+  `264/264` in `488.3s`, both strict validators, and `16/16` adversarial report
+  rejections pass. All synchronized blobs and lock hashes remain exact.
+- The WindowsApps Python reparse attempt and malformed helper/check commands are
+  visible and uncredited; corrected non-reparse and read-only checks pass. The
+  protected vault remains exact. No install, service/driver start, Defender
+  weakening, release, publication, calibration, or pre-execution claim was
+  made. Checkpoint 2235 is closed; the complete antivirus goal remains active.
+
 ## Checkpoint 2235 Scripted State - Bounded Risk Fusion
 
 - Native score accumulation is saturating and clamped; Local Core score

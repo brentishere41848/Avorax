@@ -134,3 +134,51 @@ unique regular root entries, six platform release files, seven matching
 checksum rows, and one CycloneDX 1.6 lockfile SBOM with 569 components.
 Evidence-head checks, normal merge, merged-main evidence, guarded
 synchronization, and destination verification remain pending.
+
+## Integration And Destination Closure
+
+Evidence commit `57ce16371cbc47147b7e302c80f310b47873d918` passes CI
+`32894004836` and Desktop Packages `32894004858`; publication job
+`97959351533` is skipped. Consolidated artifact `9581295219` is 131,617,898
+bytes with exact SHA-256
+`bffaed284e9899581622d607bb022fe75b434b2b6dfd97d1a249b7f0417ac0dc`.
+
+PR `#87` merges normally as `5fc30c918ff832af7154034bc62dbbb2b09d6ce5`
+with exact parents `c969351dd7fae979d6b49df9e870db92a4e51f23` and
+`57ce16371cbc47147b7e302c80f310b47873d918`. Merged-main CI
+`32896343556` and Desktop Packages `32896343565` pass; publication job
+`97967308847` is skipped. Consolidated artifact `9582201337` is 131,609,164
+bytes with exact SHA-256
+`3642de70bb51591bc4b09713ce659f5bb75bfceb69d6db0341be52e9918581fd`.
+Both artifacts pass the same bounded non-extracting exact eight-root-entry,
+six-release-file, seven-checksum-row, CycloneDX 1.6/569-component validation.
+
+Guarded synchronization checks the exact closure base and desired merge blobs,
+path containment, and reparse boundaries before atomically copying 13 paths and
+6,511,924 bytes to `C:\Users\Brent\Documents\Avorax-main`. It deletes nothing,
+cleans its verified stage, and leaves no sync temp residue. All 13 destination
+blobs match the merge commit exactly.
+
+Destination source contracts pass `665/665`; focused Native/Local fusion passes
+`10/10` and `1/1`; complete Native passes `520` with 19 intentional child-
+fixture ignores plus compiler `6/6`; Local passes `537/537`; both locked
+workspace modes pass; Flutter analyze and `838/838` pass. The definitive
+no-skip/no-Defender report passes exact `264/264`, zero failed/skipped, from
+`2026-08-25T21:13:57.7812688Z` through `2026-08-25T21:22:06.1136243Z` in
+`488.3s`. Native and Local risk-fusion targets each occur once. Independent
+Windows PowerShell 5.1 and PowerShell 7 validation passes, and eight isolated
+mutations per host reject `16/16`. Report SHA-256 is
+`ac4df75efe6fd70b38d147def7f47d2e30daa4da23e3b3ef5472efad2205a839`.
+
+The first destination verifier selected the WindowsApps `py.exe` reparse alias
+and failed visibly; it is uncredited. An initial parse-only sync helper was
+outer-shell misquoted, and two read-only post-sync inventory drafts contained
+PowerShell string/filter syntax errors. Corrected commands passed; no failed
+draft is treated as evidence. Lock hashes, source blobs, stage/temp/process
+checks, and the protected-vault invariant are exact.
+
+Checkpoint 2235 is closed. No machine-wide install, service/driver start,
+Defender change, live malware, candidate execution, release, or publication
+occurred. The bounded weighted policy is still not production-calibrated, and
+no installed-service, signed-driver, cross-identity, or pre-execution claim is
+made. The complete antivirus project remains active.

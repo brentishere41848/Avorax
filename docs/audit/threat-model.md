@@ -2868,3 +2868,13 @@ both consolidated ZIPs match GitHub digests and pass bounded non-extracting
 supports the bounded-fusion implementation and package reproducibility only.
 Calibration, installed-service, destination, signed-driver, and pre-execution
 limits are unchanged.
+
+Evidence head `57ce163`, normal PR `#87` merge `5fc30c9`, merged-main hosted
+checks, skipped publication, and bounded package review pass. Guarded 13-path
+destination synchronization plus focused/full Native and Local execution,
+source `665/665`, Flutter `838/838`, exact `264/264` in `488.3s`, both strict
+validator hosts, and `16/16` malformed-report rejections close checkpoint 2235.
+The initial WindowsApps Python reparse attempt failed visibly and is uncredited.
+This evidence confirms the bounded risk-fusion controls; it does not establish
+production malware calibration, installed service protection, signing,
+cross-identity isolation, driver/kernel behavior, or pre-execution blocking.

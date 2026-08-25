@@ -1402,3 +1402,11 @@ without dependency or lock change. Their consolidated artifacts contain the
 expected CycloneDX 1.6 lockfile SBOM with exactly 569 components and pass
 bounded in-stream validation. Final signed-artifact notice/copyright approval
 remains a separate release prerequisite.
+
+Checkpoint-2235 evidence-head and merged-main package runs `32894004858` and
+`32896343565` pass with publication skipped. Artifacts `9581295219` and
+`9582201337` match GitHub SHA-256 and pass bounded non-extracting six-platform-
+file, seven-checksum, and CycloneDX 1.6/569-component validation. Destination
+source, locked workspaces, exact verifier dependency gate, and all three lock
+hash checks pass without dependency, feature, license, or lockfile change.
+Final production signed-artifact notice/copyright approval remains separate.

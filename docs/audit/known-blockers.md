@@ -2894,3 +2894,15 @@ enforcement, or pre-execution blocking is claimed.
   merged-main evidence, guarded original-tree synchronization, and independent
   destination verification remain open. External calibration/signing/service/
   driver/pre-execution blockers remain unchanged.
+
+- **Checkpoint integration blocker closed:** evidence `57ce163`, normal merge
+  `5fc30c9`, evidence/merged-main hosted CI and packages, guarded exact 13-path
+  synchronization, destination source `665/665`, broad/focused engine and
+  Flutter suites, exact `264/264` in `488.3s`, dual-host validation, and
+  `16/16` adversarial rejections pass. The WindowsApps Python reparse run and
+  malformed helper/check command drafts are visible and uncredited.
+- **Residual blockers unchanged:** production calibration needs approved
+  representative corpora, targets, and analyst review. Installed elevated/
+  service E2E, production signing, cross-identity isolation, signed-driver
+  behavior, secure erasure, and pre-execution enforcement retain external
+  prerequisites. Checkpoint 2235 is closed; the complete project remains active.

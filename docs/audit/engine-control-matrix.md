@@ -4799,3 +4799,13 @@ match GitHub SHA-256 and pass bounded non-extracting exact
 8-entry/6-release/7-checksum/CycloneDX 1.6/569-component validation. Evidence-
 head, merge, synchronization, and destination integration remain pending; no
 antivirus-engine, installed-service, or pre-execution claim changes.
+
+Checkpoint 2235 is now **verified and integrated**. Evidence head `57ce163`,
+normal PR `#87` merge `5fc30c9`, exact evidence/merged-main CI and package runs,
+skipped publication, and bounded artifact digest/inventory/checksum/SBOM review
+pass. Guarded 13-path synchronization and destination focused/full engine,
+workspace, Flutter `838/838`, source `665/665`, exact `264/264` in `488.3s`,
+dual-host strict validation, and `16/16` adversarial report rejections pass.
+The four checkpoint controls are verified at source and destination. Risk
+fusion remains weighted policy without production calibration; installed
+service, signing, driver, kernel, and pre-execution evidence remain unchanged.
