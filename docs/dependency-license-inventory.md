@@ -1284,5 +1284,8 @@ runs `32850194350` and `32850233494` build all six Windows/Linux/macOS release
 files and consolidate a CycloneDX 1.6 lockfile SBOM with exactly 569 components.
 Both downloaded consolidated ZIP digests match GitHub and pass bounded in-stream
 inventory, checksum, and SBOM validation without extraction or execution.
-Publication is skipped. Evidence-head, merged-main, and final signed-artifact
-license/notice review remain pending.
+Evidence-head package run `32852690969` and merged-main package run
+`32854130974` repeat all six platform files, exact checksum coverage, and the
+569-component CycloneDX 1.6 SBOM. Their consolidated artifacts match GitHub
+digests and pass non-extracting validation. Publication is skipped. Final
+signed-artifact license/notice review remains a production-release prerequisite.

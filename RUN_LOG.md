@@ -10885,3 +10885,43 @@ Updates page showed:
   pending/temp/reparse. Nothing was installed, released, published, executed as
   candidate content, or changed in Defender. Checkpoint 2231 is closed; the
   complete antivirus goal remains active.
+
+## Checkpoint 2232 Integration And Destination Closure
+
+- Evidence head `183d1d6217b897ef8ca88d98397c4138f854cb00` passes Avorax CI
+  `32852690962` and Desktop Packages `32852690969`; publication
+  `97820931936` is skipped. Consolidated artifact `9565334960` is 131,650,795
+  bytes with matching GitHub/downloaded SHA-256 `e8ae76ababb3a2ee297e1822302689e06f7dd7ccf5a75b438755007a29b02847`.
+  Non-extracting validation passes exact eight entries, six platform files,
+  seven checksums, and CycloneDX 1.6 with 569 components.
+- PR `#84` merges normally as `6de2a8f3bd48c5c45ee3281a90828d8b0796ded5`
+  with parents `b678027`/`183d1d6`. Merged-main CI `32854127768` and packages
+  `32854130974` pass; publication `97825750752` is skipped. Consolidated
+  artifact `9565904414` is 131,559,530 bytes with matching SHA-256
+  `e69dcc6a698404fd98fd1d647eb94da7c0b954acc9959c5537bafb0213d1cba9`
+  and the same exact in-stream inventory/checksum/SBOM proof. No release is
+  created; the release list remains headed by `v0.1.15-beta.3`.
+- The first destination precondition stopped before staging because
+  `RUN_LOG.md` matched known checkpoint-2231 closure `c5d7a2f`, not older main
+  `b678027`. Corrected exact per-path closure/main preconditions, containment,
+  and reparse checks permit atomic synchronization of 15/15 paths, 6,845,406
+  bytes, with zero delete, unrelated change, temporary residue, or stage left.
+- Destination parsers, formatting, source `662/662`, zeroization `1/1`, Native
+  `516/19 ignored + 6/6`, Local `536/536`, Guard `248/248 + 249/249`, both
+  locked workspaces, strict Clippy, standalone offline Native, release builds,
+  PS7/PS5 Authenticode smoke, Flutter analyze, and Flutter `838/838` pass. One
+  combined Clippy wrapper failed before compilation because it used root-relative
+  manifests from the Flutter subdirectory; corrected root invocations pass.
+- The destination no-skip/no-Defender verifier runs from
+  `2026-08-25T13:51:12.7681591Z` through `2026-08-25T14:00:28.1197160Z` and
+  passes exact `262/262`, zero failed/skipped, in `555.3s`; zeroization takes
+  `0.2s`. Embedded and independent PS5 validators pass and `8/8` destination
+  report mutations are rejected.
+- Post-test all 15 merge blobs and three raw lock SHA-256 values are exact.
+  Flutter's test tool rewrote only destination lockfile line endings; semantic
+  blob validation permitted atomic restoration to exact unchanged source bytes.
+  No process, sync temp, or stage remains. The protected vault remains 16,072
+  files, zero directories, 4,522,733 bytes, 5,357 each payload/metadata/auth,
+  one key, and zero pending/temp/reparse. Nothing was installed, released,
+  published, executed as candidate content, or changed in Defender. Checkpoint
+  2232 is closed; the complete antivirus goal remains active.

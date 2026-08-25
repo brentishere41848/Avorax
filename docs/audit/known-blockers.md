@@ -2728,9 +2728,12 @@ enforcement, or pre-execution blocking is claimed.
 - **Local evidence verified:** best-effort Authenticode launch-key zeroization
   passes focused `1/1`, Native `516/516`, source `662/662`, strict lint/release,
   PS7/PS5 trust smoke, Flutter `838/838`, and exact verifier/validator `262/262`
-  in `459.7s`; `8/8` malformed reports are rejected. Exact implementation-head
-  CI and Windows/Linux/macOS package evidence pass with publication skipped.
-  Evidence-head, merge, synchronization, and destination proof remain pending.
+  in `459.7s`; `8/8` malformed reports are rejected. Exact implementation,
+  evidence, and merged-main CI plus Windows/Linux/macOS package evidence pass
+  with publication skipped. Normal PR `#84` merge, guarded exact 15-path
+  synchronization, destination full Rust/Flutter/build evidence, destination
+  `262/262` in `555.3s`, and `8/8` destination malformed-report rejections pass.
+  Checkpoint 2232 is closed while the complete antivirus goal remains active.
 - **Owned-buffer scope only:** `zeroize 1.9.0` wraps the parent and child owned
   key strings plus the bounded child pipe-read buffer. Borrowed key slices avoid
   the prior raw 36-byte derived-key array. Key-bearing containers intentionally

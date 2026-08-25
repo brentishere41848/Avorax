@@ -6158,6 +6158,19 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   seven-checksum, and CycloneDX 1.6/569-component validation without extraction
   or execution. Evidence-head, merge, synchronization, and destination proof
   remain pending.
+- **Integration and destination closure:** evidence `183d1d6` passes CI
+  `32852690962` and packages `32852690969`; PR `#84` merges normally as
+  `6de2a8f` with parents `b678027`/`183d1d6`. Merged-main CI `32854127768`
+  and packages `32854130974` pass, both publication jobs are skipped, and exact
+  consolidated artifacts match GitHub digests and pass non-extracting 8-entry,
+  6-platform, 7-checksum, CycloneDX 1.6/569-component validation. Guarded mixed
+  merged-main/checkpoint-2231-closure preconditions synchronize exact `15/15`
+  paths and 6,845,406 bytes with zero delete/residue. Destination focused/full
+  Rust, both workspaces, strict Clippy/offline/release/two-host smoke, Flutter
+  analyze and `838/838` pass. The no-skip/no-Defender verifier and strict
+  validators pass exact `262/262` in `555.3s`; `8/8` adversarial reports are
+  rejected. Locks, processes, sync residue, and the protected-vault invariant
+  are exact. Checkpoint 2232 is closed; the full antivirus goal remains active.
 
 ## Checkpoint 2230 - Pipe-Delivered Authenticode Launch Key
 

@@ -2691,3 +2691,13 @@ their consolidated artifacts pass exact digest and in-stream inventory/SBOM
 validation with publication skipped. Evidence-head, integration,
 synchronization, and destination proof remain pending. No candidate content or
 live malware is used.
+
+**Integration evidence:** Evidence `183d1d6`, normal PR `#84` merge `6de2a8f`,
+evidence-head and merged-main CI/packages, skipped publication, and exact
+non-extracting package digest/inventory/SBOM validation pass. Guarded mixed
+merged-main/checkpoint-2231-closure preconditions synchronize exact 15 paths.
+Destination full Rust/Flutter/build evidence passes, as do exact `262/262` in
+`555.3s`, both strict validators, and `8/8` adversarial report rejections. Locks,
+processes, sync residue, and the protected-vault invariant remain exact.
+Checkpoint 2232 is closed; the complete antivirus goal remains active and all
+owned-buffer-only technical limits above remain unchanged.
