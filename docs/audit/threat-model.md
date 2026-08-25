@@ -2860,3 +2860,11 @@ strict validation, and `16/16` adversarial report rejections. This verifies the
 bounded-fusion regression and evidence contract locally; it does not change the
 residual calibration, installed-service, signed-driver, or pre-execution model.
 Hosted and destination evidence remains pending.
+
+Exact implementation `8fa9630` passes hosted CI `32892108074` and package
+push/PR runs `32891914251`/`32892108020`. Both publication jobs are skipped;
+both consolidated ZIPs match GitHub digests and pass bounded non-extracting
+8-entry/6-release/7-checksum/CycloneDX 1.6/569-component validation. This
+supports the bounded-fusion implementation and package reproducibility only.
+Calibration, installed-service, destination, signed-driver, and pre-execution
+limits are unchanged.

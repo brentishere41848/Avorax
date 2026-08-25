@@ -2885,3 +2885,12 @@ enforcement, or pre-execution blocking is claimed.
 - **Remaining integration work:** implementation/evidence-head hosted checks,
   normal PR merge, merged-main evidence, guarded original-tree synchronization,
   and independent destination verification remain open.
+
+- **Implementation-head hosting blocker closed:** exact `8fa9630` passes CI
+  `32892108074` and package push/PR `32891914251`/`32892108020`; both
+  consolidated ZIPs match GitHub digests and pass exact non-extracting package,
+  checksum, and 569-component SBOM validation. Publication is skipped.
+- **Remaining integration work:** evidence-head hosted checks, normal PR merge,
+  merged-main evidence, guarded original-tree synchronization, and independent
+  destination verification remain open. External calibration/signing/service/
+  driver/pre-execution blockers remain unchanged.

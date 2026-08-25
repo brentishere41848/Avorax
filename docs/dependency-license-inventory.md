@@ -1396,3 +1396,9 @@ Clippy pass. Final hosted package/SBOM evidence remains pending.
 
 Definitive exact `264/264` and its dependency evidence gate pass without a
 lockfile diff. Hosted exact-head package and CycloneDX review remains pending.
+
+Hosted checkpoint-2235 push/PR package runs `32891914251`/`32892108020` pass
+without dependency or lock change. Their consolidated artifacts contain the
+expected CycloneDX 1.6 lockfile SBOM with exactly 569 components and pass
+bounded in-stream validation. Final signed-artifact notice/copyright approval
+remains a separate release prerequisite.

@@ -4791,3 +4791,11 @@ The checkpoint-2235 verifier contract is now **definitively locally verified**:
 exact `264/264` in `503.5s`, both strict PowerShell hosts, and `16/16`
 stale/target/scope/options/status/step report mutations pass. Hosted,
 integration, synchronization, and destination columns remain pending.
+
+Exact implementation-head hosting is now **verified**: commit `8fa9630` passes
+CI `32892108074` and package push/PR runs `32891914251`/`32892108020`; both
+publication jobs are skipped. Consolidated artifacts `9580216963`/`9580381411`
+match GitHub SHA-256 and pass bounded non-extracting exact
+8-entry/6-release/7-checksum/CycloneDX 1.6/569-component validation. Evidence-
+head, merge, synchronization, and destination integration remain pending; no
+antivirus-engine, installed-service, or pre-execution claim changes.

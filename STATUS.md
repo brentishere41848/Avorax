@@ -6152,6 +6152,14 @@ attempt stopped before step one and is uncredited. Report SHA-256 is
 `3c28abf05ba1b004ff0a16448690b8245baad0fd658ee0893bf052f3cdc719ed`.
 Hosted, merge, synchronization, and destination evidence remains pending.
 
+Exact implementation-head hosting is now **verified**: commit `8fa9630` is PR
+`#87`'s exact head. CI `32892108074` and package push/PR runs
+`32891914251`/`32892108020` pass without retry; publication jobs are skipped.
+Consolidated artifacts `9580216963`/`9580381411` match GitHub SHA-256 and pass
+bounded non-extracting exact 8-entry/6-release/7-checksum/CycloneDX 1.6/569-
+component validation. Evidence-head checks, normal merge, merged-main evidence,
+guarded synchronization, and destination proof remain pending.
+
 ## Checkpoint 2234 - PowerShell JSON String Validation
 
 - **Scripted:** all nine strict report readers preserve JSON strings on

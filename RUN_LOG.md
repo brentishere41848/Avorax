@@ -9474,6 +9474,25 @@ Updates page showed:
 - Evidence-head CI/packages, normal merge, merged-main evidence, guarded
   original-tree synchronization, and destination verification remain pending.
 
+## 2026-08-25 - Checkpoint 2235 Exact Implementation-Head Hosted Evidence
+
+- Exact implementation `8fa9630d0c16796f7175ba67afbda2f92e85bce8` is PR
+  `#87`'s head and passes all five Avorax CI jobs in run `32892108074` without
+  retry.
+- Desktop Packages push `32891914251` and PR `32892108020` pass contracts,
+  Windows MSI/EXE, Linux DEB/tar, both macOS DMGs, consolidation, checksums, and
+  evidence upload. Publication jobs `97949822381`/`97951304602` are skipped; no
+  release or prerelease is created.
+- Consolidated artifacts `9580216963` (131,722,107 bytes) and `9580381411`
+  (131,278,201 bytes) match GitHub/download SHA-256 values
+  `bc5eb9b6a0501fa8afa462bd422f058041337a7c391fc2f2dd1ea281a9bed625` and
+  `4aa910c1a9f53c85c0b0baccbc19edb773c0c91c9759e91854678c12808ed773`.
+  Bounded in-stream review, without extraction or execution, passes exact eight
+  root entries, six platform release files, seven matching checksum rows, and
+  CycloneDX 1.6 lockfile SBOM evidence with 569 components.
+- Evidence-head CI/packages, normal merge, merged-main evidence, guarded
+  original-tree synchronization, and destination verification remain pending.
+
 ## Checkpoint 2235 - Bounded Risk Fusion
 
 Selected the central Native/Local verdict fusion boundary as the next

@@ -115,3 +115,22 @@ uncredited. The checked bundled runtime path completed the credited run.
 No test process remains. Locks and the protected-vault invariant remain exact.
 Hosted exact-head, normal merge, guarded synchronization, and destination
 verification remain pending.
+
+## Exact Implementation-Head Hosted Evidence
+
+Implementation commit `8fa9630d0c16796f7175ba67afbda2f92e85bce8` is PR
+`#87`'s exact head. Avorax CI run `32892108074` passes all five jobs without a
+retry. Desktop Packages push `32891914251` and PR `32892108020` pass package
+contracts, Windows x64 MSI/EXE, Linux x64 DEB/tar, macOS x64/arm64 DMGs,
+consolidation, checksums, and evidence upload. Publication jobs `97949822381`
+and `97951304602` are explicitly skipped; no release or prerelease is created.
+
+Consolidated artifacts `9580216963` and `9580381411` are 131,722,107 and
+131,278,201 bytes. Their downloaded SHA-256 values exactly match GitHub at
+`bc5eb9b6a0501fa8afa462bd422f058041337a7c391fc2f2dd1ea281a9bed625`
+and `4aa910c1a9f53c85c0b0baccbc19edb773c0c91c9759e91854678c12808ed773`.
+Bounded in-stream review, without extraction or execution, passes exactly eight
+unique regular root entries, six platform release files, seven matching
+checksum rows, and one CycloneDX 1.6 lockfile SBOM with 569 components.
+Evidence-head checks, normal merge, merged-main evidence, guarded
+synchronization, and destination verification remain pending.
