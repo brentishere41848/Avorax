@@ -4814,16 +4814,16 @@ service, signing, driver, kernel, and pre-execution evidence remain unchanged.
 
 | Control or engine | Responsibility | Scripted state | Honest limit |
 |---|---|---|---|
-| Bounded process event gate | Reject invalid process identity/NUL telemetry before file I/O and inspect only bounded UTF-8-safe command head/tail data | Nonzero PID, embedded-NUL rejection, 16 KiB valid-UTF-8 sample, truncation evidence, and benign/adversarial fixtures are scripted; verification pending | Public explicit API only; app/service process-start wiring and durable monitoring are not established |
-| Process script-host observation | Record exact script-host executable identity without treating normal host use as malicious | Exact case-insensitive basename matching and zero-weight `NativeBehavior` evidence are scripted; verification pending | Does not parse or execute scripts and does not make host use suspicious by itself |
-| Process security-tamper review | Correlate exact command/script host context with distinct bounded tamper command indicators | Context gate, token boundaries, distinct count, saturating score capped at 75, no raw command disclosure, and evidence-before-fusion wiring are scripted; verification pending | Post-start review only; no process is stopped, quarantined, or blocked |
-| Post-start execution decision | Describe the recommended response without claiming an action that did not occur | `block` is replaced by `recommend_stop_and_quarantine`; all verdict mappings and harmless known-bad fixture paths are scripted; verification pending | Recommendation only; no pre-execution or mutation capability |
-| Ransomware high-write component | Share the exact 25-write threshold with the bounded ransomware activity window | Existing helper is wired into runtime window scoring; verification pending | Post-write user-mode telemetry; no driver or pre-write interception |
+| Bounded process event gate | Reject invalid process identity/NUL telemetry before file I/O and inspect only bounded UTF-8-safe command head/tail data | Verified by focused/full/destination and exact 265-step evidence: nonzero PID, embedded-NUL rejection, 16 KiB valid-UTF-8 sample, truncation evidence, and benign/adversarial fixtures | Public explicit API only; app/service process-start wiring and durable monitoring are not established |
+| Process script-host observation | Record exact script-host executable identity without treating normal host use as malicious | Verified by focused/full/destination and exact 265-step evidence: exact case-insensitive basename and zero-weight `NativeBehavior` context | Does not parse or execute scripts and does not make host use suspicious by itself |
+| Process security-tamper review | Correlate exact command/script host context with distinct bounded tamper command indicators | Verified by focused/full/destination and exact 265-step evidence: context gate, token boundaries, distinct count, saturating score capped at 75, bounded UTF-8 sample, and no raw command disclosure | Post-start review only; no process is stopped, quarantined, or blocked |
+| Post-start execution decision | Describe the recommended response without claiming an action that did not occur | Verified: `recommend_stop_and_quarantine` replaces fake `block`; mapping and harmless known-bad paths pass destination regression | Recommendation only; no pre-execution or mutation capability |
+| Ransomware high-write component | Share the exact 25-write threshold with the bounded ransomware activity window | Verified in focused/full/destination suites; existing helper is wired into runtime window scoring | Post-write user-mode telemetry; no driver or pre-write interception |
 | Browser-data path access provider | Correlate trusted per-process browser-store path access | Explicitly disabled; bounded case-insensitive helper remains testable | Blocked by missing trusted per-process path-access telemetry |
 | Infostealer credential/network provider | Correlate credential/wallet reads, staging, and outbound activity | Explicitly disabled; score arithmetic is saturating and bounded | Blocked by missing correlated credential-read/archive/network telemetry |
 | Persistence correlation provider | Correlate autorun writes with parent trust/signature state | Explicitly disabled; path and score helpers are bounded and saturating | Blocked by missing trusted registry/file-write and parent-signature telemetry |
 | Suspicious child-lineage provider | Correlate verified parent and child image identities | Explicitly disabled; exact allocation-free name classifier remains tested | `ProcessStartEvent` has only parent PID, not verified parent image identity |
-| Checkpoint 2236 verifier contract | Bind source, runtime fixtures, exact report cardinality, scope, docs, and unchanged dependencies | Mandatory Native process-behavior target, exact 265-step validator, five scope clauses, and source contract 666 are scripted; verification pending | Does not prove installed UI/service, production calibration/signing, driver, kernel, or pre-execution behavior |
+| Checkpoint 2236 verifier contract | Bind source, runtime fixtures, exact report cardinality, scope, docs, and unchanged dependencies | Verified locally and at destination: mandatory target once, exact `265/265`, five scope clauses, source contracts `666/666`, two-host validation, adversarial `16/16` | Does not prove installed UI/service, production calibration/signing, driver, kernel, or pre-execution behavior |
 
 No checkpoint-2236 control is marked verified during scripting. Existing process
 snapshot and file-activity evidence remains separate and does not silently fill
@@ -4840,3 +4840,10 @@ Definitive local verification passes exact `265/265` in `523.1s`, including the
 new target in `0.3s`; both strict validators pass and adversarial report variants
 reject `16/16`. Hosted, integration, and destination columns remain open, and no
 disabled provider or installed/pre-execution capability is promoted by this result.
+
+Checkpoint 2236 integration and destination evidence is now closed. PR `#88`
+merged normally; exact-head and merged-main CI/package matrices pass with
+publication skipped. Guarded synchronization copied 25 exact blobs, and the
+destination passes the broad suites plus exact `265/265` in `490.8s`, both
+validators, and adversarial `16/16`. The four missing-telemetry providers above
+remain disabled and the installed/durable/pre-execution limitations are unchanged.

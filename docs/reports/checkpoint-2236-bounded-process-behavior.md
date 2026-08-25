@@ -137,6 +137,51 @@ Evidence-head hosted runs, normal PR merge, merged-main hosted evidence, guarded
 original-tree synchronization, and independent destination verification remain
 pending. This hosted result does not change the documented post-start API limits.
 
+## Integration And Destination Closure
+
+- Evidence commit `f24c7b58915dc54831cf9f097eb9a60c13c05e89` passes
+  CI `32906638178` and Desktop Packages `32906638195`; publication job
+  `97994982862` is skipped. Consolidated artifact `9585362967` is 131,793,867
+  bytes with SHA-256 `4de44b4fce1b052cf4261a8639a7b9e3411a9567edd33e0b7a77e45f3c29be1c`
+  and passes exact bounded non-extracting 8-root/6-release/7-checksum/CycloneDX
+  1.6/569-component validation.
+- PR `#88` merges normally as `b28dfd6b1ec8b7dd510d60128f2484c327b6b89a`
+  with parents `5fc30c918ff832af7154034bc62dbbb2b09d6ce5` and
+  `f24c7b58915dc54831cf9f097eb9a60c13c05e89`. Merged-main CI
+  `32907875014` and Desktop Packages `32907874963` pass; publication
+  `98000529939` is skipped. Artifact `9585995999` is 131,740,338 bytes with
+  SHA-256 `f51af83c30cc5d05489d13d85146c6ada4436ff27c12103ac43a8cda675117a8`
+  and passes the same in-stream validation. No release is created.
+- Guarded synchronization validates checkpoint-2235 closure or merge-base
+  preconditions, containment, reparse boundaries, and desired merge blobs before
+  copying exactly 25 paths and 6,669,190 bytes. It deletes nothing and leaves no
+  stage/temp residue. The first PS5.1 run hit an unavailable three-argument
+  `.NET File.Move` overload before replacing any target; a dedicated checked
+  cleanup removed only the isolated stage/temp state, and the corrected PS7 run
+  passed. All 25 destination files match source bytes and merge Git blob IDs.
+- Destination checks pass parser hosts, rustfmt, source contracts `666/666`,
+  focused process behavior `19/19`, strict Native all-target/all-feature Clippy,
+  Native `538/538` plus 19 deliberate child-fixture ignores and compiler `6/6`,
+  Local `537/537`, Guard `248/248 + 249/249`, both locked workspace modes,
+  Flutter analyze, and Flutter `838/838`.
+- The destination no-skip/no-Defender verifier passes exactly `265/265` with
+  zero failed/skipped from `2026-08-25T23:25:04.0740027Z` through
+  `2026-08-25T23:33:14.9481622Z` in `490.8s`. The new target occurs once and
+  passes in `0.3s`; embedded and independent PS5.1/PS7 validators pass. Eight
+  isolated mutations per host reject `16/16`. Report SHA-256 is
+  `1c4ca9976b7675c7f8c3d6e20368b7ad6c8f83c9f4c3bea1d0f66e27ce66af28`.
+- Three package source-contract symlink-positive fixtures remain explicitly
+  skipped inside their passing parent step because Windows symlink creation
+  needs optional privilege; the definitive report itself has zero skipped steps.
+  A destination `git status` probe found no `.git`, one draft confused file
+  SHA-1 with Git blob IDs, and one PS7 parser wrapper omitted its path argument.
+  Corrected checks passed; none of those drafts is credited.
+- Locks remain exact, no test process or sync residue remains, and the protected
+  vault is unchanged at 16,072 files, zero directories, 4,522,733 bytes, 5,357
+  each `.avoraxq`/`.json`/`.auth`, one key, and zero pending/temp/reparse.
+
+Checkpoint 2236 is closed. The complete antivirus project remains active.
+
 ## Limits
 
 This public API is not currently connected to the installed app/service process

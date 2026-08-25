@@ -2939,3 +2939,14 @@ Definitive local report evidence now passes exact `265/265` in `523.1s` under
 both strict hosts, and `16/16` isolated mutations reject. Hosted, merge, guarded
 sync, destination, installed process telemetry, durable service wiring, process
 mutation, driver/kernel, and pre-execution proof remain open.
+
+Checkpoint 2236 hosted, merge, guarded-sync, and destination evidence is now
+closed. PR `#88`, exact-head/merged-main CI and package matrices, 25-blob
+zero-delete synchronization, destination broad suites, exact `265/265` in
+`490.8s`, two-host validation, and adversarial `16/16` all pass. This removes the
+checkpoint evidence blocker only. Trusted path-access, credential/network,
+persistence-write, and parent-image telemetry are still absent, so those four
+providers remain disabled. Installed durable process-loop wiring, termination/
+quarantine mutation, production calibration, signing, installed E2E,
+cross-identity isolation, driver/kernel enforcement, and pre-execution blocking
+remain genuine blockers.

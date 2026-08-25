@@ -6487,3 +6487,21 @@ guarded synchronization, and destination proof remain pending.
   cross-identity authentication, durable secret or token-object identity,
   AppContainer/LPAC, installed LocalSystem, signed-driver, or pre-execution
   enforcement. The complete antivirus project remains active.
+
+## Checkpoint 2236 Closure
+
+- **Verified:** PR `#88` merged normally as `b28dfd6`; evidence-head and
+  merged-main CI/package matrices pass with every publication job skipped.
+  Consolidated artifacts were validated without extraction or execution.
+- **Verified:** guarded zero-delete synchronization copied 25 exact blobs and
+  6,669,190 bytes into `C:\Users\Brent\Documents\Avorax-main`; no stage/temp
+  residue or test process remains.
+- **Verified:** destination component/workspace/Flutter/contracts pass, followed
+  by exact no-skip/no-Defender `265/265` in `490.8s`, both independent validators,
+  and adversarial rejection `16/16`. Report SHA-256 is
+  `1c4ca9976b7675c7f8c3d6e20368b7ad6c8f83c9f4c3bea1d0f66e27ce66af28`.
+- **Unchanged limits:** process behavior is post-start advisory evidence and is
+  not wired to an installed durable process loop. Disabled telemetry providers,
+  production calibration, signing, installed E2E, cross-identity isolation,
+  driver/kernel enforcement, and pre-execution blocking remain open. Checkpoint
+  2236 is closed; the complete antivirus project is not complete.

@@ -2923,3 +2923,14 @@ target passes in `0.3s`, both strict report hosts accept the report, and `16/16`
 isolated adversarial reports reject. This verifies the bounded source/runtime
 contract locally; it does not prove installed telemetry, termination, quarantine
 mutation, production calibration, driver/kernel, or pre-execution enforcement.
+
+**Integration and destination evidence:** PR `#88` merged normally as
+`b28dfd6`; exact evidence-head and merged-main CI/package matrices pass with
+publication skipped. Guarded synchronization copied 25 exact blobs with zero
+deletes/residue. Destination focused and broad suites pass, followed by exact
+`265/265` in `490.8s`, both independent validators, and adversarial `16/16`.
+This closes checkpoint 2236 evidence without changing the threat boundary:
+command sampling can omit middle text, behavior remains post-start/advisory, four
+correlation providers remain disabled for missing trusted telemetry, and no
+installed durable, mutation, cross-identity, driver/kernel, or pre-execution
+claim is made.

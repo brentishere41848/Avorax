@@ -1432,3 +1432,13 @@ confirms each contains one CycloneDX 1.6 lockfile inventory with exactly 569
 components and seven matching checksums beside six platform files. This remains
 lockfile-derived partial dependency evidence, not final-binary license resolution,
 production signing, or legal approval.
+
+Evidence-head packages `32906638195` and merged-main packages `32907874963`
+also pass all builders and consolidation with publication skipped. Their
+consolidated artifacts `9585362967` and `9585995999` pass the same bounded,
+non-extracting six-platform/seven-checksum/CycloneDX 1.6/569-component review.
+Destination source contracts `666/666`, both locked workspace modes, strict
+Native lint, Flutter analyze/`838/838`, exact 265-step dependency gate, and exact
+lock hashes pass. No dependency, feature, lockfile, machine-wide component,
+release, or publication changed. Final-binary license resolution, production
+signing, and legal approval remain separate prerequisites.
