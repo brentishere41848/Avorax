@@ -6163,6 +6163,18 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   bounded, non-extracting validation of exactly eight root entries, six release
   files, seven matching checksums, and a CycloneDX 1.6/569-component SBOM.
   Evidence-head, merge, synchronization, and destination proof remain pending.
+- **Integration and destination closure:** evidence `646000b` passes CI
+  `32868120569` and packages `32868120588`; PR `#85` merges normally as
+  `7467bfd` with exact parents `6de2a8f`/`646000b`. Merged-main CI
+  `32870805497` and packages `32870805371` pass, both publication jobs are
+  skipped, and evidence/merge artifacts match GitHub digests plus exact
+  non-extracting 8/6/7/CycloneDX 1.6/569-component checks. Guarded 12-path
+  synchronization applies 6,773,798 bytes with zero delete/residue. Destination
+  full Rust/Flutter/lint/build/smoke evidence passes; the corrected explicit-
+  Python verifier passes `263/263` in `454.1s` and adversarial reports are
+  rejected `8/8`. The earlier WindowsApps Python-alias run failed visibly and
+  is uncredited. Locks, processes, stage, and vault remain exact. Checkpoint
+  2233 is closed; the complete antivirus goal remains active.
 
 ## Checkpoint 2232 - Authenticode Launch-Key Best-Effort Zeroization
 

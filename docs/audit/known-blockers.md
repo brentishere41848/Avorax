@@ -2795,3 +2795,14 @@ enforcement, or pre-execution blocking is claimed.
   verification remain open. Production signing, installed elevated/service
   behavior, kernel/pre-execution enforcement, and secure erasure remain blocked
   by their existing external prerequisites and are not claimed.
+- **Checkpoint integration blocker closed:** evidence `646000b`, normal merge
+  `7467bfd`, evidence/merged-main CI and package artifacts, guarded 12-path
+  synchronization, destination full suites, exact `263/263` in `454.1s`, both
+  strict validators, and `8/8` adversarial rejections pass. The WindowsApps
+  Python reparse alias caused one visible uncredited verifier stop; the explicit
+  verified Python binary closed that host-path issue without weakening checks.
+- **Residual blockers unchanged:** fixed launch-key storage does not provide
+  secure erasure, live-memory protection, cross-identity isolation, installed
+  elevated/service evidence, production signing, signed-driver behavior, or
+  pre-execution enforcement. Checkpoint 2233 is closed; those external platform
+  prerequisites and the complete antivirus project remain active.

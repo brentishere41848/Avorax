@@ -11017,3 +11017,37 @@ Updates page showed:
   CycloneDX 1.6 lockfile SBOM evidence with 569 components.
 - Evidence-head CI/packages, normal PR merge, merged-main evidence, guarded
   original-tree synchronization, and destination verification remain pending.
+
+## 2026-08-25 - Checkpoint 2233 Integration And Destination Closure
+
+- Evidence `646000b` passes Avorax CI `32868120569` and Desktop Packages
+  `32868120588`; publication `97876653526` is skipped. Artifact `9571887670`
+  is 131,521,867 bytes with exact SHA-256 `40b0dcaa8a32c6d283c7b4d6649177f213b7a3cb29b0611ddd8e80a95996db66`
+  and passes non-extracting exact 8-entry/6-release/7-checksum/CycloneDX
+  1.6/569-component validation.
+- PR `#85` merges normally as `7467bfd`, with exact parents `6de2a8f` and
+  `646000b`. Merged CI `32870805497` and packages `32870805371` pass;
+  publication `97884457320` is skipped. Artifact `9572796463` is 131,671,586
+  bytes with matching SHA-256 `d7a9a0627c5032541712ed4d93cb51bd1000a2b8e8a9266615777ebebc1ab3f3`
+  and the same bounded stream review. One attempted check saw the ZIP while
+  `gh` was still writing; after the visible process completed at the exact
+  GitHub byte count, the credited review passed.
+- Guarded exact preconditions synchronize 12 paths and 6,773,798 bytes with
+  zero delete/residue. Seven old docs match closure `76ab106`, four source/test
+  files match base `6de2a8f`, and the new report was absent. Stage cleanup runs
+  only after exact inventory/hash/reparse checks and leaves no stage.
+- Destination parsers, format, source `663/663`, fixed buffer `1/1`, Native
+  `517/517 + 19 ignored + compiler 6/6`, Local `536/536`, Guard
+  `248/248 + 249/249`, both workspaces, strict lint/offline/release/two-host
+  smoke, Flutter analyze, and Flutter `838/838` pass.
+- A first verifier invocation resolves Python to the rejected WindowsApps
+  reparse alias and stops at signed hash-intelligence package smoke. It is not
+  credited. The corrected explicit Python run passes exact `263/263`, zero
+  failed/skipped, in `454.1s`; both PS5.1 validators pass and destination
+  mutations are rejected `8/8`.
+- All synchronized paths and three locks remain exact. No process, sync temp, or
+  stage remains. The protected vault remains 16,072 files, zero directories,
+  4,522,733 bytes, 5,357 each payload/JSON/auth, one key, and zero pending/temp/
+  reparse. Nothing was installed, published, released, executed as candidate
+  content, or changed in Defender. Checkpoint 2233 is closed; the full antivirus
+  project remains active.

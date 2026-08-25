@@ -4724,3 +4724,13 @@ artifacts `9570689038`/`9570466353` match GitHub SHA-256 and pass bounded
 non-extracting exact 8-entry/6-release/7-checksum/CycloneDX 1.6/569-component
 validation. Evidence-head, merge, synchronization, and destination integration
 remain pending; the fixed-buffer memory and pre-execution limits are unchanged.
+
+Checkpoint 2233 is now **verified and integrated**. Evidence `646000b`, normal
+PR `#85` merge `7467bfd`, exact evidence/merged-main CI and packages, skipped
+publication, and three stages of non-extracting package digest/inventory/SBOM
+review pass. Guarded 12-path destination synchronization and destination full
+Rust/Flutter/lint/build/smoke evidence pass. The corrected verifier is exact
+`263/263` in `454.1s`; both strict validators and `8/8` destination mutations
+pass. The initial WindowsApps Python-alias verifier is fail-visible and
+uncredited. Locks and the protected vault remain exact. Fixed-buffer ownership
+remains best-effort memory hygiene, not secure erasure or pre-execution proof.

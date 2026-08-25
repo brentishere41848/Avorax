@@ -2770,3 +2770,14 @@ CycloneDX 1.6/569-component validation. This verifies hosted build/package
 compatibility at the implementation head; it does not strengthen the stated
 memory, cross-identity, signed-driver, installed-host, or pre-execution model.
 Evidence-head, merge, synchronization, and destination proof remain pending.
+
+**Integration evidence:** evidence `646000b`, normal PR `#85` merge `7467bfd`,
+evidence-head and merged-main CI/packages, skipped publication, and exact
+non-extracting package digest/inventory/SBOM review pass. Guarded 12-path
+destination synchronization is followed by complete Rust/Flutter/lint/build/
+smoke evidence, corrected exact `263/263` verification in `454.1s`, both strict
+validators, and `8/8` destination adversarial rejections. One WindowsApps
+Python-alias invocation stopped safely and is not credited. Locks, stage,
+processes, and protected-vault invariants remain exact. This closes checkpoint
+2233 integration without changing any live-memory, cross-identity, installed-
+service, signed-driver, secure-erasure, or pre-execution boundary above.
