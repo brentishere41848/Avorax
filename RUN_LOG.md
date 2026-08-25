@@ -9474,6 +9474,46 @@ Updates page showed:
 - Evidence-head CI/packages, normal merge, merged-main evidence, guarded
   original-tree synchronization, and destination verification remain pending.
 
+## Checkpoint 2235 - Bounded Risk Fusion
+
+Selected the central Native/Local verdict fusion boundary as the next
+highest-value unblocked engine work. Audit found signed-weight overflow in the
+Native `i32` sum, positive-weight overflow/wrap in the Local `u16` sum,
+byte-unsafe explanation truncation, TrustStore provenance collected before its
+synthetic evidence, and input-order truncation that could hide decisive late
+evidence.
+
+The complete checkpoint batch is scripted before execution: saturating/clamped
+Native and Local score folds; positive-only Local quality/source gates; stable
+absolute-weight report prioritization; bounded UTF-8 evidence/explanations;
+correct TrustStore provenance; pure extreme-weight/multibyte/late-evidence
+regressions; one new mandatory Local verifier target; strict exact 264-step and
+scope validation; source contract 665; and audit, threat-model, blocker,
+dependency, status, and checkpoint documentation. No checkpoint-2235 passing
+result is claimed during scripting. No candidate content, live malware,
+Defender change, installation, service/driver start, dependency, feature,
+lockfile, release, or publication is involved.
+
+Focused execution passes Native `10/10`, Local `1/1`, source contracts
+`665/665`, rustfmt, and both PowerShell parsers. Full Native passes `520` with
+19 intentional child-fixture ignores plus compiler `6/6`; Local `537/537`;
+Guard `248/248 + 249/249`; Flutter analyze and `838/838`; both complete locked
+workspace variants; and strict changed-crate Clippy. Two pytest commands fail
+before collection because pytest is absent and are uncredited; the intended
+dependency-free runner passes. A workspace-wide strict Clippy attempt is also
+uncredited on pre-existing API-only enum/test-module ordering lints. Locks and
+the protected vault remain exact. Definitive and integration work is pending.
+
+The definitive verifier passes exact `264/264` from
+`2026-08-25T19:38:33.8452358Z` to `2026-08-25T19:46:57.3735345Z` in `503.5s`,
+with zero failed/skipped and both mandatory risk-fusion targets. Embedded and
+independent PS5.1/PS7 validators pass; eight malformed reports reject under
+each host (`16/16`). The first wrong conventional pwsh-path invocation stopped
+before execution and is uncredited. Report SHA-256 is
+`3c28abf05ba1b004ff0a16448690b8245baad0fd658ee0893bf052f3cdc719ed`.
+Locks, processes, and protected vault remain exact. Hosted/integration remains
+pending.
+
 ## 2026-08-25 - Checkpoint 2234 Integration And Destination Closure
 
 - Evidence `a5cf1c5a311159feba3bbb9fa3276b68c5093a60` passes Avorax CI

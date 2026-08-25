@@ -2850,3 +2850,38 @@ enforcement, or pre-execution blocking is claimed.
   cross-identity isolation, secure erasure, and pre-execution enforcement still
   require their external prerequisites. Checkpoint 2234 is closed; the complete
   antivirus project remains active.
+
+## Checkpoint 2235 Scripted State And Residual Limits
+
+- Overflow, UTF-8 truncation, negative-diagnostic quality inflation, late
+  decisive-evidence omission, and missing synthetic TrustStore provenance have
+  scripted repairs and benign/adversarial regressions. Source contract 665 and
+  exact verifier cardinality 264 bind the new boundary.
+- No checkpoint-2235 passing result is claimed before focused and broad local
+  execution, strict definitive/adversarial report validation, hosted exact-head
+  evidence, merge, guarded synchronization, and destination verification.
+- Production calibration remains blocked by approved representative corpora,
+  false-positive/sensitivity targets, and analyst review. Live malware is not
+  an acceptable prerequisite; only benign/synthetic/EICAR-safe evidence may be
+  used under project policy.
+- Installed UI/service E2E, production signing, signed-driver/kernel behavior,
+  and pre-execution enforcement retain their existing external prerequisites.
+  This checkpoint does not weaken Windows security or claim those capabilities.
+
+- **Local execution blocker closed:** focused and broad Native/Local/Guard,
+  both locked workspaces, Flutter `838/838`, source `665/665`, parsers,
+  changed-crate strict Clippy, exact locks, and protected vault pass.
+- **Visible unrelated lint debt:** workspace-wide `-D warnings` remains blocked
+  by existing API `enum_variant_names` and `items_after_test_module` findings.
+  Changed-crate strict Clippy passes, so this is neither hidden nor credited as
+  checkpoint success; API cleanup is separate from bounded risk fusion.
+- **Remaining checkpoint work:** exact 264-step definitive/adversarial report
+  evidence, hosted exact-head CI/packages, normal merge, guarded sync, and
+  independent destination verification remain open.
+
+- **Definitive local blocker closed:** exact `264/264` in `503.5s`, both strict
+  validator hosts, and `16/16` malformed-report rejections pass. The wrong
+  initial pwsh path stopped before step one and is not credited.
+- **Remaining integration work:** implementation/evidence-head hosted checks,
+  normal PR merge, merged-main evidence, guarded original-tree synchronization,
+  and independent destination verification remain open.

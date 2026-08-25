@@ -1,10 +1,15 @@
+use std::cmp::Reverse;
+
 use serde::{Deserialize, Serialize};
 
 use super::{Confidence, ThreatCategory, Verdict};
 
 const MAX_REPORTED_EVIDENCE_ITEMS: usize = 32;
 const MAX_EXPLANATION_EVIDENCE_ITEMS: usize = 8;
-const MAX_EXPLANATION_CHARS: usize = 2048;
+const MAX_EVIDENCE_ID_BYTES: usize = 256;
+const MAX_EVIDENCE_TITLE_BYTES: usize = 256;
+const MAX_EVIDENCE_DETAIL_BYTES: usize = 1024;
+const MAX_EXPLANATION_BYTES: usize = 2048;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -45,13 +50,6 @@ pub struct RiskFusion;
 
 impl RiskFusion {
     pub fn fuse(mut evidence: Vec<Evidence>, known_good: bool, allowlisted: bool) -> FinalVerdict {
-        let mut engines_used = evidence
-            .iter()
-            .map(|item| item.source.clone())
-            .collect::<Vec<_>>();
-        engines_used.sort_by_key(|item| format!("{item:?}"));
-        engines_used.dedup();
-
         if known_good || allowlisted {
             evidence.push(Evidence {
                 id: if known_good { "known_good" } else { "allowlisted" }.to_string(),
@@ -61,6 +59,13 @@ impl RiskFusion {
                 source: EvidenceSource::TrustStore,
             });
         }
+
+        let mut engines_used = evidence
+            .iter()
+            .map(|item| item.source.clone())
+            .collect::<Vec<_>>();
+        engines_used.sort_by_key(|item| format!("{item:?}"));
+        engines_used.dedup();
 
         let has_test = evidence
             .iter()
@@ -109,8 +114,9 @@ impl RiskFusion {
 
         let score = evidence
             .iter()
-            .map(|item| item.weight)
-            .sum::<i32>()
+            .fold(0_i64, |total, item| {
+                total.saturating_add(i64::from(item.weight))
+            })
             .clamp(0, 100) as u8;
         let strong_positive_count = evidence.iter().filter(|item| item.weight >= 20).count();
         let ml_high = evidence
@@ -229,14 +235,16 @@ fn final_verdict(
     category: ThreatCategory,
     confidence: Confidence,
     risk_score: u8,
-    evidence: Vec<Evidence>,
+    mut evidence: Vec<Evidence>,
     engines_used: Vec<EvidenceSource>,
     recommended_action: &str,
 ) -> FinalVerdict {
     let omitted_evidence_count = evidence.len().saturating_sub(MAX_REPORTED_EVIDENCE_ITEMS);
+    evidence.sort_by_key(|item| Reverse(item.weight.unsigned_abs()));
     let reported_evidence = evidence
         .into_iter()
         .take(MAX_REPORTED_EVIDENCE_ITEMS)
+        .map(bound_reported_evidence)
         .collect::<Vec<_>>();
     let user_visible_explanation = if reported_evidence.is_empty() {
         "Avorax Native Engine did not find suspicious local evidence.".to_string()
@@ -269,13 +277,32 @@ fn final_verdict(
     }
 }
 
-fn truncate_explanation(mut explanation: String) -> String {
-    if explanation.len() <= MAX_EXPLANATION_CHARS {
-        return explanation;
+fn bound_reported_evidence(mut evidence: Evidence) -> Evidence {
+    evidence.id = truncate_utf8_with_ellipsis(evidence.id, MAX_EVIDENCE_ID_BYTES);
+    evidence.title = truncate_utf8_with_ellipsis(evidence.title, MAX_EVIDENCE_TITLE_BYTES);
+    evidence.detail = truncate_utf8_with_ellipsis(evidence.detail, MAX_EVIDENCE_DETAIL_BYTES);
+    evidence
+}
+
+fn truncate_explanation(explanation: String) -> String {
+    truncate_utf8_with_ellipsis(explanation, MAX_EXPLANATION_BYTES)
+}
+
+fn truncate_utf8_with_ellipsis(mut value: String, max_bytes: usize) -> String {
+    if value.len() <= max_bytes {
+        return value;
     }
-    explanation.truncate(MAX_EXPLANATION_CHARS);
-    explanation.push_str("...");
-    explanation
+    if max_bytes <= 3 {
+        return ".".repeat(max_bytes);
+    }
+
+    let mut boundary = max_bytes - 3;
+    while !value.is_char_boundary(boundary) {
+        boundary -= 1;
+    }
+    value.truncate(boundary);
+    value.push_str("...");
+    value
 }
 
 #[cfg(test)]
@@ -325,7 +352,95 @@ mod tests {
         assert!(verdict
             .user_visible_explanation
             .contains("additional evidence item(s) omitted"));
-        assert!(verdict.user_visible_explanation.len() <= MAX_EXPLANATION_CHARS + 3);
+        assert!(verdict.user_visible_explanation.len() <= MAX_EXPLANATION_BYTES);
+    }
+
+    #[test]
+    fn risk_fusion_saturates_extreme_weights_without_overflow() {
+        let positive = RiskFusion::fuse(
+            weighted_evidence(&[i32::MAX, i32::MAX, i32::MAX]),
+            false,
+            false,
+        );
+        let negative = RiskFusion::fuse(
+            weighted_evidence(&[i32::MIN, i32::MIN, i32::MIN]),
+            false,
+            false,
+        );
+
+        assert_eq!(positive.risk_score, 100);
+        assert_eq!(positive.verdict, Verdict::ProbableMalware);
+        assert_eq!(negative.risk_score, 0);
+        assert_eq!(negative.verdict, Verdict::Clean);
+    }
+
+    #[test]
+    fn risk_fusion_bounds_multibyte_fields_and_explanation_at_utf8_boundaries() {
+        let verdict = RiskFusion::fuse(
+            (0..MAX_EXPLANATION_EVIDENCE_ITEMS)
+                .map(|index| Evidence {
+                    id: format!("id-{index}-") + &"é".repeat(MAX_EVIDENCE_ID_BYTES),
+                    title: format!("title-{index}-") + &"€".repeat(MAX_EVIDENCE_TITLE_BYTES),
+                    detail: format!("detail-{index}-") + &"😀".repeat(MAX_EVIDENCE_DETAIL_BYTES),
+                    weight: 45,
+                    source: EvidenceSource::NativeHeuristic,
+                })
+                .collect(),
+            false,
+            false,
+        );
+
+        assert!(verdict.evidence[0].id.len() <= MAX_EVIDENCE_ID_BYTES);
+        assert!(verdict.evidence[0].title.len() <= MAX_EVIDENCE_TITLE_BYTES);
+        assert!(verdict.evidence[0].detail.len() <= MAX_EVIDENCE_DETAIL_BYTES);
+        assert!(verdict.evidence[0].id.ends_with("..."));
+        assert!(verdict.evidence[0].title.ends_with("..."));
+        assert!(verdict.evidence[0].detail.ends_with("..."));
+        assert!(verdict.user_visible_explanation.len() <= MAX_EXPLANATION_BYTES);
+        assert!(verdict.user_visible_explanation.ends_with("..."));
+    }
+
+    #[test]
+    fn risk_fusion_retains_decisive_evidence_and_reports_trust_engine() {
+        let mut evidence = (0..MAX_REPORTED_EVIDENCE_ITEMS)
+            .map(|index| Evidence {
+                id: format!("diagnostic-{index}"),
+                title: format!("Diagnostic {index}"),
+                detail: "Low-weight diagnostic fixture".to_string(),
+                weight: 1,
+                source: EvidenceSource::NativeHeuristic,
+            })
+            .collect::<Vec<_>>();
+        evidence.push(Evidence {
+            id: "known_bad_hash".to_string(),
+            title: "Known bad hash".to_string(),
+            detail: "Decisive exact hash fixture".to_string(),
+            weight: 100,
+            source: EvidenceSource::NativeSignature,
+        });
+
+        let known_bad = RiskFusion::fuse(evidence, false, false);
+        let known_good = RiskFusion::fuse(Vec::new(), true, false);
+
+        assert_eq!(known_bad.verdict, Verdict::ConfirmedMalware);
+        assert!(known_bad
+            .evidence
+            .iter()
+            .any(|item| item.id == "known_bad_hash"));
+        assert!(known_bad
+            .user_visible_explanation
+            .contains("Known bad hash"));
+        assert!(known_good
+            .engines_used
+            .contains(&EvidenceSource::TrustStore));
+        assert_eq!(
+            known_good
+                .engines_used
+                .iter()
+                .filter(|source| **source == EvidenceSource::TrustStore)
+                .count(),
+            1
+        );
     }
 
     #[test]

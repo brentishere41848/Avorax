@@ -1376,3 +1376,23 @@ or lock change. Their consolidated CycloneDX 1.6 SBOM evidence remains exactly
 match the recorded root/Native/Flutter values. This closes checkpoint package
 dependency evidence, while final signed-artifact notice/copyright approval
 remains a separate release prerequisite.
+
+## Checkpoint 2235 Dependency Scope
+
+Bounded Native/Local risk fusion uses Rust standard-library arithmetic,
+ordering, UTF-8 boundary, and collection APIs already available in the locked
+toolchain. Tests use existing crate test support. Verifier, validator, source
+contract, and documentation changes use existing repository tooling. This
+checkpoint adds no dependency, feature, downloaded model/rule, package source,
+license obligation, or lockfile change. No network content or candidate file is
+introduced or executed.
+
+Local execution confirms no lockfile diff. Root, Native, and Flutter SHA-256
+remain `7c7c8aa006c2ac80eb89fa64d3b8ec09b32b26598b1a85bceb3c2af5a2d20e39`,
+`7f4393c81896600c4a5e84cad288a1a5360eccbc1c458b38f615082f66391383`,
+and `4de19695f9207273746341ca2221541b5b86d9f72af83727afca78541e177694`.
+Source `665/665`, both locked workspaces, Flutter, and changed-crate strict
+Clippy pass. Final hosted package/SBOM evidence remains pending.
+
+Definitive exact `264/264` and its dependency evidence gate pass without a
+lockfile diff. Hosted exact-head package and CycloneDX review remains pending.

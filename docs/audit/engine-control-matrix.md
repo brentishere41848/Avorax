@@ -4768,3 +4768,26 @@ rejections pass. Three package symlink-positive tests remain explicitly skipped
 for absent optional Windows symlink privilege. The JSON-host repair remains
 verification tooling, not a detection, installed-service, driver, signing, or
 pre-execution capability.
+
+## Checkpoint 2235 Engine-Control Matrix Addendum
+
+| Control or engine | Responsibility | Scripted state | Honest limit |
+|---|---|---|---|
+| Native `RiskFusion` score policy | Aggregate signed signature, rule, heuristic, ML, behavior, reputation, application-control, and trust evidence into a conservative 0..100 verdict | Saturating `i64` accumulation, exact thresholds, and extreme-weight regressions are scripted; verification pending | Weighted policy is not a calibrated malware probability or production false-positive measurement |
+| Local Core heuristic risk policy | Aggregate local reasons and gate probable-malware/automatic quarantine on sufficient positive quality and independent positive sources | Saturating 0..100 accumulation plus positive-only quality/source gates and adversarial diagnostics are scripted; verification pending | Heuristic auto-quarantine remains conservative policy and requires broader production calibration and installed E2E |
+| Native verdict explainability | Keep decisive evidence and provenance visible while bounding API/UI output | Stable descending absolute-weight selection, exact 32-item limit, 256/256/1,024-byte fields, 2,048-byte UTF-8 explanation, omitted count, and TrustStore provenance are scripted; verification pending | Lower-magnitude evidence can be omitted by design; complete evidence still participates in the verdict but is not all returned |
+| Checkpoint 2235 verifier contract | Bind source, focused runtime fixtures, exact report cardinality, scope, docs, and unchanged dependencies | Mandatory Native and Local targets, exact 264-step validator, four scope clauses, and source contract 665 are scripted; execution pending | Does not prove installed UI/service behavior, production calibration, signing, driver, or pre-execution enforcement |
+
+Checkpoint 2235 is now **locally verified** for the first three controls and
+the local portion of the verifier contract: Native `10/10` focused and
+`520 + 19 ignored + 6`, Local `1/1` focused and `537/537`, Guard
+`248/248 + 249/249`, source `665/665`, both locked workspaces, changed-crate
+strict Clippy, Flutter analyze/`838/838`, dual-host parsers, locks, and vault
+pass. Exact 264-step, hosted, merge, sync, and destination columns remain
+pending. Existing API-only workspace Clippy diagnostics are visible and not
+credited to this control.
+
+The checkpoint-2235 verifier contract is now **definitively locally verified**:
+exact `264/264` in `503.5s`, both strict PowerShell hosts, and `16/16`
+stale/target/scope/options/status/step report mutations pass. Hosted,
+integration, synchronization, and destination columns remain pending.
