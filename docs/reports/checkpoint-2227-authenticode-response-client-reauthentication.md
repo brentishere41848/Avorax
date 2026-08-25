@@ -164,6 +164,65 @@ Read-only in-stream validation, without extraction or execution, requires and
 passes exactly eight root entries, six platform files, seven matching SHA-256
 rows, and a CycloneDX 1.6 lockfile SBOM with 569 components in each artifact.
 
-Evidence-head CI/packages, normal merge, merged-main evidence, guarded
-synchronization, and destination proof remain pending. No release or publication
-occurred and the complete antivirus goal remains active.
+The implementation-head runs are supporting evidence; complete integration and
+destination closure is recorded below. No release or publication occurred.
+
+## Integration And Destination Closure
+
+Evidence commit `c63fb71a4cd0834d8a014b646b40197cbc6119bb` passes all five
+Avorax CI jobs in run `32792981574`. Desktop Packages run `32792981950`
+passes package contracts, Windows x64 MSI/EXE, Linux x64 DEB/tar, both macOS
+DMGs, and consolidation; publication is skipped. Untouched consolidated
+artifact `9544267760` has SHA-256
+`0ecaf5ea3e976c282dae9afe2fd36bf7f2f587d9ec932a337a8a70f936f79c5d`
+and passes exact eight-root-entry, six-platform-file, seven-checksum, and
+CycloneDX 1.6/569-component in-stream validation without extraction or
+execution.
+
+PR `#79` was made ready and head-locked, then normally merged without admin
+bypass or direct-main push as
+`9304681badde248533788806bbe84a298726e241`. Its parents are main
+`bab872d50daf5bbcc775a53e3c0788c51770ca33` and exact evidence
+`c63fb71a4cd0834d8a014b646b40197cbc6119bb`. Merged-main CI
+`32794436961` and packages `32794437034` pass all jobs; publication is
+skipped. Untouched artifact `9544647451` has SHA-256
+`e56a600c0515f9760e552088906db4a141b2aadf596c032155d5f1246f463fd4`
+and passes the same exact stream-only checks without extraction or execution.
+
+The merge changes exactly 12 paths from its first parent with zero deletes.
+Preconditioned atomic synchronization copied those exact blobs to
+`C:\Users\Brent\Documents\Avorax-main`, preserving unrelated files. A raw
+hash audit first exposed expected LF/CRLF working-tree normalization; the
+corrected path-aware Git-filter audit passed. Three PowerShell 5.1 sync helper
+attempts failed before the first destination replacement because `ArgumentList`,
+three-argument `File.Move`, and null-backup `File.Replace` were unavailable or
+invalid. The corrected wrapper reused only exact staged blobs, completed all 12
+replacements, verified every result, and removed exact backups. A later blob
+wrapper incorrectly assumed the destination was a Git repository; corrected
+absolute comparison through the authoritative repository passes `12/12`.
+These support failures are retained and uncredited. Zero staging files, backups,
+or deletes remain.
+
+Destination parsers pass `2/2`, source contracts `657/657`, and the focused
+response client-reauthentication target passes `2/2`. Complete Authenticode
+passes `72/15`; Native passes `508/15` plus signature compiler `6/6`; Local
+Core passes `536/536`; Guard passes `248/248`. Both standard and all-feature
+locked workspaces, strict Native/Local/Guard Clippy, standalone Native locked/
+offline checking, locked release builds, the benign two-host Authenticode smoke,
+Flutter analysis, and Flutter `838/838` pass.
+
+The destination definitive verifier ran from
+`2026-08-25T01:04:32.3781546Z` through `2026-08-25T01:11:46.4460196Z`
+and passes exact `257/257`, zero failed/skipped, in `434s`; the mandatory new
+target passes in `0.2s` and the independent Windows PowerShell 5.1 validator
+accepts the full report. The three lock blobs remain exact. The read-only vault
+remains 16,072 files, zero directories, 4,522,733 bytes, 5,357 each payload,
+metadata, and auth, one metadata-auth key, and zero pending/temp. `.verification`
+remains untracked and unstaged.
+
+Checkpoint 2227 is closed. Fresh response-boundary reauthentication remains the
+documented point-in-time control, not cross-snapshot token-object equality,
+cryptographic response binding, cross-identity/AppContainer isolation,
+installed LocalSystem, signed-driver, or pre-execution proof. Nothing was
+installed, executed as candidate content, released, or published, and the
+complete antivirus goal remains active.

@@ -143,6 +143,14 @@ const AUTHENTICODE_HELPER_HANDSHAKE_TOKEN_BYTES: usize = 36;
 const AUTHENTICODE_HELPER_HANDSHAKE_ACK: [u8; 1] = [0xA5];
 const AUTHENTICODE_HELPER_RESPONSE_READY: [u8; 1] = [0x5A];
 const AUTHENTICODE_HELPER_RESPONSE_ACK: [u8; 1] = [0xC3];
+const AUTHENTICODE_HELPER_RESPONSE_BINDING_DOMAIN: &[u8] =
+    b"avorax-authenticode-response-binding-v1\0";
+const AUTHENTICODE_HELPER_RESPONSE_BINDING_LENGTH_BYTES: usize = size_of::<u64>();
+const AUTHENTICODE_HELPER_RESPONSE_BINDING_SHA256_BYTES: usize = 32;
+const AUTHENTICODE_HELPER_RESPONSE_BINDING_FRAME_BYTES: usize = AUTHENTICODE_HELPER_RESPONSE_READY
+    .len()
+    + AUTHENTICODE_HELPER_RESPONSE_BINDING_LENGTH_BYTES
+    + AUTHENTICODE_HELPER_RESPONSE_BINDING_SHA256_BYTES;
 const AUTHENTICODE_HELPER_HANDSHAKE_PIPE_BUFFER_BYTES: u32 = 64;
 const AUTHENTICODE_HELPER_HANDSHAKE_CLIENT_SQOS_FLAGS: u32 =
     SECURITY_SQOS_PRESENT | SECURITY_IMPERSONATION;
@@ -225,6 +233,13 @@ struct AuthenticodeHelperOutput {
     status: ExitStatus,
     stdout: Vec<u8>,
     stderr: Vec<u8>,
+    response_binding: AuthenticodeResponseBindingEvidence,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct AuthenticodeResponseBindingEvidence {
+    response_bytes: u64,
+    sha256: [u8; AUTHENTICODE_HELPER_RESPONSE_BINDING_SHA256_BYTES],
 }
 
 struct SanitizedAuthenticodeLaunchContext {
@@ -670,7 +685,7 @@ impl AuthenticodeParentChildHandshake {
         process: HANDLE,
         launch_token: HANDLE,
         timeout: Duration,
-    ) -> Result<()> {
+    ) -> Result<AuthenticodeResponseBindingEvidence> {
         let deadline = Instant::now() + timeout.min(AUTHENTICODE_HELPER_TIMEOUT);
         anyhow::ensure!(
             unsafe { ResetEvent(self.event.0) } != 0,
@@ -679,7 +694,7 @@ impl AuthenticodeParentChildHandshake {
         );
         *self.overlapped = OVERLAPPED::default();
         self.overlapped.hEvent = self.event.0;
-        let mut received = [0u8; AUTHENTICODE_HELPER_RESPONSE_READY.len() + 1];
+        let mut received = [0u8; AUTHENTICODE_HELPER_RESPONSE_BINDING_FRAME_BYTES + 1];
         let mut transferred = 0u32;
         let read = unsafe {
             ReadFile(
@@ -707,7 +722,8 @@ impl AuthenticodeParentChildHandshake {
             transferred as usize <= received.len(),
             "AuthentiCode response-ready read exceeded its buffer"
         );
-        validate_authenticode_response_ready_bytes(&received[..transferred as usize])?;
+        let response_binding =
+            validate_authenticode_response_binding_frame(&received[..transferred as usize])?;
         verify_authenticode_response_client_binding(
             process,
             self.server.0,
@@ -752,7 +768,7 @@ impl AuthenticodeParentChildHandshake {
             transferred as usize == AUTHENTICODE_HELPER_RESPONSE_ACK.len(),
             "AuthentiCode response ACK write was incomplete"
         );
-        Ok(())
+        Ok(response_binding)
     }
 
     fn wait_for_operation(
@@ -1441,6 +1457,82 @@ fn validate_authenticode_response_ready_bytes(actual: &[u8]) -> Result<()> {
     Ok(())
 }
 
+fn authenticode_response_binding(response: &[u8]) -> Result<AuthenticodeResponseBindingEvidence> {
+    anyhow::ensure!(
+        !response.is_empty() && response.len() <= MAX_AUTHENTICODE_HELPER_RESPONSE_BYTES,
+        "AuthentiCode response binding input must contain between 1 and {} bytes",
+        MAX_AUTHENTICODE_HELPER_RESPONSE_BYTES
+    );
+    let response_bytes = u64::try_from(response.len())
+        .context("AuthentiCode response binding length does not fit u64")?;
+    let mut hasher = Sha256::new();
+    hasher.update(AUTHENTICODE_HELPER_RESPONSE_BINDING_DOMAIN);
+    hasher.update(response_bytes.to_le_bytes());
+    hasher.update(response);
+    Ok(AuthenticodeResponseBindingEvidence {
+        response_bytes,
+        sha256: hasher.finalize().into(),
+    })
+}
+
+fn encode_authenticode_response_binding_frame(
+    response: &[u8],
+) -> Result<[u8; AUTHENTICODE_HELPER_RESPONSE_BINDING_FRAME_BYTES]> {
+    let evidence = authenticode_response_binding(response)?;
+    let mut frame = [0u8; AUTHENTICODE_HELPER_RESPONSE_BINDING_FRAME_BYTES];
+    frame[..AUTHENTICODE_HELPER_RESPONSE_READY.len()]
+        .copy_from_slice(&AUTHENTICODE_HELPER_RESPONSE_READY);
+    let length_start = AUTHENTICODE_HELPER_RESPONSE_READY.len();
+    let digest_start = length_start + AUTHENTICODE_HELPER_RESPONSE_BINDING_LENGTH_BYTES;
+    frame[length_start..digest_start].copy_from_slice(&evidence.response_bytes.to_le_bytes());
+    frame[digest_start..].copy_from_slice(&evidence.sha256);
+    Ok(frame)
+}
+
+fn validate_authenticode_response_binding_frame(
+    frame: &[u8],
+) -> Result<AuthenticodeResponseBindingEvidence> {
+    anyhow::ensure!(
+        frame.len() == AUTHENTICODE_HELPER_RESPONSE_BINDING_FRAME_BYTES,
+        "AuthentiCode response-binding frame length is invalid"
+    );
+    validate_authenticode_response_ready_bytes(&frame[..AUTHENTICODE_HELPER_RESPONSE_READY.len()])?;
+    let length_start = AUTHENTICODE_HELPER_RESPONSE_READY.len();
+    let digest_start = length_start + AUTHENTICODE_HELPER_RESPONSE_BINDING_LENGTH_BYTES;
+    let response_bytes = u64::from_le_bytes(
+        frame[length_start..digest_start]
+            .try_into()
+            .context("AuthentiCode response-binding length field is malformed")?,
+    );
+    anyhow::ensure!(
+        response_bytes > 0 && response_bytes <= MAX_AUTHENTICODE_HELPER_RESPONSE_BYTES as u64,
+        "AuthentiCode response-binding byte length is outside its bound"
+    );
+    let sha256 = frame[digest_start..]
+        .try_into()
+        .context("AuthentiCode response-binding SHA-256 field is malformed")?;
+    Ok(AuthenticodeResponseBindingEvidence {
+        response_bytes,
+        sha256,
+    })
+}
+
+fn validate_authenticode_response_binding(
+    response: &[u8],
+    expected: AuthenticodeResponseBindingEvidence,
+) -> Result<()> {
+    let actual = authenticode_response_binding(response)?;
+    anyhow::ensure!(
+        actual.response_bytes == expected.response_bytes,
+        "AuthentiCode helper stdout length does not match the authenticated response binding"
+    );
+    anyhow::ensure!(
+        actual.sha256 == expected.sha256,
+        "AuthentiCode helper stdout SHA-256 does not match the authenticated response binding"
+    );
+    Ok(())
+}
+
 fn validate_authenticode_response_ack_bytes(actual: &[u8]) -> Result<()> {
     anyhow::ensure!(
         actual == AUTHENTICODE_HELPER_RESPONSE_ACK,
@@ -1834,7 +1926,8 @@ struct AuthenticodeChildHandshake {
 }
 
 impl AuthenticodeChildHandshake {
-    fn complete_after_response(self) -> Result<()> {
+    fn complete_after_response(self, response: &[u8]) -> Result<()> {
+        let response_binding = encode_authenticode_response_binding_frame(response)?;
         std::io::stdout()
             .lock()
             .flush()
@@ -1844,18 +1937,18 @@ impl AuthenticodeChildHandshake {
             unsafe {
                 WriteFile(
                     self.pipe.0,
-                    AUTHENTICODE_HELPER_RESPONSE_READY.as_ptr(),
-                    AUTHENTICODE_HELPER_RESPONSE_READY.len() as u32,
+                    response_binding.as_ptr(),
+                    response_binding.len() as u32,
                     &mut transferred,
                     null_mut(),
                 )
             } != 0,
-            "unable to write the Authenticode response-ready marker: {}",
+            "unable to write the Authenticode response-binding frame: {}",
             std::io::Error::last_os_error()
         );
         anyhow::ensure!(
-            transferred as usize == AUTHENTICODE_HELPER_RESPONSE_READY.len(),
-            "AuthentiCode response-ready marker write was incomplete"
+            transferred as usize == response_binding.len(),
+            "AuthentiCode response-binding frame write was incomplete"
         );
         let mut ack = [0u8; AUTHENTICODE_HELPER_RESPONSE_ACK.len() + 1];
         transferred = 0;
@@ -2407,7 +2500,10 @@ struct RestrictedAuthenticodeProcess {
 }
 
 impl RestrictedAuthenticodeProcess {
-    fn complete_post_response_binding(&mut self, timeout: Duration) -> Result<()> {
+    fn complete_post_response_binding(
+        &mut self,
+        timeout: Duration,
+    ) -> Result<AuthenticodeResponseBindingEvidence> {
         let handshake = self
             .handshake
             .take()
@@ -3616,8 +3712,8 @@ pub(crate) fn run_authenticode_helper_stdio() -> Result<()> {
     let (nonce, prepared) = restricted.finish(read_and_prepare_authenticode_helper_request())?;
     let outcome = prepared.and_then(verify_prepared_microsoft_signature);
     let restricted = RestrictedAuthenticodeThreadToken::enter()?;
-    restricted.finish(write_authenticode_helper_response(nonce, outcome))?;
-    handshake.complete_after_response()
+    let response = restricted.finish(write_authenticode_helper_response(nonce, outcome))?;
+    handshake.complete_after_response(&response)
 }
 
 pub(crate) fn run_authenticode_client_self_test_stdio() -> Result<()> {
@@ -3629,7 +3725,7 @@ fn run_authenticode_stdio(verify: impl FnOnce(&Path, &str) -> Result<bool>) -> R
     let nonce = validate_authenticode_helper_request(&request)?;
     let path = PathBuf::from(OsString::from_wide(&request.path_utf16));
     let outcome = verify(&path, &request.expected_sha256);
-    write_authenticode_helper_response(nonce, outcome)
+    write_authenticode_helper_response(nonce, outcome).map(|_| ())
 }
 
 fn read_and_prepare_authenticode_helper_request(
@@ -3641,7 +3737,7 @@ fn read_and_prepare_authenticode_helper_request(
     Ok((nonce, prepared))
 }
 
-fn write_authenticode_helper_response(nonce: String, outcome: Result<bool>) -> Result<()> {
+fn write_authenticode_helper_response(nonce: String, outcome: Result<bool>) -> Result<Vec<u8>> {
     let response = match outcome {
         Ok(trusted) => AuthenticodeHelperResponse {
             schema_version: AUTHENTICODE_HELPER_SCHEMA_VERSION,
@@ -3658,17 +3754,17 @@ fn write_authenticode_helper_response(nonce: String, outcome: Result<bool>) -> R
             error: Some(bounded_authenticode_helper_text(&format!("{error:#}"))),
         },
     };
-    let encoded = serde_json::to_vec(&response)
+    let mut encoded = serde_json::to_vec(&response)
         .context("unable to serialize Authenticode helper response")?;
+    encoded.push(b'\n');
     anyhow::ensure!(
         encoded.len() <= MAX_AUTHENTICODE_HELPER_RESPONSE_BYTES,
         "AuthentiCode helper response exceeds its byte limit"
     );
     let mut stdout = std::io::stdout().lock();
     stdout.write_all(&encoded)?;
-    stdout.write_all(b"\n")?;
     stdout.flush()?;
-    Ok(())
+    Ok(encoded)
 }
 
 fn read_authenticode_helper_request(mut input: impl Read) -> Result<AuthenticodeHelperRequest> {
@@ -3831,31 +3927,36 @@ fn run_bounded_authenticode_helper(
     );
 
     let started = Instant::now();
-    if let Err(error) = child.complete_post_response_binding(timeout) {
-        let kill_result = child.terminate();
-        drop(job);
-        let reaped = wait_for_child_exit(&child, AUTHENTICODE_HELPER_REAP_TIMEOUT);
-        let desktop_close = if reaped.is_ok() {
-            child.close_private_desktop()
-        } else {
-            Err(anyhow::anyhow!(
-                "desktop close deferred because the helper was not confirmed exited"
-            ))
-        };
-        let worker_deadline = Instant::now() + AUTHENTICODE_HELPER_REAP_TIMEOUT;
-        let writer_result = receive_helper_worker(writer, worker_deadline, "request writer");
-        let stdout_result = receive_helper_worker(stdout_reader, worker_deadline, "stdout reader");
-        let stderr_result = receive_helper_worker(stderr_reader, worker_deadline, "stderr reader");
-        anyhow::bail!(
-            "{error:#}; AuthentiCode post-response token-binding cleanup: termination request: {}; reap: {}; private desktop: {}; writer: {}; stdout: {}; stderr: {}",
-            helper_result_summary(kill_result),
-            helper_result_summary(reaped),
-            helper_result_summary(desktop_close),
-            helper_result_summary(writer_result),
-            helper_result_summary(stdout_result.map(|_| ())),
-            helper_result_summary(stderr_result.map(|_| ()))
-        );
-    }
+    let response_binding = match child.complete_post_response_binding(timeout) {
+        Ok(binding) => binding,
+        Err(error) => {
+            let kill_result = child.terminate();
+            drop(job);
+            let reaped = wait_for_child_exit(&child, AUTHENTICODE_HELPER_REAP_TIMEOUT);
+            let desktop_close = if reaped.is_ok() {
+                child.close_private_desktop()
+            } else {
+                Err(anyhow::anyhow!(
+                    "desktop close deferred because the helper was not confirmed exited"
+                ))
+            };
+            let worker_deadline = Instant::now() + AUTHENTICODE_HELPER_REAP_TIMEOUT;
+            let writer_result = receive_helper_worker(writer, worker_deadline, "request writer");
+            let stdout_result =
+                receive_helper_worker(stdout_reader, worker_deadline, "stdout reader");
+            let stderr_result =
+                receive_helper_worker(stderr_reader, worker_deadline, "stderr reader");
+            anyhow::bail!(
+                "{error:#}; AuthentiCode post-response token-binding cleanup: termination request: {}; reap: {}; private desktop: {}; writer: {}; stdout: {}; stderr: {}",
+                helper_result_summary(kill_result),
+                helper_result_summary(reaped),
+                helper_result_summary(desktop_close),
+                helper_result_summary(writer_result),
+                helper_result_summary(stdout_result.map(|_| ())),
+                helper_result_summary(stderr_result.map(|_| ()))
+            );
+        }
+    };
     let status = loop {
         if let Some(status) = child
             .try_wait()
@@ -3906,6 +4007,7 @@ fn run_bounded_authenticode_helper(
         status,
         stdout,
         stderr,
+        response_binding,
     })
 }
 
@@ -4461,6 +4563,8 @@ fn interpret_authenticode_helper_output(
         output.stdout.len() <= MAX_AUTHENTICODE_HELPER_RESPONSE_BYTES,
         "isolated Authenticode helper response exceeds its byte limit"
     );
+    validate_authenticode_response_binding(&output.stdout, output.response_binding)
+        .context("isolated Authenticode helper response binding failed")?;
     let response: AuthenticodeHelperResponse = serde_json::from_slice(&output.stdout)
         .context("isolated Authenticode helper response is not strict JSON")?;
     anyhow::ensure!(
@@ -5659,22 +5763,34 @@ mod tests {
             trusted: Some(true),
             error: None,
         };
-        let output = |response: &AuthenticodeHelperResponse| AuthenticodeHelperOutput {
-            status: ExitStatus::from_raw(0),
-            stdout: serde_json::to_vec(response).unwrap(),
-            stderr: Vec::new(),
+        let output = |response: &AuthenticodeHelperResponse| {
+            let stdout = serde_json::to_vec(response).unwrap();
+            let response_binding = authenticode_response_binding(&stdout).unwrap();
+            AuthenticodeHelperOutput {
+                status: ExitStatus::from_raw(0),
+                stdout,
+                stderr: Vec::new(),
+                response_binding,
+            }
         };
         assert!(interpret_authenticode_helper_output(path, &nonce, output(&success)).unwrap());
         assert!(
             interpret_authenticode_helper_output(path, "wrong-nonce", output(&success)).is_err()
         );
 
-        let hidden_diagnostic = AuthenticodeHelperOutput {
-            status: ExitStatus::from_raw(0),
-            stdout: serde_json::to_vec(&success).unwrap(),
-            stderr: b"hidden failure".to_vec(),
-        };
+        let mut hidden_diagnostic = output(&success);
+        hidden_diagnostic.stderr = b"hidden failure".to_vec();
         assert!(interpret_authenticode_helper_output(path, &nonce, hidden_diagnostic).is_err());
+
+        let mut mismatched_binding = output(&success);
+        let mut forged = mismatched_binding.stdout.clone();
+        forged[0] ^= 1;
+        mismatched_binding.response_binding = authenticode_response_binding(&forged).unwrap();
+        let binding_error =
+            interpret_authenticode_helper_output(path, &nonce, mismatched_binding).unwrap_err();
+        assert!(binding_error
+            .to_string()
+            .contains("response binding failed"));
 
         let fake_success = AuthenticodeHelperResponse {
             error: Some("contradictory".to_string()),
@@ -5698,6 +5814,10 @@ mod tests {
             status: ExitStatus::from_raw(0),
             stdout: vec![b'X'; MAX_AUTHENTICODE_HELPER_RESPONSE_BYTES + 1],
             stderr: Vec::new(),
+            response_binding: AuthenticodeResponseBindingEvidence {
+                response_bytes: 1,
+                sha256: [0; AUTHENTICODE_HELPER_RESPONSE_BINDING_SHA256_BYTES],
+            },
         };
         assert!(interpret_authenticode_helper_output(path, &nonce, oversized).is_err());
     }
@@ -5773,7 +5893,9 @@ mod tests {
         let handshake = complete_current_process_authenticode_parent_child_handshake().unwrap();
         validate_current_process_authenticode_private_desktop().unwrap();
         println!("AVORAX_PRIVATE_DESKTOP_OK");
-        handshake.complete_after_response().unwrap();
+        handshake
+            .complete_after_response(b"AVORAX_PRIVATE_DESKTOP_OK\n")
+            .unwrap();
     }
 
     #[test]
@@ -5868,7 +5990,9 @@ mod tests {
         let handshake = complete_current_process_authenticode_parent_child_handshake().unwrap();
         validate_current_process_authenticode_primary_token().unwrap();
         println!("AVORAX_RESTRICTED_PRIMARY_TOKEN_OK");
-        handshake.complete_after_response().unwrap();
+        handshake
+            .complete_after_response(b"AVORAX_RESTRICTED_PRIMARY_TOKEN_OK\n")
+            .unwrap();
     }
 
     #[test]
@@ -5925,7 +6049,9 @@ mod tests {
         assert_eq!(error.kind(), std::io::ErrorKind::PermissionDenied);
         assert_eq!(fixture_sha256(&path), request.expected_sha256);
         println!("AVORAX_LOW_INTEGRITY_MUTATION_DENIED");
-        handshake.complete_after_response().unwrap();
+        handshake
+            .complete_after_response(b"AVORAX_LOW_INTEGRITY_MUTATION_DENIED\n")
+            .unwrap();
     }
 
     #[test]
@@ -6009,7 +6135,9 @@ mod tests {
         let handshake = complete_current_process_authenticode_parent_child_handshake().unwrap();
         validate_current_process_authenticode_primary_token().unwrap();
         println!("AVORAX_MANDATORY_NO_WRITE_UP_POLICY_OK");
-        handshake.complete_after_response().unwrap();
+        handshake
+            .complete_after_response(b"AVORAX_MANDATORY_NO_WRITE_UP_POLICY_OK\n")
+            .unwrap();
     }
 
     #[test]
@@ -6066,7 +6194,9 @@ mod tests {
         let handshake = complete_current_process_authenticode_parent_child_handshake().unwrap();
         validate_current_process_authenticode_primary_token().unwrap();
         println!("AVORAX_TOKEN_VIRTUALIZATION_UIACCESS_DISABLED_OK");
-        handshake.complete_after_response().unwrap();
+        handshake
+            .complete_after_response(b"AVORAX_TOKEN_VIRTUALIZATION_UIACCESS_DISABLED_OK\n")
+            .unwrap();
     }
 
     #[test]
@@ -6138,7 +6268,9 @@ mod tests {
         validate_current_process_authenticode_primary_token().unwrap();
         validate_current_process_authenticode_mitigations().unwrap();
         println!("AVORAX_PROCESS_MITIGATION_POLICY_OK");
-        handshake.complete_after_response().unwrap();
+        handshake
+            .complete_after_response(b"AVORAX_PROCESS_MITIGATION_POLICY_OK\n")
+            .unwrap();
     }
 
     #[test]
@@ -6331,7 +6463,9 @@ mod tests {
         let handshake = complete_current_process_authenticode_parent_child_handshake().unwrap();
         validate_current_process_authenticode_job_membership().unwrap();
         println!("AVORAX_JOB_MEMBERSHIP_OK");
-        handshake.complete_after_response().unwrap();
+        handshake
+            .complete_after_response(b"AVORAX_JOB_MEMBERSHIP_OK\n")
+            .unwrap();
     }
 
     #[test]
@@ -6406,7 +6540,9 @@ mod tests {
         let handshake = complete_current_process_authenticode_parent_child_handshake().unwrap();
         validate_current_process_authenticode_standard_handles().unwrap();
         println!("AVORAX_STANDARD_HANDLE_BINDING_OK");
-        handshake.complete_after_response().unwrap();
+        handshake
+            .complete_after_response(b"AVORAX_STANDARD_HANDLE_BINDING_OK\n")
+            .unwrap();
     }
 
     #[test]
@@ -6416,7 +6552,9 @@ mod tests {
         validate_current_process_authenticode_standard_handles().unwrap();
         validate_current_process_authenticode_pipe_peer_processes().unwrap();
         println!("AVORAX_PIPE_PEER_PARENT_BINDING_OK");
-        handshake.complete_after_response().unwrap();
+        handshake
+            .complete_after_response(b"AVORAX_PIPE_PEER_PARENT_BINDING_OK\n")
+            .unwrap();
     }
 
     #[test]
@@ -6584,7 +6722,9 @@ mod tests {
     fn authenticode_parent_child_handshake_child_fixture() {
         let handshake = complete_current_process_authenticode_parent_child_handshake().unwrap();
         println!("AVORAX_PARENT_CHILD_PROCESS_BINDING_OK");
-        handshake.complete_after_response().unwrap();
+        handshake
+            .complete_after_response(b"AVORAX_PARENT_CHILD_PROCESS_BINDING_OK\n")
+            .unwrap();
     }
 
     #[test]
@@ -7595,7 +7735,11 @@ mod tests {
             )
             .unwrap_err()
             .to_string();
-            assert!(error.contains("response-ready"));
+            if fixture.contains("missing_response_ready") {
+                assert!(error.contains("response-ready"));
+            } else {
+                assert!(error.contains("response-binding frame length"));
+            }
             assert!(error.contains("post-response token-binding cleanup"));
         }
     }
@@ -7657,6 +7801,145 @@ mod tests {
     }
 
     #[test]
+    fn native_authenticode_response_hash_binding_spans_authenticated_boundary() {
+        assert!(open_current_thread_token().unwrap().is_none());
+        let application = std::env::current_exe().unwrap();
+        let arguments = [
+            "--ignored",
+            "--exact",
+            "windows_authenticode::tests::authenticode_parent_child_handshake_child_fixture",
+            "--nocapture",
+            "--test-threads=1",
+        ];
+        let output = run_bounded_authenticode_helper(
+            &application,
+            &arguments,
+            Vec::new(),
+            Duration::from_secs(5),
+        )
+        .unwrap();
+        assert!(output.status.success());
+        assert!(output.stderr.is_empty());
+        assert!(String::from_utf8_lossy(&output.stdout)
+            .contains("AVORAX_PARENT_CHILD_PROCESS_BINDING_OK"));
+        validate_authenticode_response_binding(
+            b"AVORAX_PARENT_CHILD_PROCESS_BINDING_OK\n",
+            output.response_binding,
+        )
+        .unwrap();
+        assert!(open_current_thread_token().unwrap().is_none());
+    }
+
+    #[test]
+    fn native_authenticode_response_hash_binding_contract_is_fail_visible() {
+        let response = b"{\"schema_version\":1,\"status\":\"ok\",\"trusted\":true}\n";
+        let expected = authenticode_response_binding(response).unwrap();
+        let frame = encode_authenticode_response_binding_frame(response).unwrap();
+        assert_eq!(
+            validate_authenticode_response_binding_frame(&frame).unwrap(),
+            expected
+        );
+        validate_authenticode_response_binding(response, expected).unwrap();
+
+        for malformed in [
+            Vec::new(),
+            frame[..frame.len() - 1].to_vec(),
+            [frame.as_slice(), &[0]].concat(),
+        ] {
+            assert!(validate_authenticode_response_binding_frame(&malformed).is_err());
+        }
+
+        let mut wrong_marker = frame;
+        wrong_marker[0] ^= 1;
+        assert!(validate_authenticode_response_binding_frame(&wrong_marker).is_err());
+
+        let length_start = AUTHENTICODE_HELPER_RESPONSE_READY.len();
+        let digest_start = length_start + AUTHENTICODE_HELPER_RESPONSE_BINDING_LENGTH_BYTES;
+        let mut zero_length = frame;
+        zero_length[length_start..digest_start].copy_from_slice(&0u64.to_le_bytes());
+        assert!(validate_authenticode_response_binding_frame(&zero_length).is_err());
+        let mut oversized = frame;
+        oversized[length_start..digest_start]
+            .copy_from_slice(&((MAX_AUTHENTICODE_HELPER_RESPONSE_BYTES as u64) + 1).to_le_bytes());
+        assert!(validate_authenticode_response_binding_frame(&oversized).is_err());
+
+        let mut same_length_mutation = response.to_vec();
+        same_length_mutation[1] ^= 1;
+        let digest_error =
+            validate_authenticode_response_binding(&same_length_mutation, expected).unwrap_err();
+        assert!(digest_error.to_string().contains("stdout SHA-256"));
+        let length_error =
+            validate_authenticode_response_binding(&response[..response.len() - 1], expected)
+                .unwrap_err();
+        assert!(length_error.to_string().contains("stdout length"));
+        assert!(authenticode_response_binding(&[]).is_err());
+        assert!(authenticode_response_binding(&vec![
+            0;
+            MAX_AUTHENTICODE_HELPER_RESPONSE_BYTES + 1
+        ])
+        .is_err());
+
+        let nonce = Uuid::new_v4().hyphenated().to_string();
+        let response = AuthenticodeHelperResponse {
+            schema_version: AUTHENTICODE_HELPER_SCHEMA_VERSION,
+            nonce: nonce.clone(),
+            status: "ok".to_string(),
+            trusted: Some(true),
+            error: None,
+        };
+        let stdout = serde_json::to_vec(&response).unwrap();
+        let mut forged = stdout.clone();
+        forged[0] ^= 1;
+        let output = AuthenticodeHelperOutput {
+            status: ExitStatus::from_raw(0),
+            stdout,
+            stderr: Vec::new(),
+            response_binding: authenticode_response_binding(&forged).unwrap(),
+        };
+        let error = interpret_authenticode_helper_output(
+            Path::new(r"C:\benign-fixture.exe"),
+            &nonce,
+            output,
+        )
+        .unwrap_err();
+        let diagnostic = format!("{error:#}");
+        assert!(diagnostic.contains("response binding failed"));
+        assert!(diagnostic.contains("stdout SHA-256"));
+    }
+
+    #[test]
+    fn native_authenticode_response_hash_binding_rejects_mutated_stdout() {
+        let application = std::env::current_exe().unwrap();
+        let arguments = [
+            "--ignored",
+            "--exact",
+            "windows_authenticode::tests::authenticode_mismatched_response_binding_child_fixture",
+            "--nocapture",
+            "--test-threads=1",
+        ];
+        let output = run_bounded_authenticode_helper(
+            &application,
+            &arguments,
+            Vec::new(),
+            Duration::from_secs(5),
+        )
+        .unwrap();
+        assert!(String::from_utf8_lossy(&output.stdout).contains("AVORAX_RESPONSE_HASH_BINDING_A"));
+        let error = validate_authenticode_response_binding(
+            b"AVORAX_RESPONSE_HASH_BINDING_A\n",
+            output.response_binding,
+        )
+        .unwrap_err()
+        .to_string();
+        assert!(error.contains("stdout SHA-256"));
+        validate_authenticode_response_binding(
+            b"AVORAX_RESPONSE_HASH_BINDING_B\n",
+            output.response_binding,
+        )
+        .unwrap();
+    }
+
+    #[test]
     #[ignore = "isolated child fixture invoked by the missing response-ready regression"]
     fn authenticode_missing_response_ready_child_fixture() {
         let _handshake = complete_current_process_authenticode_parent_child_handshake().unwrap();
@@ -7683,6 +7966,16 @@ mod tests {
         );
         assert_eq!(transferred as usize, malformed.len());
         thread::sleep(Duration::from_secs(30));
+    }
+
+    #[test]
+    #[ignore = "isolated child fixture invoked by the response hash-binding regression"]
+    fn authenticode_mismatched_response_binding_child_fixture() {
+        let handshake = complete_current_process_authenticode_parent_child_handshake().unwrap();
+        println!("AVORAX_RESPONSE_HASH_BINDING_A");
+        handshake
+            .complete_after_response(b"AVORAX_RESPONSE_HASH_BINDING_B\n")
+            .unwrap();
     }
 
     #[test]
@@ -7727,7 +8020,9 @@ mod tests {
             ]
         );
         println!("AVORAX_SANITIZED_LAUNCH_CONTEXT_OK");
-        handshake.complete_after_response().unwrap();
+        handshake
+            .complete_after_response(b"AVORAX_SANITIZED_LAUNCH_CONTEXT_OK\n")
+            .unwrap();
     }
 
     #[test]
@@ -7858,7 +8153,9 @@ mod tests {
             Ok(())
         })();
         restricted.finish(operation).unwrap();
-        handshake.complete_after_response().unwrap();
+        handshake
+            .complete_after_response(b"AVORAX_WRITE_RESTRICTED_MUTATION_DENIED\n")
+            .unwrap();
     }
 
     #[test]

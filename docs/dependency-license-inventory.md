@@ -1152,5 +1152,26 @@ Checkpoint 2227 exact implementation `cef0d28` passes package push/PR runs
 `9543648381`/`9543559227` each contain six platform files, seven matching
 SHA-256 rows, and a CycloneDX 1.6 lockfile SBOM with 569 components under exact
 in-stream validation; publication is skipped. This is dependency evidence, not
-complete signed final-artifact license or binary approval. Evidence-head and
-merged-main package evidence remain pending.
+complete signed final-artifact license or binary approval.
+
+Checkpoint 2227 evidence `c63fb71`, normal merge `9304681`, evidence/merged-main
+package runs `32792981950`/`32794437034`, exact guarded synchronization, and
+destination `257/257` verification preserve the exact three lock blobs.
+Untouched package artifacts `9544267760`/`9544647451` retain six platform
+files, seven matching checksums, and CycloneDX 1.6/569-component SBOMs under
+stream-only validation; publication is skipped. No dependency, lockfile, or
+machine-wide component changed. Complete signed final-artifact license, notice,
+copyright, and binary-resolution review remains a production-release
+prerequisite.
+
+Checkpoint 2228 response hash binding reuses the Native Engine's already pinned
+`sha2` 0.10 dependency to hash a fixed domain, exact response length, and exact
+stdout bytes. The fixed 41-byte pipe frame and existing 16 KiB response ceiling
+add no crate, package, feature, or lockfile change, runtime component, script
+host, network source, or machine-wide installation. Source contract 658 and
+verifier/validator step 258 are scripted before execution. This SHA-256 is
+unkeyed same-user content-integrity evidence, not a secret MAC, encryption,
+cross-identity authentication, AppContainer/LPAC, installed LocalSystem,
+signed-driver, or pre-execution proof. Full local, hosted, package, integration,
+synchronization, destination, and signed final-artifact license/binary review
+remain pending.

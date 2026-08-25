@@ -2467,7 +2467,7 @@ repeat connected pipe-client process or impersonation-token authentication at
 the response-ready boundary. Persistent client security-context drift after the
 initial handshake could therefore escape the later primary-token snapshots.
 
-**Locally verified control, integration pending:** After exact ready-marker validation and
+**Verified and integrated control:** After exact ready-marker validation and
 before launch/child token read-back and final ACK, parent binds the client PID
 queried from the retained pipe instance to the PID queried from the exact
 retained child process handle. It then freshly impersonates that same connection
@@ -2481,10 +2481,13 @@ and cannot become trust. Source contract 657 and verifier step 257 are scripted.
 Focused regressions pass `2/2`, complete Authenticode passes `72/15`, Native
 passes `508/15` plus compiler `6/6`, affected crates and both locked workspaces
 pass, and Flutter passes `838/838`. Definitive verifier/validator passes exact
-`257/257` in `453.2s`, and 12 malformed reports are rejected. Hosted,
-integration, synchronization, and destination evidence remain pending. Exact
-implementation `cef0d28` also passes hosted CI and both cross-platform package
-runs with publication skipped; this does not expand the point-in-time boundary.
+`257/257` in `453.2s`, and 12 malformed reports are rejected. Exact
+implementation `cef0d28`, evidence `c63fb71`, PR `#79`, normal merge
+`9304681`, evidence-head and merged-main CI/packages, exact 12-path guarded
+synchronization, full destination Rust/Flutter checks, and destination verifier/
+validator `257/257` in `434s` pass. Publication is skipped, locks and the
+protected vault remain exact, and this closure does not expand the point-in-time
+boundary.
 
 **Residual risk:** This repeats the connected identity/profile at a second point
 in time; it is not cross-snapshot token-object equality. Windows may create a
@@ -2494,3 +2497,32 @@ cryptographically token-bound. Transients between checks, post-ACK mutation,
 privileged same-session injection/handle duplication, compromised parent/kernel,
 cross-identity IPC, AppContainer/LPAC, installed LocalSystem, signed-driver, and
 pre-execution threats remain outside this control.
+
+### Authenticode response hash binding (checkpoint 2228)
+
+**Threat:** The response-ready boundary reauthenticates the connected child and
+rechecks primary tokens, but its one-byte marker does not describe the exact
+stdout bytes later parsed as a verdict. Mutation of the anonymous stdout stream
+after flush could therefore leave process/token evidence intact while changing
+the response consumed by the parent.
+
+**Scripted control, execution pending:** The response writer retains the exact
+bounded JSON plus newline. Child hashes a fixed domain, exact unsigned 64-bit
+little-endian length, and every response byte, sends an exact 41-byte marker,
+length, and SHA-256 frame on the retained pipe, and waits for ACK. Parent
+requires exact frame size and 1..16,384-byte length before fresh connected-client
+reauthentication and launch/child token read-back. After exit it compares exact
+collected stdout length/digest before strict JSON parsing or publisher trust.
+Malformed, truncated, extended, out-of-range, length-mismatch, or digest-mismatch
+evidence is fail-visible. Three Rust regressions, source contract 658, verifier
+step 258, strict validator scope, and all audit records are scripted before any
+execution.
+
+**Residual risk:** The unkeyed SHA-256 digest gains its sender association from
+the existing same-user pipe process/token validation. It is content-integrity
+evidence, not a secret MAC, encryption, cross-identity message authentication,
+or durable token-object identity. A privileged same-session attacker able to
+inject the helper, duplicate handles, or change both stdout and frame before the
+authenticated snapshot remains in scope. It does not supply AppContainer/LPAC,
+installed LocalSystem, production signing, signed-driver, or demonstrated
+pre-execution enforcement.

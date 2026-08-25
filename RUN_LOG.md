@@ -10138,3 +10138,196 @@ Updates page showed:
   1.6/569-component in-stream validation without extraction or execution.
 - Draft PR `#79` remains unmerged. Evidence-head checks, normal merge,
   merged-main evidence, guarded synchronization, and destination proof remain.
+
+## 2026-08-25 continuation checkpoint 2227 integration closure
+
+- Evidence `c63fb71a4cd0834d8a014b646b40197cbc6119bb` passes all five CI
+  jobs in run `32792981574`. Package run `32792981950` passes contracts,
+  Windows MSI/EXE, Linux DEB/tar, both macOS DMGs, and consolidation;
+  publication is skipped. Untouched artifact `9544267760` has SHA-256
+  `0ecaf5ea3e976c282dae9afe2fd36bf7f2f587d9ec932a337a8a70f936f79c5d`
+  and passes exact eight-entry, six-platform-file, seven-checksum, and
+  CycloneDX 1.6/569-component in-stream validation without extraction.
+- PR `#79` was made ready and normally merged without bypass or direct-main
+  push as `9304681badde248533788806bbe84a298726e241`, with parents
+  `bab872d50daf5bbcc775a53e3c0788c51770ca33` and evidence `c63fb71`.
+  Merged-main CI `32794436961` and packages `32794437034` pass; publication
+  is skipped. Untouched artifact `9544647451` has SHA-256
+  `e56a600c0515f9760e552088906db4a141b2aadf596c032155d5f1246f463fd4`
+  and passes the same exact in-stream checks.
+- The merge changes exactly 12 paths from its first parent with zero deletes.
+  Guarded synchronization copied those 12 exact Git blobs to
+  `C:\Users\Brent\Documents\Avorax-main`; post-test comparison remains
+  `12/12`, with zero staging files or backups and unrelated files preserved.
+- Destination parsers `2/2`, contracts `657/657`, focused `2/2`, complete
+  Authenticode `72/15`, Native `508/15` plus compiler `6/6`, Local `536/536`,
+  Guard `248/248`, both locked workspaces, strict Clippy, offline Native,
+  release/two-host smoke, Flutter analyze, and Flutter `838/838` pass.
+  Definitive verification ran from `2026-08-25T01:04:32.3781546Z` through
+  `2026-08-25T01:11:46.4460196Z` and passes exact `257/257`, zero failed or
+  skipped, in `434s`; the new target is `0.2s` and the independent Windows
+  PowerShell 5.1 validator passes.
+- Support failures are retained and uncredited. A raw destination hash check
+  saw expected LF/CRLF differences before the path-aware Git-filter audit
+  passed. Three PowerShell 5.1 sync helpers failed before the first destination
+  replacement (`ArgumentList`, three-argument `File.Move`, then null-backup
+  `File.Replace`); the corrected atomic wrapper reused only exact staged blobs
+  and completed. A destination blob wrapper then assumed a nonexistent `.git`;
+  the corrected absolute source-repository comparison passed `12/12`.
+- Lock blobs remain exact. The read-only vault remains 16,072 files, zero
+  directories, 4,522,733 bytes, 5,357 each payload/metadata/auth, one key, and
+  zero pending/temp. `.verification` remains untracked and unstaged. Nothing
+  was installed, executed as candidate content, released, or published.
+  Checkpoint 2227 is closed; its technical limits and the overall antivirus
+  goal remain active.
+- Closure-document source contracts pass `657/657`; branding, product-copy,
+  explicit bundled-Python no-malware, and `git diff --check` gates pass.
+
+## 2026-08-25 continuation checkpoint 2228 scripting
+
+- Started `agent/checkpoint-2228-authenticode-response-hash-binding` from local
+  checkpoint-2227 closure `f523acb`.
+- Scripted a fixed 41-byte response-ready frame containing the existing marker,
+  exact little-endian `u64` stdout length, and SHA-256 over a fixed domain,
+  length, and every exact response byte including the JSON newline.
+- Parent requires exact frame shape and a 1..16,384-byte length, then performs
+  fresh connected-client process/token authentication plus launch/child token
+  read-back before final ACK. Collected stdout must later match authenticated
+  length and digest before strict JSON parsing or publisher trust.
+- Scripted three benign/adversarial Rust regressions, an intentional same-length
+  stdout/digest mismatch child, source contract 658, mandatory verifier step
+  258, strict 258-step validator scope, and checkpoint/audit/threat/blocker/
+  dependency/status documentation.
+- The digest is unkeyed evidence on the existing same-user authenticated pipe,
+  not a secret MAC, encryption, cross-identity identity proof, AppContainer,
+  installed LocalSystem, signed-driver, or pre-execution enforcement. A
+  privileged same-session actor able to change both outputs before authentication
+  remains outside this control.
+- No checkpoint-2228 parser, formatter, build, lint, test, smoke, or verifier has
+  run yet. No dependency/lock change, installation, Defender change, candidate
+  execution, protected-vault mutation, release, or publication is intended.
+
+## 2026-08-25 continuation checkpoint 2228 initial execution
+
+- Both PowerShell parsers and `git diff --check` pass. Production compiles and
+  two of three focused response hash-binding tests pass.
+- The first formatter check reports four canonical-layout differences. Source
+  contracts execute all 658 and reject one stale checkpoint-2226 ordering
+  assertion that still named the retired one-byte parser. The remaining focused
+  test correctly rejects its forged digest but its assertion inspects only the
+  outer `anyhow` context instead of the diagnostic chain. These three failed
+  checks are retained and uncredited.
+- Canonical formatting, the historical contract's current frame-parser name,
+  and chain-aware diagnostic assertion are repaired without changing the
+  response-binding security boundary. A complete focused rerun is required.
+
+## 2026-08-25 continuation checkpoint 2228 corrected focused execution
+
+- Both PowerShell parsers, `cargo fmt --check`, `git diff --check`, and source
+  contracts `658/658` pass.
+- All three response hash-binding regressions compile and pass, including the
+  real restricted-child boundary and same-length stdout/digest mismatch. The
+  initial failed checks remain retained and uncredited.
+- Complete affected Rust, locked-workspace, lint/offline, release/smoke,
+  Flutter, definitive, hosted, integration, synchronization, and destination
+  evidence remain pending. The complete antivirus goal remains active.
+
+## 2026-08-25 continuation checkpoint 2228 initial broad execution
+
+- Complete Authenticode executes 91 tests and reaches `74` passed with `16`
+  intentional child fixtures ignored, then one historical malformed-ready
+  assertion fails because it still requires the old `response-ready` wording.
+  The product path returns the intended exact `response-binding frame length`
+  diagnostic and cleanup evidence. This run is retained and uncredited.
+- Guard passes `248/248`. Parallel Native and Local runs exited, but their
+  command output was not retained as complete evidence by the orchestration
+  wrapper; they are not credited and will be rerun explicitly.
+- The malformed fixture assertion is narrowed to require `response-ready read`
+  for the missing frame and `response-binding frame length` for the malformed
+  frame, while both continue to require post-response cleanup. No production
+  behavior or weaker error path changes.
+- The first explicit rerun shows the missing-frame OS path preserves the stable
+  `response-ready` prefix but not necessarily the narrower `read` word. Complete
+  Authenticode again reaches `74/16` and Native reaches `510/16` before that
+  assertion; both runs are retained and uncredited. Local passes `536/536`.
+  The assertion now requires the stable missing-frame prefix, the exact malformed
+  frame diagnostic, and cleanup for both; production code remains unchanged.
+
+## 2026-08-25 continuation checkpoint 2228 corrected broad Rust execution
+
+- The repaired missing/malformed diagnostic regression passes. Source contracts
+  remain `658/658` and formatting remains exact.
+- Complete Authenticode passes `75` with `16` intentional child fixtures
+  ignored. Native passes `511/16` plus signature compiler `6/6`; Local Core
+  passes `536/536`; Guard passes `248/248`.
+- The two failed broad attempts remain retained and uncredited. Locked workspace,
+  lint/offline, release/smoke, Flutter, definitive, hosted, integration,
+  synchronization, and destination evidence remain pending.
+
+## 2026-08-25 continuation checkpoint 2228 workspace and lint execution
+
+- Standard and all-feature locked workspace suites pass. Strict all-target/all-
+  feature Clippy passes for Native, Local Core, and Guard; standalone Native
+  locked/offline all-target/all-feature checking passes.
+- Locked Local Core and Guard release builds pass. The first smoke wrapper call
+  is safely rejected because its binary arguments are relative rather than the
+  required absolute paths. The wrapper failure is retained and uncredited; the
+  already built binaries require a corrected absolute-path smoke rerun.
+
+## 2026-08-25 continuation checkpoint 2228 smoke and Flutter execution
+
+- The corrected absolute-path two-host release smoke passes. It verifies
+  mandatory nonce/hash-bound helper IPC, embedded and catalog Microsoft trust,
+  unsigned rejection, and wrong-hash failure without executing candidate
+  content.
+- Flutter analysis reports no issues and the complete client suite passes
+  `838/838`. Flutter reports 33 newer package versions incompatible with the
+  pinned constraints; no dependency or lockfile update is made.
+- Definitive 258-step verification, malformed-report rejection, exact lock/
+  vault reconfirmation, hosted/package evidence, integration, guarded
+  synchronization, and destination proof remain pending. The complete
+  antivirus goal remains active.
+
+## 2026-08-25 continuation checkpoint 2228 definitive local evidence
+
+- The no-skip, no-Defender/EICAR verifier runs from
+  `2026-08-25T02:20:43.6274754Z` through
+  `2026-08-25T02:28:47.9121375Z` and passes exact `258/258`, zero failed or
+  skipped, in `484.2s`; the new target passes in `0.3s`. Embedded and
+  independent Windows PowerShell 5.1 strict validators pass.
+- Fifteen isolated malformed reports covering schema, top-level status,
+  Defender, both skips, the mandatory target, five new verified scopes, two new
+  technical limits, final-step status, and stale 257 count are rejected with
+  exit 1. They remain untracked below `.verification` and are not staged.
+- Root Cargo, Native Cargo, and Flutter lock blobs remain
+  `7ab38f4820b08029c64872360fac7141e2512ac4`,
+  `277dd9fe1edfc45fa5550e8e2831f2a0c121561d`, and
+  `51fa085a41168aa1deadace8b5395614db43649e`. The read-only protected vault
+  remains 16,072 files, zero directories, 4,522,733 bytes, 5,357 each payload/
+  metadata/auth, one key, and zero pending/temp.
+- Support failures remain visible and uncredited: `unittest` discovered zero
+  pytest-style tests before the dependency-free `658/658` pass; one nested
+  parser wrapper lost variables to quoting before both literal parser checks
+  passed; and the first adversarial harness had a parse-time closure syntax
+  error before corrected `15/15` rejection.
+- Hosted/package evidence, integration, guarded synchronization, and
+  destination proof remain pending. The complete antivirus goal remains active.
+
+## 2026-08-25 continuation checkpoint 2228 implementation-head hosting
+
+- The verified tree remains unchanged after non-destructively merging current
+  `origin/main`. Exact head `7531850d6fa79033f159f799d5c37b55c5ee80b8`
+  passes all five jobs in Avorax CI run `32802501559` without retry.
+- Desktop Packages push/PR runs `32802476664`/`32802501516` pass contracts,
+  Windows MSI/EXE with administrative extraction, Linux DEB/tar, both macOS
+  DMGs, and consolidation. Publication is skipped in both runs.
+- Untouched artifacts `9547257904`/`9547368311` have sizes
+  `131283935`/`131433875` and SHA-256
+  `95a3f1d2c07672a1cb1947ffda19245f1ad9ce43eab2df0a143b54ae0a3dadff`/
+  `302bf947c141a7977c821308269d9e16b4956150e51170999c31140a8b323ae3`.
+  Both pass bounded in-stream validation for exactly eight root entries, six
+  platform artifacts, seven matching checksums, and a CycloneDX 1.6 lockfile
+  SBOM with 569 components, without extraction or execution.
+- Draft PR `#80` remains unmerged. Evidence-head checks, normal merge,
+  merged-main evidence, guarded synchronization, and destination proof remain
+  pending. The complete antivirus goal remains active.

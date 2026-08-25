@@ -5928,7 +5928,7 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
 
 ## Checkpoint 2227 - Authenticode response client reauthentication (2026-08-25)
 
-- **Scripted control:** after exact response-ready validation and before launch/
+- **Verified and integrated control:** after exact response-ready validation and before launch/
   child token read-back or final ACK, the parent binds
   `GetNamedPipeClientProcessId` on the retained connection to `GetProcessId` on
   the exact retained child handle, then freshly calls
@@ -5953,24 +5953,90 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   `72/15`, Native `508/15` plus compiler `6/6`, Local Core `536/536`, Guard
   `248/248`, both locked workspaces, strict affected-crate Clippy, standalone
   locked/offline Native, locked release/two-host smoke, Flutter analysis, and
-  Flutter `838/838`. Definitive, hosted, integration, synchronization, and
-  destination evidence remain pending. Definitive local verification now passes
+  Flutter `838/838`. Definitive local verification passes
   exact `257/257` in `453.2s`, target `0.2s`, both strict validators, and 12
   malformed-report rejections. Locks and the protected-vault invariant remain
-  exact; hosted, integration, synchronization, and destination proof remain
-  pending.
+  exact.
 - **Implementation-head hosted verified:** exact `cef0d28` passes CI
   `32791340856` and package push/PR runs `32791317044`/`32791340840` across
   Windows, Linux, both macOS architectures, and consolidation; publication is
   skipped. Untouched artifacts `9543648381`/`9543559227` pass exact six-platform-
   file, seven-checksum, and CycloneDX 1.6/569-component in-stream validation.
-  Draft PR `#79` remains unmerged; evidence-head, merge, synchronization, and
-  destination evidence remain pending.
+  Evidence-head and merged-main integration evidence is recorded below.
 - **Technically limited:** each impersonation call may yield a distinct token
   object, so cross-snapshot impersonation `TokenId` equality is unavailable and
   not claimed. This remains point-in-time, not durable or cryptographically
   response-bound, and does not stop every transient, privileged same-session
   injection/handle duplication, or provide cross-identity IPC, AppContainer/
   LPAC, installed LocalSystem, signed-driver, or pre-execution enforcement.
-  Local, hosted, integration, synchronization, and destination evidence remain
-  pending; the complete antivirus goal remains active.
+  The complete antivirus goal remains active.
+- **Integration and destination closure:** evidence `c63fb71`, PR `#79`, and
+  normal merge `9304681` are complete. Evidence-head CI/packages
+  `32792981574`/`32792981950` and merged-main CI/packages
+  `32794436961`/`32794437034` pass with publication skipped. Untouched
+  artifacts `9544267760`/`9544647451` each contain six platform files, seven
+  matching checksums, and a CycloneDX 1.6/569-component SBOM. Exactly 12 paths
+  synchronized with zero deletes and remain exact after testing, with no temp
+  or backup residue. Destination Native `508/15` plus compiler `6/6`, Local
+  `536/536`, Guard `248/248`, both locked workspaces, strict lint, offline
+  Native, Flutter analyze and `838/838`, and exact verifier/validator `257/257`
+  in `434s` pass. Locks and the protected vault remain exact. Checkpoint 2227
+  is closed; the complete antivirus goal remains active.
+
+## Checkpoint 2228 - Authenticode response hash binding (2026-08-25)
+
+- **Scripted control:** exact helper stdout, including the JSON newline, is
+  bound by SHA-256 over a fixed domain, exact unsigned little-endian `u64`
+  length, and every byte. The child sends a fixed 41-byte marker/length/digest
+  frame over the retained duplex pipe and waits for final ACK.
+- **Authenticated ordering:** parent validates exact frame shape and bounded
+  1..16,384-byte length, freshly reauthenticates the same connected child, and
+  repeats launch/child token checks before ACK. After exit, collected stdout
+  must match the authenticated length and digest before strict JSON parsing.
+- **Fail-visible contract:** empty, oversized, truncated, extended, malformed,
+  out-of-range, length-mismatched, or digest-mismatched evidence cannot become
+  publisher trust. Pre-ACK failures retain bounded terminate/reap cleanup; a
+  post-exit mismatch remains a hard diagnostic.
+- **Evidence scripted:** three production/adversarial Rust regressions, source
+  contract 658, mandatory verifier step 258, exact 258-step report validation,
+  and report/control/threat/blocker/dependency/run-log records are complete.
+  Initial parsers/diff pass; formatter, one historical source assertion, and
+  one diagnostic-chain assertion fail and remain uncredited. Exact repairs are
+  scripted. The corrected complete focused rerun passes both parsers, formatter,
+  diff, source contracts `658/658`, and all three new Rust regressions. Broader
+  Authenticode first reaches `74/16` before one stale diagnostic assertion;
+  the first retry reaches Authenticode `74/16` and Native `510/16` before an
+  over-narrow missing-frame wording check. Local `536/536` and Guard `248/248`
+  pass. The stable assertion is repaired without product-code change; explicit
+  reruns now pass Authenticode `75/16`, Native `511/16` plus compiler `6/6`,
+  Local `536/536`, Guard `248/248`, source contracts `658/658`, and formatting.
+  Both locked workspaces, strict Native/Local/Guard lint, standalone Native
+  locked/offline checks, and locked Local/Guard release builds pass. The first
+  smoke wrapper safely rejects relative binary paths and is uncredited; the
+  corrected absolute-path two-host smoke passes mandatory nonce/hash-bound IPC,
+  embedded/catalog trust, unsigned rejection, and wrong-hash failure without
+  candidate execution. Flutter analyze reports no issues and all `838/838`
+  tests pass. Definitive verifier and both strict validators pass exact
+  `258/258`, zero failed/skipped, in `484.2s`; the new target is `0.3s`, and
+  15 malformed reports are rejected. Lock blobs and the read-only protected-
+  vault invariant remain exact. Hosted, integration, synchronization, and
+  destination evidence remain pending.
+- **Technically limited:** the digest is unkeyed evidence over the existing
+  same-user authenticated endpoint, not a secret MAC, encryption, cross-identity
+  message authentication, or durable token-object binding. A privileged same-
+  session attacker able to inject the helper, duplicate handles, or modify both
+  stdout and frame before authentication remains outside the control. Separate
+  token objects, AppContainer/LPAC, installed LocalSystem, signed-driver, and
+  pre-execution enforcement remain separate; the complete antivirus goal is
+  active.
+- **Implementation-head hosted verified:** exact `7531850` passes Avorax CI
+  `32802501559` without retry and Desktop Packages push/PR runs
+  `32802476664`/`32802501516` across Windows MSI/EXE, Linux DEB/tar, both macOS
+  DMGs, and consolidation; publication is skipped. Untouched artifacts
+  `9547257904`/`9547368311` have SHA-256
+  `95a3f1d2c07672a1cb1947ffda19245f1ad9ce43eab2df0a143b54ae0a3dadff`/
+  `302bf947c141a7977c821308269d9e16b4956150e51170999c31140a8b323ae3`
+  and pass exact six-platform-file, seven-checksum, CycloneDX 1.6/569-component
+  in-stream validation without extraction. Evidence-head checks, normal merge,
+  merged-main evidence, guarded synchronization, and destination proof remain
+  pending.
