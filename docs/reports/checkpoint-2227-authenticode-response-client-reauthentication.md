@@ -148,3 +148,22 @@ Root Cargo, Native Cargo, and Flutter lock blobs remain
 remains exactly 16,072 files, zero directories, 4,522,733 bytes, 5,357 each
 payload/metadata/auth, one metadata-auth key, and zero pending/temp. Hosted,
 package, integration, synchronization, and destination evidence remain pending.
+
+## Implementation-Head Hosted Evidence
+
+Exact implementation `cef0d282acf58e9260492ac3dd7b300fdd9ee5f4` passes all
+five Avorax CI jobs in run `32791340856`. Desktop Packages push and draft-PR
+runs `32791317044` and `32791340840` pass package contracts, Windows x64 MSI/
+EXE, Linux x64 DEB/tar, macOS arm64/x64 DMG, and consolidation; publication is
+skipped. Draft PR `#79` remains unmerged.
+
+Untouched consolidated artifacts `9543648381` and `9543559227` have SHA-256
+`264f26824cca39b1852cff2cafc549a4a85ab1560f1d29378a0351765df92eb9`
+and `f67375780a6a32527a26aaeb25ac7b9e2acc1b7b2a7b5196806fe40eca3800e0`.
+Read-only in-stream validation, without extraction or execution, requires and
+passes exactly eight root entries, six platform files, seven matching SHA-256
+rows, and a CycloneDX 1.6 lockfile SBOM with 569 components in each artifact.
+
+Evidence-head CI/packages, normal merge, merged-main evidence, guarded
+synchronization, and destination proof remain pending. No release or publication
+occurred and the complete antivirus goal remains active.

@@ -2482,7 +2482,9 @@ Focused regressions pass `2/2`, complete Authenticode passes `72/15`, Native
 passes `508/15` plus compiler `6/6`, affected crates and both locked workspaces
 pass, and Flutter passes `838/838`. Definitive verifier/validator passes exact
 `257/257` in `453.2s`, and 12 malformed reports are rejected. Hosted,
-integration, synchronization, and destination evidence remain pending.
+integration, synchronization, and destination evidence remain pending. Exact
+implementation `cef0d28` also passes hosted CI and both cross-platform package
+runs with publication skipped; this does not expand the point-in-time boundary.
 
 **Residual risk:** This repeats the connected identity/profile at a second point
 in time; it is not cross-snapshot token-object equality. Windows may create a

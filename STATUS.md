@@ -5959,6 +5959,13 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   malformed-report rejections. Locks and the protected-vault invariant remain
   exact; hosted, integration, synchronization, and destination proof remain
   pending.
+- **Implementation-head hosted verified:** exact `cef0d28` passes CI
+  `32791340856` and package push/PR runs `32791317044`/`32791340840` across
+  Windows, Linux, both macOS architectures, and consolidation; publication is
+  skipped. Untouched artifacts `9543648381`/`9543559227` pass exact six-platform-
+  file, seven-checksum, and CycloneDX 1.6/569-component in-stream validation.
+  Draft PR `#79` remains unmerged; evidence-head, merge, synchronization, and
+  destination evidence remain pending.
 - **Technically limited:** each impersonation call may yield a distinct token
   object, so cross-snapshot impersonation `TokenId` equality is unavailable and
   not claimed. This remains point-in-time, not durable or cryptographically

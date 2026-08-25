@@ -2599,7 +2599,9 @@ enforcement, or pre-execution blocking is claimed.
   locked workspaces, strict lint/offline/release smoke, and Flutter `838/838`
   pass locally. Definitive verifier/validator passes exact `257/257` in `453.2s`
   and 12 malformed reports are rejected. Hosted, integration, synchronization,
-  and destination evidence remain pending.
+  and destination evidence remain pending. Exact implementation-head CI and
+  cross-platform packages now pass with publication skipped; evidence-head,
+  merge, synchronization, and destination evidence remain pending.
 - **Checkpoint 2227 residual technical blocker:** Windows may create a distinct
   impersonation token object per impersonation call, so cross-snapshot token-
   object identity is technically unavailable and not claimed. The control is

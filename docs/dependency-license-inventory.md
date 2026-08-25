@@ -1141,8 +1141,16 @@ analysis/`838` pass locally. Definitive exact `257/257` passes and the root
 Cargo, Native Cargo, and Flutter lock blobs remain respectively
 `7ab38f4820b08029c64872360fac7141e2512ac4`,
 `277dd9fe1edfc45fa5550e8e2831f2a0c121561d`, and
-`51fa085a41168aa1deadace8b5395614db43649e`. Hosted package/SBOM evidence remains pending. The control
+`51fa085a41168aa1deadace8b5395614db43649e`. The control
 does not add encryption, cross-identity IPC, AppContainer/LPAC, installed
 LocalSystem, signing, signed-driver, or pre-execution guarantees. Complete signed
 final-artifact license, notice, copyright, and binary-resolution review remains
 a production-release prerequisite.
+
+Checkpoint 2227 exact implementation `cef0d28` passes package push/PR runs
+`32791317044`/`32791340840`. Untouched consolidated artifacts
+`9543648381`/`9543559227` each contain six platform files, seven matching
+SHA-256 rows, and a CycloneDX 1.6 lockfile SBOM with 569 components under exact
+in-stream validation; publication is skipped. This is dependency evidence, not
+complete signed final-artifact license or binary approval. Evidence-head and
+merged-main package evidence remain pending.
