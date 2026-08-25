@@ -225,3 +225,28 @@ invalid inline closure expression before the corrected harness rejected all
 
 Hosted, integration, synchronization, and destination evidence remain pending.
 The complete antivirus goal remains active.
+
+## Implementation-Head Hosted Evidence
+
+The verified tree is unchanged by the non-destructive merge of current
+`origin/main`; exact implementation head
+`7531850d6fa79033f159f799d5c37b55c5ee80b8` passes all five Avorax CI jobs in
+run `32802501559` without retry. Desktop Packages push and draft-PR runs
+`32802476664` and `32802501516` pass contracts, Windows x64 MSI/EXE (including
+administrative extraction without installation), Linux x64 DEB/tar, macOS
+arm64/x64 DMG, and consolidation. Prerelease publication is skipped in both.
+
+Untouched consolidated artifacts `9547257904` and `9547368311` are retained
+below untracked `.verification`; they are not extracted or executed. Their
+outer ZIP sizes/SHA-256 values are respectively
+`131283935`/`95a3f1d2c07672a1cb1947ffda19245f1ad9ce43eab2df0a143b54ae0a3dadff`
+and
+`131433875`/`302bf947c141a7977c821308269d9e16b4956150e51170999c31140a8b323ae3`.
+Bounded in-stream validation proves each contains exactly eight regular root
+entries: six platform artifacts, one seven-row checksum file matching all six
+artifacts plus the SBOM, and one CycloneDX 1.6 lockfile SBOM with 569
+components.
+
+Draft PR `#80` remains unmerged. Evidence-head checks, normal merge, merged-main
+evidence, guarded synchronization, and destination proof remain pending. The
+complete antivirus goal remains active.

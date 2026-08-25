@@ -6029,3 +6029,14 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   token objects, AppContainer/LPAC, installed LocalSystem, signed-driver, and
   pre-execution enforcement remain separate; the complete antivirus goal is
   active.
+- **Implementation-head hosted verified:** exact `7531850` passes Avorax CI
+  `32802501559` without retry and Desktop Packages push/PR runs
+  `32802476664`/`32802501516` across Windows MSI/EXE, Linux DEB/tar, both macOS
+  DMGs, and consolidation; publication is skipped. Untouched artifacts
+  `9547257904`/`9547368311` have SHA-256
+  `95a3f1d2c07672a1cb1947ffda19245f1ad9ce43eab2df0a143b54ae0a3dadff`/
+  `302bf947c141a7977c821308269d9e16b4956150e51170999c31140a8b323ae3`
+  and pass exact six-platform-file, seven-checksum, CycloneDX 1.6/569-component
+  in-stream validation without extraction. Evidence-head checks, normal merge,
+  merged-main evidence, guarded synchronization, and destination proof remain
+  pending.

@@ -10312,3 +10312,22 @@ Updates page showed:
   error before corrected `15/15` rejection.
 - Hosted/package evidence, integration, guarded synchronization, and
   destination proof remain pending. The complete antivirus goal remains active.
+
+## 2026-08-25 continuation checkpoint 2228 implementation-head hosting
+
+- The verified tree remains unchanged after non-destructively merging current
+  `origin/main`. Exact head `7531850d6fa79033f159f799d5c37b55c5ee80b8`
+  passes all five jobs in Avorax CI run `32802501559` without retry.
+- Desktop Packages push/PR runs `32802476664`/`32802501516` pass contracts,
+  Windows MSI/EXE with administrative extraction, Linux DEB/tar, both macOS
+  DMGs, and consolidation. Publication is skipped in both runs.
+- Untouched artifacts `9547257904`/`9547368311` have sizes
+  `131283935`/`131433875` and SHA-256
+  `95a3f1d2c07672a1cb1947ffda19245f1ad9ce43eab2df0a143b54ae0a3dadff`/
+  `302bf947c141a7977c821308269d9e16b4956150e51170999c31140a8b323ae3`.
+  Both pass bounded in-stream validation for exactly eight root entries, six
+  platform artifacts, seven matching checksums, and a CycloneDX 1.6 lockfile
+  SBOM with 569 components, without extraction or execution.
+- Draft PR `#80` remains unmerged. Evidence-head checks, normal merge,
+  merged-main evidence, guarded synchronization, and destination proof remain
+  pending. The complete antivirus goal remains active.
