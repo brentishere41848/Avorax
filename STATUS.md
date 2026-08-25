@@ -6118,6 +6118,45 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   AppContainer/LPAC, installed LocalSystem, signed-driver, or pre-execution
   enforcement. The complete antivirus project remains active.
 
+## Checkpoint 2233 - Authenticode Fixed Launch-Key Buffer
+
+- **Scripted, execution pending:** four Authenticode protocol states now use one
+  fixed key shape, `Zeroizing<[u8; 37]>`, instead of `Zeroizing<String>`. Bytes
+  0..36 hold the canonical lowercase RFC-4122-v4 UUID and byte 36 is a zero
+  overflow guard. Parent generation writes directly into this buffer and pipe
+  delivery remains exactly 36 bytes.
+- **Child ownership contract:** one guarded 37-byte read requires an exact
+  36-byte transfer and unchanged zero guard. The same buffer moves from pending
+  to completed child state; the former UTF-8 `to_owned()` key copy is absent.
+  HMAC code borrows only the validated 36-byte prefix. Key-bearing structs still
+  omit `Debug`.
+- **Evidence scripted:** a benign fixed-buffer/guard/scrub regression, updated
+  zeroization regression, source contract `663`, mandatory verifier step `263`,
+  strict exact-263 report validation, eight adversarial report mutations, and
+  all audit/dependency documents are prepared. No checkpoint-2233 passing result
+  is claimed yet; execution starts only after this complete scripting batch.
+- **Technically limited:** replacing `String` ownership narrows copies and
+  formatting exposure but does not guarantee erasure of compiler, UUID/HMAC,
+  stack/register, allocator, pipe, OS, dump, paging, or forensic copies and does
+  not prevent live same-user/privileged reads. This is not secure erasure,
+  cross-identity authentication, AppContainer/LPAC, installed LocalSystem,
+  signed-driver, or pre-execution enforcement.
+- **Broad local verification:** parsers, formatting, source `663/663`, focused
+  fixed-buffer `1/1`, zeroization `1/1`, key-confirmation `2/2`, pipe `1/1`,
+  Authenticode `81/81` plus 19 intentional ignores, Native `517/517 + 6/6`,
+  Local `536/536`, Guard `248/248 + 249/249`, both locked workspaces, strict
+  Clippy, offline Native, three release builds, PS7/PS5.1 smoke, Flutter analyze,
+  and Flutter `838/838` pass. Locks remain exact. Definitive 263-step, hosted,
+  integration, synchronization, and destination evidence remain pending.
+- **Definitive local verification:** exact `263/263` passes in `461.4s`, with
+  the new fixed-buffer target at `0.2s`, no failed/skipped step, no Defender
+  integration, and neither Rust nor Flutter skipped. Embedded and independent
+  PS5.1 validators pass; `8/8` malformed reports are rejected. The vault and
+  locks remain exact. An extra PS7 validator attempt is blocked by automatic
+  JSON timestamp conversion to `DateTime`; it is not credited and does not
+  affect the PS7/PS5.1 release-smoke passes. Hosted, merge, synchronization, and
+  destination evidence remain pending.
+
 ## Checkpoint 2232 - Authenticode Launch-Key Best-Effort Zeroization
 
 - **Implemented and locally verified:** Native's Windows Authenticode path pins

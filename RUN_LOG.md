@@ -10925,3 +10925,77 @@ Updates page showed:
   one key, and zero pending/temp/reparse. Nothing was installed, released,
   published, executed as candidate content, or changed in Defender. Checkpoint
   2232 is closed; the complete antivirus goal remains active.
+
+## 2026-08-25 - Checkpoint 2233 Authenticode Fixed Launch-Key Buffer Scripting
+
+- Audited the checkpoint-2232 launch-key lifetime and found two avoidable owned
+  forms: displayable `String` storage in four protocol states and a second owned
+  child `String` copy after the bounded pipe read. The wire key itself remains
+  the same canonical 36-byte lowercase random UUID.
+- Scripted one shared `AuthenticodeLaunchKey` type,
+  `Zeroizing<[u8; 37]>`: 36 protocol bytes plus one zero overflow guard. The
+  parent generates directly into that fixed buffer and writes exactly 36 bytes.
+  The child reads at most 37, requires exactly 36 transferred bytes and an
+  unchanged guard, then moves the same buffer through pending and completed
+  states without `to_owned()` or another owned key copy.
+- Scripted canonical guard/UTF-8/RFC-4122-v4 validation before borrowed HMAC use,
+  explicit all-zero and changed-guard regressions, source contract 663, one new
+  mandatory verifier target, exact 263-step validation, and eight adversarial
+  report mutations. Only benign protocol bytes are used; fixtures are not
+  executed as candidate content.
+- Updated verifier scope, report validation, control matrix, blockers, threat
+  model, dependency inventory, and checkpoint report. The residual boundary is
+  explicit: fixed Avorax-owned buffers do not erase UUID/HMAC internals, stack
+  or register spills, OS/pipe copies, paging, dumps, or live same-user reads and
+  do not prove secure erasure, cross-identity IPC, driver, or pre-execution
+  protection.
+- No checkpoint-2233 parser, formatter, compiler, test, verifier, validator, or
+  hosted result is claimed during this scripting phase. No dependency, feature,
+  lockfile, service, installer, release, publication, or vault change is made.
+
+## 2026-08-25 - Checkpoint 2233 Broad Local Evidence
+
+- Python and all three PowerShell parsers pass. Rust formatting is exact after
+  applying four formatter-only changes. The dependency-free source runner passes
+  `663/663`; its first execution found five stale historical text anchors, which
+  were updated to the intended fixed-buffer names and then passed.
+- Focused fixed-buffer `1/1`, zeroization `1/1`, key-confirmation `2/2`, and
+  pipe-delivery `1/1` pass. Complete Authenticode passes `81/81` with 19
+  intentional isolated child entrypoints. Native passes `517/517` plus compiler
+  `6/6`; Local passes `536/536`; Guard passes `248/248` and all-features
+  `249/249`. Both serial locked root workspace modes pass.
+- Strict Native/Local/Guard Clippy, standalone locked/offline Native, Local/
+  Guard/Update release builds, and corrected absolute-path PS7 plus PS5.1
+  isolated Authenticode smokes pass. An initial relative-binary smoke invocation
+  and one incorrect assumed PS7 executable path failed before helper execution;
+  neither is credited.
+- Flutter analyze reports no issues and Flutter passes `838/838`. Root, Native,
+  and Flutter lockfiles have no diff; Flutter remains raw SHA-256
+  `4de19695f9207273746341ca2221541b5b86d9f72af83727afca78541e177694`
+  and blob `51fa085a41168aa1deadace8b5395614db43649e`.
+- The definitive 263-step verifier, strict validators, adversarial reports,
+  hosted exact-head evidence, integration, synchronization, and destination
+  proof remain pending. No candidate content, install, service/driver start,
+  Defender change, release, publication, or protected-vault access occurred.
+
+## 2026-08-25 - Checkpoint 2233 Definitive Local Evidence
+
+- The no-skip/no-Defender verifier runs from
+  `2026-08-25T15:09:40.0697976Z` through
+  `2026-08-25T15:17:21.5029589Z` and passes exact `263/263`, zero failed or
+  skipped steps, in `461.4s`. The new fixed-buffer target passes in `0.2s`.
+- The verifier's embedded Windows PowerShell 5.1 strict validator and a separate
+  PS5.1 invocation both accept the report. The scripted adversarial harness
+  rejects `8/8` mutations: failed status, Defender inclusion, Rust skip, stale
+  262-step count, renamed mandatory target, removed verified scope, removed
+  technical-limit scope, and a failed final step.
+- An extra non-required PowerShell 7 validator invocation fails visibly before
+  evidence evaluation because that host auto-converts ISO JSON timestamps to
+  `DateTime` while the current validator contract requires strings. It is not
+  credited and remains a tooling-host compatibility limitation; PS7 and PS5.1
+  release Authenticode smokes themselves both pass.
+- Root/Native/Flutter locks remain unchanged, no test process remains, and the
+  protected vault remains exactly 16,072 files, zero directories, 4,522,733
+  bytes, 5,357 each `.avoraxq`/`.json`/`.auth`, one `.metadata_auth_key`, and
+  zero pending/temp/reparse. Hosted exact-head evidence, integration,
+  synchronization, and destination proof remain pending.

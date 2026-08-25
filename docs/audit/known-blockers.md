@@ -2747,3 +2747,42 @@ enforcement, or pre-execution blocking is claimed.
 - **Safety boundary unchanged:** only protocol bytes and benign fixtures may be
   used; no candidate content is executed, no live malware is retained, Defender
   is not weakened, and nothing is installed, released, or published.
+
+## Checkpoint 2233 Scripted State And Residual Limits
+
+- **Execution remains pending:** the fixed-key implementation, benign tests,
+  source contract 663, verifier step 263, validator, adversarial script, and
+  documentation are scripted as one batch. No parser, format, compile, test,
+  verifier, hosted, integration, synchronization, or destination pass is yet
+  claimed for checkpoint 2233.
+- **Owned-copy reduction:** all four key owners use
+  `Zeroizing<[u8; 37]>` rather than `Zeroizing<String>`. The final byte is a zero
+  overflow guard; parent writes exactly 36 bytes and child accepts exactly 36,
+  then moves the same fixed buffer without an owned `String` copy.
+- **Residual memory blocker:** the key must remain live while handshake and
+  response HMACs run. Fixed ownership cannot guarantee cleanup of compiler or
+  UUID/HMAC temporaries, stack/register spills, allocator/OS/pipe copies, dumps,
+  paging, or forensic remnants and cannot prevent same-user or privileged live
+  memory access.
+- **Platform blocker unchanged:** this does not provide secure erasure,
+  encryption, cross-identity authentication, AppContainer/LPAC, installed
+  LocalSystem evidence, production signing, signed-driver behavior, or
+  pre-execution enforcement. Those require separate privileged/test-host and
+  signing prerequisites; Windows security is not weakened to simulate them.
+- **Local execution blocker closed:** fixed-buffer, zeroization, HMAC, pipe,
+  complete Authenticode, full Native/Local/Guard, both workspaces, lint,
+  offline/release/PS7/PS5.1 smoke, Flutter `838/838`, and source `663/663` pass.
+  The `Zeroizing<[u8; 37]>` overflow guard is therefore locally exercised and
+  the owned `String` copy is absent by contract. Definitive exact-263 evidence,
+  hosted CI/packages, merge, synchronization, and destination proof remain
+  open; no pre-execution or secure-erasure claim is made meanwhile.
+- **Definitive local blocker closed:** `263/263`, both required PS5.1 strict
+  validations, and `8/8` adversarial rejections pass with exact locks and vault.
+  Hosted exact-head, merge, synchronization, and destination evidence remain
+  open.
+- **Optional PS7 validator-host limitation:** PowerShell 7 auto-converts ISO JSON
+  timestamp strings to `DateTime`, so the current strict validator rejects that
+  host before evidence evaluation. This failure is visible and uncredited;
+  Windows PowerShell 5.1 is the verified validator host. It does not affect the
+  passing PS7 release smoke, fixed `Zeroizing<[u8; 37]>` overflow guard, removed
+  owned `String` copy, or the unchanged secure-erasure/pre-execution limits.

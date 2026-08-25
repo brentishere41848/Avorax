@@ -4689,3 +4689,30 @@ passed and published the prerelease at commit
 | Zeroization fail-visible regression | Prove explicit scrubbing destroys the usable key evidence instead of yielding a valid protocol result | Verified and integrated | A benign pure regression explicitly zeroizes the key and read buffer, requires empty/all-zero storage, and requires prior handshake-HMAC and response-MAC evidence to fail. Focused `1/1`, source `662/662`, local `262/262` in `459.7s`, destination `262/262` in `555.3s`, strict validators, and `8/8` local plus `8/8` destination malformed-report rejections pass. No candidate content is read or executed. |
 | Residual memory boundary | Keep best-effort owned-buffer cleanup distinct from secret isolation or secure erasure | Technically limited | `zeroize` cannot guarantee removal of compiler temporaries, HMAC internals, allocator/OS copies, paging, process dumps, or forensic remnants, and it cannot stop same-user or privileged memory reads while the key is live. This is not secure erasure, durable secret storage, cross-identity IPC, AppContainer/LPAC, installed LocalSystem, signed-driver, or pre-execution enforcement. |
 | Checkpoint 2232 package evidence | Bind platform package and dependency evidence to exact implementation, evidence, and merged-main heads without publication | Verified and integrated | Exact implementation `eac61e6`, evidence `183d1d6`, and merge `6de2a8f` pass hosted CI/packages. Their consolidated artifacts match GitHub SHA-256 and pass exact in-stream eight-entry, six-platform-file, seven-checksum, and CycloneDX 1.6/569-component validation without extraction or execution. Publication jobs are skipped and no release is created. |
+
+## Checkpoint 2233 Engine-Control Matrix Addendum
+
+| Control / engine | Responsibility | Status | Evidence and limits |
+|---|---|---|---|
+| Authenticode fixed launch-key ownership | Keep each owned protocol key in one non-displayable, fixed, best-effort-zeroizing shape | Scripted; verification pending | Parent, authenticated response evidence, pending child, and completed child use `AuthenticodeLaunchKey = Zeroizing<[u8; 37]>` instead of `Zeroizing<String>`. The parent encodes directly into bytes 0..36; byte 36 is a zero overflow guard. The wire contract remains exactly 36 bytes. No passing result is claimed before execution. |
+| Exact child key transfer and move | Reject truncated/extended delivery and avoid a second owned child key copy | Scripted; verification pending | Child reads at most 37 bytes, requires exactly 36 transferred bytes and an unchanged overflow guard, validates canonical UTF-8/RFC-4122-v4 form, and moves the same buffer through states without `String::to_owned()`. HMAC receives only a borrowed validated prefix. |
+| Fixed-buffer fail-visible regressions | Prove generation, guard, transfer shape, canonical validation, and scrub failure behavior with benign data | Scripted; verification pending | New pure regression requires length 37, a zero guard, canonical nonzero 36-byte key, changed-guard rejection, all-zero scrub, and post-scrub rejection. Updated source contract 663 and mandatory exact-263 verifier/report checks are scripted; no fixture is executed as candidate content. |
+| Residual fixed-buffer memory boundary | Keep reduced ownership/copy surface distinct from secure erasure or endpoint isolation | Technically limited | Removing owned `String` keys does not erase UUID/HMAC internals, compiler temporaries, stack/register spills, allocator/OS/pipe copies, dumps, paging, or forensic remnants and cannot stop live same-user or privileged reads. This is not encryption, cross-identity IPC, AppContainer/LPAC, installed LocalSystem, signed-driver, or pre-execution enforcement. |
+
+Checkpoint 2233 broad local execution now passes source `663/663`, focused
+fixed-buffer `1/1`, complete Authenticode `81/81` with 19 intentional ignores,
+Native `517/517 + 6/6`, Local `536/536`, Guard `248/248 + 249/249`, both locked
+workspaces, strict lint/offline/release/two-host smoke, and Flutter `838/838`.
+The first three rows remain **locally verified; definitive/integration pending**
+until exact 263-step, hosted, merge, synchronization, and destination evidence
+passes. The `Zeroizing<[u8; 37]>` overflow guard and removed owned `String` copy
+do not change the technically limited secure-erasure/pre-execution boundary.
+
+Definitive local status is now **verified**: exact `263/263` passes in `461.4s`,
+the mandatory fixed-buffer target passes in `0.2s`, embedded/independent PS5.1
+strict validation passes, and `8/8` adversarial reports are rejected. Hosted,
+merge, synchronization, and destination integration remain pending. An optional
+PS7 report-validator invocation is technically limited by automatic JSON ISO
+timestamp-to-`DateTime` conversion; this does not affect the passing PS7/PS5.1
+release Authenticode smokes or the `Zeroizing<[u8; 37]>` overflow guard and
+removed owned `String` evidence, and makes no pre-execution claim.
