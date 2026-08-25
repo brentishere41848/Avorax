@@ -1330,3 +1330,14 @@ limit adds no package and does not change the existing `zeroize 1.9.0`,
 `Zeroizing<[u8; 37]>`, overflow guard, removed owned `String`, or
 pre-execution/secure-erasure boundaries. Hosted SBOM/package and final
 signed-artifact review remain pending.
+
+Checkpoint-2233 exact implementation-head package evidence now passes in push
+run `32865302082` and PR run `32865480497` for exact `00e9f3c`. Both runs build
+all six Windows/Linux/macOS release files, generate the pinned lockfile
+CycloneDX 1.6 SBOM with exactly 569 components, checksum all seven targets, and
+skip publication. Untouched consolidated artifacts `9570689038` and
+`9570466353` match GitHub/download SHA-256 and pass bounded in-stream inventory,
+checksum, and SBOM validation without extraction or execution. This is package
+and source-lock evidence, not final signed-binary license/notice/copyright
+approval; evidence-head and merged-main package evidence plus final production
+artifact review remain pending. No dependency or lock changed.

@@ -4716,3 +4716,11 @@ PS7 report-validator invocation is technically limited by automatic JSON ISO
 timestamp-to-`DateTime` conversion; this does not affect the passing PS7/PS5.1
 release Authenticode smokes or the `Zeroizing<[u8; 37]>` overflow guard and
 removed owned `String` evidence, and makes no pre-execution claim.
+
+Exact implementation-head status is now **hosted verified**: exact `00e9f3c`
+passes Avorax CI `32865480443` and Desktop Packages push/PR
+`32865302082`/`32865480497`. Both publication jobs are skipped. Consolidated
+artifacts `9570689038`/`9570466353` match GitHub SHA-256 and pass bounded
+non-extracting exact 8-entry/6-release/7-checksum/CycloneDX 1.6/569-component
+validation. Evidence-head, merge, synchronization, and destination integration
+remain pending; the fixed-buffer memory and pre-execution limits are unchanged.

@@ -2786,3 +2786,12 @@ enforcement, or pre-execution blocking is claimed.
   Windows PowerShell 5.1 is the verified validator host. It does not affect the
   passing PS7 release smoke, fixed `Zeroizing<[u8; 37]>` overflow guard, removed
   owned `String` copy, or the unchanged secure-erasure/pre-execution limits.
+- **Implementation-head hosting blocker closed:** exact `00e9f3c` passes CI
+  `32865480443` and package push/PR `32865302082`/`32865480497`; both untouched
+  consolidated ZIPs match GitHub digests and pass exact non-extracting package,
+  checksum, and 569-component SBOM validation. Publication is skipped.
+- **Remaining checkpoint integration work:** evidence-head checks, normal merge,
+  merged-main evidence, guarded synchronization, and independent destination
+  verification remain open. Production signing, installed elevated/service
+  behavior, kernel/pre-execution enforcement, and secure erasure remain blocked
+  by their existing external prerequisites and are not claimed.

@@ -2760,3 +2760,13 @@ and fails visibly before evidence evaluation; it is not credited. PS7/PS5.1
 release smokes both pass, and this tooling limit changes neither the
 `Zeroizing<[u8; 37]>` overflow-guard/removed `String` control nor its
 secure-erasure, cross-identity, signed-driver, and pre-execution limits.
+
+**Exact implementation-head hosted evidence:** exact `00e9f3c` passes all
+required jobs in CI `32865480443` and package push/PR runs
+`32865302082`/`32865480497`. Publication is skipped. Consolidated artifacts
+`9570689038`/`9570466353` match GitHub SHA-256 and, without extraction or
+execution, pass exact eight-root-entry, six-release-file, seven-checksum, and
+CycloneDX 1.6/569-component validation. This verifies hosted build/package
+compatibility at the implementation head; it does not strengthen the stated
+memory, cross-identity, signed-driver, installed-host, or pre-execution model.
+Evidence-head, merge, synchronization, and destination proof remain pending.

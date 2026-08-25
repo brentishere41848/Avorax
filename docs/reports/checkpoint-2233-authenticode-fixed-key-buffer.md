@@ -119,3 +119,26 @@ and destination verification remain pending. The verified
 `Zeroizing<[u8; 37]>` overflow guard and removed owned `String` copy still do
 not prove secure erasure, cross-identity authentication, signed-driver behavior,
 or pre-execution enforcement.
+
+## Exact Implementation-Head Hosted Evidence
+
+Implementation commit `00e9f3c3f0f03c5bf4596c7bdc8bad1ef091ddd6` was pushed
+only to the checkpoint branch and is PR `#85`'s exact head. Avorax CI run
+`32865480443` passes all five jobs: branding/copy, Flutter client/protocol,
+security/protection/performance, Rust Local Core/Native/Guard/Update/backend,
+and Unix quarantine permissions.
+
+Desktop Packages push run `32865302082` and PR run `32865480497` pass package
+contracts, Windows x64 MSI/EXE, Linux x64 DEB/tar, macOS x64/arm64 DMGs, and
+consolidation/checksums. Publication jobs `97866405363` and `97864507631` are
+explicitly skipped. No release or prerelease was created.
+
+Consolidated artifacts `9570689038` and `9570466353` are 131,516,444 and
+131,671,922 bytes. Their downloaded SHA-256 values exactly match GitHub digests
+`10ed03fd553b98687955b63dc58bc6b25795e231918447ad09682eeb63809ed5` and
+`b0d96529086e4422eba504d096990d090c7acda7e44ab2b434b46b50d7797cf7`.
+Without extracting or executing either artifact, bounded in-stream validation
+passes exactly eight unique regular root entries, six platform release files,
+seven checksum targets with matching internal SHA-256, clean ZIP reads, and one
+CycloneDX 1.6 lockfile SBOM with exactly 569 components. Evidence-head hosted
+checks, normal merge, synchronization, and destination proof remain pending.

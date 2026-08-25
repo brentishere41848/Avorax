@@ -6156,6 +6156,13 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   JSON timestamp conversion to `DateTime`; it is not credited and does not
   affect the PS7/PS5.1 release-smoke passes. Hosted, merge, synchronization, and
   destination evidence remain pending.
+- **Exact implementation-head hosted verified:** exact `00e9f3c` is PR `#85`'s
+  head. Avorax CI `32865480443` and package push/PR runs
+  `32865302082`/`32865480497` pass every required job; publication is skipped.
+  Consolidated artifacts `9570689038`/`9570466353` match GitHub SHA-256 and pass
+  bounded, non-extracting validation of exactly eight root entries, six release
+  files, seven matching checksums, and a CycloneDX 1.6/569-component SBOM.
+  Evidence-head, merge, synchronization, and destination proof remain pending.
 
 ## Checkpoint 2232 - Authenticode Launch-Key Best-Effort Zeroization
 
