@@ -2685,6 +2685,9 @@ with 19 intentional ignored child entrypoints plus compiler `6/6`; Local passes
 offline/release/two-host trust smoke, Flutter analyze and `838/838`, and source
 contracts `662/662` pass. The exact no-skip/no-Defender verifier and both strict
 validators pass `262/262` in `459.7s`, and `8/8` malformed reports are rejected.
-Locks and the protected-vault invariant remain exact. Hosted, integration,
-synchronization, and destination evidence remain pending. No candidate content
-or live malware is used.
+Locks and the protected-vault invariant remain exact. Exact implementation
+`eac61e6` passes all five CI jobs and both Windows/Linux/macOS package runs;
+their consolidated artifacts pass exact digest and in-stream inventory/SBOM
+validation with publication skipped. Evidence-head, integration,
+synchronization, and destination proof remain pending. No candidate content or
+live malware is used.

@@ -1279,5 +1279,10 @@ the definitive dependency gate inside the exact `262/262` verifier. Root,
 standalone Native, and Flutter lock blobs are
 `80a97940019c722f29e6852504b430cf97ca906e`,
 `876c6627fe0584976778ad26e88149e9e2c51be1`, and
-`51fa085a41168aa1deadace8b5395614db43649e`. Hosted package/SBOM, merged-main,
-and final signed-artifact license/notice review remain pending.
+`51fa085a41168aa1deadace8b5395614db43649e`. Exact implementation-head package
+runs `32850194350` and `32850233494` build all six Windows/Linux/macOS release
+files and consolidate a CycloneDX 1.6 lockfile SBOM with exactly 569 components.
+Both downloaded consolidated ZIP digests match GitHub and pass bounded in-stream
+inventory, checksum, and SBOM validation without extraction or execution.
+Publication is skipped. Evidence-head, merged-main, and final signed-artifact
+license/notice review remain pending.

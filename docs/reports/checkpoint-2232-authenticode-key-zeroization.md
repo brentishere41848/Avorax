@@ -100,6 +100,31 @@ temporary, or reparse entries. Nothing was installed, released, published,
 executed as candidate content, or changed in Defender. Exact-head hosted,
 integration, synchronization, and destination evidence remain pending.
 
+## Exact Implementation-Head Hosted Evidence
+
+Implementation commit `eac61e6706aa7e56a9349ef78d31d588e7aea2ca` was pushed only
+to the checkpoint branch and is PR `#84`'s exact head. Avorax CI run
+`32850233405` passes all five jobs: branding/copy, Flutter client/protocol,
+security/protection/performance, Rust Local Core/Native/Guard/Update/backend,
+and Unix quarantine permissions.
+
+Desktop Packages push run `32850194350` and PR run `32850233494` pass package
+contracts, Windows x64 MSI/EXE, Linux x64 DEB/tar, macOS x64/arm64 DMGs, and
+consolidation/checksums. Publication jobs `97813669850` and `97815214301` are
+explicitly skipped. An immediately superseded duplicate push run `32850193325`
+was canceled by workflow concurrency before meaningful execution and is not
+credited. No release or prerelease was created.
+
+Consolidated artifacts `9564478764` and `9564663349` are 131,654,335 and
+131,510,762 bytes. Their downloaded SHA-256 values exactly match GitHub digests
+`4695b44bbd25bc66207ecc8198b3dc9a868a445023b6427db496f86e67c18447` and
+`897af2445d84b8ab18b6893b4e527ecddb05d7f716e7d2aa08acd4020209427e`.
+Without extracting or executing either artifact, in-stream validation passes
+exactly eight unique regular root entries, six platform release files, seven
+checksum targets with matching internal SHA-256, clean ZIP reads, and one
+CycloneDX 1.6 lockfile SBOM with exactly 569 components. Evidence-head hosted
+checks, normal merge, synchronization, and destination proof remain pending.
+
 ## Safety
 
 The regression uses protocol bytes and fixed benign UUID keys only. It does not

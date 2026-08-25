@@ -6149,6 +6149,15 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   or live same-user/privileged reads. It is not durable secret storage,
   cross-identity isolation, AppContainer/LPAC, installed LocalSystem, driver, or
   pre-execution enforcement. The full antivirus goal remains active.
+- **Exact implementation-head hosted verified:** commit `eac61e6` is PR `#84`'s
+  exact head. CI `32850233405` and package push/PR runs
+  `32850194350`/`32850233494` pass all mandatory jobs for Windows MSI/EXE,
+  Linux DEB/tar, both macOS DMGs, consolidation, checksums, and lockfile SBOM;
+  publication is skipped. Consolidated artifacts `9564478764`/`9564663349`
+  match GitHub digests and pass exact in-stream eight-entry, six-platform-file,
+  seven-checksum, and CycloneDX 1.6/569-component validation without extraction
+  or execution. Evidence-head, merge, synchronization, and destination proof
+  remain pending.
 
 ## Checkpoint 2230 - Pipe-Delivered Authenticode Launch Key
 

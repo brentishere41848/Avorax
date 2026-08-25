@@ -10531,6 +10531,24 @@ Updates page showed:
   Nothing was installed, released, published, executed as candidate content, or
   changed in Defender. Hosted/merge/sync/destination evidence remains pending.
 
+## Checkpoint 2232 Exact Implementation-Head Hosted Evidence
+
+- Implementation `eac61e6706aa7e56a9349ef78d31d588e7aea2ca` was pushed only
+  to the checkpoint branch and opened as PR `#84`. Exact-head Avorax CI
+  `32850233405` passes all five jobs.
+- Desktop Packages push `32850194350` and PR `32850233494` pass contracts,
+  Windows MSI/EXE, Linux DEB/tar, macOS x64/arm64 DMGs, and consolidation.
+  Publication jobs `97813669850`/`97815214301` are skipped. Superseded duplicate
+  run `32850193325` was canceled immediately by concurrency and is not credited.
+- Consolidated artifacts `9564478764` and `9564663349` are 131,654,335 and
+  131,510,762 bytes. Downloaded SHA-256 exactly matches GitHub at
+  `4695b44bbd25bc66207ecc8198b3dc9a868a445023b6427db496f86e67c18447` and
+  `897af2445d84b8ab18b6893b4e527ecddb05d7f716e7d2aa08acd4020209427e`.
+  In-stream validation, without extraction or execution, passes exact eight
+  root entries, six release files, seven checksums, and CycloneDX 1.6 with 569
+  components. Evidence-head checks, merge, synchronization, and destination
+  verification remain pending.
+
 ## 2026-08-25 - Checkpoint 2229 implementation-head hosting
 
 - Exact implementation head `eaa4ba31bf942b570eb7fb55304831c9a0c30ba4`
