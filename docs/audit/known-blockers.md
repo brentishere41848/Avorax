@@ -2705,3 +2705,29 @@ enforcement, or pre-execution blocking is claimed.
   rejections pass. The package source suite skips three Windows symlink-positive
   fixtures because optional symlink privilege is unavailable; no execution of
   those cases is claimed. Hosted, integration, sync, and destination work remains.
+
+## Checkpoint 2231 Pending Evidence And Residual Limits
+
+- **Execution pending:** the HMAC-SHA-256 launch-key confirmation implementation,
+  benign pure/context regressions, real restricted wrong-key child, source
+  contract 661, exact 261-step verifier/validator, and documentation are
+  scripted. No parser, formatter, compiler, test, smoke, definitive verifier,
+  hosted CI/package, merge, synchronization, or destination result is yet
+  credited for checkpoint 2231.
+- **Same-user key boundary remains:** key confirmation proves possession only by
+  data arriving on the already PID/token-bound same-user pipe at that point.
+  The key remains in parent/child memory and crosses the pipe. Same-user memory
+  read, privileged injection, pipe observation, and handle duplication may
+  recover it or subvert an endpoint.
+- **Domain separation, not independent keys:** handshake confirmation and
+  response binding use the same random per-launch key with distinct fixed HMAC
+  domains. This is deliberate and dependency-free, but it is not encryption,
+  cross-identity authentication, durable secret storage, or durable token-object
+  identity.
+- **Platform enforcement remains blocked:** this checkpoint does not provide
+  AppContainer/LPAC, installed LocalSystem E2E, production signing, a signed
+  driver, or demonstrated pre-execution blocking. Those need separate design,
+  credentials, disposable elevated hosts, and driver/code-signing evidence.
+- **No malware or release claim:** tests use protocol bytes and benign child
+  fixtures only. No candidate content is executed; Defender is not weakened;
+  nothing is installed, released, or published.

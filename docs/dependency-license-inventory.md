@@ -1238,3 +1238,13 @@ suite passes 21 tests and explicitly skips three Windows symlink-positive cases
 that require optional privileges; no dependency is installed to force those
 fixtures. Hosted package/SBOM and complete signed final-artifact review remain
 release prerequisites.
+
+Checkpoint 2231 replaces the public fixed handshake ACK with HMAC-SHA-256 key
+confirmation using the already pinned `hmac 0.12.1` and `sha2 0.10.9` crates,
+the existing canonical UUID key, and existing pipe/process evidence. It adds no
+crate, package, feature, or lockfile change, executable, script host, network
+source, service, driver, or license obligation. The handshake and response MACs
+reuse one per-launch key under distinct fixed domains; this is documented as
+same-user point-in-time possession evidence, not encryption, cross-identity
+authentication, durable secret storage, signed-driver, or pre-execution proof.
+No checkpoint-2231 dependency or lock result is claimed before execution.

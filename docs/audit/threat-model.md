@@ -2616,3 +2616,33 @@ the new key-delivery regression in `0.2s`; strict PS5 validation passes and
 `16/16` adversarial report mutations are rejected. This execution evidence does
 not change the same-user memory/pipe, cross-identity, driver, or pre-execution
 limits above. Hosted and destination evidence remains pending.
+
+## Checkpoint 2231 - Authenticode Launch-Key Confirmation HMAC
+
+**Threat:** The checkpoint-2230 fixed one-byte ACK proved protocol ordering but
+did not cryptographically prove that the connected child received the exact
+per-launch key. A process able to reach the already authenticated same-user
+pipe could emit that public byte without possessing the key.
+
+**Scripted control:** The fixed ACK is removed. After exact parent PID, child
+PID, pipe security, connected-client token, launch-token, and child-token checks,
+the child reads the canonical 36-byte key and computes domain-separated
+HMAC-SHA-256 over the exact little-endian canonical pipe-name byte length, every
+canonical pipe-name byte, and the exact little-endian parent and child PIDs.
+The parent reads at most 33 bytes, requires exactly 32, and uses constant-time
+verification under its retained key and exact retained context before repeating
+launch/child token stability and allowing request or candidate work. Empty,
+truncated, extended, mutated, wrong-key, wrong-pipe, wrong-PID, zero-PID, and
+equal-PID evidence is fail-visible. A real restricted benign wrong-key child is
+scripted to terminate and reap through existing bounded cleanup. No live malware
+or candidate fixture is executed.
+
+**Residual risk:** Handshake key confirmation and response MAC binding use the
+same per-launch key with distinct fixed HMAC-SHA-256 domains. This is
+point-in-time possession evidence from the already PID/token-bound same-user
+pipe, not encryption, cross-identity authentication, durable secret storage,
+durable token-object identity, AppContainer/LPAC, installed LocalSystem,
+signed-driver, or pre-execution enforcement. Same-user memory read, sufficiently
+privileged injection, pipe observation, and handle duplication can still expose
+the key or subvert an endpoint. No checkpoint-2231 result is verified until the
+scripted focused and full execution phase passes.

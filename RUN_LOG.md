@@ -10704,3 +10704,58 @@ Updates page showed:
   one metadata key, and zero pending/temp/reparse. Nothing was installed,
   released, published, executed as candidate content, or changed in Defender.
   Checkpoint 2230 is closed; the complete antivirus goal remains active.
+
+## Checkpoint 2231 Scripting - Authenticode Launch-Key Confirmation HMAC
+
+- Created `agent/checkpoint-2231-authenticode-key-confirmation-hmac` from the
+  checkpoint-2230 closure and merged `origin/main` normally. `.verification`
+  remains untracked and untouched.
+- Audited the duplex launch-key flow and confirmed the remaining fixed one-byte
+  ACK proved ordering only. Production now removes that marker and uses an exact
+  32-byte domain-separated HMAC-SHA-256 over canonical pipe-name length/name and
+  exact parent/child PIDs under the canonical pipe-delivered key. Parent
+  verification is constant-time and precedes post-confirmation token stability.
+- Scripted pure malformed/context substitution coverage and a real restricted
+  benign wrong-key child that must be terminated and reaped. Tests use only
+  protocol bytes and fixed benign UUIDs; no candidate content is executed.
+- Scripted source contract 661, one mandatory verifier target, exact 261-step
+  independent validator requirements, and matrix/blocker/threat/dependency/
+  status/report documentation. No checkpoint-2231 formatter, parser, compiler,
+  test, smoke, verifier, hosted, merge, synchronization, or destination result
+  is claimed during this scripting phase.
+- The residual boundary remains explicit: HMAC-SHA-256 confirmation proves
+  point-in-time possession on the already PID/token-bound same-user pipe. It is
+  not encryption, cross-identity authentication, durable secret storage,
+  AppContainer/LPAC, installed LocalSystem, signed-driver, or pre-execution
+  enforcement. The complete antivirus goal remains active.
+
+## Checkpoint 2231 Focused And Full Local Execution
+
+- Corrected PS7/PS5 parsers, format/diff checks, and source contracts `661/661`
+  pass. One stale checkpoint-2230 assertion and one outer-shell-expanded PS5
+  wrapper failed visibly before their corrected reruns and are not credited.
+- New HMAC targets pass `2/2`; adjacent pipe-delivery, PID, child-token, and
+  response-MAC targets pass. Native passes `515/19 ignored + 6/6`, Local Core
+  `536/536`, Guard `248/248 + 249/249`, and the locked standard workspace passes.
+- A first parallel locked all-feature run rejected a zero-byte child pipe close
+  in the existing launch-token stability test. The exact test passed ten real
+  isolated executions, and the full serial locked all-feature rerun passed. The
+  original failure is retained and uncredited rather than hidden by the rerun.
+- Strict Native/Local/Guard Clippy, standalone locked/offline Native, all three
+  release builds, PS7/PS5 release Authenticode smoke, Flutter analyze, and
+  Flutter `838/838` pass. No dependency or lockfile was changed.
+
+## Checkpoint 2231 Definitive Local Evidence
+
+- The no-skip/no-Defender verifier ran from `2026-08-25T10:19:35.3708813Z`
+  through `2026-08-25T10:27:21.7980983Z` and passed exact `261/261`, zero
+  failed/skipped, in `466.4s`. The new HMAC target passed in `0.3s`; embedded
+  and independent PS5 strict validation pass.
+- Eight isolated report mutations are rejected `8/8`, covering failed status,
+  Defender enablement, Rust skip, stale count, renamed mandatory target, missing
+  verified/technical-limit HMAC scopes, and failed final step.
+- Root/Native/Flutter lock blobs remain exact. No checkpoint process remains.
+  The protected vault remains 16,072 files, zero directories, 4,522,733 bytes,
+  5,357 each payload/metadata/auth, one key, and zero pending/temp/reparse.
+  Nothing was installed, released, published, executed as candidate content, or
+  changed in Defender. Exact-head hosted and integration evidence remain pending.
