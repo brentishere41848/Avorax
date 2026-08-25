@@ -10007,3 +10007,134 @@ Updates page showed:
   exact current `x64.msi`/`x64-setup.exe` names then pass. The failed check is
   retained and uncredited. Draft PR `#78` remains exact; evidence-head checks,
   merge, merged-main evidence, synchronization, and destination proof remain.
+
+## 2026-08-24 continuation checkpoint 2226 integration closure
+
+- Evidence `bacf1ccb8f0f47020ee0798522a01f6a3ca0ffca` passes CI
+  `32782113876`. Package run `32782113878` passes on failed-job-only attempt 2:
+  attempt 1 failed only macOS arm64 when hosted Flutter tried a darwin-x64
+  `impellerc`; the unchanged retry passed. The failed attempt is uncredited.
+- Untouched evidence artifact `9540950441` has SHA-256
+  `14e45afec7639b698cc3b0d6733bf43e633c0a970731a5cf5776783226dbadcf`
+  and passes exact six-platform-file, seven-checksum, and CycloneDX 1.6/569-
+  component in-stream validation. Publication is skipped.
+- PR `#78` was made ready and head-locked, then normally merged as
+  `bab872d50daf5bbcc775a53e3c0788c51770ca33`. Merged-main CI
+  `32784751719` and packages `32784751652` pass. Untouched artifact
+  `9541445838` has SHA-256
+  `c10e9e0cd43798431d9b398fea1bbec8b7d78b12e8b872f49f0598e2cea0ba40`
+  and passes the same exact stream checks; publication is skipped.
+- The merge changed exactly 12 paths from parent `5792c22f` with zero deletes.
+  Eleven existing destination paths matched the parent and the new report was
+  absent. Exact atomic synchronization to `C:\Users\Brent\Documents\Avorax-main`
+  preserves all unrelated files; normalized blobs and raw hashes match source.
+- Destination parsers `2/2`, contracts `656/656`, focused `3/3`, complete
+  Authenticode `70/15`, Native `506/15` plus compiler `6/6`, Local `536/536`,
+  Guard `248/248`, both locked workspaces, strict Clippy, offline Native,
+  formatting, release/two-host smoke, Flutter analyze, and Flutter `838/838`
+  pass. Definitive verification ran from `2026-08-24T22:54:38.3164086Z`
+  through `2026-08-24T23:01:56.7274772Z` and passed exact `256/256`, zero
+  failed/skipped, in `438.4s`; target `0.3s` and both validators pass.
+- Support failures remain retained and uncredited: stale Windows artifact names,
+  a JavaScript/PowerShell parse failure, a pre-execution command-policy sync
+  rejection, and a destination Cargo helper's accidental automatic `$args`
+  false positive. Corrected exact wrappers ran and passed; none changed product
+  behavior, copied files, or counts as evidence.
+- Closure-document validation first invoked `unittest` and discovered zero
+  tests, then found no optional `pytest` in either available Python runtime;
+  neither attempt is evidence. The no-malware gate also correctly refused an
+  ambient `PATH` Python. The dependency-free source-contract runner passes
+  `656/656`; explicit bundled-Python no-malware, branding, product-copy,
+  formatting, and diff gates pass.
+- Lock blobs and the read-only protected vault remain exact at 16,072 files,
+  zero directories, 4,522,733 bytes, 5,357 each payload/metadata/auth, one key,
+  and zero pending. `.verification` remains untracked/unstaged. Nothing was
+  installed, executed as candidate content, released, or published. Checkpoint
+  2226 is closed; its explicit limits and the overall antivirus goal remain.
+
+## 2026-08-25 continuation checkpoint 2227 scripting
+
+- Started `agent/checkpoint-2227-authenticode-response-client-reauthentication`
+  from local checkpoint-2226 closure `caf6cca`.
+- Scripted response-boundary binding between `GetProcessId` on the exact retained
+  child handle and `GetNamedPipeClientProcessId` on the still-connected retained
+  handshake pipe, followed by fresh `ImpersonateNamedPipeClient` validation.
+- The second token snapshot repeats exact type/level, launch SID, logon session,
+  privilege/restricted-SID/integrity/policy/safety profile, within-check
+  `TokenId`/`ModifiedId` stability, `RevertToSelf`, and empty-thread-token proof
+  before launch/child read-back and final ACK. Every failure enters existing
+  terminate/reap/desktop/worker cleanup with no weaker retry.
+- Scripted a benign bounded production regression, invalid process/pipe-handle
+  adversarial checks, source contract 657, mandatory verifier step 257, exact
+  257-step report validation, and checkpoint/audit/threat/blocker/dependency/
+  status documentation.
+- Fresh impersonation can produce a distinct Windows token object, so cross-
+  snapshot impersonation `TokenId` equality is unavailable and not claimed.
+  This remains point-in-time flow binding, not encrypted/durable cross-identity
+  IPC, AppContainer/LPAC, installed LocalSystem, driver, or pre-execution proof.
+- No checkpoint-2227 parser, formatter, build, lint, test, smoke, or verifier has
+  run yet. No dependency/lock change, installation, Defender change, candidate
+  execution, protected-vault mutation, release, or publication is intended.
+
+## 2026-08-25 continuation checkpoint 2227 initial execution
+
+- The real response-client reauthentication target compiles and passes `2/2`;
+  both PowerShell parsers and `git diff --check` pass.
+- The first formatting check rejected one noncanonical multiline call layout.
+  The first source-contract run executed `657` and failed one new documentation
+  assertion because the known-blockers text lacked the literal `reauth` term.
+  Both failures remain uncredited; exact formatting and wording repairs are
+  scripted without changing behavior or weakening any contract.
+
+## 2026-08-25 continuation checkpoint 2227 full local verification
+
+- The corrected focused rerun passes both PowerShell parsers, formatting, diff
+  validation, source contracts `657/657`, and the response-client
+  reauthentication regressions `2/2`.
+- Complete Authenticode passes `72/15`; Native passes `508/15` plus signature
+  compiler `6/6`; Local Core passes `536/536`; Guard passes `248/248`. Both
+  standard and all-feature locked workspace suites pass.
+- Strict all-target/all-feature Clippy passes for Native, Local Core, and Guard;
+  standalone Native locked/offline checking passes. Locked Local Core and Guard
+  release builds and the benign two-host Authenticode helper smoke pass without
+  executing candidate content.
+- Flutter analysis reports no issues and all `838/838` tests pass. The earlier
+  formatter and source-contract failures remain retained and uncredited.
+- Definitive 257-step verification, exact lock/vault reconfirmation, hosted and
+  package evidence, integration, guarded synchronization, and destination proof
+  remain pending. The complete antivirus goal remains active.
+
+## 2026-08-25 continuation checkpoint 2227 definitive local evidence
+
+- The no-skip, no-Defender/EICAR verifier ran from
+  `2026-08-24T23:39:54.4842664Z` through `2026-08-24T23:47:27.7479027Z` and
+  passed exact `257/257`, zero failed/skipped, in `453.2s`; the new target
+  passed in `0.2s`. Embedded and independent Windows PowerShell 5.1 strict
+  validators pass.
+- Twelve isolated malformed reports covering schema, status, Defender, both
+  skips, target, two verified scopes, two technical limits, final-step status,
+  and stale 256 count are rejected with exit 1. Two exact cleanup commands were
+  policy-rejected before execution, so these untracked `.verification` copies
+  remain; no source or protected-vault content was removed.
+- Root Cargo, Native Cargo, and Flutter lock blobs remain
+  `7ab38f4820b08029c64872360fac7141e2512ac4`,
+  `277dd9fe1edfc45fa5550e8e2831f2a0c121561d`, and
+  `51fa085a41168aa1deadace8b5395614db43649e`. The read-only protected vault
+  remains 16,072 files, zero directories, 4,522,733 bytes, 5,357 each payload/
+  metadata/auth, one key, and zero pending/temp.
+- Hosted/package evidence, integration, guarded synchronization, and
+  destination proof remain pending; the complete antivirus goal remains active.
+
+## 2026-08-25 continuation checkpoint 2227 implementation-head hosting
+
+- Exact implementation `cef0d282acf58e9260492ac3dd7b300fdd9ee5f4`
+  passes all five CI jobs in run `32791340856`. Desktop Packages push/PR runs
+  `32791317044`/`32791340840` pass contracts, Windows MSI/EXE, Linux DEB/tar,
+  both macOS DMGs, and consolidation; publication is skipped.
+- Untouched consolidated artifacts `9543648381`/`9543559227` have SHA-256
+  `264f26824cca39b1852cff2cafc549a4a85ab1560f1d29378a0351765df92eb9`/
+  `f67375780a6a32527a26aaeb25ac7b9e2acc1b7b2a7b5196806fe40eca3800e0`.
+  Both pass exact eight-entry, six-platform-file, seven-checksum, and CycloneDX
+  1.6/569-component in-stream validation without extraction or execution.
+- Draft PR `#79` remains unmerged. Evidence-head checks, normal merge,
+  merged-main evidence, guarded synchronization, and destination proof remain.

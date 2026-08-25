@@ -2429,7 +2429,7 @@ suspended creation and authenticated handshake, but the helper could still
 experience persistent token replacement or modification after initial ACK while
 performing trust work or writing its response.
 
-**Implemented and locally verified control:** The same duplex channel now remains
+**Verified and integrated control:** The same duplex channel now remains
 open through candidate trust and response flush. After writing and flushing
 bounded stdout, the child sends an exact response-ready marker and blocks for a
 distinct final ACK. Before that ACK, the parent queries the same launch
@@ -2443,8 +2443,12 @@ Post-response regressions pass `3/3`, complete Authenticode passes `55/55`,
 Native passes `506/15` plus compiler `6/6`, both locked workspaces and strict
 lint/offline checks pass, and Flutter passes `838/838`. Definitive verifier and
 strict validation pass exact `256/256` in `459.6s`; ten malformed reports are
-rejected. Hosted, integration, synchronization, and destination evidence remain
-pending.
+rejected. Evidence `bacf1cc`, PR `#78`, normal merge `bab872d`, exact evidence-
+head and merged-main CI/packages, exact 12-path guarded synchronization, full
+destination Rust/Flutter checks, and destination verifier/validator `256/256`
+in `438.4s` close checkpoint 2226 integration. The initial arm64 hosted attempt
+and support-wrapper failures remain uncredited; publication was skipped and
+locks and the protected vault remain exact.
 
 **Residual risk:** This third snapshot narrows persistent drift through flushed
 response production but remains point-in-time. It does not cryptographically
@@ -2454,3 +2458,39 @@ mutation after final ACK or privileged same-session injection/handle
 duplication, encrypt IPC, create cross-identity authentication or AppContainer/
 LPAC, prove installed LocalSystem, or demonstrate signed-driver/pre-execution
 enforcement. Response-ready and final ACK are flow control, not secrets.
+
+### Authenticode response client reauthentication (checkpoint 2227)
+
+**Threat:** Checkpoint 2226 keeps the exact pipe and child alive through flushed
+response production and rechecks launch/child primary tokens, but it does not
+repeat connected pipe-client process or impersonation-token authentication at
+the response-ready boundary. Persistent client security-context drift after the
+initial handshake could therefore escape the later primary-token snapshots.
+
+**Locally verified control, integration pending:** After exact ready-marker validation and
+before launch/child token read-back and final ACK, parent binds the client PID
+queried from the retained pipe instance to the PID queried from the exact
+retained child process handle. It then freshly impersonates that same connection
+and repeats exact SecurityImpersonation type/level, launch SID,
+AuthenticationId/session, privilege stripping, zero restricting SIDs, low
+integrity/no-write-up, virtualization/UIAccess safety, and within-validation
+`TokenId`/`ModifiedId` stability. Successful `RevertToSelf` and an empty parent
+thread token remain mandatory. Any query, binding, impersonation, profile,
+stability, revert, later read-back, or final-ACK failure enters bounded cleanup
+and cannot become trust. Source contract 657 and verifier step 257 are scripted.
+Focused regressions pass `2/2`, complete Authenticode passes `72/15`, Native
+passes `508/15` plus compiler `6/6`, affected crates and both locked workspaces
+pass, and Flutter passes `838/838`. Definitive verifier/validator passes exact
+`257/257` in `453.2s`, and 12 malformed reports are rejected. Hosted,
+integration, synchronization, and destination evidence remain pending. Exact
+implementation `cef0d28` also passes hosted CI and both cross-platform package
+runs with publication skipped; this does not expand the point-in-time boundary.
+
+**Residual risk:** This repeats the connected identity/profile at a second point
+in time; it is not cross-snapshot token-object equality. Windows may create a
+distinct impersonation token object for each call, so that equality is
+unavailable and not claimed. Response/ready/ACK bytes remain unencrypted and not
+cryptographically token-bound. Transients between checks, post-ACK mutation,
+privileged same-session injection/handle duplication, compromised parent/kernel,
+cross-identity IPC, AppContainer/LPAC, installed LocalSystem, signed-driver, and
+pre-execution threats remain outside this control.

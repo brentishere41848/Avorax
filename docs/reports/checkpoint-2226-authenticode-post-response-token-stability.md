@@ -166,6 +166,70 @@ Windows names contained `windows-x64`; current package-contract names are
 streams. The failed attempt is not credited as evidence and changed no product
 or artifact bytes.
 
-Draft PR `#78` remains head-locked to the implementation commit. Evidence-head
-checks, normal merge, merged-main evidence, guarded synchronization, and
-destination verification remain pending.
+The implementation-head runs are supporting evidence only; complete integration
+and destination closure is recorded below.
+
+## Integration And Destination Closure
+
+Evidence commit `bacf1ccb8f0f47020ee0798522a01f6a3ca0ffca` passes all five
+Avorax CI jobs in run `32782113876`. Desktop Packages PR run `32782113878`
+passes package contracts, Windows x64 MSI/EXE, Linux x64 DEB/tar, both macOS
+DMGs, and consolidation after a failed-job-only retry; publication is skipped.
+Attempt 1 failed only the macOS arm64 job because the hosted Flutter toolcache
+tried to execute a darwin-x64 `impellerc` on arm64 and returned `Illegal byte
+sequence`. The unchanged failed job passed on attempt 2. The failed attempt is
+retained and is not credited as a pass.
+
+Untouched evidence artifact `9540950441` has SHA-256
+`14e45afec7639b698cc3b0d6733bf43e633c0a970731a5cf5776783226dbadcf`
+and passes exact eight-entry, six-platform-file, seven-checksum, and CycloneDX
+1.6/569-component in-stream validation without extraction or execution.
+
+PR `#78` was made ready, clean, and head-locked to the evidence commit, then
+merged normally without a direct-main push as
+`bab872d50daf5bbcc775a53e3c0788c51770ca33`, with parent
+`5792c22f3815f4eccbc97a78d5ae9e01873193f5`. Merged-main CI `32784751719`
+and Desktop Packages `32784751652` pass all required jobs; publication is
+skipped. Untouched merged artifact `9541445838` has SHA-256
+`c10e9e0cd43798431d9b398fea1bbec8b7d78b12e8b872f49f0598e2cea0ba40`
+and independently passes the same exact in-stream checks.
+
+The merge changed exactly 12 paths from its parent, with zero deletes. All 11
+existing destination paths first matched the parent and the new report was
+absent. Exactly those paths synchronized atomically to
+`C:\Users\Brent\Documents\Avorax-main`; normalized blobs and raw SHA-256 values
+match merge/source, with no unrelated destination overwrite.
+
+Destination PowerShell parsers `2/2`, source contracts `656/656`, focused
+post-response `3/3`, complete Authenticode `70` passed/`15` intentionally
+ignored fixtures, Native `506/15` plus compiler `6/6`, Local Core `536/536`,
+Guard `248/248`, both locked workspaces, strict Native/Local/Guard Clippy,
+standalone locked/offline Native, formatting, release Local Core/Guard,
+two-host Authenticode smoke, Flutter analysis, and Flutter `838/838` pass.
+Definitive destination verification ran from
+`2026-08-24T22:54:38.3164086Z` through `2026-08-24T23:01:56.7274772Z` and
+passed exact `256/256`, zero failed or skipped, in `438.4s`; target `0.3s` and
+both embedded and independent Windows PowerShell 5.1 validators pass.
+
+Support failures remain retained and uncredited: the first artifact validator
+assumed stale Windows filenames; one JavaScript/PowerShell wrapper failed to
+parse before validation; one guarded sync wrapper was rejected by command
+policy before copying; and one destination Cargo helper used PowerShell's
+automatic `$args`, printed help, and returned a false exit-zero. Corrected exact
+wrappers performed the real checks and passed. None of those failures changed
+product behavior, copied files, or counts as evidence.
+
+During closure-document validation, `python -m unittest` discovered zero tests,
+both available Python runtimes lacked optional `pytest`, and the no-malware gate
+correctly refused an ambient `PATH` interpreter. Those attempts are not
+credited. The repository's dependency-free source-contract runner passed
+`656/656`, and the no-malware gate passed with the explicit bundled Python path;
+branding, product-copy, formatting, and diff gates also pass.
+
+Final read-only checks retain the exact three lock blobs and protected-vault
+invariant above. `.verification` remains untracked and unstaged. No service or
+driver was installed or started, Defender was not weakened, candidate content
+or installers were not executed, and no release or publication occurred.
+Checkpoint 2226 is closed; its point-in-time, impersonation-token, identity,
+isolation, signed-driver, and pre-execution limitations and the complete
+antivirus goal remain active.

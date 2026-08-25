@@ -5876,7 +5876,7 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
 
 ## Checkpoint 2226 - Authenticode post-response token stability (2026-08-24)
 
-- **Implemented and locally verified:** the same duplex handshake now remains open
+- **Verified and integrated:** the same duplex handshake now remains open
   through candidate trust work and response flush. The child flushes stdout,
   sends an exact one-byte response-ready marker, and blocks for a distinct
   final ACK.
@@ -5903,13 +5903,74 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
 - **Implementation-head hosted evidence:** exact `74d7d963` passes CI
   `32780511368` and package push/PR `32780474053`/`32780511318`, including all
   six platform artifacts, checksums and a 569-component lockfile SBOM;
-  publication is skipped. Draft PR `#78` is exact. Evidence-head, merge,
-  synchronization, and destination proof remain pending.
+  publication is skipped.
 - **Technically limited:** this remains point-in-time and does not bind the
   distinct impersonation token object, cryptographically bind response bytes
   to token snapshots, prevent every transient or mutation after final ACK, or
   stop same-session injection/privileged handle duplication. Response-ready
   and final ACK are not secret/encrypted. Cross-identity IPC, AppContainer/
   LPAC, installed LocalSystem, signed-driver, and pre-execution enforcement
-  remain separate. Definitive verifier, hosted/package, merge, synchronization,
-  and destination evidence remain pending.
+  remain separate, and the complete antivirus goal remains active.
+- **Integration and destination closure:** evidence `bacf1cc`, PR `#78`, and
+  normal merge `bab872d` are complete. Evidence-head CI/packages
+  `32782113876`/`32782113878` and merged-main CI/packages
+  `32784751719`/`32784751652` pass with publication skipped. The evidence arm64
+  job passed an unchanged failed-job-only retry after a hosted Flutter toolcache
+  architecture mismatch; the failed first attempt is retained and uncredited.
+  Untouched artifacts `9540950441`/`9541445838` each contain six platform
+  files, seven matching checksums, and a CycloneDX 1.6/569-component SBOM.
+  Exactly 12 paths synchronized with zero deletes and match merge/source.
+  Destination Native `506/15` plus compiler `6/6`, Local `536/536`, Guard
+  `248/248`, both locked workspaces, strict lint, offline Native, Flutter
+  analyze and `838/838`, and exact verifier/validator `256/256` in `438.4s`
+  pass. Locks and the protected vault remain exact. Checkpoint 2226 is closed;
+  the complete antivirus goal remains active.
+
+## Checkpoint 2227 - Authenticode response client reauthentication (2026-08-25)
+
+- **Scripted control:** after exact response-ready validation and before launch/
+  child token read-back or final ACK, the parent binds
+  `GetNamedPipeClientProcessId` on the retained connection to `GetProcessId` on
+  the exact retained child handle, then freshly calls
+  `ImpersonateNamedPipeClient` on that connection.
+- **Repeated security evidence:** the fresh client token must repeat exact
+  SecurityImpersonation type/level, launch SID, AuthenticationId/session,
+  privilege stripping, zero restricting SIDs, low integrity/no-write-up,
+  canonical virtualization, disabled UIAccess, and within-validation
+  `TokenId`/`ModifiedId` stability. `RevertToSelf` and an empty parent thread
+  token remain mandatory.
+- **Fail-visible contract:** process-handle/PID/pipe query, process binding,
+  impersonation, token profile/stability, revert, launch/child token read-back,
+  final ACK, timeout, cancellation, terminate/reap, desktop, or worker failure
+  cannot become publisher trust and has no weaker retry.
+- **Evidence scripted:** benign production and invalid-handle Rust regressions,
+  source contract 657, one mandatory verifier step, exact 257-step validation,
+  and report/control/threat/blocker/dependency/run-log records are complete.
+  Initial runtime `2/2`, both parsers, and diff check pass. Initial formatting
+  and one of 657 source contracts failed on call layout and missing literal
+  blocker wording; both are repaired and remain uncredited. The corrected
+  focused rerun passes, as do source contracts `657/657`, complete Authenticode
+  `72/15`, Native `508/15` plus compiler `6/6`, Local Core `536/536`, Guard
+  `248/248`, both locked workspaces, strict affected-crate Clippy, standalone
+  locked/offline Native, locked release/two-host smoke, Flutter analysis, and
+  Flutter `838/838`. Definitive, hosted, integration, synchronization, and
+  destination evidence remain pending. Definitive local verification now passes
+  exact `257/257` in `453.2s`, target `0.2s`, both strict validators, and 12
+  malformed-report rejections. Locks and the protected-vault invariant remain
+  exact; hosted, integration, synchronization, and destination proof remain
+  pending.
+- **Implementation-head hosted verified:** exact `cef0d28` passes CI
+  `32791340856` and package push/PR runs `32791317044`/`32791340840` across
+  Windows, Linux, both macOS architectures, and consolidation; publication is
+  skipped. Untouched artifacts `9543648381`/`9543559227` pass exact six-platform-
+  file, seven-checksum, and CycloneDX 1.6/569-component in-stream validation.
+  Draft PR `#79` remains unmerged; evidence-head, merge, synchronization, and
+  destination evidence remain pending.
+- **Technically limited:** each impersonation call may yield a distinct token
+  object, so cross-snapshot impersonation `TokenId` equality is unavailable and
+  not claimed. This remains point-in-time, not durable or cryptographically
+  response-bound, and does not stop every transient, privileged same-session
+  injection/handle duplication, or provide cross-identity IPC, AppContainer/
+  LPAC, installed LocalSystem, signed-driver, or pre-execution enforcement.
+  Local, hosted, integration, synchronization, and destination evidence remain
+  pending; the complete antivirus goal remains active.
