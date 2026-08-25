@@ -10561,3 +10561,79 @@ Updates page showed:
   released, published, executed as candidate content, or changed in Defender.
   Checkpoint 2229 is closed; its residual technical limits and the complete
   antivirus goal remain active.
+
+## Checkpoint 2230 Scripting Phase
+
+- Created `agent/checkpoint-2230-authenticode-pipe-delivered-launch-key` and
+  non-destructively merged current `origin/main` as `46236221`; the merge tree
+  was unchanged from the checkpoint-2229 closure parent.
+- Scripted parent-authenticated pipe delivery of the canonical 36-byte random
+  launch/MAC key only after exact child PID, same-user connected-client token,
+  launch-token, and child-primary-token validation. Scripted child-side exact
+  parent/pipe-security checks, bounded canonical key read, and exact ACK before
+  the parent's repeated stability checks.
+- Removed launch-key inheritance from the sanitized child environment. Scripted
+  a real benign child fixture proving the environment variable remains absent
+  before and after the production handshake, plus exact four-entry environment
+  regression coverage.
+- Scripted source contract 660, a dedicated verifier target, exact 260-step
+  validator scope, and synchronized checkpoint/status/matrix/blocker/threat/
+  dependency documentation. No formatter, parser, compiler, test, smoke,
+  verifier, hosted CI/package, merge, synchronization, or destination command
+  was run during this scripting phase; no checkpoint-2230 pass is claimed.
+- The residual boundary remains explicit: key material still exists in process
+  memory and crosses authenticated same-user IPC. Same-user memory access,
+  privileged injection, pipe-handle duplication/observation, administrator/
+  SYSTEM, and kernel compromise remain outside this control. It is not
+  encryption, cross-identity isolation, driver, or pre-execution enforcement.
+
+## Checkpoint 2230 Focused And Full Local Execution
+
+- Initial source-contract execution failed visibly because a new test-only
+  attribute appeared before the contract harness's production/test delimiter.
+  Moving the obsolete comparison helper into the existing test module reduced
+  failures from 30 to six genuine stale protocol assertions; updating those to
+  parent-to-child delivery reduced the run to `660/660`.
+- The first real child regression completed the production handshake but its
+  parent assertion incorrectly expected stdout to contain only the marker even
+  though Rust's test harness adds normal status lines. The corrected assertion
+  requires successful exit, empty stderr, and exactly one fixed benign marker;
+  the rerun passes `1/1` without warnings.
+- Adjacent PID, client-token, launch-token, child-token, and wrong-MAC-key
+  targets pass `9/9`. Native passes `513/513` with 18 ignored child entrypoints
+  plus compiler `6/6`; Local Core passes `536/536`; Guard passes `248/248` and
+  all-features `249/249`; both locked workspace modes pass.
+- Strict all-target/all-feature Clippy for Native/Local/Guard, offline locked
+  Native resolution, all three release builds, and PS7/PS5 release Authenticode
+  smoke pass. Flutter analyze reports no issues and Flutter tests pass `838/838`.
+- Lock blobs remain exact: root `bc43621213d9bede816a6e062146996116fb92fc`,
+  Native `1d9d96a172c258a584066a9adbb5a10a8feff97d`, Flutter
+  `51fa085a41168aa1deadace8b5395614db43649e`. No live malware, installation,
+  service/driver start, Defender change, publication, or protected-vault
+  mutation occurred. Definitive and hosted/integration evidence remain pending.
+
+## Checkpoint 2230 Definitive Local Evidence
+
+- During final review, `python -m unittest tests.test_custom_driver_contract`
+  discovered zero tests and `python -m pytest` failed because the optional
+  package is not installed. Neither invocation is credited. The repository's
+  dependency-free `tools\testing\run-python-source-contracts.py` runner then
+  passed the exact `660/660` source contracts without installing anything.
+- The no-skip/no-Defender verifier ran from `2026-08-25T07:53:23.8458080Z`
+  through `2026-08-25T08:01:03.7456483Z` and passed exact `260/260` in
+  `459.9s`; the new target passed in `0.2s`. Embedded and independent PS5
+  strict validators pass.
+- Sixteen isolated report mutations covering schema, overall status, Defender,
+  both skips, mandatory target, six new verified scopes, two new technical
+  limits, final-step failure, and stale count are rejected `16/16`.
+- Three package source-contract symlink-positive tests are explicitly skipped
+  because Windows symlink creation needs optional privileges; 21 adjacent tests
+  pass and the verifier step passes. No symlink-positive execution is claimed.
+- An independent PS7 validator attempt is uncredited: PS7's default JSON date
+  conversion violates the validator's intentional string-type check. Both PS5
+  validations pass. The first adversarial wrapper stopped on expected native
+  stderr under `ErrorActionPreference=Stop`; corrected exit capture passes.
+- Final read-only reconciliation proves zero active test processes, exact lock
+  blobs, and the protected vault invariant: 16,072 files, zero directories,
+  4,522,733 bytes, 5,357 each payload/metadata/auth, one metadata key, zero
+  pending/temp/reparse. Hosted/integration/destination work remains pending.

@@ -6117,3 +6117,37 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   is not encryption, cross-identity authentication, durable token identity,
   AppContainer/LPAC, installed LocalSystem, signed-driver, or pre-execution
   enforcement. The complete antivirus project remains active.
+
+## Checkpoint 2230 - Pipe-Delivered Authenticode Launch Key
+
+- **Scripted; execution pending:** the restricted Authenticode child no longer
+  inherits the random launch/MAC key through its environment. Its exact sanitized
+  environment contains only the canonical handshake pipe, canonical parent PID,
+  and checked native `SystemRoot`/`WINDIR` values.
+- Before key delivery, the parent binds the connected pipe client to the exact
+  retained child, authenticates the same-user logon-session token and restricted
+  profile, and revalidates launch/child token stability. The child validates the
+  exact parent and pipe security before its bounded key read, derives the MAC key,
+  and returns an exact ACK; the parent repeats stability checks after that ACK.
+- Implementation, benign fixture, source contract 660, exact 260-step verifier
+  and strict validator changes, and synchronized documentation are scripted.
+  No checkpoint-2230 formatter, parser, compiler, test, verifier, hosted,
+  integration, synchronization, or destination result is claimed yet.
+- **Technically limited:** removing the key from the environment narrows passive
+  disclosure, but the key remains in parent/child memory and crosses the
+  authenticated same-user pipe. Process-memory access, privileged injection,
+  pipe-handle duplication or observation, administrator/SYSTEM, and kernel
+  compromise remain outside this user-mode control. It is not encryption,
+  cross-identity IPC, AppContainer/LPAC, driver, or pre-execution enforcement.
+- **Local execution verified:** parsers, format/diff, source `660/660`, focused
+  pipe/identity/token/MAC targets, Native `513/18 + 6/6`, Local `536/536`, Guard
+  `248/248 + 249/249`, both workspaces, strict Clippy, offline resolution,
+  release builds/smoke, Flutter analyze and `838/838` pass. Locks remain exact.
+  Definitive, hosted, integration, synchronization, and destination evidence is
+  still pending; checkpoint 2230 and the complete antivirus project remain open.
+- **Definitive local verified:** exact `260/260` passes in `459.9s`, including
+  the new target in `0.2s`; embedded and independent PS5 strict validation pass,
+  and `16/16` isolated adversarial reports are rejected. Three package-source
+  symlink fixtures remain explicitly skipped on Windows due optional symlink
+  privilege. Locks, processes, and protected-vault invariants remain exact.
+  Hosted/integration/destination evidence is still pending.

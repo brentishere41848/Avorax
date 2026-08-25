@@ -1210,3 +1210,31 @@ the exact root/Native/Flutter lock blobs. Untouched artifacts `9551544695`/
 CycloneDX 1.6/569-component SBOMs under stream-only validation; publication is
 skipped. Complete signed final-artifact license, notice, copyright, and binary
 review remains a production-release prerequisite.
+
+Checkpoint 2230 changes only the native Authenticode launch-key transport and
+its local tests, verifier/validator contracts, and documentation. It adds no
+crate, package, feature, lockfile edge, executable, network source, service,
+driver, installer, machine-wide component, or candidate-content execution. The
+existing HMAC-SHA-256 dependency and pinned root/standalone Native/Flutter lock
+graphs are intended to remain exact; lock verification is pending execution.
+The key is removed from the child environment but remains in parent/child memory
+and crosses authenticated same-user IPC, so this is not encryption,
+cross-identity authentication, AppContainer/LPAC, installed LocalSystem,
+signed-driver, or pre-execution proof. No checkpoint-2230 passing result is
+claimed during scripting; focused/full, definitive, hosted, merge, destination,
+and final dependency evidence remain pending.
+
+Post-scripting local execution confirms no lock delta. Git blobs remain exact at
+root `bc43621213d9bede816a6e062146996116fb92fc`, standalone Native
+`1d9d96a172c258a584066a9adbb5a10a8feff97d`, and Flutter
+`51fa085a41168aa1deadace8b5395614db43649e`. Locked/offline resolution, both
+workspace modes, affected strict Clippy, release builds, Flutter analyze, and
+Flutter `838/838` pass. Hosted package/SBOM and final signed-artifact review
+remain pending; no publication is authorized.
+
+Definitive local verification also passes exact `260/260` and its dependency
+evidence gate while preserving all three lock blobs. The package source-contract
+suite passes 21 tests and explicitly skips three Windows symlink-positive cases
+that require optional privileges; no dependency is installed to force those
+fixtures. Hosted package/SBOM and complete signed final-artifact review remain
+release prerequisites.
