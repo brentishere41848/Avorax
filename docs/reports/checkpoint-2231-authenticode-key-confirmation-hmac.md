@@ -144,15 +144,34 @@ The protected vault remains 16,072 files, zero directories, 4,522,733 bytes,
 pending/temp/reparse. Nothing was installed, released, published, executed as
 candidate content, or changed in Defender.
 
+## Exact Implementation-Head Hosted Evidence
+
+Implementation commit `a3ef715f808edeaaa7e9bae39b8085173d183192`
+was pushed only to the checkpoint branch and is the exact head of PR `#83`.
+Avorax CI run `32837753355` passes all five jobs: branding/copy, Flutter
+client/protocol, security/protection/performance, Rust Local Core/Guard/Update/
+backend, and Unix quarantine permissions.
+
+Desktop Packages runs `32837712672` (push) and `32837753111` (PR) pass package
+contracts, Windows x64 MSI/EXE, Linux x64 DEB/tar, macOS x64/arm64 DMGs, and
+consolidation/checksums. Publication jobs `97774038187` and `97775157486` are
+explicitly skipped; no release or prerelease was created.
+
+Consolidated artifacts `9559719743` and `9559858142` are 131,486,380 and
+131,484,239 bytes. Their downloaded SHA-256 values exactly match GitHub digests
+`8833d9e1cf1f63d242b63d2e10bf93e2d97e4b5660b786c17f9420773a8135e4` and
+`31fb549ec83cb390aa11aa414628b70b72bd381435fca37fd18701af70263076`.
+Without extracting or executing either artifact, in-stream validation passes
+exactly eight unique regular root entries, six platform release files, seven
+checksum targets with matching internal SHA-256, clean ZIP reads, and one
+CycloneDX 1.6 lockfile SBOM with exactly 569 components. Evidence-head hosted
+checks, normal merge, synchronization, and destination proof remain pending.
+
 ## Pending Integration Sequence
 
-1. Review the final implementation diff and commit only the checkpoint source
-   and documentation; `.verification` remains untracked.
-2. Push only the checkpoint branch, obtain exact-head CI and desktop-package
-   evidence, and require publication jobs to remain skipped.
-3. Add hosted evidence, rerun exact evidence-head gates, open the PR, merge
+1. Commit this hosted evidence and rerun exact evidence-head gates, then merge
    normally, and verify merged-main CI/packages without creating a release.
-4. Guardedly synchronize only exact merge-delta files to the original tree and
+2. Guardedly synchronize only exact merge-delta files to the original tree and
    independently repeat destination verification and read-only reconciliation.
 
 Checkpoint 2231 is not the completion of the antivirus project. After closure,

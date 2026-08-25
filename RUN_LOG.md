@@ -10759,3 +10759,21 @@ Updates page showed:
   5,357 each payload/metadata/auth, one key, and zero pending/temp/reparse.
   Nothing was installed, released, published, executed as candidate content, or
   changed in Defender. Exact-head hosted and integration evidence remain pending.
+
+## Checkpoint 2231 Exact Implementation-Head Hosted Evidence
+
+- Implementation `a3ef715f808edeaaa7e9bae39b8085173d183192` was pushed only
+  to the checkpoint branch and opened as PR `#83`. Exact-head Avorax CI run
+  `32837753355` passes all five jobs without retry.
+- Desktop Packages push `32837712672` and PR `32837753111` pass package
+  contracts, Windows MSI/EXE, Linux DEB/tar, macOS x64/arm64 DMGs, and
+  consolidation. Publication jobs `97774038187`/`97775157486` are skipped; no
+  release or prerelease was created.
+- Consolidated artifacts `9559719743` and `9559858142` are 131,486,380 and
+  131,484,239 bytes. Downloaded SHA-256 exactly matches GitHub at
+  `8833d9e1cf1f63d242b63d2e10bf93e2d97e4b5660b786c17f9420773a8135e4` and
+  `31fb549ec83cb390aa11aa414628b70b72bd381435fca37fd18701af70263076`.
+  In-stream validation, without extraction or execution, passes exact eight
+  root entries, six release files, seven matching checksum targets, and one
+  CycloneDX 1.6 lockfile SBOM with 569 components. Evidence-head hosted checks,
+  normal merge, synchronization, and destination proof remain pending.

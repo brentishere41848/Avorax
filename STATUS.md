@@ -6199,6 +6199,13 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   `8/8` isolated malformed reports are rejected. Locks, processes, and the
   protected-vault invariant remain exact. Hosted/integration/destination
   evidence remains pending.
+- **Exact implementation-head hosted verified:** commit `a3ef715` is PR `#83`'s
+  exact head. CI `32837753355` and package push/PR runs
+  `32837712672`/`32837753111` pass all mandatory jobs; both publication jobs are
+  skipped. Consolidated artifacts `9559719743`/`9559858142` match GitHub digests
+  and pass exact in-stream eight-entry, six-platform-file, seven-checksum, and
+  CycloneDX 1.6/569-component validation without extraction or execution.
+  Evidence-head, merge, synchronization, and destination proof remain pending.
 - **Technically limited:** key confirmation proves point-in-time possession by
   data arriving on the already PID/token-bound same-user pipe. Confirmation and
   response binding reuse the key under distinct domains. This is not encryption,
