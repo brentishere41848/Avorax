@@ -2812,3 +2812,11 @@ both consolidated ZIPs match GitHub digests and pass bounded non-extracting
 8-entry/6-release/7-checksum/CycloneDX 1.6/569-component validation. This
 supports the verifier-host repair and package reproducibility only. Integration,
 destination, and external platform limits are unchanged.
+
+Evidence head `a5cf1c5`, normal merge `c969351`, merged-main CI/packages,
+skipped publication, and bounded package review pass. Guarded 11-path
+destination synchronization and exact `263/263` destination verification in
+`468.9s` pass under both strict hosts; `16/16` adversarial reports reject. This
+closes the JSON-host evidence inconsistency without changing the threat model:
+PowerShell hosts remain trusted verifier prerequisites, and no detection,
+installed service, signing, driver, kernel, or pre-execution boundary expands.

@@ -9474,6 +9474,38 @@ Updates page showed:
 - Evidence-head CI/packages, normal merge, merged-main evidence, guarded
   original-tree synchronization, and destination verification remain pending.
 
+## 2026-08-25 - Checkpoint 2234 Integration And Destination Closure
+
+- Evidence `a5cf1c5a311159feba3bbb9fa3276b68c5093a60` passes Avorax CI
+  `32881438307` and Desktop Packages `32881438208` without retry. Publication
+  `97915871533` is skipped. Artifact `9576386744` is 131,680,378 bytes with
+  exact GitHub/download SHA-256
+  `565d4ec592d7a2704d4ffb64d104d4c91fc1e75d2aadc0295e3b8e5b5deccb03`
+  and passes non-extracting exact 8-entry/6-release/7-checksum/CycloneDX
+  1.6/569-component validation.
+- PR `#86` merges normally as `c969351dd7fae979d6b49df9e870db92a4e51f23`
+  with exact parents `7467bfd61a077a8783f3c333ef2488a9d00433f2` and
+  `a5cf1c5a311159feba3bbb9fa3276b68c5093a60`. Merged CI `32884202709`
+  and packages `32884202759` pass without retry; publication `97929408266` is
+  skipped. Artifact `9577913781` is 131,563,257 bytes with exact SHA-256
+  `1766f2a3a5d01e2366ba004ed611837768063aff7b65ee87f526c23ab8b7d228`
+  and the same bounded stream review.
+- Exact base `7330416` preconditions permit guarded synchronization of 11 paths
+  and 6,434,655 bytes to the merge with zero delete/residue. The stage is
+  removed only after exact inventory/hash/reparse audit. One first helper
+  parser command was misquoted by its outer shell and stopped before execution;
+  it is uncredited. The corrected parse-only check passed and left no stage.
+- Destination parsers, source `664/664`, merge blobs, and locks pass. The
+  no-skip/no-Defender verifier passes exact `263/263`, zero failed/skipped, in
+  `468.9s`; both strict hosts pass and `16/16` destination adversarial reports
+  reject. Three package-source symlink-positive tests remain explicitly skipped
+  due absent optional Windows symlink privilege.
+- No test process, stage, or sync residue remains. The protected vault remains
+  16,072 files, zero directories, 4,522,733 bytes, 5,357 each payload/JSON/auth,
+  one key, and zero pending/reparse. Nothing was installed, released, published,
+  executed as candidate content, or changed in Defender. Checkpoint 2234 is
+  closed; the complete antivirus project remains active.
+
 ## 2026-08-24 continuation checkpoint 2221 integration closure
 
 - Evidence head `b60f500d59629682d84f532c7e0f16d623f6b6b4` passed Avorax CI

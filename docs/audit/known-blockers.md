@@ -2838,3 +2838,15 @@ enforcement, or pre-execution blocking is claimed.
   checksum, and 569-component SBOM validation. Publication is skipped.
 - Evidence-head, merge, guarded synchronization, and destination evidence remain
   open. External signing/service/driver/pre-execution blockers remain unchanged.
+- **Checkpoint integration blocker closed:** evidence `a5cf1c5`, normal merge
+  `c969351`, evidence/merged-main hosted evidence, guarded 11-path destination
+  synchronization, source `664/664`, exact `263/263` in `468.9s`, dual-host
+  validators, and `16/16` adversarial rejections pass. The first misquoted
+  parse-only helper command is visible and uncredited; the corrected check left
+  no stage.
+- **Residual blockers unchanged:** three package symlink-positive tests require
+  optional Windows symlink privilege and remain explicit skips. Production
+  signing, installed elevated/service evidence, signed-driver behavior,
+  cross-identity isolation, secure erasure, and pre-execution enforcement still
+  require their external prerequisites. Checkpoint 2234 is closed; the complete
+  antivirus project remains active.

@@ -73,6 +73,47 @@ checksum rows, and one CycloneDX 1.6 lockfile SBOM with 569 components.
 Evidence-head checks, normal merge, merged-main evidence, guarded
 synchronization, and destination verification remain pending.
 
+## Integration And Destination Closure
+
+Evidence head `a5cf1c5a311159feba3bbb9fa3276b68c5093a60` passes Avorax
+CI `32881438307` and Desktop Packages `32881438208` without retry. Publication
+job `97915871533` is skipped. Consolidated artifact `9576386744` is
+131,680,378 bytes; its downloaded SHA-256 matches GitHub at
+`565d4ec592d7a2704d4ffb64d104d4c91fc1e75d2aadc0295e3b8e5b5deccb03`
+and its non-extracting review passes exact 8/6/7/CycloneDX 1.6/569 evidence.
+
+PR `#86` merges normally as
+`c969351dd7fae979d6b49df9e870db92a4e51f23`, with exact parents
+`7467bfd61a077a8783f3c333ef2488a9d00433f2` and
+`a5cf1c5a311159feba3bbb9fa3276b68c5093a60`. Merged-main CI
+`32884202709` and packages `32884202759` pass without retry; publication
+`97929408266` is skipped. Artifact `9577913781` is 131,563,257 bytes with
+matching GitHub/download SHA-256
+`1766f2a3a5d01e2366ba004ed611837768063aff7b65ee87f526c23ab8b7d228`
+and passes the same non-extracting package/SBOM review.
+
+Guarded base `7330416` preconditions, root containment, reparse rejection,
+checked staging, temporary hash verification, and atomic replacement
+synchronize exactly 11 paths and 6,434,655 bytes to the merge with zero delete
+or residue. The stage is removed only after exact 11-file inventory, merge-hash,
+and reparse checks. One first parse-only helper invocation was misquoted by its
+outer shell and failed before helper execution; it is retained as uncredited.
+The corrected PS5.1 syntax check passed and created no stage.
+
+Destination PS5.1/PS7 parsers, source contracts `664/664`, and exact merge/lock
+hashes pass. The no-skip/no-Defender verifier passes exact `263/263`, zero
+failed/skipped, from `2026-08-25T19:00:55.9094290Z` through
+`2026-08-25T19:08:44.8756230Z` in `468.9s`; both post-report validators pass.
+The three package symlink-positive source tests remain explicitly skipped on
+Windows because optional symlink privilege is absent. All `16/16` destination
+report mutations are rejected across both hosts.
+
+No test process or sync residue remains. The protected vault remains exactly
+16,072 files, zero directories, 4,522,733 bytes, 5,357 each payload/JSON/auth,
+one metadata key, and zero pending/reparse. Nothing was installed, released,
+published, executed as candidate content, or changed in Defender. Checkpoint
+2234 is closed; the complete antivirus project remains active.
+
 ## Limits
 
 This repairs evidence parsing only. It does not expand antivirus detection,

@@ -1369,3 +1369,10 @@ remain unchanged. No package upgrade was accepted. Hosted push/PR package runs
 `32878368995`/`32878421335` pass and their consolidated artifacts contain the
 expected CycloneDX 1.6 lockfile SBOM with exactly 569 components. Final signed-
 artifact license review remains pending.
+
+Checkpoint-2234 evidence and merged-main package runs also pass without package
+or lock change. Their consolidated CycloneDX 1.6 SBOM evidence remains exactly
+569 components and passes bounded in-stream validation. Destination lock hashes
+match the recorded root/Native/Flutter values. This closes checkpoint package
+dependency evidence, while final signed-artifact notice/copyright approval
+remains a separate release prerequisite.

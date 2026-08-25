@@ -4758,3 +4758,13 @@ match GitHub SHA-256 and pass bounded non-extracting exact
 8-entry/6-release/7-checksum/CycloneDX 1.6/569-component validation. Evidence-
 head, merge, synchronization, and destination integration remain pending; no
 antivirus-engine or pre-execution claim changes.
+
+Checkpoint 2234 is now **verified and integrated**. Evidence `a5cf1c5`, normal
+PR `#86` merge `c969351`, exact evidence/merged-main CI and packages, skipped
+publication, and non-extracting package digest/inventory/checksum/SBOM review
+pass. Guarded 11-path synchronization and destination source `664/664`, exact
+`263/263` in `468.9s`, dual-host strict validation, and `16/16` adversarial
+rejections pass. Three package symlink-positive tests remain explicitly skipped
+for absent optional Windows symlink privilege. The JSON-host repair remains
+verification tooling, not a detection, installed-service, driver, signing, or
+pre-execution capability.

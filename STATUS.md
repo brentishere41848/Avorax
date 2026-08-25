@@ -6150,6 +6150,20 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
 - Evidence-head checks, normal merge, merged-main evidence, guarded destination
   synchronization, and destination proof remain pending. Checkpoint 2234 and
   the full antivirus project are not closed.
+- **Verified and integrated:** evidence `a5cf1c5`, normal PR `#86` merge
+  `c969351`, exact evidence/merged-main CI and packages, skipped publication,
+  and non-extracting 8/6/7/CycloneDX 1.6/569 artifact review pass. Guarded
+  11-path/6,434,655-byte destination synchronization leaves zero residue.
+- Destination parsers and source `664/664` pass. The no-skip/no-Defender
+  verifier passes exact `263/263` in `468.9s` under both strict hosts, and all
+  `16/16` adversarial host/mutation pairs reject. Three package symlink-positive
+  tests remain explicitly skipped for absent optional Windows symlink privilege.
+  One misquoted parse-only helper invocation failed before execution and is
+  uncredited; its corrected syntax check passed without creating a stage.
+- Merge blobs, locks, processes, and the protected-vault invariant remain exact.
+  Checkpoint 2234 is closed. This tooling repair adds no antivirus detection,
+  signing, installed-service, driver, or pre-execution claim; the full antivirus
+  project remains active.
 
 ## Checkpoint 2233 - Authenticode Fixed Launch-Key Buffer
 
