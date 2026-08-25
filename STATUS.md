@@ -6206,6 +6206,20 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   and pass exact in-stream eight-entry, six-platform-file, seven-checksum, and
   CycloneDX 1.6/569-component validation without extraction or execution.
   Evidence-head, merge, synchronization, and destination proof remain pending.
+- **Integration and destination closure:** evidence `0f49c76` passes CI
+  `32839839948` and packages `32839839992`; PR `#83` merges normally as
+  `b678027` with exact parents `9690c84`/`0f49c76`. Merged-main CI
+  `32841378314` and packages `32841378372` pass; publication `97784458641` is
+  skipped. Merged artifact `9560976668` is 131,646,181 bytes with exact SHA-256
+  `b1da2eef2de556d6d15a31886aa13171f21eedfbd3fa97c9a81e21fafbcc56b1`
+  and passes in-stream 8-entry/6-release/7-checksum/CycloneDX 1.6 validation.
+  Exact checkpoint-start preconditions permit guarded 11-path synchronization,
+  6,694,886 bytes and zero deletes/residue. Destination focused/full Rust,
+  strict lint/offline/release/two-host smoke, Flutter analyze and `838/838` all
+  pass. The destination verifier/validators pass `261/261` in `452.7s`, and
+  adversarial reports are rejected `8/8`. Source/lock blobs and the protected
+  vault remain exact. Checkpoint 2231 is closed; the full antivirus goal remains
+  active.
 - **Technically limited:** key confirmation proves point-in-time possession by
   data arriving on the already PID/token-bound same-user pipe. Confirmation and
   response binding reuse the key under distinct domains. This is not encryption,

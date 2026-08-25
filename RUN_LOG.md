@@ -10777,3 +10777,46 @@ Updates page showed:
   root entries, six release files, seven matching checksum targets, and one
   CycloneDX 1.6 lockfile SBOM with 569 components. Evidence-head hosted checks,
   normal merge, synchronization, and destination proof remain pending.
+
+## Checkpoint 2231 Integration And Destination Closure
+
+- Evidence head `0f49c76e316fc4103fae4c655cc6f119f487d751` passes CI
+  `32839839948` and Desktop Packages `32839839992`; publication job
+  `97781098855` is skipped. PR `#83` merges normally as
+  `b678027bf4b6522fdf12c2eebc2df2fd15c14684`, with exact parents `9690c84`
+  and `0f49c76`.
+- Merged-main CI `32841378314` passes all five jobs. Desktop Packages
+  `32841378372` passes contracts, Windows MSI/EXE, Linux DEB/tar, both macOS
+  DMGs, and consolidation. Publication job `97784458641` is skipped and the
+  latest release remains `v0.1.15-beta.3` from 2026-07-20.
+- Consolidated merged-main artifact `9560976668` is 131,646,181 bytes with
+  matching GitHub/downloaded SHA-256
+  `b1da2eef2de556d6d15a31886aa13171f21eedfbd3fa97c9a81e21fafbcc56b1`.
+  In-stream validation, without extraction or execution, passes exact eight
+  unique root entries, six release files, seven checksums, clean ZIP reads, and
+  a CycloneDX 1.6 lockfile SBOM with 569 components.
+- The first read-only destination precondition intentionally stopped before
+  staging because `RUN_LOG.md` did not match older main `9690c84`. It exactly
+  matched the known checkpoint-2230 closure blob from checkpoint-2231 start
+  merge `4bd0b15`. Corrected start-blob, path-containment, and reparse checks
+  permitted atomic synchronization of exactly 11 paths, 6,694,886 bytes, with
+  one new report, zero deletes, and no unrelated destination change.
+- Destination parser, formatting, source `661/661`, HMAC `2/2`, pipe `1/1`, PID
+  `2/2`, child-token `2/2`, response-key `1/1`, Native `515/19 ignored + 6/6`,
+  Local `536/536`, Guard `248/248 + 249/249`, both serial locked workspaces,
+  strict Clippy, offline Native, three release builds, PS7/PS5 smoke, Flutter
+  analyze, and Flutter `838/838` pass.
+- The destination no-skip/no-Defender verifier runs from
+  `2026-08-25T11:41:07.796987Z` through `2026-08-25T11:48:40.4769471Z` and
+  passes exact `261/261`, zero failed/skipped, in `452.7s`; the HMAC step takes
+  `0.3s`. Embedded and independent PS5 validators pass, and `8/8` adversarial
+  reports are rejected. Two outer-shell parser-wrapper quoting failures occurred
+  before intended parser execution; corrected invocations pass and only those
+  are credited.
+- Post-test all 11 synchronized files match merge blobs and source raw SHA-256.
+  Root/Native/Flutter lock blobs remain exact; no test process, sync temporary,
+  or stage remains. The protected vault remains 16,072 files, zero directories,
+  4,522,733 bytes, 5,357 each payload/metadata/auth, one metadata key, and zero
+  pending/temp/reparse. Nothing was installed, released, published, executed as
+  candidate content, or changed in Defender. Checkpoint 2231 is closed; the
+  complete antivirus goal remains active.
