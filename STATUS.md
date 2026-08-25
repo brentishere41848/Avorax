@@ -6118,6 +6118,48 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   AppContainer/LPAC, installed LocalSystem, signed-driver, or pre-execution
   enforcement. The complete antivirus project remains active.
 
+## Checkpoint 2235 Scripted State - Bounded Risk Fusion
+
+- Native score accumulation is saturating and clamped; Local Core score
+  accumulation saturates directly at 100. Extreme signed weights cannot wrap or
+  panic, and non-positive Local Core diagnostics cannot satisfy quality/source
+  gates for probable-malware or automatic-quarantine behavior.
+- Native reporting retains the 32 strongest absolute-weight items with stable
+  tie ordering, includes synthetic TrustStore provenance, and bounds evidence
+  fields plus explanations at valid UTF-8 byte boundaries.
+- Benign Rust regressions, mandatory verifier step 264, strict report scope,
+  source contract 665, audit/threat/blocker/dependency documentation, and exact
+  no-dependency/no-lockfile contracts are scripted.
+- No checkpoint-2235 passing result is claimed during scripting. Focused,
+  broad, definitive, adversarial-report, hosted, merge, synchronization, and
+  destination evidence remain pending.
+- Residual limits remain: weighted risk is not a calibrated probability;
+  production false-positive/sensitivity evidence, installed UI/service E2E,
+  signing, driver, and pre-execution enforcement are not established.
+
+Checkpoint 2235 is now **locally verified**: focused Native `10/10`, Local
+`1/1`, source `665/665`, broad Native `520 + 19 ignored + 6`, Local `537/537`,
+Guard `248/248 + 249/249`, both locked workspaces, changed-crate strict Clippy,
+Flutter analyze and `838/838`, dual-host parsers, exact locks, and protected
+vault pass. Workspace-wide strict Clippy remains visibly uncredited on existing
+API-only lints. Definitive 264-step, hosted, merge, sync, and destination work
+remains pending.
+
+Definitive checkpoint-2235 evidence is now **locally verified**: exact
+`264/264`, zero failed/skipped, `503.5s`, both strict validator hosts, and
+`16/16` adversarial report rejections pass. The initial nonexistent pwsh-path
+attempt stopped before step one and is uncredited. Report SHA-256 is
+`3c28abf05ba1b004ff0a16448690b8245baad0fd658ee0893bf052f3cdc719ed`.
+Hosted, merge, synchronization, and destination evidence remains pending.
+
+Exact implementation-head hosting is now **verified**: commit `8fa9630` is PR
+`#87`'s exact head. CI `32892108074` and package push/PR runs
+`32891914251`/`32892108020` pass without retry; publication jobs are skipped.
+Consolidated artifacts `9580216963`/`9580381411` match GitHub SHA-256 and pass
+bounded non-extracting exact 8-entry/6-release/7-checksum/CycloneDX 1.6/569-
+component validation. Evidence-head checks, normal merge, merged-main evidence,
+guarded synchronization, and destination proof remain pending.
+
 ## Checkpoint 2234 - PowerShell JSON String Validation
 
 - **Scripted:** all nine strict report readers preserve JSON strings on
@@ -6150,6 +6192,20 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
 - Evidence-head checks, normal merge, merged-main evidence, guarded destination
   synchronization, and destination proof remain pending. Checkpoint 2234 and
   the full antivirus project are not closed.
+- **Verified and integrated:** evidence `a5cf1c5`, normal PR `#86` merge
+  `c969351`, exact evidence/merged-main CI and packages, skipped publication,
+  and non-extracting 8/6/7/CycloneDX 1.6/569 artifact review pass. Guarded
+  11-path/6,434,655-byte destination synchronization leaves zero residue.
+- Destination parsers and source `664/664` pass. The no-skip/no-Defender
+  verifier passes exact `263/263` in `468.9s` under both strict hosts, and all
+  `16/16` adversarial host/mutation pairs reject. Three package symlink-positive
+  tests remain explicitly skipped for absent optional Windows symlink privilege.
+  One misquoted parse-only helper invocation failed before execution and is
+  uncredited; its corrected syntax check passed without creating a stage.
+- Merge blobs, locks, processes, and the protected-vault invariant remain exact.
+  Checkpoint 2234 is closed. This tooling repair adds no antivirus detection,
+  signing, installed-service, driver, or pre-execution claim; the full antivirus
+  project remains active.
 
 ## Checkpoint 2233 - Authenticode Fixed Launch-Key Buffer
 

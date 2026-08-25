@@ -1904,8 +1904,8 @@ if ($RequireFullSuite) {
   if ($skipFlutter -or $skipRust) {
     throw "-RequireFullSuite requires skip_flutter=false and skip_rust=false."
   }
-  if ($steps.Count -ne 263) {
-    throw "-RequireFullSuite expected exactly 263 verifier steps for this source revision, found $($steps.Count)."
+  if ($steps.Count -ne 264) {
+    throw "-RequireFullSuite expected exactly 264 verifier steps for this source revision, found $($steps.Count)."
   }
   if ($steps[0].name -ne "local-core safe simulator scan reporting") {
     throw "-RequireFullSuite first step mismatch: $($steps[0].name)"
@@ -1968,6 +1968,11 @@ if ($RequireFullSuite) {
   Assert-ReportContainsStep $steps "native-engine Authenticode fixed launch-key buffer regressions"
   Assert-ReportContainsStep $steps "native-engine Authenticode mandatory-hash/file-identity regressions"
   Assert-ReportContainsStep $steps "native-engine risk fusion regressions"
+  Assert-ReportContainsStep $steps "local-core bounded risk fusion regressions"
+  Assert-ReportScopeContains $verifiedScopeText "overflow-safe bounded score accumulation" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "only positive Local Core reasons count toward evidence quality and source independence" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "reported Native evidence is stably prioritized by absolute decision weight" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "bounds identifiers, titles, details, and explanations at valid UTF-8 byte boundaries" "verification_scope.verified"
   Assert-ReportContainsStep $steps "native-engine ClickOnce carrier heuristic detection"
   Assert-ReportContainsStep $steps "native-engine Java Web Start carrier heuristic detection"
   Assert-ReportContainsStep $steps "native-engine Windows scriptlet carrier heuristic detection"

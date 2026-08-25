@@ -9474,6 +9474,97 @@ Updates page showed:
 - Evidence-head CI/packages, normal merge, merged-main evidence, guarded
   original-tree synchronization, and destination verification remain pending.
 
+## 2026-08-25 - Checkpoint 2235 Exact Implementation-Head Hosted Evidence
+
+- Exact implementation `8fa9630d0c16796f7175ba67afbda2f92e85bce8` is PR
+  `#87`'s head and passes all five Avorax CI jobs in run `32892108074` without
+  retry.
+- Desktop Packages push `32891914251` and PR `32892108020` pass contracts,
+  Windows MSI/EXE, Linux DEB/tar, both macOS DMGs, consolidation, checksums, and
+  evidence upload. Publication jobs `97949822381`/`97951304602` are skipped; no
+  release or prerelease is created.
+- Consolidated artifacts `9580216963` (131,722,107 bytes) and `9580381411`
+  (131,278,201 bytes) match GitHub/download SHA-256 values
+  `bc5eb9b6a0501fa8afa462bd422f058041337a7c391fc2f2dd1ea281a9bed625` and
+  `4aa910c1a9f53c85c0b0baccbc19edb773c0c91c9759e91854678c12808ed773`.
+  Bounded in-stream review, without extraction or execution, passes exact eight
+  root entries, six platform release files, seven matching checksum rows, and
+  CycloneDX 1.6 lockfile SBOM evidence with 569 components.
+- Evidence-head CI/packages, normal merge, merged-main evidence, guarded
+  original-tree synchronization, and destination verification remain pending.
+
+## Checkpoint 2235 - Bounded Risk Fusion
+
+Selected the central Native/Local verdict fusion boundary as the next
+highest-value unblocked engine work. Audit found signed-weight overflow in the
+Native `i32` sum, positive-weight overflow/wrap in the Local `u16` sum,
+byte-unsafe explanation truncation, TrustStore provenance collected before its
+synthetic evidence, and input-order truncation that could hide decisive late
+evidence.
+
+The complete checkpoint batch is scripted before execution: saturating/clamped
+Native and Local score folds; positive-only Local quality/source gates; stable
+absolute-weight report prioritization; bounded UTF-8 evidence/explanations;
+correct TrustStore provenance; pure extreme-weight/multibyte/late-evidence
+regressions; one new mandatory Local verifier target; strict exact 264-step and
+scope validation; source contract 665; and audit, threat-model, blocker,
+dependency, status, and checkpoint documentation. No checkpoint-2235 passing
+result is claimed during scripting. No candidate content, live malware,
+Defender change, installation, service/driver start, dependency, feature,
+lockfile, release, or publication is involved.
+
+Focused execution passes Native `10/10`, Local `1/1`, source contracts
+`665/665`, rustfmt, and both PowerShell parsers. Full Native passes `520` with
+19 intentional child-fixture ignores plus compiler `6/6`; Local `537/537`;
+Guard `248/248 + 249/249`; Flutter analyze and `838/838`; both complete locked
+workspace variants; and strict changed-crate Clippy. Two pytest commands fail
+before collection because pytest is absent and are uncredited; the intended
+dependency-free runner passes. A workspace-wide strict Clippy attempt is also
+uncredited on pre-existing API-only enum/test-module ordering lints. Locks and
+the protected vault remain exact. Definitive and integration work is pending.
+
+The definitive verifier passes exact `264/264` from
+`2026-08-25T19:38:33.8452358Z` to `2026-08-25T19:46:57.3735345Z` in `503.5s`,
+with zero failed/skipped and both mandatory risk-fusion targets. Embedded and
+independent PS5.1/PS7 validators pass; eight malformed reports reject under
+each host (`16/16`). The first wrong conventional pwsh-path invocation stopped
+before execution and is uncredited. Report SHA-256 is
+`3c28abf05ba1b004ff0a16448690b8245baad0fd658ee0893bf052f3cdc719ed`.
+Locks, processes, and protected vault remain exact. Hosted/integration remains
+pending.
+
+## 2026-08-25 - Checkpoint 2234 Integration And Destination Closure
+
+- Evidence `a5cf1c5a311159feba3bbb9fa3276b68c5093a60` passes Avorax CI
+  `32881438307` and Desktop Packages `32881438208` without retry. Publication
+  `97915871533` is skipped. Artifact `9576386744` is 131,680,378 bytes with
+  exact GitHub/download SHA-256
+  `565d4ec592d7a2704d4ffb64d104d4c91fc1e75d2aadc0295e3b8e5b5deccb03`
+  and passes non-extracting exact 8-entry/6-release/7-checksum/CycloneDX
+  1.6/569-component validation.
+- PR `#86` merges normally as `c969351dd7fae979d6b49df9e870db92a4e51f23`
+  with exact parents `7467bfd61a077a8783f3c333ef2488a9d00433f2` and
+  `a5cf1c5a311159feba3bbb9fa3276b68c5093a60`. Merged CI `32884202709`
+  and packages `32884202759` pass without retry; publication `97929408266` is
+  skipped. Artifact `9577913781` is 131,563,257 bytes with exact SHA-256
+  `1766f2a3a5d01e2366ba004ed611837768063aff7b65ee87f526c23ab8b7d228`
+  and the same bounded stream review.
+- Exact base `7330416` preconditions permit guarded synchronization of 11 paths
+  and 6,434,655 bytes to the merge with zero delete/residue. The stage is
+  removed only after exact inventory/hash/reparse audit. One first helper
+  parser command was misquoted by its outer shell and stopped before execution;
+  it is uncredited. The corrected parse-only check passed and left no stage.
+- Destination parsers, source `664/664`, merge blobs, and locks pass. The
+  no-skip/no-Defender verifier passes exact `263/263`, zero failed/skipped, in
+  `468.9s`; both strict hosts pass and `16/16` destination adversarial reports
+  reject. Three package-source symlink-positive tests remain explicitly skipped
+  due absent optional Windows symlink privilege.
+- No test process, stage, or sync residue remains. The protected vault remains
+  16,072 files, zero directories, 4,522,733 bytes, 5,357 each payload/JSON/auth,
+  one key, and zero pending/reparse. Nothing was installed, released, published,
+  executed as candidate content, or changed in Defender. Checkpoint 2234 is
+  closed; the complete antivirus project remains active.
+
 ## 2026-08-24 continuation checkpoint 2221 integration closure
 
 - Evidence head `b60f500d59629682d84f532c7e0f16d623f6b6b4` passed Avorax CI

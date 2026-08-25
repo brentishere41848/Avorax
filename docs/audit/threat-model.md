@@ -2812,3 +2812,59 @@ both consolidated ZIPs match GitHub digests and pass bounded non-extracting
 8-entry/6-release/7-checksum/CycloneDX 1.6/569-component validation. This
 supports the verifier-host repair and package reproducibility only. Integration,
 destination, and external platform limits are unchanged.
+
+Evidence head `a5cf1c5`, normal merge `c969351`, merged-main CI/packages,
+skipped publication, and bounded package review pass. Guarded 11-path
+destination synchronization and exact `263/263` destination verification in
+`468.9s` pass under both strict hosts; `16/16` adversarial reports reject. This
+closes the JSON-host evidence inconsistency without changing the threat model:
+PowerShell hosts remain trusted verifier prerequisites, and no detection,
+installed service, signing, driver, kernel, or pre-execution boundary expands.
+
+## Checkpoint 2235 Risk-Fusion Boundary
+
+**Threat:** malformed or unexpectedly numerous engine evidence can overflow a
+score accumulator, panic a debug scanner, wrap a release score, split a UTF-8
+character during display truncation, use negative diagnostics to satisfy Local
+quality/source gates, hide decisive evidence after the report cap, or omit the
+TrustStore engine that actually changed policy.
+
+**Scripted control:** Native accumulation uses saturating `i64` arithmetic and
+clamps at 0..100. Local accumulation saturates at 100 and quality/source counts
+ignore non-positive reasons. Native output stably retains highest absolute
+decision weight, bounds each text field and explanation at valid UTF-8 byte
+boundaries, discloses omitted item count, and collects engine provenance after
+synthetic trust evidence. All complete evidence remains available to verdict
+and category decisions before report shaping.
+
+**Residual risk:** weighted evidence and ordering remain policy choices, not a
+calibrated probability. An attacker may still craft files near thresholds, and
+bounded reports omit lower-magnitude context. Analysts, signed definition/rule
+updates, broader benign/malicious corpora, production false-positive metrics,
+and installed workflow tests remain required. No driver, kernel, signing,
+cross-identity, or pre-execution boundary changes.
+
+**Evidence state:** all checkpoint-2235 implementation, pure regressions,
+verifier/validator changes, source contract 665, and documentation are scripted
+before execution. No passing result is claimed yet.
+
+Focused extreme-weight, multibyte, decisive-evidence, provenance, and negative-
+diagnostic tests now pass, as do broad engine/workspace/Flutter regressions,
+source `665/665`, changed-crate strict Clippy, parser, lock, and vault checks.
+This supplies local runtime evidence for the scripted control without changing
+the residual calibration, installed-service, driver, or pre-execution risks.
+Definitive and integration evidence remains pending.
+
+Definitive local evidence now passes exact `264/264` in `503.5s`, dual-host
+strict validation, and `16/16` adversarial report rejections. This verifies the
+bounded-fusion regression and evidence contract locally; it does not change the
+residual calibration, installed-service, signed-driver, or pre-execution model.
+Hosted and destination evidence remains pending.
+
+Exact implementation `8fa9630` passes hosted CI `32892108074` and package
+push/PR runs `32891914251`/`32892108020`. Both publication jobs are skipped;
+both consolidated ZIPs match GitHub digests and pass bounded non-extracting
+8-entry/6-release/7-checksum/CycloneDX 1.6/569-component validation. This
+supports the bounded-fusion implementation and package reproducibility only.
+Calibration, installed-service, destination, signed-driver, and pre-execution
+limits are unchanged.

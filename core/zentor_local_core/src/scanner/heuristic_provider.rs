@@ -194,11 +194,11 @@ impl RiskScore {
 }
 
 pub fn score_from_reasons(reasons: Vec<RiskReason>, engines_used: Vec<RiskEngine>) -> RiskScore {
-    let score = reasons
-        .iter()
-        .map(|reason| reason.weight.max(0) as u16)
-        .sum::<u16>()
-        .min(100) as u8;
+    let score = reasons.iter().fold(0_u8, |total, reason| {
+        total
+            .saturating_add(reason.weight.clamp(0, 100) as u8)
+            .min(100)
+    });
     let high_quality = high_quality_reason_count(&reasons);
     let independent_sources = independent_reason_source_count(&reasons);
 
@@ -243,10 +243,11 @@ fn high_quality_reason_count(reasons: &[RiskReason]) -> usize {
     reasons
         .iter()
         .filter(|reason| {
-            matches!(
-                reason.severity,
-                RiskSeverity::Medium | RiskSeverity::High | RiskSeverity::Critical
-            )
+            reason.weight > 0
+                && matches!(
+                    reason.severity,
+                    RiskSeverity::Medium | RiskSeverity::High | RiskSeverity::Critical
+                )
         })
         .count()
 }
@@ -254,6 +255,7 @@ fn high_quality_reason_count(reasons: &[RiskReason]) -> usize {
 fn independent_reason_source_count(reasons: &[RiskReason]) -> usize {
     reasons
         .iter()
+        .filter(|reason| reason.weight > 0)
         .map(|reason| format!("{:?}", reason.source))
         .collect::<HashSet<_>>()
         .len()
@@ -810,6 +812,89 @@ mod tests {
         }
         assert!(!eligible_for_heuristic_auto_quarantine(
             &single_source,
+            false
+        ));
+    }
+
+    #[test]
+    fn bounded_risk_fusion_handles_extreme_reason_weights_without_overflow() {
+        let risk = score_from_reasons(
+            vec![
+                reason(
+                    "extreme_heuristic",
+                    "Extreme heuristic fixture",
+                    "Benign score-bound regression",
+                    i32::MAX,
+                    RiskSeverity::High,
+                    RiskReasonSource::Heuristic,
+                ),
+                reason(
+                    "extreme_static",
+                    "Extreme static fixture",
+                    "Benign score-bound regression",
+                    i32::MAX,
+                    RiskSeverity::Critical,
+                    RiskReasonSource::StaticFeature,
+                ),
+                reason(
+                    "third_positive",
+                    "Third positive fixture",
+                    "Benign score-bound regression",
+                    25,
+                    RiskSeverity::Medium,
+                    RiskReasonSource::Heuristic,
+                ),
+                reason(
+                    "negative_diagnostic",
+                    "Negative diagnostic fixture",
+                    "Negative evidence cannot wrap the positive score",
+                    i32::MIN,
+                    RiskSeverity::High,
+                    RiskReasonSource::Heuristic,
+                ),
+            ],
+            vec![RiskEngine::Heuristic],
+        );
+
+        assert_eq!(risk.score, 100);
+        assert_eq!(risk.verdict, RiskVerdict::ProbableMalware);
+        assert_eq!(risk.confidence, ThreatConfidence::High);
+        assert_eq!(risk.recommended_action, RecommendedAction::Quarantine);
+        assert!(eligible_for_heuristic_auto_quarantine(&risk, false));
+
+        let diagnostic_only_quality = score_from_reasons(
+            vec![
+                reason(
+                    "single_positive",
+                    "Single positive fixture",
+                    "One positive source cannot become probable malware",
+                    i32::MAX,
+                    RiskSeverity::High,
+                    RiskReasonSource::Heuristic,
+                ),
+                reason(
+                    "negative_static",
+                    "Negative static diagnostic",
+                    "Negative diagnostics do not count as quality or independence",
+                    i32::MIN,
+                    RiskSeverity::Critical,
+                    RiskReasonSource::StaticFeature,
+                ),
+                reason(
+                    "negative_static_two",
+                    "Second negative static diagnostic",
+                    "Negative diagnostics do not count as quality or independence",
+                    -1,
+                    RiskSeverity::Critical,
+                    RiskReasonSource::StaticFeature,
+                ),
+            ],
+            vec![RiskEngine::Heuristic],
+        );
+        assert_eq!(diagnostic_only_quality.score, 100);
+        assert_eq!(diagnostic_only_quality.verdict, RiskVerdict::Suspicious);
+        assert!(!eligible_for_heuristic_auto_quarantine(
+            &diagnostic_only_quality,
             false
         ));
     }
