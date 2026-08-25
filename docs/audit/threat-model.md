@@ -2578,7 +2578,7 @@ LocalSystem, signed-driver, or pre-execution enforcement.
 
 ## Checkpoint 2230 - Pipe-Delivered Launch-Key Boundary
 
-**Scripted control:** The parent now withholds the canonical random launch/MAC
+**Control:** The parent withholds the canonical random launch/MAC
 key until a connected handshake client is bound to the exact retained child
 process, its same-user logon-session impersonation token and restricted profile
 are authenticated, and launch/child token stability is revalidated. Only that
@@ -2593,7 +2593,7 @@ MAC key. Malformed, oversized, truncated, non-UTF-8, noncanonical, duplicate
 pipe/key UUID, missing ACK, partial I/O, timeout, cancellation, PID, pipe-security,
 or token evidence is fail-visible and cannot become publisher trust. Benign
 fixture, source contract 660, and exact 260-step verification coverage are
-scripted, but no checkpoint-2230 execution result is claimed yet.
+implemented and verified.
 
 **Residual risk:** Removing environment inheritance narrows passive disclosure;
 it does not create durable secrecy. The key remains in parent/child memory and
@@ -2608,14 +2608,15 @@ enforcement.
 new real benign child, adjacent identity/token/MAC targets, complete Native,
 Local Core, Guard, both workspace modes, strict lint/offline/release checks,
 PS7/PS5 Authenticode smoke, Flutter analyze, and `838/838` UI tests passed.
-Definitive, hosted, integration, synchronization, and destination evidence is
-not yet claimed.
+Definitive, hosted, integration, synchronization, and destination evidence now
+passes without changing the residual technical limits below.
 
 Definitive local execution now passes exact `260/260` in `459.9s`, including
 the new key-delivery regression in `0.2s`; strict PS5 validation passes and
-`16/16` adversarial report mutations are rejected. This execution evidence does
-not change the same-user memory/pipe, cross-identity, driver, or pre-execution
-limits above. Hosted and destination evidence remains pending.
+`16/16` adversarial report mutations are rejected. Evidence `4b03b0e`, PR `#82`,
+merge `9690c84`, hosted/merged-main CI/packages, exact 12-path synchronization,
+and destination `260/260` in `448.1s` also pass. This evidence does not change
+the same-user memory/pipe, cross-identity, driver, or pre-execution limits above.
 
 ## Checkpoint 2231 - Authenticode Launch-Key Confirmation HMAC
 
@@ -2624,7 +2625,7 @@ did not cryptographically prove that the connected child received the exact
 per-launch key. A process able to reach the already authenticated same-user
 pipe could emit that public byte without possessing the key.
 
-**Scripted control:** The fixed ACK is removed. After exact parent PID, child
+**Control:** The fixed ACK is removed. After exact parent PID, child
 PID, pipe security, connected-client token, launch-token, and child-token checks,
 the child reads the canonical 36-byte key and computes domain-separated
 HMAC-SHA-256 over the exact little-endian canonical pipe-name byte length, every
@@ -2644,5 +2645,49 @@ pipe, not encryption, cross-identity authentication, durable secret storage,
 durable token-object identity, AppContainer/LPAC, installed LocalSystem,
 signed-driver, or pre-execution enforcement. Same-user memory read, sufficiently
 privileged injection, pipe observation, and handle duplication can still expose
-the key or subvert an endpoint. No checkpoint-2231 result is verified until the
-scripted focused and full execution phase passes.
+the key or subvert an endpoint.
+
+**Evidence:** Focused HMAC `2/2`, complete Native `515/515` plus compiler `6/6`,
+Local `536/536`, Guard `248/248 + 249/249`, both locked workspaces, strict lint,
+release smoke, Flutter `838/838`, and source `661/661` pass. Local and destination
+verifier/validator evidence passes exact `261/261` in `466.4s` and `452.7s`, with
+`8/8` malformed-report rejections at each stage. Evidence `0f49c76`, PR `#83`,
+normal merge `b678027`, hosted/merged-main CI/packages, guarded synchronization,
+exact locks, and the protected-vault invariant pass; publication is skipped.
+
+## Checkpoint 2232 - Authenticode Launch-Key Best-Effort Zeroization
+
+**Threat:** Checkpoint 2231 retained the random per-launch HMAC key in ordinary
+owned `String` values and created a separate raw 36-byte derived-key array. Drop,
+error, cancellation, or unwind released those allocations without an explicit
+best-effort scrub, increasing the chance that stale key bytes remained readable
+in Avorax-owned memory after the protocol ended.
+
+**Control:** The Windows-only Native Authenticode path pins `zeroize 1.9.0` and
+uses `Zeroizing<String>` for the parent handshake, authenticated response
+evidence, pending child handshake, and completed child handshake. The bounded
+37-byte child pipe-read buffer uses `Zeroizing<[u8; 37]>`. Canonical UUID
+validation now returns a borrowed key slice instead of copying the key into a
+raw array. Key-bearing structs do not derive `Debug`. RAII covers normal drop,
+early return, and unwind; a pure benign regression explicitly scrubs both owned
+forms and requires prior handshake-HMAC and response-MAC evidence to fail.
+
+**Residual risk:** This is best-effort cleanup of Avorax-owned buffers only. It
+does not prove erasure of compiler temporaries, HMAC internals, allocator or OS
+copies, process dumps, paging, or forensic remnants and does not stop same-user
+or privileged reads while the key is live. It is not secure erasure, encryption,
+durable secret storage, cross-identity authentication, AppContainer/LPAC,
+installed LocalSystem, signed-driver, or pre-execution enforcement.
+
+**Local evidence:** Focused zeroization passes `1/1`; Native passes `516/516`
+with 19 intentional ignored child entrypoints plus compiler `6/6`; Local passes
+`536/536`; Guard passes `248/248 + 249/249`; both locked workspaces, strict lint,
+offline/release/two-host trust smoke, Flutter analyze and `838/838`, and source
+contracts `662/662` pass. The exact no-skip/no-Defender verifier and both strict
+validators pass `262/262` in `459.7s`, and `8/8` malformed reports are rejected.
+Locks and the protected-vault invariant remain exact. Exact implementation
+`eac61e6` passes all five CI jobs and both Windows/Linux/macOS package runs;
+their consolidated artifacts pass exact digest and in-stream inventory/SBOM
+validation with publication skipped. Evidence-head, integration,
+synchronization, and destination proof remain pending. No candidate content or
+live malware is used.

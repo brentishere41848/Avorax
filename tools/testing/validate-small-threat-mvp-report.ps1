@@ -1904,8 +1904,8 @@ if ($RequireFullSuite) {
   if ($skipFlutter -or $skipRust) {
     throw "-RequireFullSuite requires skip_flutter=false and skip_rust=false."
   }
-  if ($steps.Count -ne 261) {
-    throw "-RequireFullSuite expected exactly 261 verifier steps for this source revision, found $($steps.Count)."
+  if ($steps.Count -ne 262) {
+    throw "-RequireFullSuite expected exactly 262 verifier steps for this source revision, found $($steps.Count)."
   }
   if ($steps[0].name -ne "local-core safe simulator scan reporting") {
     throw "-RequireFullSuite first step mismatch: $($steps[0].name)"
@@ -1964,6 +1964,7 @@ if ($RequireFullSuite) {
   Assert-ReportContainsStep $steps "native-engine Authenticode response launch-key MAC regressions"
   Assert-ReportContainsStep $steps "native-engine Authenticode pipe-delivered launch-key regressions"
   Assert-ReportContainsStep $steps "native-engine Authenticode launch-key confirmation HMAC regressions"
+  Assert-ReportContainsStep $steps "native-engine Authenticode launch-key zeroization regressions"
   Assert-ReportContainsStep $steps "native-engine Authenticode mandatory-hash/file-identity regressions"
   Assert-ReportContainsStep $steps "native-engine risk fusion regressions"
   Assert-ReportContainsStep $steps "native-engine ClickOnce carrier heuristic detection"
@@ -2152,11 +2153,15 @@ if ($RequireFullSuite) {
   Assert-ReportScopeContains $verifiedScopeText "the child computes the handshake key confirmation as domain-separated HMAC-SHA-256 under the exact canonical 36-byte per-launch key over the exact unsigned 64-bit little-endian canonical pipe-name byte length, every canonical pipe-name byte, and the unsigned 32-bit little-endian parent and child PIDs" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "The parent requires exactly 32 bytes and verifies that HMAC in constant time against its retained pipe name, launch key, own PID, and exact retained child PID before accepting key possession" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "Empty, truncated, extended, mutated, wrong-key, wrong-pipe, wrong-parent-PID, wrong-child-PID, zero-PID, or equal-PID evidence fails visibly; the real restricted benign child succeeds and a real restricted wrong-key child is terminated and reaped" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "owned copies of the canonical Authenticode launch key in the parent handshake, authenticated response evidence, pending child handshake, and completed child handshake are held in Zeroizing<String>; the bounded child pipe-read buffer is held in Zeroizing<[u8; 37]>" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "The former raw 36-byte derived-key array copy is removed, key bytes are borrowed only after canonical UUID validation, and key-bearing structs do not derive Debug" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Drop and every early-return path zeroize these Avorax-owned buffers; explicit scrub regression proves the key becomes empty, the read buffer becomes all zero, and prior handshake-HMAC and response-MAC evidence fails after scrub" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "The key is absent from the child environment" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "the sanitized child environment contains only the canonical handshake pipe name, canonical parent PID, and checked native SystemRoot/WINDIR values; it contains no launch token or response MAC key" "verification_scope.verified"
   Assert-ReportScopeContains $technicalLimitText "Response MAC binding uses a per-launch key delivered over the authenticated same-user pipe and retained in parent/child memory; it is not encryption, cross-identity authentication, durable token-object binding, or durable secret storage" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "Handshake key confirmation and response MAC binding use the same per-launch key with distinct fixed domains after delivery over the authenticated same-user pipe; this proves possession by data arriving on the already PID/token-bound pipe at that point, not encryption, cross-identity authentication, durable token-object binding, or durable secret storage" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "Removing it from the child environment narrows passive environment disclosure, but same-user process-memory read access, sufficiently privileged process injection, pipe-handle duplication, or pipe observation may recover the key or modify both stdout and MAC before authentication" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "Best-effort Authenticode launch-key zeroization covers only Avorax-owned String and pipe-read buffers; it does not guarantee erasure of compiler temporaries, HMAC internals, allocator or OS copies, process dumps, paging, same-user or privileged memory reads, or forensic recovery, and it is not secure erasure, durable secret storage, cross-identity isolation, driver, or pre-execution evidence" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "It does not bind the impersonation token object to the launch primary-token object, prevent mutation wholly before or after that window, prevent same-session injection or handle duplication, encrypt IPC, provide cross-identity authentication or AppContainer/LPAC, or demonstrate driver/pre-execution enforcement" "verification_scope.technically_limited"
   Assert-ReportScopeContains $verifiedScopeText "Before CreateProcessAsUserW, the parent supplies an immutable DWORD64 process-creation mitigation policy enabling strict handle checks, extension-point disable, dynamic-code prohibition, Microsoft-signed-only binary loading, no remote images, no low-label images, and System32 image preference; the child requires both invalid-handle exception and permanent-enforcement read-back flags plus every other required policy before stdin or request parsing, and attribute construction, application, or read-back failure cannot become trust" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "Environment construction, current-directory validation, mitigation-policy construction/application/read-back, token/SID creation, process launch, handle-list construction, Job assignment, resume, bounded TokenPrivileges, TokenRestrictedSids, TokenIntegrityLevel, fixed-size TokenMandatoryPolicy, or fixed-size token virtualization/UIAccess inspection, verification, or normal revert failure cannot become trust" "verification_scope.verified"

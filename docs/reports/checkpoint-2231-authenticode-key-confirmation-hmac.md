@@ -165,14 +165,65 @@ Without extracting or executing either artifact, in-stream validation passes
 exactly eight unique regular root entries, six platform release files, seven
 checksum targets with matching internal SHA-256, clean ZIP reads, and one
 CycloneDX 1.6 lockfile SBOM with exactly 569 components. Evidence-head hosted
-checks, normal merge, synchronization, and destination proof remain pending.
+checks, normal merge, synchronization, and destination proof remained pending at
+that implementation-head stage.
 
-## Pending Integration Sequence
+## Integration And Destination Closure
 
-1. Commit this hosted evidence and rerun exact evidence-head gates, then merge
-   normally, and verify merged-main CI/packages without creating a release.
-2. Guardedly synchronize only exact merge-delta files to the original tree and
-   independently repeat destination verification and read-only reconciliation.
+Evidence commit `0f49c76e316fc4103fae4c655cc6f119f487d751` passes all five
+Avorax CI jobs in run `32839839948` and all package jobs in PR run
+`32839839992`; publication job `97781098855` is skipped. The consolidated
+evidence-head artifact is `9560563684`, 131,647,453 bytes, with GitHub SHA-256
+`56e8f5bff444e43c64ecdf7fafaae963ca3bfdf5c69362effc3a41f2144da36a`.
 
-Checkpoint 2231 is not the completion of the antivirus project. After closure,
-the highest-value unblocked defensive risk remains the next task.
+PR `#83` merged normally as
+`b678027bf4b6522fdf12c2eebc2df2fd15c14684`, with exact parents
+`9690c84a81148551a51ab16b8d2db9b2e02ba086` and
+`0f49c76e316fc4103fae4c655cc6f119f487d751`. Merged-main CI
+`32841378314` passes all five jobs. Desktop Packages `32841378372` passes
+contracts, Windows x64 MSI/EXE, Linux x64 DEB/tar, macOS x64/arm64 DMGs, and
+consolidation; publication job `97784458641` is skipped. No release was created,
+and the release list remains headed by `v0.1.15-beta.3` from 2026-07-20.
+
+Merged-main consolidated artifact `9560976668` binds to exact merge head, is
+131,646,181 bytes, and has matching GitHub/downloaded SHA-256
+`b1da2eef2de556d6d15a31886aa13171f21eedfbd3fa97c9a81e21fafbcc56b1`.
+Without extraction or execution, in-stream validation passes exact eight unique
+regular root entries, six platform release files, seven matching checksum rows,
+clean ZIP reads, and one CycloneDX 1.6 lockfile SBOM with 569 components.
+
+The merge has 12 paths relative to previous main, including the already closed
+checkpoint-2230 report. Relative to the exact checkpoint-2231 start merge
+`4bd0b1582080271526072dca81459064a4d0648c`, destination work is exact 11
+paths: ten modified files, one new report, and zero deletes. An initial read-only
+precondition against older main `9690c84` rejected `RUN_LOG.md` before staging;
+the destination instead exactly matched known checkpoint-2230 closure blob
+`f6ad6cee79bf714ab493d53e8022ea3a7f19a5c3` from `4bd0b15`. Corrected exact-
+start preconditions, root containment, and reparse checks then permitted atomic
+application of `11/11` files, 6,694,886 bytes. No unrelated destination path was
+changed, and the checked external staging directory was removed.
+
+Destination verification passes both parser hosts, formatting, source contracts
+`661/661`, HMAC `2/2`, pipe delivery `1/1`, parent/child PID `2/2`, child-token
+binding `2/2`, and wrong response-key `1/1`. Native passes `515/515` with 19
+intentional ignored child entrypoints plus compiler `6/6`; Local Core passes
+`536/536`; Guard passes `248/248` and all-features `249/249`. Both locked
+workspaces pass serially, as do strict Native/Local/Guard Clippy, offline Native
+resolution, all three release builds, PS7/PS5 Authenticode smoke, Flutter analyze,
+and Flutter `838/838`.
+
+The destination no-skip/no-Defender verifier ran from
+`2026-08-25T11:41:07.796987Z` through `2026-08-25T11:48:40.4769471Z` and
+passed exact `261/261`, zero failed or skipped steps, in `452.7s`; the HMAC step
+passed in `0.3s`. Embedded and independent Windows PowerShell 5.1 strict
+validation pass, and eight isolated adversarial destination reports are rejected
+`8/8`. Two outer-shell parser-wrapper quoting errors occurred before the intended
+PS5/PS7 parser logic and are uncredited; corrected invocations pass.
+
+Post-test all 11 synchronized files match the merge blobs and source raw SHA-256.
+Root, Native, and Flutter lock blobs remain exact. No test process, sync temp, or
+external stage remains. The protected vault remains 16,072 files, zero
+directories, 4,522,733 bytes, 5,357 each `.avoraxq`/`.json`/`.auth`, one
+`.metadata_auth_key`, and zero pending/temp/reparse. Nothing was installed,
+released, published, executed as candidate content, or changed in Defender.
+Checkpoint 2231 is closed; the complete antivirus project remains active.

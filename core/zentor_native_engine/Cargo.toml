@@ -38,6 +38,7 @@ windows-sys = { version = "0.61", features = [
   "Win32_System_SystemServices",
   "Win32_System_Threading",
 ] }
+zeroize = "=1.9.0"
 
 [target.'cfg(windows)'.dev-dependencies]
 avorax_platform_security = { path = "../avorax_platform_security" }

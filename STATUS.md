@@ -6118,6 +6118,47 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   AppContainer/LPAC, installed LocalSystem, signed-driver, or pre-execution
   enforcement. The complete antivirus project remains active.
 
+## Checkpoint 2232 - Authenticode Launch-Key Best-Effort Zeroization
+
+- **Implemented and locally verified:** Native's Windows Authenticode path pins
+  `zeroize 1.9.0`. Parent/child owned launch-key strings use
+  `Zeroizing<String>`, the bounded child read buffer uses
+  `Zeroizing<[u8; 37]>`, canonical validation returns borrowed bytes instead of
+  a raw 36-byte key copy, and key-bearing structs omit `Debug`.
+- A pure benign regression explicitly scrubs both owned forms, requires empty or
+  all-zero storage, and requires prior handshake-HMAC and response-MAC evidence
+  to fail. Source contract 662, mandatory verifier step 262, exact validator
+  scope, dependency/license inventory, threat model, blocker record, matrix, and
+  checkpoint report were scripted before any checkpoint-2232 test was run.
+- **Verification:** source contracts pass `662/662`; zeroization passes `1/1`;
+  Native passes `516/516` with 19 ignored child entrypoints plus compiler `6/6`;
+  Local passes `536/536`; Guard passes `248/248 + 249/249`; both locked
+  workspaces, strict Clippy, offline Native, three release builds, PS7/PS5
+  Authenticode smoke, Flutter analyze, and Flutter `838/838` pass. The exact
+  no-skip/no-Defender verifier and both strict validators pass `262/262` in
+  `459.7s`; `8/8` malformed reports are rejected.
+- **Lock and safety evidence:** offline resolution changes root only by the Native
+  edge and standalone Native only by the exact `zeroize 1.9.0` package/edge;
+  Flutter is unchanged. Lock blobs and the protected 16,072-file vault invariant
+  remain exact; no test process remains. Hosted CI/packages, merge,
+  synchronization, and destination proof remain pending. No candidate content
+  is executed and no installation,
+  Defender change, release, or publication is authorized.
+- **Technically limited:** best-effort zeroization covers Avorax-owned buffers,
+  not compiler/HMAC/allocator/OS copies, dumps, paging, forensic secure erasure,
+  or live same-user/privileged reads. It is not durable secret storage,
+  cross-identity isolation, AppContainer/LPAC, installed LocalSystem, driver, or
+  pre-execution enforcement. The full antivirus goal remains active.
+- **Exact implementation-head hosted verified:** commit `eac61e6` is PR `#84`'s
+  exact head. CI `32850233405` and package push/PR runs
+  `32850194350`/`32850233494` pass all mandatory jobs for Windows MSI/EXE,
+  Linux DEB/tar, both macOS DMGs, consolidation, checksums, and lockfile SBOM;
+  publication is skipped. Consolidated artifacts `9564478764`/`9564663349`
+  match GitHub digests and pass exact in-stream eight-entry, six-platform-file,
+  seven-checksum, and CycloneDX 1.6/569-component validation without extraction
+  or execution. Evidence-head, merge, synchronization, and destination proof
+  remain pending.
+
 ## Checkpoint 2230 - Pipe-Delivered Authenticode Launch Key
 
 - **Scripted phase complete:** the restricted Authenticode child no longer
@@ -6206,6 +6247,20 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   and pass exact in-stream eight-entry, six-platform-file, seven-checksum, and
   CycloneDX 1.6/569-component validation without extraction or execution.
   Evidence-head, merge, synchronization, and destination proof remain pending.
+- **Integration and destination closure:** evidence `0f49c76` passes CI
+  `32839839948` and packages `32839839992`; PR `#83` merges normally as
+  `b678027` with exact parents `9690c84`/`0f49c76`. Merged-main CI
+  `32841378314` and packages `32841378372` pass; publication `97784458641` is
+  skipped. Merged artifact `9560976668` is 131,646,181 bytes with exact SHA-256
+  `b1da2eef2de556d6d15a31886aa13171f21eedfbd3fa97c9a81e21fafbcc56b1`
+  and passes in-stream 8-entry/6-release/7-checksum/CycloneDX 1.6 validation.
+  Exact checkpoint-start preconditions permit guarded 11-path synchronization,
+  6,694,886 bytes and zero deletes/residue. Destination focused/full Rust,
+  strict lint/offline/release/two-host smoke, Flutter analyze and `838/838` all
+  pass. The destination verifier/validators pass `261/261` in `452.7s`, and
+  adversarial reports are rejected `8/8`. Source/lock blobs and the protected
+  vault remain exact. Checkpoint 2231 is closed; the full antivirus goal remains
+  active.
 - **Technically limited:** key confirmation proves point-in-time possession by
   data arriving on the already PID/token-bound same-user pipe. Confirmation and
   response binding reuse the key under distinct domains. This is not encryption,

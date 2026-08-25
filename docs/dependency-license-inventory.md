@@ -1248,3 +1248,41 @@ reuse one per-launch key under distinct fixed domains; this is documented as
 same-user point-in-time possession evidence, not encryption, cross-identity
 authentication, durable secret storage, signed-driver, or pre-execution proof.
 No checkpoint-2231 dependency or lock result is claimed before execution.
+
+Checkpoint 2232 adds `zeroize 1.9.0` as an exact Windows-only direct dependency
+of Native Engine. The RustCrypto crate is licensed `Apache-2.0 OR MIT`, requires
+Rust 1.85 or newer, and provides the established `Zeroizing<T>` RAII wrapper and
+`Zeroize` trait used to scrub Avorax-owned Authenticode launch-key strings and
+the bounded child pipe-read buffer on drop. The root lock already contains
+`zeroize 1.9.0` transitively; checkpoint 2232 adds only the Native package edge
+there. Offline Cargo resolution adds the exact package and Native edge to the
+standalone lock without any other package change. The resulting SHA-256 values
+are root `7c7c8aa006c2ac80eb89fa64d3b8ec09b32b26598b1a85bceb3c2af5a2d20e39`,
+standalone Native
+`7f4393c81896600c4a5e84cad288a1a5360eccbc1c458b38f615082f66391383`,
+and unchanged Flutter
+`4de19695f9207273746341ca2221541b5b86d9f72af83727afca78541e177694`.
+
+The dependency adds no executable, script host, network client, service, driver,
+installer, machine-wide component, or candidate-content execution. Best-effort
+zeroization does not guarantee compiler/HMAC/allocator/OS copy removal, process-
+dump or paging cleanup, forensic secure erasure, live-memory secrecy, durable
+secret storage, cross-identity isolation, signed-driver behavior, or
+pre-execution enforcement. Complete signed final-artifact license, notice,
+copyright, and binary-resolution review remains a production-release
+prerequisite. No checkpoint-2232 passing result is claimed during scripting.
+
+Local dependency evidence now passes source contracts `662/662`, standalone
+Native `--locked --offline --all-targets --all-features`, strict Native/Local/
+Guard Clippy, both locked workspace variants, three locked release builds, and
+the definitive dependency gate inside the exact `262/262` verifier. Root,
+standalone Native, and Flutter lock blobs are
+`80a97940019c722f29e6852504b430cf97ca906e`,
+`876c6627fe0584976778ad26e88149e9e2c51be1`, and
+`51fa085a41168aa1deadace8b5395614db43649e`. Exact implementation-head package
+runs `32850194350` and `32850233494` build all six Windows/Linux/macOS release
+files and consolidate a CycloneDX 1.6 lockfile SBOM with exactly 569 components.
+Both downloaded consolidated ZIP digests match GitHub and pass bounded in-stream
+inventory, checksum, and SBOM validation without extraction or execution.
+Publication is skipped. Evidence-head, merged-main, and final signed-artifact
+license/notice review remain pending.

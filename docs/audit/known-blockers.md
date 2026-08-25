@@ -2675,16 +2675,13 @@ enforcement, or pre-execution blocking is claimed.
   AppContainer/LPAC, installed LocalSystem, signed-driver, or pre-execution
   enforcement.
 
-## Checkpoint 2230 Pending Evidence And Residual Limits
+## Checkpoint 2230 Closure And Residual Limits
 
-- **Execution pending:** implementation, benign tests, source contract 660,
-  exact 260-step verifier/validator changes, and documentation are scripted.
-  Formatter, parser, compiler, focused/full regression, definitive verification,
-  hosted CI/package, normal merge, original-tree synchronization, and destination
-  evidence have not yet run and must not be inferred from checkpoint 2229.
-- **Integration pending:** no checkpoint-2230 implementation/evidence commit,
-  hosted exact-head proof, PR, normal merge, merged-main proof, guarded sync, or
-  destination proof exists yet. Publication remains prohibited.
+- **Execution and integration blockers closed:** source `660/660`, focused/full
+  Rust and Flutter regression, strict lint, release smoke, local/destination exact
+  `260/260` verifier/validator evidence, hosted CI/packages, PR `#82`, normal
+  merge `9690c84`, and guarded 12-path destination synchronization pass.
+  Publication was skipped; no release or installation occurred.
 - **Residual technical blocker:** the launch/MAC key is absent from the child
   environment but remains in parent/child memory and crosses the authenticated
   same-user pipe. Process-memory read access, privileged injection, pipe-handle
@@ -2692,28 +2689,22 @@ enforcement, or pre-execution blocking is claimed.
   kernel access may recover it or modify both response and MAC. This user-mode
   control is not encryption, cross-identity IPC, AppContainer/LPAC, installed
   LocalSystem, signed-driver, or pre-execution enforcement.
-- **Local execution blocker closed:** source `660/660`, focused protocol tests,
-  complete Rust/workspace/Flutter regression, strict lint, offline/release, and
-  PS7/PS5 smoke all pass. No live malware, installation, service/driver start,
-  Defender change, publication, or protected-vault mutation occurred.
-- **Still pending:** exact 260-step definitive verification and adversarial
-  report validation, exact implementation-head hosted CI/package evidence,
-  evidence commit, normal PR merge, merged-main evidence, guarded original-tree
-  synchronization, and independent destination proof.
-- **Definitive local blocker closed:** exact `260/260` verification in `459.9s`,
-  embedded/independent PS5 validation, and `16/16` isolated malformed-report
-  rejections pass. The package source suite skips three Windows symlink-positive
-  fixtures because optional symlink privilege is unavailable; no execution of
-  those cases is claimed. Hosted, integration, sync, and destination work remains.
+- **Evidence limits remain explicit:** the package source suite skips three
+  Windows symlink-positive fixtures because optional symlink privilege is
+  unavailable; no execution of those cases is claimed. This does not reopen the
+  checkpoint integration blocker or change the residual technical boundary.
 
-## Checkpoint 2231 Pending Evidence And Residual Limits
+## Checkpoint 2231 Closure And Residual Limits
 
-- **Execution pending:** the HMAC-SHA-256 launch-key confirmation implementation,
-  benign pure/context regressions, real restricted wrong-key child, source
-  contract 661, exact 261-step verifier/validator, and documentation are
-  scripted. No parser, formatter, compiler, test, smoke, definitive verifier,
-  hosted CI/package, merge, synchronization, or destination result is yet
-  credited for checkpoint 2231.
+- **Execution and integration blockers closed:** HMAC `2/2`, adjacent pipe/PID/
+  token/MAC checks, Native `515/515` plus compiler `6/6`, Local `536/536`, Guard
+  `248/248 + 249/249`, both locked workspaces, strict lint/offline/release,
+  Flutter `838/838`, and source `661/661` pass locally and at destination where
+  applicable. Exact local/destination verifier evidence passes `261/261` in
+  `466.4s`/`452.7s`; strict validators and `8/8` adversarial reports pass at
+  both stages. Evidence `0f49c76`, PR `#83`, merge `b678027`, hosted and
+  merged-main CI/packages, and guarded destination synchronization pass with
+  publication skipped.
 - **Same-user key boundary remains:** key confirmation proves possession only by
   data arriving on the already PID/token-bound same-user pipe at that point.
   The key remains in parent/child memory and crosses the pipe. Same-user memory
@@ -2731,3 +2722,25 @@ enforcement, or pre-execution blocking is claimed.
 - **No malware or release claim:** tests use protocol bytes and benign child
   fixtures only. No candidate content is executed; Defender is not weakened;
   nothing is installed, released, or published.
+
+## Checkpoint 2232 Local Evidence And Residual Limits
+
+- **Local evidence verified:** best-effort Authenticode launch-key zeroization
+  passes focused `1/1`, Native `516/516`, source `662/662`, strict lint/release,
+  PS7/PS5 trust smoke, Flutter `838/838`, and exact verifier/validator `262/262`
+  in `459.7s`; `8/8` malformed reports are rejected. Exact implementation-head
+  CI and Windows/Linux/macOS package evidence pass with publication skipped.
+  Evidence-head, merge, synchronization, and destination proof remain pending.
+- **Owned-buffer scope only:** `zeroize 1.9.0` wraps the parent and child owned
+  key strings plus the bounded child pipe-read buffer. Borrowed key slices avoid
+  the prior raw 36-byte derived-key array. Key-bearing containers intentionally
+  omit `Debug` so routine formatting does not disclose the key.
+- **Residual blocker:** best-effort zeroization cannot guarantee removal of
+  compiler temporaries, HMAC internals, allocator or OS copies, process dumps,
+  paging, or forensic remnants, and it cannot prevent same-user or privileged
+  memory reads while the key is live. It is not secure erasure, durable secret
+  storage, cross-identity isolation, AppContainer/LPAC, installed LocalSystem,
+  signed-driver, or pre-execution enforcement.
+- **Safety boundary unchanged:** only protocol bytes and benign fixtures may be
+  used; no candidate content is executed, no live malware is retained, Defender
+  is not weakened, and nothing is installed, released, or published.
