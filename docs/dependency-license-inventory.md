@@ -1284,5 +1284,60 @@ runs `32850194350` and `32850233494` build all six Windows/Linux/macOS release
 files and consolidate a CycloneDX 1.6 lockfile SBOM with exactly 569 components.
 Both downloaded consolidated ZIP digests match GitHub and pass bounded in-stream
 inventory, checksum, and SBOM validation without extraction or execution.
-Publication is skipped. Evidence-head, merged-main, and final signed-artifact
-license/notice review remain pending.
+Evidence-head package run `32852690969` and merged-main package run
+`32854130974` repeat all six platform files, exact checksum coverage, and the
+569-component CycloneDX 1.6 SBOM. Their consolidated artifacts match GitHub
+digests and pass non-extracting validation. Publication is skipped. Final
+signed-artifact license/notice review remains a production-release prerequisite.
+
+Checkpoint 2233 changes only Authenticode launch-key ownership and validation.
+It replaces Avorax-owned `Zeroizing<String>` values with the existing
+`zeroize 1.9.0` wrapper over one fixed shape, `Zeroizing<[u8; 37]>`, where the
+last byte is a zero overflow guard. It reuses the already direct Windows-only
+`zeroize = "=1.9.0"`, `uuid`, `hmac`, and `sha2` dependencies and adds no crate,
+package, feature, or lockfile change. Their existing licenses and pins remain
+unchanged.
+
+The ownership change adds no executable, script host, network source, service,
+driver, installer, machine-wide component, candidate-content execution, release,
+or publication. A fixed buffer narrows `String` allocation/copy/formatting
+surface but does not guarantee cleanup of UUID/HMAC internals, compiler
+temporaries, stack/register spills, allocator/OS/pipe copies, dumps, paging, or
+forensic remnants; it is not secure erasure, cross-identity isolation,
+signed-driver behavior, or pre-execution enforcement. No checkpoint-2233
+dependency, lock, build, or test result is claimed during scripting. Exact
+source contract 663, exact 263-step dependency/verifier evidence, hosted SBOM,
+and final signed-artifact license/notice review remain execution or production
+prerequisites.
+
+Checkpoint-2233 local dependency evidence now passes source `663/663`, locked
+offline Native resolution, strict Native/Local/Guard Clippy, both locked root
+workspace test modes, Local/Guard/Update release builds, and Flutter
+`838/838`. Root, standalone Native, and Flutter locks have no diff; Flutter raw
+SHA-256 remains `4de19695f9207273746341ca2221541b5b86d9f72af83727afca78541e177694`
+and blob `51fa085a41168aa1deadace8b5395614db43649e`. The implementation continues to
+reuse `zeroize 1.9.0` for `Zeroizing<[u8; 37]>` with one overflow guard and adds
+no owned launch-key `String`, crate, package, feature, license, or lock change.
+Exact 263-step, hosted SBOM/package, and final signed-artifact review remain
+pending and no pre-execution or secure-erasure dependency claim is made.
+
+The definitive local dependency gate now passes inside exact `263/263` in
+`461.4s`; embedded and independent PS5.1 validators plus `8/8` report mutations
+pass. All three locks remain exact and no new dependency/license edge exists.
+An optional PS7 strict-validator attempt is not credited because host JSON
+timestamp conversion violates the validator's string schema; that tooling-host
+limit adds no package and does not change the existing `zeroize 1.9.0`,
+`Zeroizing<[u8; 37]>`, overflow guard, removed owned `String`, or
+pre-execution/secure-erasure boundaries. Hosted SBOM/package and final
+signed-artifact review remain pending.
+
+Checkpoint-2233 exact implementation-head package evidence now passes in push
+run `32865302082` and PR run `32865480497` for exact `00e9f3c`. Both runs build
+all six Windows/Linux/macOS release files, generate the pinned lockfile
+CycloneDX 1.6 SBOM with exactly 569 components, checksum all seven targets, and
+skip publication. Untouched consolidated artifacts `9570689038` and
+`9570466353` match GitHub/download SHA-256 and pass bounded in-stream inventory,
+checksum, and SBOM validation without extraction or execution. This is package
+and source-lock evidence, not final signed-binary license/notice/copyright
+approval; evidence-head and merged-main package evidence plus final production
+artifact review remain pending. No dependency or lock changed.

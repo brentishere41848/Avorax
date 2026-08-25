@@ -125,6 +125,64 @@ checksum targets with matching internal SHA-256, clean ZIP reads, and one
 CycloneDX 1.6 lockfile SBOM with exactly 569 components. Evidence-head hosted
 checks, normal merge, synchronization, and destination proof remain pending.
 
+## Integration And Destination Closure
+
+Evidence commit `183d1d6217b897ef8ca88d98397c4138f854cb00` passes all five
+Avorax CI jobs in run `32852690962` and all Desktop Packages jobs in PR run
+`32852690969`; publication job `97820931936` is skipped. Consolidated artifact
+`9565334960` is 131,650,795 bytes and its downloaded SHA-256 exactly matches
+GitHub at `e8ae76ababb3a2ee297e1822302689e06f7dd7ccf5a75b438755007a29b02847`.
+In-stream validation, without extraction or execution, passes exact eight root
+entries, six platform files, seven matching checksum rows, and one CycloneDX
+1.6 lockfile SBOM with 569 components.
+
+PR `#84` merged normally as
+`6de2a8f3bd48c5c45ee3281a90828d8b0796ded5`, with exact parents
+`b678027bf4b6522fdf12c2eebc2df2fd15c14684` and
+`183d1d6217b897ef8ca88d98397c4138f854cb00`. Merged-main CI
+`32854127768` and Desktop Packages `32854130974` pass; publication job
+`97825750752` is skipped and no release is created. Consolidated artifact
+`9565904414` is 131,559,530 bytes with matching GitHub/downloaded SHA-256
+`e69dcc6a698404fd98fd1d647eb94da7c0b954acc9959c5537bafb0213d1cba9`.
+The same non-extracting validation passes its exact 8/6/7 inventory and
+CycloneDX 1.6 SBOM with 569 components.
+
+The first guarded destination attempt stopped before staging because
+`RUN_LOG.md` did not match merged main `b678027`; it exactly matched the known
+checkpoint-2231 closure commit `c5d7a2f`. Corrected per-path preconditions
+accepted six exact closure-document blobs, eight exact merged-main blobs, and
+one absent new report. Root containment, reparse rejection, checked staging,
+temporary hash verification, and atomic replacement then synchronized exactly
+15 paths and 6,845,406 bytes with zero delete or unrelated-path change.
+
+Destination PS7/PS5 parsers, formatting, source contracts `662/662`, focused
+zeroization `1/1`, Native `516/516` with 19 intentional child-entrypoint ignores
+plus compiler `6/6`, Local `536/536`, Guard `248/248 + 249/249`, both serial
+locked workspace variants, strict Native/Local/Guard Clippy, standalone offline
+Native, locked release builds, PS7/PS5 Authenticode smoke, Flutter analyze, and
+Flutter `838/838` pass. One combined Clippy wrapper used root-relative manifests
+from the Flutter subdirectory and failed before compilation; corrected root
+invocations pass and only those are credited.
+
+The destination no-skip/no-Defender verifier ran from
+`2026-08-25T13:51:12.7681591Z` through `2026-08-25T14:00:28.1197160Z` and
+passed exact `262/262`, zero failed or skipped steps, in `555.3s`; zeroization
+took `0.2s`. Embedded and independent Windows PowerShell 5.1 strict validation
+pass, and eight isolated adversarial destination reports are rejected `8/8`.
+
+Post-test all 15 synchronized paths match merge blobs. Root, Native, and Flutter
+lock SHA-256 values are exact at `7c7c8aa006c2ac80eb89fa64d3b8ec09b32b26598b1a85bceb3c2af5a2d20e39`,
+`7f4393c81896600c4a5e84cad288a1a5360eccbc1c458b38f615082f66391383`, and
+`4de19695f9207273746341ca2221541b5b86d9f72af83727afca78541e177694`.
+Flutter rewrote only destination lockfile line endings during testing; exact
+semantic blob preconditions permitted atomic restoration to the unchanged
+source bytes. No checkpoint process, sync temporary, or external stage remains.
+The protected vault remains 16,072 files, zero directories, 4,522,733 bytes,
+5,357 each `.avoraxq`/`.json`/`.auth`, one `.metadata_auth_key`, and zero
+pending/temp/reparse. Nothing was installed, released, published, executed as
+candidate content, or changed in Defender. Checkpoint 2232 is closed; the
+complete antivirus project remains active.
+
 ## Safety
 
 The regression uses protocol bytes and fixed benign UUID keys only. It does not

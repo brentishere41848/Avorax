@@ -141,6 +141,9 @@ const AUTHENTICODE_HELPER_HANDSHAKE_PIPE_ENV: &str = "AVORAX_AUTHENTICODE_HANDSH
 const AUTHENTICODE_HELPER_HANDSHAKE_PIPE_PREFIX: &str = r"\\.\pipe\Avorax.Authenticode.";
 const AUTHENTICODE_HELPER_HANDSHAKE_TIMEOUT: Duration = Duration::from_secs(5);
 const AUTHENTICODE_HELPER_HANDSHAKE_TOKEN_BYTES: usize = 36;
+const AUTHENTICODE_HELPER_HANDSHAKE_KEY_BUFFER_BYTES: usize =
+    AUTHENTICODE_HELPER_HANDSHAKE_TOKEN_BYTES + 1;
+type AuthenticodeLaunchKey = Zeroizing<[u8; AUTHENTICODE_HELPER_HANDSHAKE_KEY_BUFFER_BYTES]>;
 const AUTHENTICODE_HELPER_HANDSHAKE_KEY_CONFIRMATION_DOMAIN: &[u8] =
     b"avorax-authenticode-handshake-key-confirmation-v1\0";
 const AUTHENTICODE_HELPER_HANDSHAKE_KEY_CONFIRMATION_BYTES: usize = 32;
@@ -258,7 +261,7 @@ struct AuthenticodeResponseMacEvidence {
 
 struct AuthenticatedAuthenticodeResponseMacEvidence {
     frame: AuthenticodeResponseMacEvidence,
-    key: Zeroizing<String>,
+    key: AuthenticodeLaunchKey,
 }
 
 struct SanitizedAuthenticodeLaunchContext {
@@ -457,7 +460,7 @@ struct AuthenticodeParentChildHandshake {
     event: OwnedKernelHandle,
     overlapped: Box<OVERLAPPED>,
     pipe_name: String,
-    token: Zeroizing<String>,
+    token: AuthenticodeLaunchKey,
     expected_user_sid: String,
     expected_logon_session: AuthenticodeTokenLogonSessionEvidence,
     expected_launch_token_stability: AuthenticodeTokenStabilityEvidence,
@@ -480,7 +483,7 @@ impl AuthenticodeParentChildHandshake {
             AUTHENTICODE_HELPER_HANDSHAKE_PIPE_PREFIX,
             Uuid::new_v4().hyphenated()
         );
-        let token = Zeroizing::new(Uuid::new_v4().hyphenated().to_string());
+        let token = new_authenticode_launch_key();
         validate_authenticode_handshake_launch_values(&pipe_name, &token)?;
         let mut pipe_name_wide = pipe_name.encode_utf16().collect::<Vec<_>>();
         pipe_name_wide.push(0);
@@ -642,7 +645,7 @@ impl AuthenticodeParentChildHandshake {
             WriteFile(
                 self.server.0,
                 self.token.as_ptr(),
-                self.token.len() as u32,
+                AUTHENTICODE_HELPER_HANDSHAKE_TOKEN_BYTES as u32,
                 &mut transferred,
                 self.overlapped.as_mut(),
             )
@@ -1442,27 +1445,24 @@ fn validate_authenticode_parent_child_handshake_evidence(
     Ok(())
 }
 
-fn validate_authenticode_handshake_launch_values(pipe_name: &str, token: &str) -> Result<()> {
+fn new_authenticode_launch_key() -> AuthenticodeLaunchKey {
+    let mut token = Zeroizing::new([0u8; AUTHENTICODE_HELPER_HANDSHAKE_KEY_BUFFER_BYTES]);
+    let _ = Uuid::new_v4()
+        .hyphenated()
+        .encode_lower(&mut token[..AUTHENTICODE_HELPER_HANDSHAKE_TOKEN_BYTES]);
+    token
+}
+
+fn validate_authenticode_handshake_launch_values(
+    pipe_name: &str,
+    token: &AuthenticodeLaunchKey,
+) -> Result<()> {
     let pipe_id = validate_authenticode_handshake_pipe_name(pipe_name)?;
-    let token_bytes = token.as_bytes();
-    anyhow::ensure!(
-        token_bytes.len() == AUTHENTICODE_HELPER_HANDSHAKE_TOKEN_BYTES
-            && token_bytes.iter().enumerate().all(|(index, byte)| {
-                if matches!(index, 8 | 13 | 18 | 23) {
-                    *byte == b'-'
-                } else {
-                    byte.is_ascii_digit() || (b'a'..=b'f').contains(byte)
-                }
-            }),
-        "AuthentiCode parent-child handshake token must use canonical lowercase UUID text"
-    );
-    let token_id =
-        Uuid::parse_str(token).context("AuthentiCode parent-child handshake token is invalid")?;
-    anyhow::ensure!(
-        token_id.get_variant() == Variant::RFC4122
-            && token_id.get_version() == Some(Version::Random),
-        "AuthentiCode parent-child handshake token must be a canonical RFC 4122 random UUID"
-    );
+    let token_bytes = authenticode_response_mac_key(token)?;
+    let token_text = std::str::from_utf8(token_bytes)
+        .context("AuthentiCode parent-child handshake token is invalid UTF-8")?;
+    let token_id = Uuid::parse_str(token_text)
+        .context("AuthentiCode parent-child handshake token is invalid")?;
     anyhow::ensure!(
         pipe_id != token_id,
         "AuthentiCode parent-child handshake pipe identifier and token must differ"
@@ -1564,8 +1564,12 @@ fn validate_authenticode_response_ready_bytes(actual: &[u8]) -> Result<()> {
     Ok(())
 }
 
-fn authenticode_response_mac_key(token: &str) -> Result<&[u8]> {
-    let token_bytes = token.as_bytes();
+fn authenticode_response_mac_key(token: &AuthenticodeLaunchKey) -> Result<&[u8]> {
+    anyhow::ensure!(
+        token[AUTHENTICODE_HELPER_HANDSHAKE_TOKEN_BYTES] == 0,
+        "AuthentiCode response MAC launch-key overflow guard is not zero"
+    );
+    let token_bytes = &token[..AUTHENTICODE_HELPER_HANDSHAKE_TOKEN_BYTES];
     anyhow::ensure!(
         token_bytes.len() == AUTHENTICODE_HELPER_HANDSHAKE_TOKEN_BYTES,
         "AuthentiCode response MAC launch token has an unexpected byte length"
@@ -1580,7 +1584,9 @@ fn authenticode_response_mac_key(token: &str) -> Result<&[u8]> {
         }),
         "AuthentiCode response MAC launch token must use canonical lowercase UUID text"
     );
-    let token_id = Uuid::parse_str(token)
+    let token_text = std::str::from_utf8(token_bytes)
+        .context("AuthentiCode response MAC launch token is not valid UTF-8")?;
+    let token_id = Uuid::parse_str(token_text)
         .context("AuthentiCode response MAC launch token is not a valid UUID")?;
     anyhow::ensure!(
         token_id.get_variant() == Variant::RFC4122
@@ -2064,7 +2070,7 @@ fn windows_sid_string(sid: windows_sys::Win32::Security::PSID, sid_label: &str) 
 
 struct AuthenticodeChildHandshake {
     pipe: OwnedKernelHandle,
-    response_mac_key: Zeroizing<String>,
+    response_mac_key: AuthenticodeLaunchKey,
 }
 
 struct PendingAuthenticodeChildHandshake {
@@ -2072,7 +2078,7 @@ struct PendingAuthenticodeChildHandshake {
     pipe_name: String,
     parent_process_id: u32,
     child_process_id: u32,
-    response_mac_key: Zeroizing<String>,
+    response_mac_key: AuthenticodeLaunchKey,
 }
 
 impl PendingAuthenticodeChildHandshake {
@@ -2225,14 +2231,15 @@ fn prepare_current_process_authenticode_parent_child_handshake(
         .context("unable to resolve the Authenticode helper user SID for client pipe security")?;
     verify_authenticode_handshake_pipe_security(pipe.0, &current_user_sid)
         .context("unable to verify the Authenticode handshake client pipe security")?;
-    let mut token_bytes = Zeroizing::new([0u8; AUTHENTICODE_HELPER_HANDSHAKE_TOKEN_BYTES + 1]);
+    let mut response_mac_key =
+        Zeroizing::new([0u8; AUTHENTICODE_HELPER_HANDSHAKE_KEY_BUFFER_BYTES]);
     let mut transferred = 0u32;
     anyhow::ensure!(
         unsafe {
             ReadFile(
                 pipe.0,
-                token_bytes.as_mut_ptr(),
-                token_bytes.len() as u32,
+                response_mac_key.as_mut_ptr(),
+                response_mac_key.len() as u32,
                 &mut transferred,
                 null_mut(),
             )
@@ -2241,14 +2248,15 @@ fn prepare_current_process_authenticode_parent_child_handshake(
         std::io::Error::last_os_error()
     );
     anyhow::ensure!(
-        transferred as usize <= token_bytes.len(),
-        "AuthentiCode parent-delivered handshake key read exceeded its buffer"
+        transferred as usize == AUTHENTICODE_HELPER_HANDSHAKE_TOKEN_BYTES,
+        "AuthentiCode parent-delivered handshake key read was incomplete or extended"
     );
-    let token = std::str::from_utf8(&token_bytes[..transferred as usize])
-        .context("AuthentiCode parent-delivered handshake key is not UTF-8")?;
-    validate_authenticode_handshake_launch_values(&pipe_name, token)?;
-    authenticode_response_mac_key(token)?;
-    let response_mac_key = Zeroizing::new(token.to_owned());
+    anyhow::ensure!(
+        response_mac_key[AUTHENTICODE_HELPER_HANDSHAKE_TOKEN_BYTES] == 0,
+        "AuthentiCode parent-delivered handshake key overflow guard changed"
+    );
+    validate_authenticode_handshake_launch_values(&pipe_name, &response_mac_key)?;
+    authenticode_response_mac_key(&response_mac_key)?;
     Ok(PendingAuthenticodeChildHandshake {
         pipe,
         pipe_name,
@@ -5860,8 +5868,20 @@ mod tests {
         Ok(())
     }
 
-    fn test_response_mac_key() -> Zeroizing<String> {
-        Zeroizing::new(TEST_RESPONSE_MAC_TOKEN.to_string())
+    fn test_launch_key(value: &str) -> AuthenticodeLaunchKey {
+        let mut key = Zeroizing::new([0u8; AUTHENTICODE_HELPER_HANDSHAKE_KEY_BUFFER_BYTES]);
+        let value = value.as_bytes();
+        let copy_len = value.len().min(key.len());
+        key[..copy_len].copy_from_slice(&value[..copy_len]);
+        key
+    }
+
+    fn test_response_mac_key() -> AuthenticodeLaunchKey {
+        test_launch_key(TEST_RESPONSE_MAC_TOKEN)
+    }
+
+    fn other_test_response_mac_key() -> AuthenticodeLaunchKey {
+        test_launch_key(OTHER_TEST_RESPONSE_MAC_TOKEN)
     }
 
     fn authenticated_test_response_binding(
@@ -7016,16 +7036,17 @@ mod tests {
         }
 
         let pipe = r"\\.\pipe\Avorax.Authenticode.11111111-1111-4111-8111-111111111111";
-        let token = "22222222-2222-4222-8222-222222222222";
-        validate_authenticode_handshake_launch_values(pipe, token).unwrap();
-        validate_authenticode_handshake_token_bytes(token.as_bytes(), token.as_bytes()).unwrap();
+        let token = test_launch_key("22222222-2222-4222-8222-222222222222");
+        let token_bytes = authenticode_response_mac_key(&token).unwrap();
+        validate_authenticode_handshake_launch_values(pipe, &token).unwrap();
+        validate_authenticode_handshake_token_bytes(token_bytes, token_bytes).unwrap();
         for invalid_pipe in [
             "",
             r"\\.\pipe\Other.11111111-1111-4111-8111-111111111111",
             r"\\.\pipe\Avorax.Authenticode.11111111111141118111111111111111",
             r"\\.\pipe\Avorax.Authenticode.11111111-1111-1111-8111-111111111111",
         ] {
-            assert!(validate_authenticode_handshake_launch_values(invalid_pipe, token).is_err());
+            assert!(validate_authenticode_handshake_launch_values(invalid_pipe, &token).is_err());
         }
         for invalid_token in [
             "",
@@ -7033,12 +7054,13 @@ mod tests {
             "22222222222242228222222222222222",
             "22222222-2222-1222-8222-222222222222",
         ] {
-            assert!(validate_authenticode_handshake_launch_values(pipe, invalid_token).is_err());
+            let invalid_token = test_launch_key(invalid_token);
+            assert!(validate_authenticode_handshake_launch_values(pipe, &invalid_token).is_err());
         }
-        assert!(validate_authenticode_handshake_token_bytes(token.as_bytes(), b"short").is_err());
-        let mut wrong = token.as_bytes().to_vec();
+        assert!(validate_authenticode_handshake_token_bytes(token_bytes, b"short").is_err());
+        let mut wrong = token_bytes.to_vec();
         wrong[0] = b'3';
-        assert!(validate_authenticode_handshake_token_bytes(token.as_bytes(), &wrong).is_err());
+        assert!(validate_authenticode_handshake_token_bytes(token_bytes, &wrong).is_err());
     }
 
     #[test]
@@ -7895,7 +7917,8 @@ mod tests {
     fn native_authenticode_handshake_key_confirmation_is_context_bound_and_fail_visible() {
         let key = test_response_mac_key();
         let key_bytes = authenticode_response_mac_key(&key).unwrap();
-        let other_key = authenticode_response_mac_key(OTHER_TEST_RESPONSE_MAC_TOKEN).unwrap();
+        let other_key = other_test_response_mac_key();
+        let other_key_bytes = authenticode_response_mac_key(&other_key).unwrap();
         let parent_process_id = 4_242;
         let child_process_id = 4_243;
         let confirmation = authenticode_handshake_key_confirmation(
@@ -7943,7 +7966,7 @@ mod tests {
                 TEST_HANDSHAKE_PIPE,
                 parent_process_id,
                 child_process_id,
-                other_key,
+                other_key_bytes,
                 &confirmation,
             ),
             verify_authenticode_handshake_key_confirmation(
@@ -8001,12 +8024,13 @@ mod tests {
         .unwrap();
 
         key.zeroize();
-        assert!(key.is_empty());
+        assert!(key.iter().all(|byte| *byte == 0));
+        assert!(authenticode_response_mac_key(&key).is_err());
         assert!(verify_authenticode_handshake_key_confirmation(
             TEST_HANDSHAKE_PIPE,
             parent_process_id,
             child_process_id,
-            key.as_bytes(),
+            &key[..AUTHENTICODE_HELPER_HANDSHAKE_TOKEN_BYTES],
             &confirmation,
         )
         .is_err());
@@ -8014,9 +8038,37 @@ mod tests {
         assert!(validate_authenticode_response_binding(response, &scrubbed).is_err());
 
         let mut delivered_key_buffer =
-            Zeroizing::new([0xA5u8; AUTHENTICODE_HELPER_HANDSHAKE_TOKEN_BYTES + 1]);
+            Zeroizing::new([0xA5u8; AUTHENTICODE_HELPER_HANDSHAKE_KEY_BUFFER_BYTES]);
         delivered_key_buffer.zeroize();
         assert!(delivered_key_buffer.iter().all(|byte| *byte == 0));
+    }
+
+    #[test]
+    fn native_authenticode_launch_key_fixed_buffer_is_guarded_and_fail_visible() {
+        let mut generated = new_authenticode_launch_key();
+        assert_eq!(
+            generated.len(),
+            AUTHENTICODE_HELPER_HANDSHAKE_KEY_BUFFER_BYTES
+        );
+        assert_eq!(generated[AUTHENTICODE_HELPER_HANDSHAKE_TOKEN_BYTES], 0);
+        let generated_bytes = authenticode_response_mac_key(&generated).unwrap();
+        assert_eq!(
+            generated_bytes.len(),
+            AUTHENTICODE_HELPER_HANDSHAKE_TOKEN_BYTES
+        );
+        assert!(generated_bytes.iter().any(|byte| *byte != 0));
+
+        let mut changed_guard = test_response_mac_key();
+        changed_guard[AUTHENTICODE_HELPER_HANDSHAKE_TOKEN_BYTES] = 1;
+        assert!(authenticode_response_mac_key(&changed_guard).is_err());
+        assert!(
+            validate_authenticode_handshake_launch_values(TEST_HANDSHAKE_PIPE, &changed_guard,)
+                .is_err()
+        );
+
+        generated.zeroize();
+        assert!(generated.iter().all(|byte| *byte == 0));
+        assert!(authenticode_response_mac_key(&generated).is_err());
     }
 
     #[test]
@@ -8383,7 +8435,7 @@ mod tests {
     #[ignore = "isolated child fixture invoked by the response MAC wrong-key regression"]
     fn authenticode_wrong_response_mac_key_child_fixture() {
         let mut handshake = complete_current_process_authenticode_parent_child_handshake().unwrap();
-        handshake.response_mac_key = Zeroizing::new(OTHER_TEST_RESPONSE_MAC_TOKEN.to_string());
+        handshake.response_mac_key = other_test_response_mac_key();
         println!("AVORAX_RESPONSE_MAC_WRONG_KEY");
         handshake
             .complete_after_response(b"AVORAX_RESPONSE_MAC_WRONG_KEY\n")
@@ -8553,8 +8605,11 @@ mod tests {
     #[ignore = "isolated benign child fixture invoked by the handshake wrong-key regression"]
     fn authenticode_wrong_handshake_confirmation_key_child_fixture() {
         let pending = prepare_current_process_authenticode_parent_child_handshake().unwrap();
-        let wrong_key = authenticode_response_mac_key(OTHER_TEST_RESPONSE_MAC_TOKEN).unwrap();
-        let _handshake = pending.complete_with_key_confirmation(wrong_key).unwrap();
+        let wrong_key = other_test_response_mac_key();
+        let wrong_key_bytes = authenticode_response_mac_key(&wrong_key).unwrap();
+        let _handshake = pending
+            .complete_with_key_confirmation(wrong_key_bytes)
+            .unwrap();
         thread::sleep(Duration::from_secs(30));
     }
 

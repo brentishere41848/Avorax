@@ -2691,3 +2691,82 @@ their consolidated artifacts pass exact digest and in-stream inventory/SBOM
 validation with publication skipped. Evidence-head, integration,
 synchronization, and destination proof remain pending. No candidate content or
 live malware is used.
+
+**Integration evidence:** Evidence `183d1d6`, normal PR `#84` merge `6de2a8f`,
+evidence-head and merged-main CI/packages, skipped publication, and exact
+non-extracting package digest/inventory/SBOM validation pass. Guarded mixed
+merged-main/checkpoint-2231-closure preconditions synchronize exact 15 paths.
+Destination full Rust/Flutter/build evidence passes, as do exact `262/262` in
+`555.3s`, both strict validators, and `8/8` adversarial report rejections. Locks,
+processes, sync residue, and the protected-vault invariant remain exact.
+Checkpoint 2232 is closed; the complete antivirus goal remains active and all
+owned-buffer-only technical limits above remain unchanged.
+
+## Checkpoint 2233 - Authenticode Fixed Launch-Key Buffer
+
+**Threat:** Checkpoint 2232 scrubbed Avorax-owned key storage, but four protocol
+states still used displayable, heap-owning `String` values and the child copied
+the just-read key into another owned `String`. That enlarged the number and
+kind of Avorax-owned key representations and left formatting/capacity behavior
+that the fixed 36-byte protocol does not need.
+
+**Control:** Every key owner now uses the same
+`AuthenticodeLaunchKey = Zeroizing<[u8; 37]>`. The first 36 bytes contain the
+canonical lowercase random RFC-4122-v4 UUID; the last byte is a zero overflow
+guard. The parent encodes directly into the buffer and writes exactly 36 bytes.
+The child reads at most 37, requires exactly 36 bytes and an unchanged guard,
+validates guard, ASCII shape, UTF-8, UUID variant, and version, and moves the
+same buffer through pending/completed state without `to_owned()`. HMAC routines
+borrow only the validated prefix. Key-bearing structs do not derive `Debug`.
+
+**Adversarial model:** benign pure regressions cover generated length/form,
+nonzero key material, guard mutation, explicit all-zero scrub, and post-scrub
+canonical rejection. Existing malformed UUID, wrong key, handshake HMAC, and
+response HMAC tests remain mandatory. The verifier adds a distinct fixed-buffer
+target and the independent validator requires exactly 263 steps plus the new
+verified and technically limited scope. Eight scripted report mutations remove
+or corrupt those claims and must be rejected after definitive evidence exists.
+
+**Residual risk:** This reduces owned copies and displayable `String` exposure;
+it is not secure erasure. UUID/HMAC internals, compiler temporaries, stack or
+register spills, allocator/OS/pipe copies, process dumps, paging, forensic
+remnants, and live same-user or privileged memory reads remain outside this
+user-mode control. It is not encryption, cross-identity authentication,
+AppContainer/LPAC, installed LocalSystem, signed-driver, or pre-execution
+enforcement.
+
+**Evidence state:** implementation, benign tests, source contract 663, verifier,
+validator, adversarial script, and documentation were completed before
+execution. No checkpoint-2233 passing result is claimed during scripting. No
+candidate content, live malware, Defender change, machine-wide install, service,
+driver, release, publication, dependency, or lockfile change is involved.
+
+**Broad local evidence:** parsers, format, source `663/663`, fixed-buffer `1/1`,
+zeroization `1/1`, key confirmation `2/2`, pipe delivery `1/1`, complete
+Authenticode `81/81` with 19 intentional ignores, Native `517/517` plus compiler
+`6/6`, Local `536/536`, Guard `248/248 + 249/249`, both locked workspaces,
+strict lint, offline Native, release builds, corrected absolute-path PS7/PS5.1
+smoke, Flutter analyze, and Flutter `838/838` pass. All lockfiles remain exact.
+The `Zeroizing<[u8; 37]>` overflow guard and absent owned child `String` copy are
+locally evidenced; definitive 263-step, hosted, integration, synchronization,
+and destination proof remain pending. This does not expand pre-execution claims.
+
+**Definitive local evidence:** the verifier passes exact `263/263` from
+`2026-08-25T15:09:40.0697976Z` to `2026-08-25T15:17:21.5029589Z` in `461.4s`;
+the fixed-buffer step takes `0.2s`. Embedded/independent PS5.1 validation and
+`8/8` adversarial rejections pass. Locks and protected-vault invariants remain
+exact. An optional PS7 validator host auto-converts ISO strings to `DateTime`
+and fails visibly before evidence evaluation; it is not credited. PS7/PS5.1
+release smokes both pass, and this tooling limit changes neither the
+`Zeroizing<[u8; 37]>` overflow-guard/removed `String` control nor its
+secure-erasure, cross-identity, signed-driver, and pre-execution limits.
+
+**Exact implementation-head hosted evidence:** exact `00e9f3c` passes all
+required jobs in CI `32865480443` and package push/PR runs
+`32865302082`/`32865480497`. Publication is skipped. Consolidated artifacts
+`9570689038`/`9570466353` match GitHub SHA-256 and, without extraction or
+execution, pass exact eight-root-entry, six-release-file, seven-checksum, and
+CycloneDX 1.6/569-component validation. This verifies hosted build/package
+compatibility at the implementation head; it does not strengthen the stated
+memory, cross-identity, signed-driver, installed-host, or pre-execution model.
+Evidence-head, merge, synchronization, and destination proof remain pending.

@@ -10885,3 +10885,135 @@ Updates page showed:
   pending/temp/reparse. Nothing was installed, released, published, executed as
   candidate content, or changed in Defender. Checkpoint 2231 is closed; the
   complete antivirus goal remains active.
+
+## Checkpoint 2232 Integration And Destination Closure
+
+- Evidence head `183d1d6217b897ef8ca88d98397c4138f854cb00` passes Avorax CI
+  `32852690962` and Desktop Packages `32852690969`; publication
+  `97820931936` is skipped. Consolidated artifact `9565334960` is 131,650,795
+  bytes with matching GitHub/downloaded SHA-256 `e8ae76ababb3a2ee297e1822302689e06f7dd7ccf5a75b438755007a29b02847`.
+  Non-extracting validation passes exact eight entries, six platform files,
+  seven checksums, and CycloneDX 1.6 with 569 components.
+- PR `#84` merges normally as `6de2a8f3bd48c5c45ee3281a90828d8b0796ded5`
+  with parents `b678027`/`183d1d6`. Merged-main CI `32854127768` and packages
+  `32854130974` pass; publication `97825750752` is skipped. Consolidated
+  artifact `9565904414` is 131,559,530 bytes with matching SHA-256
+  `e69dcc6a698404fd98fd1d647eb94da7c0b954acc9959c5537bafb0213d1cba9`
+  and the same exact in-stream inventory/checksum/SBOM proof. No release is
+  created; the release list remains headed by `v0.1.15-beta.3`.
+- The first destination precondition stopped before staging because
+  `RUN_LOG.md` matched known checkpoint-2231 closure `c5d7a2f`, not older main
+  `b678027`. Corrected exact per-path closure/main preconditions, containment,
+  and reparse checks permit atomic synchronization of 15/15 paths, 6,845,406
+  bytes, with zero delete, unrelated change, temporary residue, or stage left.
+- Destination parsers, formatting, source `662/662`, zeroization `1/1`, Native
+  `516/19 ignored + 6/6`, Local `536/536`, Guard `248/248 + 249/249`, both
+  locked workspaces, strict Clippy, standalone offline Native, release builds,
+  PS7/PS5 Authenticode smoke, Flutter analyze, and Flutter `838/838` pass. One
+  combined Clippy wrapper failed before compilation because it used root-relative
+  manifests from the Flutter subdirectory; corrected root invocations pass.
+- The destination no-skip/no-Defender verifier runs from
+  `2026-08-25T13:51:12.7681591Z` through `2026-08-25T14:00:28.1197160Z` and
+  passes exact `262/262`, zero failed/skipped, in `555.3s`; zeroization takes
+  `0.2s`. Embedded and independent PS5 validators pass and `8/8` destination
+  report mutations are rejected.
+- Post-test all 15 merge blobs and three raw lock SHA-256 values are exact.
+  Flutter's test tool rewrote only destination lockfile line endings; semantic
+  blob validation permitted atomic restoration to exact unchanged source bytes.
+  No process, sync temp, or stage remains. The protected vault remains 16,072
+  files, zero directories, 4,522,733 bytes, 5,357 each payload/metadata/auth,
+  one key, and zero pending/temp/reparse. Nothing was installed, released,
+  published, executed as candidate content, or changed in Defender. Checkpoint
+  2232 is closed; the complete antivirus goal remains active.
+
+## 2026-08-25 - Checkpoint 2233 Authenticode Fixed Launch-Key Buffer Scripting
+
+- Audited the checkpoint-2232 launch-key lifetime and found two avoidable owned
+  forms: displayable `String` storage in four protocol states and a second owned
+  child `String` copy after the bounded pipe read. The wire key itself remains
+  the same canonical 36-byte lowercase random UUID.
+- Scripted one shared `AuthenticodeLaunchKey` type,
+  `Zeroizing<[u8; 37]>`: 36 protocol bytes plus one zero overflow guard. The
+  parent generates directly into that fixed buffer and writes exactly 36 bytes.
+  The child reads at most 37, requires exactly 36 transferred bytes and an
+  unchanged guard, then moves the same buffer through pending and completed
+  states without `to_owned()` or another owned key copy.
+- Scripted canonical guard/UTF-8/RFC-4122-v4 validation before borrowed HMAC use,
+  explicit all-zero and changed-guard regressions, source contract 663, one new
+  mandatory verifier target, exact 263-step validation, and eight adversarial
+  report mutations. Only benign protocol bytes are used; fixtures are not
+  executed as candidate content.
+- Updated verifier scope, report validation, control matrix, blockers, threat
+  model, dependency inventory, and checkpoint report. The residual boundary is
+  explicit: fixed Avorax-owned buffers do not erase UUID/HMAC internals, stack
+  or register spills, OS/pipe copies, paging, dumps, or live same-user reads and
+  do not prove secure erasure, cross-identity IPC, driver, or pre-execution
+  protection.
+- No checkpoint-2233 parser, formatter, compiler, test, verifier, validator, or
+  hosted result is claimed during this scripting phase. No dependency, feature,
+  lockfile, service, installer, release, publication, or vault change is made.
+
+## 2026-08-25 - Checkpoint 2233 Broad Local Evidence
+
+- Python and all three PowerShell parsers pass. Rust formatting is exact after
+  applying four formatter-only changes. The dependency-free source runner passes
+  `663/663`; its first execution found five stale historical text anchors, which
+  were updated to the intended fixed-buffer names and then passed.
+- Focused fixed-buffer `1/1`, zeroization `1/1`, key-confirmation `2/2`, and
+  pipe-delivery `1/1` pass. Complete Authenticode passes `81/81` with 19
+  intentional isolated child entrypoints. Native passes `517/517` plus compiler
+  `6/6`; Local passes `536/536`; Guard passes `248/248` and all-features
+  `249/249`. Both serial locked root workspace modes pass.
+- Strict Native/Local/Guard Clippy, standalone locked/offline Native, Local/
+  Guard/Update release builds, and corrected absolute-path PS7 plus PS5.1
+  isolated Authenticode smokes pass. An initial relative-binary smoke invocation
+  and one incorrect assumed PS7 executable path failed before helper execution;
+  neither is credited.
+- Flutter analyze reports no issues and Flutter passes `838/838`. Root, Native,
+  and Flutter lockfiles have no diff; Flutter remains raw SHA-256
+  `4de19695f9207273746341ca2221541b5b86d9f72af83727afca78541e177694`
+  and blob `51fa085a41168aa1deadace8b5395614db43649e`.
+- The definitive 263-step verifier, strict validators, adversarial reports,
+  hosted exact-head evidence, integration, synchronization, and destination
+  proof remain pending. No candidate content, install, service/driver start,
+  Defender change, release, publication, or protected-vault access occurred.
+
+## 2026-08-25 - Checkpoint 2233 Definitive Local Evidence
+
+- The no-skip/no-Defender verifier runs from
+  `2026-08-25T15:09:40.0697976Z` through
+  `2026-08-25T15:17:21.5029589Z` and passes exact `263/263`, zero failed or
+  skipped steps, in `461.4s`. The new fixed-buffer target passes in `0.2s`.
+- The verifier's embedded Windows PowerShell 5.1 strict validator and a separate
+  PS5.1 invocation both accept the report. The scripted adversarial harness
+  rejects `8/8` mutations: failed status, Defender inclusion, Rust skip, stale
+  262-step count, renamed mandatory target, removed verified scope, removed
+  technical-limit scope, and a failed final step.
+- An extra non-required PowerShell 7 validator invocation fails visibly before
+  evidence evaluation because that host auto-converts ISO JSON timestamps to
+  `DateTime` while the current validator contract requires strings. It is not
+  credited and remains a tooling-host compatibility limitation; PS7 and PS5.1
+  release Authenticode smokes themselves both pass.
+- Root/Native/Flutter locks remain unchanged, no test process remains, and the
+  protected vault remains exactly 16,072 files, zero directories, 4,522,733
+  bytes, 5,357 each `.avoraxq`/`.json`/`.auth`, one `.metadata_auth_key`, and
+  zero pending/temp/reparse. Hosted exact-head evidence, integration,
+  synchronization, and destination proof remain pending.
+
+## 2026-08-25 - Checkpoint 2233 Exact Implementation-Head Hosted Evidence
+
+- Exact implementation `00e9f3c3f0f03c5bf4596c7bdc8bad1ef091ddd6` is PR
+  `#85`'s head and passes all five Avorax CI jobs in run `32865480443`.
+- Desktop Packages push `32865302082` and PR `32865480497` pass contracts,
+  Windows MSI/EXE, Linux DEB/tar, both macOS DMGs, consolidation, checksums, and
+  evidence upload. Publication jobs `97866405363`/`97864507631` are skipped; no
+  release or prerelease is created.
+- Consolidated artifacts `9570689038` (131,516,444 bytes) and `9570466353`
+  (131,671,922 bytes) match GitHub/download SHA-256 values
+  `10ed03fd553b98687955b63dc58bc6b25795e231918447ad09682eeb63809ed5` and
+  `b0d96529086e4422eba504d096990d090c7acda7e44ab2b434b46b50d7797cf7`.
+  Bounded in-stream review, without extraction or execution, passes exact eight
+  root entries, six platform release files, seven matching checksum rows, and
+  CycloneDX 1.6 lockfile SBOM evidence with 569 components.
+- Evidence-head CI/packages, normal PR merge, merged-main evidence, guarded
+  original-tree synchronization, and destination verification remain pending.
