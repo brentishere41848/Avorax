@@ -2553,6 +2553,14 @@ seven-checksum, and CycloneDX 1.6/569-component in-stream validation without
 extraction or execution. Evidence-head, integration, and destination evidence
 remain pending.
 
+**Integration closure:** Evidence `f0c72e1`, PR `#81`, normal merge
+`36d67798`, evidence-head and merged-main CI/packages, exact 23-path
+synchronization, destination focused/full Rust and Flutter checks, and exact
+`259/259` verification in `473s` pass. Publication is skipped; artifact
+validation never extracts or executes candidate installers. Locks and the
+protected vault remain exact. This closes checkpoint integration without
+expanding the same-user technical boundary below.
+
 Definitive execution also exposed a Windows PowerShell 5.1 boundary error:
 redirected stdin could prepend a UTF-8 BOM to otherwise strict JSON. The release
 Authenticode harness, six user wrappers, and driver-self-test harness now choose
@@ -2567,3 +2575,44 @@ handle duplication may recover it or modify both stdout and HMAC before
 authentication. HMAC-SHA-256 does not encrypt IPC, authenticate another Windows
 identity, bind durable token objects, or establish AppContainer/LPAC, installed
 LocalSystem, signed-driver, or pre-execution enforcement.
+
+## Checkpoint 2230 - Pipe-Delivered Launch-Key Boundary
+
+**Scripted control:** The parent now withholds the canonical random launch/MAC
+key until a connected handshake client is bound to the exact retained child
+process, its same-user logon-session impersonation token and restricted profile
+are authenticated, and launch/child token stability is revalidated. Only that
+retained pipe receives the exact key. The child verifies exact parent PID and
+the applied pipe DACL/mandatory label before a bounded canonical UUID read,
+derives the response MAC key, and emits the exact ACK. The parent validates that
+ACK and repeats stability checks before candidate trust work can proceed.
+
+The sanitized environment now carries only the canonical pipe name, parent PID,
+and checked native `SystemRoot`/`WINDIR`; it carries no launch token or response
+MAC key. Malformed, oversized, truncated, non-UTF-8, noncanonical, duplicate
+pipe/key UUID, missing ACK, partial I/O, timeout, cancellation, PID, pipe-security,
+or token evidence is fail-visible and cannot become publisher trust. Benign
+fixture, source contract 660, and exact 260-step verification coverage are
+scripted, but no checkpoint-2230 execution result is claimed yet.
+
+**Residual risk:** Removing environment inheritance narrows passive disclosure;
+it does not create durable secrecy. The key remains in parent/child memory and
+crosses authenticated same-user IPC. Process-memory access, sufficiently
+privileged injection, pipe-handle duplication or observation, compromised
+endpoints, administrator/SYSTEM, or kernel compromise may recover it or modify
+both response and MAC. This is not encryption, cross-identity authentication,
+AppContainer/LPAC, installed LocalSystem, signed-driver, or pre-execution
+enforcement.
+
+**Local evidence:** After scripting completed, source contracts `660/660`, the
+new real benign child, adjacent identity/token/MAC targets, complete Native,
+Local Core, Guard, both workspace modes, strict lint/offline/release checks,
+PS7/PS5 Authenticode smoke, Flutter analyze, and `838/838` UI tests passed.
+Definitive, hosted, integration, synchronization, and destination evidence is
+not yet claimed.
+
+Definitive local execution now passes exact `260/260` in `459.9s`, including
+the new key-delivery regression in `0.2s`; strict PS5 validation passes and
+`16/16` adversarial report mutations are rejected. This execution evidence does
+not change the same-user memory/pipe, cross-identity, driver, or pre-execution
+limits above. Hosted and destination evidence remains pending.

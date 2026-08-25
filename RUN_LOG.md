@@ -10509,3 +10509,156 @@ Updates page showed:
   script; it is uncredited. The corrected single-quoted child command parses
   both verifier scripts successfully. Diff checks and source contracts
   `659/659` also pass after the hosted documentation update.
+
+## 2026-08-25 - Checkpoint 2229 integration closure
+
+- Evidence `f0c72e1c6e9aea36650f1c1f204d24f82846b65f` passes CI
+  `32815352968`; PR packages `32815352955` pass every platform and
+  consolidation job with publication skipped. Untouched artifact `9551544695`
+  is `131461070` bytes, SHA-256
+  `23336b6dc76d82ae546d651c18bd0a25dd23234d3d5200ca206be3bc257d6c33`,
+  and passes exact eight-entry/six-platform/seven-checksum/CycloneDX
+  1.6/569-component stream validation without extraction.
+- PR `#81` passed all 12 exact-head checks and normally merged, without
+  bypass or direct-main push, as `36d67798aea479b94d271aa9980cb4680e3f1b64`
+  with parents `ab43569` and `f0c72e1`. Merged-main CI `32816491068`
+  and packages `32816491027` pass without retry; publication is skipped.
+  Untouched artifact `9551887494` is `131450083` bytes, SHA-256
+  `5c5a9f1f28ca9bb8932fd90ba5590706a15d6eccdbbac659b5366f1fd15c096c`,
+  and passes the same exact stream checks.
+- Read-only destination preconditions proved all 22 existing merge-delta blobs
+  exactly matched `ab43569`, the one new report was absent, and there were
+  zero deletes. The first synchronization tool call failed in JavaScript
+  interpolation before PowerShell or filesystem access and is uncredited.
+- The corrected wrapper staged, raw-blob checked, atomically applied, and
+  post-validated all 23 paths, then failed only its final `Where-Object`
+  summary syntax after deleting backups. Its catch therefore retained 22
+  verified replacements and removed the newly added report. Immediate audit
+  proved exactly that bounded state and zero residue; a single verified raw
+  Git-blob move restored the report. Final state is exact `23/23`,
+  `6827323` synchronized bytes, and zero temp/backup residue.
+- A first read-only residue audit incorrectly counted each parent path because
+  of array/`Join-Path` binding and is uncredited; explicit literal candidate
+  paths prove zero residue. An initial broad Rust wrapper allowed long commands
+  to return sessions before later commands started; no processes remained, but
+  that overlapping batch is uncredited. Every suite was rerun individually
+  with explicit completion waits and passed.
+- Destination evidence passes PS7/PS5 parsers, source contracts `659/659`,
+  response binding `3/3`, wrong-key MAC `1/1`, Authenticode `84/17`,
+  Native `512/17` plus compiler `6/6`, Local `536/536`, Guard standard
+  `248/248` and all-feature `249/249`, both locked workspace modes,
+  strict Native/Local/Guard Clippy, offline standalone Native, locked release
+  builds, release Authenticode smoke, Flutter analyze, and Flutter `838/838`.
+- Destination definitive verification ran from
+  `2026-08-25T06:48:26.8190238Z` through
+  `2026-08-25T06:56:19.8804954Z` and passed exact `259/259`, zero
+  failed/skipped, in `473s`. The launch-key MAC target passed in `0.2s`;
+  embedded and independent PS5 strict validators pass.
+- Post-test all 23 destination blobs and all three lock blobs remain exact.
+  The read-only protected vault remains 16,072 files, zero directories,
+  4,522,733 bytes, 5,357 each payload/metadata/auth, one key, zero pending/temp,
+  and zero reparse points. No test process remains. Nothing was installed,
+  released, published, executed as candidate content, or changed in Defender.
+  Checkpoint 2229 is closed; its residual technical limits and the complete
+  antivirus goal remain active.
+
+## Checkpoint 2230 Scripting Phase
+
+- Created `agent/checkpoint-2230-authenticode-pipe-delivered-launch-key` and
+  non-destructively merged current `origin/main` as `46236221`; the merge tree
+  was unchanged from the checkpoint-2229 closure parent.
+- Scripted parent-authenticated pipe delivery of the canonical 36-byte random
+  launch/MAC key only after exact child PID, same-user connected-client token,
+  launch-token, and child-primary-token validation. Scripted child-side exact
+  parent/pipe-security checks, bounded canonical key read, and exact ACK before
+  the parent's repeated stability checks.
+- Removed launch-key inheritance from the sanitized child environment. Scripted
+  a real benign child fixture proving the environment variable remains absent
+  before and after the production handshake, plus exact four-entry environment
+  regression coverage.
+- Scripted source contract 660, a dedicated verifier target, exact 260-step
+  validator scope, and synchronized checkpoint/status/matrix/blocker/threat/
+  dependency documentation. No formatter, parser, compiler, test, smoke,
+  verifier, hosted CI/package, merge, synchronization, or destination command
+  was run during this scripting phase; no checkpoint-2230 pass is claimed.
+- The residual boundary remains explicit: key material still exists in process
+  memory and crosses authenticated same-user IPC. Same-user memory access,
+  privileged injection, pipe-handle duplication/observation, administrator/
+  SYSTEM, and kernel compromise remain outside this control. It is not
+  encryption, cross-identity isolation, driver, or pre-execution enforcement.
+
+## Checkpoint 2230 Focused And Full Local Execution
+
+- Initial source-contract execution failed visibly because a new test-only
+  attribute appeared before the contract harness's production/test delimiter.
+  Moving the obsolete comparison helper into the existing test module reduced
+  failures from 30 to six genuine stale protocol assertions; updating those to
+  parent-to-child delivery reduced the run to `660/660`.
+- The first real child regression completed the production handshake but its
+  parent assertion incorrectly expected stdout to contain only the marker even
+  though Rust's test harness adds normal status lines. The corrected assertion
+  requires successful exit, empty stderr, and exactly one fixed benign marker;
+  the rerun passes `1/1` without warnings.
+- Adjacent PID, client-token, launch-token, child-token, and wrong-MAC-key
+  targets pass `9/9`. Native passes `513/513` with 18 ignored child entrypoints
+  plus compiler `6/6`; Local Core passes `536/536`; Guard passes `248/248` and
+  all-features `249/249`; both locked workspace modes pass.
+- Strict all-target/all-feature Clippy for Native/Local/Guard, offline locked
+  Native resolution, all three release builds, and PS7/PS5 release Authenticode
+  smoke pass. Flutter analyze reports no issues and Flutter tests pass `838/838`.
+- Lock blobs remain exact: root `bc43621213d9bede816a6e062146996116fb92fc`,
+  Native `1d9d96a172c258a584066a9adbb5a10a8feff97d`, Flutter
+  `51fa085a41168aa1deadace8b5395614db43649e`. No live malware, installation,
+  service/driver start, Defender change, publication, or protected-vault
+  mutation occurred. Definitive and hosted/integration evidence remain pending.
+
+## Checkpoint 2230 Definitive Local Evidence
+
+- During final review, `python -m unittest tests.test_custom_driver_contract`
+  discovered zero tests and `python -m pytest` failed because the optional
+  package is not installed. Neither invocation is credited. The repository's
+  dependency-free `tools\testing\run-python-source-contracts.py` runner then
+  passed the exact `660/660` source contracts without installing anything.
+- The no-skip/no-Defender verifier ran from `2026-08-25T07:53:23.8458080Z`
+  through `2026-08-25T08:01:03.7456483Z` and passed exact `260/260` in
+  `459.9s`; the new target passed in `0.2s`. Embedded and independent PS5
+  strict validators pass.
+- Sixteen isolated report mutations covering schema, overall status, Defender,
+  both skips, mandatory target, six new verified scopes, two new technical
+  limits, final-step failure, and stale count are rejected `16/16`.
+- Three package source-contract symlink-positive tests are explicitly skipped
+  because Windows symlink creation needs optional privileges; 21 adjacent tests
+  pass and the verifier step passes. No symlink-positive execution is claimed.
+- An independent PS7 validator attempt is uncredited: PS7's default JSON date
+  conversion violates the validator's intentional string-type check. Both PS5
+  validations pass. The first adversarial wrapper stopped on expected native
+  stderr under `ErrorActionPreference=Stop`; corrected exit capture passes.
+- Final read-only reconciliation proves zero active test processes, exact lock
+  blobs, and the protected vault invariant: 16,072 files, zero directories,
+  4,522,733 bytes, 5,357 each payload/metadata/auth, one metadata key, zero
+  pending/temp/reparse. Integration/destination work remains pending.
+
+## Checkpoint 2230 Exact-Head Hosted Evidence
+
+- Implementation commit `d54ff0f08db944fa846b3137c5ebe52bca7adde6`
+  was pushed only to `agent/checkpoint-2230-authenticode-pipe-delivered-launch-key`;
+  PR `#82` targets `main`, is mergeable/clean, and binds its head to that exact
+  commit.
+- Exact-head CI run `32825256842` passes all five jobs: branding/copy, Flutter
+  client/protocol, security/protection/performance, Rust local-core/guard/update/
+  backend, and Unix quarantine permissions.
+- Exact-head Desktop Packages runs `32825194396` (push) and `32825256832` (PR)
+  both pass package contracts, Windows x64 MSI/EXE, Linux x64 DEB/tar, macOS
+  x64 DMG, macOS arm64 DMG, and consolidation/checksums. Their publication jobs
+  are explicitly `skipped`; no release or prerelease was created.
+- Consolidated artifacts `9555004994` and `9555032779` bind to the exact
+  implementation head. Downloaded untracked ZIPs are 131,593,453 and
+  132,130,178 bytes and match GitHub SHA-256 digests
+  `9e688b1072b3fb06595b114a196f94062dc4f02f15189e5993df2e7bb21f837f`
+  and `8442677ce8f60a50ea895c4b11f14f8da768da796b533c5d570483adc2d3b197`.
+- In-stream checks, without extraction or execution, pass for both ZIPs: exact
+  eight unique regular entries, exact six release files, one CycloneDX 1.6
+  lockfile SBOM, one checksum manifest covering all seven payload/SBOM entries,
+  matching internal SHA-256, clean CRC, and no directory, symlink, absolute,
+  or parent-traversal entry. Hosted integration-head evidence and guarded
+  destination synchronization remain pending.

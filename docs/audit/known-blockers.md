@@ -2659,6 +2659,14 @@ enforcement, or pre-execution blocking is claimed.
   checksum, and CycloneDX 1.6/569-component in-stream validation. Evidence-
   head, normal merge, merged-main, guarded synchronization, and destination
   proof remain pending and are not implied by this result.
+- **Checkpoint 2229 integration blockers closed:** evidence `f0c72e1`, PR
+  `#81`, normal merge `36d67798`, evidence/merged-main CI and package runs,
+  23-path guarded synchronization, full destination Rust/Flutter checks, and
+  destination verifier/validator `259/259` in `473s` pass. The synchronization
+  summary failure and broad-Rust wrapper concurrency attempt remain visible and
+  uncredited; exact repair/reruns pass. Publication is skipped, locks and vault
+  remain exact. Checkpoint 2229 has no integration blocker, while its residual
+  technical limits and the larger antivirus goal remain.
 - **Checkpoint 2229 residual technical blocker:** the HMAC key is present in the
   child environment and memory and travels on same-user IPC. Same-user process-
   memory or environment read access, privileged injection, or handle duplication
@@ -2666,3 +2674,34 @@ enforcement, or pre-execution blocking is claimed.
   encryption, cross-identity authentication, durable token-object binding,
   AppContainer/LPAC, installed LocalSystem, signed-driver, or pre-execution
   enforcement.
+
+## Checkpoint 2230 Pending Evidence And Residual Limits
+
+- **Execution pending:** implementation, benign tests, source contract 660,
+  exact 260-step verifier/validator changes, and documentation are scripted.
+  Formatter, parser, compiler, focused/full regression, definitive verification,
+  hosted CI/package, normal merge, original-tree synchronization, and destination
+  evidence have not yet run and must not be inferred from checkpoint 2229.
+- **Integration pending:** no checkpoint-2230 implementation/evidence commit,
+  hosted exact-head proof, PR, normal merge, merged-main proof, guarded sync, or
+  destination proof exists yet. Publication remains prohibited.
+- **Residual technical blocker:** the launch/MAC key is absent from the child
+  environment but remains in parent/child memory and crosses the authenticated
+  same-user pipe. Process-memory read access, privileged injection, pipe-handle
+  duplication or observation, compromised endpoints, administrator/SYSTEM, or
+  kernel access may recover it or modify both response and MAC. This user-mode
+  control is not encryption, cross-identity IPC, AppContainer/LPAC, installed
+  LocalSystem, signed-driver, or pre-execution enforcement.
+- **Local execution blocker closed:** source `660/660`, focused protocol tests,
+  complete Rust/workspace/Flutter regression, strict lint, offline/release, and
+  PS7/PS5 smoke all pass. No live malware, installation, service/driver start,
+  Defender change, publication, or protected-vault mutation occurred.
+- **Still pending:** exact 260-step definitive verification and adversarial
+  report validation, exact implementation-head hosted CI/package evidence,
+  evidence commit, normal PR merge, merged-main evidence, guarded original-tree
+  synchronization, and independent destination proof.
+- **Definitive local blocker closed:** exact `260/260` verification in `459.9s`,
+  embedded/independent PS5 validation, and `16/16` isolated malformed-report
+  rejections pass. The package source suite skips three Windows symlink-positive
+  fixtures because optional symlink privilege is unavailable; no execution of
+  those cases is claimed. Hosted, integration, sync, and destination work remains.

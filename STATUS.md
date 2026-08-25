@@ -6099,9 +6099,65 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   six-platform-file, seven-checksum, CycloneDX 1.6/569-component in-stream
   validation without extraction or execution. Evidence-head, merge,
   merged-main, synchronization, and destination proof remain pending.
+- **Integration and destination closure:** evidence `f0c72e1`, PR `#81`,
+  and normal merge `36d67798` are complete. Evidence/merged-main CI
+  `32815352968`/`32816491068` and packages
+  `32815352955`/`32816491027` pass without retry; publication is skipped.
+  Untouched artifacts `9551544695`/`9551887494` pass exact stream
+  validation. Exactly 23 merge-delta paths synchronize with zero deletes and
+  remain exact with no residue. Destination source `659/659`, focused
+  response `3/3 + 1/1`, Authenticode `84/17`, Native `512/17 + 6/6`,
+  Local `536/536`, Guard `248/248 + 249/249`, both workspaces, strict
+  lint/offline/release/smoke, Flutter `838/838`, and definitive
+  verifier/validator `259/259` in `473s` pass. Locks and vault remain exact.
+  Checkpoint 2229 is closed; the complete antivirus project remains active.
 - **Technically limited:** the per-launch key exists in child environment/memory
   and same-user IPC. Same-user read access, privileged injection, or handle
   duplication may recover it or alter both streams before authentication. This
   is not encryption, cross-identity authentication, durable token identity,
   AppContainer/LPAC, installed LocalSystem, signed-driver, or pre-execution
   enforcement. The complete antivirus project remains active.
+
+## Checkpoint 2230 - Pipe-Delivered Authenticode Launch Key
+
+- **Scripted phase complete:** the restricted Authenticode child no longer
+  inherits the random launch/MAC key through its environment. Its exact sanitized
+  environment contains only the canonical handshake pipe, canonical parent PID,
+  and checked native `SystemRoot`/`WINDIR` values.
+- Before key delivery, the parent binds the connected pipe client to the exact
+  retained child, authenticates the same-user logon-session token and restricted
+  profile, and revalidates launch/child token stability. The child validates the
+  exact parent and pipe security before its bounded key read, derives the MAC key,
+  and returns an exact ACK; the parent repeats stability checks after that ACK.
+- Implementation, benign fixture, source contract 660, exact 260-step verifier
+  and strict validator changes, and synchronized documentation are scripted.
+  No checkpoint-2230 formatter, parser, compiler, test, verifier, hosted,
+  integration, synchronization, or destination result was claimed during that
+  scripting phase.
+- **Technically limited:** removing the key from the environment narrows passive
+  disclosure, but the key remains in parent/child memory and crosses the
+  authenticated same-user pipe. Process-memory access, privileged injection,
+  pipe-handle duplication or observation, administrator/SYSTEM, and kernel
+  compromise remain outside this user-mode control. It is not encryption,
+  cross-identity IPC, AppContainer/LPAC, driver, or pre-execution enforcement.
+- **Local execution verified:** parsers, format/diff, source `660/660`, focused
+  pipe/identity/token/MAC targets, Native `513/18 + 6/6`, Local `536/536`, Guard
+  `248/248 + 249/249`, both workspaces, strict Clippy, offline resolution,
+  release builds/smoke, Flutter analyze and `838/838` pass. Locks remain exact.
+  At that stage definitive, hosted, integration, synchronization, and
+  destination evidence remained pending; later evidence is recorded below.
+- **Definitive local verified:** exact `260/260` passes in `459.9s`, including
+  the new target in `0.2s`; embedded and independent PS5 strict validation pass,
+  and `16/16` isolated adversarial reports are rejected. Three package-source
+  symlink fixtures remain explicitly skipped on Windows due optional symlink
+  privilege. Locks, processes, and protected-vault invariants remain exact.
+  Integration/destination evidence is still pending.
+- **Exact implementation-head hosted verified:** PR `#82` and all three runs
+  bind to `d54ff0f08db944fa846b3137c5ebe52bca7adde6`. CI run `32825256842`,
+  PR package run `32825256832`, and push package run `32825194396` pass. Both
+  package runs build and verify Windows MSI/EXE, Linux DEB/tar, and macOS
+  x64/arm64 DMGs, consolidate exact six release files plus lockfile SBOM and
+  checksums, and skip publication. Both consolidated ZIP digests match GitHub;
+  in-stream validation passes exact entries, CRC, internal SHA-256, CycloneDX,
+  and path/type guards without extraction or execution. Integration,
+  synchronization, and destination evidence remain pending.
