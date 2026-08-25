@@ -2659,6 +2659,14 @@ enforcement, or pre-execution blocking is claimed.
   checksum, and CycloneDX 1.6/569-component in-stream validation. Evidence-
   head, normal merge, merged-main, guarded synchronization, and destination
   proof remain pending and are not implied by this result.
+- **Checkpoint 2229 integration blockers closed:** evidence `f0c72e1`, PR
+  `#81`, normal merge `36d67798`, evidence/merged-main CI and package runs,
+  23-path guarded synchronization, full destination Rust/Flutter checks, and
+  destination verifier/validator `259/259` in `473s` pass. The synchronization
+  summary failure and broad-Rust wrapper concurrency attempt remain visible and
+  uncredited; exact repair/reruns pass. Publication is skipped, locks and vault
+  remain exact. Checkpoint 2229 has no integration blocker, while its residual
+  technical limits and the larger antivirus goal remain.
 - **Checkpoint 2229 residual technical blocker:** the HMAC key is present in the
   child environment and memory and travels on same-user IPC. Same-user process-
   memory or environment read access, privileged injection, or handle duplication

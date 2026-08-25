@@ -10509,3 +10509,55 @@ Updates page showed:
   script; it is uncredited. The corrected single-quoted child command parses
   both verifier scripts successfully. Diff checks and source contracts
   `659/659` also pass after the hosted documentation update.
+
+## 2026-08-25 - Checkpoint 2229 integration closure
+
+- Evidence `f0c72e1c6e9aea36650f1c1f204d24f82846b65f` passes CI
+  `32815352968`; PR packages `32815352955` pass every platform and
+  consolidation job with publication skipped. Untouched artifact `9551544695`
+  is `131461070` bytes, SHA-256
+  `23336b6dc76d82ae546d651c18bd0a25dd23234d3d5200ca206be3bc257d6c33`,
+  and passes exact eight-entry/six-platform/seven-checksum/CycloneDX
+  1.6/569-component stream validation without extraction.
+- PR `#81` passed all 12 exact-head checks and normally merged, without
+  bypass or direct-main push, as `36d67798aea479b94d271aa9980cb4680e3f1b64`
+  with parents `ab43569` and `f0c72e1`. Merged-main CI `32816491068`
+  and packages `32816491027` pass without retry; publication is skipped.
+  Untouched artifact `9551887494` is `131450083` bytes, SHA-256
+  `5c5a9f1f28ca9bb8932fd90ba5590706a15d6eccdbbac659b5366f1fd15c096c`,
+  and passes the same exact stream checks.
+- Read-only destination preconditions proved all 22 existing merge-delta blobs
+  exactly matched `ab43569`, the one new report was absent, and there were
+  zero deletes. The first synchronization tool call failed in JavaScript
+  interpolation before PowerShell or filesystem access and is uncredited.
+- The corrected wrapper staged, raw-blob checked, atomically applied, and
+  post-validated all 23 paths, then failed only its final `Where-Object`
+  summary syntax after deleting backups. Its catch therefore retained 22
+  verified replacements and removed the newly added report. Immediate audit
+  proved exactly that bounded state and zero residue; a single verified raw
+  Git-blob move restored the report. Final state is exact `23/23`,
+  `6827323` synchronized bytes, and zero temp/backup residue.
+- A first read-only residue audit incorrectly counted each parent path because
+  of array/`Join-Path` binding and is uncredited; explicit literal candidate
+  paths prove zero residue. An initial broad Rust wrapper allowed long commands
+  to return sessions before later commands started; no processes remained, but
+  that overlapping batch is uncredited. Every suite was rerun individually
+  with explicit completion waits and passed.
+- Destination evidence passes PS7/PS5 parsers, source contracts `659/659`,
+  response binding `3/3`, wrong-key MAC `1/1`, Authenticode `84/17`,
+  Native `512/17` plus compiler `6/6`, Local `536/536`, Guard standard
+  `248/248` and all-feature `249/249`, both locked workspace modes,
+  strict Native/Local/Guard Clippy, offline standalone Native, locked release
+  builds, release Authenticode smoke, Flutter analyze, and Flutter `838/838`.
+- Destination definitive verification ran from
+  `2026-08-25T06:48:26.8190238Z` through
+  `2026-08-25T06:56:19.8804954Z` and passed exact `259/259`, zero
+  failed/skipped, in `473s`. The launch-key MAC target passed in `0.2s`;
+  embedded and independent PS5 strict validators pass.
+- Post-test all 23 destination blobs and all three lock blobs remain exact.
+  The read-only protected vault remains 16,072 files, zero directories,
+  4,522,733 bytes, 5,357 each payload/metadata/auth, one key, zero pending/temp,
+  and zero reparse points. No test process remains. Nothing was installed,
+  released, published, executed as candidate content, or changed in Defender.
+  Checkpoint 2229 is closed; its residual technical limits and the complete
+  antivirus goal remain active.

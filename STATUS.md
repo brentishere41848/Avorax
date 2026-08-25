@@ -6099,6 +6099,18 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   six-platform-file, seven-checksum, CycloneDX 1.6/569-component in-stream
   validation without extraction or execution. Evidence-head, merge,
   merged-main, synchronization, and destination proof remain pending.
+- **Integration and destination closure:** evidence `f0c72e1`, PR `#81`,
+  and normal merge `36d67798` are complete. Evidence/merged-main CI
+  `32815352968`/`32816491068` and packages
+  `32815352955`/`32816491027` pass without retry; publication is skipped.
+  Untouched artifacts `9551544695`/`9551887494` pass exact stream
+  validation. Exactly 23 merge-delta paths synchronize with zero deletes and
+  remain exact with no residue. Destination source `659/659`, focused
+  response `3/3 + 1/1`, Authenticode `84/17`, Native `512/17 + 6/6`,
+  Local `536/536`, Guard `248/248 + 249/249`, both workspaces, strict
+  lint/offline/release/smoke, Flutter `838/838`, and definitive
+  verifier/validator `259/259` in `473s` pass. Locks and vault remain exact.
+  Checkpoint 2229 is closed; the complete antivirus project remains active.
 - **Technically limited:** the per-launch key exists in child environment/memory
   and same-user IPC. Same-user read access, privileged injection, or handle
   duplication may recover it or alter both streams before authentication. This

@@ -2553,6 +2553,14 @@ seven-checksum, and CycloneDX 1.6/569-component in-stream validation without
 extraction or execution. Evidence-head, integration, and destination evidence
 remain pending.
 
+**Integration closure:** Evidence `f0c72e1`, PR `#81`, normal merge
+`36d67798`, evidence-head and merged-main CI/packages, exact 23-path
+synchronization, destination focused/full Rust and Flutter checks, and exact
+`259/259` verification in `473s` pass. Publication is skipped; artifact
+validation never extracts or executes candidate installers. Locks and the
+protected vault remain exact. This closes checkpoint integration without
+expanding the same-user technical boundary below.
+
 Definitive execution also exposed a Windows PowerShell 5.1 boundary error:
 redirected stdin could prepend a UTF-8 BOM to otherwise strict JSON. The release
 Authenticode harness, six user wrappers, and driver-self-test harness now choose

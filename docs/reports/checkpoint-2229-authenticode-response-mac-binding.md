@@ -150,6 +150,53 @@ Evidence-head checks, normal integration, merged-main evidence, guarded
 synchronization, and destination proof remain pending. This hosted evidence
 does not complete either checkpoint 2229 or the antivirus project.
 
+## Integration And Destination Closure
+
+Evidence commit `f0c72e1c6e9aea36650f1c1f204d24f82846b65f` passes all
+five CI jobs in run `32815352968`. Its PR package run `32815352955`
+passes every platform and consolidation job and skips publication. Untouched
+artifact `9551544695` is `131461070` bytes with SHA-256
+`23336b6dc76d82ae546d651c18bd0a25dd23234d3d5200ca206be3bc257d6c33`
+and passes the same exact in-stream checks.
+
+PR `#81` passed all 12 exact-head checks and was normally merged without
+bypass or direct-main push as
+`36d67798aea479b94d271aa9980cb4680e3f1b64`, with parents `ab43569`
+and `f0c72e1`. Merged-main CI `32816491068` and packages
+`32816491027` pass without retry; publication is skipped. Untouched merged
+artifact `9551887494` is `131450083` bytes with SHA-256
+`5c5a9f1f28ca9bb8932fd90ba5590706a15d6eccdbbac659b5366f1fd15c096c`
+and passes exact eight-entry, six-platform-file, seven-checksum, and CycloneDX
+1.6/569-component stream validation without extraction or execution.
+
+The merge changes 23 paths from its first parent: 22 modifications, one new
+report, and zero deletes. Read-only preconditions proved every existing
+destination blob exactly matched checkpoint 2228 and the new report was absent.
+Sibling staging and raw Git-blob validation synchronized `6827323` bytes.
+One post-application summary syntax error left 22 exact merge blobs and removed
+only the newly added report during its incomplete rollback. An immediate exact
+inventory proved that bounded state and zero residue; the missing report was
+then restored from its verified Git blob. Final proof is `23/23` exact with
+zero temp/backup residue and unrelated files preserved.
+
+Destination verification passes source contracts `659/659`, retained
+response binding `3/3`, wrong-key MAC `1/1`, complete Authenticode
+`84 passed/17 ignored`, Native `512/17` plus compiler `6/6`, Local Core
+`536/536`, Guard standard `248/248` and all-feature `249/249`, both
+locked workspace modes, strict Native/Local/Guard Clippy, offline standalone
+Native, locked release builds, release Authenticode smoke, Flutter analysis,
+and Flutter `838/838`.
+
+The destination definitive verifier ran from
+`2026-08-25T06:48:26.8190238Z` through
+`2026-08-25T06:56:19.8804954Z` and passed exact `259/259`, zero failed
+or skipped, in `473s`. The launch-key MAC target passed in `0.2s`; embedded
+and independently repeated PS5 strict validation pass. Lock blobs and the
+read-only protected-vault invariant remain exact. Nothing was installed,
+released, published, or executed as candidate content. Checkpoint 2229 is
+closed; the complete antivirus project and the technical limits below remain
+active.
+
 ## Technical Limits
 
 The launch token is ephemeral but is not guaranteed secret from every process

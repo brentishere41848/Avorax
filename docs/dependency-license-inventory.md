@@ -1201,3 +1201,12 @@ push/PR runs `32812914763`/`32812956466`; untouched artifacts `9550661340`/
 1.6/569-component in-stream validation, while publication is skipped. Evidence-
 head/integration checks and complete signed final-artifact review remain
 pending.
+
+Checkpoint 2229 evidence `f0c72e1`, normal merge `36d67798`,
+evidence/merged-main package runs `32815352955`/`32816491027`, guarded
+destination synchronization, and destination `259/259` verification preserve
+the exact root/Native/Flutter lock blobs. Untouched artifacts `9551544695`/
+`9551887494` retain six platform files, seven matching checksums, and
+CycloneDX 1.6/569-component SBOMs under stream-only validation; publication is
+skipped. Complete signed final-artifact license, notice, copyright, and binary
+review remains a production-release prerequisite.
