@@ -250,3 +250,68 @@ components.
 Draft PR `#80` remains unmerged. Evidence-head checks, normal merge, merged-main
 evidence, guarded synchronization, and destination proof remain pending. The
 complete antivirus goal remains active.
+
+## Evidence-Head And Normal Integration
+
+Evidence commit `d0a9f1bc9b14fe0164f6003677b20ac8034b0532` passes all five
+CI jobs in run `32803875977`. PR package run `32803875954` passes every
+platform and consolidation with publication skipped. Its untouched artifact
+`9547754133` has size `131399107`, SHA-256
+`5ef7e52cb6764a17967cec55e16a1c4748884efdf8ae772d514e43a35766d609`,
+and passes the exact bounded in-stream validation described above. Workflow
+path filters did not trigger another push package run for this documentation-
+only evidence commit.
+
+PR `#80` passed all 12 exact-head checks, was made ready, and was normally
+merged without bypass or direct-main push as
+`ab435698a2de5fb3c9a1bc77ef62c8197da5f98f`. Its parents are `9304681` and
+evidence `d0a9f1b`.
+
+## Merged-Main Hosted Evidence
+
+Merged-main CI `32804898895` passes all five jobs at exact merge
+`ab435698`. Package run `32804898920` initially encountered five transient
+`hdiutil verify` `Resource temporarily unavailable` failures on macOS arm64;
+the other platform jobs passed. One failed-job retry was performed only after
+the completed log established that condition. Attempt 2 passes arm64,
+consolidation, and the whole workflow; publication is skipped.
+
+Untouched merged-main artifact `9548383452` has size `131282890` and SHA-256
+`7be770c1cfcc17621eca3b7449fc832e26311f56e4f146277f37e02c02960a2f`.
+Without extraction or execution, it contains exactly eight regular root
+entries, six platform artifacts, seven matching checksums, and a CycloneDX
+1.6 lockfile SBOM with 569 components.
+
+## Guarded Destination Closure
+
+The merge changes exactly 12 paths from its first parent and deletes none.
+Before writing, all eleven existing destination files matched their old Git
+blobs and the new report was absent. Path-bounded sibling staging, path-aware
+Git blob verification, atomic replacement, and rollback guards synchronized
+exactly those files to `C:\Users\Brent\Documents\Avorax-main`. They remain
+`12/12` exact after testing, with no sync residue and no unrelated-file change.
+
+Destination verification passes both PowerShell parsers, source contracts
+`658/658`, focused response binding `3/3`, complete Authenticode `75/16`,
+Native `511/16` plus compiler `6/6`, Local `536/536`, Guard standard `248/248`
+and all-feature `249/249`, both locked workspaces, strict Native/Local/Guard
+Clippy, offline Native, release Local/Guard builds, the absolute two-host
+smoke, Flutter analyze and `838/838`, branding, product-copy, and no-malware
+gates.
+
+The destination verifier runs from `2026-08-25T06:02:28.2280336+02:00`
+through `2026-08-25T06:09:57.8630559+02:00` and passes exact `258/258`, zero
+failed/skipped, in `449.6s`. The response-binding target passes in `0.3s`; the
+embedded and independent Windows PowerShell 5.1 strict validators accept the
+report. All three lock blobs remain exact. The read-only protected vault stays
+at 16,072 files, zero directories, 4,522,733 bytes, 5,357 each `.avoraxq`/
+`.json`/`.auth`, one key, and zero pending/temp.
+
+Two support failures are retained and uncredited. The GitHub job-log endpoint
+returned plain text, so the first in-memory ZIP open stopped safely before the
+same bounded file was read as text. The first merged-artifact validator used an
+ambiguous PowerShell `-join` expression and rejected the correct entry set;
+the parenthesized rerun passed. No product behavior was weakened.
+
+Checkpoint 2228 is closed. The digest remains unkeyed same-user evidence with
+the limits stated above, and the complete antivirus goal remains active.

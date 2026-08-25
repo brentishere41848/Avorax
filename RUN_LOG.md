@@ -10331,3 +10331,60 @@ Updates page showed:
 - Draft PR `#80` remains unmerged. Evidence-head checks, normal merge,
   merged-main evidence, guarded synchronization, and destination proof remain
   pending. The complete antivirus goal remains active.
+
+## 2026-08-25 continuation checkpoint 2228 integration closure
+
+- Evidence `d0a9f1bc9b14fe0164f6003677b20ac8034b0532` passes all five CI
+  jobs in run `32803875977`. PR package run `32803875954` passes contracts,
+  Windows MSI/EXE, Linux DEB/tar, both macOS DMGs, and consolidation;
+  publication is skipped. The documentation-only evidence commit did not
+  trigger a second push package run under the workflow path filters. Untouched
+  artifact `9547754133` has size `131399107`, SHA-256
+  `5ef7e52cb6764a17967cec55e16a1c4748884efdf8ae772d514e43a35766d609`,
+  and passes exact eight-entry, six-platform-file, seven-checksum, and
+  CycloneDX 1.6/569-component in-stream validation without extraction.
+- PR `#80` passed all 12 exact-head checks, was made ready, and was normally
+  merged without bypass or direct-main push as
+  `ab435698a2de5fb3c9a1bc77ef62c8197da5f98f`, with parents `9304681` and
+  evidence `d0a9f1b`. Merged-main CI `32804898895` passes all five jobs.
+- Merged-main package run `32804898920` initially failed only its macOS arm64
+  DMG verification after five `hdiutil` `Resource temporarily unavailable`
+  results; macOS x64, Windows, and Linux passed. One failed-job rerun was
+  performed after the completed log proved that transient condition. Attempt
+  2 passes arm64 in `7m12s`, consolidation, and the whole run; publication is
+  skipped. Untouched artifact `9548383452` has size `131282890`, SHA-256
+  `7be770c1cfcc17621eca3b7449fc832e26311f56e4f146277f37e02c02960a2f`,
+  and passes the same exact in-stream checks without extraction or execution.
+- The merge changes exactly 12 paths from its first parent with zero deletes.
+  All old destination blobs and the one expected absence matched checkpoint
+  2227 before mutation. Sibling staging, path-aware Git blob validation,
+  atomic replacement, rollback guards, and final validation synchronized
+  exactly those paths to `C:\Users\Brent\Documents\Avorax-main`. Post-test
+  comparison remains `12/12`, with zero staging/backup residue and unrelated
+  files preserved.
+- Destination parsers pass for both verifier scripts in PowerShell 7 and 5.1;
+  source contracts pass `658/658`; focused response binding passes `3/3`;
+  complete Authenticode passes `75/16`; Native passes `511/16` plus compiler
+  `6/6`; Local passes `536/536`; Guard passes standard `248/248` and all-
+  feature `249/249`. Both locked workspaces, strict Native/Local/Guard Clippy,
+  offline Native, locked release Local/Guard builds, absolute two-host trust
+  smoke, Flutter analyze and `838/838`, branding, product-copy, and no-malware
+  gates pass.
+- Destination definitive verification ran from
+  `2026-08-25T06:02:28.2280336+02:00` through
+  `2026-08-25T06:09:57.8630559+02:00` and passes exact `258/258` in `449.6s`,
+  with zero failed or skipped steps. The response hash-binding target is
+  present and passes in `0.3s`; embedded and independent Windows PowerShell
+  5.1 strict validators accept the report.
+- Support failures remain visible and uncredited. GitHub returned the
+  completed arm64 job log as plain text from its logs endpoint, so an initial
+  in-memory ZIP open stopped at `End of Central Directory`; reading that same
+  bounded file as text exposed the transient error. The first merged-artifact
+  validator had a PowerShell `-join` precedence error and rejected the correct
+  eight-entry set; an explicitly parenthesized rerun passed all checks.
+- All three lock blobs remain exact. The read-only protected vault remains
+  16,072 files, zero directories, 4,522,733 bytes, 5,357 each payload/
+  metadata/auth, one key, and zero pending/temp. `.verification` remains
+  untracked and unstaged. Nothing was installed, executed as candidate
+  content, released, or published. Checkpoint 2228 is closed; its documented
+  technical limits and the complete antivirus goal remain active.

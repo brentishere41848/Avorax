@@ -6040,3 +6040,20 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   in-stream validation without extraction. Evidence-head checks, normal merge,
   merged-main evidence, guarded synchronization, and destination proof remain
   pending.
+- **Integration and destination closure:** evidence `d0a9f1b`, PR `#80`, and
+  normal merge `ab43569` are complete. Evidence-head CI/package runs
+  `32803875977`/`32803875954` pass; merged-main CI `32804898895` passes.
+  Merged-main packages `32804898920` pass after one failed-job retry of an
+  evidenced transient macOS arm64 `hdiutil` resource-unavailable error;
+  publication is skipped. Untouched evidence/merged artifacts `9547754133`/
+  `9548383452` pass exact eight-entry, six-platform-file, seven-checksum, and
+  CycloneDX 1.6/569-component in-stream validation without extraction.
+  Exactly 12 merge-delta paths synchronized with zero deletes and remain exact
+  with no residue. Destination source `658/658`, response binding `3/3`,
+  Authenticode `75/16`, Native `511/16` plus compiler `6/6`, Local `536/536`,
+  Guard standard `248/248` and all-feature `249/249`, both locked workspaces,
+  strict lint/offline/release/two-host smoke, Flutter analyze and `838/838`,
+  and all safety gates pass. Definitive verification/validation passes exact
+  `258/258` in `449.6s`; locks and the read-only vault remain exact.
+  Checkpoint 2228 is closed, while its same-user/unkeyed-digest limits and the
+  complete antivirus goal remain active.
