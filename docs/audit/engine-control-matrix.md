@@ -4750,3 +4750,11 @@ mutations reject. Broad standalone engine and Flutter suites pass. One combined
 root-workspace Native executable is blocked by Defender with OS error 225 and is
 not credited; the standalone Native suite passes without weakening Defender.
 Hosted, integration, synchronization, and destination columns remain pending.
+
+Exact implementation-head hosting is now **verified**: commit `708e939` passes
+CI `32878421258` and package push/PR runs `32878368995`/`32878421335`; both
+publication jobs are skipped. Consolidated artifacts `9575787747`/`9575480016`
+match GitHub SHA-256 and pass bounded non-extracting exact
+8-entry/6-release/7-checksum/CycloneDX 1.6/569-component validation. Evidence-
+head, merge, synchronization, and destination integration remain pending; no
+antivirus-engine or pre-execution claim changes.

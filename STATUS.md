@@ -6141,8 +6141,15 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   uncredited because Defender blocks its separate Native test executable with
   OS error 225 after prior members pass. Defender was not changed; standalone
   Native passes `517/517 + 19 ignored + 6/6`.
-- Hosted, merge, guarded destination synchronization, and destination proof are
-  still pending. Checkpoint 2234 and the full antivirus project are not closed.
+- **Exact implementation-head hosted verified:** commit `708e939` is PR `#86`'s
+  exact head. CI `32878421258` and package push/PR runs
+  `32878368995`/`32878421335` pass without retry; publication jobs are skipped.
+  Consolidated artifacts `9575787747`/`9575480016` match GitHub SHA-256 and pass
+  non-extracting exact 8-entry/6-release/7-checksum/CycloneDX 1.6/569-component
+  validation.
+- Evidence-head checks, normal merge, merged-main evidence, guarded destination
+  synchronization, and destination proof remain pending. Checkpoint 2234 and
+  the full antivirus project are not closed.
 
 ## Checkpoint 2233 - Authenticode Fixed Launch-Key Buffer
 

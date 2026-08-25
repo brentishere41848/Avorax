@@ -1365,5 +1365,7 @@ and final signed-binary notice/copyright review requirements are unchanged.
 Checkpoint-2234 local dependency evidence passes inside exact verifier
 `263/263` in `469.9s`; source contracts pass `664/664`, both strict Windows
 PowerShell 5.1/PowerShell 7 validators pass, and root/Native/Flutter lockfiles
-remain unchanged. No package upgrade was accepted. Hosted package/SBOM and final
-signed-artifact license review remain pending.
+remain unchanged. No package upgrade was accepted. Hosted push/PR package runs
+`32878368995`/`32878421335` pass and their consolidated artifacts contain the
+expected CycloneDX 1.6 lockfile SBOM with exactly 569 components. Final signed-
+artifact license review remains pending.

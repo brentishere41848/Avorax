@@ -2832,5 +2832,9 @@ enforcement, or pre-execution blocking is claimed.
   test executable with OS error 225. No Defender setting changed. Standalone
   Native passes `517/517` plus compiler `6/6`, so this is not used as a product
   failure or a complete-workspace success claim.
-- Hosted, integration, guarded synchronization, and destination evidence remain
+- **Implementation-head hosting blocker closed:** exact `708e939` passes CI
+  `32878421258` and package push/PR `32878368995`/`32878421335`; both
+  consolidated ZIPs match GitHub digests and pass exact non-extracting package,
+  checksum, and 569-component SBOM validation. Publication is skipped.
+- Evidence-head, merge, guarded synchronization, and destination evidence remain
   open. External signing/service/driver/pre-execution blockers remain unchanged.

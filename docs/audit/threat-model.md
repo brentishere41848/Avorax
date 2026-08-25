@@ -2806,4 +2806,9 @@ failed-step mutations reject, including `16/16` full-suite host/mutation pairs.
 The definitive run passes `263/263` in `469.9s`. A combined root-workspace test
 binary is separately blocked by Defender with OS error 225 and is not counted;
 the standalone Native `517/517 + 6/6` route passes and Defender remains enabled.
-Hosted, integration, destination, and external platform limits are unchanged.
+Exact implementation `708e939` passes hosted CI `32878421258` and package
+push/PR runs `32878368995`/`32878421335`. Both publication jobs are skipped;
+both consolidated ZIPs match GitHub digests and pass bounded non-extracting
+8-entry/6-release/7-checksum/CycloneDX 1.6/569-component validation. This
+supports the verifier-host repair and package reproducibility only. Integration,
+destination, and external platform limits are unchanged.

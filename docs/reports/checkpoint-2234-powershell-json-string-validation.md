@@ -52,8 +52,26 @@ The definitive report passes exact `263/263`, with zero failed verifier steps,
 `469.9s`. Its post-report strict validator passes first under Windows PowerShell
 5.1 and then under PowerShell 7. Eight full-suite mutations per host covering
 timestamp type confusion, status/options, cardinality, required dual-host scope,
-and failed-step evidence are rejected `16/16`. Hosted, integration,
-synchronization, and destination evidence remain pending.
+and failed-step evidence are rejected `16/16`.
+
+## Exact Implementation-Head Hosted Evidence
+
+Implementation commit `708e93907f588a211b0dfe3863f8157eaa8d1dc8` is PR
+`#86`'s exact head. Avorax CI run `32878421258` passes all five jobs without a
+retry. Desktop Packages push `32878368995` and PR `32878421335` pass package
+contracts, Windows x64 MSI/EXE, Linux x64 DEB/tar, macOS x64/arm64 DMGs,
+consolidation, checksums, and evidence upload. Publication jobs `97910531652`
+and `97907714051` are explicitly skipped; no release or prerelease is created.
+
+Consolidated artifacts `9575787747` and `9575480016` are 131,538,658 and
+131,528,096 bytes. Their downloaded SHA-256 values exactly match GitHub at
+`0a6a6ba0031b84f3f7c15dfde1b09256f24324cd74a89c066659962fe6668e5d`
+and `eabac11ac088712ecd29dfdf977ba9b0318724322eada3d65672b7f4b2640047`.
+Bounded in-stream review, without extraction or execution, passes exactly eight
+unique regular root entries, six platform release files, seven matching
+checksum rows, and one CycloneDX 1.6 lockfile SBOM with 569 components.
+Evidence-head checks, normal merge, merged-main evidence, guarded
+synchronization, and destination verification remain pending.
 
 ## Limits
 

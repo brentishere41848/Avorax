@@ -11085,3 +11085,22 @@ Updates page showed:
   exact at 16,072 files, zero directories, 4,522,733 bytes, 5,357 each payload/
   JSON/auth, one key, and zero reparse. Hosted/integration/destination evidence
   remains pending.
+
+## 2026-08-25 - Checkpoint 2234 Exact Implementation-Head Hosted Evidence
+
+- Exact implementation `708e93907f588a211b0dfe3863f8157eaa8d1dc8` is PR
+  `#86`'s head and passes all five Avorax CI jobs in run `32878421258` without
+  retry.
+- Desktop Packages push `32878368995` and PR `32878421335` pass contracts,
+  Windows MSI/EXE, Linux DEB/tar, both macOS DMGs, consolidation, checksums, and
+  evidence upload. Publication jobs `97910531652`/`97907714051` are skipped; no
+  release or prerelease is created.
+- Consolidated artifacts `9575787747` (131,538,658 bytes) and `9575480016`
+  (131,528,096 bytes) match GitHub/download SHA-256 values
+  `0a6a6ba0031b84f3f7c15dfde1b09256f24324cd74a89c066659962fe6668e5d` and
+  `eabac11ac088712ecd29dfdf977ba9b0318724322eada3d65672b7f4b2640047`.
+  Bounded in-stream review, without extraction or execution, passes exact eight
+  root entries, six platform release files, seven matching checksum rows, and
+  CycloneDX 1.6 lockfile SBOM evidence with 569 components.
+- Evidence-head CI/packages, normal merge, merged-main evidence, guarded
+  original-tree synchronization, and destination verification remain pending.
