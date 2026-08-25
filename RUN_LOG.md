@@ -11150,6 +11150,19 @@ pending.
   after which the dependency-free repository runner passed. Definitive 265-step,
   adversarial, hosted, merge, synchronization, and destination work remains open.
 
+### Checkpoint 2236 definitive local evidence
+
+- The explicit no-skip/no-Defender verifier passes exact `265/265` with zero
+  failed/skipped report steps in `523.1s`; the new target passes in `0.3s`.
+  Embedded and independent PS5/PS7 strict validators pass. Report SHA-256 is
+  `57f7c1cff6283eb424f92a95f511e695bb60242add571a0139b08ae3a68de162`.
+- Eight isolated report mutations are rejected under both hosts, exact `16/16`.
+  The first harness caller lost its final output window and is uncredited; the
+  complete rerun passed. Three optional-privilege symlink-positive package
+  fixtures remain explicitly skipped inside their passing parent verifier step.
+- Hosted exact-head, merge, guarded sync, and destination evidence remain open;
+  neither checkpoint 2236 nor the complete antivirus project is closed.
+
 ## 2026-08-25 - Checkpoint 2235 Integration And Destination Closure
 
 - Evidence head `57ce16371cbc47147b7e302c80f310b47873d918` passes CI

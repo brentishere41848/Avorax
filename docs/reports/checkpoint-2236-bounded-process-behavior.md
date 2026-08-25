@@ -91,6 +91,30 @@ mutation is involved.
 Definitive exact 265-step, independent adversarial report, hosted exact-head,
 merge, guarded synchronization, and destination evidence remain pending.
 
+## Definitive Local Evidence
+
+- The no-skip/no-Defender verifier passes exact `265/265`, zero failed or
+  skipped report steps, in `523.1s`. The new bounded process-behavior step passes
+  in `0.3s`; embedded and independent Windows PowerShell 5.1 and PowerShell 7
+  validators accept the same strict report.
+- Report SHA-256 is
+  `57f7c1cff6283eb424f92a95f511e695bb60242add571a0139b08ae3a68de162`.
+  Options are exact: `skip_flutter=false`, `skip_rust=false`, and
+  `include_defender_eicar=false`.
+- Eight isolated report mutations covering Defender enablement, failed status,
+  failed final step, missing process-behavior target, missing bounded-sample
+  scope, missing honest-action scope, skipped Rust, and stale 264-step scope are
+  rejected by both validator hosts, exact `16/16`.
+- Three package source-contract symlink-positive fixtures remain explicitly
+  skipped because Windows symlink creation requires optional privilege; their
+  parent verifier step passes. The first adversarial harness execution completed
+  its generated files but its caller lost the final output window, so it is
+  uncredited; the complete repeated harness is the credited `16/16` result.
+
+Exact implementation-head hosted CI/package evidence, normal PR merge, guarded
+original-tree synchronization, and independent destination verification remain
+pending. This checkpoint and the whole antivirus project remain active.
+
 ## Limits
 
 This public API is not currently connected to the installed app/service process

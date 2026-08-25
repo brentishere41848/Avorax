@@ -4835,3 +4835,8 @@ Local execution now verifies the scripted control contracts with focused Native
 analyze and `838/838`, and source contracts `666/666`. The explicit API remains
 post-start and unconnected to installed process telemetry; disabled providers
 remain disabled. Definitive, hosted, integration, and destination proof is open.
+
+Definitive local verification passes exact `265/265` in `523.1s`, including the
+new target in `0.3s`; both strict validators pass and adversarial report variants
+reject `16/16`. Hosted, integration, and destination columns remain open, and no
+disabled provider or installed/pre-execution capability is promoted by this result.

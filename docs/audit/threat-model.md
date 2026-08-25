@@ -2917,3 +2917,9 @@ compiler `6/6`; both locked workspace modes, strict lint/format/parser checks,
 Flutter analyze and `838/838`, and source contracts `666/666` pass. Locks and
 the protected vault remain exact. Definitive, adversarial, hosted, integration,
 and destination evidence remains pending and does not reduce the residual risks.
+
+**Definitive local verification:** exact `265/265` passes in `523.1s`, the new
+target passes in `0.3s`, both strict report hosts accept the report, and `16/16`
+isolated adversarial reports reject. This verifies the bounded source/runtime
+contract locally; it does not prove installed telemetry, termination, quarantine
+mutation, production calibration, driver/kernel, or pre-execution enforcement.

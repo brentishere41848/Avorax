@@ -2934,3 +2934,8 @@ modes, Flutter `838/838`, and source contracts `666/666`. Locks and the protecte
 vault remain exact. The API wiring, missing trusted telemetry, definitive
 265-step/adversarial evidence, hosted proof, integration, and destination items
 above remain genuine blockers or open evidence and are not presented as solved.
+
+Definitive local report evidence now passes exact `265/265` in `523.1s` under
+both strict hosts, and `16/16` isolated mutations reject. Hosted, merge, guarded
+sync, destination, installed process telemetry, durable service wiring, process
+mutation, driver/kernel, and pre-execution proof remain open.

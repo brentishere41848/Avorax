@@ -6149,6 +6149,12 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   destination evidence remain open; the checkpoint and whole project are not
   yet complete.
 
+- Definitive local evidence now passes exact `265/265` in `523.1s`, with the
+  new target at `0.3s`, both strict validator hosts, and `16/16` adversarial
+  report rejections. Report SHA-256 is
+  `57f7c1cff6283eb424f92a95f511e695bb60242add571a0139b08ae3a68de162`.
+  Hosted, merge, synchronization, and destination evidence remains pending.
+
 ## Checkpoint 2235 Integration Closure
 
 - Evidence `57ce163` and merged main `5fc30c9` pass exact-head CI and Desktop
