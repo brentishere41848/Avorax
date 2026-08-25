@@ -56,6 +56,20 @@ function Get-AvoraxRequiredTool([string]$Path, [string]$Description) {
   Get-AvoraxGateFile $Path $Description
 }
 
+function ConvertFrom-AvoraxGateJsonPreservingStrings {
+  param([AllowEmptyString()][string]$Json)
+
+  $parameters = @{
+    InputObject = $Json
+    ErrorAction = "Stop"
+  }
+  $command = Get-Command -Name ConvertFrom-Json -CommandType Cmdlet -ErrorAction Stop
+  if ($command.Parameters.ContainsKey("DateKind")) {
+    $parameters["DateKind"] = "String"
+  }
+  ConvertFrom-Json @parameters
+}
+
 function New-AvoraxGateDirectory([string]$Path, [string]$Description) {
   Assert-AvoraxNoReparsePath $Path $Description
   if (-not (Test-Path -LiteralPath $Path)) {

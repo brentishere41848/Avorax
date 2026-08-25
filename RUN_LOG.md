@@ -11051,3 +11051,37 @@ Updates page showed:
   reparse. Nothing was installed, published, released, executed as candidate
   content, or changed in Defender. Checkpoint 2233 is closed; the full antivirus
   project remains active.
+
+## Checkpoint 2234 - Scripted PowerShell JSON String Boundary
+
+- The checkpoint-2233 optional PowerShell 7 validator failure is traced to
+  automatic ISO timestamp conversion, not invalid report evidence.
+- One shared parser now requests `DateKind=String` when supported and retains
+  the Windows PowerShell 5.1-compatible parser call otherwise. All nine strict
+  report readers route through it.
+- The definitive verifier now requires its exact 263-step report to pass under
+  distinct checked Windows PowerShell 5.1 and PowerShell 7 executables. Strict
+  timestamp and schema typing are not relaxed.
+- Source contract 664, verifier/validator wiring, adversarial expectations, and
+  audit/dependency/checkpoint documentation are scripted. No checkpoint-2234
+  parser, test, verifier, hosted, integration, synchronization, destination, or
+  vault result is claimed yet.
+
+### Checkpoint 2234 local execution
+
+- Parser/diff checks pass; the focused JSON string probe passes under Windows
+  PowerShell 5.1 and PowerShell 7. The prior valid 263-step report passes both
+  hosts, and timestamp type-confusion/malformed JSON cases reject `4/4`.
+- Source contracts pass `664/664`. Native passes `517/517 + 19 ignored + 6/6`,
+  Local `536/536`, Guard `248/248 + 249/249`, Flutter analyze, and Flutter
+  `838/838`.
+- One combined root workspace run reaches Native after passing earlier members,
+  then Defender blocks that distinct test executable with OS error 225. It is
+  uncredited; Defender is unchanged and standalone Native passes fully.
+- The definitive verifier passes exact `263/263` in `469.9s`; its same report
+  passes strict Windows PowerShell 5.1 and PowerShell 7 validation. Full-suite
+  adversarial variants reject `16/16` across both hosts.
+- Locks are unchanged, no test process remains, and the protected vault remains
+  exact at 16,072 files, zero directories, 4,522,733 bytes, 5,357 each payload/
+  JSON/auth, one key, and zero reparse. Hosted/integration/destination evidence
+  remains pending.

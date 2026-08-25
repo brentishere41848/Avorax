@@ -1354,3 +1354,16 @@ lock SHA-256 values remain exact at
 `4de19695f9207273746341ca2221541b5b86d9f72af83727afca78541e177694`.
 No dependency or lock changed. Final signed-binary license, notice, copyright,
 and production release approval remain separate prerequisites.
+
+Checkpoint 2234 adds no dependency, feature, or lockfile change. Its PowerShell
+7 and Windows PowerShell 5.1 JSON compatibility repair uses the built-in
+`ConvertFrom-Json` cmdlet and feature-detects the native `DateKind` parameter.
+The definitive verifier remains exactly 263 steps; source contract 664 covers
+the parser and distinct-host wiring. Existing dependency licenses, lock hashes,
+and final signed-binary notice/copyright review requirements are unchanged.
+
+Checkpoint-2234 local dependency evidence passes inside exact verifier
+`263/263` in `469.9s`; source contracts pass `664/664`, both strict Windows
+PowerShell 5.1/PowerShell 7 validators pass, and root/Native/Flutter lockfiles
+remain unchanged. No package upgrade was accepted. Hosted package/SBOM and final
+signed-artifact license review remain pending.

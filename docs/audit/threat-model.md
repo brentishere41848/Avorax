@@ -2781,3 +2781,29 @@ Python-alias invocation stopped safely and is not credited. Locks, stage,
 processes, and protected-vault invariants remain exact. This closes checkpoint
 2233 integration without changing any live-memory, cross-identity, installed-
 service, signed-driver, secure-erasure, or pre-execution boundary above.
+
+## Checkpoint 2234 - Verification JSON Host Consistency
+
+PowerShell 7 can convert ISO-looking JSON strings into `DateTime` objects before
+the strict validator sees them. Accepting those objects would weaken the JSON
+type contract, while rejecting the host leaves one verification path unusable.
+The shared gate parser now requests native `DateKind=String` when available and
+uses the unchanged Windows PowerShell 5.1 parser shape otherwise. The validator
+then performs its existing explicit invariant-culture ISO-8601 parse.
+
+All nine bounded top-level and generated-report readers use this boundary. The
+definitive verifier requires the exact 263-step report to pass the same strict
+validator under distinct checked Windows PowerShell 5.1 and PowerShell 7
+executables. Malformed JSON, type confusion, unsafe paths, inconsistent status,
+scope drift, and wrong step counts still fail visibly. Scripted evidence is not
+execution evidence; checkpoint-2234 focused, full, adversarial, hosted,
+integration, destination, and protected-vault checks remain pending.
+
+Local execution confirms that preserving strings does not weaken rejection:
+both hosts accept the same exact 263-step report; numeric/object timestamp,
+malformed JSON, false status/options, stale cardinality, removed host scope, and
+failed-step mutations reject, including `16/16` full-suite host/mutation pairs.
+The definitive run passes `263/263` in `469.9s`. A combined root-workspace test
+binary is separately blocked by Defender with OS error 225 and is not counted;
+the standalone Native `517/517 + 6/6` route passes and Defender remains enabled.
+Hosted, integration, destination, and external platform limits are unchanged.

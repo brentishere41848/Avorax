@@ -351,7 +351,7 @@ function Read-SmallThreatMvpReport {
     throw "small-threat MVP verification report is empty: $Path"
   }
   try {
-    $report = $json | ConvertFrom-Json -ErrorAction Stop
+    $report = ConvertFrom-AvoraxGateJsonPreservingStrings $json
   } catch {
     throw "small-threat MVP verification report is not valid JSON: $(Get-AvoraxGateBoundedDiagnostic $_.Exception.Message)"
   }
@@ -370,7 +370,7 @@ function Read-ProtectionSelfTestReport {
     throw "protection self-test generated report is empty: $Path"
   }
   try {
-    $report = $json | ConvertFrom-Json -ErrorAction Stop
+    $report = ConvertFrom-AvoraxGateJsonPreservingStrings $json
   } catch {
     throw "protection self-test generated report is not valid JSON: $(Get-AvoraxGateBoundedDiagnostic $_.Exception.Message)"
   }
@@ -389,7 +389,7 @@ function Read-DependencyEvidenceReport {
     throw "dependency evidence generated report is empty: $Path"
   }
   try {
-    $report = $json | ConvertFrom-Json -ErrorAction Stop
+    $report = ConvertFrom-AvoraxGateJsonPreservingStrings $json
   } catch {
     throw "dependency evidence generated report is not valid JSON: $(Get-AvoraxGateBoundedDiagnostic $_.Exception.Message)"
   }
@@ -408,7 +408,7 @@ function Read-PerformanceGateReport {
     throw "performance gate generated report is empty: $Path"
   }
   try {
-    $report = $json | ConvertFrom-Json -ErrorAction Stop
+    $report = ConvertFrom-AvoraxGateJsonPreservingStrings $json
   } catch {
     throw "performance gate generated report is not valid JSON: $(Get-AvoraxGateBoundedDiagnostic $_.Exception.Message)"
   }
@@ -427,7 +427,7 @@ function Read-PerformanceBenchmarkReport {
     throw "performance benchmark generated report is empty: $Path"
   }
   try {
-    $report = $json | ConvertFrom-Json -ErrorAction Stop
+    $report = ConvertFrom-AvoraxGateJsonPreservingStrings $json
   } catch {
     throw "performance benchmark generated report is not valid JSON: $(Get-AvoraxGateBoundedDiagnostic $_.Exception.Message)"
   }
@@ -446,7 +446,7 @@ function Read-BundledPackInventoryReport {
     throw "bundled pack inventory report is empty: $Path"
   }
   try {
-    $report = $json | ConvertFrom-Json -ErrorAction Stop
+    $report = ConvertFrom-AvoraxGateJsonPreservingStrings $json
   } catch {
     throw "bundled pack inventory report is not valid JSON: $(Get-AvoraxGateBoundedDiagnostic $_.Exception.Message)"
   }
@@ -465,7 +465,7 @@ function Read-NoEicarHarmlessThreatReport {
     throw "no-EICAR harmless-threat generated report is empty: $Path"
   }
   try {
-    $report = $json | ConvertFrom-Json -ErrorAction Stop
+    $report = ConvertFrom-AvoraxGateJsonPreservingStrings $json
   } catch {
     throw "no-EICAR harmless-threat generated report is not valid JSON: $(Get-AvoraxGateBoundedDiagnostic $_.Exception.Message)"
   }
@@ -1002,7 +1002,7 @@ function Read-InstalledCoreLifecycleReport {
     throw "installed core lifecycle generated report is empty: $Path"
   }
   try {
-    $report = $json | ConvertFrom-Json -ErrorAction Stop
+    $report = ConvertFrom-AvoraxGateJsonPreservingStrings $json
   } catch {
     throw "installed core lifecycle generated report is not valid JSON: $(Get-AvoraxGateBoundedDiagnostic $_.Exception.Message)"
   }
@@ -1218,7 +1218,7 @@ function Read-ReleasePrereqHostReport {
     throw "release prerequisite host generated report is empty: $Path"
   }
   try {
-    $report = $json | ConvertFrom-Json -ErrorAction Stop
+    $report = ConvertFrom-AvoraxGateJsonPreservingStrings $json
   } catch {
     throw "release prerequisite host generated report is not valid JSON: $(Get-AvoraxGateBoundedDiagnostic $_.Exception.Message)"
   }
@@ -2304,6 +2304,8 @@ if ($RequireFullSuite) {
   Assert-ReportScopeContains $verifiedScopeText "Basic-auth/cookie/session/URL-userinfo shareable export redaction guards" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "threat-intel pack metadata smoke" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "bundled signature/rule pack validation" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "parsed without PowerShell 7 timestamp coercion" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "distinct checked Windows PowerShell 5.1 and PowerShell 7 executables" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "app-lifetime scheduled quick scans including target-selection skip and scan-mode busy guards" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "scan concurrency target-selection controller guards" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "custom-picker scan-busy controller guards" "verification_scope.verified"

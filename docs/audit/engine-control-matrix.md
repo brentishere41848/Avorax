@@ -4734,3 +4734,19 @@ Rust/Flutter/lint/build/smoke evidence pass. The corrected verifier is exact
 pass. The initial WindowsApps Python-alias verifier is fail-visible and
 uncredited. Locks and the protected vault remain exact. Fixed-buffer ownership
 remains best-effort memory hygiene, not secure erasure or pre-execution proof.
+
+## Checkpoint 2234 Engine-Control Matrix Addendum
+
+| Control or engine | Scripted state | Verification state | Honest limit |
+|---|---|---|---|
+| Strict verification JSON reader | All nine bounded readers preserve strings with PowerShell 7 `DateKind=String` and retain Windows PowerShell 5.1 compatibility | Source contract 664 and dual-host exact-report execution are scripted; execution pending | Trusted-host evidence parser only; no detection or protection behavior |
+| Definitive report validator | Exact schema, scalar types, explicit ISO timestamp parsing, repository containment, generated evidence, status/scope, and 263-step cardinality stay strict | Same report must pass under distinct checked Windows PowerShell 5.1 and PowerShell 7 executables; execution pending | Does not prove installed service, driver, signing, or pre-execution behavior |
+| Detection, scan, update, quarantine, realtime, and custom engines | No source or configuration change | Prior evidence remains applicable; checkpoint 2234 adds no new engine claim | Existing partial, blocked, and technical limits remain unchanged |
+
+Local execution now verifies the JSON reader and definitive validator:
+PowerShell 5.1/7 focused checks pass, source contracts pass `664/664`, exact
+`263/263` passes in `469.9s` under both strict hosts, and `16/16` full-suite
+mutations reject. Broad standalone engine and Flutter suites pass. One combined
+root-workspace Native executable is blocked by Defender with OS error 225 and is
+not credited; the standalone Native suite passes without weakening Defender.
+Hosted, integration, synchronization, and destination columns remain pending.

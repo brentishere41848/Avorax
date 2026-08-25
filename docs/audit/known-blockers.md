@@ -2806,3 +2806,31 @@ enforcement, or pre-execution blocking is claimed.
   elevated/service evidence, production signing, signed-driver behavior, or
   pre-execution enforcement. Checkpoint 2233 is closed; those external platform
   prerequisites and the complete antivirus project remain active.
+
+## Checkpoint 2234 Scripted State And Residual Limits
+
+- The checkpoint-2233 PowerShell 7 timestamp-coercion blocker has a scripted
+  repair: all nine bounded JSON readers preserve strings through native
+  `DateKind=String` where available and remain compatible with Windows
+  PowerShell 5.1.
+- The definitive exact 263-step verifier is scripted to require both distinct,
+  checked host executables. Strict JSON string and explicit ISO timestamp
+  validation remain unchanged; no coercion is accepted as evidence.
+- Source contract 664 and existing malformed-report rejection coverage account
+  for the implementation, but no checkpoint-2234 passing result is claimed
+  before execution.
+- This does not close production signing, installed elevated/service, signed-
+  driver, secure-erasure, cross-identity, or pre-execution blockers and does not
+  change any antivirus engine verdict.
+
+- **Local parser blocker closed:** focused Windows PowerShell 5.1 and PowerShell
+  7 probes plus the same prior 263-step report pass, and source `664/664` passes.
+  The definitive exact `263/263` report passes in `469.9s` under both strict
+  hosts; adversarial full-suite reports reject `16/16`.
+- **Defender test-host interaction remains visible:** one combined root-
+  workspace attempt is uncredited after Defender rejects its separate Native
+  test executable with OS error 225. No Defender setting changed. Standalone
+  Native passes `517/517` plus compiler `6/6`, so this is not used as a product
+  failure or a complete-workspace success claim.
+- Hosted, integration, guarded synchronization, and destination evidence remain
+  open. External signing/service/driver/pre-execution blockers remain unchanged.
