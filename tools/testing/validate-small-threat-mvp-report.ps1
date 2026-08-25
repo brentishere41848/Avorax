@@ -1904,8 +1904,8 @@ if ($RequireFullSuite) {
   if ($skipFlutter -or $skipRust) {
     throw "-RequireFullSuite requires skip_flutter=false and skip_rust=false."
   }
-  if ($steps.Count -ne 264) {
-    throw "-RequireFullSuite expected exactly 264 verifier steps for this source revision, found $($steps.Count)."
+  if ($steps.Count -ne 265) {
+    throw "-RequireFullSuite expected exactly 265 verifier steps for this source revision, found $($steps.Count)."
   }
   if ($steps[0].name -ne "local-core safe simulator scan reporting") {
     throw "-RequireFullSuite first step mismatch: $($steps[0].name)"
@@ -1968,6 +1968,12 @@ if ($RequireFullSuite) {
   Assert-ReportContainsStep $steps "native-engine Authenticode fixed launch-key buffer regressions"
   Assert-ReportContainsStep $steps "native-engine Authenticode mandatory-hash/file-identity regressions"
   Assert-ReportContainsStep $steps "native-engine risk fusion regressions"
+  Assert-ReportContainsStep $steps "native-engine bounded process behavior regressions"
+  Assert-ReportScopeContains $verifiedScopeText "bounded UTF-8-safe head/tail command-line sampling" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "command indicators remain post-start review evidence" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "high-risk process-start verdicts return recommendations rather than fake block success" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "behavior provider inventory explicitly disables engines missing correlated telemetry" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Browser-data, credential/network, persistence-write, and parent-image lineage engines remain disabled with exact blockers" "verification_scope.verified"
   Assert-ReportContainsStep $steps "local-core bounded risk fusion regressions"
   Assert-ReportScopeContains $verifiedScopeText "overflow-safe bounded score accumulation" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "only positive Local Core reasons count toward evidence quality and source independence" "verification_scope.verified"

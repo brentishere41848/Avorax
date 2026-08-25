@@ -3,7 +3,7 @@ mod tests {
     use std::fs;
 
     use crate::analyzers::{analyze_path, FileType};
-    use crate::behavior::{BehaviorDecision, FileActivityEvent};
+    use crate::behavior::{BehaviorDecision, FileActivityEvent, ProcessStartEvent};
     use crate::config::EngineConfig;
     use crate::detection_provider::{
         DetectionProvider, DetectionProviderRegistry, DetectionProviderStatus, ScanContext,
@@ -607,6 +607,74 @@ mod tests {
         assert!(provider_ids.contains(&"native.rules".to_string()));
         assert!(provider_ids.contains(&"native.heuristics".to_string()));
         assert!(provider_ids.contains(&"native.ml".to_string()));
+        assert!(provider_ids.contains(&"native.behavior.ransomware_window".to_string()));
+        assert!(provider_ids.contains(&"native.behavior.process_security_tamper".to_string()));
+        assert!(provider_ids.contains(&"native.behavior.infostealer_correlation".to_string()));
+    }
+
+    #[test]
+    fn process_behavior_evidence_is_fused_before_post_start_decision() {
+        let (dir, mut engine) = test_engine();
+        let executable = dir.path().join("powershell.exe");
+        fs::write(&executable, b"benign process behavior fixture").unwrap();
+
+        let decision = engine
+            .analyze_process_start(ProcessStartEvent {
+                process_id: 42,
+                parent_process_id: Some(7),
+                executable_path: executable,
+                command_line: Some(
+                    "powershell.exe Set-MpPreference; vssadmin.exe delete shadows".to_string(),
+                ),
+            })
+            .unwrap();
+
+        assert_eq!(decision.verdict.verdict, Verdict::Suspicious);
+        assert_eq!(decision.action, "allow_and_monitor");
+        assert!(decision
+            .verdict
+            .evidence
+            .iter()
+            .any(|item| item.id == "security_tamper_command_review"));
+        assert!(decision
+            .verdict
+            .engines_used
+            .contains(&crate::verdict::EvidenceSource::NativeBehavior));
+    }
+
+    #[test]
+    fn process_behavior_high_risk_decision_is_a_recommendation_not_fake_blocking() {
+        let (dir, mut engine) = test_engine();
+        let executable = dir.path().join("known-bad-benign-fixture.exe");
+        fs::write(&executable, b"harmless-known-bad-fixture").unwrap();
+
+        let decision = engine
+            .analyze_process_start(ProcessStartEvent {
+                process_id: 43,
+                parent_process_id: None,
+                executable_path: executable,
+                command_line: None,
+            })
+            .unwrap();
+
+        assert_eq!(decision.verdict.verdict, Verdict::ConfirmedMalware);
+        assert_eq!(decision.action, "recommend_stop_and_quarantine");
+        assert_ne!(decision.action, "block");
+    }
+
+    #[test]
+    fn process_behavior_invalid_identity_fails_before_file_io() {
+        let (_dir, mut engine) = test_engine();
+        let error = engine
+            .analyze_process_start(ProcessStartEvent {
+                process_id: 0,
+                parent_process_id: None,
+                executable_path: std::path::PathBuf::from("missing.exe"),
+                command_line: None,
+            })
+            .unwrap_err();
+
+        assert!(error.to_string().contains("nonzero process id"));
     }
 
     #[test]

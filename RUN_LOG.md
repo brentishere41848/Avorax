@@ -11109,6 +11109,47 @@ pending.
 - Evidence-head CI/packages, normal PR merge, merged-main evidence, guarded
   original-tree synchronization, and destination verification remain pending.
 
+## Checkpoint 2236 - Scripted Bounded Process Behavior
+
+- Audit found that Native `analyze_process_start` ignored its command line,
+  returned fake `block` action text despite performing no process mutation, and
+  exposed seven behavior helpers without an honest runtime inventory. Two score
+  helpers could overflow at the final addition and several classifiers allocated
+  lowercase copies proportional to untrusted input.
+- The complete scripting batch adds bounded UTF-8-safe head/tail command-line
+  inspection, exact executable context, distinct capped security-tamper review
+  evidence, pre-file-I/O event validation, and evidence fusion before the final
+  verdict. High-risk post-start decisions now recommend stop/quarantine instead
+  of claiming a block. Script-host identity alone has zero weight.
+- Ransomware/high-write, process script-host, and process security-tamper
+  providers are explicitly enabled at their API boundaries. Browser-data,
+  credential/network, persistence-write, and parent-image lineage providers are
+  explicitly disabled with missing-telemetry blockers. Their standalone helpers
+  are bounded and overflow-safe rather than silently treated as protection.
+- Benign/adversarial Rust fixtures, mandatory verifier step 265, strict scope and
+  cardinality validation, source contract 666, and audit/dependency/checkpoint
+  documentation are scripted. No checkpoint-2236 passing result is claimed
+  during scripting; no live malware, candidate execution, Defender change,
+  install, service/driver start, dependency, feature, lock, release, or
+  publication is involved.
+
+### Checkpoint 2236 local execution
+
+- Focused process-behavior tests pass `19/19`; Native passes `538/538` with 19
+  deliberate child-entrypoint ignores plus compiler `6/6`. Strict Native
+  all-target/all-feature Clippy, rustfmt, Flutter analyze, both locked workspace
+  modes, and Flutter `838/838` pass.
+- Source contracts pass exact `666/666`; PS5/PS7 parse both changed verifier
+  scripts; `git diff --check` passes. Root/Native/Flutter lock SHA-256 values are
+  exact and unchanged. The protected vault remains 16,072 files, zero dirs,
+  4,522,733 bytes, 5,357 each payload/JSON/auth, one key, zero pending/reparse.
+- Uncredited attempts remain visible: initial format drift and a misquoted PS5
+  parser command were corrected; the transferred all-features session was rerun
+  after its handle disappeared; a root-level Flutter command found no tests;
+  `unittest` found zero pytest-style functions and optional pytest was absent,
+  after which the dependency-free repository runner passed. Definitive 265-step,
+  adversarial, hosted, merge, synchronization, and destination work remains open.
+
 ## 2026-08-25 - Checkpoint 2235 Integration And Destination Closure
 
 - Evidence head `57ce16371cbc47147b7e302c80f310b47873d918` passes CI

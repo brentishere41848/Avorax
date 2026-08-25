@@ -2878,3 +2878,42 @@ The initial WindowsApps Python reparse attempt failed visibly and is uncredited.
 This evidence confirms the bounded risk-fusion controls; it does not establish
 production malware calibration, installed service protection, signing,
 cross-identity isolation, driver/kernel behavior, or pre-execution blocking.
+
+## Checkpoint 2236 - Bounded Process Behavior And Honest Actions
+
+**Threat:** an untrusted or malformed process event can allocate memory
+proportional to a command line, split UTF-8 while truncating, inflate a score by
+repeating one term, use quoted documentation as a tamper signal, overflow helper
+arithmetic, or produce a `block` success claim even though analysis occurs after
+start and performs no mutation. Dead custom engines can also appear active when
+the telemetry needed for their decisions does not exist.
+
+**Scripted control:** process identity and NUL validity are checked before file
+I/O. Command inspection retains at most a valid-UTF-8 16 KiB head/tail sample,
+uses exact executable context and bounded token boundaries, counts distinct
+tamper classes, caps their score at 75, and never returns the raw command line.
+Behavior evidence joins complete file evidence before risk fusion. Script-host
+identity has zero weight; command evidence alone cannot reach probable-malware.
+High-risk post-start results recommend stop/quarantine and never claim `block`.
+
+The runtime inventory marks ransomware/high-write, script-host observation, and
+security-tamper review enabled at explicit API boundaries. Browser-data access,
+credential/network correlation, persistence correlation, and suspicious child
+lineage are disabled with exact missing-telemetry reasons. Their bounded helper
+logic is not represented as active protection.
+
+**Residual risk:** bounded head/tail sampling cannot recover omitted middle
+arguments. Attackers can use alternate tools, syntax, aliases, indirect launch,
+or telemetry races. The explicit API is post-start and is not wired to an
+installed durable service. Same-user tampering, short-lived processes, parent
+PID reuse, process termination, quarantine mutation, production calibration,
+cross-identity authentication, driver/kernel, and pre-execution boundaries are
+unchanged. Exact 265-step verifier and source contract 666 changes are scripted;
+no checkpoint-2236 execution result is claimed during scripting.
+
+**Local verification:** focused behavior regressions pass `19/19`; complete
+Native passes `538/538` with 19 deliberate child entrypoints ignored plus
+compiler `6/6`; both locked workspace modes, strict lint/format/parser checks,
+Flutter analyze and `838/838`, and source contracts `666/666` pass. Locks and
+the protected vault remain exact. Definitive, adversarial, hosted, integration,
+and destination evidence remains pending and does not reduce the residual risks.

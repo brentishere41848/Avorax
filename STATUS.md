@@ -6118,6 +6118,37 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   AppContainer/LPAC, installed LocalSystem, signed-driver, or pre-execution
   enforcement. The complete antivirus project remains active.
 
+## Checkpoint 2236 Scripted State - Bounded Process Behavior
+
+- Native process-start analysis now consumes bounded command-line telemetry and
+  fuses context-bound behavior evidence with complete file evidence before risk
+  shaping. Nonzero PID and NUL checks fail before file I/O; raw command lines are
+  never returned in evidence.
+- Security-tamper scoring counts distinct contextual indicators, caps at 75,
+  and samples at most 16 KiB of UTF-8-safe head/tail data. Script-host identity
+  is a zero-weight observation and command evidence alone remains review-only.
+- `block` is removed from the post-start decision contract. High-risk verdicts
+  return `recommend_stop_and_quarantine`; this API does not terminate, quarantine,
+  or claim pre-execution enforcement.
+- Engine status inventories seven behavior responsibilities: three enabled API
+  providers and four explicitly disabled providers with exact telemetry blockers.
+  Arithmetic/path/name helpers are overflow-safe and allocation-bounded.
+- Tests, exact verifier/validator step 265, source contract 666, and all audit
+  documents are scripted. No checkpoint-2236 passing result is claimed before
+  focused and broad execution, definitive/adversarial evidence, hosted checks,
+  merge, guarded synchronization, and independent destination verification.
+
+### Checkpoint 2236 local status
+
+- Focused `19/19`, complete Native `538/538` plus 19 deliberate ignores and
+  compiler `6/6`, both locked workspace modes, strict Native Clippy, formatting,
+  Flutter analyze, Flutter `838/838`, both PowerShell parsers, and source
+  contracts `666/666` pass.
+- Three lock hashes and the protected-vault invariant remain exact. Definitive
+  265-step/adversarial, hosted, merge, guarded synchronization, and independent
+  destination evidence remain open; the checkpoint and whole project are not
+  yet complete.
+
 ## Checkpoint 2235 Integration Closure
 
 - Evidence `57ce163` and merged main `5fc30c9` pass exact-head CI and Desktop

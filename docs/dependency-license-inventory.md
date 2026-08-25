@@ -1410,3 +1410,18 @@ file, seven-checksum, and CycloneDX 1.6/569-component validation. Destination
 source, locked workspaces, exact verifier dependency gate, and all three lock
 hash checks pass without dependency, feature, license, or lockfile change.
 Final production signed-artifact notice/copyright approval remains separate.
+
+## Checkpoint 2236 Dependency Scope
+
+Bounded process behavior uses Rust standard-library path, byte-window, UTF-8
+boundary, saturating arithmetic, and collection APIs plus repository `anyhow`
+and existing verdict/provider types. It adds no dependency, feature, downloaded
+model/rule, package source, license obligation, or lockfile change. Tests use the
+existing Native test support and harmless text/known-bad fixtures; no candidate
+is executed. Source contract 666 and exact verifier cardinality 265 bind this
+scope. Lock, package/SBOM, and final signed-artifact review remain pending.
+
+Local execution confirms all three lockfile SHA-256 values remain exact after
+focused and broad tests. No dependency was installed to replace missing optional
+pytest; the repository's dependency-free source-contract runner passed
+`666/666`. Hosted package/SBOM and final signed-artifact review remain pending.
