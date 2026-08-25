@@ -6040,3 +6040,68 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   in-stream validation without extraction. Evidence-head checks, normal merge,
   merged-main evidence, guarded synchronization, and destination proof remain
   pending.
+- **Integration and destination closure:** evidence `d0a9f1b`, PR `#80`, and
+  normal merge `ab43569` are complete. Evidence-head CI/package runs
+  `32803875977`/`32803875954` pass; merged-main CI `32804898895` passes.
+  Merged-main packages `32804898920` pass after one failed-job retry of an
+  evidenced transient macOS arm64 `hdiutil` resource-unavailable error;
+  publication is skipped. Untouched evidence/merged artifacts `9547754133`/
+  `9548383452` pass exact eight-entry, six-platform-file, seven-checksum, and
+  CycloneDX 1.6/569-component in-stream validation without extraction.
+  Exactly 12 merge-delta paths synchronized with zero deletes and remain exact
+  with no residue. Destination source `658/658`, response binding `3/3`,
+  Authenticode `75/16`, Native `511/16` plus compiler `6/6`, Local `536/536`,
+  Guard standard `248/248` and all-feature `249/249`, both locked workspaces,
+  strict lint/offline/release/two-host smoke, Flutter analyze and `838/838`,
+  and all safety gates pass. Definitive verification/validation passes exact
+  `258/258` in `449.6s`; locks and the read-only vault remain exact.
+  Checkpoint 2228 is closed, while its same-user/unkeyed-digest limits and the
+  complete antivirus goal remain active.
+
+## Checkpoint 2229 - Authenticode response launch-key MAC
+
+- **Implemented and locally verified:** Native Engine now declares direct
+  `hmac = "0.12"`. The exact canonical 36-byte random handshake token is retained
+  by both endpoints as a per-launch response key. Child computes domain-separated
+  HMAC-SHA-256 over exact little-endian response length and all bounded stdout;
+  parent performs constant-time verification before strict JSON or publisher
+  trust. The fixed 41-byte frame and 16 KiB ceiling remain unchanged.
+- **Adversarial coverage scripted:** malformed/short/extended frames, invalid
+  lengths, changed response bytes, changed tag, and a real isolated child using
+  the wrong benign test key all fail visibly. Existing process/client/token
+  reauthentication and cancellation/terminate/reap behavior remain in the path.
+- **Evidence contract verified:** source contract 659, the historical response-
+  hash target, a new response launch-key MAC target, exact 259-step validator,
+  audit matrix, threat model, blockers, dependency inventory, run log, and this
+  report are updated. The credited verifier passes exact `259/259` in `441.1s`,
+  with zero failed/skipped steps; both strict validators and 15/15 adversarial
+  report rejections pass. Hosted evidence, integration, and destination
+  synchronization remain pending.
+- **Focused verified:** exact offline lock review is complete. Root/Native/
+  Flutter lock blobs are respectively `bc436212`, `1d9d96a`, and unchanged
+  `51fa085a`. Both PowerShell parsers, formatting/diff checks, source contracts
+  `659/659`, retained response tests `3/3`, and the new wrong-launch-key test
+  `1/1` pass. Authenticode `84/17 ignored`, Native `512/17 ignored` plus compiler
+  `6/6`, Local Core `536/536`, Guard `248/248` and `249/249`, both root workspace
+  modes, strict lint/offline/release checks, Flutter analyze and `838/838`, and
+  all safety/dependency gates pass.
+- **PS5 JSON wiring repaired:** definitive execution exposed BOM-prefixed stdin
+  in the Authenticode release harness and user scan/cancel/allowlist/quarantine/
+  watch/status wrappers. All affected paths plus the blocked driver-self-test
+  harness now select BOM-less UTF-8 only around child stdin creation and restore
+  prior encoding. Product JSON remains strict. Parsers pass `8/8`, Authenticode
+  smoke passes 12 repetitions, and all six wrapper flows pass sequentially.
+- **Implementation-head hosted verified:** exact `eaa4ba3` passes Avorax CI
+  `32812956518` and Desktop Packages push/PR runs `32812914763`/
+  `32812956466` without retry. Windows MSI/EXE, Linux DEB/tar, both macOS DMGs,
+  consolidation, checksums, dependency evidence, and SBOM pass; publication is
+  skipped. Untouched artifacts `9550661340`/`9550842112` pass exact eight-entry,
+  six-platform-file, seven-checksum, CycloneDX 1.6/569-component in-stream
+  validation without extraction or execution. Evidence-head, merge,
+  merged-main, synchronization, and destination proof remain pending.
+- **Technically limited:** the per-launch key exists in child environment/memory
+  and same-user IPC. Same-user read access, privileged injection, or handle
+  duplication may recover it or alter both streams before authentication. This
+  is not encryption, cross-identity authentication, durable token identity,
+  AppContainer/LPAC, installed LocalSystem, signed-driver, or pre-execution
+  enforcement. The complete antivirus project remains active.

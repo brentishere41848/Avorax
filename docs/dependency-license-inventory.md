@@ -1173,5 +1173,31 @@ verifier/validator step 258 are scripted before execution. This SHA-256 is
 unkeyed same-user content-integrity evidence, not a secret MAC, encryption,
 cross-identity authentication, AppContainer/LPAC, installed LocalSystem,
 signed-driver, or pre-execution proof. Full local, hosted, package, integration,
-synchronization, destination, and signed final-artifact license/binary review
-remain pending.
+synchronization, and destination evidence subsequently passed at merge
+`ab43569`; complete signed final-artifact license/binary review remains pending.
+
+Checkpoint 2229 adds Native Engine direct dependency `hmac = "0.12"` to replace
+the checkpoint-2228 unkeyed response digest with domain-separated HMAC-SHA-256
+under the exact per-launch handshake token. Workspace `Cargo.lock` already pins
+RustCrypto `hmac` `0.12.1` through Local Core and Guard; locally cached metadata
+already records `MIT OR Apache-2.0`. The dependency uses the existing `sha2`
+0.10 implementation and adds no network service, executable, script host,
+machine-wide component, or candidate-content execution. Offline lock resolution
+and exact review are complete. Root adds only the Native `hmac` edge and hashes
+to `bc43621213d9bede816a6e062146996116fb92fc`. Standalone Native adds `hmac`
+`0.12.1`, `subtle` `2.6.1`, the enabled `digest` subtle edge, and the Native
+edge without package version updates; it hashes to
+`1d9d96a172c258a584066a9adbb5a10a8feff97d`. Flutter remains exact at
+`51fa085a41168aa1deadace8b5395614db43649e`. The key is carried in child environment/memory
+and same-user IPC, so HMAC is not encryption, durable secret storage, cross-
+identity authentication, AppContainer/LPAC, installed LocalSystem, signed-
+driver, or pre-execution proof. Complete signed final-artifact license, notice,
+copyright, and binary-resolution review remains a release prerequisite. No
+checkpoint-2229 passing result was claimed during scripting. Focused and full
+local runtime checks, exact `259/259` verification, strict report validation,
+and dependency evidence now pass. Exact implementation `eaa4ba3` passes package
+push/PR runs `32812914763`/`32812956466`; untouched artifacts `9550661340`/
+`9550842112` each pass exact six-platform-file, seven-checksum, and CycloneDX
+1.6/569-component in-stream validation, while publication is skipped. Evidence-
+head/integration checks and complete signed final-artifact review remain
+pending.

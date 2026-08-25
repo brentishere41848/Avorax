@@ -2627,3 +2627,42 @@ enforcement, or pre-execution blocking is claimed.
   stdout and frame before authentication. AppContainer/LPAC, installed
   LocalSystem, production signing, signed-driver enforcement, and demonstrated
   pre-execution protection remain external or technical blockers.
+- **Checkpoint 2228 closure and supersession:** the unkeyed response hash
+  boundary passed focused, full local, hosted, merged-main, guarded destination,
+  and exact `258/258` verification. It is integrated at merge `ab43569` and is
+  now deliberately superseded in source by checkpoint 2229 HMAC-SHA-256; its
+  historical evidence remains valid for that merged revision.
+- **Checkpoint 2229 scripted per-launch response MAC:** exact flushed stdout is
+  bound with domain-separated HMAC-SHA-256 under the canonical 36-byte random
+  launch token already authenticated on the retained pipe. Parent and child
+  retain their exact per-launch key copies; parent verifies in constant time
+  before strict JSON or publisher trust. Wrong-key, mutation, length, malformed-
+  frame, and bound failures are scripted with benign text-only fixtures. Source
+  contract 659, verifier step 259, validator, and documentation are complete;
+  exact lock review, source contracts `659/659`, retained response tests `3/3`,
+  and wrong-launch-key test `1/1` pass. Full affected/workspace/Flutter/release
+  regression, exact `259/259` definitive verification in `441.1s`, both strict
+  validators, and 15/15 adversarial report rejections pass. Hosted evidence,
+  integration, synchronization, and destination proof remain pending.
+- **Checkpoint 2229 repaired PS5 stdin blocker:** Windows PowerShell 5.1 could
+  prefix redirected JSON stdin with a UTF-8 BOM in the release Authenticode
+  harness and six user wrappers. The harnesses now select BOM-less UTF-8 before
+  process/stdin creation and restore prior encoding in `finally`; strict product
+  parsing is not weakened. Parsers `8/8`, source `659/659`, twelve consecutive
+  Authenticode smokes, six sequential wrapper smokes, and definitive execution
+  pass. The signed/installed driver self-test remains externally blocked, but its
+  same stdin path is repaired and source-contracted.
+- **Checkpoint 2229 implementation-head hosting complete:** exact `eaa4ba3`
+  passes all five CI jobs in `32812956518` and every package/consolidation job
+  in push/PR runs `32812914763`/`32812956466`; publication is skipped. Both
+  untouched consolidated artifacts pass exact six-platform-file, seven-
+  checksum, and CycloneDX 1.6/569-component in-stream validation. Evidence-
+  head, normal merge, merged-main, guarded synchronization, and destination
+  proof remain pending and are not implied by this result.
+- **Checkpoint 2229 residual technical blocker:** the HMAC key is present in the
+  child environment and memory and travels on same-user IPC. Same-user process-
+  memory or environment read access, privileged injection, or handle duplication
+  may recover it or modify both stdout and MAC before authentication. This is not
+  encryption, cross-identity authentication, durable token-object binding,
+  AppContainer/LPAC, installed LocalSystem, signed-driver, or pre-execution
+  enforcement.

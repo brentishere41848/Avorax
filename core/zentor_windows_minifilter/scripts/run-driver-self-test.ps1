@@ -177,9 +177,15 @@ try {
   $process.StartInfo = $startInfo
   $exitCode = $null
   try {
-    [void]$process.Start()
-    $process.StandardInput.Write($commandText)
-    $process.StandardInput.Close()
+    $previousInputEncoding = [Console]::InputEncoding
+    try {
+      [Console]::InputEncoding = [System.Text.UTF8Encoding]::new($false)
+      [void]$process.Start()
+      $process.StandardInput.Write($commandText)
+      $process.StandardInput.Close()
+    } finally {
+      [Console]::InputEncoding = $previousInputEncoding
+    }
     $streams = Read-AvoraxProcessStreamsWithLimit $process $SelfTestTimeoutMilliseconds
     $raw = [string]$streams.stdout
     $stderrText = [string]$streams.stderr

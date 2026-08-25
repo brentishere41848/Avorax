@@ -3499,6 +3499,7 @@ dependencies = [
  "avorax_platform_security",
  "chrono",
  "flate2",
+ "hmac",
  "serde",
  "serde_json",
  "sha2",
