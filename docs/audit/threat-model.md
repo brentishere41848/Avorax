@@ -2545,8 +2545,13 @@ verification before strict JSON parsing or publisher trust. Wrong length,
 mutated bytes, modified MAC, malformed frame, and a benign child using a wrong
 launch key are fail-visible. Source contract 659, complete Authenticode and
 workspace regression, verifier step 259, exact `259/259` strict verification,
-and controlled malformed-report rejection pass locally. Hosted, integration,
-and destination evidence remain pending.
+and controlled malformed-report rejection pass locally. Exact implementation
+head `eaa4ba3` also passes all five CI jobs in `32812956518` and complete
+Desktop Packages push/PR runs `32812914763`/`32812956466`. Publication is
+skipped; both untouched consolidated artifacts pass exact six-platform-file,
+seven-checksum, and CycloneDX 1.6/569-component in-stream validation without
+extraction or execution. Evidence-head, integration, and destination evidence
+remain pending.
 
 Definitive execution also exposed a Windows PowerShell 5.1 boundary error:
 redirected stdin could prepend a UTF-8 BOM to otherwise strict JSON. The release

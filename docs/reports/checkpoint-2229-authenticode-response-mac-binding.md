@@ -128,9 +128,27 @@ read-only and exact: 16,072 files, zero directories or reparse points, 4,522,733
 bytes, 5,357 each `.avoraxq`/`.json`/`.auth`, one `.metadata_auth_key`, and zero
 pending/temp.
 
-Hosted exact-head evidence, normal integration, guarded synchronization, and
-destination proof remain pending. This local evidence does not complete either
-checkpoint 2229 or the antivirus project.
+## Implementation-Head Hosted Evidence
+
+Exact implementation head `eaa4ba31bf942b570eb7fb55304831c9a0c30ba4`
+passes all five Avorax CI jobs in run `32812956518` without retry. Desktop
+Packages push/PR runs `32812914763`/`32812956466` pass package contracts,
+Windows x64 MSI/EXE including administrative extraction without installation,
+Linux x64 DEB/tar, macOS x64/arm64 DMGs, consolidation, checksums, dependency
+evidence, and the lockfile SBOM. Both publication jobs are skipped.
+
+Untouched consolidated artifacts `9550661340`/`9550842112` are
+`131454491`/`131288897` bytes with SHA-256
+`68a8a98d21e49e76e5e5a1dffbca6a1cfa95b2291fe00e4ef613abc545efd112`/
+`07d5154cc1a66ef0675e6b93ba4a9d8d83b7647098107cf01feee28dfe0cf739`.
+Bounded in-stream validation, without extraction or execution, proves exactly
+eight root regular entries: six platform artifacts, `SHA256SUMS.txt`, and a
+CycloneDX 1.6 lockfile SBOM. All seven checksum rows independently match and
+the SBOM contains exactly 569 components.
+
+Evidence-head checks, normal integration, merged-main evidence, guarded
+synchronization, and destination proof remain pending. This hosted evidence
+does not complete either checkpoint 2229 or the antivirus project.
 
 ## Technical Limits
 

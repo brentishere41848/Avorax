@@ -10483,3 +10483,29 @@ Updates page showed:
   `.avoraxq`/`.json`/`.auth`, one metadata key, and zero pending/temp. Hosted,
   integration, synchronization, and destination evidence remain pending; the
   complete antivirus goal remains active.
+
+## 2026-08-25 - Checkpoint 2229 implementation-head hosting
+
+- Exact implementation head `eaa4ba31bf942b570eb7fb55304831c9a0c30ba4`
+  passes all five Avorax CI jobs in run `32812956518` without retry.
+- Desktop Packages push/PR runs `32812914763`/`32812956466` pass contracts,
+  Windows x64 MSI/EXE with administrative extraction but no installation,
+  Linux x64 DEB/tar, macOS x64/arm64 DMGs, consolidation, checksums,
+  dependency evidence, and lockfile SBOM generation. Publication is skipped
+  in both runs.
+- Untouched consolidated artifacts `9550661340`/`9550842112` are
+  `131454491`/`131288897` bytes with SHA-256
+  `68a8a98d21e49e76e5e5a1dffbca6a1cfa95b2291fe00e4ef613abc545efd112`/
+  `07d5154cc1a66ef0675e6b93ba4a9d8d83b7647098107cf01feee28dfe0cf739`.
+  Bounded in-stream validation, without extraction or execution, proves exact
+  eight-entry root inventories, six platform files, seven independently
+  matching checksum rows, and CycloneDX 1.6 lockfile SBOMs with 569 components.
+- Evidence-head hosted checks, normal merge, merged-main evidence, guarded
+  synchronization, and destination proof remain pending. `.verification`
+  remains untracked and unstaged; nothing was installed, released, published,
+  or executed as candidate content.
+- The first closure PS5 parser wrapper expanded its inner `$files` variable in
+  the outer PowerShell process and failed before parsing either repository
+  script; it is uncredited. The corrected single-quoted child command parses
+  both verifier scripts successfully. Diff checks and source contracts
+  `659/659` also pass after the hosted documentation update.

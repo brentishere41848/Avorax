@@ -1195,5 +1195,9 @@ driver, or pre-execution proof. Complete signed final-artifact license, notice,
 copyright, and binary-resolution review remains a release prerequisite. No
 checkpoint-2229 passing result was claimed during scripting. Focused and full
 local runtime checks, exact `259/259` verification, strict report validation,
-and dependency evidence now pass. Hosted package/SBOM evidence and complete
-signed final-artifact review remain pending.
+and dependency evidence now pass. Exact implementation `eaa4ba3` passes package
+push/PR runs `32812914763`/`32812956466`; untouched artifacts `9550661340`/
+`9550842112` each pass exact six-platform-file, seven-checksum, and CycloneDX
+1.6/569-component in-stream validation, while publication is skipped. Evidence-
+head/integration checks and complete signed final-artifact review remain
+pending.

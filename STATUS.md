@@ -6091,6 +6091,14 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   harness now select BOM-less UTF-8 only around child stdin creation and restore
   prior encoding. Product JSON remains strict. Parsers pass `8/8`, Authenticode
   smoke passes 12 repetitions, and all six wrapper flows pass sequentially.
+- **Implementation-head hosted verified:** exact `eaa4ba3` passes Avorax CI
+  `32812956518` and Desktop Packages push/PR runs `32812914763`/
+  `32812956466` without retry. Windows MSI/EXE, Linux DEB/tar, both macOS DMGs,
+  consolidation, checksums, dependency evidence, and SBOM pass; publication is
+  skipped. Untouched artifacts `9550661340`/`9550842112` pass exact eight-entry,
+  six-platform-file, seven-checksum, CycloneDX 1.6/569-component in-stream
+  validation without extraction or execution. Evidence-head, merge,
+  merged-main, synchronization, and destination proof remain pending.
 - **Technically limited:** the per-launch key exists in child environment/memory
   and same-user IPC. Same-user read access, privileged injection, or handle
   duplication may recover it or alter both streams before authentication. This

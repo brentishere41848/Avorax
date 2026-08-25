@@ -2652,6 +2652,13 @@ enforcement, or pre-execution blocking is claimed.
   Authenticode smokes, six sequential wrapper smokes, and definitive execution
   pass. The signed/installed driver self-test remains externally blocked, but its
   same stdin path is repaired and source-contracted.
+- **Checkpoint 2229 implementation-head hosting complete:** exact `eaa4ba3`
+  passes all five CI jobs in `32812956518` and every package/consolidation job
+  in push/PR runs `32812914763`/`32812956466`; publication is skipped. Both
+  untouched consolidated artifacts pass exact six-platform-file, seven-
+  checksum, and CycloneDX 1.6/569-component in-stream validation. Evidence-
+  head, normal merge, merged-main, guarded synchronization, and destination
+  proof remain pending and are not implied by this result.
 - **Checkpoint 2229 residual technical blocker:** the HMAC key is present in the
   child environment and memory and travels on same-user IPC. Same-user process-
   memory or environment read access, privileged injection, or handle duplication
