@@ -6161,3 +6161,54 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   in-stream validation passes exact entries, CRC, internal SHA-256, CycloneDX,
   and path/type guards without extraction or execution. Integration,
   synchronization, and destination evidence remain pending.
+- **Integration and destination closure:** evidence head `4b03b0e` passes CI
+  `32826686112` and packages `32826686104`; PR `#82` normally merges as
+  `9690c84` with parents `36d6779`/`4b03b0e`. Merged-main CI `32827802503`
+  and packages `32827802711` pass; both publication jobs are skipped. Guarded
+  previous-main preconditions and reparse/path checks allow exact atomic sync of
+  all 12 merge-delta files (6,670,605 bytes), with zero delete or residue.
+  Destination source contracts `660/660`, focused pipe/token/MAC checks, Native
+  `513/18 + 6/6`, Local `536/536`, Guard `248/248 + 249/249`, both workspaces,
+  strict lint/offline/release/PS7+PS5 smoke, Flutter analyze and `838/838` pass.
+  The destination verifier/validator passes exact `260/260` in `448.1s`, and
+  `16/16` malformed report variants are rejected. Source/lock blobs and the
+  protected vault remain exact; checkpoint 2230 is closed while the complete
+  antivirus project remains active.
+
+## Checkpoint 2231 - Authenticode Launch-Key Confirmation HMAC
+
+- **Implemented and locally verified:** the public fixed one-byte
+  handshake ACK is removed. The restricted child now computes an exact 32-byte,
+  domain-separated HMAC-SHA-256 under the pipe-delivered canonical 36-byte
+  per-launch key over exact canonical pipe-name length/name and parent/child
+  PIDs. The parent verifies it in constant time under its retained key/context
+  before post-confirmation launch/child token stability and request processing.
+- Pure regressions cover empty, truncated, extended, mutated, wrong-key,
+  wrong-pipe, wrong-parent-PID, wrong-child-PID, zero-PID, and equal-PID input.
+  A real restricted benign child deliberately confirms with another fixed test
+  UUID key and must fail into bounded terminate/reap cleanup. No candidate
+  content or live malware is executed.
+- Source contract `661/661`, the focused HMAC target `2/2`, adjacent pipe/PID/
+  token/MAC checks, Native `515/19 ignored + 6/6`, Local `536/536`, Guard
+  `248/248 + 249/249`, both locked workspaces, strict Clippy/offline/release,
+  PS7/PS5 Authenticode smoke, Flutter analyze and `838/838` pass. One parallel
+  all-feature run exposed a fail-visible zero-byte child close; the exact test
+  passed ten consecutive isolated runs and the complete serial rerun passed.
+- **Definitive local verified:** exact `261/261` passes with zero failed/skipped
+  in `466.4s`; the new target passes in `0.3s`, both strict validators pass, and
+  `8/8` isolated malformed reports are rejected. Locks, processes, and the
+  protected-vault invariant remain exact. Hosted/integration/destination
+  evidence remains pending.
+- **Exact implementation-head hosted verified:** commit `a3ef715` is PR `#83`'s
+  exact head. CI `32837753355` and package push/PR runs
+  `32837712672`/`32837753111` pass all mandatory jobs; both publication jobs are
+  skipped. Consolidated artifacts `9559719743`/`9559858142` match GitHub digests
+  and pass exact in-stream eight-entry, six-platform-file, seven-checksum, and
+  CycloneDX 1.6/569-component validation without extraction or execution.
+  Evidence-head, merge, synchronization, and destination proof remain pending.
+- **Technically limited:** key confirmation proves point-in-time possession by
+  data arriving on the already PID/token-bound same-user pipe. Confirmation and
+  response binding reuse the key under distinct domains. This is not encryption,
+  cross-identity authentication, durable secret or token-object identity,
+  AppContainer/LPAC, installed LocalSystem, signed-driver, or pre-execution
+  enforcement. The complete antivirus project remains active.
