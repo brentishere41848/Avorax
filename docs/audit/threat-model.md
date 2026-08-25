@@ -2654,3 +2654,37 @@ verifier/validator evidence passes exact `261/261` in `466.4s` and `452.7s`, wit
 `8/8` malformed-report rejections at each stage. Evidence `0f49c76`, PR `#83`,
 normal merge `b678027`, hosted/merged-main CI/packages, guarded synchronization,
 exact locks, and the protected-vault invariant pass; publication is skipped.
+
+## Checkpoint 2232 - Authenticode Launch-Key Best-Effort Zeroization
+
+**Threat:** Checkpoint 2231 retained the random per-launch HMAC key in ordinary
+owned `String` values and created a separate raw 36-byte derived-key array. Drop,
+error, cancellation, or unwind released those allocations without an explicit
+best-effort scrub, increasing the chance that stale key bytes remained readable
+in Avorax-owned memory after the protocol ended.
+
+**Control:** The Windows-only Native Authenticode path pins `zeroize 1.9.0` and
+uses `Zeroizing<String>` for the parent handshake, authenticated response
+evidence, pending child handshake, and completed child handshake. The bounded
+37-byte child pipe-read buffer uses `Zeroizing<[u8; 37]>`. Canonical UUID
+validation now returns a borrowed key slice instead of copying the key into a
+raw array. Key-bearing structs do not derive `Debug`. RAII covers normal drop,
+early return, and unwind; a pure benign regression explicitly scrubs both owned
+forms and requires prior handshake-HMAC and response-MAC evidence to fail.
+
+**Residual risk:** This is best-effort cleanup of Avorax-owned buffers only. It
+does not prove erasure of compiler temporaries, HMAC internals, allocator or OS
+copies, process dumps, paging, or forensic remnants and does not stop same-user
+or privileged reads while the key is live. It is not secure erasure, encryption,
+durable secret storage, cross-identity authentication, AppContainer/LPAC,
+installed LocalSystem, signed-driver, or pre-execution enforcement.
+
+**Local evidence:** Focused zeroization passes `1/1`; Native passes `516/516`
+with 19 intentional ignored child entrypoints plus compiler `6/6`; Local passes
+`536/536`; Guard passes `248/248 + 249/249`; both locked workspaces, strict lint,
+offline/release/two-host trust smoke, Flutter analyze and `838/838`, and source
+contracts `662/662` pass. The exact no-skip/no-Defender verifier and both strict
+validators pass `262/262` in `459.7s`, and `8/8` malformed reports are rejected.
+Locks and the protected-vault invariant remain exact. Hosted, integration,
+synchronization, and destination evidence remain pending. No candidate content
+or live malware is used.

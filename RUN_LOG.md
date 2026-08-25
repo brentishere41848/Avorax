@@ -10484,6 +10484,53 @@ Updates page showed:
   integration, synchronization, and destination evidence remain pending; the
   complete antivirus goal remains active.
 
+## Checkpoint 2232 Scripting - Authenticode Launch-Key Best-Effort Zeroization
+
+- Selected the next highest-value unblocked risk after checkpoint 2231: ordinary
+  owned launch-key strings and a raw derived-key array were not explicitly
+  scrubbed after Authenticode helper success, failure, cancellation, or unwind.
+- Scripted exact Windows-only direct dependency `zeroize 1.9.0`; parent handshake,
+  authenticated response evidence, pending child handshake, completed child
+  handshake, and bounded child pipe-read buffer now use `Zeroizing`. Canonical
+  validation returns borrowed key bytes, and key-bearing containers omit Debug.
+- Scripted one pure benign fail-visible zeroization regression, source contract
+  662, mandatory verifier step 262, stale-261 rejection, exact verified and
+  technically limited report scopes, dependency/license evidence, threat model,
+  blocker entry, engine matrix, status, and checkpoint report.
+- No checkpoint-2232 parser, formatter, compiler, test, verifier, validator, or
+  runtime command has been executed yet, honoring the requested script-first
+  sequence. After the complete source/docs batch, offline lock resolution adds
+  only the root Native edge and standalone exact package/edge. Root/Native/
+  Flutter SHA-256 values are `7c7c8aa...`, `7f4393c...`, and unchanged
+  `4de1969...`. No passing result is claimed.
+- Best-effort zeroization does not promise compiler/HMAC/allocator/OS copy
+  removal, dump/paging cleanup, forensic secure erasure, or protection from live
+  same-user/privileged memory readers. It is not cross-identity isolation,
+  AppContainer/LPAC, installed LocalSystem, driver, or pre-execution evidence.
+  No malware, candidate execution, installation, Defender change, release, or
+  publication is involved.
+
+## Checkpoint 2232 Definitive Local Evidence
+
+- Corrected PS7/PS5 parsers, format/diff checks, and source contracts `662/662`
+  pass. The first PS5 parser wrapper, stale source assertions, initial focused
+  compile errors, and a relative-path PS5 release-smoke invocation failed
+  visibly before repair and are not credited.
+- Zeroization `1/1`, handshake HMAC `2/2`, pipe delivery `1/1`, wrong response
+  key `1/1`, Native `516/19 ignored + 6/6`, Local `536/536`, Guard
+  `248/248 + 249/249`, both serial locked workspaces, strict Clippy, standalone
+  offline Native, three locked release builds, PS7/PS5 Authenticode smoke,
+  Flutter analyze, and Flutter `838/838` pass.
+- The no-skip/no-Defender verifier runs from `2026-08-25T12:41:36.2627306Z`
+  through `2026-08-25T12:49:16.0230861Z` and passes exact `262/262`, zero
+  failed/skipped, in `459.7s`; zeroization takes `0.2s`. Embedded and independent
+  PS5 validators pass. Eight controlled malformed reports are rejected `8/8`.
+- Root/Native/Flutter lock blobs are exact, no checkpoint process remains, and
+  the protected vault remains 16,072 files, zero directories, 4,522,733 bytes,
+  5,357 each payload/metadata/auth, one key, and zero pending/temp/reparse.
+  Nothing was installed, released, published, executed as candidate content, or
+  changed in Defender. Hosted/merge/sync/destination evidence remains pending.
+
 ## 2026-08-25 - Checkpoint 2229 implementation-head hosting
 
 - Exact implementation head `eaa4ba31bf942b570eb7fb55304831c9a0c30ba4`

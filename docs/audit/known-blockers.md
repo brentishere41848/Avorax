@@ -2722,3 +2722,24 @@ enforcement, or pre-execution blocking is claimed.
 - **No malware or release claim:** tests use protocol bytes and benign child
   fixtures only. No candidate content is executed; Defender is not weakened;
   nothing is installed, released, or published.
+
+## Checkpoint 2232 Local Evidence And Residual Limits
+
+- **Local evidence verified:** best-effort Authenticode launch-key zeroization
+  passes focused `1/1`, Native `516/516`, source `662/662`, strict lint/release,
+  PS7/PS5 trust smoke, Flutter `838/838`, and exact verifier/validator `262/262`
+  in `459.7s`; `8/8` malformed reports are rejected. Hosted CI/packages, merge,
+  synchronization, and destination proof remain pending.
+- **Owned-buffer scope only:** `zeroize 1.9.0` wraps the parent and child owned
+  key strings plus the bounded child pipe-read buffer. Borrowed key slices avoid
+  the prior raw 36-byte derived-key array. Key-bearing containers intentionally
+  omit `Debug` so routine formatting does not disclose the key.
+- **Residual blocker:** best-effort zeroization cannot guarantee removal of
+  compiler temporaries, HMAC internals, allocator or OS copies, process dumps,
+  paging, or forensic remnants, and it cannot prevent same-user or privileged
+  memory reads while the key is live. It is not secure erasure, durable secret
+  storage, cross-identity isolation, AppContainer/LPAC, installed LocalSystem,
+  signed-driver, or pre-execution enforcement.
+- **Safety boundary unchanged:** only protocol bytes and benign fixtures may be
+  used; no candidate content is executed, no live malware is retained, Defender
+  is not weakened, and nothing is installed, released, or published.
