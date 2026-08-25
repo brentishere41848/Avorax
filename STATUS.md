@@ -6161,3 +6161,16 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   in-stream validation passes exact entries, CRC, internal SHA-256, CycloneDX,
   and path/type guards without extraction or execution. Integration,
   synchronization, and destination evidence remain pending.
+- **Integration and destination closure:** evidence head `4b03b0e` passes CI
+  `32826686112` and packages `32826686104`; PR `#82` normally merges as
+  `9690c84` with parents `36d6779`/`4b03b0e`. Merged-main CI `32827802503`
+  and packages `32827802711` pass; both publication jobs are skipped. Guarded
+  previous-main preconditions and reparse/path checks allow exact atomic sync of
+  all 12 merge-delta files (6,670,605 bytes), with zero delete or residue.
+  Destination source contracts `660/660`, focused pipe/token/MAC checks, Native
+  `513/18 + 6/6`, Local `536/536`, Guard `248/248 + 249/249`, both workspaces,
+  strict lint/offline/release/PS7+PS5 smoke, Flutter analyze and `838/838` pass.
+  The destination verifier/validator passes exact `260/260` in `448.1s`, and
+  `16/16` malformed report variants are rejected. Source/lock blobs and the
+  protected vault remain exact; checkpoint 2230 is closed while the complete
+  antivirus project remains active.

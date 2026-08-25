@@ -10662,3 +10662,45 @@ Updates page showed:
   matching internal SHA-256, clean CRC, and no directory, symlink, absolute,
   or parent-traversal entry. Hosted integration-head evidence and guarded
   destination synchronization remain pending.
+
+## Checkpoint 2230 Integration And Destination Closure
+
+- Evidence head `4b03b0e858b1810fe167c9e1ba83a59596ac4e46` passes CI
+  `32826686112` and Desktop Packages `32826686104`; its publication job
+  `97739423107` is skipped. PR `#82` then merged normally, without direct-main
+  push or bypass, as `9690c84a81148551a51ab16b8d2db9b2e02ba086` with parents
+  `36d6779` and `4b03b0e`. Merged-main CI `32827802503` and packages
+  `32827802711` pass; publication job `97743409281` is skipped.
+- Read-only destination preconditions showed all 11 existing merge-delta files
+  exactly matched previous merged main `36d6779`, the new checkpoint report was
+  absent, and there were zero deletes. The apparent `RUN_LOG.md` mismatch
+  against local closure parent `4623622` was correctly traced to the prior
+  unpushed checkpoint-2229 closure; destination matched `36d6779` exactly.
+- The guarded synchronization staged checked source files outside the project,
+  rejected reparse/escaping paths, atomically applied all 12 merge-delta files,
+  and post-validated exact merge blobs: `12/12`, 6,670,605 bytes. The isolated
+  staging directory was removed after exact-path/reparse validation; destination
+  has zero sync-temp residue.
+- Wrapper-only failures remain uncredited and visible: one JavaScript quoting
+  error and one command-policy rejection occurred before PowerShell/filesystem
+  execution; a malformed independent `Join-Path` audit was discarded and rerun;
+  direct recursive staging cleanup was policy-rejected before execution and the
+  checked .NET helper succeeded. No unexpected destination content changed.
+- Destination parsers, formatting, source contracts `660/660`, the new real-child
+  target `1/1`, adjacent PID/token/MAC checks, Native `513/18 ignored + 6/6`,
+  Local `536/536`, Guard `248/248 + 249/249`, both locked workspace modes,
+  strict Native/Local/Guard Clippy, offline Native resolution, three release
+  builds, PS7/PS5 Authenticode release smoke, Flutter analyze, and Flutter
+  `838/838` pass. One relative-path smoke invocation was correctly rejected;
+  both corrected absolute-path invocations pass.
+- The destination no-skip/no-Defender verifier ran from
+  `2026-08-25T09:18:55.0870892Z` through
+  `2026-08-25T09:26:23.1983695Z` and passed exact `260/260`, zero failed or
+  report-level skipped steps, in `448.1s`. Embedded and independent PS5 strict
+  validation pass; `16/16` isolated adversarial destination reports are rejected.
+- Post-test all 12 source blobs and root/Native/Flutter lock blobs remain exact.
+  No test process or sync residue remains. The protected vault remains 16,072
+  files, zero directories, 4,522,733 bytes, 5,357 each payload/metadata/auth,
+  one metadata key, and zero pending/temp/reparse. Nothing was installed,
+  released, published, executed as candidate content, or changed in Defender.
+  Checkpoint 2230 is closed; the complete antivirus goal remains active.

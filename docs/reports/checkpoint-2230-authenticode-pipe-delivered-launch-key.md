@@ -124,6 +124,48 @@ payload/SBOM entries, all internal SHA-256 values, ZIP CRC, and rejection guards
 for directories, symlinks, absolute paths, and parent traversal. Hosted
 integration-head, merge, synchronization, and destination proof remain pending.
 
+## Integration And Destination Closure
+
+Evidence head `4b03b0e858b1810fe167c9e1ba83a59596ac4e46` passes CI
+`32826686112` and Desktop Packages `32826686104`; publication job `97739423107`
+is skipped. PR `#82` merged normally as
+`9690c84a81148551a51ab16b8d2db9b2e02ba086`, with parents `36d6779` and
+`4b03b0e`. Merged-main CI `32827802503` and packages `32827802711` pass, and
+publication job `97743409281` is skipped. No release was created.
+
+The original tree's 11 existing merge-delta files exactly matched previous
+merged main `36d6779`; the new report was absent and there were zero deletes.
+After path-containment and reparse checks, all 12 files were staged outside the
+project, atomically applied, and checked against merge blobs: `12/12`, 6,670,605
+bytes, zero sync residue. Pre-execution wrapper quoting/policy failures and one
+malformed read-only `Join-Path` audit are uncredited; their corrected bounded
+forms pass and no unexpected destination content changed.
+
+Destination verification passes both PowerShell parsers, formatting, source
+contracts `660/660`, the real-child target `1/1`, adjacent PID/token/MAC checks,
+Native `513 passed/18 ignored` plus compiler `6/6`, Local Core `536/536`, Guard
+`248/248` and all-features `249/249`, both locked workspaces, strict affected
+Clippy, offline Native resolution, three release builds, PS7/PS5 release smoke,
+Flutter analyze, and Flutter `838/838`. An initial relative-path release-smoke
+invocation was correctly rejected before helper execution; both absolute-path
+reruns pass.
+
+The destination no-skip/no-Defender verifier ran from
+`2026-08-25T09:18:55.0870892Z` through
+`2026-08-25T09:26:23.1983695Z` and passed exact `260/260`, zero failed or
+report-level skipped steps, in `448.1s`. Embedded and independent Windows
+PowerShell 5.1 strict validation pass. Sixteen destination report mutations are
+rejected `16/16` across schema/status/options, mandatory target, verified and
+technical-limit scope, final-step status, and stale count.
+
+Post-test all 12 synchronized source blobs and root/Native/Flutter lock blobs
+remain exact. No test process or synchronization residue remains. The protected
+vault remains 16,072 files, zero directories, 4,522,733 bytes, 5,357 each
+`.avoraxq`/`.json`/`.auth`, one `.metadata_auth_key`, and zero
+pending/temp/reparse. Nothing was installed, released, published, executed as
+candidate content, or changed in Defender. Checkpoint 2230 is closed; the full
+antivirus goal remains active.
+
 ## Technical Limits
 
 Removing the key from the environment narrows passive same-user environment
