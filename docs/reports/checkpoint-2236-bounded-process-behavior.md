@@ -115,6 +115,28 @@ Exact implementation-head hosted CI/package evidence, normal PR merge, guarded
 original-tree synchronization, and independent destination verification remain
 pending. This checkpoint and the whole antivirus project remain active.
 
+## Exact Implementation-Head Hosted Evidence
+
+- PR `#88` binds implementation/evidence head
+  `8ec7f67de41747a97173a9a6508bbdfb982cb0aa`. Avorax CI run
+  `32904894596` passes all five jobs. Desktop Packages push run `32904862805`
+  and PR run `32904894580` both pass package contracts, Windows x64 MSI/EXE,
+  Linux x64 DEB/tar, macOS x64/arm64 DMGs, consolidation, checksums, and evidence
+  upload.
+- Publication jobs `97989631395` and `97991365780` are both skipped. No release
+  or prerelease is created.
+- Consolidated artifact `9584740958` is 131,785,747 bytes with SHA-256
+  `d373594aa2916c262f44ebe2448d5f6b3df697ee297ff8c008f086a6eaf4e392`;
+  artifact `9584941678` is 131,799,199 bytes with SHA-256
+  `af27a6441d84be609fdb36ea2b6b65b296ad2934c73dad361863bc4e8d880cc7`.
+  Bounded in-stream validation, without extraction or execution, passes exact
+  eight root entries, six platform release files, seven matching checksum rows,
+  and CycloneDX 1.6 lockfile SBOM evidence with 569 components for both.
+
+Evidence-head hosted runs, normal PR merge, merged-main hosted evidence, guarded
+original-tree synchronization, and independent destination verification remain
+pending. This hosted result does not change the documented post-start API limits.
+
 ## Limits
 
 This public API is not currently connected to the installed app/service process

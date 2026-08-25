@@ -11163,6 +11163,19 @@ pending.
 - Hosted exact-head, merge, guarded sync, and destination evidence remain open;
   neither checkpoint 2236 nor the complete antivirus project is closed.
 
+### Checkpoint 2236 exact implementation-head hosted evidence
+
+- PR `#88` head `8ec7f67de41747a97173a9a6508bbdfb982cb0aa` passes CI
+  `32904894596` and Desktop Packages push/PR runs
+  `32904862805`/`32904894580`. Both publication jobs are skipped.
+- Consolidated artifacts `9584740958` (131,785,747 bytes,
+  `d373594aa2916c262f44ebe2448d5f6b3df697ee297ff8c008f086a6eaf4e392`)
+  and `9584941678` (131,799,199 bytes,
+  `af27a6441d84be609fdb36ea2b6b65b296ad2934c73dad361863bc4e8d880cc7`)
+  pass bounded non-extracting exact 8-entry/6-release/7-checksum/CycloneDX
+  1.6/569-component validation. Evidence-head, merge, sync, and destination
+  proof remain pending.
+
 ## 2026-08-25 - Checkpoint 2235 Integration And Destination Closure
 
 - Evidence head `57ce16371cbc47147b7e302c80f310b47873d918` passes CI

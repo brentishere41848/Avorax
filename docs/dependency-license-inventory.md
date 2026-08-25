@@ -1425,3 +1425,10 @@ Local execution confirms all three lockfile SHA-256 values remain exact after
 focused and broad tests. No dependency was installed to replace missing optional
 pytest; the repository's dependency-free source-contract runner passed
 `666/666`. Hosted package/SBOM and final signed-artifact review remain pending.
+
+Exact implementation-head package push/PR runs `32904862805`/`32904894580`
+produce two independently consolidated artifacts. Non-extracting validation
+confirms each contains one CycloneDX 1.6 lockfile inventory with exactly 569
+components and seven matching checksums beside six platform files. This remains
+lockfile-derived partial dependency evidence, not final-binary license resolution,
+production signing, or legal approval.

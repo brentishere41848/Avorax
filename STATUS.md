@@ -6155,6 +6155,12 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   `57f7c1cff6283eb424f92a95f511e695bb60242add571a0139b08ae3a68de162`.
   Hosted, merge, synchronization, and destination evidence remains pending.
 
+- Exact implementation head `8ec7f67` passes CI `32904894596` and package
+  push/PR runs `32904862805`/`32904894580`; publication is skipped. Both
+  consolidated artifacts pass non-extracting exact inventory/checksum/SBOM
+  validation. Evidence-head, merge, guarded sync, and destination proof remain
+  pending.
+
 ## Checkpoint 2235 Integration Closure
 
 - Evidence `57ce163` and merged main `5fc30c9` pass exact-head CI and Desktop
