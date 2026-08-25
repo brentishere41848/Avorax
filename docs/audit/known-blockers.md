@@ -2795,3 +2795,46 @@ enforcement, or pre-execution blocking is claimed.
   verification remain open. Production signing, installed elevated/service
   behavior, kernel/pre-execution enforcement, and secure erasure remain blocked
   by their existing external prerequisites and are not claimed.
+- **Checkpoint integration blocker closed:** evidence `646000b`, normal merge
+  `7467bfd`, evidence/merged-main CI and package artifacts, guarded 12-path
+  synchronization, destination full suites, exact `263/263` in `454.1s`, both
+  strict validators, and `8/8` adversarial rejections pass. The WindowsApps
+  Python reparse alias caused one visible uncredited verifier stop; the explicit
+  verified Python binary closed that host-path issue without weakening checks.
+- **Residual blockers unchanged:** fixed launch-key storage does not provide
+  secure erasure, live-memory protection, cross-identity isolation, installed
+  elevated/service evidence, production signing, signed-driver behavior, or
+  pre-execution enforcement. Checkpoint 2233 is closed; those external platform
+  prerequisites and the complete antivirus project remain active.
+
+## Checkpoint 2234 Scripted State And Residual Limits
+
+- The checkpoint-2233 PowerShell 7 timestamp-coercion blocker has a scripted
+  repair: all nine bounded JSON readers preserve strings through native
+  `DateKind=String` where available and remain compatible with Windows
+  PowerShell 5.1.
+- The definitive exact 263-step verifier is scripted to require both distinct,
+  checked host executables. Strict JSON string and explicit ISO timestamp
+  validation remain unchanged; no coercion is accepted as evidence.
+- Source contract 664 and existing malformed-report rejection coverage account
+  for the implementation, but no checkpoint-2234 passing result is claimed
+  before execution.
+- This does not close production signing, installed elevated/service, signed-
+  driver, secure-erasure, cross-identity, or pre-execution blockers and does not
+  change any antivirus engine verdict.
+
+- **Local parser blocker closed:** focused Windows PowerShell 5.1 and PowerShell
+  7 probes plus the same prior 263-step report pass, and source `664/664` passes.
+  The definitive exact `263/263` report passes in `469.9s` under both strict
+  hosts; adversarial full-suite reports reject `16/16`.
+- **Defender test-host interaction remains visible:** one combined root-
+  workspace attempt is uncredited after Defender rejects its separate Native
+  test executable with OS error 225. No Defender setting changed. Standalone
+  Native passes `517/517` plus compiler `6/6`, so this is not used as a product
+  failure or a complete-workspace success claim.
+- **Implementation-head hosting blocker closed:** exact `708e939` passes CI
+  `32878421258` and package push/PR `32878368995`/`32878421335`; both
+  consolidated ZIPs match GitHub digests and pass exact non-extracting package,
+  checksum, and 569-component SBOM validation. Publication is skipped.
+- Evidence-head, merge, guarded synchronization, and destination evidence remain
+  open. External signing/service/driver/pre-execution blockers remain unchanged.

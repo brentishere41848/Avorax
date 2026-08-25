@@ -142,3 +142,56 @@ passes exactly eight unique regular root entries, six platform release files,
 seven checksum targets with matching internal SHA-256, clean ZIP reads, and one
 CycloneDX 1.6 lockfile SBOM with exactly 569 components. Evidence-head hosted
 checks, normal merge, synchronization, and destination proof remain pending.
+
+## Integration And Destination Closure
+
+Evidence commit `646000bf64565ff16af19231275ddefecdcb21b8` passes all five
+Avorax CI jobs in run `32868120569` and all Desktop Packages jobs in run
+`32868120588`; publication job `97876653526` is skipped. Consolidated artifact
+`9571887670` is 131,521,867 bytes and its downloaded SHA-256 exactly matches
+GitHub at `40b0dcaa8a32c6d283c7b4d6649177f213b7a3cb29b0611ddd8e80a95996db66`.
+Its bounded non-extracting validation passes exact 8/6/7 inventory and one
+CycloneDX 1.6 lockfile SBOM with 569 components.
+
+PR `#85` merged normally as
+`7467bfd61a077a8783f3c333ef2488a9d00433f2`, with exact parents
+`6de2a8f3bd48c5c45ee3281a90828d8b0796ded5` and
+`646000bf64565ff16af19231275ddefecdcb21b8`. Merged-main CI
+`32870805497` and Desktop Packages `32870805371` pass; publication job
+`97884457320` is skipped. Consolidated artifact `9572796463` is 131,671,586
+bytes with matching GitHub/download SHA-256
+`d7a9a0627c5032541712ed4d93cb51bd1000a2b8e8a9266615777ebebc1ab3f3`
+and passes the same non-extracting 8/6/7/CycloneDX 1.6/569-component review.
+The first local ZIP check was attempted while the visible `gh` process was
+still writing and failed as incomplete; after that process completed at the
+exact GitHub byte count, the credited validation passed.
+
+Guarded preconditions accepted seven checkpoint-2232 closure-document blobs,
+four merged-main source/test blobs, and one absent new report. Root containment,
+reparse rejection, checked staging, temporary hash verification, and atomic
+replacement synchronized exactly 12 paths and 6,773,798 bytes with zero delete
+or residue. The stage was removed only after its exact 12-file inventory and
+merge hashes were revalidated.
+
+Destination parsers, formatting, source contracts `663/663`, fixed buffer
+`1/1`, Native `517/517` with 19 intentional child-entrypoint ignores plus
+compiler `6/6`, Local `536/536`, Guard `248/248 + 249/249`, both locked
+workspaces, strict Native/Local/Guard Clippy, offline Native, three release
+builds, PS7/PS5.1 Authenticode smoke, Flutter analyze, and Flutter `838/838`
+pass. The first verifier invocation used the WindowsApps Python reparse alias
+and failed visibly at the signed hash-intelligence smoke; it is not credited.
+The corrected explicit Python-binary run passes exact `263/263` from
+`2026-08-25T16:50:12.2323462Z` through `2026-08-25T16:57:46.3305093Z` in
+`454.1s`, with the fixed-buffer target at `0.2s` and zero failed/skipped steps.
+Embedded and independent PS5.1 validation pass, and `8/8` destination report
+mutations are rejected.
+
+All 12 synchronized paths and root/Native/Flutter locks remain exact; lock
+SHA-256 values are `7c7c8aa006c2ac80eb89fa64d3b8ec09b32b26598b1a85bceb3c2af5a2d20e39`,
+`7f4393c81896600c4a5e84cad288a1a5360eccbc1c458b38f615082f66391383`,
+and `4de19695f9207273746341ca2221541b5b86d9f72af83727afca78541e177694`.
+No process, sync temp, or stage remains. The protected vault remains 16,072
+files, zero directories, 4,522,733 bytes, 5,357 each payload/JSON/auth, one
+metadata key, and zero pending/temp/reparse. Nothing was installed, released,
+published, executed as candidate content, or changed in Defender. Checkpoint
+2233 is closed; the complete antivirus project remains active.

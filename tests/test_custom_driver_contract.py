@@ -231,6 +231,7 @@ SMALL_THREAT_MVP_VERIFIER = (
 SMALL_THREAT_MVP_REPORT_VALIDATOR = (
     ROOT / "tools" / "testing" / "validate-small-threat-mvp-report.ps1"
 )
+SMALL_THREAT_MVP_JSON_GATE = ROOT / "tools" / "security" / "avorax-security-gate-tools.ps1"
 SAFE_EICAR_SMOKE = ROOT / "tools" / "testing" / "run-safe-eicar-smoke.ps1"
 SAFE_FOLDER_SCAN_SMOKE = ROOT / "tools" / "testing" / "run-safe-folder-scan-smoke.ps1"
 SAFE_MANUAL_QUARANTINE_SMOKE = (
@@ -29261,3 +29262,58 @@ def test_ci_runs_native_unix_quarantine_permission_runtime_contracts():
     assert "|| true" not in job
     assert "apt-get" not in job
     assert "curl " not in job
+
+
+def test_small_threat_report_validation_preserves_json_strings_on_both_powershell_hosts():
+    helper = read(SMALL_THREAT_MVP_JSON_GATE)
+    validator = read(SMALL_THREAT_MVP_REPORT_VALIDATOR)
+    verifier = read(SMALL_THREAT_MVP_VERIFIER)
+    checkpoint = read(
+        ROOT
+        / "docs"
+        / "reports"
+        / "checkpoint-2234-powershell-json-string-validation.md"
+    )
+    documents = [
+        checkpoint,
+        read(RUN_LOG),
+        read(STATUS_DOC),
+        read(ROOT / "docs" / "audit" / "engine-control-matrix.md"),
+        read(ROOT / "docs" / "audit" / "threat-model.md"),
+        read(ROOT / "docs" / "audit" / "known-blockers.md"),
+        read(DEPENDENCY_LICENSE_INVENTORY),
+    ]
+
+    assert "function ConvertFrom-AvoraxGateJsonPreservingStrings" in helper
+    assert 'Get-Command -Name ConvertFrom-Json -CommandType Cmdlet' in helper
+    assert '$command.Parameters.ContainsKey("DateKind")' in helper
+    assert '$parameters["DateKind"] = "String"' in helper
+    assert "ConvertFrom-Json @parameters" in helper
+    assert validator.count("ConvertFrom-AvoraxGateJsonPreservingStrings $json") == 9
+    assert "| ConvertFrom-Json" not in validator
+    assert "Small-threat MVP report validator (Windows PowerShell 5.1)" in verifier
+    assert "Small-threat MVP report validator (PowerShell 7)" in verifier
+    assert "Get-AvoraxRequiredTool $powerShell7" in verifier
+    assert "must be distinct executables" in verifier
+    assert (
+        "Invoke-SmallThreatMvpReportValidator $repo $verificationReportPath "
+        "$powershell $powerShell7 $requireFullReportValidation"
+    ) in verifier
+    for contract in [
+        "parsed without PowerShell 7 timestamp coercion",
+        "distinct checked Windows PowerShell 5.1 and PowerShell 7 executables",
+    ]:
+        assert contract in verifier
+        assert contract in validator
+    for document in documents:
+        normalized = re.sub(r"\s+", " ", document)
+        assert "PowerShell 7" in normalized
+        assert "Windows PowerShell 5.1" in normalized
+        assert "JSON" in normalized
+        assert "263" in normalized
+    normalized_checkpoint = re.sub(r"\s+", " ", checkpoint)
+    assert "No checkpoint-2234 passing result is claimed during scripting" in normalized_checkpoint
+    assert "source contract 664" in normalized_checkpoint.lower()
+    assert "adds no dependency, feature, or lockfile change" in re.sub(
+        r"\s+", " ", documents[-1]
+    )

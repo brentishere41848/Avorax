@@ -2770,3 +2770,45 @@ CycloneDX 1.6/569-component validation. This verifies hosted build/package
 compatibility at the implementation head; it does not strengthen the stated
 memory, cross-identity, signed-driver, installed-host, or pre-execution model.
 Evidence-head, merge, synchronization, and destination proof remain pending.
+
+**Integration evidence:** evidence `646000b`, normal PR `#85` merge `7467bfd`,
+evidence-head and merged-main CI/packages, skipped publication, and exact
+non-extracting package digest/inventory/SBOM review pass. Guarded 12-path
+destination synchronization is followed by complete Rust/Flutter/lint/build/
+smoke evidence, corrected exact `263/263` verification in `454.1s`, both strict
+validators, and `8/8` destination adversarial rejections. One WindowsApps
+Python-alias invocation stopped safely and is not credited. Locks, stage,
+processes, and protected-vault invariants remain exact. This closes checkpoint
+2233 integration without changing any live-memory, cross-identity, installed-
+service, signed-driver, secure-erasure, or pre-execution boundary above.
+
+## Checkpoint 2234 - Verification JSON Host Consistency
+
+PowerShell 7 can convert ISO-looking JSON strings into `DateTime` objects before
+the strict validator sees them. Accepting those objects would weaken the JSON
+type contract, while rejecting the host leaves one verification path unusable.
+The shared gate parser now requests native `DateKind=String` when available and
+uses the unchanged Windows PowerShell 5.1 parser shape otherwise. The validator
+then performs its existing explicit invariant-culture ISO-8601 parse.
+
+All nine bounded top-level and generated-report readers use this boundary. The
+definitive verifier requires the exact 263-step report to pass the same strict
+validator under distinct checked Windows PowerShell 5.1 and PowerShell 7
+executables. Malformed JSON, type confusion, unsafe paths, inconsistent status,
+scope drift, and wrong step counts still fail visibly. Scripted evidence is not
+execution evidence; checkpoint-2234 focused, full, adversarial, hosted,
+integration, destination, and protected-vault checks remain pending.
+
+Local execution confirms that preserving strings does not weaken rejection:
+both hosts accept the same exact 263-step report; numeric/object timestamp,
+malformed JSON, false status/options, stale cardinality, removed host scope, and
+failed-step mutations reject, including `16/16` full-suite host/mutation pairs.
+The definitive run passes `263/263` in `469.9s`. A combined root-workspace test
+binary is separately blocked by Defender with OS error 225 and is not counted;
+the standalone Native `517/517 + 6/6` route passes and Defender remains enabled.
+Exact implementation `708e939` passes hosted CI `32878421258` and package
+push/PR runs `32878368995`/`32878421335`. Both publication jobs are skipped;
+both consolidated ZIPs match GitHub digests and pass bounded non-extracting
+8-entry/6-release/7-checksum/CycloneDX 1.6/569-component validation. This
+supports the verifier-host repair and package reproducibility only. Integration,
+destination, and external platform limits are unchanged.

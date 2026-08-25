@@ -6118,6 +6118,39 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   AppContainer/LPAC, installed LocalSystem, signed-driver, or pre-execution
   enforcement. The complete antivirus project remains active.
 
+## Checkpoint 2234 - PowerShell JSON String Validation
+
+- **Scripted:** all nine strict report readers preserve JSON strings on
+  PowerShell 7 through native `DateKind=String` and remain compatible with
+  Windows PowerShell 5.1. Explicit ISO-8601 parsing and every strict type/path/
+  scope/status check remain in force.
+- **Verifier contract:** the exact 263-step report must pass under distinct
+  checked regular-file Windows PowerShell 5.1 and PowerShell 7 hosts. Source
+  contract 664 and audit documentation account for the boundary.
+- **Pending:** no checkpoint-2234 passing execution is claimed until focused,
+  full, definitive, adversarial, hosted, merge, synchronization, and destination
+  evidence complete. No antivirus engine behavior or external blocker is
+  promoted by this tooling repair.
+
+- **Local verified:** parser and dual-host focused checks pass, source contracts
+  pass `664/664`, and broad Rust/Flutter regression passes through the exact
+  standalone suites. The definitive no-skip/no-Defender report passes
+  `263/263` in `469.9s`, both strict hosts pass it, and adversarial full-suite
+  reports reject `16/16`.
+- **Visible host interaction:** one combined root-workspace attempt is
+  uncredited because Defender blocks its separate Native test executable with
+  OS error 225 after prior members pass. Defender was not changed; standalone
+  Native passes `517/517 + 19 ignored + 6/6`.
+- **Exact implementation-head hosted verified:** commit `708e939` is PR `#86`'s
+  exact head. CI `32878421258` and package push/PR runs
+  `32878368995`/`32878421335` pass without retry; publication jobs are skipped.
+  Consolidated artifacts `9575787747`/`9575480016` match GitHub SHA-256 and pass
+  non-extracting exact 8-entry/6-release/7-checksum/CycloneDX 1.6/569-component
+  validation.
+- Evidence-head checks, normal merge, merged-main evidence, guarded destination
+  synchronization, and destination proof remain pending. Checkpoint 2234 and
+  the full antivirus project are not closed.
+
 ## Checkpoint 2233 - Authenticode Fixed Launch-Key Buffer
 
 - **Scripted, execution pending:** four Authenticode protocol states now use one
@@ -6163,6 +6196,18 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   bounded, non-extracting validation of exactly eight root entries, six release
   files, seven matching checksums, and a CycloneDX 1.6/569-component SBOM.
   Evidence-head, merge, synchronization, and destination proof remain pending.
+- **Integration and destination closure:** evidence `646000b` passes CI
+  `32868120569` and packages `32868120588`; PR `#85` merges normally as
+  `7467bfd` with exact parents `6de2a8f`/`646000b`. Merged-main CI
+  `32870805497` and packages `32870805371` pass, both publication jobs are
+  skipped, and evidence/merge artifacts match GitHub digests plus exact
+  non-extracting 8/6/7/CycloneDX 1.6/569-component checks. Guarded 12-path
+  synchronization applies 6,773,798 bytes with zero delete/residue. Destination
+  full Rust/Flutter/lint/build/smoke evidence passes; the corrected explicit-
+  Python verifier passes `263/263` in `454.1s` and adversarial reports are
+  rejected `8/8`. The earlier WindowsApps Python-alias run failed visibly and
+  is uncredited. Locks, processes, stage, and vault remain exact. Checkpoint
+  2233 is closed; the complete antivirus goal remains active.
 
 ## Checkpoint 2232 - Authenticode Launch-Key Best-Effort Zeroization
 
