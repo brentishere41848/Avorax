@@ -2497,3 +2497,32 @@ cryptographically token-bound. Transients between checks, post-ACK mutation,
 privileged same-session injection/handle duplication, compromised parent/kernel,
 cross-identity IPC, AppContainer/LPAC, installed LocalSystem, signed-driver, and
 pre-execution threats remain outside this control.
+
+### Authenticode response hash binding (checkpoint 2228)
+
+**Threat:** The response-ready boundary reauthenticates the connected child and
+rechecks primary tokens, but its one-byte marker does not describe the exact
+stdout bytes later parsed as a verdict. Mutation of the anonymous stdout stream
+after flush could therefore leave process/token evidence intact while changing
+the response consumed by the parent.
+
+**Scripted control, execution pending:** The response writer retains the exact
+bounded JSON plus newline. Child hashes a fixed domain, exact unsigned 64-bit
+little-endian length, and every response byte, sends an exact 41-byte marker,
+length, and SHA-256 frame on the retained pipe, and waits for ACK. Parent
+requires exact frame size and 1..16,384-byte length before fresh connected-client
+reauthentication and launch/child token read-back. After exit it compares exact
+collected stdout length/digest before strict JSON parsing or publisher trust.
+Malformed, truncated, extended, out-of-range, length-mismatch, or digest-mismatch
+evidence is fail-visible. Three Rust regressions, source contract 658, verifier
+step 258, strict validator scope, and all audit records are scripted before any
+execution.
+
+**Residual risk:** The unkeyed SHA-256 digest gains its sender association from
+the existing same-user pipe process/token validation. It is content-integrity
+evidence, not a secret MAC, encryption, cross-identity message authentication,
+or durable token-object identity. A privileged same-session attacker able to
+inject the helper, duplicate handles, or change both stdout and frame before the
+authenticated snapshot remains in scope. It does not supply AppContainer/LPAC,
+installed LocalSystem, production signing, signed-driver, or demonstrated
+pre-execution enforcement.

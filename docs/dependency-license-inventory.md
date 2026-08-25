@@ -1163,3 +1163,15 @@ stream-only validation; publication is skipped. No dependency, lockfile, or
 machine-wide component changed. Complete signed final-artifact license, notice,
 copyright, and binary-resolution review remains a production-release
 prerequisite.
+
+Checkpoint 2228 response hash binding reuses the Native Engine's already pinned
+`sha2` 0.10 dependency to hash a fixed domain, exact response length, and exact
+stdout bytes. The fixed 41-byte pipe frame and existing 16 KiB response ceiling
+add no crate, package, feature, or lockfile change, runtime component, script
+host, network source, or machine-wide installation. Source contract 658 and
+verifier/validator step 258 are scripted before execution. This SHA-256 is
+unkeyed same-user content-integrity evidence, not a secret MAC, encryption,
+cross-identity authentication, AppContainer/LPAC, installed LocalSystem,
+signed-driver, or pre-execution proof. Full local, hosted, package, integration,
+synchronization, destination, and signed final-artifact license/binary review
+remain pending.

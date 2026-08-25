@@ -5982,3 +5982,50 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   Native, Flutter analyze and `838/838`, and exact verifier/validator `257/257`
   in `434s` pass. Locks and the protected vault remain exact. Checkpoint 2227
   is closed; the complete antivirus goal remains active.
+
+## Checkpoint 2228 - Authenticode response hash binding (2026-08-25)
+
+- **Scripted control:** exact helper stdout, including the JSON newline, is
+  bound by SHA-256 over a fixed domain, exact unsigned little-endian `u64`
+  length, and every byte. The child sends a fixed 41-byte marker/length/digest
+  frame over the retained duplex pipe and waits for final ACK.
+- **Authenticated ordering:** parent validates exact frame shape and bounded
+  1..16,384-byte length, freshly reauthenticates the same connected child, and
+  repeats launch/child token checks before ACK. After exit, collected stdout
+  must match the authenticated length and digest before strict JSON parsing.
+- **Fail-visible contract:** empty, oversized, truncated, extended, malformed,
+  out-of-range, length-mismatched, or digest-mismatched evidence cannot become
+  publisher trust. Pre-ACK failures retain bounded terminate/reap cleanup; a
+  post-exit mismatch remains a hard diagnostic.
+- **Evidence scripted:** three production/adversarial Rust regressions, source
+  contract 658, mandatory verifier step 258, exact 258-step report validation,
+  and report/control/threat/blocker/dependency/run-log records are complete.
+  Initial parsers/diff pass; formatter, one historical source assertion, and
+  one diagnostic-chain assertion fail and remain uncredited. Exact repairs are
+  scripted. The corrected complete focused rerun passes both parsers, formatter,
+  diff, source contracts `658/658`, and all three new Rust regressions. Broader
+  Authenticode first reaches `74/16` before one stale diagnostic assertion;
+  the first retry reaches Authenticode `74/16` and Native `510/16` before an
+  over-narrow missing-frame wording check. Local `536/536` and Guard `248/248`
+  pass. The stable assertion is repaired without product-code change; explicit
+  reruns now pass Authenticode `75/16`, Native `511/16` plus compiler `6/6`,
+  Local `536/536`, Guard `248/248`, source contracts `658/658`, and formatting.
+  Both locked workspaces, strict Native/Local/Guard lint, standalone Native
+  locked/offline checks, and locked Local/Guard release builds pass. The first
+  smoke wrapper safely rejects relative binary paths and is uncredited; the
+  corrected absolute-path two-host smoke passes mandatory nonce/hash-bound IPC,
+  embedded/catalog trust, unsigned rejection, and wrong-hash failure without
+  candidate execution. Flutter analyze reports no issues and all `838/838`
+  tests pass. Definitive verifier and both strict validators pass exact
+  `258/258`, zero failed/skipped, in `484.2s`; the new target is `0.3s`, and
+  15 malformed reports are rejected. Lock blobs and the read-only protected-
+  vault invariant remain exact. Hosted, integration, synchronization, and
+  destination evidence remain pending.
+- **Technically limited:** the digest is unkeyed evidence over the existing
+  same-user authenticated endpoint, not a secret MAC, encryption, cross-identity
+  message authentication, or durable token-object binding. A privileged same-
+  session attacker able to inject the helper, duplicate handles, or modify both
+  stdout and frame before authentication remains outside the control. Separate
+  token objects, AppContainer/LPAC, installed LocalSystem, signed-driver, and
+  pre-execution enforcement remain separate; the complete antivirus goal is
+  active.

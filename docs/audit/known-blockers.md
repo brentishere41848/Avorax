@@ -2611,3 +2611,19 @@ enforcement, or pre-execution blocking is claimed.
   transient, prevent privileged same-session injection/handle duplication,
   encrypt/authenticate cross-identity IPC, provide AppContainer/LPAC or installed
   LocalSystem isolation, or establish signed-driver/pre-execution enforcement.
+- **Checkpoint 2228 scripted response hash boundary:** exact flushed stdout is
+  bound to a fixed domain, unsigned little-endian length, and SHA-256 in one
+  exact 41-byte frame sent on the retained pipe. Parent validates the frame,
+  freshly reauthenticates the client and primary-token evidence before ACK, and
+  later requires exact collected stdout length/digest before JSON parsing or
+  publisher trust. Three Rust regressions, source contract 658, verifier step
+  258, validator, and all documentation are scripted; execution, hosted,
+  integration, synchronization, and destination evidence remain pending.
+- **Checkpoint 2228 residual technical blocker:** the digest is unkeyed evidence
+  on an existing same-user authenticated endpoint, not a secret MAC, encryption,
+  cross-identity authentication, or durable token-object binding. It detects
+  post-frame stdout changes but cannot stop a sufficiently privileged same-
+  session actor from injecting the helper, duplicating handles, or changing both
+  stdout and frame before authentication. AppContainer/LPAC, installed
+  LocalSystem, production signing, signed-driver enforcement, and demonstrated
+  pre-execution protection remain external or technical blockers.
