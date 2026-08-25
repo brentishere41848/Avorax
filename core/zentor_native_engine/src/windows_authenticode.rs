@@ -15,6 +15,7 @@ use std::thread;
 use std::time::{Duration, Instant};
 
 use anyhow::{Context, Result};
+use hmac::{Hmac, Mac};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use uuid::{Uuid, Variant, Version};
@@ -143,14 +144,14 @@ const AUTHENTICODE_HELPER_HANDSHAKE_TOKEN_BYTES: usize = 36;
 const AUTHENTICODE_HELPER_HANDSHAKE_ACK: [u8; 1] = [0xA5];
 const AUTHENTICODE_HELPER_RESPONSE_READY: [u8; 1] = [0x5A];
 const AUTHENTICODE_HELPER_RESPONSE_ACK: [u8; 1] = [0xC3];
-const AUTHENTICODE_HELPER_RESPONSE_BINDING_DOMAIN: &[u8] =
-    b"avorax-authenticode-response-binding-v1\0";
+const AUTHENTICODE_HELPER_RESPONSE_MAC_DOMAIN: &[u8] =
+    b"avorax-authenticode-response-mac-binding-v1\0";
 const AUTHENTICODE_HELPER_RESPONSE_BINDING_LENGTH_BYTES: usize = size_of::<u64>();
-const AUTHENTICODE_HELPER_RESPONSE_BINDING_SHA256_BYTES: usize = 32;
+const AUTHENTICODE_HELPER_RESPONSE_MAC_BYTES: usize = 32;
 const AUTHENTICODE_HELPER_RESPONSE_BINDING_FRAME_BYTES: usize = AUTHENTICODE_HELPER_RESPONSE_READY
     .len()
     + AUTHENTICODE_HELPER_RESPONSE_BINDING_LENGTH_BYTES
-    + AUTHENTICODE_HELPER_RESPONSE_BINDING_SHA256_BYTES;
+    + AUTHENTICODE_HELPER_RESPONSE_MAC_BYTES;
 const AUTHENTICODE_HELPER_HANDSHAKE_PIPE_BUFFER_BYTES: u32 = 64;
 const AUTHENTICODE_HELPER_HANDSHAKE_CLIENT_SQOS_FLAGS: u32 =
     SECURITY_SQOS_PRESENT | SECURITY_IMPERSONATION;
@@ -233,13 +234,19 @@ struct AuthenticodeHelperOutput {
     status: ExitStatus,
     stdout: Vec<u8>,
     stderr: Vec<u8>,
-    response_binding: AuthenticodeResponseBindingEvidence,
+    response_binding: AuthenticatedAuthenticodeResponseMacEvidence,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-struct AuthenticodeResponseBindingEvidence {
+struct AuthenticodeResponseMacEvidence {
     response_bytes: u64,
-    sha256: [u8; AUTHENTICODE_HELPER_RESPONSE_BINDING_SHA256_BYTES],
+    mac: [u8; AUTHENTICODE_HELPER_RESPONSE_MAC_BYTES],
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct AuthenticatedAuthenticodeResponseMacEvidence {
+    frame: AuthenticodeResponseMacEvidence,
+    key: [u8; AUTHENTICODE_HELPER_HANDSHAKE_TOKEN_BYTES],
 }
 
 struct SanitizedAuthenticodeLaunchContext {
@@ -685,7 +692,7 @@ impl AuthenticodeParentChildHandshake {
         process: HANDLE,
         launch_token: HANDLE,
         timeout: Duration,
-    ) -> Result<AuthenticodeResponseBindingEvidence> {
+    ) -> Result<AuthenticatedAuthenticodeResponseMacEvidence> {
         let deadline = Instant::now() + timeout.min(AUTHENTICODE_HELPER_TIMEOUT);
         anyhow::ensure!(
             unsafe { ResetEvent(self.event.0) } != 0,
@@ -724,6 +731,7 @@ impl AuthenticodeParentChildHandshake {
         );
         let response_binding =
             validate_authenticode_response_binding_frame(&received[..transferred as usize])?;
+        let response_mac_key = authenticode_response_mac_key(&self.token)?;
         verify_authenticode_response_client_binding(
             process,
             self.server.0,
@@ -768,7 +776,10 @@ impl AuthenticodeParentChildHandshake {
             transferred as usize == AUTHENTICODE_HELPER_RESPONSE_ACK.len(),
             "AuthentiCode response ACK write was incomplete"
         );
-        Ok(response_binding)
+        Ok(AuthenticatedAuthenticodeResponseMacEvidence {
+            frame: response_binding,
+            key: response_mac_key,
+        })
     }
 
     fn wait_for_operation(
@@ -1457,41 +1468,63 @@ fn validate_authenticode_response_ready_bytes(actual: &[u8]) -> Result<()> {
     Ok(())
 }
 
-fn authenticode_response_binding(response: &[u8]) -> Result<AuthenticodeResponseBindingEvidence> {
+fn authenticode_response_mac_key(
+    token: &str,
+) -> Result<[u8; AUTHENTICODE_HELPER_HANDSHAKE_TOKEN_BYTES]> {
+    let token_id = Uuid::parse_str(token)
+        .context("AuthentiCode response MAC launch token is not a valid UUID")?;
+    anyhow::ensure!(
+        token_id.get_variant() == Variant::RFC4122
+            && token_id.get_version() == Some(Version::Random)
+            && token_id.hyphenated().to_string() == token,
+        "AuthentiCode response MAC launch token must be a canonical RFC 4122 random UUID"
+    );
+    token
+        .as_bytes()
+        .try_into()
+        .context("AuthentiCode response MAC launch token has an unexpected byte length")
+}
+
+fn authenticode_response_mac(
+    response: &[u8],
+    key: &[u8; AUTHENTICODE_HELPER_HANDSHAKE_TOKEN_BYTES],
+) -> Result<AuthenticodeResponseMacEvidence> {
     anyhow::ensure!(
         !response.is_empty() && response.len() <= MAX_AUTHENTICODE_HELPER_RESPONSE_BYTES,
-        "AuthentiCode response binding input must contain between 1 and {} bytes",
+        "AuthentiCode response MAC input must contain between 1 and {} bytes",
         MAX_AUTHENTICODE_HELPER_RESPONSE_BYTES
     );
     let response_bytes = u64::try_from(response.len())
-        .context("AuthentiCode response binding length does not fit u64")?;
-    let mut hasher = Sha256::new();
-    hasher.update(AUTHENTICODE_HELPER_RESPONSE_BINDING_DOMAIN);
-    hasher.update(response_bytes.to_le_bytes());
-    hasher.update(response);
-    Ok(AuthenticodeResponseBindingEvidence {
+        .context("AuthentiCode response MAC length does not fit u64")?;
+    let mut mac = Hmac::<Sha256>::new_from_slice(key)
+        .map_err(|_| anyhow::anyhow!("AuthentiCode response MAC key length is invalid"))?;
+    mac.update(AUTHENTICODE_HELPER_RESPONSE_MAC_DOMAIN);
+    mac.update(&response_bytes.to_le_bytes());
+    mac.update(response);
+    Ok(AuthenticodeResponseMacEvidence {
         response_bytes,
-        sha256: hasher.finalize().into(),
+        mac: mac.finalize().into_bytes().into(),
     })
 }
 
 fn encode_authenticode_response_binding_frame(
     response: &[u8],
+    key: &[u8; AUTHENTICODE_HELPER_HANDSHAKE_TOKEN_BYTES],
 ) -> Result<[u8; AUTHENTICODE_HELPER_RESPONSE_BINDING_FRAME_BYTES]> {
-    let evidence = authenticode_response_binding(response)?;
+    let evidence = authenticode_response_mac(response, key)?;
     let mut frame = [0u8; AUTHENTICODE_HELPER_RESPONSE_BINDING_FRAME_BYTES];
     frame[..AUTHENTICODE_HELPER_RESPONSE_READY.len()]
         .copy_from_slice(&AUTHENTICODE_HELPER_RESPONSE_READY);
     let length_start = AUTHENTICODE_HELPER_RESPONSE_READY.len();
     let digest_start = length_start + AUTHENTICODE_HELPER_RESPONSE_BINDING_LENGTH_BYTES;
     frame[length_start..digest_start].copy_from_slice(&evidence.response_bytes.to_le_bytes());
-    frame[digest_start..].copy_from_slice(&evidence.sha256);
+    frame[digest_start..].copy_from_slice(&evidence.mac);
     Ok(frame)
 }
 
 fn validate_authenticode_response_binding_frame(
     frame: &[u8],
-) -> Result<AuthenticodeResponseBindingEvidence> {
+) -> Result<AuthenticodeResponseMacEvidence> {
     anyhow::ensure!(
         frame.len() == AUTHENTICODE_HELPER_RESPONSE_BINDING_FRAME_BYTES,
         "AuthentiCode response-binding frame length is invalid"
@@ -1508,28 +1541,30 @@ fn validate_authenticode_response_binding_frame(
         response_bytes > 0 && response_bytes <= MAX_AUTHENTICODE_HELPER_RESPONSE_BYTES as u64,
         "AuthentiCode response-binding byte length is outside its bound"
     );
-    let sha256 = frame[digest_start..]
+    let mac = frame[digest_start..]
         .try_into()
-        .context("AuthentiCode response-binding SHA-256 field is malformed")?;
-    Ok(AuthenticodeResponseBindingEvidence {
+        .context("AuthentiCode response-binding MAC field is malformed")?;
+    Ok(AuthenticodeResponseMacEvidence {
         response_bytes,
-        sha256,
+        mac,
     })
 }
 
 fn validate_authenticode_response_binding(
     response: &[u8],
-    expected: AuthenticodeResponseBindingEvidence,
+    expected: AuthenticatedAuthenticodeResponseMacEvidence,
 ) -> Result<()> {
-    let actual = authenticode_response_binding(response)?;
     anyhow::ensure!(
-        actual.response_bytes == expected.response_bytes,
+        u64::try_from(response.len()).ok() == Some(expected.frame.response_bytes),
         "AuthentiCode helper stdout length does not match the authenticated response binding"
     );
-    anyhow::ensure!(
-        actual.sha256 == expected.sha256,
-        "AuthentiCode helper stdout SHA-256 does not match the authenticated response binding"
-    );
+    let mut mac = Hmac::<Sha256>::new_from_slice(&expected.key)
+        .map_err(|_| anyhow::anyhow!("AuthentiCode response MAC key length is invalid"))?;
+    mac.update(AUTHENTICODE_HELPER_RESPONSE_MAC_DOMAIN);
+    mac.update(&expected.frame.response_bytes.to_le_bytes());
+    mac.update(response);
+    mac.verify_slice(&expected.frame.mac)
+        .map_err(|_| anyhow::anyhow!("AuthentiCode helper stdout HMAC-SHA-256 does not match the authenticated response binding"))?;
     Ok(())
 }
 
@@ -1923,11 +1958,13 @@ fn windows_sid_string(sid: windows_sys::Win32::Security::PSID, sid_label: &str) 
 
 struct AuthenticodeChildHandshake {
     pipe: OwnedKernelHandle,
+    response_mac_key: [u8; AUTHENTICODE_HELPER_HANDSHAKE_TOKEN_BYTES],
 }
 
 impl AuthenticodeChildHandshake {
     fn complete_after_response(self, response: &[u8]) -> Result<()> {
-        let response_binding = encode_authenticode_response_binding_frame(response)?;
+        let response_binding =
+            encode_authenticode_response_binding_frame(response, &self.response_mac_key)?;
         std::io::stdout()
             .lock()
             .flush()
@@ -1976,6 +2013,7 @@ fn complete_current_process_authenticode_parent_child_handshake(
     let token = std::env::var(AUTHENTICODE_HELPER_HANDSHAKE_TOKEN_ENV)
         .context("AuthentiCode helper handshake token environment is missing or non-Unicode")?;
     validate_authenticode_handshake_launch_values(&pipe_name, &token)?;
+    let response_mac_key = authenticode_response_mac_key(&token)?;
     let expected_parent_process_id = expected_authenticode_parent_process_id()?;
     let mut pipe_name_wide = pipe_name.encode_utf16().collect::<Vec<_>>();
     pipe_name_wide.push(0);
@@ -2048,7 +2086,10 @@ fn complete_current_process_authenticode_parent_child_handshake(
         std::io::Error::last_os_error()
     );
     validate_authenticode_handshake_ack_bytes(&ack[..transferred as usize])?;
-    Ok(AuthenticodeChildHandshake { pipe })
+    Ok(AuthenticodeChildHandshake {
+        pipe,
+        response_mac_key,
+    })
 }
 
 fn verify_authenticode_handshake_client_token(
@@ -2503,7 +2544,7 @@ impl RestrictedAuthenticodeProcess {
     fn complete_post_response_binding(
         &mut self,
         timeout: Duration,
-    ) -> Result<AuthenticodeResponseBindingEvidence> {
+    ) -> Result<AuthenticatedAuthenticodeResponseMacEvidence> {
         let handshake = self
             .handshake
             .take()
@@ -5636,6 +5677,23 @@ mod tests {
         DELETE, FILE_SHARE_DELETE, FILE_SHARE_WRITE, WRITE_DAC, WRITE_OWNER,
     };
 
+    const TEST_RESPONSE_MAC_TOKEN: &str = "11111111-1111-4111-8111-111111111111";
+    const OTHER_TEST_RESPONSE_MAC_TOKEN: &str = "22222222-2222-4222-8222-222222222222";
+
+    fn test_response_mac_key() -> [u8; AUTHENTICODE_HELPER_HANDSHAKE_TOKEN_BYTES] {
+        authenticode_response_mac_key(TEST_RESPONSE_MAC_TOKEN).unwrap()
+    }
+
+    fn authenticated_test_response_binding(
+        response: &[u8],
+    ) -> AuthenticatedAuthenticodeResponseMacEvidence {
+        let key = test_response_mac_key();
+        AuthenticatedAuthenticodeResponseMacEvidence {
+            frame: authenticode_response_mac(response, &key).unwrap(),
+            key,
+        }
+    }
+
     fn fixture_sha256(path: &Path) -> String {
         let bytes = fs::read(path).unwrap();
         format!("{:x}", Sha256::digest(bytes))
@@ -5765,7 +5823,7 @@ mod tests {
         };
         let output = |response: &AuthenticodeHelperResponse| {
             let stdout = serde_json::to_vec(response).unwrap();
-            let response_binding = authenticode_response_binding(&stdout).unwrap();
+            let response_binding = authenticated_test_response_binding(&stdout);
             AuthenticodeHelperOutput {
                 status: ExitStatus::from_raw(0),
                 stdout,
@@ -5785,7 +5843,7 @@ mod tests {
         let mut mismatched_binding = output(&success);
         let mut forged = mismatched_binding.stdout.clone();
         forged[0] ^= 1;
-        mismatched_binding.response_binding = authenticode_response_binding(&forged).unwrap();
+        mismatched_binding.response_binding = authenticated_test_response_binding(&forged);
         let binding_error =
             interpret_authenticode_helper_output(path, &nonce, mismatched_binding).unwrap_err();
         assert!(binding_error
@@ -5814,9 +5872,12 @@ mod tests {
             status: ExitStatus::from_raw(0),
             stdout: vec![b'X'; MAX_AUTHENTICODE_HELPER_RESPONSE_BYTES + 1],
             stderr: Vec::new(),
-            response_binding: AuthenticodeResponseBindingEvidence {
-                response_bytes: 1,
-                sha256: [0; AUTHENTICODE_HELPER_RESPONSE_BINDING_SHA256_BYTES],
+            response_binding: AuthenticatedAuthenticodeResponseMacEvidence {
+                frame: AuthenticodeResponseMacEvidence {
+                    response_bytes: 1,
+                    mac: [0; AUTHENTICODE_HELPER_RESPONSE_MAC_BYTES],
+                },
+                key: test_response_mac_key(),
             },
         };
         assert!(interpret_authenticode_helper_output(path, &nonce, oversized).is_err());
@@ -7833,13 +7894,18 @@ mod tests {
     #[test]
     fn native_authenticode_response_hash_binding_contract_is_fail_visible() {
         let response = b"{\"schema_version\":1,\"status\":\"ok\",\"trusted\":true}\n";
-        let expected = authenticode_response_binding(response).unwrap();
-        let frame = encode_authenticode_response_binding_frame(response).unwrap();
+        let key = test_response_mac_key();
+        let expected = authenticode_response_mac(response, &key).unwrap();
+        let frame = encode_authenticode_response_binding_frame(response, &key).unwrap();
         assert_eq!(
             validate_authenticode_response_binding_frame(&frame).unwrap(),
             expected
         );
-        validate_authenticode_response_binding(response, expected).unwrap();
+        let authenticated = AuthenticatedAuthenticodeResponseMacEvidence {
+            frame: expected,
+            key,
+        };
+        validate_authenticode_response_binding(response, authenticated).unwrap();
 
         for malformed in [
             Vec::new(),
@@ -7863,20 +7929,26 @@ mod tests {
             .copy_from_slice(&((MAX_AUTHENTICODE_HELPER_RESPONSE_BYTES as u64) + 1).to_le_bytes());
         assert!(validate_authenticode_response_binding_frame(&oversized).is_err());
 
+        let mut mutated_mac = authenticated;
+        mutated_mac.frame.mac[0] ^= 1;
+        let mac_error = validate_authenticode_response_binding(response, mutated_mac).unwrap_err();
+        assert!(mac_error.to_string().contains("stdout HMAC-SHA-256"));
+
         let mut same_length_mutation = response.to_vec();
         same_length_mutation[1] ^= 1;
         let digest_error =
-            validate_authenticode_response_binding(&same_length_mutation, expected).unwrap_err();
-        assert!(digest_error.to_string().contains("stdout SHA-256"));
+            validate_authenticode_response_binding(&same_length_mutation, authenticated)
+                .unwrap_err();
+        assert!(digest_error.to_string().contains("stdout HMAC-SHA-256"));
         let length_error =
-            validate_authenticode_response_binding(&response[..response.len() - 1], expected)
+            validate_authenticode_response_binding(&response[..response.len() - 1], authenticated)
                 .unwrap_err();
         assert!(length_error.to_string().contains("stdout length"));
-        assert!(authenticode_response_binding(&[]).is_err());
-        assert!(authenticode_response_binding(&vec![
-            0;
-            MAX_AUTHENTICODE_HELPER_RESPONSE_BYTES + 1
-        ])
+        assert!(authenticode_response_mac(&[], &key).is_err());
+        assert!(authenticode_response_mac(
+            &vec![0; MAX_AUTHENTICODE_HELPER_RESPONSE_BYTES + 1],
+            &key
+        )
         .is_err());
 
         let nonce = Uuid::new_v4().hyphenated().to_string();
@@ -7894,7 +7966,7 @@ mod tests {
             status: ExitStatus::from_raw(0),
             stdout,
             stderr: Vec::new(),
-            response_binding: authenticode_response_binding(&forged).unwrap(),
+            response_binding: authenticated_test_response_binding(&forged),
         };
         let error = interpret_authenticode_helper_output(
             Path::new(r"C:\benign-fixture.exe"),
@@ -7904,7 +7976,7 @@ mod tests {
         .unwrap_err();
         let diagnostic = format!("{error:#}");
         assert!(diagnostic.contains("response binding failed"));
-        assert!(diagnostic.contains("stdout SHA-256"));
+        assert!(diagnostic.contains("stdout HMAC-SHA-256"));
     }
 
     #[test]
@@ -7931,12 +8003,41 @@ mod tests {
         )
         .unwrap_err()
         .to_string();
-        assert!(error.contains("stdout SHA-256"));
+        assert!(error.contains("stdout HMAC-SHA-256"));
         validate_authenticode_response_binding(
             b"AVORAX_RESPONSE_HASH_BINDING_B\n",
             output.response_binding,
         )
         .unwrap();
+    }
+
+    #[test]
+    fn native_authenticode_response_mac_binding_rejects_wrong_launch_key() {
+        let application = std::env::current_exe().unwrap();
+        let arguments = [
+            "--ignored",
+            "--exact",
+            "windows_authenticode::tests::authenticode_wrong_response_mac_key_child_fixture",
+            "--nocapture",
+            "--test-threads=1",
+        ];
+        let output = run_bounded_authenticode_helper(
+            &application,
+            &arguments,
+            Vec::new(),
+            Duration::from_secs(5),
+        )
+        .unwrap();
+        assert!(output.status.success());
+        assert!(output.stderr.is_empty());
+        assert!(String::from_utf8_lossy(&output.stdout).contains("AVORAX_RESPONSE_MAC_WRONG_KEY"));
+        let error = validate_authenticode_response_binding(
+            b"AVORAX_RESPONSE_MAC_WRONG_KEY\n",
+            output.response_binding,
+        )
+        .unwrap_err()
+        .to_string();
+        assert!(error.contains("stdout HMAC-SHA-256"));
     }
 
     #[test]
@@ -7975,6 +8076,18 @@ mod tests {
         println!("AVORAX_RESPONSE_HASH_BINDING_A");
         handshake
             .complete_after_response(b"AVORAX_RESPONSE_HASH_BINDING_B\n")
+            .unwrap();
+    }
+
+    #[test]
+    #[ignore = "isolated child fixture invoked by the response MAC wrong-key regression"]
+    fn authenticode_wrong_response_mac_key_child_fixture() {
+        let mut handshake = complete_current_process_authenticode_parent_child_handshake().unwrap();
+        handshake.response_mac_key =
+            authenticode_response_mac_key(OTHER_TEST_RESPONSE_MAC_TOKEN).unwrap();
+        println!("AVORAX_RESPONSE_MAC_WRONG_KEY");
+        handshake
+            .complete_after_response(b"AVORAX_RESPONSE_MAC_WRONG_KEY\n")
             .unwrap();
     }
 

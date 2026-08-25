@@ -126,11 +126,17 @@ function Invoke-LocalCoreJson {
     $startInfo.UseShellExecute = $false
     $startInfo.CreateNoWindow = $true
 
-    $process = [System.Diagnostics.Process]::Start($startInfo)
-    $stdoutTask = $process.StandardOutput.ReadToEndAsync()
-    $stderrTask = $process.StandardError.ReadToEndAsync()
-    $process.StandardInput.WriteLine($json)
-    $process.StandardInput.Close()
+    $previousInputEncoding = [Console]::InputEncoding
+    try {
+      [Console]::InputEncoding = [System.Text.UTF8Encoding]::new($false)
+      $process = [System.Diagnostics.Process]::Start($startInfo)
+      $stdoutTask = $process.StandardOutput.ReadToEndAsync()
+      $stderrTask = $process.StandardError.ReadToEndAsync()
+      $process.StandardInput.WriteLine($json)
+      $process.StandardInput.Close()
+    } finally {
+      [Console]::InputEncoding = $previousInputEncoding
+    }
 
     if (-not $process.WaitForExit($Timeout * 1000)) {
       try {

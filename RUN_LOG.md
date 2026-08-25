@@ -10388,3 +10388,98 @@ Updates page showed:
   untracked and unstaged. Nothing was installed, executed as candidate
   content, released, or published. Checkpoint 2228 is closed; its documented
   technical limits and the complete antivirus goal remain active.
+
+## 2026-08-25 - Checkpoint 2229 response launch-key MAC scripting
+
+- Began from clean branch `agent/checkpoint-2229-authenticode-response-mac-binding`
+  with only protected `.verification/` untracked. A first inventory command had
+  a PowerShell quoting parse failure and made no change; the corrected read-only
+  inventory succeeded.
+- Added Native Engine direct `hmac = "0.12"` and replaced the checkpoint-2228
+  unkeyed response digest with domain-separated HMAC-SHA-256. The child retains
+  the exact canonical 36-byte random handshake token as its response key; the
+  parent retains the independently generated exact key and uses `verify_slice`
+  for constant-time tag verification before strict JSON or publisher trust.
+- Kept the exact 41-byte marker/length/tag frame, 1..16,384-byte response bound,
+  response-ready client reauthentication, launch/child token read-backs, final
+  ACK, bounded cleanup, and fail-visible diagnostics. No weaker retry was added.
+- Converted the benign mutation/length/frame regressions to MAC semantics and
+  added a wrong-launch-key regression. Its isolated test child completes the
+  real handshake with the correct token, writes harmless fixed text, and forms
+  the frame under a different fixed valid test UUID; no candidate fixture is
+  executed.
+- Added source contract 659, a mandatory launch-key-MAC verifier target, exact
+  259-step validator requirements, and audit/threat/blocker/dependency/report
+  updates. Historical checkpoint 2228 evidence remains documented as closed and
+  is explicitly superseded rather than rewritten as HMAC evidence.
+- Scripting phase status: implementation, test scripting, verifier/validator,
+  source contracts, and documentation are complete. No checkpoint-2229 tests,
+  formatters, compilers, lock generation, or validators have run yet, honoring
+  the requested script-first sequence. Root/Native exact lock generation and
+  review are next, followed by focused and full execution.
+- Technical boundary remains explicit: the per-launch key is carried in child
+  environment/memory and over same-user IPC. HMAC-SHA-256 is not encryption,
+  cross-identity authentication, durable token-object binding, AppContainer/
+  LPAC, installed LocalSystem, signed-driver, or pre-execution protection.
+- Offline lock resolution then produced the exact expected delta. Root lock adds
+  only the Native `hmac` edge and hashes to
+  `bc43621213d9bede816a6e062146996116fb92fc`. The standalone Native lock adds
+  `hmac 0.12.1`, `subtle 2.6.1`, the `digest` subtle edge, and the Native edge,
+  with no version update, and hashes to
+  `1d9d96a172c258a584066a9adbb5a10a8feff97d`. Flutter lock remains
+  `51fa085a41168aa1deadace8b5395614db43649e`.
+- Cargo ignored the nested lock while resolving the workspace member. A bounded
+  fixed TEMP standalone copy was therefore used to resolve that historical lock
+  offline. The first `--no-deps` metadata attempt did not update it; the complete
+  metadata resolution added exactly two packages. Two policy-rejected cleanup
+  commands never started. After read-only proof of 144 files, 24 directories,
+  and 1,151,989 bytes, exact-path PowerShell/.NET cleanup removed the copy.
+- Focused execution now passes: PowerShell 7 and Windows PowerShell 5.1 parsers,
+  rustfmt and `git diff --check`, source contracts `659/659`, retained response
+  regressions `3/3`, and new launch-key MAC regression `1/1`. An exploratory
+  `python -m pytest` failed because optional pytest is absent; no package was
+  installed, and the required dependency-free runner passed. An initial nested
+  PS5.1 parser command had shell-variable expansion noise and is not credited;
+  the corrected direct parser command passes.
+- Full local regression passes: Authenticode `84 passed/17 ignored`, Native
+  `512 passed/17 ignored` plus signature compiler `6/6`, Local Core `536/536`,
+  Guard standard `248/248` and all-feature `249/249`, both root workspace modes,
+  locked/offline checks, strict affected-crate Clippy, locked release builds,
+  the two-host Authenticode smoke, Flutter analyze, and Flutter `838/838`.
+- Definitive execution exposed two real Windows PowerShell 5.1 wiring defects
+  rather than being retried into silence. The release Authenticode smoke and six
+  user wrappers could emit a UTF-8 BOM before strict JSON through the default
+  redirected-stdin `StreamWriter`. The harness, scan, cancel, allowlist,
+  quarantine, watch, status, and blocked driver-self-test paths now temporarily
+  select `UTF8Encoding(false)` before process start/stdin creation and restore
+  the prior console input encoding in `finally`. The product parsers remain
+  strict and continue to reject BOM-prefixed JSON. Both PowerShell parsers pass
+  `8/8`; source contracts remain `659/659`; the Authenticode release smoke passes
+  12 consecutive repetitions; and all six release-binary wrapper smokes pass in
+  one sequential run.
+- The credited no-skip/no-Defender-integration verifier ran from
+  `2026-08-25T05:02:46.0085093Z` through `2026-08-25T05:10:07.1292531Z` and
+  passed exact `259/259`, zero failed or skipped, in `441.1s`. The new MAC target
+  passed in `0.2s`. Both embedded and independently repeated Windows PowerShell
+  5.1 strict validation pass. Fifteen isolated `.verification` copies are
+  rejected with exit 1 for wrong schema/status/options, renamed target, each of
+  five MAC verified-scope fragments, each of two MAC limit fragments, a failed
+  final step, and stale 258-step evidence.
+- Failed attempts remain uncredited and visible: the first verifier lost a
+  Flutter temporary `output.dill` and its stuck test child was explicitly reaped
+  before the exact five-file group passed `6/6`; a manual rerun from the repo
+  root found no `pubspec.yaml` before the corrected app-directory run; the next
+  verifier exposed the Authenticode BOM; the following verifier exposed the
+  general wrapper BOM. Initial unsupported `StandardInputEncoding`, too-late
+  `BaseStream`, parser/runner path, byte-probe quoting, and adversarial-harness
+  stderr-handling attempts are not credited. Each failure preceded a bounded
+  repair and passing regression; none installed software, weakened Defender,
+  executed candidate content, or touched the protected vault.
+- Post-verification Git blobs remain exact at root Cargo
+  `bc43621213d9bede816a6e062146996116fb92fc`, Native Cargo
+  `1d9d96a172c258a584066a9adbb5a10a8feff97d`, and Flutter
+  `51fa085a41168aa1deadace8b5395614db43649e`. Read-only vault inventory remains
+  16,072 files, zero directories/reparse points, 4,522,733 bytes, 5,357 each
+  `.avoraxq`/`.json`/`.auth`, one metadata key, and zero pending/temp. Hosted,
+  integration, synchronization, and destination evidence remain pending; the
+  complete antivirus goal remains active.

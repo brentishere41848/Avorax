@@ -122,7 +122,9 @@ function Invoke-HelperMode {
   $process = [System.Diagnostics.Process]::new()
   $process.StartInfo = $startInfo
   $started = $false
+  $previousInputEncoding = [Console]::InputEncoding
   try {
+    [Console]::InputEncoding = [System.Text.UTF8Encoding]::new($false)
     if (-not $process.Start()) {
       throw "failed to start Authenticode host $Binary"
     }
@@ -168,6 +170,7 @@ function Invoke-HelperMode {
     }
     throw "$failure; cleanup=$cleanup"
   } finally {
+    [Console]::InputEncoding = $previousInputEncoding
     $process.Dispose()
   }
 }

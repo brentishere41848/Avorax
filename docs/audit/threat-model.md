@@ -2526,3 +2526,39 @@ inject the helper, duplicate handles, or change both stdout and frame before the
 authenticated snapshot remains in scope. It does not supply AppContainer/LPAC,
 installed LocalSystem, production signing, signed-driver, or demonstrated
 pre-execution enforcement.
+
+### Authenticode per-launch response MAC (checkpoint 2229)
+
+**Threat:** Checkpoint 2228 detected stdout changes after its frame was formed,
+but an unkeyed digest did not require knowledge held by this launch. An actor
+able to alter both the anonymous stdout stream and digest frame before the
+authenticated snapshot could preserve internal consistency.
+
+**Locally verified control:** The already authenticated canonical
+random launch UUID becomes the exact 36-byte HMAC key. The child retains that
+key after handshake authentication and computes domain-separated HMAC-SHA-256
+over the exact unsigned little-endian response length and all bounded stdout
+bytes. The parent retains its independently generated per-launch key, accepts
+only the fixed 41-byte frame and canonical 1..16,384-byte length, completes the
+existing process/client/token checks, and after exit uses constant-time MAC
+verification before strict JSON parsing or publisher trust. Wrong length,
+mutated bytes, modified MAC, malformed frame, and a benign child using a wrong
+launch key are fail-visible. Source contract 659, complete Authenticode and
+workspace regression, verifier step 259, exact `259/259` strict verification,
+and controlled malformed-report rejection pass locally. Hosted, integration,
+and destination evidence remain pending.
+
+Definitive execution also exposed a Windows PowerShell 5.1 boundary error:
+redirected stdin could prepend a UTF-8 BOM to otherwise strict JSON. The release
+Authenticode harness, six user wrappers, and driver-self-test harness now choose
+BOM-less UTF-8 only around process/stdin creation and restore the prior encoding
+in `finally`. Product parsers still reject BOM-prefixed input; this changes the
+trusted producer wiring rather than broadening accepted syntax.
+
+**Residual risk:** The launch token is not durable secret storage. It is carried
+in the child's sanitized environment and over a same-user pipe, so same-user
+process-memory or environment read access, privileged process injection, or
+handle duplication may recover it or modify both stdout and HMAC before
+authentication. HMAC-SHA-256 does not encrypt IPC, authenticate another Windows
+identity, bind durable token objects, or establish AppContainer/LPAC, installed
+LocalSystem, signed-driver, or pre-execution enforcement.

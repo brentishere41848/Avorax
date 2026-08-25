@@ -315,3 +315,13 @@ the parenthesized rerun passed. No product behavior was weakened.
 
 Checkpoint 2228 is closed. The digest remains unkeyed same-user evidence with
 the limits stated above, and the complete antivirus goal remains active.
+
+## Later Supersession
+
+Checkpoint 2229 supersedes this merged unkeyed SHA-256 implementation with
+domain-separated HMAC-SHA-256 under the exact per-launch handshake token while
+retaining the fixed frame, bounded length, process/token reauthentication, and
+pre-JSON ordering. This does not invalidate checkpoint 2228 evidence for merge
+`ab43569`. The newer same-user key is present in child environment/memory and is
+not encryption, cross-identity authentication, AppContainer/LPAC, or
+pre-execution enforcement.
