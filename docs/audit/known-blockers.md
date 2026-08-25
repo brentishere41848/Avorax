@@ -2894,3 +2894,48 @@ enforcement, or pre-execution blocking is claimed.
   merged-main evidence, guarded original-tree synchronization, and independent
   destination verification remain open. External calibration/signing/service/
   driver/pre-execution blockers remain unchanged.
+
+- **Checkpoint integration blocker closed:** evidence `57ce163`, normal merge
+  `5fc30c9`, evidence/merged-main hosted CI and packages, guarded exact 13-path
+  synchronization, destination source `665/665`, broad/focused engine and
+  Flutter suites, exact `264/264` in `488.3s`, dual-host validation, and
+  `16/16` adversarial rejections pass. The WindowsApps Python reparse run and
+  malformed helper/check command drafts are visible and uncredited.
+- **Residual blockers unchanged:** production calibration needs approved
+  representative corpora, targets, and analyst review. Installed elevated/
+  service E2E, production signing, cross-identity isolation, signed-driver
+  behavior, secure erasure, and pre-execution enforcement retain external
+  prerequisites. Checkpoint 2235 is closed; the complete project remains active.
+
+## Checkpoint 2236 Scripted State And Residual Limits
+
+- Native process-start command evidence, fake-block action text, dead behavior
+  helper wiring, arithmetic overflow, unbounded lowercase allocation, provider
+  inventory, tests, verifier/validator, source contract 666, and documentation
+  have scripted repairs. Execution evidence remains pending.
+- Browser-data access remains disabled until a trusted per-process path-access
+  stream exists. Infostealer correlation remains disabled until credential/
+  wallet reads, archive staging, and outbound network activity are bound to one
+  process under bounded retention.
+- Persistence correlation remains disabled until trusted registry/file autorun
+  write telemetry and parent trust state exist. Suspicious child lineage remains
+  disabled because the event has a parent PID but no verified parent image.
+- The explicit process-start API is post-launch and currently has no installed
+  app/service callsite. It emits evidence and recommendations only; process stop,
+  quarantine mutation, durable monitoring, installed service E2E, signed-driver,
+  kernel, and pre-execution proof retain existing prerequisites.
+- No checkpoint-2236 passing result is claimed during scripting. Focused, broad,
+  definitive exact 265-step, adversarial, hosted, merge, guarded sync,
+  destination, lock, and protected-vault evidence remain open.
+
+Focused and broad local execution now passes, including Native `538/538` plus
+19 deliberate child-entrypoint ignores and compiler `6/6`, both locked workspace
+modes, Flutter `838/838`, and source contracts `666/666`. Locks and the protected
+vault remain exact. The API wiring, missing trusted telemetry, definitive
+265-step/adversarial evidence, hosted proof, integration, and destination items
+above remain genuine blockers or open evidence and are not presented as solved.
+
+Definitive local report evidence now passes exact `265/265` in `523.1s` under
+both strict hosts, and `16/16` isolated mutations reject. Hosted, merge, guarded
+sync, destination, installed process telemetry, durable service wiring, process
+mutation, driver/kernel, and pre-execution proof remain open.

@@ -9,6 +9,7 @@ use sha2::{Digest, Sha256};
 
 use crate::analyzers::analyze_path_with_size;
 use crate::behavior::{
+    builtin_behavior_provider_inventory, process_behavior::analyze_process_start_event,
     BehaviorDecision, FileActivityEvent, ProcessStartEvent, RansomwareActivityWindow,
 };
 use crate::config::EngineConfig;
@@ -112,6 +113,14 @@ impl ZentorNativeEngine {
     }
 
     pub fn status(&self) -> EngineStatus {
+        let mut detection_providers = builtin_provider_inventory(
+            self.signatures.count(),
+            self.rules.count(),
+            self.ml.is_loaded(),
+            self.ml.production_ready(),
+            self.config.compatibility_engines_enabled,
+        );
+        detection_providers.extend(builtin_behavior_provider_inventory());
         EngineStatus {
             native_engine_ready: true,
             signature_pack_loaded: self.signatures.pack_loaded(),
@@ -126,13 +135,7 @@ impl ZentorNativeEngine {
             known_bad_count: self.known_bad.count(),
             last_error: None,
             compatibility_engines_disabled_by_default: !self.config.compatibility_engines_enabled,
-            detection_providers: builtin_provider_inventory(
-                self.signatures.count(),
-                self.rules.count(),
-                self.ml.is_loaded(),
-                self.ml.production_ready(),
-                self.config.compatibility_engines_enabled,
-            ),
+            detection_providers,
         }
     }
 
@@ -148,6 +151,7 @@ impl ZentorNativeEngine {
                 content.scanned_bytes,
                 content.sample_limited,
             )),
+            Vec::new(),
         )
     }
 
@@ -158,7 +162,7 @@ impl ZentorNativeEngine {
         mode: ScanActionMode,
     ) -> Result<FileScanVerdict> {
         ensure_non_mutating_scan_mode(mode)?;
-        self.scan_bytes_at(path, bytes, None)
+        self.scan_bytes_at(path, bytes, None, Vec::new())
     }
 
     fn scan_bytes_at(
@@ -166,6 +170,7 @@ impl ZentorNativeEngine {
         path: PathBuf,
         bytes: &[u8],
         content_metadata: Option<ScanContentMetadata>,
+        mut additional_evidence: Vec<Evidence>,
     ) -> Result<FileScanVerdict> {
         let (sha256, file_size_bytes, scanned_bytes, scan_sample_limited) =
             scan_content_metadata_or_computed(bytes, content_metadata);
@@ -218,6 +223,7 @@ impl ZentorNativeEngine {
         let trusted_local_artifact =
             trusted_avorax_path || (microsoft_system_path && microsoft_signature_valid);
         let mut evidence = Vec::<Evidence>::new();
+        evidence.append(&mut additional_evidence);
         for (id, title, detail) in trust_diagnostics {
             evidence.push(Evidence {
                 id: id.to_string(),
@@ -481,7 +487,19 @@ impl ZentorNativeEngine {
     }
 
     pub fn analyze_process_start(&mut self, event: ProcessStartEvent) -> Result<ExecutionDecision> {
-        let verdict = self.scan_file(event.executable_path, ScanActionMode::DetectOnly)?;
+        let behavior_evidence = analyze_process_start_event(&event)?;
+        let content = read_scan_content(&event.executable_path)?;
+        let verdict = self.scan_bytes_at(
+            event.executable_path,
+            &content.sampled_bytes,
+            Some((
+                content.full_sha256,
+                content.file_size_bytes,
+                content.scanned_bytes,
+                content.sample_limited,
+            )),
+            behavior_evidence,
+        )?;
         let action = execution_action_for_verdict(verdict.final_verdict.verdict);
         Ok(ExecutionDecision {
             action: action.to_string(),
@@ -721,7 +739,9 @@ fn progress_current_path_or_unknown(progress: &ScanProgress) -> &str {
 
 fn execution_action_for_verdict(verdict: Verdict) -> &'static str {
     match verdict {
-        Verdict::ConfirmedMalware | Verdict::TestThreat | Verdict::ProbableMalware => "block",
+        Verdict::ConfirmedMalware | Verdict::TestThreat | Verdict::ProbableMalware => {
+            "recommend_stop_and_quarantine"
+        }
         Verdict::Suspicious => "allow_and_monitor",
         Verdict::Clean | Verdict::LikelyClean | Verdict::Observation | Verdict::Unknown => "allow",
     }
@@ -1056,18 +1076,19 @@ mod engine_source_tests {
         );
         assert_eq!(
             super::execution_action_for_verdict(super::Verdict::ProbableMalware),
-            "block"
+            "recommend_stop_and_quarantine"
         );
         assert_eq!(
             super::execution_action_for_verdict(super::Verdict::ConfirmedMalware),
-            "block"
+            "recommend_stop_and_quarantine"
         );
         assert_eq!(
             super::execution_action_for_verdict(super::Verdict::TestThreat),
-            "block"
+            "recommend_stop_and_quarantine"
         );
         assert!(process_source.contains("execution_action_for_verdict"));
         assert!(!helper_source.contains("_ => \"allow\""));
+        assert!(!helper_source.contains("\"block\""));
     }
 
     #[test]

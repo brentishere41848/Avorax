@@ -6118,6 +6118,66 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   AppContainer/LPAC, installed LocalSystem, signed-driver, or pre-execution
   enforcement. The complete antivirus project remains active.
 
+## Checkpoint 2236 Scripted State - Bounded Process Behavior
+
+- Native process-start analysis now consumes bounded command-line telemetry and
+  fuses context-bound behavior evidence with complete file evidence before risk
+  shaping. Nonzero PID and NUL checks fail before file I/O; raw command lines are
+  never returned in evidence.
+- Security-tamper scoring counts distinct contextual indicators, caps at 75,
+  and samples at most 16 KiB of UTF-8-safe head/tail data. Script-host identity
+  is a zero-weight observation and command evidence alone remains review-only.
+- `block` is removed from the post-start decision contract. High-risk verdicts
+  return `recommend_stop_and_quarantine`; this API does not terminate, quarantine,
+  or claim pre-execution enforcement.
+- Engine status inventories seven behavior responsibilities: three enabled API
+  providers and four explicitly disabled providers with exact telemetry blockers.
+  Arithmetic/path/name helpers are overflow-safe and allocation-bounded.
+- Tests, exact verifier/validator step 265, source contract 666, and all audit
+  documents are scripted. No checkpoint-2236 passing result is claimed before
+  focused and broad execution, definitive/adversarial evidence, hosted checks,
+  merge, guarded synchronization, and independent destination verification.
+
+### Checkpoint 2236 local status
+
+- Focused `19/19`, complete Native `538/538` plus 19 deliberate ignores and
+  compiler `6/6`, both locked workspace modes, strict Native Clippy, formatting,
+  Flutter analyze, Flutter `838/838`, both PowerShell parsers, and source
+  contracts `666/666` pass.
+- Three lock hashes and the protected-vault invariant remain exact. Definitive
+  265-step/adversarial, hosted, merge, guarded synchronization, and independent
+  destination evidence remain open; the checkpoint and whole project are not
+  yet complete.
+
+- Definitive local evidence now passes exact `265/265` in `523.1s`, with the
+  new target at `0.3s`, both strict validator hosts, and `16/16` adversarial
+  report rejections. Report SHA-256 is
+  `57f7c1cff6283eb424f92a95f511e695bb60242add571a0139b08ae3a68de162`.
+  Hosted, merge, synchronization, and destination evidence remains pending.
+
+- Exact implementation head `8ec7f67` passes CI `32904894596` and package
+  push/PR runs `32904862805`/`32904894580`; publication is skipped. Both
+  consolidated artifacts pass non-extracting exact inventory/checksum/SBOM
+  validation. Evidence-head, merge, guarded sync, and destination proof remain
+  pending.
+
+## Checkpoint 2235 Integration Closure
+
+- Evidence `57ce163` and merged main `5fc30c9` pass exact-head CI and Desktop
+  Packages. PR `#87` merged normally; every publication job was skipped.
+  Evidence and merged artifacts match GitHub SHA-256 and pass bounded
+  8-root/6-release/7-checksum/CycloneDX 1.6/569-component inspection.
+- Guarded synchronization copied exactly 13 merge-delta paths and 6,511,924
+  bytes with zero deletes or residue. Destination source `665/665`, focused and
+  broad Native/Local, both workspace modes, Flutter analyze/`838/838`, exact
+  `264/264` in `488.3s`, both strict validators, and `16/16` adversarial report
+  rejections pass. All synchronized blobs and lock hashes remain exact.
+- The WindowsApps Python reparse attempt and malformed helper/check commands are
+  visible and uncredited; corrected non-reparse and read-only checks pass. The
+  protected vault remains exact. No install, service/driver start, Defender
+  weakening, release, publication, calibration, or pre-execution claim was
+  made. Checkpoint 2235 is closed; the complete antivirus goal remains active.
+
 ## Checkpoint 2235 Scripted State - Bounded Risk Fusion
 
 - Native score accumulation is saturating and clamped; Local Core score

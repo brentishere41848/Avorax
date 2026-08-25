@@ -1,5 +1,6 @@
 use crate::verdict::risk_fusion::{Evidence, EvidenceSource};
 
+use super::behavior_score::high_write_rate;
 use super::file_activity::FileActivityEvent;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -17,7 +18,7 @@ pub struct RansomwareGuard;
 impl RansomwareGuard {
     pub fn analyze(event: &FileActivityEvent) -> (BehaviorDecision, Option<Evidence>) {
         let mut score = 0;
-        if event.files_modified_count >= 25 {
+        if high_write_rate(event.files_modified_count) {
             score += 35;
         }
         if event.files_renamed_count >= 15 {

@@ -11109,6 +11109,110 @@ pending.
 - Evidence-head CI/packages, normal PR merge, merged-main evidence, guarded
   original-tree synchronization, and destination verification remain pending.
 
+## Checkpoint 2236 - Scripted Bounded Process Behavior
+
+- Audit found that Native `analyze_process_start` ignored its command line,
+  returned fake `block` action text despite performing no process mutation, and
+  exposed seven behavior helpers without an honest runtime inventory. Two score
+  helpers could overflow at the final addition and several classifiers allocated
+  lowercase copies proportional to untrusted input.
+- The complete scripting batch adds bounded UTF-8-safe head/tail command-line
+  inspection, exact executable context, distinct capped security-tamper review
+  evidence, pre-file-I/O event validation, and evidence fusion before the final
+  verdict. High-risk post-start decisions now recommend stop/quarantine instead
+  of claiming a block. Script-host identity alone has zero weight.
+- Ransomware/high-write, process script-host, and process security-tamper
+  providers are explicitly enabled at their API boundaries. Browser-data,
+  credential/network, persistence-write, and parent-image lineage providers are
+  explicitly disabled with missing-telemetry blockers. Their standalone helpers
+  are bounded and overflow-safe rather than silently treated as protection.
+- Benign/adversarial Rust fixtures, mandatory verifier step 265, strict scope and
+  cardinality validation, source contract 666, and audit/dependency/checkpoint
+  documentation are scripted. No checkpoint-2236 passing result is claimed
+  during scripting; no live malware, candidate execution, Defender change,
+  install, service/driver start, dependency, feature, lock, release, or
+  publication is involved.
+
+### Checkpoint 2236 local execution
+
+- Focused process-behavior tests pass `19/19`; Native passes `538/538` with 19
+  deliberate child-entrypoint ignores plus compiler `6/6`. Strict Native
+  all-target/all-feature Clippy, rustfmt, Flutter analyze, both locked workspace
+  modes, and Flutter `838/838` pass.
+- Source contracts pass exact `666/666`; PS5/PS7 parse both changed verifier
+  scripts; `git diff --check` passes. Root/Native/Flutter lock SHA-256 values are
+  exact and unchanged. The protected vault remains 16,072 files, zero dirs,
+  4,522,733 bytes, 5,357 each payload/JSON/auth, one key, zero pending/reparse.
+- Uncredited attempts remain visible: initial format drift and a misquoted PS5
+  parser command were corrected; the transferred all-features session was rerun
+  after its handle disappeared; a root-level Flutter command found no tests;
+  `unittest` found zero pytest-style functions and optional pytest was absent,
+  after which the dependency-free repository runner passed. Definitive 265-step,
+  adversarial, hosted, merge, synchronization, and destination work remains open.
+
+### Checkpoint 2236 definitive local evidence
+
+- The explicit no-skip/no-Defender verifier passes exact `265/265` with zero
+  failed/skipped report steps in `523.1s`; the new target passes in `0.3s`.
+  Embedded and independent PS5/PS7 strict validators pass. Report SHA-256 is
+  `57f7c1cff6283eb424f92a95f511e695bb60242add571a0139b08ae3a68de162`.
+- Eight isolated report mutations are rejected under both hosts, exact `16/16`.
+  The first harness caller lost its final output window and is uncredited; the
+  complete rerun passed. Three optional-privilege symlink-positive package
+  fixtures remain explicitly skipped inside their passing parent verifier step.
+- Hosted exact-head, merge, guarded sync, and destination evidence remain open;
+  neither checkpoint 2236 nor the complete antivirus project is closed.
+
+### Checkpoint 2236 exact implementation-head hosted evidence
+
+- PR `#88` head `8ec7f67de41747a97173a9a6508bbdfb982cb0aa` passes CI
+  `32904894596` and Desktop Packages push/PR runs
+  `32904862805`/`32904894580`. Both publication jobs are skipped.
+- Consolidated artifacts `9584740958` (131,785,747 bytes,
+  `d373594aa2916c262f44ebe2448d5f6b3df697ee297ff8c008f086a6eaf4e392`)
+  and `9584941678` (131,799,199 bytes,
+  `af27a6441d84be609fdb36ea2b6b65b296ad2934c73dad361863bc4e8d880cc7`)
+  pass bounded non-extracting exact 8-entry/6-release/7-checksum/CycloneDX
+  1.6/569-component validation. Evidence-head, merge, sync, and destination
+  proof remain pending.
+
+## 2026-08-25 - Checkpoint 2235 Integration And Destination Closure
+
+- Evidence head `57ce16371cbc47147b7e302c80f310b47873d918` passes CI
+  `32894004836` and Desktop Packages `32894004858`; publication job
+  `97959351533` is skipped. Artifact `9581295219` is 131,617,898 bytes with
+  exact SHA-256 `bffaed284e9899581622d607bb022fe75b434b2b6dfd97d1a249b7f0417ac0dc`
+  and passes bounded non-extracting 8-root/6-release/7-checksum/CycloneDX
+  1.6/569-component validation.
+- PR `#87` merges normally as `5fc30c918ff832af7154034bc62dbbb2b09d6ce5`
+  with exact parents `c969351dd7fae979d6b49df9e870db92a4e51f23` and
+  `57ce16371cbc47147b7e302c80f310b47873d918`. Merged-main CI
+  `32896343556` and packages `32896343565` pass; publication
+  `97967308847` is skipped. Artifact `9582201337` is 131,609,164 bytes with
+  matching SHA-256 `3642de70bb51591bc4b09713ce659f5bb75bfceb69d6db0341be52e9918581fd`
+  and the same bounded package review.
+- Guarded base/desired blob, path, and reparse preconditions synchronize exact
+  `13/13` paths and 6,511,924 bytes into `C:\Users\Brent\Documents\Avorax-main`
+  with zero deletes, temp residue, or retained stage. Destination source
+  `665/665`, focused Native `10/10`, focused Local `1/1`, complete Native
+  `520 + 19 ignored + 6/6`, Local `537/537`, both locked workspace modes,
+  Flutter analyze, and Flutter `838/838` pass.
+- The corrected destination verifier uses the real non-reparse Python 3.14.6
+  executable and passes exact `264/264`, zero failed/skipped, in `488.3s`.
+  Both strict PowerShell hosts independently accept the report; `16/16`
+  destination mutations reject. Report SHA-256 is
+  `ac4df75efe6fd70b38d147def7f47d2e30daa4da23e3b3ef5472efad2205a839`.
+- The first destination verifier selected the WindowsApps `py.exe` reparse
+  alias and failed visibly; it is uncredited. An earlier parse-only sync command
+  was outer-shell misquoted, and two later read-only inventory command drafts
+  had string/filter syntax errors; corrected commands passed and only their
+  corrected results are credited.
+- All 13 destination blobs and three lock hashes are exact. The protected vault
+  remains 16,072 files, zero directories, 4,522,733 bytes, 5,357 each payload/
+  JSON/auth, one key, and zero pending/reparse. Nothing was installed, released,
+  published, executed as candidate content, or changed in Defender. Checkpoint
+  2235 is closed; the full antivirus project remains active.
+
 ## 2026-08-25 - Checkpoint 2233 Integration And Destination Closure
 
 - Evidence `646000b` passes Avorax CI `32868120569` and Desktop Packages

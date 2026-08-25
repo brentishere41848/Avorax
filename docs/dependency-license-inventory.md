@@ -1402,3 +1402,33 @@ without dependency or lock change. Their consolidated artifacts contain the
 expected CycloneDX 1.6 lockfile SBOM with exactly 569 components and pass
 bounded in-stream validation. Final signed-artifact notice/copyright approval
 remains a separate release prerequisite.
+
+Checkpoint-2235 evidence-head and merged-main package runs `32894004858` and
+`32896343565` pass with publication skipped. Artifacts `9581295219` and
+`9582201337` match GitHub SHA-256 and pass bounded non-extracting six-platform-
+file, seven-checksum, and CycloneDX 1.6/569-component validation. Destination
+source, locked workspaces, exact verifier dependency gate, and all three lock
+hash checks pass without dependency, feature, license, or lockfile change.
+Final production signed-artifact notice/copyright approval remains separate.
+
+## Checkpoint 2236 Dependency Scope
+
+Bounded process behavior uses Rust standard-library path, byte-window, UTF-8
+boundary, saturating arithmetic, and collection APIs plus repository `anyhow`
+and existing verdict/provider types. It adds no dependency, feature, downloaded
+model/rule, package source, license obligation, or lockfile change. Tests use the
+existing Native test support and harmless text/known-bad fixtures; no candidate
+is executed. Source contract 666 and exact verifier cardinality 265 bind this
+scope. Lock, package/SBOM, and final signed-artifact review remain pending.
+
+Local execution confirms all three lockfile SHA-256 values remain exact after
+focused and broad tests. No dependency was installed to replace missing optional
+pytest; the repository's dependency-free source-contract runner passed
+`666/666`. Hosted package/SBOM and final signed-artifact review remain pending.
+
+Exact implementation-head package push/PR runs `32904862805`/`32904894580`
+produce two independently consolidated artifacts. Non-extracting validation
+confirms each contains one CycloneDX 1.6 lockfile inventory with exactly 569
+components and seven matching checksums beside six platform files. This remains
+lockfile-derived partial dependency evidence, not final-binary license resolution,
+production signing, or legal approval.
