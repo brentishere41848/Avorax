@@ -10138,3 +10138,47 @@ Updates page showed:
   1.6/569-component in-stream validation without extraction or execution.
 - Draft PR `#79` remains unmerged. Evidence-head checks, normal merge,
   merged-main evidence, guarded synchronization, and destination proof remain.
+
+## 2026-08-25 continuation checkpoint 2227 integration closure
+
+- Evidence `c63fb71a4cd0834d8a014b646b40197cbc6119bb` passes all five CI
+  jobs in run `32792981574`. Package run `32792981950` passes contracts,
+  Windows MSI/EXE, Linux DEB/tar, both macOS DMGs, and consolidation;
+  publication is skipped. Untouched artifact `9544267760` has SHA-256
+  `0ecaf5ea3e976c282dae9afe2fd36bf7f2f587d9ec932a337a8a70f936f79c5d`
+  and passes exact eight-entry, six-platform-file, seven-checksum, and
+  CycloneDX 1.6/569-component in-stream validation without extraction.
+- PR `#79` was made ready and normally merged without bypass or direct-main
+  push as `9304681badde248533788806bbe84a298726e241`, with parents
+  `bab872d50daf5bbcc775a53e3c0788c51770ca33` and evidence `c63fb71`.
+  Merged-main CI `32794436961` and packages `32794437034` pass; publication
+  is skipped. Untouched artifact `9544647451` has SHA-256
+  `e56a600c0515f9760e552088906db4a141b2aadf596c032155d5f1246f463fd4`
+  and passes the same exact in-stream checks.
+- The merge changes exactly 12 paths from its first parent with zero deletes.
+  Guarded synchronization copied those 12 exact Git blobs to
+  `C:\Users\Brent\Documents\Avorax-main`; post-test comparison remains
+  `12/12`, with zero staging files or backups and unrelated files preserved.
+- Destination parsers `2/2`, contracts `657/657`, focused `2/2`, complete
+  Authenticode `72/15`, Native `508/15` plus compiler `6/6`, Local `536/536`,
+  Guard `248/248`, both locked workspaces, strict Clippy, offline Native,
+  release/two-host smoke, Flutter analyze, and Flutter `838/838` pass.
+  Definitive verification ran from `2026-08-25T01:04:32.3781546Z` through
+  `2026-08-25T01:11:46.4460196Z` and passes exact `257/257`, zero failed or
+  skipped, in `434s`; the new target is `0.2s` and the independent Windows
+  PowerShell 5.1 validator passes.
+- Support failures are retained and uncredited. A raw destination hash check
+  saw expected LF/CRLF differences before the path-aware Git-filter audit
+  passed. Three PowerShell 5.1 sync helpers failed before the first destination
+  replacement (`ArgumentList`, three-argument `File.Move`, then null-backup
+  `File.Replace`); the corrected atomic wrapper reused only exact staged blobs
+  and completed. A destination blob wrapper then assumed a nonexistent `.git`;
+  the corrected absolute source-repository comparison passed `12/12`.
+- Lock blobs remain exact. The read-only vault remains 16,072 files, zero
+  directories, 4,522,733 bytes, 5,357 each payload/metadata/auth, one key, and
+  zero pending/temp. `.verification` remains untracked and unstaged. Nothing
+  was installed, executed as candidate content, released, or published.
+  Checkpoint 2227 is closed; its technical limits and the overall antivirus
+  goal remain active.
+- Closure-document source contracts pass `657/657`; branding, product-copy,
+  explicit bundled-Python no-malware, and `git diff --check` gates pass.

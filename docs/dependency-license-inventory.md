@@ -1152,5 +1152,14 @@ Checkpoint 2227 exact implementation `cef0d28` passes package push/PR runs
 `9543648381`/`9543559227` each contain six platform files, seven matching
 SHA-256 rows, and a CycloneDX 1.6 lockfile SBOM with 569 components under exact
 in-stream validation; publication is skipped. This is dependency evidence, not
-complete signed final-artifact license or binary approval. Evidence-head and
-merged-main package evidence remain pending.
+complete signed final-artifact license or binary approval.
+
+Checkpoint 2227 evidence `c63fb71`, normal merge `9304681`, evidence/merged-main
+package runs `32792981950`/`32794437034`, exact guarded synchronization, and
+destination `257/257` verification preserve the exact three lock blobs.
+Untouched package artifacts `9544267760`/`9544647451` retain six platform
+files, seven matching checksums, and CycloneDX 1.6/569-component SBOMs under
+stream-only validation; publication is skipped. No dependency, lockfile, or
+machine-wide component changed. Complete signed final-artifact license, notice,
+copyright, and binary-resolution review remains a production-release
+prerequisite.

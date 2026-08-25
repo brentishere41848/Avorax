@@ -2467,7 +2467,7 @@ repeat connected pipe-client process or impersonation-token authentication at
 the response-ready boundary. Persistent client security-context drift after the
 initial handshake could therefore escape the later primary-token snapshots.
 
-**Locally verified control, integration pending:** After exact ready-marker validation and
+**Verified and integrated control:** After exact ready-marker validation and
 before launch/child token read-back and final ACK, parent binds the client PID
 queried from the retained pipe instance to the PID queried from the exact
 retained child process handle. It then freshly impersonates that same connection
@@ -2481,10 +2481,13 @@ and cannot become trust. Source contract 657 and verifier step 257 are scripted.
 Focused regressions pass `2/2`, complete Authenticode passes `72/15`, Native
 passes `508/15` plus compiler `6/6`, affected crates and both locked workspaces
 pass, and Flutter passes `838/838`. Definitive verifier/validator passes exact
-`257/257` in `453.2s`, and 12 malformed reports are rejected. Hosted,
-integration, synchronization, and destination evidence remain pending. Exact
-implementation `cef0d28` also passes hosted CI and both cross-platform package
-runs with publication skipped; this does not expand the point-in-time boundary.
+`257/257` in `453.2s`, and 12 malformed reports are rejected. Exact
+implementation `cef0d28`, evidence `c63fb71`, PR `#79`, normal merge
+`9304681`, evidence-head and merged-main CI/packages, exact 12-path guarded
+synchronization, full destination Rust/Flutter checks, and destination verifier/
+validator `257/257` in `434s` pass. Publication is skipped, locks and the
+protected vault remain exact, and this closure does not expand the point-in-time
+boundary.
 
 **Residual risk:** This repeats the connected identity/profile at a second point
 in time; it is not cross-snapshot token-object equality. Windows may create a

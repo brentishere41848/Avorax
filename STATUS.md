@@ -5928,7 +5928,7 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
 
 ## Checkpoint 2227 - Authenticode response client reauthentication (2026-08-25)
 
-- **Scripted control:** after exact response-ready validation and before launch/
+- **Verified and integrated control:** after exact response-ready validation and before launch/
   child token read-back or final ACK, the parent binds
   `GetNamedPipeClientProcessId` on the retained connection to `GetProcessId` on
   the exact retained child handle, then freshly calls
@@ -5953,24 +5953,32 @@ Avorax must not claim kernel-level or pre-execution protection until the signed 
   `72/15`, Native `508/15` plus compiler `6/6`, Local Core `536/536`, Guard
   `248/248`, both locked workspaces, strict affected-crate Clippy, standalone
   locked/offline Native, locked release/two-host smoke, Flutter analysis, and
-  Flutter `838/838`. Definitive, hosted, integration, synchronization, and
-  destination evidence remain pending. Definitive local verification now passes
+  Flutter `838/838`. Definitive local verification passes
   exact `257/257` in `453.2s`, target `0.2s`, both strict validators, and 12
   malformed-report rejections. Locks and the protected-vault invariant remain
-  exact; hosted, integration, synchronization, and destination proof remain
-  pending.
+  exact.
 - **Implementation-head hosted verified:** exact `cef0d28` passes CI
   `32791340856` and package push/PR runs `32791317044`/`32791340840` across
   Windows, Linux, both macOS architectures, and consolidation; publication is
   skipped. Untouched artifacts `9543648381`/`9543559227` pass exact six-platform-
   file, seven-checksum, and CycloneDX 1.6/569-component in-stream validation.
-  Draft PR `#79` remains unmerged; evidence-head, merge, synchronization, and
-  destination evidence remain pending.
+  Evidence-head and merged-main integration evidence is recorded below.
 - **Technically limited:** each impersonation call may yield a distinct token
   object, so cross-snapshot impersonation `TokenId` equality is unavailable and
   not claimed. This remains point-in-time, not durable or cryptographically
   response-bound, and does not stop every transient, privileged same-session
   injection/handle duplication, or provide cross-identity IPC, AppContainer/
   LPAC, installed LocalSystem, signed-driver, or pre-execution enforcement.
-  Local, hosted, integration, synchronization, and destination evidence remain
-  pending; the complete antivirus goal remains active.
+  The complete antivirus goal remains active.
+- **Integration and destination closure:** evidence `c63fb71`, PR `#79`, and
+  normal merge `9304681` are complete. Evidence-head CI/packages
+  `32792981574`/`32792981950` and merged-main CI/packages
+  `32794436961`/`32794437034` pass with publication skipped. Untouched
+  artifacts `9544267760`/`9544647451` each contain six platform files, seven
+  matching checksums, and a CycloneDX 1.6/569-component SBOM. Exactly 12 paths
+  synchronized with zero deletes and remain exact after testing, with no temp
+  or backup residue. Destination Native `508/15` plus compiler `6/6`, Local
+  `536/536`, Guard `248/248`, both locked workspaces, strict lint, offline
+  Native, Flutter analyze and `838/838`, and exact verifier/validator `257/257`
+  in `434s` pass. Locks and the protected vault remain exact. Checkpoint 2227
+  is closed; the complete antivirus goal remains active.
