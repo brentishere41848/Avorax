@@ -6865,3 +6865,55 @@ guarded synchronization, and destination proof remain pending.
   Both independent validators pass, all locks and the protected vault remain
   exact, and checkpoint 2244 is closed. The complete antivirus goal remains
   active.
+
+## Checkpoint 2245 Non-Archive Static Analysis Cancellation
+
+- **Scripted, not yet verified:** entropy traversal, string references/IP/term/
+  UTF-16 analysis, PE section/import/debug analysis, and all four script
+  analyzers now receive cooperative fallible checkpoints through the shared
+  Native static-analysis callback.
+- URL and remote-path evidence is counted as a stream instead of retained in
+  match-proportional vectors. Existing compatibility entry points remain and
+  have exact parity regressions.
+- Verifier step 274, strict report validation, Source contract 675, benign tests,
+  and the full audit delta are scripted. No checkpoint-2245 passing result is
+  claimed during this implementation-first phase.
+- **Limit:** cancellation is not preemptive. One active lowercase normalization,
+  term search, bounded parser/system call, synchronous rule/ML call, or Windows
+  trust operation can finish before the next checkpoint; static content remains
+  under the existing 64 MiB sample cap.
+- Disabled reputation and correlation-dependent behavior engines remain
+  disabled with exact blockers. The whole antivirus hardening goal remains
+  active.
+
+### Checkpoint 2245 Local Verification Progress
+
+Focused cancellation passes `15/15`, all analyzers `99/99`, Source contracts
+exact `675/675`, strict Native Clippy, rustfmt, diff integrity, and PowerShell
+5.1 parsing. A Defender error-225 run is uncredited; after all five blocked tests
+passed separately, a complete serial rerun passes Native library `574` with `21`
+documented child-fixture ignores and compiler `6/6`. No Defender control was
+weakened. At that stage Local Core, Flutter, definitive `274/274`, hosted, merge,
+package, guarded-sync, and destination proof remained pending.
+
+Local Core `546/546`, Flutter analyze, Flutter `847/847`, strict Local Core lint,
+and the locked workspace release build now also pass. Dependency locks are
+unchanged, and protected-vault preflight remains exact at 16,072 files and
+4,522,733 bytes with no directories, pending entries, or reparse points.
+The definitive verifier now passes exact `274/274` in `539.7s`, from
+`2026-08-26T18:47:12.5110894Z` through `2026-08-26T18:56:12.2995212Z`, with no
+Rust or Flutter skip and Defender integration disabled. Embedded and independent
+PowerShell 5.1/7 validators accept report SHA-256
+`bf1e079ee669281b69a040a27ff7eef894aa00d72c394a72e2907aaf678f2c07`.
+Both independent hosts reject missing-step and missing-required-scope copies.
+Hosted exact-head, merge, package, guarded-sync, destination regression, and
+destination definitive evidence remain pending.
+
+Implementation head `6a8c136aff321b9c8dac53547b5e988376603091` now passes CI
+`33003081719` and Desktop Packages push/PR runs `33003036684`/`33003081759`.
+Both package runs pass all four platform jobs and consolidation; both publication
+jobs are skipped. Downloaded PR artifact `9619955244` matches GitHub SHA-256
+`54a8e214df6976ed9b97859dd90470ca7c6be285dac75e86558e6096272aacd9`
+and passes bounded non-extracting exact 8/6/7/CycloneDX-1.6/569 validation.
+PR `#98` is open. Evidence-head, merge, main, guarded-sync, and destination
+evidence remain pending; the whole antivirus goal remains active.

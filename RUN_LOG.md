@@ -12057,3 +12057,80 @@ pending.
   Git-attribute-aware post-run comparison passes `14/14`.
 - Exact locks and the protected-vault invariant remain unchanged. Checkpoint
   2244 is closed; the complete antivirus hardening goal remains active.
+
+## Checkpoint 2245 Non-Archive Static Analysis Cancellation (Scripting)
+
+- Branch `agent/checkpoint-2245-static-analysis-cancellation` starts from exact
+  merged main `0f75e8ed883d1fadf5314ce57aafcacae7ab924f`.
+- Shared non-archive entropy, string, PE, and script analysis now carries the
+  fallible job-bound callback through bounded substeps before verdict
+  publication. URL/network-path/IP counts stream without match-proportional
+  reference vectors; compatibility wrappers remain explicit.
+- Benign cancellation/parity tests, exact verifier step 274, strict validator
+  scope/cardinality, Source contract 675, and the complete audit/documentation
+  batch are scripted.
+- No checkpoint-2245 test has run during this scripting phase. No formatter,
+  parser, compiler, linter, verifier, or test result is claimed yet.
+- Cooperative limits remain explicit: one active lowercase normalization, term
+  search, bounded parser/system call, rule/ML call, or trust operation can finish
+  before the next checkpoint. The existing 64 MiB sample cap remains in force.
+- No dependency, feature, lockfile, malware corpus, Defender setting,
+  machine-wide component, installed service/driver, release, publication, or
+  protected-quarantine content is changed.
+
+### Checkpoint 2245 Focused And Native Evidence
+
+- Initial focused `14/15` exposed only a self-matching forbidden-source marker;
+  after splitting that test literal, the exact filter passes `15/15`.
+- Analyzer regressions pass `99/99`; Source contracts pass exact `675/675`;
+  rustfmt, diff integrity, PowerShell 5.1 parser, and strict Native all-target/
+  all-feature Clippy pass.
+- A first complete serial Native attempt passed `569` before five benign child
+  starts were blocked by Defender with Windows error 225. Defender was not
+  changed. The five tests pass independently, and the required complete rerun
+  passes Native `574` with `21` documented fixture ignores plus compiler `6/6`.
+- At this stage Local Core, Flutter, definitive `274/274`, hosted, integration,
+  guarded sync, and destination proof remained pending; checkpoint 2245 was not
+  closed.
+
+- Local Core passes `546/546`; Flutter analyze passes and Flutter tests pass
+  `847/847`; strict Local Core Clippy and locked workspace release build pass.
+- Dependency manifests/locks show no diff. Protected-vault preflight remains
+  exact: 16,072 files, 0 directories, 4,522,733 bytes, 5,357 each payload/
+  metadata/auth, one metadata key, 0 pending, and 0 reparse points.
+- At this stage definitive `274/274` plus hosted, merge, package, guarded-sync,
+  and destination evidence remained pending.
+
+### Checkpoint 2245 Definitive Local Evidence
+
+- Definitive verification passes exact `274/274` from
+  `2026-08-26T18:47:12.5110894Z` through
+  `2026-08-26T18:56:12.2995212Z` in `539.7s`, with Defender integration
+  disabled and no Rust or Flutter skip.
+- Embedded and independent Windows PowerShell 5.1 and PowerShell 7 validators
+  accept the report. SHA-256 is
+  `bf1e079ee669281b69a040a27ff7eef894aa00d72c394a72e2907aaf678f2c07`.
+- Both independent validators reject an adversarial `273`-step report and a
+  `274`-step report missing the mandatory entropy/PE cancellation scope; all
+  four expected-negative invocations exit `1`.
+- Exact locks and the protected-vault invariant remain unchanged. `.verification`
+  remains untracked and unstaged. Hosted exact-head, merge, package, guarded
+  synchronization, destination regression, and destination definitive evidence
+  remain pending.
+
+### Checkpoint 2245 Implementation-Head Hosted Evidence
+
+- Exact implementation head `6a8c136aff321b9c8dac53547b5e988376603091`
+  passes all five CI jobs in run `33003081719`.
+- Desktop Packages push/PR runs `33003036684`/`33003081759` pass contracts,
+  Windows MSI/EXE, Linux DEB/tar, both macOS DMGs, and consolidation.
+  Publication jobs `98293891452`/`98294578577` are skipped.
+- PR artifact `9619955244` is `132023565` bytes and matches GitHub/download
+  SHA-256 `54a8e214df6976ed9b97859dd90470ca7c6be285dac75e86558e6096272aacd9`.
+  Bounded non-extracting validation passes exact 8-root/6-platform/7-checksum
+  and CycloneDX 1.6/569-component evidence. Push artifact `9619876133` is
+  `131952443` bytes with GitHub digest
+  `c008386d54e85bf115b4bda9a1e9d146734bcf4d102c23fec536666c51595d0a`.
+- PR `#98` remains open. Evidence-head checks, normal merge, merged-main
+  evidence, guarded synchronization, and destination verification remain
+  pending. Nothing was installed, executed, released, or published.

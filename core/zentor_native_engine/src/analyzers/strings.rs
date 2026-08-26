@@ -1,6 +1,9 @@
+use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+const STRING_REFERENCE_CANCELLATION_INTERVAL: usize = 1024;
+
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct StringIndicators {
     pub embedded_url_count: u32,
     pub embedded_ip_count: u32,
@@ -28,122 +31,122 @@ pub struct StringIndicators {
 }
 
 pub fn extract_indicators(bytes: &[u8]) -> StringIndicators {
+    let mut never_cancel = || Ok(());
+    extract_indicators_with_cancellation(bytes, &mut never_cancel)
+        .expect("the infallible string-indicator callback cannot fail")
+}
+
+pub fn extract_indicators_with_cancellation(
+    bytes: &[u8],
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<StringIndicators> {
+    cancellation_checkpoint()?;
     let text = String::from_utf8_lossy(bytes).to_ascii_lowercase();
-    let mut indicators = extract_indicators_from_text(&text);
-    if let Some(utf16le_text) = utf16le_text_view(bytes) {
-        indicators.merge(extract_indicators_from_text(&utf16le_text));
+    cancellation_checkpoint()?;
+    let mut indicators =
+        extract_indicators_from_text_with_cancellation(&text, cancellation_checkpoint)?;
+    if let Some(utf16le_text) = utf16le_text_view_with_cancellation(bytes, cancellation_checkpoint)?
+    {
+        indicators.merge(extract_indicators_from_text_with_cancellation(
+            &utf16le_text,
+            cancellation_checkpoint,
+        )?);
     }
+    cancellation_checkpoint()?;
     indicators.disk_image_autorun_executable_count = disk_image_autorun_executables(bytes, &text);
+    cancellation_checkpoint()?;
     if has_compound_file_binary_header(bytes) {
         indicators.windows_installer_marker_count =
             indicators.windows_installer_marker_count.saturating_add(1);
     }
-    indicators
+    cancellation_checkpoint()?;
+    Ok(indicators)
 }
 
-fn extract_indicators_from_text(text: &str) -> StringIndicators {
-    let urls = embedded_urls(text);
-    let embedded_url_count = urls.len() as u32;
-    let remote_executable_url_count = urls
-        .iter()
-        .filter(|url| url_has_executable_or_script_suffix(url))
-        .count() as u32;
-    let remote_clickonce_url_count = urls
-        .iter()
-        .filter(|url| url_has_clickonce_suffix(url))
-        .count() as u32;
-    let remote_java_web_start_url_count = urls
-        .iter()
-        .filter(|url| url_has_java_web_start_suffix(url))
-        .count() as u32;
-    let remote_windows_app_package_url_count = urls
-        .iter()
-        .filter(|url| url_has_windows_app_package_suffix(url))
-        .count() as u32;
-    let remote_network_executable_path_count = remote_network_paths(text)
-        .iter()
-        .filter(|path| path_has_executable_or_script_suffix(path))
-        .count() as u32;
-    let clickonce_marker_count = clickonce_markers(text);
-    let java_web_start_marker_count = java_web_start_markers(text);
-    let windows_scriptlet_marker_count = windows_scriptlet_markers(text);
-    let windows_installer_marker_count = windows_installer_markers(text);
-    let windows_installer_custom_action_count = windows_installer_custom_actions(text);
-    let windows_appinstaller_marker_count = windows_appinstaller_markers(text);
-    let macro_auto_run_count = [
-        "autoopen",
-        "auto_open",
-        "document_open",
-        "workbook_open",
-        "presentation_open",
-    ]
-    .iter()
-    .map(|term| text.matches(term).count() as u32)
-    .sum();
+fn extract_indicators_from_text_with_cancellation(
+    text: &str,
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<StringIndicators> {
+    let urls = embedded_url_counts_with_cancellation(text, cancellation_checkpoint)?;
+    let remote_network_executable_path_count =
+        remote_network_executable_path_count_with_cancellation(text, cancellation_checkpoint)?;
+    let clickonce_marker_count = clickonce_markers(text, cancellation_checkpoint)?;
+    let java_web_start_marker_count = java_web_start_markers(text, cancellation_checkpoint)?;
+    let windows_scriptlet_marker_count = windows_scriptlet_markers(text, cancellation_checkpoint)?;
+    let windows_installer_marker_count = windows_installer_markers(text, cancellation_checkpoint)?;
+    let windows_installer_custom_action_count =
+        windows_installer_custom_actions(text, cancellation_checkpoint)?;
+    let windows_appinstaller_marker_count =
+        windows_appinstaller_markers(text, cancellation_checkpoint)?;
+    let macro_auto_run_count = count_terms_with_cancellation(
+        text,
+        &[
+            "autoopen",
+            "auto_open",
+            "document_open",
+            "workbook_open",
+            "presentation_open",
+        ],
+        cancellation_checkpoint,
+    )?;
     let rtf_external_object_count = if is_rtf_text(text) {
-        [
-            "\\object",
-            "\\objautlink",
-            "\\objupdate",
-            "\\template",
-            "\\field",
-            "ddeauto",
-            "includepicture",
-            "includetext",
-        ]
-        .iter()
-        .map(|term| text.matches(term).count() as u32)
-        .sum()
+        count_terms_with_cancellation(
+            text,
+            &[
+                "\\object",
+                "\\objautlink",
+                "\\objupdate",
+                "\\template",
+                "\\field",
+                "ddeauto",
+                "includepicture",
+                "includetext",
+            ],
+            cancellation_checkpoint,
+        )?
     } else {
         0
     };
     let pdf_active_content_count = if is_pdf_text(text) {
-        [
-            "/openaction",
-            "/aa",
-            "/js",
-            "/javascript",
-            "/launch",
-            "/embeddedfile",
-            "/submitform",
-            "/xfa",
-        ]
-        .iter()
-        .map(|term| text.matches(term).count() as u32)
-        .sum()
+        count_terms_with_cancellation(
+            text,
+            &[
+                "/openaction",
+                "/aa",
+                "/js",
+                "/javascript",
+                "/launch",
+                "/embeddedfile",
+                "/submitform",
+                "/xfa",
+            ],
+            cancellation_checkpoint,
+        )?
     } else {
         0
     };
     let web_document_active_content_count = if is_web_document_text(text) {
-        [
-            "<script",
-            "javascript:",
-            "onload=",
-            "onerror=",
-            "createobjecturl",
-            "mssaveoropenblob",
-            ".download",
-            "download=",
-            "atob(",
-            "fetch(",
-            "xmlhttprequest",
-        ]
-        .iter()
-        .map(|term| text.matches(term).count() as u32)
-        .sum()
+        count_terms_with_cancellation(
+            text,
+            &[
+                "<script",
+                "javascript:",
+                "onload=",
+                "onerror=",
+                "createobjecturl",
+                "mssaveoropenblob",
+                ".download",
+                "download=",
+                "atob(",
+                "fetch(",
+                "xmlhttprequest",
+            ],
+            cancellation_checkpoint,
+        )?
     } else {
         0
     };
-    let embedded_ip_count = text
-        .split(|c: char| !c.is_ascii_digit() && c != '.')
-        .filter(|part| {
-            let pieces = part.split('.').collect::<Vec<_>>();
-            pieces.len() == 4
-                && pieces
-                    .iter()
-                    .all(|piece| piece.parse::<u8>().is_ok() && !piece.is_empty())
-        })
-        .count();
+    let embedded_ip_count = embedded_ip_count_with_cancellation(text, cancellation_checkpoint)?;
     let suspicious_terms = [
         "invoke-expression",
         "iex ",
@@ -158,56 +161,106 @@ fn extract_indicators_from_text(text: &str) -> StringIndicators {
         "start-process",
         "downloadstring",
     ];
-    let suspicious_string_count = suspicious_terms
-        .iter()
-        .map(|term| text.matches(term).count() as u32)
-        .sum();
-    let registry_autorun_count = ["currentversion\\run", "runonce"]
-        .iter()
-        .map(|term| text.matches(term).count() as u32)
-        .sum();
+    cancellation_checkpoint()?;
+    let suspicious_string_count =
+        count_terms_with_cancellation(text, &suspicious_terms, cancellation_checkpoint)?;
+    let registry_autorun_count = count_terms_with_cancellation(
+        text,
+        &["currentversion\\run", "runonce"],
+        cancellation_checkpoint,
+    )?;
+    cancellation_checkpoint()?;
     let autorun_inf_executable_command_count = autorun_inf_executable_commands(text);
     let disk_image_autorun_executable_count = 0;
     let email_executable_attachment_count = email_executable_attachments(text);
-    let script_host_reference_count = [
-        "wscript.shell",
-        "mshta",
-        "rundll32",
-        "regsvr32",
-        "scrobj.dll",
-        "powershell",
-        "cmd.exe",
-        "cscript",
-        "wscript",
-    ]
-    .iter()
-    .map(|term| text.matches(term).count() as u32)
-    .sum();
-    StringIndicators {
-        embedded_url_count,
-        embedded_ip_count: embedded_ip_count as u32,
+    cancellation_checkpoint()?;
+    let script_host_reference_count = count_terms_with_cancellation(
+        text,
+        &[
+            "wscript.shell",
+            "mshta",
+            "rundll32",
+            "regsvr32",
+            "scrobj.dll",
+            "powershell",
+            "cmd.exe",
+            "cscript",
+            "wscript",
+        ],
+        cancellation_checkpoint,
+    )?;
+    cancellation_checkpoint()?;
+    Ok(StringIndicators {
+        embedded_url_count: urls.total,
+        embedded_ip_count,
         suspicious_string_count,
         registry_autorun_count,
         autorun_inf_executable_command_count,
         disk_image_autorun_executable_count,
         email_executable_attachment_count,
         script_host_reference_count,
-        remote_executable_url_count,
-        remote_clickonce_url_count,
+        remote_executable_url_count: urls.executable,
+        remote_clickonce_url_count: urls.clickonce,
         remote_network_executable_path_count,
         clickonce_marker_count,
         java_web_start_marker_count,
-        remote_java_web_start_url_count,
+        remote_java_web_start_url_count: urls.java_web_start,
         windows_scriptlet_marker_count,
         windows_installer_marker_count,
         windows_installer_custom_action_count,
         windows_appinstaller_marker_count,
-        remote_windows_app_package_url_count,
+        remote_windows_app_package_url_count: urls.windows_app_package,
         macro_auto_run_count,
         rtf_external_object_count,
         pdf_active_content_count,
         web_document_active_content_count,
+    })
+}
+
+fn count_terms_with_cancellation(
+    text: &str,
+    terms: &[&str],
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<u32> {
+    let mut total = 0u32;
+    for term in terms {
+        cancellation_checkpoint()?;
+        total = total.saturating_add(text.matches(term).count() as u32);
     }
+    cancellation_checkpoint()?;
+    Ok(total)
+}
+
+fn embedded_ip_count_with_cancellation(
+    text: &str,
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<u32> {
+    let mut candidates_seen = 0usize;
+    let mut count = 0u32;
+    for candidate in text.split(|c: char| !c.is_ascii_digit() && c != '.') {
+        if candidates_seen.is_multiple_of(STRING_REFERENCE_CANCELLATION_INTERVAL) {
+            cancellation_checkpoint()?;
+        }
+        candidates_seen = candidates_seen.saturating_add(1);
+        if is_ipv4_candidate(candidate) {
+            count = count.saturating_add(1);
+        }
+    }
+    cancellation_checkpoint()?;
+    Ok(count)
+}
+
+fn is_ipv4_candidate(candidate: &str) -> bool {
+    let mut octets = candidate.split('.');
+    for _ in 0..4 {
+        let Some(octet) = octets.next() else {
+            return false;
+        };
+        if octet.is_empty() || octet.parse::<u8>().is_err() {
+            return false;
+        }
+    }
+    octets.next().is_none()
 }
 
 impl StringIndicators {
@@ -373,55 +426,86 @@ fn is_email_message_text(text: &str) -> bool {
         && (text.contains("\nsubject:") || text.starts_with("subject:"))
 }
 
-fn utf16le_text_view(bytes: &[u8]) -> Option<String> {
+fn utf16le_text_view_with_cancellation(
+    bytes: &[u8],
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<Option<String>> {
     if bytes.len() < 8 {
-        return None;
+        cancellation_checkpoint()?;
+        return Ok(None);
     }
     let units = bytes
         .chunks_exact(2)
-        .map(|chunk| u16::from_le_bytes([chunk[0], chunk[1]]))
-        .collect::<Vec<_>>();
-    let text = String::from_utf16_lossy(&units).to_ascii_lowercase();
-    if text.contains("http://")
-        || text.contains("https://")
-        || text.contains("powershell")
-        || text.contains("cmd.exe")
-        || text.contains("wscript")
-        || text.contains("cscript")
-        || text.contains("regsvr32")
-        || text.contains("scrobj")
-        || text.contains("<scriptlet")
-        || text.contains(".sct")
-        || text.contains(".wsc")
-        || text.contains("\\\\")
-        || text.contains("file://")
-        || text.contains("autoopen")
-        || text.contains("document_open")
-        || text.contains("workbook_open")
-        || text.contains("[autorun]")
-        || text.contains("mime-version:")
-        || text.contains("content-disposition: attachment")
-        || text.contains("<jnlp")
-        || text.contains(".jnlp")
-        || text.contains("<appinstaller")
-        || text.contains(".appinstaller")
-        || text.contains(".appx")
-        || text.contains(".msix")
-        || text.contains("<!doctype html")
-        || text.contains("<html")
-        || text.contains("<svg")
-    {
-        Some(text)
-    } else {
-        None
+        .map(|chunk| u16::from_le_bytes([chunk[0], chunk[1]]));
+    let mut text = String::with_capacity(bytes.len() / 2);
+    for (index, decoded) in char::decode_utf16(units).enumerate() {
+        if index % (64 * 1024) == 0 {
+            cancellation_checkpoint()?;
+        }
+        text.push(decoded.unwrap_or(char::REPLACEMENT_CHARACTER));
     }
+    text.make_ascii_lowercase();
+    cancellation_checkpoint()?;
+    for marker in [
+        "http://",
+        "https://",
+        "powershell",
+        "cmd.exe",
+        "wscript",
+        "cscript",
+        "regsvr32",
+        "scrobj",
+        "<scriptlet",
+        ".sct",
+        ".wsc",
+        "\\\\",
+        "file://",
+        "autoopen",
+        "document_open",
+        "workbook_open",
+        "[autorun]",
+        "mime-version:",
+        "content-disposition: attachment",
+        "<jnlp",
+        ".jnlp",
+        "<appinstaller",
+        ".appinstaller",
+        ".appx",
+        ".msix",
+        "<!doctype html",
+        "<html",
+        "<svg",
+    ] {
+        cancellation_checkpoint()?;
+        if text.contains(marker) {
+            return Ok(Some(text));
+        }
+    }
+    Ok(None)
 }
 
-fn embedded_urls(text: &str) -> Vec<&str> {
-    let mut urls = Vec::new();
+#[derive(Default)]
+struct EmbeddedUrlCounts {
+    total: u32,
+    executable: u32,
+    clickonce: u32,
+    java_web_start: u32,
+    windows_app_package: u32,
+}
+
+fn embedded_url_counts_with_cancellation(
+    text: &str,
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<EmbeddedUrlCounts> {
+    let mut counts = EmbeddedUrlCounts::default();
+    let mut references_seen = 0usize;
     for marker in ["http://", "https://"] {
+        cancellation_checkpoint()?;
         let mut search_start = 0;
         while let Some(relative_start) = text[search_start..].find(marker) {
+            if references_seen.is_multiple_of(STRING_REFERENCE_CANCELLATION_INTERVAL) {
+                cancellation_checkpoint()?;
+            }
             let start = search_start + relative_start;
             let rest = &text[start..];
             let end = rest
@@ -429,11 +513,26 @@ fn embedded_urls(text: &str) -> Vec<&str> {
                     ch.is_whitespace() || matches!(ch, '"' | '\'' | '<' | '>' | ')' | ']' | '}')
                 })
                 .unwrap_or(rest.len());
-            urls.push(&rest[..end]);
+            let url = &rest[..end];
+            counts.total = counts.total.saturating_add(1);
+            counts.executable = counts
+                .executable
+                .saturating_add(u32::from(url_has_executable_or_script_suffix(url)));
+            counts.clickonce = counts
+                .clickonce
+                .saturating_add(u32::from(url_has_clickonce_suffix(url)));
+            counts.java_web_start = counts
+                .java_web_start
+                .saturating_add(u32::from(url_has_java_web_start_suffix(url)));
+            counts.windows_app_package = counts
+                .windows_app_package
+                .saturating_add(u32::from(url_has_windows_app_package_suffix(url)));
+            references_seen = references_seen.saturating_add(1);
             search_start = start + marker.len();
         }
     }
-    urls
+    cancellation_checkpoint()?;
+    Ok(counts)
 }
 
 fn url_has_executable_or_script_suffix(url: &str) -> bool {
@@ -462,29 +561,36 @@ fn url_has_windows_app_package_suffix(url: &str) -> bool {
         .any(|suffix| path.ends_with(suffix))
 }
 
-fn remote_network_paths(text: &str) -> Vec<&str> {
-    let mut paths = Vec::new();
-    collect_delimited_refs(text, "\\\\", &mut paths);
-    collect_delimited_refs(text, "file://", &mut paths);
-    paths
-        .into_iter()
-        .filter(|path| is_remote_network_path(path))
-        .collect()
-}
-
-fn collect_delimited_refs<'a>(text: &'a str, marker: &str, values: &mut Vec<&'a str>) {
-    let mut search_start = 0;
-    while let Some(relative_start) = text[search_start..].find(marker) {
-        let start = search_start + relative_start;
-        let rest = &text[start..];
-        let end = rest
-            .find(|ch: char| {
-                ch.is_whitespace() || matches!(ch, '"' | '\'' | '<' | '>' | ')' | ']' | '}')
-            })
-            .unwrap_or(rest.len());
-        values.push(&rest[..end]);
-        search_start = start + marker.len();
+fn remote_network_executable_path_count_with_cancellation(
+    text: &str,
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<u32> {
+    let mut executable_count = 0u32;
+    let mut references_seen = 0usize;
+    for marker in ["\\\\", "file://"] {
+        cancellation_checkpoint()?;
+        let mut search_start = 0;
+        while let Some(relative_start) = text[search_start..].find(marker) {
+            if references_seen.is_multiple_of(STRING_REFERENCE_CANCELLATION_INTERVAL) {
+                cancellation_checkpoint()?;
+            }
+            let start = search_start + relative_start;
+            let rest = &text[start..];
+            let end = rest
+                .find(|ch: char| {
+                    ch.is_whitespace() || matches!(ch, '"' | '\'' | '<' | '>' | ')' | ']' | '}')
+                })
+                .unwrap_or(rest.len());
+            let path = &rest[..end];
+            if is_remote_network_path(path) && path_has_executable_or_script_suffix(path) {
+                executable_count = executable_count.saturating_add(1);
+            }
+            references_seen = references_seen.saturating_add(1);
+            search_start = start + marker.len();
+        }
     }
+    cancellation_checkpoint()?;
+    Ok(executable_count)
 }
 
 fn is_remote_network_path(path: &str) -> bool {
@@ -519,101 +625,125 @@ fn path_has_executable_or_script_suffix(path: &str) -> bool {
         .any(|suffix| path.ends_with(suffix))
 }
 
-fn clickonce_markers(text: &str) -> u32 {
-    [
-        "deploymentprovider",
-        "asmv2:deployment",
-        "urn:schemas-microsoft-com:asm.v2",
-        "<deployment ",
-        "<deployment>",
-        "<dependentassembly",
-        "applicationreference",
-    ]
-    .iter()
-    .map(|term| text.matches(term).count() as u32)
-    .sum()
+fn clickonce_markers(
+    text: &str,
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<u32> {
+    count_terms_with_cancellation(
+        text,
+        &[
+            "deploymentprovider",
+            "asmv2:deployment",
+            "urn:schemas-microsoft-com:asm.v2",
+            "<deployment ",
+            "<deployment>",
+            "<dependentassembly",
+            "applicationreference",
+        ],
+        cancellation_checkpoint,
+    )
 }
 
-fn java_web_start_markers(text: &str) -> u32 {
-    [
-        "<jnlp",
-        "jnlp spec",
-        "application-desc",
-        "applet-desc",
-        "installer-desc",
-        "<jar ",
-        " jar href",
-        "<extension ",
-        "java-vm-args",
-        "main-class",
-    ]
-    .iter()
-    .map(|term| text.matches(term).count() as u32)
-    .sum()
+fn java_web_start_markers(
+    text: &str,
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<u32> {
+    count_terms_with_cancellation(
+        text,
+        &[
+            "<jnlp",
+            "jnlp spec",
+            "application-desc",
+            "applet-desc",
+            "installer-desc",
+            "<jar ",
+            " jar href",
+            "<extension ",
+            "java-vm-args",
+            "main-class",
+        ],
+        cancellation_checkpoint,
+    )
 }
 
-fn windows_scriptlet_markers(text: &str) -> u32 {
-    [
-        "<scriptlet",
-        "scriptlet",
-        "<registration",
-        "<public",
-        "<script ",
-        "language=\"jscript",
-        "language=\"vbscript",
-        "regsvr32",
-        "scrobj.dll",
-        "script:",
-    ]
-    .iter()
-    .map(|term| text.matches(term).count() as u32)
-    .sum()
+fn windows_scriptlet_markers(
+    text: &str,
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<u32> {
+    count_terms_with_cancellation(
+        text,
+        &[
+            "<scriptlet",
+            "scriptlet",
+            "<registration",
+            "<public",
+            "<script ",
+            "language=\"jscript",
+            "language=\"vbscript",
+            "regsvr32",
+            "scrobj.dll",
+            "script:",
+        ],
+        cancellation_checkpoint,
+    )
 }
 
-fn windows_installer_markers(text: &str) -> u32 {
-    [
-        "windows installer",
-        "msiexec",
-        "installexecutesequence",
-        "installuisequence",
-        "productcode",
-        "packagecode",
-        "msipatchmetadata",
-    ]
-    .iter()
-    .map(|term| text.matches(term).count() as u32)
-    .sum()
+fn windows_installer_markers(
+    text: &str,
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<u32> {
+    count_terms_with_cancellation(
+        text,
+        &[
+            "windows installer",
+            "msiexec",
+            "installexecutesequence",
+            "installuisequence",
+            "productcode",
+            "packagecode",
+            "msipatchmetadata",
+        ],
+        cancellation_checkpoint,
+    )
 }
 
-fn windows_installer_custom_actions(text: &str) -> u32 {
-    [
-        "customaction",
-        "custom action",
-        "wixquietexec",
-        "wixsilentexec",
-        "quietexec",
-        "deferred",
-        "commit custom",
-        "rollback custom",
-    ]
-    .iter()
-    .map(|term| text.matches(term).count() as u32)
-    .sum()
+fn windows_installer_custom_actions(
+    text: &str,
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<u32> {
+    count_terms_with_cancellation(
+        text,
+        &[
+            "customaction",
+            "custom action",
+            "wixquietexec",
+            "wixsilentexec",
+            "quietexec",
+            "deferred",
+            "commit custom",
+            "rollback custom",
+        ],
+        cancellation_checkpoint,
+    )
 }
 
-fn windows_appinstaller_markers(text: &str) -> u32 {
-    [
-        "<appinstaller",
-        "appinstaller",
-        "mainpackage",
-        "<mainbundle",
-        "packageuri",
-        "uri=\"",
-        "schemas.microsoft.com/appx/appinstaller",
-    ]
-    .iter()
-    .map(|term| text.matches(term).count() as u32)
-    .sum()
+fn windows_appinstaller_markers(
+    text: &str,
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<u32> {
+    count_terms_with_cancellation(
+        text,
+        &[
+            "<appinstaller",
+            "appinstaller",
+            "mainpackage",
+            "<mainbundle",
+            "packageuri",
+            "uri=\"",
+            "schemas.microsoft.com/appx/appinstaller",
+        ],
+        cancellation_checkpoint,
+    )
 }
 
 fn has_compound_file_binary_header(bytes: &[u8]) -> bool {
@@ -623,6 +753,75 @@ fn has_compound_file_binary_header(bytes: &[u8]) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn non_archive_static_cancellation_interrupts_string_indicator_substeps() {
+        let bytes = b"https://example.invalid/readme.txt powershell benign";
+        let mut checks = 0usize;
+        let mut checkpoint = || {
+            checks += 1;
+            if checks == 7 {
+                anyhow::bail!("benign string-indicator cancellation")
+            }
+            Ok(())
+        };
+
+        let error = extract_indicators_with_cancellation(bytes, &mut checkpoint)
+            .expect_err("string cancellation must abort indicator extraction");
+
+        assert!(error
+            .to_string()
+            .contains("benign string-indicator cancellation"));
+        assert_eq!(checks, 7);
+    }
+
+    #[test]
+    fn non_archive_static_cancellation_streams_reference_counts_without_vectors() {
+        let text = "https://example.invalid/readme.txt ".repeat(3000);
+        let indicators = extract_indicators(text.as_bytes());
+
+        assert_eq!(indicators.embedded_url_count, 3000);
+        assert_eq!(indicators.remote_executable_url_count, 0);
+        let source = include_str!("strings.rs");
+        assert!(source.contains("embedded_url_counts_with_cancellation"));
+        assert!(source.contains("remote_network_executable_path_count_with_cancellation"));
+        let old_url_vector = ["fn embedded_urls(text: &str) -> ", "Vec<&str>"].concat();
+        let old_path_vector = ["fn remote_network_paths(text: &str) -> ", "Vec<&str>"].concat();
+        assert!(!source.contains(&old_url_vector));
+        assert!(!source.contains(&old_path_vector));
+    }
+
+    #[test]
+    fn non_archive_static_cancellation_preserves_string_wrapper_results() {
+        let bytes = b"https://example.invalid/tool.exe 192.0.2.1 powershell";
+        let wrapped = extract_indicators(bytes);
+        let mut never_cancel = || Ok(());
+        let fallible = extract_indicators_with_cancellation(bytes, &mut never_cancel)
+            .expect("fallible string analysis must pass without cancellation");
+
+        assert_eq!(wrapped, fallible);
+    }
+
+    #[test]
+    fn non_archive_static_cancellation_interrupts_streamed_ip_candidates() {
+        let text = "192.0.2.1 ".repeat(4096);
+        let mut checks = 0usize;
+        let mut checkpoint = || {
+            checks += 1;
+            if checks == 2 {
+                anyhow::bail!("benign IP traversal cancellation")
+            }
+            Ok(())
+        };
+
+        let error = embedded_ip_count_with_cancellation(&text, &mut checkpoint)
+            .expect_err("IP traversal cancellation must abort counting");
+
+        assert!(error
+            .to_string()
+            .contains("benign IP traversal cancellation"));
+        assert_eq!(checks, 2);
+    }
 
     #[test]
     fn string_indicators_count_registry_and_shortcut_carriers() {

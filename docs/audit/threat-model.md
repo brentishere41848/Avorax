@@ -3186,3 +3186,54 @@ SHA-256 is
 `b5c403d2795bbbd9ff544a6ba431b45c14c2620ec6b99557afb93fed1079a405`.
 Checkpoint 2244 is closed, but this evidence does not expand the cooperative
 user-mode claim or remove the residual risks above.
+
+## Checkpoint 2245 Non-Archive Static Cancellation Threat Delta
+
+**Threat:** a large but bounded non-archive sample delays job cancellation in
+entropy, string, PE, or script analysis; match-proportional URL/path vectors add
+avoidable memory pressure; or a callback error is swallowed and a partial
+static result reaches verdict fusion.
+
+**Mitigation:** the shared fallible callback now brackets phases, 4096-byte
+entropy aggregation, at-most-64-KiB entropy/debug/decode chunks, streamed URL/
+network-path/IP intervals, PE sections/import terms, and script/string term
+passes. URL and remote-path counts no longer retain match references. Arbitrary
+callback errors cross the analyzer/engine boundary, so no partial
+`StaticAnalysis` or verdict can be returned. Exact wrapper-parity tests guard
+existing behavior.
+
+**Residual risk:** cancellation remains cooperative. One active UTF-8/UTF-16
+normalization, term search, bounded parser/system call, synchronous rule/ML call,
+or Windows trust operation can complete first. The existing 64 MiB sample cap
+bounds non-archive input but is not a constant-memory or hard-preemption proof.
+This remains user-mode post-start control, not installed-service, driver, kernel,
+or pre-execution enforcement.
+
+Verifier step 274 and Source contract 675 are scripted. No checkpoint-2245 test
+has run during this scripting phase. Reputation and telemetry-dependent behavior
+engines remain disabled with their existing blockers; no protection capability
+is fake-enabled.
+
+Local focused `15/15`, analyzer `99/99`, Source contract `675/675`, strict
+Native lint, and complete Native `574` plus compiler `6/6` evidence now pass.
+Five benign child starts in an earlier run were blocked by Defender error 225;
+the individual tests and clean complete rerun pass without changing Defender.
+At that stage exact verifier step 274 and integration/destination proof remained
+pending.
+
+Local Core `546/546`, Flutter analyze and `847/847`, strict Local Core lint, and
+the locked release build pass. Protected-vault and dependency-lock preflight are
+unchanged. These results do not expand cooperative user-mode cancellation into
+hard preemption, driver mediation, or pre-execution enforcement.
+
+Definitive local verification now passes exact `274/274` in `539.7s`. Embedded
+and independent PowerShell 5.1/7 validators accept the exact report; both
+independent hosts reject copies missing step 274 or its required entropy scope.
+This evidence verifies fail-visible report enforcement but does not alter any
+cooperative-cancellation residual risk or disabled-engine blocker above.
+
+Hosted implementation-head CI, platform packaging, and bounded non-extracting
+artifact validation also pass. Both publication jobs are skipped. This proves
+the source/package workflow on that exact head; it does not prove installed
+service ownership, production signing/notarization, driver mediation,
+pre-execution blocking, or hard cancellation.

@@ -1580,6 +1580,47 @@ execution. Destination lock hashes remain exact. Checkpoint 2241 introduces no
 dependency, feature, package source, license classification, or lockfile
 change; final-binary SBOM resolution and legal approval remain separate.
 
+## Checkpoint 2245 Non-Archive Static Cancellation Delta
+
+Checkpoint 2245 adds no dependency, feature, build script, downloaded content,
+package source, license classification, license obligation, or lockfile change.
+It uses Rust standard-library iterators/counters/callbacks and the already locked
+`anyhow` error contract. Existing dependency pins and license evidence remain
+authoritative.
+
+Benign tests use ordinary strings and synthetic PE bytes in memory; they do not
+download, unpack, retain, or execute malware and do not touch the protected
+quarantine vault. Exact verifier step 274 and Source contract 675 are scripted,
+but no checkpoint-2245 test has run during this scripting phase. Final-binary
+SBOM resolution, production signing, release-host packaging, and legal approval
+remain separate prerequisites.
+
+Local focused, analyzer, strict Native lint, complete Native, and exact Source
+contract `675/675` evidence pass without modifying any dependency manifest or
+lockfile. At that stage definitive verifier 274 and hosted SBOM/package evidence
+remained pending; no dependency or license conclusion is expanded by the local
+tests.
+
+Local Core `546/546`, Flutter analyze and `847/847`, strict Local Core lint, and
+the locked workspace release build pass with no manifest or lockfile diff.
+Protected-vault preflight is unchanged. Hosted package/SBOM and final-binary
+license evidence remain pending.
+
+Definitive local verification now passes exact `274/274` under the locked
+dependency graph; both independent PowerShell report validators pass and reject
+the two malformed evidence copies. No dependency manifest or lockfile changed.
+Hosted package/SBOM and final-binary license evidence remain pending.
+
+Implementation-head push and PR package matrices now pass. The downloaded PR
+consolidated artifact matches GitHub's SHA-256 and contains exact CycloneDX 1.6
+lockfile evidence with `569` components; all seven checksum rows match their
+streamed entries. No entry was extracted or executed, and both publication jobs
+are skipped. Legal approval, production signing/notarization, and final release
+approval remain separate and partial.
+
+
+
+
 ## Checkpoint 2244 Static Archive Analysis Cancellation Delta
 
 Checkpoint 2244 adds no dependency, feature, build script, downloaded content,

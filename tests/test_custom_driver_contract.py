@@ -20915,8 +20915,8 @@ def test_small_threat_mvp_report_validator_is_strict_and_local():
     assert "driver_request_known_good_allows_in_lockdown" in source
     assert "Get-AvoraxGateFile ([System.IO.Path]::GetFullPath($text)) $Description" in source
     assert "-RequireFullSuite requires skip_flutter=false and skip_rust=false" in source
-    assert "if ($steps.Count -ne 273)" in source
-    assert "-RequireFullSuite expected exactly 273 verifier steps" in source
+    assert "if ($steps.Count -ne 274)" in source
+    assert "-RequireFullSuite expected exactly 274 verifier steps" in source
     assert (
         'Assert-ReportContainsStep $steps "native-engine secondary catalog '
         'Authenticode selection regressions"'
@@ -25309,7 +25309,7 @@ def test_native_secondary_catalog_authenticode_is_bounded_exact_and_honestly_par
     assert "native_secondary_catalog_authenticode_primary_runtime_is_exact_and_hash_bound" in source
     assert "native-engine secondary catalog Authenticode selection regressions" in verifier
     assert '"native_secondary_catalog_authenticode"' in verifier
-    assert "if ($steps.Count -ne 273)" in validator
+    assert "if ($steps.Count -ne 274)" in validator
     assert "no controlled benign multi-signed system-catalog fixture" in verifier
     assert "no controlled benign multi-signed system-catalog fixture" in validator
     assert "$technicalLimitText = Assert-JsonString" in validator
@@ -25346,8 +25346,8 @@ def test_native_authenticode_helper_job_resources_are_exact_and_fail_visible():
     )
     assert "native-engine Authenticode helper Job resource-limit regressions" in verifier
     assert '"native_authenticode_helper_job_limits"' in verifier
-    assert "if ($steps.Count -ne 273)" in validator
-    assert "expected exactly 273 verifier steps" in validator
+    assert "if ($steps.Count -ne 274)" in validator
+    assert "expected exactly 274 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper Job '
         'resource-limit regressions"'
@@ -25413,8 +25413,8 @@ def test_native_authenticode_helper_job_ui_restrictions_are_exact_and_fail_visib
     assert "native_authenticode_helper_job_ui_restrictions_are_exact_and_fail_visible" in source
     assert "native-engine Authenticode helper Job UI-restriction regressions" in verifier
     assert '"native_authenticode_helper_job_ui_restrictions"' in verifier
-    assert "if ($steps.Count -ne 273)" in validator
-    assert "expected exactly 273 verifier steps" in validator
+    assert "if ($steps.Count -ne 274)" in validator
+    assert "expected exactly 274 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper Job '
         'UI-restriction regressions"'
@@ -25522,8 +25522,8 @@ def test_native_authenticode_helper_private_desktop_is_exact_and_fail_visible():
     assert "native_authenticode_helper_private_desktop_contract_is_exact_and_fail_visible" in source
     assert "native-engine Authenticode helper private-desktop regressions" in verifier
     assert '"native_authenticode_helper_private_desktop"' in verifier
-    assert "if ($steps.Count -ne 273)" in validator
-    assert "expected exactly 273 verifier steps" in validator
+    assert "if ($steps.Count -ne 274)" in validator
+    assert "expected exactly 274 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper '
         'private-desktop regressions"'
@@ -25625,8 +25625,8 @@ def test_native_authenticode_helper_standard_handles_are_exact_and_fail_visible(
     assert "AVORAX_STANDARD_HANDLE_BINDING_OK" in source
     assert "native-engine Authenticode helper standard-handle binding regressions" in verifier
     assert '"native_authenticode_helper_standard_handle"' in verifier
-    assert "if ($steps.Count -ne 273)" in validator
-    assert "expected exactly 273 verifier steps" in validator
+    assert "if ($steps.Count -ne 274)" in validator
+    assert "expected exactly 274 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper '
         'standard-handle binding regressions"'
@@ -25718,8 +25718,8 @@ def test_native_authenticode_helper_pipe_peers_bind_to_exact_parent_creator():
     assert "AVORAX_PIPE_PEER_PARENT_BINDING_OK" in source
     assert "native-engine Authenticode helper pipe-peer process regressions" in verifier
     assert '"native_authenticode_helper_pipe_peer_process"' in verifier
-    assert "if ($steps.Count -ne 273)" in validator
-    assert "expected exactly 273 verifier steps" in validator
+    assert "if ($steps.Count -ne 274)" in validator
+    assert "expected exactly 274 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper '
         'pipe-peer process regressions"'
@@ -25827,8 +25827,8 @@ def test_native_authenticode_helper_parent_child_handshake_is_mutually_pid_bound
     assert "AVORAX_PARENT_CHILD_PROCESS_BINDING_OK" in source
     assert "native-engine Authenticode helper parent-child handshake regressions" in verifier
     assert '"native_authenticode_helper_parent_child_handshake"' in verifier
-    assert "if ($steps.Count -ne 273)" in validator
-    assert "expected exactly 273 verifier steps" in validator
+    assert "if ($steps.Count -ne 274)" in validator
+    assert "expected exactly 274 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper '
         'parent-child handshake regressions"'
@@ -25922,8 +25922,8 @@ def test_native_authenticode_handshake_pipe_security_is_read_back_exactly():
     )
     assert "native-engine Authenticode handshake pipe security read-back regressions" in verifier
     assert '"native_authenticode_handshake_pipe_security_readback"' in verifier
-    assert "if ($steps.Count -ne 273)" in validator
-    assert "expected exactly 273 verifier steps" in validator
+    assert "if ($steps.Count -ne 274)" in validator
+    assert "expected exactly 274 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode handshake '
         'pipe security read-back regressions"'
@@ -26021,8 +26021,8 @@ def test_native_authenticode_handshake_client_security_is_read_back_before_token
         in verifier
     )
     assert '"native_authenticode_handshake_client_pipe_security_readback"' in verifier
-    assert "if ($steps.Count -ne 273)" in validator
-    assert "expected exactly 273 verifier steps" in validator
+    assert "if ($steps.Count -ne 274)" in validator
+    assert "expected exactly 274 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode handshake '
         'client security read-back regressions"'
@@ -26129,8 +26129,8 @@ def test_native_authenticode_handshake_pipe_dacl_is_least_privilege_and_exact():
     step = "native-engine Authenticode handshake pipe least-privilege DACL regressions"
     assert step in verifier
     assert '"native_authenticode_handshake_pipe_dacl_least_privilege"' in verifier
-    assert "if ($steps.Count -ne 273)" in validator
-    assert "expected exactly 273 verifier steps" in validator
+    assert "if ($steps.Count -ne 274)" in validator
+    assert "expected exactly 274 verifier steps" in validator
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
     verified_scope = (
         "Bounded structured ACL reads require a protected nondefault DACL containing exactly "
@@ -26235,8 +26235,8 @@ def test_native_authenticode_handshake_pipe_owner_rights_are_exact_and_fail_visi
     step = "native-engine Authenticode handshake pipe owner-rights regressions"
     assert step in verifier
     assert '"native_authenticode_handshake_pipe_owner_rights"' in verifier
-    assert "if ($steps.Count -ne 273)" in validator
-    assert "expected exactly 273 verifier steps" in validator
+    assert "if ($steps.Count -ne 274)" in validator
+    assert "expected exactly 274 verifier steps" in validator
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
     verified_owner = (
         "the handshake descriptor sets and reads back the exact current process-token user SID "
@@ -26390,8 +26390,8 @@ def test_native_authenticode_handshake_pipe_client_token_is_exact_and_fail_visib
     step = "native-engine Authenticode handshake pipe client-token regressions"
     assert step in verifier
     assert '"native_authenticode_handshake_pipe_client_token"' in verifier
-    assert "if ($steps.Count -ne 273)" in validator
-    assert "expected exactly 273 verifier steps" in validator
+    assert "if ($steps.Count -ne 274)" in validator
+    assert "expected exactly 274 verifier steps" in validator
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
     verified_sqos = (
         "the Authenticode helper opens the handshake client with explicit "
@@ -26524,8 +26524,8 @@ def test_native_authenticode_handshake_client_logon_session_is_exact_and_fail_vi
     step = "native-engine Authenticode handshake client logon-session regressions"
     assert step in verifier
     assert '"native_authenticode_handshake_client_logon_session"' in verifier
-    assert "if ($steps.Count -ne 273)" in validator
-    assert "expected exactly 273 verifier steps" in validator
+    assert "if ($steps.Count -ne 274)" in validator
+    assert "expected exactly 274 verifier steps" in validator
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
     scope_fragments = [
         "before handshake pipe creation, the parent queries exact TokenStatistics.AuthenticationId",
@@ -26627,8 +26627,8 @@ def test_native_authenticode_handshake_client_token_stability_is_exact_and_fail_
     step = "native-engine Authenticode handshake client token-stability regressions"
     assert step in verifier
     assert '"native_authenticode_handshake_client_token_stability"' in verifier
-    assert "if ($steps.Count -ne 273)" in validator
-    assert "expected exactly 273 verifier steps" in validator
+    assert "if ($steps.Count -ne 274)" in validator
+    assert "expected exactly 274 verifier steps" in validator
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
     scope_fragments = [
         "snapshots the exact TokenStatistics.TokenId and ModifiedId before all client-token property checks",
@@ -26751,8 +26751,8 @@ def test_native_authenticode_launch_token_stability_spans_creation_and_handshake
     step = "native-engine Authenticode launch token-stability regressions"
     assert step in verifier
     assert '"native_authenticode_launch_token_stability"' in verifier
-    assert "if ($steps.Count -ne 273)" in validator
-    assert "expected exactly 273 verifier steps" in validator
+    assert "if ($steps.Count -ne 274)" in validator
+    assert "expected exactly 274 verifier steps" in validator
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
     scope_fragments = [
         "before handshake pipe creation, the parent snapshots the exact launch primary TokenStatistics.TokenId and ModifiedId",
@@ -26922,8 +26922,8 @@ def test_native_authenticode_child_process_token_binding_is_key_confirmation_gat
     step = "native-engine Authenticode child process-token binding regressions"
     assert step in verifier
     assert '"native_authenticode_child_process_token_binding"' in verifier
-    assert "if ($steps.Count -ne 273)" in validator
-    assert "expected exactly 273 verifier steps" in validator
+    assert "if ($steps.Count -ne 274)" in validator
+    assert "expected exactly 274 verifier steps" in validator
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
     scope_fragments = [
         "Before disclosing the random launch key, the parent binds the connected pipe client PID to the exact retained child process",
@@ -27064,8 +27064,8 @@ def test_native_authenticode_post_response_token_stability_is_final_ack_gated():
     step = "native-engine Authenticode post-response token-stability regressions"
     assert step in verifier
     assert '"native_authenticode_post_response_token_stability"' in verifier
-    assert "if ($steps.Count -ne 273)" in validator
-    assert "expected exactly 273 verifier steps" in validator
+    assert "if ($steps.Count -ne 274)" in validator
+    assert "expected exactly 274 verifier steps" in validator
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
     scope_fragments = [
         "the same duplex handshake remains open through candidate trust work and bounded response production",
@@ -27168,8 +27168,8 @@ def test_native_authenticode_response_client_reauthentication_is_exact_and_fail_
     step = "native-engine Authenticode response client-reauthentication regressions"
     assert step in verifier
     assert '"native_authenticode_post_response_client_reauthentication"' in verifier
-    assert "if ($steps.Count -ne 273)" in validator
-    assert "expected exactly 273 verifier steps" in validator
+    assert "if ($steps.Count -ne 274)" in validator
+    assert "expected exactly 274 verifier steps" in validator
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
     scope_fragments = [
         "after accepting the exact response-binding frame marker, length, and MAC and before launch-token or child-process-token read-back and final ACK",
@@ -27305,8 +27305,8 @@ def test_native_authenticode_response_hash_binding_is_exact_and_fail_visible():
     step = "native-engine Authenticode response hash-binding regressions"
     assert step in verifier
     assert '"native_authenticode_response_hash_binding"' in verifier
-    assert "if ($steps.Count -ne 273)" in validator
-    assert "expected exactly 273 verifier steps" in validator
+    assert "if ($steps.Count -ne 274)" in validator
+    assert "expected exactly 274 verifier steps" in validator
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
     scope_fragments = [
         "After flushing exact bounded stdout, the child computes domain-separated HMAC-SHA-256 under the exact canonical 36-byte random launch-token key",
@@ -27397,8 +27397,8 @@ def test_native_authenticode_response_launch_key_mac_is_exact_and_fail_visible()
     step = "native-engine Authenticode response launch-key MAC regressions"
     assert step in verifier
     assert '"native_authenticode_response_mac_binding"' in verifier
-    assert "if ($steps.Count -ne 273)" in validator
-    assert "expected exactly 273 verifier steps" in validator
+    assert "if ($steps.Count -ne 274)" in validator
+    assert "expected exactly 274 verifier steps" in validator
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
     scope_fragments = [
         "exact canonical 36-byte random launch-token key",
@@ -27497,8 +27497,8 @@ def test_native_authenticode_launch_key_is_pipe_delivered_not_environment_inheri
     step = "native-engine Authenticode pipe-delivered launch-key regressions"
     assert step in verifier
     assert '"native_authenticode_pipe_delivered_launch_key"' in verifier
-    assert "if ($steps.Count -ne 273)" in validator
-    assert "expected exactly 273 verifier steps" in validator
+    assert "if ($steps.Count -ne 274)" in validator
+    assert "expected exactly 274 verifier steps" in validator
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
     scope_fragments = [
         "Before disclosing the random launch key, the parent binds the connected pipe client PID to the exact retained child process",
@@ -27613,8 +27613,8 @@ def test_native_authenticode_launch_key_confirmation_is_hmac_context_bound():
     step = "native-engine Authenticode launch-key confirmation HMAC regressions"
     assert step in verifier
     assert '"native_authenticode_handshake_key_confirmation"' in verifier
-    assert "if ($steps.Count -ne 273)" in validator
-    assert "expected exactly 273 verifier steps" in validator
+    assert "if ($steps.Count -ne 274)" in validator
+    assert "expected exactly 274 verifier steps" in validator
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
     scope_fragments = [
         "the child computes the handshake key confirmation as domain-separated HMAC-SHA-256",
@@ -27736,8 +27736,8 @@ def test_native_authenticode_launch_key_material_is_zeroized_best_effort():
     step = "native-engine Authenticode launch-key zeroization regressions"
     assert step in verifier
     assert '"native_authenticode_launch_key_zeroization"' in verifier
-    assert "if ($steps.Count -ne 273)" in validator
-    assert "expected exactly 273 verifier steps" in validator
+    assert "if ($steps.Count -ne 274)" in validator
+    assert "expected exactly 274 verifier steps" in validator
     assert "if ($steps.Count -ne 261)" not in validator
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
     scope_fragments = [
@@ -27835,8 +27835,8 @@ def test_native_authenticode_launch_key_uses_one_guarded_fixed_buffer():
     step = "native-engine Authenticode fixed launch-key buffer regressions"
     assert step in verifier
     assert '"native_authenticode_launch_key_fixed_buffer"' in verifier
-    assert "if ($steps.Count -ne 273)" in validator
-    assert "expected exactly 273 verifier steps" in validator
+    assert "if ($steps.Count -ne 274)" in validator
+    assert "expected exactly 274 verifier steps" in validator
     assert "if ($steps.Count -ne 262)" not in validator
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
     scope_fragments = [
@@ -27921,8 +27921,8 @@ def test_native_authenticode_helper_job_membership_is_exact_and_fail_visible():
     assert "AVORAX_JOB_MEMBERSHIP_OK" in source
     assert "native-engine Authenticode helper Job membership regressions" in verifier
     assert '"native_authenticode_helper_job_membership"' in verifier
-    assert "if ($steps.Count -ne 273)" in validator
-    assert "expected exactly 273 verifier steps" in validator
+    assert "if ($steps.Count -ne 274)" in validator
+    assert "expected exactly 274 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper Job '
         'membership regressions"'
@@ -28072,8 +28072,8 @@ def test_native_authenticode_helper_uses_restricted_primary_process_token_and_ex
     assert "AVORAX_RESTRICTED_PRIMARY_TOKEN_OK" in source
     assert "native-engine Authenticode helper restricted-process-token regressions" in verifier
     assert '"native_authenticode_helper_restricted_process"' in verifier
-    assert "if ($steps.Count -ne 273)" in validator
-    assert "expected exactly 273 verifier steps" in validator
+    assert "if ($steps.Count -ne 274)" in validator
+    assert "expected exactly 274 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper '
         'restricted-process-token regressions"'
@@ -28144,8 +28144,8 @@ def test_native_authenticode_helper_launch_environment_and_directory_are_sanitiz
     assert "AVORAX_SANITIZED_LAUNCH_CONTEXT_OK" in source
     assert "native-engine Authenticode helper sanitized-launch regressions" in verifier
     assert '"native_authenticode_helper_sanitized"' in verifier
-    assert "if ($steps.Count -ne 273)" in validator
-    assert "expected exactly 273 verifier steps" in validator
+    assert "if ($steps.Count -ne 274)" in validator
+    assert "expected exactly 274 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper '
         'sanitized-launch regressions"'
@@ -28221,8 +28221,8 @@ def test_native_authenticode_helper_process_mitigations_are_applied_and_read_bac
     assert "AVORAX_PROCESS_MITIGATION_POLICY_OK" in source
     assert "native-engine Authenticode helper process-mitigation regressions" in verifier
     assert '"native_authenticode_helper_process_mitigation"' in verifier
-    assert "if ($steps.Count -ne 273)" in validator
-    assert "expected exactly 273 verifier steps" in validator
+    assert "if ($steps.Count -ne 274)" in validator
+    assert "expected exactly 274 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper '
         'process-mitigation regressions"'
@@ -28306,8 +28306,8 @@ def test_native_authenticode_helper_primary_token_is_exact_low_integrity():
     assert "revert_authenticode_helper_thread_token().unwrap()" in source
     assert "native-engine Authenticode helper low-integrity-primary-token regressions" in verifier
     assert '"native_authenticode_helper_low_integrity"' in verifier
-    assert "if ($steps.Count -ne 273)" in validator
-    assert "expected exactly 273 verifier steps" in validator
+    assert "if ($steps.Count -ne 274)" in validator
+    assert "expected exactly 274 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper '
         'low-integrity-primary-token regressions"'
@@ -28382,8 +28382,8 @@ def test_native_authenticode_helper_mandatory_no_write_up_policy_is_inherited_an
     assert "AVORAX_MANDATORY_NO_WRITE_UP_POLICY_OK" in source
     assert "native-engine Authenticode helper mandatory no-write-up policy regressions" in verifier
     assert '"native_authenticode_helper_mandatory_policy"' in verifier
-    assert "if ($steps.Count -ne 273)" in validator
-    assert "expected exactly 273 verifier steps" in validator
+    assert "if ($steps.Count -ne 274)" in validator
+    assert "expected exactly 274 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper '
         'mandatory no-write-up policy regressions"'
@@ -28461,8 +28461,8 @@ def test_native_authenticode_helper_validates_capability_and_disables_active_vir
     assert "AVORAX_TOKEN_VIRTUALIZATION_UIACCESS_DISABLED_OK" in source
     assert "native-engine Authenticode helper virtualization/UIAccess token regressions" in verifier
     assert '"native_authenticode_helper_token_safety_flags"' in verifier
-    assert "if ($steps.Count -ne 273)" in validator
-    assert "expected exactly 273 verifier steps" in validator
+    assert "if ($steps.Count -ne 274)" in validator
+    assert "expected exactly 274 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper '
         'virtualization/UIAccess token regressions"'
@@ -28548,8 +28548,8 @@ def test_native_authenticode_helper_uses_exact_write_restricting_sid_and_readbac
     assert "AVORAX_WRITE_RESTRICTED_MUTATION_DENIED" in source
     assert "native-engine Authenticode helper write-restricted-thread-token regressions" in verifier
     assert '"native_authenticode_helper_write_restricted"' in verifier
-    assert "if ($steps.Count -ne 273)" in validator
-    assert "expected exactly 273 verifier steps" in validator
+    assert "if ($steps.Count -ne 274)" in validator
+    assert "expected exactly 274 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper '
         'write-restricted-thread-token regressions"'
@@ -29418,8 +29418,8 @@ def test_bounded_risk_fusion_is_overflow_safe_explainable_and_exactly_verified()
     assert step in verifier
     assert '"bounded_risk_fusion"' in verifier
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
-    assert "if ($steps.Count -ne 273)" in validator
-    assert "expected exactly 273 verifier steps" in validator
+    assert "if ($steps.Count -ne 274)" in validator
+    assert "expected exactly 274 verifier steps" in validator
     assert "$technicalLimitsText" not in validator
     for scope in [
         "overflow-safe bounded score accumulation",
@@ -29534,8 +29534,8 @@ def test_checkpoint_2241_cooperative_in_engine_scan_cancellation_contract():
     assert step in verifier
     assert '"--workspace", "cooperative_scan_cancellation"' in verifier
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
-    assert "if ($steps.Count -ne 273)" in validator
-    assert "expected exactly 273 verifier steps" in validator
+    assert "if ($steps.Count -ne 274)" in validator
+    assert "expected exactly 274 verifier steps" in validator
     for scope in [
         "job-bound cancellation is checked around at-most-1-MiB content-hash reads",
         "An interrupted file publishes no partial verdict and is counted with the remaining queue as unscanned",
@@ -29614,8 +29614,8 @@ def test_checkpoint_2242_cooperative_archive_inflate_cancellation_contract():
     assert step in verifier
     assert '"--workspace", "cooperative_archive_cancellation"' in verifier
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
-    assert "if ($steps.Count -ne 273)" in validator
-    assert "expected exactly 273 verifier steps" in validator
+    assert "if ($steps.Count -ne 274)" in validator
+    assert "expected exactly 274 verifier steps" in validator
     for scope in [
         "bounded ZIP sampling checks cancellation before each local or central-directory entry",
         "before each at-most-64-KiB inflate output read",
@@ -29691,8 +29691,8 @@ def test_checkpoint_2243_parallel_authenticode_helper_lifecycle_contract():
     assert step in verifier
     assert '"native_authenticode_helper_lifecycle"' in verifier
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
-    assert "if ($steps.Count -ne 273)" in validator
-    assert "expected exactly 273 verifier steps" in validator
+    assert "if ($steps.Count -ne 274)" in validator
+    assert "expected exactly 274 verifier steps" in validator
     for scope in [
         "Authenticode stdout and stderr drainers start before the initial authenticated handshake",
         "four concurrent helpers complete independently without product-wide serialization",
@@ -29766,7 +29766,7 @@ def test_checkpoint_2244_static_archive_analysis_cancellation_contract():
     ]:
         assert marker in zip_analyzer
     assert (
-        engine.index("static archive analysis progress")
+        engine.index("static analysis progress")
         < engine.index("static analysis completion")
     )
     assert "analyze_path_with_size_and_cancellation" in engine
@@ -29776,8 +29776,8 @@ def test_checkpoint_2244_static_archive_analysis_cancellation_contract():
     assert step in verifier
     assert '"static_archive_cancellation"' in verifier
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
-    assert "if ($steps.Count -ne 273)" in validator
-    assert "expected exactly 273 verifier steps" in validator
+    assert "if ($steps.Count -ne 274)" in validator
+    assert "expected exactly 274 verifier steps" in validator
     for scope in [
         "Native static ZIP analysis checks cancellation before parser traversal",
         "before every local or central-directory metadata entry",
@@ -29835,6 +29835,146 @@ def test_checkpoint_2244_static_archive_analysis_cancellation_contract():
         "the complete antivirus hardening goal remains active",
     ]:
         assert claim in normalized_checkpoint
+    normalized_dependencies = re.sub(r"\s+", " ", documents[-1])
+    assert "adds no dependency, feature" in normalized_dependencies
+    assert "lockfile change" in normalized_dependencies
+
+
+def test_checkpoint_2245_non_archive_static_analysis_cancellation_contract():
+    analyzer_root = ROOT / "core" / "zentor_native_engine" / "src" / "analyzers"
+    entropy = read(analyzer_root / "entropy.rs")
+    analyzers = read(analyzer_root / "mod.rs")
+    strings = read(analyzer_root / "strings.rs")
+    scripts = read(analyzer_root / "scripts" / "mod.rs")
+    script_modules = [
+        read(analyzer_root / "scripts" / name)
+        for name in ["powershell.rs", "javascript.rs", "batch.rs", "vbs.rs"]
+    ]
+    pe_imports = read(analyzer_root / "pe" / "imports.rs")
+    pe_parser = read(analyzer_root / "pe" / "pe_parser.rs")
+    engine = read(NATIVE_ENGINE)
+    verifier = read(SMALL_THREAT_MVP_VERIFIER)
+    validator = read(SMALL_THREAT_MVP_REPORT_VALIDATOR)
+    checkpoint = read(
+        ROOT
+        / "docs"
+        / "reports"
+        / "checkpoint-2245-non-archive-static-analysis-cancellation.md"
+    )
+    documents = [
+        checkpoint,
+        read(RUN_LOG),
+        read(STATUS_DOC),
+        read(ROOT / "docs" / "audit" / "engine-control-matrix.md"),
+        read(ROOT / "docs" / "audit" / "threat-model.md"),
+        read(ROOT / "docs" / "audit" / "known-blockers.md"),
+        read(DEPENDENCY_LICENSE_INVENTORY),
+    ]
+
+    for marker in [
+        "ENTROPY_CANCELLATION_CHUNK_BYTES: usize = 64 * 1024",
+        "pub fn entropy_with_cancellation",
+        "non_archive_static_cancellation_interrupts_entropy_chunks",
+        "non_archive_static_cancellation_preserves_entropy_wrapper_result",
+    ]:
+        assert marker in entropy
+    analysis_body = analyzers[
+        analyzers.index("pub fn analyze_path_with_size_and_cancellation") :
+        analyzers.index("#[cfg(test)]")
+    ]
+    for marker in [
+        "for chunk in bytes.chunks(4096)",
+        "strings::extract_indicators_with_cancellation",
+        "pe::parse_pe_with_cancellation",
+        "scripts::analyze_script_with_cancellation",
+        "archives::zip::analyze_zip_with_cancellation",
+    ]:
+        assert marker in analysis_body
+    assert "collect::<Vec<_>>()" not in analysis_body
+
+    for marker in [
+        "embedded_url_counts_with_cancellation",
+        "remote_network_executable_path_count_with_cancellation",
+        "embedded_ip_count_with_cancellation",
+        "char::decode_utf16",
+        "STRING_REFERENCE_CANCELLATION_INTERVAL: usize = 1024",
+        "non_archive_static_cancellation_interrupts_string_indicator_substeps",
+        "non_archive_static_cancellation_interrupts_streamed_ip_candidates",
+        "non_archive_static_cancellation_preserves_string_wrapper_results",
+    ]:
+        assert marker in strings
+    assert "fn embedded_urls(text: &str) -> Vec<&str>" not in strings
+    assert "fn remote_network_paths(text: &str) -> Vec<&str>" not in strings
+    assert ".chunks_exact(2)" in strings
+    assert ".collect::<Vec<_>>();\n    let text = String::from_utf16_lossy" not in strings
+
+    for marker in [
+        "pub fn analyze_script_with_cancellation",
+        "count_terms_with_cancellation",
+        "contains_any_with_cancellation",
+        "non_archive_static_cancellation_interrupts_script_substeps",
+        "non_archive_static_cancellation_preserves_script_wrapper_results",
+    ]:
+        assert marker in scripts
+    for source in script_modules:
+        assert "pub fn analyze_with_cancellation" in source
+        assert "count_terms_with_cancellation" in source
+
+    for marker in [
+        "pub fn categorize_imports_with_cancellation",
+        "non_archive_static_cancellation_interrupts_pe_import_terms",
+    ]:
+        assert marker in pe_imports
+    for marker in [
+        "pub fn parse_pe_with_cancellation",
+        "entropy_with_cancellation",
+        "categorize_imports_with_cancellation",
+        "contains_debug_path_with_cancellation",
+        "PE_LINEAR_SCAN_CANCELLATION_CHUNK_BYTES: usize = 64 * 1024",
+        "non_archive_static_cancellation_interrupts_pe_section_traversal",
+        "non_archive_static_cancellation_interrupts_pe_debug_chunks",
+        "non_archive_static_cancellation_preserves_pe_wrapper_results",
+    ]:
+        assert marker in pe_parser
+
+    scan_start = engine.index("fn scan_bytes_at_with_cancellation")
+    scan_end = engine.index("pub fn scan_folder")
+    scan_body = engine[scan_start:scan_end]
+    assert scan_body.index("static analysis progress") < scan_body.index(
+        "analyze_path_with_size_and_cancellation"
+    )
+    assert scan_body.index("analyze_path_with_size_and_cancellation") < scan_body.index(
+        "static analysis completion"
+    )
+    assert "static archive analysis progress" not in scan_body
+    assert "non_archive_static_cancellation_is_wired_before_verdict_publication" in engine
+
+    step = "native-engine non-archive static analysis cancellation regressions"
+    assert step in verifier
+    assert '"non_archive_static_cancellation"' in verifier
+    assert f'Assert-ReportContainsStep $steps "{step}"' in validator
+    assert "if ($steps.Count -ne 274)" in validator
+    assert "expected exactly 274 verifier steps" in validator
+    for scope in [
+        "entropy 4096-byte traversal and PE section entropy use fallible checkpoints",
+        "string references stream counts without URL/path vectors while term groups, IP candidates, and UTF16 traversal checkpoint",
+        "PE section/import/debug and script term passes checkpoint",
+        "Arbitrary callback errors propagate; no partial StaticAnalysis/verdict is published",
+        "compatibility wrappers preserve behavior",
+        "one already-running UTF-8 or UTF-16 lossy/lowercase normalization or one term search can complete before the next checkpoint",
+        "existing 64 MiB sample cap",
+    ]:
+        assert scope in verifier
+        assert scope in validator
+
+    for document in documents:
+        normalized = re.sub(r"\s+", " ", document)
+        assert "Checkpoint 2245" in normalized
+        assert "cancellation" in normalized.lower()
+        assert "274" in normalized
+    normalized_checkpoint = re.sub(r"\s+", " ", checkpoint)
+    assert "No checkpoint-2245 test has run during this scripting phase" in normalized_checkpoint
+    assert "Source contract 675" in normalized_checkpoint
     normalized_dependencies = re.sub(r"\s+", " ", documents[-1])
     assert "adds no dependency, feature" in normalized_dependencies
     assert "lockfile change" in normalized_dependencies
@@ -29931,8 +30071,8 @@ def test_checkpoint_2239_scan_cancellation_generation_and_process_ownership_cont
     assert step in verifier
     assert '"scan cancellation"' in verifier
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
-    assert "if ($steps.Count -ne 273)" in validator
-    assert "expected exactly 273 verifier steps" in validator
+    assert "if ($steps.Count -ne 274)" in validator
+    assert "expected exactly 274 verifier steps" in validator
     for scope in [
         "scan cancellation is generation-bound to the exact active scan",
         "replacement manual, scheduled, picker, and visible scan starts remain blocked until cancellation resolves",
@@ -30053,8 +30193,8 @@ def test_checkpoint_2240_scan_job_bound_cancellation_contract():
     assert step in verifier
     assert '"scan_cancellation_is_bound_to_exact_job_and_validated"' in verifier
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
-    assert "if ($steps.Count -ne 273)" in validator
-    assert "expected exactly 273 verifier steps" in validator
+    assert "if ($steps.Count -ne 274)" in validator
+    assert "expected exactly 274 verifier steps" in validator
     for scope in [
         "every client scan receives a canonical random UUID before process start",
         "an old or wrong job token cannot cancel another scan",
@@ -30167,8 +30307,8 @@ def test_bounded_process_behavior_is_review_only_inventory_complete_and_exactly_
     assert step in verifier
     assert '"process_behavior"' in verifier
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
-    assert "if ($steps.Count -ne 273)" in validator
-    assert "expected exactly 273 verifier steps" in validator
+    assert "if ($steps.Count -ne 274)" in validator
+    assert "expected exactly 274 verifier steps" in validator
     for scope in [
         "bounded UTF-8-safe head/tail command-line sampling",
         "command indicators remain post-start review evidence",
@@ -30293,8 +30433,8 @@ def test_process_observation_native_behavior_wiring_is_bounded_visible_and_exact
     assert step in verifier
     assert '"native_process_review"' in verifier
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
-    assert "if ($steps.Count -ne 273)" in validator
-    assert "expected exactly 273 verifier steps" in validator
+    assert "if ($steps.Count -ne 274)" in validator
+    assert "expected exactly 274 verifier steps" in validator
     for scope in [
         "preserves caller-reported bounded command omission",
         "exact 16-review limit",
@@ -30379,8 +30519,8 @@ def test_protection_loop_generations_reject_stale_async_completion_and_are_exact
     assert step in verifier
     assert '"stale protection loop generation"' in verifier
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
-    assert "if ($steps.Count -ne 273)" in validator
-    assert "expected exactly 273 verifier steps" in validator
+    assert "if ($steps.Count -ne 274)" in validator
+    assert "expected exactly 274 verifier steps" in validator
     for scope in [
         "process-snapshot and finite watch-poll completions are generation-bound",
         "stopping or replacing a protection loop invalidates late success and error state/event publication",
