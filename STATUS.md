@@ -6908,3 +6908,12 @@ PowerShell 5.1/7 validators accept report SHA-256
 Both independent hosts reject missing-step and missing-required-scope copies.
 Hosted exact-head, merge, package, guarded-sync, destination regression, and
 destination definitive evidence remain pending.
+
+Implementation head `6a8c136aff321b9c8dac53547b5e988376603091` now passes CI
+`33003081719` and Desktop Packages push/PR runs `33003036684`/`33003081759`.
+Both package runs pass all four platform jobs and consolidation; both publication
+jobs are skipped. Downloaded PR artifact `9619955244` matches GitHub SHA-256
+`54a8e214df6976ed9b97859dd90470ca7c6be285dac75e86558e6096272aacd9`
+and passes bounded non-extracting exact 8/6/7/CycloneDX-1.6/569 validation.
+PR `#98` is open. Evidence-head, merge, main, guarded-sync, and destination
+evidence remain pending; the whole antivirus goal remains active.

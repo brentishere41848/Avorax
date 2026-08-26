@@ -3231,3 +3231,9 @@ and independent PowerShell 5.1/7 validators accept the exact report; both
 independent hosts reject copies missing step 274 or its required entropy scope.
 This evidence verifies fail-visible report enforcement but does not alter any
 cooperative-cancellation residual risk or disabled-engine blocker above.
+
+Hosted implementation-head CI, platform packaging, and bounded non-extracting
+artifact validation also pass. Both publication jobs are skipped. This proves
+the source/package workflow on that exact head; it does not prove installed
+service ownership, production signing/notarization, driver mediation,
+pre-execution blocking, or hard cancellation.

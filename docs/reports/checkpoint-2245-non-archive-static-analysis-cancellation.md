@@ -122,3 +122,23 @@ remain isolated under `.verification` and the accepted report was not modified.
 Hosted exact-head CI/package evidence, normal PR integration, guarded
 synchronization, destination regression, and destination definitive evidence
 remain required before checkpoint closure. No release or publication occurred.
+
+## Implementation-Head Hosted Evidence
+
+Implementation head `6a8c136aff321b9c8dac53547b5e988376603091` passes all five
+Avorax CI jobs in run `33003081719`. Desktop Packages push run `33003036684`
+and PR run `33003081759` both pass package contracts, Windows MSI/EXE, Linux
+DEB/tar, macOS arm64/x64 DMGs, and consolidation. Publication jobs
+`98293891452` and `98294578577` are skipped.
+
+The PR consolidated artifact `9619955244` is `132023565` bytes and its
+downloaded SHA-256 matches GitHub's digest exactly at
+`54a8e214df6976ed9b97859dd90470ca7c6be285dac75e86558e6096272aacd9`.
+Bounded in-stream validation passes exact 8-root/6-platform/7-checksum and
+CycloneDX 1.6/569-component evidence without extraction or execution. The
+independent push artifact `9619876133` is `131952443` bytes with GitHub digest
+`c008386d54e85bf115b4bda9a1e9d146734bcf4d102c23fec536666c51595d0a`.
+
+PR `#98` remains open. The documentation-only evidence commit, its exact-head
+checks, normal merge, merged-main checks/packages, guarded synchronization, and
+destination verification remain required. No release or publication occurred.

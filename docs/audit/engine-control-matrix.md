@@ -5111,3 +5111,10 @@ verification now passes exact `274/274` in `539.7s`; embedded and independent
 PowerShell 5.1/7 validators accept the exact report, while both independent
 hosts reject missing-step and missing-required-scope copies. Hosted, integration,
 and destination matrix proof remain pending.
+
+Implementation head `6a8c136aff321b9c8dac53547b5e988376603091` passes all five
+hosted CI jobs and independent push/PR package matrices for Windows, Linux, and
+both macOS architectures. The PR consolidated artifact passes bounded
+non-extracting exact 8/6/7/CycloneDX-1.6/569 validation, and both publication
+jobs are skipped. Evidence-head, integration, and destination proof remain
+pending; this does not promote any disabled engine or expand user-mode limits.

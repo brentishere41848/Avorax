@@ -12117,3 +12117,20 @@ pending.
   remains untracked and unstaged. Hosted exact-head, merge, package, guarded
   synchronization, destination regression, and destination definitive evidence
   remain pending.
+
+### Checkpoint 2245 Implementation-Head Hosted Evidence
+
+- Exact implementation head `6a8c136aff321b9c8dac53547b5e988376603091`
+  passes all five CI jobs in run `33003081719`.
+- Desktop Packages push/PR runs `33003036684`/`33003081759` pass contracts,
+  Windows MSI/EXE, Linux DEB/tar, both macOS DMGs, and consolidation.
+  Publication jobs `98293891452`/`98294578577` are skipped.
+- PR artifact `9619955244` is `132023565` bytes and matches GitHub/download
+  SHA-256 `54a8e214df6976ed9b97859dd90470ca7c6be285dac75e86558e6096272aacd9`.
+  Bounded non-extracting validation passes exact 8-root/6-platform/7-checksum
+  and CycloneDX 1.6/569-component evidence. Push artifact `9619876133` is
+  `131952443` bytes with GitHub digest
+  `c008386d54e85bf115b4bda9a1e9d146734bcf4d102c23fec536666c51595d0a`.
+- PR `#98` remains open. Evidence-head checks, normal merge, merged-main
+  evidence, guarded synchronization, and destination verification remain
+  pending. Nothing was installed, executed, released, or published.

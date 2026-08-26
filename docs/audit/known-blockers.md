@@ -3209,3 +3209,10 @@ missing-required-scope adversarial copies. Hosted exact-head CI/packages, normal
 merge, guarded synchronization, destination regression, and destination
 definitive evidence remain checkpoint-closure blockers. The technical limits
 and disabled-engine blockers above remain unchanged.
+
+Implementation-head CI and both independent package matrices now pass, with
+publication skipped and bounded non-extracting artifact validation complete.
+The remaining checkpoint blockers are exact evidence-head checks, normal PR
+merge, merged-main checks/packages, guarded synchronization, destination full
+regression, and destination definitive verification. Technical product limits
+and disabled-engine blockers remain unchanged.

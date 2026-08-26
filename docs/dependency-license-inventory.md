@@ -1611,6 +1611,13 @@ dependency graph; both independent PowerShell report validators pass and reject
 the two malformed evidence copies. No dependency manifest or lockfile changed.
 Hosted package/SBOM and final-binary license evidence remain pending.
 
+Implementation-head push and PR package matrices now pass. The downloaded PR
+consolidated artifact matches GitHub's SHA-256 and contains exact CycloneDX 1.6
+lockfile evidence with `569` components; all seven checksum rows match their
+streamed entries. No entry was extracted or executed, and both publication jobs
+are skipped. Legal approval, production signing/notarization, and final release
+approval remain separate and partial.
+
 
 
 
