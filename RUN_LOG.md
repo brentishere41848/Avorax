@@ -11975,3 +11975,19 @@ pending.
   exactly unchanged. Definitive
   273-step, adversarial report validation, hosted/integration/destination, and
   closure evidence remain pending.
+
+## 2026-08-26 - Checkpoint 2244 Definitive Local Evidence
+
+- Definitive verification passes exact `273/273` from
+  `2026-08-26T15:07:07.5888297Z` through
+  `2026-08-26T15:15:58.7193871Z` in `531.1s`, with Defender integration
+  disabled and no Rust or Flutter skips.
+- Embedded and independent Windows PowerShell 5.1 and PowerShell 7 validators
+  accept the report. SHA-256 is
+  `2547454f20895864be9727dd545e0625d39b0b761732032f886c004ff5de2216`.
+- Both independent validators reject an adversarial `272`-step report and a
+  `273`-step report missing parser-traversal cancellation scope; all four
+  expected-negative invocations exit `1`.
+- Root, Native, and Flutter lock hashes and the protected-vault invariant remain
+  exact. `.verification` remains untracked and unstaged. Hosted exact-head,
+  integration, destination, and closure evidence remain pending.

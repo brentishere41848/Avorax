@@ -1589,8 +1589,10 @@ license evidence are unchanged. Verification cardinality advances to 273 and
 source contract 674; no new third-party license review is required.
 
 Local verification confirms all three lock hashes remain exact, source contract
-`674/674` passes, and no dependency file is modified. Definitive and hosted
-package/SBOM evidence remains pending.
+`674/674` passes, and no dependency file is modified. Definitive verification
+passes exact `273/273` in `531.1s` with dual validator acceptance and
+adversarial missing-step/scope rejection. The three lock hashes remain exact
+afterward. Hosted package/SBOM evidence remains pending.
 
 ## Checkpoint 2243 Dependency Scope
 

@@ -3137,9 +3137,11 @@ was repaired and targeted strict lint passes.
   observed cancellation only after the whole substep is repaired in source:
   parser/entry/copy/inflate checkpoints now propagate fallible errors through
   the Native engine before verdict publication.
-- Focused/full local and source contract 674 now pass. Mandatory step 273,
-  strict report/adversarial validation, hosted, integration, and destination
-  evidence must still pass before this blocker is closed.
+- Focused/full local and source contract 674 pass. Mandatory step 273 passes in
+  an exact `273/273` definitive report, dual validators accept it, and both
+  missing-step and missing-parser-scope adversarial copies are rejected.
+  Hosted, integration, and destination evidence must still pass before this
+  checkpoint is closed.
 - Remaining technical limitation: one already-running `flate2` read is not
   preempted. Non-archive analyzer work, synchronous rule/ML calls, trust helper
   calls, installed service identity, driver mediation, and pre-execution

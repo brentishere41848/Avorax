@@ -6811,7 +6811,7 @@ guarded synchronization, and destination proof remain pending.
   Locks and the protected vault remain exact; checkpoint 2243 is closed. The
   complete antivirus goal remains active.
 
-## Checkpoint 2244 - Static Archive Analysis Cancellation Locally Verified
+## Checkpoint 2244 - Static Archive Analysis Cancellation Definitively Verified Locally
 
 - Native static ZIP metadata/relationship analysis now accepts the scan's
   fallible cancellation checkpoint while preserving compatibility wrappers.
@@ -6828,8 +6828,13 @@ guarded synchronization, and destination proof remain pending.
   `674/674`, strict component Clippy, dual parsers, formatting and diff checks
   plus locked release build now pass. Exact locks and protected vault remain
   unchanged.
-- Definitive 273-step, adversarial validator, hosted, integration, destination,
-  and closure evidence remains pending.
+- Definitive verification passes exact `273/273` in `531.1s` with no Rust or
+  Flutter skips. Embedded and independent PS5/PS7 validators pass; an
+  adversarial `272`-step copy and a `273`-step copy missing parser-traversal
+  cancellation scope are rejected by both. Report SHA-256 is
+  `2547454f20895864be9727dd545e0625d39b0b761732032f886c004ff5de2216`.
+  Exact locks and the protected vault remain unchanged. Hosted exact-head,
+  integration, destination, and closure evidence remains pending.
 - **Limit:** cooperative checkpoints do not preempt one running decoder read,
   and this change does not make non-archive analyzers, rule/ML calls, Windows
   trust, services, drivers, or pre-execution enforcement hard-cancellable.

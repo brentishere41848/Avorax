@@ -3176,5 +3176,7 @@ scripted but have not run during the scripting phase.
 
 Local benign cancellation, complete ZIP/Native/Local/Flutter regressions, source
 contract 674, strict component lint, dual parser, formatting, and diff evidence
-now pass. Definitive 273-step and hosted/integration/destination evidence remains
-pending; local success does not expand the cooperative user-mode claim.
+pass. Definitive verification passes exact `273/273` in `531.1s`; dual
+independent validators accept the report and reject both missing-step and
+missing-parser-scope adversarial copies. Hosted/integration/destination evidence
+remains pending; local success does not expand the cooperative user-mode claim.

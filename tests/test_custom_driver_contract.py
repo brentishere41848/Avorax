@@ -29798,6 +29798,10 @@ def test_checkpoint_2244_static_archive_analysis_cancellation_contract():
     normalized_checkpoint = re.sub(r"\s+", " ", checkpoint)
     assert "No checkpoint-2244 passing result is claimed during scripting" in normalized_checkpoint
     assert "Source contract 674" in normalized_checkpoint
+    assert "Definitive verification passes exact `273/273`" in normalized_checkpoint
+    assert "2547454f20895864be9727dd545e0625d39b0b761732032f886c004ff5de2216" in checkpoint
+    assert "An adversarial `272`-step copy is rejected" in normalized_checkpoint
+    assert "missing the required parser-traversal cancellation scope" in normalized_checkpoint
     normalized_dependencies = re.sub(r"\s+", " ", documents[-1])
     assert "adds no dependency, feature" in normalized_dependencies
     assert "lockfile change" in normalized_dependencies

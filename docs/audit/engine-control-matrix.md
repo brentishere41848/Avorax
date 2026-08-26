@@ -5026,7 +5026,7 @@ evidence remain pending.
 | OOXML relationship analyzer | Inspect bounded stored/deflated `.rels` bodies for external and remote executable targets | Locally verified | Checkpoints around stored copies and before each at-most-64-KiB inflate output read; benign cancellation and existing detection regressions pass |
 | Archive autorun analyzer | Inspect bounded stored/deflated `autorun.inf` bodies for executable commands | Locally verified | Same fallible copy/inflate checkpoint path; callback errors are not archive limits; complete ZIP regressions pass |
 | Native scan cancellation bridge | Prevent partial static analysis or verdict publication after cancellation/probe failure | Locally verified | Engine maps `static archive analysis progress` through typed cancellation; source contract and full Native/Local pass |
-| Checkpoint 2244 verifier contract | Reject stale checkpoint-2243 evidence | Scripted; execution pending | Exact 273 steps, source contract 674, dual validators, and adversarial missing-step/scope rejection planned |
+| Checkpoint 2244 verifier contract | Reject stale checkpoint-2243 evidence | Definitively verified locally | Exact 273/273 in 531.1s, source contract 674, dual validators, and adversarial missing-step/scope rejection pass |
 
 Checkpoint 2244 adds cooperative boundaries only. It does not hard-interrupt an
 active decoder read, change detector thresholds or archive limits, add
@@ -5037,4 +5037,6 @@ Local evidence passes focused `4/4`, ZIP `36/36`, adjacent cancellation `4/4`,
 Native `559`/`21` plus compiler `6/6`, Local Core `546/546`, Flutter `847/847`,
 source contracts `674/674`, strict component lint, dual parsers, formatting and
 diff checks, and locked release build. Locks and protected vault remain exact;
-definitive/hosted/integration/destination evidence remains pending.
+definitive exact `273/273` and adversarial evidence pass. Report SHA-256 is
+`2547454f20895864be9727dd545e0625d39b0b761732032f886c004ff5de2216`;
+hosted/integration/destination evidence remains pending.

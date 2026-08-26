@@ -68,6 +68,22 @@ service identity, and pre-execution blocking are outside this repair.
   `4522733` bytes, `5357` each payload/JSON/auth, one metadata key, zero pending,
   and zero reparse points.
 
-Definitive 273-step, adversarial validator, hosted, integration, destination,
-and closure evidence remain pending and must not be inferred from these local
-results.
+## Definitive Local Verification
+
+- Definitive verification passes exact `273/273` from
+  `2026-08-26T15:07:07.5888297Z` through
+  `2026-08-26T15:15:58.7193871Z` in `531.1s`, with Defender integration
+  disabled and no Rust or Flutter skips.
+- Embedded and independent Windows PowerShell 5.1 and PowerShell 7 validators
+  accept the exact report. Its SHA-256 is
+  `2547454f20895864be9727dd545e0625d39b0b761732032f886c004ff5de2216`.
+- An adversarial `272`-step copy is rejected by both independent validators.
+  A second `273`-step copy missing the required parser-traversal cancellation
+  scope is also rejected by both; all four expected-negative invocations exit
+  `1`.
+- Root, Native, and Flutter lock hashes and the protected-vault invariant remain
+  exact after the verifier and adversarial checks.
+
+Hosted exact-head CI/package evidence, normal PR/merge, guarded integration,
+destination verification, and closure remain pending and must not be inferred
+from these definitive local results.
