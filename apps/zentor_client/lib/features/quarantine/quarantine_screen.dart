@@ -48,6 +48,7 @@ class QuarantineScreen extends ConsumerWidget {
                     quarantineMutationBusy ||
                         state.scanTargetSelectionInFlight ||
                         state.scanStartInFlight ||
+                        state.scanCancelInFlight ||
                         state.scanStatus == ScanStatus.running
                     ? null
                     : () async {

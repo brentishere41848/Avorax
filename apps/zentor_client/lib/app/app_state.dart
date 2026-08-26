@@ -854,7 +854,10 @@ class ZentorController extends StateNotifier<ZentorState> {
   final WatchPollTimerFactory _watchPollTimerFactory;
   final FileSystemTypeProbe _fileSystemTypeProbe;
   bool _updateOperationInFlight = false;
-  bool _scanCancelled = false;
+  int _scanOperationGeneration = 0;
+  int? _activeScanGeneration;
+  int? _scanCancellationRequestedGeneration;
+  Completer<bool>? _scanCancellationOutcome;
   bool _onboardingCompletionInFlight = false;
   bool _cloudHealthCheckInFlight = false;
   bool _appDetectionInFlight = false;
@@ -4306,6 +4309,9 @@ class ZentorController extends StateNotifier<ZentorState> {
   }
 
   String? _scheduledQuickScanBusyReason() {
+    if (_scanCancelInFlight || state.scanCancelInFlight) {
+      return 'Scan cancellation is already in progress.';
+    }
     if (_scanStartInFlight || state.scanStatus == ScanStatus.running) {
       return 'A scan is already running.';
     }
@@ -4544,6 +4550,7 @@ class ZentorController extends StateNotifier<ZentorState> {
   }
 
   Future<void> scanSelectedFile({bool confirmedAutoAction = false}) async {
+    if (await _rejectScanStartDuringCancellation('Custom file scan')) return;
     if (await _rejectScanStartDuringConfigurationChange('Custom file scan')) {
       return;
     }
@@ -4626,6 +4633,11 @@ class ZentorController extends StateNotifier<ZentorState> {
     )) {
       return;
     }
+    if (await _rejectScanStartDuringCancellation(
+      'Quarantine original rescan',
+    )) {
+      return;
+    }
     if (await _rejectScanStartDuringConfigurationChange(
       'Quarantine original rescan',
     )) {
@@ -4651,6 +4663,7 @@ class ZentorController extends StateNotifier<ZentorState> {
   }
 
   Future<void> scanSelectedFolder({bool confirmedAutoAction = false}) async {
+    if (await _rejectScanStartDuringCancellation('Custom folder scan')) return;
     if (await _rejectScanStartDuringConfigurationChange('Custom folder scan')) {
       return;
     }
@@ -4741,6 +4754,9 @@ class ZentorController extends StateNotifier<ZentorState> {
     if (state.scanStatus == ScanStatus.running) {
       return 'A scan is already running.';
     }
+    if (_scanCancelInFlight || state.scanCancelInFlight) {
+      return 'Scan cancellation is already in progress.';
+    }
     return null;
   }
 
@@ -4756,6 +4772,7 @@ class ZentorController extends StateNotifier<ZentorState> {
     bool confirmedAutoAction = false,
   }) async {
     if (await _rejectScanStartDuringTargetSelection('Quick scan')) return;
+    if (await _rejectScanStartDuringCancellation('Quick scan')) return;
     if (await _rejectScanStartDuringConfigurationChange('Quick scan')) return;
     if (await _rejectScanStartDuringUpdateMutation('Quick scan')) return;
     final effectiveActionMode = actionMode ?? state.scanActionMode;
@@ -4806,6 +4823,7 @@ class ZentorController extends StateNotifier<ZentorState> {
     bool confirmedAutoAction = false,
   }) async {
     if (await _rejectScanStartDuringTargetSelection('Full scan')) return;
+    if (await _rejectScanStartDuringCancellation('Full scan')) return;
     if (await _rejectScanStartDuringConfigurationChange('Full scan')) return;
     if (await _rejectScanStartDuringUpdateMutation('Full scan')) return;
     final effectiveActionMode = actionMode ?? state.scanActionMode;
@@ -4865,6 +4883,23 @@ class ZentorController extends StateNotifier<ZentorState> {
       severity: 'warning',
     );
     state = state.copyWith(errorMessage: message);
+    return true;
+  }
+
+  Future<bool> _rejectScanStartDuringCancellation(String target) async {
+    if (!_scanCancelInFlight && !state.scanCancelInFlight) return false;
+    const message = 'Scan cancellation is already in progress.';
+    await logEvent(
+      'scan_start_ignored',
+      'Scan start ignored',
+      details: target.trim().isEmpty ? message : '$target\n$message',
+      category: 'scan',
+      severity: 'warning',
+    );
+    state = state.copyWith(
+      scanCancelInFlight: _scanCancelInFlight || state.scanCancelInFlight,
+      errorMessage: message,
+    );
     return true;
   }
 
@@ -5951,11 +5986,30 @@ class ZentorController extends StateNotifier<ZentorState> {
       state = state.copyWith(errorMessage: message);
       return;
     }
+    final scanGeneration = _activeScanGeneration;
+    if (scanGeneration == null || !_scanGenerationIsCurrent(scanGeneration)) {
+      const message =
+          'The running scan lifecycle could not be identified; cancellation was not sent.';
+      await logEvent(
+        'scan_cancel_failed',
+        'Scan cancellation failed',
+        details: message,
+        category: 'scan',
+        severity: 'error',
+      );
+      state = state.copyWith(errorMessage: message);
+      return;
+    }
     _scanCancelInFlight = true;
+    _scanCancellationRequestedGeneration = scanGeneration;
+    final cancellationOutcome = Completer<bool>();
+    _scanCancellationOutcome = cancellationOutcome;
     state = state.copyWith(scanCancelInFlight: true);
-    _scanCancelled = true;
     try {
       final warning = await _localCoreClient.cancelActiveScan();
+      if (!_scanGenerationIsCurrent(scanGeneration)) return;
+      if (!cancellationOutcome.isCompleted) cancellationOutcome.complete(true);
+      if (!mounted) return;
       await logEvent(
         'scan_cancelled',
         warning == null ? 'Scan cancelled' : 'Scan cancelled with fallback',
@@ -5963,11 +6017,17 @@ class ZentorController extends StateNotifier<ZentorState> {
         category: 'scan',
         severity: warning == null ? 'info' : 'warning',
       );
+      if (!mounted || !_scanGenerationIsCurrent(scanGeneration)) return;
       if (warning != null) {
         state = state.copyWith(errorMessage: warning);
       }
     } on Object catch (error) {
-      _scanCancelled = false;
+      if (!_scanGenerationIsCurrent(scanGeneration)) return;
+      if (!cancellationOutcome.isCompleted) cancellationOutcome.complete(false);
+      if (_scanCancellationRequestedGeneration == scanGeneration) {
+        _scanCancellationRequestedGeneration = null;
+        _scanCancellationOutcome = null;
+      }
       final details = _boundedUiDiagnostic(error);
       await logEvent(
         'scan_cancel_failed',
@@ -5976,15 +6036,21 @@ class ZentorController extends StateNotifier<ZentorState> {
         category: 'scan',
         severity: 'error',
       );
+      if (!mounted || !_scanGenerationIsCurrent(scanGeneration)) return;
       state = state.copyWith(
         errorMessage: 'Unable to request scan cancellation: $details',
       );
       return;
     } finally {
       _scanCancelInFlight = false;
-      if (mounted) {
+      if (mounted && _scanGenerationIsCurrent(scanGeneration)) {
         state = state.copyWith(scanCancelInFlight: false);
       }
+    }
+    if (!mounted ||
+        !_scanGenerationIsCurrent(scanGeneration) ||
+        _scanCancellationRequestedGeneration != scanGeneration) {
+      return;
     }
     state = state.copyWith(
       scanStatus: ScanStatus.cancelled,
@@ -6013,7 +6079,18 @@ class ZentorController extends StateNotifier<ZentorState> {
             ),
       clearCurrentScanPath: true,
     );
+    if (_activeScanGeneration != scanGeneration &&
+        _scanCancellationRequestedGeneration == scanGeneration) {
+      _scanCancellationRequestedGeneration = null;
+      _scanCancellationOutcome = null;
+    }
   }
+
+  bool _scanGenerationIsCurrent(int generation) =>
+      generation == _scanOperationGeneration;
+
+  bool _scanCancellationRequestedFor(int generation) =>
+      _scanCancellationRequestedGeneration == generation;
 
   void _replaceThreat(String id, ThreatResult replacement) {
     final report = state.lastScanReport;
@@ -6054,6 +6131,7 @@ class ZentorController extends StateNotifier<ZentorState> {
     required ScanActionMode actionMode,
     List<String> targetLimitations = const [],
   }) async {
+    if (await _rejectScanStartDuringCancellation(kind.label)) return;
     if (await _rejectScanStartDuringConfigurationChange(kind.label)) return;
     if (await _rejectScanStartDuringUpdateMutation(kind.label)) return;
     if (_scanStartInFlight || state.scanStatus == ScanStatus.running) {
@@ -6099,6 +6177,10 @@ class ZentorController extends StateNotifier<ZentorState> {
       return;
     }
     _scanStartInFlight = true;
+    final scanGeneration = ++_scanOperationGeneration;
+    _activeScanGeneration = scanGeneration;
+    _scanCancellationRequestedGeneration = null;
+    _scanCancellationOutcome = null;
     state = state.copyWith(scanStartInFlight: true);
     try {
       if (!_localCoreClient.isDesktop) {
@@ -6145,7 +6227,6 @@ class ZentorController extends StateNotifier<ZentorState> {
         category: 'scan',
         severity: scanStartLimitations.isEmpty ? 'info' : 'warning',
       );
-      _scanCancelled = false;
       state = state.copyWith(
         scanStatus: ScanStatus.running,
         currentScanPath: paths.first,
@@ -6171,7 +6252,11 @@ class ZentorController extends StateNotifier<ZentorState> {
       ScanReport report;
       try {
         void updateProgress(ScanProgress progress) {
-          if (!mounted || _scanCancelled) return;
+          if (!mounted ||
+              !_scanGenerationIsCurrent(scanGeneration) ||
+              _scanCancellationRequestedFor(scanGeneration)) {
+            return;
+          }
           state = state.copyWith(
             scanProgress: progress,
             currentScanPath: progress.currentPath,
@@ -6232,17 +6317,24 @@ class ZentorController extends StateNotifier<ZentorState> {
           severity: 'error',
         );
       }
-      if (_scanCancelled) {
-        final cancelledReport = _cancelledScanReport(report);
-        final scanErrorMessage = _scanCoverageWarning(cancelledReport);
-        state = state.copyWith(
-          scanStatus: ScanStatus.cancelled,
-          lastScanReport: cancelledReport,
-          clearCurrentScanPath: true,
-          clearError: scanErrorMessage == null,
-          errorMessage: scanErrorMessage,
-        );
-        return;
+      if (!mounted || !_scanGenerationIsCurrent(scanGeneration)) return;
+      if (_scanCancellationRequestedFor(scanGeneration)) {
+        final cancellationOutcome = _scanCancellationOutcome;
+        final cancellationAccepted =
+            cancellationOutcome != null && await cancellationOutcome.future;
+        if (!mounted || !_scanGenerationIsCurrent(scanGeneration)) return;
+        if (cancellationAccepted) {
+          final cancelledReport = _cancelledScanReport(report);
+          final scanErrorMessage = _scanCoverageWarning(cancelledReport);
+          state = state.copyWith(
+            scanStatus: ScanStatus.cancelled,
+            lastScanReport: cancelledReport,
+            clearCurrentScanPath: true,
+            clearError: scanErrorMessage == null,
+            errorMessage: scanErrorMessage,
+          );
+          return;
+        }
       }
       if (report.threats.isNotEmpty) {
         await logEvent(
@@ -6264,6 +6356,7 @@ class ZentorController extends StateNotifier<ZentorState> {
           );
         }
       }
+      if (!mounted || !_scanGenerationIsCurrent(scanGeneration)) return;
       final scanErrorMessage = _scanCoverageWarning(report);
       await logEvent(
         'scan_completed',
@@ -6274,6 +6367,7 @@ class ZentorController extends StateNotifier<ZentorState> {
         category: 'scan',
         severity: scanErrorMessage == null ? 'info' : 'warning',
       );
+      if (!mounted || !_scanGenerationIsCurrent(scanGeneration)) return;
       state = state.copyWith(
         scanStatus: report.status,
         lastScanReport: report,
@@ -6287,9 +6381,19 @@ class ZentorController extends StateNotifier<ZentorState> {
       );
       await unawaitedRefreshQuarantine();
     } finally {
-      _scanStartInFlight = false;
-      if (mounted) {
-        state = state.copyWith(scanStartInFlight: false);
+      if (_activeScanGeneration == scanGeneration) {
+        _activeScanGeneration = null;
+      }
+      if (_scanGenerationIsCurrent(scanGeneration)) {
+        _scanStartInFlight = false;
+        if (!_scanCancelInFlight &&
+            _scanCancellationRequestedGeneration == scanGeneration) {
+          _scanCancellationRequestedGeneration = null;
+          _scanCancellationOutcome = null;
+        }
+        if (mounted) {
+          state = state.copyWith(scanStartInFlight: false);
+        }
       }
     }
   }

@@ -11503,3 +11503,41 @@ pending.
 - Exact locks, zero repository test processes, zero sync residue, and the
   protected-vault invariant remain unchanged. Checkpoint 2238 is closed; the
   complete antivirus project remains active.
+
+## 2026-08-26 - Checkpoint 2239 Scan Cancellation Ownership Scripted
+
+- Audited controller cancellation and `LocalCoreClient` process ownership. A
+  completed old scan could release the scan-start guard while cancel IPC still
+  waited, allowing a replacement start; late cancellation could then overwrite
+  replacement state. Any unrelated `_call` completion also cleared the static
+  active-scan process slot, while fallback kill reread that mutable slot after
+  an await.
+- Scripted exact controller scan generations, per-generation cancellation
+  outcomes, manual/scheduled/picker start rejection until cancellation
+  resolves, and matching busy UI on Home, Protection, Scan, and Quarantine.
+  Delayed cancel failure releases the completed report instead of fabricating a
+  cancelled verdict.
+- Scripted an exact Local Core process lease. Cancel captures that lease before
+  IPC/delay; only the owning scan call may clear it, so unrelated IPC cannot
+  erase it and a late fallback cannot retarget a newer process reference.
+- Scripted benign pending-future and subprocess regressions, mandatory verifier
+  step, exact 268-step validation, source contract 669, and audit/dependency/
+  checkpoint documentation. No checkpoint-2239 test has run and no passing
+  result is claimed during the required scripting-first phase.
+- The user-runtime cancellation token remains shared rather than authenticated
+  to a cross-instance job ID. No live malware, EICAR file, Defender change,
+  install, service/driver start, dependency, release/publication, candidate
+  execution, or protected-vault mutation is involved.
+- After the complete scripting batch, focused cancellation ownership passed
+  `6/6`, adjacent cancellation/UI filters passed `16/16`, and the relevant UI
+  set passed `59/59`. The corrected full Flutter suite passes `845/845`, source
+  contracts pass `669/669`, and analyzer, formatter, diff, dual-host parser,
+  exact lockfile, and protected-vault checks pass. Definitive and hosted
+  evidence remain pending.
+- The explicit-tool, no-skip, no-Defender definitive verifier passes exact
+  `268/268`, zero failed/skipped, from `2026-08-26T04:19:27.6082751Z` through
+  `2026-08-26T04:27:19.1498007Z` in `471.5s`. Both independent validators pass,
+  11 controlled report mutations on both hosts reject `22/22`, and report
+  SHA-256 is `4331723c28e51e889978f481cc86082d1ee6bd57ce8cbd941769d99959495e66`.
+  Hosted exact-head evidence, merge, synchronization, and destination proof
+  remain pending.

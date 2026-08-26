@@ -3018,3 +3018,19 @@ only. Hard cancellation of already-started work, installed durable monitoring,
 trusted Guard commandlines, verified parent lineage, mutation, production
 calibration, signed driver/kernel interception, and pre-execution blocking
 remain genuine blockers or disabled capabilities.
+
+## Checkpoint 2239 Scan Cancellation Ownership
+
+- A late cancellation previously could overlap a replacement scan after the
+  old scan released `_scanStartInFlight`; cancellation publication and fallback
+  process kill were not bound to an exact scan generation/process lease.
+- Any unrelated Local Core `_call` completion could clear the static active-scan
+  process slot. This made fallback cancellation unavailable or susceptible to
+  retargeting after an await. Exact lease ownership is now scripted.
+- Per-generation outcome waiting, replacement-start rejection, visible busy
+  controls, benign races/subprocess checks, exact 268-step validation, and source
+  contract 669 are scripted but not yet run.
+- The current-user-runtime cancellation token is still shared across Local Core
+  processes and is not authenticated to a job ID. Cross-instance serialization,
+  installed service ownership, kernel cancellation, and pre-execution blocking
+  remain genuine blockers and are not claimed.

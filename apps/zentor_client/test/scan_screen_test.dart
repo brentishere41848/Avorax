@@ -53,6 +53,32 @@ const _engineUnavailableReport = ScanReport(
 );
 
 void main() {
+  testWidgets('scan cancellation busy disables every scan start control', (
+    tester,
+  ) async {
+    await _pumpScanScreen(tester, const ZentorState(scanCancelInFlight: true));
+
+    final actionModeSelector = find.byType(SegmentedButton<ScanActionMode>);
+    final quickScanButton = find.widgetWithText(FilledButton, 'Quick Scan');
+    final fullScanButton = find.widgetWithText(OutlinedButton, 'Full Scan');
+    final customFileButton = find.widgetWithText(OutlinedButton, 'Custom File');
+    final customFolderButton = find.widgetWithText(
+      OutlinedButton,
+      'Custom Folder',
+    );
+
+    expect(
+      tester
+          .widget<SegmentedButton<ScanActionMode>>(actionModeSelector)
+          .onSelectionChanged,
+      isNull,
+    );
+    expect(tester.widget<FilledButton>(quickScanButton).onPressed, isNull);
+    expect(tester.widget<OutlinedButton>(fullScanButton).onPressed, isNull);
+    expect(tester.widget<OutlinedButton>(customFileButton).onPressed, isNull);
+    expect(tester.widget<OutlinedButton>(customFolderButton).onPressed, isNull);
+  });
+
   testWidgets('scan start busy disables action mode and scan starts', (
     tester,
   ) async {

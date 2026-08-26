@@ -1286,7 +1286,7 @@ void main() {
     expect(scanSource, contains("'scan_started'"));
     final startedEvent = scanSource.substring(
       scanSource.indexOf("'scan_started'"),
-      scanSource.indexOf('_scanCancelled = false'),
+      scanSource.indexOf('scanStatus: ScanStatus.running'),
     );
     expect(startedEvent, contains("category: 'scan'"));
     expect(startedEvent, contains("'scan_started_with_limitations'"));

@@ -6608,3 +6608,30 @@ guarded synchronization, and destination proof remain pending.
   installed durable monitoring, mutation, cross-identity isolation, driver/
   kernel enforcement, and pre-execution blocking remain open. Checkpoint 2238
   is closed; the complete antivirus project is not complete.
+
+## Checkpoint 2239 - Scan Cancellation Generation And Process Ownership
+
+- **Implemented and locally verified:** every scan owns a monotonically increasing
+  controller generation. Cancellation captures the exact active generation and
+  publishes success/failure only while that generation remains current.
+- A per-generation outcome prevents optimistic cancellation: a scan result that
+  arrives during pending cancel waits; accepted cancellation becomes cancelled,
+  while a delayed exception preserves the completed report. Manual, scheduled,
+  picker, rescan, and visible scan starts remain blocked until resolution.
+- `LocalCoreClient` now owns an exact active-process lease. Unrelated IPC cannot
+  clear it, an older call cannot clear a replacement lease, and fallback kill
+  uses the pre-await captured process rather than a mutable global reread.
+- Benign controller/subprocess/UI regressions, exact 268-step verifier contract,
+  source contract 669, and documentation are scripted. Focused cancellation
+  ownership passes `6/6`, adjacent filters pass `16/16`, relevant UI tests pass
+  `59/59`, full Flutter passes `845/845`, and source contracts pass `669/669`.
+  Analyzer, formatter, diff, dual-host parsers, exact locks, and the read-only
+  protected-vault invariant pass. The definitive verifier passes exact
+  `268/268` in `471.5s` with no skips or Defender option; both independent
+  validators pass and controlled malformed reports reject `22/22`. Report
+  SHA-256 is `4331723c28e51e889978f481cc86082d1ee6bd57ce8cbd941769d99959495e66`.
+  Hosted exact-head evidence, merge, synchronization, and destination proof
+  remain pending.
+- **Limit:** the cancellation token remains current-user-runtime shared and is
+  not authenticated to a cross-instance job ID. This is user-mode post-start
+  cancellation, not service/driver/kernel/pre-execution isolation.
