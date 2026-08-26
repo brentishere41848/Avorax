@@ -11461,3 +11461,17 @@ pending.
 - Hosted exact-head, merge, guarded synchronization, and destination evidence
   remain pending. No Defender change, install, service/driver start, release,
   publication, candidate execution, or vault mutation occurred.
+
+## 2026-08-26 - Checkpoint 2238 Implementation-Head Hosted Evidence
+
+- Exact implementation `5944e97063c59f9d703c0a1915950b6f884c7e5e` is PR
+  `#90`'s head. Avorax CI `32923573250` passes all five jobs.
+- Desktop Packages push `32923527726` and PR `32923573229` pass package
+  contracts, Windows MSI/EXE, Linux DEB/tar, both macOS DMGs, consolidation,
+  and upload. Publication jobs `98045073302`/`98044630756` are skipped.
+- Consolidated artifacts `9591053604`/`9590999961` are 131,695,821 and
+  131,731,372 bytes with SHA-256 `99ccb5ac02eac63c2031d5b8a66af4d578474cf65ff3e8a02a67e86dcfe949c7`
+  and `b376f8412261dafa5e688d9cc226d30d3463c111cb6a4e0d172f5dfd675edbbc`.
+  Both match GitHub digests and pass bounded non-extracting validation of eight
+  entries, six platform files, seven checksums, and CycloneDX 1.6 with 569
+  components. Evidence-head/merge/sync/destination evidence remains pending.

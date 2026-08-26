@@ -6574,8 +6574,17 @@ guarded synchronization, and destination proof remain pending.
   exact `267/267`, zero failed/skipped, in `469.8s`. Both strict hosts accept
   the report, adversarial variants reject `16/16`, and report SHA-256 is
   `c219c9b35c74988471fc5dfa1ac2c2808488873fd79706876f51f5c2eaff8236`.
-  Locks, processes, and the protected-vault invariant remain exact. Hosted,
-  integration, synchronization, and destination evidence remains pending.
+  Locks, processes, and the protected-vault invariant remain exact.
+  Implementation-head hosted evidence follows; evidence-head, integration,
+  synchronization, and destination evidence remains pending.
+- **Exact implementation-head hosted verified:** commit `5944e97` is PR `#90`'s
+  exact head. CI `32923573250` and package push/PR runs `32923527726`/
+  `32923573229` pass all mandatory jobs; publication jobs `98045073302`/
+  `98044630756` are skipped. Consolidated artifacts `9591053604`/`9590999961`
+  match GitHub digests and pass bounded in-stream 8-entry/6-platform/
+  7-checksum/CycloneDX 1.6/569-component validation without extraction or
+  execution. Evidence-head, merge, synchronization, and destination proof
+  remain pending.
 - **Limits:** underlying bounded work is not hard-cancelled and may finish after
   stop; only stale state/event publication is rejected. App-lifetime polling,
   installed/durable monitoring, mutation, cross-identity isolation, driver/

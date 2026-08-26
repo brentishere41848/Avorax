@@ -1494,5 +1494,14 @@ passes locally. Root, Native, and Flutter lock SHA-256 values remain exactly
 `7f4393c81896600c4a5e84cad288a1a5360eccbc1c458b38f615082f66391383`,
 and `4de19695f9207273746341ca2221541b5b86d9f72af83727afca78541e177694`.
 No dependency, feature, package source, license classification, or lockfile
-changed. Hosted package/SBOM evidence remains pending. Final-binary license
+changed. Implementation-head hosted package/SBOM evidence follows; evidence-
+head and merged-main package evidence remains pending. Final-binary license
 resolution, production signing, and legal approval remain separate prerequisites.
+
+Exact implementation-head package runs `32923527726`/`32923573229` produce
+consolidated artifacts `9591053604`/`9590999961`. Bounded in-stream review
+without extraction confirms six platform release files, seven matching
+checksums, and CycloneDX 1.6 lockfile SBOM evidence with 569 components in each;
+publication is skipped. This remains lockfile-derived partial dependency
+evidence, not final-binary license resolution, production signing, or legal
+approval.

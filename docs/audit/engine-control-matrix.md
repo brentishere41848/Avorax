@@ -4897,5 +4897,12 @@ Focused and adjacent filters, Flutter `840/840`, source contracts `668/668`, and
 the exact `267/267` verifier pass locally. Both strict hosts accept the report
 and adversarial variants reject `16/16`. Generation binding narrows asynchronous
 UI/controller lifecycle integrity; it does not promote polling to installed
-durable monitoring or add mutation/pre-execution capability. Hosted,
-integration, synchronization, and destination evidence remains open.
+durable monitoring or add mutation/pre-execution capability. Implementation-
+head hosted evidence follows; evidence-head, integration, synchronization, and
+destination evidence remains open.
+
+Exact implementation `5944e97` passes PR `#90` CI and both package trigger
+modes. Both consolidated artifact streams pass bounded platform/checksum/SBOM
+validation and publication is skipped. Hosted packaging does not expand the
+app-lifetime, publication-only generation boundary; evidence-head, merge,
+synchronization, and destination evidence remains open.

@@ -3002,8 +3002,9 @@ remain genuine blockers or disabled capabilities.
 - Focused/adjacent tests, Flutter `840/840`, source contracts `668/668`, exact
   no-skip/no-Defender `267/267` in `469.8s`, both strict report validators, and
   adversarial rejection `16/16` pass locally. Locks, processes, and protected-
-  vault inventory remain exact. Hosted, merge, guarded-sync, and destination
-  evidence remain pending for checkpoint 2238.
+  vault inventory remain exact. Implementation-head hosted evidence passes;
+  evidence-head, merge, guarded-sync, and destination evidence remain pending
+  for checkpoint 2238.
 - Installed durable process/file telemetry, shorter observation gaps, trusted
   Guard commandlines, parent-image identity, mutation, production calibration,
   driver/kernel interception, and pre-execution blocking remain genuine blockers.

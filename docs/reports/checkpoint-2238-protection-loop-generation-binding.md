@@ -73,9 +73,28 @@ protected-vault mutation is involved.
   vault is unchanged at 16,072 files, zero directories, 4,522,733 bytes, 5,357
   each payload/JSON/auth, one metadata key, and zero pending/temp/reparse.
 
-Hosted CI/packages, normal merge, guarded synchronization, and destination
-verification remain pending. No install, service/driver start, Defender change,
-release, publication, candidate execution, or protected-vault mutation occurred.
+## Exact Implementation-Head Hosted Evidence
+
+Commit `5944e97063c59f9d703c0a1915950b6f884c7e5e` is PR `#90`'s exact
+implementation head. Avorax CI run `32923573250` passes all five mandatory jobs.
+Desktop Packages push `32923527726` and PR run `32923573229` pass package
+contracts, Windows MSI/EXE, Linux DEB/tar, both macOS DMGs, consolidation, and
+evidence upload. Publication jobs `98045073302` and `98044630756` are skipped;
+no release or prerelease is created.
+
+Consolidated artifacts `9591053604` and `9590999961` are 131,695,821 and
+131,731,372 bytes with SHA-256
+`99ccb5ac02eac63c2031d5b8a66af4d578474cf65ff3e8a02a67e86dcfe949c7` and
+`b376f8412261dafa5e688d9cc226d30d3463c111cb6a4e0d172f5dfd675edbbc`.
+Both match GitHub's digests and pass bounded in-stream validation without
+extraction or execution: exact eight root entries, six platform release files,
+seven matching checksum rows, and CycloneDX 1.6 lockfile SBOM evidence with 569
+components.
+
+Evidence-head CI/packages, normal merge, merged-main evidence, guarded
+synchronization, and destination verification remain pending. No install,
+service/driver start, Defender change, release, publication, candidate
+execution, or protected-vault mutation occurred.
 
 ## Limits
 
