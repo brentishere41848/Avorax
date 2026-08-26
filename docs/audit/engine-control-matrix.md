@@ -4871,3 +4871,38 @@ modes. Both consolidated artifact streams pass exact platform/checksum/SBOM
 validation and publication is skipped. Evidence-head, merge, synchronization,
 and destination evidence remain open; hosted packaging does not expand the
 post-start advisory boundary.
+
+Checkpoint 2237 integration and destination evidence is now closed. PR `#89`
+merged normally; exact evidence-head and merged-main CI/package matrices pass
+with publication skipped. Guarded synchronization copied 24 exact blobs, and
+the destination passes broad component/workspace/Flutter/contracts plus exact
+`266/266` in `499.0s`, both validators, and adversarial `16/16`. The enabled
+process controls above are verified at the destination. Guard commandline and
+parent-image providers remain disabled, and installed durable monitoring,
+mutation, calibration, driver/kernel, and pre-execution limits are unchanged.
+
+## Checkpoint 2238 Protection Loop Generation Matrix
+
+| Control | Ownership | Scripted state | Exact limit |
+|---|---|---|---|
+| Process-snapshot lifecycle generation | Flutter `ZentorController` | Locally verified | Exact generation, active timer, mounted controller, and active protection required at timer entry and after each request await |
+| Finite watch-poll lifecycle generation | Flutter `ZentorController` | Locally verified | Independent exact generation and current loop-state check for success/error publication |
+| Empty watch-path replacement | Flutter watch-poll start | Locally verified | Prior generation/timer/path lease invalidated before empty-path limitation returns |
+| Late process success | Flutter controller regression | Locally verified | Suspicious fixture after stop cannot replace `off` state or publish suspicious loop event |
+| Late watch-poll error | Flutter controller regression | Locally verified | Exception after stop cannot replace `off` state or publish stale failure event |
+| Underlying request cancellation | PowerShell/CIM and Local Core subprocess paths | Not claimed | Existing bounded timeout/reap behavior remains; generation binding rejects publication only |
+| Checkpoint 2238 verifier contract | Verifier, validator, source contracts | Locally verified | Mandatory stale-generation target, exact 267 steps, source contract 668 |
+
+Focused and adjacent filters, Flutter `840/840`, source contracts `668/668`, and
+the exact `267/267` verifier pass locally. Both strict hosts accept the report
+and adversarial variants reject `16/16`. Generation binding narrows asynchronous
+UI/controller lifecycle integrity; it does not promote polling to installed
+durable monitoring or add mutation/pre-execution capability. Implementation-
+head hosted evidence follows; evidence-head, integration, synchronization, and
+destination evidence remains open.
+
+Exact implementation `5944e97` passes PR `#90` CI and both package trigger
+modes. Both consolidated artifact streams pass bounded platform/checksum/SBOM
+validation and publication is skipped. Hosted packaging does not expand the
+app-lifetime, publication-only generation boundary; evidence-head, merge,
+synchronization, and destination evidence remains open.

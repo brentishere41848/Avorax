@@ -881,6 +881,8 @@ class ZentorController extends StateNotifier<ZentorState> {
   bool _allowlistRefreshPending = false;
   bool _processSnapshotEvaluationInFlight = false;
   bool _watchPollEvaluationInFlight = false;
+  int _processSnapshotLoopGeneration = 0;
+  int _watchPollLoopGeneration = 0;
   String? _lastProcessSnapshotLoopRoutineEventKey;
   String? _lastWatchPollLoopRoutineEventKey;
   Timer? _scheduledQuickScanTimer;
@@ -1838,7 +1840,9 @@ class ZentorController extends StateNotifier<ZentorState> {
     );
   }
 
-  Future<void> _evaluateProcessSnapshotForActiveProtection() async {
+  Future<void> _evaluateProcessSnapshotForActiveProtection(
+    int loopGeneration,
+  ) async {
     await _evaluateProcessSnapshot(
       emptyType: 'process_snapshot_loop_empty',
       emptyMessage: 'Protection process snapshot contained no observations',
@@ -1854,6 +1858,7 @@ class ZentorController extends StateNotifier<ZentorState> {
       emptySeverity: 'info',
       dedupeRepeatedRoutineEvents: true,
       updateProcessSnapshotLoopState: true,
+      activeLoopGeneration: loopGeneration,
     );
   }
 
@@ -1870,7 +1875,9 @@ class ZentorController extends StateNotifier<ZentorState> {
     required String emptySeverity,
     bool dedupeRepeatedRoutineEvents = false,
     bool updateProcessSnapshotLoopState = false,
+    int? activeLoopGeneration,
   }) async {
+    if (!_processSnapshotEvaluationIsCurrent(activeLoopGeneration)) return;
     if (_processSnapshotEvaluationInFlight) {
       const busyDetails =
           'A process snapshot evaluation was skipped because a previous snapshot is still running.';
@@ -1889,7 +1896,7 @@ class ZentorController extends StateNotifier<ZentorState> {
     _processSnapshotEvaluationInFlight = true;
     try {
       final observations = await _appDetector.processSnapshotObservations();
-      if (!mounted) return;
+      if (!_processSnapshotEvaluationIsCurrent(activeLoopGeneration)) return;
       if (observations.isEmpty) {
         if (updateProcessSnapshotLoopState) {
           _setProcessSnapshotLoopState(status: 'active', reason: emptyDetails);
@@ -1914,7 +1921,7 @@ class ZentorController extends StateNotifier<ZentorState> {
       final report = await _localCoreClient.evaluateProcessSnapshot(
         observations,
       );
-      if (!mounted) return;
+      if (!_processSnapshotEvaluationIsCurrent(activeLoopGeneration)) return;
       if (!report.ok) {
         final diagnosticParts = <String>[
           'Local Core rejected process snapshot evaluation:',
@@ -1928,6 +1935,7 @@ class ZentorController extends StateNotifier<ZentorState> {
           details: diagnosticParts.join(' '),
           dedupeRepeatedRoutineEvents: dedupeRepeatedRoutineEvents,
           updateProcessSnapshotLoopState: updateProcessSnapshotLoopState,
+          activeLoopGeneration: activeLoopGeneration,
         );
         return;
       }
@@ -1941,6 +1949,7 @@ class ZentorController extends StateNotifier<ZentorState> {
               'diagnostics=${report.diagnostics.take(2).join("; ")}',
           dedupeRepeatedRoutineEvents: dedupeRepeatedRoutineEvents,
           updateProcessSnapshotLoopState: updateProcessSnapshotLoopState,
+          activeLoopGeneration: activeLoopGeneration,
         );
         return;
       }
@@ -1983,13 +1992,14 @@ class ZentorController extends StateNotifier<ZentorState> {
         severity: eventSeverity,
       );
     } on Object catch (error) {
-      if (!mounted) return;
+      if (!_processSnapshotEvaluationIsCurrent(activeLoopGeneration)) return;
       await _recordProcessSnapshotFailure(
         failedType: failedType,
         failedMessage: failedMessage,
         details: _boundedUiDiagnostic(error),
         dedupeRepeatedRoutineEvents: dedupeRepeatedRoutineEvents,
         updateProcessSnapshotLoopState: updateProcessSnapshotLoopState,
+        activeLoopGeneration: activeLoopGeneration,
       );
     } finally {
       _processSnapshotEvaluationInFlight = false;
@@ -2002,7 +2012,9 @@ class ZentorController extends StateNotifier<ZentorState> {
     required Object details,
     required bool dedupeRepeatedRoutineEvents,
     required bool updateProcessSnapshotLoopState,
+    required int? activeLoopGeneration,
   }) async {
+    if (!_processSnapshotEvaluationIsCurrent(activeLoopGeneration)) return;
     final boundedDetails = _boundedUiDiagnostic(details);
     if (updateProcessSnapshotLoopState) {
       _setProcessSnapshotLoopState(status: 'limited', reason: boundedDetails);
@@ -2039,10 +2051,11 @@ class ZentorController extends StateNotifier<ZentorState> {
   String? _startProcessSnapshotLoop() {
     try {
       _stopProcessSnapshotLoop();
+      final loopGeneration = _processSnapshotLoopGeneration;
       _lastProcessSnapshotLoopRoutineEventKey = null;
       _processSnapshotTimer = _processSnapshotTimerFactory(
         _processSnapshotLoopInterval,
-        (_) => _runProcessSnapshotLoopTickSafely(),
+        (_) => _runProcessSnapshotLoopTickSafely(loopGeneration),
       );
       return null;
     } on Object catch (error) {
@@ -2052,18 +2065,19 @@ class ZentorController extends StateNotifier<ZentorState> {
   }
 
   void _stopProcessSnapshotLoop() {
+    _processSnapshotLoopGeneration += 1;
     _processSnapshotTimer?.cancel();
     _processSnapshotTimer = null;
     _lastProcessSnapshotLoopRoutineEventKey = null;
   }
 
-  void _runProcessSnapshotLoopTickSafely() {
-    if (!mounted || !_processSnapshotLoopShouldRun()) return;
+  void _runProcessSnapshotLoopTickSafely(int loopGeneration) {
+    if (!_processSnapshotLoopGenerationIsCurrent(loopGeneration)) return;
     unawaited(
-      _evaluateProcessSnapshotForActiveProtection().catchError((
+      _evaluateProcessSnapshotForActiveProtection(loopGeneration).catchError((
         Object error,
       ) async {
-        if (!mounted) return;
+        if (!_processSnapshotLoopGenerationIsCurrent(loopGeneration)) return;
         final details = _boundedUiDiagnostic(error);
         _setProcessSnapshotLoopState(status: 'limited', reason: details);
         await logEvent(
@@ -2076,6 +2090,17 @@ class ZentorController extends StateNotifier<ZentorState> {
       }),
     );
   }
+
+  bool _processSnapshotEvaluationIsCurrent(int? loopGeneration) =>
+      mounted &&
+      (loopGeneration == null ||
+          _processSnapshotLoopGenerationIsCurrent(loopGeneration));
+
+  bool _processSnapshotLoopGenerationIsCurrent(int loopGeneration) =>
+      mounted &&
+      loopGeneration == _processSnapshotLoopGeneration &&
+      _processSnapshotTimer?.isActive == true &&
+      _processSnapshotLoopShouldRun();
 
   void _setProcessSnapshotLoopState({
     required String status,
@@ -2095,16 +2120,17 @@ class ZentorController extends StateNotifier<ZentorState> {
           state.protectionStatus == ProtectionStatus.localOnly);
 
   String? _startWatchPollLoop(List<String> watchedPaths) {
+    _stopWatchPollLoop();
     if (watchedPaths.isEmpty) {
       return 'Finite watch-poll loop did not start: no watched paths were reported.';
     }
     try {
-      _stopWatchPollLoop();
+      final loopGeneration = _watchPollLoopGeneration;
       _watchPollPaths = List<String>.unmodifiable(watchedPaths);
       _lastWatchPollLoopRoutineEventKey = null;
       _watchPollTimer = _watchPollTimerFactory(
         _watchPollLoopInterval,
-        (_) => _runWatchPollLoopTickSafely(),
+        (_) => _runWatchPollLoopTickSafely(loopGeneration),
       );
       return null;
     } on Object catch (error) {
@@ -2114,17 +2140,20 @@ class ZentorController extends StateNotifier<ZentorState> {
   }
 
   void _stopWatchPollLoop() {
+    _watchPollLoopGeneration += 1;
     _watchPollTimer?.cancel();
     _watchPollTimer = null;
     _watchPollPaths = const [];
     _lastWatchPollLoopRoutineEventKey = null;
   }
 
-  void _runWatchPollLoopTickSafely() {
-    if (!mounted || !_watchPollLoopShouldRun()) return;
+  void _runWatchPollLoopTickSafely(int loopGeneration) {
+    if (!_watchPollLoopGenerationIsCurrent(loopGeneration)) return;
     unawaited(
-      _evaluateWatchPollForActiveProtection().catchError((Object error) async {
-        if (!mounted) return;
+      _evaluateWatchPollForActiveProtection(
+        loopGeneration: loopGeneration,
+      ).catchError((Object error) async {
+        if (!_watchPollLoopGenerationIsCurrent(loopGeneration)) return;
         final details = _boundedUiDiagnostic(error);
         _setWatchPollLoopState(status: 'limited', reason: details);
         await logEvent(
@@ -2139,8 +2168,10 @@ class ZentorController extends StateNotifier<ZentorState> {
   }
 
   Future<void> _evaluateWatchPollForActiveProtection({
+    required int loopGeneration,
     bool dedupeRepeatedRoutineEvents = true,
   }) async {
+    if (!_watchPollLoopGenerationIsCurrent(loopGeneration)) return;
     if (_watchPollEvaluationInFlight) {
       const busyDetails =
           'A finite watch-poll scan was skipped because a previous watch-poll scan is still running.';
@@ -2169,7 +2200,7 @@ class ZentorController extends StateNotifier<ZentorState> {
         pollInterval: _watchPollScanPollInterval,
         maxEvents: _watchPollScanMaxEvents,
       );
-      if (!mounted) return;
+      if (!_watchPollLoopGenerationIsCurrent(loopGeneration)) return;
       final poll = result.poll;
       final detailParts = <String>[
         'watcherActive=${result.watcher.active}',
@@ -2260,7 +2291,7 @@ class ZentorController extends StateNotifier<ZentorState> {
         severity: eventSeverity,
       );
     } on Object catch (error) {
-      if (!mounted) return;
+      if (!_watchPollLoopGenerationIsCurrent(loopGeneration)) return;
       final details = _boundedUiDiagnostic(error);
       _setWatchPollLoopState(status: 'limited', reason: details);
       _lastWatchPollLoopRoutineEventKey = null;
@@ -2275,6 +2306,12 @@ class ZentorController extends StateNotifier<ZentorState> {
       _watchPollEvaluationInFlight = false;
     }
   }
+
+  bool _watchPollLoopGenerationIsCurrent(int loopGeneration) =>
+      mounted &&
+      loopGeneration == _watchPollLoopGeneration &&
+      _watchPollTimer?.isActive == true &&
+      _watchPollLoopShouldRun();
 
   String? _watchPollResponseConsistencyError(WatchPollScanResult result) {
     final watcher = result.watcher;

@@ -2971,3 +2971,38 @@ eight mutations reject under both hosts (`16/16`). Locks and the protected vault
 remain exact. This verifies the bounded local runtime contract only. Hosted,
 installed/durable, synchronization, destination, calibration, mutation,
 driver/kernel, and pre-execution residual risks are unchanged.
+
+**Integration and destination evidence:** PR `#89` merged normally as
+`8900107`; exact evidence-head and merged-main CI/package matrices pass with
+publication skipped. Guarded synchronization copied 24 exact blobs with zero
+deletes/residue. Destination component/workspace/Flutter/contracts pass,
+followed by exact `266/266` in `499.0s`, both independent validators, and
+adversarial `16/16`. This closes checkpoint 2237 evidence without changing the
+threat boundary: snapshots can miss short-lived processes, head/tail sampling
+can miss middle arguments, process review is post-start and non-mutating, and
+no installed durable, cross-identity, driver/kernel, or pre-execution claim is
+made.
+
+## Checkpoint 2238 Protection Loop Generation Threat Delta
+
+- **Stale asynchronous success:** a process/watch result is accepted only while
+  its captured loop generation, timer, controller, configuration, and protection
+  state remain current. Stop or replacement invalidates publication before
+  timer cleanup.
+- **Stale asynchronous failure:** inner exception and outer unawaited-catch paths
+  apply the same generation check, so an old request cannot overwrite `off`
+  state with `limited` or append a stale loop-failure event after stop.
+- **Empty replacement confusion:** watch-poll start invalidates the prior loop
+  before rejecting an empty replacement path set; an old timer/path lease cannot
+  survive that limitation.
+- **Cancellation honesty:** no running CIM/OS/Local Core request is described as
+  cancelled. It may consume its existing bounded resource/time allowance; only
+  state/event publication is revoked.
+
+Checkpoint 2238 locally passes its focused and adjacent races, Flutter
+`840/840`, source contracts `668/668`, and exact `267/267` no-skip/no-Defender
+verifier in `469.8s`. Two strict hosts accept the report and adversarial
+variants reject `16/16`; locks and protected-vault inventory remain exact. This
+proves stale-publication rejection within the app controller only. App-lifetime
+poll gaps, installed identity boundaries, durable monitoring, calibration,
+mutation, driver/kernel enforcement, and pre-execution remain residual risks.

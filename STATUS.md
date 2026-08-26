@@ -6539,3 +6539,53 @@ guarded synchronization, and destination proof remain pending.
   service/driver stream. Guard commandline telemetry, verified parent-image
   lineage, durable cross-identity operation, production calibration, process
   enforcement, and pre-execution blocking remain partial or blocked.
+
+## Checkpoint 2237 Closure
+
+- **Verified:** PR `#89` merged normally as `8900107`; evidence-head and
+  merged-main CI/package matrices pass with every publication job skipped.
+  Consolidated artifacts were validated without extraction or execution.
+- **Verified:** guarded zero-delete synchronization copied 24 exact blobs and
+  7,685,018 bytes into `C:\Users\Brent\Documents\Avorax-main`; no stage/temp
+  residue or test process remains.
+- **Verified:** destination component/workspace/Flutter/contracts pass, followed
+  by exact no-skip/no-Defender `266/266` in `499.0s`, both independent validators,
+  and adversarial rejection `16/16`. Report SHA-256 is
+  `e5cd69828c3d1bb417f06e7cfb7116569c0de807970b7bd735eea2c83ad2cf9c`.
+- **Unchanged limits:** collection is app-lifetime polling and post-start review.
+  Guard commandline telemetry, installed durable monitoring, parent-image
+  lineage, production calibration, mutation, cross-identity isolation,
+  driver/kernel enforcement, and pre-execution blocking remain open. Checkpoint
+  2237 is closed; the complete antivirus project is not complete.
+
+## Checkpoint 2238 - Protection Loop Generation Binding
+
+- **Implemented and locally verified:** process-snapshot and finite watch-poll timers capture separate
+  controller-lifetime generations. Stop/replacement invalidates a generation
+  before timer cleanup; late success, exception, and outer catch publication
+  require the exact active generation.
+- An empty replacement watch-path set now invalidates the old
+  timer and path lease first. Two benign pending-future regressions cover a late
+  suspicious process result and a late watch-poll exception after stop.
+- Focused stale-generation tests pass `2/2`; adjacent process/watch/protection
+  filters pass `9/9`, `5/5`, and `50/50`; Flutter analyze and full `840/840`
+  pass; source contracts pass `668/668`.
+- **Definitive local verified:** the explicit no-skip/no-Defender verifier passes
+  exact `267/267`, zero failed/skipped, in `469.8s`. Both strict hosts accept
+  the report, adversarial variants reject `16/16`, and report SHA-256 is
+  `c219c9b35c74988471fc5dfa1ac2c2808488873fd79706876f51f5c2eaff8236`.
+  Locks, processes, and the protected-vault invariant remain exact.
+  Implementation-head hosted evidence follows; evidence-head, integration,
+  synchronization, and destination evidence remains pending.
+- **Exact implementation-head hosted verified:** commit `5944e97` is PR `#90`'s
+  exact head. CI `32923573250` and package push/PR runs `32923527726`/
+  `32923573229` pass all mandatory jobs; publication jobs `98045073302`/
+  `98044630756` are skipped. Consolidated artifacts `9591053604`/`9590999961`
+  match GitHub digests and pass bounded in-stream 8-entry/6-platform/
+  7-checksum/CycloneDX 1.6/569-component validation without extraction or
+  execution. Evidence-head, merge, synchronization, and destination proof
+  remain pending.
+- **Limits:** underlying bounded work is not hard-cancelled and may finish after
+  stop; only stale state/event publication is rejected. App-lifetime polling,
+  installed/durable monitoring, mutation, cross-identity isolation, driver/
+  kernel enforcement, and pre-execution blocking remain partial or blocked.

@@ -2979,3 +2979,32 @@ accept the report and adversarial variants reject `16/16`. This removes the
 local checkpoint evidence blocker only. Hosted, merge, guarded synchronization,
 destination, installed durable process observation, production calibration,
 mutation, driver/kernel, and pre-execution evidence remain open or blocked.
+
+Checkpoint 2237 hosted, merge, guarded-sync, and destination evidence is now
+closed. PR `#89`, exact-head/merged-main CI and package matrices, 24-blob
+zero-delete synchronization, destination broad suites, exact `266/266` in
+`499.0s`, two-host validation, and adversarial `16/16` all pass. This removes
+the checkpoint evidence blocker only. Installed durable process collection,
+trusted Guard commandline telemetry, verified parent-image lineage, correlated
+browser/credential/network/persistence telemetry, production calibration,
+process mutation, signed driver/kernel interception, and pre-execution blocking
+remain genuine blockers or disabled capabilities.
+
+## Checkpoint 2238 Protection Loop Generation Binding
+
+- A stopped/replaced process-snapshot or finite watch-poll loop previously did
+  not invalidate an already-running asynchronous evaluation. Late completion
+  could publish stale active/attention/limited state or an old loop event. Exact
+  lifecycle generations and benign race regressions are now scripted.
+- This checkpoint deliberately does not claim hard cancellation. Already-started
+  CIM, subprocess, or Local Core work may continue until its existing bounded
+  timeout/reap path finishes; its old generation only loses publication rights.
+- Focused/adjacent tests, Flutter `840/840`, source contracts `668/668`, exact
+  no-skip/no-Defender `267/267` in `469.8s`, both strict report validators, and
+  adversarial rejection `16/16` pass locally. Locks, processes, and protected-
+  vault inventory remain exact. Implementation-head hosted evidence passes;
+  evidence-head, merge, guarded-sync, and destination evidence remain pending
+  for checkpoint 2238.
+- Installed durable process/file telemetry, shorter observation gaps, trusted
+  Guard commandlines, parent-image identity, mutation, production calibration,
+  driver/kernel interception, and pre-execution blocking remain genuine blockers.

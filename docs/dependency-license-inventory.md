@@ -1468,3 +1468,40 @@ in-stream review confirms each has six platform files, seven matching checksums,
 and one CycloneDX 1.6 lockfile SBOM with 569 components; publication is skipped.
 This is lockfile-derived partial dependency evidence, not production signing,
 final-binary license resolution, or legal approval.
+
+Evidence-head packages `32917698337` and merged-main packages `32918786960`
+also pass every builder and consolidation with publication skipped. Their
+consolidated artifacts `9589047438` and `9589474251` pass bounded non-extracting
+six-platform/seven-checksum/CycloneDX 1.6/569-component review. Destination
+source contracts `667/667`, both locked workspace modes, strict Native/Local
+lint, Flutter analyze/`838/838`, exact 266-step dependency gate, and exact lock
+hashes pass. No dependency, feature, lockfile, machine-wide component, release,
+or publication changed. Final-binary license resolution, production signing,
+and legal approval remain separate prerequisites.
+
+## Checkpoint 2238 Dependency Scope
+
+Protection-loop generation binding uses Dart integer state, existing timer and
+Future control flow, current Flutter test doubles, and repository PowerShell/
+Python verification tools. It adds no dependency, feature, downloaded content,
+package source, license obligation, or lockfile change. Benign tests use only
+temporary empty directories, manual timers, and in-memory response/error
+fixtures; they create or execute no candidate content.
+
+Source contracts pass `668/668` and the exact `267/267` verifier dependency gate
+passes locally. Root, Native, and Flutter lock SHA-256 values remain exactly
+`7c7c8aa006c2ac80eb89fa64d3b8ec09b32b26598b1a85bceb3c2af5a2d20e39`,
+`7f4393c81896600c4a5e84cad288a1a5360eccbc1c458b38f615082f66391383`,
+and `4de19695f9207273746341ca2221541b5b86d9f72af83727afca78541e177694`.
+No dependency, feature, package source, license classification, or lockfile
+changed. Implementation-head hosted package/SBOM evidence follows; evidence-
+head and merged-main package evidence remains pending. Final-binary license
+resolution, production signing, and legal approval remain separate prerequisites.
+
+Exact implementation-head package runs `32923527726`/`32923573229` produce
+consolidated artifacts `9591053604`/`9590999961`. Bounded in-stream review
+without extraction confirms six platform release files, seven matching
+checksums, and CycloneDX 1.6 lockfile SBOM evidence with 569 components in each;
+publication is skipped. This remains lockfile-derived partial dependency
+evidence, not final-binary license resolution, production signing, or legal
+approval.

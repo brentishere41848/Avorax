@@ -1904,8 +1904,8 @@ if ($RequireFullSuite) {
   if ($skipFlutter -or $skipRust) {
     throw "-RequireFullSuite requires skip_flutter=false and skip_rust=false."
   }
-  if ($steps.Count -ne 266) {
-    throw "-RequireFullSuite expected exactly 266 verifier steps for this source revision, found $($steps.Count)."
+  if ($steps.Count -ne 267) {
+    throw "-RequireFullSuite expected exactly 267 verifier steps for this source revision, found $($steps.Count)."
   }
   if ($steps[0].name -ne "local-core safe simulator scan reporting") {
     throw "-RequireFullSuite first step mismatch: $($steps[0].name)"
@@ -1970,6 +1970,7 @@ if ($RequireFullSuite) {
   Assert-ReportContainsStep $steps "native-engine risk fusion regressions"
   Assert-ReportContainsStep $steps "native-engine bounded process behavior regressions"
   Assert-ReportContainsStep $steps "local-core Native process observation wiring regressions"
+  Assert-ReportContainsStep $steps "Flutter protection-loop stale-generation tests"
   Assert-ReportScopeContains $verifiedScopeText "bounded UTF-8-safe head/tail command-line sampling" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "command indicators remain post-start review evidence" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "high-risk process-start verdicts return recommendations rather than fake block success" "verification_scope.verified"
@@ -1982,6 +1983,9 @@ if ($RequireFullSuite) {
   Assert-ReportScopeContains $verifiedScopeText "positive observed behavior remains review-visible despite trusted-file offsets" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "bounded fail-visible diagnostics" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "no process stop or quarantine action" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "process-snapshot and finite watch-poll completions are generation-bound" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "stopping or replacing a protection loop invalidates late success and error state/event publication" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "without claiming hard cancellation of already-started operating-system or Local Core work" "verification_scope.verified"
   Assert-ReportContainsStep $steps "local-core bounded risk fusion regressions"
   Assert-ReportScopeContains $verifiedScopeText "overflow-safe bounded score accumulation" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "only positive Local Core reasons count toward evidence quality and source independence" "verification_scope.verified"
