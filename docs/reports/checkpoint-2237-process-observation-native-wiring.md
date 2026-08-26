@@ -89,9 +89,22 @@ mutation is involved.
 
 ## Pending Integration
 
-Exact-head hosted CI/package evidence with publication skipped, normal PR
-merge, guarded zero-delete synchronization, and destination re-verification
-remain pending. Local proof does not substitute for those phases.
+Exact implementation `0e10cae3b2ac8260f3911c4f103b46c1cd6e5af0` is
+PR `#89`'s head. Avorax CI `32915881353` passes all five jobs. Desktop
+Packages push/PR runs `32915865035`/`32915881182` pass contracts, Windows
+MSI/EXE, Linux DEB/tar, macOS arm64/x64 DMG, consolidation, checksums, and
+lockfile SBOM; publication jobs `98022943808`/`98024063933` are skipped.
+Consolidated artifacts `9588536075` (131,805,755 bytes, SHA-256
+`9f08245b75984af40ef769d5ce706e443a1052fe1853529eaa4df5812d26d31d`)
+and `9588657829` (131,802,266 bytes, SHA-256
+`38a8e5f47aa21c93c3e854bb28238f7c8ead9ae1ecbe0f12a71072fb01ecef7d`)
+match GitHub digests. Bounded in-stream review without extraction or execution
+passes exact eight entries, six platform files, seven matching checksum rows,
+and CycloneDX 1.6 with 569 components.
+
+Evidence-head hosted checks, normal PR merge, guarded zero-delete
+synchronization, and destination re-verification remain pending. Implementation-
+head proof does not substitute for those phases.
 
 ## Limits
 

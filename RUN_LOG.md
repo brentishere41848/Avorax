@@ -11373,3 +11373,18 @@ pending.
   one key, and zero pending/other/reparse. Hosted/integration/destination proof
   remains pending; no install, service/driver start, Defender change, release,
   publication, candidate execution, or vault mutation occurred.
+
+## 2026-08-26 - Checkpoint 2237 Implementation-Head Hosted Evidence
+
+- Exact implementation `0e10cae3b2ac8260f3911c4f103b46c1cd6e5af0` is
+  PR `#89`'s head. Avorax CI `32915881353` passes all five jobs.
+- Desktop Packages push `32915865035` and PR `32915881182` pass all four
+  platform builders and consolidation. Publication jobs `98022943808` and
+  `98024063933` are skipped; no release or prerelease is created.
+- Consolidated artifacts `9588536075` and `9588657829` are 131,805,755 and
+  131,802,266 bytes with SHA-256
+  `9f08245b75984af40ef769d5ce706e443a1052fe1853529eaa4df5812d26d31d`
+  and `38a8e5f47aa21c93c3e854bb28238f7c8ead9ae1ecbe0f12a71072fb01ecef7d`.
+  Both match GitHub digests and pass non-extracting in-stream validation of
+  eight entries, six platform files, seven checksums, and CycloneDX 1.6 with
+  569 components. Evidence-head/merge/sync/destination proof remains pending.

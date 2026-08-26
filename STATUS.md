@@ -6528,6 +6528,13 @@ guarded synchronization, and destination proof remain pending.
   `472.7s` with zero failed/skipped; both strict hosts accept the report and
   adversarial variants reject `16/16`. Locks and the protected vault remain
   exact. Hosted, merge, synchronization, and destination proof remain pending.
+- **Exact implementation-head hosted verified:** commit `0e10cae` is PR `#89`'s
+  exact head. CI `32915881353` and package push/PR runs
+  `32915865035`/`32915881182` pass all mandatory jobs; both publication jobs
+  are skipped. Consolidated artifacts `9588536075`/`9588657829` match GitHub
+  digests and pass in-stream 8-entry/6-platform/7-checksum/CycloneDX 1.6 with
+  569 components without extraction or execution. Evidence-head, merge,
+  synchronization, and destination proof remain pending.
 - **Limits:** this remains a two-minute app-lifetime snapshot, not an installed
   service/driver stream. Guard commandline telemetry, verified parent-image
   lineage, durable cross-identity operation, production calibration, process

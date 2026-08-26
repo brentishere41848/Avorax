@@ -4865,3 +4865,9 @@ The release smoke, source contract `667/667`, complete component/workspace/
 Flutter suites, and exact no-skip/no-Defender `266/266` verifier pass locally.
 Both strict hosts accept the report and adversarial variants reject `16/16`.
 Hosted, integration, synchronization, and destination evidence remains open.
+
+Exact implementation `0e10cae` passes PR `#89` CI and both package trigger
+modes. Both consolidated artifact streams pass exact platform/checksum/SBOM
+validation and publication is skipped. Evidence-head, merge, synchronization,
+and destination evidence remain open; hosted packaging does not expand the
+post-start advisory boundary.

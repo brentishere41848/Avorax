@@ -1461,3 +1461,10 @@ contracts `667/667`, and the exact `266/266` dependency/report gate pass. No
 dependency, feature, package source, license classification, or lockfile changed.
 Hosted package/CycloneDX and complete signed final-binary license/notice review
 remain pending and are not inferred from this local result.
+
+Exact implementation-head package push/PR runs `32915865035`/`32915881182`
+produce consolidated artifacts `9588536075`/`9588657829`. Non-extracting
+in-stream review confirms each has six platform files, seven matching checksums,
+and one CycloneDX 1.6 lockfile SBOM with 569 components; publication is skipped.
+This is lockfile-derived partial dependency evidence, not production signing,
+final-binary license resolution, or legal approval.
