@@ -11897,3 +11897,18 @@ pending.
 - The implementation remains `f521242272378816f2413e0278c77ad3ed21da55`;
   `.verification` is untracked and unstaged. Hosted exact-head evidence,
   integration, guarded synchronization, and destination verification remain.
+
+## 2026-08-26 - Checkpoint 2243 Hosted Implementation/Local-Evidence Head
+
+- Exact head `ee804f19223fd2237c2fd1af971a10a13f0b2a8f` passes CI
+  `32974393351` and Desktop Packages push/PR runs `32974348589`/
+  `32974393379`; publication is skipped in both package runs.
+- Consolidated artifacts `9609491152`/`9609575687` are `131938207`/
+  `131955514` bytes and match GitHub/download SHA-256 values
+  `5e84b251d5d6d50d83d9d85325cbc24778e7852900bd55c15b4d025b4047ab18`/
+  `5dfa5eb6c57862bc9ce57aa246cc88750af06e5f561cce0e7589faf71f77108c`.
+- Non-extracting in-stream validation passes exact eight-entry inventories,
+  seven internal checksums, six platform payloads, and CycloneDX 1.6 SBOMs with
+  569 components. Nothing was extracted or executed.
+- Evidence-head hosted checks, normal merge, merged-main evidence, guarded
+  synchronization, and destination verification remain pending.

@@ -109,5 +109,20 @@ fail-closed; diagnostics do not create a verdict.
   Both validators exit nonzero; these copies remain untracked under
   `.verification`.
 
-Hosted exact-head evidence, normal integration, guarded synchronization, and
+## Hosted Implementation And Local-Evidence Head
+
+Exact head `ee804f19223fd2237c2fd1af971a10a13f0b2a8f` passes Avorax CI PR
+run `32974393351` and Desktop Packages push/PR runs `32974348589`/
+`32974393379`. Both publication jobs are skipped; no release is created.
+
+Consolidated artifacts `9609491152`/`9609575687` are `131938207`/
+`131955514` bytes. Their downloaded SHA-256 values exactly match GitHub:
+`5e84b251d5d6d50d83d9d85325cbc24778e7852900bd55c15b4d025b4047ab18` and
+`5dfa5eb6c57862bc9ce57aa246cc88750af06e5f561cce0e7589faf71f77108c`.
+Non-extracting in-stream review passes an exact eight-entry inventory in each
+bundle: six platform installers/archives, one checksum file with seven verified
+rows, and one CycloneDX 1.6 lockfile SBOM with 569 components. No artifact was
+extracted or executed.
+
+Evidence-head hosted checks, normal integration, guarded synchronization, and
 destination verification remain pending.

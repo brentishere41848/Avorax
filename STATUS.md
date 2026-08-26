@@ -6797,5 +6797,9 @@ guarded synchronization, and destination proof remain pending.
   and independent PS5/PS7 validators pass; missing-step and missing-framing-scope
   copies are rejected. Report SHA-256 is
   `81b5937b0f86c94b8b7c17865c742b31839723e776a1d249a56dd22331fdd700`.
-  Hosted exact-head, integration, guarded synchronization, and destination proof
-  remain open.
+- Exact local-evidence head `ee804f19223fd2237c2fd1af971a10a13f0b2a8f`
+  passes CI `32974393351` and packages `32974348589`/`32974393379` with
+  publication skipped. Both consolidated artifacts match GitHub SHA-256 and
+  pass exact non-extracting eight-entry, `7/7` checksum, and CycloneDX 1.6/569-
+  component SBOM validation. Evidence-head hosted checks, integration, guarded
+  synchronization, and destination proof remain open.
