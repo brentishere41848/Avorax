@@ -2,11 +2,12 @@
 
 ## Status
 
-Implementation-first scripting is complete. No checkpoint-2246 test has run
-during this scripting phase. Passing evidence must not be claimed until focused,
-broad, definitive, hosted, integration, synchronization, and destination checks
-complete. Source contract 676 and exact verifier step 275 are part of that
-required evidence.
+Checkpoint 2246 is closed. The implementation-first chronology is preserved by
+this historical statement: No checkpoint-2246 test has run during this scripting
+phase. Focused, broad, definitive, hosted, integration, synchronization, and
+destination checks have since passed. Source contract 676 and exact verifier
+step 275 are part of the accepted evidence. The complete antivirus hardening
+goal remains active.
 
 ## Objective
 
@@ -139,6 +140,52 @@ documented blockers. The complete antivirus hardening goal remains active.
 - Canonical report:
   `.verification/checkpoint-2246-full-report.json`; SHA-256
   `5c38555423a46188172e828f1193e24d44dab8e4c3613308c11b6151365a44a8`.
-- Lock hashes and the protected vault invariant remain exact. Hosted exact-head,
-  PR/merge, package, guarded synchronization, and destination evidence remain
-  pending, so checkpoint 2246 is not closed and the whole goal remains active.
+- Lock hashes and the protected vault invariant remained exact at local
+  verification. The integration and destination evidence below supersedes the
+  historical pending state.
+
+## Hosted And Integration Evidence
+
+- Implementation commit `52a0995fafda2f8b2d467b1359924c61604f777b`
+  passed exact-head Avorax CI `33017144188` and Desktop Packages push/PR runs
+  `33017129545` and `33017144209`. All required jobs passed; publication was
+  skipped. PR `#100` merged normally as
+  `f3c2c9f331748d0e340abe6cd1e33a4e435769b9`, with exact parents
+  `7d45726e346c3f25cceb079442869ae6916fb843` and
+  `52a0995fafda2f8b2d467b1359924c61604f777b`.
+- PR consolidated artifact `9625320449` is 132,074,772 bytes with SHA-256
+  `8a25f5f192c4798c1f18d365f1e8d39ccfc76307a723392b3a6eb634e7a6f2fa`.
+  Bounded validation without extraction or execution found the exact eight root
+  entries, six platform files, seven checksum targets, CycloneDX 1.6, and 569
+  components.
+- Merged-main Avorax CI `33018138486` and Desktop Packages `33018138334`
+  passed, with publication skipped. Main artifact `9625857946` is 132,001,624
+  bytes with SHA-256
+  `e5cdd5e6d36e6f933816f4c95132e467ad270ba830cd9458c5bc6afbdefdb828`
+  and passes the same bounded non-extracting 8/6/7/CycloneDX-1.6/569 inventory.
+- Guarded synchronization from base
+  `7d45726e346c3f25cceb079442869ae6916fb843` to the exact merge passes audit,
+  apply, and independent Git-attribute-aware canonical comparison for `21/21`
+  paths, with zero deletes and no staging residue.
+
+## Destination Evidence
+
+- In `C:\Users\Brent\Documents\Avorax-main`, focused provider tests pass
+  `19/19`, Source contracts pass `676/676`, and workspace formatting passes.
+- Definitive verification passes exact `275/275`, with zero failed or skipped,
+  from `2026-08-26T22:25:08.4194801Z` through
+  `2026-08-26T22:33:43.7654199Z` in `515.3s`. Rust and Flutter are not skipped;
+  Defender/EICAR integration remains opt-in and was off. Embedded and separately
+  invoked PowerShell 5.1 and PowerShell 7 validators pass. Report SHA-256 is
+  `12e27ad9e3f28058896ea03f66f1c91a6133a82b1827079869d937cd927ede65`.
+- The root, Native, and Flutter dependency locks remain exact. The protected
+  quarantine remains read-only and exact at 16,072 files, zero directories,
+  4,522,733 bytes, 5,357 each payload/metadata/auth, one metadata key, zero
+  pending files, and zero reparse points. No package was extracted or executed,
+  no release was published, and no machine-wide component was installed.
+
+Checkpoint 2246 is closed. Cancellation and Windows trust remain cooperative
+and bounded rather than hard-preemptive, correlation-dependent engines remain
+disabled with blockers, and no service, driver, kernel, production-accuracy,
+pre-execution, or Defender-replacement claim is added. The complete antivirus
+hardening goal remains active.
