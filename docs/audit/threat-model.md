@@ -3055,3 +3055,40 @@ driver/kernel, or pre-execution enforcement.
 
 Exact verifier step 269 and source contract 670 are scripted but not yet run.
 No checkpoint-2240 passing result is claimed during scripting.
+
+## Checkpoint 2241 Cooperative In-Engine Cancellation Threat Delta
+
+- **Long content hash after cancel:** the Native reader probes the exact Local
+  Core job token before and after each at-most-1-MiB read request and once more
+  before detection begins.
+- **Partial-verdict publication:** explicit checks separate static/trust/
+  signature/archive/rule/heuristic/ML stages and run immediately before verdict
+  construction is returned. Accepted cancellation has a typed error and cannot
+  become clean evidence.
+- **Archive cancellation gap:** bounded sample collection has pre/post probes;
+  every sampled and recursively nested entry has its own pre-analysis probe.
+- **Probe-state corruption:** malformed, mismatched, over-limit, unsafe, or
+  unreadable job-token state remains a distinct typed failure. Local Core aborts
+  visibly instead of translating it to cancelled or an ordinary file skip.
+- **Residual latency:** already-entered synchronous work is not forcibly
+  unwound. One filesystem read, static substep, bounded archive collect/inflate,
+  rule/ML operation, or Windows trust helper call can finish before the next
+  checkpoint. Existing resource/time limits and Flutter's visible exact-process
+  fallback remain separate controls.
+
+Exact verifier step 270 and source contract 671 were scripted before testing.
+No checkpoint-2241 passing result was claimed during scripting. Same-user token
+observation, installed/cross-identity ownership, driver/kernel cancellation,
+and pre-execution blocking remain residual risks.
+
+**Local verification:** focused cancellation passes `9/9`; Native library
+`568`, Local Core `546/546`, Flutter `847/847`, source contracts `671/671`,
+strict Native/Local lint, locked release build, analyzer, formatting, and dual
+PowerShell parser gates pass. The initial contract run found only stale current-
+cardinality/direct-call source markers and the initial Clippy run found the new
+large enum; both were repaired and rerun. The definitive no-skip/no-Defender
+report passes exact `270/270` in `462.7s`; dual independent validators pass and
+adversarial missing-step/scope reports are rejected. Hosted, integration,
+synchronization, and destination proof remain open. Three
+unchanged API-service Rust-1.96 strict-workspace lints remain a documented
+quality blocker but do not prevent the full locked release build.

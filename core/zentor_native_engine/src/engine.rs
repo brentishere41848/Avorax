@@ -19,7 +19,10 @@ use crate::ml::{feature_extractor, NativeModelRunner};
 use crate::quarantine::QuarantineRecord;
 use crate::rules::RuleDb;
 use crate::scan::archive_scanner;
-use crate::scan::content_reader::{read_scan_content, read_scan_content_with_limit};
+use crate::scan::cancellation::check_scan_cancellation;
+use crate::scan::content_reader::{
+    read_scan_content_with_cancellation, read_scan_content_with_limit,
+};
 use crate::scan::file_walker;
 use crate::scan::full_scan_planner;
 use crate::scan::quick_scan_planner;
@@ -141,9 +144,20 @@ impl ZentorNativeEngine {
     }
 
     pub fn scan_file(&mut self, path: PathBuf, mode: ScanActionMode) -> Result<FileScanVerdict> {
+        let mut never_cancel = || Ok(false);
+        self.scan_file_with_cancellation(path, mode, &mut never_cancel)
+    }
+
+    pub fn scan_file_with_cancellation(
+        &mut self,
+        path: PathBuf,
+        mode: ScanActionMode,
+        should_cancel: &mut dyn FnMut() -> Result<bool>,
+    ) -> Result<FileScanVerdict> {
         ensure_non_mutating_scan_mode(mode)?;
-        let content = read_scan_content(&path)?;
-        self.scan_bytes_at(
+        let content = read_scan_content_with_cancellation(&path, should_cancel)?;
+        check_scan_cancellation(should_cancel, "post-content boundary")?;
+        self.scan_bytes_at_with_cancellation(
             path,
             &content.sampled_bytes,
             Some((
@@ -153,6 +167,7 @@ impl ZentorNativeEngine {
                 content.sample_limited,
             )),
             Vec::new(),
+            should_cancel,
         )
     }
 
@@ -171,11 +186,31 @@ impl ZentorNativeEngine {
         path: PathBuf,
         bytes: &[u8],
         content_metadata: Option<ScanContentMetadata>,
-        mut additional_evidence: Vec<Evidence>,
+        additional_evidence: Vec<Evidence>,
     ) -> Result<FileScanVerdict> {
+        let mut never_cancel = || Ok(false);
+        self.scan_bytes_at_with_cancellation(
+            path,
+            bytes,
+            content_metadata,
+            additional_evidence,
+            &mut never_cancel,
+        )
+    }
+
+    fn scan_bytes_at_with_cancellation(
+        &mut self,
+        path: PathBuf,
+        bytes: &[u8],
+        content_metadata: Option<ScanContentMetadata>,
+        mut additional_evidence: Vec<Evidence>,
+        should_cancel: &mut dyn FnMut() -> Result<bool>,
+    ) -> Result<FileScanVerdict> {
+        check_scan_cancellation(should_cancel, "static analysis preflight")?;
         let (sha256, file_size_bytes, scanned_bytes, scan_sample_limited) =
             scan_content_metadata_or_computed(bytes, content_metadata);
         let analysis = analyze_path_with_size(&path, bytes, file_size_bytes)?;
+        check_scan_cancellation(should_cancel, "static analysis completion")?;
         let known_good = self.known_good.contains(&sha256);
         let known_bad = self.known_bad.contains(&sha256);
         let allowlisted = self.allowlist.contains(&path, &sha256);
@@ -203,6 +238,7 @@ impl ZentorNativeEngine {
                     false
                 }
             };
+        check_scan_cancellation(should_cancel, "publisher trust completion")?;
         let microsoft_system_path = match microsoft_trust::is_windows_system_path(&path) {
             Ok(is_system_path) => is_system_path,
             Err(error) => {
@@ -281,7 +317,9 @@ impl ZentorNativeEngine {
             weight: matched.weight,
             source: EvidenceSource::NativeSignature,
         }));
-        evidence.extend(self.archive_entry_detection_evidence(&path, bytes)?);
+        check_scan_cancellation(should_cancel, "native signature completion")?;
+        evidence.extend(self.archive_entry_detection_evidence(&path, bytes, should_cancel)?);
+        check_scan_cancellation(should_cancel, "archive analysis completion")?;
         let rule_matches = self.rules.evaluate(&path, bytes, &analysis)?;
         evidence.extend(rule_matches.into_iter().map(|matched| Evidence {
             id: matched.rule_id,
@@ -290,6 +328,7 @@ impl ZentorNativeEngine {
             weight: matched.weight,
             source: EvidenceSource::NativeRule,
         }));
+        check_scan_cancellation(should_cancel, "native rule completion")?;
         evidence.extend(heuristics::score_file(&path, &analysis));
         if let Some(script) = analysis.script.as_ref() {
             if script.persistence_patterns >= 2 {
@@ -305,6 +344,7 @@ impl ZentorNativeEngine {
                 });
             }
         }
+        check_scan_cancellation(should_cancel, "heuristic completion")?;
         let features = feature_extractor::extract_features(&path, &analysis, known_good, known_bad);
         if let Some(ml) = self.ml.analyze_features(&features)? {
             if matches!(
@@ -329,8 +369,10 @@ impl ZentorNativeEngine {
                 });
             }
         }
+        check_scan_cancellation(should_cancel, "ML completion")?;
         let final_verdict =
             RiskFusion::fuse(evidence, known_good || trusted_local_artifact, allowlisted);
+        check_scan_cancellation(should_cancel, "verdict publication")?;
         Ok(FileScanVerdict {
             path,
             sha256,
@@ -344,12 +386,23 @@ impl ZentorNativeEngine {
         })
     }
 
-    fn archive_entry_detection_evidence(&self, path: &Path, bytes: &[u8]) -> Result<Vec<Evidence>> {
+    fn archive_entry_detection_evidence(
+        &self,
+        path: &Path,
+        bytes: &[u8],
+        should_cancel: &mut dyn FnMut() -> Result<bool>,
+    ) -> Result<Vec<Evidence>> {
         if !archive_path_is_zip(path) {
             return Ok(Vec::new());
         }
         let mut evidence = Vec::new();
-        self.collect_archive_entry_detection_evidence(path, bytes, 0, &mut evidence)?;
+        self.collect_archive_entry_detection_evidence(
+            path,
+            bytes,
+            0,
+            &mut evidence,
+            should_cancel,
+        )?;
         Ok(evidence)
     }
 
@@ -359,8 +412,13 @@ impl ZentorNativeEngine {
         bytes: &[u8],
         depth: usize,
         evidence: &mut Vec<Evidence>,
+        should_cancel: &mut dyn FnMut() -> Result<bool>,
     ) -> Result<()> {
-        let samples = archive_scanner::collect_bounded_zip_entry_samples(bytes)?;
+        check_scan_cancellation(should_cancel, "archive sample preflight")?;
+        let samples = archive_scanner::collect_bounded_zip_entry_samples_with_cancellation(
+            bytes,
+            should_cancel,
+        )?;
         if samples.limit_exceeded {
             push_archive_content_scan_limited_evidence(
                 evidence,
@@ -369,6 +427,7 @@ impl ZentorNativeEngine {
             );
         }
         for entry in samples.entries {
+            check_scan_cancellation(should_cancel, "archive entry analysis")?;
             let entry_path = archive_entry_path(path, &entry.name);
             let entry_sha256 = sha256_bytes(&entry.bytes);
             let entry_analysis =
@@ -440,6 +499,7 @@ impl ZentorNativeEngine {
                         &entry.bytes,
                         depth + 1,
                         evidence,
+                        should_cancel,
                     )?;
                 }
             }
@@ -891,7 +951,9 @@ mod engine_source_tests {
             scan_source
                 .find("ensure_non_mutating_scan_mode(mode)?")
                 .unwrap()
-                < scan_source.find("read_scan_content(&path)?").unwrap()
+                < scan_source
+                    .find("read_scan_content_with_cancellation(&path, should_cancel)?")
+                    .unwrap()
         );
         assert!(
             roots_source
@@ -951,6 +1013,36 @@ mod engine_source_tests {
 
         assert!(source.contains("\"completed_with_errors\""));
         assert!(source.contains("if scan_errors.is_empty()"));
+    }
+
+    #[test]
+    fn cooperative_file_scan_checks_content_providers_archives_and_verdict_publication() {
+        let source = include_str!("engine.rs");
+        let scan_start = source.find("pub fn scan_file_with_cancellation").unwrap();
+        let folder_start = source.find("pub fn scan_folder").unwrap();
+        let scan_source = &source[scan_start..folder_start];
+
+        for marker in [
+            "read_scan_content_with_cancellation(&path, should_cancel)?",
+            "post-content boundary",
+            "static analysis preflight",
+            "static analysis completion",
+            "publisher trust completion",
+            "native signature completion",
+            "archive analysis completion",
+            "native rule completion",
+            "heuristic completion",
+            "ML completion",
+            "verdict publication",
+            "collect_bounded_zip_entry_samples_with_cancellation",
+            "archive entry analysis",
+        ] {
+            assert!(scan_source.contains(marker), "missing marker: {marker}");
+        }
+        assert!(
+            scan_source.find("verdict publication").unwrap()
+                < scan_source.find("Ok(FileScanVerdict").unwrap()
+        );
     }
 
     #[test]

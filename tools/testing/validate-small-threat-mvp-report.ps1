@@ -1904,8 +1904,8 @@ if ($RequireFullSuite) {
   if ($skipFlutter -or $skipRust) {
     throw "-RequireFullSuite requires skip_flutter=false and skip_rust=false."
   }
-  if ($steps.Count -ne 269) {
-    throw "-RequireFullSuite expected exactly 269 verifier steps for this source revision, found $($steps.Count)."
+  if ($steps.Count -ne 270) {
+    throw "-RequireFullSuite expected exactly 270 verifier steps for this source revision, found $($steps.Count)."
   }
   if ($steps[0].name -ne "local-core safe simulator scan reporting") {
     throw "-RequireFullSuite first step mismatch: $($steps[0].name)"
@@ -1973,6 +1973,7 @@ if ($RequireFullSuite) {
   Assert-ReportContainsStep $steps "Flutter protection-loop stale-generation tests"
   Assert-ReportContainsStep $steps "Flutter scan cancellation generation/process-ownership tests"
   Assert-ReportContainsStep $steps "scan job-bound cancellation regressions"
+  Assert-ReportContainsStep $steps "cooperative in-engine cancellation regressions"
   Assert-ReportScopeContains $verifiedScopeText "bounded UTF-8-safe head/tail command-line sampling" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "command indicators remain post-start review evidence" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "high-risk process-start verdicts return recommendations rather than fake block success" "verification_scope.verified"
@@ -1994,6 +1995,11 @@ if ($RequireFullSuite) {
   Assert-ReportScopeContains $verifiedScopeText "Local Core fallback termination captures an exact active-process lease that unrelated IPC completion cannot clear or retarget" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "every client scan receives a canonical random UUID before process start" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "an old or wrong job token cannot cancel another scan" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "job-bound cancellation is checked around at-most-1-MiB content-hash reads" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "An interrupted file publishes no partial verdict and is counted with the remaining queue as unscanned" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "cancellation-probe corruption fails the command visibly rather than becoming cancelled, clean, or an ordinary skipped-file result" "verification_scope.verified"
+  Assert-ReportScopeContains $technicalLimitText "Cooperative in-engine cancellation does not hard-interrupt an already-running filesystem read" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "cancellation is observed at the next explicit checkpoint" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "same-user code that learns a UUID remains inside the current-user capability boundary" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "not cross-identity authentication, installed service ownership, kernel cancellation, or pre-execution blocking" "verification_scope.technically_limited"
   Assert-ReportContainsStep $steps "local-core bounded risk fusion regressions"

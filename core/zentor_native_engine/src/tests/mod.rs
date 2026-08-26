@@ -721,6 +721,43 @@ mod tests {
     }
 
     #[test]
+    fn cooperative_scan_cancellation_before_providers_publishes_no_verdict() {
+        let (dir, mut engine) = test_engine();
+        let file = dir.path().join("cooperative-cancel-benign.bin");
+        fs::write(&file, b"ordinary benign cancellation fixture").unwrap();
+        let mut checks = 0_u32;
+        let mut should_cancel = || {
+            checks += 1;
+            Ok(checks >= 6)
+        };
+
+        let error = engine
+            .scan_file_with_cancellation(file, ScanActionMode::DetectOnly, &mut should_cancel)
+            .expect_err("cancelled partial scan must not publish a verdict");
+
+        assert!(crate::scan::is_cooperative_scan_cancellation(&error));
+        assert!(!crate::scan::is_scan_cancellation_check_failure(&error));
+        assert_eq!(checks, 6);
+        assert!(error.to_string().contains("static analysis preflight"));
+    }
+
+    #[test]
+    fn cooperative_scan_cancellation_probe_failure_is_not_cancelled() {
+        let (dir, mut engine) = test_engine();
+        let file = dir.path().join("cooperative-probe-failure-benign.bin");
+        fs::write(&file, b"ordinary benign cancellation fixture").unwrap();
+        let mut should_cancel = || anyhow::bail!("job token became unreadable");
+
+        let error = engine
+            .scan_file_with_cancellation(file, ScanActionMode::DetectOnly, &mut should_cancel)
+            .expect_err("probe failure must not publish a verdict");
+
+        assert!(!crate::scan::is_cooperative_scan_cancellation(&error));
+        assert!(crate::scan::is_scan_cancellation_check_failure(&error));
+        assert!(error.to_string().contains("job token became unreadable"));
+    }
+
+    #[test]
     fn quarantine_copy_fallback_rejects_hash_mismatch_before_delete() {
         let dir = tempfile::tempdir().unwrap();
         let source = dir.path().join("source.exe");

@@ -6699,3 +6699,34 @@ guarded synchronization, and destination proof remain pending.
 - **Limit:** UUID binding remains a same-user capability, not cross-identity
   authentication or installed service/kernel/pre-execution control. The
   complete antivirus goal remains active.
+
+## Checkpoint 2241 - Cooperative In-Engine Cancellation Local Pass
+
+- Native scan cancellation now has distinct typed outcomes for accepted
+  cancellation and failure to inspect cancellation state. The content reader
+  checks around at-most-1-MiB hash reads; the engine checks between static,
+  trust, signature, archive, rule, heuristic, ML, and verdict-publication
+  stages; bounded archive scanning checks around collection and each sample.
+- Local Core passes its exact job-token probe through the Native file scan. A
+  partial interrupted file never increments scanned counters or publishes a
+  verdict; it and the queued remainder become explicitly unscanned. Corrupt or
+  unreadable token state fails the command visibly.
+- Focused cancellation passes `9/9`; Native passes `568` library tests plus
+  compiler targets, Local Core `546/546`, Flutter `847/847`, analyzer, source
+  contracts `671/671`, dual PowerShell parsing, formatting, strict Native/Local
+  Clippy, and the locked workspace release build pass.
+- The definitive no-skip/no-Defender rerun passes exact `270/270` in `462.7s`.
+  Independent PowerShell 5.1/7 validators pass; adversarial removal of either
+  the mandatory step or its exact technical-limit scope is rejected. Report
+  SHA-256 is
+  `15be81e12ab47b2851d421e00db5a5b921cbf485c77a213808331c1734b3db59`.
+  Hosted, merge, synchronization, and destination evidence remain pending.
+- Workspace-wide strict Clippy remains blocked by three unchanged API-service
+  Rust-1.96 lints (`items_after_test_module` twice and `enum_variant_names`
+  once). The checkpoint's own large-enum finding was repaired by boxing the
+  verdict; targeted strict lint is clean and the workspace release build passes.
+- **Limit:** this is cooperative user-mode interruption at explicit boundaries,
+  not hard cancellation of an active OS read, analyzer call, bounded archive
+  collect/inflate, rule/ML call, or Windows trust helper. Same-user UUID access,
+  installed service ownership, cross-identity authentication, driver/kernel
+  cancellation, and pre-execution blocking remain limited or blocked.

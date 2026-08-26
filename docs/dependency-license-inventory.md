@@ -1542,3 +1542,30 @@ subprocesses. They do not scan or execute candidate content. Exact 269-step and
 source contract 670 coverage are scripted but not yet run. Final-binary license
 resolution, production signing, and legal approval remain separate
 prerequisites.
+
+## Checkpoint 2241 Dependency Scope
+
+Cooperative in-engine cancellation uses only Rust standard-library error/
+callback types, the already locked `anyhow` dependency, existing Local Core
+UUID-token parsing, and repository PowerShell/Python verification tools. It
+adds no dependency, feature, downloaded content, package source, license
+obligation, or lockfile change.
+
+Benign regressions use temporary ordinary text files, sparse zero-filled files,
+in-memory byte fixtures, and isolated temporary data roots. They never execute
+candidate content and never touch the installed quarantine vault. Exact
+270-step and source contract 671 coverage were scripted before testing. Final-
+binary license resolution, production signing, and legal approval remain
+separate prerequisites; no checkpoint-2241 passing result was claimed during
+scripting.
+
+Local verification confirms root, Native, and Flutter lock SHA-256 values remain
+exactly `7c7c8aa006c2ac80eb89fa64d3b8ec09b32b26598b1a85bceb3c2af5a2d20e39`,
+`7f4393c81896600c4a5e84cad288a1a5360eccbc1c458b38f615082f66391383`,
+and `4de19695f9207273746341ca2221541b5b86d9f72af83727afca78541e177694`.
+Source contracts `671/671`, the locked workspace release build, Flutter
+`847/847`, and strict Native/Local lint pass. The definitive report passes exact
+`270/270` in `462.7s` with dual validator acceptance and adversarial
+missing-step/scope rejection. No dependency, feature, package source, license
+classification, or lockfile changed. Hosted SBOM/package evidence remains
+pending.

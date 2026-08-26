@@ -4946,3 +4946,29 @@ driver/kernel, or pre-execution blocking capability.
 Cancellation remains cooperative user-mode post-start control. Job binding is
 not cross-identity authentication, installed service ownership, hard engine
 interruption, driver/kernel interception, or pre-execution blocking.
+
+## Checkpoint 2241 Cooperative In-Engine Cancellation Matrix
+
+| Control | Responsibility | Scripted state | Evidence target / limit |
+| --- | --- | --- | --- |
+| Native cancellation outcome | Distinguish accepted cancellation from token-probe failure | Locally verified | Typed anyhow downcast; neither outcome can become a verdict |
+| Content hash/read boundary | Probe exact job state around each at-most-1-MiB read request | Locally verified | Sparse benign fixture cancels before full hash completion |
+| Detection-stage boundary | Probe between static, publisher trust, signatures, archive, rules, heuristics, ML, and verdict publication | Locally verified | Benign runtime/source regressions; no partial verdict |
+| Archive boundary | Probe around bounded sample collection and before every sampled entry/recursive archive | Locally verified | Existing 64-entry/4-MiB/1-MiB/depth limits remain authoritative |
+| Local Core accounting | Interrupted current file plus remainder are unscanned; probe corruption aborts visibly | Locally verified | Exact-job token runtime tests and source accounting contract |
+| Checkpoint 2241 verifier contract | Verifier, validator, source contracts | Locally verified | Mandatory cooperative-cancellation target, exact 270/270, source contract 671, dual validators and adversarial rejection |
+
+Checkpoint 2241 does not hard-interrupt an in-progress filesystem read, static
+analyzer substep, bounded archive collect/inflate, synchronous rule/ML call, or
+Windows trust helper. It remains current-user cooperative cancellation, not
+installed cross-identity, driver/kernel, or pre-execution enforcement. No
+checkpoint-2241 passing result is claimed during scripting.
+
+Focused cancellation passes `9/9`; complete Native library `568`, Local Core
+`546/546`, Flutter `847/847`, source contracts `671/671`, strict component lint,
+locked release build, analyzer, formatting, and parser gates pass. The
+definitive no-skip/no-Defender report passes exact `270/270` in `462.7s`, both
+independent validators pass, and missing-step/scope adversarial reports are
+rejected. Hosted, merge, synchronization, and destination evidence remain
+open. Workspace-wide strict Clippy is separately blocked by three
+unchanged API-service Rust-1.96 lints; Native/Local strict Clippy is clean.

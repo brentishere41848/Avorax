@@ -14,9 +14,11 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 use sha2::{Digest, Sha256};
 use zentor_native_engine::{
+    is_cooperative_scan_cancellation, is_scan_cancellation_check_failure,
     Confidence as AneConfidence, EngineConfig, EngineStatus as AneEngineStatus,
-    ScanActionMode as AneScanActionMode, SelfTestReport as AneSelfTestReport,
-    ThreatCategory as AneThreatCategory, Verdict as AneVerdict, ZentorNativeEngine,
+    FileScanVerdict as AneFileScanVerdict, ScanActionMode as AneScanActionMode,
+    SelfTestReport as AneSelfTestReport, ThreatCategory as AneThreatCategory,
+    Verdict as AneVerdict, ZentorNativeEngine,
 };
 
 #[cfg_attr(not(test), allow(dead_code, unused_imports))]
@@ -1571,6 +1573,29 @@ fn scan_paths(
     scan_paths_for_job(roots, action_mode, kind, Uuid::new_v4(), emit_progress)
 }
 
+#[derive(Debug)]
+enum JobBoundNativeScan {
+    Verdict(Box<AneFileScanVerdict>),
+    Cancelled,
+}
+
+fn scan_native_file_for_job(
+    engine: &mut ZentorNativeEngine,
+    path: PathBuf,
+    job_id: Uuid,
+) -> anyhow::Result<JobBoundNativeScan> {
+    let mut should_cancel = || scan_cancellation_requested(job_id);
+    match engine.scan_file_with_cancellation(
+        path,
+        AneScanActionMode::DetectOnly,
+        &mut should_cancel,
+    ) {
+        Ok(verdict) => Ok(JobBoundNativeScan::Verdict(Box::new(verdict))),
+        Err(error) if is_cooperative_scan_cancellation(&error) => Ok(JobBoundNativeScan::Cancelled),
+        Err(error) => Err(error),
+    }
+}
+
 fn scan_paths_for_job(
     roots: Vec<PathBuf>,
     action_mode: ScanActionMode,
@@ -1699,8 +1724,22 @@ fn scan_paths_for_job(
                 continue;
             }
         };
-        match engine.scan_file(path.clone(), AneScanActionMode::DetectOnly) {
-            Ok(verdict) => {
+        match scan_native_file_for_job(engine, path.clone(), job_id) {
+            Ok(JobBoundNativeScan::Cancelled) => {
+                cancelled = true;
+                cancelled_remaining_files = total_files.saturating_sub(index as u64);
+                skipped_files = skipped_files.saturating_add(cancelled_remaining_files);
+                push_scan_error(
+                    &mut scan_errors,
+                    format!(
+                        "scan cancelled by user request during bounded inspection of {}; the interrupted file and {remaining_after_current} queued file(s) were not scanned",
+                        path.display(),
+                        remaining_after_current = cancelled_remaining_files.saturating_sub(1),
+                    ),
+                );
+                break;
+            }
+            Ok(JobBoundNativeScan::Verdict(verdict)) => {
                 files_scanned += 1;
                 bytes_scanned = bytes_scanned.saturating_add(file_size);
                 if should_surface_native_verdict(verdict.final_verdict.verdict) {
@@ -1745,6 +1784,14 @@ fn scan_paths_for_job(
                     skipped_files = skipped_files.saturating_add(1);
                     push_scan_error(&mut scan_errors, format!("{}: {detail}", path.display()));
                 }
+            }
+            Err(error) if is_scan_cancellation_check_failure(&error) => {
+                return Err(error).with_context(|| {
+                    format!(
+                        "job-bound cancellation state became unreadable while scanning {}",
+                        path.display()
+                    )
+                });
             }
             Err(error) => {
                 if windows_antimalware_blocked_scan_error(&error) {
@@ -5869,10 +5916,10 @@ mod tests {
     fn scan_paths_does_not_count_failed_native_inspections_as_scanned() {
         let source = crate::normalized_test_source(include_str!("main.rs"));
         let scan_call = source
-            .find("match engine.scan_file(path.clone(), AneScanActionMode::DetectOnly)")
+            .find("match scan_native_file_for_job(engine, path.clone(), job_id)")
             .expect("scan call marker");
         let success_increment = source
-            .find("Ok(verdict) => {\n                files_scanned += 1;")
+            .find("Ok(JobBoundNativeScan::Verdict(verdict)) => {\n                files_scanned += 1;")
             .expect("success increment marker");
         let failure_detail = source
             .find("native scan failed")
@@ -5881,6 +5928,30 @@ mod tests {
         assert!(scan_call < success_increment);
         assert!(scan_call < failure_detail);
         assert!(source.contains("skipped_files = skipped_files.saturating_add(1);"));
+    }
+
+    #[test]
+    fn cooperative_scan_cancellation_is_unscanned_not_clean() {
+        let source = crate::normalized_test_source(include_str!("main.rs"));
+        let cancelled_branch = source
+            .find("Ok(JobBoundNativeScan::Cancelled) => {")
+            .expect("in-engine cancellation branch");
+        let verdict_branch = source
+            .find("Ok(JobBoundNativeScan::Verdict(verdict)) => {")
+            .expect("verdict branch");
+        let cancellation_probe_failure = source
+            .find("Err(error) if is_scan_cancellation_check_failure(&error) => {")
+            .expect("probe failure branch");
+
+        assert!(cancelled_branch < verdict_branch);
+        assert!(source[cancelled_branch..verdict_branch]
+            .contains("cancelled_remaining_files = total_files.saturating_sub(index as u64);"));
+        assert!(source[cancelled_branch..verdict_branch]
+            .contains("skipped_files = skipped_files.saturating_add(cancelled_remaining_files);"));
+        assert!(source[cancelled_branch..verdict_branch].contains("break;"));
+        assert!(verdict_branch < cancellation_probe_failure);
+        assert!(source[cancellation_probe_failure..]
+            .contains("job-bound cancellation state became unreadable while scanning"));
     }
 
     #[test]
@@ -5954,6 +6025,66 @@ mod tests {
             .iter()
             .any(|error| error.contains("scan cancelled by user request")));
         assert!(!scan_cancellation_requested(job_id).unwrap());
+        std::env::remove_var("AVORAX_DATA_DIR");
+    }
+
+    #[test]
+    fn cooperative_scan_cancellation_reaches_native_file_scan() {
+        const CASE: &str = "native-file-scan-cooperative-cancellation";
+        if !is_isolated_environment_case(CASE) {
+            run_isolated_environment_case(
+                "tests::cooperative_scan_cancellation_reaches_native_file_scan",
+                CASE,
+                |_| {},
+            );
+            return;
+        }
+        let _lock = env_lock();
+        let dir = tempdir().unwrap();
+        std::env::set_var("AVORAX_DATA_DIR", dir.path().join("data"));
+        let file = dir.path().join("benign-engine-cancel.bin");
+        fs::write(&file, b"ordinary benign cancellation fixture").unwrap();
+        let job_id = Uuid::new_v4();
+        let token = request_scan_cancellation(job_id).unwrap();
+        let mut engine = native_engine().unwrap();
+
+        let outcome = scan_native_file_for_job(&mut engine, file, job_id).unwrap();
+
+        assert!(matches!(outcome, JobBoundNativeScan::Cancelled));
+        assert!(token.exists());
+        clear_scan_cancellation(job_id).unwrap();
+        assert!(!token.exists());
+        std::env::remove_var("AVORAX_DATA_DIR");
+    }
+
+    #[test]
+    fn cooperative_scan_cancellation_surfaces_malformed_job_token() {
+        const CASE: &str = "native-file-scan-cancellation-probe-failure";
+        if !is_isolated_environment_case(CASE) {
+            run_isolated_environment_case(
+                "tests::cooperative_scan_cancellation_surfaces_malformed_job_token",
+                CASE,
+                |_| {},
+            );
+            return;
+        }
+        let _lock = env_lock();
+        let dir = tempdir().unwrap();
+        std::env::set_var("AVORAX_DATA_DIR", dir.path().join("data"));
+        let file = dir.path().join("benign-engine-probe-failure.bin");
+        fs::write(&file, b"ordinary benign cancellation fixture").unwrap();
+        let job_id = Uuid::new_v4();
+        let token = request_scan_cancellation(job_id).unwrap();
+        fs::write(&token, b"not-json").unwrap();
+        let mut engine = native_engine().unwrap();
+
+        let error = scan_native_file_for_job(&mut engine, file, job_id)
+            .expect_err("malformed cancellation token must fail visibly");
+
+        assert!(is_scan_cancellation_check_failure(&error));
+        assert!(!is_cooperative_scan_cancellation(&error));
+        assert!(error.to_string().contains("malformed"));
+        fs::remove_file(&token).unwrap();
         std::env::remove_var("AVORAX_DATA_DIR");
     }
 

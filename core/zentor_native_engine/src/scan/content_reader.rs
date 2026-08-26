@@ -5,6 +5,8 @@ use std::path::Path;
 use anyhow::{Context, Result};
 use sha2::{Digest, Sha256};
 
+use super::cancellation::check_scan_cancellation;
+
 pub const MAX_FILE_BYTES: u64 = 64 * 1024 * 1024;
 const HASH_BUFFER_BYTES: usize = 1024 * 1024;
 
@@ -18,10 +20,28 @@ pub struct ScanContent {
 }
 
 pub fn read_scan_content(path: &Path) -> Result<ScanContent> {
-    read_scan_content_with_limit(path, u64::MAX)
+    let mut never_cancel = || Ok(false);
+    read_scan_content_with_limit_and_cancellation(path, u64::MAX, &mut never_cancel)
 }
 
 pub fn read_scan_content_with_limit(path: &Path, max_total_bytes: u64) -> Result<ScanContent> {
+    let mut never_cancel = || Ok(false);
+    read_scan_content_with_limit_and_cancellation(path, max_total_bytes, &mut never_cancel)
+}
+
+pub(crate) fn read_scan_content_with_cancellation(
+    path: &Path,
+    should_cancel: &mut dyn FnMut() -> Result<bool>,
+) -> Result<ScanContent> {
+    read_scan_content_with_limit_and_cancellation(path, u64::MAX, should_cancel)
+}
+
+fn read_scan_content_with_limit_and_cancellation(
+    path: &Path,
+    max_total_bytes: u64,
+    should_cancel: &mut dyn FnMut() -> Result<bool>,
+) -> Result<ScanContent> {
+    check_scan_cancellation(should_cancel, "content preflight")?;
     let metadata = ensure_regular_scan_content_file(path)?;
     let file_size_bytes = metadata.len();
     if file_size_bytes > max_total_bytes {
@@ -39,6 +59,7 @@ pub fn read_scan_content_with_limit(path: &Path, max_total_bytes: u64) -> Result
     let mut bytes_read_total = 0_u64;
 
     loop {
+        check_scan_cancellation(should_cancel, "content hashing")?;
         let read = file.read(&mut buffer)?;
         if read == 0 {
             break;
@@ -60,6 +81,7 @@ pub fn read_scan_content_with_limit(path: &Path, max_total_bytes: u64) -> Result
         }
         bytes_read_total = next_total;
     }
+    check_scan_cancellation(should_cancel, "content hash completion")?;
 
     Ok(ScanContent {
         sampled_bytes,
@@ -111,6 +133,7 @@ fn scan_content_metadata_is_windows_reparse_point(_metadata: &fs::Metadata) -> b
 mod tests {
     #[cfg(unix)]
     use super::read_scan_content;
+    use super::{read_scan_content_with_cancellation, HASH_BUFFER_BYTES};
     use std::fs;
 
     #[cfg(unix)]
@@ -156,5 +179,39 @@ mod tests {
             .expect_err("oversized fixture must fail before content read");
 
         assert!(error.to_string().contains("exceeds total read limit"));
+    }
+
+    #[test]
+    fn cooperative_scan_cancellation_interrupts_bounded_hash_reads() {
+        let temp = tempfile::tempdir().expect("tempdir");
+        let target = temp.path().join("large-benign-content.bin");
+        let file = fs::File::create(&target).expect("fixture");
+        file.set_len((HASH_BUFFER_BYTES * 3) as u64)
+            .expect("sparse benign fixture size");
+        let mut checks = 0_u32;
+        let mut should_cancel = || {
+            checks += 1;
+            Ok(checks >= 3)
+        };
+
+        let error = read_scan_content_with_cancellation(&target, &mut should_cancel)
+            .expect_err("content read must stop at a cancellation checkpoint");
+
+        assert!(super::super::cancellation::is_cooperative_scan_cancellation(&error));
+        assert_eq!(checks, 3);
+    }
+
+    #[test]
+    fn cooperative_scan_cancellation_surfaces_probe_failure() {
+        let temp = tempfile::tempdir().expect("tempdir");
+        let target = temp.path().join("benign-content.bin");
+        fs::write(&target, b"benign fixture").expect("fixture");
+        let mut should_cancel = || anyhow::bail!("bounded probe failure");
+
+        let error = read_scan_content_with_cancellation(&target, &mut should_cancel)
+            .expect_err("probe failure must remain visible");
+
+        assert!(super::super::cancellation::is_scan_cancellation_check_failure(&error));
+        assert!(error.to_string().contains("bounded probe failure"));
     }
 }
