@@ -6723,8 +6723,12 @@ guarded synchronization, and destination proof remain pending.
   Implementation head `810cea36a8ea14b518a884c56b4d5366c069a3f8` passes exact
   Avorax CI and Desktop Packages push/PR evidence, including both skipped
   publication jobs and bounded non-extracting validation of both consolidated
-  artifacts. Evidence-head, merge, synchronization, and destination evidence
-  remain pending.
+  artifacts. Evidence-head CI/packages, normal PR `#93` merge, merged-main
+  CI/packages, non-extracting artifacts, guarded `19/19` sync, and destination
+  focused/full/definitive evidence now pass. Destination definitive is exact
+  `270/270` in `517.9s`, with report SHA-256
+  `f74307775a173e49c359f30e06e0b8b627fecfc5e13258ebd28906dfa415df9d`.
+  Locks and the protected vault remain exact; checkpoint 2241 is closed.
 - Workspace-wide strict Clippy remains blocked by three unchanged API-service
   Rust-1.96 lints (`items_after_test_module` twice and `enum_variant_names`
   once). The checkpoint's own large-enum finding was repaired by boxing the

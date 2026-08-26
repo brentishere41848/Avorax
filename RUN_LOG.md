@@ -11747,3 +11747,25 @@ pending.
   non-extracting `8` root / `6` platform / `7` checksum / CycloneDX 1.6 / `569`
   component validation. Evidence-head, merge, synchronization, and destination
   evidence remain open.
+
+## 2026-08-26 - Checkpoint 2241 Integration And Destination Closure
+
+- Evidence head `dc44b9f6b3af60d4caacfd626e19ecd4a7dc1f7e` passes CI
+  `32954883621` and packages `32954883591`; artifact `9602378676` matches
+  GitHub/download SHA-256 and exact non-extracting package/SBOM validation.
+  Publication is skipped. Redundant cancelled dispatch `32954878909` is not
+  credited.
+- PR `#93` merged normally as
+  `68f766301041ee5e106569b7bd0afe1c63f3165d`. Merged-main CI
+  `32957262066` and packages `32957262029` pass; publication is skipped and
+  artifact `9603036370` passes matching digest plus exact bounded in-stream
+  validation.
+- Guarded sync verifies `19/19` exact paths, zero deletion/mismatch/residue.
+  Destination focused cancellation `9/9`, Native `549` passed/`19` ignored plus
+  compiler `6/6`, Local Core `546/546`, Flutter `847/847`, source contracts
+  `671/671`, analyzer, strict component lint, and locked release build pass.
+- Destination definitive evidence passes exact `270/270` in `517.9s`; dual
+  independent validators pass and report SHA-256 is
+  `f74307775a173e49c359f30e06e0b8b627fecfc5e13258ebd28906dfa415df9d`.
+  Locks and protected-vault invariant remain exact. Checkpoint 2241 is closed;
+  the complete antivirus goal remains active.

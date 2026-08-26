@@ -3088,7 +3088,8 @@ PowerShell parser gates pass. The initial contract run found only stale current-
 cardinality/direct-call source markers and the initial Clippy run found the new
 large enum; both were repaired and rerun. The definitive no-skip/no-Defender
 report passes exact `270/270` in `462.7s`; dual independent validators pass and
-adversarial missing-step/scope reports are rejected. Hosted, integration,
-synchronization, and destination proof remain open. Three
+adversarial missing-step/scope reports are rejected. Hosted, merged-main,
+guarded `19/19` synchronization, and destination `270/270` proof pass; checkpoint
+2241 is closed. Three
 unchanged API-service Rust-1.96 strict-workspace lints remain a documented
 quality blocker but do not prevent the full locked release build.
