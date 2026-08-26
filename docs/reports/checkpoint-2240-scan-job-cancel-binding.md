@@ -74,6 +74,27 @@ evidence wrapper correctly received validator exit `1` but its own diagnostic
 regex was too strict for wrapped PowerShell output; a simpler bounded wrapper
 then recorded both expected rejections without counting either as success.
 
+## Hosted Implementation Evidence
+
+- Exact implementation commit `511eb18050c8913099e4641e99d7bedb46b65059`
+  passes Avorax CI PR run `32941736916` and Desktop Packages push/PR runs
+  `32941701666` and `32941736885`.
+- Both package runs pass package contracts, Windows x64 MSI/setup EXE, Linux
+  x64 DEB/tar, macOS x64/arm64 DMGs, consolidation, checksums, and lockfile
+  SBOM. Both publication jobs are explicitly skipped; no release was created.
+- Consolidated artifacts `9597342672` and `9597199315` are respectively
+  `131904219` and `131525034` bytes. Their downloaded SHA-256 values exactly
+  match GitHub digests
+  `da0ac68d6a4284e8139f11077f3d85bdd34c730138967b3731500341ed68b58d`
+  and
+  `d4d926ce975a2a8f5e280ba60ec142d38495114bfba97cf900ccd6603cc0af04`.
+- Bounded in-stream validation, without extraction or execution, proves exact
+  eight-entry root inventories, six platform release files, seven independent
+  matching checksum rows, and CycloneDX 1.6 lockfile SBOMs with 569 components.
+
+Evidence-head checks, normal PR merge, merged-main evidence, guarded original-
+tree synchronization, and destination verification remain pending.
+
 ## Limits
 
 This remains cooperative user-mode cancellation after scan start. A random job

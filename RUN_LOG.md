@@ -11627,3 +11627,20 @@ pending.
 - Hosted exact-head CI/packages, evidence head, merge, merged-main evidence,
   guarded original-tree synchronization, and destination verification remain
   pending. The complete antivirus goal remains active.
+
+## 2026-08-26 - Checkpoint 2240 Implementation-Head Hosting
+
+- Exact implementation `511eb18050c8913099e4641e99d7bedb46b65059`
+  passes Avorax CI PR run `32941736916` and Desktop Packages push/PR runs
+  `32941701666`/`32941736885`. Draft PR `#92` remains unmerged.
+- Both package runs pass contracts, Windows MSI/setup EXE, Linux DEB/tar,
+  macOS x64/arm64 DMGs, consolidation, checksums, and lockfile SBOM. Publication
+  is skipped in both runs; no release was created.
+- Consolidated artifacts `9597342672` (`131904219` bytes) and `9597199315`
+  (`131525034` bytes) match GitHub/download SHA-256 values
+  `da0ac68d6a4284e8139f11077f3d85bdd34c730138967b3731500341ed68b58d`
+  and `d4d926ce975a2a8f5e280ba60ec142d38495114bfba97cf900ccd6603cc0af04`.
+  Non-extracting in-stream review passes exact eight-entry inventories, six
+  platform files, seven checksums, and CycloneDX 1.6/569-component SBOMs.
+- Evidence-head hosted checks, normal merge, merged-main evidence, guarded
+  synchronization, and destination verification remain pending.

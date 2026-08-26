@@ -6674,8 +6674,13 @@ guarded synchronization, and destination proof remain pending.
   PowerShell parsing pass. The definitive no-skip/no-Defender verifier and both
   strict validators pass exact `269/269` in `475s`; missing-step and missing-
   UUID-scope report copies are rejected.
-- Hosted exact-head CI/packages, merge, synchronization, and destination
-  evidence remain pending; no release or publication has occurred.
+- Evidence-head checks, merge, synchronization, and destination evidence remain
+  pending; no release or publication has occurred.
+- Exact implementation `511eb18` passes Avorax CI `32941736916` and Desktop
+  Packages push/PR `32941701666`/`32941736885`. Both consolidated artifacts
+  match GitHub SHA-256 and pass non-extracting exact inventory, checksum, and
+  CycloneDX 1.6/569-component validation. Publication is skipped. Evidence-head
+  checks, merge, synchronization, and destination evidence remain pending.
 - **Limit:** UUID binding remains a same-user capability, not cross-identity
   authentication or installed service/kernel/pre-execution control. The
   complete antivirus goal remains active.
