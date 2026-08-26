@@ -11541,3 +11541,14 @@ pending.
   SHA-256 is `4331723c28e51e889978f481cc86082d1ee6bd57ce8cbd941769d99959495e66`.
   Hosted exact-head evidence, merge, synchronization, and destination proof
   remain pending.
+- Exact implementation head `0b0aead1e725c67d10fcacd4d4e8e113ee60f3fc`
+  is PR `#91`. Avorax CI `32930494586` passes all five jobs; Desktop Packages
+  push `32930448777` and PR run `32930494592` pass contracts, Windows MSI/EXE,
+  Linux DEB/tar, both macOS DMGs, consolidation/checksums/SBOM, and upload.
+  Publication jobs `98065115237`/`98064888856` are skipped; no release exists.
+- Consolidated artifacts `9593421332`/`9593395490` are 131,753,478/131,752,211
+  bytes with SHA-256 `7528117206ee11f8456a72ed6d18a7838eac1102168bd6253763a7fcd48c8e36`/
+  `1ee8f3142e15d3d728ca7c4665af500321fd5a214853d1e1f7fd3e7ecc08e4dd`.
+  Both match GitHub metadata and pass bounded non-extracting exact
+  8-root/6-release/7-checksum/CycloneDX 1.6/569-component validation.
+  Evidence-head checks, merge, synchronization, and destination proof remain.

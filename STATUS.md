@@ -6630,8 +6630,12 @@ guarded synchronization, and destination proof remain pending.
   `268/268` in `471.5s` with no skips or Defender option; both independent
   validators pass and controlled malformed reports reject `22/22`. Report
   SHA-256 is `4331723c28e51e889978f481cc86082d1ee6bd57ce8cbd941769d99959495e66`.
-  Hosted exact-head evidence, merge, synchronization, and destination proof
-  remain pending.
+  Exact implementation-head CI `32930494586` and package push/PR runs
+  `32930448777`/`32930494592` pass all platform, consolidation, checksum, SBOM,
+  and upload jobs; publication is skipped. Both consolidated artifacts match
+  GitHub digests and pass non-extracting 8-entry/6-release/7-checksum/
+  CycloneDX 1.6/569-component validation. Evidence-head checks, merge,
+  synchronization, and destination proof remain pending.
 - **Limit:** the cancellation token remains current-user-runtime shared and is
   not authenticated to a cross-instance job ID. This is user-mode post-start
   cancellation, not service/driver/kernel/pre-execution isolation.

@@ -69,6 +69,26 @@ rejected `22/22`. Report SHA-256 is
 `4331723c28e51e889978f481cc86082d1ee6bd57ce8cbd941769d99959495e66`.
 Hosted exact-head evidence remains pending.
 
+## Exact Implementation-Head Hosted Evidence
+
+Commit `0b0aead1e725c67d10fcacd4d4e8e113ee60f3fc` is PR `#91`'s exact
+implementation head. Avorax CI run `32930494586` passes all five mandatory
+jobs. Desktop Packages push `32930448777` and PR run `32930494592` pass package
+contracts, Windows MSI/EXE, Linux DEB/tar, both macOS DMGs, consolidation,
+checksums, lockfile SBOM creation, and evidence upload. Publication jobs
+`98065115237` and `98064888856` are skipped; no release or prerelease is
+created.
+
+Consolidated artifacts `9593421332` and `9593395490` are 131,753,478 and
+131,752,211 bytes with SHA-256
+`7528117206ee11f8456a72ed6d18a7838eac1102168bd6253763a7fcd48c8e36` and
+`1ee8f3142e15d3d728ca7c4665af500321fd5a214853d1e1f7fd3e7ecc08e4dd`.
+Both match GitHub's digests and pass bounded in-stream validation without
+extraction or execution: exact eight root entries, six platform release files,
+seven matching checksum rows, and CycloneDX 1.6 lockfile SBOM evidence with 569
+components. Evidence-head checks, merge, synchronization, and destination proof
+remain pending.
+
 ## Limits
 
 Cancellation is cooperative user-mode post-start control. The Local Core
