@@ -4906,3 +4906,13 @@ modes. Both consolidated artifact streams pass bounded platform/checksum/SBOM
 validation and publication is skipped. Hosted packaging does not expand the
 app-lifetime, publication-only generation boundary; evidence-head, merge,
 synchronization, and destination evidence remains open.
+
+Checkpoint 2238 integration and destination evidence is now closed. PR `#90`
+merged normally as `2435b31`; exact evidence-head and merged-main CI/package
+matrices pass with publication skipped. Guarded synchronization copied 13 exact
+blobs and the destination passes focused generation `2/2`, Flutter
+analyze/`840/840`, source contracts `668/668`, exact `267/267` in `464.2s`,
+both validators, and adversarial `16/16`. The enabled generation controls above
+are verified at the destination. Hard cancellation, installed durable
+monitoring, mutation, driver/kernel enforcement, and pre-execution blocking
+remain unclaimed.

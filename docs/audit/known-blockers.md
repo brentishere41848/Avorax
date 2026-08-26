@@ -3008,3 +3008,13 @@ remain genuine blockers or disabled capabilities.
 - Installed durable process/file telemetry, shorter observation gaps, trusted
   Guard commandlines, parent-image identity, mutation, production calibration,
   driver/kernel interception, and pre-execution blocking remain genuine blockers.
+
+Checkpoint 2238 hosted, merge, guarded-sync, and destination evidence is now
+closed. PR `#90`, exact evidence-head/merged-main CI and package matrices,
+13-blob zero-delete synchronization, destination Flutter `840/840`, source
+contracts `668/668`, exact `267/267` in `464.2s`, two-host validation, and
+adversarial `16/16` all pass. This removes the checkpoint evidence blocker
+only. Hard cancellation of already-started work, installed durable monitoring,
+trusted Guard commandlines, verified parent lineage, mutation, production
+calibration, signed driver/kernel interception, and pre-execution blocking
+remain genuine blockers or disabled capabilities.

@@ -11475,3 +11475,31 @@ pending.
   Both match GitHub digests and pass bounded non-extracting validation of eight
   entries, six platform files, seven checksums, and CycloneDX 1.6 with 569
   components. Evidence-head/merge/sync/destination evidence remains pending.
+
+## 2026-08-26 - Checkpoint 2238 Integration And Destination Closure
+
+- Evidence head `bdde944809fadd3840f8c1473bd40b22ed95ca2f` passes CI
+  `32924928331` and Desktop Packages `32924928368`; publication job
+  `98048797558` is skipped. Consolidated artifact `9591498177` is 132,048,634
+  bytes with SHA-256 `65a2c45ecff67643865e29446434cd4827cfe81fc519ea3be1e7fb3e00e6784d`
+  and passes bounded non-extracting 8-root/6-release/7-checksum/CycloneDX
+  1.6/569-component validation.
+- PR `#90` merges normally as `2435b3139ff012eda7cb565774c039e1db1d5fbc`
+  with exact parents `8900107b082d1ca55dbe434f506345764bc10799` and
+  `bdde944809fadd3840f8c1473bd40b22ed95ca2f`. Merged-main CI
+  `32926037036` and packages `32926037103` pass; publication job
+  `98051967746` is skipped. Artifact `9591881748` is 131,736,977 bytes with
+  SHA-256 `b84eef491f84ea2f852887da247b47eff550d11b8b122aa40a7d0a8793be6537`
+  and passes the same bounded validation. No release is created.
+- Guarded zero-delete synchronization copies exact `13/13` Git-filtered blobs
+  and 7,163,699 bytes into `C:\Users\Brent\Documents\Avorax-main`; no stage
+  or temp residue remains. Destination Dart format, focused generation `2/2`,
+  Flutter analyze, full Flutter `840/840`, and source contracts `668/668` pass.
+- The destination explicit-tool no-skip/no-Defender verifier passes exact
+  `267/267`, zero failed/skipped, from `2026-08-26T03:41:07.6190417Z` through
+  `2026-08-26T03:48:51.8328668Z` in `464.2s`. Both independent validators pass,
+  eight mutations per host reject `16/16`, and report SHA-256 is
+  `394f1ab5694bf5598c5731c2192d573b6ed16540f997e5869cc3f5377f8ef063`.
+- Exact locks, zero repository test processes, zero sync residue, and the
+  protected-vault invariant remain unchanged. Checkpoint 2238 is closed; the
+  complete antivirus project remains active.

@@ -6589,3 +6589,22 @@ guarded synchronization, and destination proof remain pending.
   stop; only stale state/event publication is rejected. App-lifetime polling,
   installed/durable monitoring, mutation, cross-identity isolation, driver/
   kernel enforcement, and pre-execution blocking remain partial or blocked.
+
+## Checkpoint 2238 Closure
+
+- **Verified:** PR `#90` merged normally as `2435b31`; evidence-head and
+  merged-main CI/package matrices pass with every publication job skipped.
+  Consolidated artifacts were validated in-stream without extraction or
+  execution, and no release was created.
+- **Verified:** guarded zero-delete synchronization copied 13 exact blobs and
+  7,163,699 bytes into `C:\Users\Brent\Documents\Avorax-main`; no stage/temp
+  residue or repository test process remains.
+- **Verified:** destination focused `2/2`, Flutter analyze/`840/840`, source
+  contracts `668/668`, and exact no-skip/no-Defender `267/267` in `464.2s`
+  pass. Both independent validators accept the report and adversarial variants
+  reject `16/16`; report SHA-256 is
+  `394f1ab5694bf5598c5731c2192d573b6ed16540f997e5869cc3f5377f8ef063`.
+- **Unchanged limits:** already-started work is not hard-cancelled. Poll gaps,
+  installed durable monitoring, mutation, cross-identity isolation, driver/
+  kernel enforcement, and pre-execution blocking remain open. Checkpoint 2238
+  is closed; the complete antivirus project is not complete.
