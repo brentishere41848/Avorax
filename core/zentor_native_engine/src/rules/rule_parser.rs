@@ -9,6 +9,10 @@ use super::{rule_compiler, rule_vm, NativeRule, RuleMatch, RulePack};
 use crate::analyzers::StaticAnalysis;
 
 const MAX_RULE_PACK_FILE_BYTES: u64 = 2 * 1024 * 1024;
+const MAX_RULE_PACK_FILES: usize = 32;
+const MAX_RULE_PACK_DIRECTORY_ENTRIES: usize = 256;
+const MAX_RULE_PACK_TOTAL_BYTES: u64 = 16 * 1024 * 1024;
+const MAX_LOADED_RULES: usize = 4096;
 
 #[derive(Debug, Clone, Default)]
 pub struct RuleDb {
@@ -20,16 +24,28 @@ impl RuleDb {
     pub fn load_pack(path: &Path) -> Result<Self> {
         let mut db = Self::default();
         if pack_file_present(path)? {
-            db.load_one(path)?;
-            db.pack_loaded = true;
+            let primary_metadata = ensure_regular_pack_file(path)?;
+            let mut pack_file_count = 1usize;
+            let mut inspected_directory_entries = 0usize;
+            let mut total_pack_bytes = primary_metadata.len();
+            let mut siblings = Vec::new();
             if let Some(parent) = path.parent() {
-                let mut siblings = Vec::new();
                 for entry in fs::read_dir(parent).with_context(|| {
                     format!(
                         "failed to enumerate rule pack directory {}",
                         parent.display()
                     )
                 })? {
+                    inspected_directory_entries =
+                        inspected_directory_entries.checked_add(1).ok_or_else(|| {
+                            anyhow::anyhow!("rule pack directory entry count overflow")
+                        })?;
+                    if inspected_directory_entries > MAX_RULE_PACK_DIRECTORY_ENTRIES {
+                        bail!(
+                            "rule pack directory exceeds maximum inspected entry count of {}",
+                            MAX_RULE_PACK_DIRECTORY_ENTRIES
+                        );
+                    }
                     let entry = entry.with_context(|| {
                         format!(
                             "failed to read rule pack directory entry in {}",
@@ -41,31 +57,73 @@ impl RuleDb {
                         && is_regular_pack_file(&candidate)?
                         && candidate != path
                     {
+                        pack_file_count = pack_file_count
+                            .checked_add(1)
+                            .ok_or_else(|| anyhow::anyhow!("rule pack file count overflow"))?;
+                        if pack_file_count > MAX_RULE_PACK_FILES {
+                            bail!(
+                                "rule pack set exceeds maximum file count of {}",
+                                MAX_RULE_PACK_FILES
+                            );
+                        }
+                        let candidate_bytes = ensure_regular_pack_file(&candidate)?.len();
+                        total_pack_bytes = total_pack_bytes
+                            .checked_add(candidate_bytes)
+                            .ok_or_else(|| anyhow::anyhow!("rule pack total size overflow"))?;
+                        if total_pack_bytes > MAX_RULE_PACK_TOTAL_BYTES {
+                            bail!(
+                                "rule pack set exceeds maximum total bytes of {}",
+                                MAX_RULE_PACK_TOTAL_BYTES
+                            );
+                        }
                         siblings.push(candidate);
                     }
                 }
-                siblings.sort();
-                for sibling in siblings {
-                    db.load_one(&sibling)?;
-                }
+            }
+            siblings.sort();
+            let mut loaded_pack_bytes = db.load_one(path, MAX_RULE_PACK_TOTAL_BYTES)?;
+            db.pack_loaded = true;
+            for sibling in siblings {
+                let remaining_pack_bytes = MAX_RULE_PACK_TOTAL_BYTES
+                    .checked_sub(loaded_pack_bytes)
+                    .ok_or_else(|| anyhow::anyhow!("rule pack loaded size overflow"))?;
+                let sibling_bytes = db.load_one(&sibling, remaining_pack_bytes)?;
+                loaded_pack_bytes = loaded_pack_bytes
+                    .checked_add(sibling_bytes)
+                    .ok_or_else(|| anyhow::anyhow!("rule pack loaded size overflow"))?;
             }
         }
         Ok(db)
     }
 
-    fn load_one(&mut self, path: &Path) -> Result<()> {
+    fn load_one(&mut self, path: &Path, remaining_pack_bytes: u64) -> Result<u64> {
         ensure_regular_pack_file(path)?;
-        let text = read_bounded_rule_pack(path)
+        let text = read_bounded_rule_pack_with_limit(path, remaining_pack_bytes)
             .with_context(|| format!("failed to read rule pack {}", path.display()))?;
+        let loaded_bytes = u64::try_from(text.len())
+            .map_err(|_| anyhow::anyhow!("rule pack loaded size overflow"))?;
         let pack: RulePack = serde_json::from_str(&text)
             .with_context(|| format!("failed to parse rule pack {}", path.display()))?;
         rule_compiler::validate_rule_pack(&pack)?;
+        self.ensure_rule_capacity(pack.rules.len())?;
         for rule in &pack.rules {
             if self.rules.iter().any(|existing| existing.id == rule.id) {
                 bail!("duplicate rule id across loaded packs {}", rule.id);
             }
         }
         self.rules.extend(pack.rules);
+        Ok(loaded_bytes)
+    }
+
+    fn ensure_rule_capacity(&self, additional: usize) -> Result<()> {
+        let next = self
+            .rules
+            .len()
+            .checked_add(additional)
+            .ok_or_else(|| anyhow::anyhow!("loaded rule count overflow"))?;
+        if next > MAX_LOADED_RULES {
+            bail!("loaded rule count exceeds maximum of {}", MAX_LOADED_RULES);
+        }
         Ok(())
     }
 
@@ -83,24 +141,63 @@ impl RuleDb {
         bytes: &[u8],
         analysis: &StaticAnalysis,
     ) -> Result<Vec<RuleMatch>> {
+        let mut never_cancel = || Ok(());
+        self.evaluate_with_cancellation(path, bytes, analysis, &mut never_cancel)
+    }
+
+    pub fn evaluate_with_cancellation(
+        &self,
+        path: &Path,
+        bytes: &[u8],
+        analysis: &StaticAnalysis,
+        cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+    ) -> Result<Vec<RuleMatch>> {
+        cancellation_checkpoint()?;
+        if self.rules.is_empty() {
+            cancellation_checkpoint()?;
+            return Ok(Vec::new());
+        }
+        let lower_text = String::from_utf8_lossy(bytes).to_ascii_lowercase();
+        let lower_path_text = path.display().to_string().to_ascii_lowercase();
+        cancellation_checkpoint()?;
         let mut matches = Vec::new();
         for rule in &self.rules {
-            if let Some(matched) = rule_vm::evaluate_rule(rule, path, bytes, analysis)
-                .with_context(|| format!("rule {} evaluation failed", rule.id))?
+            cancellation_checkpoint()?;
+            if let Some(matched) = rule_vm::evaluate_rule_with_prepared_text_and_cancellation(
+                rule,
+                bytes,
+                analysis,
+                &lower_text,
+                &lower_path_text,
+                cancellation_checkpoint,
+            )
+            .with_context(|| format!("rule {} evaluation failed", rule.id))?
             {
                 matches.push(matched);
             }
         }
+        cancellation_checkpoint()?;
         Ok(matches)
     }
 }
 
+#[cfg(test)]
 fn read_bounded_rule_pack(path: &Path) -> Result<String> {
+    read_bounded_rule_pack_with_limit(path, MAX_RULE_PACK_FILE_BYTES)
+}
+
+fn read_bounded_rule_pack_with_limit(path: &Path, remaining_pack_bytes: u64) -> Result<String> {
     use std::io::Read;
 
     let metadata = ensure_regular_pack_file(path)?;
     if metadata.len() > MAX_RULE_PACK_FILE_BYTES {
         bail!("rule pack file is too large {}", path.display());
+    }
+    if metadata.len() > remaining_pack_bytes {
+        bail!(
+            "rule pack set exceeds maximum total bytes of {}",
+            MAX_RULE_PACK_TOTAL_BYTES
+        );
     }
     let mut file = fs::File::open(path)?;
     let mut total = 0_u64;
@@ -116,6 +213,12 @@ fn read_bounded_rule_pack(path: &Path) -> Result<String> {
             .ok_or_else(|| anyhow::anyhow!("rule pack read size overflow"))?;
         if total > MAX_RULE_PACK_FILE_BYTES {
             bail!("rule pack file is too large {}", path.display());
+        }
+        if total > remaining_pack_bytes {
+            bail!(
+                "rule pack set exceeds maximum total bytes of {}",
+                MAX_RULE_PACK_TOTAL_BYTES
+            );
         }
         bytes.extend_from_slice(&buffer[..read]);
     }
@@ -300,5 +403,145 @@ mod tests {
         let error = read_bounded_rule_pack(&path).unwrap_err().to_string();
 
         assert!(error.contains("rule pack file is too large"));
+    }
+
+    #[test]
+    fn native_provider_pack_limits_reject_excess_rule_siblings() {
+        let dir = tempfile::tempdir().unwrap();
+        let primary = dir.path().join("primary.zrule");
+        let empty_pack = r#"{"format":"zentor-rule-pack-v1","version":"1","rules":[]}"#;
+        fs::write(&primary, empty_pack).unwrap();
+        for index in 0..MAX_RULE_PACK_FILES {
+            fs::write(
+                dir.path().join(format!("sibling-{index:02}.zrule")),
+                empty_pack,
+            )
+            .unwrap();
+        }
+
+        let error = RuleDb::load_pack(&primary).unwrap_err().to_string();
+
+        assert!(error.contains("rule pack set exceeds maximum file count"));
+    }
+
+    #[test]
+    fn native_provider_pack_limits_reject_rule_directory_entry_flood() {
+        let dir = tempfile::tempdir().unwrap();
+        let primary = dir.path().join("primary.zrule");
+        let empty_pack = r#"{"format":"zentor-rule-pack-v1","version":"1","rules":[]}"#;
+        fs::write(&primary, empty_pack).unwrap();
+        for index in 0..MAX_RULE_PACK_DIRECTORY_ENTRIES {
+            fs::write(
+                dir.path().join(format!("unrelated-{index:03}.txt")),
+                "benign",
+            )
+            .unwrap();
+        }
+
+        let error = RuleDb::load_pack(&primary).unwrap_err().to_string();
+
+        assert!(error.contains("rule pack directory exceeds maximum inspected entry count"));
+    }
+
+    #[test]
+    fn native_provider_pack_limits_reject_aggregate_rule_pack_bytes() {
+        let dir = tempfile::tempdir().unwrap();
+        let primary = dir.path().join("primary.zrule");
+        let empty_pack = r#"{"format":"zentor-rule-pack-v1","version":"1","rules":[]}"#;
+        fs::write(&primary, empty_pack).unwrap();
+        for index in 0..8 {
+            fs::File::create(dir.path().join(format!("sibling-{index:02}.zrule")))
+                .unwrap()
+                .set_len(MAX_RULE_PACK_FILE_BYTES)
+                .unwrap();
+        }
+
+        let error = RuleDb::load_pack(&primary).unwrap_err().to_string();
+
+        assert!(error.contains("rule pack set exceeds maximum total bytes"));
+    }
+
+    #[test]
+    fn native_provider_pack_limits_recheck_rule_bytes_during_read() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("bounded.zrule");
+        fs::write(&path, "ordinary benign pack bytes").unwrap();
+
+        let error = read_bounded_rule_pack_with_limit(&path, 8)
+            .unwrap_err()
+            .to_string();
+
+        assert!(error.contains("rule pack set exceeds maximum total bytes"));
+
+        let source = include_str!("rule_parser.rs");
+        let start = source.find("fn read_bounded_rule_pack_with_limit").unwrap();
+        let end = source.find("fn pack_file_present").unwrap();
+        let read_source = &source[start..end];
+        assert!(read_source.contains("metadata.len() > remaining_pack_bytes"));
+        assert!(read_source.contains("total > remaining_pack_bytes"));
+    }
+
+    #[test]
+    fn native_provider_pack_limits_reject_aggregate_rule_count() {
+        let template = NativeRule {
+            id: "ZNE-RULE-BENIGN-CAPACITY".to_string(),
+            name: "Benign capacity rule".to_string(),
+            description: "Capacity fixture only.".to_string(),
+            category: crate::verdict::ThreatCategory::TestThreat,
+            confidence: crate::verdict::Confidence::Low,
+            verdict: crate::verdict::Verdict::Observation,
+            false_positive_notes: "Benign fixture only.".to_string(),
+            conditions: vec![crate::rules::RuleCondition::FileType {
+                equals: "text".to_string(),
+            }],
+            min_condition_matches: 1,
+            action: "review_only".to_string(),
+        };
+        let mut db = RuleDb::default();
+        db.rules.resize(MAX_LOADED_RULES, template);
+
+        let error = db.ensure_rule_capacity(1).unwrap_err().to_string();
+
+        assert!(error.contains("loaded rule count exceeds maximum"));
+    }
+
+    #[test]
+    fn native_provider_cancellation_preserves_rule_db_wrapper_and_errors() {
+        let rule = NativeRule {
+            id: "ZNE-RULE-BENIGN-PROVIDER".to_string(),
+            name: "Benign provider rule".to_string(),
+            description: "Cancellation fixture only.".to_string(),
+            category: crate::verdict::ThreatCategory::TestThreat,
+            confidence: crate::verdict::Confidence::Low,
+            verdict: crate::verdict::Verdict::Observation,
+            false_positive_notes: "Benign fixture only.".to_string(),
+            conditions: vec![crate::rules::RuleCondition::ContainsAscii {
+                value: "ordinary provider marker".to_string(),
+            }],
+            min_condition_matches: 1,
+            action: "review_only".to_string(),
+        };
+        let db = RuleDb {
+            rules: vec![rule],
+            pack_loaded: true,
+        };
+        let bytes = b"ordinary provider marker";
+        let path = Path::new("benign.txt");
+        let analysis = crate::analyzers::analyze_path(path, bytes).unwrap();
+        let wrapped = db.evaluate(path, bytes, &analysis).unwrap();
+        let mut never_cancel = || Ok(());
+        let fallible = db
+            .evaluate_with_cancellation(path, bytes, &analysis, &mut never_cancel)
+            .unwrap();
+        let mut failure = || anyhow::bail!("benign rule provider callback failure");
+        let error = db
+            .evaluate_with_cancellation(path, bytes, &analysis, &mut failure)
+            .expect_err("rule callback failure must abort evaluation");
+
+        assert_eq!(wrapped.len(), fallible.len());
+        assert_eq!(wrapped[0].rule_id, fallible[0].rule_id);
+        assert!(error
+            .to_string()
+            .contains("benign rule provider callback failure"));
     }
 }

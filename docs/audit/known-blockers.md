@@ -3232,3 +3232,28 @@ correlation-dependent engines remain disabled; installed cross-identity
 service ownership, production signing/notarization, signed driver/kernel
 mediation, and demonstrated pre-execution blocking remain blocked or technically
 limited. The complete antivirus hardening goal remains active.
+
+## Checkpoint 2246 Native Provider Cancellation And Pack Limits
+
+- Signature/rule byte searches and ML loops previously observed job cancellation
+  only after a complete provider call. Rule and required-context evaluation also
+  rebuilt a bounded but potentially 64 MiB lowercase sample per item. Shared
+  fallible search and one-sample-per-provider paths are now locally verified for normal
+  files and bounded archive entries.
+- Local sibling pack loading previously had a 2 MiB per-file bound but no exact
+  aggregate file/count/byte ceiling. Locally verified fail-visible ceilings are 32
+  provider files, 256 inspected directory entries, 16 MiB aggregate bytes,
+  4,096 loaded signatures, and 4,096 loaded rules. Construction failure cannot
+  partially activate a database.
+- Exact verifier step 275, strict validation, Source contract `676/676`, focused
+  `19/19`, full component/workspace tests, and release build pass. Definitive
+  local evidence is exact `275/275` in `488.1s`; independent PS5/PS7 validators
+  pass and reject missing-step/scope mutations. Hosted, merge, package, guarded
+  sync, and destination evidence remain pending, so the checkpoint is not closed.
+- Remaining technical limitation: callbacks are cooperative, not hard
+  interruption. One provider lossy/lowercase normalization, one at-most-64-KiB
+  search chunk, the bounded ML contribution sort, an entered filesystem/system
+  call, or Windows trust helper work may complete before the next checkpoint.
+  Installed cross-identity service ownership, production-calibrated ML/rules,
+  signed-driver/kernel mediation, and pre-execution blocking remain separate
+  blockers. Reputation and correlation-dependent engines remain disabled.

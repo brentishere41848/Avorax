@@ -11,6 +11,10 @@ use crate::analyzers::StaticAnalysis;
 use crate::verdict::{Confidence, ThreatCategory};
 
 const MAX_SIGNATURE_PACK_FILE_BYTES: u64 = 2 * 1024 * 1024;
+const MAX_SIGNATURE_PACK_FILES: usize = 32;
+const MAX_SIGNATURE_PACK_DIRECTORY_ENTRIES: usize = 256;
+const MAX_SIGNATURE_PACK_TOTAL_BYTES: u64 = 16 * 1024 * 1024;
+const MAX_LOADED_SIGNATURES: usize = 4096;
 
 #[derive(Debug, Clone)]
 pub struct SignatureDb {
@@ -49,16 +53,28 @@ impl SignatureDb {
     pub fn load_pack(path: &Path) -> Result<Self> {
         let mut db = Self::built_in();
         if pack_file_present(path)? {
-            db.load_one(path)?;
-            db.pack_loaded = true;
+            let primary_metadata = ensure_regular_pack_file(path)?;
+            let mut pack_file_count = 1usize;
+            let mut inspected_directory_entries = 0usize;
+            let mut total_pack_bytes = primary_metadata.len();
+            let mut siblings = Vec::new();
             if let Some(parent) = path.parent() {
-                let mut siblings = Vec::new();
                 for entry in fs::read_dir(parent).with_context(|| {
                     format!(
                         "failed to enumerate signature pack directory {}",
                         parent.display()
                     )
                 })? {
+                    inspected_directory_entries =
+                        inspected_directory_entries.checked_add(1).ok_or_else(|| {
+                            anyhow::anyhow!("signature pack directory entry count overflow")
+                        })?;
+                    if inspected_directory_entries > MAX_SIGNATURE_PACK_DIRECTORY_ENTRIES {
+                        bail!(
+                            "signature pack directory exceeds maximum inspected entry count of {}",
+                            MAX_SIGNATURE_PACK_DIRECTORY_ENTRIES
+                        );
+                    }
                     let entry = entry.with_context(|| {
                         format!(
                             "failed to read signature pack directory entry in {}",
@@ -70,27 +86,57 @@ impl SignatureDb {
                         && is_regular_pack_file(&candidate)?
                         && candidate != path
                     {
+                        pack_file_count = pack_file_count
+                            .checked_add(1)
+                            .ok_or_else(|| anyhow::anyhow!("signature pack file count overflow"))?;
+                        if pack_file_count > MAX_SIGNATURE_PACK_FILES {
+                            bail!(
+                                "signature pack set exceeds maximum file count of {}",
+                                MAX_SIGNATURE_PACK_FILES
+                            );
+                        }
+                        let candidate_bytes = ensure_regular_pack_file(&candidate)?.len();
+                        total_pack_bytes = total_pack_bytes
+                            .checked_add(candidate_bytes)
+                            .ok_or_else(|| anyhow::anyhow!("signature pack total size overflow"))?;
+                        if total_pack_bytes > MAX_SIGNATURE_PACK_TOTAL_BYTES {
+                            bail!(
+                                "signature pack set exceeds maximum total bytes of {}",
+                                MAX_SIGNATURE_PACK_TOTAL_BYTES
+                            );
+                        }
                         siblings.push(candidate);
                     }
                 }
-                siblings.sort();
-                for sibling in siblings {
-                    db.load_one(&sibling)?;
-                }
+            }
+            siblings.sort();
+            let mut loaded_pack_bytes = db.load_one(path, MAX_SIGNATURE_PACK_TOTAL_BYTES)?;
+            db.pack_loaded = true;
+            for sibling in siblings {
+                let remaining_pack_bytes = MAX_SIGNATURE_PACK_TOTAL_BYTES
+                    .checked_sub(loaded_pack_bytes)
+                    .ok_or_else(|| anyhow::anyhow!("signature pack loaded size overflow"))?;
+                let sibling_bytes = db.load_one(&sibling, remaining_pack_bytes)?;
+                loaded_pack_bytes = loaded_pack_bytes
+                    .checked_add(sibling_bytes)
+                    .ok_or_else(|| anyhow::anyhow!("signature pack loaded size overflow"))?;
             }
         }
         Ok(db)
     }
 
-    fn load_one(&mut self, path: &Path) -> Result<()> {
+    fn load_one(&mut self, path: &Path, remaining_pack_bytes: u64) -> Result<u64> {
         ensure_regular_pack_file(path)?;
-        let text = read_bounded_signature_pack(path)
+        let text = read_bounded_signature_pack_with_limit(path, remaining_pack_bytes)
             .with_context(|| format!("failed to read signature pack {}", path.display()))?;
+        let loaded_bytes = u64::try_from(text.len())
+            .map_err(|_| anyhow::anyhow!("signature pack loaded size overflow"))?;
         let pack: super::pack_format::SignaturePack = serde_json::from_str(&text)
             .with_context(|| format!("failed to parse signature pack {}", path.display()))?;
         let canonical = super::signature_compiler::canonical_pack_bytes(&pack)?;
         super::pack_verifier::verify_pack(&pack, &canonical)?;
         super::signature_compiler::validate_signatures(&pack.signatures)?;
+        self.ensure_signature_capacity(pack.signatures.len())?;
         for signature in &pack.signatures {
             if self
                 .signatures
@@ -104,6 +150,21 @@ impl SignatureDb {
             }
         }
         self.signatures.extend(pack.signatures);
+        Ok(loaded_bytes)
+    }
+
+    fn ensure_signature_capacity(&self, additional: usize) -> Result<()> {
+        let next = self
+            .signatures
+            .len()
+            .checked_add(additional)
+            .ok_or_else(|| anyhow::anyhow!("loaded signature count overflow"))?;
+        if next > MAX_LOADED_SIGNATURES {
+            bail!(
+                "loaded signature count exceeds maximum of {}",
+                MAX_LOADED_SIGNATURES
+            );
+        }
         Ok(())
     }
 
@@ -122,25 +183,64 @@ impl SignatureDb {
         bytes: &[u8],
         analysis: &StaticAnalysis,
     ) -> Result<Vec<SignatureMatch>> {
+        let mut never_cancel = || Ok(());
+        self.match_bytes_with_cancellation(path, sha256, bytes, analysis, &mut never_cancel)
+    }
+
+    pub fn match_bytes_with_cancellation(
+        &self,
+        path: &Path,
+        sha256: &str,
+        bytes: &[u8],
+        analysis: &StaticAnalysis,
+        cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+    ) -> Result<Vec<SignatureMatch>> {
+        cancellation_checkpoint()?;
+        let lower_text = String::from_utf8_lossy(bytes).to_ascii_lowercase();
+        cancellation_checkpoint()?;
         let mut matches = Vec::new();
         for signature in &self.signatures {
+            cancellation_checkpoint()?;
             if let Some(matched) =
-                signature_matcher::matches_signature(signature, path, sha256, bytes, analysis)
-                    .with_context(|| format!("signature {} evaluation failed", signature.id))?
+                signature_matcher::matches_signature_with_prepared_text_and_cancellation(
+                    signature,
+                    path,
+                    sha256,
+                    bytes,
+                    analysis,
+                    &lower_text,
+                    cancellation_checkpoint,
+                )
+                .with_context(|| format!("signature {} evaluation failed", signature.id))?
             {
                 matches.push(matched);
             }
         }
+        cancellation_checkpoint()?;
         Ok(matches)
     }
 }
 
+#[cfg(test)]
 fn read_bounded_signature_pack(path: &Path) -> Result<String> {
+    read_bounded_signature_pack_with_limit(path, MAX_SIGNATURE_PACK_FILE_BYTES)
+}
+
+fn read_bounded_signature_pack_with_limit(
+    path: &Path,
+    remaining_pack_bytes: u64,
+) -> Result<String> {
     use std::io::Read;
 
     let metadata = ensure_regular_pack_file(path)?;
     if metadata.len() > MAX_SIGNATURE_PACK_FILE_BYTES {
         bail!("signature pack file is too large {}", path.display());
+    }
+    if metadata.len() > remaining_pack_bytes {
+        bail!(
+            "signature pack set exceeds maximum total bytes of {}",
+            MAX_SIGNATURE_PACK_TOTAL_BYTES
+        );
     }
     let mut file = fs::File::open(path)?;
     let mut total = 0_u64;
@@ -156,6 +256,12 @@ fn read_bounded_signature_pack(path: &Path) -> Result<String> {
             .ok_or_else(|| anyhow::anyhow!("signature pack read size overflow"))?;
         if total > MAX_SIGNATURE_PACK_FILE_BYTES {
             bail!("signature pack file is too large {}", path.display());
+        }
+        if total > remaining_pack_bytes {
+            bail!(
+                "signature pack set exceeds maximum total bytes of {}",
+                MAX_SIGNATURE_PACK_TOTAL_BYTES
+            );
         }
         bytes.extend_from_slice(&buffer[..read]);
     }
@@ -343,5 +449,131 @@ mod tests {
         let error = read_bounded_signature_pack(&path).unwrap_err().to_string();
 
         assert!(error.contains("signature pack file is too large"));
+    }
+
+    #[test]
+    fn native_provider_pack_limits_reject_excess_signature_siblings() {
+        let dir = tempfile::tempdir().unwrap();
+        let primary = dir.path().join("primary.zsig");
+        let empty_pack = r#"{"format":"zentor-signature-pack-v1","version":"1","signatures":[]}"#;
+        fs::write(&primary, empty_pack).unwrap();
+        for index in 0..MAX_SIGNATURE_PACK_FILES {
+            fs::write(
+                dir.path().join(format!("sibling-{index:02}.zsig")),
+                empty_pack,
+            )
+            .unwrap();
+        }
+
+        let error = SignatureDb::load_pack(&primary).unwrap_err().to_string();
+
+        assert!(error.contains("signature pack set exceeds maximum file count"));
+    }
+
+    #[test]
+    fn native_provider_pack_limits_reject_signature_directory_entry_flood() {
+        let dir = tempfile::tempdir().unwrap();
+        let primary = dir.path().join("primary.zsig");
+        let empty_pack = r#"{"format":"zentor-signature-pack-v1","version":"1","signatures":[]}"#;
+        fs::write(&primary, empty_pack).unwrap();
+        for index in 0..MAX_SIGNATURE_PACK_DIRECTORY_ENTRIES {
+            fs::write(
+                dir.path().join(format!("unrelated-{index:03}.txt")),
+                "benign",
+            )
+            .unwrap();
+        }
+
+        let error = SignatureDb::load_pack(&primary).unwrap_err().to_string();
+
+        assert!(error.contains("signature pack directory exceeds maximum inspected entry count"));
+    }
+
+    #[test]
+    fn native_provider_pack_limits_reject_aggregate_signature_pack_bytes() {
+        let dir = tempfile::tempdir().unwrap();
+        let primary = dir.path().join("primary.zsig");
+        let empty_pack = r#"{"format":"zentor-signature-pack-v1","version":"1","signatures":[]}"#;
+        fs::write(&primary, empty_pack).unwrap();
+        for index in 0..8 {
+            fs::File::create(dir.path().join(format!("sibling-{index:02}.zsig")))
+                .unwrap()
+                .set_len(MAX_SIGNATURE_PACK_FILE_BYTES)
+                .unwrap();
+        }
+
+        let error = SignatureDb::load_pack(&primary).unwrap_err().to_string();
+
+        assert!(error.contains("signature pack set exceeds maximum total bytes"));
+    }
+
+    #[test]
+    fn native_provider_pack_limits_recheck_signature_bytes_during_read() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("bounded.zsig");
+        fs::write(&path, "ordinary benign pack bytes").unwrap();
+
+        let error = read_bounded_signature_pack_with_limit(&path, 8)
+            .unwrap_err()
+            .to_string();
+
+        assert!(error.contains("signature pack set exceeds maximum total bytes"));
+
+        let source = include_str!("signature_db.rs");
+        let start = source
+            .find("fn read_bounded_signature_pack_with_limit")
+            .unwrap();
+        let end = source.find("fn pack_file_present").unwrap();
+        let read_source = &source[start..end];
+        assert!(read_source.contains("metadata.len() > remaining_pack_bytes"));
+        assert!(read_source.contains("total > remaining_pack_bytes"));
+    }
+
+    #[test]
+    fn native_provider_pack_limits_reject_aggregate_signature_count() {
+        let mut db = SignatureDb::built_in();
+        let template = db.signatures[0].clone();
+        db.signatures.resize(MAX_LOADED_SIGNATURES, template);
+
+        let error = db.ensure_signature_capacity(1).unwrap_err().to_string();
+
+        assert!(error.contains("loaded signature count exceeds maximum"));
+    }
+
+    #[test]
+    fn native_provider_cancellation_preserves_signature_db_wrapper_and_errors() {
+        let db = SignatureDb::built_in();
+        let bytes = eicar_signature::eicar_test_bytes();
+        let analysis = crate::analyzers::analyze_path(Path::new("eicar.com.txt"), bytes).unwrap();
+        let sha256 = crate::engine::sha256_bytes(bytes);
+        let wrapped = db
+            .match_bytes(Path::new("eicar.com.txt"), &sha256, bytes, &analysis)
+            .unwrap();
+        let mut never_cancel = || Ok(());
+        let fallible = db
+            .match_bytes_with_cancellation(
+                Path::new("eicar.com.txt"),
+                &sha256,
+                bytes,
+                &analysis,
+                &mut never_cancel,
+            )
+            .unwrap();
+        let mut failure = || anyhow::bail!("benign signature provider callback failure");
+        let error = db
+            .match_bytes_with_cancellation(
+                Path::new("eicar.com.txt"),
+                &sha256,
+                bytes,
+                &analysis,
+                &mut failure,
+            )
+            .expect_err("signature callback failure must abort evaluation");
+
+        assert_eq!(wrapped.len(), fallible.len());
+        assert_eq!(wrapped[0].signature_id, fallible[0].signature_id);
+        assert!(error
+            .to_string()
+            .contains("benign signature provider callback failure"));
     }
 }

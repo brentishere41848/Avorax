@@ -7,7 +7,7 @@ use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
-use crate::analyzers::{analyze_path_with_size, analyze_path_with_size_and_cancellation};
+use crate::analyzers::analyze_path_with_size_and_cancellation;
 use crate::behavior::{
     builtin_behavior_provider_inventory, process_behavior::analyze_process_start_event,
     BehaviorDecision, FileActivityEvent, ProcessStartEvent, RansomwareActivityWindow,
@@ -316,9 +316,17 @@ impl ZentorNativeEngine {
                 });
             }
         }
-        let signature_matches = self
-            .signatures
-            .match_bytes(&path, &sha256, bytes, &analysis)?;
+        let signature_matches = {
+            let mut signature_checkpoint =
+                || check_scan_cancellation(should_cancel, "native signature progress");
+            self.signatures.match_bytes_with_cancellation(
+                &path,
+                &sha256,
+                bytes,
+                &analysis,
+                &mut signature_checkpoint,
+            )?
+        };
         evidence.extend(signature_matches.into_iter().map(|matched| Evidence {
             id: matched.signature_id,
             title: matched.name,
@@ -329,7 +337,12 @@ impl ZentorNativeEngine {
         check_scan_cancellation(should_cancel, "native signature completion")?;
         evidence.extend(self.archive_entry_detection_evidence(&path, bytes, should_cancel)?);
         check_scan_cancellation(should_cancel, "archive analysis completion")?;
-        let rule_matches = self.rules.evaluate(&path, bytes, &analysis)?;
+        let rule_matches = {
+            let mut rule_checkpoint =
+                || check_scan_cancellation(should_cancel, "native rule progress");
+            self.rules
+                .evaluate_with_cancellation(&path, bytes, &analysis, &mut rule_checkpoint)?
+        };
         evidence.extend(rule_matches.into_iter().map(|matched| Evidence {
             id: matched.rule_id,
             title: matched.name,
@@ -355,7 +368,12 @@ impl ZentorNativeEngine {
         }
         check_scan_cancellation(should_cancel, "heuristic completion")?;
         let features = feature_extractor::extract_features(&path, &analysis, known_good, known_bad);
-        if let Some(ml) = self.ml.analyze_features(&features)? {
+        let ml_result = {
+            let mut ml_checkpoint = || check_scan_cancellation(should_cancel, "native ML progress");
+            self.ml
+                .analyze_features_with_cancellation(&features, &mut ml_checkpoint)?
+        };
+        if let Some(ml) = ml_result {
             if matches!(
                 ml.verdict,
                 Verdict::Suspicious | Verdict::ProbableMalware | Verdict::ConfirmedMalware
@@ -439,14 +457,28 @@ impl ZentorNativeEngine {
             check_scan_cancellation(should_cancel, "archive entry analysis")?;
             let entry_path = archive_entry_path(path, &entry.name);
             let entry_sha256 = sha256_bytes(&entry.bytes);
-            let entry_analysis =
-                analyze_path_with_size(&entry_path, &entry.bytes, entry.bytes.len() as u64)?;
-            let matches = self.signatures.match_bytes(
-                &entry_path,
-                &entry_sha256,
-                &entry.bytes,
-                &entry_analysis,
-            )?;
+            let entry_analysis = {
+                let mut entry_analysis_checkpoint = || {
+                    check_scan_cancellation(should_cancel, "archive entry static analysis progress")
+                };
+                analyze_path_with_size_and_cancellation(
+                    &entry_path,
+                    &entry.bytes,
+                    entry.bytes.len() as u64,
+                    &mut entry_analysis_checkpoint,
+                )?
+            };
+            let matches = {
+                let mut entry_signature_checkpoint =
+                    || check_scan_cancellation(should_cancel, "archive entry signature progress");
+                self.signatures.match_bytes_with_cancellation(
+                    &entry_path,
+                    &entry_sha256,
+                    &entry.bytes,
+                    &entry_analysis,
+                    &mut entry_signature_checkpoint,
+                )?
+            };
             for matched in matches {
                 evidence.push(Evidence {
                     id: matched.signature_id,
@@ -461,9 +493,16 @@ impl ZentorNativeEngine {
                     source: EvidenceSource::NativeSignature,
                 });
             }
-            let rule_matches = self
-                .rules
-                .evaluate(&entry_path, &entry.bytes, &entry_analysis)?;
+            let rule_matches = {
+                let mut entry_rule_checkpoint =
+                    || check_scan_cancellation(should_cancel, "archive entry rule progress");
+                self.rules.evaluate_with_cancellation(
+                    &entry_path,
+                    &entry.bytes,
+                    &entry_analysis,
+                    &mut entry_rule_checkpoint,
+                )?
+            };
             for matched in rule_matches {
                 evidence.push(Evidence {
                     id: matched.rule_id,
@@ -1097,6 +1136,47 @@ mod engine_source_tests {
         assert!(checkpoint < analyzer);
         assert!(analyzer < verdict);
         assert!(scan_source[analyzer..verdict].contains(")?"));
+    }
+
+    #[test]
+    fn native_provider_cancellation_is_wired_for_files_and_archive_entries() {
+        let source = include_str!("engine.rs");
+        let scan_start = source.find("fn scan_bytes_at_with_cancellation").unwrap();
+        let folder_start = source.find("pub fn scan_folder").unwrap();
+        let scan_source = &source[scan_start..folder_start];
+        let verdict = scan_source.find("Ok(FileScanVerdict").unwrap();
+
+        for marker in [
+            "native signature progress",
+            "match_bytes_with_cancellation",
+            "native rule progress",
+            "evaluate_with_cancellation",
+            "native ML progress",
+            "analyze_features_with_cancellation",
+        ] {
+            let position = scan_source
+                .find(marker)
+                .unwrap_or_else(|| panic!("missing provider cancellation marker: {marker}"));
+            assert!(position < verdict);
+        }
+        let archive_start = scan_source
+            .find("fn collect_archive_entry_detection_evidence")
+            .unwrap();
+        let archive_source = &scan_source[archive_start..];
+        let archive_completion = archive_source.rfind("Ok(())").unwrap();
+        for marker in [
+            "archive entry static analysis progress",
+            "archive entry signature progress",
+            "archive entry rule progress",
+        ] {
+            let position = archive_source.find(marker).unwrap_or_else(|| {
+                panic!("missing archive provider cancellation marker: {marker}")
+            });
+            assert!(position < archive_completion);
+        }
+        assert!(!scan_source.contains("analyze_path_with_size(&entry_path"));
+        assert!(!scan_source.contains(".signatures.match_bytes("));
+        assert!(!scan_source.contains(".rules.evaluate("));
     }
 
     #[test]

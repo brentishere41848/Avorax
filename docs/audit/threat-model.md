@@ -3253,3 +3253,35 @@ search, parser/system call, rule/ML call, or trust operation. Disabled engines
 remain disabled, the 64 MiB sample bound remains authoritative, and no installed
 service identity, driver, kernel mediation, or pre-execution blocking has been
 demonstrated.
+
+## Checkpoint 2246 Native Provider Cancellation And Pack-Limit Threat Delta
+
+**Threat:** a large bounded sample plus many custom signatures/rules delays a
+cancelled job, repeated lowercase allocations amplify CPU/RAM use, a local
+definitions directory supplies excessive sibling packs, or a callback error is
+converted into no-match and allows a partial verdict.
+
+**Mitigation:** exact, masked, ASCII, UTF-16, EICAR, required-context and rule
+term searches share fallible at-most-64-KiB candidate chunks. Signature and rule
+databases prepare one lowercase sample per provider. Rule boundaries and ML's at
+most 128 weights/contributions checkpoint explicitly. Bounded archive-entry
+static/signature/rule work receives the same scan-job callback. Pack discovery
+uses checked aggregate ceilings of 32 provider files, 256 inspected directory
+entries, 16 MiB total bytes, 4,096 signatures, and 4,096 rules. Every failure
+returns before a database, provider evidence, or file verdict is published.
+
+**Residual risk:** cancellation is cooperative. One normalization, one search
+chunk, the bounded ML contribution sort, an entered read/system call, or Windows
+trust helper operation can finish first. The existing 64 MiB file sample and 1
+MiB archive-entry sample bounds remain; these are not constant-memory or hard-
+preemption proofs. Pack authenticity still depends on the existing signed
+update/activation chain and local configuration boundary. No installed service,
+cross-identity IPC, driver, kernel, or pre-execution guarantee is claimed.
+
+Focused `19/19`, Source `676/676`, full Native/Local/Flutter/workspace checks,
+locked release build, and definitive exact `275/275` local verification pass.
+Both independent validators accept the canonical report and reject missing-step
+and missing-scope mutations. Only benign in-memory/text fixtures and isolated
+temporary pack directories are used; no candidate fixture is executed and the
+protected quarantine vault remains read-only and exact. Hosted and destination
+evidence remain pending; the residual risk and claims above are unchanged.

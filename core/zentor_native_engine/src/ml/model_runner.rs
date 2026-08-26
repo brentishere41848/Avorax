@@ -69,12 +69,24 @@ impl NativeModelRunner {
     }
 
     pub fn analyze_features(&self, features: &FeatureVector) -> Result<Option<NativeMlResult>> {
+        let mut never_cancel = || Ok(());
+        self.analyze_features_with_cancellation(features, &mut never_cancel)
+    }
+
+    pub fn analyze_features_with_cancellation(
+        &self,
+        features: &FeatureVector,
+        cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+    ) -> Result<Option<NativeMlResult>> {
+        cancellation_checkpoint()?;
         let Some(model) = self.model.as_ref() else {
             return Ok(None);
         };
         validate_feature_vector(features)?;
+        cancellation_checkpoint()?;
         let mut score = model.bias;
         for (name, weight) in &model.weights {
+            cancellation_checkpoint()?;
             score += features.get(name)? * weight;
         }
         if !score.is_finite() {
@@ -106,8 +118,10 @@ impl NativeModelRunner {
             };
         let mut contributions = Vec::with_capacity(model.weights.len());
         for (name, weight) in &model.weights {
+            cancellation_checkpoint()?;
             contributions.push((name, features.get(name)? * weight));
         }
+        cancellation_checkpoint()?;
         contributions.sort_by(|a, b| b.1.total_cmp(&a.1));
         let explanation_features = contributions
             .into_iter()
@@ -115,6 +129,7 @@ impl NativeModelRunner {
             .filter(|(_, contribution)| *contribution > 0.01)
             .map(|(name, _)| name.clone())
             .collect();
+        cancellation_checkpoint()?;
         Ok(Some(NativeMlResult {
             malware_probability: probability,
             top_category: if features.encoded_command_flag > 0.0 {
@@ -471,6 +486,37 @@ mod tests {
 
         assert!(error.contains("known_bad_flag"));
         assert!(error.contains("exceeds maximum absolute value"));
+    }
+
+    #[test]
+    fn native_provider_cancellation_preserves_ml_wrapper_and_callback_errors() {
+        let runner = NativeModelRunner {
+            model: Some(valid_native_model()),
+        };
+        let features = FeatureVector::default();
+        let wrapped = runner.analyze_features(&features).unwrap().unwrap();
+        let mut never_cancel = || Ok(());
+        let fallible = runner
+            .analyze_features_with_cancellation(&features, &mut never_cancel)
+            .unwrap()
+            .unwrap();
+        let mut checks = 0usize;
+        let mut failure = || {
+            checks += 1;
+            if checks == 3 {
+                anyhow::bail!("benign ML provider callback failure")
+            }
+            Ok(())
+        };
+        let error = runner
+            .analyze_features_with_cancellation(&features, &mut failure)
+            .expect_err("ML callback failure must abort scoring");
+
+        assert_eq!(wrapped.verdict, fallible.verdict);
+        assert_eq!(wrapped.malware_probability, fallible.malware_probability);
+        assert!(error
+            .to_string()
+            .contains("benign ML provider callback failure"));
     }
 
     #[test]

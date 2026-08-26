@@ -1,5 +1,9 @@
 use std::sync::OnceLock;
 
+use anyhow::Result;
+
+use super::search;
+
 pub const EICAR_TEST_BYTES_LEN: usize = 68;
 const EICAR_TEST_BYTES_XOR_A5: [u8; EICAR_TEST_BYTES_LEN] = [
     0xfd, 0x90, 0xea, 0x84, 0xf5, 0x80, 0xe5, 0xe4, 0xf5, 0xfe, 0x91, 0xf9, 0xf5, 0xff, 0xfd, 0x90,
@@ -26,8 +30,16 @@ pub fn eicar_test_string() -> String {
 }
 
 pub fn contains_eicar(bytes: &[u8]) -> bool {
-    let marker = eicar_test_bytes();
-    bytes.windows(marker.len()).any(|window| window == marker)
+    let mut never_cancel = || Ok(());
+    contains_eicar_with_cancellation(bytes, &mut never_cancel)
+        .expect("the infallible EICAR search callback cannot fail")
+}
+
+pub fn contains_eicar_with_cancellation(
+    bytes: &[u8],
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<bool> {
+    search::contains_exact_with_cancellation(bytes, eicar_test_bytes(), cancellation_checkpoint)
 }
 
 #[cfg(test)]

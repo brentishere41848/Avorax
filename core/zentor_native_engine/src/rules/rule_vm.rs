@@ -12,14 +12,56 @@ pub fn evaluate_rule(
     bytes: &[u8],
     analysis: &StaticAnalysis,
 ) -> Result<Option<RuleMatch>> {
+    let mut never_cancel = || Ok(());
+    evaluate_rule_with_cancellation(rule, path, bytes, analysis, &mut never_cancel)
+}
+
+pub fn evaluate_rule_with_cancellation(
+    rule: &NativeRule,
+    path: &Path,
+    bytes: &[u8],
+    analysis: &StaticAnalysis,
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<Option<RuleMatch>> {
+    cancellation_checkpoint()?;
     let text = String::from_utf8_lossy(bytes).to_ascii_lowercase();
     let path_text = path.display().to_string().to_ascii_lowercase();
+    cancellation_checkpoint()?;
+    evaluate_rule_with_prepared_text_and_cancellation(
+        rule,
+        bytes,
+        analysis,
+        &text,
+        &path_text,
+        cancellation_checkpoint,
+    )
+}
+
+pub(crate) fn evaluate_rule_with_prepared_text_and_cancellation(
+    rule: &NativeRule,
+    bytes: &[u8],
+    analysis: &StaticAnalysis,
+    lower_text: &str,
+    lower_path_text: &str,
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<Option<RuleMatch>> {
+    cancellation_checkpoint()?;
     let mut matches = 0;
     for condition in &rule.conditions {
-        if condition_matches(rule, condition, &text, &path_text, bytes, analysis)? {
+        cancellation_checkpoint()?;
+        if condition_matches(
+            rule,
+            condition,
+            lower_text,
+            lower_path_text,
+            bytes,
+            analysis,
+            cancellation_checkpoint,
+        )? {
             matches += 1;
         }
     }
+    cancellation_checkpoint()?;
     if matches < rule.min_condition_matches {
         return Ok(None);
     }
@@ -62,12 +104,18 @@ fn condition_matches(
     path_text: &str,
     bytes: &[u8],
     analysis: &StaticAnalysis,
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
 ) -> Result<bool> {
     Ok(match condition {
         RuleCondition::FileType { equals } => file_type_name(analysis.file_type) == equals,
         RuleCondition::ContainsAscii { value } => {
             let value = validated_string_condition(rule, value)?;
-            text.contains(&value.to_ascii_lowercase())
+            let normalized = value.to_ascii_lowercase();
+            crate::signatures::search::contains_exact_with_cancellation(
+                text.as_bytes(),
+                normalized.as_bytes(),
+                cancellation_checkpoint,
+            )?
         }
         RuleCondition::ContainsUtf16 { value } => {
             let value = validated_string_condition(rule, value)?;
@@ -75,7 +123,11 @@ fn condition_matches(
                 .encode_utf16()
                 .flat_map(|unit| unit.to_le_bytes())
                 .collect::<Vec<_>>();
-            !encoded.is_empty() && bytes.windows(encoded.len()).any(|window| window == encoded)
+            crate::signatures::search::contains_exact_with_cancellation(
+                bytes,
+                &encoded,
+                cancellation_checkpoint,
+            )?
         }
         RuleCondition::EntropyGreaterThan { value } => analysis.entropy_max > *value,
         RuleCondition::SuspiciousImportsAtLeast { value } => {
@@ -112,7 +164,12 @@ fn condition_matches(
         }
         RuleCondition::PathContains { value } => {
             let value = validated_string_condition(rule, value)?;
-            path_text.contains(&value.to_ascii_lowercase())
+            let normalized = value.to_ascii_lowercase();
+            crate::signatures::search::contains_exact_with_cancellation(
+                path_text.as_bytes(),
+                normalized.as_bytes(),
+                cancellation_checkpoint,
+            )?
         }
         RuleCondition::ScriptObfuscationAtLeast { value } => {
             match expected_script_analysis(rule, analysis)? {
@@ -144,7 +201,7 @@ fn condition_matches(
                 None => false,
             }
         }
-        RuleCondition::RansomNoteText => contains_any(
+        RuleCondition::RansomNoteText => contains_any_with_cancellation(
             text,
             &[
                 "your files have been encrypted",
@@ -152,12 +209,14 @@ fn condition_matches(
                 "decrypt your files",
                 "ransom note",
             ],
-        ),
-        RuleCondition::MinerPoolString => contains_any(
+            cancellation_checkpoint,
+        )?,
+        RuleCondition::MinerPoolString => contains_any_with_cancellation(
             text,
             &["stratum+tcp", "xmrpool", "xmrig", "mining pool", "monero"],
-        ),
-        RuleCondition::CredentialAccessString => contains_any(
+            cancellation_checkpoint,
+        )?,
+        RuleCondition::CredentialAccessString => contains_any_with_cancellation(
             text,
             &[
                 "login data",
@@ -167,8 +226,9 @@ fn condition_matches(
                 "token grab",
                 "browser credentials",
             ],
-        ),
-        RuleCondition::AdwarePupString => contains_any(
+            cancellation_checkpoint,
+        )?,
+        RuleCondition::AdwarePupString => contains_any_with_cancellation(
             text,
             &[
                 "silentinstall",
@@ -177,7 +237,8 @@ fn condition_matches(
                 "offer bundle",
                 "unwanted toolbar",
             ],
-        ),
+            cancellation_checkpoint,
+        )?,
     })
 }
 
@@ -254,8 +315,21 @@ fn pe_import_category_count(rule: &NativeRule, category: &str, pe: &pe::PeAnalys
     })
 }
 
-fn contains_any(text: &str, needles: &[&str]) -> bool {
-    needles.iter().any(|needle| text.contains(needle))
+fn contains_any_with_cancellation(
+    text: &str,
+    needles: &[&str],
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<bool> {
+    for needle in needles {
+        if crate::signatures::search::contains_exact_with_cancellation(
+            text.as_bytes(),
+            needle.as_bytes(),
+            cancellation_checkpoint,
+        )? {
+            return Ok(true);
+        }
+    }
+    Ok(false)
 }
 
 fn validated_string_condition<'a>(rule: &NativeRule, value: &'a str) -> Result<&'a str> {
