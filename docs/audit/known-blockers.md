@@ -3084,8 +3084,8 @@ was repaired and targeted strict lint passes.
 - Entry-level and 64-KiB inflate-output checkpoints now pass exact typed
   cancellation/probe propagation, focused/full suites, source contract
   `672/672`, and definitive verifier `271/271` with dual validation plus
-  missing-step/scope rejection. Hosted, merge, synchronization, and destination
-  evidence remain open.
+  missing-step/scope rejection. Hosted, merge, guarded `13/13` synchronization,
+  and destination exact `271/271` evidence pass; checkpoint 2242 is closed.
 - One active `flate2` decoder read cannot be hard-interrupted by the in-process
   callback. Moving it behind a safely killable worker requires authenticated
   IPC and resource-confinement work beyond this checkpoint.
@@ -3094,4 +3094,39 @@ was repaired and targeted strict lint passes.
   ownership, cross-identity authentication, driver/kernel cancellation, and
   pre-execution blocking remain genuine blockers.
 - No checkpoint-2242 passing result was claimed during scripting; local proof
-  is now complete without changing the residual technical limits above.
+  and closure proof are now complete without changing the residual technical
+  limits above. One default-parallel Native run exposed a short Authenticode
+  key-confirmation race; exact and serial reruns pass, so concurrency hardening
+  remains a separate test/reliability lead rather than credited closure proof.
+
+## Checkpoint 2243 Parallel Authenticode Helper Lifecycle
+
+- Bounded stdout/stderr drainers are now established before the initial
+  authenticated helper handshake. Early process exit returns bounded child
+  output, exit status, worker and cleanup evidence instead of discarding the
+  diagnostic behind a short key-confirmation error.
+- The reproduced root race was synchronous completion of overlapped pipe I/O:
+  the old path trusted the call-site transfer variable. All four key/response
+  operations now call `GetOverlappedResult` after immediate or pending success
+  before applying exact byte-count checks.
+- A second reproduced race was byte-stream coalescing of confirmation plus the
+  next response byte. Message-framed local named-pipe transport now preserves
+  write boundaries while keeping exact oversized-message rejection.
+- Four benign helper children must authenticate and response-bind concurrently
+  without a product-wide lock. A separate benign child fills more than an
+  ordinary pipe buffer with stderr and exits before handshake; the parent must
+  fail visibly, reap it, and report the capped marker. No retry or trust verdict
+  is permitted.
+- Verifier step 272, strict cardinality/scope validation, source contract 673,
+  and all audit documents are scripted. No checkpoint-2243 passing result is
+  claimed during scripting.
+- **Remaining blocker:** this bounded four-child test is not unbounded production
+  load, installed-service/cross-identity stress, kernel mediation, signed-driver
+  proof, or pre-execution blocking. Diagnostic text is deliberately capped and
+  lossy-normalized. Those limits do not weaken fail-closed trust handling.
+- **Verified locally:** focused `2/2`, 20 focused repetitions, complete
+  Authenticode default-parallel `83`/`21`, 20 complete repetitions, Native
+  `555`/`21` plus compiler `6/6`, Local Core `546/546`, Flutter `847/847`, source
+  contracts `673/673`, analyzer, strict component lint, parsers, formatting and
+  locked release build pass. Exact 272-step and hosted/integration/destination
+  closure remain pending.

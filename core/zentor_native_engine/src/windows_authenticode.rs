@@ -100,8 +100,9 @@ use windows_sys::Win32::System::JobObjects::{
 };
 use windows_sys::Win32::System::Pipes::{
     ConnectNamedPipe, CreateNamedPipeW, CreatePipe, GetNamedPipeClientProcessId, GetNamedPipeInfo,
-    GetNamedPipeServerProcessId, ImpersonateNamedPipeClient, PIPE_CLIENT_END, PIPE_READMODE_BYTE,
-    PIPE_REJECT_REMOTE_CLIENTS, PIPE_SERVER_END, PIPE_TYPE_BYTE, PIPE_WAIT,
+    GetNamedPipeServerProcessId, ImpersonateNamedPipeClient, PIPE_CLIENT_END,
+    PIPE_READMODE_MESSAGE, PIPE_REJECT_REMOTE_CLIENTS, PIPE_SERVER_END, PIPE_TYPE_MESSAGE,
+    PIPE_WAIT,
 };
 use windows_sys::Win32::System::StationsAndDesktops::{
     CloseDesktop, CreateDesktopW, GetThreadDesktop, GetUserObjectInformationW,
@@ -502,7 +503,7 @@ impl AuthenticodeParentChildHandshake {
             CreateNamedPipeW(
                 pipe_name_wide.as_ptr(),
                 PIPE_ACCESS_DUPLEX | FILE_FLAG_FIRST_PIPE_INSTANCE | FILE_FLAG_OVERLAPPED,
-                PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT | PIPE_REJECT_REMOTE_CLIENTS,
+                PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT | PIPE_REJECT_REMOTE_CLIENTS,
                 1,
                 AUTHENTICODE_HELPER_HANDSHAKE_PIPE_BUFFER_BYTES,
                 AUTHENTICODE_HELPER_HANDSHAKE_PIPE_BUFFER_BYTES,
@@ -516,7 +517,7 @@ impl AuthenticodeParentChildHandshake {
         )?;
         validate_authenticode_pipe_endpoint(
             server.0,
-            Some(PIPE_SERVER_END | PIPE_REJECT_REMOTE_CLIENTS),
+            Some(PIPE_SERVER_END | PIPE_TYPE_MESSAGE | PIPE_REJECT_REMOTE_CLIENTS),
             0,
             "AuthentiCode parent-child handshake server",
         )?;
@@ -662,6 +663,8 @@ impl AuthenticodeParentChildHandshake {
                 return self.fail_after_pending_operation(error, "key delivery");
             }
             transferred = self.finish_overlapped("key delivery")?;
+        } else {
+            transferred = self.finish_overlapped("synchronous key delivery")?;
         }
         anyhow::ensure!(
             transferred as usize == AUTHENTICODE_HELPER_HANDSHAKE_TOKEN_BYTES,
@@ -699,6 +702,8 @@ impl AuthenticodeParentChildHandshake {
                 return self.fail_after_pending_operation(error, "key confirmation read");
             }
             transferred = self.finish_overlapped("key confirmation read")?;
+        } else {
+            transferred = self.finish_overlapped("synchronous key confirmation read")?;
         }
         anyhow::ensure!(
             transferred as usize <= received.len(),
@@ -760,6 +765,8 @@ impl AuthenticodeParentChildHandshake {
                 return self.fail_after_pending_operation(error, "response-ready read");
             }
             transferred = self.finish_overlapped("response-ready read")?;
+        } else {
+            transferred = self.finish_overlapped("synchronous response-ready read")?;
         }
         anyhow::ensure!(
             transferred as usize <= received.len(),
@@ -807,6 +814,8 @@ impl AuthenticodeParentChildHandshake {
                 return self.fail_after_pending_operation(error, "response ACK write");
             }
             transferred = self.finish_overlapped("response ACK write")?;
+        } else {
+            transferred = self.finish_overlapped("synchronous response ACK write")?;
         }
         anyhow::ensure!(
             transferred as usize == AUTHENTICODE_HELPER_RESPONSE_ACK.len(),
@@ -2212,7 +2221,7 @@ fn prepare_current_process_authenticode_parent_child_handshake(
     )?;
     validate_authenticode_pipe_endpoint(
         pipe.0,
-        Some(PIPE_CLIENT_END | PIPE_REJECT_REMOTE_CLIENTS),
+        Some(PIPE_CLIENT_END | PIPE_TYPE_MESSAGE | PIPE_REJECT_REMOTE_CLIENTS),
         0,
         "AuthentiCode parent-child handshake client",
     )?;
@@ -2706,6 +2715,7 @@ impl Drop for ProcessThreadAttributeList {
 
 struct RestrictedAuthenticodeProcess {
     process: OwnedKernelHandle,
+    process_id: u32,
     launch_token: OwnedToken,
     handshake: Option<AuthenticodeParentChildHandshake>,
     private_desktop: PrivateAuthenticodeDesktop,
@@ -2715,6 +2725,20 @@ struct RestrictedAuthenticodeProcess {
 }
 
 impl RestrictedAuthenticodeProcess {
+    fn complete_initial_handshake(&mut self, timeout: Duration) -> Result<()> {
+        let handshake = self
+            .handshake
+            .take()
+            .context("AuthentiCode initial parent-child handshake is unavailable")?;
+        self.handshake = Some(handshake.complete_initial(
+            self.process.0,
+            self.launch_token.0,
+            self.process_id,
+            timeout,
+        )?);
+        Ok(())
+    }
+
     fn complete_post_response_binding(
         &mut self,
         timeout: Duration,
@@ -4141,6 +4165,34 @@ fn run_bounded_authenticode_helper(
         "AuthentiCode helper stderr",
     );
 
+    if let Err(error) = child.complete_initial_handshake(AUTHENTICODE_HELPER_HANDSHAKE_TIMEOUT) {
+        let kill_result = child.terminate();
+        drop(job);
+        let reaped = wait_for_child_exit(&child, AUTHENTICODE_HELPER_REAP_TIMEOUT);
+        let status = helper_exit_status_after_reap(&child, &reaped);
+        let desktop_close = if reaped.is_ok() {
+            child.close_private_desktop()
+        } else {
+            Err(anyhow::anyhow!(
+                "desktop close deferred because the helper was not confirmed exited"
+            ))
+        };
+        let worker_deadline = Instant::now() + AUTHENTICODE_HELPER_REAP_TIMEOUT;
+        let writer_result = receive_helper_worker(writer, worker_deadline, "request writer");
+        let stdout_result = receive_helper_worker(stdout_reader, worker_deadline, "stdout reader");
+        let stderr_result = receive_helper_worker(stderr_reader, worker_deadline, "stderr reader");
+        anyhow::bail!(
+            "{error:#}; AuthentiCode initial parent-child handshake cleanup: termination request: {}; reap: {}; private desktop: {}; status: {}; writer: {}; stdout: {}; stderr: {}",
+            helper_result_summary(kill_result),
+            helper_result_summary(reaped),
+            helper_result_summary(desktop_close),
+            helper_value_result_summary(status),
+            helper_result_summary(writer_result),
+            helper_stream_result_summary(stdout_result),
+            helper_stream_result_summary(stderr_result)
+        );
+    }
+
     let started = Instant::now();
     let response_binding = match child.complete_post_response_binding(timeout) {
         Ok(binding) => binding,
@@ -4327,23 +4379,9 @@ fn spawn_restricted_authenticode_process(
         );
     }
     drop(thread_handle);
-    let handshake = match handshake.complete_initial(
-        process.0,
-        token.0,
-        process_info.dwProcessId,
-        AUTHENTICODE_HELPER_HANDSHAKE_TIMEOUT,
-    ) {
-        Ok(handshake) => handshake,
-        Err(error) => {
-            let termination = terminate_and_reap_suspended_authenticode_process(&process);
-            anyhow::bail!(
-                "{error:#}; AuthentiCode parent-child handshake process cleanup: {}",
-                helper_result_summary(termination)
-            );
-        }
-    };
     Ok(RestrictedAuthenticodeProcess {
         process,
+        process_id: process_info.dwProcessId,
         launch_token: token,
         handshake: Some(handshake),
         private_desktop,
@@ -4743,6 +4781,36 @@ fn wait_for_child_exit(child: &RestrictedAuthenticodeProcess, timeout: Duration)
 fn helper_result_summary<T, E: std::fmt::Display>(result: std::result::Result<T, E>) -> String {
     match result {
         Ok(_) => "ok".to_string(),
+        Err(error) => bounded_authenticode_helper_text(&format!("error: {error:#}")),
+    }
+}
+
+fn helper_value_result_summary<T: std::fmt::Display, E: std::fmt::Display>(
+    result: std::result::Result<T, E>,
+) -> String {
+    match result {
+        Ok(value) => bounded_authenticode_helper_text(&value.to_string()),
+        Err(error) => bounded_authenticode_helper_text(&format!("error: {error:#}")),
+    }
+}
+
+fn helper_exit_status_after_reap(
+    child: &RestrictedAuthenticodeProcess,
+    reaped: &Result<()>,
+) -> Result<String> {
+    reaped
+        .as_ref()
+        .map_err(|error| anyhow::anyhow!("{error:#}"))?;
+    child
+        .try_wait()?
+        .map(|status| status.to_string())
+        .context("AuthentiCode helper was reaped without an exit status")
+}
+
+fn helper_stream_result_summary(result: Result<Vec<u8>>) -> String {
+    match result {
+        Ok(bytes) if bytes.is_empty() => "empty".to_string(),
+        Ok(bytes) => bounded_authenticode_helper_text(&String::from_utf8_lossy(&bytes)),
         Err(error) => bounded_authenticode_helper_text(&format!("error: {error:#}")),
     }
 }
@@ -5834,6 +5902,7 @@ mod tests {
     use super::*;
     use std::fs;
     use std::os::windows::process::ExitStatusExt;
+    use std::sync::{Arc, Barrier};
     use windows_sys::Win32::Foundation::{
         CRYPT_E_FILE_ERROR, CRYPT_E_NO_REVOCATION_CHECK, CRYPT_E_REVOCATION_OFFLINE,
         CRYPT_E_SECURITY_SETTINGS, ERROR_ACCESS_DENIED, TRUST_E_ACTION_UNKNOWN, TRUST_E_FAIL,
@@ -6120,6 +6189,92 @@ mod tests {
     fn authenticode_timeout_child_fixture() {
         let _handshake = complete_current_process_authenticode_parent_child_handshake().unwrap();
         thread::sleep(Duration::from_secs(30));
+    }
+
+    #[test]
+    fn native_authenticode_helper_lifecycle_supports_parallel_authenticated_handshakes() {
+        const HELPER_COUNT: usize = 4;
+        let application = Arc::new(std::env::current_exe().unwrap());
+        let barrier = Arc::new(Barrier::new(HELPER_COUNT));
+        let workers = (0..HELPER_COUNT)
+            .map(|_| {
+                let application = Arc::clone(&application);
+                let barrier = Arc::clone(&barrier);
+                thread::spawn(move || {
+                    barrier.wait();
+                    let arguments = [
+                        "--ignored",
+                        "--exact",
+                        "windows_authenticode::tests::authenticode_parallel_handshake_child_fixture",
+                        "--nocapture",
+                        "--test-threads=1",
+                    ];
+                    run_bounded_authenticode_helper(
+                        &application,
+                        &arguments,
+                        Vec::new(),
+                        Duration::from_secs(10),
+                    )
+                })
+            })
+            .collect::<Vec<_>>();
+
+        for worker in workers {
+            let output = worker.join().unwrap().unwrap();
+            assert!(output.status.success());
+            assert!(output.stderr.is_empty());
+            assert!(
+                String::from_utf8_lossy(&output.stdout).contains("AVORAX_PARALLEL_HANDSHAKE_OK")
+            );
+            validate_authenticode_response_binding(
+                b"AVORAX_PARALLEL_HANDSHAKE_OK\n",
+                &output.response_binding,
+            )
+            .unwrap();
+        }
+    }
+
+    #[test]
+    #[ignore = "isolated child fixture invoked by the parallel handshake regression"]
+    fn authenticode_parallel_handshake_child_fixture() {
+        let handshake = complete_current_process_authenticode_parent_child_handshake().unwrap();
+        println!("AVORAX_PARALLEL_HANDSHAKE_OK");
+        handshake
+            .complete_after_response(b"AVORAX_PARALLEL_HANDSHAKE_OK\n")
+            .unwrap();
+    }
+
+    #[test]
+    fn native_authenticode_helper_lifecycle_drains_and_reports_pre_handshake_child_stderr() {
+        let application = std::env::current_exe().unwrap();
+        let arguments = [
+            "--ignored",
+            "--exact",
+            "windows_authenticode::tests::authenticode_pre_handshake_stderr_child_fixture",
+            "--nocapture",
+            "--test-threads=1",
+        ];
+        let error = run_bounded_authenticode_helper(
+            &application,
+            &arguments,
+            Vec::new(),
+            Duration::from_secs(5),
+        )
+        .unwrap_err();
+        let diagnostic = format!("{error:#}");
+        assert!(diagnostic.contains("initial parent-child handshake cleanup"));
+        assert!(diagnostic.contains("status: exit code: 0"));
+        assert!(diagnostic.contains("stderr: AVORAX_PRE_HANDSHAKE_FAILURE"));
+        assert!(diagnostic.chars().count() < MAX_AUTHENTICODE_HELPER_ERROR_CHARS * 2);
+    }
+
+    #[test]
+    #[ignore = "isolated child fixture invoked by the pre-handshake diagnostic regression"]
+    fn authenticode_pre_handshake_stderr_child_fixture() {
+        eprintln!(
+            "AVORAX_PRE_HANDSHAKE_FAILURE{}",
+            "X".repeat(MAX_AUTHENTICODE_HELPER_STDERR_BYTES / 2)
+        );
     }
 
     #[test]
@@ -7255,7 +7410,10 @@ mod tests {
                 CreateNamedPipeW(
                     pipe_name_wide.as_ptr(),
                     PIPE_ACCESS_DUPLEX | FILE_FLAG_FIRST_PIPE_INSTANCE,
-                    PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT | PIPE_REJECT_REMOTE_CLIENTS,
+                    PIPE_TYPE_MESSAGE
+                        | PIPE_READMODE_MESSAGE
+                        | PIPE_WAIT
+                        | PIPE_REJECT_REMOTE_CLIENTS,
                     1,
                     AUTHENTICODE_HELPER_HANDSHAKE_PIPE_BUFFER_BYTES,
                     AUTHENTICODE_HELPER_HANDSHAKE_PIPE_BUFFER_BYTES,
@@ -8598,7 +8756,10 @@ mod tests {
         .unwrap_err();
         let diagnostic = format!("{error:#}");
         assert!(diagnostic.contains("handshake HMAC-SHA-256"));
-        assert!(diagnostic.contains("parent-child handshake process cleanup"));
+        assert!(diagnostic.contains("initial parent-child handshake cleanup"));
+        assert!(diagnostic.contains("status:"));
+        assert!(diagnostic.contains("stdout:"));
+        assert!(diagnostic.contains("stderr:"));
     }
 
     #[test]

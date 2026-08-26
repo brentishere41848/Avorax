@@ -11818,3 +11818,97 @@ pending.
   platform files, seven checksums, and CycloneDX 1.6/569-component SBOMs.
 - Evidence-head hosted checks, normal merge, merged-main evidence, guarded
   original-tree synchronization, and destination verification remain pending.
+
+## 2026-08-26 - Checkpoint 2242 Integration And Destination Closure
+
+- Evidence head `bedac3896165f17422151c0ad514e7f2c507cea9` passes CI
+  `32965133555` and packages `32965133524`; artifact `9605774079` matches
+  GitHub/download SHA-256 and exact non-extracting package/SBOM validation.
+  Publication is skipped.
+- PR `#94` merged normally as
+  `31e476a3d9d960575827cbfa2da66db779f287dd`. Merged-main CI
+  `32966419598` and packages `32966419580` pass; publication is skipped and
+  artifact `9606492259` passes matching digest plus exact bounded in-stream
+  validation.
+- Guarded sync verifies `13/13` exact paths, zero deletion/mismatch/reparse/
+  residue. Destination focused archive cancellation `4/4`, adjacent
+  cancellation `9/9`, serial Native `553` passed/`19` ignored plus compiler
+  `6/6`, Local Core `546/546`, Flutter `847/847`, source contracts `672/672`,
+  analyzer, strict component lint, locked release build, and dual parsers pass.
+- Destination definitive evidence passes exact `271/271` in `507.6s`; dual
+  independent validators pass and report SHA-256 is
+  `2cb5cf20cbedce244d240de260da5d28db65c91cbb53972edbd47964a8fed4c2`.
+  Locks and protected-vault invariant remain exact. Checkpoint 2242 is closed;
+  the complete antivirus goal remains active.
+- One default-parallel Native run is uncredited after the isolated wrong-key
+  response-MAC child produced a short key-confirmation message (`552/1/19`).
+  The exact test and complete serial rerun pass. Initial raw-blob sync hashing,
+  parser quoting, and external report-path attempts also failed visibly before
+  corrected runs; no destination mutation occurred before the guarded apply.
+
+## 2026-08-26 - Checkpoint 2243 Parallel Authenticode Lifecycle Scripted
+
+- Audited the uncredited default-parallel Native failure and found that bounded
+  stdout/stderr drainers started only after the initial authenticated handshake.
+  A child that failed or filled a standard pipe before confirmation could leave
+  the parent with a generic short-confirmation error and discarded diagnostics.
+- Scripted process lifecycle separation so drainers start before handshake;
+  early failure now reports bounded exit status, stdout/stderr and cleanup while
+  remaining fail-closed with no retry or verdict.
+- Scripted four-way benign parallel handshake/MAC evidence, a benign early-exit
+  large-stderr regression, mandatory verifier step 272, validator cardinality/
+  scope, source contract 673, and audit/threat/blocker/dependency documentation.
+- No checkpoint-2243 test has run during this scripting phase. This is bounded
+  user-mode fixture concurrency, not unbounded load, installed-service stress,
+  kernel mediation, or pre-execution blocking. No live malware, Defender change,
+  install, service/driver start, release, publication, or vault mutation is
+  involved.
+- The first default-parallel Authenticode run after scripting failed visibly in
+  two tests. One was a stale expected diagnostic. The other preserved a healthy
+  child marker and exposed the root race: synchronous overlapped I/O was reading
+  a non-authoritative call-site transfer count. All four key/response transfers
+  now use `GetOverlappedResult` after both pending and immediate completion; the
+  stale diagnostic contract is updated. This failed run is uncredited.
+- A subsequent captured stress run exposed a second fail-closed race: byte-mode
+  pipe reads could coalesce a valid 32-byte confirmation with the first response
+  byte. The handshake pipe is now message-framed/read in message mode so exact
+  overlength rejection applies per protocol write. That failed run is likewise
+  uncredited.
+- Credited local evidence now passes focused lifecycle `2/2`, 20 focused
+  repetitions, complete Authenticode default-parallel `83`/`21`, 20 complete
+  parallel repetitions, Native `555`/`21` plus compiler `6/6`, Local Core
+  `546/546`, Flutter analyzer and `847/847`, source contracts `673/673`, dual
+  parsers, strict Native/Local Clippy, formatting/diff, and locked release build.
+- Lock hashes and the protected-vault invariant remain exact. Definitive 272-step
+  and hosted/integration/destination evidence remain pending.
+
+## 2026-08-26 - Checkpoint 2243 Definitive Local Evidence
+
+- Definitive verification passes exact `272/272` from
+  `2026-08-26T13:13:03.3773124Z` through
+  `2026-08-26T13:21:44.8175976Z` in `521.4s`, with Defender integration disabled
+  and no Rust or Flutter skips.
+- Embedded and independent Windows PowerShell 5.1 and PowerShell 7 validators
+  pass the exact report. SHA-256 is
+  `81b5937b0f86c94b8b7c17865c742b31839723e776a1d249a56dd22331fdd700`.
+- A copy missing the mandatory lifecycle step is rejected at `271` steps and a
+  copy missing message-type/message-read-mode framing scope is rejected for the
+  exact absent contract. Both expected-negative validators exit `1`.
+- The implementation remains `f521242272378816f2413e0278c77ad3ed21da55`;
+  `.verification` is untracked and unstaged. Hosted exact-head evidence,
+  integration, guarded synchronization, and destination verification remain.
+
+## 2026-08-26 - Checkpoint 2243 Hosted Implementation/Local-Evidence Head
+
+- Exact head `ee804f19223fd2237c2fd1af971a10a13f0b2a8f` passes CI
+  `32974393351` and Desktop Packages push/PR runs `32974348589`/
+  `32974393379`; publication is skipped in both package runs.
+- Consolidated artifacts `9609491152`/`9609575687` are `131938207`/
+  `131955514` bytes and match GitHub/download SHA-256 values
+  `5e84b251d5d6d50d83d9d85325cbc24778e7852900bd55c15b4d025b4047ab18`/
+  `5dfa5eb6c57862bc9ce57aa246cc88750af06e5f561cce0e7589faf71f77108c`.
+- Non-extracting in-stream validation passes exact eight-entry inventories,
+  seven internal checksums, six platform payloads, and CycloneDX 1.6 SBOMs with
+  569 components. Nothing was extracted or executed.
+- Evidence-head hosted checks, normal merge, merged-main evidence, guarded
+  synchronization, and destination verification remain pending.

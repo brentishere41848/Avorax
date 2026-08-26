@@ -1580,6 +1580,28 @@ execution. Destination lock hashes remain exact. Checkpoint 2241 introduces no
 dependency, feature, package source, license classification, or lockfile
 change; final-binary SBOM resolution and legal approval remain separate.
 
+## Checkpoint 2243 Dependency Scope
+
+Parallel Authenticode helper lifecycle hardening uses Rust standard-library
+threads, channels, barriers, process status and I/O plus the already locked
+`anyhow`, `hmac`, `sha2`, `uuid`, `windows-sys`, and `zeroize` dependencies. It
+adds no dependency, feature, downloaded content, package source, license
+obligation, or lockfile change.
+
+Benign tests launch only the current Native test executable under the existing
+restricted helper boundary. They exchange fixed text markers, never scan or
+execute candidate content, and never touch the installed quarantine vault.
+Exact verifier step 272 and source contract 673 are scripted before execution;
+no checkpoint-2243 passing result is claimed during scripting. Final-binary
+license resolution, production signing, installed-service stress, and legal
+approval remain separate prerequisites.
+
+Local verification confirms source contracts `673/673`, strict Native/Local
+lint, locked workspace release build, and unchanged root/Native/Flutter lock
+SHA-256 values. Flutter `847/847` and analyzer pass. No dependency, feature,
+package source, license classification, or lockfile changed; exact verifier 272
+and hosted SBOM/package evidence remain pending.
+
 ## Checkpoint 2242 Dependency Scope
 
 Cooperative archive traversal/inflate cancellation uses Rust standard-library
@@ -1597,3 +1619,10 @@ scripting. Implementation-head hosted package evidence now confirms both
 consolidated artifacts contain one CycloneDX 1.6 lockfile SBOM with exactly 569
 components and seven matching checksum targets. This remains lockfile evidence,
 not a final-binary SBOM, legal approval, or production-signing proof.
+
+Evidence-head and merged-main packages preserve the same exact CycloneDX 1.6,
+569-component, seven-checksum contract. Their consolidated ZIP downloads match
+GitHub SHA-256 and pass bounded in-stream validation without extraction or
+execution. Destination lock hashes remain exact. Checkpoint 2242 introduces no
+dependency, feature, package source, license classification, or lockfile
+change; final-binary SBOM resolution and legal approval remain separate.

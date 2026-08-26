@@ -3112,5 +3112,44 @@ quality blocker but do not prevent the full locked release build.
 Exact verifier step 271 and source contract 672 were scripted before testing.
 No checkpoint-2242 passing result was claimed during scripting. Local focused,
 full, definitive `271/271`, dual-validator, and adversarial missing-step/scope
-evidence now pass. Locks and the protected vault remain exact; hosted,
-integration, synchronization, and destination evidence remain pending.
+evidence now pass. Hosted and merged-main evidence, bounded artifacts, guarded
+`13/13` synchronization, and destination exact `271/271` proof pass. Locks and
+the protected vault remain exact; checkpoint 2242 is closed. An uncredited
+default-parallel Authenticode child handshake race remains a reliability lead;
+the exact test and full serial suite pass, so no trust result was accepted from
+the failed attempt.
+
+## Checkpoint 2243 Parallel Authenticode Lifecycle Threat Delta
+
+- **Pre-handshake pipe backpressure:** bounded stdout/stderr readers now start
+  before initial key delivery/confirmation, so child harness output or an early
+  diagnostic cannot block the parent behind an undrained anonymous pipe.
+- **Synchronous overlapped completion ambiguity:** key delivery, confirmation,
+  response-ready, and ACK transfers always obtain byte counts from
+  `GetOverlappedResult`; an immediate completion cannot reuse a zero call-site
+  count and falsely classify a healthy child as a short message.
+- **Cross-frame coalescing:** local message-type/message-read-mode framing keeps
+  key confirmation and response binding as separate writes. The existing +1
+  read guard therefore rejects true overlength instead of a coalesced next
+  protocol frame.
+- **Opaque early child failure:** a failed handshake now preserves bounded exit
+  status, writer, stdout/stderr, termination, reap, and private-desktop cleanup
+  evidence. Failure still returns no trust verdict and is never retried.
+- **Accidental global serialization:** four benign children begin together and
+  must independently authenticate their unique pipe/process/launch-key context
+  and response MAC without a product-wide lock.
+- **Diagnostic abuse:** both pipe readers keep their existing 16-KiB byte caps;
+  surfaced text is control-normalized and capped at 4096 characters.
+- **Residual scale/identity boundary:** four fixture children are bounded local
+  evidence, not unbounded load, installed-service/cross-identity proof, kernel
+  control, driver interception, or pre-execution blocking.
+
+Exact verifier step 272 and source contract 673 are scripted before testing.
+No checkpoint-2243 passing result is claimed during scripting.
+
+Local focused, complete default-parallel, and 20-repetition Authenticode
+evidence now passes, as do complete Native/Local/Flutter, strict lint/build,
+source contract `673/673`, and parser/diff gates. Two earlier parallel attempts
+failed closed and exposed the synchronous-count and cross-frame races; neither
+accepted a trust result. Exact 272-step definitive, hosted, integration, sync,
+and destination evidence remain pending.

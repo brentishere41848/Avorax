@@ -6757,9 +6757,49 @@ guarded synchronization, and destination proof remain pending.
   `ef1944db1e84fd8cbdff9c8db200073640e281ae` passes exact Avorax CI and
   Desktop Packages push/PR evidence. Both publication jobs are skipped, and
   bounded non-extracting validation passes for both consolidated artifacts.
-  Evidence-head, merge, guarded synchronization, and destination evidence
-  remain pending.
+  Evidence-head CI/packages, normal PR `#94` merge, merged-main CI/packages,
+  non-extracting artifacts, guarded `13/13` sync, and destination focused/full/
+  definitive evidence now pass. Destination definitive is exact `271/271` in
+  `507.6s`, with report SHA-256
+  `2cb5cf20cbedce244d240de260da5d28db65c91cbb53972edbd47964a8fed4c2`.
+  Locks and the protected vault remain exact; checkpoint 2242 is closed.
 - **Limit:** one active decoder read and the static analyzer's separate bounded
   archive metadata/relationship inspection remain synchronous. This is not
   hard cancellation, cross-identity service control, driver/kernel blocking, or
   pre-execution enforcement.
+
+## Checkpoint 2243 - Parallel Authenticode Helper Lifecycle Locally Verified
+
+- Restricted helper stdout/stderr drainers now start before the initial
+  authenticated handshake. Early child exit cannot silently discard its bounded
+  status/output evidence, and no handshake failure is retried or accepted.
+- All four overlapped key/response transfers now obtain authoritative byte
+  counts through `GetOverlappedResult` after pending or synchronous completion;
+  a healthy fast child can no longer be misread as a zero-byte confirmation.
+- The local handshake named pipe is message-framed. A valid confirmation cannot
+  be coalesced with the following response frame and mistaken for overlength;
+  genuinely extended messages still fail closed.
+- Four simultaneous benign helpers must complete independent authenticated
+  handshakes and response bindings without product-wide serialization. A second
+  benign child emits bounded pre-handshake stderr and exits to prove fail-visible
+  cleanup diagnostics.
+- Exact verifier step 272, strict validator scope/cardinality, source contract
+  673, and all checkpoint documents are scripted before execution. No
+  checkpoint-2243 passing result is claimed during scripting.
+- **Limit:** four local test children are not unbounded production load or an
+  installed-service stress test. Diagnostics are capped and lossy-normalized;
+  user-mode, service-identity, kernel, driver, and pre-execution limits remain.
+- Local evidence passes focused `2/2`, 20 focused repetitions, complete
+  Authenticode `83`/`21` plus 20 default-parallel repetitions, Native `555`/`21`
+  plus compiler `6/6`, Local Core `546/546`, Flutter `847/847`, source contracts
+  `673/673`, analyzer, strict lint, dual parsers, and locked release build.
+- Definitive evidence passes exact `272/272` in `521.4s` with no skips. Embedded
+  and independent PS5/PS7 validators pass; missing-step and missing-framing-scope
+  copies are rejected. Report SHA-256 is
+  `81b5937b0f86c94b8b7c17865c742b31839723e776a1d249a56dd22331fdd700`.
+- Exact local-evidence head `ee804f19223fd2237c2fd1af971a10a13f0b2a8f`
+  passes CI `32974393351` and packages `32974348589`/`32974393379` with
+  publication skipped. Both consolidated artifacts match GitHub SHA-256 and
+  pass exact non-extracting eight-entry, `7/7` checksum, and CycloneDX 1.6/569-
+  component SBOM validation. Evidence-head hosted checks, integration, guarded
+  synchronization, and destination proof remain open.
