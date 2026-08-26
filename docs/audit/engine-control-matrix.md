@@ -5039,10 +5039,23 @@ source contracts `674/674`, strict component lint, dual parsers, formatting and
 diff checks, and locked release build. Locks and protected vault remain exact;
 definitive exact `273/273` and adversarial evidence pass. Report SHA-256 is
 `2547454f20895864be9727dd545e0625d39b0b761732032f886c004ff5de2216`;
-hosted/integration/destination evidence remains pending.
+hosted/integration/destination evidence was pending at that local stage.
 
 The GitHub Actions `major_outage` left uncredited zero-job runs, but recovery
 evidence now passes: exact-head CI `32987569318`/`32987888207` and PR packages
 `32987888192` are green with publication skipped. Consolidated artifact
 `9614177410` passes bounded non-extracting exact 8/6/7/CycloneDX-1.6/569
-validation. Evidence-head/merge/main/integration/destination proof remains.
+validation. Evidence-head/merge/main/integration/destination proof was pending
+at that recovery stage; the closure matrix below supersedes it.
+
+### Checkpoint 2244 Integration Closure
+
+| Control | Responsibility | Status | Evidence |
+|---|---|---|---|
+| Static archive cancellation integration | Preserve exact parser/entry/copy/inflate cancellation behavior through hosted, merged, and destination trees | Verified | Evidence head `0b566a4` and merge `c0cd92f`; main CI `32993065989`; main packages `32993065971`; guarded canonical sync `14/14` |
+| Static archive cancellation destination verifier | Reproduce the exact no-skip control/engine matrix after guarded synchronization | Verified | Destination `273/273` in `502s`; dual independent validators; report SHA-256 `b5c403d2795bbbd9ff544a6ba431b45c14c2620ec6b99557afb93fed1079a405` |
+| Residual synchronous analysis | Keep unclosed cancellation boundaries explicit | Partial / technically limited | One active decoder read, non-archive static analysis, synchronous rule/ML and trust calls remain cooperative/bounded rather than preemptive |
+
+Checkpoint 2244 is closed without expanding user-mode cancellation into a
+service, driver, kernel, or pre-execution claim. The whole antivirus goal remains
+active.

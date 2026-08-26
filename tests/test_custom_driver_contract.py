@@ -29811,7 +29811,30 @@ def test_checkpoint_2244_static_archive_analysis_cancellation_contract():
     assert "9614177410" in checkpoint
     assert "2649ce251aa91688097357298e23d28790d09424b6865d8b81d965f36c5af030" in checkpoint
     assert "The same bounded non-extracting 8/6/7/CycloneDX-1.6/569 validation passes" in normalized_checkpoint
-    assert "No release, publication, merge, or synchronization is claimed" in normalized_checkpoint
+    for marker in [
+        "0b566a4ce45e9818db840b09156fbf4a2d0b25f0",
+        "32990951715",
+        "32991018757",
+        "32990331126",
+        "32991019029",
+        "9615033566",
+        "dbdf405392a269545b23da7202c86c5fb0e06781a2eab85cc1bda9deec653323",
+        "c0cd92f7f10e6205ad209435c24367f54f8cd8b0",
+        "32993065989",
+        "32993065971",
+        "9616123602",
+        "697bcf7a12ee557e14768fbb762c35b01960b6ec6fa7e30eca323a7e4a0166a0",
+        "b5c403d2795bbbd9ff544a6ba431b45c14c2620ec6b99557afb93fed1079a405",
+    ]:
+        assert marker in checkpoint
+    for claim in [
+        "Atomic application and independent canonical-blob verification pass `14/14`",
+        "Destination definitive verification passes exact `273/273`",
+        "with Defender integration disabled and no Rust or Flutter skips",
+        "Checkpoint 2244 is closed",
+        "the complete antivirus hardening goal remains active",
+    ]:
+        assert claim in normalized_checkpoint
     normalized_dependencies = re.sub(r"\s+", " ", documents[-1])
     assert "adds no dependency, feature" in normalized_dependencies
     assert "lockfile change" in normalized_dependencies
