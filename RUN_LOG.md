@@ -11644,3 +11644,42 @@ pending.
   platform files, seven checksums, and CycloneDX 1.6/569-component SBOMs.
 - Evidence-head hosted checks, normal merge, merged-main evidence, guarded
   synchronization, and destination verification remain pending.
+
+## 2026-08-26 - Checkpoint 2240 Closure
+
+- Exact evidence head `3ecb2b0e4692683b80855d99f0ab9e55af391996`
+  passes Avorax CI `32943762241` and Desktop Packages `32943762214`.
+  Publication is skipped. Consolidated artifact `9598057781` is `131526164`
+  bytes; downloaded SHA-256 and GitHub digest both equal
+  `9be7f43feaaf4ce417f58fedb5e2586d3517e55641a620031737cf7606515c76`.
+  Its non-extracting in-stream inventory, seven checksums, six platform files,
+  and CycloneDX 1.6/569-component SBOM pass.
+- Draft PR `#92` was made ready and normally merged, with exact head locking,
+  as `96a7042496c00e340fd22f0fb28917fb8d72e191`. Its parents are base
+  `bee5193c36a8636211d95b8e91a6ce9224b7b0fe` and evidence head
+  `3ecb2b0e4692683b80855d99f0ab9e55af391996`; no direct-main push occurred.
+- Merged-main Avorax CI `32945550401` and Desktop Packages `32945550405`
+  pass, with publication skipped. Consolidated artifact `9598548199` is
+  `131527036` bytes and matches GitHub SHA-256
+  `f16e70d9279ba44d0526b74309ae82b9c16e5bc043b20326e40436b3cabb15bc`.
+  The same bounded in-stream package validation passes without extraction or
+  execution. Hosted artifacts are retained untouched on D: only.
+- Guarded original-tree synchronization applied the exact `56`-path,
+  `7849300`-byte merge inventory with zero deletes, mismatches, residue, or
+  staging-directory remainder. Every pre-existing destination target matched
+  base `bee5193` before replacement; all `56/56` targets match merge
+  `96a7042` afterward. The destination has no `.git`, so Git status there is
+  unavailable by design; exact Git-object hashes provide the comparison.
+- Destination focused/full suites, strict Clippy, release build, wrapper and
+  direct release smokes, Flutter analyze, Local Core `543/543`, Flutter
+  `847/847`, and source contracts `670/670` pass. Its definitive report runs
+  from `2026-08-26T08:23:21.7536003Z` through
+  `2026-08-26T08:31:15.3572364Z`, passes exact `269/269` in `473.6s`, and has
+  SHA-256 `34e64791eabee91c9e4749581e61a35e48d29aecba05e9a280b749a60e7706f7`.
+  Independent Windows PowerShell 5.1 and PowerShell 7 full-suite validators
+  pass. No scan/test process or sync residue remains.
+- Dependency lock hashes remain exact and the protected quarantine invariant
+  remains `16072` files, zero directories, `4522733` bytes, `5357` each
+  `.avoraxq`/`.json`/`.auth`, one `.metadata_auth_key`, zero pending, and zero
+  reparse points. Checkpoint 2240 is closed; the complete antivirus goal
+  remains active.

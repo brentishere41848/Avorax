@@ -92,8 +92,46 @@ then recorded both expected rejections without counting either as success.
   eight-entry root inventories, six platform release files, seven independent
   matching checksum rows, and CycloneDX 1.6 lockfile SBOMs with 569 components.
 
-Evidence-head checks, normal PR merge, merged-main evidence, guarded original-
-tree synchronization, and destination verification remain pending.
+## Integration And Destination Evidence
+
+- Exact evidence head `3ecb2b0e4692683b80855d99f0ab9e55af391996`
+  passes Avorax CI `32943762241` and Desktop Packages `32943762214`.
+  Consolidated artifact `9598057781` is `131526164` bytes and matches GitHub
+  SHA-256
+  `9be7f43feaaf4ce417f58fedb5e2586d3517e55641a620031737cf7606515c76`.
+  Publication is skipped.
+- PR `#92` was made ready and normally merged with exact head locking as
+  `96a7042496c00e340fd22f0fb28917fb8d72e191`; its parents are base
+  `bee5193c36a8636211d95b8e91a6ce9224b7b0fe` and evidence head `3ecb2b0`.
+  No direct-main push occurred.
+- Merged-main Avorax CI `32945550401` and Desktop Packages `32945550405` pass.
+  Consolidated artifact `9598548199` is `131527036` bytes and matches GitHub
+  SHA-256
+  `f16e70d9279ba44d0526b74309ae82b9c16e5bc043b20326e40436b3cabb15bc`.
+  Publication remains skipped. Bounded in-stream validation of evidence-head
+  and merged-main artifacts passes the exact eight-entry inventory, six
+  platform files, seven checksum rows, and CycloneDX 1.6/569-component SBOM
+  without extracting or executing any artifact.
+- Guarded original-tree synchronization copied the exact `56` merge paths and
+  `7849300` bytes with zero deletes, mismatches, residue, or staging-directory
+  remainder. All `56/56` destination files match merge Git objects. The
+  destination has no `.git`; exact object/hash comparison replaces Git status.
+- Destination focused and full checks pass: cancellation Rust `5/5`, job ID
+  `1/1`, scan loop `1/1`, Flutter cancellation `4/4`, Local Core `543/543`,
+  Flutter `847/847`, source contracts `670/670`, strict Clippy, release build,
+  Flutter analyze, wrapper smokes, and direct release scan/quarantine/restore.
+- The destination definitive report ran from
+  `2026-08-26T08:23:21.7536003Z` through
+  `2026-08-26T08:31:15.3572364Z`, passed exact `269/269` in `473.6s`, and has
+  SHA-256 `34e64791eabee91c9e4749581e61a35e48d29aecba05e9a280b749a60e7706f7`.
+  Independent Windows PowerShell 5.1 and PowerShell 7 `-RequireFullSuite`
+  validators pass. No scan/test process or sync residue remains.
+- Root, Native Engine, and Flutter lock hashes remain exact. The protected
+  quarantine invariant remains `16072` files, zero directories, `4522733`
+  bytes, `5357` each `.avoraxq`/`.json`/`.auth`, one `.metadata_auth_key`, zero
+  pending, and zero reparse points.
+
+Checkpoint 2240 is closed. The complete antivirus project remains active.
 
 ## Limits
 

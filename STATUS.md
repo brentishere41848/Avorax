@@ -6674,13 +6674,28 @@ guarded synchronization, and destination proof remain pending.
   PowerShell parsing pass. The definitive no-skip/no-Defender verifier and both
   strict validators pass exact `269/269` in `475s`; missing-step and missing-
   UUID-scope report copies are rejected.
-- Evidence-head checks, merge, synchronization, and destination evidence remain
-  pending; no release or publication has occurred.
+- Exact evidence head `3ecb2b0` passes Avorax CI `32943762241` and Desktop
+  Packages `32943762214`; artifact `9598057781` matches SHA-256
+  `9be7f43feaaf4ce417f58fedb5e2586d3517e55641a620031737cf7606515c76`.
+  PR `#92` was normally merged as `96a7042`. Merged-main Avorax CI
+  `32945550401` and Desktop Packages `32945550405` pass; artifact `9598548199`
+  matches SHA-256
+  `f16e70d9279ba44d0526b74309ae82b9c16e5bc043b20326e40436b3cabb15bc`.
+  All publication jobs are skipped; no release was created.
 - Exact implementation `511eb18` passes Avorax CI `32941736916` and Desktop
   Packages push/PR `32941701666`/`32941736885`. Both consolidated artifacts
   match GitHub SHA-256 and pass non-extracting exact inventory, checksum, and
   CycloneDX 1.6/569-component validation. Publication is skipped. Evidence-head
-  checks, merge, synchronization, and destination evidence remain pending.
+  checks pass. Guarded original-tree synchronization applied exact `56/56`
+  merge paths (`7849300` bytes) with zero deletes, mismatches, or residue.
+- Destination focused/full verification passes Local Core `543/543`, Flutter
+  `847/847`, source contracts `670/670`, strict Clippy, release build, analyzer,
+  and release smokes. Its definitive no-skip/no-Defender report passes exact
+  `269/269` in `473.6s`; independent PowerShell 5.1/7 validators pass and report
+  SHA-256 is
+  `34e64791eabee91c9e4749581e61a35e48d29aecba05e9a280b749a60e7706f7`.
+  Lock hashes, zero residual processes, and the protected-vault invariant remain
+  exact. Checkpoint 2240 is closed.
 - **Limit:** UUID binding remains a same-user capability, not cross-identity
   authentication or installed service/kernel/pre-execution control. The
   complete antivirus goal remains active.
