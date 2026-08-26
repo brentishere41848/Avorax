@@ -1040,6 +1040,192 @@ void main() {
   });
 
   test(
+    'stale protection loop generation drops process snapshot success after stop',
+    () async {
+      SharedPreferences.setMockInitialValues({});
+      final preferences = await SharedPreferences.getInstance();
+      final target = Directory.systemTemp.createTempSync(
+        'avorax-stale-process-loop-',
+      );
+      addTearDown(() => target.deleteSync(recursive: true));
+      final processTimerFactory = _ManualScheduledTimerFactory();
+      final watchPollTimerFactory = _ManualScheduledTimerFactory();
+      final pendingProcessSnapshot = Completer<ProcessSnapshotReport>();
+      final localCore = _FakeLocalCoreClient(
+        watcherState: RealtimeWatcherState(
+          active: true,
+          mode: 'userModeBestEffort',
+          watchedPaths: [target.path],
+        ),
+        pendingProcessSnapshot: pendingProcessSnapshot,
+      );
+      final container = ProviderContainer(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(preferences),
+          localCoreClientProvider.overrideWithValue(localCore),
+          appDetectorProvider.overrideWithValue(
+            const _FakeAppDetector(
+              observations: [
+                ProcessObservation(
+                  pid: 420,
+                  imagePath:
+                      r'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe',
+                  commandLine: 'powershell.exe benign fixture command',
+                ),
+              ],
+            ),
+          ),
+          processSnapshotTimerFactoryProvider.overrideWithValue(
+            processTimerFactory.create,
+          ),
+          watchPollTimerFactoryProvider.overrideWithValue(
+            watchPollTimerFactory.create,
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final controller = container.read(zentorControllerProvider.notifier);
+      await _waitForControllerStartup(container);
+      await controller.selectDetectedApp(
+        DetectedApp(
+          appId: 'folder',
+          displayName: 'Protected folder',
+          path: target.path,
+          source: 'test',
+        ),
+        confirmed: true,
+      );
+      await controller.startProtection(confirmed: true);
+      processTimerFactory.timer?.fire();
+      for (
+        var attempt = 0;
+        attempt < 20 && localCore.processSnapshotCalls < 1;
+        attempt += 1
+      ) {
+        await Future<void>.delayed(Duration.zero);
+      }
+      expect(localCore.processSnapshotCalls, 1);
+
+      await controller.stopProtection(confirmed: true);
+      pendingProcessSnapshot.complete(
+        const ProcessSnapshotReport(
+          ok: true,
+          status: 'snapshotOnly',
+          capability: 'userModeSnapshot',
+          statusReason: 'late fixture result',
+          observedProcesses: 1,
+          findings: [
+            ProcessFinding(
+              pid: 420,
+              imagePath:
+                  r'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe',
+              score: 80,
+              verdict: 'suspiciousProcess',
+              reasons: ['late fixture finding'],
+            ),
+          ],
+        ),
+      );
+      for (var attempt = 0; attempt < 10; attempt += 1) {
+        await Future<void>.delayed(Duration.zero);
+      }
+
+      final state = container.read(zentorControllerProvider);
+      expect(state.protectionStatus, ProtectionStatus.idle);
+      expect(state.processSnapshotLoopStatus, 'off');
+      expect(
+        state.processSnapshotLoopStatusReason,
+        contains('Protection is stopped'),
+      );
+      expect(
+        state.events.map((event) => event.type),
+        isNot(contains('process_snapshot_loop_suspicious')),
+      );
+    },
+  );
+
+  test(
+    'stale protection loop generation drops watch-poll failure after stop',
+    () async {
+      SharedPreferences.setMockInitialValues({});
+      final preferences = await SharedPreferences.getInstance();
+      final target = Directory.systemTemp.createTempSync(
+        'avorax-stale-watch-loop-',
+      );
+      addTearDown(() => target.deleteSync(recursive: true));
+      final processTimerFactory = _ManualScheduledTimerFactory();
+      final watchPollTimerFactory = _ManualScheduledTimerFactory();
+      final pendingWatchPoll = Completer<WatchPollScanResult>();
+      final localCore = _FakeLocalCoreClient(
+        watcherState: RealtimeWatcherState(
+          active: true,
+          mode: 'userModeBestEffort',
+          watchedPaths: [target.path],
+        ),
+        pendingWatchPoll: pendingWatchPoll,
+      );
+      final container = ProviderContainer(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(preferences),
+          localCoreClientProvider.overrideWithValue(localCore),
+          processSnapshotTimerFactoryProvider.overrideWithValue(
+            processTimerFactory.create,
+          ),
+          watchPollTimerFactoryProvider.overrideWithValue(
+            watchPollTimerFactory.create,
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final controller = container.read(zentorControllerProvider.notifier);
+      await _waitForControllerStartup(container);
+      await controller.selectDetectedApp(
+        DetectedApp(
+          appId: 'folder',
+          displayName: 'Protected folder',
+          path: target.path,
+          source: 'test',
+        ),
+        confirmed: true,
+      );
+      await controller.startProtection(confirmed: true);
+      watchPollTimerFactory.timer?.fire();
+      for (
+        var attempt = 0;
+        attempt < 20 && localCore.watchPollCalls < 1;
+        attempt += 1
+      ) {
+        await Future<void>.delayed(Duration.zero);
+      }
+      expect(localCore.watchPollCalls, 1);
+
+      await controller.stopProtection(confirmed: true);
+      pendingWatchPoll.completeError(StateError('late watch fixture failure'));
+      for (var attempt = 0; attempt < 10; attempt += 1) {
+        await Future<void>.delayed(Duration.zero);
+      }
+
+      final state = container.read(zentorControllerProvider);
+      expect(state.protectionStatus, ProtectionStatus.idle);
+      expect(state.watchPollLoopStatus, 'off');
+      expect(
+        state.watchPollLoopStatusReason,
+        contains('Protection is stopped'),
+      );
+      expect(
+        state.events.where(
+          (event) =>
+              event.type == 'watch_poll_loop_failed' &&
+              (event.details ?? '').contains('late watch fixture failure'),
+        ),
+        isEmpty,
+      );
+    },
+  );
+
+  test(
     'active protection contradictory watch-poll success fails closed',
     () async {
       SharedPreferences.setMockInitialValues({});
@@ -9761,11 +9947,13 @@ class _FakeLocalCoreClient extends LocalCoreClient {
       statusReason: 'fixture snapshot evaluated',
     ),
     this.processSnapshotException,
+    this.pendingProcessSnapshot,
     this.watchPollResult = const WatchPollScanResult(
       ok: true,
       watcher: RealtimeWatcherState(active: true, mode: 'userModeBestEffort'),
       poll: WatchPollScanSummary(active: true, mode: 'finiteUserModePolling'),
     ),
+    this.pendingWatchPoll,
   }) : _reports = List<ScanReport>.of(reports ?? const []),
        _quarantineRecords = List<QuarantineRecord>.of(
          quarantineRecords ?? const [],
@@ -9810,7 +9998,9 @@ class _FakeLocalCoreClient extends LocalCoreClient {
   final RealtimeWatcherState _stopWatcherState;
   final ProcessSnapshotReport processSnapshotReport;
   final String? processSnapshotException;
+  final Completer<ProcessSnapshotReport>? pendingProcessSnapshot;
   final WatchPollScanResult watchPollResult;
+  final Completer<WatchPollScanResult>? pendingWatchPoll;
   int scanCalls = 0;
   int cancelCalls = 0;
   int watchCalls = 0;
@@ -9960,6 +10150,8 @@ class _FakeLocalCoreClient extends LocalCoreClient {
     lastWatchPollDuration = duration;
     lastWatchPollPollInterval = pollInterval;
     lastWatchPollMaxEvents = maxEvents;
+    final pending = pendingWatchPoll;
+    if (pending != null) return pending.future;
     return watchPollResult;
   }
 
@@ -9970,6 +10162,8 @@ class _FakeLocalCoreClient extends LocalCoreClient {
   }) async {
     processSnapshotCalls += 1;
     lastProcessObservations = List<ProcessObservation>.of(observations);
+    final pending = pendingProcessSnapshot;
+    if (pending != null) return pending.future;
     final exception = processSnapshotException;
     if (exception != null) throw StateError(exception);
     return processSnapshotReport;

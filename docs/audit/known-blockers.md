@@ -2989,3 +2989,21 @@ trusted Guard commandline telemetry, verified parent-image lineage, correlated
 browser/credential/network/persistence telemetry, production calibration,
 process mutation, signed driver/kernel interception, and pre-execution blocking
 remain genuine blockers or disabled capabilities.
+
+## Checkpoint 2238 Protection Loop Generation Binding
+
+- A stopped/replaced process-snapshot or finite watch-poll loop previously did
+  not invalidate an already-running asynchronous evaluation. Late completion
+  could publish stale active/attention/limited state or an old loop event. Exact
+  lifecycle generations and benign race regressions are now scripted.
+- This checkpoint deliberately does not claim hard cancellation. Already-started
+  CIM, subprocess, or Local Core work may continue until its existing bounded
+  timeout/reap path finishes; its old generation only loses publication rights.
+- Focused/adjacent tests, Flutter `840/840`, source contracts `668/668`, exact
+  no-skip/no-Defender `267/267` in `469.8s`, both strict report validators, and
+  adversarial rejection `16/16` pass locally. Locks, processes, and protected-
+  vault inventory remain exact. Hosted, merge, guarded-sync, and destination
+  evidence remain pending for checkpoint 2238.
+- Installed durable process/file telemetry, shorter observation gaps, trusted
+  Guard commandlines, parent-image identity, mutation, production calibration,
+  driver/kernel interception, and pre-execution blocking remain genuine blockers.

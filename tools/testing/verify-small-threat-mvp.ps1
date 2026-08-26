@@ -384,6 +384,7 @@ $verifiedScope = $verifiedScope.Replace(
   "status wrapper release-binary health smoke, status wrapper release-binary path/report guard smoke",
   "status wrapper release-binary health smoke, installed smoke structured core-health parser/probe guards, status wrapper release-binary path/report guard smoke"
 )
+$verifiedScope += " Additional verified boundary: app-lifetime process-snapshot and finite watch-poll completions are generation-bound; stopping or replacing a protection loop invalidates late success and error state/event publication without claiming hard cancellation of already-started operating-system or Local Core work."
 $verifiedScope = $verifiedScope.Replace(
   "installed smoke structured core-health parser/probe guards",
   "installed smoke structured core-health parser/probe guards, installed core scan/quarantine/restore/delete lifecycle probe release-binary evidence and installed-smoke wiring"
@@ -715,6 +716,7 @@ try {
     $results.Add((Invoke-Step "Flutter watch-poll IPC diagnostics tests" $clientRoot $flutter @("test", "test\local_core_ipc_diagnostics_test.dart", "--plain-name", "watch-poll")))
     $results.Add((Invoke-Step "Flutter watcher controller tests" $clientRoot $flutter @("test", "test\offline_scan_test.dart", "--plain-name", "watcher")))
     $results.Add((Invoke-Step "Flutter watch-poll loop controller tests" $clientRoot $flutter @("test", "test\offline_scan_test.dart", "--plain-name", "watch-poll")))
+    $results.Add((Invoke-Step "Flutter protection-loop stale-generation tests" $clientRoot $flutter @("test", "test\offline_scan_test.dart", "--plain-name", "stale protection loop generation")))
     $results.Add((Invoke-Step "Flutter protection start-stop controller tests" $clientRoot $flutter @("test", "test\offline_scan_test.dart", "--plain-name", "protection")))
     $results.Add((Invoke-Step "Flutter ransomware settings controller tests" $clientRoot $flutter @("test", "test\offline_scan_test.dart", "--plain-name", "ransomware")))
     $results.Add((Invoke-Step "Flutter quarantine controller tests" $clientRoot $flutter @("test", "test\offline_scan_test.dart", "--plain-name", "quarantine")))

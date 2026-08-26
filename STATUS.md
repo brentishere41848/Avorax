@@ -6557,3 +6557,26 @@ guarded synchronization, and destination proof remain pending.
   lineage, production calibration, mutation, cross-identity isolation,
   driver/kernel enforcement, and pre-execution blocking remain open. Checkpoint
   2237 is closed; the complete antivirus project is not complete.
+
+## Checkpoint 2238 - Protection Loop Generation Binding
+
+- **Implemented and locally verified:** process-snapshot and finite watch-poll timers capture separate
+  controller-lifetime generations. Stop/replacement invalidates a generation
+  before timer cleanup; late success, exception, and outer catch publication
+  require the exact active generation.
+- An empty replacement watch-path set now invalidates the old
+  timer and path lease first. Two benign pending-future regressions cover a late
+  suspicious process result and a late watch-poll exception after stop.
+- Focused stale-generation tests pass `2/2`; adjacent process/watch/protection
+  filters pass `9/9`, `5/5`, and `50/50`; Flutter analyze and full `840/840`
+  pass; source contracts pass `668/668`.
+- **Definitive local verified:** the explicit no-skip/no-Defender verifier passes
+  exact `267/267`, zero failed/skipped, in `469.8s`. Both strict hosts accept
+  the report, adversarial variants reject `16/16`, and report SHA-256 is
+  `c219c9b35c74988471fc5dfa1ac2c2808488873fd79706876f51f5c2eaff8236`.
+  Locks, processes, and the protected-vault invariant remain exact. Hosted,
+  integration, synchronization, and destination evidence remains pending.
+- **Limits:** underlying bounded work is not hard-cancelled and may finish after
+  stop; only stale state/event publication is rejected. App-lifetime polling,
+  installed/durable monitoring, mutation, cross-identity isolation, driver/
+  kernel enforcement, and pre-execution blocking remain partial or blocked.

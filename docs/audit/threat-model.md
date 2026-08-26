@@ -2982,3 +2982,27 @@ threat boundary: snapshots can miss short-lived processes, head/tail sampling
 can miss middle arguments, process review is post-start and non-mutating, and
 no installed durable, cross-identity, driver/kernel, or pre-execution claim is
 made.
+
+## Checkpoint 2238 Protection Loop Generation Threat Delta
+
+- **Stale asynchronous success:** a process/watch result is accepted only while
+  its captured loop generation, timer, controller, configuration, and protection
+  state remain current. Stop or replacement invalidates publication before
+  timer cleanup.
+- **Stale asynchronous failure:** inner exception and outer unawaited-catch paths
+  apply the same generation check, so an old request cannot overwrite `off`
+  state with `limited` or append a stale loop-failure event after stop.
+- **Empty replacement confusion:** watch-poll start invalidates the prior loop
+  before rejecting an empty replacement path set; an old timer/path lease cannot
+  survive that limitation.
+- **Cancellation honesty:** no running CIM/OS/Local Core request is described as
+  cancelled. It may consume its existing bounded resource/time allowance; only
+  state/event publication is revoked.
+
+Checkpoint 2238 locally passes its focused and adjacent races, Flutter
+`840/840`, source contracts `668/668`, and exact `267/267` no-skip/no-Defender
+verifier in `469.8s`. Two strict hosts accept the report and adversarial
+variants reject `16/16`; locks and protected-vault inventory remain exact. This
+proves stale-publication rejection within the app controller only. App-lifetime
+poll gaps, installed identity boundaries, durable monitoring, calibration,
+mutation, driver/kernel enforcement, and pre-execution remain residual risks.
