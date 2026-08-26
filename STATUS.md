@@ -6767,3 +6767,30 @@ guarded synchronization, and destination proof remain pending.
   archive metadata/relationship inspection remain synchronous. This is not
   hard cancellation, cross-identity service control, driver/kernel blocking, or
   pre-execution enforcement.
+
+## Checkpoint 2243 - Parallel Authenticode Helper Lifecycle Scripted
+
+- Restricted helper stdout/stderr drainers now start before the initial
+  authenticated handshake. Early child exit cannot silently discard its bounded
+  status/output evidence, and no handshake failure is retried or accepted.
+- All four overlapped key/response transfers now obtain authoritative byte
+  counts through `GetOverlappedResult` after pending or synchronous completion;
+  a healthy fast child can no longer be misread as a zero-byte confirmation.
+- The local handshake named pipe is message-framed. A valid confirmation cannot
+  be coalesced with the following response frame and mistaken for overlength;
+  genuinely extended messages still fail closed.
+- Four simultaneous benign helpers must complete independent authenticated
+  handshakes and response bindings without product-wide serialization. A second
+  benign child emits bounded pre-handshake stderr and exits to prove fail-visible
+  cleanup diagnostics.
+- Exact verifier step 272, strict validator scope/cardinality, source contract
+  673, and all checkpoint documents are scripted before execution. No
+  checkpoint-2243 passing result is claimed during scripting.
+- **Limit:** four local test children are not unbounded production load or an
+  installed-service stress test. Diagnostics are capped and lossy-normalized;
+  user-mode, service-identity, kernel, driver, and pre-execution limits remain.
+- Local evidence passes focused `2/2`, 20 focused repetitions, complete
+  Authenticode `83`/`21` plus 20 default-parallel repetitions, Native `555`/`21`
+  plus compiler `6/6`, Local Core `546/546`, Flutter `847/847`, source contracts
+  `673/673`, analyzer, strict lint, dual parsers, and locked release build.
+  Definitive exact 272-step and hosted/integration/destination proof remain open.

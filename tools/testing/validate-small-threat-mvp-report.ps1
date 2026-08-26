@@ -1904,8 +1904,8 @@ if ($RequireFullSuite) {
   if ($skipFlutter -or $skipRust) {
     throw "-RequireFullSuite requires skip_flutter=false and skip_rust=false."
   }
-  if ($steps.Count -ne 271) {
-    throw "-RequireFullSuite expected exactly 271 verifier steps for this source revision, found $($steps.Count)."
+  if ($steps.Count -ne 272) {
+    throw "-RequireFullSuite expected exactly 272 verifier steps for this source revision, found $($steps.Count)."
   }
   if ($steps[0].name -ne "local-core safe simulator scan reporting") {
     throw "-RequireFullSuite first step mismatch: $($steps[0].name)"
@@ -1942,6 +1942,7 @@ if ($RequireFullSuite) {
   Assert-ReportContainsStep $steps "native-engine secondary catalog Authenticode selection regressions"
   Assert-ReportContainsStep $steps "native-engine secondary embedded Authenticode Microsoft-signed regressions"
   Assert-ReportContainsStep $steps "native-engine Authenticode helper isolation regressions"
+  Assert-ReportContainsStep $steps "native-engine Authenticode parallel helper lifecycle regressions"
   Assert-ReportContainsStep $steps "native-engine Authenticode helper Job resource-limit regressions"
   Assert-ReportContainsStep $steps "native-engine Authenticode helper Job UI-restriction regressions"
   Assert-ReportContainsStep $steps "native-engine Authenticode helper Job membership regressions"
@@ -2006,6 +2007,14 @@ if ($RequireFullSuite) {
   Assert-ReportScopeContains $verifiedScopeText "Cancellation and probe failure abort collection without publishing partial archive evidence or becoming an archive limit" "verification_scope.verified"
   Assert-ReportScopeContains $technicalLimitText "does not hard-interrupt one already-running flate2 decoder read" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "The static analyzer's separate archive metadata and relationship inspection remains synchronous and independently bounded" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $verifiedScopeText "Authenticode stdout and stderr drainers start before the initial authenticated handshake" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "four concurrent helpers complete independently without product-wide serialization" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "an early child exit preserves bounded exit-status, stdout, stderr, cleanup, and reader diagnostics without retrying or accepting a trust result" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "every successful overlapped Authenticode key delivery, key-confirmation read, response-ready read, and response ACK write obtains its authoritative byte count through GetOverlappedResult whether ReadFile or WriteFile completed pending or synchronously" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "the Authenticode handshake transport uses local message-type/message-read-mode named-pipe framing, preserving each key-confirmation and response-binding write boundary while retaining exact overlength rejection" "verification_scope.verified"
+  Assert-ReportScopeContains $technicalLimitText "not an unbounded production load or installed-service stress test" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "Child diagnostics are lossy UTF-8-normalized and capped" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "any handshake or output failure remains fail-closed and produces no trusted verdict" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "same-user code that learns a UUID remains inside the current-user capability boundary" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "not cross-identity authentication, installed service ownership, kernel cancellation, or pre-execution blocking" "verification_scope.technically_limited"
   Assert-ReportContainsStep $steps "local-core bounded risk fusion regressions"

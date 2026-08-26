@@ -11845,3 +11845,39 @@ pending.
   The exact test and complete serial rerun pass. Initial raw-blob sync hashing,
   parser quoting, and external report-path attempts also failed visibly before
   corrected runs; no destination mutation occurred before the guarded apply.
+
+## 2026-08-26 - Checkpoint 2243 Parallel Authenticode Lifecycle Scripted
+
+- Audited the uncredited default-parallel Native failure and found that bounded
+  stdout/stderr drainers started only after the initial authenticated handshake.
+  A child that failed or filled a standard pipe before confirmation could leave
+  the parent with a generic short-confirmation error and discarded diagnostics.
+- Scripted process lifecycle separation so drainers start before handshake;
+  early failure now reports bounded exit status, stdout/stderr and cleanup while
+  remaining fail-closed with no retry or verdict.
+- Scripted four-way benign parallel handshake/MAC evidence, a benign early-exit
+  large-stderr regression, mandatory verifier step 272, validator cardinality/
+  scope, source contract 673, and audit/threat/blocker/dependency documentation.
+- No checkpoint-2243 test has run during this scripting phase. This is bounded
+  user-mode fixture concurrency, not unbounded load, installed-service stress,
+  kernel mediation, or pre-execution blocking. No live malware, Defender change,
+  install, service/driver start, release, publication, or vault mutation is
+  involved.
+- The first default-parallel Authenticode run after scripting failed visibly in
+  two tests. One was a stale expected diagnostic. The other preserved a healthy
+  child marker and exposed the root race: synchronous overlapped I/O was reading
+  a non-authoritative call-site transfer count. All four key/response transfers
+  now use `GetOverlappedResult` after both pending and immediate completion; the
+  stale diagnostic contract is updated. This failed run is uncredited.
+- A subsequent captured stress run exposed a second fail-closed race: byte-mode
+  pipe reads could coalesce a valid 32-byte confirmation with the first response
+  byte. The handshake pipe is now message-framed/read in message mode so exact
+  overlength rejection applies per protocol write. That failed run is likewise
+  uncredited.
+- Credited local evidence now passes focused lifecycle `2/2`, 20 focused
+  repetitions, complete Authenticode default-parallel `83`/`21`, 20 complete
+  parallel repetitions, Native `555`/`21` plus compiler `6/6`, Local Core
+  `546/546`, Flutter analyzer and `847/847`, source contracts `673/673`, dual
+  parsers, strict Native/Local Clippy, formatting/diff, and locked release build.
+- Lock hashes and the protected-vault invariant remain exact. Definitive 272-step
+  and hosted/integration/destination evidence remain pending.

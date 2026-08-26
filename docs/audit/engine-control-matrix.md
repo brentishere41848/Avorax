@@ -4993,3 +4993,27 @@ head, evidence head, and merged main pass CI/packages and bounded artifact
 validation. Guarded sync verifies `13/13` paths and destination definitive
 passes `271/271` in `507.6s`. Checkpoint 2242 is closed; one uncredited
 default-parallel Native handshake race remains the next hardening lead.
+
+## Checkpoint 2243 Parallel Authenticode Helper Lifecycle Matrix
+
+| Control | Responsibility | Scripted state | Evidence target / limit |
+| --- | --- | --- | --- |
+| Pre-handshake standard-stream draining | Start bounded stdout/stderr readers before authenticated pipe key delivery/confirmation | Locally verified | Early child output cannot create pipe backpressure before handshake; existing 16-KiB stream caps remain |
+| Overlapped transfer settlement | Use authoritative completion byte counts for key delivery, key confirmation, response-ready, and ACK | Locally verified | `GetOverlappedResult` is mandatory after pending and synchronous success; exact transfer lengths remain fail-closed |
+| Handshake message framing | Preserve protocol-write boundaries between key confirmation and response binding | Locally verified | Local message-type/message-read-mode named pipe; +1 buffers reject true overlength without consuming a following frame |
+| Early failure evidence | Preserve bounded child exit status, stdout/stderr, writer and cleanup diagnostics | Locally verified | Benign child emits a marker plus more than an ordinary pipe buffer, exits cleanly before connect, and yields a fail-visible bounded parent error |
+| Parallel helper independence | Support concurrent product helper calls without a process-wide serialization lock | Locally verified | Four barrier-released benign helpers each complete unique pipe/process/key authentication and response MAC binding; 20 focused and 20 complete repetitions pass |
+| Fail-closed lifecycle | Never retry handshake/output failure and never derive a trust verdict from diagnostic evidence | Locally verified | Initial handshake failure terminates or observes exit, reaps, closes the desktop, joins workers, and returns error |
+| Checkpoint 2243 verifier contract | Reject stale checkpoint-2242 evidence | Scripted, execution pending | Exact 272 steps, source contract 673, dual validators, and adversarial missing-step/scope rejection |
+
+No checkpoint-2243 passing result is claimed during scripting. Four local child
+fixtures do not prove unbounded load, installed-service identity behavior,
+kernel/driver mediation, or pre-execution blocking. Authenticode still requires
+valid Windows trust and a verified Microsoft signer; diagnostics never create a
+trusted result.
+
+Local focused `2/2`, 20 focused repetitions, complete Authenticode `83`/`21`
+with 20 full repetitions, Native `555`/`21` plus compiler `6/6`, Local Core
+`546/546`, Flutter `847/847`, source contracts `673/673`, strict lint/build, and
+parser/diff gates pass. Definitive 272-step and hosted/integration/destination
+evidence remain pending.

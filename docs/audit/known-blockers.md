@@ -3098,3 +3098,35 @@ was repaired and targeted strict lint passes.
   limits above. One default-parallel Native run exposed a short Authenticode
   key-confirmation race; exact and serial reruns pass, so concurrency hardening
   remains a separate test/reliability lead rather than credited closure proof.
+
+## Checkpoint 2243 Parallel Authenticode Helper Lifecycle
+
+- Bounded stdout/stderr drainers are now established before the initial
+  authenticated helper handshake. Early process exit returns bounded child
+  output, exit status, worker and cleanup evidence instead of discarding the
+  diagnostic behind a short key-confirmation error.
+- The reproduced root race was synchronous completion of overlapped pipe I/O:
+  the old path trusted the call-site transfer variable. All four key/response
+  operations now call `GetOverlappedResult` after immediate or pending success
+  before applying exact byte-count checks.
+- A second reproduced race was byte-stream coalescing of confirmation plus the
+  next response byte. Message-framed local named-pipe transport now preserves
+  write boundaries while keeping exact oversized-message rejection.
+- Four benign helper children must authenticate and response-bind concurrently
+  without a product-wide lock. A separate benign child fills more than an
+  ordinary pipe buffer with stderr and exits before handshake; the parent must
+  fail visibly, reap it, and report the capped marker. No retry or trust verdict
+  is permitted.
+- Verifier step 272, strict cardinality/scope validation, source contract 673,
+  and all audit documents are scripted. No checkpoint-2243 passing result is
+  claimed during scripting.
+- **Remaining blocker:** this bounded four-child test is not unbounded production
+  load, installed-service/cross-identity stress, kernel mediation, signed-driver
+  proof, or pre-execution blocking. Diagnostic text is deliberately capped and
+  lossy-normalized. Those limits do not weaken fail-closed trust handling.
+- **Verified locally:** focused `2/2`, 20 focused repetitions, complete
+  Authenticode default-parallel `83`/`21`, 20 complete repetitions, Native
+  `555`/`21` plus compiler `6/6`, Local Core `546/546`, Flutter `847/847`, source
+  contracts `673/673`, analyzer, strict component lint, parsers, formatting and
+  locked release build pass. Exact 272-step and hosted/integration/destination
+  closure remain pending.
