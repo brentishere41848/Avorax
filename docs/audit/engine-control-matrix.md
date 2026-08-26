@@ -5062,7 +5062,7 @@ active.
 
 ## Checkpoint 2245 Non-Archive Static Cancellation Matrix
 
-| Control / engine | Responsibility | Status | Scripted evidence / blocker |
+| Control / engine | Responsibility | Status | Evidence / blocker |
 |---|---|---|---|
 | Shared Native static orchestrator | Propagate one job-bound callback through non-archive phases and publish no partial result | Scripted / unverified | 4096-byte entropy loop plus fallible string/PE/script calls; verifier step 274 |
 | Entropy | Bound cancellation latency while counting byte frequencies | Scripted / unverified | At-most-64-KiB checkpoints and exact wrapper parity |
@@ -5136,3 +5136,31 @@ rows are therefore verified for this user-mode boundary. Reputation and the
 four correlation-dependent behavior rows remain **Disabled / blocked**;
 rule/ML/trust cancellation remains **Partial / technically limited**. No row is
 promoted to installed service, kernel, driver, or pre-execution protection.
+
+## Checkpoint 2246 Native Provider Cancellation And Pack-Limit Matrix
+
+| Control / engine | Responsibility | Status | Scripted evidence / blocker |
+|---|---|---|---|
+| Shared provider byte search | Exact and masked byte matching with bounded cancellation latency | Verified locally | At-most-64-KiB candidate chunks, cross-chunk parity, arbitrary callback failure |
+| Native signature provider | Match exact/partial hashes, bytes, ASCII, UTF-16, EICAR, PE/script/archive and required context | Verified locally | One lowercase sample per provider; fallible per-signature/context/search path |
+| Native rule provider | Evaluate validated explainable conditions without repeated sample normalization | Verified locally | One lowercase sample/path per provider; per-rule, condition and term checkpoints |
+| Native ML provider | Score bounded static features with development/production metadata honesty | Verified locally | Callback per at-most-128 score/contribution weights; compatibility parity |
+| Archive-entry provider path | Analyze bounded in-memory entry samples without extraction/execution | Verified locally | Fallible static/signature/rule callbacks before outer verdict publication; 1 MiB entry cap |
+| Signature pack loader | Load local `.zsig` definitions without aggregate resource exhaustion | Verified locally | Max 32 provider files, 256 inspected entries, 16 MiB total bytes, 4,096 signatures |
+| Rule pack loader | Load local `.zrule` definitions without aggregate resource exhaustion | Verified locally | Max 32 provider files, 256 inspected entries, 16 MiB total bytes, 4,096 rules |
+| Provider compatibility wrappers | Preserve existing infallible internal API behavior | Verified locally | Signature/rule/ML/search wrapper parity fixtures |
+| Provider error boundary | Prevent cancellation/probe/overflow/limit failure becoming no-match or clean | Verified locally | Error propagation before database activation, evidence fusion, or file verdict |
+| Windows publisher trust | Validate bounded Microsoft Authenticode identity/hash binding | Partial / technically limited | Existing isolated helper bounds; one active trust call is not hard-interrupted |
+| Reputation provider | Remote reputation only after authenticated privacy-reviewed backend exists | Disabled / blocked | No approved authenticated backend; unchanged |
+| Browser-data correlation | Correlate trusted per-process browser-data access telemetry | Disabled / blocked | No trusted per-process telemetry; unchanged |
+| Credential/network correlation | Correlate credential reads, archive creation, and outbound network activity | Disabled / blocked | No trusted correlated telemetry; unchanged |
+| Persistence-write correlation | Correlate registry/file autorun writes with signer/parent identity | Disabled / blocked | No trusted registry/file write plus identity feed; unchanged |
+| Parent-image lineage | Attribute verified parent image identity rather than PID alone | Disabled / blocked | No trusted parent-image identity feed; unchanged |
+
+Focused `19/19`, Source `676/676`, full Native/Local/Flutter, locked workspace,
+release build, and definitive exact `275/275` local evidence pass. Implemented
+rows are **Verified locally** while hosted/merge/destination proof remains
+pending. Cancellation is cooperative: one provider
+normalization, one search chunk, the bounded ML sort, an entered OS call, or a
+Windows trust operation can finish before the next callback. No installed
+service, driver, kernel, production-accuracy, or pre-execution claim is added.

@@ -9,11 +9,47 @@ use crate::verdict::Confidence;
 
 pub fn matches_signature(
     signature: &NativeSignature,
-    _path: &Path,
+    path: &Path,
     sha256: &str,
     bytes: &[u8],
     analysis: &StaticAnalysis,
 ) -> Result<Option<SignatureMatch>> {
+    let mut never_cancel = || Ok(());
+    matches_signature_with_cancellation(signature, path, sha256, bytes, analysis, &mut never_cancel)
+}
+
+pub fn matches_signature_with_cancellation(
+    signature: &NativeSignature,
+    path: &Path,
+    sha256: &str,
+    bytes: &[u8],
+    analysis: &StaticAnalysis,
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<Option<SignatureMatch>> {
+    cancellation_checkpoint()?;
+    let lower_text = String::from_utf8_lossy(bytes).to_ascii_lowercase();
+    cancellation_checkpoint()?;
+    matches_signature_with_prepared_text_and_cancellation(
+        signature,
+        path,
+        sha256,
+        bytes,
+        analysis,
+        &lower_text,
+        cancellation_checkpoint,
+    )
+}
+
+pub(crate) fn matches_signature_with_prepared_text_and_cancellation(
+    signature: &NativeSignature,
+    _path: &Path,
+    sha256: &str,
+    bytes: &[u8],
+    analysis: &StaticAnalysis,
+    lower_text: &str,
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<Option<SignatureMatch>> {
+    cancellation_checkpoint()?;
     if let Some(min) = signature.min_file_size {
         if (bytes.len() as u64) < min {
             return Ok(None);
@@ -27,9 +63,15 @@ pub fn matches_signature(
     if !file_type_allowed(signature, analysis.file_type)? {
         return Ok(None);
     }
-    if !required_context_matches(signature, bytes, analysis)? {
+    if !required_context_matches_with_cancellation(
+        signature,
+        lower_text,
+        analysis,
+        cancellation_checkpoint,
+    )? {
         return Ok(None);
     }
+    cancellation_checkpoint()?;
     let matched = match signature.signature_type {
         SignatureType::ExactHash => {
             hash_signatures::matches_exact_hash(sha256, &signature.pattern)?
@@ -39,9 +81,14 @@ pub fn matches_signature(
         }
         SignatureType::BytePattern => match signature.offset {
             Some(offset) => {
+                cancellation_checkpoint()?;
                 byte_pattern_signatures::matches_hex_pattern_at(bytes, &signature.pattern, offset)?
             }
-            None => byte_pattern_signatures::contains_hex_pattern(bytes, &signature.pattern)?,
+            None => byte_pattern_signatures::contains_hex_pattern_with_cancellation(
+                bytes,
+                &signature.pattern,
+                cancellation_checkpoint,
+            )?,
         },
         SignatureType::MaskedBytePattern => {
             let Some(mask) = signature.mask.as_deref() else {
@@ -50,13 +97,28 @@ pub fn matches_signature(
                     signature.id
                 );
             };
-            byte_pattern_signatures::contains_masked_hex_pattern(bytes, &signature.pattern, mask)?
+            byte_pattern_signatures::contains_masked_hex_pattern_with_cancellation(
+                bytes,
+                &signature.pattern,
+                mask,
+                cancellation_checkpoint,
+            )?
         }
         SignatureType::AsciiString | SignatureType::ScriptPattern => {
-            string_signatures::contains_ascii(bytes, &signature.pattern)?
+            string_signatures::contains_ascii_in_lower_text_with_cancellation(
+                lower_text,
+                &signature.pattern,
+                cancellation_checkpoint,
+            )?
         }
-        SignatureType::Utf16String => string_signatures::contains_utf16(bytes, &signature.pattern)?,
-        SignatureType::EicarTestSignature => eicar_signature::contains_eicar(bytes),
+        SignatureType::Utf16String => string_signatures::contains_utf16_with_cancellation(
+            bytes,
+            &signature.pattern,
+            cancellation_checkpoint,
+        )?,
+        SignatureType::EicarTestSignature => {
+            eicar_signature::contains_eicar_with_cancellation(bytes, cancellation_checkpoint)?
+        }
         SignatureType::PowershellEncodedCommand => {
             match expected_script_analysis(signature, analysis)? {
                 Some(script) => script.encoded_command,
@@ -90,6 +152,7 @@ pub fn matches_signature(
             None => false,
         },
     };
+    cancellation_checkpoint()?;
     Ok(matched.then(|| SignatureMatch {
         signature_id: signature.id.clone(),
         name: signature.name.clone(),
@@ -190,13 +253,14 @@ fn file_type_allowed(signature: &NativeSignature, actual: FileType) -> Result<bo
     Ok(false)
 }
 
-fn required_context_matches(
+fn required_context_matches_with_cancellation(
     signature: &NativeSignature,
-    bytes: &[u8],
+    lower_text: &str,
     analysis: &StaticAnalysis,
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
 ) -> Result<bool> {
-    let sample_text = String::from_utf8_lossy(bytes).to_ascii_lowercase();
     for context in &signature.required_context {
+        cancellation_checkpoint()?;
         let normalized = context.to_ascii_lowercase();
         let matched = match normalized.as_str() {
             "exact eicar safe test string."
@@ -235,8 +299,8 @@ fn required_context_matches(
                 None => false,
             },
             "credential_access_string" => {
-                contains_any(
-                    &sample_text,
+                contains_any_with_cancellation(
+                    lower_text,
                     &[
                         "login data",
                         "cookies.sqlite",
@@ -245,23 +309,26 @@ fn required_context_matches(
                         "token grab",
                         "browser credentials",
                     ],
-                )
+                    cancellation_checkpoint,
+                )?
             }
-            "ransom_note_text" => contains_any(
-                &sample_text,
+            "ransom_note_text" => contains_any_with_cancellation(
+                lower_text,
                 &[
                     "your files have been encrypted",
                     "recover your files",
                     "decrypt your files",
                     "ransom note",
                 ],
-            ),
-            "miner_pool_string" => contains_any(
-                &sample_text,
+                cancellation_checkpoint,
+            )?,
+            "miner_pool_string" => contains_any_with_cancellation(
+                lower_text,
                 &["stratum+tcp", "xmrpool", "xmrig", "mining pool", "monero"],
-            ),
-            "pup_adware_string" => contains_any(
-                &sample_text,
+                cancellation_checkpoint,
+            )?,
+            "pup_adware_string" => contains_any_with_cancellation(
+                lower_text,
                 &[
                     "silentinstall",
                     "browser extension install",
@@ -269,7 +336,8 @@ fn required_context_matches(
                     "offer bundle",
                     "unwanted toolbar",
                 ],
-            ),
+                cancellation_checkpoint,
+            )?,
             _ => bail!(
                 "signature {} uses unsupported required_context {}",
                 signature.id,
@@ -283,8 +351,21 @@ fn required_context_matches(
     Ok(true)
 }
 
-fn contains_any(text: &str, needles: &[&str]) -> bool {
-    needles.iter().any(|needle| text.contains(needle))
+fn contains_any_with_cancellation(
+    lower_text: &str,
+    needles: &[&str],
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<bool> {
+    for needle in needles {
+        if super::search::contains_exact_with_cancellation(
+            lower_text.as_bytes(),
+            needle.as_bytes(),
+            cancellation_checkpoint,
+        )? {
+            return Ok(true);
+        }
+    }
+    Ok(false)
 }
 
 fn file_type_name(value: FileType) -> &'static str {

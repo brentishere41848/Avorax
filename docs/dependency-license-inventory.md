@@ -1580,6 +1580,25 @@ execution. Destination lock hashes remain exact. Checkpoint 2241 introduces no
 dependency, feature, package source, license classification, or lockfile
 change; final-binary SBOM resolution and legal approval remain separate.
 
+## Checkpoint 2246 Native Provider Cancellation Dependency Scope
+
+Checkpoint 2246 uses Rust standard-library slices, strings, checked arithmetic,
+callbacks and existing `anyhow` error propagation. It adds no dependency, feature,
+downloaded content, package source, license classification, or lockfile change.
+The root Cargo, Native Cargo, and Flutter lock hashes remain exactly unchanged:
+`7c7c8aa006c2ac80eb89fa64d3b8ec09b32b26598b1a85bceb3c2af5a2d20e39`,
+`7f4393c81896600c4a5e84cad288a1a5360eccbc1c458b38f615082f66391383`, and
+`4de19695f9207273746341ca2221541b5b86d9f72af83727afca78541e177694`.
+
+Benign tests use ordinary bytes, the decoded EICAR test marker already present
+in the safety suite, and isolated temporary empty custom-pack fixtures. They do
+not download, retain, unpack, or execute malware and do not access the protected
+ProgramData vault. Source contract `676/676`, locked workspace tests, locked
+release build, and exact verifier `275/275` pass locally without a manifest or
+lock delta. Final-binary SBOM,
+production signing/notarization, model/rule accuracy evidence, legal approval,
+and release approval remain separate prerequisites.
+
 ## Checkpoint 2245 Non-Archive Static Cancellation Delta
 
 Checkpoint 2245 adds no dependency, feature, build script, downloaded content,

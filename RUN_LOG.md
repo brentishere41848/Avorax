@@ -12180,3 +12180,63 @@ pending.
   bytes, 5,357 each payload/metadata/auth, one metadata key, zero pending, and
   zero reparse points. Checkpoint 2245 is closed; the complete antivirus
   hardening goal remains active.
+
+## 2026-08-26 - Checkpoint 2246 Native Provider Cancellation And Pack Limits (Scripting)
+
+- Checkpoint 2245 closure merge `7d45726e346c3f25cceb079442869ae6916fb843`
+  passes merged-main CI `33011175218`. Its docs-only merge started no package or
+  publication workflow. Guarded closure sync passes exact `7/7`, final canonical
+  comparison passes all checkpoint paths `22/22`, and destination definitive
+  verification passes exact `274/274` in `424.3s`. Both independent validators
+  accept report SHA-256
+  `abe104350f136a089aa2e44b793d2ac55d2822e0cdd94acdddc639bd3f00bac9`.
+  Locks and the protected vault remain exact. Checkpoint 2245 is closed; the
+  complete antivirus goal remains active.
+- Checkpoint 2246 is fully scripted before execution. Signature and rule
+  providers prepare one lowercase sample per provider, exact/masked/ASCII/
+  UTF-16/EICAR/context/rule searches share an at-most-64-KiB cancellation
+  interval, and Native ML checks every one of its at-most-128 score and
+  contribution weights. Ordinary files and bounded archive entries use the
+  same job-bound, fail-visible path before verdict publication.
+- Local custom pack discovery now rejects more than 32 matching provider files,
+  256 inspected directory entries, 16 MiB aggregate bytes, 4,096 loaded
+  signatures, or 4,096 loaded rules. Overflow and arbitrary callback errors are
+  returned; no partially loaded database, provider evidence, or file verdict is
+  accepted.
+- Compatibility wrappers, benign/adversarial Rust fixtures, exact verifier step
+  275, strict validator cardinality/scope, Source contract 676, matrix, threat
+  model, blockers, dependency notes, and this report are scripted. No
+  checkpoint-2246 test has run during this scripting phase. Windows trust work,
+  one provider normalization, one search chunk, and the bounded ML sort remain
+  cooperative rather than hard-preemptive; no service, driver, kernel, or
+  pre-execution claim is added.
+
+### Checkpoint 2246 Local Verification
+
+- The first focused run compiled and passed `18/19`; only the new engine source
+  test compared archive-helper markers against the earlier main-verdict region.
+  A test-only region repair was applied and the exact rerun passed `19/19`.
+- The first Source run executed 676 tests and exposed 44 historical contracts
+  still pinned to verifier count 274. Only those cardinality strings were moved
+  to 275; the complete rerun passed exact `676/676`.
+- Adjacent signature/compiler `62/62`, rule `43/43`, ML `17/17`, and archive
+  `71/71` checks pass. Full Native passes library `593` plus compiler `6/6`,
+  with 21 documented child-fixture entrypoints ignored; Local Core passes
+  `546/546`; Flutter analyze has no issues and Flutter passes `847/847`.
+- Native and Local Core strict all-target/all-feature Clippy, workspace rustfmt,
+  locked workspace tests, and `cargo build --workspace --release --locked`
+  pass. An extra workspace-wide strict Clippy probe remains non-gating because
+  three pre-existing `services/api` style lints fail (`items_after_test_module`
+  twice and `enum_variant_names` once); no checkpoint-2246 file is implicated.
+- Definitive verification passes exact `275/275` with zero failed or skipped
+  steps from `2026-08-26T21:35:34.3063496Z` through
+  `2026-08-26T21:43:42.4436595Z` in `488.1s`, with no Rust/Flutter skip and
+  Defender integration off. Embedded and independently invoked PS5/PS7
+  validators pass; both shells reject separate missing-step and missing-scope
+  mutations. Report SHA-256 is
+  `5c38555423a46188172e828f1193e24d44dab8e4c3613308c11b6151365a44a8`.
+- Root, Native, and Flutter lock hashes remain exact. The protected vault stays
+  read-only and exact at 16,072 files, zero directories, 4,522,733 bytes, 5,357
+  each payload/metadata/auth, one metadata key, zero pending, and zero reparse
+  points. Hosted exact-head, PR/merge, package, guarded synchronization, and
+  destination proof remain pending; the checkpoint and whole goal stay active.

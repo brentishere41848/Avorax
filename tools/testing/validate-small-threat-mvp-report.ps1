@@ -1904,8 +1904,8 @@ if ($RequireFullSuite) {
   if ($skipFlutter -or $skipRust) {
     throw "-RequireFullSuite requires skip_flutter=false and skip_rust=false."
   }
-  if ($steps.Count -ne 274) {
-    throw "-RequireFullSuite expected exactly 274 verifier steps for this source revision, found $($steps.Count)."
+  if ($steps.Count -ne 275) {
+    throw "-RequireFullSuite expected exactly 275 verifier steps for this source revision, found $($steps.Count)."
   }
   if ($steps[0].name -ne "local-core safe simulator scan reporting") {
     throw "-RequireFullSuite first step mismatch: $($steps[0].name)"
@@ -1978,6 +1978,7 @@ if ($RequireFullSuite) {
   Assert-ReportContainsStep $steps "cooperative archive collection cancellation regressions"
   Assert-ReportContainsStep $steps "native-engine static archive analysis cancellation regressions"
   Assert-ReportContainsStep $steps "native-engine non-archive static analysis cancellation regressions"
+  Assert-ReportContainsStep $steps "native-engine custom provider cancellation and pack-limit regressions"
   Assert-ReportScopeContains $verifiedScopeText "entropy 4096-byte traversal and PE section entropy use fallible checkpoints" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "string references stream counts without URL/path vectors while term groups, IP candidates, and UTF16 traversal checkpoint" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "PE section/import/debug and script term passes checkpoint" "verification_scope.verified"
@@ -1985,6 +1986,16 @@ if ($RequireFullSuite) {
   Assert-ReportScopeContains $verifiedScopeText "compatibility wrappers preserve behavior" "verification_scope.verified"
   Assert-ReportScopeContains $technicalLimitText "one already-running UTF-8 or UTF-16 lossy/lowercase normalization or one term search can complete before the next checkpoint" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "existing 64 MiB sample cap" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $verifiedScopeText "Native signature, rule, and ML providers propagate the exact job-bound cancellation callback before publishing evidence" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "searches checkpoint every at-most-64-KiB candidate chunk" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "one lowercase sample is prepared per signature or rule provider instead of per item" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "ML scoring checkpoints each of at most 128 weights and contributions" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "bounded archive-entry static/signature/rule work uses the same fail-visible path" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "rejects more than 32 provider files, 256 inspected directory entries, 16 MiB aggregate pack bytes, 4,096 loaded signatures, or 4,096 loaded rules without partial activation" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "arbitrary callback failures remain errors, and no partial provider evidence or file verdict is published" "verification_scope.verified"
+  Assert-ReportScopeContains $technicalLimitText "one provider UTF-8 lossy/lowercase normalization" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "one at-most-64-KiB signature/rule search chunk" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "bounded ML contribution sort" "verification_scope.technically_limited"
   Assert-ReportScopeContains $verifiedScopeText "bounded UTF-8-safe head/tail command-line sampling" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "command indicators remain post-start review evidence" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "high-risk process-start verdicts return recommendations rather than fake block success" "verification_scope.verified"

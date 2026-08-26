@@ -6940,3 +6940,41 @@ and locked release build pass. Destination definitive verification is exact
 Locks and the protected vault remain exact. Checkpoint 2245 is closed; all
 cooperative user-mode limits and disabled-engine blockers remain, and the
 complete antivirus hardening goal stays active.
+
+## Checkpoint 2246 Native Provider Cancellation And Pack Limits
+
+- **Locally verified / integration pending:** Native signature, rule, and ML providers now
+  accept one fallible callback all the way through evidence production. Shared
+  exact/masked searches checkpoint every at-most-64-KiB candidate chunk;
+  signatures cover byte, ASCII, UTF-16, EICAR and required-context searches;
+  rules cover each rule/condition and term search; ML covers each of at most 128
+  score/contribution weights. Bounded archive-entry static/signature/rule work
+  uses the same exact scan-job callback.
+- **Bounded custom definitions:** signature/rule sibling discovery fails visibly
+  above 32 provider files, 256 inspected directory entries, or 16 MiB aggregate
+  bytes. Activation also rejects more than 4,096 loaded signatures or 4,096
+  loaded rules and checked-add overflow. Failed construction cannot replace the
+  active engine database.
+- **Efficiency and compatibility:** lowercase sample text is prepared once per
+  signature or rule provider rather than once per item. Existing infallible
+  internal wrappers remain and have parity tests; callback errors remain errors,
+  so no partial evidence or verdict is published as clean or successful.
+- **Evidence contract:** benign tests, exact verifier step 275, strict 275-step
+  validator scope, Source contract 676, and all audit documents are locally
+  verified. Focused provider tests pass `19/19`; Source passes `676/676`; full
+  Native passes `593` plus compiler `6/6` with 21 documented fixture ignores;
+  Local Core passes `546/546`; Flutter analyze and `847/847` pass. Locked
+  workspace tests and release build also pass.
+- **Definitive local evidence:** exact `275/275`, zero failed/skipped, `488.1s`,
+  no Rust/Flutter skip, Defender opt-in off. Embedded and independent PS5/PS7
+  validation passes; both reject missing-step and missing-scope mutations. SHA is
+  `5c38555423a46188172e828f1193e24d44dab8e4c3613308c11b6151365a44a8`.
+- **Technical limits:** cancellation remains cooperative. One lossy/lowercase
+  normalization, one at-most-64-KiB search chunk, the at-most-128-item ML sort,
+  one entered OS call/read, or Windows trust helper work can finish before the
+  next checkpoint. Input remains capped by the existing 64 MiB file sample and
+  1 MiB archive-entry sample. Installed service identity, signed-driver/kernel
+  mediation, production calibration, and pre-execution blocking remain partial,
+  blocked, or technically limited. The whole antivirus goal remains active.
+  Hosted exact-head, PR/merge, package, guarded destination synchronization, and
+  destination reruns remain pending, so checkpoint 2246 is not yet closed.

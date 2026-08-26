@@ -11,6 +11,7 @@ pub mod pack_verifier;
 pub mod pe_import_signatures;
 pub mod ransomware_signatures;
 pub mod script_signatures;
+pub(crate) mod search;
 pub mod signature;
 pub mod signature_compiler;
 pub mod signature_db;

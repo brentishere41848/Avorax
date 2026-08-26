@@ -1,8 +1,19 @@
 use anyhow::{bail, Context, Result};
 
+use super::search;
+
 pub fn contains_hex_pattern(bytes: &[u8], pattern: &str) -> Result<bool> {
+    let mut never_cancel = || Ok(());
+    contains_hex_pattern_with_cancellation(bytes, pattern, &mut never_cancel)
+}
+
+pub fn contains_hex_pattern_with_cancellation(
+    bytes: &[u8],
+    pattern: &str,
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<bool> {
     let pattern = decode_hex(pattern, "byte pattern")?;
-    Ok(bytes.windows(pattern.len()).any(|window| window == pattern))
+    search::contains_exact_with_cancellation(bytes, &pattern, cancellation_checkpoint)
 }
 
 pub fn matches_hex_pattern_at(bytes: &[u8], pattern: &str, offset: usize) -> Result<bool> {
@@ -17,18 +28,22 @@ pub fn matches_hex_pattern_at(bytes: &[u8], pattern: &str, offset: usize) -> Res
 }
 
 pub fn contains_masked_hex_pattern(bytes: &[u8], pattern: &str, mask: &str) -> Result<bool> {
+    let mut never_cancel = || Ok(());
+    contains_masked_hex_pattern_with_cancellation(bytes, pattern, mask, &mut never_cancel)
+}
+
+pub fn contains_masked_hex_pattern_with_cancellation(
+    bytes: &[u8],
+    pattern: &str,
+    mask: &str,
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<bool> {
     let pattern = decode_hex(pattern, "masked byte pattern")?;
     let mask = decode_hex(mask, "masked byte mask")?;
     if pattern.len() != mask.len() {
         bail!("masked byte pattern mask length does not match pattern length");
     }
-    Ok(bytes.windows(pattern.len()).any(|window| {
-        window
-            .iter()
-            .zip(pattern.iter())
-            .zip(mask.iter())
-            .all(|((actual, expected), mask)| (*actual & *mask) == (*expected & *mask))
-    }))
+    search::contains_masked_with_cancellation(bytes, &pattern, &mask, cancellation_checkpoint)
 }
 
 fn decode_hex(value: &str, label: &str) -> Result<Vec<u8>> {
@@ -66,5 +81,21 @@ mod tests {
         assert!(helper_source.contains("let Some(window) = bytes.get(offset..end) else"));
         assert!(helper_source.contains("return Ok(false);"));
         assert!(!helper_source.contains(".unwrap_or(false)"));
+    }
+
+    #[test]
+    fn native_provider_cancellation_preserves_byte_pattern_wrappers() {
+        let bytes = b"ordinary-safe-prefix-DEADBEEF-suffix";
+        let wrapped = contains_hex_pattern(bytes, "4445414442454546").unwrap();
+        let masked =
+            contains_masked_hex_pattern(bytes, "4040404040404040", "f0f0f0f0f0f0f0f0").unwrap();
+        let mut never_cancel = || Ok(());
+        let fallible =
+            contains_hex_pattern_with_cancellation(bytes, "4445414442454546", &mut never_cancel)
+                .unwrap();
+
+        assert!(wrapped);
+        assert!(masked);
+        assert_eq!(wrapped, fallible);
     }
 }
