@@ -12240,3 +12240,46 @@ pending.
   each payload/metadata/auth, one metadata key, zero pending, and zero reparse
   points. Hosted exact-head, PR/merge, package, guarded synchronization, and
   destination proof remain pending; the checkpoint and whole goal stay active.
+
+## 2026-08-27 - Checkpoint 2247 Provider Text Normalization Cancellation (Scripting)
+
+- The shared Native provider normalizer is scripted to preserve one-shot lossy
+  UTF-8 replacement and ASCII-only lowercase semantics while processing at most
+  64 KiB of new input between exact scan-job callbacks. A maximum three-byte
+  carry preserves valid or malformed sequences crossing chunk boundaries.
+- Signature DB, direct signature matching, ASCII wrapper, Rule DB, and direct
+  rule evaluation are wired to the shared fallible helper. Partial text is local
+  and discarded on callback failure before match, evidence, or verdict return;
+  ordinary files and bounded archive entries retain existing engine wiring.
+- Benign parity, malformed/truncated UTF-8, exact boundary, multi-chunk
+  cancellation, and provider integration fixtures are scripted. Verifier step
+  276, strict validator cardinality/scope, Source contract 677, audit matrix,
+  threat model, blockers, dependency scope, and the checkpoint report are also
+  scripted. No checkpoint-2247 test has run during this scripting phase.
+- Cancellation remains cooperative within one normalization/search chunk and
+  separately bounded ML/system/static/trust work. No malware, live EICAR file,
+  Defender change, vault mutation, service/driver action, install, release, or
+  publication is part of this checkpoint.
+
+## 2026-08-27 - Checkpoint 2247 Local Verification
+
+- After the complete scripting batch was frozen, dedicated normalization tests
+  passed `7/7`; all provider `26/26`; signature `62/62` plus compiler `6/6`;
+  rule `44/44`; ML `40/40`; archive `71/71`; complete Native `600` active plus
+  compiler `6/6`; Local Core `546/546`; Flutter `847/847`; Source `677/677`.
+  Strict affected lint, Flutter analyze, formatting, locked workspace tests, and
+  the locked release workspace build passed.
+- A supplementary strict whole-workspace Clippy run reported only the three
+  existing `services/api` style lints: two `items_after_test_module` findings
+  and one `enum_variant_names` finding. It is not claimed as passing; no changed
+  checkpoint-2247 file is implicated, and strict Native/Local Core lint passes.
+- The definitive verifier passed `276/276`, zero failed/skipped, in `491.3s`
+  (`2026-08-26T23:07:30.367868Z` to
+  `2026-08-26T23:15:41.7081091Z`). Embedded and independent PS5/PS7 validators
+  accept SHA-256
+  `3fe607aac49c1d327eb1162b6352cc4be2d336077cbad73396f0948cc631dd7c`;
+  controlled missing-step and missing-scope reports are rejected with exit `1`.
+- All three dependency locks remain exact. Read-only vault inventory remains
+  16,072 files, zero directories, 4,522,733 bytes, 5,357 each
+  payload/metadata/auth, one key, zero pending, and zero reparse points. Hosted,
+  integration, guarded synchronization, and destination evidence remain open.

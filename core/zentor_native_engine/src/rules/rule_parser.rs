@@ -157,9 +157,15 @@ impl RuleDb {
             cancellation_checkpoint()?;
             return Ok(Vec::new());
         }
-        let lower_text = String::from_utf8_lossy(bytes).to_ascii_lowercase();
-        let lower_path_text = path.display().to_string().to_ascii_lowercase();
-        cancellation_checkpoint()?;
+        let lower_text = crate::signatures::text::ascii_lowercase_lossy_with_cancellation(
+            bytes,
+            cancellation_checkpoint,
+        )?;
+        let path_display = path.display().to_string();
+        let lower_path_text = crate::signatures::text::ascii_lowercase_lossy_with_cancellation(
+            path_display.as_bytes(),
+            cancellation_checkpoint,
+        )?;
         let mut matches = Vec::new();
         for rule in &self.rules {
             cancellation_checkpoint()?;
@@ -543,5 +549,48 @@ mod tests {
         assert!(error
             .to_string()
             .contains("benign rule provider callback failure"));
+    }
+
+    #[test]
+    fn native_provider_normalization_cancels_rule_db_before_evidence() {
+        let rule = NativeRule {
+            id: "ZNE-RULE-BENIGN-NORMALIZATION".to_string(),
+            name: "Benign normalization rule".to_string(),
+            description: "Normalization cancellation fixture only.".to_string(),
+            category: crate::verdict::ThreatCategory::TestThreat,
+            confidence: crate::verdict::Confidence::Low,
+            verdict: crate::verdict::Verdict::Observation,
+            false_positive_notes: "Benign fixture only.".to_string(),
+            conditions: vec![crate::rules::RuleCondition::ContainsAscii {
+                value: "marker absent from fixture".to_string(),
+            }],
+            min_condition_matches: 1,
+            action: "review_only".to_string(),
+        };
+        let db = RuleDb {
+            rules: vec![rule],
+            pack_loaded: true,
+        };
+        let bytes =
+            vec![b'A'; crate::signatures::text::TEXT_NORMALIZATION_CANCELLATION_CHUNK_BYTES * 3];
+        let path = Path::new("ordinary-benign-normalization.txt");
+        let analysis = crate::analyzers::analyze_path(path, &bytes).unwrap();
+        let mut checks = 0usize;
+        let mut checkpoint = || {
+            checks += 1;
+            if checks == 3 {
+                anyhow::bail!("benign rule DB normalization cancellation")
+            }
+            Ok(())
+        };
+
+        let error = db
+            .evaluate_with_cancellation(path, &bytes, &analysis, &mut checkpoint)
+            .expect_err("rule DB must not publish evidence after normalization cancellation");
+
+        assert!(error
+            .to_string()
+            .contains("benign rule DB normalization cancellation"));
+        assert_eq!(checks, 3);
     }
 }

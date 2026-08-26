@@ -1737,3 +1737,21 @@ GitHub SHA-256 and pass bounded in-stream validation without extraction or
 execution. Destination lock hashes remain exact. Checkpoint 2242 introduces no
 dependency, feature, package source, license classification, or lockfile
 change; final-binary SBOM resolution and legal approval remain separate.
+
+## Checkpoint 2247 Dependency Scope
+
+Provider text-normalization cancellation uses only Rust standard-library UTF-8,
+string, vector, iterator, and checked-arithmetic facilities plus the already
+locked `anyhow` error boundary. It adds no dependency, Cargo feature, downloaded
+content, package source, license obligation, or lockfile change.
+
+Tests use ordinary benign text and explicitly malformed byte arrays in memory;
+they never download, unpack, retain, or execute candidate content and do not use
+a live EICAR file. Exact verifier step 276 and Source contract 677 were scripted
+before execution and now pass in exact `276/276` and `677/677` runs. Root Cargo,
+Native Cargo, and Flutter lock SHA-256 values remain respectively
+`7c7c8aa006c2ac80eb89fa64d3b8ec09b32b26598b1a85bceb3c2af5a2d20e39`,
+`7f4393c81896600c4a5e84cad288a1a5360eccbc1c458b38f615082f66391383`, and
+`4de19695f9207273746341ca2221541b5b86d9f72af83727afca78541e177694`.
+Final-binary SBOM resolution, production signing/notarization, legal approval,
+installed-service stress, and release approval remain separate.

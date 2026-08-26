@@ -23,10 +23,15 @@ pub fn evaluate_rule_with_cancellation(
     analysis: &StaticAnalysis,
     cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
 ) -> Result<Option<RuleMatch>> {
-    cancellation_checkpoint()?;
-    let text = String::from_utf8_lossy(bytes).to_ascii_lowercase();
-    let path_text = path.display().to_string().to_ascii_lowercase();
-    cancellation_checkpoint()?;
+    let text = crate::signatures::text::ascii_lowercase_lossy_with_cancellation(
+        bytes,
+        cancellation_checkpoint,
+    )?;
+    let path_display = path.display().to_string();
+    let path_text = crate::signatures::text::ascii_lowercase_lossy_with_cancellation(
+        path_display.as_bytes(),
+        cancellation_checkpoint,
+    )?;
     evaluate_rule_with_prepared_text_and_cancellation(
         rule,
         bytes,

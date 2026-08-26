@@ -17,6 +17,7 @@ pub mod signature_compiler;
 pub mod signature_db;
 pub mod signature_matcher;
 pub mod string_signatures;
+pub(crate) mod text;
 
 pub use signature::{NativeSignature, SignatureMatch, SignatureType};
 pub use signature_db::SignatureDb;

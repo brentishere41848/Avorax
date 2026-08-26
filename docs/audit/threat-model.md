@@ -3285,3 +3285,33 @@ and missing-scope mutations. Only benign in-memory/text fixtures and isolated
 temporary pack directories are used; no candidate fixture is executed and the
 protected quarantine vault remains read-only and exact. Hosted and destination
 evidence remain pending; the residual risk and claims above are unchanged.
+
+## Checkpoint 2247 Provider Text Normalization Cancellation Threat Delta
+
+**Threat:** a bounded but large ordinary file or sampled archive entry keeps the
+signature/rule provider inside one whole-sample lossy UTF-8 and lowercase pass
+after the exact scan job was cancelled, or a malformed sequence split at a new
+chunk boundary changes matching semantics. A callback error must not become a
+clean/no-match result or partial evidence.
+
+**Mitigation:** one shared helper checks the exact callback before every
+at-most-64-KiB input chunk and after final input, uses at most three pending bytes
+to preserve split UTF-8 semantics, and reproduces the previous replacement and
+ASCII-only case-fold result. Signature/rule direct wrappers and databases use
+the same helper before evaluation. Any callback or checked-offset failure
+returns before provider evidence or verdict publication.
+
+**Residual risk:** cancellation is cooperative, not hard preemption. One active
+normalization/search chunk, the bounded ML sort, a separate static-analyzer
+normalization, entered filesystem/system work, or Windows trust operation can
+finish first. Input caps remain 64 MiB per ordinary sample and 1 MiB per sampled
+archive entry. No installed cross-identity service, driver, kernel,
+production-accuracy, pre-execution, or Defender-replacement guarantee is added.
+
+Verifier step 276, Source contract 677, benign compatibility/error fixtures, and
+all audit contracts were scripted before execution. Dedicated `7/7`, provider
+`26/26`, complete Native `600` active plus compiler `6/6`, Source `677/677`, and
+definitive `276/276` evidence now passes locally. Dual validators pass; removing
+the mandatory step or technical-scope phrase is rejected. Hosted, integration,
+synchronization, and destination evidence remain open. Disabled reputation and
+telemetry-dependent behavior providers remain disabled with their prerequisites.
