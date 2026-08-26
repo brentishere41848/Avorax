@@ -12314,3 +12314,28 @@ pending.
   16,072 files, zero directories, 4,522,733 bytes, 5,357 each
   payload/metadata/auth, one key, zero pending, and zero reparse points. Hosted,
   integration, guarded synchronization, and destination evidence remain open.
+
+### Checkpoint 2246 Closure-Document Finalization
+
+- Closure-document commit `40ac38030c470dcffd95fa93313e07a3593a9855`
+  passes exact-head Avorax CI `33021047209`; docs-only path policy starts no
+  Desktop Packages workflow. PR `#102` merges normally as
+  `146b536e9064ffc3e318b81866665fd039622835`, and merged-main Avorax CI
+  `33021627147` passes all five jobs. No package or publication workflow is
+  required for the four documentation-only paths.
+- Guarded sync from implementation merge
+  `f3c2c9f331748d0e340abe6cd1e33a4e435769b9` to closure merge `146b536` passes
+  audit and apply for exactly four modified documentation blobs, zero additions,
+  zero deletes, exact pre-sync base blobs, independent target-blob comparison,
+  and zero staging residue.
+- The first final-verifier invocation requested an external report path and was
+  rejected before tests by the destination path guard. The corrected destination
+  run passes exact `275/275`, zero failed/skipped, from
+  `2026-08-26T23:23:49.0203757Z` through
+  `2026-08-26T23:31:04.7438328Z` in `435.7s`. Embedded and independently
+  invoked PS5/PS7 validators pass; report SHA-256 is
+  `dd25744f021a6e7b90f0744271f7e7eaacab997b3f7d03d754e33d1217b137fc`.
+- Locks remain exact and the read-only protected vault remains 16,072 files,
+  zero directories, 4,522,733 bytes, 5,357 each payload/metadata/auth, one key,
+  zero pending, and zero reparse points. Checkpoint 2246 is fully finalized; the
+  complete antivirus hardening goal and checkpoint 2247 remain active.

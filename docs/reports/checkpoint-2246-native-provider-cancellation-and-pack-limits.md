@@ -184,6 +184,29 @@ documented blockers. The complete antivirus hardening goal remains active.
   pending files, and zero reparse points. No package was extracted or executed,
   no release was published, and no machine-wide component was installed.
 
+## Closure-Document Integration And Final Revalidation
+
+- Closure-document commit `40ac38030c470dcffd95fa93313e07a3593a9855`
+  passes exact-head Avorax CI `33021047209`. PR `#102` merges normally as
+  `146b536e9064ffc3e318b81866665fd039622835` with implementation merge
+  `f3c2c9f331748d0e340abe6cd1e33a4e435769b9` as base. Merged-main Avorax CI
+  `33021627147` passes all five jobs. The four-path documentation-only change
+  starts no Desktop Packages workflow under the repository path policy.
+- A second guarded sync from `f3c2c9f` to `146b536` passes preflight and apply
+  for exactly four modified documentation paths. Every destination file was
+  base-exact before replacement, independent Git-filter-aware comparison equals
+  all four target blobs afterward, and additions, deletes, and staging residue
+  are zero.
+- The final destination verifier passes exact `275/275`, zero failed/skipped,
+  from `2026-08-26T23:23:49.0203757Z` through
+  `2026-08-26T23:31:04.7438328Z` in `435.7s`. Embedded and independently
+  invoked Windows PowerShell 5.1 and PowerShell 7 validators pass. Report
+  SHA-256 is
+  `dd25744f021a6e7b90f0744271f7e7eaacab997b3f7d03d754e33d1217b137fc`.
+- All three lock hashes and the protected-vault invariant remain exact after
+  final revalidation. No package was extracted or executed, no machine-wide
+  component was installed, and no release was published.
+
 Checkpoint 2246 is closed. Cancellation and Windows trust remain cooperative
 and bounded rather than hard-preemptive, correlation-dependent engines remain
 disabled with blockers, and no service, driver, kernel, production-accuracy,

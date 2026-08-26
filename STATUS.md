@@ -7016,3 +7016,18 @@ complete antivirus hardening goal stays active.
   exact-head CI/package evidence, integration, guarded synchronization, and
   destination proof remain pending. Disabled providers remain disabled and the
   whole goal stays active.
+
+## Checkpoint 2246 Closure-Document Finalization
+
+- Closure docs `40ac38030c470dcffd95fa93313e07a3593a9855` pass exact-head
+  CI `33021047209`; PR `#102` merges normally as
+  `146b536e9064ffc3e318b81866665fd039622835`; merged-main CI `33021627147`
+  passes all five jobs. Docs-only path policy starts no package workflow and no
+  publication occurs.
+- Guarded sync applies four exact modified documentation blobs from `f3c2c9f`
+  to `146b536`, with zero additions/deletes/residue and independent target-blob
+  equality. Final destination verification passes exact `275/275`, zero
+  failed/skipped, in `435.7s`; independent PS5/PS7 validators accept SHA-256
+  `dd25744f021a6e7b90f0744271f7e7eaacab997b3f7d03d754e33d1217b137fc`.
+  Locks and the protected vault remain exact. Checkpoint 2246 is fully finalized;
+  checkpoint 2247 and the complete antivirus goal remain active.
