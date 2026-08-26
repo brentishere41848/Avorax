@@ -1567,5 +1567,8 @@ Source contracts `671/671`, the locked workspace release build, Flutter
 `847/847`, and strict Native/Local lint pass. The definitive report passes exact
 `270/270` in `462.7s` with dual validator acceptance and adversarial
 missing-step/scope rejection. No dependency, feature, package source, license
-classification, or lockfile changed. Hosted SBOM/package evidence remains
-pending.
+classification, or lockfile changed. Hosted SBOM/package evidence is now
+verified at implementation head: both consolidated artifacts contain one
+CycloneDX 1.6 lockfile SBOM with exactly 569 components and seven matching
+checksum targets. This remains lockfile evidence, not a final-binary SBOM or
+legal approval.

@@ -85,6 +85,29 @@ vault remains `16072` files, zero directories, `4522733` bytes, `5357` each
 zero reparse points. Hosted exact-head evidence, normal integration, guarded
 original-tree synchronization, and destination verification remain pending.
 
+## Implementation-Head Hosted Evidence
+
+Implementation head `810cea36a8ea14b518a884c56b4d5366c069a3f8` passes Avorax CI
+run `32952521600` at the exact PR head. All five jobs pass: Flutter client and
+protocol, Rust Local Core and Guard, branding/copy, Unix quarantine permission
+runtime, and security/protection/performance gates.
+
+Desktop Packages push run `32952457220` and PR run `32952521616` pass package
+contracts, Windows x64 MSI/EXE, Linux x64 DEB/tar, macOS arm64/x64 DMGs, and
+consolidation/checksums. Publication jobs `98130675426` and `98133110658` are
+explicitly skipped; no release or prerelease is created.
+
+Consolidated artifacts `9601135988` and `9601425781` are `132013855` and
+`131914377` bytes. Downloaded SHA-256 values exactly match GitHub digests
+`7b14b7594d04e557f5f03bacbeaa1b5aef8e403cb2907c0dbdfb36483c7d94b6`
+and
+`fa152bca11d3779c9013bfbf2fe29d67508a00ba8f7a1c516984e8bf5cd52424`.
+Bounded in-stream validation, without extraction or execution, passes exact
+eight unique regular root entries, six platform files, seven matching internal
+checksum targets, clean ZIP reads, and one CycloneDX 1.6 lockfile SBOM with
+exactly 569 components. Evidence-head hosting, merge, synchronization, and
+destination verification remain open.
+
 ## Limits
 
 Cancellation is cooperative at explicit boundaries. It does not hard-interrupt

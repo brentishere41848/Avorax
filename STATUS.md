@@ -6720,7 +6720,11 @@ guarded synchronization, and destination proof remain pending.
   the mandatory step or its exact technical-limit scope is rejected. Report
   SHA-256 is
   `15be81e12ab47b2851d421e00db5a5b921cbf485c77a213808331c1734b3db59`.
-  Hosted, merge, synchronization, and destination evidence remain pending.
+  Implementation head `810cea36a8ea14b518a884c56b4d5366c069a3f8` passes exact
+  Avorax CI and Desktop Packages push/PR evidence, including both skipped
+  publication jobs and bounded non-extracting validation of both consolidated
+  artifacts. Evidence-head, merge, synchronization, and destination evidence
+  remain pending.
 - Workspace-wide strict Clippy remains blocked by three unchanged API-service
   Rust-1.96 lints (`items_after_test_module` twice and `enum_variant_names`
   once). The checkpoint's own large-enum finding was repaired by boxing the
