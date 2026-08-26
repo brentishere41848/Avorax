@@ -1597,3 +1597,10 @@ scripting. Implementation-head hosted package evidence now confirms both
 consolidated artifacts contain one CycloneDX 1.6 lockfile SBOM with exactly 569
 components and seven matching checksum targets. This remains lockfile evidence,
 not a final-binary SBOM, legal approval, or production-signing proof.
+
+Evidence-head and merged-main packages preserve the same exact CycloneDX 1.6,
+569-component, seven-checksum contract. Their consolidated ZIP downloads match
+GitHub SHA-256 and pass bounded in-stream validation without extraction or
+execution. Destination lock hashes remain exact. Checkpoint 2242 introduces no
+dependency, feature, package source, license classification, or lockfile
+change; final-binary SBOM resolution and legal approval remain separate.

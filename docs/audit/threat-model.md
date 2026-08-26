@@ -3112,5 +3112,9 @@ quality blocker but do not prevent the full locked release build.
 Exact verifier step 271 and source contract 672 were scripted before testing.
 No checkpoint-2242 passing result was claimed during scripting. Local focused,
 full, definitive `271/271`, dual-validator, and adversarial missing-step/scope
-evidence now pass. Locks and the protected vault remain exact; hosted,
-integration, synchronization, and destination evidence remain pending.
+evidence now pass. Hosted and merged-main evidence, bounded artifacts, guarded
+`13/13` synchronization, and destination exact `271/271` proof pass. Locks and
+the protected vault remain exact; checkpoint 2242 is closed. An uncredited
+default-parallel Authenticode child handshake race remains a reliability lead;
+the exact test and full serial suite pass, so no trust result was accepted from
+the failed attempt.

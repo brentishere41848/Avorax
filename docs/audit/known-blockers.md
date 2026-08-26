@@ -3084,8 +3084,8 @@ was repaired and targeted strict lint passes.
 - Entry-level and 64-KiB inflate-output checkpoints now pass exact typed
   cancellation/probe propagation, focused/full suites, source contract
   `672/672`, and definitive verifier `271/271` with dual validation plus
-  missing-step/scope rejection. Hosted, merge, synchronization, and destination
-  evidence remain open.
+  missing-step/scope rejection. Hosted, merge, guarded `13/13` synchronization,
+  and destination exact `271/271` evidence pass; checkpoint 2242 is closed.
 - One active `flate2` decoder read cannot be hard-interrupted by the in-process
   callback. Moving it behind a safely killable worker requires authenticated
   IPC and resource-confinement work beyond this checkpoint.
@@ -3094,4 +3094,7 @@ was repaired and targeted strict lint passes.
   ownership, cross-identity authentication, driver/kernel cancellation, and
   pre-execution blocking remain genuine blockers.
 - No checkpoint-2242 passing result was claimed during scripting; local proof
-  is now complete without changing the residual technical limits above.
+  and closure proof are now complete without changing the residual technical
+  limits above. One default-parallel Native run exposed a short Authenticode
+  key-confirmation race; exact and serial reruns pass, so concurrency hardening
+  remains a separate test/reliability lead rather than credited closure proof.

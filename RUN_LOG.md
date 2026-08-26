@@ -11818,3 +11818,30 @@ pending.
   platform files, seven checksums, and CycloneDX 1.6/569-component SBOMs.
 - Evidence-head hosted checks, normal merge, merged-main evidence, guarded
   original-tree synchronization, and destination verification remain pending.
+
+## 2026-08-26 - Checkpoint 2242 Integration And Destination Closure
+
+- Evidence head `bedac3896165f17422151c0ad514e7f2c507cea9` passes CI
+  `32965133555` and packages `32965133524`; artifact `9605774079` matches
+  GitHub/download SHA-256 and exact non-extracting package/SBOM validation.
+  Publication is skipped.
+- PR `#94` merged normally as
+  `31e476a3d9d960575827cbfa2da66db779f287dd`. Merged-main CI
+  `32966419598` and packages `32966419580` pass; publication is skipped and
+  artifact `9606492259` passes matching digest plus exact bounded in-stream
+  validation.
+- Guarded sync verifies `13/13` exact paths, zero deletion/mismatch/reparse/
+  residue. Destination focused archive cancellation `4/4`, adjacent
+  cancellation `9/9`, serial Native `553` passed/`19` ignored plus compiler
+  `6/6`, Local Core `546/546`, Flutter `847/847`, source contracts `672/672`,
+  analyzer, strict component lint, locked release build, and dual parsers pass.
+- Destination definitive evidence passes exact `271/271` in `507.6s`; dual
+  independent validators pass and report SHA-256 is
+  `2cb5cf20cbedce244d240de260da5d28db65c91cbb53972edbd47964a8fed4c2`.
+  Locks and protected-vault invariant remain exact. Checkpoint 2242 is closed;
+  the complete antivirus goal remains active.
+- One default-parallel Native run is uncredited after the isolated wrong-key
+  response-MAC child produced a short key-confirmation message (`552/1/19`).
+  The exact test and complete serial rerun pass. Initial raw-blob sync hashing,
+  parser quoting, and external report-path attempts also failed visibly before
+  corrected runs; no destination mutation occurred before the guarded apply.

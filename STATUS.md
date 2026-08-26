@@ -6757,8 +6757,12 @@ guarded synchronization, and destination proof remain pending.
   `ef1944db1e84fd8cbdff9c8db200073640e281ae` passes exact Avorax CI and
   Desktop Packages push/PR evidence. Both publication jobs are skipped, and
   bounded non-extracting validation passes for both consolidated artifacts.
-  Evidence-head, merge, guarded synchronization, and destination evidence
-  remain pending.
+  Evidence-head CI/packages, normal PR `#94` merge, merged-main CI/packages,
+  non-extracting artifacts, guarded `13/13` sync, and destination focused/full/
+  definitive evidence now pass. Destination definitive is exact `271/271` in
+  `507.6s`, with report SHA-256
+  `2cb5cf20cbedce244d240de260da5d28db65c91cbb53972edbd47964a8fed4c2`.
+  Locks and the protected vault remain exact; checkpoint 2242 is closed.
 - **Limit:** one active decoder read and the static analyzer's separate bounded
   archive metadata/relationship inspection remain synchronous. This is not
   hard cancellation, cross-identity service control, driver/kernel blocking, or

@@ -4983,12 +4983,13 @@ unchanged API-service Rust-1.96 lints; Native/Local strict Clippy is clean.
 | Stored body checkpoint | Bound cancellation around an at-most-1-MiB stored-body copy | Locally verified | Pre/post callback with unchanged entry/total limits |
 | Deflate output checkpoint | Observe cancellation before every at-most-64-KiB output read | Locally verified | Benign multi-chunk deflate regression; existing 1-MiB output cap |
 | Scanner typed propagation | Preserve cancellation/probe errors instead of archive-limit evidence | Locally verified | Distinct cancellation and probe-failure adapter regressions; source contract 672 |
-| Checkpoint 2242 verifier contract | Require current evidence rather than stale checkpoint-2241 reports | Locally definitive and implementation-head hosted verified | Exact 271/271, dual validators, missing-step/scope rejection, exact-head CI/packages |
+| Checkpoint 2242 verifier contract | Require current evidence rather than stale checkpoint-2241 reports | Closed: local, hosted, merged-main, synchronized, and destination verified | Exact 271/271, source contract 672, dual validators, adversarial rejection, exact-head/main CI and packages, 13/13 sync, destination 271/271 |
 
 One already-running decoder read is not hard-interrupted. Static archive
 metadata/relationship analysis remains a separate synchronous bounded substep.
 During scripting, no checkpoint-2242 passing result was claimed. Local focused,
 full, definitive `271/271`, and adversarial validation now pass. Implementation
-head `ef1944db1e84fd8cbdff9c8db200073640e281ae` passes CI, both package
-contexts, and bounded consolidated-artifact validation. Integration, guarded
-synchronization, and destination evidence remain open.
+head, evidence head, and merged main pass CI/packages and bounded artifact
+validation. Guarded sync verifies `13/13` paths and destination definitive
+passes `271/271` in `507.6s`. Checkpoint 2242 is closed; one uncredited
+default-parallel Native handshake race remains the next hardening lead.
