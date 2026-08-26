@@ -6943,7 +6943,7 @@ complete antivirus hardening goal stays active.
 
 ## Checkpoint 2246 Native Provider Cancellation And Pack Limits
 
-- **Locally verified / integration pending:** Native signature, rule, and ML providers now
+- **Verified and integrated:** Native signature, rule, and ML providers now
   accept one fallible callback all the way through evidence production. Shared
   exact/masked searches checkpoint every at-most-64-KiB candidate chunk;
   signatures cover byte, ASCII, UTF-16, EICAR and required-context searches;
@@ -6976,8 +6976,19 @@ complete antivirus hardening goal stays active.
   1 MiB archive-entry sample. Installed service identity, signed-driver/kernel
   mediation, production calibration, and pre-execution blocking remain partial,
   blocked, or technically limited. The whole antivirus goal remains active.
-  Hosted exact-head, PR/merge, package, guarded destination synchronization, and
-  destination reruns remain pending, so checkpoint 2246 is not yet closed.
+- **Hosted and merged:** implementation head
+  `52a0995fafda2f8b2d467b1359924c61604f777b` passes CI `33017144188` and
+  package runs `33017129545`/`33017144209`; PR `#100` merged normally as
+  `f3c2c9f331748d0e340abe6cd1e33a4e435769b9`. Merged-main CI
+  `33018138486` and packages `33018138334` pass, with publication skipped.
+  PR/main artifacts `9625320449`/`9625857946` pass bounded non-extracting exact
+  8/6/7/CycloneDX-1.6/569 validation.
+- **Destination verified:** guarded synchronization passes `21/21` with zero
+  deletes. Focused provider `19/19`, Source `676/676`, formatting, and definitive
+  exact `275/275` pass in `515.3s`; independent PS5/PS7 validators accept report
+  SHA-256 `12e27ad9e3f28058896ea03f66f1c91a6133a82b1827079869d937cd927ede65`.
+  Locks and the protected vault remain exact. Checkpoint 2246 is closed; the
+  complete antivirus hardening goal stays active.
 
 ## Checkpoint 2247 Provider Text Normalization Cancellation
 
