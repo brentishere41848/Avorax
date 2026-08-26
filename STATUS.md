@@ -6639,3 +6639,24 @@ guarded synchronization, and destination proof remain pending.
 - **Limit:** the cancellation token remains current-user-runtime shared and is
   not authenticated to a cross-instance job ID. This is user-mode post-start
   cancellation, not service/driver/kernel/pre-execution isolation.
+
+## Checkpoint 2239 Closure
+
+- **Verified:** evidence-head and merged-main CI/package matrices pass on exact
+  commits; all six platform artifacts, checksums, lockfile SBOM, and bounded
+  in-stream artifact checks pass. Publication is skipped and no release exists.
+- **Verified:** PR `#91` merges normally as `bee5193c`; guarded zero-delete
+  synchronization applies exact `21/21` blobs and 7,747,274 bytes. Destination
+  focused `6/6`, analyzer, source `669/669`, and final Flutter `845/845` pass.
+- **Verified:** destination no-skip/no-Defender verifier passes exact `268/268`
+  in `470.2s`; both validators pass, adversarial reports reject `22/22`, and
+  report SHA-256 is
+  `f198239723c3dcb07f0146fcb03c766520df894dce09ec2e8383e0d9acaff491`.
+- **Environment evidence:** C: disk-full and D: exFAT/cleanup attempts remain
+  explicitly uncredited. Hosted ZIPs are byte-exact preserved on D: to restore
+  C: space; no project or vault content was discarded. Locks, processes,
+  sync residue, and the protected-vault invariant remain exact.
+- **Unchanged limit:** the cancellation token is not job-ID-authenticated
+  across client instances. Service/cross-identity ownership, driver/kernel
+  enforcement, and pre-execution blocking remain partial or blocked.
+  Checkpoint 2239 is closed; the complete antivirus project remains active.

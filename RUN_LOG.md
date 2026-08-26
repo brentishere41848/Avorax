@@ -11552,3 +11552,35 @@ pending.
   Both match GitHub metadata and pass bounded non-extracting exact
   8-root/6-release/7-checksum/CycloneDX 1.6/569-component validation.
   Evidence-head checks, merge, synchronization, and destination proof remain.
+
+## 2026-08-26 - Checkpoint 2239 Integration And Destination Closure
+
+- Evidence head `fb4b1cf5fdcd723bef48d2da110ddb038838231b` passes CI
+  `32931893838` and packages `32931893808`; publication `98067942213` is
+  skipped. Consolidated artifact `9593749447` is 131,756,565 bytes, SHA-256
+  `b45dd10032412313d0db419b71e020eb39d4e017de5668173bd8a65900d53025`,
+  and passes bounded non-extracting 8/6/7/CycloneDX 1.6/569 validation.
+- PR `#91` merges normally as `bee5193c36a8636211d95b8e91a6ce9224b7b0fe`
+  with parents `2435b3139ff012eda7cb565774c039e1db1d5fbc` and
+  `fb4b1cf5fdcd723bef48d2da110ddb038838231b`. Merged-main CI
+  `32932815722` and packages `32932815727` pass; publication `98071571653`
+  is skipped. Artifact `9594188176` is 131,718,396 bytes with SHA-256
+  `06bdc080af570c2d12c71e0068fdfcc46c34a25d4c9f7eecb5ab6dbf7be80bea`
+  and passes the same in-stream validation. No release exists.
+- Guarded synchronization applies exact `21/21` filtered blobs and 7,747,274
+  bytes with zero deletes/residue/stage. A first Windows PowerShell 5.1 attempt
+  failed before replacement on an unavailable overwrite overload; verified
+  cleanup proved zero changed targets, then PowerShell 7 succeeded.
+- Destination format, focused `6/6`, analyzer, source `669/669`, and final
+  sequential Flutter `845/845` pass. Earlier attempts remain uncredited and
+  explained: C: disk-full/compiler interruption and one exFAT D:-temp cleanup
+  race (`844/845`, exact focused retry `1/1`). D: cannot provide NTFS ACL
+  semantics; four exact hosted ZIPs totaling 526,980,650 bytes were preserved
+  under `D:\Avorax-Codex-Evidence\checkpoint-2239` to restore C: space.
+- Destination no-skip/no-Defender verification passes exact `268/268`, zero
+  failed/skipped, from `2026-08-26T06:02:19.1747256Z` through
+  `2026-08-26T06:10:09.4014246Z` in `470.2s`. Both validators pass,
+  adversarial reports reject `22/22`, and report SHA-256 is
+  `f198239723c3dcb07f0146fcb03c766520df894dce09ec2e8383e0d9acaff491`.
+  Locks, zero processes/sync residue, and the protected vault stay exact.
+  Checkpoint 2239 is closed; the complete antivirus project remains active.

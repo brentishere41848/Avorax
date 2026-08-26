@@ -86,8 +86,50 @@ Consolidated artifacts `9593421332` and `9593395490` are 131,753,478 and
 Both match GitHub's digests and pass bounded in-stream validation without
 extraction or execution: exact eight root entries, six platform release files,
 seven matching checksum rows, and CycloneDX 1.6 lockfile SBOM evidence with 569
-components. Evidence-head checks, merge, synchronization, and destination proof
-remain pending.
+components.
+
+## Integration And Destination Closure
+
+Evidence head `fb4b1cf5fdcd723bef48d2da110ddb038838231b` passes CI
+`32931893838` and packages `32931893808`; publication `98067942213` is skipped.
+Artifact `9593749447` is 131,756,565 bytes with SHA-256
+`b45dd10032412313d0db419b71e020eb39d4e017de5668173bd8a65900d53025`
+and passes the same bounded non-extracting validation.
+
+PR `#91` merges normally as `bee5193c36a8636211d95b8e91a6ce9224b7b0fe`
+with exact parents `2435b3139ff012eda7cb565774c039e1db1d5fbc` and
+`fb4b1cf5fdcd723bef48d2da110ddb038838231b`. Merged-main CI
+`32932815722` and packages `32932815727` pass; publication `98071571653`
+is skipped. Artifact `9594188176` is 131,718,396 bytes with SHA-256
+`06bdc080af570c2d12c71e0068fdfcc46c34a25d4c9f7eecb5ab6dbf7be80bea`
+and passes exact 8-root/6-release/7-checksum/CycloneDX 1.6/569-component
+in-stream validation. No release is created.
+
+Guarded synchronization copies exact `21/21` Git-filtered blobs and 7,747,274
+bytes into `C:\Users\Brent\Documents\Avorax-main` with zero deletes, residue,
+or remaining stage. The first sync attempt stopped before replacement because
+Windows PowerShell 5.1 lacks the required overwrite overload; a bounded cleanup
+proved zero changed targets before the successful PowerShell 7 retry.
+
+Destination format, focused cancellation `6/6`, analyzer, source contracts
+`669/669`, and a final sequential full Flutter run `845/845` pass. The C: drive
+initially had only 0.34 GB free: an interrupted compiler run and a retry with an
+explicit disk-full diagnostic are not credited. An exFAT D:-temp run completed
+`844/845` with one transient isolated subprocess-fixture cleanup race; its exact
+focused rerun passed `1/1`. D: was not used for Rust quarantine proof because
+exFAT lacks the required ACL semantics. Four untouched hosted ZIPs totaling
+526,980,650 bytes were instead byte-exact archived to
+`D:\Avorax-Codex-Evidence\checkpoint-2239`, restoring C: working space without
+losing evidence.
+
+The final destination no-skip/no-Defender verifier passes exactly `268/268`
+from `2026-08-26T06:02:19.1747256Z` through
+`2026-08-26T06:10:09.4014246Z` in `470.2s`. Both independent validators pass,
+11 controlled mutations under both hosts reject `22/22`, and report SHA-256 is
+`f198239723c3dcb07f0146fcb03c766520df894dce09ec2e8383e0d9acaff491`.
+Locks, zero repo processes/sync residue, and the protected-vault invariant
+remain exact. Checkpoint 2239 is closed; the complete antivirus project remains
+active.
 
 ## Limits
 
