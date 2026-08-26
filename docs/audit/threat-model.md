@@ -3237,3 +3237,19 @@ artifact validation also pass. Both publication jobs are skipped. This proves
 the source/package workflow on that exact head; it does not prove installed
 service ownership, production signing/notarization, driver mediation,
 pre-execution blocking, or hard cancellation.
+
+### Checkpoint 2245 Closure Evidence
+
+Evidence head `195d3c847b4e0ce993329bd0e7b142d1b6c0b785`, normal merge
+`48cf932ff23211961386cbf220d05026821322c7`, merged-main checks/packages,
+bounded non-extracting package validation, guarded `22/22` synchronization, and
+post-test canonical comparison all pass. Destination focused and full
+regressions pass, and definitive verification is exact `274/274` in `502.5s`
+with independent PS5/PS7 acceptance.
+
+This closes the checkpoint's evidence gap without changing its threat claim.
+Cancellation still cannot preempt one already-running normalization, term
+search, parser/system call, rule/ML call, or trust operation. Disabled engines
+remain disabled, the 64 MiB sample bound remains authoritative, and no installed
+service identity, driver, kernel mediation, or pre-execution blocking has been
+demonstrated.

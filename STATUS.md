@@ -6917,3 +6917,26 @@ jobs are skipped. Downloaded PR artifact `9619955244` matches GitHub SHA-256
 and passes bounded non-extracting exact 8/6/7/CycloneDX-1.6/569 validation.
 PR `#98` is open. Evidence-head, merge, main, guarded-sync, and destination
 evidence remain pending; the whole antivirus goal remains active.
+
+### Checkpoint 2245 Integration And Destination Closure
+
+The historical pending status above is superseded. Evidence head
+`195d3c847b4e0ce993329bd0e7b142d1b6c0b785` passes CI `33004923358` and
+Desktop Packages `33004923305`; publication is skipped and artifact
+`9620713611` passes matching-digest, non-extracting 8/6/7/CycloneDX-1.6/569
+validation. PR `#98` merged normally as
+`48cf932ff23211961386cbf220d05026821322c7`. Merged-main CI `33006604149`,
+packages `33006604143`, skipped publication, and artifact `9621531773` with
+SHA-256 `a06528a864f1f4a97fb6eaae56b0d92ec021fd44e193f0915ca3892708052110`
+all pass.
+
+Guarded synchronization and post-test canonical comparison both pass `22/22`
+with zero deletes or residue. Destination focused `15/15`, analyzers `99/99`,
+source `675/675`, Native `574`/`21` plus compiler `6/6`, Local Core `546/546`,
+Flutter analyzer and `847/847`, strict component Clippy, rustfmt, dual parsers,
+and locked release build pass. Destination definitive verification is exact
+`274/274` in `502.5s`; dual independent validators pass and report SHA-256 is
+`3b56da92cf01d0a3191ea0fbea19fde82fd45fc14b7e6aaeee5cda9b3e08e342`.
+Locks and the protected vault remain exact. Checkpoint 2245 is closed; all
+cooperative user-mode limits and disabled-engine blockers remain, and the
+complete antivirus hardening goal stays active.

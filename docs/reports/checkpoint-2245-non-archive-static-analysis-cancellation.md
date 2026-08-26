@@ -142,3 +142,62 @@ independent push artifact `9619876133` is `131952443` bytes with GitHub digest
 PR `#98` remains open. The documentation-only evidence commit, its exact-head
 checks, normal merge, merged-main checks/packages, guarded synchronization, and
 destination verification remain required. No release or publication occurred.
+
+## Integration And Destination Closure
+
+The preceding open-PR statement records an earlier evidence stage and is now
+superseded. Exact evidence head
+`195d3c847b4e0ce993329bd0e7b142d1b6c0b785` passes CI `33004923358` and
+Desktop Packages `33004923305`; publication job `98301296963` is skipped.
+Artifact `9620713611` is `131962495` bytes, matches SHA-256
+`621ea64b26f312bc79132f49869e6b3f5356ea0b3230d7e9475507ed62c16ab4`,
+and passes bounded non-extracting exact 8-root/6-platform/7-checksum plus
+CycloneDX 1.6/569-component validation.
+
+PR `#98` merged normally as
+`48cf932ff23211961386cbf220d05026821322c7`. Its exact parents are main
+`0f75e8ed883d1fadf5314ce57aafcacae7ab924f` and evidence head
+`195d3c847b4e0ce993329bd0e7b142d1b6c0b785`. Merged-main CI
+`33006604149` and Desktop Packages `33006604143` pass; publication job
+`98308496311` is skipped. Artifact `9621531773` is `131928321` bytes,
+matches SHA-256
+`a06528a864f1f4a97fb6eaae56b0d92ec021fd44e193f0915ca3892708052110`,
+and passes the same bounded validation. No release, direct-main push, package
+execution, or installation occurred.
+
+Guarded synchronization to `C:\Users\Brent\Documents\Avorax-main` passes
+preflight, atomic apply, and independent Git-attribute-aware verification for
+all `22/22` paths with zero deletes and zero staging residue. Post-test
+canonical comparison again passes `22/22`.
+
+Destination results are:
+
+- focused non-archive cancellation `15/15`;
+- analyzer regressions `99/99` and Source contracts `675/675`;
+- Native library `574` passed and `21` documented fixture tests ignored, plus
+  signature compiler `6/6`;
+- Local Core `546/546`;
+- Flutter analyzer with no issues and Flutter `847/847`;
+- Native/Local rustfmt and strict all-target/all-feature Clippy;
+- explicit Windows PowerShell 5.1 and PowerShell 7 parser checks; and
+- `cargo build --workspace --release --locked`.
+
+The exact destination verifier command was:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools\testing\verify-small-threat-mvp.ps1 -RepoRoot . -ReportPath .verification\checkpoint-2245-destination-full-report.json
+```
+
+It passes `274/274` from `2026-08-26T20:15:03.174601Z` through
+`2026-08-26T20:23:25.6774898Z` in `502.5s`, with Defender/EICAR opt-in off and
+no Rust or Flutter skip. Embedded and separately invoked PS5/PS7 validators
+accept the report. SHA-256 is
+`3b56da92cf01d0a3191ea0fbea19fde82fd45fc14b7e6aaeee5cda9b3e08e342`.
+The nested package-source command passed its mandatory verifier step while
+documenting three skipped Windows symlink fixtures that require optional
+symlink privilege.
+
+All three lock hashes and the protected 16,072-file quarantine invariant remain
+exact. Checkpoint 2245 is closed. Cancellation remains cooperative, all
+documented disabled engines remain disabled, and the complete antivirus
+hardening goal remains active.

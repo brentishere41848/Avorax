@@ -5118,3 +5118,21 @@ both macOS architectures. The PR consolidated artifact passes bounded
 non-extracting exact 8/6/7/CycloneDX-1.6/569 validation, and both publication
 jobs are skipped. Evidence-head, integration, and destination proof remain
 pending; this does not promote any disabled engine or expand user-mode limits.
+
+### Checkpoint 2245 Closure Matrix Evidence
+
+The historical pending statements above are superseded. Evidence-head and
+merged-main CI/package matrices pass with publication skipped. PR `#98` merged
+normally as `48cf932ff23211961386cbf220d05026821322c7`; both package artifacts
+pass matching-digest, bounded non-extracting 8/6/7/CycloneDX-1.6/569 checks.
+Guarded and post-test canonical comparisons pass all `22/22` synchronized
+paths with zero deletes or residue.
+
+Destination focused `15/15`, analyzers `99/99`, source `675/675`, Native
+`574`/`21` plus compiler `6/6`, Local Core `546/546`, Flutter `847/847`, strict
+quality gates, locked release build, and definitive `274/274` in `502.5s` all
+pass. The implemented analyzer, compatibility-wrapper, and fail-visible verdict
+rows are therefore verified for this user-mode boundary. Reputation and the
+four correlation-dependent behavior rows remain **Disabled / blocked**;
+rule/ML/trust cancellation remains **Partial / technically limited**. No row is
+promoted to installed service, kernel, driver, or pre-execution protection.

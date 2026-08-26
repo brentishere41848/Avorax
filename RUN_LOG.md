@@ -12134,3 +12134,49 @@ pending.
 - PR `#98` remains open. Evidence-head checks, normal merge, merged-main
   evidence, guarded synchronization, and destination verification remain
   pending. Nothing was installed, executed, released, or published.
+
+## 2026-08-26 - Checkpoint 2245 Integration And Destination Closure
+
+- Exact evidence head `195d3c847b4e0ce993329bd0e7b142d1b6c0b785` passes all
+  five CI jobs in run `33004923358` and Desktop Packages run `33004923305`.
+  Publication job `98301296963` is skipped. Consolidated artifact
+  `9620713611` is `131962495` bytes, matches downloaded SHA-256
+  `621ea64b26f312bc79132f49869e6b3f5356ea0b3230d7e9475507ed62c16ab4`,
+  and passes bounded non-extracting exact 8-root/6-platform/7-checksum plus
+  CycloneDX 1.6/569-component validation.
+- PR `#98` merged normally as
+  `48cf932ff23211961386cbf220d05026821322c7`, with parents
+  `0f75e8ed883d1fadf5314ce57aafcacae7ab924f` and
+  `195d3c847b4e0ce993329bd0e7b142d1b6c0b785`. Merged-main CI
+  `33006604149` and Desktop Packages `33006604143` pass. Publication job
+  `98308496311` is skipped. Main artifact `9621531773` is `131928321`
+  bytes, matches SHA-256
+  `a06528a864f1f4a97fb6eaae56b0d92ec021fd44e193f0915ca3892708052110`,
+  and passes the same bounded validation. No direct-main push, release,
+  publication, package execution, or installation occurred.
+- Guarded synchronization from base
+  `0f75e8ed883d1fadf5314ce57aafcacae7ab924f` to the exact merge passes
+  read-only preflight, atomic apply, and independent Git-attribute-aware
+  canonical verification for `22/22` paths with zero deletes and zero staging
+  residue. A second canonical comparison after all destination tests again
+  passes `22/22`.
+- In `C:\Users\Brent\Documents\Avorax-main`, focused cancellation passes
+  `15/15`, analyzers `99/99`, source contracts `675/675`, Native `574` active
+  with `21` documented fixture ignores plus compiler `6/6`, Local Core
+  `546/546`, and Flutter `847/847` with no analyzer issues. Native/Local
+  rustfmt and strict all-target/all-feature Clippy, explicit PS5/PS7 parsers,
+  and `cargo build --workspace --release --locked` pass.
+- Destination definitive verification passes exact `274/274` from
+  `2026-08-26T20:15:03.174601Z` through
+  `2026-08-26T20:23:25.6774898Z` in `502.5s`, with Defender/EICAR opt-in
+  disabled and no Rust or Flutter skip. Embedded and separately invoked
+  Windows PowerShell 5.1 and PowerShell 7 validators pass. Report SHA-256 is
+  `3b56da92cf01d0a3191ea0fbea19fde82fd45fc14b7e6aaeee5cda9b3e08e342`.
+  The package-source subcommand ran 24 tests and retained three documented
+  Windows symlink-fixture skips because optional symlink privilege was absent;
+  the containing mandatory verifier step passed.
+- Root, Native, and Flutter lock hashes remain exact. The protected quarantine
+  remains read-only and exact at 16,072 files, zero directories, 4,522,733
+  bytes, 5,357 each payload/metadata/auth, one metadata key, zero pending, and
+  zero reparse points. Checkpoint 2245 is closed; the complete antivirus
+  hardening goal remains active.
