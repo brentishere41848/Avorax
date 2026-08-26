@@ -3171,3 +3171,41 @@ The technical limits remain: one entered decoder read is not preempted;
 non-archive analysis, synchronous rule/ML and trust calls, installed service
 identity, driver mediation, and pre-execution blocking require separate work.
 Disabled reputation and behavior engines remain disabled with their blockers.
+
+## Checkpoint 2245 Non-Archive Static Cancellation
+
+- Entropy, string-reference/IP/term/UTF-16, PE section/import/debug, and script
+  term passes now have scripted cooperative checkpoints and fail-visible error
+  propagation. Verifier step 274 and Source contract 675 have not run during
+  this implementation-first scripting phase.
+- One already-running UTF-8 or UTF-16 lossy/lowercase normalization, one term
+  search, one bounded parser/system call, synchronous rule/ML call, or Windows
+  trust operation is not forcibly interrupted. The next explicit checkpoint
+  observes cancellation; non-archive input remains capped at 64 MiB.
+- Reputation remains disabled without an authenticated privacy-reviewed
+  backend. Browser-data, credential/network, persistence-write, and parent-image
+  lineage engines remain disabled without trusted correlated telemetry.
+- Installed service ownership, authenticated cross-identity IPC, signed driver
+  mediation, kernel cancellation, and demonstrated pre-execution blocking remain
+  blockers. Checkpoint 2245 makes none of those claims.
+- During the implementation-first phase no passing result was claimed. Exact
+  `274/274`, hosted, merge, package, guarded-sync, and destination evidence were
+  prerequisites for checkpoint closure.
+
+Focused `15/15`, analyzer `99/99`, Native `574` plus compiler `6/6`, strict
+Native Clippy, and Source contract `675/675` now pass. One earlier complete run
+hit five Defender error-225 child-start blocks; the individual tests and clean
+complete rerun pass without changing Defender. At that stage exact verifier 274
+and all integration/destination prerequisites remained blockers to closure.
+
+Local Core `546/546`, Flutter analyze and `847/847`, strict Local Core lint, and
+the locked release build now pass. Locks and the exact protected-vault invariant
+remain unchanged. Definitive exact `274/274` and hosted/integration/destination
+evidence were the remaining checkpoint-closure blockers.
+
+Definitive local verification now passes exact `274/274` in `539.7s`, and both
+independent PowerShell hosts accept the report and reject missing-step and
+missing-required-scope adversarial copies. Hosted exact-head CI/packages, normal
+merge, guarded synchronization, destination regression, and destination
+definitive evidence remain checkpoint-closure blockers. The technical limits
+and disabled-engine blockers above remain unchanged.

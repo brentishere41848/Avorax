@@ -210,13 +210,13 @@ impl ZentorNativeEngine {
         let (sha256, file_size_bytes, scanned_bytes, scan_sample_limited) =
             scan_content_metadata_or_computed(bytes, content_metadata);
         let analysis = {
-            let mut static_archive_checkpoint =
-                || check_scan_cancellation(should_cancel, "static archive analysis progress");
+            let mut static_analysis_checkpoint =
+                || check_scan_cancellation(should_cancel, "static analysis progress");
             analyze_path_with_size_and_cancellation(
                 &path,
                 bytes,
                 file_size_bytes,
-                &mut static_archive_checkpoint,
+                &mut static_analysis_checkpoint,
             )?
         };
         check_scan_cancellation(should_cancel, "static analysis completion")?;
@@ -1035,7 +1035,7 @@ mod engine_source_tests {
             "read_scan_content_with_cancellation(&path, should_cancel)?",
             "post-content boundary",
             "static analysis preflight",
-            "static archive analysis progress",
+            "static analysis progress",
             "static analysis completion",
             "publisher trust completion",
             "native signature completion",
@@ -1066,13 +1066,35 @@ mod engine_source_tests {
             .find("analyze_path_with_size_and_cancellation")
             .expect("fallible static analyzer must be wired");
         let archive_checkpoint = scan_source
-            .find("static archive analysis progress")
-            .expect("static archive checkpoint must be job-bound");
+            .find("static analysis progress")
+            .expect("static analysis checkpoint must be job-bound");
         let verdict = scan_source
             .find("Ok(FileScanVerdict")
             .expect("verdict publication must remain explicit");
 
         assert!(archive_checkpoint < analyzer);
+        assert!(analyzer < verdict);
+        assert!(scan_source[analyzer..verdict].contains(")?"));
+    }
+
+    #[test]
+    fn non_archive_static_cancellation_is_wired_before_verdict_publication() {
+        let source = include_str!("engine.rs");
+        let scan_start = source.find("fn scan_bytes_at_with_cancellation").unwrap();
+        let folder_start = source.find("pub fn scan_folder").unwrap();
+        let scan_source = &source[scan_start..folder_start];
+
+        let checkpoint = scan_source
+            .find("static analysis progress")
+            .expect("shared static checkpoint must be job-bound");
+        let analyzer = scan_source
+            .find("analyze_path_with_size_and_cancellation")
+            .expect("fallible static analyzer must be wired");
+        let verdict = scan_source
+            .find("Ok(FileScanVerdict")
+            .expect("verdict publication must remain explicit");
+
+        assert!(checkpoint < analyzer);
         assert!(analyzer < verdict);
         assert!(scan_source[analyzer..verdict].contains(")?"));
     }

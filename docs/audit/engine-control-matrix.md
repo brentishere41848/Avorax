@@ -5059,3 +5059,55 @@ at that recovery stage; the closure matrix below supersedes it.
 Checkpoint 2244 is closed without expanding user-mode cancellation into a
 service, driver, kernel, or pre-execution claim. The whole antivirus goal remains
 active.
+
+## Checkpoint 2245 Non-Archive Static Cancellation Matrix
+
+| Control / engine | Responsibility | Status | Scripted evidence / blocker |
+|---|---|---|---|
+| Shared Native static orchestrator | Propagate one job-bound callback through non-archive phases and publish no partial result | Scripted / unverified | 4096-byte entropy loop plus fallible string/PE/script calls; verifier step 274 |
+| Entropy | Bound cancellation latency while counting byte frequencies | Scripted / unverified | At-most-64-KiB checkpoints and exact wrapper parity |
+| String URLs | Count URL carrier classes without retaining references | Scripted / unverified | Streaming saturated counters; checkpoint every 1024 references |
+| String network paths | Count remote executable paths without retaining references | Scripted / unverified | Streaming saturated counter; checkpoint every 1024 references |
+| String IPs | Count valid IPv4 candidates without per-candidate vectors | Scripted / unverified | Four-octet iterator; checkpoint every 1024 candidates |
+| String term groups | Preserve registry, macro, document, installer, script-host, and suspicious-term evidence | Scripted / unverified | Fallible callback before each complete term search |
+| UTF-16 indicator view | Decode without a temporary `Vec<u16>` and retain marker semantics | Scripted / unverified | Streaming decode checkpoint every 64 Ki characters and per marker |
+| PE sections | Parse each section and calculate high-entropy evidence | Scripted / unverified | Per-section callback; fallible at-most-64-KiB entropy chunks |
+| PE imports | Preserve nine suspicious-import categories | Scripted / unverified | Per-term callbacks; no temporary lowercase term allocation |
+| PE debug path | Preserve boundary-spanning `.pdb` detection | Scripted / unverified | Overlapping at-most-64-KiB search chunks |
+| PowerShell static analyzer | Explain encoded, obfuscation, download, execution, persistence, and tamper evidence | Scripted / unverified | Fallible normalization and term passes |
+| JavaScript static analyzer | Explain encoded, obfuscation, download, execution, and persistence evidence | Scripted / unverified | Fallible normalization and term passes |
+| Batch static analyzer | Explain obfuscation, download, execution, persistence, and tamper evidence | Scripted / unverified | Fallible normalization and term passes |
+| VBS static analyzer | Explain encoded, obfuscation, download, execution, and persistence evidence | Scripted / unverified | Fallible normalization and term passes |
+| Wrapper compatibility | Keep existing infallible internal callers behaviorally unchanged | Scripted / unverified | Exact entropy/string/script/PE parity tests |
+| Verdict publication | Fail visibly on arbitrary callback errors | Scripted / unverified | Shared analyzer returns `Err`; completion and verdict remain after fallible call |
+| Reputation provider | Remote reputation only after authenticated privacy-reviewed backend exists | Disabled / blocked | No approved authenticated backend; unchanged |
+| Browser-data correlation | Correlate trusted per-process browser-data access telemetry | Disabled / blocked | No trusted per-process telemetry; unchanged |
+| Credential/network correlation | Correlate credential reads, archive creation, and outbound network activity | Disabled / blocked | No trusted correlated telemetry; unchanged |
+| Persistence-write correlation | Correlate registry/file autorun writes with signer/parent identity | Disabled / blocked | No trusted registry/file write plus identity feed; unchanged |
+| Parent-image lineage | Attribute verified parent image identity rather than PID alone | Disabled / blocked | No trusted parent-image identity feed; unchanged |
+| Rule/ML/trust cancellation | Interrupt synchronous rule, ML, or Windows trust calls | Partial / technically limited | Separate bounded operations; not made preemptive in checkpoint 2245 |
+
+Exact verifier step 274 and Source contract 675 are scripted. No
+checkpoint-2245 test has run during this scripting phase, so no matrix row above
+is promoted to Verified yet. The 64 MiB sample cap and cooperative user-mode
+boundary remain authoritative; no service, driver, kernel, or pre-execution
+claim is added.
+
+### Checkpoint 2245 Local Matrix Evidence
+
+The scripted analyzer, compatibility, and verdict-boundary rows above are now
+verified locally by focused `15/15`, analyzer `99/99`, Native `574` plus compiler
+`6/6`, Source contract `675/675`, strict Native Clippy, formatting, diff, and
+PowerShell parsing. The first complete Native attempt's five Defender error-225
+blocks are uncredited; isolated reruns and a clean complete rerun pass without
+changing Defender. At that stage rows remained pending for exact verifier
+`274/274`, hosted, merge, package, guarded synchronization, and destination
+evidence.
+
+Local Core `546/546`, Flutter analyze and `847/847`, strict Local Core lint, and
+the locked release workspace build also pass. Dependency locks and the exact
+16,072-file protected-vault invariant are unchanged. Definitive local
+verification now passes exact `274/274` in `539.7s`; embedded and independent
+PowerShell 5.1/7 validators accept the exact report, while both independent
+hosts reject missing-step and missing-required-scope copies. Hosted, integration,
+and destination matrix proof remain pending.

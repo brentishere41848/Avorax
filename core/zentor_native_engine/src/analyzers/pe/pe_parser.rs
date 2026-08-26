@@ -4,9 +4,11 @@ use anyhow::{bail, Result};
 
 use super::imports::ImportCategories;
 use super::resources::{PeDataDirectory, PeSectionBounds};
-use crate::analyzers::entropy::entropy;
+use crate::analyzers::entropy::entropy_with_cancellation;
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+const PE_LINEAR_SCAN_CANCELLATION_CHUNK_BYTES: usize = 64 * 1024;
+
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PeAnalysis {
     pub section_count: u16,
     pub high_entropy_section_count: u16,
@@ -19,6 +21,15 @@ pub struct PeAnalysis {
 }
 
 pub fn parse_pe(bytes: &[u8]) -> Result<PeAnalysis> {
+    let mut never_cancel = || Ok(());
+    parse_pe_with_cancellation(bytes, &mut never_cancel)
+}
+
+pub fn parse_pe_with_cancellation(
+    bytes: &[u8],
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<PeAnalysis> {
+    cancellation_checkpoint()?;
     if !bytes.starts_with(b"MZ") {
         bail!("PE file is missing MZ header");
     }
@@ -55,6 +66,7 @@ pub fn parse_pe(bytes: &[u8]) -> Result<PeAnalysis> {
     let mut max_section_end = 0usize;
     let mut sections = Vec::with_capacity(section_count as usize);
     for index in 0..section_count as usize {
+        cancellation_checkpoint()?;
         let offset = section_table + index * 40;
         if offset + 40 > bytes.len() {
             bail!("PE section table is truncated");
@@ -73,24 +85,51 @@ pub fn parse_pe(bytes: &[u8]) -> Result<PeAnalysis> {
         let raw_ptr = raw_ptr as usize;
         let end = raw_ptr.saturating_add(raw_size).min(bytes.len());
         if raw_ptr < end {
-            if entropy(&bytes[raw_ptr..end]) > 7.2 {
+            if entropy_with_cancellation(&bytes[raw_ptr..end], cancellation_checkpoint)? > 7.2 {
                 high_entropy_section_count += 1;
             }
             max_section_end = max_section_end.max(end);
         }
     }
+    cancellation_checkpoint()?;
     let overlay_size = bytes.len().saturating_sub(max_section_end) as u64;
     let resource_directory_entry_count =
         super::resources::resource_directory_entry_count(bytes, &sections, resource_directory)?;
+    cancellation_checkpoint()?;
+    let suspicious_imports =
+        super::imports::categorize_imports_with_cancellation(bytes, cancellation_checkpoint)?;
+    let has_debug_info = contains_debug_path_with_cancellation(bytes, cancellation_checkpoint)?;
+    cancellation_checkpoint()?;
     Ok(PeAnalysis {
         section_count,
         high_entropy_section_count,
-        suspicious_imports: super::imports::categorize_imports(bytes),
-        has_debug_info: bytes.windows(4).any(|w| w.eq_ignore_ascii_case(b".pdb")),
+        suspicious_imports,
+        has_debug_info,
         certificate_table_present,
         resource_directory_entry_count,
         overlay_size,
     })
+}
+
+fn contains_debug_path_with_cancellation(
+    bytes: &[u8],
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<bool> {
+    for start in (0..bytes.len()).step_by(PE_LINEAR_SCAN_CANCELLATION_CHUNK_BYTES) {
+        cancellation_checkpoint()?;
+        let end = start
+            .saturating_add(PE_LINEAR_SCAN_CANCELLATION_CHUNK_BYTES)
+            .saturating_add(3)
+            .min(bytes.len());
+        if bytes[start..end]
+            .windows(4)
+            .any(|window| window.eq_ignore_ascii_case(b".pdb"))
+        {
+            return Ok(true);
+        }
+    }
+    cancellation_checkpoint()?;
+    Ok(false)
 }
 
 fn pe_data_directory(
@@ -227,6 +266,55 @@ mod tests {
             .contains("resource_directory_entry_count(bytes, &sections, resource_directory)?"));
         assert!(!production.contains(&old_certificate_default));
         assert!(!production.contains(&old_resource_default));
+    }
+
+    #[test]
+    fn non_archive_static_cancellation_interrupts_pe_section_traversal() {
+        let bytes = pe_with_resource_and_certificate_directories();
+        let mut checks = 0usize;
+        let mut checkpoint = || {
+            checks += 1;
+            if checks == 2 {
+                anyhow::bail!("benign PE section cancellation")
+            }
+            Ok(())
+        };
+
+        let error = parse_pe_with_cancellation(&bytes, &mut checkpoint)
+            .expect_err("PE section cancellation must abort analysis");
+
+        assert!(error.to_string().contains("benign PE section cancellation"));
+        assert_eq!(checks, 2);
+    }
+
+    #[test]
+    fn non_archive_static_cancellation_preserves_pe_wrapper_results() {
+        let bytes = pe_with_resource_and_certificate_directories();
+        let wrapped = parse_pe(&bytes).expect("wrapper PE analysis must pass");
+        let mut never_cancel = || Ok(());
+        let fallible = parse_pe_with_cancellation(&bytes, &mut never_cancel)
+            .expect("fallible PE analysis must pass without cancellation");
+
+        assert_eq!(wrapped, fallible);
+    }
+
+    #[test]
+    fn non_archive_static_cancellation_interrupts_pe_debug_chunks() {
+        let bytes = vec![b'a'; PE_LINEAR_SCAN_CANCELLATION_CHUNK_BYTES * 3];
+        let mut checks = 0usize;
+        let mut checkpoint = || {
+            checks += 1;
+            if checks == 2 {
+                anyhow::bail!("benign PE debug cancellation")
+            }
+            Ok(())
+        };
+
+        let error = contains_debug_path_with_cancellation(&bytes, &mut checkpoint)
+            .expect_err("PE debug cancellation must abort traversal");
+
+        assert!(error.to_string().contains("benign PE debug cancellation"));
+        assert_eq!(checks, 2);
     }
 
     fn pe_with_resource_and_certificate_directories() -> Vec<u8> {
