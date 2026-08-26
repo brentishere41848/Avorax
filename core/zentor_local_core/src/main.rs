@@ -750,10 +750,16 @@ fn handle(command: CoreCommand) -> serde_json::Value {
                 }
             };
             let policy = command.process_monitor_policy.unwrap_or_default();
+            let mut engine = None;
+            let mut analyzer = |event| match engine.get_or_insert_with(native_engine) {
+                Ok(engine) => engine.analyze_process_start(event),
+                Err(error) => anyhow::bail!("Native engine initialization failed: {error:#}"),
+            };
             json!(
-                protection::process_monitor::ProcessMonitor::evaluate_snapshot(
+                protection::process_monitor::ProcessMonitor::evaluate_snapshot_with_native(
                     &observations,
-                    &policy
+                    &policy,
+                    &mut analyzer,
                 )
             )
         }

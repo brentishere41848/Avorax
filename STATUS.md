@@ -6487,3 +6487,55 @@ guarded synchronization, and destination proof remain pending.
   cross-identity authentication, durable secret or token-object identity,
   AppContainer/LPAC, installed LocalSystem, signed-driver, or pre-execution
   enforcement. The complete antivirus project remains active.
+
+## Checkpoint 2236 Closure
+
+- **Verified:** PR `#88` merged normally as `b28dfd6`; evidence-head and
+  merged-main CI/package matrices pass with every publication job skipped.
+  Consolidated artifacts were validated without extraction or execution.
+- **Verified:** guarded zero-delete synchronization copied 25 exact blobs and
+  6,669,190 bytes into `C:\Users\Brent\Documents\Avorax-main`; no stage/temp
+  residue or test process remains.
+- **Verified:** destination component/workspace/Flutter/contracts pass, followed
+  by exact no-skip/no-Defender `265/265` in `490.8s`, both independent validators,
+  and adversarial rejection `16/16`. Report SHA-256 is
+  `1c4ca9976b7675c7f8c3d6e20368b7ad6c8f83c9f4c3bea1d0f66e27ce66af28`.
+- **Unchanged limits:** process behavior is post-start advisory evidence and is
+  not wired to an installed durable process loop. Disabled telemetry providers,
+  production calibration, signing, installed E2E, cross-identity isolation,
+  driver/kernel enforcement, and pre-execution blocking remain open. Checkpoint
+  2236 is closed; the complete antivirus project is not complete.
+
+## Checkpoint 2237 - Process Observation Native Wiring
+
+- **Implemented:** Local Core connects valid, non-allowlisted,
+  command-bearing app-lifetime process observations to Native file-plus-
+  behavior process-start review. The batch is exact-bounded to 16 reviews;
+  attempted/completed/failed/limited counts and sanitized diagnostics flow
+  through Flutter and the existing visible protection failure path. Native
+  process executable I/O is separately hard-limited to 16 MiB per review.
+- Caller-reported command omission is preserved end to end. Zero PID, NUL,
+  truncation-without-command, malformed paths, and allowlisted images are
+  rejected or skipped before Native file I/O. Review never stops, quarantines,
+  deletes, restores, or executes process content.
+- **Locally verified:** focused Native `22/22`, Local `3/3`, Flutter IPC
+  `88/88`, and release process smoke pass. Complete Native passes `542/542`
+  plus 19 deliberate ignores and compiler `6/6`; Local passes `540/540`;
+  Guard passes `248/248 + 249/249`; both locked workspaces, strict Clippy,
+  format/parser/diff checks, Flutter analyze and `838/838`, and source
+  contracts `667/667` pass.
+- **Definitive local verified:** exact no-skip/no-Defender `266/266` passes in
+  `472.7s` with zero failed/skipped; both strict hosts accept the report and
+  adversarial variants reject `16/16`. Locks and the protected vault remain
+  exact. Hosted, merge, synchronization, and destination proof remain pending.
+- **Exact implementation-head hosted verified:** commit `0e10cae` is PR `#89`'s
+  exact head. CI `32915881353` and package push/PR runs
+  `32915865035`/`32915881182` pass all mandatory jobs; both publication jobs
+  are skipped. Consolidated artifacts `9588536075`/`9588657829` match GitHub
+  digests and pass in-stream 8-entry/6-platform/7-checksum/CycloneDX 1.6 with
+  569 components without extraction or execution. Evidence-head, merge,
+  synchronization, and destination proof remain pending.
+- **Limits:** this remains a two-minute app-lifetime snapshot, not an installed
+  service/driver stream. Guard commandline telemetry, verified parent-image
+  lineage, durable cross-identity operation, production calibration, process
+  enforcement, and pre-execution blocking remain partial or blocked.

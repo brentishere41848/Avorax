@@ -3851,6 +3851,11 @@ Future<void> main() async {
     'status_reason': 'snapshot-only fixture',
     'observed_processes': observations.length,
     'skipped_processes': 0,
+    'native_behavior_attempted': 1,
+    'native_behavior_completed': 1,
+    'native_behavior_failed': 0,
+    'native_behavior_limited': 0,
+    'diagnostics': <String>[],
     'findings': <Object?>[
       <String, Object?>{
         'pid': 42,
@@ -3883,6 +3888,10 @@ Future<void> main() async {
     expect(report.status, 'notActive');
     expect(report.capability, 'userModeSnapshot');
     expect(report.observedProcesses, 1);
+    expect(report.nativeBehaviorAttempted, 1);
+    expect(report.nativeBehaviorCompleted, 1);
+    expect(report.nativeBehaviorFailed, 0);
+    expect(report.nativeBehaviorLimited, 0);
     expect(report.findings, hasLength(1));
     expect(report.findings.single.verdict, 'suspiciousProcess');
     expect(report.findings.single.reasons.single, contains('encoded'));
@@ -3908,6 +3917,11 @@ void main() {
     'status_reason': 'snapshot-only fixture',
     'observed_processes': 0,
     'skipped_processes': 0,
+    'native_behavior_attempted': 0,
+    'native_behavior_completed': 0,
+    'native_behavior_failed': 0,
+    'native_behavior_limited': 0,
+    'diagnostics': <String>[],
     'findings': <Object?>[],
   }));
 }

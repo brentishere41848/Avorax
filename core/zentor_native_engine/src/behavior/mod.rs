@@ -33,13 +33,13 @@ pub fn builtin_behavior_provider_inventory() -> Vec<DetectionProviderInfo> {
             "native.behavior.process_script_host",
             "Process script-host observation",
             DetectionProviderStatus::Enabled,
-            Some("available through the explicit process-start API; host identity alone has zero risk weight"),
+            Some("connected to bounded app-lifetime process snapshots through the explicit process-start API; host identity alone has zero risk weight"),
         ),
         behavior_provider(
             "native.behavior.process_security_tamper",
             "Bounded process security-tamper review",
             DetectionProviderStatus::Enabled,
-            Some("available through the explicit post-start API; emits review evidence and does not stop a process"),
+            Some("connected to bounded app-lifetime process snapshots through the explicit post-start API; emits review evidence and does not stop a process"),
         ),
         behavior_provider(
             "native.behavior.browser_data_access",

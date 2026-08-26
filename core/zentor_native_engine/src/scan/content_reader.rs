@@ -18,8 +18,19 @@ pub struct ScanContent {
 }
 
 pub fn read_scan_content(path: &Path) -> Result<ScanContent> {
+    read_scan_content_with_limit(path, u64::MAX)
+}
+
+pub fn read_scan_content_with_limit(path: &Path, max_total_bytes: u64) -> Result<ScanContent> {
     let metadata = ensure_regular_scan_content_file(path)?;
     let file_size_bytes = metadata.len();
+    if file_size_bytes > max_total_bytes {
+        anyhow::bail!(
+            "scan content {} exceeds total read limit of {} bytes",
+            path.display(),
+            max_total_bytes
+        );
+    }
     let sample_limit = MAX_FILE_BYTES.min(file_size_bytes) as usize;
     let mut file = fs::File::open(path)?;
     let mut hasher = Sha256::new();
@@ -32,12 +43,22 @@ pub fn read_scan_content(path: &Path) -> Result<ScanContent> {
         if read == 0 {
             break;
         }
+        let next_total = bytes_read_total
+            .checked_add(read as u64)
+            .ok_or_else(|| anyhow::anyhow!("scan content byte count overflow"))?;
+        if next_total > max_total_bytes {
+            anyhow::bail!(
+                "scan content {} grew beyond total read limit of {} bytes",
+                path.display(),
+                max_total_bytes
+            );
+        }
         hasher.update(&buffer[..read]);
         if sampled_bytes.len() < sample_limit {
             let remaining_sample = sample_limit - sampled_bytes.len();
             sampled_bytes.write_all(&buffer[..read.min(remaining_sample)])?;
         }
-        bytes_read_total += read as u64;
+        bytes_read_total = next_total;
     }
 
     Ok(ScanContent {
@@ -90,7 +111,6 @@ fn scan_content_metadata_is_windows_reparse_point(_metadata: &fs::Metadata) -> b
 mod tests {
     #[cfg(unix)]
     use super::read_scan_content;
-    #[cfg(unix)]
     use std::fs;
 
     #[cfg(unix)]
@@ -123,5 +143,18 @@ mod tests {
         assert!(source.contains(&symlink_error_pattern));
         assert!(source.contains(&reparse_error_pattern));
         assert!(!source.contains(&old_metadata_pattern));
+    }
+
+    #[test]
+    fn native_scan_content_total_read_limit_rejects_oversized_metadata() {
+        let temp = tempfile::tempdir().expect("tempdir");
+        let target = temp.path().join("oversized-benign.bin");
+        let file = fs::File::create(&target).expect("fixture");
+        file.set_len(4097).expect("sparse fixture size");
+
+        let error = super::read_scan_content_with_limit(&target, 4096)
+            .expect_err("oversized fixture must fail before content read");
+
+        assert!(error.to_string().contains("exceeds total read limit"));
     }
 }

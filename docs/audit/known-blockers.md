@@ -2939,3 +2939,43 @@ Definitive local report evidence now passes exact `265/265` in `523.1s` under
 both strict hosts, and `16/16` isolated mutations reject. Hosted, merge, guarded
 sync, destination, installed process telemetry, durable service wiring, process
 mutation, driver/kernel, and pre-execution proof remain open.
+
+Checkpoint 2236 hosted, merge, guarded-sync, and destination evidence is now
+closed. PR `#88`, exact-head/merged-main CI and package matrices, 25-blob
+zero-delete synchronization, destination broad suites, exact `265/265` in
+`490.8s`, two-host validation, and adversarial `16/16` all pass. This removes the
+checkpoint evidence blocker only. Trusted path-access, credential/network,
+persistence-write, and parent-image telemetry are still absent, so those four
+providers remain disabled. Installed durable process-loop wiring, termination/
+quarantine mutation, production calibration, signing, installed E2E,
+cross-identity isolation, driver/kernel enforcement, and pre-execution blocking
+remain genuine blockers.
+
+## Checkpoint 2237 Process Observation Native Wiring
+
+- The app-lifetime Windows CIM snapshot is scripted to feed at most 16 valid,
+  relevant command-bearing observations into Native file-plus-behavior review.
+  Exact allowlists bypass before file I/O and every failed/limited review is
+  counted and surfaced through bounded Flutter diagnostics. Each process
+  executable read is hard-limited to 16 MiB. Exact 266-step and source contract
+  667 verification are scripted but not yet run.
+- This does not close installed monitoring: collection runs inside the desktop
+  app on a two-minute best-effort timer and can race short-lived processes.
+  Guard has no trustworthy commandline field, no installed service event stream
+  is proven, and POSIX collection supplies no command data.
+- Process stop/quarantine based on behavior remains disabled. Parent-image
+  lineage, correlated browser/credential/network/persistence telemetry,
+  production calibration, signed driver/kernel interception, and pre-execution
+  blocking remain blocked by their documented prerequisites.
+- No checkpoint-2237 passing result is claimed during scripting. Focused,
+  broad, definitive, hosted, merge, sync, and destination evidence remain
+  pending.
+
+Focused and broad local evidence now passes: Native `542/542` plus 19 deliberate
+ignores and compiler `6/6`, Local `540/540`, Guard `248/248 + 249/249`, both
+locked workspaces, Flutter `838/838`, and source contracts `667/667`. The exact
+no-skip/no-Defender verifier passes `266/266` in `472.7s`; two strict hosts
+accept the report and adversarial variants reject `16/16`. This removes the
+local checkpoint evidence blocker only. Hosted, merge, guarded synchronization,
+destination, installed durable process observation, production calibration,
+mutation, driver/kernel, and pre-execution evidence remain open or blocked.

@@ -2,6 +2,11 @@ use std::collections::HashSet;
 use std::path::{Component, Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
+use zentor_native_engine::behavior::{
+    process_behavior::process_start_requires_native_review, ProcessStartEvent,
+};
+use zentor_native_engine::engine::ExecutionDecision;
+use zentor_native_engine::verdict::{risk_fusion::EvidenceSource, Verdict as AneVerdict};
 
 pub struct ProcessMonitor;
 
@@ -11,6 +16,8 @@ const PROCESS_MONITOR_STATUS_REASON: &str =
 const MAX_PROCESS_SNAPSHOT_ITEMS: usize = 256;
 const MAX_PROCESS_TEXT_CHARS: usize = 4096;
 const MAX_PROCESS_FINDINGS: usize = 64;
+const MAX_NATIVE_PROCESS_REVIEWS: usize = 16;
+const MAX_PROCESS_DIAGNOSTICS: usize = 16;
 const PROCESS_TEXT_TRUNCATION_MARKER: &str = " ...[truncated-middle]... ";
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -45,7 +52,12 @@ pub struct ProcessSnapshotReport {
     pub status_reason: &'static str,
     pub observed_processes: usize,
     pub skipped_processes: usize,
+    pub native_behavior_attempted: usize,
+    pub native_behavior_completed: usize,
+    pub native_behavior_failed: usize,
+    pub native_behavior_limited: usize,
     pub findings: Vec<ProcessFinding>,
+    pub diagnostics: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq)]
@@ -98,6 +110,10 @@ impl ProcessMonitor {
             .saturating_sub(MAX_PROCESS_SNAPSHOT_ITEMS);
 
         for observation in observations.iter().take(MAX_PROCESS_SNAPSHOT_ITEMS) {
+            if observation.pid == 0 {
+                skipped_processes = skipped_processes.saturating_add(1);
+                continue;
+            }
             let Some(image_path) = normalize_process_path_text(&observation.image_path) else {
                 skipped_processes = skipped_processes.saturating_add(1);
                 continue;
@@ -184,8 +200,205 @@ impl ProcessMonitor {
             status_reason: Self::status_reason(),
             observed_processes: observations.len(),
             skipped_processes,
+            native_behavior_attempted: 0,
+            native_behavior_completed: 0,
+            native_behavior_failed: 0,
+            native_behavior_limited: 0,
             findings,
+            diagnostics: Vec::new(),
         }
+    }
+
+    pub fn evaluate_snapshot_with_native(
+        observations: &[ProcessObservation],
+        policy: &ProcessMonitorPolicy,
+        analyzer: &mut dyn FnMut(ProcessStartEvent) -> anyhow::Result<ExecutionDecision>,
+    ) -> ProcessSnapshotReport {
+        let mut report = Self::evaluate_snapshot(observations, policy);
+        let allowlist = normalized_allowlist(&policy.allowed_image_paths);
+
+        for observation in observations.iter().take(MAX_PROCESS_SNAPSHOT_ITEMS) {
+            if observation.pid == 0 {
+                continue;
+            }
+            let Some(image_path) = normalize_process_path_text(&observation.image_path) else {
+                continue;
+            };
+            if allowlist.contains(&image_path.to_ascii_lowercase()) {
+                continue;
+            }
+            let command_line = match observation.command_line.as_deref() {
+                Some(value) => {
+                    let Some(normalized) =
+                        normalize_process_command_text(value, observation.command_line_truncated)
+                    else {
+                        continue;
+                    };
+                    Some(normalized)
+                }
+                None if observation.command_line_truncated => continue,
+                None => None,
+            };
+            let event = ProcessStartEvent {
+                process_id: observation.pid,
+                parent_process_id: observation.parent_pid,
+                executable_path: PathBuf::from(&image_path),
+                command_line: command_line.as_ref().map(|value| value.text.clone()),
+                command_line_truncated: command_line.as_ref().is_some_and(|value| value.truncated),
+            };
+            let requires_review = match process_start_requires_native_review(&event) {
+                Ok(value) => value,
+                Err(error) => {
+                    report.native_behavior_failed = report.native_behavior_failed.saturating_add(1);
+                    push_process_diagnostic(
+                        &mut report.diagnostics,
+                        format!(
+                            "Native process behavior preflight failed for PID {}: {error:#}",
+                            observation.pid
+                        ),
+                    );
+                    continue;
+                }
+            };
+            if !requires_review {
+                continue;
+            }
+            if report.native_behavior_attempted >= MAX_NATIVE_PROCESS_REVIEWS {
+                report.native_behavior_limited = report.native_behavior_limited.saturating_add(1);
+                continue;
+            }
+
+            report.native_behavior_attempted = report.native_behavior_attempted.saturating_add(1);
+            match analyzer(event) {
+                Ok(decision) => {
+                    report.native_behavior_completed =
+                        report.native_behavior_completed.saturating_add(1);
+                    merge_native_process_decision(
+                        &mut report.findings,
+                        observation.pid,
+                        &image_path,
+                        decision,
+                    );
+                }
+                Err(error) => {
+                    report.native_behavior_failed = report.native_behavior_failed.saturating_add(1);
+                    push_process_diagnostic(
+                        &mut report.diagnostics,
+                        format!(
+                            "Native process behavior review failed for PID {}: {error:#}",
+                            observation.pid
+                        ),
+                    );
+                }
+            }
+        }
+
+        if report.native_behavior_limited > 0 {
+            push_process_diagnostic(
+                &mut report.diagnostics,
+                format!(
+                    "Native process behavior review limit reached; {} eligible observation(s) were not reviewed",
+                    report.native_behavior_limited
+                ),
+            );
+        }
+        report
+    }
+}
+
+fn merge_native_process_decision(
+    findings: &mut Vec<ProcessFinding>,
+    pid: u32,
+    image_path: &str,
+    decision: ExecutionDecision,
+) {
+    let behavior_review_score = decision
+        .verdict
+        .evidence
+        .iter()
+        .filter(|evidence| evidence.source == EvidenceSource::NativeBehavior)
+        .fold(0_u32, |score, evidence| {
+            score.saturating_add(evidence.weight.max(0) as u32)
+        })
+        .min(100);
+    let mut reasons = decision
+        .verdict
+        .evidence
+        .iter()
+        .filter(|evidence| {
+            evidence.source == EvidenceSource::NativeBehavior
+                && (evidence.weight > 0 || evidence.id == "process_command_line_inspection_limited")
+        })
+        .map(|evidence| format!("{}: {}", evidence.title, evidence.detail))
+        .collect::<Vec<_>>();
+    let file_verdict_requires_review = matches!(
+        decision.verdict.verdict,
+        AneVerdict::Suspicious
+            | AneVerdict::ProbableMalware
+            | AneVerdict::ConfirmedMalware
+            | AneVerdict::TestThreat
+    );
+    if reasons.is_empty() && !file_verdict_requires_review {
+        return;
+    }
+    if file_verdict_requires_review {
+        reasons.push(format!(
+            "Native post-start file-plus-behavior verdict: {} No process action was taken.",
+            decision.verdict.user_visible_explanation
+        ));
+    }
+    reasons.truncate(16);
+    let verdict = match decision.verdict.verdict {
+        AneVerdict::ConfirmedMalware | AneVerdict::TestThreat => "confirmedProcessThreat",
+        AneVerdict::ProbableMalware => "probableProcessThreat",
+        _ => "suspiciousProcess",
+    };
+    let score = u32::from(decision.verdict.risk_score).max(behavior_review_score);
+
+    if let Some(existing) = findings
+        .iter_mut()
+        .find(|finding| finding.pid == pid && finding.image_path == image_path)
+    {
+        existing.score = existing.score.max(score);
+        if process_verdict_rank(verdict) > process_verdict_rank(existing.verdict) {
+            existing.verdict = verdict;
+        }
+        for reason in reasons {
+            if existing.reasons.len() >= 16 {
+                break;
+            }
+            if !existing.reasons.contains(&reason) {
+                existing.reasons.push(reason);
+            }
+        }
+    } else if findings.len() < MAX_PROCESS_FINDINGS {
+        findings.push(ProcessFinding {
+            pid,
+            image_path: image_path.to_string(),
+            score,
+            verdict,
+            reasons,
+        });
+    }
+}
+
+fn process_verdict_rank(verdict: &str) -> u8 {
+    match verdict {
+        "confirmedProcessThreat" => 3,
+        "probableProcessThreat" => 2,
+        "suspiciousProcess" => 1,
+        _ => 0,
+    }
+}
+
+fn push_process_diagnostic(diagnostics: &mut Vec<String>, diagnostic: String) {
+    if diagnostics.len() < MAX_PROCESS_DIAGNOSTICS {
+        let sanitized = diagnostic
+            .chars()
+            .map(|ch| if ch.is_control() { ' ' } else { ch })
+            .take(MAX_PROCESS_TEXT_CHARS)
+            .collect::<String>();
+        diagnostics.push(sanitized);
     }
 }
 
@@ -331,6 +544,7 @@ fn is_user_writable_execution_path(image_path_lower: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use zentor_native_engine::verdict::risk_fusion::{Evidence, RiskFusion};
 
     #[test]
     fn process_monitor_status_is_snapshot_only_without_polling_loop() {
@@ -558,5 +772,139 @@ mod tests {
 
         assert_eq!(report.skipped_processes, 1);
         assert!(report.findings.is_empty());
+    }
+
+    #[test]
+    fn native_process_review_is_bounded_and_preserves_source_truncation() {
+        let observations = (1..=18)
+            .map(|pid| ProcessObservation {
+                pid,
+                parent_pid: Some(1),
+                image_path: format!(r"C:\Windows\System32\cmd-{pid}\cmd.exe"),
+                command_line: Some(format!(
+                    "cmd.exe /c benign fixture {pid} vssadmin.exe delete shadows"
+                )),
+                command_line_truncated: pid == 1,
+                signer_trusted: Some(true),
+            })
+            .collect::<Vec<_>>();
+        let mut saw_source_truncation = false;
+        let mut analyzer = |event: ProcessStartEvent| {
+            if event.process_id == 1 {
+                saw_source_truncation = event.command_line_truncated;
+            }
+            Ok(ExecutionDecision {
+                action: "allow_and_monitor".to_string(),
+                verdict: RiskFusion::fuse(
+                    vec![Evidence {
+                        id: "security_tamper_command_review".to_string(),
+                        title: "Security-tamper command review".to_string(),
+                        detail: "One bounded post-start indicator requires review; no process was stopped."
+                            .to_string(),
+                        weight: 25,
+                        source: EvidenceSource::NativeBehavior,
+                    }],
+                    true,
+                    false,
+                ),
+            })
+        };
+
+        let report = ProcessMonitor::evaluate_snapshot_with_native(
+            &observations,
+            &ProcessMonitorPolicy::default(),
+            &mut analyzer,
+        );
+
+        assert!(saw_source_truncation);
+        assert_eq!(report.native_behavior_attempted, MAX_NATIVE_PROCESS_REVIEWS);
+        assert_eq!(report.native_behavior_completed, MAX_NATIVE_PROCESS_REVIEWS);
+        assert_eq!(report.native_behavior_failed, 0);
+        assert_eq!(report.native_behavior_limited, 2);
+        assert_eq!(report.findings.len(), MAX_NATIVE_PROCESS_REVIEWS);
+        assert_eq!(report.diagnostics.len(), 1);
+        assert!(report.diagnostics[0].contains("review limit reached"));
+        assert!(report
+            .findings
+            .iter()
+            .all(|finding| finding.verdict == "suspiciousProcess"));
+        assert!(report.findings.iter().all(|finding| finding.score == 25));
+        assert!(report
+            .findings
+            .iter()
+            .flat_map(|finding| finding.reasons.iter())
+            .all(|reason| !reason.contains("vssadmin.exe")));
+    }
+
+    #[test]
+    fn native_process_review_failures_are_visible_and_allowlist_is_not_read() {
+        let allowed = r"C:\Windows\System32\cmd.exe".to_string();
+        let observations = vec![
+            ProcessObservation {
+                pid: 42,
+                parent_pid: Some(1),
+                image_path: allowed.clone(),
+                command_line: Some("cmd.exe /c benign allowlisted fixture".to_string()),
+                command_line_truncated: false,
+                signer_trusted: Some(true),
+            },
+            ProcessObservation {
+                pid: 43,
+                parent_pid: Some(1),
+                image_path: r"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe"
+                    .to_string(),
+                command_line: Some("powershell.exe benign failing fixture".to_string()),
+                command_line_truncated: false,
+                signer_trusted: Some(true),
+            },
+        ];
+        let mut analyzed_pids = Vec::new();
+        let mut analyzer = |event: ProcessStartEvent| {
+            analyzed_pids.push(event.process_id);
+            anyhow::bail!("bounded benign analyzer failure")
+        };
+
+        let report = ProcessMonitor::evaluate_snapshot_with_native(
+            &observations,
+            &ProcessMonitorPolicy {
+                allowed_image_paths: vec![allowed],
+                ..ProcessMonitorPolicy::default()
+            },
+            &mut analyzer,
+        );
+
+        assert_eq!(analyzed_pids, vec![43]);
+        assert_eq!(report.native_behavior_attempted, 1);
+        assert_eq!(report.native_behavior_completed, 0);
+        assert_eq!(report.native_behavior_failed, 1);
+        assert!(report.findings.is_empty());
+        assert_eq!(report.diagnostics.len(), 1);
+        assert!(report.diagnostics[0].contains("PID 43"));
+        assert!(report.diagnostics[0].contains("bounded benign analyzer failure"));
+    }
+
+    #[test]
+    fn native_process_review_rejects_zero_pid_before_file_io() {
+        let mut called = false;
+        let mut analyzer = |_event: ProcessStartEvent| {
+            called = true;
+            anyhow::bail!("must not be called")
+        };
+        let report = ProcessMonitor::evaluate_snapshot_with_native(
+            &[ProcessObservation {
+                pid: 0,
+                parent_pid: None,
+                image_path: r"C:\Windows\System32\cmd.exe".to_string(),
+                command_line: Some("cmd.exe /c benign fixture".to_string()),
+                command_line_truncated: false,
+                signer_trusted: Some(true),
+            }],
+            &ProcessMonitorPolicy::default(),
+            &mut analyzer,
+        );
+
+        assert!(!called);
+        assert_eq!(report.skipped_processes, 1);
+        assert_eq!(report.native_behavior_attempted, 0);
     }
 }

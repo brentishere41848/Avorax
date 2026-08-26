@@ -7,16 +7,7 @@ use super::script_monitor::script_execution_indicator;
 use super::security_tamper::{assess_security_tamper, is_security_sensitive_command_host};
 
 pub fn analyze_process_start_event(event: &ProcessStartEvent) -> Result<Vec<Evidence>> {
-    if event.process_id == 0 {
-        bail!("process-start behavior event requires a nonzero process id");
-    }
-    if event
-        .command_line
-        .as_deref()
-        .is_some_and(|value| value.contains('\0'))
-    {
-        bail!("process-start command line contains an embedded NUL");
-    }
+    validate_process_start_event(event)?;
 
     let executable_name = event
         .executable_path
@@ -45,7 +36,8 @@ pub fn analyze_process_start_event(event: &ProcessStartEvent) -> Result<Vec<Evid
     }
 
     if let Some(command_line) = event.command_line.as_deref() {
-        let assessment = assess_security_tamper(executable_name, command_line);
+        let assessment =
+            assess_security_tamper(executable_name, command_line, event.command_line_truncated);
         if assessment.command_line_truncated && is_security_sensitive_command_host(executable_name)
         {
             evidence.push(Evidence {
@@ -73,6 +65,35 @@ pub fn analyze_process_start_event(event: &ProcessStartEvent) -> Result<Vec<Evid
     Ok(evidence)
 }
 
+pub fn process_start_requires_native_review(event: &ProcessStartEvent) -> Result<bool> {
+    validate_process_start_event(event)?;
+    let Some(executable_name) = event
+        .executable_path
+        .file_name()
+        .and_then(|value| value.to_str())
+    else {
+        return Ok(false);
+    };
+    Ok(event.command_line.is_some() && is_security_sensitive_command_host(executable_name))
+}
+
+fn validate_process_start_event(event: &ProcessStartEvent) -> Result<()> {
+    if event.process_id == 0 {
+        bail!("process-start behavior event requires a nonzero process id");
+    }
+    if event
+        .command_line
+        .as_deref()
+        .is_some_and(|value| value.contains('\0'))
+    {
+        bail!("process-start command line contains an embedded NUL");
+    }
+    if event.command_line.is_none() && event.command_line_truncated {
+        bail!("process-start command truncation flag requires command-line evidence");
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use std::path::PathBuf;
@@ -90,6 +111,7 @@ mod tests {
             command_line: Some(
                 "powershell.exe Set-MpPreference; vssadmin.exe delete shadows; wbadmin.exe delete catalog; bcdedit.exe /set recoveryenabled no".to_string(),
             ),
+            command_line_truncated: false,
         };
         let evidence = analyze_process_start_event(&event).unwrap();
         let verdict = RiskFusion::fuse(evidence, false, false);
@@ -111,6 +133,7 @@ mod tests {
             parent_process_id: None,
             executable_path: PathBuf::from("powershell.exe"),
             command_line: Some(command_line),
+            command_line_truncated: false,
         };
 
         let evidence = analyze_process_start_event(&event).unwrap();
@@ -129,6 +152,7 @@ mod tests {
             parent_process_id: None,
             executable_path: PathBuf::from("missing.exe"),
             command_line: None,
+            command_line_truncated: false,
         };
         assert!(analyze_process_start_event(&zero_pid)
             .unwrap_err()
@@ -140,10 +164,41 @@ mod tests {
             parent_process_id: None,
             executable_path: PathBuf::from("powershell.exe"),
             command_line: Some("powershell.exe\0hidden".to_string()),
+            command_line_truncated: false,
         };
         assert!(analyze_process_start_event(&nul)
             .unwrap_err()
             .to_string()
             .contains("embedded NUL"));
+
+        let inconsistent = ProcessStartEvent {
+            process_id: 2,
+            parent_process_id: None,
+            executable_path: PathBuf::from("powershell.exe"),
+            command_line: None,
+            command_line_truncated: true,
+        };
+        assert!(analyze_process_start_event(&inconsistent)
+            .unwrap_err()
+            .to_string()
+            .contains("requires command-line evidence"));
+    }
+
+    #[test]
+    fn process_behavior_review_candidate_is_bounded_to_relevant_commands() {
+        let relevant = ProcessStartEvent {
+            process_id: 3,
+            parent_process_id: Some(1),
+            executable_path: PathBuf::from("cmd.exe"),
+            command_line: Some("cmd.exe /c echo benign-fixture".to_string()),
+            command_line_truncated: false,
+        };
+        let unrelated = ProcessStartEvent {
+            executable_path: PathBuf::from("notepad.exe"),
+            ..relevant.clone()
+        };
+
+        assert!(process_start_requires_native_review(&relevant).unwrap());
+        assert!(!process_start_requires_native_review(&unrelated).unwrap());
     }
 }

@@ -19,7 +19,7 @@ use crate::ml::{feature_extractor, NativeModelRunner};
 use crate::quarantine::QuarantineRecord;
 use crate::rules::RuleDb;
 use crate::scan::archive_scanner;
-use crate::scan::content_reader::read_scan_content;
+use crate::scan::content_reader::{read_scan_content, read_scan_content_with_limit};
 use crate::scan::file_walker;
 use crate::scan::full_scan_planner;
 use crate::scan::quick_scan_planner;
@@ -38,6 +38,7 @@ const MAX_NATIVE_SCAN_ERROR_DETAILS: usize = 20;
 const MAX_NATIVE_SCAN_ERROR_DETAIL_CHARS: usize = 4096;
 const NATIVE_SCAN_ERROR_TRUNCATION_SUFFIX: &str = "...[truncated]";
 const NATIVE_MUTATION_BOUNDARY_MESSAGE: &str = "native engine file mutation is disabled; use Avorax Local Core for authenticated quarantine lifecycle";
+pub(crate) const MAX_PROCESS_EXECUTABLE_READ_BYTES: u64 = 16 * 1024 * 1024;
 type ScanContentMetadata = (String, u64, u64, bool);
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -488,7 +489,10 @@ impl ZentorNativeEngine {
 
     pub fn analyze_process_start(&mut self, event: ProcessStartEvent) -> Result<ExecutionDecision> {
         let behavior_evidence = analyze_process_start_event(&event)?;
-        let content = read_scan_content(&event.executable_path)?;
+        let content = read_scan_content_with_limit(
+            &event.executable_path,
+            MAX_PROCESS_EXECUTABLE_READ_BYTES,
+        )?;
         let verdict = self.scan_bytes_at(
             event.executable_path,
             &content.sampled_bytes,

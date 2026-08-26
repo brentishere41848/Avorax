@@ -9474,6 +9474,42 @@ Updates page showed:
 - Evidence-head CI/packages, normal merge, merged-main evidence, guarded
   original-tree synchronization, and destination verification remain pending.
 
+## 2026-08-26 - Checkpoint 2236 Integration And Destination Closure
+
+- Evidence head `f24c7b58915dc54831cf9f097eb9a60c13c05e89` passes CI
+  `32906638178` and Desktop Packages `32906638195`; publication job
+  `97994982862` is skipped. Consolidated artifact `9585362967` is 131,793,867
+  bytes with SHA-256 `4de44b4fce1b052cf4261a8639a7b9e3411a9567edd33e0b7a77e45f3c29be1c`
+  and passes bounded non-extracting 8-root/6-release/7-checksum/CycloneDX
+  1.6/569-component validation.
+- PR `#88` merges normally as `b28dfd6b1ec8b7dd510d60128f2484c327b6b89a`
+  with exact parents `5fc30c918ff832af7154034bc62dbbb2b09d6ce5` and
+  `f24c7b58915dc54831cf9f097eb9a60c13c05e89`. Merged-main CI
+  `32907875014` and packages `32907874963` pass; publication job
+  `98000529939` is skipped. Artifact `9585995999` is 131,740,338 bytes with
+  SHA-256 `f51af83c30cc5d05489d13d85146c6ada4436ff27c12103ac43a8cda675117a8`
+  and passes the same bounded validation. No release is created.
+- Guarded synchronization copies exactly 25 paths and 6,669,190 bytes with
+  zero deletes or residue. The first Windows PowerShell 5.1 attempt encountered
+  an unavailable three-argument `.NET File.Move` overload before replacing any
+  target; checked cleanup removed only its isolated stage/temp state, and the
+  corrected PowerShell 7 run passed. Every destination Git blob is exact.
+- Destination verification passes source contracts `666/666`, focused Native
+  process behavior `19/19`, strict Native Clippy, Native `538/538` plus 19
+  deliberate child-fixture ignores and compiler `6/6`, Local `537/537`, Guard
+  `248/248 + 249/249`, both locked workspace modes, Flutter analyze and
+  `838/838`, and both PowerShell parser hosts.
+- The destination no-skip/no-Defender report passes exact `265/265`, zero
+  failed/skipped, from `2026-08-25T23:25:04.0740027Z` through
+  `2026-08-25T23:33:14.9481622Z` in `490.8s`. Both independent validators pass,
+  eight mutations per host reject `16/16`, and report SHA-256 is
+  `1c4ca9976b7675c7f8c3d6e20368b7ad6c8f83c9f4c3bea1d0f66e27ce66af28`.
+- A destination `git status` probe correctly found no `.git`; one read-only blob
+  draft compared file SHA-1 with Git blob IDs, and one PS7 parser wrapper omitted
+  its path argument. Corrected checks passed and none of those drafts is credited.
+  Locks, zero test processes, zero sync residue, and the protected-vault invariant
+  remain exact. Checkpoint 2236 is closed; the full antivirus goal remains active.
+
 ## 2026-08-25 - Checkpoint 2235 Exact Implementation-Head Hosted Evidence
 
 - Exact implementation `8fa9630d0c16796f7175ba67afbda2f92e85bce8` is PR
@@ -11299,3 +11335,56 @@ pending.
   CycloneDX 1.6 lockfile SBOM evidence with 569 components.
 - Evidence-head CI/packages, normal merge, merged-main evidence, guarded
   original-tree synchronization, and destination verification remain pending.
+
+## 2026-08-26 - Checkpoint 2237 Process Observation Native Wiring Scripted
+
+- Audited Guard and Local Core process paths. Guard owns PID/executable path but
+  no trustworthy command line, so wiring behavior there would fabricate
+  capability. The Flutter Windows CIM snapshot owns bounded PID, parent PID,
+  path, and command telemetry and is selected; POSIX does not invent command
+  data.
+- Scripted end-to-end truncation provenance, lazy Native initialization, exact
+  relevant-host filtering, exact 16-review cap, allowlist-before-file-I/O,
+  a hard 16 MiB per-process executable read limit, bounded diagnostics, four review
+  counters, finding merge, and Flutter-visible failure routing. No Native
+  recommendation is executed.
+- Scripted benign/adversarial Rust and Flutter regressions, a release-binary
+  Native-only tamper review fixture, mandatory verifier target, strict exact
+  266-step validation, source contract 667, and audit/dependency/report docs.
+- No checkpoint-2237 test has run and no passing result is claimed during the
+  required scripting-first phase. Vault, Defender, services/drivers, installed
+  components, release/publication state, and candidate execution are untouched.
+
+## 2026-08-26 - Checkpoint 2237 Local Verification
+
+- PS5.1/PS7 parser checks, Rustfmt, Dart format, diff checks, strict Native and
+  Local Clippy, and Flutter analyze pass. Focused Native behavior is `22/22`,
+  Local Native review `3/3`, Flutter IPC diagnostics `88/88`, and the release
+  process smoke completes Native `4/4` with zero failure/limit/diagnostic.
+- Full Native is `542/542` plus 19 deliberate child-entrypoint ignores and
+  compiler `6/6`; Local is `540/540`; Guard is `248/248 + 249/249`; both locked
+  workspaces pass; Flutter is `838/838`; source contracts are `667/667`.
+- The definitive explicit-tool, no-skip/no-Defender verifier passes exact
+  `266/266`, zero failed/skipped, in `472.7s`. Both independent validators pass
+  and eight report mutations under both hosts reject `16/16`. Report SHA-256 is
+  `2b8a58df72bd7905aee0aa01a42d69614853f4c54e17ddc7cc85046bb54983d4`.
+- All three locks remain exact. Read-only vault verification remains exact at
+  16,072 files, zero directories, 4,522,733 bytes, 5,357 each payload/JSON/auth,
+  one key, and zero pending/other/reparse. Hosted/integration/destination proof
+  remains pending; no install, service/driver start, Defender change, release,
+  publication, candidate execution, or vault mutation occurred.
+
+## 2026-08-26 - Checkpoint 2237 Implementation-Head Hosted Evidence
+
+- Exact implementation `0e10cae3b2ac8260f3911c4f103b46c1cd6e5af0` is
+  PR `#89`'s head. Avorax CI `32915881353` passes all five jobs.
+- Desktop Packages push `32915865035` and PR `32915881182` pass all four
+  platform builders and consolidation. Publication jobs `98022943808` and
+  `98024063933` are skipped; no release or prerelease is created.
+- Consolidated artifacts `9588536075` and `9588657829` are 131,805,755 and
+  131,802,266 bytes with SHA-256
+  `9f08245b75984af40ef769d5ce706e443a1052fe1853529eaa4df5812d26d31d`
+  and `38a8e5f47aa21c93c3e854bb28238f7c8ead9ae1ecbe0f12a71072fb01ecef7d`.
+  Both match GitHub digests and pass non-extracting in-stream validation of
+  eight entries, six platform files, seven checksums, and CycloneDX 1.6 with
+  569 components. Evidence-head/merge/sync/destination proof remains pending.
