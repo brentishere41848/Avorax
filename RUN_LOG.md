@@ -11388,3 +11388,38 @@ pending.
   Both match GitHub digests and pass non-extracting in-stream validation of
   eight entries, six platform files, seven checksums, and CycloneDX 1.6 with
   569 components. Evidence-head/merge/sync/destination proof remains pending.
+
+## 2026-08-26 - Checkpoint 2237 Integration And Destination Closure
+
+- Evidence head `b1089f96a1b357b0313137e879174104b4077f01` passes CI
+  `32917698341` and Desktop Packages `32917698337`; publication job
+  `98027611941` is skipped. Consolidated artifact `9589047438` is 131,742,192
+  bytes with SHA-256 `4a10e7a6af46cb6fab1677c027974072f91cb7c7694ee6521b8831d9caea11fc`
+  and passes bounded non-extracting 8-root/6-release/7-checksum/CycloneDX
+  1.6/569-component validation.
+- PR `#89` merges normally as `8900107b082d1ca55dbe434f506345764bc10799`
+  with exact parents `b28dfd6b1ec8b7dd510d60128f2484c327b6b89a` and
+  `b1089f96a1b357b0313137e879174104b4077f01`. Merged-main CI
+  `32918786964` and packages `32918786960` pass; publication job
+  `98031361263` is skipped. Artifact `9589474251` is 131,859,129 bytes with
+  SHA-256 `86cc6fd34083f95f112c206be812c5fe9a50ea3f8f846c7dad100687645cf6af`
+  and passes the same bounded validation under PowerShell 5.1 and 7. No release
+  is created.
+- Guarded base/desired blob, containment, and reparse checks synchronize exact
+  `24/24` paths and 7,685,018 bytes into
+  `C:\Users\Brent\Documents\Avorax-main` with zero deletes, stage, or temp
+  residue. Every destination blob remains exact to the merge.
+- Destination parser/format checks, strict Native/Local Clippy, source contracts
+  `667/667`, Native `542/542` plus 19 deliberate child-entrypoint ignores and
+  compiler `6/6`, Local `540/540`, Guard `248/248 + 249/249`, both locked
+  workspace modes, Flutter analyze, and Flutter `838/838` pass.
+- The destination explicit-tool no-skip/no-Defender verifier passes exact
+  `266/266`, zero failed/skipped, from `2026-08-26T01:55:01.5596354Z` through
+  `2026-08-26T02:03:20.6309884Z` in `499.0s`. Both independent validators pass,
+  eight mutations per host reject `16/16`, and report SHA-256 is
+  `e5cd69828c3d1bb417f06e7cfb7116569c0de807970b7bd735eea2c83ad2cf9c`.
+- The first destination parser wrapper accidentally presented a path as a
+  script and failed under execution policy; the corrected parse-only command
+  passed under both hosts and only that result is credited. Locks, zero test
+  processes, and the protected-vault invariant remain exact. Checkpoint 2237
+  is closed; the complete antivirus project remains active.

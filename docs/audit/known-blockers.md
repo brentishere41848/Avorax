@@ -2979,3 +2979,13 @@ accept the report and adversarial variants reject `16/16`. This removes the
 local checkpoint evidence blocker only. Hosted, merge, guarded synchronization,
 destination, installed durable process observation, production calibration,
 mutation, driver/kernel, and pre-execution evidence remain open or blocked.
+
+Checkpoint 2237 hosted, merge, guarded-sync, and destination evidence is now
+closed. PR `#89`, exact-head/merged-main CI and package matrices, 24-blob
+zero-delete synchronization, destination broad suites, exact `266/266` in
+`499.0s`, two-host validation, and adversarial `16/16` all pass. This removes
+the checkpoint evidence blocker only. Installed durable process collection,
+trusted Guard commandline telemetry, verified parent-image lineage, correlated
+browser/credential/network/persistence telemetry, production calibration,
+process mutation, signed driver/kernel interception, and pre-execution blocking
+remain genuine blockers or disabled capabilities.

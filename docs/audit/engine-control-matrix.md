@@ -4871,3 +4871,12 @@ modes. Both consolidated artifact streams pass exact platform/checksum/SBOM
 validation and publication is skipped. Evidence-head, merge, synchronization,
 and destination evidence remain open; hosted packaging does not expand the
 post-start advisory boundary.
+
+Checkpoint 2237 integration and destination evidence is now closed. PR `#89`
+merged normally; exact evidence-head and merged-main CI/package matrices pass
+with publication skipped. Guarded synchronization copied 24 exact blobs, and
+the destination passes broad component/workspace/Flutter/contracts plus exact
+`266/266` in `499.0s`, both validators, and adversarial `16/16`. The enabled
+process controls above are verified at the destination. Guard commandline and
+parent-image providers remain disabled, and installed durable monitoring,
+mutation, calibration, driver/kernel, and pre-execution limits are unchanged.

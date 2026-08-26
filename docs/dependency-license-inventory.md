@@ -1468,3 +1468,13 @@ in-stream review confirms each has six platform files, seven matching checksums,
 and one CycloneDX 1.6 lockfile SBOM with 569 components; publication is skipped.
 This is lockfile-derived partial dependency evidence, not production signing,
 final-binary license resolution, or legal approval.
+
+Evidence-head packages `32917698337` and merged-main packages `32918786960`
+also pass every builder and consolidation with publication skipped. Their
+consolidated artifacts `9589047438` and `9589474251` pass bounded non-extracting
+six-platform/seven-checksum/CycloneDX 1.6/569-component review. Destination
+source contracts `667/667`, both locked workspace modes, strict Native/Local
+lint, Flutter analyze/`838/838`, exact 266-step dependency gate, and exact lock
+hashes pass. No dependency, feature, lockfile, machine-wide component, release,
+or publication changed. Final-binary license resolution, production signing,
+and legal approval remain separate prerequisites.

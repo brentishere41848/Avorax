@@ -2971,3 +2971,14 @@ eight mutations reject under both hosts (`16/16`). Locks and the protected vault
 remain exact. This verifies the bounded local runtime contract only. Hosted,
 installed/durable, synchronization, destination, calibration, mutation,
 driver/kernel, and pre-execution residual risks are unchanged.
+
+**Integration and destination evidence:** PR `#89` merged normally as
+`8900107`; exact evidence-head and merged-main CI/package matrices pass with
+publication skipped. Guarded synchronization copied 24 exact blobs with zero
+deletes/residue. Destination component/workspace/Flutter/contracts pass,
+followed by exact `266/266` in `499.0s`, both independent validators, and
+adversarial `16/16`. This closes checkpoint 2237 evidence without changing the
+threat boundary: snapshots can miss short-lived processes, head/tail sampling
+can miss middle arguments, process review is post-start and non-mutating, and
+no installed durable, cross-identity, driver/kernel, or pre-execution claim is
+made.

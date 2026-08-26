@@ -6539,3 +6539,21 @@ guarded synchronization, and destination proof remain pending.
   service/driver stream. Guard commandline telemetry, verified parent-image
   lineage, durable cross-identity operation, production calibration, process
   enforcement, and pre-execution blocking remain partial or blocked.
+
+## Checkpoint 2237 Closure
+
+- **Verified:** PR `#89` merged normally as `8900107`; evidence-head and
+  merged-main CI/package matrices pass with every publication job skipped.
+  Consolidated artifacts were validated without extraction or execution.
+- **Verified:** guarded zero-delete synchronization copied 24 exact blobs and
+  7,685,018 bytes into `C:\Users\Brent\Documents\Avorax-main`; no stage/temp
+  residue or test process remains.
+- **Verified:** destination component/workspace/Flutter/contracts pass, followed
+  by exact no-skip/no-Defender `266/266` in `499.0s`, both independent validators,
+  and adversarial rejection `16/16`. Report SHA-256 is
+  `e5cd69828c3d1bb417f06e7cfb7116569c0de807970b7bd735eea2c83ad2cf9c`.
+- **Unchanged limits:** collection is app-lifetime polling and post-start review.
+  Guard commandline telemetry, installed durable monitoring, parent-image
+  lineage, production calibration, mutation, cross-identity isolation,
+  driver/kernel enforcement, and pre-execution blocking remain open. Checkpoint
+  2237 is closed; the complete antivirus project is not complete.
