@@ -29805,7 +29805,13 @@ def test_checkpoint_2244_static_archive_analysis_cancellation_contract():
     assert "GitHub Actions entered an official `major_outage`" in normalized_checkpoint
     assert "32985138375" in checkpoint
     assert "32985149344" in checkpoint
-    assert "No package test, artifact, publication job, release, merge" in normalized_checkpoint
+    assert "32987569318" in checkpoint
+    assert "32987888207" in checkpoint
+    assert "32987888192" in checkpoint
+    assert "9614177410" in checkpoint
+    assert "2649ce251aa91688097357298e23d28790d09424b6865d8b81d965f36c5af030" in checkpoint
+    assert "The same bounded non-extracting 8/6/7/CycloneDX-1.6/569 validation passes" in normalized_checkpoint
+    assert "No release, publication, merge, or synchronization is claimed" in normalized_checkpoint
     normalized_dependencies = re.sub(r"\s+", " ", documents[-1])
     assert "adds no dependency, feature" in normalized_dependencies
     assert "lockfile change" in normalized_dependencies

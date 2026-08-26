@@ -88,21 +88,41 @@ Hosted exact-head CI/package evidence, normal PR/merge, guarded integration,
 destination verification, and closure remain pending and must not be inferred
 from these definitive local results.
 
-## Hosted Verification Blocker
+## Hosted Verification Recovery
 
 GitHub Actions entered an official `major_outage` at
 `2026-08-26T15:11:58.254Z`, before this checkpoint's hosted attempts. The
 status incident identifies a database-primary failure and an immediate replica
 failover at `2026-08-26T15:23:10.599Z`.
 
-- Push package run `32984814869` for local-evidence head `2518612` reached
-  `startup_failure` without executing a workflow step.
-- An empty, source-preserving retrigger commit produced exact hosted head
-  `945c8cac4fbaca5831a1c4592cf22e72d68ed3b2`; PR `#96` is open and mergeable.
+- Push package run `32984814869` for local-evidence head `2518612` was
+  transiently reported as a startup failure while the incident was active, but
+  ultimately completed successfully across Windows, Linux, both macOS
+  architectures, and consolidation. Publication job `98231721596` is skipped.
+  Consolidated artifact `9613011717` is `132034442` bytes with matching GitHub
+  and downloaded SHA-256
+  `81cd3cf0f7ef2069ee1af1db53676eb0a6c57485361d75aac38d1848f164398e`.
+  Bounded in-stream validation passes exact 8-root/6-platform/7-checksum and
+  CycloneDX 1.6/569-component evidence without extraction or execution.
+- An empty, source-preserving retrigger commit and the outage-evidence commit
+  produced hosted head `3237d49e3df2d6355968882cddf57f0c171e3827`;
+  PR `#96` remains open and mergeable.
 - Exact-head Avorax CI run `32985138375` remained queued with zero jobs. Manual
   Desktop Packages run `32985149344`, explicitly dispatched with
-  `publish_prerelease=false`, reached `startup_failure` with zero jobs.
-- No package test, artifact, publication job, release, merge, integration, or
-  destination synchronization is claimed. The prerequisite is restored GitHub
-  Actions job creation and runner availability, followed by fresh exact-head
-  CI and package runs.
+  `publish_prerelease=false`, reached `startup_failure` with zero jobs. These
+  outage attempts remain uncredited.
+- After GitHub began restoring traffic, exact-head Avorax CI runs `32987569318`
+  and `32987888207` both pass all five jobs. The first exact-head manual package
+  run `32986620660` is uncredited: its macOS arm64 build, packaged-core smoke,
+  and manifest checks passed, but all five `hdiutil verify` attempts returned
+  `Resource temporarily unavailable` and consolidation was skipped.
+- Independent exact-head PR package run `32987888192` passes contracts,
+  Windows, Linux, both macOS architectures, and consolidation; publication job
+  `98244620437` is skipped. Consolidated artifact `9614177410` is `132043669`
+  bytes with matching GitHub/download SHA-256
+  `2649ce251aa91688097357298e23d28790d09424b6865d8b81d965f36c5af030`.
+  The same bounded non-extracting 8/6/7/CycloneDX-1.6/569 validation passes.
+
+Hosted evidence-head checks after this documentation commit, normal merge,
+merged-main checks, guarded integration, destination verification, and closure
+remain pending. No release, publication, merge, or synchronization is claimed.

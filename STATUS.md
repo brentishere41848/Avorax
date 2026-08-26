@@ -6835,14 +6835,17 @@ guarded synchronization, and destination proof remain pending.
   `2547454f20895864be9727dd545e0625d39b0b761732032f886c004ff5de2216`.
   Exact locks and the protected vault remain unchanged. Hosted exact-head,
   integration, destination, and closure evidence remains pending.
-- Hosted execution is currently blocked by GitHub's official Actions
-  `major_outage` beginning `2026-08-26T15:11:58.254Z`. Push package run
-  `32984814869` and exact-head manual package run `32985149344` ended in
-  `startup_failure` before any workflow step; exact-head CI `32985138375`
-  remained queued with zero jobs. PR `#96` stays open and unmerged. Recovery
-  requires fresh exact-head CI/package evidence after GitHub restores Actions;
-  no hosted success, artifact, publication, integration, or destination result
-  is claimed.
+- GitHub's Actions `major_outage` initially dropped/delayed runs, but hosted
+  recovery evidence now passes. Local-evidence package run `32984814869` and
+  exact head `3237d49e3df2d6355968882cddf57f0c171e3827` CI runs
+  `32987569318`/`32987888207` plus PR packages `32987888192` succeed;
+  publication is skipped. Consolidated artifacts `9613011717`/`9614177410`
+  match downloaded SHA-256 and pass bounded non-extracting exact
+  8-root/6-platform/7-checksum/CycloneDX-1.6/569 validation. One uncredited
+  manual package run `32986620660` failed only after five macOS arm64
+  `hdiutil verify` resource-unavailable errors; the independent PR run proves
+  arm64 green. PR `#96` remains open. Evidence-head, merge, main, integration,
+  destination, and closure evidence remains pending.
 - **Limit:** cooperative checkpoints do not preempt one running decoder read,
   and this change does not make non-archive analyzers, rule/ML calls, Windows
   trust, services, drivers, or pre-execution enforcement hard-cancellable.

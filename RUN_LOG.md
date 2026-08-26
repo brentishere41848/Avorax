@@ -11992,20 +11992,34 @@ pending.
   exact. `.verification` remains untracked and unstaged. Hosted exact-head,
   integration, destination, and closure evidence remain pending.
 
-## 2026-08-26 - Checkpoint 2244 GitHub Actions Outage
+## 2026-08-26 - Checkpoint 2244 GitHub Actions Outage And Recovery
 
 - GitHub Actions reported an official `major_outage` beginning
   `2026-08-26T15:11:58.254Z`. Its latest observed incident update identified a
   database-primary failure and replica failover at
   `2026-08-26T15:23:10.599Z`.
-- Push package run `32984814869` at local-evidence head `2518612` reached
-  `startup_failure` without a workflow step. Closing/reopening PR `#96` and an
-  empty source-preserving retrigger commit created exact head
-  `945c8cac4fbaca5831a1c4592cf22e72d68ed3b2`.
+- Push package run `32984814869` at local-evidence head `2518612` was
+  transiently reported as a startup failure, then completed successfully with
+  publication skipped. Its consolidated artifact `9613011717` is `132034442`
+  bytes, matches SHA-256
+  `81cd3cf0f7ef2069ee1af1db53676eb0a6c57485361d75aac38d1848f164398e`,
+  and passes non-extracting exact 8/6/7/CycloneDX-1.6/569 validation.
+- Closing/reopening PR `#96`, an empty source-preserving retrigger, and the
+  outage-evidence commit produced exact head
+  `3237d49e3df2d6355968882cddf57f0c171e3827`.
 - Exact-head CI `32985138375` remained queued with zero jobs. Explicit
   `publish_prerelease=false` package dispatch `32985149344` reached
   `startup_failure` with zero jobs. These are retained failure evidence, not
   passing hosted evidence.
-- PR `#96` remains open and unmerged. No artifact, publication, integration, or
-  destination synchronization occurred. Fresh exact-head hosted runs are
-  required after GitHub restores job creation and runner availability.
+- Exact-head CI `32987569318` and `32987888207` now pass all five jobs.
+  Uncredited manual package run `32986620660` passed its arm64 build, packaged
+  smoke, and manifest checks but failed five `hdiutil verify` attempts with
+  `Resource temporarily unavailable`; consolidation remained skipped.
+- Independent exact-head PR package run `32987888192` passes all package and
+  consolidation jobs, with publication job `98244620437` skipped. Consolidated
+  artifact `9614177410` is `132043669` bytes, matches SHA-256
+  `2649ce251aa91688097357298e23d28790d09424b6865d8b81d965f36c5af030`,
+  and passes the same bounded non-extracting 8/6/7/CycloneDX-1.6/569 contract.
+- PR `#96` remains open and unmerged. Evidence-head checks, merge, main checks,
+  integration, and destination synchronization remain pending; no release or
+  publication occurred.

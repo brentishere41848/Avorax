@@ -5041,7 +5041,8 @@ definitive exact `273/273` and adversarial evidence pass. Report SHA-256 is
 `2547454f20895864be9727dd545e0625d39b0b761732032f886c004ff5de2216`;
 hosted/integration/destination evidence remains pending.
 
-Hosted evidence is externally blocked by GitHub Actions `major_outage`.
-Exact-head CI `32985138375` created zero jobs and manual package run
-`32985149344` failed at startup with zero jobs. Neither result verifies a
-control or package; fresh exact-head runs are mandatory after service recovery.
+The GitHub Actions `major_outage` left uncredited zero-job runs, but recovery
+evidence now passes: exact-head CI `32987569318`/`32987888207` and PR packages
+`32987888192` are green with publication skipped. Consolidated artifact
+`9614177410` passes bounded non-extracting exact 8/6/7/CycloneDX-1.6/569
+validation. Evidence-head/merge/main/integration/destination proof remains.
