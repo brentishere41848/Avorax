@@ -3078,3 +3078,20 @@ passes. Workspace-wide strict Clippy remains blocked by two
 unchanged API `items_after_test_module` findings and one unchanged API
 `enum_variant_names` finding under Rust 1.96; the checkpoint-owned large enum
 was repaired and targeted strict lint passes.
+
+## Checkpoint 2242 Cooperative Archive Inflate Cancellation
+
+- Entry-level and 64-KiB inflate-output checkpoints now pass exact typed
+  cancellation/probe propagation, focused/full suites, source contract
+  `672/672`, and definitive verifier `271/271` with dual validation plus
+  missing-step/scope rejection. Hosted, merge, synchronization, and destination
+  evidence remain open.
+- One active `flate2` decoder read cannot be hard-interrupted by the in-process
+  callback. Moving it behind a safely killable worker requires authenticated
+  IPC and resource-confinement work beyond this checkpoint.
+- Native static archive metadata/relationship inspection remains a separate
+  synchronous bounded substep. Same-user capability secrecy, installed service
+  ownership, cross-identity authentication, driver/kernel cancellation, and
+  pre-execution blocking remain genuine blockers.
+- No checkpoint-2242 passing result was claimed during scripting; local proof
+  is now complete without changing the residual technical limits above.

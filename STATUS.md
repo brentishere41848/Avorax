@@ -6738,3 +6738,24 @@ guarded synchronization, and destination proof remain pending.
   collect/inflate, rule/ML call, or Windows trust helper. Same-user UUID access,
   installed service ownership, cross-identity authentication, driver/kernel
   cancellation, and pre-execution blocking remain limited or blocked.
+
+## Checkpoint 2242 - Cooperative Archive Inflate Cancellation Locally Verified
+
+- Bounded ZIP sample collection now accepts a fallible checkpoint and checks
+  before every local/central-directory entry, around stored copies, and before
+  every at-most-64-KiB inflate output read.
+- Callback failure propagates unchanged, so typed cancellation cannot become an
+  archive limit or partial verdict and probe failure remains fail-visible.
+- Benign regressions, mandatory verifier step 271, validator cardinality/scope,
+  source contract 672, and all audit documents are scripted before execution.
+  Focused tests pass `4/4`, adjacent cancellation passes `9/9`, Native passes
+  `553` plus compiler `6/6`, Local Core `546/546`, Flutter `847/847`, and source
+  contracts `672/672`; strict component lint/analyzer/release checks pass.
+- Definitive verification passes exact `271/271` in `535.7s`, dual independent
+  validators pass, and missing-step/scope copies are rejected. Locks and the
+  protected vault remain exact. Hosted, merge, guarded synchronization, and
+  destination evidence remain pending.
+- **Limit:** one active decoder read and the static analyzer's separate bounded
+  archive metadata/relationship inspection remain synchronous. This is not
+  hard cancellation, cross-identity service control, driver/kernel blocking, or
+  pre-execution enforcement.

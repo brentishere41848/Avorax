@@ -4935,7 +4935,7 @@ driver/kernel, or pre-execution blocking capability.
 
 ## Checkpoint 2240 Scan Job Cancellation Binding Matrix
 
-| Control | Responsibility | Scripted state | Evidence target / limit |
+| Control | Responsibility | State | Evidence target / limit |
 | --- | --- | --- | --- |
 | Client scan job UUID | Create one canonical random UUID before process start and bind scan IPC plus exact process lease | Scripted, not yet verified | Flutter benign subprocess regression; same-user capability only |
 | Local Core job parser/progress | Require canonical UUID on every scan/cancel command and preserve it in progress | Scripted, not yet verified | Rust canonical/missing/malformed command regressions |
@@ -4974,3 +4974,19 @@ validation; guarded sync verifies `19/19` paths and destination definitive
 passes `270/270` in `517.9s`. Checkpoint 2241 is closed. Workspace-wide strict
 Clippy is separately blocked by three
 unchanged API-service Rust-1.96 lints; Native/Local strict Clippy is clean.
+
+## Checkpoint 2242 Cooperative Archive Inflate Cancellation Matrix
+
+| Control | Responsibility | Scripted state | Evidence target / limit |
+| --- | --- | --- | --- |
+| ZIP entry traversal checkpoint | Observe exact job cancellation before each local/central-directory sampled entry | Locally verified | Benign two-entry cancellation regression; no partial returned sample set |
+| Stored body checkpoint | Bound cancellation around an at-most-1-MiB stored-body copy | Locally verified | Pre/post callback with unchanged entry/total limits |
+| Deflate output checkpoint | Observe cancellation before every at-most-64-KiB output read | Locally verified | Benign multi-chunk deflate regression; existing 1-MiB output cap |
+| Scanner typed propagation | Preserve cancellation/probe errors instead of archive-limit evidence | Locally verified | Distinct cancellation and probe-failure adapter regressions; source contract 672 |
+| Checkpoint 2242 verifier contract | Require current evidence rather than stale checkpoint-2241 reports | Locally definitive; hosted/integration pending | Exact 271/271, dual validators, missing-step/scope rejection |
+
+One already-running decoder read is not hard-interrupted. Static archive
+metadata/relationship analysis remains a separate synchronous bounded substep.
+During scripting, no checkpoint-2242 passing result was claimed. Local focused,
+full, definitive `271/271`, and adversarial validation now pass. Hosted,
+integration, guarded synchronization, and destination evidence remain open.

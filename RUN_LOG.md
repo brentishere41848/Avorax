@@ -11769,3 +11769,37 @@ pending.
   `f74307775a173e49c359f30e06e0b8b627fecfc5e13258ebd28906dfa415df9d`.
   Locks and protected-vault invariant remain exact. Checkpoint 2241 is closed;
   the complete antivirus goal remains active.
+
+## 2026-08-26 - Checkpoint 2242 Archive Inflate Cancellation Scripted
+
+- Audited the checkpoint-2241 residual and found that bounded ZIP sampling
+  checked only before and after complete collection. One 64-entry/4-MiB
+  collection and its bounded deflate work could finish before cancellation was
+  observed.
+- Scripted fallible checkpoints before every local/central-directory entry,
+  around stored-body copies, and before every at-most-64-KiB inflate output
+  read. Existing archive size/count/depth/path/encryption policies are unchanged.
+- Scripted benign traversal/inflate cancellation tests, typed scanner
+  cancellation/probe-failure coverage, mandatory verifier step 271, strict validator scope/cardinality,
+  source contract 672, and audit/threat/blocker/dependency documentation.
+- No checkpoint-2242 test has run during this scripting phase. One already-
+  running decoder read and the static analyzer's separate bounded archive
+  metadata/relationship inspection remain synchronous. No live malware,
+  Defender change, install, service/driver start, release, publication, or vault
+  mutation is involved.
+- Local verification now passes focused archive cancellation `4/4`, adjacent
+  cooperative cancellation `9/9`, Native `553` with `19` intentional ignores
+  plus compiler `6/6`, Local Core `546/546`, source contracts `672/672`, strict
+  Native/Local Clippy, formatting, analyzer, Flutter `847/847`, and the locked
+  workspace release build.
+- Definitive verification passes exact `271/271` from
+  `2026-08-26T11:10:24.2677488Z` through
+  `2026-08-26T11:19:19.9980328Z` in `535.7s`; embedded and independent PS5/PS7
+  validation pass. Report SHA-256 is
+  `730d83aefb8d3d6d8f1673f7394594aae83af2a25573efe64d57dfe2ca6466db`.
+  Missing-step (`270`) and missing-inflate-scope copies are rejected.
+- Initial formatting, unavailable optional-pytest, malformed parser escaping,
+  and two adversarial-harness capture/matching attempts failed visibly and are
+  uncredited; corrected repository-owned checks pass without installing a
+  dependency. Locks and the protected-vault invariant remain exact. Hosted,
+  merge, guarded synchronization, and destination evidence remain pending.
