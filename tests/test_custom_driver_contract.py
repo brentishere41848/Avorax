@@ -29713,7 +29713,12 @@ def test_checkpoint_2243_parallel_authenticode_helper_lifecycle_contract():
         assert "Authenticode" in normalized
         assert "272" in normalized
     normalized_checkpoint = re.sub(r"\s+", " ", checkpoint)
-    assert "No checkpoint-2243 passing result is claimed during scripting" in normalized_checkpoint
+    normalized_run_log = re.sub(r"\s+", " ", documents[1])
+    assert "No checkpoint-2243 test has run during this scripting phase" in normalized_run_log
+    assert "Definitive verification passes exact `272/272`" in normalized_checkpoint
+    assert "81b5937b0f86c94b8b7c17865c742b31839723e776a1d249a56dd22331fdd700" in normalized_checkpoint
+    assert "An adversarial `271`-step copy is rejected" in normalized_checkpoint
+    assert "without the message-framing scope is rejected" in normalized_checkpoint
     assert "Source contract 673" in normalized_checkpoint
     normalized_dependencies = re.sub(r"\s+", " ", documents[-1])
     assert "adds no dependency, feature" in normalized_dependencies

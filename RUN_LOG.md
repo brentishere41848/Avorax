@@ -11881,3 +11881,19 @@ pending.
   parsers, strict Native/Local Clippy, formatting/diff, and locked release build.
 - Lock hashes and the protected-vault invariant remain exact. Definitive 272-step
   and hosted/integration/destination evidence remain pending.
+
+## 2026-08-26 - Checkpoint 2243 Definitive Local Evidence
+
+- Definitive verification passes exact `272/272` from
+  `2026-08-26T13:13:03.3773124Z` through
+  `2026-08-26T13:21:44.8175976Z` in `521.4s`, with Defender integration disabled
+  and no Rust or Flutter skips.
+- Embedded and independent Windows PowerShell 5.1 and PowerShell 7 validators
+  pass the exact report. SHA-256 is
+  `81b5937b0f86c94b8b7c17865c742b31839723e776a1d249a56dd22331fdd700`.
+- A copy missing the mandatory lifecycle step is rejected at `271` steps and a
+  copy missing message-type/message-read-mode framing scope is rejected for the
+  exact absent contract. Both expected-negative validators exit `1`.
+- The implementation remains `f521242272378816f2413e0278c77ad3ed21da55`;
+  `.verification` is untracked and unstaged. Hosted exact-head evidence,
+  integration, guarded synchronization, and destination verification remain.

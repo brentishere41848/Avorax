@@ -6768,7 +6768,7 @@ guarded synchronization, and destination proof remain pending.
   hard cancellation, cross-identity service control, driver/kernel blocking, or
   pre-execution enforcement.
 
-## Checkpoint 2243 - Parallel Authenticode Helper Lifecycle Scripted
+## Checkpoint 2243 - Parallel Authenticode Helper Lifecycle Locally Verified
 
 - Restricted helper stdout/stderr drainers now start before the initial
   authenticated handshake. Early child exit cannot silently discard its bounded
@@ -6793,4 +6793,9 @@ guarded synchronization, and destination proof remain pending.
   Authenticode `83`/`21` plus 20 default-parallel repetitions, Native `555`/`21`
   plus compiler `6/6`, Local Core `546/546`, Flutter `847/847`, source contracts
   `673/673`, analyzer, strict lint, dual parsers, and locked release build.
-  Definitive exact 272-step and hosted/integration/destination proof remain open.
+- Definitive evidence passes exact `272/272` in `521.4s` with no skips. Embedded
+  and independent PS5/PS7 validators pass; missing-step and missing-framing-scope
+  copies are rejected. Report SHA-256 is
+  `81b5937b0f86c94b8b7c17865c742b31839723e776a1d249a56dd22331fdd700`.
+  Hosted exact-head, integration, guarded synchronization, and destination proof
+  remain open.

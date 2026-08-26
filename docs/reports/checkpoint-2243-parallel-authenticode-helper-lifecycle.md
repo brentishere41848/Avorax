@@ -65,8 +65,7 @@ verifier/validator wording and cardinality, and all checkpoint documents.
 
 ## Limits And Status
 
-No checkpoint-2243 passing result is claimed during scripting. The scripted
-four-helper test is bounded evidence, not proof for arbitrary load, installed
+The four-helper test is bounded evidence, not proof for arbitrary load, installed
 service identities, kernel mediation, or pre-execution blocking. Authenticode
 trust still requires a valid Windows trust result and verified Microsoft signer
 under the existing embedded/catalog and primary/secondary signature policies.
@@ -99,7 +98,16 @@ fail-closed; diagnostics do not create a verdict.
   second identified byte-stream cross-frame coalescing. Both failed closed and
   accepted no trust result. Their repaired paths pass the complete and repeated
   parallel evidence above.
+- Definitive verification passes exact `272/272` from
+  `2026-08-26T13:13:03.3773124Z` through
+  `2026-08-26T13:21:44.8175976Z` in `521.4s`, with Defender integration off and
+  no Rust or Flutter skips. Embedded and independent Windows PowerShell 5.1 and
+  PowerShell 7 validation pass. Report SHA-256 is
+  `81b5937b0f86c94b8b7c17865c742b31839723e776a1d249a56dd22331fdd700`.
+- An adversarial `271`-step copy is rejected for exact cardinality and a copy
+  without the message-framing scope is rejected for missing mandatory evidence.
+  Both validators exit nonzero; these copies remain untracked under
+  `.verification`.
 
-Definitive 272-step verification, adversarial report validation, hosted exact-
-head evidence, normal integration, guarded synchronization, and destination
-verification remain pending.
+Hosted exact-head evidence, normal integration, guarded synchronization, and
+destination verification remain pending.
