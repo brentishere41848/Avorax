@@ -53,6 +53,7 @@ try {
 
   $command = @{
     command = "scan_file"
+    job_id = [System.Guid]::NewGuid().ToString("D")
     path = $fixture
     action_mode = "detectOnly"
     scan_kind = "custom"

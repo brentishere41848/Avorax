@@ -61,6 +61,7 @@ const MAX_SCAN_ERROR_DETAILS: usize = 20;
 const MAX_SCAN_ERROR_DETAIL_CHARS: usize = 4096;
 const SCAN_ERROR_TRUNCATION_SUFFIX: &str = "...[truncated]";
 const MAX_RANSOMWARE_GUARD_CONFIG_BYTES: u64 = 64 * 1024;
+const MAX_SCAN_CANCELLATION_TOKEN_BYTES: u64 = 1024;
 const MAX_CORE_COMMAND_JSON_BYTES: usize = 256 * 1024;
 const MAX_CORE_IPC_PATHS: usize = 64;
 const MAX_CORE_IPC_PATH_CHARS: usize = 4096;
@@ -453,10 +454,20 @@ fn combine_core_service_runtime_and_status_results(
 fn handle(command: CoreCommand) -> serde_json::Value {
     match command.command.as_str() {
         "health" => health_response(),
-        "cancel_scan" => match request_scan_cancellation() {
-            Ok(path) => json!({"ok": true, "cancel_token": path.display().to_string()}),
-            Err(error) => json!({"ok": false, "error": error.to_string()}),
-        },
+        "cancel_scan" => {
+            let job_id = match parse_bounded_scan_job_id(command.job_id) {
+                Ok(job_id) => job_id,
+                Err(error) => return json!({"ok": false, "error": error.to_string()}),
+            };
+            match request_scan_cancellation(job_id) {
+                Ok(path) => json!({
+                    "ok": true,
+                    "job_id": job_id.to_string(),
+                    "cancel_token": path.display().to_string()
+                }),
+                Err(error) => json!({"ok": false, "error": error.to_string()}),
+            }
+        }
         "scan_file" => {
             let path = match required_core_ipc_path(command.path, "path") {
                 Ok(path) => path,
@@ -470,7 +481,11 @@ fn handle(command: CoreCommand) -> serde_json::Value {
                 Ok(kind) => kind,
                 Err(error) => return json!({"ok": false, "error": error.to_string()}),
             };
-            match scan_paths(vec![path], action_mode, kind, None) {
+            let job_id = match parse_bounded_scan_job_id(command.job_id) {
+                Ok(job_id) => job_id,
+                Err(error) => return json!({"ok": false, "error": error.to_string()}),
+            };
+            match scan_paths_for_job(vec![path], action_mode, kind, job_id, None) {
                 Ok(report) => json!(report),
                 Err(error) => json!({"ok": false, "error": error.to_string()}),
             }
@@ -488,7 +503,11 @@ fn handle(command: CoreCommand) -> serde_json::Value {
                 Ok(kind) => kind,
                 Err(error) => return json!({"ok": false, "error": error.to_string()}),
             };
-            match scan_paths(vec![path], action_mode, kind, None) {
+            let job_id = match parse_bounded_scan_job_id(command.job_id) {
+                Ok(job_id) => job_id,
+                Err(error) => return json!({"ok": false, "error": error.to_string()}),
+            };
+            match scan_paths_for_job(vec![path], action_mode, kind, job_id, None) {
                 Ok(report) => json!(report),
                 Err(error) => json!({"ok": false, "error": error.to_string()}),
             }
@@ -506,10 +525,14 @@ fn handle(command: CoreCommand) -> serde_json::Value {
                 Ok(kind) => kind,
                 Err(error) => return json!({"ok": false, "error": error.to_string()}),
             };
+            let job_id = match parse_bounded_scan_job_id(command.job_id) {
+                Ok(job_id) => job_id,
+                Err(error) => return json!({"ok": false, "error": error.to_string()}),
+            };
             let mut emit = |progress: &ScanProgress| {
                 println!("{}", progress_event_line(progress));
             };
-            match scan_paths(paths, action_mode, kind, Some(&mut emit)) {
+            match scan_paths_for_job(paths, action_mode, kind, job_id, Some(&mut emit)) {
                 Ok(report) => json!(report),
                 Err(error) => json!({"ok": false, "error": error.to_string()}),
             }
@@ -1055,6 +1078,15 @@ fn parse_bounded_scan_kind(raw: Option<String>) -> anyhow::Result<ScanKind> {
     Ok(parse_scan_kind(raw.as_deref()))
 }
 
+fn parse_bounded_scan_job_id(raw: Option<String>) -> anyhow::Result<Uuid> {
+    let raw = required_core_ipc_text(raw, "job_id", MAX_CORE_IPC_ID_CHARS)?;
+    let parsed = Uuid::parse_str(&raw).context("job_id must be a UUID")?;
+    if parsed.to_string() != raw {
+        anyhow::bail!("job_id must use canonical lowercase hyphenated UUID form");
+    }
+    Ok(parsed)
+}
+
 fn parse_core_ipc_u64_bound(
     raw: Option<u64>,
     field: &str,
@@ -1534,12 +1566,21 @@ fn scan_paths(
     roots: Vec<PathBuf>,
     action_mode: ScanActionMode,
     kind: ScanKind,
+    emit_progress: Option<&mut dyn FnMut(&ScanProgress)>,
+) -> anyhow::Result<scanner::ScanReport> {
+    scan_paths_for_job(roots, action_mode, kind, Uuid::new_v4(), emit_progress)
+}
+
+fn scan_paths_for_job(
+    roots: Vec<PathBuf>,
+    action_mode: ScanActionMode,
+    kind: ScanKind,
+    job_id: Uuid,
     mut emit_progress: Option<&mut dyn FnMut(&ScanProgress)>,
 ) -> anyhow::Result<scanner::ScanReport> {
     let started = Instant::now();
     let started_at = Utc::now();
-    clear_scan_cancellation()?;
-    let job = ScanJob::new(kind.clone());
+    let job = ScanJob::with_id(kind.clone(), job_id.to_string());
     let mut files_scanned: u64 = 0;
     let mut bytes_scanned: u64 = 0;
     let mut skipped_files: u64 = 0;
@@ -1604,7 +1645,7 @@ fn scan_paths(
     }
 
     for (index, path) in walk.files.into_iter().enumerate() {
-        if scan_cancellation_requested()? {
+        if scan_cancellation_requested(job_id)? {
             cancelled = true;
             cancelled_remaining_files = total_files.saturating_sub(index as u64);
             skipped_files = skipped_files.saturating_add(cancelled_remaining_files);
@@ -1781,7 +1822,12 @@ fn scan_paths(
         emit(&progress);
     }
     if cancelled {
-        clear_scan_cancellation()?;
+        if let Err(error) = clear_scan_cancellation(job_id) {
+            push_scan_error(
+                &mut scan_errors,
+                format!("scan cancelled but its job-bound cancellation token could not be removed: {error:#}"),
+            );
+        }
     }
     Ok(scanner::ScanReport {
         status,
@@ -1892,8 +1938,16 @@ fn scan_target_metadata_is_windows_reparse_point(_metadata: &std::fs::Metadata) 
     false
 }
 
-fn request_scan_cancellation() -> anyhow::Result<PathBuf> {
-    let path = scan_cancellation_token_path()?;
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ScanCancellationToken {
+    schema_version: u32,
+    job_id: Uuid,
+    requested_at_utc: DateTime<Utc>,
+}
+
+fn request_scan_cancellation(job_id: Uuid) -> anyhow::Result<PathBuf> {
+    let path = scan_cancellation_token_path(job_id)?;
     if let Some(parent) = path
         .parent()
         .filter(|parent| !parent.as_os_str().is_empty())
@@ -1902,9 +1956,16 @@ fn request_scan_cancellation() -> anyhow::Result<PathBuf> {
         ensure_runtime_directory(parent, "scan cancellation token parent")?;
     }
     let temp_path = path.with_extension(format!("tmp-{}", Uuid::new_v4()));
+    let token = ScanCancellationToken {
+        schema_version: 1,
+        job_id,
+        requested_at_utc: Utc::now(),
+    };
+    let token_bytes =
+        serde_json::to_vec(&token).context("failed to encode scan cancellation token")?;
     write_runtime_file_exclusive(
         &temp_path,
-        Utc::now().to_rfc3339().as_bytes(),
+        &token_bytes,
         "temporary scan cancellation token",
     )?;
     if let Err(error) = remove_existing_runtime_file(&path, "scan cancellation token") {
@@ -1935,11 +1996,9 @@ fn request_scan_cancellation() -> anyhow::Result<PathBuf> {
     Ok(path)
 }
 
-fn clear_scan_cancellation() -> anyhow::Result<()> {
-    let path = scan_cancellation_token_path()?;
+fn clear_scan_cancellation(job_id: Uuid) -> anyhow::Result<()> {
+    let path = scan_cancellation_token_path(job_id)?;
     remove_existing_runtime_file(&path, "scan cancellation token")?;
-    let temp_path = path.with_extension("tmp");
-    remove_existing_runtime_file(&temp_path, "temporary scan cancellation token")?;
     Ok(())
 }
 
@@ -1953,15 +2012,37 @@ fn cleanup_staged_local_core_file(path: &Path, label: &str) -> anyhow::Result<()
     }
 }
 
-fn scan_cancellation_requested() -> anyhow::Result<bool> {
-    let path = scan_cancellation_token_path()?;
-    optional_runtime_file_present(&path, "scan cancellation token")
+fn scan_cancellation_requested(job_id: Uuid) -> anyhow::Result<bool> {
+    let path = scan_cancellation_token_path(job_id)?;
+    if !optional_runtime_file_present(&path, "scan cancellation token")? {
+        return Ok(false);
+    }
+    let raw = read_bounded_runtime_file(
+        &path,
+        MAX_SCAN_CANCELLATION_TOKEN_BYTES,
+        "scan cancellation token",
+    )?;
+    let token: ScanCancellationToken =
+        serde_json::from_slice(&raw).context("scan cancellation token is malformed")?;
+    if token.schema_version != 1 {
+        anyhow::bail!(
+            "scan cancellation token has unsupported schema_version {}",
+            token.schema_version
+        );
+    }
+    if token.job_id != job_id {
+        anyhow::bail!(
+            "scan cancellation token job_id mismatch: expected {job_id}, got {}",
+            token.job_id
+        );
+    }
+    Ok(true)
 }
 
-fn scan_cancellation_token_path() -> anyhow::Result<PathBuf> {
+fn scan_cancellation_token_path(job_id: Uuid) -> anyhow::Result<PathBuf> {
     Ok(avorax_program_data_dir()?
         .join("runtime")
-        .join("cancel-active-scan"))
+        .join(format!("cancel-scan-{job_id}")))
 }
 
 fn ensure_runtime_metadata_safe(metadata: &std::fs::Metadata, label: &str) -> anyhow::Result<()> {
@@ -2003,6 +2084,67 @@ fn optional_runtime_file_present(path: &Path, label: &str) -> anyhow::Result<boo
             Err(error).with_context(|| format!("failed to inspect {label} {}", path.display()))
         }
     }
+}
+
+fn read_bounded_runtime_file(path: &Path, max_bytes: u64, label: &str) -> anyhow::Result<Vec<u8>> {
+    let file = open_runtime_file_readonly_no_follow(path, label)?;
+    let metadata = file
+        .metadata()
+        .with_context(|| format!("failed to inspect open {label} {}", path.display()))?;
+    ensure_runtime_metadata_safe(&metadata, label)?;
+    if !metadata.is_file() {
+        anyhow::bail!("{label} is not a regular file");
+    }
+    if metadata.len() > max_bytes {
+        anyhow::bail!(
+            "{label} {} exceeds maximum size of {max_bytes} bytes",
+            path.display()
+        );
+    }
+    let mut bytes = Vec::with_capacity(metadata.len() as usize);
+    file.take(max_bytes.saturating_add(1))
+        .read_to_end(&mut bytes)
+        .with_context(|| format!("failed to read {label} {}", path.display()))?;
+    if bytes.len() as u64 > max_bytes {
+        anyhow::bail!(
+            "{label} {} grew beyond maximum size of {max_bytes} bytes",
+            path.display()
+        );
+    }
+    Ok(bytes)
+}
+
+fn open_runtime_file_readonly_no_follow(path: &Path, label: &str) -> anyhow::Result<std::fs::File> {
+    let mut options = std::fs::OpenOptions::new();
+    options.read(true);
+    #[cfg(windows)]
+    {
+        use std::os::windows::fs::OpenOptionsExt;
+        const FILE_FLAG_OPEN_REPARSE_POINT: u32 = 0x0020_0000;
+        options.custom_flags(FILE_FLAG_OPEN_REPARSE_POINT);
+    }
+    #[cfg(any(target_os = "linux", target_os = "android"))]
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+        const O_NOFOLLOW: i32 = 0x0002_0000;
+        options.custom_flags(O_NOFOLLOW);
+    }
+    #[cfg(any(
+        target_os = "macos",
+        target_os = "ios",
+        target_os = "freebsd",
+        target_os = "openbsd",
+        target_os = "netbsd",
+        target_os = "dragonfly"
+    ))]
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+        const O_NOFOLLOW: i32 = 0x0000_0100;
+        options.custom_flags(O_NOFOLLOW);
+    }
+    options
+        .open(path)
+        .with_context(|| format!("failed to open non-following {label} {}", path.display()))
 }
 
 fn remove_existing_runtime_file(path: &Path, label: &str) -> anyhow::Result<()> {
@@ -3569,6 +3711,7 @@ mod tests {
             paths: None,
             action_mode: None,
             scan_kind: None,
+            job_id: None,
             threat_name: None,
             engine: None,
             quarantine_id: None,
@@ -5257,6 +5400,7 @@ mod tests {
             ]),
             action_mode: None,
             scan_kind: None,
+            job_id: None,
             threat_name: None,
             engine: None,
             quarantine_id: None,
@@ -5754,8 +5898,19 @@ mod tests {
 
     #[test]
     fn scan_paths_honors_cancel_request_between_files() {
+        const CASE: &str = "scan-job-bound-cancellation";
+        if !is_isolated_environment_case(CASE) {
+            run_isolated_environment_case(
+                "tests::scan_paths_honors_cancel_request_between_files",
+                CASE,
+                |_| {},
+            );
+            return;
+        }
         let _lock = env_lock();
         let dir = tempdir().unwrap();
+        std::env::set_var("AVORAX_DATA_DIR", dir.path().join("data"));
+        let job_id = Uuid::new_v4();
         for index in 0..5 {
             fs::write(
                 dir.path().join(format!("fixture-{index}.txt")),
@@ -5768,19 +5923,21 @@ mod tests {
         let mut emit = |_progress: &ScanProgress| {
             if !requested {
                 requested = true;
-                request_scan_cancellation().unwrap();
+                request_scan_cancellation(job_id).unwrap();
             }
         };
 
-        let report = scan_paths(
+        let report = scan_paths_for_job(
             vec![dir.path().to_path_buf()],
             ScanActionMode::DetectOnly,
             ScanKind::Custom,
+            job_id,
             Some(&mut emit),
         )
         .unwrap();
 
         assert_eq!(report.status, ReportStatus::Cancelled);
+        assert_eq!(report.progress.as_ref().unwrap().job_id, job_id.to_string());
         assert_eq!(
             report.progress.as_ref().unwrap().status,
             ScanJobStatus::Cancelled
@@ -5796,7 +5953,8 @@ mod tests {
             .scan_errors
             .iter()
             .any(|error| error.contains("scan cancelled by user request")));
-        assert!(!scan_cancellation_requested().unwrap());
+        assert!(!scan_cancellation_requested(job_id).unwrap());
+        std::env::remove_var("AVORAX_DATA_DIR");
     }
 
     #[test]
@@ -5824,15 +5982,164 @@ mod tests {
         let _lock = env_lock();
         let dir = tempdir().unwrap();
         std::env::set_var("AVORAX_DATA_DIR", dir.path());
+        let job_id = Uuid::new_v4();
 
-        let token = request_scan_cancellation().unwrap();
+        let token = request_scan_cancellation(job_id).unwrap();
 
         assert!(token.exists());
+        assert_eq!(
+            token.file_name().unwrap().to_string_lossy(),
+            format!("cancel-scan-{job_id}")
+        );
         assert!(!token.with_extension("tmp").exists());
-        assert!(scan_cancellation_requested().unwrap());
-        clear_scan_cancellation().unwrap();
+        assert!(scan_cancellation_requested(job_id).unwrap());
+        clear_scan_cancellation(job_id).unwrap();
         assert!(!token.exists());
         std::env::remove_var("AVORAX_DATA_DIR");
+    }
+
+    #[test]
+    fn scan_cancellation_is_bound_to_exact_job_and_validated() {
+        const CASE: &str = "scan-cancellation-exact-job";
+        if !is_isolated_environment_case(CASE) {
+            run_isolated_environment_case(
+                "tests::scan_cancellation_is_bound_to_exact_job_and_validated",
+                CASE,
+                |_| {},
+            );
+            return;
+        }
+        let _lock = env_lock();
+        let dir = tempdir().unwrap();
+        std::env::set_var("AVORAX_DATA_DIR", dir.path());
+        let target_job = Uuid::new_v4();
+        let other_job = Uuid::new_v4();
+
+        let other_token = request_scan_cancellation(other_job).unwrap();
+        assert!(scan_cancellation_requested(other_job).unwrap());
+        assert!(!scan_cancellation_requested(target_job).unwrap());
+
+        let target_token = request_scan_cancellation(target_job).unwrap();
+        fs::write(
+            &target_token,
+            serde_json::to_vec(&ScanCancellationToken {
+                schema_version: 1,
+                job_id: other_job,
+                requested_at_utc: Utc::now(),
+            })
+            .unwrap(),
+        )
+        .unwrap();
+        assert!(scan_cancellation_requested(target_job)
+            .unwrap_err()
+            .to_string()
+            .contains("job_id mismatch"));
+
+        fs::write(
+            &target_token,
+            vec![b'x'; MAX_SCAN_CANCELLATION_TOKEN_BYTES as usize + 1],
+        )
+        .unwrap();
+        assert!(scan_cancellation_requested(target_job)
+            .unwrap_err()
+            .to_string()
+            .contains("exceeds maximum size"));
+
+        fs::write(&target_token, b"not-json").unwrap();
+        assert!(scan_cancellation_requested(target_job)
+            .unwrap_err()
+            .to_string()
+            .contains("malformed"));
+
+        fs::write(
+            &target_token,
+            serde_json::to_vec(&ScanCancellationToken {
+                schema_version: 2,
+                job_id: target_job,
+                requested_at_utc: Utc::now(),
+            })
+            .unwrap(),
+        )
+        .unwrap();
+        assert!(scan_cancellation_requested(target_job)
+            .unwrap_err()
+            .to_string()
+            .contains("unsupported schema_version"));
+
+        clear_scan_cancellation(target_job).unwrap();
+        clear_scan_cancellation(other_job).unwrap();
+        assert!(!target_token.exists());
+        assert!(!other_token.exists());
+        std::env::remove_var("AVORAX_DATA_DIR");
+    }
+
+    #[test]
+    fn scan_cancellation_token_directory_fails_without_removal() {
+        const CASE: &str = "scan-cancellation-token-directory";
+        if !is_isolated_environment_case(CASE) {
+            run_isolated_environment_case(
+                "tests::scan_cancellation_token_directory_fails_without_removal",
+                CASE,
+                |_| {},
+            );
+            return;
+        }
+        let _lock = env_lock();
+        let dir = tempdir().unwrap();
+        std::env::set_var("AVORAX_DATA_DIR", dir.path());
+        let job_id = Uuid::new_v4();
+        let token = scan_cancellation_token_path(job_id).unwrap();
+        fs::create_dir_all(&token).unwrap();
+
+        assert!(scan_cancellation_requested(job_id)
+            .unwrap_err()
+            .to_string()
+            .contains("not a regular file"));
+        assert!(request_scan_cancellation(job_id)
+            .unwrap_err()
+            .to_string()
+            .contains("not a regular file"));
+        assert!(clear_scan_cancellation(job_id)
+            .unwrap_err()
+            .to_string()
+            .contains("not a regular file"));
+        assert!(token.is_dir());
+        std::env::remove_var("AVORAX_DATA_DIR");
+    }
+
+    #[test]
+    fn scan_job_id_ipc_is_required_and_canonical() {
+        let missing = handle(test_core_command("cancel_scan"));
+        assert_eq!(missing["ok"], false);
+        assert!(missing["error"]
+            .as_str()
+            .unwrap()
+            .contains("job_id is required"));
+
+        let dir = tempdir().unwrap();
+        let fixture = dir.path().join("benign.txt");
+        fs::write(&fixture, b"benign job-id parser fixture").unwrap();
+        let mut missing_scan_job = test_core_command("scan_file");
+        missing_scan_job.path = Some(fixture.display().to_string());
+        let missing_scan_response = handle(missing_scan_job);
+        assert_eq!(missing_scan_response["ok"], false);
+        assert!(missing_scan_response["error"]
+            .as_str()
+            .unwrap()
+            .contains("job_id is required"));
+
+        for malformed in [
+            "not-a-uuid".to_string(),
+            Uuid::new_v4().to_string().to_uppercase(),
+            format!("{}x", Uuid::new_v4()),
+            "x".repeat(MAX_CORE_IPC_ID_CHARS + 1),
+        ] {
+            let mut command = test_core_command("cancel_scan");
+            command.job_id = Some(malformed);
+            let response = handle(command);
+            assert_eq!(response["ok"], false);
+            assert!(response["error"].as_str().unwrap().contains("job_id"));
+        }
     }
 
     #[cfg(unix)]
@@ -5843,20 +6150,21 @@ mod tests {
         let _lock = env_lock();
         let dir = tempdir().unwrap();
         std::env::set_var("AVORAX_DATA_DIR", dir.path());
+        let job_id = Uuid::new_v4();
         let runtime = dir.path().join("runtime");
         fs::create_dir_all(&runtime).unwrap();
         let external = dir.path().join("external-token");
-        let token = runtime.join("cancel-active-scan");
+        let token = runtime.join(format!("cancel-scan-{job_id}"));
         fs::write(&external, "external").unwrap();
         symlink(&external, &token).unwrap();
 
-        assert!(scan_cancellation_requested()
+        assert!(scan_cancellation_requested(job_id)
             .unwrap_err()
             .to_string()
             .contains("symbolic link"));
-        let error = request_scan_cancellation().unwrap_err().to_string();
+        let error = request_scan_cancellation(job_id).unwrap_err().to_string();
         assert!(error.contains("symbolic link"));
-        assert!(clear_scan_cancellation()
+        assert!(clear_scan_cancellation(job_id)
             .unwrap_err()
             .to_string()
             .contains("symbolic link"));
@@ -5888,8 +6196,11 @@ mod tests {
             .contains("remove_existing_runtime_file(&path, \"scan cancellation token\")"));
         assert!(token_source
             .contains("optional_runtime_file_present(&path, \"scan cancellation token\")"));
-        assert!(token_source.contains("scan_cancellation_token_path()?"));
-        assert!(token_source.contains("scan_cancellation_requested() -> anyhow::Result<bool>"));
+        assert!(token_source.contains("scan_cancellation_token_path(job_id)?"));
+        assert!(token_source.contains("scan_cancellation_requested(job_id: Uuid)"));
+        assert!(token_source.contains("read_bounded_runtime_file"));
+        assert!(token_source.contains("token.job_id != job_id"));
+        assert!(token_source.contains("cancel-scan-{job_id}"));
         assert!(!token_source.contains("path.exists()"));
         assert!(!token_source.contains("temp_path.exists()"));
         assert!(!token_source.contains(&old_write_pattern));

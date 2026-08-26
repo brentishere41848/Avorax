@@ -123,6 +123,13 @@ Scan-cancel IPC subprocesses are time-bounded. If cancellation IPC does not fini
 
 Scan-cancel IPC responses are verified before success is reported. The Flutter client reads bounded stdout/stderr from the cancellation subprocess, rejects non-zero exits, missing/malformed responses, and explicit `ok:false` results, and only treats `ok:true` as a successful cancel request.
 
+Checkpoint 2240 additionally binds scan and cancel IPC to one canonical random
+job UUID created before the scan process starts. The exact process lease retains
+that ID, successful cancel responses must echo it, and Local Core checks only a
+strict 1 KiB per-job token whose path and JSON content match it. This prevents
+stale or wrong-job token retargeting within normal clients; the UUID remains a
+same-user capability rather than cross-identity authentication.
+
 Elevated PowerShell helper subprocesses collect both stdout and stderr through bounded IPC readers. Timeout handling kills the PowerShell launcher and reports bounded diagnostics from either stream.
 
 LocalCoreClient exception diagnostics are bounded before reaching UI recovery paths. Protection self-test, install-report open, local-core IPC failures, cancel IPC, and executable probe exceptions normalize details with the shared IPC diagnostic limit.

@@ -246,8 +246,10 @@ if ($ScanType -eq "Full") {
   $scanKind = "custom"
 }
 
+$scanJobId = [System.Guid]::NewGuid().ToString("D")
 $command = [ordered]@{
   command = $commandName
+  job_id = $scanJobId
   action_mode = $actionMode
   scan_kind = $scanKind
 }
@@ -304,6 +306,7 @@ try {
     local_core_path = $binary
     scan_type = $ScanType
     command = $commandName
+    job_id = $scanJobId
     scan_kind = $scanKind
     action_mode = $actionMode
     auto_quarantine_confirmed = [bool]$AutoQuarantineConfirmed

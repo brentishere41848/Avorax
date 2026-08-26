@@ -3,6 +3,8 @@ param(
   [string]$LocalCorePath = "",
   [string]$ReportPath = "",
   [string]$DataRoot = "",
+  [Parameter(Mandatory = $true)]
+  [string]$JobId,
   [switch]$UseInstalledDataRoot,
   [int]$TimeoutSeconds = 120
 )
@@ -37,6 +39,56 @@ function Assert-NotReparsePath {
   $item = Get-Item -LiteralPath $PathValue -Force -ErrorAction Stop
   if (($item.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0) {
     throw "$Description must not be a reparse point: $PathValue"
+  }
+}
+
+function Resolve-CanonicalJobId {
+  param([string]$Value)
+  if ([string]::IsNullOrWhiteSpace($Value)) {
+    throw "Avorax cancel scan requires -JobId."
+  }
+  if ($Value.Contains([char]0) -or $Value.Length -gt 128) {
+    throw "Avorax cancel scan JobId is malformed."
+  }
+  $parsed = [Guid]::Empty
+  if (-not [Guid]::TryParseExact($Value, "D", [ref]$parsed)) {
+    throw "Avorax cancel scan JobId must be a canonical UUID."
+  }
+  $canonical = $parsed.ToString("D")
+  if (-not $Value.Equals($canonical, [StringComparison]::Ordinal)) {
+    throw "Avorax cancel scan JobId must use canonical lowercase hyphenated UUID form."
+  }
+  return $canonical
+}
+
+function Read-BoundedJsonFile {
+  param([string]$PathValue, [int]$MaxBytes, [string]$Description)
+  Assert-NotReparsePath $PathValue $Description
+  $stream = $null
+  try {
+    $stream = [System.IO.File]::Open(
+      $PathValue,
+      [System.IO.FileMode]::Open,
+      [System.IO.FileAccess]::Read,
+      [System.IO.FileShare]::Read
+    )
+    $buffer = [byte[]]::new($MaxBytes + 1)
+    $total = 0
+    while ($total -lt $buffer.Length) {
+      $read = $stream.Read($buffer, $total, $buffer.Length - $total)
+      if ($read -eq 0) { break }
+      $total += $read
+    }
+    if ($total -gt $MaxBytes) {
+      throw "$Description exceeds $MaxBytes bytes."
+    }
+    $utf8 = [System.Text.UTF8Encoding]::new($false, $true)
+    $text = $utf8.GetString($buffer, 0, $total)
+    return $text | ConvertFrom-Json -ErrorAction Stop
+  } catch {
+    throw "$Description is not valid bounded JSON: $(Get-BoundedText $_.Exception.Message)"
+  } finally {
+    if ($null -ne $stream) { $stream.Dispose() }
   }
 }
 
@@ -208,6 +260,7 @@ function Write-JsonReportAtomic {
 
 $repo = (Resolve-Path -LiteralPath $RepoRoot).Path
 $binary = Resolve-LocalCoreBinary $repo $LocalCorePath
+$jobIdFull = Resolve-CanonicalJobId $JobId
 
 if (-not [string]::IsNullOrWhiteSpace($DataRoot) -and $UseInstalledDataRoot) {
   throw "Avorax cancel scan accepts either -DataRoot or -UseInstalledDataRoot, not both."
@@ -231,9 +284,13 @@ try {
 
   $command = [ordered]@{
     command = "cancel_scan"
+    job_id = $jobIdFull
   }
   $result = Invoke-LocalCoreJson $command $repo $binary $TimeoutSeconds
   $response = $result.response
+  if (-not ([string]$response.job_id).Equals($jobIdFull, [StringComparison]::Ordinal)) {
+    throw "local-core cancel response job_id did not match the requested scan job."
+  }
   $tokenPath = [string]$response.cancel_token
   if ([string]::IsNullOrWhiteSpace($tokenPath)) {
     throw "local-core cancel response is missing cancel_token."
@@ -249,8 +306,9 @@ try {
   }
 
   $tokenFull = [System.IO.Path]::GetFullPath($tokenPath)
-  if ([System.IO.Path]::GetFileName($tokenFull) -ne "cancel-active-scan") {
-    throw "local-core cancel_token leaf must be cancel-active-scan: $tokenFull"
+  $expectedLeaf = "cancel-scan-$jobIdFull"
+  if ([System.IO.Path]::GetFileName($tokenFull) -cne $expectedLeaf) {
+    throw "local-core cancel_token leaf must match the requested scan job: $tokenFull"
   }
   $tokenExists = Test-Path -LiteralPath $tokenFull -PathType Leaf
   if ($tokenExists) {
@@ -259,7 +317,7 @@ try {
 
   $tokenUnderDataRoot = $false
   if (-not [string]::IsNullOrWhiteSpace($dataRootFull)) {
-    $expectedToken = Join-Path (Join-Path $dataRootFull "runtime") "cancel-active-scan"
+    $expectedToken = Join-Path (Join-Path $dataRootFull "runtime") $expectedLeaf
     if (-not $tokenFull.Equals([System.IO.Path]::GetFullPath($expectedToken), [StringComparison]::OrdinalIgnoreCase)) {
       throw "local-core cancel_token must stay inside DataRoot runtime: $tokenFull"
     }
@@ -267,6 +325,12 @@ try {
       throw "local-core cancel_token was not written: $tokenFull"
     }
     $tokenUnderDataRoot = Test-PathUnderRoot $tokenFull $dataRootFull
+  }
+  if ($tokenExists) {
+    $tokenBody = Read-BoundedJsonFile $tokenFull 1024 "local-core cancel token"
+    if ($tokenBody.schema_version -ne 1 -or -not ([string]$tokenBody.job_id).Equals($jobIdFull, [StringComparison]::Ordinal)) {
+      throw "local-core cancel token did not bind to the requested scan job."
+    }
   }
 
   $summary = [ordered]@{
@@ -276,6 +340,7 @@ try {
     repository = $repo
     local_core_path = $binary
     command = "cancel_scan"
+    job_id = $jobIdFull
     data_root = $dataRootFull
     use_installed_data_root = [bool]$UseInstalledDataRoot
     cancel_requested = $true
@@ -299,6 +364,7 @@ try {
     }
     limitations = @(
       "cooperative-cancel-token-request-only",
+      "job-id-capability-not-cross-identity-authentication",
       "running-scan-observation-covered-by-local-core-regressions",
       "no-installed-service-e2e-claim",
       "no-external-process-kill",

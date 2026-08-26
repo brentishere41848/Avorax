@@ -236,6 +236,7 @@ try {
 
   $scan = Invoke-LocalCoreBinaryJson @{
     command = "full_scan"
+    job_id = [System.Guid]::NewGuid().ToString("D")
     paths = @($scanRoot)
     action_mode = "autoQuarantineConfirmedOnly"
     scan_kind = "full"

@@ -3034,3 +3034,16 @@ remain genuine blockers or disabled capabilities.
   processes and is not authenticated to a job ID. Cross-instance serialization,
   installed service ownership, kernel cancellation, and pre-execution blocking
   remain genuine blockers and are not claimed.
+
+## Checkpoint 2240 Scan Job Cancellation Binding
+
+- The shared Local Core marker is replaced by one strict, bounded token per
+  canonical random scan UUID. Scan/cancel IPC, progress, subprocess ownership,
+  response, and token content are explicitly job-bound.
+- Exact 269-step verification and source contract 670 are scripted but not yet
+  run. This removes accidental stale/wrong-job cancellation only after evidence
+  passes.
+- Same-user code able to observe a UUID remains inside the capability boundary.
+  Cross-identity authentication, installed service ownership, hard interruption
+  inside one file inspection, driver/kernel cancellation, and pre-execution
+  blocking remain genuine blockers.

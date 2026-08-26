@@ -11584,3 +11584,46 @@ pending.
   `f198239723c3dcb07f0146fcb03c766520df894dce09ec2e8383e0d9acaff491`.
   Locks, zero processes/sync residue, and the protected vault stay exact.
   Checkpoint 2239 is closed; the complete antivirus project remains active.
+
+## 2026-08-26 - Checkpoint 2240 Scan Job Cancellation Binding Scripted
+
+- Audited the Local Core cancellation chain left after checkpoint 2239. Local
+  Core still generated its job ID after process start and every process shared
+  one `cancel-active-scan` runtime marker.
+- Scripted a canonical random UUID before every Flutter scan process start and
+  bound scan IPC, progress, exact process lease, cancel IPC, and echoed response
+  to that UUID. Cancel without an active job now fails before process launch.
+- Replaced the shared marker with strict, bounded per-job token JSON under
+  `runtime/cancel-scan-<UUID>`. Wrong-job, mismatched, malformed, oversized,
+  and unsafe token evidence fails visibly.
+- Scripted benign Rust/Dart/PowerShell adversarial coverage, mandatory verifier
+  step 269, source contract 670, and audit/dependency documentation. No
+  checkpoint-2240 test has run during this scripting phase.
+- Same-user code that learns a UUID remains in the capability boundary. No
+  cross-identity, installed-service, kernel, hard-cancel, or pre-execution claim
+  is made; no protected-vault mutation is involved.
+
+## 2026-08-26 - Checkpoint 2240 Local Verification
+
+- Focused Rust cancellation (`5/5`), canonical job-ID IPC (`1/1`), scan-loop
+  cancellation (`1/1`), Flutter cancellation (`4/4`), and repaired cancel source
+  marker (`1/1`) pass. Local Core passes `543/543`; release build, strict Clippy,
+  cancel/local-scan/direct release smokes, and Flutter analyze pass.
+- Python source contracts pass `670/670`, all 38 modified PowerShell scripts
+  parse under Windows PowerShell 5.1 and PowerShell 7, and complete Flutter
+  passes `847/847`.
+- The definitive no-skip/no-Defender report runs from
+  `2026-08-26T07:01:43.1256621Z` through
+  `2026-08-26T07:09:38.1561571Z` and passes exact `269/269` with zero failed
+  steps in `475s`. Built-in and independent strict validators pass under both
+  Windows PowerShell 5.1 and PowerShell 7.
+- A 268-step copy missing `scan job-bound cancellation regressions` and a
+  269-step copy missing the exact canonical-UUID scope are rejected. The first
+  evidence wrapper used an over-specific wrapped-output regex after the
+  validator correctly returned exit 1; the simplified wrapper records both
+  expected rejections. Stale source assertions found by initial source-contract
+  and Flutter runs were repaired and complete suites rerun. A wrong-directory
+  Clippy command failed before compilation; the exact manifest command passed.
+- Hosted exact-head CI/packages, evidence head, merge, merged-main evidence,
+  guarded original-tree synchronization, and destination verification remain
+  pending. The complete antivirus goal remains active.

@@ -4926,9 +4926,23 @@ remain unclaimed.
 | Replacement scan starts | Controller and visible scan controls | Scripted, not yet verified | Manual quick/full/custom/rescan, picker, scheduler, Home, Protection, Scan, and Quarantine starts blocked while cancellation is in flight |
 | Active scan subprocess | `LocalCoreClient` | Scripted, not yet verified | Exact process lease captured before cancel IPC/delay; only identical owning lease may clear the slot |
 | Unrelated Local Core IPC | `LocalCoreClient._call` | Scripted, not yet verified | Non-scan calls own no lease and cannot clear active scan fallback ownership |
-| Cross-instance cancel token | Local Core runtime file | Technically limited | Current-user-runtime shared token; no authenticated job-ID or cross-instance isolation |
+| Cross-instance cancel token | Local Core runtime file | Superseded by checkpoint 2240 scripting | Per-job UUID/token binding replaces the shared marker; same-user capability is not cross-identity authentication |
 | Checkpoint 2239 verifier contract | Verifier, validator, source contracts | Scripted, not yet verified | Mandatory cancellation ownership target, exact 268 steps, source contract 669 |
 
 No checkpoint-2239 passing result is claimed during scripting. The change
 narrows post-start cancellation ownership only; it does not add durable service,
 driver/kernel, or pre-execution blocking capability.
+
+## Checkpoint 2240 Scan Job Cancellation Binding Matrix
+
+| Control | Responsibility | Scripted state | Evidence target / limit |
+| --- | --- | --- | --- |
+| Client scan job UUID | Create one canonical random UUID before process start and bind scan IPC plus exact process lease | Scripted, not yet verified | Flutter benign subprocess regression; same-user capability only |
+| Local Core job parser/progress | Require canonical UUID on every scan/cancel command and preserve it in progress | Scripted, not yet verified | Rust canonical/missing/malformed command regressions |
+| Per-job cancellation token | Exclusive staged write, 1 KiB bound, strict JSON/schema/job validation, non-following path checks | Scripted, not yet verified | Wrong-job, mismatch, malformed, oversized, symlink regressions |
+| Cancel wrapper | Require `-JobId`; validate echo, exact leaf/content/root and negative no-output guards | Scripted, not yet verified | Release-binary wrapper smoke with malformed-ID case |
+| Checkpoint 2240 verifier contract | Verifier, validator, source contracts | Scripted, not yet verified | Mandatory job-bound cancellation target, exact 269 steps, source contract 670 |
+
+Cancellation remains cooperative user-mode post-start control. Job binding is
+not cross-identity authentication, installed service ownership, hard engine
+interruption, driver/kernel interception, or pre-execution blocking.

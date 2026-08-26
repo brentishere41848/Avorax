@@ -6660,3 +6660,22 @@ guarded synchronization, and destination proof remain pending.
   across client instances. Service/cross-identity ownership, driver/kernel
   enforcement, and pre-execution blocking remain partial or blocked.
   Checkpoint 2239 is closed; the complete antivirus project remains active.
+
+## Checkpoint 2240 - Scan Job Cancellation Binding Local Pass
+
+- Each client scan receives a canonical random
+  UUID before process start. Scan command/progress, exact process lease, cancel
+  command, and successful cancel response must share that ID.
+- Local Core uses a strict, 1 KiB-bounded per-job JSON token at
+  `runtime/cancel-scan-<UUID>`. Missing/noncanonical IPC IDs and wrong,
+  mismatched, malformed, oversized, symlink/reparse token evidence fail visibly.
+- Focused checks, strict lint, release/wrapper smokes, Local Core `543/543`,
+  Flutter analyze and `847/847`, source contracts `670/670`, and dual-host
+  PowerShell parsing pass. The definitive no-skip/no-Defender verifier and both
+  strict validators pass exact `269/269` in `475s`; missing-step and missing-
+  UUID-scope report copies are rejected.
+- Hosted exact-head CI/packages, merge, synchronization, and destination
+  evidence remain pending; no release or publication has occurred.
+- **Limit:** UUID binding remains a same-user capability, not cross-identity
+  authentication or installed service/kernel/pre-execution control. The
+  complete antivirus goal remains active.

@@ -3,14 +3,16 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:zentor_protocol/zentor_protocol.dart';
+import 'package:uuid/uuid.dart';
 
 typedef LocalCoreProcessStarter =
     Future<Process> Function(String executable, List<String> arguments);
 
 class _ActiveScanProcessLease {
-  const _ActiveScanProcessLease(this.process);
+  const _ActiveScanProcessLease(this.process, this.jobId);
 
   final Process process;
+  final String jobId;
 }
 
 const avoraxInstallerOwnedRepairBlocker =
@@ -46,6 +48,7 @@ class LocalCoreClient {
   final Duration? serviceHealthTimeout;
 
   static _ActiveScanProcessLease? _activeScanProcessLease;
+  static const Uuid _scanJobIdGenerator = Uuid();
   static const _maxIpcStatusTextLength = 256;
   static const _maxIpcDiagnosticTextLength = 2048;
   static const _maxIpcStdoutLineLength = 64 * 1024;
@@ -1466,14 +1469,17 @@ if ($service.Status -ne 'Running') {
 
   Future<String?> cancelActiveScan() async {
     final activeScanLease = _activeScanProcessLease;
+    if (activeScanLease == null) {
+      return 'Avorax local core cancel request was rejected: no active scan job is available.';
+    }
     Object? cancelError;
     try {
-      await _sendCancelScanRequest();
+      await _sendCancelScanRequest(activeScanLease.jobId);
     } on Object catch (error) {
       cancelError = error;
     }
     await Future<void>.delayed(const Duration(milliseconds: 250));
-    final killed = activeScanLease?.process.kill() ?? false;
+    final killed = activeScanLease.process.kill();
     if (cancelError != null) {
       final fallback = killed
           ? 'process kill fallback was requested'
@@ -1491,6 +1497,8 @@ if ($service.Status -ne 'Running') {
     required ScanActionMode actionMode,
     void Function(ScanProgress progress)? onProgress,
   }) async {
+    final scanJobId = _scanJobIdGenerator.v4();
+    command['job_id'] = scanJobId;
     final response = await _call(command, onProgress: onProgress);
     if (response == null || response['ok'] == false) {
       final error = _ipcDiagnosticOrNull(response?['error']);
@@ -1545,17 +1553,29 @@ if ($service.Status -ne 'Running') {
     if (launchBlocker != null) {
       return {'ok': false, 'error': launchBlocker};
     }
+    final isScanCommand =
+        command['command'] == 'scan_file' ||
+        command['command'] == 'scan_folder' ||
+        command['command'] == 'quick_scan_selected_paths' ||
+        command['command'] == 'full_scan';
+    final scanJobId = command['job_id'];
+    if (isScanCommand && (scanJobId is! String || scanJobId.isEmpty)) {
+      return {
+        'ok': false,
+        'error': 'Avorax local core scan command was missing its job ID.',
+      };
+    }
     _ActiveScanProcessLease? trackedScanLease;
     try {
       final process = await (processStarter ?? Process.start)(
         executablePath,
         executableArguments,
       );
-      if (command['command'] == 'scan_file' ||
-          command['command'] == 'scan_folder' ||
-          command['command'] == 'quick_scan_selected_paths' ||
-          command['command'] == 'full_scan') {
-        trackedScanLease = _ActiveScanProcessLease(process);
+      if (isScanCommand) {
+        trackedScanLease = _ActiveScanProcessLease(
+          process,
+          scanJobId as String,
+        );
         _activeScanProcessLease = trackedScanLease;
       }
       return await (() async {
@@ -2418,7 +2438,7 @@ if ($service.Status -ne 'Running') {
     return reasons;
   }
 
-  Future<void> _sendCancelScanRequest() async {
+  Future<void> _sendCancelScanRequest(String jobId) async {
     if (!isDesktop) {
       throw StateError('Avorax local core scan cancellation is desktop-only.');
     }
@@ -2447,7 +2467,9 @@ if ($service.Status -ne 'Running') {
         executablePath,
         executableArguments,
       );
-      process.stdin.writeln(jsonEncode({'command': 'cancel_scan'}));
+      process.stdin.writeln(
+        jsonEncode({'command': 'cancel_scan', 'job_id': jobId}),
+      );
       await process.stdin.close();
       final results =
           await Future.wait<Object?>([
@@ -2486,7 +2508,15 @@ if ($service.Status -ne 'Running') {
           'Cancel IPC returned response with protocol warnings: ${stdout.protocolWarnings.first}',
         );
       }
-      if (ok == true) return;
+      if (ok == true) {
+        final responseJobId = response['job_id'];
+        if (responseJobId != jobId) {
+          throw StateError(
+            'Cancel IPC response job ID did not match the active scan job.',
+          );
+        }
+        return;
+      }
       final error = _ipcDiagnosticOrNull(response['error']);
       if (ok == false) {
         throw StateError(error ?? 'Cancel IPC request failed.');

