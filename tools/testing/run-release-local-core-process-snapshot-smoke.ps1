@@ -235,6 +235,7 @@ try {
     (New-ProcessObservation 43 "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" ("powershell.exe " + ("a" * 4352) + " -EncodedCommand benign-tail-fixture") $true),
     (New-ProcessObservation 44 "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" "powershell.exe benign bounded head and tail fixture" $true $true),
     (New-ProcessObservation 45 "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" $null $true $true),
+    (New-ProcessObservation 46 "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" "powershell.exe Set-MpPreference; vssadmin.exe delete shadows" $true),
     (New-ProcessObservation 77 "C:\Users\Brent\AppData\Local\Temp\curl.exe" "curl.exe https://example.invalid/benign-fixture" $false),
     (New-ProcessObservation 78 "C:\Users\Brent\..\Temp\bad.exe" "bad.exe" $false)
   )
@@ -269,8 +270,15 @@ try {
   if ([int]$snapshot.skipped_processes -lt 12) {
     throw "release local-core process snapshot did not report skipped malformed/over-limit observations: $(Get-BoundedText ($snapshot | ConvertTo-Json -Compress -Depth 8))"
   }
-  if (@($snapshot.findings).Count -ne 4) {
-    throw "release local-core process snapshot expected exactly four suspicious findings: $(Get-BoundedText ($snapshot | ConvertTo-Json -Compress -Depth 10))"
+  if ([int]$snapshot.native_behavior_attempted -ne 4 -or
+      [int]$snapshot.native_behavior_completed -ne 4 -or
+      [int]$snapshot.native_behavior_failed -ne 0 -or
+      [int]$snapshot.native_behavior_limited -ne 0 -or
+      @($snapshot.diagnostics).Count -ne 0) {
+    throw "release local-core process snapshot did not complete the bounded Native behavior batch without hidden errors: $(Get-BoundedText ($snapshot | ConvertTo-Json -Compress -Depth 10))"
+  }
+  if (@($snapshot.findings).Count -ne 5) {
+    throw "release local-core process snapshot expected exactly five review findings: $(Get-BoundedText ($snapshot | ConvertTo-Json -Compress -Depth 10))"
   }
 
   $scriptFinding = @($snapshot.findings) | Where-Object {
@@ -298,6 +306,19 @@ try {
   }
   Assert-FindingReason $sourceTruncationFinding "omitted arguments require review"
 
+  $nativeTamperFinding = @($snapshot.findings) | Where-Object {
+    $_.pid -eq 46 -and $_.verdict -eq "suspiciousProcess" -and [int]$_.score -ge 50
+  } | Select-Object -First 1
+  if ($null -eq $nativeTamperFinding) {
+    throw "release local-core process snapshot did not surface the Native-only security-tamper review: $(Get-BoundedText ($snapshot | ConvertTo-Json -Compress -Depth 10))"
+  }
+  Assert-FindingReason $nativeTamperFinding "Security-tamper command review"
+  Assert-FindingReason $nativeTamperFinding "no process was stopped"
+  $findingJson = $snapshot.findings | ConvertTo-Json -Compress -Depth 10
+  if ($findingJson -like "*Set-MpPreference*" -or $findingJson -like "*vssadmin.exe*") {
+    throw "release local-core process snapshot exposed raw command evidence in findings: $(Get-BoundedText $findingJson)"
+  }
+
   $downloadFinding = @($snapshot.findings) | Where-Object {
     $_.pid -eq 77 -and $_.verdict -eq "suspiciousProcess" -and [int]$_.score -ge 40
   } | Select-Object -First 1
@@ -307,11 +328,11 @@ try {
   Assert-FindingReason $downloadFinding "remote transfer"
   Assert-FindingReason $downloadFinding "user-writable"
 
-  $allowedPath = "C:\Users\Brent\AppData\Local\Temp\curl.exe"
+  $allowedPath = "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe"
   $allowed = Invoke-LocalCoreBinaryJson -Command @{
     command = "evaluate_process_snapshot"
     process_observations = @(
-      (New-ProcessObservation 99 $allowedPath "curl.exe https://example.invalid/benign-fixture" $false)
+      (New-ProcessObservation 99 $allowedPath "powershell.exe Set-MpPreference; vssadmin.exe delete shadows" $true)
     )
     process_monitor_policy = @{
       suspicious_threshold = 40
@@ -319,7 +340,11 @@ try {
     }
   } -InputJsonPath $inputJson -Repo $repo -Binary $binary -Timeout $TimeoutSeconds
 
-  if ($allowed.ok -ne $true -or @($allowed.findings).Count -ne 0 -or [int]$allowed.skipped_processes -ne 0) {
+  if ($allowed.ok -ne $true -or
+      @($allowed.findings).Count -ne 0 -or
+      [int]$allowed.skipped_processes -ne 0 -or
+      [int]$allowed.native_behavior_attempted -ne 0 -or
+      @($allowed.diagnostics).Count -ne 0) {
     throw "release local-core process snapshot did not honor exact normalized allowlist policy: $(Get-BoundedText ($allowed | ConvertTo-Json -Compress -Depth 8))"
   }
 
@@ -349,6 +374,7 @@ try {
   Write-Host "Observed processes: $($snapshot.observed_processes)"
   Write-Host "Skipped processes: $($snapshot.skipped_processes)"
   Write-Host "Findings: $(@($snapshot.findings).Count)"
+  Write-Host "Native behavior reviews: $($snapshot.native_behavior_completed)/$($snapshot.native_behavior_attempted)"
   Write-Host "Allowed findings: $(@($allowed.findings).Count)"
   Write-Host "Malformed input exit code: $($malformed.exit_code)"
 } finally {

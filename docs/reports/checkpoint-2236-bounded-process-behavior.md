@@ -184,11 +184,12 @@ Checkpoint 2236 is closed. The complete antivirus project remains active.
 
 ## Limits
 
-This public API is not currently connected to the installed app/service process
-snapshot loop. It is post-start, advisory, and cannot terminate or quarantine a
-process. Bounded head/tail evidence can miss middle arguments; alternate command
-forms and telemetry races remain possible. Disabled providers must remain
-disabled until their exact trusted telemetry and bounded correlation windows are
-implemented and verified. Production calibration, installed E2E, signing,
-cross-identity isolation, driver/kernel enforcement, and pre-execution blocking
-remain external prerequisites.
+At checkpoint-2236 closure this public API was not connected to the app process
+snapshot loop. Checkpoint 2237 subsequently connects and locally verifies that
+bounded app-lifetime path. The API remains post-start/advisory and cannot
+terminate or quarantine a process. Bounded head/tail evidence can miss middle arguments;
+alternate command forms and telemetry races remain possible. Disabled providers
+must remain disabled until their exact trusted telemetry and bounded correlation
+windows are implemented and verified. Production calibration, installed E2E,
+signing, cross-identity isolation, driver/kernel enforcement, and pre-execution
+blocking remain external prerequisites.

@@ -2934,3 +2934,40 @@ command sampling can omit middle text, behavior remains post-start/advisory, fou
 correlation providers remain disabled for missing trusted telemetry, and no
 installed durable, mutation, cross-identity, driver/kernel, or pre-execution
 claim is made.
+
+## Checkpoint 2237 Process Observation Native Wiring Threat Delta
+
+- **Untrusted observation payload:** strict serde rejects unknown fields;
+  inventory, path text, command text, findings, reasons, Native reviews, and
+  diagnostics are independently bounded. Zero PID, parent traversal, NUL, and
+  inconsistent truncation cannot reach Native file I/O.
+- **Arbitrary file-read/resource pressure:** only exact security-sensitive
+  executable identities with command evidence are eligible; exact allowlists
+  bypass before analysis; at most 16 rows invoke Native's file reader, and each
+  process executable is hard-limited to 16 MiB total I/O. Limit omissions and
+  read-limit errors are counted and surfaced, not called clean.
+- **Telemetry provenance/confusion:** upstream truncation is explicit and
+  preserved. POSIX and Guard sources do not invent absent command lines. Parent
+  PID is not parent identity, and lineage remains disabled.
+- **False-positive mutation:** all results are post-start review. The wiring
+  never consumes Native's action string and has no stop/quarantine call. Even a
+  confirmed file verdict is reported without claiming action taken. Trusted
+  file/publisher offsets cannot hide positive observed behavior from review,
+  but that review-only score cannot become mutation.
+- **Error suppression/data disclosure:** analyzer failures become bounded
+  diagnostics that Flutter treats as visible failures. Evidence contains fixed
+  explanations and counts, not raw command lines.
+
+Checkpoint 2237 scripts exact 266-step and source contract 667 coverage. No
+checkpoint-2237 execution result is claimed during scripting; process races,
+snapshot gaps, installed identity boundaries, calibration, kernel enforcement,
+and pre-execution remain residual risks.
+
+**Local verification:** focused and complete Native/Local/Guard, both locked
+workspaces, release smoke, strict lint/format/parser, Flutter analyze and
+`838/838`, and source contracts `667/667` pass. The definitive no-skip/
+no-Defender report passes exact `266/266` in `472.7s` under both strict hosts;
+eight mutations reject under both hosts (`16/16`). Locks and the protected vault
+remain exact. This verifies the bounded local runtime contract only. Hosted,
+installed/durable, synchronization, destination, calibration, mutation,
+driver/kernel, and pre-execution residual risks are unchanged.

@@ -4847,3 +4847,21 @@ publication skipped. Guarded synchronization copied 25 exact blobs, and the
 destination passes the broad suites plus exact `265/265` in `490.8s`, both
 validators, and adversarial `16/16`. The four missing-telemetry providers above
 remain disabled and the installed/durable/pre-execution limitations are unchanged.
+
+## Checkpoint 2237 Process Observation Native Wiring
+
+| Control or engine | Ownership | Scripted state | Evidence or exact limit |
+|---|---|---|---|
+| App-lifetime process inventory | Flutter `AppDetector`, Local Core process monitor | Locally verified by focused/full/release/exact 266-step evidence | Maximum 256 rows; Flutter 2,048-scalar and Local Core 4,096-scalar head/tail samples; Windows CIM owns PID/parent/path/command, POSIX does not fabricate command data |
+| Native script-host observation | `native.behavior.process_script_host` | Enabled, connected, and locally verified through Local Core | Exact command-host identity, zero host-only weight, maximum 16 Native reviews per snapshot |
+| Native security-tamper review | `native.behavior.process_security_tamper` | Enabled, connected, and locally verified | File-plus-behavior fusion, caller truncation provenance, positive behavior remains review-visible despite trusted-file offsets, exact 16-review/16-diagnostic limits, hard 16 MiB per-process executable-read limit, post-start review only |
+| Process review allowlist | Local Core process monitor | Locally verified before Native candidate/file I/O | Exact normalized path match; no substring/prefix suppression |
+| Process review errors | Local Core IPC, Flutter parser/controller | Locally verified fail-visible | attempted/completed/failed/limited counters, max 16 sanitized 4,096-character diagnostics, existing failure event/state path |
+| Process action | Local Core | Disabled by design | Native recommendation is ignored; no stop, kill, block, quarantine, delete, restore, or candidate execution |
+| Guard commandline behavior wiring | Guard service | Disabled/blocked | Guard enumeration owns PID/path only; trusted bounded commandline transport is absent |
+| Parent-child lineage | Native behavior inventory | Disabled/blocked | Parent PID is not verified parent image identity |
+
+The release smoke, source contract `667/667`, complete component/workspace/
+Flutter suites, and exact no-skip/no-Defender `266/266` verifier pass locally.
+Both strict hosts accept the report and adversarial variants reject `16/16`.
+Hosted, integration, synchronization, and destination evidence remains open.

@@ -6505,3 +6505,30 @@ guarded synchronization, and destination proof remain pending.
   production calibration, signing, installed E2E, cross-identity isolation,
   driver/kernel enforcement, and pre-execution blocking remain open. Checkpoint
   2236 is closed; the complete antivirus project is not complete.
+
+## Checkpoint 2237 - Process Observation Native Wiring
+
+- **Implemented:** Local Core connects valid, non-allowlisted,
+  command-bearing app-lifetime process observations to Native file-plus-
+  behavior process-start review. The batch is exact-bounded to 16 reviews;
+  attempted/completed/failed/limited counts and sanitized diagnostics flow
+  through Flutter and the existing visible protection failure path. Native
+  process executable I/O is separately hard-limited to 16 MiB per review.
+- Caller-reported command omission is preserved end to end. Zero PID, NUL,
+  truncation-without-command, malformed paths, and allowlisted images are
+  rejected or skipped before Native file I/O. Review never stops, quarantines,
+  deletes, restores, or executes process content.
+- **Locally verified:** focused Native `22/22`, Local `3/3`, Flutter IPC
+  `88/88`, and release process smoke pass. Complete Native passes `542/542`
+  plus 19 deliberate ignores and compiler `6/6`; Local passes `540/540`;
+  Guard passes `248/248 + 249/249`; both locked workspaces, strict Clippy,
+  format/parser/diff checks, Flutter analyze and `838/838`, and source
+  contracts `667/667` pass.
+- **Definitive local verified:** exact no-skip/no-Defender `266/266` passes in
+  `472.7s` with zero failed/skipped; both strict hosts accept the report and
+  adversarial variants reject `16/16`. Locks and the protected vault remain
+  exact. Hosted, merge, synchronization, and destination proof remain pending.
+- **Limits:** this remains a two-minute app-lifetime snapshot, not an installed
+  service/driver stream. Guard commandline telemetry, verified parent-image
+  lineage, durable cross-identity operation, production calibration, process
+  enforcement, and pre-execution blocking remain partial or blocked.

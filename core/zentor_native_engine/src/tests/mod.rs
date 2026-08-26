@@ -626,6 +626,7 @@ mod tests {
                 command_line: Some(
                     "powershell.exe Set-MpPreference; vssadmin.exe delete shadows".to_string(),
                 ),
+                command_line_truncated: false,
             })
             .unwrap();
 
@@ -654,6 +655,7 @@ mod tests {
                 parent_process_id: None,
                 executable_path: executable,
                 command_line: None,
+                command_line_truncated: false,
             })
             .unwrap();
 
@@ -671,10 +673,32 @@ mod tests {
                 parent_process_id: None,
                 executable_path: std::path::PathBuf::from("missing.exe"),
                 command_line: None,
+                command_line_truncated: false,
             })
             .unwrap_err();
 
         assert!(error.to_string().contains("nonzero process id"));
+    }
+
+    #[test]
+    fn process_behavior_executable_read_is_hard_limited() {
+        let (dir, mut engine) = test_engine();
+        let executable = dir.path().join("cmd.exe");
+        let file = fs::File::create(&executable).unwrap();
+        file.set_len(crate::engine::MAX_PROCESS_EXECUTABLE_READ_BYTES + 1)
+            .unwrap();
+
+        let error = engine
+            .analyze_process_start(ProcessStartEvent {
+                process_id: 44,
+                parent_process_id: None,
+                executable_path: executable,
+                command_line: Some("cmd.exe /c echo benign fixture".to_string()),
+                command_line_truncated: false,
+            })
+            .unwrap_err();
+
+        assert!(error.to_string().contains("exceeds total read limit"));
     }
 
     #[test]

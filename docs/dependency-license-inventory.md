@@ -1442,3 +1442,22 @@ Native lint, Flutter analyze/`838/838`, exact 265-step dependency gate, and exac
 lock hashes pass. No dependency, feature, lockfile, machine-wide component,
 release, or publication changed. Final-binary license resolution, production
 signing, and legal approval remain separate prerequisites.
+
+## Checkpoint 2237 Dependency Scope
+
+Process observation Native wiring reuses the existing Local Core dependency on
+`zentor_native_engine`, existing `anyhow`/serde types, Flutter/Dart standard
+libraries, and repository PowerShell/Python verification tools. It adds no
+dependency, feature, downloaded model/rule, package source, license obligation,
+or lockfile change. Benign tests create only text or temporary ordinary files
+and never execute candidate content. Source contract 667 and exact verifier
+cardinality 266 bind this scope. Lock, package/SBOM, hosted, and final signed-
+artifact license evidence remain pending; no checkpoint-2237 passing result is
+claimed during scripting.
+
+Local execution confirms all three lockfile SHA-256 values remain exact. Strict
+component lint, both locked workspace modes, Flutter analyze/`838/838`, source
+contracts `667/667`, and the exact `266/266` dependency/report gate pass. No
+dependency, feature, package source, license classification, or lockfile changed.
+Hosted package/CycloneDX and complete signed final-binary license/notice review
+remain pending and are not inferred from this local result.

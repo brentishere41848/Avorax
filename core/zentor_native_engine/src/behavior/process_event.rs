@@ -6,4 +6,5 @@ pub struct ProcessStartEvent {
     pub parent_process_id: Option<u32>,
     pub executable_path: PathBuf,
     pub command_line: Option<String>,
+    pub command_line_truncated: bool,
 }

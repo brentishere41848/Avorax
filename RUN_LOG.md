@@ -11335,3 +11335,41 @@ pending.
   CycloneDX 1.6 lockfile SBOM evidence with 569 components.
 - Evidence-head CI/packages, normal merge, merged-main evidence, guarded
   original-tree synchronization, and destination verification remain pending.
+
+## 2026-08-26 - Checkpoint 2237 Process Observation Native Wiring Scripted
+
+- Audited Guard and Local Core process paths. Guard owns PID/executable path but
+  no trustworthy command line, so wiring behavior there would fabricate
+  capability. The Flutter Windows CIM snapshot owns bounded PID, parent PID,
+  path, and command telemetry and is selected; POSIX does not invent command
+  data.
+- Scripted end-to-end truncation provenance, lazy Native initialization, exact
+  relevant-host filtering, exact 16-review cap, allowlist-before-file-I/O,
+  a hard 16 MiB per-process executable read limit, bounded diagnostics, four review
+  counters, finding merge, and Flutter-visible failure routing. No Native
+  recommendation is executed.
+- Scripted benign/adversarial Rust and Flutter regressions, a release-binary
+  Native-only tamper review fixture, mandatory verifier target, strict exact
+  266-step validation, source contract 667, and audit/dependency/report docs.
+- No checkpoint-2237 test has run and no passing result is claimed during the
+  required scripting-first phase. Vault, Defender, services/drivers, installed
+  components, release/publication state, and candidate execution are untouched.
+
+## 2026-08-26 - Checkpoint 2237 Local Verification
+
+- PS5.1/PS7 parser checks, Rustfmt, Dart format, diff checks, strict Native and
+  Local Clippy, and Flutter analyze pass. Focused Native behavior is `22/22`,
+  Local Native review `3/3`, Flutter IPC diagnostics `88/88`, and the release
+  process smoke completes Native `4/4` with zero failure/limit/diagnostic.
+- Full Native is `542/542` plus 19 deliberate child-entrypoint ignores and
+  compiler `6/6`; Local is `540/540`; Guard is `248/248 + 249/249`; both locked
+  workspaces pass; Flutter is `838/838`; source contracts are `667/667`.
+- The definitive explicit-tool, no-skip/no-Defender verifier passes exact
+  `266/266`, zero failed/skipped, in `472.7s`. Both independent validators pass
+  and eight report mutations under both hosts reject `16/16`. Report SHA-256 is
+  `2b8a58df72bd7905aee0aa01a42d69614853f4c54e17ddc7cc85046bb54983d4`.
+- All three locks remain exact. Read-only vault verification remains exact at
+  16,072 files, zero directories, 4,522,733 bytes, 5,357 each payload/JSON/auth,
+  one key, and zero pending/other/reparse. Hosted/integration/destination proof
+  remains pending; no install, service/driver start, Defender change, release,
+  publication, candidate execution, or vault mutation occurred.

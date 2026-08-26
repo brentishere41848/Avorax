@@ -11,8 +11,9 @@ pub struct SecurityTamperAssessment {
 pub fn assess_security_tamper(
     executable_name: &str,
     command_line: &str,
+    source_reported_truncated: bool,
 ) -> SecurityTamperAssessment {
-    let (sample, command_line_truncated) = bounded_head_tail_sample(command_line);
+    let (sample, locally_truncated) = bounded_head_tail_sample(command_line);
     let command_host = is_command_host(executable_name);
     let mut count = 0_u8;
 
@@ -55,7 +56,7 @@ pub fn assess_security_tamper(
         score: u32::from(count)
             .saturating_mul(25)
             .min(MAX_SECURITY_TAMPER_SCORE),
-        command_line_truncated,
+        command_line_truncated: source_reported_truncated || locally_truncated,
     }
 }
 
@@ -148,14 +149,17 @@ mod tests {
         let direct = assess_security_tamper(
             "VSSADMIN.EXE",
             r#""C:\Windows\System32\vssadmin.exe" delete shadows /all"#,
+            false,
         );
         let hosted = assess_security_tamper(
             "powershell.exe",
             "Set-MpPreference -DisableRealtimeMonitoring $true; Set-MpPreference; vssadmin.exe delete shadows",
+            false,
         );
         let quoted_by_benign = assess_security_tamper(
             "documentation-viewer.exe",
             "example: Set-MpPreference and vssadmin.exe delete shadows",
+            false,
         );
 
         assert_eq!(direct.distinct_indicator_count, 1);
@@ -169,7 +173,7 @@ mod tests {
     fn process_behavior_tamper_sample_is_utf8_safe_and_bounded() {
         let mut command = "é".repeat(MAX_PROCESS_COMMAND_LINE_SAMPLE_BYTES);
         command.push_str(" bcdedit.exe /set recoveryenabled no");
-        let assessment = assess_security_tamper("cmd.exe", &command);
+        let assessment = assess_security_tamper("cmd.exe", &command, false);
 
         assert!(assessment.command_line_truncated);
         assert_eq!(assessment.distinct_indicator_count, 1);
@@ -181,7 +185,20 @@ mod tests {
         let assessment = assess_security_tamper(
             "powershell.exe",
             "notset-mppreference and disableantispywarelookalike",
+            false,
         );
+        assert_eq!(assessment.score, 0);
+    }
+
+    #[test]
+    fn process_behavior_preserves_source_reported_command_omission() {
+        let assessment = assess_security_tamper(
+            "powershell.exe",
+            "powershell.exe benign retained head and tail",
+            true,
+        );
+
+        assert!(assessment.command_line_truncated);
         assert_eq!(assessment.score, 0);
     }
 }

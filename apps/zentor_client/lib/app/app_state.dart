@@ -1949,6 +1949,9 @@ class ZentorController extends StateNotifier<ZentorState> {
         'observed=${report.observedProcesses}',
         'skipped=${report.skippedProcesses}',
         'findings=$findingCount',
+        'native=${report.nativeBehaviorCompleted}/${report.nativeBehaviorAttempted}',
+        'nativeFailed=${report.nativeBehaviorFailed}',
+        'nativeLimited=${report.nativeBehaviorLimited}',
         'status=${report.status}',
         'capability=${report.capability}',
       ];

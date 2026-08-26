@@ -2000,6 +2000,7 @@ if ($service.Status -ne 'Running') {
     }
     final diagnostics = <String>[
       ..._scanErrorList(_field(response, 'scanErrors', 'scan_errors')),
+      ..._scanErrorList(response['diagnostics']),
     ];
     final ok = response['ok'];
     if (ok == false) {
@@ -2240,6 +2241,26 @@ if ($service.Status -ne 'Running') {
       'skipped_processes',
       diagnostics,
     );
+    final nativeBehaviorAttempted = _processSnapshotIntField(
+      response,
+      'native_behavior_attempted',
+      diagnostics,
+    );
+    final nativeBehaviorCompleted = _processSnapshotIntField(
+      response,
+      'native_behavior_completed',
+      diagnostics,
+    );
+    final nativeBehaviorFailed = _processSnapshotIntField(
+      response,
+      'native_behavior_failed',
+      diagnostics,
+    );
+    final nativeBehaviorLimited = _processSnapshotIntField(
+      response,
+      'native_behavior_limited',
+      diagnostics,
+    );
     final findings = _processSnapshotFindings(
       response['findings'],
       diagnostics,
@@ -2251,6 +2272,10 @@ if ($service.Status -ne 'Running') {
       statusReason: statusReason,
       observedProcesses: observedProcesses,
       skippedProcesses: skippedProcesses,
+      nativeBehaviorAttempted: nativeBehaviorAttempted,
+      nativeBehaviorCompleted: nativeBehaviorCompleted,
+      nativeBehaviorFailed: nativeBehaviorFailed,
+      nativeBehaviorLimited: nativeBehaviorLimited,
       findings: findings,
       diagnostics: diagnostics,
     );
@@ -4599,6 +4624,10 @@ class ProcessSnapshotReport {
     required this.statusReason,
     this.observedProcesses = 0,
     this.skippedProcesses = 0,
+    this.nativeBehaviorAttempted = 0,
+    this.nativeBehaviorCompleted = 0,
+    this.nativeBehaviorFailed = 0,
+    this.nativeBehaviorLimited = 0,
     this.findings = const [],
     this.diagnostics = const [],
   });
@@ -4609,6 +4638,10 @@ class ProcessSnapshotReport {
   final String statusReason;
   final int observedProcesses;
   final int skippedProcesses;
+  final int nativeBehaviorAttempted;
+  final int nativeBehaviorCompleted;
+  final int nativeBehaviorFailed;
+  final int nativeBehaviorLimited;
   final List<ProcessFinding> findings;
   final List<String> diagnostics;
 }
