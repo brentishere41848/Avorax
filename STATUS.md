@@ -6674,13 +6674,63 @@ guarded synchronization, and destination proof remain pending.
   PowerShell parsing pass. The definitive no-skip/no-Defender verifier and both
   strict validators pass exact `269/269` in `475s`; missing-step and missing-
   UUID-scope report copies are rejected.
-- Evidence-head checks, merge, synchronization, and destination evidence remain
-  pending; no release or publication has occurred.
+- Exact evidence head `3ecb2b0` passes Avorax CI `32943762241` and Desktop
+  Packages `32943762214`; artifact `9598057781` matches SHA-256
+  `9be7f43feaaf4ce417f58fedb5e2586d3517e55641a620031737cf7606515c76`.
+  PR `#92` was normally merged as `96a7042`. Merged-main Avorax CI
+  `32945550401` and Desktop Packages `32945550405` pass; artifact `9598548199`
+  matches SHA-256
+  `f16e70d9279ba44d0526b74309ae82b9c16e5bc043b20326e40436b3cabb15bc`.
+  All publication jobs are skipped; no release was created.
 - Exact implementation `511eb18` passes Avorax CI `32941736916` and Desktop
   Packages push/PR `32941701666`/`32941736885`. Both consolidated artifacts
   match GitHub SHA-256 and pass non-extracting exact inventory, checksum, and
   CycloneDX 1.6/569-component validation. Publication is skipped. Evidence-head
-  checks, merge, synchronization, and destination evidence remain pending.
+  checks pass. Guarded original-tree synchronization applied exact `56/56`
+  merge paths (`7849300` bytes) with zero deletes, mismatches, or residue.
+- Destination focused/full verification passes Local Core `543/543`, Flutter
+  `847/847`, source contracts `670/670`, strict Clippy, release build, analyzer,
+  and release smokes. Its definitive no-skip/no-Defender report passes exact
+  `269/269` in `473.6s`; independent PowerShell 5.1/7 validators pass and report
+  SHA-256 is
+  `34e64791eabee91c9e4749581e61a35e48d29aecba05e9a280b749a60e7706f7`.
+  Lock hashes, zero residual processes, and the protected-vault invariant remain
+  exact. Checkpoint 2240 is closed.
 - **Limit:** UUID binding remains a same-user capability, not cross-identity
   authentication or installed service/kernel/pre-execution control. The
   complete antivirus goal remains active.
+
+## Checkpoint 2241 - Cooperative In-Engine Cancellation Local Pass
+
+- Native scan cancellation now has distinct typed outcomes for accepted
+  cancellation and failure to inspect cancellation state. The content reader
+  checks around at-most-1-MiB hash reads; the engine checks between static,
+  trust, signature, archive, rule, heuristic, ML, and verdict-publication
+  stages; bounded archive scanning checks around collection and each sample.
+- Local Core passes its exact job-token probe through the Native file scan. A
+  partial interrupted file never increments scanned counters or publishes a
+  verdict; it and the queued remainder become explicitly unscanned. Corrupt or
+  unreadable token state fails the command visibly.
+- Focused cancellation passes `9/9`; Native passes `568` library tests plus
+  compiler targets, Local Core `546/546`, Flutter `847/847`, analyzer, source
+  contracts `671/671`, dual PowerShell parsing, formatting, strict Native/Local
+  Clippy, and the locked workspace release build pass.
+- The definitive no-skip/no-Defender rerun passes exact `270/270` in `462.7s`.
+  Independent PowerShell 5.1/7 validators pass; adversarial removal of either
+  the mandatory step or its exact technical-limit scope is rejected. Report
+  SHA-256 is
+  `15be81e12ab47b2851d421e00db5a5b921cbf485c77a213808331c1734b3db59`.
+  Implementation head `810cea36a8ea14b518a884c56b4d5366c069a3f8` passes exact
+  Avorax CI and Desktop Packages push/PR evidence, including both skipped
+  publication jobs and bounded non-extracting validation of both consolidated
+  artifacts. Evidence-head, merge, synchronization, and destination evidence
+  remain pending.
+- Workspace-wide strict Clippy remains blocked by three unchanged API-service
+  Rust-1.96 lints (`items_after_test_module` twice and `enum_variant_names`
+  once). The checkpoint's own large-enum finding was repaired by boxing the
+  verdict; targeted strict lint is clean and the workspace release build passes.
+- **Limit:** this is cooperative user-mode interruption at explicit boundaries,
+  not hard cancellation of an active OS read, analyzer call, bounded archive
+  collect/inflate, rule/ML call, or Windows trust helper. Same-user UUID access,
+  installed service ownership, cross-identity authentication, driver/kernel
+  cancellation, and pre-execution blocking remain limited or blocked.

@@ -3047,3 +3047,33 @@ remain genuine blockers or disabled capabilities.
   Cross-identity authentication, installed service ownership, hard interruption
   inside one file inspection, driver/kernel cancellation, and pre-execution
   blocking remain genuine blockers.
+
+## Checkpoint 2241 Cooperative In-Engine Cancellation
+
+- Exact-job cancellation now reaches Native content reads and provider/archive
+  boundaries. Interrupted files publish no partial verdict and remain counted
+  as unscanned; cancellation-state parse/access failure aborts visibly.
+- Exact 270-step verification and source contract 671 pass locally. The
+  definitive no-skip/no-Defender report is exact `270/270` in `462.7s`; both
+  independent validators pass and adversarial missing-step/scope reports are
+  rejected. Hosted, merge, synchronization, and destination evidence remain
+  open for this checkpoint.
+- Hard interruption of an active OS read, static analyzer substep, bounded
+  archive collect/inflate, synchronous rule/ML operation, or Windows trust
+  helper remains technically unavailable in this in-process design. Moving
+  every detector behind safely killable isolated workers would require a larger
+  authenticated IPC/resource-confinement design and separate regression audit.
+- Same-user capability secrecy, installed service ownership, cross-identity
+  authentication, driver/kernel cancellation, and pre-execution blocking remain
+  genuine blockers. No checkpoint-2241 passing result was claimed during
+  scripting.
+
+Focused and broad local component evidence now passes: cancellation `9/9`,
+Native `568`, Local Core `546/546`, Flutter `847/847`, source contracts
+`671/671`, strict Native/Local lint, locked release build, analyzer, format, and
+dual PowerShell parsing. The definitive exact `270/270` report and both
+independent validators now pass; hosted/integration evidence remains open.
+Workspace-wide strict Clippy also remains blocked by two
+unchanged API `items_after_test_module` findings and one unchanged API
+`enum_variant_names` finding under Rust 1.96; the checkpoint-owned large enum
+was repaired and targeted strict lint passes.

@@ -35,7 +35,10 @@ pub fn run_authenticode_client_self_test_stdio() -> anyhow::Result<()> {
 pub use config::EngineConfig;
 pub use detection_provider::{DetectionProviderInfo, DetectionProviderStatus};
 pub use engine::{EngineStatus, SelfTestReport, ZentorNativeEngine};
-pub use scan::{FileScanVerdict, ScanActionMode, ScanJobId, ScanMode, ScanProgress, ScanSummary};
+pub use scan::{
+    is_cooperative_scan_cancellation, is_scan_cancellation_check_failure, FileScanVerdict,
+    ScanActionMode, ScanJobId, ScanMode, ScanProgress, ScanSummary,
+};
 pub use verdict::{Confidence, ThreatCategory, Verdict};
 
 #[cfg(test)]
