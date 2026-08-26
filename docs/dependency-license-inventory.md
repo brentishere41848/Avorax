@@ -1580,6 +1580,26 @@ execution. Destination lock hashes remain exact. Checkpoint 2241 introduces no
 dependency, feature, package source, license classification, or lockfile
 change; final-binary SBOM resolution and legal approval remain separate.
 
+## Checkpoint 2244 Static Archive Analysis Cancellation Delta
+
+Checkpoint 2244 adds no dependency, feature, build script, downloaded content,
+or lockfile change. It reuses `anyhow`, `flate2`, and existing Rust callback
+contracts already present in the Native engine. Their pinned versions and
+license evidence are unchanged. Verification cardinality advances to 273 and
+source contract 674; no new third-party license review is required.
+
+Local verification confirms all three lock hashes remain exact, source contract
+`674/674` passes, and no dependency file is modified. Definitive verification
+passes exact `273/273` in `531.1s` with dual validator acceptance and
+adversarial missing-step/scope rejection. The three lock hashes remain exact
+afterward. Hosted package evidence at local-evidence head `2518612` and hosted
+head `3237d49e3df2d6355968882cddf57f0c171e3827` passes with publication
+skipped. Consolidated artifacts `9613011717` and `9614177410` each pass bounded
+non-extracting exact eight-entry/seven-checksum validation and contain one
+CycloneDX 1.6 lockfile SBOM with 569 components. No dependency, feature,
+package source, license classification, or lockfile changed; this remains
+lockfile evidence rather than final-binary SBOM resolution or legal approval.
+
 ## Checkpoint 2243 Dependency Scope
 
 Parallel Authenticode helper lifecycle hardening uses Rust standard-library

@@ -11645,6 +11645,33 @@ pending.
 - Evidence-head hosted checks, normal merge, merged-main evidence, guarded
   synchronization, and destination verification remain pending.
 
+## 2026-08-26 - Checkpoint 2243 Integration And Destination Closure
+
+- Evidence head `485457eba8711751d77c769cf3ee3f1532beefa7` passes CI
+  `32976646428` and packages `32976646459`; artifact `9610197402` matches
+  GitHub/download SHA-256 and exact non-extracting package/SBOM validation.
+  Publication is skipped.
+- PR `#95` merged normally as
+  `24c383cfc111df66ad6b8c3d4047d78481730a19`. Merged-main CI
+  `32978078680` and packages `32978078751` pass; artifact `9610930606` matches
+  SHA-256 and exact bounded in-stream validation. Publication is skipped.
+- Guarded sync verifies `12/12` exact merge blobs and zero deletion/residue.
+  Raw-hash and tar staging attempts exposed CRLF conversion and stopped before
+  writes. An unsupported empty-backup `File.Replace` call also stopped before
+  replacing the first file; its one exact temporary blob was reused by the
+  corrected same-volume overwrite path. No unrelated destination content was
+  replaced.
+- Destination focused lifecycle `2/2`, Native `555` passed/`21` ignored plus
+  compiler `6/6`, Local Core `546/546`, Flutter `847/847`, source contracts
+  `673/673`, analyzer, dual parsers, strict lint, and locked release build pass.
+- Destination definitive evidence passes exact `272/272` from
+  `2026-08-26T14:34:43.4420427Z` through
+  `2026-08-26T14:43:45.3546271Z` in `541.9s`; independent PS5/PS7 validators
+  pass and report SHA-256 is
+  `5230e5af24c4fa35a161abbe1ec938f6ecc6d371e6888b9e8ef74ed6e2695ea3`.
+  Locks and protected-vault invariants remain exact. Checkpoint 2243 is closed;
+  the complete antivirus goal remains active.
+
 ## 2026-08-26 - Checkpoint 2240 Closure
 
 - Exact evidence head `3ecb2b0e4692683b80855d99f0ab9e55af391996`
@@ -11912,3 +11939,87 @@ pending.
   569 components. Nothing was extracted or executed.
 - Evidence-head hosted checks, normal merge, merged-main evidence, guarded
   synchronization, and destination verification remain pending.
+
+## 2026-08-26 - Checkpoint 2244 Static Archive Analysis Cancellation Scripted
+
+- Audited the next highest-value unblocked scan-cancellation gap after
+  checkpoint 2243. Reputation and four behavior engines remain honestly
+  disabled because no trusted backend/correlated telemetry exists; they were
+  not replaced with fake results.
+- Scripted fallible cooperative checkpoints through Native static ZIP parser
+  traversal, every local/central metadata entry, stored OOXML relationship and
+  autorun copies, and at-most-64-KiB deflate output reads.
+- The scan engine now maps those checkpoints to typed job-bound cancellation.
+  Cancellation and probe failure abort without publishing partial
+  `StaticAnalysis` or a file verdict and cannot be mislabeled as archive limits.
+- Added benign Rust regressions, mandatory verifier step 273, strict validator
+  scope/cardinality, source contract 674, and checkpoint/audit/threat/blocker/
+  dependency documentation.
+- No checkpoint-2244 test has run during this scripting phase. One active
+  decoder read is not hard-interrupted, non-archive synchronous work remains,
+  and no kernel/pre-execution claim is made. No dependency, feature, or
+  lockfile change is introduced.
+
+## 2026-08-26 - Checkpoint 2244 Local Verification
+
+- Focused static archive cancellation passes `4/4`; complete ZIP analyzer
+  `36/36`; adjacent cooperative archive cancellation `4/4`.
+- Default-parallel Native passes `559` active/`21` intentional ignores plus
+  compiler `6/6`. Local Core passes `546/546`; Flutter analyzer and `847/847`
+  pass. Strict Native/Local Clippy, rustfmt, diff check, dual PS5/PS7 parsers,
+  locked workspace release build, and source contracts `674/674` pass.
+- Two uncredited `pytest` commands executed no tests because pytest is absent.
+  The dependency-free source runner first rejected two stale wording contracts;
+  corrected wording then passed all 674 contracts.
+- Root, Native, and Flutter lock hashes and the protected-vault invariant remain
+  exactly unchanged. Definitive
+  273-step, adversarial report validation, hosted/integration/destination, and
+  closure evidence remain pending.
+
+## 2026-08-26 - Checkpoint 2244 Definitive Local Evidence
+
+- Definitive verification passes exact `273/273` from
+  `2026-08-26T15:07:07.5888297Z` through
+  `2026-08-26T15:15:58.7193871Z` in `531.1s`, with Defender integration
+  disabled and no Rust or Flutter skips.
+- Embedded and independent Windows PowerShell 5.1 and PowerShell 7 validators
+  accept the report. SHA-256 is
+  `2547454f20895864be9727dd545e0625d39b0b761732032f886c004ff5de2216`.
+- Both independent validators reject an adversarial `272`-step report and a
+  `273`-step report missing parser-traversal cancellation scope; all four
+  expected-negative invocations exit `1`.
+- Root, Native, and Flutter lock hashes and the protected-vault invariant remain
+  exact. `.verification` remains untracked and unstaged. Hosted exact-head,
+  integration, destination, and closure evidence remain pending.
+
+## 2026-08-26 - Checkpoint 2244 GitHub Actions Outage And Recovery
+
+- GitHub Actions reported an official `major_outage` beginning
+  `2026-08-26T15:11:58.254Z`. Its latest observed incident update identified a
+  database-primary failure and replica failover at
+  `2026-08-26T15:23:10.599Z`.
+- Push package run `32984814869` at local-evidence head `2518612` was
+  transiently reported as a startup failure, then completed successfully with
+  publication skipped. Its consolidated artifact `9613011717` is `132034442`
+  bytes, matches SHA-256
+  `81cd3cf0f7ef2069ee1af1db53676eb0a6c57485361d75aac38d1848f164398e`,
+  and passes non-extracting exact 8/6/7/CycloneDX-1.6/569 validation.
+- Closing/reopening PR `#96`, an empty source-preserving retrigger, and the
+  outage-evidence commit produced exact head
+  `3237d49e3df2d6355968882cddf57f0c171e3827`.
+- Exact-head CI `32985138375` remained queued with zero jobs. Explicit
+  `publish_prerelease=false` package dispatch `32985149344` reached
+  `startup_failure` with zero jobs. These are retained failure evidence, not
+  passing hosted evidence.
+- Exact-head CI `32987569318` and `32987888207` now pass all five jobs.
+  Uncredited manual package run `32986620660` passed its arm64 build, packaged
+  smoke, and manifest checks but failed five `hdiutil verify` attempts with
+  `Resource temporarily unavailable`; consolidation remained skipped.
+- Independent exact-head PR package run `32987888192` passes all package and
+  consolidation jobs, with publication job `98244620437` skipped. Consolidated
+  artifact `9614177410` is `132043669` bytes, matches SHA-256
+  `2649ce251aa91688097357298e23d28790d09424b6865d8b81d965f36c5af030`,
+  and passes the same bounded non-extracting 8/6/7/CycloneDX-1.6/569 contract.
+- PR `#96` remains open and unmerged. Evidence-head checks, merge, main checks,
+  integration, and destination synchronization remain pending; no release or
+  publication occurred.

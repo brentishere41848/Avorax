@@ -3153,3 +3153,30 @@ source contract `673/673`, and parser/diff gates. Two earlier parallel attempts
 failed closed and exposed the synchronous-count and cross-frame races; neither
 accepted a trust result. Exact 272-step definitive, hosted, integration, sync,
 and destination evidence remain pending.
+
+## Checkpoint 2244 Static Archive Cancellation Threat Delta
+
+**Threat:** a bounded but expensive ZIP metadata/OOXML substep delays a
+job-bound cancellation, or a cancellation-probe error is swallowed and a
+partial static result reaches verdict fusion.
+
+**Mitigation:** static ZIP traversal uses a fallible callback before parsing and
+before every local/central entry. Stored relationship/autorun copies have
+before/after checkpoints and deflate decoding checks before every at-most-64-KiB
+output read. The callback's `Err` crosses analyzer and engine boundaries
+unchanged, preventing a partial `StaticAnalysis`, evidence set, or verdict.
+
+**Residual risk:** cancellation remains cooperative. One decoder read may finish
+before its next checkpoint, and non-archive static parsing plus synchronous
+rule/ML and Windows trust operations remain separately bounded but are not made
+preemptible here. The existing 256-entry and body-size limits still bound ZIP
+work. This is user-mode post-start control, not service/driver or pre-execution
+blocking. Checkpoint 2244 verification step 273 and source contract 674 are
+scripted but have not run during the scripting phase.
+
+Local benign cancellation, complete ZIP/Native/Local/Flutter regressions, source
+contract 674, strict component lint, dual parser, formatting, and diff evidence
+pass. Definitive verification passes exact `273/273` in `531.1s`; dual
+independent validators accept the report and reject both missing-step and
+missing-parser-scope adversarial copies. Hosted/integration/destination evidence
+remains pending; local success does not expand the cooperative user-mode claim.

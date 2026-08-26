@@ -37,6 +37,16 @@ pub fn analyze_path_with_size(
     bytes: &[u8],
     file_size_bytes: u64,
 ) -> Result<StaticAnalysis> {
+    let mut never_cancel = || Ok(());
+    analyze_path_with_size_and_cancellation(path, bytes, file_size_bytes, &mut never_cancel)
+}
+
+pub fn analyze_path_with_size_and_cancellation(
+    path: &Path,
+    bytes: &[u8],
+    file_size_bytes: u64,
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<StaticAnalysis> {
     let file_type = detect_file_type(path, bytes);
     let chunks = bytes.chunks(4096).map(entropy).collect::<Vec<_>>();
     let entropy_mean = mean_entropy(&chunks);
@@ -59,7 +69,10 @@ pub fn analyze_path_with_size(
         None
     };
     let archive = if file_type == FileType::Zip {
-        Some(archives::zip::analyze_zip(bytes)?)
+        Some(archives::zip::analyze_zip_with_cancellation(
+            bytes,
+            cancellation_checkpoint,
+        )?)
     } else {
         None
     };
@@ -86,5 +99,23 @@ mod tests {
                 .unwrap();
 
         assert_eq!(analysis.file_size, 128 * 1024 * 1024);
+    }
+
+    #[test]
+    fn static_archive_cancellation_probe_failure_is_fail_visible() {
+        let archive = b"PK\x03\x04\x14\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\x08\0\0\0safe.txt";
+        let mut checkpoint = || anyhow::bail!("benign static analyzer probe failure");
+
+        let error = analyze_path_with_size_and_cancellation(
+            Path::new("benign.zip"),
+            archive,
+            archive.len() as u64,
+            &mut checkpoint,
+        )
+        .expect_err("checkpoint failure must abort static archive analysis");
+
+        assert!(error
+            .to_string()
+            .contains("benign static analyzer probe failure"));
     }
 }

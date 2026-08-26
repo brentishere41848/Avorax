@@ -5017,3 +5017,32 @@ with 20 full repetitions, Native `555`/`21` plus compiler `6/6`, Local Core
 `546/546`, Flutter `847/847`, source contracts `673/673`, strict lint/build, and
 parser/diff gates pass. Definitive 272-step and hosted/integration/destination
 evidence remain pending.
+
+## Checkpoint 2244 Static Archive Analysis Cancellation Matrix
+
+| Control / engine | Responsibility | Current state | Evidence / blocker |
+|---|---|---|---|
+| Native static ZIP metadata analyzer | Inspect bounded local/central metadata and archive names without extraction | Locally verified | Fallible checkpoint before traversal and every entry; maximum 256 entries retained; focused/ZIP/full Native pass |
+| OOXML relationship analyzer | Inspect bounded stored/deflated `.rels` bodies for external and remote executable targets | Locally verified | Checkpoints around stored copies and before each at-most-64-KiB inflate output read; benign cancellation and existing detection regressions pass |
+| Archive autorun analyzer | Inspect bounded stored/deflated `autorun.inf` bodies for executable commands | Locally verified | Same fallible copy/inflate checkpoint path; callback errors are not archive limits; complete ZIP regressions pass |
+| Native scan cancellation bridge | Prevent partial static analysis or verdict publication after cancellation/probe failure | Locally verified | Engine maps `static archive analysis progress` through typed cancellation; source contract and full Native/Local pass |
+| Checkpoint 2244 verifier contract | Reject stale checkpoint-2243 evidence | Definitively verified locally | Exact 273/273 in 531.1s, source contract 674, dual validators, and adversarial missing-step/scope rejection pass |
+
+Checkpoint 2244 adds cooperative boundaries only. It does not hard-interrupt an
+active decoder read, change detector thresholds or archive limits, add
+extraction, or claim kernel/pre-execution blocking. No checkpoint-2244 passing
+result is claimed during scripting.
+
+Local evidence passes focused `4/4`, ZIP `36/36`, adjacent cancellation `4/4`,
+Native `559`/`21` plus compiler `6/6`, Local Core `546/546`, Flutter `847/847`,
+source contracts `674/674`, strict component lint, dual parsers, formatting and
+diff checks, and locked release build. Locks and protected vault remain exact;
+definitive exact `273/273` and adversarial evidence pass. Report SHA-256 is
+`2547454f20895864be9727dd545e0625d39b0b761732032f886c004ff5de2216`;
+hosted/integration/destination evidence remains pending.
+
+The GitHub Actions `major_outage` left uncredited zero-job runs, but recovery
+evidence now passes: exact-head CI `32987569318`/`32987888207` and PR packages
+`32987888192` are green with publication skipped. Consolidated artifact
+`9614177410` passes bounded non-extracting exact 8/6/7/CycloneDX-1.6/569
+validation. Evidence-head/merge/main/integration/destination proof remains.

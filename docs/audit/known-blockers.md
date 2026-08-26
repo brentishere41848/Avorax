@@ -3130,3 +3130,30 @@ was repaired and targeted strict lint passes.
   contracts `673/673`, analyzer, strict component lint, parsers, formatting and
   locked release build pass. Exact 272-step and hosted/integration/destination
   closure remain pending.
+
+## Checkpoint 2244 Static Archive Analysis Cancellation
+
+- The previous blocker that static ZIP metadata and OOXML relationship analysis
+  observed cancellation only after the whole substep is repaired in source:
+  parser/entry/copy/inflate checkpoints now propagate fallible errors through
+  the Native engine before verdict publication.
+- Focused/full local and source contract 674 pass. Mandatory step 273 passes in
+  an exact `273/273` definitive report, dual validators accept it, and both
+  missing-step and missing-parser-scope adversarial copies are rejected.
+  Hosted, integration, and destination evidence must still pass before this
+  checkpoint is closed.
+- **Hosted outage recovered for this head:** uncredited zero-job and transient
+  arm64 `hdiutil` resource-unavailable runs are retained, while exact-head CI
+  `32987569318`/`32987888207` and independent PR packages `32987888192` pass.
+  Publication is skipped and consolidated artifact `9614177410` passes bounded
+  non-extracting inventory/checksum/SBOM validation. PR `#96` remains open;
+  evidence-head, merge/main, integration, and destination proof still block
+  checkpoint closure.
+- Remaining technical limitation: one already-running `flate2` read is not
+  preempted. Non-archive analyzer work, synchronous rule/ML calls, trust helper
+  calls, installed service identity, driver mediation, and pre-execution
+  blocking remain outside this checkpoint.
+- Reputation remains disabled without an authenticated privacy-reviewed
+  backend. Browser-data, credential/network, persistence-write, and parent-image
+  lineage behavior engines remain disabled without trusted correlated telemetry.
+  Checkpoint 2244 does not fake-enable them.

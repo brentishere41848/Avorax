@@ -6801,5 +6801,51 @@ guarded synchronization, and destination proof remain pending.
   passes CI `32974393351` and packages `32974348589`/`32974393379` with
   publication skipped. Both consolidated artifacts match GitHub SHA-256 and
   pass exact non-extracting eight-entry, `7/7` checksum, and CycloneDX 1.6/569-
-  component SBOM validation. Evidence-head hosted checks, integration, guarded
-  synchronization, and destination proof remain open.
+  component SBOM validation.
+- Evidence head `485457eba8711751d77c769cf3ee3f1532beefa7`, PR `#95`,
+  merge `24c383cfc111df66ad6b8c3d4047d78481730a19`, evidence/main CI and
+  package runs, skipped publication, exact non-extracting artifacts, guarded
+  `12/12` sync, and destination focused/full/definitive evidence now pass.
+  Destination definitive is exact `272/272` in `541.9s`, with report SHA-256
+  `5230e5af24c4fa35a161abbe1ec938f6ecc6d371e6888b9e8ef74ed6e2695ea3`.
+  Locks and the protected vault remain exact; checkpoint 2243 is closed. The
+  complete antivirus goal remains active.
+
+## Checkpoint 2244 - Static Archive Analysis Cancellation Definitively Verified Locally
+
+- Native static ZIP metadata/relationship analysis now accepts the scan's
+  fallible cancellation checkpoint while preserving compatibility wrappers.
+- Checkpoints cover parser preflight, each of at most 256 metadata entries,
+  stored relationship/autorun copies, and at-most-64-KiB deflate output reads.
+- Cancellation or probe failure returns an error before any partial static
+  analysis or verdict can be published; parser/content limits remain explicit
+  `limit_exceeded` results rather than cancellation errors.
+- Benign regressions, verifier step 273, validator cardinality/scopes, source
+  contract 674, and all Checkpoint 2244 documents are scripted.
+- No checkpoint-2244 passing result was claimed during scripting. Focused
+  `4/4`, ZIP analyzer `36/36`, adjacent cancellation `4/4`, Native `559`/`21`
+  plus compiler `6/6`, Local Core `546/546`, Flutter `847/847`, source contracts
+  `674/674`, strict component Clippy, dual parsers, formatting and diff checks
+  plus locked release build now pass. Exact locks and protected vault remain
+  unchanged.
+- Definitive verification passes exact `273/273` in `531.1s` with no Rust or
+  Flutter skips. Embedded and independent PS5/PS7 validators pass; an
+  adversarial `272`-step copy and a `273`-step copy missing parser-traversal
+  cancellation scope are rejected by both. Report SHA-256 is
+  `2547454f20895864be9727dd545e0625d39b0b761732032f886c004ff5de2216`.
+  Exact locks and the protected vault remain unchanged. Hosted exact-head,
+  integration, destination, and closure evidence remains pending.
+- GitHub's Actions `major_outage` initially dropped/delayed runs, but hosted
+  recovery evidence now passes. Local-evidence package run `32984814869` and
+  exact head `3237d49e3df2d6355968882cddf57f0c171e3827` CI runs
+  `32987569318`/`32987888207` plus PR packages `32987888192` succeed;
+  publication is skipped. Consolidated artifacts `9613011717`/`9614177410`
+  match downloaded SHA-256 and pass bounded non-extracting exact
+  8-root/6-platform/7-checksum/CycloneDX-1.6/569 validation. One uncredited
+  manual package run `32986620660` failed only after five macOS arm64
+  `hdiutil verify` resource-unavailable errors; the independent PR run proves
+  arm64 green. PR `#96` remains open. Evidence-head, merge, main, integration,
+  destination, and closure evidence remains pending.
+- **Limit:** cooperative checkpoints do not preempt one running decoder read,
+  and this change does not make non-archive analyzers, rule/ML calls, Windows
+  trust, services, drivers, or pre-execution enforcement hard-cancellable.
