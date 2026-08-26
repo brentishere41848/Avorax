@@ -11645,6 +11645,33 @@ pending.
 - Evidence-head hosted checks, normal merge, merged-main evidence, guarded
   synchronization, and destination verification remain pending.
 
+## 2026-08-26 - Checkpoint 2243 Integration And Destination Closure
+
+- Evidence head `485457eba8711751d77c769cf3ee3f1532beefa7` passes CI
+  `32976646428` and packages `32976646459`; artifact `9610197402` matches
+  GitHub/download SHA-256 and exact non-extracting package/SBOM validation.
+  Publication is skipped.
+- PR `#95` merged normally as
+  `24c383cfc111df66ad6b8c3d4047d78481730a19`. Merged-main CI
+  `32978078680` and packages `32978078751` pass; artifact `9610930606` matches
+  SHA-256 and exact bounded in-stream validation. Publication is skipped.
+- Guarded sync verifies `12/12` exact merge blobs and zero deletion/residue.
+  Raw-hash and tar staging attempts exposed CRLF conversion and stopped before
+  writes. An unsupported empty-backup `File.Replace` call also stopped before
+  replacing the first file; its one exact temporary blob was reused by the
+  corrected same-volume overwrite path. No unrelated destination content was
+  replaced.
+- Destination focused lifecycle `2/2`, Native `555` passed/`21` ignored plus
+  compiler `6/6`, Local Core `546/546`, Flutter `847/847`, source contracts
+  `673/673`, analyzer, dual parsers, strict lint, and locked release build pass.
+- Destination definitive evidence passes exact `272/272` from
+  `2026-08-26T14:34:43.4420427Z` through
+  `2026-08-26T14:43:45.3546271Z` in `541.9s`; independent PS5/PS7 validators
+  pass and report SHA-256 is
+  `5230e5af24c4fa35a161abbe1ec938f6ecc6d371e6888b9e8ef74ed6e2695ea3`.
+  Locks and protected-vault invariants remain exact. Checkpoint 2243 is closed;
+  the complete antivirus goal remains active.
+
 ## 2026-08-26 - Checkpoint 2240 Closure
 
 - Exact evidence head `3ecb2b0e4692683b80855d99f0ab9e55af391996`

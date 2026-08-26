@@ -6801,5 +6801,12 @@ guarded synchronization, and destination proof remain pending.
   passes CI `32974393351` and packages `32974348589`/`32974393379` with
   publication skipped. Both consolidated artifacts match GitHub SHA-256 and
   pass exact non-extracting eight-entry, `7/7` checksum, and CycloneDX 1.6/569-
-  component SBOM validation. Evidence-head hosted checks, integration, guarded
-  synchronization, and destination proof remain open.
+  component SBOM validation.
+- Evidence head `485457eba8711751d77c769cf3ee3f1532beefa7`, PR `#95`,
+  merge `24c383cfc111df66ad6b8c3d4047d78481730a19`, evidence/main CI and
+  package runs, skipped publication, exact non-extracting artifacts, guarded
+  `12/12` sync, and destination focused/full/definitive evidence now pass.
+  Destination definitive is exact `272/272` in `541.9s`, with report SHA-256
+  `5230e5af24c4fa35a161abbe1ec938f6ecc6d371e6888b9e8ef74ed6e2695ea3`.
+  Locks and the protected vault remain exact; checkpoint 2243 is closed. The
+  complete antivirus goal remains active.

@@ -124,5 +124,39 @@ bundle: six platform installers/archives, one checksum file with seven verified
 rows, and one CycloneDX 1.6 lockfile SBOM with 569 components. No artifact was
 extracted or executed.
 
-Evidence-head hosted checks, normal integration, guarded synchronization, and
-destination verification remain pending.
+## Integration And Destination Closure
+
+Evidence head `485457eba8711751d77c769cf3ee3f1532beefa7` passes CI
+`32976646428` and packages `32976646459`. Consolidated artifact `9610197402`
+is `131946295` bytes, matches GitHub/download SHA-256
+`d624cf92353218a58d5e2f16a299f80241e034d0593b0d2423596d75a28ff06b`, and
+passes the same non-extracting inventory/checksum/SBOM validation. Publication
+is skipped.
+
+PR `#95` merged normally as
+`24c383cfc111df66ad6b8c3d4047d78481730a19`. Merged-main CI
+`32978078680` and packages `32978078751` pass; publication is skipped.
+Artifact `9610930606` is `131947822` bytes, matches SHA-256
+`38f3be1f09968df8f7458b12f86a729172180494630d95923e85a06f3d326393`, and
+passes exact non-extracting eight-entry, seven-checksum, and CycloneDX 1.6/569-
+component validation.
+
+Guarded synchronization preconditioned and then copied exact merge content for
+`12/12` paths with no deletion or residue. A raw Git-blob precondition first
+exposed expected CRLF storage differences, and `tar.exe` staging then exposed
+the same conversion; both stopped before destination writes. Direct Git-object
+streaming verified every staged blob. One unsupported empty-backup
+`File.Replace` call stopped before replacing the first destination and left one
+verified temporary file, which became the first successful atomic overwrite;
+all remaining paths used the corrected same-volume overwrite path.
+
+Destination evidence passes focused lifecycle `2/2`, default-parallel Native
+`555` passed/`21` intentional child-fixture ignores plus compiler `6/6`, Local
+Core `546/546`, Flutter `847/847`, source contracts `673/673`, analyzer, dual
+parsers, strict Native/Local Clippy, and locked release build. Definitive
+verification passes exact `272/272` from `2026-08-26T14:34:43.4420427Z`
+through `2026-08-26T14:43:45.3546271Z` in `541.9s`; embedded and independent
+PS5/PS7 validation pass. Report SHA-256 is
+`5230e5af24c4fa35a161abbe1ec938f6ecc6d371e6888b9e8ef74ed6e2695ea3`.
+Locks and the protected-vault invariant remain exact. Checkpoint 2243 is closed;
+the complete antivirus goal remains active.
