@@ -12023,3 +12023,37 @@ pending.
 - PR `#96` remains open and unmerged. Evidence-head checks, merge, main checks,
   integration, and destination synchronization remain pending; no release or
   publication occurred.
+
+## 2026-08-26 - Checkpoint 2244 Integration And Destination Closure
+
+- Exact evidence head `0b566a4ce45e9818db840b09156fbf4a2d0b25f0` passes CI
+  `32990951715`/`32991018757` and Desktop Packages `32990331126`/
+  `32991019029`; publication job `98252248675` is skipped. Downloaded artifact
+  `9615033566` matches SHA-256
+  `dbdf405392a269545b23da7202c86c5fb0e06781a2eab85cc1bda9deec653323`
+  and passes bounded non-extracting exact 8/6/7/CycloneDX-1.6/569 validation.
+- PR `#96` merged normally as
+  `c0cd92f7f10e6205ad209435c24367f54f8cd8b0`. Merged-main CI
+  `32993065989` and package run `32993065971` pass; publication
+  `98261977747` is skipped. Main artifact `9616123602` is `132044279` bytes,
+  matches SHA-256
+  `697bcf7a12ee557e14768fbb762c35b01960b6ec6fa7e30eca323a7e4a0166a0`,
+  and passes the same bounded validation. No direct-main push or release occurred.
+- Guarded sync from base `24c383cfc111df66ad6b8b7c4047d78481730a19` to
+  that exact merge passes preflight, atomic apply, and independent `14/14`
+  canonical-blob verification with zero deletes and zero staging residue.
+- Destination focused `4/4`, ZIP `36/36`, adjacent cancellation `4/4`, Native
+  `559`/`21` plus compiler `6/6`, Local Core `546/546`, Flutter analyze and
+  `847/847`, source `674/674`, strict component lint, rustfmt, dual parsers, and
+  locked release build pass.
+- Destination definitive verification passes exact `273/273` from
+  `2026-08-26T17:43:51.7105344Z` through
+  `2026-08-26T17:52:13.7327773Z` in `502s`. Defender integration is disabled,
+  no Rust/Flutter step is skipped, embedded and independent PS5/PS7 validators
+  pass, and report SHA-256 is
+  `b5c403d2795bbbd9ff544a6ba431b45c14c2620ec6b99557afb93fed1079a405`.
+- An invalid raw-byte/Git-blob comparison reported ten text mismatches because
+  it ignored line-ending attributes; it is uncredited. The corrected canonical
+  Git-attribute-aware post-run comparison passes `14/14`.
+- Exact locks and the protected-vault invariant remain unchanged. Checkpoint
+  2244 is closed; the complete antivirus hardening goal remains active.

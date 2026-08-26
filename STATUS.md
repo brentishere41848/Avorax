@@ -6811,7 +6811,7 @@ guarded synchronization, and destination proof remain pending.
   Locks and the protected vault remain exact; checkpoint 2243 is closed. The
   complete antivirus goal remains active.
 
-## Checkpoint 2244 - Static Archive Analysis Cancellation Definitively Verified Locally
+## Checkpoint 2244 - Static Archive Analysis Cancellation Closed
 
 - Native static ZIP metadata/relationship analysis now accepts the scan's
   fallible cancellation checkpoint while preserving compatibility wrappers.
@@ -6833,8 +6833,9 @@ guarded synchronization, and destination proof remain pending.
   adversarial `272`-step copy and a `273`-step copy missing parser-traversal
   cancellation scope are rejected by both. Report SHA-256 is
   `2547454f20895864be9727dd545e0625d39b0b761732032f886c004ff5de2216`.
-  Exact locks and the protected vault remain unchanged. Hosted exact-head,
-  integration, destination, and closure evidence remains pending.
+  Exact locks and the protected vault remain unchanged. At this local-evidence
+  stage, hosted exact-head, integration, destination, and closure evidence was
+  pending; the closure evidence below supersedes that stage status.
 - GitHub's Actions `major_outage` initially dropped/delayed runs, but hosted
   recovery evidence now passes. Local-evidence package run `32984814869` and
   exact head `3237d49e3df2d6355968882cddf57f0c171e3827` CI runs
@@ -6844,8 +6845,23 @@ guarded synchronization, and destination proof remain pending.
   8-root/6-platform/7-checksum/CycloneDX-1.6/569 validation. One uncredited
   manual package run `32986620660` failed only after five macOS arm64
   `hdiutil verify` resource-unavailable errors; the independent PR run proves
-  arm64 green. PR `#96` remains open. Evidence-head, merge, main, integration,
-  destination, and closure evidence remains pending.
+  arm64 green. At that recovery stage PR `#96` remained open and evidence-head,
+  merge, main, integration, destination, and closure evidence was pending. The
+  closure evidence below supersedes that stage status.
 - **Limit:** cooperative checkpoints do not preempt one running decoder read,
   and this change does not make non-archive analyzers, rule/ML calls, Windows
   trust, services, drivers, or pre-execution enforcement hard-cancellable.
+- Evidence head `0b566a4ce45e9818db840b09156fbf4a2d0b25f0` passes exact CI and
+  package runs, including bounded non-extracting validation of artifact
+  `9615033566`. PR `#96` merged normally as
+  `c0cd92f7f10e6205ad209435c24367f54f8cd8b0`; merged-main CI
+  `32993065989`, packages `32993065971`, skipped publication, and artifact
+  `9616123602` all pass on that exact merge.
+- Guarded base-to-target synchronization passes `14/14` canonical blobs with
+  zero deletes/residue. Destination focused/full/lint/analyzer/release checks
+  pass, and destination definitive verification is exact `273/273` in `502s`
+  with report SHA-256
+  `b5c403d2795bbbd9ff544a6ba431b45c14c2620ec6b99557afb93fed1079a405`.
+  Both independent validators pass, all locks and the protected vault remain
+  exact, and checkpoint 2244 is closed. The complete antivirus goal remains
+  active.

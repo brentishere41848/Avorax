@@ -3179,4 +3179,10 @@ contract 674, strict component lint, dual parser, formatting, and diff evidence
 pass. Definitive verification passes exact `273/273` in `531.1s`; dual
 independent validators accept the report and reject both missing-step and
 missing-parser-scope adversarial copies. Hosted/integration/destination evidence
-remains pending; local success does not expand the cooperative user-mode claim.
+now passes at evidence head `0b566a4ce45e9818db840b09156fbf4a2d0b25f0`,
+normal merge `c0cd92f7f10e6205ad209435c24367f54f8cd8b0`, guarded canonical
+sync `14/14`, and destination exact `273/273` in `502s`. Destination report
+SHA-256 is
+`b5c403d2795bbbd9ff544a6ba431b45c14c2620ec6b99557afb93fed1079a405`.
+Checkpoint 2244 is closed, but this evidence does not expand the cooperative
+user-mode claim or remove the residual risks above.

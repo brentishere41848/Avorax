@@ -85,8 +85,8 @@ service identity, and pre-execution blocking are outside this repair.
   exact after the verifier and adversarial checks.
 
 Hosted exact-head CI/package evidence, normal PR/merge, guarded integration,
-destination verification, and closure remain pending and must not be inferred
-from these definitive local results.
+and destination verification are recorded separately below. They do not expand
+the cooperative user-mode scope of these definitive local results.
 
 ## Hosted Verification Recovery
 
@@ -123,6 +123,61 @@ failover at `2026-08-26T15:23:10.599Z`.
   `2649ce251aa91688097357298e23d28790d09424b6865d8b81d965f36c5af030`.
   The same bounded non-extracting 8/6/7/CycloneDX-1.6/569 validation passes.
 
-Hosted evidence-head checks after this documentation commit, normal merge,
-merged-main checks, guarded integration, destination verification, and closure
-remain pending. No release, publication, merge, or synchronization is claimed.
+At the time this recovery evidence was committed, no release, publication,
+merge, or synchronization was claimed. The later exact-head, merge, main,
+guarded-sync, and destination evidence below supersedes that pending status.
+
+## Exact-Head And Main Evidence
+
+- Evidence head `0b566a4ce45e9818db840b09156fbf4a2d0b25f0` passes Avorax CI
+  runs `32990951715` and `32991018757`, manual Desktop Packages run
+  `32990331126`, and PR package run `32991019029`. Publication job
+  `98252248675` is skipped. Consolidated PR artifact `9615033566` is
+  `132038280` bytes with matching GitHub/download SHA-256
+  `dbdf405392a269545b23da7202c86c5fb0e06781a2eab85cc1bda9deec653323`.
+  Bounded non-extracting validation passes exact 8-root/6-platform/7-checksum,
+  CycloneDX 1.6, and 569-component evidence.
+- PR `#96` merged normally as
+  `c0cd92f7f10e6205ad209435c24367f54f8cd8b0`; no direct-main push was used.
+  Merged-main CI run `32993065989` and automatic package run `32993065971`
+  pass on that exact merge. Publication job `98261977747` is skipped.
+  Consolidated artifact `9616123602` is `132044279` bytes with matching
+  GitHub/download SHA-256
+  `697bcf7a12ee557e14768fbb762c35b01960b6ec6fa7e30eca323a7e4a0166a0`.
+  It passes the same bounded non-extracting 8/6/7/CycloneDX-1.6/569 checks.
+- Superseded delayed package run `32990951779` and manual-main fallback
+  `32992945261` were canceled by workflow concurrency. They are retained as
+  uncredited attempts, not presented as passing evidence.
+
+## Guarded Integration And Destination Verification
+
+- The guarded sync used base
+  `24c383cfc111df66ad6b8b7c4047d78481730a19` and exact target
+  `c0cd92f7f10e6205ad209435c24367f54f8cd8b0`. Preflight proved all 13 modified
+  destination files matched the base blobs and the one new report was absent.
+  Atomic application and independent canonical-blob verification pass `14/14`,
+  with zero deletes and zero staging residue.
+- Destination focused evidence passes static archive cancellation `4/4`, ZIP
+  analyzer `36/36`, adjacent archive cancellation `4/4`, and source contracts
+  `674/674`. Complete Native passes `559` active with `21` intentional fixture
+  ignores plus compiler `6/6`; Local Core passes `546/546`; Flutter analyze is
+  clean and Flutter passes `847/847`. Strict Native/Local Clippy, rustfmt,
+  dual-host parser checks, and the locked workspace release build pass.
+- Destination definitive verification passes exact `273/273` from
+  `2026-08-26T17:43:51.7105344Z` through
+  `2026-08-26T17:52:13.7327773Z` in `502s`, with Defender integration disabled
+  and no Rust or Flutter skips. Embedded and independent Windows PowerShell 5.1
+  and PowerShell 7 validators accept the report. Its SHA-256 is
+  `b5c403d2795bbbd9ff544a6ba431b45c14c2620ec6b99557afb93fed1079a405`.
+- A first post-run raw-file hash diagnostic compared CRLF worktree bytes with
+  Git-normalized blob IDs and was rejected as invalid evidence. The corrected
+  `.gitattributes`-aware canonical check passes all `14/14` target blobs.
+- Root, Native, and Flutter lock hashes remain exact. The protected vault remains
+  `16072` files, zero directories, `4522733` bytes, `5357` each payload/JSON/auth,
+  one metadata key, zero pending, and zero reparse points.
+
+Checkpoint 2244 is closed. This closes only the static archive cancellation
+checkpoint; the complete antivirus hardening goal remains active. One running
+decoder read, non-archive static analysis, synchronous rule/ML and trust calls,
+installed-service identity, driver mediation, and pre-execution blocking retain
+the limitations documented above.

@@ -3140,15 +3140,14 @@ was repaired and targeted strict lint passes.
 - Focused/full local and source contract 674 pass. Mandatory step 273 passes in
   an exact `273/273` definitive report, dual validators accept it, and both
   missing-step and missing-parser-scope adversarial copies are rejected.
-  Hosted, integration, and destination evidence must still pass before this
-  checkpoint is closed.
+  Hosted, integration, and destination evidence was still required at that
+  local stage; the closure evidence below satisfies that requirement.
 - **Hosted outage recovered for this head:** uncredited zero-job and transient
   arm64 `hdiutil` resource-unavailable runs are retained, while exact-head CI
   `32987569318`/`32987888207` and independent PR packages `32987888192` pass.
   Publication is skipped and consolidated artifact `9614177410` passes bounded
-  non-extracting inventory/checksum/SBOM validation. PR `#96` remains open;
-  evidence-head, merge/main, integration, and destination proof still block
-  checkpoint closure.
+  non-extracting inventory/checksum/SBOM validation. PR `#96` remained open at
+  that recovery stage; the closure evidence below supersedes that blocker.
 - Remaining technical limitation: one already-running `flate2` read is not
   preempted. Non-archive analyzer work, synchronous rule/ML calls, trust helper
   calls, installed service identity, driver mediation, and pre-execution
@@ -3157,3 +3156,18 @@ was repaired and targeted strict lint passes.
   backend. Browser-data, credential/network, persistence-write, and parent-image
   lineage behavior engines remain disabled without trusted correlated telemetry.
   Checkpoint 2244 does not fake-enable them.
+
+### Checkpoint 2244 Closure
+
+Evidence head `0b566a4ce45e9818db840b09156fbf4a2d0b25f0`, normal PR `#96`
+merge `c0cd92f7f10e6205ad209435c24367f54f8cd8b0`, merged-main CI/packages,
+bounded artifact validation, guarded `14/14` synchronization, and destination
+exact `273/273` verification now pass. Report SHA-256 is
+`b5c403d2795bbbd9ff544a6ba431b45c14c2620ec6b99557afb93fed1079a405`;
+locks and the protected vault remain exact. The prior integration/destination
+blocker is closed.
+
+The technical limits remain: one entered decoder read is not preempted;
+non-archive analysis, synchronous rule/ML and trust calls, installed service
+identity, driver mediation, and pre-execution blocking require separate work.
+Disabled reputation and behavior engines remain disabled with their blockers.

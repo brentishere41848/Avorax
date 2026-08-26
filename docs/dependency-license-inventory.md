@@ -1600,6 +1600,15 @@ CycloneDX 1.6 lockfile SBOM with 569 components. No dependency, feature,
 package source, license classification, or lockfile changed; this remains
 lockfile evidence rather than final-binary SBOM resolution or legal approval.
 
+Evidence head `0b566a4ce45e9818db840b09156fbf4a2d0b25f0` and merged main
+`c0cd92f7f10e6205ad209435c24367f54f8cd8b0` preserve that dependency
+contract. Main package artifact `9616123602` passes bounded non-extracting exact
+8-root/6-platform/7-checksum validation with CycloneDX 1.6 and 569 lockfile
+components. Guarded destination verification preserves exact root, Native, and
+Flutter lock SHA-256 values. Checkpoint 2244 is closed with no dependency,
+feature, package source, license classification, or lockfile change; final-binary
+SBOM resolution, production signing, and legal approval remain separate.
+
 ## Checkpoint 2243 Dependency Scope
 
 Parallel Authenticode helper lifecycle hardening uses Rust standard-library
