@@ -3088,7 +3088,29 @@ PowerShell parser gates pass. The initial contract run found only stale current-
 cardinality/direct-call source markers and the initial Clippy run found the new
 large enum; both were repaired and rerun. The definitive no-skip/no-Defender
 report passes exact `270/270` in `462.7s`; dual independent validators pass and
-adversarial missing-step/scope reports are rejected. Hosted, integration,
-synchronization, and destination proof remain open. Three
+adversarial missing-step/scope reports are rejected. Hosted, merged-main,
+guarded `19/19` synchronization, and destination `270/270` proof pass; checkpoint
+2241 is closed. Three
 unchanged API-service Rust-1.96 strict-workspace lints remain a documented
 quality blocker but do not prevent the full locked release build.
+
+## Checkpoint 2242 Cooperative Archive Cancellation Threat Delta
+
+- **Long sampled ZIP traversal:** exact cancellation is checked before each
+  local or central-directory entry rather than only after complete collection.
+- **Long sampled inflate:** output reads are individually capped at 64 KiB and
+  preceded by a cancellation checkpoint. Existing compressed/input and
+  inflated/output limits remain authoritative.
+- **Semantic confusion:** a cancellation callback error propagates outside the
+  parser result, so it cannot become `limit_exceeded`, partial evidence, clean,
+  or a verdict.
+- **Residual decoder latency:** one already-entered `flate2::read` is not
+  forcibly unwound. Cancellation is observed before the next output request.
+- **Residual static analysis:** separate archive metadata, OOXML relationship,
+  and autorun analysis remains synchronous under its existing bounds.
+
+Exact verifier step 271 and source contract 672 were scripted before testing.
+No checkpoint-2242 passing result was claimed during scripting. Local focused,
+full, definitive `271/271`, dual-validator, and adversarial missing-step/scope
+evidence now pass. Locks and the protected vault remain exact; hosted,
+integration, synchronization, and destination evidence remain pending.

@@ -17,6 +17,7 @@ const MAX_INFLATED_AUTORUN_INF_BYTES: usize = 16 * 1024;
 const MAX_CONTENT_SCAN_ENTRIES: usize = 64;
 const MAX_CONTENT_SCAN_ENTRY_BYTES: usize = 1024 * 1024;
 const MAX_CONTENT_SCAN_TOTAL_BYTES: usize = 4 * 1024 * 1024;
+const INFLATE_CANCELLATION_CHUNK_BYTES: usize = 64 * 1024;
 const MAX_CENTRAL_DIRECTORY_BYTES: usize = 256 * 1024;
 const MAX_EOCD_SEARCH_BYTES: usize = 22 + u16::MAX as usize;
 const ZIP_COMPRESSION_STORED: u16 = 0;
@@ -72,22 +73,36 @@ pub fn analyze_zip(bytes: &[u8]) -> Result<ArchiveAnalysis> {
 }
 
 pub fn bounded_zip_entry_samples(bytes: &[u8]) -> Result<BoundedZipEntrySamples> {
+    let mut never_cancel = || Ok(());
+    bounded_zip_entry_samples_with_cancellation(bytes, &mut never_cancel)
+}
+
+pub(crate) fn bounded_zip_entry_samples_with_cancellation(
+    bytes: &[u8],
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<BoundedZipEntrySamples> {
     if bytes.starts_with(ZIP_LOCAL_FILE_HEADER_SIGNATURE) && bytes.len() < 30 {
         bail!("truncated zip local file header");
     }
     if bytes.starts_with(ZIP_LOCAL_FILE_HEADER_SIGNATURE) {
-        if let Some(samples) = bounded_central_directory_entry_samples(bytes) {
+        if let Some(samples) =
+            bounded_central_directory_entry_samples(bytes, cancellation_checkpoint)?
+        {
             return Ok(samples);
         }
     }
-    bounded_local_header_entry_samples(bytes)
+    bounded_local_header_entry_samples(bytes, cancellation_checkpoint)
 }
 
-fn bounded_local_header_entry_samples(bytes: &[u8]) -> Result<BoundedZipEntrySamples> {
+fn bounded_local_header_entry_samples(
+    bytes: &[u8],
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<BoundedZipEntrySamples> {
     let mut offset = 0usize;
     let mut samples = BoundedZipEntrySamples::default();
     let mut total_sampled_bytes = 0usize;
     while offset + 30 <= bytes.len() {
+        cancellation_checkpoint()?;
         if &bytes[offset..offset + 4] != ZIP_LOCAL_FILE_HEADER_SIGNATURE {
             break;
         }
@@ -134,7 +149,12 @@ fn bounded_local_header_entry_samples(bytes: &[u8]) -> Result<BoundedZipEntrySam
             compressed_size,
             uncompressed_size,
         };
-        collect_bounded_zip_entry_sample(&entry, &mut samples, &mut total_sampled_bytes);
+        collect_bounded_zip_entry_sample(
+            &entry,
+            &mut samples,
+            &mut total_sampled_bytes,
+            cancellation_checkpoint,
+        )?;
         let body_end = body_start.saturating_add(compressed_size);
         if body_end > bytes.len() {
             samples.limit_exceeded = true;
@@ -145,16 +165,33 @@ fn bounded_local_header_entry_samples(bytes: &[u8]) -> Result<BoundedZipEntrySam
     Ok(samples)
 }
 
-fn bounded_central_directory_entry_samples(bytes: &[u8]) -> Option<BoundedZipEntrySamples> {
-    let eocd_offset = find_end_of_central_directory(bytes)?;
+fn bounded_central_directory_entry_samples(
+    bytes: &[u8],
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<Option<BoundedZipEntrySamples>> {
+    let Some(eocd_offset) = find_end_of_central_directory(bytes) else {
+        return Ok(None);
+    };
     let mut samples = BoundedZipEntrySamples::default();
     let mut total_sampled_bytes = 0usize;
-    let total_entries = read_u16_le(bytes, eocd_offset + 10)? as usize;
-    let central_directory_size = read_u32_le(bytes, eocd_offset + 12)?;
-    let central_directory_offset = read_u32_le(bytes, eocd_offset + 16)?;
-    let disk_number = read_u16_le(bytes, eocd_offset + 4)?;
-    let central_directory_disk = read_u16_le(bytes, eocd_offset + 6)?;
-    let disk_entries = read_u16_le(bytes, eocd_offset + 8)? as usize;
+    let Some(total_entries) = read_u16_le(bytes, eocd_offset + 10).map(usize::from) else {
+        return Ok(None);
+    };
+    let Some(central_directory_size) = read_u32_le(bytes, eocd_offset + 12) else {
+        return Ok(None);
+    };
+    let Some(central_directory_offset) = read_u32_le(bytes, eocd_offset + 16) else {
+        return Ok(None);
+    };
+    let Some(disk_number) = read_u16_le(bytes, eocd_offset + 4) else {
+        return Ok(None);
+    };
+    let Some(central_directory_disk) = read_u16_le(bytes, eocd_offset + 6) else {
+        return Ok(None);
+    };
+    let Some(disk_entries) = read_u16_le(bytes, eocd_offset + 8).map(usize::from) else {
+        return Ok(None);
+    };
     if disk_number != 0
         || central_directory_disk != 0
         || disk_entries != total_entries
@@ -162,29 +199,30 @@ fn bounded_central_directory_entry_samples(bytes: &[u8]) -> Option<BoundedZipEnt
         || central_directory_offset == ZIP64_U32_SENTINEL
     {
         samples.limit_exceeded = true;
-        return Some(samples);
+        return Ok(Some(samples));
     }
     let central_directory_size = central_directory_size as usize;
     let central_directory_offset = central_directory_offset as usize;
     if central_directory_size > MAX_CENTRAL_DIRECTORY_BYTES {
         samples.limit_exceeded = true;
-        return Some(samples);
+        return Ok(Some(samples));
     }
     let Some(central_directory_end) = central_directory_offset.checked_add(central_directory_size)
     else {
         samples.limit_exceeded = true;
-        return Some(samples);
+        return Ok(Some(samples));
     };
     if central_directory_offset > eocd_offset
         || central_directory_end > eocd_offset
         || central_directory_end > bytes.len()
     {
         samples.limit_exceeded = true;
-        return Some(samples);
+        return Ok(Some(samples));
     }
     let mut offset = central_directory_offset;
     let mut parsed_entries = 0usize;
     while parsed_entries < total_entries {
+        cancellation_checkpoint()?;
         if samples.entries.len() >= MAX_CONTENT_SCAN_ENTRIES {
             samples.limit_exceeded = true;
             break;
@@ -219,14 +257,19 @@ fn bounded_central_directory_entry_samples(bytes: &[u8]) -> Option<BoundedZipEnt
             compressed_size: entry.compressed_size as usize,
             uncompressed_size: entry.uncompressed_size as usize,
         };
-        collect_bounded_zip_entry_sample(&entry_view, &mut samples, &mut total_sampled_bytes);
+        collect_bounded_zip_entry_sample(
+            &entry_view,
+            &mut samples,
+            &mut total_sampled_bytes,
+            cancellation_checkpoint,
+        )?;
         offset = next_offset;
         parsed_entries += 1;
     }
     if parsed_entries < total_entries || offset != central_directory_end {
         samples.limit_exceeded = true;
     }
-    Some(samples)
+    Ok(Some(samples))
 }
 
 fn analyze_local_headers(bytes: &[u8]) -> Result<ArchiveAnalysis> {
@@ -820,86 +863,97 @@ fn collect_bounded_zip_entry_sample(
     entry: &ZipEntryView<'_>,
     samples: &mut BoundedZipEntrySamples,
     total_sampled_bytes: &mut usize,
-) {
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<()> {
     if entry.name.ends_with('/') {
-        return;
+        return Ok(());
     }
     if unsafe_archive_path(entry.name) {
         samples.limit_exceeded = true;
-        return;
+        return Ok(());
     }
     if entry.general_purpose_flags & ZIP_GENERAL_PURPOSE_ENCRYPTED != 0 {
         samples.limit_exceeded = true;
-        return;
+        return Ok(());
     }
     if entry.general_purpose_flags & ZIP_GENERAL_PURPOSE_DATA_DESCRIPTOR != 0
         && entry.compressed_size == 0
     {
         samples.limit_exceeded = true;
-        return;
+        return Ok(());
     }
     let Some(body_end) = entry.body_start.checked_add(entry.compressed_size) else {
         samples.limit_exceeded = true;
-        return;
+        return Ok(());
     };
     if body_end > entry.archive_bytes.len() {
         samples.limit_exceeded = true;
-        return;
+        return Ok(());
     }
-    let body = match bounded_archive_content_body(
+    let body = match bounded_archive_content_body_with_cancellation(
         &entry.archive_bytes[entry.body_start..body_end],
         entry.compression_method,
         entry.compressed_size,
         entry.uncompressed_size,
-    ) {
+        cancellation_checkpoint,
+    )? {
         Ok(Some(body)) => body,
-        Ok(None) => return,
+        Ok(None) => return Ok(()),
         Err(()) => {
             samples.limit_exceeded = true;
-            return;
+            return Ok(());
         }
     };
     if body.is_empty() {
-        return;
+        return Ok(());
     }
     let Some(next_total) = total_sampled_bytes.checked_add(body.len()) else {
         samples.limit_exceeded = true;
-        return;
+        return Ok(());
     };
     if next_total > MAX_CONTENT_SCAN_TOTAL_BYTES {
         samples.limit_exceeded = true;
-        return;
+        return Ok(());
     }
     *total_sampled_bytes = next_total;
     samples.entries.push(BoundedZipEntrySample {
         name: entry.name.to_string(),
         bytes: body,
     });
+    Ok(())
 }
 
-fn bounded_archive_content_body(
+fn bounded_archive_content_body_with_cancellation(
     body: &[u8],
     compression_method: u16,
     compressed_size: usize,
     uncompressed_size: usize,
-) -> std::result::Result<Option<Vec<u8>>, ()> {
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<std::result::Result<Option<Vec<u8>>, ()>> {
     match compression_method {
         ZIP_COMPRESSION_STORED
             if compressed_size <= MAX_CONTENT_SCAN_ENTRY_BYTES
                 && uncompressed_size <= MAX_CONTENT_SCAN_ENTRY_BYTES
                 && compressed_size == uncompressed_size =>
         {
-            Ok(Some(body.to_vec()))
+            cancellation_checkpoint()?;
+            let copied = body.to_vec();
+            cancellation_checkpoint()?;
+            Ok(Ok(Some(copied)))
         }
-        ZIP_COMPRESSION_STORED => Err(()),
+        ZIP_COMPRESSION_STORED => Ok(Err(())),
         ZIP_COMPRESSION_DEFLATE
             if compressed_size <= MAX_CONTENT_SCAN_ENTRY_BYTES
                 && uncompressed_size <= MAX_CONTENT_SCAN_ENTRY_BYTES =>
         {
-            inflate_zip_body(body, MAX_CONTENT_SCAN_ENTRY_BYTES)
+            inflate_zip_body_with_cancellation(
+                body,
+                MAX_CONTENT_SCAN_ENTRY_BYTES,
+                cancellation_checkpoint,
+            )
         }
-        ZIP_COMPRESSION_DEFLATE => Err(()),
-        _ => Err(()),
+        ZIP_COMPRESSION_DEFLATE => Ok(Err(())),
+        _ => Ok(Err(())),
     }
 }
 
@@ -915,6 +969,39 @@ fn inflate_zip_body(
         return Err(());
     }
     Ok(Some(inflated))
+}
+
+fn inflate_zip_body_with_cancellation(
+    body: &[u8],
+    max_inflated_bytes: usize,
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<std::result::Result<Option<Vec<u8>>, ()>> {
+    let mut decoder = DeflateDecoder::new(body);
+    let mut inflated = Vec::new();
+    let mut buffer = [0_u8; INFLATE_CANCELLATION_CHUNK_BYTES];
+    loop {
+        cancellation_checkpoint()?;
+        let remaining = max_inflated_bytes
+            .saturating_add(1)
+            .saturating_sub(inflated.len());
+        if remaining == 0 {
+            return Ok(Err(()));
+        }
+        let read_limit = remaining.min(buffer.len());
+        let read = match decoder.read(&mut buffer[..read_limit]) {
+            Ok(read) => read,
+            Err(_) => return Ok(Err(())),
+        };
+        if read == 0 {
+            break;
+        }
+        inflated.extend_from_slice(&buffer[..read]);
+        if inflated.len() > max_inflated_bytes {
+            return Ok(Err(()));
+        }
+    }
+    cancellation_checkpoint()?;
+    Ok(Ok(Some(inflated)))
 }
 
 fn inspect_ooxml_relationship_body(body: &[u8], result: &mut ArchiveAnalysis) {
@@ -1251,6 +1338,55 @@ mod tests {
         assert!(!samples.limit_exceeded);
         assert_eq!(samples.entries.len(), 1);
         assert_eq!(samples.entries[0].bytes, b"compressed hello");
+    }
+
+    #[test]
+    fn cooperative_archive_cancellation_interrupts_entry_traversal() {
+        let archive = zip_with_stored_entries(&[
+            (b"payload/first.txt", b"first benign body"),
+            (b"payload/second.txt", b"second benign body"),
+        ]);
+        let mut checks = 0_u32;
+        let mut cancellation_checkpoint = || {
+            checks += 1;
+            if checks >= 4 {
+                anyhow::bail!("benign entry traversal cancellation");
+            }
+            Ok(())
+        };
+
+        let error =
+            bounded_zip_entry_samples_with_cancellation(&archive, &mut cancellation_checkpoint)
+                .expect_err("entry traversal cancellation must abort collection");
+
+        assert_eq!(checks, 4);
+        assert!(error
+            .to_string()
+            .contains("benign entry traversal cancellation"));
+    }
+
+    #[test]
+    fn cooperative_archive_cancellation_interrupts_inflate_chunks() {
+        let body = vec![b'a'; INFLATE_CANCELLATION_CHUNK_BYTES * 3];
+        let compressed = deflate_raw(&body);
+        let mut checks = 0_u32;
+        let mut cancellation_checkpoint = || {
+            checks += 1;
+            if checks >= 3 {
+                anyhow::bail!("benign inflate cancellation");
+            }
+            Ok(())
+        };
+
+        let error = inflate_zip_body_with_cancellation(
+            &compressed,
+            MAX_CONTENT_SCAN_ENTRY_BYTES,
+            &mut cancellation_checkpoint,
+        )
+        .expect_err("inflate cancellation must abort before complete output");
+
+        assert_eq!(checks, 3);
+        assert!(error.to_string().contains("benign inflate cancellation"));
     }
 
     #[test]

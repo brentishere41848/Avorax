@@ -3056,8 +3056,9 @@ remain genuine blockers or disabled capabilities.
 - Exact 270-step verification and source contract 671 pass locally. The
   definitive no-skip/no-Defender report is exact `270/270` in `462.7s`; both
   independent validators pass and adversarial missing-step/scope reports are
-  rejected. Hosted, merge, synchronization, and destination evidence remain
-  open for this checkpoint.
+  rejected. Hosted, merge, synchronization, and destination evidence pass;
+  destination definitive is exact `270/270` in `517.9s` and checkpoint 2241 is
+  closed.
 - Hard interruption of an active OS read, static analyzer substep, bounded
   archive collect/inflate, synchronous rule/ML operation, or Windows trust
   helper remains technically unavailable in this in-process design. Moving
@@ -3072,8 +3073,25 @@ Focused and broad local component evidence now passes: cancellation `9/9`,
 Native `568`, Local Core `546/546`, Flutter `847/847`, source contracts
 `671/671`, strict Native/Local lint, locked release build, analyzer, format, and
 dual PowerShell parsing. The definitive exact `270/270` report and both
-independent validators now pass; hosted/integration evidence remains open.
-Workspace-wide strict Clippy also remains blocked by two
+independent validators now pass; hosted/integration/destination evidence also
+passes. Workspace-wide strict Clippy remains blocked by two
 unchanged API `items_after_test_module` findings and one unchanged API
 `enum_variant_names` finding under Rust 1.96; the checkpoint-owned large enum
 was repaired and targeted strict lint passes.
+
+## Checkpoint 2242 Cooperative Archive Inflate Cancellation
+
+- Entry-level and 64-KiB inflate-output checkpoints now pass exact typed
+  cancellation/probe propagation, focused/full suites, source contract
+  `672/672`, and definitive verifier `271/271` with dual validation plus
+  missing-step/scope rejection. Hosted, merge, synchronization, and destination
+  evidence remain open.
+- One active `flate2` decoder read cannot be hard-interrupted by the in-process
+  callback. Moving it behind a safely killable worker requires authenticated
+  IPC and resource-confinement work beyond this checkpoint.
+- Native static archive metadata/relationship inspection remains a separate
+  synchronous bounded substep. Same-user capability secrecy, installed service
+  ownership, cross-identity authentication, driver/kernel cancellation, and
+  pre-execution blocking remain genuine blockers.
+- No checkpoint-2242 passing result was claimed during scripting; local proof
+  is now complete without changing the residual technical limits above.

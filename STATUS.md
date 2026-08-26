@@ -6723,8 +6723,12 @@ guarded synchronization, and destination proof remain pending.
   Implementation head `810cea36a8ea14b518a884c56b4d5366c069a3f8` passes exact
   Avorax CI and Desktop Packages push/PR evidence, including both skipped
   publication jobs and bounded non-extracting validation of both consolidated
-  artifacts. Evidence-head, merge, synchronization, and destination evidence
-  remain pending.
+  artifacts. Evidence-head CI/packages, normal PR `#93` merge, merged-main
+  CI/packages, non-extracting artifacts, guarded `19/19` sync, and destination
+  focused/full/definitive evidence now pass. Destination definitive is exact
+  `270/270` in `517.9s`, with report SHA-256
+  `f74307775a173e49c359f30e06e0b8b627fecfc5e13258ebd28906dfa415df9d`.
+  Locks and the protected vault remain exact; checkpoint 2241 is closed.
 - Workspace-wide strict Clippy remains blocked by three unchanged API-service
   Rust-1.96 lints (`items_after_test_module` twice and `enum_variant_names`
   once). The checkpoint's own large-enum finding was repaired by boxing the
@@ -6734,3 +6738,28 @@ guarded synchronization, and destination proof remain pending.
   collect/inflate, rule/ML call, or Windows trust helper. Same-user UUID access,
   installed service ownership, cross-identity authentication, driver/kernel
   cancellation, and pre-execution blocking remain limited or blocked.
+
+## Checkpoint 2242 - Cooperative Archive Inflate Cancellation Locally Verified
+
+- Bounded ZIP sample collection now accepts a fallible checkpoint and checks
+  before every local/central-directory entry, around stored copies, and before
+  every at-most-64-KiB inflate output read.
+- Callback failure propagates unchanged, so typed cancellation cannot become an
+  archive limit or partial verdict and probe failure remains fail-visible.
+- Benign regressions, mandatory verifier step 271, validator cardinality/scope,
+  source contract 672, and all audit documents are scripted before execution.
+  Focused tests pass `4/4`, adjacent cancellation passes `9/9`, Native passes
+  `553` plus compiler `6/6`, Local Core `546/546`, Flutter `847/847`, and source
+  contracts `672/672`; strict component lint/analyzer/release checks pass.
+- Definitive verification passes exact `271/271` in `535.7s`, dual independent
+  validators pass, and missing-step/scope copies are rejected. Locks and the
+  protected vault remain exact. Implementation head
+  `ef1944db1e84fd8cbdff9c8db200073640e281ae` passes exact Avorax CI and
+  Desktop Packages push/PR evidence. Both publication jobs are skipped, and
+  bounded non-extracting validation passes for both consolidated artifacts.
+  Evidence-head, merge, guarded synchronization, and destination evidence
+  remain pending.
+- **Limit:** one active decoder read and the static analyzer's separate bounded
+  archive metadata/relationship inspection remain synchronous. This is not
+  hard cancellation, cross-identity service control, driver/kernel blocking, or
+  pre-execution enforcement.

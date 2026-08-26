@@ -4935,7 +4935,7 @@ driver/kernel, or pre-execution blocking capability.
 
 ## Checkpoint 2240 Scan Job Cancellation Binding Matrix
 
-| Control | Responsibility | Scripted state | Evidence target / limit |
+| Control | Responsibility | State | Evidence target / limit |
 | --- | --- | --- | --- |
 | Client scan job UUID | Create one canonical random UUID before process start and bind scan IPC plus exact process lease | Scripted, not yet verified | Flutter benign subprocess regression; same-user capability only |
 | Local Core job parser/progress | Require canonical UUID on every scan/cancel command and preserve it in progress | Scripted, not yet verified | Rust canonical/missing/malformed command regressions |
@@ -4956,7 +4956,7 @@ interruption, driver/kernel interception, or pre-execution blocking.
 | Detection-stage boundary | Probe between static, publisher trust, signatures, archive, rules, heuristics, ML, and verdict publication | Locally verified | Benign runtime/source regressions; no partial verdict |
 | Archive boundary | Probe around bounded sample collection and before every sampled entry/recursive archive | Locally verified | Existing 64-entry/4-MiB/1-MiB/depth limits remain authoritative |
 | Local Core accounting | Interrupted current file plus remainder are unscanned; probe corruption aborts visibly | Locally verified | Exact-job token runtime tests and source accounting contract |
-| Checkpoint 2241 verifier contract | Verifier, validator, source contracts | Locally and implementation-head hosted verified | Mandatory cooperative-cancellation target, exact 270/270, source contract 671, dual validators, adversarial rejection, exact-head CI, and cross-platform package evidence |
+| Checkpoint 2241 verifier contract | Verifier, validator, source contracts | Closed: local, hosted, merged-main, synchronized, and destination verified | Mandatory cooperative-cancellation target, exact 270/270, source contract 671, dual validators, adversarial rejection, exact-head/main CI and packages, 19/19 sync, destination 270/270 |
 
 Checkpoint 2241 does not hard-interrupt an in-progress filesystem read, static
 analyzer substep, bounded archive collect/inflate, synchronous rule/ML call, or
@@ -4969,7 +4969,26 @@ Focused cancellation passes `9/9`; complete Native library `568`, Local Core
 locked release build, analyzer, formatting, and parser gates pass. The
 definitive no-skip/no-Defender report passes exact `270/270` in `462.7s`, both
 independent validators pass, and missing-step/scope adversarial reports are
-rejected. Implementation head `810cea36a8ea14b518a884c56b4d5366c069a3f8`
-passes CI and both package contexts; merge, synchronization, and destination
-evidence remain open. Workspace-wide strict Clippy is separately blocked by three
+rejected. Evidence head and merged main pass CI/packages and bounded artifact
+validation; guarded sync verifies `19/19` paths and destination definitive
+passes `270/270` in `517.9s`. Checkpoint 2241 is closed. Workspace-wide strict
+Clippy is separately blocked by three
 unchanged API-service Rust-1.96 lints; Native/Local strict Clippy is clean.
+
+## Checkpoint 2242 Cooperative Archive Inflate Cancellation Matrix
+
+| Control | Responsibility | Scripted state | Evidence target / limit |
+| --- | --- | --- | --- |
+| ZIP entry traversal checkpoint | Observe exact job cancellation before each local/central-directory sampled entry | Locally verified | Benign two-entry cancellation regression; no partial returned sample set |
+| Stored body checkpoint | Bound cancellation around an at-most-1-MiB stored-body copy | Locally verified | Pre/post callback with unchanged entry/total limits |
+| Deflate output checkpoint | Observe cancellation before every at-most-64-KiB output read | Locally verified | Benign multi-chunk deflate regression; existing 1-MiB output cap |
+| Scanner typed propagation | Preserve cancellation/probe errors instead of archive-limit evidence | Locally verified | Distinct cancellation and probe-failure adapter regressions; source contract 672 |
+| Checkpoint 2242 verifier contract | Require current evidence rather than stale checkpoint-2241 reports | Locally definitive and implementation-head hosted verified | Exact 271/271, dual validators, missing-step/scope rejection, exact-head CI/packages |
+
+One already-running decoder read is not hard-interrupted. Static archive
+metadata/relationship analysis remains a separate synchronous bounded substep.
+During scripting, no checkpoint-2242 passing result was claimed. Local focused,
+full, definitive `271/271`, and adversarial validation now pass. Implementation
+head `ef1944db1e84fd8cbdff9c8db200073640e281ae` passes CI, both package
+contexts, and bounded consolidated-artifact validation. Integration, guarded
+synchronization, and destination evidence remain open.

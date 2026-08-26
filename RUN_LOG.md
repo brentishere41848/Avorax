@@ -11747,3 +11747,74 @@ pending.
   non-extracting `8` root / `6` platform / `7` checksum / CycloneDX 1.6 / `569`
   component validation. Evidence-head, merge, synchronization, and destination
   evidence remain open.
+
+## 2026-08-26 - Checkpoint 2241 Integration And Destination Closure
+
+- Evidence head `dc44b9f6b3af60d4caacfd626e19ecd4a7dc1f7e` passes CI
+  `32954883621` and packages `32954883591`; artifact `9602378676` matches
+  GitHub/download SHA-256 and exact non-extracting package/SBOM validation.
+  Publication is skipped. Redundant cancelled dispatch `32954878909` is not
+  credited.
+- PR `#93` merged normally as
+  `68f766301041ee5e106569b7bd0afe1c63f3165d`. Merged-main CI
+  `32957262066` and packages `32957262029` pass; publication is skipped and
+  artifact `9603036370` passes matching digest plus exact bounded in-stream
+  validation.
+- Guarded sync verifies `19/19` exact paths, zero deletion/mismatch/residue.
+  Destination focused cancellation `9/9`, Native `549` passed/`19` ignored plus
+  compiler `6/6`, Local Core `546/546`, Flutter `847/847`, source contracts
+  `671/671`, analyzer, strict component lint, and locked release build pass.
+- Destination definitive evidence passes exact `270/270` in `517.9s`; dual
+  independent validators pass and report SHA-256 is
+  `f74307775a173e49c359f30e06e0b8b627fecfc5e13258ebd28906dfa415df9d`.
+  Locks and protected-vault invariant remain exact. Checkpoint 2241 is closed;
+  the complete antivirus goal remains active.
+
+## 2026-08-26 - Checkpoint 2242 Archive Inflate Cancellation Scripted
+
+- Audited the checkpoint-2241 residual and found that bounded ZIP sampling
+  checked only before and after complete collection. One 64-entry/4-MiB
+  collection and its bounded deflate work could finish before cancellation was
+  observed.
+- Scripted fallible checkpoints before every local/central-directory entry,
+  around stored-body copies, and before every at-most-64-KiB inflate output
+  read. Existing archive size/count/depth/path/encryption policies are unchanged.
+- Scripted benign traversal/inflate cancellation tests, typed scanner
+  cancellation/probe-failure coverage, mandatory verifier step 271, strict validator scope/cardinality,
+  source contract 672, and audit/threat/blocker/dependency documentation.
+- No checkpoint-2242 test has run during this scripting phase. One already-
+  running decoder read and the static analyzer's separate bounded archive
+  metadata/relationship inspection remain synchronous. No live malware,
+  Defender change, install, service/driver start, release, publication, or vault
+  mutation is involved.
+- Local verification now passes focused archive cancellation `4/4`, adjacent
+  cooperative cancellation `9/9`, Native `553` with `19` intentional ignores
+  plus compiler `6/6`, Local Core `546/546`, source contracts `672/672`, strict
+  Native/Local Clippy, formatting, analyzer, Flutter `847/847`, and the locked
+  workspace release build.
+- Definitive verification passes exact `271/271` from
+  `2026-08-26T11:10:24.2677488Z` through
+  `2026-08-26T11:19:19.9980328Z` in `535.7s`; embedded and independent PS5/PS7
+  validation pass. Report SHA-256 is
+  `730d83aefb8d3d6d8f1673f7394594aae83af2a25573efe64d57dfe2ca6466db`.
+  Missing-step (`270`) and missing-inflate-scope copies are rejected.
+- Initial formatting, unavailable optional-pytest, malformed parser escaping,
+  and two adversarial-harness capture/matching attempts failed visibly and are
+  uncredited; corrected repository-owned checks pass without installing a
+  dependency. Locks and the protected-vault invariant remain exact. Hosted,
+  merge, guarded synchronization, and destination evidence remain pending.
+
+## 2026-08-26 - Checkpoint 2242 Implementation-Head Hosting
+
+- Exact implementation `ef1944db1e84fd8cbdff9c8db200073640e281ae`
+  passes Avorax CI PR run `32963240331` and Desktop Packages push/PR runs
+  `32963175466`/`32963240244`. Both publication jobs are skipped; no release is
+  created.
+- Consolidated artifacts `9605102016`/`9605194147` are `131922540`/
+  `131921189` bytes and match GitHub/download SHA-256 values
+  `96f8bb64f3bfd9af53600cab71b9baffb26a1fe9a3b50d3b26f541409fc536f4`/
+  `92042d73caa0f4e6326c9a24c3344c2b9efa2535d2f629b02b584955ac9c94e2`.
+  Non-extracting in-stream review passes exact eight-entry inventories, six
+  platform files, seven checksums, and CycloneDX 1.6/569-component SBOMs.
+- Evidence-head hosted checks, normal merge, merged-main evidence, guarded
+  original-tree synchronization, and destination verification remain pending.

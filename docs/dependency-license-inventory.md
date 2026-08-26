@@ -1572,3 +1572,28 @@ verified at implementation head: both consolidated artifacts contain one
 CycloneDX 1.6 lockfile SBOM with exactly 569 components and seven matching
 checksum targets. This remains lockfile evidence, not a final-binary SBOM or
 legal approval.
+
+Evidence-head and merged-main packages preserve the same exact CycloneDX 1.6,
+569-component, seven-checksum contract. Their consolidated ZIP downloads match
+GitHub SHA-256 and pass bounded in-stream validation without extraction or
+execution. Destination lock hashes remain exact. Checkpoint 2241 introduces no
+dependency, feature, package source, license classification, or lockfile
+change; final-binary SBOM resolution and legal approval remain separate.
+
+## Checkpoint 2242 Dependency Scope
+
+Cooperative archive traversal/inflate cancellation uses Rust standard-library
+callbacks and I/O, the already locked `anyhow` and `flate2` dependencies, and
+existing repository verification tools. It adds no dependency, feature,
+downloaded content, package source, license obligation, or lockfile change.
+
+Benign tests construct ordinary stored/deflated text fixtures in memory and do
+not extract or execute candidate content. Exact verifier step 271 and source
+contract 672 were scripted before execution. They now pass exact `271/271` and
+`672/672`; locked release build and all three unchanged lock hashes pass. Final-
+binary license resolution, production signing, and legal approval remain
+separate prerequisites; no checkpoint-2242 passing result was claimed during
+scripting. Implementation-head hosted package evidence now confirms both
+consolidated artifacts contain one CycloneDX 1.6 lockfile SBOM with exactly 569
+components and seven matching checksum targets. This remains lockfile evidence,
+not a final-binary SBOM, legal approval, or production-signing proof.

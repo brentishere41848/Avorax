@@ -108,6 +108,46 @@ checksum targets, clean ZIP reads, and one CycloneDX 1.6 lockfile SBOM with
 exactly 569 components. Evidence-head hosting, merge, synchronization, and
 destination verification remain open.
 
+## Integration And Destination Closure
+
+Evidence head `dc44b9f6b3af60d4caacfd626e19ecd4a7dc1f7e` passes Avorax CI
+`32954883621` and Desktop Packages PR run `32954883591`. Publication job
+`98141092965` is skipped. Consolidated artifact `9602378676` is `132010980`
+bytes; GitHub and downloaded SHA-256 both equal
+`c0b87ebb0acef91ed0060a492872626bb64a3856d8aeda08eda2b91e5a290104`.
+Its bounded non-extracting validation passes the same exact
+8-root/6-platform/7-checksum/CycloneDX-1.6/569-component contract. Redundant
+manual dispatch `32954878909` was cancelled after the automatic PR run started
+and is not credited.
+
+PR `#93` merged normally as
+`68f766301041ee5e106569b7bd0afe1c63f3165d`, with exact parents
+`96a7042496c00e340fd22f0fb28917fb8d72e191` and
+`dc44b9f6b3af60d4caacfd626e19ecd4a7dc1f7e`. Merged-main CI
+`32957262066` and Desktop Packages `32957262029` pass; publication job
+`98146445860` is skipped. Main consolidated artifact `9603036370` is
+`132009707` bytes with matching GitHub/download SHA-256
+`4cf6184511f815a64902c6d1ab991dc50354eea6b55fa34f4144e60a671fe8bf`
+and passes the same non-extracting artifact contract.
+
+Guarded synchronization copied exact merge content for `19/19` inventoried
+paths (`17` modified, `2` added), with zero deletion, mismatch, or temporary
+residue. Every modified destination target matched the old main blob before
+copy. Destination focused cancellation passes `9/9`; complete Native reports
+`549` passed and `19` intentional ignores plus compiler `6/6`; Local Core
+passes `546/546`; Flutter passes `847/847`; source contracts `671/671`, analyzer,
+strict Native/Local lint, and locked workspace release build pass.
+
+Destination definitive verification passes exact `270/270` from
+`2026-08-26T10:41:01.5134634Z` through
+`2026-08-26T10:49:39.4241350Z` in `517.9s`. Independent Windows PowerShell
+5.1/PowerShell 7 validators pass; report SHA-256 is
+`f74307775a173e49c359f30e06e0b8b627fecfc5e13258ebd28906dfa415df9d`.
+The three lock hashes remain exact and the protected vault remains `16072`
+files, zero directories, `4522733` bytes, `5357` each
+`.avoraxq`/`.json`/`.auth`, one metadata key, zero pending, and zero reparse
+points. Checkpoint 2241 is closed; the complete antivirus goal remains active.
+
 ## Limits
 
 Cancellation is cooperative at explicit boundaries. It does not hard-interrupt
