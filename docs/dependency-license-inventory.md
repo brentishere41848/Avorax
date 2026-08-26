@@ -1593,4 +1593,7 @@ contract 672 were scripted before execution. They now pass exact `271/271` and
 `672/672`; locked release build and all three unchanged lock hashes pass. Final-
 binary license resolution, production signing, and legal approval remain
 separate prerequisites; no checkpoint-2242 passing result was claimed during
-scripting.
+scripting. Implementation-head hosted package evidence now confirms both
+consolidated artifacts contain one CycloneDX 1.6 lockfile SBOM with exactly 569
+components and seven matching checksum targets. This remains lockfile evidence,
+not a final-binary SBOM, legal approval, or production-signing proof.

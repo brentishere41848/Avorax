@@ -6753,8 +6753,12 @@ guarded synchronization, and destination proof remain pending.
   contracts `672/672`; strict component lint/analyzer/release checks pass.
 - Definitive verification passes exact `271/271` in `535.7s`, dual independent
   validators pass, and missing-step/scope copies are rejected. Locks and the
-  protected vault remain exact. Hosted, merge, guarded synchronization, and
-  destination evidence remain pending.
+  protected vault remain exact. Implementation head
+  `ef1944db1e84fd8cbdff9c8db200073640e281ae` passes exact Avorax CI and
+  Desktop Packages push/PR evidence. Both publication jobs are skipped, and
+  bounded non-extracting validation passes for both consolidated artifacts.
+  Evidence-head, merge, guarded synchronization, and destination evidence
+  remain pending.
 - **Limit:** one active decoder read and the static analyzer's separate bounded
   archive metadata/relationship inspection remain synchronous. This is not
   hard cancellation, cross-identity service control, driver/kernel blocking, or

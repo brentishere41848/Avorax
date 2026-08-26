@@ -11803,3 +11803,18 @@ pending.
   uncredited; corrected repository-owned checks pass without installing a
   dependency. Locks and the protected-vault invariant remain exact. Hosted,
   merge, guarded synchronization, and destination evidence remain pending.
+
+## 2026-08-26 - Checkpoint 2242 Implementation-Head Hosting
+
+- Exact implementation `ef1944db1e84fd8cbdff9c8db200073640e281ae`
+  passes Avorax CI PR run `32963240331` and Desktop Packages push/PR runs
+  `32963175466`/`32963240244`. Both publication jobs are skipped; no release is
+  created.
+- Consolidated artifacts `9605102016`/`9605194147` are `131922540`/
+  `131921189` bytes and match GitHub/download SHA-256 values
+  `96f8bb64f3bfd9af53600cab71b9baffb26a1fe9a3b50d3b26f541409fc536f4`/
+  `92042d73caa0f4e6326c9a24c3344c2b9efa2535d2f629b02b584955ac9c94e2`.
+  Non-extracting in-stream review passes exact eight-entry inventories, six
+  platform files, seven checksums, and CycloneDX 1.6/569-component SBOMs.
+- Evidence-head hosted checks, normal merge, merged-main evidence, guarded
+  original-tree synchronization, and destination verification remain pending.

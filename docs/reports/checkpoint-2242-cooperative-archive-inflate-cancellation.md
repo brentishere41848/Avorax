@@ -77,6 +77,29 @@ vault mutation is involved.
   Hosted exact-head evidence, normal merge, guarded synchronization, and
   independent destination verification remain pending.
 
+## Implementation-Head Hosted Evidence
+
+Implementation head `ef1944db1e84fd8cbdff9c8db200073640e281ae` passes Avorax
+CI PR run `32963240331`. All five jobs pass: branding/copy, Flutter client and
+protocol, Rust Local Core and Guard, Unix quarantine permission runtime, and
+security/protection/performance gates.
+
+Desktop Packages push run `32963175466` and PR run `32963240244` pass package
+contracts, Windows x64 MSI/setup EXE, Linux x64 DEB/tar, macOS arm64/x64 DMGs,
+and consolidation/checksums. Publication jobs `98163620162` and `98164407214`
+are explicitly skipped; no release or prerelease is created.
+
+Consolidated artifacts `9605102016` and `9605194147` are `131922540` and
+`131921189` bytes. Downloaded SHA-256 values exactly match GitHub digests
+`96f8bb64f3bfd9af53600cab71b9baffb26a1fe9a3b50d3b26f541409fc536f4`
+and
+`92042d73caa0f4e6326c9a24c3344c2b9efa2535d2f629b02b584955ac9c94e2`.
+Bounded in-stream validation, without extraction or execution, passes exactly
+eight unique regular root entries, six platform files, seven matching internal
+checksum targets, clean ZIP reads, and one CycloneDX 1.6 lockfile SBOM with
+exactly 569 components. Evidence-head hosting, merge, synchronization, and
+destination verification remain open.
+
 ## Limits
 
 Cancellation remains cooperative. It cannot hard-interrupt one already-running
