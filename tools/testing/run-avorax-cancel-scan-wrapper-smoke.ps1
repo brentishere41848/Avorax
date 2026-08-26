@@ -134,7 +134,7 @@ function Assert-FalseProperty {
 }
 
 function Assert-CancelReport {
-  param([object]$Report, [string]$DataRoot)
+  param([object]$Report, [string]$DataRoot, [string]$JobId)
   if ($Report.tool -ne "avorax-cancel-scan") {
     throw "cancel wrapper report tool mismatch: $($Report.tool)"
   }
@@ -143,6 +143,12 @@ function Assert-CancelReport {
   }
   if ($Report.cancel_requested -ne $true) {
     throw "cancel wrapper report did not mark cancel_requested=true."
+  }
+  if (-not ([string]$Report.job_id).Equals($JobId, [StringComparison]::Ordinal)) {
+    throw "cancel wrapper report job_id mismatch: $($Report.job_id)"
+  }
+  if (-not ([string]$Report.raw_response.job_id).Equals($JobId, [StringComparison]::Ordinal)) {
+    throw "cancel wrapper raw response job_id mismatch: $($Report.raw_response.job_id)"
   }
   if ($Report.cancel_token_exists -ne $true) {
     throw "cancel wrapper report did not observe the cancel token."
@@ -176,6 +182,7 @@ function Assert-CancelReport {
   $limitations = @($Report.limitations) -join " "
   foreach ($expected in @(
     "cooperative-cancel-token-request-only",
+    "job-id-capability-not-cross-identity-authentication",
     "running-scan-observation-covered-by-local-core-regressions",
     "no-installed-service-e2e-claim",
     "no-kernel-pre-execution-blocking"
@@ -184,7 +191,7 @@ function Assert-CancelReport {
       throw "cancel wrapper report limitations missing: $expected"
     }
   }
-  $expectedToken = Join-Path (Join-Path $DataRoot "runtime") "cancel-active-scan"
+  $expectedToken = Join-Path (Join-Path $DataRoot "runtime") "cancel-scan-$JobId"
   if (-not ([System.IO.Path]::GetFullPath([string]$Report.cancel_token_path).Equals([System.IO.Path]::GetFullPath($expectedToken), [StringComparison]::OrdinalIgnoreCase))) {
     throw "cancel wrapper report token path mismatch: $($Report.cancel_token_path)"
   }
@@ -198,6 +205,10 @@ function Assert-CancelReport {
   $tokenText = Get-Content -LiteralPath $expectedToken -Raw
   if ([string]::IsNullOrWhiteSpace($tokenText)) {
     throw "cancel wrapper token must not be empty."
+  }
+  $token = $tokenText | ConvertFrom-Json -ErrorAction Stop
+  if ($token.schema_version -ne 1 -or -not ([string]$token.job_id).Equals($JobId, [StringComparison]::Ordinal)) {
+    throw "cancel wrapper token content did not bind to the requested job."
   }
 }
 
@@ -227,6 +238,7 @@ if (-not (Test-Path -LiteralPath $wrapper -PathType Leaf)) {
 $powershell = (Get-Command powershell.exe -ErrorAction Stop).Source
 $tempRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("avorax-cancel-scan-wrapper-smoke-" + [System.Guid]::NewGuid().ToString("N"))
 $dataRoot = Join-Path $tempRoot "data"
+$jobId = [System.Guid]::NewGuid().ToString("D")
 $reportRelative = ".workflow\ultracode\avorax-hardening\results\cancel-scan-wrapper-request.json"
 $guardReportRelative = ".workflow\ultracode\avorax-hardening\results\cancel-scan-wrapper-path-guards.json"
 $missingRootReportRelative = ".workflow\ultracode\avorax-hardening\results\cancel-scan-wrapper-missing-root-should-not-exist.json"
@@ -237,11 +249,14 @@ $missingRootReport = Join-Path $repo $missingRootReportRelative
 $dualRootReport = Join-Path $repo $dualRootReportRelative
 $outsideReport = Join-Path $tempRoot "cancel-scan-wrapper-outside-repo-should-not-exist.json"
 $outsideDataRoot = Join-Path $tempRoot "outside-report-data"
-$outsideToken = Join-Path (Join-Path $outsideDataRoot "runtime") "cancel-active-scan"
+$outsideToken = Join-Path (Join-Path $outsideDataRoot "runtime") "cancel-scan-$jobId"
+$invalidJobToken = Join-Path (Join-Path $dataRoot "runtime") "cancel-scan-not-a-uuid"
+$invalidJobReportRelative = ".workflow\ultracode\avorax-hardening\results\cancel-scan-wrapper-invalid-job-should-not-exist.json"
+$invalidJobReport = Join-Path $repo $invalidJobReportRelative
 
 try {
   New-Item -ItemType Directory -Path $dataRoot -Force | Out-Null
-  foreach ($staleReport in @($guardReport, $missingRootReport, $dualRootReport, $outsideReport)) {
+  foreach ($staleReport in @($guardReport, $missingRootReport, $dualRootReport, $outsideReport, $invalidJobReport)) {
     if (Test-Path -LiteralPath $staleReport -PathType Leaf) {
       Remove-Item -LiteralPath $staleReport -Force
     }
@@ -253,13 +268,14 @@ try {
     "-File", $wrapper,
     "-RepoRoot", $repo,
     "-DataRoot", $dataRoot,
+    "-JobId", $jobId,
     "-LocalCorePath", $binary,
     "-ReportPath", $reportRelative,
     "-TimeoutSeconds", ([string]$TimeoutSeconds)
   ) -ExpectSuccess $true | Out-Null
 
   $reportJson = Read-JsonFile $report "cancel scan wrapper report"
-  Assert-CancelReport $reportJson $dataRoot
+  Assert-CancelReport $reportJson $dataRoot $jobId
 
   $guardCases = @()
   $guardCases += Invoke-NegativeCancelWrapperCase -Name "missing-data-root" -Arguments @(
@@ -267,6 +283,7 @@ try {
     "-ExecutionPolicy", "Bypass",
     "-File", $wrapper,
     "-RepoRoot", $repo,
+    "-JobId", $jobId,
     "-LocalCorePath", $binary,
     "-ReportPath", $missingRootReportRelative,
     "-TimeoutSeconds", ([string]$TimeoutSeconds)
@@ -278,6 +295,7 @@ try {
     "-File", $wrapper,
     "-RepoRoot", $repo,
     "-DataRoot", $dataRoot,
+    "-JobId", $jobId,
     "-UseInstalledDataRoot",
     "-LocalCorePath", $binary,
     "-ReportPath", $dualRootReportRelative,
@@ -289,10 +307,22 @@ try {
     "-File", $wrapper,
     "-RepoRoot", $repo,
     "-DataRoot", $outsideDataRoot,
+    "-JobId", $jobId,
     "-LocalCorePath", $binary,
     "-ReportPath", $outsideReport,
     "-TimeoutSeconds", ([string]$TimeoutSeconds)
   ) -ExpectedDiagnostic "Avorax cancel scan report must be inside the repository" -UnexpectedReportPath $outsideReport -UnexpectedTokenPath $outsideToken
+  $guardCases += Invoke-NegativeCancelWrapperCase -Name "malformed-job-id" -Arguments @(
+    "-NoProfile",
+    "-ExecutionPolicy", "Bypass",
+    "-File", $wrapper,
+    "-RepoRoot", $repo,
+    "-DataRoot", $dataRoot,
+    "-JobId", "not-a-uuid",
+    "-LocalCorePath", $binary,
+    "-ReportPath", $invalidJobReportRelative,
+    "-TimeoutSeconds", ([string]$TimeoutSeconds)
+  ) -ExpectedDiagnostic "JobId must be a canonical UUID" -UnexpectedReportPath $invalidJobReport -UnexpectedTokenPath $invalidJobToken
 
   Write-JsonFileAtomic $guardReport ([ordered]@{
     schema_version = 1

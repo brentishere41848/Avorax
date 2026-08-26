@@ -23,6 +23,7 @@ pub struct CoreCommand {
     pub paths: Option<Vec<String>>,
     pub action_mode: Option<String>,
     pub scan_kind: Option<String>,
+    pub job_id: Option<String>,
     pub threat_name: Option<String>,
     pub engine: Option<String>,
     pub quarantine_id: Option<String>,

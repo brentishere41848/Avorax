@@ -67,7 +67,7 @@ repository has executable proof and the verification report names the proof.
 | Long local scans appear stuck or fake-complete | Local scan wrapper progress smoke requires release-binary progress events and report counts | Installed UI progress click-through and external cancellation E2E remain partial |
 | Automation treats a threat result as success or a folder action removes benign files | `-FailOnThreat` returns visible failure while preserving detect-only behavior; explicit folder auto-quarantine smoke proves the known-bad fixture is removed and the benign fixture remains | Installed UI/service folder scan click-through remains partial |
 | Bad scan input creates fake reports or writes evidence outside the repo | Local scan wrapper path-guard smoke proves missing targets, wrong target kind, and repo-escaping report paths fail visibly before scan-report creation | Installed UI/service filesystem picker E2E remains partial |
-| Cancel control writes to an unintended runtime or claims hard blocking | Cancel wrapper requires `-DataRoot` or explicit `-UseInstalledDataRoot`, validates the `cancel-active-scan` token path, documents cooperative-token limits, and has path/report guard proof that rejected input writes neither a report nor an outside-path cancel token | Installed UI/service cross-process cancellation E2E remains partial |
+| Cancel control writes to an unintended runtime or claims hard blocking | Cancel wrapper requires a canonical `-JobId` plus `-DataRoot` or explicit `-UseInstalledDataRoot`, validates exact per-job token path/content, documents cooperative-token limits, and rejects bad input before report/token output | Installed UI/service cross-identity cancellation E2E remains partial |
 | User trusts a malicious path accidentally | Confirmation-gated allowlist wrapper, target validation, no broad-root wrapper support, and path/report guard proof for unconfirmed mutation and repo-escaping report rejection | Folder/hash wrapper support remains partial |
 | Quarantine restore writes unsafe data/path | Quarantine metadata/payload tamper smokes, restore/delete confirmation | Installed UI/service E2E remains partial |
 | Manual quarantine is used on the wrong file or becomes a silent destructive control | Manual quarantine wrapper requires a concrete non-reparse leaf file, bounded labels, and `-ConfirmAction`; Flutter manual quarantine requires confirmation before file picker access, refuses busy states, and sends explicit `quarantine_file` labels; smokes prove confirmed quarantine creates a real `.avoraxq` payload through release local-core | Installed packaged file-picker click-through and service-mediated manual quarantine remain partial |
@@ -3036,3 +3036,22 @@ driver/kernel, or pre-execution claim is made.
 No checkpoint-2239 result is claimed during scripting. Cancellation remains
 cooperative user-mode post-start control, not installed cross-identity,
 driver/kernel, or pre-execution enforcement.
+
+## Checkpoint 2240 Scan Job Cancellation Threat Delta
+
+- **Shared-token retargeting:** every scan now carries a random canonical UUID
+  and observes only the strict per-job token path and content for that UUID.
+- **Early cancellation loss:** scan startup no longer deletes one global token,
+  so an exact-job cancel immediately after process lease publication remains
+  observable.
+- **Malformed evidence:** missing/noncanonical IDs and malformed, over-limit,
+  wrong-schema, mismatched, symlink/reparse token evidence fail visibly.
+- **Cross-process confusion:** Flutter captures the UUID in its exact subprocess
+  lease and requires the separate cancel process to echo it.
+- **Residual boundary:** the UUID is a same-user capability, not a secret from
+  same-user code that can observe it. Installed service ownership,
+  cross-identity authentication, hard engine cancellation, driver/kernel
+  interception, and pre-execution blocking remain unproved.
+
+Exact verifier step 269 and source contract 670 are scripted but not yet run.
+No checkpoint-2240 passing result is claimed during scripting.

@@ -1,5 +1,3 @@
-use uuid::Uuid;
-
 use super::{ScanJobStatus, ScanKind};
 
 #[derive(Debug, Clone)]
@@ -11,9 +9,9 @@ pub struct ScanJob {
 }
 
 impl ScanJob {
-    pub fn new(kind: ScanKind) -> Self {
+    pub fn with_id(kind: ScanKind, id: String) -> Self {
         Self {
-            id: Uuid::new_v4().to_string(),
+            id,
             kind,
             status: ScanJobStatus::Queued,
         }
@@ -30,7 +28,10 @@ mod tests {
 
     #[test]
     fn cancel_scan_stops_job_safely() {
-        let mut job = ScanJob::new(ScanKind::Full);
+        let mut job = ScanJob::with_id(
+            ScanKind::Full,
+            "00000000-0000-0000-0000-000000000001".to_string(),
+        );
         job.cancel();
         assert_eq!(job.status, ScanJobStatus::Cancelled);
     }

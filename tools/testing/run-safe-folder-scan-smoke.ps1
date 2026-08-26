@@ -132,6 +132,7 @@ try {
 
   $scan = Invoke-LocalCoreJson @{
     command = "scan_folder"
+    job_id = [System.Guid]::NewGuid().ToString("D")
     path = $scanRoot
     action_mode = "autoQuarantineConfirmedOnly"
     scan_kind = "custom"

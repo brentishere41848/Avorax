@@ -236,6 +236,7 @@ function Invoke-QuarantineFixture {
 
   $scan = Invoke-LocalCoreBinaryJson @{
     command = "scan_file"
+    job_id = [System.Guid]::NewGuid().ToString("D")
     path = $Scenario.Fixture
     action_mode = "autoQuarantineConfirmedOnly"
     scan_kind = "custom"

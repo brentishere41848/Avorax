@@ -1529,3 +1529,16 @@ and a bounded Dart subprocess fixture that reads only its JSON test command and
 never scans or executes candidate content. Exact 268-step and source contract
 669 coverage are scripted but not yet run. Final-binary license resolution,
 production signing, and legal approval remain separate prerequisites.
+
+## Checkpoint 2240 Dependency Scope
+
+Scan-job cancellation binding uses the already locked Dart `uuid` package,
+Rust `uuid`/Serde/Chrono crates, `dart:io`, and repository PowerShell/Python
+tooling. It adds no dependency, feature, downloaded content, package source,
+license obligation, or lockfile change.
+
+Benign tests use temporary data roots, JSON command fixtures, and dormant Dart
+subprocesses. They do not scan or execute candidate content. Exact 269-step and
+source contract 670 coverage are scripted but not yet run. Final-binary license
+resolution, production signing, and legal approval remain separate
+prerequisites.

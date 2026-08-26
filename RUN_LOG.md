@@ -11552,3 +11552,95 @@ pending.
   Both match GitHub metadata and pass bounded non-extracting exact
   8-root/6-release/7-checksum/CycloneDX 1.6/569-component validation.
   Evidence-head checks, merge, synchronization, and destination proof remain.
+
+## 2026-08-26 - Checkpoint 2239 Integration And Destination Closure
+
+- Evidence head `fb4b1cf5fdcd723bef48d2da110ddb038838231b` passes CI
+  `32931893838` and packages `32931893808`; publication `98067942213` is
+  skipped. Consolidated artifact `9593749447` is 131,756,565 bytes, SHA-256
+  `b45dd10032412313d0db419b71e020eb39d4e017de5668173bd8a65900d53025`,
+  and passes bounded non-extracting 8/6/7/CycloneDX 1.6/569 validation.
+- PR `#91` merges normally as `bee5193c36a8636211d95b8e91a6ce9224b7b0fe`
+  with parents `2435b3139ff012eda7cb565774c039e1db1d5fbc` and
+  `fb4b1cf5fdcd723bef48d2da110ddb038838231b`. Merged-main CI
+  `32932815722` and packages `32932815727` pass; publication `98071571653`
+  is skipped. Artifact `9594188176` is 131,718,396 bytes with SHA-256
+  `06bdc080af570c2d12c71e0068fdfcc46c34a25d4c9f7eecb5ab6dbf7be80bea`
+  and passes the same in-stream validation. No release exists.
+- Guarded synchronization applies exact `21/21` filtered blobs and 7,747,274
+  bytes with zero deletes/residue/stage. A first Windows PowerShell 5.1 attempt
+  failed before replacement on an unavailable overwrite overload; verified
+  cleanup proved zero changed targets, then PowerShell 7 succeeded.
+- Destination format, focused `6/6`, analyzer, source `669/669`, and final
+  sequential Flutter `845/845` pass. Earlier attempts remain uncredited and
+  explained: C: disk-full/compiler interruption and one exFAT D:-temp cleanup
+  race (`844/845`, exact focused retry `1/1`). D: cannot provide NTFS ACL
+  semantics; four exact hosted ZIPs totaling 526,980,650 bytes were preserved
+  under `D:\Avorax-Codex-Evidence\checkpoint-2239` to restore C: space.
+- Destination no-skip/no-Defender verification passes exact `268/268`, zero
+  failed/skipped, from `2026-08-26T06:02:19.1747256Z` through
+  `2026-08-26T06:10:09.4014246Z` in `470.2s`. Both validators pass,
+  adversarial reports reject `22/22`, and report SHA-256 is
+  `f198239723c3dcb07f0146fcb03c766520df894dce09ec2e8383e0d9acaff491`.
+  Locks, zero processes/sync residue, and the protected vault stay exact.
+  Checkpoint 2239 is closed; the complete antivirus project remains active.
+
+## 2026-08-26 - Checkpoint 2240 Scan Job Cancellation Binding Scripted
+
+- Audited the Local Core cancellation chain left after checkpoint 2239. Local
+  Core still generated its job ID after process start and every process shared
+  one `cancel-active-scan` runtime marker.
+- Scripted a canonical random UUID before every Flutter scan process start and
+  bound scan IPC, progress, exact process lease, cancel IPC, and echoed response
+  to that UUID. Cancel without an active job now fails before process launch.
+- Replaced the shared marker with strict, bounded per-job token JSON under
+  `runtime/cancel-scan-<UUID>`. Wrong-job, mismatched, malformed, oversized,
+  and unsafe token evidence fails visibly.
+- Scripted benign Rust/Dart/PowerShell adversarial coverage, mandatory verifier
+  step 269, source contract 670, and audit/dependency documentation. No
+  checkpoint-2240 test has run during this scripting phase.
+- Same-user code that learns a UUID remains in the capability boundary. No
+  cross-identity, installed-service, kernel, hard-cancel, or pre-execution claim
+  is made; no protected-vault mutation is involved.
+
+## 2026-08-26 - Checkpoint 2240 Local Verification
+
+- Focused Rust cancellation (`5/5`), canonical job-ID IPC (`1/1`), scan-loop
+  cancellation (`1/1`), Flutter cancellation (`4/4`), and repaired cancel source
+  marker (`1/1`) pass. Local Core passes `543/543`; release build, strict Clippy,
+  cancel/local-scan/direct release smokes, and Flutter analyze pass.
+- Python source contracts pass `670/670`, all 38 modified PowerShell scripts
+  parse under Windows PowerShell 5.1 and PowerShell 7, and complete Flutter
+  passes `847/847`.
+- The definitive no-skip/no-Defender report runs from
+  `2026-08-26T07:01:43.1256621Z` through
+  `2026-08-26T07:09:38.1561571Z` and passes exact `269/269` with zero failed
+  steps in `475s`. Built-in and independent strict validators pass under both
+  Windows PowerShell 5.1 and PowerShell 7.
+- A 268-step copy missing `scan job-bound cancellation regressions` and a
+  269-step copy missing the exact canonical-UUID scope are rejected. The first
+  evidence wrapper used an over-specific wrapped-output regex after the
+  validator correctly returned exit 1; the simplified wrapper records both
+  expected rejections. Stale source assertions found by initial source-contract
+  and Flutter runs were repaired and complete suites rerun. A wrong-directory
+  Clippy command failed before compilation; the exact manifest command passed.
+- Hosted exact-head CI/packages, evidence head, merge, merged-main evidence,
+  guarded original-tree synchronization, and destination verification remain
+  pending. The complete antivirus goal remains active.
+
+## 2026-08-26 - Checkpoint 2240 Implementation-Head Hosting
+
+- Exact implementation `511eb18050c8913099e4641e99d7bedb46b65059`
+  passes Avorax CI PR run `32941736916` and Desktop Packages push/PR runs
+  `32941701666`/`32941736885`. Draft PR `#92` remains unmerged.
+- Both package runs pass contracts, Windows MSI/setup EXE, Linux DEB/tar,
+  macOS x64/arm64 DMGs, consolidation, checksums, and lockfile SBOM. Publication
+  is skipped in both runs; no release was created.
+- Consolidated artifacts `9597342672` (`131904219` bytes) and `9597199315`
+  (`131525034` bytes) match GitHub/download SHA-256 values
+  `da0ac68d6a4284e8139f11077f3d85bdd34c730138967b3731500341ed68b58d`
+  and `d4d926ce975a2a8f5e280ba60ec142d38495114bfba97cf900ccd6603cc0af04`.
+  Non-extracting in-stream review passes exact eight-entry inventories, six
+  platform files, seven checksums, and CycloneDX 1.6/569-component SBOMs.
+- Evidence-head hosted checks, normal merge, merged-main evidence, guarded
+  synchronization, and destination verification remain pending.

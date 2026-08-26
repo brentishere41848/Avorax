@@ -148,6 +148,7 @@ try {
 
   $scan = Invoke-LocalCoreJson @{
     command = "scan_file"
+    job_id = [System.Guid]::NewGuid().ToString("D")
     path = $fixture
     action_mode = "autoQuarantineConfirmedOnly"
     scan_kind = "custom"

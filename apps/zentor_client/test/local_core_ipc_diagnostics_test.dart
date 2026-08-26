@@ -2477,10 +2477,20 @@ void main() {
       cancelMethod,
       contains('Cancel IPC returned response with protocol warnings'),
     );
-    expect(cancelMethod, contains('if (ok == true) return'));
+    expect(cancelMethod, contains('if (ok == true) {'));
+    expect(cancelMethod, contains("final responseJobId = response['job_id']"));
+    expect(cancelMethod, contains('if (responseJobId != jobId)'));
+    expect(
+      cancelMethod,
+      contains('Cancel IPC response job ID did not match the active scan job.'),
+    );
     expect(
       cancelMethod.indexOf('stdout.protocolWarnings.isNotEmpty'),
-      lessThan(cancelMethod.indexOf('if (ok == true) return')),
+      lessThan(cancelMethod.indexOf('if (ok == true) {')),
+    );
+    expect(
+      cancelMethod.indexOf('if (responseJobId != jobId)'),
+      lessThan(cancelMethod.indexOf('return;')),
     );
     expect(cancelMethod, contains('Cancel IPC returned no response.'));
     expect(cancelMethod, contains('Cancel IPC request failed.'));
@@ -2504,8 +2514,11 @@ void main() {
 
     expect(clientSource, contains('class _ActiveScanProcessLease'));
     expect(clientSource, contains('static _ActiveScanProcessLease?'));
+    expect(clientSource, contains('final String jobId;'));
+    expect(clientSource, contains("command['job_id'] = scanJobId"));
     expect(cancelActive, contains('final activeScanLease ='));
-    expect(cancelActive, contains('activeScanLease?.process.kill()'));
+    expect(cancelActive, contains('activeScanLease.jobId'));
+    expect(cancelActive, contains('activeScanLease.process.kill()'));
     expect(
       cancelActive,
       isNot(contains('_activeScanProcessLease?.process.kill')),
@@ -2517,6 +2530,24 @@ void main() {
     );
     expect(callMethod, contains('trackedScanLease != null &&'));
   });
+
+  test(
+    'scan cancellation rejects missing active job before IPC launch',
+    () async {
+      var launches = 0;
+      final client = LocalCoreClient(
+        processStarter: (executable, arguments) async {
+          launches += 1;
+          throw StateError('cancel fixture must not launch');
+        },
+      );
+
+      final result = await client.cancelActiveScan();
+
+      expect(result, contains('no active scan job is available'));
+      expect(launches, 0);
+    },
+  );
 
   test(
     'scan cancellation process ownership survives unrelated local core IPC',
@@ -2531,7 +2562,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-Future<void> main() async {
+Future<void> main(List<String> args) async {
   final line = await stdin.transform(utf8.decoder).transform(const LineSplitter()).first;
   final request = jsonDecode(line) as Map<String, dynamic>;
   final command = request['command'];
@@ -2540,10 +2571,16 @@ Future<void> main() async {
     return;
   }
   if (command == 'cancel_scan') {
-    stdout.writeln(jsonEncode(<String, Object?>{'ok': true}));
+    final scanJobId = await File(args.single).readAsString();
+    if (request['job_id'] != scanJobId) {
+      stdout.writeln(jsonEncode(<String, Object?>{'ok': false, 'error': 'job mismatch'}));
+      return;
+    }
+    stdout.writeln(jsonEncode(<String, Object?>{'ok': true, 'job_id': scanJobId}));
     return;
   }
   if (command == 'quick_scan_selected_paths') {
+    await File(args.single).writeAsString(request['job_id'] as String, flush: true);
     await Future<void>.delayed(const Duration(seconds: 30));
     return;
   }
@@ -2559,7 +2596,10 @@ Future<void> main() async {
       });
       final client = LocalCoreClient(
         executableOverride: _dartExecutable(),
-        executableArguments: [script.path],
+        executableArguments: [
+          script.path,
+          '${dir.path}${Platform.pathSeparator}job-id.txt',
+        ],
         ipcTimeout: const Duration(seconds: 10),
         processStarter: (executable, arguments) async {
           final process = await Process.start(executable, arguments);
@@ -2595,49 +2635,158 @@ Future<void> main() async {
   test('cancel responses with protocol warnings fail at runtime', () async {
     final dir = Directory.systemTemp.createTempSync('avorax-cancel-warning-');
     addTearDown(() => dir.deleteSync(recursive: true));
-    final payload = jsonEncode(<String, Object?>{'ok': true});
     final script = File('${dir.path}${Platform.pathSeparator}cancel.dart')
-      ..writeAsStringSync('''
-void main() {
-  print('malformed prelude before cancel result');
-  print(${jsonEncode(payload)});
+      ..writeAsStringSync(r'''
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+
+Future<void> main() async {
+  final line = await stdin.transform(utf8.decoder).transform(const LineSplitter()).first;
+  final request = jsonDecode(line) as Map<String, dynamic>;
+  if (request['command'] == 'quick_scan_selected_paths') {
+    await Future<void>.delayed(const Duration(seconds: 30));
+    return;
+  }
+  if (request['command'] == 'cancel_scan') {
+    print('malformed prelude before cancel result');
+    print(jsonEncode(<String, Object?>{'ok': true, 'job_id': request['job_id']}));
+    return;
+  }
+  exitCode = 9;
 }
 ''');
 
+    final spawned = <Process>[];
+    addTearDown(() {
+      for (final process in spawned) {
+        process.kill();
+      }
+    });
     final client = LocalCoreClient(
       executableOverride: _dartExecutable(),
       executableArguments: [script.path],
+      processStarter: (executable, arguments) async {
+        final process = await Process.start(executable, arguments);
+        spawned.add(process);
+        return process;
+      },
     );
 
+    final scanFuture = client.scanPaths(
+      [dir.path],
+      kind: ScanKind.quick,
+      actionMode: ScanActionMode.detectOnly,
+    );
+    for (var attempt = 0; attempt < 50 && spawned.isEmpty; attempt += 1) {
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    }
     final result = await client.cancelActiveScan();
 
     expect(result, isNotNull);
     expect(result, contains('Avorax local core cancel IPC failed'));
-    expect(result, contains('no active scan process was available'));
+    expect(result, contains('process kill fallback was requested'));
     expect(
       result,
       contains('Cancel IPC returned response with protocol warnings'),
     );
     expect(result, contains('malformed prelude before cancel result'));
+    await scanFuture.timeout(const Duration(seconds: 2));
   });
+
+  test(
+    'scan cancellation response with a different scan job ID fails visibly',
+    () async {
+      final dir = Directory.systemTemp.createTempSync(
+        'avorax-cancel-job-mismatch-',
+      );
+      addTearDown(() => dir.deleteSync(recursive: true));
+      final script = File('${dir.path}${Platform.pathSeparator}mismatch.dart')
+        ..writeAsStringSync(r'''
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+
+Future<void> main() async {
+  final line = await stdin.transform(utf8.decoder).transform(const LineSplitter()).first;
+  final request = jsonDecode(line) as Map<String, dynamic>;
+  if (request['command'] == 'quick_scan_selected_paths') {
+    await Future<void>.delayed(const Duration(seconds: 30));
+    return;
+  }
+  if (request['command'] == 'cancel_scan') {
+    print(jsonEncode(<String, Object?>{
+      'ok': true,
+      'job_id': '00000000-0000-0000-0000-000000000000',
+    }));
+    return;
+  }
+  exitCode = 9;
+}
+''');
+      final spawned = <Process>[];
+      addTearDown(() {
+        for (final process in spawned) {
+          process.kill();
+        }
+      });
+      final client = LocalCoreClient(
+        executableOverride: _dartExecutable(),
+        executableArguments: [script.path],
+        processStarter: (executable, arguments) async {
+          final process = await Process.start(executable, arguments);
+          spawned.add(process);
+          return process;
+        },
+      );
+
+      final scanFuture = client.scanPaths(
+        [dir.path],
+        kind: ScanKind.quick,
+        actionMode: ScanActionMode.detectOnly,
+      );
+      for (var attempt = 0; attempt < 50 && spawned.isEmpty; attempt += 1) {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+      }
+      final result = await client.cancelActiveScan();
+
+      expect(result, contains('Cancel IPC response job ID did not match'));
+      expect(result, contains('process kill fallback was requested'));
+      await scanFuture.timeout(const Duration(seconds: 2));
+    },
+  );
 
   test('cancel IPC timeout reports cleanup at runtime', () async {
     final dir = Directory.systemTemp.createTempSync('avorax-cancel-timeout-');
     addTearDown(() => dir.deleteSync(recursive: true));
     final script = _writeSleepingDartScript(dir, 'cancel_timeout.dart');
 
-    late Process process;
+    final spawned = <Process>[];
+    addTearDown(() {
+      for (final process in spawned) {
+        process.kill();
+      }
+    });
     final client = LocalCoreClient(
       executableOverride: _dartExecutable(),
       executableArguments: [script.path],
       cancelIpcTimeout: const Duration(milliseconds: 50),
       ipcProcessReapTimeout: const Duration(seconds: 2),
       processStarter: (executable, arguments) async {
-        process = await Process.start(executable, arguments);
+        final process = await Process.start(executable, arguments);
+        spawned.add(process);
         return process;
       },
     );
 
+    final scanFuture = client.scanPaths(
+      [dir.path],
+      kind: ScanKind.quick,
+      actionMode: ScanActionMode.detectOnly,
+    );
+    for (var attempt = 0; attempt < 50 && spawned.isEmpty; attempt += 1) {
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    }
     final result = await client.cancelActiveScan();
 
     expect(result, isNotNull);
@@ -2651,7 +2800,10 @@ void main() {
         contains('Timed-out process did not exit within'),
       ),
     );
-    await _expectProcessExited(process, 'cancel IPC timeout fixture');
+    expect(spawned, hasLength(2));
+    await _expectProcessExited(spawned[1], 'cancel IPC timeout fixture');
+    await _expectProcessExited(spawned[0], 'scan process fallback fixture');
+    await scanFuture.timeout(const Duration(seconds: 2));
   });
 
   test('elevated PowerShell timeout reports cleanup at runtime', () async {

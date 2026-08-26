@@ -274,6 +274,7 @@ try {
 
   $scan = Invoke-LocalCoreBinaryJson @{
     command = "quick_scan_selected_paths"
+    job_id = [System.Guid]::NewGuid().ToString("D")
     paths = @($downloadsRoot)
     action_mode = "autoQuarantineConfirmedOnly"
     scan_kind = "quick"

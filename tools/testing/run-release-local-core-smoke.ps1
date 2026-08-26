@@ -222,6 +222,7 @@ try {
 
   $detect = Invoke-LocalCoreBinaryJson @{
     command = "scan_file"
+    job_id = [System.Guid]::NewGuid().ToString("D")
     path = $detectFixture
     action_mode = "detectOnly"
     scan_kind = "custom"
@@ -247,6 +248,7 @@ try {
 
   $scan = Invoke-LocalCoreBinaryJson @{
     command = "scan_file"
+    job_id = [System.Guid]::NewGuid().ToString("D")
     path = $quarantineFixture
     action_mode = "autoQuarantineConfirmedOnly"
     scan_kind = "custom"

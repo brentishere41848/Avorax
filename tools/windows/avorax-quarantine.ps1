@@ -431,6 +431,7 @@ try {
     $payloadFull = Resolve-QuarantinePayloadForRescan $selectedRecord $resolvedQuarantineRoot
     $rescanCommand = [ordered]@{
       command = "scan_file"
+      job_id = [System.Guid]::NewGuid().ToString("D")
       path = $payloadFull
       scan_kind = "custom"
       action_mode = "detectOnly"

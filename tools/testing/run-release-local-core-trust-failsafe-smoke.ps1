@@ -186,6 +186,7 @@ function Invoke-InvalidTrustStoreScenario {
 
     $scan = Invoke-LocalCoreBinaryJson @{
       command = "scan_file"
+      job_id = [System.Guid]::NewGuid().ToString("D")
       path = $fixture
       action_mode = "autoQuarantineConfirmedOnly"
       scan_kind = "custom"

@@ -10,6 +10,8 @@ It communicates with Flutter through stdin/stdout JSON commands. It does not bin
 - `scan_file`
 - `scan_folder`
 - `quick_scan_selected_paths`
+- `full_scan`
+- `cancel_scan`
 - `quarantine_file`
 - `restore_quarantine_item`
 - `delete_quarantine_item`
@@ -19,6 +21,12 @@ It communicates with Flutter through stdin/stdout JSON commands. It does not bin
 - `list_allowlist`
 - `start_watch`
 - `stop_watch`
+
+Every scan command requires a canonical lowercase hyphenated UUID in `job_id`.
+The caller must retain that ID and send it with `cancel_scan`. Local Core echoes
+the ID in progress/cancel evidence and observes only the bounded strict JSON
+token for that exact job. Job IDs are same-user capabilities, not
+cross-identity authentication or pre-execution blocking.
 
 ## ClamAV
 
