@@ -12240,3 +12240,34 @@ pending.
   each payload/metadata/auth, one metadata key, zero pending, and zero reparse
   points. Hosted exact-head, PR/merge, package, guarded synchronization, and
   destination proof remain pending; the checkpoint and whole goal stay active.
+
+### Checkpoint 2246 Hosted, Integration, And Destination Closure
+
+- Implementation head `52a0995fafda2f8b2d467b1359924c61604f777b` passes
+  exact-head Avorax CI `33017144188` and Desktop Packages push/PR runs
+  `33017129545`/`33017144209`; every required job passes and publication is
+  skipped. PR `#100` merges normally as
+  `f3c2c9f331748d0e340abe6cd1e33a4e435769b9` with the exact expected parents.
+- PR artifact `9625320449` is 132,074,772 bytes and SHA-256
+  `8a25f5f192c4798c1f18d365f1e8d39ccfc76307a723392b3a6eb634e7a6f2fa`.
+  Merged-main CI `33018138486` and packages `33018138334` pass with publication
+  skipped; main artifact `9625857946` is 132,001,624 bytes and SHA-256
+  `e5cdd5e6d36e6f933816f4c95132e467ad270ba830cd9458c5bc6afbdefdb828`.
+  Both artifacts pass bounded non-extracting exact
+  8-root/6-platform/7-checksum/CycloneDX-1.6/569-component validation.
+- Guarded synchronization from `7d45726e346c3f25cceb079442869ae6916fb843`
+  to the exact merge passes audit, apply, and independent Git-attribute-aware
+  canonical verification for `21/21` paths, with zero deletes and no residue.
+- Destination focused provider tests pass `19/19`, Source passes `676/676`, and
+  formatting passes. Definitive verification passes exact `275/275`, zero
+  failed/skipped, from `2026-08-26T22:25:08.4194801Z` through
+  `2026-08-26T22:33:43.7654199Z` in `515.3s`, with no Rust/Flutter skip and
+  Defender/EICAR opt-in off. Embedded and separately invoked PS5/PS7 validators
+  pass; report SHA-256 is
+  `12e27ad9e3f28058896ea03f66f1c91a6133a82b1827079869d937cd927ede65`.
+- Lock hashes remain exact. The protected quarantine remains read-only and exact
+  at 16,072 files, zero directories, 4,522,733 bytes, 5,357 each payload,
+  metadata and auth, one metadata key, zero pending, and zero reparse points.
+  Checkpoint 2246 is closed without expanding cooperative user-mode behavior
+  into service, driver, kernel, production-accuracy, pre-execution, or Defender
+  replacement claims. The complete antivirus hardening goal remains active.
