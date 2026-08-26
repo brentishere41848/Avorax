@@ -2,7 +2,7 @@ use std::path::Path;
 
 use anyhow::{bail, Result};
 
-use super::{byte_pattern_signatures, eicar_signature, hash_signatures, string_signatures};
+use super::{byte_pattern_signatures, eicar_signature, hash_signatures, string_signatures, text};
 use super::{NativeSignature, SignatureMatch, SignatureType};
 use crate::analyzers::{archives, pe, scripts, FileType, StaticAnalysis};
 use crate::verdict::Confidence;
@@ -26,9 +26,7 @@ pub fn matches_signature_with_cancellation(
     analysis: &StaticAnalysis,
     cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
 ) -> Result<Option<SignatureMatch>> {
-    cancellation_checkpoint()?;
-    let lower_text = String::from_utf8_lossy(bytes).to_ascii_lowercase();
-    cancellation_checkpoint()?;
+    let lower_text = text::ascii_lowercase_lossy_with_cancellation(bytes, cancellation_checkpoint)?;
     matches_signature_with_prepared_text_and_cancellation(
         signature,
         path,

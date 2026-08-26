@@ -1904,8 +1904,8 @@ if ($RequireFullSuite) {
   if ($skipFlutter -or $skipRust) {
     throw "-RequireFullSuite requires skip_flutter=false and skip_rust=false."
   }
-  if ($steps.Count -ne 275) {
-    throw "-RequireFullSuite expected exactly 275 verifier steps for this source revision, found $($steps.Count)."
+  if ($steps.Count -ne 276) {
+    throw "-RequireFullSuite expected exactly 276 verifier steps for this source revision, found $($steps.Count)."
   }
   if ($steps[0].name -ne "local-core safe simulator scan reporting") {
     throw "-RequireFullSuite first step mismatch: $($steps[0].name)"
@@ -1979,6 +1979,7 @@ if ($RequireFullSuite) {
   Assert-ReportContainsStep $steps "native-engine static archive analysis cancellation regressions"
   Assert-ReportContainsStep $steps "native-engine non-archive static analysis cancellation regressions"
   Assert-ReportContainsStep $steps "native-engine custom provider cancellation and pack-limit regressions"
+  Assert-ReportContainsStep $steps "native-engine provider text-normalization cancellation regressions"
   Assert-ReportScopeContains $verifiedScopeText "entropy 4096-byte traversal and PE section entropy use fallible checkpoints" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "string references stream counts without URL/path vectors while term groups, IP candidates, and UTF16 traversal checkpoint" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "PE section/import/debug and script term passes checkpoint" "verification_scope.verified"
@@ -1993,7 +1994,10 @@ if ($RequireFullSuite) {
   Assert-ReportScopeContains $verifiedScopeText "bounded archive-entry static/signature/rule work uses the same fail-visible path" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "rejects more than 32 provider files, 256 inspected directory entries, 16 MiB aggregate pack bytes, 4,096 loaded signatures, or 4,096 loaded rules without partial activation" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "arbitrary callback failures remain errors, and no partial provider evidence or file verdict is published" "verification_scope.verified"
-  Assert-ReportScopeContains $technicalLimitText "one provider UTF-8 lossy/lowercase normalization" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $verifiedScopeText "provider text normalization preserves lossy UTF-8 replacement and ASCII case-fold semantics" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "before every at-most-64-KiB input chunk and after the final chunk" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Incomplete valid or malformed UTF-8 split across chunks retains one-shot compatibility" "verification_scope.verified"
+  Assert-ReportScopeContains $technicalLimitText "one at-most-64-KiB provider text-normalization chunk" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "one at-most-64-KiB signature/rule search chunk" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "bounded ML contribution sort" "verification_scope.technically_limited"
   Assert-ReportScopeContains $verifiedScopeText "bounded UTF-8-safe head/tail command-line sampling" "verification_scope.verified"

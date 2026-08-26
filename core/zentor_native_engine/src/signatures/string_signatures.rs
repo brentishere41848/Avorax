@@ -1,6 +1,6 @@
 use anyhow::{bail, Result};
 
-use super::search;
+use super::{search, text};
 
 pub fn contains_ascii(bytes: &[u8], needle: &str) -> Result<bool> {
     let mut never_cancel = || Ok(());
@@ -13,9 +13,7 @@ pub fn contains_ascii_with_cancellation(
     cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
 ) -> Result<bool> {
     validate_string_pattern(needle)?;
-    cancellation_checkpoint()?;
-    let lower = String::from_utf8_lossy(bytes).to_ascii_lowercase();
-    cancellation_checkpoint()?;
+    let lower = text::ascii_lowercase_lossy_with_cancellation(bytes, cancellation_checkpoint)?;
     contains_ascii_in_lower_text_with_cancellation(&lower, needle, cancellation_checkpoint)
 }
 
@@ -82,5 +80,26 @@ mod tests {
             contains_utf16(&utf16, "benign UTF16").unwrap(),
             contains_utf16_with_cancellation(&utf16, "benign UTF16", &mut never_cancel).unwrap()
         );
+    }
+
+    #[test]
+    fn native_provider_normalization_interrupts_ascii_wrapper_between_chunks() {
+        let bytes = vec![b'A'; text::TEXT_NORMALIZATION_CANCELLATION_CHUNK_BYTES * 3];
+        let mut checks = 0usize;
+        let mut checkpoint = || {
+            checks += 1;
+            if checks == 2 {
+                anyhow::bail!("benign ASCII normalization cancellation")
+            }
+            Ok(())
+        };
+
+        let error = contains_ascii_with_cancellation(&bytes, "marker", &mut checkpoint)
+            .expect_err("ASCII wrapper must propagate in-normalization cancellation");
+
+        assert!(error
+            .to_string()
+            .contains("benign ASCII normalization cancellation"));
+        assert_eq!(checks, 2);
     }
 }

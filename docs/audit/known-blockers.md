@@ -3257,3 +3257,24 @@ limited. The complete antivirus hardening goal remains active.
   Installed cross-identity service ownership, production-calibrated ML/rules,
   signed-driver/kernel mediation, and pre-execution blocking remain separate
   blockers. Reputation and correlation-dependent engines remain disabled.
+
+## Checkpoint 2247 Provider Text Normalization Cancellation
+
+- The whole-sample signature/rule provider normalization gap is locally repaired
+  with exact callbacks around at-most-64-KiB input chunks and fail-visible
+  propagation before evidence publication. Focused, adjacent, broad, and exact
+  `276/276` definitive evidence passes after the scripting batch was frozen.
+- One active provider normalization chunk is still cooperative rather than
+  forcibly interrupted. Separate static-analyzer normalizations, one search
+  chunk, bounded ML sorting, entered filesystem/system calls, and Windows trust
+  helper work also remain cooperative or isolated rather than hard-preemptive.
+- Exact verifier `276/276`, Source `677/677`, broad regression, dual-validator,
+  adversarial report, and exact vault/lock evidence now pass. Hosted exact-head
+  CI/packages, normal PR merge, merged-main evidence, guarded synchronization,
+  and destination reruns remain checkpoint-closure prerequisites.
+- Installed cross-identity service ownership, authenticated service IPC,
+  production-calibrated rules/ML, signed driver/kernel mediation, demonstrated
+  pre-execution blocking, and Defender replacement remain genuine blockers or
+  unsupported claims. Reputation and correlation-dependent providers remain
+  disabled until their documented authenticated backend/telemetry prerequisites
+  exist.

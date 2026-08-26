@@ -6989,3 +6989,45 @@ complete antivirus hardening goal stays active.
   SHA-256 `12e27ad9e3f28058896ea03f66f1c91a6133a82b1827079869d937cd927ede65`.
   Locks and the protected vault remain exact. Checkpoint 2246 is closed; the
   complete antivirus hardening goal stays active.
+
+## Checkpoint 2247 Provider Text Normalization Cancellation
+
+- **Locally verified:** signature and rule provider text preparation now
+  checkpoints before each at-most-64-KiB input chunk and after the final chunk.
+  A callback failure drops partial normalized text before any provider evidence
+  or file verdict can be returned.
+- **Compatibility:** bounded carry preserves valid UTF-8 split across chunks;
+  malformed and truncated UTF-8 retains the previous lossy replacement grouping,
+  and only ASCII uppercase characters are folded. Direct wrappers, Signature DB,
+  Rule DB, ordinary files, and bounded archive entries use the same path.
+- **Evidence:** dedicated normalization `7/7`, all provider `26/26`, signature
+  `62/62` plus compiler `6/6`, rule `44/44`, ML `40/40`, archive `71/71`, Native
+  `600` active plus compiler `6/6`, Local Core `546/546`, Flutter `847/847`, and
+  Source `677/677` pass. Strict affected lint, Flutter analyze, locked workspace,
+  and locked release build pass. The definitive verifier passes exact `276/276`
+  with no failure or skip in `491.3s`; independent PS5/PS7 validators accept
+  report SHA-256 `3fe607aac49c1d327eb1162b6352cc4be2d336077cbad73396f0948cc631dd7c`,
+  while missing-step and missing-scope mutations are rejected.
+- **Limits:** one active normalization chunk, search chunk, bounded ML sort,
+  entered OS call, separate static-analyzer normalization, or Windows trust work
+  may finish before cancellation is observed. No installed service, driver,
+  kernel, production-accuracy, pre-execution, or Defender-replacement claim is
+  added. Locks and the read-only protected vault remain exact. Hosted
+  exact-head CI/package evidence, integration, guarded synchronization, and
+  destination proof remain pending. Disabled providers remain disabled and the
+  whole goal stays active.
+
+## Checkpoint 2246 Closure-Document Finalization
+
+- Closure docs `40ac38030c470dcffd95fa93313e07a3593a9855` pass exact-head
+  CI `33021047209`; PR `#102` merges normally as
+  `146b536e9064ffc3e318b81866665fd039622835`; merged-main CI `33021627147`
+  passes all five jobs. Docs-only path policy starts no package workflow and no
+  publication occurs.
+- Guarded sync applies four exact modified documentation blobs from `f3c2c9f`
+  to `146b536`, with zero additions/deletes/residue and independent target-blob
+  equality. Final destination verification passes exact `275/275`, zero
+  failed/skipped, in `435.7s`; independent PS5/PS7 validators accept SHA-256
+  `dd25744f021a6e7b90f0744271f7e7eaacab997b3f7d03d754e33d1217b137fc`.
+  Locks and the protected vault remain exact. Checkpoint 2246 is fully finalized;
+  checkpoint 2247 and the complete antivirus goal remain active.

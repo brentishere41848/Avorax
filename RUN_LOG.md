@@ -12271,3 +12271,71 @@ pending.
   Checkpoint 2246 is closed without expanding cooperative user-mode behavior
   into service, driver, kernel, production-accuracy, pre-execution, or Defender
   replacement claims. The complete antivirus hardening goal remains active.
+
+## 2026-08-27 - Checkpoint 2247 Provider Text Normalization Cancellation (Scripting)
+
+- The shared Native provider normalizer is scripted to preserve one-shot lossy
+  UTF-8 replacement and ASCII-only lowercase semantics while processing at most
+  64 KiB of new input between exact scan-job callbacks. A maximum three-byte
+  carry preserves valid or malformed sequences crossing chunk boundaries.
+- Signature DB, direct signature matching, ASCII wrapper, Rule DB, and direct
+  rule evaluation are wired to the shared fallible helper. Partial text is local
+  and discarded on callback failure before match, evidence, or verdict return;
+  ordinary files and bounded archive entries retain existing engine wiring.
+- Benign parity, malformed/truncated UTF-8, exact boundary, multi-chunk
+  cancellation, and provider integration fixtures are scripted. Verifier step
+  276, strict validator cardinality/scope, Source contract 677, audit matrix,
+  threat model, blockers, dependency scope, and the checkpoint report are also
+  scripted. No checkpoint-2247 test has run during this scripting phase.
+- Cancellation remains cooperative within one normalization/search chunk and
+  separately bounded ML/system/static/trust work. No malware, live EICAR file,
+  Defender change, vault mutation, service/driver action, install, release, or
+  publication is part of this checkpoint.
+
+## 2026-08-27 - Checkpoint 2247 Local Verification
+
+- After the complete scripting batch was frozen, dedicated normalization tests
+  passed `7/7`; all provider `26/26`; signature `62/62` plus compiler `6/6`;
+  rule `44/44`; ML `40/40`; archive `71/71`; complete Native `600` active plus
+  compiler `6/6`; Local Core `546/546`; Flutter `847/847`; Source `677/677`.
+  Strict affected lint, Flutter analyze, formatting, locked workspace tests, and
+  the locked release workspace build passed.
+- A supplementary strict whole-workspace Clippy run reported only the three
+  existing `services/api` style lints: two `items_after_test_module` findings
+  and one `enum_variant_names` finding. It is not claimed as passing; no changed
+  checkpoint-2247 file is implicated, and strict Native/Local Core lint passes.
+- The definitive verifier passed `276/276`, zero failed/skipped, in `491.3s`
+  (`2026-08-26T23:07:30.367868Z` to
+  `2026-08-26T23:15:41.7081091Z`). Embedded and independent PS5/PS7 validators
+  accept SHA-256
+  `3fe607aac49c1d327eb1162b6352cc4be2d336077cbad73396f0948cc631dd7c`;
+  controlled missing-step and missing-scope reports are rejected with exit `1`.
+- All three dependency locks remain exact. Read-only vault inventory remains
+  16,072 files, zero directories, 4,522,733 bytes, 5,357 each
+  payload/metadata/auth, one key, zero pending, and zero reparse points. Hosted,
+  integration, guarded synchronization, and destination evidence remain open.
+
+### Checkpoint 2246 Closure-Document Finalization
+
+- Closure-document commit `40ac38030c470dcffd95fa93313e07a3593a9855`
+  passes exact-head Avorax CI `33021047209`; docs-only path policy starts no
+  Desktop Packages workflow. PR `#102` merges normally as
+  `146b536e9064ffc3e318b81866665fd039622835`, and merged-main Avorax CI
+  `33021627147` passes all five jobs. No package or publication workflow is
+  required for the four documentation-only paths.
+- Guarded sync from implementation merge
+  `f3c2c9f331748d0e340abe6cd1e33a4e435769b9` to closure merge `146b536` passes
+  audit and apply for exactly four modified documentation blobs, zero additions,
+  zero deletes, exact pre-sync base blobs, independent target-blob comparison,
+  and zero staging residue.
+- The first final-verifier invocation requested an external report path and was
+  rejected before tests by the destination path guard. The corrected destination
+  run passes exact `275/275`, zero failed/skipped, from
+  `2026-08-26T23:23:49.0203757Z` through
+  `2026-08-26T23:31:04.7438328Z` in `435.7s`. Embedded and independently
+  invoked PS5/PS7 validators pass; report SHA-256 is
+  `dd25744f021a6e7b90f0744271f7e7eaacab997b3f7d03d754e33d1217b137fc`.
+- Locks remain exact and the read-only protected vault remains 16,072 files,
+  zero directories, 4,522,733 bytes, 5,357 each payload/metadata/auth, one key,
+  zero pending, and zero reparse points. Checkpoint 2246 is fully finalized; the
+  complete antivirus hardening goal and checkpoint 2247 remain active.

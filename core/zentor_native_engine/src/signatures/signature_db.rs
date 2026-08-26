@@ -195,9 +195,8 @@ impl SignatureDb {
         analysis: &StaticAnalysis,
         cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
     ) -> Result<Vec<SignatureMatch>> {
-        cancellation_checkpoint()?;
-        let lower_text = String::from_utf8_lossy(bytes).to_ascii_lowercase();
-        cancellation_checkpoint()?;
+        let lower_text =
+            super::text::ascii_lowercase_lossy_with_cancellation(bytes, cancellation_checkpoint)?;
         let mut matches = Vec::new();
         for signature in &self.signatures {
             cancellation_checkpoint()?;
@@ -575,5 +574,32 @@ mod tests {
         assert!(error
             .to_string()
             .contains("benign signature provider callback failure"));
+    }
+
+    #[test]
+    fn native_provider_normalization_cancels_signature_db_before_evidence() {
+        let db = SignatureDb::built_in();
+        let bytes =
+            vec![b'A'; crate::signatures::text::TEXT_NORMALIZATION_CANCELLATION_CHUNK_BYTES * 3];
+        let path = Path::new("ordinary-benign-normalization.txt");
+        let analysis = crate::analyzers::analyze_path(path, &bytes).unwrap();
+        let sha256 = crate::engine::sha256_bytes(&bytes);
+        let mut checks = 0usize;
+        let mut checkpoint = || {
+            checks += 1;
+            if checks == 2 {
+                anyhow::bail!("benign signature DB normalization cancellation")
+            }
+            Ok(())
+        };
+
+        let error = db
+            .match_bytes_with_cancellation(path, &sha256, &bytes, &analysis, &mut checkpoint)
+            .expect_err("signature DB must not publish evidence after normalization cancellation");
+
+        assert!(error
+            .to_string()
+            .contains("benign signature DB normalization cancellation"));
+        assert_eq!(checks, 2);
     }
 }
