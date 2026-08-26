@@ -1650,6 +1650,28 @@ Flutter lock SHA-256 values. Checkpoint 2244 is closed with no dependency,
 feature, package source, license classification, or lockfile change; final-binary
 SBOM resolution, production signing, and legal approval remain separate.
 
+## Checkpoint 2245 Dependency Closure
+
+Evidence head `195d3c847b4e0ce993329bd0e7b142d1b6c0b785` and merged main
+`48cf932ff23211961386cbf220d05026821322c7` preserve the checkpoint's
+zero-dependency delta. Evidence-head artifact `9620713611` and merged-main
+artifact `9621531773` match their downloaded SHA-256 values and pass bounded
+non-extracting exact 8-root/6-platform/7-checksum validation with CycloneDX 1.6
+and 569 lockfile components. Publication is skipped.
+
+Destination verification preserves exact SHA-256 values for root `Cargo.lock`,
+Native `Cargo.lock`, and Flutter `pubspec.lock`:
+
+- `7c7c8aa006c2ac80eb89fa64d3b8ec09b32b26598b1a85bceb3c2af5a2d20e39`;
+- `7f4393c81896600c4a5e84cad288a1a5360eccbc1c458b38f615082f66391383`;
+- `4de19695f9207273746341ca2221541b5b86d9f72af83727afca78541e177694`.
+
+Source contracts `675/675`, locked release build, and destination definitive
+`274/274` pass. Checkpoint 2245 adds no dependency, feature, package source,
+license classification, or lockfile change. CycloneDX output remains lockfile
+evidence rather than final-binary SBOM resolution; production signing,
+notarization, legal approval, and final release approval remain separate.
+
 ## Checkpoint 2243 Dependency Scope
 
 Parallel Authenticode helper lifecycle hardening uses Rust standard-library
