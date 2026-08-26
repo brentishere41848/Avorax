@@ -5040,3 +5040,8 @@ diff checks, and locked release build. Locks and protected vault remain exact;
 definitive exact `273/273` and adversarial evidence pass. Report SHA-256 is
 `2547454f20895864be9727dd545e0625d39b0b761732032f886c004ff5de2216`;
 hosted/integration/destination evidence remains pending.
+
+Hosted evidence is externally blocked by GitHub Actions `major_outage`.
+Exact-head CI `32985138375` created zero jobs and manual package run
+`32985149344` failed at startup with zero jobs. Neither result verifies a
+control or package; fresh exact-head runs are mandatory after service recovery.

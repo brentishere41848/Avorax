@@ -29802,6 +29802,10 @@ def test_checkpoint_2244_static_archive_analysis_cancellation_contract():
     assert "2547454f20895864be9727dd545e0625d39b0b761732032f886c004ff5de2216" in checkpoint
     assert "An adversarial `272`-step copy is rejected" in normalized_checkpoint
     assert "missing the required parser-traversal cancellation scope" in normalized_checkpoint
+    assert "GitHub Actions entered an official `major_outage`" in normalized_checkpoint
+    assert "32985138375" in checkpoint
+    assert "32985149344" in checkpoint
+    assert "No package test, artifact, publication job, release, merge" in normalized_checkpoint
     normalized_dependencies = re.sub(r"\s+", " ", documents[-1])
     assert "adds no dependency, feature" in normalized_dependencies
     assert "lockfile change" in normalized_dependencies

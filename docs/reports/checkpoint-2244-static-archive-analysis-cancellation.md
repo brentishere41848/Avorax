@@ -87,3 +87,22 @@ service identity, and pre-execution blocking are outside this repair.
 Hosted exact-head CI/package evidence, normal PR/merge, guarded integration,
 destination verification, and closure remain pending and must not be inferred
 from these definitive local results.
+
+## Hosted Verification Blocker
+
+GitHub Actions entered an official `major_outage` at
+`2026-08-26T15:11:58.254Z`, before this checkpoint's hosted attempts. The
+status incident identifies a database-primary failure and an immediate replica
+failover at `2026-08-26T15:23:10.599Z`.
+
+- Push package run `32984814869` for local-evidence head `2518612` reached
+  `startup_failure` without executing a workflow step.
+- An empty, source-preserving retrigger commit produced exact hosted head
+  `945c8cac4fbaca5831a1c4592cf22e72d68ed3b2`; PR `#96` is open and mergeable.
+- Exact-head Avorax CI run `32985138375` remained queued with zero jobs. Manual
+  Desktop Packages run `32985149344`, explicitly dispatched with
+  `publish_prerelease=false`, reached `startup_failure` with zero jobs.
+- No package test, artifact, publication job, release, merge, integration, or
+  destination synchronization is claimed. The prerequisite is restored GitHub
+  Actions job creation and runner availability, followed by fresh exact-head
+  CI and package runs.

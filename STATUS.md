@@ -6835,6 +6835,14 @@ guarded synchronization, and destination proof remain pending.
   `2547454f20895864be9727dd545e0625d39b0b761732032f886c004ff5de2216`.
   Exact locks and the protected vault remain unchanged. Hosted exact-head,
   integration, destination, and closure evidence remains pending.
+- Hosted execution is currently blocked by GitHub's official Actions
+  `major_outage` beginning `2026-08-26T15:11:58.254Z`. Push package run
+  `32984814869` and exact-head manual package run `32985149344` ended in
+  `startup_failure` before any workflow step; exact-head CI `32985138375`
+  remained queued with zero jobs. PR `#96` stays open and unmerged. Recovery
+  requires fresh exact-head CI/package evidence after GitHub restores Actions;
+  no hosted success, artifact, publication, integration, or destination result
+  is claimed.
 - **Limit:** cooperative checkpoints do not preempt one running decoder read,
   and this change does not make non-archive analyzers, rule/ML calls, Windows
   trust, services, drivers, or pre-execution enforcement hard-cancellable.

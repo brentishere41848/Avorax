@@ -3142,6 +3142,11 @@ was repaired and targeted strict lint passes.
   missing-step and missing-parser-scope adversarial copies are rejected.
   Hosted, integration, and destination evidence must still pass before this
   checkpoint is closed.
+- **Current external blocker:** GitHub Actions reports `major_outage`. Hosted
+  CI `32985138375` created zero jobs and package runs `32984814869`/
+  `32985149344` ended in `startup_failure` before workflow execution. PR `#96`
+  remains open and unmerged. Restored Actions job creation/runner availability
+  and fresh exact-head CI/package success are required before merge or sync.
 - Remaining technical limitation: one already-running `flate2` read is not
   preempted. Non-archive analyzer work, synchronous rule/ML calls, trust helper
   calls, installed service identity, driver mediation, and pre-execution

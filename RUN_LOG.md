@@ -11991,3 +11991,21 @@ pending.
 - Root, Native, and Flutter lock hashes and the protected-vault invariant remain
   exact. `.verification` remains untracked and unstaged. Hosted exact-head,
   integration, destination, and closure evidence remain pending.
+
+## 2026-08-26 - Checkpoint 2244 GitHub Actions Outage
+
+- GitHub Actions reported an official `major_outage` beginning
+  `2026-08-26T15:11:58.254Z`. Its latest observed incident update identified a
+  database-primary failure and replica failover at
+  `2026-08-26T15:23:10.599Z`.
+- Push package run `32984814869` at local-evidence head `2518612` reached
+  `startup_failure` without a workflow step. Closing/reopening PR `#96` and an
+  empty source-preserving retrigger commit created exact head
+  `945c8cac4fbaca5831a1c4592cf22e72d68ed3b2`.
+- Exact-head CI `32985138375` remained queued with zero jobs. Explicit
+  `publish_prerelease=false` package dispatch `32985149344` reached
+  `startup_failure` with zero jobs. These are retained failure evidence, not
+  passing hosted evidence.
+- PR `#96` remains open and unmerged. No artifact, publication, integration, or
+  destination synchronization occurred. Fresh exact-head hosted runs are
+  required after GitHub restores job creation and runner availability.
