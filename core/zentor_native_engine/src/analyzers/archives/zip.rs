@@ -61,15 +61,24 @@ pub struct BoundedZipEntrySamples {
 }
 
 pub fn analyze_zip(bytes: &[u8]) -> Result<ArchiveAnalysis> {
+    let mut never_cancel = || Ok(());
+    analyze_zip_with_cancellation(bytes, &mut never_cancel)
+}
+
+pub fn analyze_zip_with_cancellation(
+    bytes: &[u8],
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<ArchiveAnalysis> {
+    cancellation_checkpoint()?;
     if bytes.starts_with(ZIP_LOCAL_FILE_HEADER_SIGNATURE) && bytes.len() < 30 {
         bail!("truncated zip local file header");
     }
     if bytes.starts_with(ZIP_LOCAL_FILE_HEADER_SIGNATURE) {
-        if let Some(analysis) = analyze_central_directory(bytes) {
+        if let Some(analysis) = analyze_central_directory(bytes, cancellation_checkpoint)? {
             return Ok(analysis);
         }
     }
-    analyze_local_headers(bytes)
+    analyze_local_headers(bytes, cancellation_checkpoint)
 }
 
 pub fn bounded_zip_entry_samples(bytes: &[u8]) -> Result<BoundedZipEntrySamples> {
@@ -272,10 +281,14 @@ fn bounded_central_directory_entry_samples(
     Ok(Some(samples))
 }
 
-fn analyze_local_headers(bytes: &[u8]) -> Result<ArchiveAnalysis> {
+fn analyze_local_headers(
+    bytes: &[u8],
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<ArchiveAnalysis> {
     let mut offset = 0usize;
     let mut result = ArchiveAnalysis::default();
     while offset + 30 <= bytes.len() {
+        cancellation_checkpoint()?;
         if &bytes[offset..offset + 4] != ZIP_LOCAL_FILE_HEADER_SIGNATURE {
             break;
         }
@@ -324,8 +337,8 @@ fn analyze_local_headers(bytes: &[u8]) -> Result<ArchiveAnalysis> {
             compressed_size,
             uncompressed_size,
         };
-        inspect_ooxml_relationship_entry(&entry, &mut result);
-        inspect_archive_autorun_inf_entry(&entry, &mut result);
+        inspect_ooxml_relationship_entry(&entry, &mut result, cancellation_checkpoint)?;
+        inspect_archive_autorun_inf_entry(&entry, &mut result, cancellation_checkpoint)?;
         result.entry_count += 1;
         if body_end > bytes.len() {
             result.limit_exceeded = true;
@@ -336,15 +349,32 @@ fn analyze_local_headers(bytes: &[u8]) -> Result<ArchiveAnalysis> {
     Ok(result)
 }
 
-fn analyze_central_directory(bytes: &[u8]) -> Option<ArchiveAnalysis> {
-    let eocd_offset = find_end_of_central_directory(bytes)?;
+fn analyze_central_directory(
+    bytes: &[u8],
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<Option<ArchiveAnalysis>> {
+    let Some(eocd_offset) = find_end_of_central_directory(bytes) else {
+        return Ok(None);
+    };
     let mut result = ArchiveAnalysis::default();
-    let total_entries = read_u16_le(bytes, eocd_offset + 10)? as usize;
-    let central_directory_size = read_u32_le(bytes, eocd_offset + 12)?;
-    let central_directory_offset = read_u32_le(bytes, eocd_offset + 16)?;
-    let disk_number = read_u16_le(bytes, eocd_offset + 4)?;
-    let central_directory_disk = read_u16_le(bytes, eocd_offset + 6)?;
-    let disk_entries = read_u16_le(bytes, eocd_offset + 8)? as usize;
+    let Some(total_entries) = read_u16_le(bytes, eocd_offset + 10).map(usize::from) else {
+        return Ok(None);
+    };
+    let Some(central_directory_size) = read_u32_le(bytes, eocd_offset + 12) else {
+        return Ok(None);
+    };
+    let Some(central_directory_offset) = read_u32_le(bytes, eocd_offset + 16) else {
+        return Ok(None);
+    };
+    let Some(disk_number) = read_u16_le(bytes, eocd_offset + 4) else {
+        return Ok(None);
+    };
+    let Some(central_directory_disk) = read_u16_le(bytes, eocd_offset + 6) else {
+        return Ok(None);
+    };
+    let Some(disk_entries) = read_u16_le(bytes, eocd_offset + 8).map(usize::from) else {
+        return Ok(None);
+    };
     if disk_number != 0
         || central_directory_disk != 0
         || disk_entries != total_entries
@@ -352,29 +382,30 @@ fn analyze_central_directory(bytes: &[u8]) -> Option<ArchiveAnalysis> {
         || central_directory_offset == ZIP64_U32_SENTINEL
     {
         result.limit_exceeded = true;
-        return Some(result);
+        return Ok(Some(result));
     }
     let central_directory_size = central_directory_size as usize;
     let central_directory_offset = central_directory_offset as usize;
     if central_directory_size > MAX_CENTRAL_DIRECTORY_BYTES {
         result.limit_exceeded = true;
-        return Some(result);
+        return Ok(Some(result));
     }
     let Some(central_directory_end) = central_directory_offset.checked_add(central_directory_size)
     else {
         result.limit_exceeded = true;
-        return Some(result);
+        return Ok(Some(result));
     };
     if central_directory_offset > eocd_offset
         || central_directory_end > eocd_offset
         || central_directory_end > bytes.len()
     {
         result.limit_exceeded = true;
-        return Some(result);
+        return Ok(Some(result));
     }
     let mut offset = central_directory_offset;
     let mut parsed_entries = 0usize;
     while parsed_entries < total_entries {
+        cancellation_checkpoint()?;
         if result.entry_count >= MAX_ENTRIES {
             result.limit_exceeded = true;
             break;
@@ -386,8 +417,18 @@ fn analyze_central_directory(bytes: &[u8]) -> Option<ArchiveAnalysis> {
             break;
         };
         inspect_zip_entry_name(&entry.name, &mut result);
-        inspect_central_directory_ooxml_relationship(&entry, bytes, &mut result);
-        inspect_central_directory_autorun_inf_entry(&entry, bytes, &mut result);
+        inspect_central_directory_ooxml_relationship(
+            &entry,
+            bytes,
+            &mut result,
+            cancellation_checkpoint,
+        )?;
+        inspect_central_directory_autorun_inf_entry(
+            &entry,
+            bytes,
+            &mut result,
+            cancellation_checkpoint,
+        )?;
         result.entry_count += 1;
         offset = next_offset;
         parsed_entries += 1;
@@ -395,27 +436,28 @@ fn analyze_central_directory(bytes: &[u8]) -> Option<ArchiveAnalysis> {
     if parsed_entries < total_entries || offset != central_directory_end {
         result.limit_exceeded = true;
     }
-    Some(result)
+    Ok(Some(result))
 }
 
 fn inspect_central_directory_autorun_inf_entry(
     entry: &CentralDirectoryEntry,
     bytes: &[u8],
     result: &mut ArchiveAnalysis,
-) {
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<()> {
     if !archive_autorun_inf_entry(&entry.name) {
-        return;
+        return Ok(());
     }
     if entry.compressed_size == ZIP64_U32_SENTINEL
         || entry.uncompressed_size == ZIP64_U32_SENTINEL
         || entry.local_header_offset == ZIP64_U32_SENTINEL
     {
         result.limit_exceeded = true;
-        return;
+        return Ok(());
     }
     let Some(body_start) = central_directory_entry_body_start(bytes, entry) else {
         result.limit_exceeded = true;
-        return;
+        return Ok(());
     };
     let entry_view = ZipEntryView {
         name: &entry.name,
@@ -426,7 +468,7 @@ fn inspect_central_directory_autorun_inf_entry(
         compressed_size: entry.compressed_size as usize,
         uncompressed_size: entry.uncompressed_size as usize,
     };
-    inspect_archive_autorun_inf_entry(&entry_view, result);
+    inspect_archive_autorun_inf_entry(&entry_view, result, cancellation_checkpoint)
 }
 
 fn parse_central_directory_entry(
@@ -474,20 +516,21 @@ fn inspect_central_directory_ooxml_relationship(
     entry: &CentralDirectoryEntry,
     bytes: &[u8],
     result: &mut ArchiveAnalysis,
-) {
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<()> {
     if !ooxml_relationship_entry(&entry.name) {
-        return;
+        return Ok(());
     }
     if entry.compressed_size == ZIP64_U32_SENTINEL
         || entry.uncompressed_size == ZIP64_U32_SENTINEL
         || entry.local_header_offset == ZIP64_U32_SENTINEL
     {
         result.limit_exceeded = true;
-        return;
+        return Ok(());
     }
     let Some(body_start) = central_directory_entry_body_start(bytes, entry) else {
         result.limit_exceeded = true;
-        return;
+        return Ok(());
     };
     let entry_view = ZipEntryView {
         name: &entry.name,
@@ -498,7 +541,7 @@ fn inspect_central_directory_ooxml_relationship(
         compressed_size: entry.compressed_size as usize,
         uncompressed_size: entry.uncompressed_size as usize,
     };
-    inspect_ooxml_relationship_entry(&entry_view, result);
+    inspect_ooxml_relationship_entry(&entry_view, result, cancellation_checkpoint)
 }
 
 fn central_directory_entry_body_start(
@@ -725,58 +768,69 @@ fn zip_entry_suffix_is_deceptive_review_executable_or_script(suffix: &str) -> bo
     )
 }
 
-fn inspect_ooxml_relationship_entry(entry: &ZipEntryView<'_>, result: &mut ArchiveAnalysis) {
+fn inspect_ooxml_relationship_entry(
+    entry: &ZipEntryView<'_>,
+    result: &mut ArchiveAnalysis,
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<()> {
     if !ooxml_relationship_entry(entry.name) {
-        return;
+        return Ok(());
     }
     if entry.general_purpose_flags & ZIP_GENERAL_PURPOSE_ENCRYPTED != 0 {
         result.limit_exceeded = true;
-        return;
+        return Ok(());
     }
     let Some(body_end) = entry.body_start.checked_add(entry.compressed_size) else {
         result.limit_exceeded = true;
-        return;
+        return Ok(());
     };
     if body_end > entry.archive_bytes.len() {
         result.limit_exceeded = true;
-        return;
+        return Ok(());
     }
-    match bounded_relationship_body(
+    match bounded_relationship_body_with_cancellation(
         &entry.archive_bytes[entry.body_start..body_end],
         entry.compression_method,
         entry.compressed_size,
         entry.uncompressed_size,
-    ) {
+        cancellation_checkpoint,
+    )? {
         Ok(Some(body)) => inspect_ooxml_relationship_body(&body, result),
         Ok(None) => {}
         Err(()) => {
             result.limit_exceeded = true;
         }
     }
+    Ok(())
 }
 
-fn inspect_archive_autorun_inf_entry(entry: &ZipEntryView<'_>, result: &mut ArchiveAnalysis) {
+fn inspect_archive_autorun_inf_entry(
+    entry: &ZipEntryView<'_>,
+    result: &mut ArchiveAnalysis,
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<()> {
     if !archive_autorun_inf_entry(entry.name) {
-        return;
+        return Ok(());
     }
     if entry.general_purpose_flags & ZIP_GENERAL_PURPOSE_ENCRYPTED != 0 {
         result.limit_exceeded = true;
-        return;
+        return Ok(());
     }
     let Some(body_end) = entry.body_start.checked_add(entry.compressed_size) else {
         result.limit_exceeded = true;
-        return;
+        return Ok(());
     };
     if body_end > entry.archive_bytes.len() {
         result.limit_exceeded = true;
-        return;
+        return Ok(());
     }
-    match bounded_autorun_inf_body(
+    match bounded_autorun_inf_body_with_cancellation(
         &entry.archive_bytes[entry.body_start..body_end],
         entry.compression_method,
         entry.compressed_size,
         entry.uncompressed_size,
-    ) {
+        cancellation_checkpoint,
+    )? {
         Ok(Some(body)) => {
             let indicators = strings::extract_indicators(&body);
             result.autorun_inf_executable_command_count = result
@@ -788,6 +842,7 @@ fn inspect_archive_autorun_inf_entry(entry: &ZipEntryView<'_>, result: &mut Arch
             result.limit_exceeded = true;
         }
     }
+    Ok(())
 }
 
 fn zip_entry_extension_suffix(name: &str) -> Option<&str> {
@@ -815,47 +870,63 @@ fn ooxml_relationship_entry(name: &str) -> bool {
     name.ends_with(".rels") && (name == "_rels/.rels" || name.contains("/_rels/"))
 }
 
-fn bounded_relationship_body(
+fn bounded_relationship_body_with_cancellation(
     body: &[u8],
     compression_method: u16,
     compressed_size: usize,
     uncompressed_size: usize,
-) -> std::result::Result<Option<Vec<u8>>, ()> {
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<std::result::Result<Option<Vec<u8>>, ()>> {
     match compression_method {
         ZIP_COMPRESSION_STORED if compressed_size <= MAX_STORED_RELATIONSHIP_BYTES => {
-            Ok(Some(body.to_vec()))
+            cancellation_checkpoint()?;
+            let copied = body.to_vec();
+            cancellation_checkpoint()?;
+            Ok(Ok(Some(copied)))
         }
-        ZIP_COMPRESSION_STORED => Err(()),
+        ZIP_COMPRESSION_STORED => Ok(Err(())),
         ZIP_COMPRESSION_DEFLATE
             if compressed_size <= MAX_DEFLATED_RELATIONSHIP_BYTES
                 && uncompressed_size <= MAX_INFLATED_RELATIONSHIP_BYTES =>
         {
-            inflate_zip_body(body, MAX_INFLATED_RELATIONSHIP_BYTES)
+            inflate_zip_body_with_cancellation(
+                body,
+                MAX_INFLATED_RELATIONSHIP_BYTES,
+                cancellation_checkpoint,
+            )
         }
-        ZIP_COMPRESSION_DEFLATE => Err(()),
-        _ => Err(()),
+        ZIP_COMPRESSION_DEFLATE => Ok(Err(())),
+        _ => Ok(Err(())),
     }
 }
 
-fn bounded_autorun_inf_body(
+fn bounded_autorun_inf_body_with_cancellation(
     body: &[u8],
     compression_method: u16,
     compressed_size: usize,
     uncompressed_size: usize,
-) -> std::result::Result<Option<Vec<u8>>, ()> {
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<std::result::Result<Option<Vec<u8>>, ()>> {
     match compression_method {
         ZIP_COMPRESSION_STORED if compressed_size <= MAX_STORED_AUTORUN_INF_BYTES => {
-            Ok(Some(body.to_vec()))
+            cancellation_checkpoint()?;
+            let copied = body.to_vec();
+            cancellation_checkpoint()?;
+            Ok(Ok(Some(copied)))
         }
-        ZIP_COMPRESSION_STORED => Err(()),
+        ZIP_COMPRESSION_STORED => Ok(Err(())),
         ZIP_COMPRESSION_DEFLATE
             if compressed_size <= MAX_DEFLATED_AUTORUN_INF_BYTES
                 && uncompressed_size <= MAX_INFLATED_AUTORUN_INF_BYTES =>
         {
-            inflate_zip_body(body, MAX_INFLATED_AUTORUN_INF_BYTES)
+            inflate_zip_body_with_cancellation(
+                body,
+                MAX_INFLATED_AUTORUN_INF_BYTES,
+                cancellation_checkpoint,
+            )
         }
-        ZIP_COMPRESSION_DEFLATE => Err(()),
-        _ => Err(()),
+        ZIP_COMPRESSION_DEFLATE => Ok(Err(())),
+        _ => Ok(Err(())),
     }
 }
 
@@ -955,20 +1026,6 @@ fn bounded_archive_content_body_with_cancellation(
         ZIP_COMPRESSION_DEFLATE => Ok(Err(())),
         _ => Ok(Err(())),
     }
-}
-
-fn inflate_zip_body(
-    body: &[u8],
-    max_inflated_bytes: usize,
-) -> std::result::Result<Option<Vec<u8>>, ()> {
-    let mut decoder = DeflateDecoder::new(body);
-    let mut inflated = Vec::new();
-    let mut limited = decoder.by_ref().take((max_inflated_bytes + 1) as u64);
-    limited.read_to_end(&mut inflated).map_err(|_| ())?;
-    if inflated.len() > max_inflated_bytes {
-        return Err(());
-    }
-    Ok(Some(inflated))
 }
 
 fn inflate_zip_body_with_cancellation(
@@ -1387,6 +1444,58 @@ mod tests {
 
         assert_eq!(checks, 3);
         assert!(error.to_string().contains("benign inflate cancellation"));
+    }
+
+    #[test]
+    fn static_archive_cancellation_interrupts_metadata_traversal() {
+        let archive = zip_with_stored_entries(&[
+            (b"payload/first.txt", b"first benign body"),
+            (b"payload/second.txt", b"second benign body"),
+        ]);
+        let mut checks = 0_u32;
+        let mut cancellation_checkpoint = || {
+            checks += 1;
+            if checks >= 3 {
+                anyhow::bail!("benign static metadata cancellation");
+            }
+            Ok(())
+        };
+
+        let error = analyze_zip_with_cancellation(&archive, &mut cancellation_checkpoint)
+            .expect_err("metadata traversal cancellation must abort static analysis");
+
+        assert_eq!(checks, 3);
+        assert!(error
+            .to_string()
+            .contains("benign static metadata cancellation"));
+    }
+
+    #[test]
+    fn static_archive_cancellation_interrupts_ooxml_relationship_inflate() {
+        let relationship = vec![b'a'; MAX_INFLATED_RELATIONSHIP_BYTES];
+        let compressed = deflate_raw(&relationship);
+        let archive = zip_with_entry_method(
+            b"word/_rels/document.xml.rels",
+            ZIP_COMPRESSION_DEFLATE,
+            &compressed,
+            relationship.len(),
+        );
+        let mut checks = 0_u32;
+        let mut cancellation_checkpoint = || {
+            checks += 1;
+            if checks >= 4 {
+                anyhow::bail!("benign static relationship cancellation");
+            }
+            Ok(())
+        };
+
+        let error = analyze_zip_with_cancellation(&archive, &mut cancellation_checkpoint)
+            .expect_err("relationship inflate cancellation must abort static analysis");
+
+        assert_eq!(checks, 4);
+        assert!(error
+            .to_string()
+            .contains("benign static relationship cancellation"));
     }
 
     #[test]

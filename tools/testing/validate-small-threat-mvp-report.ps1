@@ -1904,8 +1904,8 @@ if ($RequireFullSuite) {
   if ($skipFlutter -or $skipRust) {
     throw "-RequireFullSuite requires skip_flutter=false and skip_rust=false."
   }
-  if ($steps.Count -ne 272) {
-    throw "-RequireFullSuite expected exactly 272 verifier steps for this source revision, found $($steps.Count)."
+  if ($steps.Count -ne 273) {
+    throw "-RequireFullSuite expected exactly 273 verifier steps for this source revision, found $($steps.Count)."
   }
   if ($steps[0].name -ne "local-core safe simulator scan reporting") {
     throw "-RequireFullSuite first step mismatch: $($steps[0].name)"
@@ -1976,6 +1976,7 @@ if ($RequireFullSuite) {
   Assert-ReportContainsStep $steps "scan job-bound cancellation regressions"
   Assert-ReportContainsStep $steps "cooperative in-engine cancellation regressions"
   Assert-ReportContainsStep $steps "cooperative archive collection cancellation regressions"
+  Assert-ReportContainsStep $steps "native-engine static archive analysis cancellation regressions"
   Assert-ReportScopeContains $verifiedScopeText "bounded UTF-8-safe head/tail command-line sampling" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "command indicators remain post-start review evidence" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "high-risk process-start verdicts return recommendations rather than fake block success" "verification_scope.verified"
@@ -2006,7 +2007,12 @@ if ($RequireFullSuite) {
   Assert-ReportScopeContains $verifiedScopeText "before each at-most-64-KiB inflate output read" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "Cancellation and probe failure abort collection without publishing partial archive evidence or becoming an archive limit" "verification_scope.verified"
   Assert-ReportScopeContains $technicalLimitText "does not hard-interrupt one already-running flate2 decoder read" "verification_scope.technically_limited"
-  Assert-ReportScopeContains $technicalLimitText "The static analyzer's separate archive metadata and relationship inspection remains synchronous and independently bounded" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $verifiedScopeText "Native static ZIP analysis checks cancellation before parser traversal" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "before every local or central-directory metadata entry" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "around stored OOXML relationship and autorun copies" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "before each at-most-64-KiB relationship or autorun inflate output read" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "no partial StaticAnalysis or file verdict is published and neither failure is mislabeled as an archive limit" "verification_scope.verified"
+  Assert-ReportScopeContains $technicalLimitText "ZIP metadata entry traversal is bounded to 256 entries, but cancellation is cooperative rather than preemptive" "verification_scope.technically_limited"
   Assert-ReportScopeContains $verifiedScopeText "Authenticode stdout and stderr drainers start before the initial authenticated handshake" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "four concurrent helpers complete independently without product-wide serialization" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "an early child exit preserves bounded exit-status, stdout, stderr, cleanup, and reader diagnostics without retrying or accepting a trust result" "verification_scope.verified"

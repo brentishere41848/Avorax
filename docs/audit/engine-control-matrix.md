@@ -5017,3 +5017,24 @@ with 20 full repetitions, Native `555`/`21` plus compiler `6/6`, Local Core
 `546/546`, Flutter `847/847`, source contracts `673/673`, strict lint/build, and
 parser/diff gates pass. Definitive 272-step and hosted/integration/destination
 evidence remain pending.
+
+## Checkpoint 2244 Static Archive Analysis Cancellation Matrix
+
+| Control / engine | Responsibility | Current state | Evidence / blocker |
+|---|---|---|---|
+| Native static ZIP metadata analyzer | Inspect bounded local/central metadata and archive names without extraction | Locally verified | Fallible checkpoint before traversal and every entry; maximum 256 entries retained; focused/ZIP/full Native pass |
+| OOXML relationship analyzer | Inspect bounded stored/deflated `.rels` bodies for external and remote executable targets | Locally verified | Checkpoints around stored copies and before each at-most-64-KiB inflate output read; benign cancellation and existing detection regressions pass |
+| Archive autorun analyzer | Inspect bounded stored/deflated `autorun.inf` bodies for executable commands | Locally verified | Same fallible copy/inflate checkpoint path; callback errors are not archive limits; complete ZIP regressions pass |
+| Native scan cancellation bridge | Prevent partial static analysis or verdict publication after cancellation/probe failure | Locally verified | Engine maps `static archive analysis progress` through typed cancellation; source contract and full Native/Local pass |
+| Checkpoint 2244 verifier contract | Reject stale checkpoint-2243 evidence | Scripted; execution pending | Exact 273 steps, source contract 674, dual validators, and adversarial missing-step/scope rejection planned |
+
+Checkpoint 2244 adds cooperative boundaries only. It does not hard-interrupt an
+active decoder read, change detector thresholds or archive limits, add
+extraction, or claim kernel/pre-execution blocking. No checkpoint-2244 passing
+result is claimed during scripting.
+
+Local evidence passes focused `4/4`, ZIP `36/36`, adjacent cancellation `4/4`,
+Native `559`/`21` plus compiler `6/6`, Local Core `546/546`, Flutter `847/847`,
+source contracts `674/674`, strict component lint, dual parsers, formatting and
+diff checks, and locked release build. Locks and protected vault remain exact;
+definitive/hosted/integration/destination evidence remains pending.

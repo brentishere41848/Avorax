@@ -11939,3 +11939,39 @@ pending.
   569 components. Nothing was extracted or executed.
 - Evidence-head hosted checks, normal merge, merged-main evidence, guarded
   synchronization, and destination verification remain pending.
+
+## 2026-08-26 - Checkpoint 2244 Static Archive Analysis Cancellation Scripted
+
+- Audited the next highest-value unblocked scan-cancellation gap after
+  checkpoint 2243. Reputation and four behavior engines remain honestly
+  disabled because no trusted backend/correlated telemetry exists; they were
+  not replaced with fake results.
+- Scripted fallible cooperative checkpoints through Native static ZIP parser
+  traversal, every local/central metadata entry, stored OOXML relationship and
+  autorun copies, and at-most-64-KiB deflate output reads.
+- The scan engine now maps those checkpoints to typed job-bound cancellation.
+  Cancellation and probe failure abort without publishing partial
+  `StaticAnalysis` or a file verdict and cannot be mislabeled as archive limits.
+- Added benign Rust regressions, mandatory verifier step 273, strict validator
+  scope/cardinality, source contract 674, and checkpoint/audit/threat/blocker/
+  dependency documentation.
+- No checkpoint-2244 test has run during this scripting phase. One active
+  decoder read is not hard-interrupted, non-archive synchronous work remains,
+  and no kernel/pre-execution claim is made. No dependency, feature, or
+  lockfile change is introduced.
+
+## 2026-08-26 - Checkpoint 2244 Local Verification
+
+- Focused static archive cancellation passes `4/4`; complete ZIP analyzer
+  `36/36`; adjacent cooperative archive cancellation `4/4`.
+- Default-parallel Native passes `559` active/`21` intentional ignores plus
+  compiler `6/6`. Local Core passes `546/546`; Flutter analyzer and `847/847`
+  pass. Strict Native/Local Clippy, rustfmt, diff check, dual PS5/PS7 parsers,
+  locked workspace release build, and source contracts `674/674` pass.
+- Two uncredited `pytest` commands executed no tests because pytest is absent.
+  The dependency-free source runner first rejected two stale wording contracts;
+  corrected wording then passed all 674 contracts.
+- Root, Native, and Flutter lock hashes and the protected-vault invariant remain
+  exactly unchanged. Definitive
+  273-step, adversarial report validation, hosted/integration/destination, and
+  closure evidence remain pending.

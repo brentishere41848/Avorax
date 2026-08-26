@@ -3130,3 +3130,21 @@ was repaired and targeted strict lint passes.
   contracts `673/673`, analyzer, strict component lint, parsers, formatting and
   locked release build pass. Exact 272-step and hosted/integration/destination
   closure remain pending.
+
+## Checkpoint 2244 Static Archive Analysis Cancellation
+
+- The previous blocker that static ZIP metadata and OOXML relationship analysis
+  observed cancellation only after the whole substep is repaired in source:
+  parser/entry/copy/inflate checkpoints now propagate fallible errors through
+  the Native engine before verdict publication.
+- Focused/full local and source contract 674 now pass. Mandatory step 273,
+  strict report/adversarial validation, hosted, integration, and destination
+  evidence must still pass before this blocker is closed.
+- Remaining technical limitation: one already-running `flate2` read is not
+  preempted. Non-archive analyzer work, synchronous rule/ML calls, trust helper
+  calls, installed service identity, driver mediation, and pre-execution
+  blocking remain outside this checkpoint.
+- Reputation remains disabled without an authenticated privacy-reviewed
+  backend. Browser-data, credential/network, persistence-write, and parent-image
+  lineage behavior engines remain disabled without trusted correlated telemetry.
+  Checkpoint 2244 does not fake-enable them.
