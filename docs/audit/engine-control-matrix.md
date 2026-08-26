@@ -4906,3 +4906,29 @@ modes. Both consolidated artifact streams pass bounded platform/checksum/SBOM
 validation and publication is skipped. Hosted packaging does not expand the
 app-lifetime, publication-only generation boundary; evidence-head, merge,
 synchronization, and destination evidence remains open.
+
+Checkpoint 2238 integration and destination evidence is now closed. PR `#90`
+merged normally as `2435b31`; exact evidence-head and merged-main CI/package
+matrices pass with publication skipped. Guarded synchronization copied 13 exact
+blobs and the destination passes focused generation `2/2`, Flutter
+analyze/`840/840`, source contracts `668/668`, exact `267/267` in `464.2s`,
+both validators, and adversarial `16/16`. The enabled generation controls above
+are verified at the destination. Hard cancellation, installed durable
+monitoring, mutation, driver/kernel enforcement, and pre-execution blocking
+remain unclaimed.
+
+## Checkpoint 2239 Scan Cancellation Ownership Matrix
+
+| Control | Ownership | Scripted state | Exact limit |
+|---|---|---|---|
+| Scan operation generation | Flutter `ZentorController` | Scripted, not yet verified | Monotonic controller-lifetime integer; exact generation required after awaits and for cleanup/publication |
+| Cancellation outcome | Flutter controller | Scripted, not yet verified | One `Completer<bool>` for the exact requested generation; completed report waits for accept/fail outcome |
+| Replacement scan starts | Controller and visible scan controls | Scripted, not yet verified | Manual quick/full/custom/rescan, picker, scheduler, Home, Protection, Scan, and Quarantine starts blocked while cancellation is in flight |
+| Active scan subprocess | `LocalCoreClient` | Scripted, not yet verified | Exact process lease captured before cancel IPC/delay; only identical owning lease may clear the slot |
+| Unrelated Local Core IPC | `LocalCoreClient._call` | Scripted, not yet verified | Non-scan calls own no lease and cannot clear active scan fallback ownership |
+| Cross-instance cancel token | Local Core runtime file | Technically limited | Current-user-runtime shared token; no authenticated job-ID or cross-instance isolation |
+| Checkpoint 2239 verifier contract | Verifier, validator, source contracts | Scripted, not yet verified | Mandatory cancellation ownership target, exact 268 steps, source contract 669 |
+
+No checkpoint-2239 passing result is claimed during scripting. The change
+narrows post-start cancellation ownership only; it does not add durable service,
+driver/kernel, or pre-execution blocking capability.

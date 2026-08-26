@@ -55,6 +55,7 @@ class ScanScreen extends ConsumerWidget {
     final updateMutationBusy = updateMutationOperationInProgress(state);
     final scanStartBusy =
         state.scanStartInFlight ||
+        state.scanCancelInFlight ||
         state.securitySettingsActionInFlight ||
         state.configurationResetInFlight ||
         state.scanStatus == ScanStatus.running ||

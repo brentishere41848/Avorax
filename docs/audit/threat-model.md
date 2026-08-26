@@ -3006,3 +3006,33 @@ variants reject `16/16`; locks and protected-vault inventory remain exact. This
 proves stale-publication rejection within the app controller only. App-lifetime
 poll gaps, installed identity boundaries, durable monitoring, calibration,
 mutation, driver/kernel enforcement, and pre-execution remain residual risks.
+
+**Integration and destination evidence:** PR `#90` merged normally as
+`2435b31`; exact evidence-head and merged-main CI/package matrices pass with
+publication skipped. Guarded synchronization copied 13 exact blobs with zero
+deletes/residue. Destination Flutter analyze/`840/840` and contracts `668/668`
+pass, followed by exact `267/267` in `464.2s`, both independent validators, and
+adversarial `16/16`. This closes checkpoint 2238 evidence without changing the
+threat boundary: already-started work may continue to its existing bound,
+polling can miss activity, and no installed durable, cross-identity,
+driver/kernel, or pre-execution claim is made.
+
+## Checkpoint 2239 Scan Cancellation Threat Delta
+
+- **Late cancel publication:** cancellation captures the exact scan generation;
+  post-await success/error and final cancelled state require that generation.
+- **Optimistic false cancellation:** a completed scan waits on its exact cancel
+  outcome. Accepted cancellation produces a cancelled report; delayed cancel
+  failure releases the real completed report and fail-visible error event.
+- **Replacement-process targeting:** manual, scheduled, picker, rescan, and UI
+  starts remain blocked until cancellation resolves. Fallback kill captures the
+  exact active process lease before awaits and cannot reread a replacement slot.
+- **Unrelated IPC slot loss:** only a scan call with the identical lease may
+  clear active process ownership; health/quarantine/other IPC owns no lease.
+- **Residual cross-instance risk:** Local Core still uses a current-user-runtime
+  cancellation token without authenticated job-ID binding. The controller and
+  process lease constrain this app instance, not arbitrary concurrent instances.
+
+No checkpoint-2239 result is claimed during scripting. Cancellation remains
+cooperative user-mode post-start control, not installed cross-identity,
+driver/kernel, or pre-execution enforcement.

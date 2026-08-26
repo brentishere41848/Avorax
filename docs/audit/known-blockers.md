@@ -3008,3 +3008,29 @@ remain genuine blockers or disabled capabilities.
 - Installed durable process/file telemetry, shorter observation gaps, trusted
   Guard commandlines, parent-image identity, mutation, production calibration,
   driver/kernel interception, and pre-execution blocking remain genuine blockers.
+
+Checkpoint 2238 hosted, merge, guarded-sync, and destination evidence is now
+closed. PR `#90`, exact evidence-head/merged-main CI and package matrices,
+13-blob zero-delete synchronization, destination Flutter `840/840`, source
+contracts `668/668`, exact `267/267` in `464.2s`, two-host validation, and
+adversarial `16/16` all pass. This removes the checkpoint evidence blocker
+only. Hard cancellation of already-started work, installed durable monitoring,
+trusted Guard commandlines, verified parent lineage, mutation, production
+calibration, signed driver/kernel interception, and pre-execution blocking
+remain genuine blockers or disabled capabilities.
+
+## Checkpoint 2239 Scan Cancellation Ownership
+
+- A late cancellation previously could overlap a replacement scan after the
+  old scan released `_scanStartInFlight`; cancellation publication and fallback
+  process kill were not bound to an exact scan generation/process lease.
+- Any unrelated Local Core `_call` completion could clear the static active-scan
+  process slot. This made fallback cancellation unavailable or susceptible to
+  retargeting after an await. Exact lease ownership is now scripted.
+- Per-generation outcome waiting, replacement-start rejection, visible busy
+  controls, benign races/subprocess checks, exact 268-step validation, and source
+  contract 669 are scripted but not yet run.
+- The current-user-runtime cancellation token is still shared across Local Core
+  processes and is not authenticated to a job ID. Cross-instance serialization,
+  installed service ownership, kernel cancellation, and pre-execution blocking
+  remain genuine blockers and are not claimed.

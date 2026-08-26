@@ -7,6 +7,12 @@ import 'package:zentor_protocol/zentor_protocol.dart';
 typedef LocalCoreProcessStarter =
     Future<Process> Function(String executable, List<String> arguments);
 
+class _ActiveScanProcessLease {
+  const _ActiveScanProcessLease(this.process);
+
+  final Process process;
+}
+
 const avoraxInstallerOwnedRepairBlocker =
     'In-app service registration is disabled. Installation repair is owned by '
     'the Avorax MSI/EXE installer; reinstall Avorax using a verified official '
@@ -39,7 +45,7 @@ class LocalCoreClient {
   final Duration? ipcProcessReapTimeout;
   final Duration? serviceHealthTimeout;
 
-  static Process? _activeScanProcess;
+  static _ActiveScanProcessLease? _activeScanProcessLease;
   static const _maxIpcStatusTextLength = 256;
   static const _maxIpcDiagnosticTextLength = 2048;
   static const _maxIpcStdoutLineLength = 64 * 1024;
@@ -1459,6 +1465,7 @@ if ($service.Status -ne 'Running') {
   }
 
   Future<String?> cancelActiveScan() async {
+    final activeScanLease = _activeScanProcessLease;
     Object? cancelError;
     try {
       await _sendCancelScanRequest();
@@ -1466,7 +1473,7 @@ if ($service.Status -ne 'Running') {
       cancelError = error;
     }
     await Future<void>.delayed(const Duration(milliseconds: 250));
-    final killed = _activeScanProcess?.kill() ?? false;
+    final killed = activeScanLease?.process.kill() ?? false;
     if (cancelError != null) {
       final fallback = killed
           ? 'process kill fallback was requested'
@@ -1538,6 +1545,7 @@ if ($service.Status -ne 'Running') {
     if (launchBlocker != null) {
       return {'ok': false, 'error': launchBlocker};
     }
+    _ActiveScanProcessLease? trackedScanLease;
     try {
       final process = await (processStarter ?? Process.start)(
         executablePath,
@@ -1547,7 +1555,8 @@ if ($service.Status -ne 'Running') {
           command['command'] == 'scan_folder' ||
           command['command'] == 'quick_scan_selected_paths' ||
           command['command'] == 'full_scan') {
-        _activeScanProcess = process;
+        trackedScanLease = _ActiveScanProcessLease(process);
+        _activeScanProcessLease = trackedScanLease;
       }
       return await (() async {
         process.stdin.writeln(jsonEncode(command));
@@ -1633,7 +1642,10 @@ if ($service.Status -ne 'Running') {
       final details = _ipcDiagnosticOrNull('$error') ?? 'IPC failed.';
       return {'ok': false, 'error': 'Avorax local core IPC failed: $details'};
     } finally {
-      _activeScanProcess = null;
+      if (trackedScanLease != null &&
+          identical(_activeScanProcessLease, trackedScanLease)) {
+        _activeScanProcessLease = null;
+      }
     }
   }
 

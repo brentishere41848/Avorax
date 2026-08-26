@@ -1505,3 +1505,27 @@ checksums, and CycloneDX 1.6 lockfile SBOM evidence with 569 components in each;
 publication is skipped. This remains lockfile-derived partial dependency
 evidence, not final-binary license resolution, production signing, or legal
 approval.
+
+Evidence-head packages `32924928368` and merged-main packages `32926037103`
+also pass every builder and consolidation with publication skipped. Their
+consolidated artifacts `9591498177` and `9591881748` pass bounded non-extracting
+six-platform/seven-checksum/CycloneDX 1.6/569-component review. Destination
+source contracts `668/668`, Flutter analyze/`840/840`, the exact 267-step
+dependency gate, and exact lock hashes pass. No dependency, feature, lockfile,
+machine-wide component, release, or publication changed. Final-binary license
+resolution, production signing, and legal approval remain separate
+prerequisites.
+
+## Checkpoint 2239 Dependency Scope
+
+Scan cancellation generation/outcome binding uses existing Dart integers,
+`Completer<bool>`, process objects, test timers, and repository Flutter/
+PowerShell/Python tooling. The Local Core process lease is a private Dart value
+around the existing `dart:io` `Process`; it adds no dependency, feature,
+downloaded content, package source, license obligation, or lockfile change.
+
+Benign tests use temporary directories, in-memory reports/errors, manual timers,
+and a bounded Dart subprocess fixture that reads only its JSON test command and
+never scans or executes candidate content. Exact 268-step and source contract
+669 coverage are scripted but not yet run. Final-binary license resolution,
+production signing, and legal approval remain separate prerequisites.

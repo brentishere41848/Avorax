@@ -23,6 +23,7 @@ class ProtectionScreen extends ConsumerWidget {
     final updateMutationBusy = updateMutationOperationInProgress(state);
     final scanStartBusy =
         state.scanStartInFlight ||
+        state.scanCancelInFlight ||
         state.scanTargetSelectionInFlight ||
         state.securitySettingsActionInFlight ||
         state.configurationResetInFlight ||

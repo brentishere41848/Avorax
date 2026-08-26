@@ -2489,6 +2489,109 @@ void main() {
     expect(cancelMethod, isNot(contains('process.stderr.drain')));
   });
 
+  test('source marker: scan cancellation process ownership is exact', () {
+    final clientSource = File(
+      'lib/core/local_core/local_core_client.dart',
+    ).readAsStringSync();
+    final cancelActive = clientSource.substring(
+      clientSource.indexOf('Future<String?> cancelActiveScan'),
+      clientSource.indexOf('Future<ScanReport> _scanCommand'),
+    );
+    final callMethod = clientSource.substring(
+      clientSource.indexOf('Future<Map<String, Object?>?> _call'),
+      clientSource.indexOf('String _formatDuration'),
+    );
+
+    expect(clientSource, contains('class _ActiveScanProcessLease'));
+    expect(clientSource, contains('static _ActiveScanProcessLease?'));
+    expect(cancelActive, contains('final activeScanLease ='));
+    expect(cancelActive, contains('activeScanLease?.process.kill()'));
+    expect(
+      cancelActive,
+      isNot(contains('_activeScanProcessLease?.process.kill')),
+    );
+    expect(callMethod, contains('_ActiveScanProcessLease? trackedScanLease'));
+    expect(
+      callMethod,
+      contains('identical(_activeScanProcessLease, trackedScanLease)'),
+    );
+    expect(callMethod, contains('trackedScanLease != null &&'));
+  });
+
+  test(
+    'scan cancellation process ownership survives unrelated local core IPC',
+    () async {
+      final dir = Directory.systemTemp.createTempSync(
+        'avorax-scan-cancel-process-ownership-',
+      );
+      addTearDown(() => dir.deleteSync(recursive: true));
+      final script = File('${dir.path}${Platform.pathSeparator}core.dart')
+        ..writeAsStringSync(r'''
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+
+Future<void> main() async {
+  final line = await stdin.transform(utf8.decoder).transform(const LineSplitter()).first;
+  final request = jsonDecode(line) as Map<String, dynamic>;
+  final command = request['command'];
+  if (command == 'list_quarantine') {
+    stdout.writeln(jsonEncode(<String, Object?>{'ok': true, 'records': <Object?>[]}));
+    return;
+  }
+  if (command == 'cancel_scan') {
+    stdout.writeln(jsonEncode(<String, Object?>{'ok': true}));
+    return;
+  }
+  if (command == 'quick_scan_selected_paths') {
+    await Future<void>.delayed(const Duration(seconds: 30));
+    return;
+  }
+  stderr.writeln('unexpected benign fixture command: $command');
+  exitCode = 9;
+}
+''');
+      final spawned = <Process>[];
+      addTearDown(() {
+        for (final process in spawned) {
+          process.kill();
+        }
+      });
+      final client = LocalCoreClient(
+        executableOverride: _dartExecutable(),
+        executableArguments: [script.path],
+        ipcTimeout: const Duration(seconds: 10),
+        processStarter: (executable, arguments) async {
+          final process = await Process.start(executable, arguments);
+          spawned.add(process);
+          return process;
+        },
+      );
+
+      final scanFuture = client.scanPaths(
+        [dir.path],
+        kind: ScanKind.quick,
+        actionMode: ScanActionMode.detectOnly,
+      );
+      for (var attempt = 0; attempt < 50 && spawned.isEmpty; attempt += 1) {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+      }
+      expect(spawned, hasLength(1));
+
+      expect(await client.listQuarantine(), isEmpty);
+      expect(spawned, hasLength(2));
+      expect(await client.cancelActiveScan(), isNull);
+      expect(spawned, hasLength(3));
+
+      final report = await scanFuture.timeout(const Duration(seconds: 2));
+      expect(report.status, ScanStatus.engineUnavailable);
+      await _expectProcessExited(
+        spawned.first,
+        'scan cancellation exact process ownership fixture',
+      );
+    },
+  );
+
   test('cancel responses with protocol warnings fail at runtime', () async {
     final dir = Directory.systemTemp.createTempSync('avorax-cancel-warning-');
     addTearDown(() => dir.deleteSync(recursive: true));

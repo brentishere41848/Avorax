@@ -11475,3 +11475,80 @@ pending.
   Both match GitHub digests and pass bounded non-extracting validation of eight
   entries, six platform files, seven checksums, and CycloneDX 1.6 with 569
   components. Evidence-head/merge/sync/destination evidence remains pending.
+
+## 2026-08-26 - Checkpoint 2238 Integration And Destination Closure
+
+- Evidence head `bdde944809fadd3840f8c1473bd40b22ed95ca2f` passes CI
+  `32924928331` and Desktop Packages `32924928368`; publication job
+  `98048797558` is skipped. Consolidated artifact `9591498177` is 132,048,634
+  bytes with SHA-256 `65a2c45ecff67643865e29446434cd4827cfe81fc519ea3be1e7fb3e00e6784d`
+  and passes bounded non-extracting 8-root/6-release/7-checksum/CycloneDX
+  1.6/569-component validation.
+- PR `#90` merges normally as `2435b3139ff012eda7cb565774c039e1db1d5fbc`
+  with exact parents `8900107b082d1ca55dbe434f506345764bc10799` and
+  `bdde944809fadd3840f8c1473bd40b22ed95ca2f`. Merged-main CI
+  `32926037036` and packages `32926037103` pass; publication job
+  `98051967746` is skipped. Artifact `9591881748` is 131,736,977 bytes with
+  SHA-256 `b84eef491f84ea2f852887da247b47eff550d11b8b122aa40a7d0a8793be6537`
+  and passes the same bounded validation. No release is created.
+- Guarded zero-delete synchronization copies exact `13/13` Git-filtered blobs
+  and 7,163,699 bytes into `C:\Users\Brent\Documents\Avorax-main`; no stage
+  or temp residue remains. Destination Dart format, focused generation `2/2`,
+  Flutter analyze, full Flutter `840/840`, and source contracts `668/668` pass.
+- The destination explicit-tool no-skip/no-Defender verifier passes exact
+  `267/267`, zero failed/skipped, from `2026-08-26T03:41:07.6190417Z` through
+  `2026-08-26T03:48:51.8328668Z` in `464.2s`. Both independent validators pass,
+  eight mutations per host reject `16/16`, and report SHA-256 is
+  `394f1ab5694bf5598c5731c2192d573b6ed16540f997e5869cc3f5377f8ef063`.
+- Exact locks, zero repository test processes, zero sync residue, and the
+  protected-vault invariant remain unchanged. Checkpoint 2238 is closed; the
+  complete antivirus project remains active.
+
+## 2026-08-26 - Checkpoint 2239 Scan Cancellation Ownership Scripted
+
+- Audited controller cancellation and `LocalCoreClient` process ownership. A
+  completed old scan could release the scan-start guard while cancel IPC still
+  waited, allowing a replacement start; late cancellation could then overwrite
+  replacement state. Any unrelated `_call` completion also cleared the static
+  active-scan process slot, while fallback kill reread that mutable slot after
+  an await.
+- Scripted exact controller scan generations, per-generation cancellation
+  outcomes, manual/scheduled/picker start rejection until cancellation
+  resolves, and matching busy UI on Home, Protection, Scan, and Quarantine.
+  Delayed cancel failure releases the completed report instead of fabricating a
+  cancelled verdict.
+- Scripted an exact Local Core process lease. Cancel captures that lease before
+  IPC/delay; only the owning scan call may clear it, so unrelated IPC cannot
+  erase it and a late fallback cannot retarget a newer process reference.
+- Scripted benign pending-future and subprocess regressions, mandatory verifier
+  step, exact 268-step validation, source contract 669, and audit/dependency/
+  checkpoint documentation. No checkpoint-2239 test has run and no passing
+  result is claimed during the required scripting-first phase.
+- The user-runtime cancellation token remains shared rather than authenticated
+  to a cross-instance job ID. No live malware, EICAR file, Defender change,
+  install, service/driver start, dependency, release/publication, candidate
+  execution, or protected-vault mutation is involved.
+- After the complete scripting batch, focused cancellation ownership passed
+  `6/6`, adjacent cancellation/UI filters passed `16/16`, and the relevant UI
+  set passed `59/59`. The corrected full Flutter suite passes `845/845`, source
+  contracts pass `669/669`, and analyzer, formatter, diff, dual-host parser,
+  exact lockfile, and protected-vault checks pass. Definitive and hosted
+  evidence remain pending.
+- The explicit-tool, no-skip, no-Defender definitive verifier passes exact
+  `268/268`, zero failed/skipped, from `2026-08-26T04:19:27.6082751Z` through
+  `2026-08-26T04:27:19.1498007Z` in `471.5s`. Both independent validators pass,
+  11 controlled report mutations on both hosts reject `22/22`, and report
+  SHA-256 is `4331723c28e51e889978f481cc86082d1ee6bd57ce8cbd941769d99959495e66`.
+  Hosted exact-head evidence, merge, synchronization, and destination proof
+  remain pending.
+- Exact implementation head `0b0aead1e725c67d10fcacd4d4e8e113ee60f3fc`
+  is PR `#91`. Avorax CI `32930494586` passes all five jobs; Desktop Packages
+  push `32930448777` and PR run `32930494592` pass contracts, Windows MSI/EXE,
+  Linux DEB/tar, both macOS DMGs, consolidation/checksums/SBOM, and upload.
+  Publication jobs `98065115237`/`98064888856` are skipped; no release exists.
+- Consolidated artifacts `9593421332`/`9593395490` are 131,753,478/131,752,211
+  bytes with SHA-256 `7528117206ee11f8456a72ed6d18a7838eac1102168bd6253763a7fcd48c8e36`/
+  `1ee8f3142e15d3d728ca7c4665af500321fd5a214853d1e1f7fd3e7ecc08e4dd`.
+  Both match GitHub metadata and pass bounded non-extracting exact
+  8-root/6-release/7-checksum/CycloneDX 1.6/569-component validation.
+  Evidence-head checks, merge, synchronization, and destination proof remain.

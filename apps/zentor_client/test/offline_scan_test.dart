@@ -9623,6 +9623,154 @@ void main() {
       expect(finalState.lastScanReport?.status, ScanStatus.clean);
     },
   );
+
+  test(
+    'scan cancellation ownership blocks replacement starts until exact cancel completes',
+    () async {
+      SharedPreferences.setMockInitialValues({});
+      final preferences = await SharedPreferences.getInstance();
+      final target = Directory.systemTemp.createTempSync(
+        'zentor-cancel-ownership-',
+      );
+      addTearDown(() => target.deleteSync(recursive: true));
+      final pendingScan = Completer<ScanReport>();
+      final pendingCancel = Completer<String?>();
+      final localCore = _FakeLocalCoreClient(
+        pendingScan: pendingScan,
+        pendingCancel: pendingCancel,
+      );
+      final timerFactory = _ManualScheduledTimerFactory();
+
+      final container = ProviderContainer(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(preferences),
+          localCoreClientProvider.overrideWithValue(localCore),
+          scanTargetServiceProvider.overrideWithValue(
+            _FakeScanTargetService([target.path]),
+          ),
+          scheduledQuickScanTimerFactoryProvider.overrideWithValue(
+            timerFactory.create,
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final controller = container.read(zentorControllerProvider.notifier);
+      await _waitForControllerStartup(container);
+      expect(
+        await controller.updateScheduledQuickScanSettings(
+          enabled: true,
+          intervalHours: 1,
+          confirmed: true,
+        ),
+        isTrue,
+      );
+
+      var scanCompleted = false;
+      final scanFuture = controller.runQuickScan().whenComplete(() {
+        scanCompleted = true;
+      });
+      await Future<void>.delayed(Duration.zero);
+      final cancelFuture = controller.cancelScan();
+      await Future<void>.delayed(Duration.zero);
+      pendingScan.complete(_scanReport(ScanStatus.clean, ScanKind.quick));
+      await Future<void>.delayed(Duration.zero);
+
+      expect(scanCompleted, isFalse);
+      expect(
+        container.read(zentorControllerProvider).scanCancelInFlight,
+        isTrue,
+      );
+      await controller.runFullScan();
+      timerFactory.timer?.fire();
+      await Future<void>.delayed(Duration.zero);
+
+      final blockedState = container.read(zentorControllerProvider);
+      expect(localCore.scanCalls, 1);
+      expect(
+        blockedState.events
+            .where((event) => event.type == 'scan_start_ignored')
+            .map((event) => event.details),
+        contains(contains('Scan cancellation is already in progress.')),
+      );
+      final scheduledSkip = blockedState.events.firstWhere(
+        (event) => event.type == 'scheduled_quick_scan_skipped',
+      );
+      expect(
+        scheduledSkip.details,
+        'Scan cancellation is already in progress.',
+      );
+
+      pendingCancel.complete(null);
+      await cancelFuture;
+      await scanFuture;
+
+      final finalState = container.read(zentorControllerProvider);
+      expect(finalState.scanCancelInFlight, isFalse);
+      expect(finalState.scanStartInFlight, isFalse);
+      expect(finalState.scanStatus, ScanStatus.cancelled);
+      expect(finalState.lastScanReport?.status, ScanStatus.cancelled);
+      expect(localCore.cancelCalls, 1);
+    },
+  );
+
+  test(
+    'scan cancellation ownership preserves completed report after delayed cancel failure',
+    () async {
+      SharedPreferences.setMockInitialValues({});
+      final preferences = await SharedPreferences.getInstance();
+      final target = Directory.systemTemp.createTempSync(
+        'zentor-cancel-ownership-failure-',
+      );
+      addTearDown(() => target.deleteSync(recursive: true));
+      final pendingScan = Completer<ScanReport>();
+      final pendingCancel = Completer<String?>();
+      final localCore = _FakeLocalCoreClient(
+        pendingScan: pendingScan,
+        pendingCancel: pendingCancel,
+      );
+
+      final container = ProviderContainer(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(preferences),
+          localCoreClientProvider.overrideWithValue(localCore),
+          scanTargetServiceProvider.overrideWithValue(
+            _FakeScanTargetService([target.path]),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final controller = container.read(zentorControllerProvider.notifier);
+      await _waitForControllerStartup(container);
+
+      var scanCompleted = false;
+      final scanFuture = controller.runQuickScan().whenComplete(() {
+        scanCompleted = true;
+      });
+      await Future<void>.delayed(Duration.zero);
+      final cancelFuture = controller.cancelScan();
+      await Future<void>.delayed(Duration.zero);
+      pendingScan.complete(_scanReport(ScanStatus.clean, ScanKind.quick));
+      await Future<void>.delayed(Duration.zero);
+      expect(scanCompleted, isFalse);
+
+      pendingCancel.completeError(StateError('delayed cancel fixture failure'));
+      await cancelFuture;
+      await scanFuture;
+
+      final state = container.read(zentorControllerProvider);
+      expect(localCore.cancelCalls, 1);
+      expect(state.scanCancelInFlight, isFalse);
+      expect(state.scanStartInFlight, isFalse);
+      expect(state.scanStatus, ScanStatus.clean);
+      expect(state.lastScanReport?.status, ScanStatus.clean);
+      expect(
+        state.events.map((event) => event.type),
+        contains('scan_cancel_failed'),
+      );
+    },
+  );
 }
 
 Future<void> _waitForControllerStartup(ProviderContainer container) async {
