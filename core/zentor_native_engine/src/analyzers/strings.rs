@@ -226,8 +226,13 @@ fn count_terms_with_cancellation(
 ) -> Result<u32> {
     let mut total = 0u32;
     for term in terms {
-        cancellation_checkpoint()?;
-        total = total.saturating_add(text.matches(term).count() as u32);
+        total = total.saturating_add(
+            crate::signatures::search::count_exact_non_overlapping_with_cancellation(
+                text.as_bytes(),
+                term.as_bytes(),
+                cancellation_checkpoint,
+            )?,
+        );
     }
     cancellation_checkpoint()?;
     Ok(total)
@@ -478,8 +483,11 @@ fn utf16le_text_view_with_cancellation(
         "<html",
         "<svg",
     ] {
-        cancellation_checkpoint()?;
-        if text.contains(marker) {
+        if crate::signatures::search::contains_exact_with_cancellation(
+            text.as_bytes(),
+            marker.as_bytes(),
+            cancellation_checkpoint,
+        )? {
             return Ok(Some(text));
         }
     }
@@ -797,6 +805,27 @@ mod tests {
             .to_string()
             .contains("benign static string normalization cancellation"));
         assert_eq!(checks, 3);
+    }
+
+    #[test]
+    fn static_term_search_interrupts_string_term_chunks_before_evidence() {
+        let text = "a".repeat(crate::signatures::search::SEARCH_CANCELLATION_CHUNK_CANDIDATES * 3);
+        let mut checks = 0usize;
+        let mut checkpoint = || {
+            checks += 1;
+            if checks == 2 {
+                anyhow::bail!("benign string term-search cancellation")
+            }
+            Ok(())
+        };
+
+        let error = count_terms_with_cancellation(&text, &["zz"], &mut checkpoint)
+            .expect_err("string term cancellation must abort before evidence");
+
+        assert!(error
+            .to_string()
+            .contains("benign string term-search cancellation"));
+        assert_eq!(checks, 2);
     }
 
     #[test]

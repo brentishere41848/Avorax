@@ -26,7 +26,7 @@ pub fn contains_exact_with_cancellation(
         let chunk_end = chunk_start
             .saturating_add(SEARCH_CANCELLATION_CHUNK_CANDIDATES)
             .min(candidate_count);
-        let search_end = chunk_end + needle.len() - 1;
+        let search_end = chunk_end + (needle.len() - 1);
         if bytes[chunk_start..search_end]
             .windows(needle.len())
             .any(|window| window == needle)
@@ -36,6 +36,47 @@ pub fn contains_exact_with_cancellation(
     }
     cancellation_checkpoint()?;
     Ok(false)
+}
+
+pub(crate) fn count_exact_non_overlapping_with_cancellation(
+    bytes: &[u8],
+    needle: &[u8],
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<u32> {
+    if needle.is_empty() {
+        bail!("term search needle is empty");
+    }
+    let Some(last_start) = bytes.len().checked_sub(needle.len()) else {
+        cancellation_checkpoint()?;
+        return Ok(0);
+    };
+    let candidate_count = last_start + 1;
+    let mut next_start = 0usize;
+    let mut total = 0u32;
+
+    while next_start < candidate_count {
+        cancellation_checkpoint()?;
+        let chunk_end = next_start
+            .saturating_add(SEARCH_CANCELLATION_CHUNK_CANDIDATES)
+            .min(candidate_count);
+        let search_end = chunk_end + needle.len() - 1;
+
+        while next_start < chunk_end {
+            let Some(relative_start) = bytes[next_start..search_end]
+                .windows(needle.len())
+                .position(|window| window == needle)
+            else {
+                next_start = chunk_end;
+                break;
+            };
+            let match_start = next_start + relative_start;
+            total = total.saturating_add(1);
+            next_start = match_start + needle.len();
+        }
+    }
+
+    cancellation_checkpoint()?;
+    Ok(total)
 }
 
 #[cfg(test)]
@@ -141,5 +182,56 @@ mod tests {
         assert!(error
             .to_string()
             .contains("benign provider callback failure"));
+    }
+
+    #[test]
+    fn static_term_search_interrupts_shared_candidate_chunks() {
+        let bytes = vec![b'a'; SEARCH_CANCELLATION_CHUNK_CANDIDATES * 3];
+        let mut checks = 0usize;
+        let mut checkpoint = || {
+            checks += 1;
+            if checks == 2 {
+                anyhow::bail!("benign static term-search cancellation")
+            }
+            Ok(())
+        };
+
+        let error = count_exact_non_overlapping_with_cancellation(&bytes, b"zz", &mut checkpoint)
+            .expect_err("the second term-search chunk must propagate cancellation");
+
+        assert!(error
+            .to_string()
+            .contains("benign static term-search cancellation"));
+        assert_eq!(checks, 2);
+    }
+
+    #[test]
+    fn static_term_search_preserves_cross_chunk_and_non_overlapping_counts() {
+        let boundary = SEARCH_CANCELLATION_CHUNK_CANDIDATES;
+        let mut bytes = vec![b'x'; boundary + 16];
+        bytes[boundary - 2..boundary + 2].copy_from_slice(b"safe");
+        bytes[boundary + 7..boundary + 11].copy_from_slice(b"safe");
+        let mut never_cancel = || Ok(());
+
+        assert_eq!(
+            count_exact_non_overlapping_with_cancellation(&bytes, b"safe", &mut never_cancel,)
+                .unwrap(),
+            2
+        );
+        assert_eq!(
+            count_exact_non_overlapping_with_cancellation(b"aaaaa", b"aa", &mut never_cancel,)
+                .unwrap(),
+            "aaaaa".matches("aa").count() as u32
+        );
+    }
+
+    #[test]
+    fn static_term_search_rejects_empty_needles() {
+        let mut never_cancel = || Ok(());
+        let error =
+            count_exact_non_overlapping_with_cancellation(b"ordinary", b"", &mut never_cancel)
+                .expect_err("empty term needles must fail visibly");
+
+        assert!(error.to_string().contains("term search needle is empty"));
     }
 }

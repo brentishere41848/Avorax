@@ -12569,3 +12569,70 @@ pending.
   payload/metadata/auth, one key, zero pending/temp, and zero reparse points.
   No release was published and no machine-wide component was installed or
   started. Checkpoint 2249 is closed; the complete antivirus goal remains active.
+
+## 2026-08-27 - Checkpoint 2249 Closure Documentation Finalized
+
+- Closure documentation commit
+  `a6e9c696b51987b677012f5fea1b14b31f804fc8` merges normally through PR `#108`
+  as `be7eecc30df459ed922d6c96550fd19823ee63c8`, with exact first parent
+  `ee8267b16b0c1b88bad86d98e9b81c6a329eadfb`.
+- PR exact-head Avorax CI `33040170513` and merged-main Avorax CI `33040582289`
+  pass all five jobs. No Desktop Packages or publish workflow ran. Guarded sync
+  changes exact four documents, zero additions/deletions, with independent `4/4`
+  target equality and no residue.
+- Clean destination Source `679/679`, focused ZIP `4/4`, formatting, and
+  definitive exact `278/278` pass. Embedded and independent PS5/PS7 validators
+  accept report SHA-256
+  `00c0202ac86a41d5491720d30f81d3019f5bde5db0cb28c5910d69cdc00f8e46`.
+  Locks and the protected-vault invariant remain exact. Checkpoint 2249 is fully
+  finalized; the whole antivirus goal remains active.
+
+## 2026-08-27 - Checkpoint 2250 Static Term-Search Scripting
+
+- Added one shared exact non-overlapping byte counter with callback checks every
+  at-most-64-KiB candidate-start chunk. String Indicator groups, script terms,
+  PE-import terms, script any-term probes, and UTF-16 marker searches now reuse
+  the shared cancellation-aware search boundary.
+- Six benign `static_term_search_` regressions cover interruption, fail-visible
+  empty needles, cross-chunk matches, non-overlapping compatibility, and no
+  analyzer evidence after callback failure.
+- Verifier step 279, strict exact-279 validator scope, and Source contract 680
+  are scripted. Audit, threat, blocker, dependency, status, and checkpoint
+  records are updated.
+- No checkpoint-2250 test has run during this scripting phase. Focused, full,
+  definitive `279/279`, hosted, integration, guarded-sync, and destination
+  evidence remain pending. No dependency, lockfile, malware, EICAR, Defender,
+  install, service/driver, release, publication, or protected-vault action occurs.
+
+## 2026-08-27 - Checkpoint 2250 Local Verification
+
+- Rustfmt and PS5/PS7 parser checks pass. Source contracts pass `680/680`.
+  Dedicated static term search passes `6/6`; adjacent cancellation,
+  normalization, and provider-search suites pass `15/15`, `5/5`, and `9/9`.
+- Full Native passes 615 active library tests plus compiler `6/6`, with 21
+  documented child fixtures ignored; Local Core passes `546/546`; Flutter
+  analyze and `847/847` pass. Locked release build and warnings-denied
+  Native/Local Clippy pass.
+- The first locked workspace run had one Defender host block, OS error 225, on
+  a benign Native child-process launch. Standalone and exact workspace-feature
+  focused reruns pass `1/1`; a complete locked workspace rerun passes. Defender
+  was not weakened and no exclusion was added.
+- Root/Native/Flutter lock hashes and the read-only protected vault invariant
+  remain exact. Definitive `279/279`, adversarial report checks, remaining
+  security gates, hosted, integration, guarded-sync, and destination evidence
+  remain pending; checkpoint 2250 and the whole goal remain active.
+
+## 2026-08-27 - Checkpoint 2250 Definitive Local Verification
+
+- Definitive verification passes exact `279/279`, zero failed or skipped, from
+  `2026-08-27T05:59:15.7292499Z` through
+  `2026-08-27T06:10:05.6522100Z` in `649.9s`.
+- Embedded and independently invoked PS5/PS7 validators accept report SHA-256
+  `b011b66f3c6af642898170b4192a94889eb8fe8d4c6b0e8419a93f7b40baee40`.
+  Both hosts reject copied reports missing verifier step 279 or the required
+  static-term verified scope with exit code `1`.
+- All dependency locks and the read-only protected vault invariant remain
+  exact. Hosted exact-head CI/packages, normal integration, guarded destination
+  synchronization, and destination reruns remain pending. No release,
+  publication, install, service/driver start, Defender change, or vault mutation
+  occurred; checkpoint 2250 and the complete goal remain active.

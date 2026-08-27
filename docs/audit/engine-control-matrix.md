@@ -5261,3 +5261,36 @@ rows are therefore **Verified**. Partial and disabled rows remain unchanged.
 This is cooperative user-mode post-start analysis, not installed-service,
 driver, kernel, production-accuracy, pre-execution, or Defender-replacement
 evidence. Checkpoint 2249 is closed; the complete antivirus goal remains active.
+
+## Checkpoint 2250 Static Term-Search Cancellation Matrix
+
+| Control / engine | Responsibility | Status | Evidence / blocker |
+|---|---|---|---|
+| Shared static term counter | Count exact non-overlapping byte terms with bounded callback latency | Verified locally | At-most-64-KiB candidate chunks; cross-chunk/count/empty-needle fixtures pass in focused `6/6` |
+| String Indicator term groups | Produce explainable static category counts | Verified locally | Shared counter and no-evidence cancellation fixture pass; verifier step 279 pending |
+| Script term groups and any-term probe | Count or detect bounded script indicators | Verified locally | Shared counter/exact search, Source `680/680`, and full Native pass |
+| PE-import term groups | Count suspicious imported API categories | Verified locally | Shared counter and cancellation-before-evidence fixture pass |
+| UTF-16 marker probes | Detect decoded executable/document markers | Verified locally | Shared exact search replaces whole-view `contains`; full Native compatibility passes |
+| Static verdict publication | Publish only after all fallible analysis completes | Verified locally | Callback errors propagate before `StaticAnalysis` and file verdict; full Native/Local pass |
+| Structured static traversal | Process bounded line, predicate, and decode work | Partial / technically limited | One separate bounded traversal or UTF-16 interval may complete before callback |
+| Windows publisher trust | Validate bounded Microsoft Authenticode identity/hash binding | Partial / technically limited | Existing isolated helper; an entered trust call is not hard-interrupted |
+| Reputation/correlated behavior providers | Require authenticated backend or trusted identity-bound telemetry | Disabled / blocked | Existing prerequisites remain unavailable |
+
+Checkpoint 2250 verifier step 279 and Source contract 680 are fully scripted.
+No checkpoint-2250 test has run during this scripting phase. Focused, full,
+definitive exact `279/279`, hosted, integration, guarded-sync, and destination
+search evidence remain pending, so implemented rows remain **Scripted /
+unverified**. Existing partial and disabled engine statuses are unchanged. The
+whole antivirus hardening goal remains active.
+
+Local focused/adjacent, Source `680/680`, full Native/Local/Flutter, locked
+workspace/release, strict Clippy, formatting, parser, lock, and vault checks now
+pass. The implementation rows are therefore **Verified locally**. Definitive
+exact `279/279`, hosted, integration, guarded-sync, and destination term-search
+evidence remain open; partial and disabled rows are unchanged.
+
+Definitive local verification now passes exact `279/279`, zero failed/skipped,
+in `649.9s`; independent PS5/PS7 validators accept the report and reject both
+required adversarial mutations. Implemented rows remain **Verified locally**.
+Hosted exact-head CI/packages, integration, guarded synchronization, and clean
+destination verification remain open; partial and disabled rows are unchanged.

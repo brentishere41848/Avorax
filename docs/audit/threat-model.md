@@ -3385,3 +3385,46 @@ Definitive exact `278/278` and independent PS5/PS7 validation now pass; both
 hosts reject missing-step and missing-scope mutations. The cooperative residual
 limit remains explicit. Hosted, integration, guarded-sync, and destination
 evidence remain pending.
+
+## Checkpoint 2250 Static Term-Search Cancellation Threat Delta
+
+**Threat:** after a scan-job cancellation is requested, one absent or late
+String Indicator, script, PE-import, or decoded UTF-16 marker term can keep a
+bounded Native static analyzer inside a complete-view `matches` or `contains`
+search. The callback was checked around each term, but not during that search.
+
+**Mitigation:** one shared exact byte-search implementation checks the exact
+callback before every at-most-64-KiB candidate-start chunk and after completion.
+Its counter preserves non-overlapping match semantics and cross-chunk matches;
+empty needles and arbitrary callback failures remain errors. All affected term
+groups and marker probes route through this boundary, and callback failure
+returns before analyzer evidence or file-verdict publication. Verifier step 279
+and Source contract 680 pin the source, six benign tests, and report scope.
+
+**Residual risk:** cancellation remains cooperative. One admitted 64-KiB
+term-search chunk, one UTF-16 decode interval, one separately bounded structured
+line/predicate traversal, an entered OS/filesystem call, bounded ML sorting, or
+one Windows trust call can finish first. Existing 64 MiB and archive-body bounds
+remain. This adds no installed cross-identity service, authenticated IPC,
+driver/kernel, production-accuracy, pre-execution, or Defender-replacement
+proof; reputation and correlation-dependent engines remain disabled.
+
+No checkpoint-2250 test has run during this scripting phase. Exact `279/279`,
+focused/full regression, hostile report mutation, hosted, integration,
+guarded-sync, and destination evidence remain pending. The mitigation is not yet
+promoted to verified, and the checkpoint and complete antivirus goal remain
+active.
+
+Focused and adjacent tests, Source `680/680`, full Native/Local/Flutter, locked
+workspace and release, strict lint, formatting, parser, lock, and read-only vault
+checks now pass. One initial workspace child launch was blocked by Defender with
+OS error 225; exact focused tests and the complete rerun pass without weakening
+Defender. The mitigation is verified locally, while its cooperative residual
+limit and definitive `279/279`, hosted, integration, sync, and destination
+requirements remain unchanged.
+
+Definitive local verification now passes exact `279/279`; independent PS5/PS7
+validation accepts the authentic report and rejects missing-step and
+missing-scope mutations. This closes the local evidence blocker but does not
+change the cooperative residual limit. Hosted CI/packages, integration,
+guarded synchronization, and destination reruns remain required.

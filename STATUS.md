@@ -7159,3 +7159,37 @@ and reject missing-step and missing-scope copies with exit `1`.
   `2fccc4b000f629f2eb7d62412a21cf684fb409e3b2ab34315b1842556d100c58`.
   All locks and the protected vault invariant remain exact. Checkpoint 2249 is
   closed; the complete antivirus hardening goal remains active.
+
+## Checkpoint 2250 Static Term-Search Cancellation
+
+- **Scripted / unverified:** a shared exact non-overlapping byte search now
+  checks cancellation every at-most-64-KiB candidate-start chunk. String
+  Indicator groups, script terms, PE-import terms, script any-term probes, and
+  UTF-16 marker probes use the shared boundary.
+- **Evidence scripted first:** six benign regressions, verifier step 279, exact
+  279-step report validation, and Source contract 680 pin cancellation,
+  cross-chunk matching, non-overlapping compatibility, empty-needle rejection,
+  fail-visible callback errors, and absence of old whole-view search forms.
+- **Honest limit:** cancellation is cooperative. One 64-KiB term-search chunk,
+  UTF-16 decode interval, structured traversal, entered system call, ML sort, or
+  trust call may finish before another callback. This does not add installed
+  service, authenticated cross-identity IPC, driver/kernel, production-accuracy,
+  pre-execution, or Defender-replacement evidence.
+- No checkpoint-2250 test has run during this scripting phase. Focused/full
+  local, definitive `279/279`, hosted, integration, guarded synchronization, and
+  destination evidence are pending; the checkpoint and whole goal remain active.
+
+### Checkpoint 2250 Local Evidence
+
+Focused term search `6/6`, adjacent `15/15`, `5/5`, and `9/9`, Source
+`680/680`, full Native 615 active plus compiler `6/6`, Local Core `546/546`,
+Flutter analyze and `847/847`, locked workspace, locked release build, strict
+Native/Local Clippy, formatting, and dual parser checks pass. The first locked
+workspace run encountered a Defender OS-error-225 child-launch block; exact
+focused reruns and a complete workspace rerun pass without any Defender change.
+Locks and the protected vault remain exact. Implementation is verified locally;
+definitive verification now passes exact `279/279` in `649.9s`. Embedded and
+independent PS5/PS7 validators accept report SHA-256
+`b011b66f3c6af642898170b4192a94889eb8fe8d4c6b0e8419a93f7b40baee40`
+and reject missing-step and missing-scope copies with exit `1`. Hosted,
+integration, guarded-sync, and destination closure are still pending.
