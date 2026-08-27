@@ -3345,3 +3345,43 @@ locked-build, Source `678/678`, and exact `277/277` local evidence now passes;
 dual validators also reject missing-step and missing-scope reports. Hosted,
 integration, guarded synchronization, and destination checks remain pending, so
 the residual risks and complete-goal status above are unchanged.
+
+## Checkpoint 2249 ZIP Entry-Name Normalization Cancellation Threat Delta
+
+**Threat:** a scan job is cancelled after ZIP metadata traversal begins, but one
+of four entry-name lossy UTF-8/lowercase conversions ignores the exact callback.
+If a central parser or local-name comparison uses `Option` alone, an arbitrary
+callback failure could also be swallowed as malformed metadata and degraded to
+limited, no-match, or clean-looking output.
+
+**Mitigation:** local sample collection, local static analysis,
+central-directory parsing, and local/central consistency now use the shared
+callback-aware normalizer. Structural parsing remains optional and fail-safe;
+the fallible name stage is a separate `Result`, so callback errors abort before
+sample collection, archive evidence, or entry-body trust. Four benign fixtures,
+verifier step 278, dual-host validation, and Source contract 679 pin this
+boundary.
+
+**Residual risk:** cancellation is cooperative. One admitted name of at most
+65,535 bytes can complete before the next callback. Entered OS/filesystem work,
+inflate reads, other bounded normalization/search/UTF-16 intervals, ML sorting,
+and Windows trust calls retain their documented intervals. This adds no
+installed cross-identity service, authenticated IPC, driver/kernel,
+production-accuracy, pre-execution, or Defender-replacement proof. Reputation
+and telemetry-correlation providers remain disabled.
+
+No checkpoint-2249 test has run during this scripting phase. Exact `278/278`,
+focused/full regression, hosted, integration, synchronization, and destination
+evidence remain pending, so the new mitigation is not yet promoted to verified.
+Checkpoint 2249 and the complete antivirus goal remain active.
+
+Local focused, adjacent, full Native/Local/Flutter, locked build, strict lint,
+Source `679/679`, packaging, and safety evidence now passes. Locks and the
+protected vault remain exact. This verifies the mitigation locally but does not
+remove its cooperative residual limit or satisfy definitive, hosted,
+integration, synchronization, and destination closure prerequisites.
+
+Definitive exact `278/278` and independent PS5/PS7 validation now pass; both
+hosts reject missing-step and missing-scope mutations. The cooperative residual
+limit remains explicit. Hosted, integration, guarded-sync, and destination
+evidence remain pending.

@@ -1017,6 +1017,11 @@ changes. Evidence-head/merged-main package proof and complete signed final-
 artifact license, notice, copyright, and binary-resolution review remain
 pending.
 
+Definitive exact `278/278` and dual-host validation pass without dependency or
+lockfile change. Hosted package lockfile-SBOM evidence remains pending; this
+checkpoint still adds no dependency, feature, package source, or license
+classification.
+
 Evidence-head package run `32735762385` and merged-main package run
 `32737920822` pass on `2f02714` and `e644d77`. Both require all six native
 artifacts, dependency/license evidence, checksums, a CycloneDX 1.6 lockfile
@@ -1707,6 +1712,16 @@ no checkpoint-2243 passing result is claimed during scripting. Final-binary
 license resolution, production signing, installed-service stress, and legal
 approval remain separate prerequisites.
 
+Local Source `679/679`, packaging source contracts, locked workspace tests,
+locked release build, and strict lint now pass. Root Cargo, Native Cargo, and
+Flutter lock SHA-256 values remain respectively
+`7c7c8aa006c2ac80eb89fa64d3b8ec09b32b26598b1a85bceb3c2af5a2d20e39`,
+`7f4393c81896600c4a5e84cad288a1a5360eccbc1c458b38f615082f66391383`, and
+`4de19695f9207273746341ca2221541b5b86d9f72af83727afca78541e177694`.
+No dependency, feature, package source, license classification, or lockfile has
+changed. Hosted lockfile SBOM/package evidence and final-binary resolution remain
+pending.
+
 Local verification confirms source contracts `673/673`, strict Native/Local
 lint, locked workspace release build, and unchanged root/Native/Flutter lock
 SHA-256 values. Flutter `847/847` and analyzer pass. No dependency, feature,
@@ -1777,3 +1792,24 @@ Flutter lock SHA-256 values remain respectively
 Hosted lockfile SBOM evidence remains pending. Final-binary SBOM resolution,
 production signing/notarization, legal approval, installed-service stress, and
 release approval remain separate prerequisites.
+
+## Checkpoint 2249 Dependency Scope
+
+ZIP entry-name normalization cancellation reuses Rust standard-library
+`Option`/`Result`, slices, strings, closures, and checked arithmetic plus the
+existing shared helper and already locked `anyhow` error boundary. It adds no
+dependency, feature, build script, downloaded or network source, package source,
+license obligation, or lockfile change.
+
+Tests use only ordinary benign in-memory ZIP byte fixtures and injected callback
+errors. They never download, unpack, retain, or execute candidate content and do
+not create a live EICAR file. Exact verifier step 278 and Source contract 679 are
+scripted; no checkpoint-2249 test has run during this scripting phase. Root
+Cargo, Native Cargo, and Flutter lock SHA-256 values are expected to remain
+respectively
+`7c7c8aa006c2ac80eb89fa64d3b8ec09b32b26598b1a85bceb3c2af5a2d20e39`,
+`7f4393c81896600c4a5e84cad288a1a5360eccbc1c458b38f615082f66391383`, and
+`4de19695f9207273746341ca2221541b5b86d9f72af83727afca78541e177694`;
+verification remains pending. Final-binary SBOM resolution, production
+signing/notarization, legal approval, installed-service stress, and release
+approval remain separate prerequisites.

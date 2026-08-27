@@ -12465,3 +12465,78 @@ pending.
   16,072 files, zero directories, 4,522,733 bytes, 5,357 each payload/metadata/
   auth, one key, zero pending/temp files, and zero reparse points. Checkpoint
   2248 is closed; the complete antivirus hardening goal remains active.
+
+### Checkpoint 2248 Closure-Document Finalization
+
+- Closure-document commit `2951aa63b6987445571f0a9bd5dab7b1940f489d`
+  passes PR `#106` CI `33033734816` and merges normally as
+  `5024093e76950151b89790ed6875373268a83022`. Merged-main CI `33034186873`
+  passes. Docs-only path policy starts no package or publication workflow.
+- Guarded synchronization changes exact four documentation paths, zero
+  additions or deletes, with `4/4` target-blob equality and zero residue.
+  Destination Source `678/678`, focused normalization `5/5`, and formatting
+  pass.
+- The first final verifier is uncredited: the broad Authenticode filter exits
+  `101` without a captured test name. The exact focused rerun passes 83 active
+  tests with 21 documented child fixtures ignored. A clean full rerun passes
+  exact `277/277`, zero failed/skipped, from
+  `2026-08-27T02:55:39.8239038Z` through
+  `2026-08-27T03:04:30.4287614Z` in `530.6s`; independent PS5/PS7 validators
+  accept SHA-256
+  `8441abf09ffa7405f83bbdc0afd8b3ee7f84c157639b8c054a6d1c16f79a8a31`.
+- All three locks and the protected vault invariant remain exact. Checkpoint
+  2248 is fully finalized; the complete antivirus goal remains active.
+
+## 2026-08-27 - Checkpoint 2249 ZIP Entry-Name Normalization Cancellation (Scripting)
+
+- Local sample collection, local static analysis, central-directory parsing,
+  and local/central name comparison now use the shared callback-aware lossy
+  UTF-8 and ASCII-lowercase helper.
+- Malformed ZIP structure remains `Ok(None)` or existing limited evidence;
+  cancellation and arbitrary callback errors remain `Err` and cannot become
+  malformed, no-match, limited, or clean fallback.
+- Four benign in-memory regressions, verifier step 278, dual-host strict
+  validator updates, Source contract 679, audit matrix, threat model, blockers,
+  dependency scope, and checkpoint report are scripted. No checkpoint-2249 test
+  has run during this scripting phase.
+- One header-bounded name of at most 65,535 bytes can still complete after its
+  callback admits the chunk. No malware, live EICAR file, Defender change,
+  protected-vault mutation, install, release, or publication is part of this
+  checkpoint. Checkpoint 2249 and the complete goal remain active.
+
+## 2026-08-27 - Checkpoint 2249 Local Verification
+
+- Formatting, diff whitespace, PS5/PS7 parsers, and Source `679/679` pass. The
+  first focused compile found a test-only `expect_err`/`Debug` constraint; the
+  fixture was repaired without changing production traits and the rerun passes
+  exact `4/4`.
+- ZIP `42/42`, cooperative archive `4/4`, static archive `4/4`, and adjacent
+  static text `5/5` pass. Native passes 609 active with 21 documented ignored
+  child fixtures plus compiler `6/6`; Local Core passes `546/546`; Flutter
+  analyze and `847/847` pass.
+- Locked workspace tests, strict Native/Local Clippy, formatting, and locked
+  release build pass. Packaging source tests pass 21 with three optional
+  Windows symlink-privilege skips. Branding, product-copy, no-malware-binaries,
+  false-positive, and exact 8-signature/6-rule bundled-pack gates pass.
+- Initial no-malware and bundled-pack commands used a non-absolute `python` name
+  and correctly stopped in path preflight. Corrected commands use the existing
+  absolute bundled Python path; no package or machine-wide component is
+  installed.
+- All three lock hashes and the protected vault invariant remain exact.
+  Definitive `278/278`, hosted, integration, package, synchronization, and
+  destination evidence remain pending; checkpoint 2249 and the complete goal
+  remain active.
+
+## 2026-08-27 - Checkpoint 2249 Definitive Local Verification
+
+- Definitive verification passes exact `278/278`, zero failed or skipped, from
+  `2026-08-27T03:25:34.3535933Z` through
+  `2026-08-27T03:33:43.7249408Z` in `489.3s`.
+- Embedded and independently invoked PS5/PS7 validators accept report SHA-256
+  `fd3e977d91b72cd217da10df0b43b11cae23b828e12390a12157102142e80a78`.
+  Both hosts reject a copied report missing the new step and one missing the ZIP
+  technical-scope phrase with exit `1`.
+- Hosted exact-head CI/packages, normal PR integration, merged-main evidence,
+  guarded destination synchronization, and destination reruns remain pending.
+  No release or publication occurred; checkpoint 2249 and the complete goal
+  remain active.

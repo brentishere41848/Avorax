@@ -7092,3 +7092,55 @@ complete antivirus hardening goal stays active.
   `c110ed4a994978550a536e9e984459296dba8a5bad59b93423792a64bc9e2e17`.
   Locks and the protected vault remain exact. Checkpoint 2248 is closed; the
   complete antivirus goal remains active.
+
+### Checkpoint 2248 Finalization Superseding Evidence
+
+Closure-doc commit `2951aa63b6987445571f0a9bd5dab7b1940f489d` passes PR `#106`
+CI `33033734816`, normal merge
+`5024093e76950151b89790ed6875373268a83022`, and merged-main CI
+`33034186873`; docs-only policy starts no package workflow. Guarded sync passes
+exact `4/4` with zero additions/deletes. After an uncredited transient broad
+Authenticode exit 101, focused Authenticode passes 83 active with 21 documented
+ignored child fixtures and a clean destination rerun passes exact `277/277` in
+`530.6s`. Independent PS5/PS7 validators accept report SHA-256
+`8441abf09ffa7405f83bbdc0afd8b3ee7f84c157639b8c054a6d1c16f79a8a31`.
+Locks and vault remain exact. Checkpoint 2248 is fully finalized.
+
+## Checkpoint 2249 ZIP Entry-Name Normalization Cancellation
+
+- **Scripted, not yet verified:** four ZIP entry-name normalization callsites
+  use the exact shared callback-aware helper; four benign fixtures, verifier
+  step 278, validator cardinality/scope, Source contract 679, and all audit docs
+  are scripted. No checkpoint-2249 test has run during this scripting phase.
+- **Fail-visible boundary:** malformed ZIP metadata retains its existing safe
+  fallback, while arbitrary callback failure remains an error before sample
+  collection, archive evidence, or central-directory body trust.
+- **Technical limit:** cancellation is cooperative; one admitted name of at
+  most 65,535 bytes can complete before the next callback. Installed service,
+  authenticated cross-identity IPC, driver/kernel, production-accuracy,
+  pre-execution, and Defender-replacement claims remain unavailable.
+- Reputation and correlation-dependent providers remain disabled with their
+  documented prerequisites. Exact `278/278`, hosted, merge, package,
+  synchronization, and destination evidence remain pending; checkpoint 2249
+  and the complete antivirus goal remain active.
+
+### Checkpoint 2249 Local Evidence
+
+Source `679/679`, focused `4/4`, ZIP `42/42`, adjacent archive/static
+cancellation, Native 609 active plus compiler `6/6` with 21 documented child
+fixtures ignored, Local Core `546/546`, Flutter analyze and `847/847`, locked
+workspace/release, strict affected Clippy, formatting, packaging source, and
+safety gates pass. One initial focused compile exposed and repaired a test-only
+`expect_err`/`Debug` constraint; two safety commands initially stopped in
+absolute-Python path preflight and passed with the existing bundled executable.
+No dependency was installed. Locks and the read-only protected vault remain
+exact. Status is **locally verified / integration pending**; definitive
+`278/278`, hosted CI/packages, merge, guarded sync, and destination evidence are
+still required.
+
+Definitive local verification now passes exact `278/278`, zero failed/skipped,
+in `489.3s`. Independent PS5/PS7 validators accept SHA-256
+`fd3e977d91b72cd217da10df0b43b11cae23b828e12390a12157102142e80a78`
+and both reject missing-step and missing-scope copies with exit `1`. Definitive
+local evidence is no longer a blocker; hosted, merge, package, guarded-sync, and
+destination closure evidence remain pending.
