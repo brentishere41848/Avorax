@@ -1,6 +1,8 @@
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
+use crate::signatures::text::ascii_lowercase_lossy_with_cancellation;
+
 const STRING_REFERENCE_CANCELLATION_INTERVAL: usize = 1024;
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -41,7 +43,7 @@ pub fn extract_indicators_with_cancellation(
     cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
 ) -> Result<StringIndicators> {
     cancellation_checkpoint()?;
-    let text = String::from_utf8_lossy(bytes).to_ascii_lowercase();
+    let text = ascii_lowercase_lossy_with_cancellation(bytes, cancellation_checkpoint)?;
     cancellation_checkpoint()?;
     let mut indicators =
         extract_indicators_from_text_with_cancellation(&text, cancellation_checkpoint)?;
@@ -773,6 +775,28 @@ mod tests {
             .to_string()
             .contains("benign string-indicator cancellation"));
         assert_eq!(checks, 7);
+    }
+
+    #[test]
+    fn static_text_normalization_interrupts_string_input_chunks_before_evidence() {
+        let bytes =
+            vec![b'A'; crate::signatures::text::TEXT_NORMALIZATION_CANCELLATION_CHUNK_BYTES * 3];
+        let mut checks = 0usize;
+        let mut checkpoint = || {
+            checks += 1;
+            if checks == 3 {
+                anyhow::bail!("benign static string normalization cancellation")
+            }
+            Ok(())
+        };
+
+        let error = extract_indicators_with_cancellation(&bytes, &mut checkpoint)
+            .expect_err("string normalization cancellation must abort before indicators");
+
+        assert!(error
+            .to_string()
+            .contains("benign static string normalization cancellation"));
+        assert_eq!(checks, 3);
     }
 
     #[test]

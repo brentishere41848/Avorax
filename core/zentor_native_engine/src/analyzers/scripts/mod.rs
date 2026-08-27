@@ -8,6 +8,8 @@ use serde::{Deserialize, Serialize};
 use super::FileType;
 use anyhow::{bail, Result};
 
+use crate::signatures::text::ascii_lowercase_lossy_with_cancellation;
+
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ScriptAnalysis {
     pub encoded_command: bool,
@@ -48,10 +50,7 @@ pub(super) fn lowercase_script_text_with_cancellation(
     bytes: &[u8],
     cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
 ) -> Result<String> {
-    cancellation_checkpoint()?;
-    let text = String::from_utf8_lossy(bytes).to_ascii_lowercase();
-    cancellation_checkpoint()?;
-    Ok(text)
+    ascii_lowercase_lossy_with_cancellation(bytes, cancellation_checkpoint)
 }
 
 pub(super) fn count_terms_with_cancellation(
@@ -128,6 +127,28 @@ mod tests {
 
         assert!(error.to_string().contains("benign script cancellation"));
         assert_eq!(checks, 5);
+    }
+
+    #[test]
+    fn static_text_normalization_interrupts_script_input_chunks_before_evidence() {
+        let bytes =
+            vec![b'A'; crate::signatures::text::TEXT_NORMALIZATION_CANCELLATION_CHUNK_BYTES * 3];
+        let mut checks = 0usize;
+        let mut checkpoint = || {
+            checks += 1;
+            if checks == 2 {
+                anyhow::bail!("benign static script normalization cancellation")
+            }
+            Ok(())
+        };
+
+        let error = lowercase_script_text_with_cancellation(&bytes, &mut checkpoint)
+            .expect_err("script normalization cancellation must abort before analysis");
+
+        assert!(error
+            .to_string()
+            .contains("benign static script normalization cancellation"));
+        assert_eq!(checks, 2);
     }
 
     #[test]

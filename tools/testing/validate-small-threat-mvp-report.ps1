@@ -1904,8 +1904,8 @@ if ($RequireFullSuite) {
   if ($skipFlutter -or $skipRust) {
     throw "-RequireFullSuite requires skip_flutter=false and skip_rust=false."
   }
-  if ($steps.Count -ne 276) {
-    throw "-RequireFullSuite expected exactly 276 verifier steps for this source revision, found $($steps.Count)."
+  if ($steps.Count -ne 277) {
+    throw "-RequireFullSuite expected exactly 277 verifier steps for this source revision, found $($steps.Count)."
   }
   if ($steps[0].name -ne "local-core safe simulator scan reporting") {
     throw "-RequireFullSuite first step mismatch: $($steps[0].name)"
@@ -1980,12 +1980,13 @@ if ($RequireFullSuite) {
   Assert-ReportContainsStep $steps "native-engine non-archive static analysis cancellation regressions"
   Assert-ReportContainsStep $steps "native-engine custom provider cancellation and pack-limit regressions"
   Assert-ReportContainsStep $steps "native-engine provider text-normalization cancellation regressions"
+  Assert-ReportContainsStep $steps "native-engine static text-normalization cancellation regressions"
   Assert-ReportScopeContains $verifiedScopeText "entropy 4096-byte traversal and PE section entropy use fallible checkpoints" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "string references stream counts without URL/path vectors while term groups, IP candidates, and UTF16 traversal checkpoint" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "PE section/import/debug and script term passes checkpoint" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "Arbitrary callback errors propagate; no partial StaticAnalysis/verdict is published" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "compatibility wrappers preserve behavior" "verification_scope.verified"
-  Assert-ReportScopeContains $technicalLimitText "one already-running UTF-8 or UTF-16 lossy/lowercase normalization or one term search can complete before the next checkpoint" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "one at-most-64-KiB static text-normalization chunk, one UTF-16 decode interval, or one term search can complete before the next checkpoint" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "existing 64 MiB sample cap" "verification_scope.technically_limited"
   Assert-ReportScopeContains $verifiedScopeText "Native signature, rule, and ML providers propagate the exact job-bound cancellation callback before publishing evidence" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "searches checkpoint every at-most-64-KiB candidate chunk" "verification_scope.verified"
@@ -2000,6 +2001,11 @@ if ($RequireFullSuite) {
   Assert-ReportScopeContains $technicalLimitText "one at-most-64-KiB provider text-normalization chunk" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "one at-most-64-KiB signature/rule search chunk" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "bounded ML contribution sort" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $verifiedScopeText "non-archive string-indicator, script, and PE-import text normalization uses the same lossy UTF-8 and ASCII case-fold helper" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "before every at-most-64-KiB input chunk and after the final chunk" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Bounded OOXML relationship and autorun bodies propagate that callback through normalization and indicator extraction" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "archive evidence fields mutate only after complete success" "verification_scope.verified"
+  Assert-ReportScopeContains $technicalLimitText "ZIP entry-name normalization remains header-bounded to at most 65,535 bytes" "verification_scope.technically_limited"
   Assert-ReportScopeContains $verifiedScopeText "bounded UTF-8-safe head/tail command-line sampling" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "command indicators remain post-start review evidence" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "high-risk process-start verdicts return recommendations rather than fake block success" "verification_scope.verified"

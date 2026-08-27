@@ -1,6 +1,8 @@
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
+use crate::signatures::text::ascii_lowercase_lossy_with_cancellation;
+
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ImportCategories {
     pub process_injection: u32,
@@ -25,7 +27,7 @@ pub fn categorize_imports_with_cancellation(
     cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
 ) -> Result<ImportCategories> {
     cancellation_checkpoint()?;
-    let text = String::from_utf8_lossy(bytes).to_ascii_lowercase();
+    let text = ascii_lowercase_lossy_with_cancellation(bytes, cancellation_checkpoint)?;
     cancellation_checkpoint()?;
     Ok(ImportCategories {
         process_injection: count_import_terms(
@@ -99,7 +101,7 @@ mod tests {
         let mut checks = 0usize;
         let mut checkpoint = || {
             checks += 1;
-            if checks == 3 {
+            if checks == 5 {
                 anyhow::bail!("benign PE import cancellation")
             }
             Ok(())
@@ -110,6 +112,28 @@ mod tests {
                 .expect_err("PE import cancellation must abort categorization");
 
         assert!(error.to_string().contains("benign PE import cancellation"));
+        assert_eq!(checks, 5);
+    }
+
+    #[test]
+    fn static_text_normalization_interrupts_pe_import_input_chunks_before_evidence() {
+        let bytes =
+            vec![b'A'; crate::signatures::text::TEXT_NORMALIZATION_CANCELLATION_CHUNK_BYTES * 3];
+        let mut checks = 0usize;
+        let mut checkpoint = || {
+            checks += 1;
+            if checks == 3 {
+                anyhow::bail!("benign PE import normalization cancellation")
+            }
+            Ok(())
+        };
+
+        let error = categorize_imports_with_cancellation(&bytes, &mut checkpoint)
+            .expect_err("PE import normalization cancellation must abort before categories");
+
+        assert!(error
+            .to_string()
+            .contains("benign PE import normalization cancellation"));
         assert_eq!(checks, 3);
     }
 }

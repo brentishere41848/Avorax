@@ -12369,3 +12369,71 @@ pending.
   No artifact was extracted or executed, no release was published, and no
   machine-wide component was installed. Checkpoint 2247 is closed; the complete
   antivirus hardening goal remains active.
+
+### Checkpoint 2247 Closure-Document Finalization
+
+- Closure-document commit `d4ec776fed288b76538c63267a64d4b1eff3fe17`
+  passes PR `#104` Avorax CI `33026575011`; the PR merges normally as
+  `01b0701422bd8f620be5df5ee9f56a0ea5d0754b` with exact parents
+  `d51c82346b60826b369412d9572680eba8c0304d` and
+  `d4ec776fed288b76538c63267a64d4b1eff3fe17`. Merged-main CI
+  `33027022675` passes all five jobs. Docs-only path policy starts no package or
+  publication workflow.
+- Guarded synchronization applies exactly four modified documentation blobs,
+  zero additions or deletes, with exact target-blob comparison and zero staging
+  residue. Final destination Source `677/677`, focused normalization `7/7`, and
+  formatting checks pass.
+- The first final definitive verifier is uncredited: its broad Authenticode
+  filter exited `101` without a test name or diagnostic in the captured report.
+  The exact focused rerun then passed 83 active tests with 21 documented child
+  fixtures ignored and zero failures. A complete clean rerun passed exact
+  `276/276`, zero failed/skipped, from `2026-08-27T00:39:50.7509959Z` through
+  `2026-08-27T00:48:19.24196Z` in `508.5s`; embedded and independent PS5/PS7
+  validators accept report SHA-256
+  `ff23775d20ad62821d8fbc7f6bdeaf4e58c2f5b59ade7d01958b0669a32363be`.
+- All four synchronized blobs, three dependency locks, and the protected vault
+  invariant remain exact. Checkpoint 2247 is fully finalized; the complete
+  antivirus goal remains active.
+
+## 2026-08-27 - Checkpoint 2248 Static Text Normalization Cancellation (Scripting)
+
+- Non-archive string, script, and PE-import normalization now delegates to the
+  shared lossy-UTF-8/ASCII-lowercase helper with an exact callback before every
+  at-most-64-KiB input chunk and after final input.
+- Bounded OOXML relationship and archive autorun inspection now propagates the
+  same callback through normalization/indicator extraction and mutates result
+  fields only after complete success. Arbitrary callback errors remain visible.
+- Five benign cancellation/error fixtures, exact verifier step 277, strict
+  report validation, Source contract 678, audit matrix, threat model, blockers,
+  dependency scope, and checkpoint report are scripted. No checkpoint-2248 test
+  has run during this scripting phase.
+- ZIP entry-name normalization remains one header-bounded interval, and
+  UTF-16/term/system work remains cooperative. Disabled engines remain disabled;
+  no malware, Defender change, vault mutation, installation, release, or
+  publication is part of this checkpoint.
+
+## 2026-08-27 - Checkpoint 2248 Local Verification
+
+- Rustfmt and both PS5/PS7 parsers pass. Optional `pytest` is unavailable in the
+  user and bundled Python runtimes, so two commands collected no tests and no
+  package was installed. The dependency-free runner then executed all 678
+  contracts, rejected one stale checkpoint-2245 technical-scope assertion, and
+  passed exact `678/678` after that assertion was updated to the new limit.
+- Dedicated static normalization `5/5`; adjacent non-archive `15/15`, archive
+  cancellation `4/4`, provider normalization `7/7`, string `39/39`, script
+  `5/5`, PE-import `2/2`, and ZIP `38/38` filters pass. Complete Native passes
+  `605` active plus compiler `6/6`, with 21 documented child fixtures ignored;
+  Local Core passes `546/546`; Flutter analyze and `847/847` pass.
+- Strict Native and Local Core Clippy, workspace formatting, locked workspace
+  tests, and the locked release workspace build pass. An initial definitive
+  command used a nonexistent conventional PowerShell 7 path and stopped during
+  preflight before tests/report output; the corrected bundled path was used.
+- Definitive verification passes exact `277/277`, zero failed/skipped, from
+  `2026-08-27T01:13:48.5351313Z` through
+  `2026-08-27T01:21:59.2036339Z` in `490.6s`. Embedded and independent PS5/PS7
+  validation passes. Both hosts reject missing-step and missing-scope evidence
+  with exit `1`; report SHA-256 is
+  `ed446a13be9e87f3c8cef0e04583e8f928f1744276825f40e61fa2304c8ba69a`.
+- All three lock hashes and the read-only protected vault remain exact. Hosted,
+  integration, package, guarded-sync, and destination evidence remain pending;
+  checkpoint 2248 and the complete antivirus goal remain active.

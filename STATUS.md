@@ -7041,3 +7041,42 @@ complete antivirus hardening goal stays active.
   `dd25744f021a6e7b90f0744271f7e7eaacab997b3f7d03d754e33d1217b137fc`.
   Locks and the protected vault remain exact. Checkpoint 2246 is fully finalized;
   checkpoint 2247 and the complete antivirus goal remain active.
+
+## Checkpoint 2247 Closure-Document Finalization
+
+- Closure commit `d4ec776fed288b76538c63267a64d4b1eff3fe17`, PR `#104`,
+  exact normal merge `01b0701422bd8f620be5df5ee9f56a0ea5d0754b`, PR CI
+  `33026575011`, and merged-main CI `33027022675` pass. Docs-only policy starts
+  no package/publication workflow. Guarded sync changes exactly four docs with
+  zero additions/deletes/residue.
+- One final verifier attempt is explicitly uncredited because a broad
+  Authenticode test process exited `101` without a captured test diagnostic.
+  The exact focused filter then passes 83 active tests plus 21 documented
+  ignored fixtures, and a clean full rerun passes `276/276` in `508.5s` with
+  dual independent validator acceptance and report SHA-256
+  `ff23775d20ad62821d8fbc7f6bdeaf4e58c2f5b59ade7d01958b0669a32363be`.
+
+## Checkpoint 2248 Static Text Normalization Cancellation
+
+- **Locally verified:** string-indicator, script, and PE-import text
+  normalization uses the existing callback-aware at-most-64-KiB helper.
+  OOXML relationship and autorun body inspection carries the same callback and
+  publishes archive counters only after complete success.
+- **Evidence contract:** five benign failure/cancellation fixtures, exact
+  verifier step 277, strict `277/277` validation, and Source contract 678 are
+  scripted. No checkpoint-2248 test has run during this scripting phase; after
+  that batch froze, focused, broad, strict, and definitive local checks passed.
+- **Local results:** Source `678/678`, focused `5/5`, Native `605` active plus
+  compiler `6/6` with 21 documented ignores, Local Core `546/546`, Flutter
+  `847/847`, locked workspace/release build, and exact definitive `277/277`
+  pass. Dual validators accept report SHA-256
+  `ed446a13be9e87f3c8cef0e04583e8f928f1744276825f40e61fa2304c8ba69a`
+  and reject missing-step/scope mutations.
+- **Limits:** ZIP entry-name normalization remains one at-most-65,535-byte
+  header-bounded interval; UTF-16 decoding, term searches, and entered system
+  operations remain cooperative. Ordinary sample input stays capped at 64 MiB.
+- This checkpoint adds no service, driver, kernel, production-accuracy,
+  pre-execution, or Defender-replacement claim. Disabled providers remain
+  disabled. Hosted exact-head, merge, package, guarded synchronization, and
+  destination evidence remain pending. Checkpoint 2248 and the complete
+  antivirus goal remain active.

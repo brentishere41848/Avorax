@@ -1755,3 +1755,25 @@ Native Cargo, and Flutter lock SHA-256 values remain respectively
 `4de19695f9207273746341ca2221541b5b86d9f72af83727afca78541e177694`.
 Final-binary SBOM resolution, production signing/notarization, legal approval,
 installed-service stress, and release approval remain separate.
+
+## Checkpoint 2248 Dependency Scope
+
+Static analyzer text-normalization cancellation reuses Rust standard-library
+string/UTF-8 facilities, the existing shared helper, and the already locked
+`anyhow` error boundary. It adds no dependency, feature, build script,
+downloaded or network source, package source, license obligation, or lockfile
+change.
+
+Tests use ordinary benign in-memory text/byte arrays and injected callback
+errors. They never download, unpack, retain, or execute candidate content and
+do not create a live EICAR file. Exact verifier step 277 and Source contract 678
+are scripted; no checkpoint-2248 test has run during this scripting phase.
+Local Source `678/678`, locked workspace tests, locked release build, and exact
+`277/277` definitive verification now pass. Root Cargo, Native Cargo, and
+Flutter lock SHA-256 values remain respectively
+`7c7c8aa006c2ac80eb89fa64d3b8ec09b32b26598b1a85bceb3c2af5a2d20e39`,
+`7f4393c81896600c4a5e84cad288a1a5360eccbc1c458b38f615082f66391383`, and
+`4de19695f9207273746341ca2221541b5b86d9f72af83727afca78541e177694`.
+Hosted lockfile SBOM evidence remains pending. Final-binary SBOM resolution,
+production signing/notarization, legal approval, installed-service stress, and
+release approval remain separate prerequisites.
