@@ -12540,3 +12540,32 @@ pending.
   guarded destination synchronization, and destination reruns remain pending.
   No release or publication occurred; checkpoint 2249 and the complete goal
   remain active.
+
+## 2026-08-27 - Checkpoint 2249 Hosted, Integration, And Destination Closure
+
+- Exact implementation head `4c5f73ad2251231c8bcb1f60035519552f0c35f5`
+  passes package push `33036903447`, PR `#107` CI `33037578015`, and PR
+  packages `33037578011`; publication is skipped. Untouched consolidated branch
+  artifact `9632555316` and PR artifact `9632919862` pass bounded non-extracting
+  exact 8-root/6-platform/7-checksum/CycloneDX-1.6/569-component validation.
+- PR `#107` merges normally as
+  `ee8267b16b0c1b88bad86d98e9b81c6a329eadfb` with exact parents
+  `5024093e76950151b89790ed6875373268a83022` and the implementation head.
+  Merged-main CI `33038527598` and packages `33038527578` pass, publication
+  remains skipped, and main artifact `9633201962` passes the same bounded
+  validation. No artifact is extracted or executed.
+- Guarded synchronization from `5024093` to `ee8267b` passes audit, apply, and
+  independent Git-filter-aware target comparison for exact `11/11` paths, with
+  one addition, zero deletes, mismatches, or staging residue. Destination Source
+  contracts pass `679/679`, dedicated ZIP name regressions pass `4/4`, and
+  workspace formatting passes.
+- Destination definitive verification passes exact `278/278`, zero failed or
+  skipped, from `2026-08-27T04:26:39.3378418Z` through
+  `2026-08-27T04:35:57.8009228Z` in `558.4s`. Embedded and independently invoked
+  PS5/PS7 validators accept report SHA-256
+  `2fccc4b000f629f2eb7d62412a21cf684fb409e3b2ab34315b1842556d100c58`.
+- All three lock hashes remain exact. The protected vault remains read-only and
+  exact at 16,072 files, zero directories, 4,522,733 bytes, 5,357 each
+  payload/metadata/auth, one key, zero pending/temp, and zero reparse points.
+  No release was published and no machine-wide component was installed or
+  started. Checkpoint 2249 is closed; the complete antivirus goal remains active.

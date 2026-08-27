@@ -2,11 +2,15 @@
 
 ## Status
 
-Implementation-first source, four benign regressions, verifier, validator,
-Source contract 679, and documentation scripting is complete. No checkpoint-2249
-test has run during this scripting phase. Execution starts only after this full
-batch is frozen. Checkpoint 2249 and the complete antivirus hardening goal remain
-active.
+Implementation, local/full verification, exact-head hosted evidence, normal PR
+integration, merged-main evidence, guarded destination synchronization, and
+destination verification are complete. Checkpoint 2249 is closed. The complete
+antivirus hardening goal remains active.
+
+Historical scripting-phase record: No checkpoint-2249 test has run during this
+scripting phase. The verification evidence below was collected only after the
+complete implementation, test, verifier, validator, contract, and documentation
+batch had been scripted.
 
 ## Prior Checkpoint Finalization
 
@@ -101,9 +105,40 @@ from `2026-08-27T03:25:34.3535933Z` through
 PS5 and PS7 validators accept report SHA-256
 `fd3e977d91b72cd217da10df0b43b11cae23b828e12390a12157102142e80a78`.
 Both hosts reject a missing new step and a missing ZIP technical-scope phrase
-with exit code `1`. Hosted CI/packages, normal integration, guarded
-synchronization, and destination evidence remain pending. Checkpoint 2249 and
-the complete antivirus goal remain active.
+with exit code `1`.
+
+## Hosted, Integration, And Destination Evidence
+
+- Exact implementation head `4c5f73ad2251231c8bcb1f60035519552f0c35f5`
+  passes package push `33036903447`, PR `#107` CI `33037578015`, and PR
+  packages `33037578011`. PR `#107` merges normally as
+  `ee8267b16b0c1b88bad86d98e9b81c6a329eadfb` with exact parents
+  `5024093e76950151b89790ed6875373268a83022` and the implementation head.
+- Merged-main CI `33038527598` and packages `33038527578` pass. Publication is
+  skipped in the branch, PR, and merged-main package workflows.
+- Consolidated artifacts `9632555316`, `9632919862`, and `9633201962` are
+  respectively 132,086,199, 132,095,619, and 132,091,298 bytes. Their SHA-256
+  values are
+  `617e7d2dd3752f3b8877dc144b4040c68a1e9ceef6a4b6753c510a574ea89bce`,
+  `c2c827fa8a3cbbfe4fa72b4c42200e4a9e058a2bb2a5886df848ed84b656c1ea`,
+  and `5c53a6e3d626adee6420731f4a05b00fbc6bb57d0e1a88707c5a957054c17aef`.
+  Each matches GitHub and passes bounded in-stream validation for exact eight
+  root entries, six platform files, seven checksum targets, and a CycloneDX 1.6
+  SBOM with 569 components. None is extracted or executed.
+- Guarded synchronization from `5024093` to `ee8267b` audits and applies exact
+  `11/11` paths: ten modifications, one addition, zero deletes. Independent
+  Git-filter-aware comparison passes `11/11`; no staging residue remains.
+- Destination focused ZIP name regressions pass `4/4`, Source passes `679/679`,
+  and workspace formatting passes. Definitive verification passes exact
+  `278/278`, zero failed/skipped, from `2026-08-27T04:26:39.3378418Z` through
+  `2026-08-27T04:35:57.8009228Z` in `558.4s`. Independent PS5 and PS7 validators
+  accept report SHA-256
+  `2fccc4b000f629f2eb7d62412a21cf684fb409e3b2ab34315b1842556d100c58`.
+- All three dependency locks remain exact. The protected vault remains read-only
+  and exact at 16,072 files, zero directories, 4,522,733 bytes, 5,357 each
+  payload/metadata/auth, one key, zero pending/temp, and zero reparse points.
+  No release, install, service/driver start, Defender change, or protected-vault
+  mutation occurred.
 
 ## Safety
 
@@ -129,16 +164,15 @@ blocking, or Defender replacement. Reputation and correlation-dependent
 providers remain disabled with their documented backend and trusted-telemetry
 prerequisites.
 
-## Required Verification Sequence
+## Completed Verification Sequence
 
-1. Freeze the complete checkpoint-2249 scripting batch before any test.
-2. Run formatting and parser checks, Source contract 679, the four focused ZIP
+1. The complete checkpoint-2249 scripting batch was frozen before any test.
+2. Formatting and parser checks, Source contract 679, the four focused ZIP
    name regressions, and adjacent ZIP/archive cancellation suites.
-3. Run complete Native, Local Core, Flutter, locked workspace/release, strict
+3. Complete Native, Local Core, Flutter, locked workspace/release, strict
    affected lint, dependency, safety, and clean-diff checks.
-4. Run the definitive verifier and require exact `278/278`, zero failures and
-   zero skips. Independently validate under PS5 and PS7 and prove missing-step
-   and missing-scope reports are rejected.
-5. Obtain exact-head hosted CI/package evidence with publication skipped, merge
-   through a normal PR, verify merged main, guarded-sync with zero deletes, and
-   repeat focused and definitive destination verification before closure.
+4. The definitive verifier passed exact `278/278`, zero failures and zero skips;
+   PS5 and PS7 accepted it and rejected missing-step/missing-scope mutations.
+5. Exact-head hosted CI/package evidence passed with publication skipped; normal
+   PR merge, merged-main verification, zero-delete guarded sync, and focused plus
+   definitive destination verification all passed before closure.
