@@ -1017,6 +1017,12 @@ changes. Evidence-head/merged-main package proof and complete signed final-
 artifact license, notice, copyright, and binary-resolution review remain
 pending.
 
+Evidence-head and merged-main package artifacts each retain exact CycloneDX 1.6
+inventory with 569 unique components and seven matching checksums. No lock,
+dependency, source, or license delta occurred. Checkpoint 2254 dependency
+evidence is closed; production notices, signing/notarization, legal approval,
+and release approval remain separate prerequisites.
+
 Implementation-head package consolidation produces the existing CycloneDX 1.6
 lockfile SBOM with exactly 569 components and 569 unique references. The
 untouched consolidated artifact passes all seven checksums without extraction,

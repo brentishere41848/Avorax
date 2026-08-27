@@ -606,3 +606,9 @@ missing-scope mutations are rejected. Exact implementation-head CI and desktop
 packages pass on Windows, Linux, and both macOS architectures with publication
 skipped; the untouched consolidated artifact passes bounded non-extracting
 `8/6/7/CycloneDX-1.6/569` validation.
+
+Checkpoint-2254 closure additionally passes evidence-head and merged-main CI/
+packages, corrected guarded `13/13` destination synchronization, destination
+PS5/PS7 parser `2/2`, formatting, Source `684/684`, EOCD `3/3`, and definitive
+destination `283/283` in `702.4s`. The destination report SHA-256 is
+`13e7ad30df65a3e85ae9747627b1687c91aa54930cb6e3403fa5dd5c2377f981`.

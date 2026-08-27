@@ -7281,6 +7281,17 @@ size/hash and passes bounded non-extracting `8/6/7/CycloneDX-1.6/569` review.
 Checkpoint 2254 is **Verified locally and at implementation head**; evidence-
 head, integration, merged-main, guarded-sync, and destination closure remain.
 
+### Checkpoint 2254 Closure
+
+Evidence head `ed9e9aa` and merge `84041c0` pass exact-head and merged-main CI/
+packages with publication skipped. Both consolidated artifacts match GitHub
+size/hash and pass bounded non-extracting `8/6/7/CycloneDX-1.6/569` review.
+Corrected guarded synchronization passes `13/13`, zero deletes and residue.
+Destination focused evidence passes, and the full report is exact `283/283` in
+`702.4s` under independent PS5/PS7 validation. Locks, product-process state,
+and the protected vault remain exact. Checkpoint 2254 is **Closed**; all
+product-level limitations remain explicit and the complete goal remains active.
+
 ## Checkpoint 2253 Failed-Step Reporting
 
 - **Scripted / unverified:** verifier report schema 2 now records a thrown

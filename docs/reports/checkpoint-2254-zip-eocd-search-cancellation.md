@@ -2,7 +2,7 @@
 
 Date: 2026-08-27
 
-Status: verified locally and at implementation head / integration pending
+Status: closed
 
 ## Objective
 
@@ -193,3 +193,73 @@ This closes implementation-head evidence only. Evidence-head CI/packages,
 normal PR integration, merged-main evidence, guarded destination synchronization,
 and destination verification remain required. The complete antivirus-hardening
 goal remains active.
+
+## Hosted Integration And Package Evidence
+
+Evidence commit `ed9e9aabe5f109bfa5863bf87311f53f1ac41d1d` passes
+PR `#117` exact-head CI run `33105265906` and Desktop Packages run
+`33105265820`. All CI jobs and package contracts, Windows, Linux, both macOS,
+and consolidation jobs pass; publication is skipped. Consolidated artifact
+`9660772598` is 132,065,928 bytes and its untouched download matches GitHub
+SHA-256 `675ff10b62dad1d558d48b9cd5e55e43823f0b9e00fc24a98425f3e04a041b9e`.
+Bounded non-extracting review passes exact 8-root/6-package/7-checksum and
+CycloneDX-1.6/569-unique-component validation.
+
+PR `#117` merged normally as
+`84041c03ae0eee5e9b588834c66b4b3efab38889`. Merged-main CI run
+`33106959423` and Desktop Packages run `33106959387` pass on that exact merge;
+publication is skipped. Main artifact `9661355729` is 132,084,304 bytes and
+its untouched download matches GitHub SHA-256
+`097ba28b3a3de307f37255327a9fc8e8f6dc0846c21d86cd0b4a303e9a0aa2b7`.
+The same bounded review passes exact 8/6/7/CycloneDX-1.6/569 inventory with
+zero unsafe, duplicate, encrypted, or link entries. Exact temporary archives
+and their empty owned directories were removed without extraction, execution,
+installation, release, or publication.
+
+## Guarded Destination Synchronization
+
+The exact delta from checkpoint-2253 closure
+`aa03828473c37a3e5f3dade84083300c5cf4a716` to merge
+`84041c03ae0eee5e9b588834c66b4b3efab38889` contains 12 modified, one added,
+and zero deleted paths. The first read-only preflight used raw hashes and
+correctly stopped before writes when CRLF destination bytes did not equal raw
+Git LF bytes; Git-filtered hashing then proved the content exactly matched the
+old blobs. The raw-byte result is uncredited.
+
+The first activation attempt is also uncredited: .NET rejected an empty backup
+path, and PowerShell's default method-error handling returned exit zero despite
+the visible error. A complete read-only recheck proved `12 old + 1 absent`, no
+activation, and zero staging residue. The corrected command set terminating
+error handling and used explicit same-directory verified backups.
+
+All 13 source files were staged, verified against the merge blobs, atomically
+activated, and independently reverified. The corrected result is `13/13`,
+7,482,242 staged bytes, zero deletes, zero rollback, and zero stage/backup
+residue. No unrelated destination file was changed.
+
+## Destination Verification
+
+Destination focused checks pass PS5/PS7 parser `2/2` each, formatting, Source
+`684/684`, and EOCD cancellation `3/3`. With bounded test-profile settings, the
+from-start destination verifier passes exact `283/283`, zero non-passing steps,
+in `702.4s` from `2026-08-27T19:32:45.9321427Z` through
+`2026-08-27T19:44:28.3798256Z`. Its 194,831-byte schema-v2 report is
+`.workflow/ultracode/avorax-hardening/results/checkpoint-2254-small-threat-mvp-verification-report-destination.json`
+with SHA-256
+`13e7ad30df65a3e85ae9747627b1687c91aa54930cb6e3403fa5dd5c2377f981`.
+It records `failure_kind=null`, 283 passed steps with JSON-null errors, exactly
+one EOCD step, the expected first step, and terminal `Dependency evidence gate`.
+Independent PS5 and PS7 full-suite validators pass.
+
+Final audit passes all `13/13` destination blobs, the three exact lock hashes,
+zero product processes, zero checkpoint/sync residue, and the protected-vault
+invariant: 16,072 files, zero directories, 4,522,733 bytes, 5,357 each
+`.avoraxq`/`.json`/`.auth`, one metadata key, and zero pending/temp/reparse
+entries. `.verification` was never staged or deleted.
+
+Checkpoint 2254 is closed through local, hostile, hosted, merged-main,
+synchronized, and destination evidence. Cooperative cancellation is not a
+deadline or preemptive stop. Installed cross-identity service/IPC, production
+calibration/signing, signed-driver/kernel mediation, pre-execution blocking,
+and Defender replacement remain technically limited, blocked, or unclaimed.
+The complete antivirus-hardening goal remains active.
