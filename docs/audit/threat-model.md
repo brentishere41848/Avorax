@@ -3540,3 +3540,54 @@ entered OS/filesystem, archive, ML, or trust operation preemptible; turn the
 64-MiB input cap into a deadline; prove production detection calibration; add
 installed cross-identity authentication, kernel mediation, or pre-execution
 blocking; or establish Defender replacement. Those residual risks remain.
+
+## Checkpoint 2253 Failed-Step Reporting Threat Delta
+
+**Threat:** a verifier command can fail after prior checks pass, while the JSON
+report omits the exact failing command because the thrown call never returns an
+object to the caller's result list. The top-level failure remains visible, but
+automation and reviewers lose structured attribution and duration.
+
+**Mitigation:** `Invoke-Step` prepares one bounded failed result before
+rethrowing. Schema v2 distinguishes terminal step failures from orchestration
+failures. The validator requires passed-step `error=null`, one terminal failed
+step with a non-empty exact top-level-matching error for `failure_kind=step`,
+and no failed step for `failure_kind=orchestration`. A nested benign first-step
+failure and three report-only adversarial mutations run under both PS5 and PS7
+as mandatory verifier step 282.
+
+**Residual risk:** the report is local evidence, not an authenticated remote
+attestation. Same-user or privileged code that can rewrite repository evidence
+remains in the host trust boundary. A process termination, power loss, or disk
+failure can prevent final report serialization despite atomic replacement. The
+change does not alter antivirus detection, installed service identity, IPC,
+driver/kernel enforcement, production accuracy, pre-execution behavior, or
+Defender integration.
+
+No checkpoint-2253 test has run during this scripting phase. Focused, full,
+definitive exact `282/282`, hosted, integration, guarded-sync, and destination
+evidence remain pending; the mitigation is not yet promoted to verified.
+
+Focused execution now verifies the local schema boundary: PS5/PS7 parsing,
+Source `683/683`, one authentic terminal failure, dual-host acceptance, and six
+adversarial rejections pass. This does not change the residual host-evidence or
+product protection limits. Full, definitive, hosted, integration, sync, and
+destination proof remain pending.
+
+Broad local regression now passes complete Native and Local Core, locked
+all-features workspace, standalone Native locked/offline, locked release,
+strict Native/Local/Guard lint, Flutter analyze and `847/847`, Dart `14/14`, and
+formatting. This strengthens local regression confidence but does not turn a
+repository JSON report into remote attestation or change any product protection
+boundary. Definitive exact `282/282`, hosted, integration, synchronization, and
+destination evidence remain pending.
+
+Definitive local evidence now passes exact `282/282`, zero non-passing, in
+`768.6s`. Both independent validator hosts accept report SHA-256
+`3ad67ee7b7d6aed00b4aafece608a61b664aff1949dd67c2a0b04ff1a592894d` and
+reject missing-step and missing-scope copies. Locks, process/temp residue, and
+the protected vault remain exact. This verifies local failed-step reporting;
+it does not authenticate repository evidence remotely or change installed
+service, IPC, production-calibration, kernel, pre-execution, or Defender-
+replacement boundaries. Hosted, integration, synchronization, and destination
+evidence remain pending.

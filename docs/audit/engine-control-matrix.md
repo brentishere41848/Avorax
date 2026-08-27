@@ -5406,3 +5406,46 @@ the installed/kernel row remains **Disabled / blocked**. The verifier's
 top-level failed-report path is fail-visible, but recording the thrown step in
 the `steps` array remains a separate harness-observability hardening item. The
 complete antivirus-hardening goal remains active.
+
+## Checkpoint 2253 Failed-Step Reporting Matrix
+
+| Control / engine | Responsibility | Status | Evidence / blocker |
+|---|---|---|---|
+| Small-threat MVP step runner | Preserve the exact invoked command, bounded error, and elapsed time before rethrow | Scripted / unverified | Schema-v2 producer and focused intentional first-step failure smoke are scripted; execution pending |
+| Verification report serializer | Distinguish invoked-step failure from orchestration failure without converting either to success | Scripted / unverified | `failure_kind=step|orchestration`; atomic repo-contained JSON path unchanged |
+| Small-threat MVP report validator | Reject missing, multiple, non-terminal, or errorless failed-step evidence and invalid passed-step errors | Scripted / unverified | PS5/PS7 acceptance plus six report-only mutation rejections scripted |
+| Full-suite verifier | Include the safe failed-step regression in every definitive run | Scripted / unverified | New mandatory step 282; exact `282/282` execution pending |
+| Detection and verdict engines | Continue existing scan, trust, quarantine, and verdict responsibilities unchanged | Verified / unchanged | No engine implementation or threshold changes in checkpoint 2253 |
+| Installed service, driver, and Defender replacement | Require installed authenticated IPC, production signing, kernel mediation, and host proof | Disabled / blocked or technically limited | This reporting checkpoint supplies no such proof and makes no protection expansion claim |
+
+No checkpoint-2253 test has run during this scripting phase. The implemented
+reporting rows remain unverified until focused, full, definitive, hosted,
+integrated, guarded-sync, and destination evidence passes. Source contract 683
+and exact verifier cardinality 282 are scripted. The complete antivirus-
+hardening goal remains active.
+
+Focused PS5/PS7 parsers, Source `683/683`, and the corrected failed-step smoke
+now pass. One authentic nested first-step failure is accepted by both hosts;
+both reject all three adversarial report forms, for six rejections total. The
+step runner, serializer, and validator rows are therefore **Verified locally
+(focused)**. Full-suite verifier step 282 remains **Scripted / unverified**
+pending broad regression and definitive exact `282/282`; hosted, integration,
+sync, and destination evidence also remain open.
+
+Broad local regression now passes Rustfmt, both complete Rust engines, the
+locked all-features workspace, standalone Native locked/offline check, locked
+release workspace, strict Native/Local/Guard Clippy, Flutter analyze and
+`847/847`, and Dart `14/14`. The full-suite verifier row remains **Scripted /
+unverified** until the from-start exact `282/282` report and independent
+validation pass. Other implemented reporting rows are **Verified locally**;
+product engine and installed/kernel limits remain unchanged.
+
+Definitive local verification promotes the full-suite verifier row to
+**Verified locally**: exact `282/282`, zero non-passing, in `768.6s`, with one
+new smoke and the dependency gate terminal. Independent PS5/PS7 validators
+accept SHA-256
+`3ad67ee7b7d6aed00b4aafece608a61b664aff1949dd67c2a0b04ff1a592894d` and
+reject both missing-step and missing-scope copies. Hosted, integration,
+guarded-sync, and destination evidence remain open. Detection/verdict behavior
+is unchanged; installed service, driver/kernel, and Defender-replacement rows
+remain partial, disabled, blocked, technically limited, or unclaimed.

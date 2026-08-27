@@ -549,6 +549,22 @@ tool-path fields, generated report paths, passed-step evidence, scope text, and
 failure semantics; it rejects misleading reports such as `passed` with no steps
 or `failed` with no error.
 
+Small-threat MVP reports use schema version 2. Every passed step has
+`error=null`. An invoked command failure is recorded once as the terminal
+`status=failed` step with the same bounded error as the top-level report and
+`failure_kind=step`; a failure outside `Invoke-Step` uses
+`failure_kind=orchestration` and has no failed step. Run the benign focused
+regression with checked local tool paths:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/testing/run-small-threat-mvp-failed-step-report-smoke.ps1 -RepoRoot . -PythonPath C:\path\to\python.exe -FlutterPath C:\path\to\flutter.bat -DartPath C:\path\to\dart.bat -PowerShell7Path C:\path\to\pwsh.exe
+```
+
+The smoke intentionally uses that Python executable as the nested verifier's
+Cargo host so the first command fails without creating or executing a candidate
+fixture. Both PowerShell hosts must accept the authentic failure report and
+reject missing, non-terminal, and errorless failed-step mutations.
+
 Some service/driver/update gates may require elevation or a signed installed driver. If they cannot run, document the blocker in `RUN_LOG.md` and do not claim the gated capability as verified.
 
 Current Windows limitation: `cargo test --manifest-path core/avorax_update_service/Cargo.toml` and `--bin avorax_update_service` can fail before running tests with Windows error 740 because the update-service test binaries inherit a require-administrator manifest. In a non-elevated shell, use `cargo check --manifest-path core/avorax_update_service/Cargo.toml --bin avorax_update_service` plus `uv run pytest tests/test_custom_driver_contract.py -q`, or rerun the Rust unit tests from an elevated developer shell. The static contract test also checks that update apply attempts rollback restoration and service restart on payload-copy failure; elevated integration tests are still needed for real service stop/start/apply paths.

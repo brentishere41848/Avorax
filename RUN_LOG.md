@@ -12842,3 +12842,73 @@ pending.
 - All 11 blobs, three locks, zero test-process residue, and the read-only vault
   invariant remain exact. `.verification` was untouched. Checkpoint 2252 is
   closed; the complete antivirus-hardening goal remains active.
+
+## 2026-08-27 - Checkpoint 2253 Failed-Step Reporting Scripting
+
+- Scripted schema-v2 failed-step recording in the small-threat MVP verifier,
+  including explicit pass/error fields, bounded terminal failure evidence,
+  exact rethrow preservation, and separate `step` versus `orchestration`
+  failure kinds.
+- Scripted the strict validator, safe nested first-step failure smoke, PS5/PS7
+  authentic acceptance, three mutations rejected by both hosts, definitive
+  verifier step 282, Source contract 683, and all checkpoint audit documents.
+- No checkpoint-2253 test has run during this scripting phase. No dependency,
+  lock, candidate fixture, EICAR, malware, Defender, installation,
+  service/driver, release, publication, `.verification`, or protected-vault
+  action occurred. Focused/full/definitive/hosted/integration/sync/destination
+  evidence remains pending; checkpoint 2253 and the complete goal remain active.
+
+## 2026-08-27 - Checkpoint 2253 Initial Focused Execution
+
+- PS5/PS7 parser checks pass for verifier, validator, and smoke. Source
+  contracts pass exact `683/683`; locks and the read-only protected vault are
+  exact.
+- The first smoke attempt fails before validator invocation because `$Host` is
+  a read-only automatic PowerShell variable. The test loop now uses
+  `$validatorHost`; the failed attempt is uncredited and focused reruns remain
+  required. No residue, product, Defender, service/driver, or vault mutation is
+  accepted or hidden.
+
+## 2026-08-27 - Checkpoint 2253 Focused Verification
+
+- Corrected PS5/PS7 parser reruns pass for all three scripts. Source contracts
+  rerun exact `683/683`.
+- The dedicated smoke passes: its authentic nested first-step failure records
+  one exact terminal failed step; PS5 and PS7 accept that report and each reject
+  missing-failure, non-terminal-failure, and missing-error mutations (`6/6`
+  adversarial rejections total).
+- Temp report residue is removed by exact-file and empty-directory cleanup.
+  Locks and the read-only protected vault remain exact. Full regression,
+  definitive `282/282`, hosted, integration, sync, and destination evidence
+  remain pending.
+
+## 2026-08-27 - Checkpoint 2253 Broad Local Regression
+
+- Rustfmt, Flutter analyze, Dart protocol `14/14`, Flutter `847/847`, Local
+  Core `546/546`, Native 632 active plus compiler `6/6` with 21 documented
+  helper fixtures ignored, and the locked all-features workspace pass.
+- Standalone Native locked/offline check, the locked release workspace build,
+  and strict Native/Local/Guard Clippy with `-D warnings` pass.
+- The same test-only Rust profile controls used after checkpoint 2252 bound
+  generated debug artifacts; no Defender setting, product dependency, release
+  profile, lockfile, fixture, service/driver, installation, or vault changed.
+- Definitive exact `282/282`, hosted exact-head evidence, normal integration,
+  guarded synchronization, and destination proof remain pending.
+
+## 2026-08-27 - Checkpoint 2253 Definitive Local Verification
+
+- The from-start PS5 verifier passes exact `282/282`, zero non-passing, in
+  `768.6s`. Schema is 2, `failure_kind` is null, all 282 step errors are JSON
+  null, the new smoke occurs once, and `Dependency evidence gate` is terminal.
+- Independent PS5/PS7 validators accept the 202,348-byte report with SHA-256
+  `3ad67ee7b7d6aed00b4aafece608a61b664aff1949dd67c2a0b04ff1a592894d`.
+  Both reject a missing-step 281-step copy and a separate missing-scope copy.
+- A direct `python -m pytest` attempt is uncredited because the checked Python
+  host has no optional pytest module. The supported dependency-free Source
+  runner passes exact `683/683`; no package was installed.
+- The first exact-file cleanup command was rejected before execution by command
+  policy. Validated absolute repo-result paths and non-reparse regular-file
+  checks then removed only the two adversarial copies; no temp entry remains.
+- Locks, zero product-process residue, and the read-only protected-vault exact
+  `16072/0/4522733` invariant pass. Hosted, integration, guarded-sync, and
+  destination closure remain pending; no release/publication occurred.
