@@ -1904,8 +1904,8 @@ if ($RequireFullSuite) {
   if ($skipFlutter -or $skipRust) {
     throw "-RequireFullSuite requires skip_flutter=false and skip_rust=false."
   }
-  if ($steps.Count -ne 277) {
-    throw "-RequireFullSuite expected exactly 277 verifier steps for this source revision, found $($steps.Count)."
+  if ($steps.Count -ne 278) {
+    throw "-RequireFullSuite expected exactly 278 verifier steps for this source revision, found $($steps.Count)."
   }
   if ($steps[0].name -ne "local-core safe simulator scan reporting") {
     throw "-RequireFullSuite first step mismatch: $($steps[0].name)"
@@ -1981,6 +1981,7 @@ if ($RequireFullSuite) {
   Assert-ReportContainsStep $steps "native-engine custom provider cancellation and pack-limit regressions"
   Assert-ReportContainsStep $steps "native-engine provider text-normalization cancellation regressions"
   Assert-ReportContainsStep $steps "native-engine static text-normalization cancellation regressions"
+  Assert-ReportContainsStep $steps "native-engine ZIP entry-name normalization cancellation regressions"
   Assert-ReportScopeContains $verifiedScopeText "entropy 4096-byte traversal and PE section entropy use fallible checkpoints" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "string references stream counts without URL/path vectors while term groups, IP candidates, and UTF16 traversal checkpoint" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "PE section/import/debug and script term passes checkpoint" "verification_scope.verified"
@@ -2005,7 +2006,9 @@ if ($RequireFullSuite) {
   Assert-ReportScopeContains $verifiedScopeText "before every at-most-64-KiB input chunk and after the final chunk" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "Bounded OOXML relationship and autorun bodies propagate that callback through normalization and indicator extraction" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "archive evidence fields mutate only after complete success" "verification_scope.verified"
-  Assert-ReportScopeContains $technicalLimitText "ZIP entry-name normalization remains header-bounded to at most 65,535 bytes" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $verifiedScopeText "ZIP local-header sampling/static analysis and central-directory entry/local-name consistency normalize header-bounded entry names through the exact callback-aware lossy UTF-8 and ASCII case-fold helper" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Arbitrary callback errors remain errors instead of malformed, limited, no-match, or clean fallback and abort before sample collection, archive evidence, or trusted entry-body use" "verification_scope.verified"
+  Assert-ReportScopeContains $technicalLimitText "ZIP entry-name normalization is cooperative, not preemptive: one header-bounded name of at most 65,535 bytes can complete before the next checkpoint" "verification_scope.technically_limited"
   Assert-ReportScopeContains $verifiedScopeText "bounded UTF-8-safe head/tail command-line sampling" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "command indicators remain post-start review evidence" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "high-risk process-start verdicts return recommendations rather than fake block success" "verification_scope.verified"

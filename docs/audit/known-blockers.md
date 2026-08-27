@@ -3298,3 +3298,35 @@ limited. The complete antivirus hardening goal remains active.
 - Reputation and correlation-dependent behavior engines remain disabled until
   their documented authenticated backend and trusted identity-bound telemetry
   prerequisites exist. Checkpoint 2248 and the complete goal remain active.
+
+## Checkpoint 2249 ZIP Entry-Name Normalization Cancellation
+
+- Four previously uncheckpointed ZIP name conversions are now scripted through
+  the shared callback-aware normalizer. Verifier step 278, Source contract 679,
+  four benign regressions, and all documentation are scripted. No
+  checkpoint-2249 test has run during this scripting phase.
+- Verification remains a blocker: focused and full local suites, exact
+  `278/278`, dual validators, exact-head hosted CI/packages, normal merge,
+  guarded synchronization, and destination reruns are still required.
+- Cancellation remains cooperative, not preemptive. One admitted ZIP header
+  name of at most 65,535 bytes, one entered system operation, archive inflate
+  read, other bounded normalization/search interval, ML sort, or Windows trust
+  call may complete before its next checkpoint.
+- Installed cross-identity service ownership, authenticated service IPC,
+  production signing/calibration, signed driver/kernel mediation, demonstrated
+  pre-execution blocking, and Defender replacement remain genuine blockers or
+  unsupported claims.
+- Reputation and correlation-dependent engines remain disabled until an
+  approved authenticated backend and trusted identity-bound telemetry exist.
+  Checkpoint 2249 and the complete antivirus goal remain active.
+
+Focused/full local, Source `679/679`, locked build, strict lint, safety, lock,
+and vault checks now pass. The local-verification portion of the second bullet is
+superseded; definitive exact `278/278`, adversarial report evidence, exact-head
+hosted CI/packages, normal integration, guarded synchronization, and destination
+reruns remain checkpoint-closure blockers.
+
+Definitive local `278/278`, dual-host validation, and missing-step/scope
+rejection now pass and supersede those local blockers. Exact-head hosted
+CI/packages, normal PR/merged-main integration, guarded synchronization, and
+destination focused/definitive reruns remain open.

@@ -148,7 +148,10 @@ fn bounded_local_header_entry_samples(
         if extra_end > bytes.len() {
             bail!("invalid zip entry extra length");
         }
-        let name = String::from_utf8_lossy(&bytes[name_start..name_end]).to_ascii_lowercase();
+        let name = ascii_lowercase_lossy_with_cancellation(
+            &bytes[name_start..name_end],
+            cancellation_checkpoint,
+        )?;
         let body_start = extra_end;
         let entry = ZipEntryView {
             name: &name,
@@ -237,8 +240,12 @@ fn bounded_central_directory_entry_samples(
             samples.limit_exceeded = true;
             break;
         }
-        let Some((entry, next_offset)) =
-            parse_central_directory_entry(bytes, offset, central_directory_end)
+        let Some((entry, next_offset)) = parse_central_directory_entry(
+            bytes,
+            offset,
+            central_directory_end,
+            cancellation_checkpoint,
+        )?
         else {
             samples.limit_exceeded = true;
             break;
@@ -252,7 +259,9 @@ fn bounded_central_directory_entry_samples(
             parsed_entries += 1;
             continue;
         }
-        let Some(body_start) = central_directory_entry_body_start(bytes, &entry) else {
+        let Some(body_start) =
+            central_directory_entry_body_start(bytes, &entry, cancellation_checkpoint)?
+        else {
             samples.limit_exceeded = true;
             offset = next_offset;
             parsed_entries += 1;
@@ -325,7 +334,10 @@ fn analyze_local_headers(
         if extra_end > bytes.len() {
             bail!("invalid zip entry extra length");
         }
-        let name = String::from_utf8_lossy(&bytes[name_start..name_end]).to_ascii_lowercase();
+        let name = ascii_lowercase_lossy_with_cancellation(
+            &bytes[name_start..name_end],
+            cancellation_checkpoint,
+        )?;
         inspect_zip_entry_name(&name, &mut result);
         let body_start = extra_end;
         let body_end = body_start.saturating_add(compressed_size);
@@ -411,8 +423,12 @@ fn analyze_central_directory(
             result.limit_exceeded = true;
             break;
         }
-        let Some((entry, next_offset)) =
-            parse_central_directory_entry(bytes, offset, central_directory_end)
+        let Some((entry, next_offset)) = parse_central_directory_entry(
+            bytes,
+            offset,
+            central_directory_end,
+            cancellation_checkpoint,
+        )?
         else {
             result.limit_exceeded = true;
             break;
@@ -456,7 +472,9 @@ fn inspect_central_directory_autorun_inf_entry(
         result.limit_exceeded = true;
         return Ok(());
     }
-    let Some(body_start) = central_directory_entry_body_start(bytes, entry) else {
+    let Some(body_start) =
+        central_directory_entry_body_start(bytes, entry, cancellation_checkpoint)?
+    else {
         result.limit_exceeded = true;
         return Ok(());
     };
@@ -476,31 +494,59 @@ fn parse_central_directory_entry(
     bytes: &[u8],
     offset: usize,
     central_directory_end: usize,
-) -> Option<(CentralDirectoryEntry, usize)> {
-    let fixed_end = offset.checked_add(46)?;
-    if fixed_end > central_directory_end
-        || fixed_end > bytes.len()
-        || bytes.get(offset..offset + 4)? != ZIP_CENTRAL_DIRECTORY_SIGNATURE
-    {
-        return None;
-    }
-    let general_purpose_flags = read_u16_le(bytes, offset + 8)?;
-    let compression_method = read_u16_le(bytes, offset + 10)?;
-    let compressed_size = read_u32_le(bytes, offset + 20)?;
-    let uncompressed_size = read_u32_le(bytes, offset + 24)?;
-    let name_len = read_u16_le(bytes, offset + 28)? as usize;
-    let extra_len = read_u16_le(bytes, offset + 30)? as usize;
-    let comment_len = read_u16_le(bytes, offset + 32)? as usize;
-    let local_header_offset = read_u32_le(bytes, offset + 42)?;
-    let name_start = offset + 46;
-    let name_end = name_start.checked_add(name_len)?;
-    let extra_end = name_end.checked_add(extra_len)?;
-    let comment_end = extra_end.checked_add(comment_len)?;
-    if name_len == 0 || comment_end > central_directory_end || comment_end > bytes.len() {
-        return None;
-    }
-    let name = String::from_utf8_lossy(&bytes[name_start..name_end]).to_ascii_lowercase();
-    Some((
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<Option<(CentralDirectoryEntry, usize)>> {
+    let Some((
+        general_purpose_flags,
+        compression_method,
+        compressed_size,
+        uncompressed_size,
+        local_header_offset,
+        name_start,
+        name_end,
+        comment_end,
+    )) = (|| {
+        let fixed_end = offset.checked_add(46)?;
+        if fixed_end > central_directory_end
+            || fixed_end > bytes.len()
+            || bytes.get(offset..offset + 4)? != ZIP_CENTRAL_DIRECTORY_SIGNATURE
+        {
+            return None;
+        }
+        let general_purpose_flags = read_u16_le(bytes, offset + 8)?;
+        let compression_method = read_u16_le(bytes, offset + 10)?;
+        let compressed_size = read_u32_le(bytes, offset + 20)?;
+        let uncompressed_size = read_u32_le(bytes, offset + 24)?;
+        let name_len = read_u16_le(bytes, offset + 28)? as usize;
+        let extra_len = read_u16_le(bytes, offset + 30)? as usize;
+        let comment_len = read_u16_le(bytes, offset + 32)? as usize;
+        let local_header_offset = read_u32_le(bytes, offset + 42)?;
+        let name_start = offset + 46;
+        let name_end = name_start.checked_add(name_len)?;
+        let extra_end = name_end.checked_add(extra_len)?;
+        let comment_end = extra_end.checked_add(comment_len)?;
+        if name_len == 0 || comment_end > central_directory_end || comment_end > bytes.len() {
+            return None;
+        }
+        Some((
+            general_purpose_flags,
+            compression_method,
+            compressed_size,
+            uncompressed_size,
+            local_header_offset,
+            name_start,
+            name_end,
+            comment_end,
+        ))
+    })()
+    else {
+        return Ok(None);
+    };
+    let name = ascii_lowercase_lossy_with_cancellation(
+        &bytes[name_start..name_end],
+        cancellation_checkpoint,
+    )?;
+    Ok(Some((
         CentralDirectoryEntry {
             name,
             general_purpose_flags,
@@ -510,7 +556,7 @@ fn parse_central_directory_entry(
             local_header_offset,
         },
         comment_end,
-    ))
+    )))
 }
 
 fn inspect_central_directory_ooxml_relationship(
@@ -529,7 +575,9 @@ fn inspect_central_directory_ooxml_relationship(
         result.limit_exceeded = true;
         return Ok(());
     }
-    let Some(body_start) = central_directory_entry_body_start(bytes, entry) else {
+    let Some(body_start) =
+        central_directory_entry_body_start(bytes, entry, cancellation_checkpoint)?
+    else {
         result.limit_exceeded = true;
         return Ok(());
     };
@@ -548,35 +596,45 @@ fn inspect_central_directory_ooxml_relationship(
 fn central_directory_entry_body_start(
     bytes: &[u8],
     entry: &CentralDirectoryEntry,
-) -> Option<usize> {
-    let offset = entry.local_header_offset as usize;
-    let fixed_end = offset.checked_add(30)?;
-    if fixed_end > bytes.len() || bytes.get(offset..offset + 4)? != ZIP_LOCAL_FILE_HEADER_SIGNATURE
-    {
-        return None;
-    }
-    let local_general_purpose_flags = read_u16_le(bytes, offset + 6)?;
-    let local_compression_method = read_u16_le(bytes, offset + 8)?;
-    let guarded_flags = ZIP_GENERAL_PURPOSE_ENCRYPTED | ZIP_GENERAL_PURPOSE_DATA_DESCRIPTOR;
-    if local_compression_method != entry.compression_method
-        || (local_general_purpose_flags & guarded_flags)
-            != (entry.general_purpose_flags & guarded_flags)
-    {
-        return None;
-    }
-    let name_len = read_u16_le(bytes, offset + 26)? as usize;
-    let extra_len = read_u16_le(bytes, offset + 28)? as usize;
-    let name_start = offset + 30;
-    let name_end = name_start.checked_add(name_len)?;
-    let extra_end = name_end.checked_add(extra_len)?;
-    if name_len == 0 || extra_end > bytes.len() {
-        return None;
-    }
-    let local_name = String::from_utf8_lossy(&bytes[name_start..name_end]).to_ascii_lowercase();
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<Option<usize>> {
+    let Some((name_start, name_end, extra_end)) = (|| {
+        let offset = entry.local_header_offset as usize;
+        let fixed_end = offset.checked_add(30)?;
+        if fixed_end > bytes.len()
+            || bytes.get(offset..offset + 4)? != ZIP_LOCAL_FILE_HEADER_SIGNATURE
+        {
+            return None;
+        }
+        let local_general_purpose_flags = read_u16_le(bytes, offset + 6)?;
+        let local_compression_method = read_u16_le(bytes, offset + 8)?;
+        let guarded_flags = ZIP_GENERAL_PURPOSE_ENCRYPTED | ZIP_GENERAL_PURPOSE_DATA_DESCRIPTOR;
+        if local_compression_method != entry.compression_method
+            || (local_general_purpose_flags & guarded_flags)
+                != (entry.general_purpose_flags & guarded_flags)
+        {
+            return None;
+        }
+        let name_len = read_u16_le(bytes, offset + 26)? as usize;
+        let extra_len = read_u16_le(bytes, offset + 28)? as usize;
+        let name_start = offset + 30;
+        let name_end = name_start.checked_add(name_len)?;
+        let extra_end = name_end.checked_add(extra_len)?;
+        if name_len == 0 || extra_end > bytes.len() {
+            return None;
+        }
+        Some((name_start, name_end, extra_end))
+    })() else {
+        return Ok(None);
+    };
+    let local_name = ascii_lowercase_lossy_with_cancellation(
+        &bytes[name_start..name_end],
+        cancellation_checkpoint,
+    )?;
     if local_name != entry.name {
-        return None;
+        return Ok(None);
     }
-    Some(extra_end)
+    Ok(Some(extra_end))
 }
 
 fn find_end_of_central_directory(bytes: &[u8]) -> Option<usize> {
@@ -1461,6 +1519,117 @@ mod tests {
 
         assert_eq!(checks, 3);
         assert!(error.to_string().contains("benign inflate cancellation"));
+    }
+
+    #[test]
+    fn zip_name_normalization_interrupts_local_sample_before_collection() {
+        let archive = zip_with_stored_entries(&[(
+            b"PAYLOAD/ordinary-benign.txt",
+            b"ordinary benign sample body",
+        )]);
+        let mut checks = 0usize;
+        let mut checkpoint = || {
+            checks += 1;
+            if checks == 2 {
+                anyhow::bail!("benign local sample name cancellation")
+            }
+            Ok(())
+        };
+
+        let error = bounded_local_header_entry_samples(&archive, &mut checkpoint)
+            .expect_err("local entry-name cancellation must abort before sample collection");
+
+        assert_eq!(checks, 2);
+        assert!(error
+            .to_string()
+            .contains("benign local sample name cancellation"));
+    }
+
+    #[test]
+    fn zip_name_normalization_interrupts_local_analysis_before_evidence() {
+        let archive = zip_with_stored_entries(&[(
+            b"PAYLOAD/ordinary-benign.txt",
+            b"ordinary benign analysis body",
+        )]);
+        let mut checks = 0usize;
+        let mut checkpoint = || {
+            checks += 1;
+            if checks == 2 {
+                anyhow::bail!("benign local analysis name cancellation")
+            }
+            Ok(())
+        };
+
+        let error = analyze_local_headers(&archive, &mut checkpoint)
+            .expect_err("local entry-name cancellation must abort before archive evidence");
+
+        assert_eq!(checks, 2);
+        assert!(error
+            .to_string()
+            .contains("benign local analysis name cancellation"));
+    }
+
+    #[test]
+    fn zip_name_normalization_interrupts_central_entry_before_parse() {
+        let archive = zip_with_central_directory_entry_flags(&[(
+            b"PAYLOAD/ordinary-benign.txt",
+            b"PAYLOAD/ordinary-benign.txt",
+            0,
+            ZIP_GENERAL_PURPOSE_DATA_DESCRIPTOR,
+            b"ordinary benign central body",
+        )]);
+        let eocd_offset = find_end_of_central_directory(&archive).unwrap();
+        let central_offset = read_u32_le(&archive, eocd_offset + 16).unwrap() as usize;
+        let central_size = read_u32_le(&archive, eocd_offset + 12).unwrap() as usize;
+        let central_end = central_offset.checked_add(central_size).unwrap();
+        let mut checks = 0usize;
+        let mut checkpoint = || {
+            checks += 1;
+            anyhow::bail!("benign central entry name cancellation")
+        };
+
+        let error =
+            parse_central_directory_entry(&archive, central_offset, central_end, &mut checkpoint)
+                .err()
+                .expect("central entry-name cancellation must remain fail-visible");
+
+        assert_eq!(checks, 1);
+        assert!(error
+            .to_string()
+            .contains("benign central entry name cancellation"));
+    }
+
+    #[test]
+    fn zip_name_normalization_interrupts_local_central_name_comparison() {
+        let archive = zip_with_central_directory_entry_flags(&[(
+            b"PAYLOAD/ordinary-benign.txt",
+            b"PAYLOAD/ordinary-benign.txt",
+            0,
+            ZIP_GENERAL_PURPOSE_DATA_DESCRIPTOR,
+            b"ordinary benign comparison body",
+        )]);
+        let eocd_offset = find_end_of_central_directory(&archive).unwrap();
+        let central_offset = read_u32_le(&archive, eocd_offset + 16).unwrap() as usize;
+        let central_size = read_u32_le(&archive, eocd_offset + 12).unwrap() as usize;
+        let central_end = central_offset.checked_add(central_size).unwrap();
+        let mut never_cancel = || Ok(());
+        let (entry, _) =
+            parse_central_directory_entry(&archive, central_offset, central_end, &mut never_cancel)
+                .unwrap()
+                .unwrap();
+        let mut checks = 0usize;
+        let mut checkpoint = || {
+            checks += 1;
+            anyhow::bail!("benign local-central name cancellation")
+        };
+
+        let error = central_directory_entry_body_start(&archive, &entry, &mut checkpoint)
+            .expect_err("local-central comparison cancellation must remain fail-visible");
+
+        assert_eq!(checks, 1);
+        assert!(error
+            .to_string()
+            .contains("benign local-central name cancellation"));
     }
 
     #[test]
