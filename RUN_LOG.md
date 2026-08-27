@@ -12794,3 +12794,18 @@ pending.
   untouched. Locks, zero process residue, and the read-only protected vault are
   exact. Hosted, integration, guarded-sync, and destination closure remain
   pending; checkpoint 2252 and the complete goal remain active.
+
+## 2026-08-27 - Checkpoint 2252 Hosted Branch Package Evidence
+
+- Exact implementation `09d84239c69288d1193e5ce8ca815c7023f83fed`
+  passes Desktop Packages push run `33069608149`: contracts, Linux, Windows,
+  both macOS architectures, and consolidation succeed; publication is skipped.
+- Consolidated artifact `9645762246` is exactly 132,039,189 bytes with GitHub
+  digest and downloaded SHA-256
+  `cd1bbb28059d1be2a64f181e399a8869e7598c8568aafafdd37ac96784d9a7ca`.
+- Bounded non-extracting review passes exact eight safe root entries, six
+  platform packages, seven checksum targets, and CycloneDX 1.6 with 569 unique
+  components. No duplicate/encrypted/link/unsafe entry exists; nothing is
+  installed or executed, and the exact temporary archive is removed.
+- PR exact-head CI/packages, merge, merged-main evidence, guarded sync, and
+  destination reruns remain pending. No release or publication occurred.

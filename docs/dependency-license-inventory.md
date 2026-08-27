@@ -1925,3 +1925,13 @@ lock hashes remain exact after the run. `CARGO_PROFILE_TEST_DEBUG=0` and
 Defender removed one debug test binary; they add no dependency, feature,
 package source, license, lockfile, release setting, Defender exclusion, or
 machine-wide installation. Hosted package/SBOM evidence remains pending.
+
+Hosted branch package evidence now passes on exact implementation `09d84239`
+in run `33069608149`, with publication skipped. Consolidated artifact
+`9645762246` has exact GitHub/download SHA-256
+`cd1bbb28059d1be2a64f181e399a8869e7598c8568aafafdd37ac96784d9a7ca`.
+Bounded non-extracting review verifies all seven checksums and a CycloneDX 1.6
+lockfile SBOM containing 569 unique component references. This is generated
+package evidence, not final-binary legal approval, production signing,
+notarization, installed-service stress, enterprise deployment approval, or a
+published release. PR and merged-main package/SBOM evidence remain pending.

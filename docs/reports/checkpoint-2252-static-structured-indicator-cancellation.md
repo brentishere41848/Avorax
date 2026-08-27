@@ -176,3 +176,26 @@ Post-verifier locks, zero residual test processes, and the read-only protected-
 vault invariant remain exact. Hosted exact-head CI/packages, normal PR
 integration, guarded destination synchronization, and destination verification
 remain required. No package was published and no release was created.
+
+## Hosted Branch Package Evidence
+
+Implementation commit `09d84239c69288d1193e5ce8ca815c7023f83fed` passes
+Desktop Packages push run `33069608149`. Package contracts, Linux x64,
+Windows x64, macOS arm64, macOS x64, and consolidation all succeed. The
+prerelease publication job is explicitly skipped; no release or package is
+published.
+
+GitHub reports consolidated artifact `9645762246`,
+`avorax-desktop-release-0.1.15`, as 132,039,189 bytes with digest
+`sha256:cd1bbb28059d1be2a64f181e399a8869e7598c8568aafafdd37ac96784d9a7ca`.
+A bounded non-extracting review downloads only that Actions artifact archive,
+confirms the same byte count and SHA-256, and inspects its ZIP central directory
+without installing or executing content. It contains exactly eight safe root
+entries: six platform packages, one checksum file, and one lockfile SBOM; there
+are no duplicate, encrypted, link, absolute, traversal, or backslash entries.
+All seven checksum targets verify. The SBOM is CycloneDX 1.6 with 569 components
+and 569 unique component references. The exact 132-MiB temporary archive and
+its empty owned directory were removed after review.
+
+Normal PR exact-head CI/packages, merge, merged-main CI/packages, guarded
+destination synchronization, and destination verification remain pending.

@@ -7249,6 +7249,18 @@ is **verified locally** but remains active pending hosted exact-head evidence,
 integration, guarded synchronization, and destination reruns. The complete
 antivirus-hardening goal remains active.
 
+### Checkpoint 2252 Hosted Branch Evidence
+
+Implementation `09d84239c69288d1193e5ce8ca815c7023f83fed` passes
+Desktop Packages run `33069608149`; all build/contract/consolidation jobs pass
+and prerelease publication is skipped. Consolidated artifact `9645762246` is
+132,039,189 bytes with exact digest
+`cd1bbb28059d1be2a64f181e399a8869e7598c8568aafafdd37ac96784d9a7ca`.
+Non-extracting review verifies eight safe root entries, six platform packages,
+seven checksums, and CycloneDX 1.6 with 569 unique components. Review temp data
+is removed. PR/merge/main, guarded sync, and destination evidence remain open;
+checkpoint 2252 and the complete goal remain active.
+
 ## Checkpoint 2252 Static Structured-Indicator Cancellation
 
 - **Scripted / unverified:** carrier markers, IPv4 candidates, URL
