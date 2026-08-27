@@ -4,10 +4,10 @@
 
 Implementation-first source, benign regression, verifier, validator, Source
 contract 678, and documentation scripting is complete. No checkpoint-2248 test
-has run during this scripting phase. Exact verifier step 277 is scripted but is
-now locally verified. Hosted, integration, guarded-synchronization, and
-destination evidence remain pending, so Checkpoint 2248 and the complete
-antivirus hardening goal remain active.
+has run during this scripting phase; execution began only after that batch was
+frozen. Local, hosted exact-head, normal integration, merged-main, guarded-sync,
+and destination evidence now pass. Checkpoint 2248 is closed, while the
+complete antivirus hardening goal remains active.
 
 ## Objective
 
@@ -76,8 +76,53 @@ semantics.
 - Root Cargo, Native Cargo, and Flutter lock hashes remain exact. Read-only vault
   inventory remains 16,072 files, zero directories, 4,522,733 bytes, 5,357 each
   payload/metadata/auth, one key, zero pending files, and zero reparse points.
-  Hosted exact-head, PR/merge, package, guarded synchronization, and destination
-  proof remain checkpoint-closure prerequisites.
+
+## Hosted And Integration Evidence
+
+- Exact implementation head `eb9b2f1f529cca328e0e45d2a6e358ff02cd24cc`
+  passes Desktop Packages push run `33030242047`, Avorax CI PR run
+  `33030430576`, and Desktop Packages PR run `33030430739`. All required jobs
+  pass and both publication jobs are explicitly skipped.
+- Untouched push artifact `9630413284` is 132,090,416 bytes with SHA-256
+  `826e997289b6bc3e97a97b266d9ac5675d8cf7e98db28cdff1002eeaf5dfb77f`;
+  untouched PR artifact `9630373063` is 132,089,765 bytes with SHA-256
+  `f76940dafd898568afde51e59822aa0fa6018bad467037c69dd5b8518b2a138e`.
+  Bounded in-stream validation without extraction or execution proves exact
+  eight-root-entry, six-platform-file, seven-checksum, CycloneDX 1.6, and
+  569-component inventories in both.
+- PR `#105` merges normally as
+  `43b4fe3441d20d9b6e39c69162ea384d96f16081`, with exact parents
+  `01b0701422bd8f620be5df5ee9f56a0ea5d0754b` and
+  `eb9b2f1f529cca328e0e45d2a6e358ff02cd24cc`. Merged-main Avorax CI
+  `33031710247` and Desktop Packages `33031710233` pass; publication is skipped.
+  Main artifact `9630807301` is 132,268,653 bytes with SHA-256
+  `84acca2a4860e4946dd1f7fbb6ac88b211ce7081293bdb572930c5210cc224dc`
+  and passes the same non-extracting 8/6/7/CycloneDX-1.6/569 validation.
+
+## Destination Evidence
+
+- Guarded synchronization from base
+  `01b0701422bd8f620be5df5ee9f56a0ea5d0754b` to merge
+  `43b4fe3441d20d9b6e39c69162ea384d96f16081` passes audit, apply, and an
+  independent Git-attribute-aware target comparison for exact `15/15` paths,
+  with one addition, zero deletes, zero mismatches, and zero staging residue.
+- In `C:\Users\Brent\Documents\Avorax-main`, Source contracts pass `678/678`,
+  dedicated static normalization passes `5/5`, and workspace formatting passes.
+  Definitive verification passes exact `277/277`, zero failed and zero skipped,
+  from `2026-08-27T02:20:01.494236Z` through
+  `2026-08-27T02:28:57.7621101Z` in `536.2s`. Embedded and independently
+  invoked Windows PowerShell 5.1 and PowerShell 7 validators accept report
+  SHA-256 `c110ed4a994978550a536e9e984459296dba8a5bad59b93423792a64bc9e2e17`.
+- All three dependency locks remain exact. The protected quarantine remains
+  read-only and exact at 16,072 files, zero directories, 4,522,733 bytes, 5,357
+  each payload/metadata/auth, one metadata key, zero pending/temp files, and
+  zero reparse points. No artifact was extracted or executed, no release was
+  published, and no machine-wide component was installed.
+
+Checkpoint 2248 is closed. Static text cancellation remains cooperative and
+bounded, ZIP entry-name normalization remains technically limited, and disabled
+correlation-dependent providers retain their blockers. The complete antivirus
+hardening goal remains active.
 
 ## Safety
 
