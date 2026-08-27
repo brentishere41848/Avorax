@@ -7008,14 +7008,24 @@ complete antivirus hardening goal stays active.
   with no failure or skip in `491.3s`; independent PS5/PS7 validators accept
   report SHA-256 `3fe607aac49c1d327eb1162b6352cc4be2d336077cbad73396f0948cc631dd7c`,
   while missing-step and missing-scope mutations are rejected.
+- **Hosted and merged:** exact evidence head
+  `2df54084e904a8b849cf94f6c3cb1e9ddd2f8296` passes package push
+  `33023772283`, PR CI `33023891024`, and PR packages `33023891013`.
+  PR `#103` merges normally as `d51c82346b60826b369412d9572680eba8c0304d`;
+  merged-main CI `33024847737` and packages `33024847755` pass with publication
+  skipped. Push, PR, and main artifacts pass bounded non-extracting exact
+  8/6/7/CycloneDX-1.6/569 validation.
+- **Destination verified:** guarded synchronization passes all `18/18` paths
+  with zero deletes, mismatches, or residue. Source `677/677`, dedicated
+  normalization `7/7`, formatting, and definitive `276/276` pass in `529.6s`;
+  independent PS5/PS7 validators accept report SHA-256
+  `e215048203573a72dab0b8b6a64304a3af44231356861629cdc83e21f38a2782`.
+  Locks and the protected vault remain exact. Checkpoint 2247 is closed.
 - **Limits:** one active normalization chunk, search chunk, bounded ML sort,
   entered OS call, separate static-analyzer normalization, or Windows trust work
   may finish before cancellation is observed. No installed service, driver,
   kernel, production-accuracy, pre-execution, or Defender-replacement claim is
-  added. Locks and the read-only protected vault remain exact. Hosted
-  exact-head CI/package evidence, integration, guarded synchronization, and
-  destination proof remain pending. Disabled providers remain disabled and the
-  whole goal stays active.
+  added. Disabled providers remain disabled and the whole goal stays active.
 
 ## Checkpoint 2246 Closure-Document Finalization
 

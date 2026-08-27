@@ -2,12 +2,12 @@
 
 ## Status
 
-Implementation-first scripting and local verification are complete. No
-checkpoint-2247 test has run during this scripting phase; execution began only
-after that batch was frozen. Focused, broad, and definitive local evidence now
-passes. Hosted, integration, synchronization, and destination checks remain
-open, so the checkpoint and complete antivirus goal stay active. Source
-contract 677 and exact verifier step 276 are part of the passing local evidence.
+Implementation-first scripting, local verification, exact-head hosted evidence,
+normal PR integration, merged-main evidence, guarded synchronization, and
+destination verification are complete. No checkpoint-2247 test has run during
+this scripting phase; execution began only after that batch was frozen.
+Checkpoint 2247 is closed, while the complete antivirus hardening goal remains active.
+Source contract 677 and exact verifier step 276 are part of the passing evidence.
 
 ## Objective
 
@@ -78,9 +78,53 @@ limits, and fail-visible verdict publication.
   4,522,733 bytes, 5,357 each payload/metadata/auth, one metadata key, zero
   pending files, and zero reparse points.
 
-Hosted exact-head CI/package evidence, normal PR integration, merged-main
-evidence, guarded zero-delete synchronization, and destination reruns remain
-required before checkpoint closure.
+## Hosted And Integration Evidence
+
+- Exact evidence head `2df54084e904a8b849cf94f6c3cb1e9ddd2f8296`
+  passes Desktop Packages push run `33023772283`, Avorax CI PR run
+  `33023891024`, and Desktop Packages PR run `33023891013`. Every required job
+  passes and publication is skipped.
+- Untouched push artifact `9627948738` is 131,986,685 bytes with SHA-256
+  `da049a47330b38a0eaa1c778ccb88d57107bac9db9160be61a6e24fafc8ead85`;
+  untouched PR artifact `9627940274` is 132,037,526 bytes with SHA-256
+  `e7d3f493377ca5544f7ed7c1349393b8b20737020f7cc6e58bba57aa3ff62a93`.
+  Bounded validation without extraction or execution finds the exact eight root
+  entries, six platform files, seven checksum targets, CycloneDX 1.6, and 569
+  components in both artifacts.
+- PR `#103` merges normally as
+  `d51c82346b60826b369412d9572680eba8c0304d`, with exact parents
+  `146b536e9064ffc3e318b81866665fd039622835` and
+  `2df54084e904a8b849cf94f6c3cb1e9ddd2f8296`. Merged-main Avorax CI
+  `33024847737` and Desktop Packages `33024847755` pass; publication is skipped.
+  Main artifact `9628247565` is 132,043,593 bytes with SHA-256
+  `b72597cf8c73452bdb25874c2a37177bb5d68b15be97788f55247f2725472495`
+  and passes the same non-extracting 8/6/7/CycloneDX-1.6/569 validation.
+- Guarded synchronization from base
+  `146b536e9064ffc3e318b81866665fd039622835` to the exact merge passes audit,
+  apply, and independent Git-attribute-aware comparison for all `18/18` paths,
+  with zero deletes, mismatches, or staging residue.
+
+## Destination Evidence
+
+- In `C:\Users\Brent\Documents\Avorax-main`, Source contracts pass `677/677`,
+  dedicated normalization regressions pass `7/7`, and workspace formatting
+  passes.
+- Definitive verification passes exact `276/276`, zero failed and zero skipped,
+  from `2026-08-27T00:08:19.0100665Z` through
+  `2026-08-27T00:17:08.6667314Z` in `529.6s`. Embedded and separately invoked
+  Windows PowerShell 5.1 and PowerShell 7 validators pass. Report SHA-256 is
+  `e215048203573a72dab0b8b6a64304a3af44231356861629cdc83e21f38a2782`.
+- Root, Native, and Flutter dependency locks remain exact. The protected
+  quarantine remains read-only and exact at 16,072 files, zero directories,
+  4,522,733 bytes, 5,357 each payload/metadata/auth, one metadata key, zero
+  pending/temp files, and zero reparse points. No artifact was extracted or
+  executed, no release was published, and no machine-wide component was
+  installed.
+
+Checkpoint 2247 is closed. Provider text cancellation remains cooperative and
+bounded, the separate static-analyzer normalization remains technically limited,
+and disabled correlation-dependent providers retain their blockers. The complete
+antivirus hardening goal remains active.
 
 ## Safety
 

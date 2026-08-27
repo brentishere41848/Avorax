@@ -12339,3 +12339,33 @@ pending.
   zero directories, 4,522,733 bytes, 5,357 each payload/metadata/auth, one key,
   zero pending, and zero reparse points. Checkpoint 2246 is fully finalized; the
   complete antivirus hardening goal and checkpoint 2247 remain active.
+
+## 2026-08-27 - Checkpoint 2247 Hosted, Integration, And Destination Closure
+
+- Exact evidence head `2df54084e904a8b849cf94f6c3cb1e9ddd2f8296` passes
+  package push `33023772283`, PR CI `33023891024`, and PR packages
+  `33023891013`; publication is skipped. Untouched push/PR consolidated
+  artifacts `9627948738` and `9627940274` pass bounded non-extracting exact
+  8-root/6-platform/7-checksum/CycloneDX-1.6/569-component validation.
+- PR `#103` merges normally as
+  `d51c82346b60826b369412d9572680eba8c0304d` with exact parents
+  `146b536e9064ffc3e318b81866665fd039622835` and
+  `2df54084e904a8b849cf94f6c3cb1e9ddd2f8296`. Merged-main CI
+  `33024847737` and packages `33024847755` pass, publication remains skipped,
+  and main artifact `9628247565` passes the same bounded validation.
+- Guarded synchronization from `146b536` to `d51c823` passes audit, apply, and
+  independent Git-filter-aware target comparison for exact `18/18` paths, with
+  zero deletes, mismatches, or staging residue. Destination Source contracts
+  pass `677/677`, dedicated normalization regressions pass `7/7`, and workspace
+  formatting passes.
+- Destination definitive verification passes exact `276/276`, zero failed or
+  skipped, from `2026-08-27T00:08:19.0100665Z` through
+  `2026-08-27T00:17:08.6667314Z` in `529.6s`. Embedded and independently
+  invoked PS5/PS7 validators pass; report SHA-256 is
+  `e215048203573a72dab0b8b6a64304a3af44231356861629cdc83e21f38a2782`.
+- All three lock hashes remain exact. The protected vault remains read-only and
+  exact at 16,072 files, zero directories, 4,522,733 bytes, 5,357 each
+  payload/metadata/auth, one key, zero pending/temp, and zero reparse points.
+  No artifact was extracted or executed, no release was published, and no
+  machine-wide component was installed. Checkpoint 2247 is closed; the complete
+  antivirus hardening goal remains active.
