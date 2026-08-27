@@ -5325,6 +5325,35 @@ destination Source `680/680`, focused `6/6`, formatting, and definitive
 partial and disabled rows are unchanged. Checkpoint 2250 is closed, while the
 complete antivirus-hardening goal remains active.
 
+## Checkpoint 2254 ZIP EOCD Search Cancellation Matrix
+
+| Control / engine | Responsibility | Status | Evidence / blocker |
+|---|---|---|---|
+| Native ZIP EOCD finder | Locate a valid trailing EOCD in the bounded comment window and preserve exact callback errors | Scripted / unverified | Initial plus at-most-4,096-candidate checkpoints scripted; focused tests pending |
+| Archive content sampling engine | Reach central-directory entries for bounded nested detection without extraction | Scripted / unverified | Callback failure must precede metadata and sample publication |
+| Static archive-analysis engine | Produce bounded ZIP structural/heuristic evidence | Scripted / unverified | Callback failure must precede metadata, evidence, fallback, and verdict publication |
+| ZIP compatibility and limits | Preserve valid comments, 65,557-byte search bound, entry caps, and parser behavior | Scripted / unverified | Benign long-comment preservation plus full Native regression pending |
+| Definitive verifier/report | Reject stale or scope-incomplete evidence | Scripted / unverified | Mandatory step 283, exact-cardinality validator, and Source contract 684 pending execution |
+| Installed service, driver/kernel, Defender replacement | Supply installed authenticated and pre-execution protection evidence | Partial / blocked / technically limited or unclaimed | Checkpoint 2254 does not alter these boundaries |
+
+No checkpoint-2254 test has run during this scripting phase. ZIP EOCD focused,
+full, exact `283/283`, hosted, integration, guarded-sync, and destination
+evidence remain required before any new row is promoted to verified.
+
+Focused execution now promotes the finder, both consumer, and compatibility
+rows to **Verified locally (focused)**: EOCD `3/3`, full ZIP `45/45`, and three
+adjacent cancellation filters `4/4` each pass. Source `684/684`, PS5/PS7 parser
+`2/2` each, formatting, and diff hygiene pass. The definitive-evidence row
+remains **Scripted / unverified** pending broad regression and exact `283/283`;
+hosted, integration, sync, and destination evidence remain open.
+
+Broad local regression now passes both locked workspace variants, Native
+`635/635` plus compiler `6/6`, Local Core `546/546`, Platform Security `9/9`,
+updater `203/203`, Flutter `847/847`, Dart `14/14`, release build, offline
+Native check, and strict Native/Local/Guard Clippy. The first four rows are
+**Verified locally**; the definitive-evidence row remains **Scripted /
+unverified** until exact `283/283` and hostile validator checks pass.
+
 ## Checkpoint 2251 Static Reference-Search Cancellation Matrix
 
 | Control / engine | Responsibility | Status | Evidence / blocker |

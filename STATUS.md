@@ -7234,6 +7234,42 @@ complete antivirus-hardening goal remains active, with installed service,
 driver/kernel, production-accuracy, pre-execution, and Defender-replacement
 claims still partial, blocked, technically limited, or unclaimed.
 
+## Checkpoint 2254 ZIP EOCD Search Cancellation
+
+- Scripted a shared fallible ZIP EOCD finder for central-directory sampling and
+  static analysis. It checks cancellation before the first offset and every
+  next at-most-4,096 backward candidates inside the unchanged 65,557-byte
+  window; callback errors remain fail-visible before samples or evidence.
+- Scripted three benign regressions for both cancellation paths and preserved
+  long-comment semantics, mandatory verifier step 283, exact validator scope,
+  Source contract 684, and complete control/threat/dependency documentation.
+- No checkpoint-2254 test has run during this scripting phase. The checkpoint
+  is **Scripted / unverified** pending focused, broad, definitive `283/283`,
+  hosted, integration, guarded-sync, and destination evidence. The complete
+  antivirus-hardening goal remains active.
+
+### Checkpoint 2254 Focused Evidence
+
+Corrected focused execution passes exact EOCD `3/3`, full ZIP `45/45`, three
+adjacent cancellation filters at `4/4` each, Source `684/684`, dual-host parser
+`2/2` each, formatting, and diff hygiene. One layout failure and two malformed
+outer-shell parser invocations remain visible and uncredited; corrected reruns
+pass. The implementation is **Verified locally (focused)**. Full regression,
+exact `283/283`, hosted, integration, guarded-sync, and destination closure are
+still required; checkpoint 2254 and the complete goal remain active.
+
+### Checkpoint 2254 Broad Local Evidence
+
+Both standard and all-features locked workspace suites pass. Native is
+`635/635` plus compiler `6/6`, Local Core `546/546`, Platform Security `9/9`,
+updater `203/203`, Flutter `847/847` with clean analysis, and Dart protocol
+`14/14`. Locked/offline Native check, locked release workspace build, and
+strict Native/Local/Guard Clippy also pass. All three lock hashes and the
+read-only protected-vault invariant remain exact, with zero product processes.
+Checkpoint 2254 is **Verified locally / definitive evidence pending**; exact
+`283/283`, hostile validation, hosted, merge, sync, and destination evidence
+remain required.
+
 ## Checkpoint 2253 Failed-Step Reporting
 
 - **Scripted / unverified:** verifier report schema 2 now records a thrown

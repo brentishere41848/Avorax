@@ -568,3 +568,34 @@ reject missing, non-terminal, and errorless failed-step mutations.
 Some service/driver/update gates may require elevation or a signed installed driver. If they cannot run, document the blocker in `RUN_LOG.md` and do not claim the gated capability as verified.
 
 Current Windows limitation: `cargo test --manifest-path core/avorax_update_service/Cargo.toml` and `--bin avorax_update_service` can fail before running tests with Windows error 740 because the update-service test binaries inherit a require-administrator manifest. In a non-elevated shell, use `cargo check --manifest-path core/avorax_update_service/Cargo.toml --bin avorax_update_service` plus `uv run pytest tests/test_custom_driver_contract.py -q`, or rerun the Rust unit tests from an elevated developer shell. The static contract test also checks that update apply attempts rollback restoration and service restart on payload-copy failure; elevated integration tests are still needed for real service stop/start/apply paths.
+
+## Checkpoint 2254 ZIP EOCD cancellation
+
+The focused benign runtime filter is:
+
+```powershell
+cargo test --manifest-path core/zentor_native_engine/Cargo.toml `
+  zip_eocd_cancellation_ -- --test-threads=1
+```
+
+It must pass exactly three tests: central-directory sample cancellation,
+central-directory static-analysis cancellation, and valid long-comment
+compatibility. Source contracts must then pass exact `684/684`. A complete
+definitive report for this revision must pass exact `283/283` and include
+`native-engine ZIP EOCD search cancellation regressions` plus the exact
+verified and technical-limit scope enforced by the independent PS5/PS7
+validator. No checkpoint-2254 command in this section has run during the
+scripting phase.
+
+Focused checkpoint-2254 results now pass exact EOCD `3/3`, complete ZIP
+`45/45`, adjacent cancellation `4/4 + 4/4 + 4/4`, Source `684/684`, and PS5/PS7
+parser `2/2` each. Formatting and diff hygiene pass after one layout-only
+repair. These results do not replace full Native/Local/Flutter/Dart regression
+or definitive exact `283/283` verification.
+
+Broad checkpoint-2254 regression now passes both locked workspace variants,
+Native `635/635` plus compiler `6/6`, Local Core `546/546`, Platform Security
+`9/9`, updater `203/203`, Flutter `847/847` with clean analysis, Dart protocol
+`14/14`, locked/offline Native check, locked release workspace build, and
+strict Native/Local/Guard Clippy. Exact `283/283` definitive verification and
+independent hostile report validation remain mandatory.

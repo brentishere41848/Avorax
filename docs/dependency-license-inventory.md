@@ -1815,6 +1815,24 @@ Hosted lockfile SBOM evidence remains pending. Final-binary SBOM resolution,
 production signing/notarization, legal approval, installed-service stress, and
 release approval remain separate prerequisites.
 
+## Checkpoint 2254 ZIP EOCD Cancellation Dependency Delta
+
+Checkpoint 2254 adds no dependency, feature, package source, downloaded
+artifact, runtime installation, or license obligation. It reuses Rust slices,
+checked/saturating arithmetic, the existing `anyhow::Result` callback boundary,
+and already locked Native Engine dependencies. There is no lockfile change.
+
+The checkpoint's verifier step 283 and Source contract 684 are scripted but not
+yet executed. Focused through destination verification remains required; final
+binary notices, production signing/notarization, release approval, installed
+service stress, and enterprise deployment approval remain separate work.
+
+Broad locked tests, locked/offline Native check, locked release build, and
+strict Clippy pass without lockfile mutation. Root Cargo, Native Cargo, and
+Flutter lock SHA-256 values remain exact at their checkpoint-2253 baselines.
+No new dependency or license review is introduced; hosted SBOM evidence remains
+pending.
+
 ## Checkpoint 2249 Dependency Scope
 
 ZIP entry-name normalization cancellation reuses Rust standard-library

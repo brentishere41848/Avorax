@@ -21,6 +21,7 @@ const MAX_CONTENT_SCAN_TOTAL_BYTES: usize = 4 * 1024 * 1024;
 const INFLATE_CANCELLATION_CHUNK_BYTES: usize = 64 * 1024;
 const MAX_CENTRAL_DIRECTORY_BYTES: usize = 256 * 1024;
 const MAX_EOCD_SEARCH_BYTES: usize = 22 + u16::MAX as usize;
+const EOCD_SEARCH_CANCELLATION_CHUNK_CANDIDATES: usize = 4 * 1024;
 const ZIP_COMPRESSION_STORED: u16 = 0;
 const ZIP_COMPRESSION_DEFLATE: u16 = 8;
 const ZIP_GENERAL_PURPOSE_ENCRYPTED: u16 = 0x0001;
@@ -182,7 +183,9 @@ fn bounded_central_directory_entry_samples(
     bytes: &[u8],
     cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
 ) -> Result<Option<BoundedZipEntrySamples>> {
-    let Some(eocd_offset) = find_end_of_central_directory(bytes) else {
+    let Some(eocd_offset) =
+        find_end_of_central_directory_with_cancellation(bytes, cancellation_checkpoint)?
+    else {
         return Ok(None);
     };
     let mut samples = BoundedZipEntrySamples::default();
@@ -366,7 +369,9 @@ fn analyze_central_directory(
     bytes: &[u8],
     cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
 ) -> Result<Option<ArchiveAnalysis>> {
-    let Some(eocd_offset) = find_end_of_central_directory(bytes) else {
+    let Some(eocd_offset) =
+        find_end_of_central_directory_with_cancellation(bytes, cancellation_checkpoint)?
+    else {
         return Ok(None);
     };
     let mut result = ArchiveAnalysis::default();
@@ -637,25 +642,39 @@ fn central_directory_entry_body_start(
     Ok(Some(extra_end))
 }
 
-fn find_end_of_central_directory(bytes: &[u8]) -> Option<usize> {
+fn find_end_of_central_directory_with_cancellation(
+    bytes: &[u8],
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<Option<usize>> {
     if bytes.len() < 22 {
-        return None;
+        return Ok(None);
     }
     let min_offset = bytes.len().saturating_sub(MAX_EOCD_SEARCH_BYTES);
     let mut offset = bytes.len() - 22;
+    let mut candidates_since_checkpoint = EOCD_SEARCH_CANCELLATION_CHUNK_CANDIDATES;
     loop {
-        if bytes.get(offset..offset + 4)? == ZIP_END_OF_CENTRAL_DIRECTORY_SIGNATURE {
-            let comment_len = read_u16_le(bytes, offset + 20)? as usize;
-            if offset.checked_add(22)?.checked_add(comment_len)? == bytes.len() {
-                return Some(offset);
+        if candidates_since_checkpoint >= EOCD_SEARCH_CANCELLATION_CHUNK_CANDIDATES {
+            cancellation_checkpoint()?;
+            candidates_since_checkpoint = 0;
+        }
+        if bytes.get(offset..offset + 4) == Some(ZIP_END_OF_CENTRAL_DIRECTORY_SIGNATURE) {
+            if let Some(comment_len) = read_u16_le(bytes, offset + 20).map(usize::from) {
+                if offset
+                    .checked_add(22)
+                    .and_then(|end| end.checked_add(comment_len))
+                    == Some(bytes.len())
+                {
+                    return Ok(Some(offset));
+                }
             }
         }
+        candidates_since_checkpoint += 1;
         if offset == min_offset {
             break;
         }
         offset -= 1;
     }
-    None
+    Ok(None)
 }
 
 fn read_u16_le(bytes: &[u8], offset: usize) -> Option<u16> {
@@ -1312,6 +1331,19 @@ mod tests {
         bytes
     }
 
+    fn with_eocd_comment(mut archive: Vec<u8>, comment_len: usize) -> Vec<u8> {
+        assert!(comment_len <= u16::MAX as usize);
+        let eocd_offset = archive.len().checked_sub(22).unwrap();
+        assert_eq!(
+            &archive[eocd_offset..eocd_offset + 4],
+            ZIP_END_OF_CENTRAL_DIRECTORY_SIGNATURE
+        );
+        archive[eocd_offset + 20..eocd_offset + 22]
+            .copy_from_slice(&(comment_len as u16).to_le_bytes());
+        archive.resize(archive.len() + comment_len, b'c');
+        archive
+    }
+
     fn deflate_raw(body: &[u8]) -> Vec<u8> {
         use flate2::write::DeflateEncoder;
         use flate2::Compression;
@@ -1522,6 +1554,94 @@ mod tests {
     }
 
     #[test]
+    fn zip_eocd_cancellation_interrupts_central_sample_search_chunks() {
+        let archive = with_eocd_comment(
+            zip_with_central_directory_entry_flags(&[(
+                b"payload/ordinary-benign.txt",
+                b"payload/ordinary-benign.txt",
+                0,
+                ZIP_GENERAL_PURPOSE_DATA_DESCRIPTOR,
+                b"ordinary benign sample body",
+            )]),
+            EOCD_SEARCH_CANCELLATION_CHUNK_CANDIDATES * 2 + 17,
+        );
+        let mut checks = 0usize;
+        let mut checkpoint = || {
+            checks += 1;
+            if checks == 3 {
+                anyhow::bail!("benign EOCD sample-search cancellation")
+            }
+            Ok(())
+        };
+
+        let error = bounded_zip_entry_samples_with_cancellation(&archive, &mut checkpoint)
+            .expect_err("EOCD sample search cancellation must abort collection");
+
+        assert_eq!(checks, 3);
+        assert!(error
+            .to_string()
+            .contains("benign EOCD sample-search cancellation"));
+    }
+
+    #[test]
+    fn zip_eocd_cancellation_interrupts_central_analysis_search_chunks() {
+        let archive = with_eocd_comment(
+            zip_with_central_directory_entry_flags(&[(
+                b"payload/ordinary-benign.txt",
+                b"payload/ordinary-benign.txt",
+                0,
+                ZIP_GENERAL_PURPOSE_DATA_DESCRIPTOR,
+                b"ordinary benign analysis body",
+            )]),
+            EOCD_SEARCH_CANCELLATION_CHUNK_CANDIDATES * 2 + 17,
+        );
+        let mut checks = 0usize;
+        let mut checkpoint = || {
+            checks += 1;
+            if checks == 4 {
+                anyhow::bail!("benign EOCD analysis-search cancellation")
+            }
+            Ok(())
+        };
+
+        let error = analyze_zip_with_cancellation(&archive, &mut checkpoint)
+            .expect_err("EOCD analysis search cancellation must abort analysis");
+
+        assert_eq!(checks, 4);
+        assert!(error
+            .to_string()
+            .contains("benign EOCD analysis-search cancellation"));
+    }
+
+    #[test]
+    fn zip_eocd_cancellation_preserves_commented_archive_semantics() {
+        let archive = with_eocd_comment(
+            zip_with_central_directory_entry_flags(&[(
+                b"payload/ordinary-benign.txt",
+                b"payload/ordinary-benign.txt",
+                0,
+                ZIP_GENERAL_PURPOSE_DATA_DESCRIPTOR,
+                b"ordinary benign preserved body",
+            )]),
+            EOCD_SEARCH_CANCELLATION_CHUNK_CANDIDATES + 17,
+        );
+        let mut checks = 0usize;
+        let mut checkpoint = || {
+            checks += 1;
+            Ok(())
+        };
+
+        let samples = bounded_zip_entry_samples_with_cancellation(&archive, &mut checkpoint)
+            .expect("commented archive sampling must remain valid");
+
+        assert!(checks >= 2);
+        assert!(!samples.limit_exceeded);
+        assert_eq!(samples.entries.len(), 1);
+        assert_eq!(samples.entries[0].name, "payload/ordinary-benign.txt");
+        assert_eq!(samples.entries[0].bytes, b"ordinary benign preserved body");
+    }
+
+    #[test]
     fn zip_name_normalization_interrupts_local_sample_before_collection() {
         let archive = zip_with_stored_entries(&[(
             b"PAYLOAD/ordinary-benign.txt",
@@ -1578,7 +1698,11 @@ mod tests {
             ZIP_GENERAL_PURPOSE_DATA_DESCRIPTOR,
             b"ordinary benign central body",
         )]);
-        let eocd_offset = find_end_of_central_directory(&archive).unwrap();
+        let mut eocd_never_cancel = || Ok(());
+        let eocd_offset =
+            find_end_of_central_directory_with_cancellation(&archive, &mut eocd_never_cancel)
+                .unwrap()
+                .unwrap();
         let central_offset = read_u32_le(&archive, eocd_offset + 16).unwrap() as usize;
         let central_size = read_u32_le(&archive, eocd_offset + 12).unwrap() as usize;
         let central_end = central_offset.checked_add(central_size).unwrap();
@@ -1608,7 +1732,11 @@ mod tests {
             ZIP_GENERAL_PURPOSE_DATA_DESCRIPTOR,
             b"ordinary benign comparison body",
         )]);
-        let eocd_offset = find_end_of_central_directory(&archive).unwrap();
+        let mut eocd_never_cancel = || Ok(());
+        let eocd_offset =
+            find_end_of_central_directory_with_cancellation(&archive, &mut eocd_never_cancel)
+                .unwrap()
+                .unwrap();
         let central_offset = read_u32_le(&archive, eocd_offset + 16).unwrap() as usize;
         let central_size = read_u32_le(&archive, eocd_offset + 12).unwrap() as usize;
         let central_end = central_offset.checked_add(central_size).unwrap();

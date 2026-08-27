@@ -3618,3 +3618,41 @@ serialization after process/power/disk failure, alter detection calibration,
 provide installed cross-identity authentication, add kernel mediation or
 pre-execution blocking, or establish Defender replacement. Those residual
 risks remain.
+
+## Checkpoint 2254 ZIP EOCD Search Cancellation Threat Delta
+
+**Threat:** an attacker-controlled ZIP comment can make each central-directory
+consumer traverse up to the bounded 65,557-byte EOCD search window without
+observing a pending scan cancellation. The work is bounded, but cancellation
+latency and repeated archive workloads remain unnecessarily coarse.
+
+**Mitigation:** both central-directory sampling and static archive analysis use
+one fallible EOCD finder. It invokes the job-bound callback before the first
+candidate and before every next block of at most 4,096 backward candidate
+offsets. Callback errors propagate unchanged before central metadata, sample,
+archive evidence, local-header fallback, or verdict publication. Valid long
+comments retain their existing semantics. Verifier step 283 and Source
+contract 684 bind the implementation and evidence claims.
+
+**Residual risk:** cancellation is cooperative, not preemptive; one 4,096-
+candidate block can complete after a successful callback. The search bound is
+not a deadline. This checkpoint does not change entered OS work, decompression
+read boundaries, installed service identity, cross-identity IPC, production
+accuracy, driver/kernel enforcement, pre-execution blocking, or Defender
+replacement.
+
+No checkpoint-2254 test has run during this scripting phase. The mitigation is
+**Scripted / unverified** until focused through destination evidence passes.
+
+Focused benign evidence now verifies both interruption paths and valid
+long-comment compatibility: exact EOCD `3/3`, full ZIP `45/45`, adjacent
+cancellation `4/4 + 4/4 + 4/4`, Source `684/684`, and dual-host parsing pass.
+This establishes local focused mitigation evidence only; cooperative latency,
+installed-service, kernel, pre-execution, calibration, and Defender-replacement
+residual risks remain unchanged. Broad and definitive step-283 evidence is open.
+
+Both full locked workspace variants and the adjacent Rust, Flutter, Dart,
+release, offline, and strict-lint gates now pass. The mitigation is therefore
+**Verified locally**. Definitive exact-cardinality, hostile report, hosted,
+integration, synchronization, and destination evidence remain open; the
+cooperative-latency and product-level residual risks are unchanged.
