@@ -3475,3 +3475,52 @@ reject both a missing-step 279-step copy and a separate missing-scope copy.
 Locks and the read-only vault remain exact. This promotes the mitigation to
 verified locally but does not change the cooperative residual risk or satisfy
 hosted, integration, guarded-sync, or destination closure evidence.
+
+## Checkpoint 2252 Static Structured-Indicator Cancellation
+
+**Threat:** after the exact marker/reference work is bounded, an adversarially
+long carrier sample, IPv4 candidate, query path, UNC host, autorun line/token,
+optical-image scan, or email line/field can still delay cancellation inside a
+whole-sample or whole-segment standard-library traversal.
+
+**Mitigation:** shared fallible helpers traverse delimiters, Unicode trimming,
+candidates, tokens, paths, hosts, carrier markers, optical markers, and email
+fields with the exact scan-job callback at every at-most-64-KiB byte or UTF-8-
+safe character interval. Existing CRLF, comment, suffix, exclusion, per-line
+count, and conservative classification semantics remain pinned. Arbitrary
+callback errors abort before `StringIndicators` or file-verdict publication.
+Verifier step 281, Source contract 682, and nine benign regressions pin the
+boundary.
+
+**Residual risk:** cancellation remains cooperative. One admitted structured
+chunk can finish before the next callback, as can one entered filesystem/OS
+operation, archive read, ML operation, trust call, or other separately bounded
+analyzer operation. The 64 MiB sample cap is not a deadline. This mitigation
+does not add installed authenticated IPC, production accuracy/calibration,
+driver/kernel mediation, pre-execution blocking, or Defender replacement.
+
+No checkpoint-2252 test has run during this scripting phase. Exact `281/281`,
+focused/full regression, hostile report mutation, hosted, integration,
+guarded-sync, and destination evidence remain pending. The mitigation is not
+yet promoted to verified; checkpoint 2252 and the complete goal remain active.
+
+Focused and full local regression now passes: structured cancellation `9/9`,
+all String Indicator `54/54`, adjacent reference `8/8`, Source `682/682`,
+complete Native and Local Core, locked workspace/release/offline checks, strict
+lint, Flutter `847/847`, and Dart `14/14`. The first Native Clippy run exposed a
+type-complexity issue in the callback parameter; the generic `FnMut` repair and
+exact reruns pass. Locks and the read-only vault remain exact. This verifies the
+mitigation locally without changing the cooperative residual risk. Definitive
+`281/281`, adversarial report, hosted, integration, synchronization, and
+destination evidence remain pending.
+
+Definitive local verification now passes exact `281/281`, zero non-passing
+steps, in `786.9s`. Independent PS5/PS7 validation accepts SHA-256
+`039f30500f4a842f7f9785653df8a49b4b01f22963ecb1c340cb7265a2815153` and
+rejects both missing-step and missing-scope report copies. Active Defender
+removed the first generated Native debug test binary as `Wacatac.C!ml` before
+execution; no security setting changed, and the exact filter plus full rerun
+pass with test-only debug/incremental metadata disabled. This closes the local
+evidence blocker without changing cooperative, installed-service, kernel,
+production-accuracy, pre-execution, or Defender-replacement residual limits.
+Hosted, integration, guarded-sync, and destination evidence remain pending.

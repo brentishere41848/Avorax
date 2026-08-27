@@ -7210,6 +7210,80 @@ complete antivirus-hardening goal remains active, with installed service,
 driver/kernel, production-accuracy, pre-execution, and Defender-replacement
 claims still partial, blocked, technically limited, or unclaimed.
 
+## Checkpoint 2252 Local Verification Progress
+
+- PS5/PS7 parsers pass `2/2` each, Source contracts pass exact `682/682`, the
+  new structured cancellation set passes `9/9`, all String Indicator tests pass
+  `54/54`, and adjacent reference cancellation passes `8/8`.
+- Complete Native passes 632 active plus compiler `6/6` with 21 documented
+  child fixtures ignored. Local Core passes `546/546`; locked all-feature,
+  standalone locked/offline Native, locked release, formatting, and strict
+  Native/Local/Guard Clippy checks pass.
+- The first strict Native Clippy attempt failed visibly on callback type
+  complexity; a generic `FnMut` segment visitor repaired it, and focused plus
+  strict-lint reruns pass.
+- The first real Source run executed 682 tests and exposed a stale helper-name
+  marker. Pinning the exact generic `<F>` signature repairs the contract; the
+  complete rerun passes `682/682`. Zero-discovery attempts are uncredited.
+- Flutter analyze is clean, Flutter passes `847/847`, and Dart passes `14/14`.
+  Locks and the read-only protected vault remain exact.
+- The mitigation is **verified locally so far**, but definitive `281/281`,
+  hostile report checks, hosted exact-head evidence, integration, guarded sync,
+  and destination reruns remain required. Checkpoint 2252 and the complete goal
+  remain active.
+
+### Checkpoint 2252 Definitive Local Evidence
+
+Active Defender removed the first generated Native debug test binary as
+`Wacatac.C!ml` before execution (`DidThreatExecute=False`); that stopped run and
+its missing-file retry are uncredited, with no security setting weakened. The
+exact blocked filter passes `4/4` and the complete verifier passes exact
+`281/281`, zero non-passing steps, in `786.9s` when test binaries are compiled
+with explicit `CARGO_PROFILE_TEST_DEBUG=0` and `CARGO_INCREMENTAL=0`.
+
+Independent PS5/PS7 validators accept SHA-256
+`039f30500f4a842f7f9785653df8a49b4b01f22963ecb1c340cb7265a2815153` and
+both reject missing-step and missing-scope adversarial copies. Temp fixtures,
+process residue, locks, and the read-only vault are clean/exact. Checkpoint 2252
+is **verified locally** but remains active pending hosted exact-head evidence,
+integration, guarded synchronization, and destination reruns. The complete
+antivirus-hardening goal remains active.
+
+### Checkpoint 2252 Hosted Branch Evidence
+
+Implementation `09d84239c69288d1193e5ce8ca815c7023f83fed` passes
+Desktop Packages run `33069608149`; all build/contract/consolidation jobs pass
+and prerelease publication is skipped. Consolidated artifact `9645762246` is
+132,039,189 bytes with exact digest
+`cd1bbb28059d1be2a64f181e399a8869e7598c8568aafafdd37ac96784d9a7ca`.
+Non-extracting review verifies eight safe root entries, six platform packages,
+seven checksums, and CycloneDX 1.6 with 569 unique components. Review temp data
+is removed. PR/merge/main, guarded sync, and destination evidence remain open;
+checkpoint 2252 and the complete goal remain active.
+
+## Checkpoint 2252 Static Structured-Indicator Cancellation
+
+- **Scripted / unverified:** carrier markers, IPv4 candidates, URL
+  query/fragment paths, remote host/share parsing, autorun lines and command
+  tokens, optical-image markers, and email lines/fields now propagate the exact
+  callback through at-most-64-KiB byte or UTF-8-safe character chunks.
+- **Behavior preserved by contract:** CRLF/comment handling, command tokens and
+  suffixes, remote-path exclusions, per-line attachment counts, and
+  conservative query/fragment URL classification remain deterministic.
+  Arbitrary callback failures return before `StringIndicators` or verdict
+  publication.
+- **Evidence scripted first:** nine benign in-memory regressions, verifier step
+  281, exact-cardinality/scope validation, Source contract 682, and maintained
+  audit/threat/dependency/checkpoint documents.
+- **Honest limit:** cancellation is cooperative. One admitted 64-KiB carrier,
+  candidate, line, token, path, host, optical-marker, or email-field chunk, an
+  entered system call, or another bounded analyzer operation may finish first.
+- No checkpoint-2252 test has run during this scripting phase. Focused/full,
+  definitive exact `281/281`, hosted, integration, guarded-sync, and
+  destination evidence remain pending. Checkpoint 2252 and the complete
+  antivirus-hardening goal remain active.
+
+
 ## Checkpoint 2251 Static Reference-Search Cancellation
 
 - **Scripted / unverified:** String Indicator URL and remote network-path marker

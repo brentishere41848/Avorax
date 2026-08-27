@@ -12729,3 +12729,83 @@ pending.
   Locks, synced blobs, process/residue checks, and the read-only protected vault
   remain exact. Checkpoint 2251 is closed; the complete antivirus goal remains
   active.
+
+## 2026-08-27 - Checkpoint 2251 Closure-State Destination Verification
+
+- The post-closure-document destination verifier passes exact `280/280`, zero
+  non-passing steps, from `2026-08-27T10:45:53.7371804Z` through
+  `2026-08-27T10:55:45.7302451Z` in `592` seconds.
+- Independent PS5 and PS7 full-suite validators accept report SHA-256
+  `c12f6d94a2e410b758c7b966f35caa165c64f41104535445dfeac39dd8ff114b`.
+  All four closure blobs, three locks, process/residue checks, and the read-only
+  16,072-file protected-vault invariant are exact.
+
+## 2026-08-27 - Checkpoint 2252 Structured-Indicator Scripting
+
+- Scripted callback-aware carrier, IPv4 candidate, query/fragment path,
+  remote-host, autorun line/token, optical-marker, and email line/field
+  traversals in the Native String Indicator provider.
+- Scripted nine benign in-memory regressions, definitive verifier step 281,
+  strict exact-281 validator scope, Source contract 682, control/threat/blocker
+  matrices, dependency evidence, and the checkpoint report.
+- No checkpoint-2252 test has run during this scripting phase. Focused/full,
+  definitive `281/281`, hosted, integration, guarded-sync, and destination
+  evidence remain pending. No dependency, lock, release, installation,
+  Defender, service/driver, live-malware, or protected-vault action occurred.
+
+## 2026-08-27 - Checkpoint 2252 Local Verification Progress
+
+- PS5/PS7 parsers pass `2/2` each; Source contracts pass exact `682/682`.
+  Focused structured cancellation passes `9/9`, all String Indicator tests pass
+  `54/54`, adjacent reference cancellation passes `8/8`, and formatting passes.
+- The first strict Native Clippy run failed visibly on callback parameter type
+  complexity. Replacing the segment visitor's dynamic callback parameter with
+  a generic `FnMut` preserves behavior; focused `9/9` and strict Native Clippy
+  reruns pass. Strict Local Core and Guard Clippy pass.
+- The first real Source run executed 682 tests and rejected a stale pre-generic
+  helper marker. The marker now pins the `<F>` signature and the complete rerun
+  passes `682/682`; two zero-discovery `unittest` attempts are uncredited.
+- Full Native passes 632 active plus signature compiler `6/6`, with 21
+  documented child fixtures ignored. Local Core passes `546/546`; locked
+  all-feature workspace, standalone locked/offline Native, and locked release
+  workspace checks pass.
+- Flutter analyze passes with no issues, Flutter passes `847/847`, and Dart
+  protocol passes `14/14`. All three lock hashes and the read-only protected
+  vault invariant remain exact.
+- Definitive exact `281/281`, adversarial validator, hosted, integration,
+  guarded-sync, and destination evidence remain pending; checkpoint 2252 and
+  the complete antivirus-hardening goal remain active.
+
+## 2026-08-27 - Checkpoint 2252 Definitive Local Verification
+
+- The first definitive attempt stopped fail-visibly when active Defender
+  removed a generated Native debug test binary as `Wacatac.C!ml`; it reports
+  `DidThreatExecute=False`. An exact missing-file retry also fails and both are
+  uncredited. No Defender setting, exclusion, restore, or allowlist changed.
+- The blocked archive filter passes `4/4` with
+  `CARGO_PROFILE_TEST_DEBUG=0` and `CARGO_INCREMENTAL=0`. A from-start verifier
+  rerun under the same test-only profile passes exact `281/281`, zero
+  non-passing steps, in `786.9` seconds.
+- Report SHA-256 is
+  `039f30500f4a842f7f9785653df8a49b4b01f22963ecb1c340cb7265a2815153`.
+  Independent PS5/PS7 full-suite validation accepts it. Both reject a 280-step
+  missing-step copy and a 281-step missing-scope copy with exit 1.
+- Exact adversarial fixtures were removed; pre-existing `.verification` was
+  untouched. Locks, zero process residue, and the read-only protected vault are
+  exact. Hosted, integration, guarded-sync, and destination closure remain
+  pending; checkpoint 2252 and the complete goal remain active.
+
+## 2026-08-27 - Checkpoint 2252 Hosted Branch Package Evidence
+
+- Exact implementation `09d84239c69288d1193e5ce8ca815c7023f83fed`
+  passes Desktop Packages push run `33069608149`: contracts, Linux, Windows,
+  both macOS architectures, and consolidation succeed; publication is skipped.
+- Consolidated artifact `9645762246` is exactly 132,039,189 bytes with GitHub
+  digest and downloaded SHA-256
+  `cd1bbb28059d1be2a64f181e399a8869e7598c8568aafafdd37ac96784d9a7ca`.
+- Bounded non-extracting review passes exact eight safe root entries, six
+  platform packages, seven checksum targets, and CycloneDX 1.6 with 569 unique
+  components. No duplicate/encrypted/link/unsafe entry exists; nothing is
+  installed or executed, and the exact temporary archive is removed.
+- PR exact-head CI/packages, merge, merged-main evidence, guarded sync, and
+  destination reruns remain pending. No release or publication occurred.

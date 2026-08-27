@@ -5,6 +5,7 @@ use crate::signatures::text::ascii_lowercase_lossy_with_cancellation;
 
 const STRING_REFERENCE_CANCELLATION_INTERVAL: usize = 1024;
 const STRING_REFERENCE_CANCELLATION_CHUNK_BYTES: usize = 64 * 1024;
+const STRING_STRUCTURED_CANCELLATION_CHUNK_BYTES: usize = 64 * 1024;
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct StringIndicators {
@@ -56,7 +57,8 @@ pub fn extract_indicators_with_cancellation(
         )?);
     }
     cancellation_checkpoint()?;
-    indicators.disk_image_autorun_executable_count = disk_image_autorun_executables(bytes, &text);
+    indicators.disk_image_autorun_executable_count =
+        disk_image_autorun_executables_with_cancellation(bytes, &text, cancellation_checkpoint)?;
     cancellation_checkpoint()?;
     if has_compound_file_binary_header(bytes) {
         indicators.windows_installer_marker_count =
@@ -92,7 +94,8 @@ fn extract_indicators_from_text_with_cancellation(
         ],
         cancellation_checkpoint,
     )?;
-    let rtf_external_object_count = if is_rtf_text(text) {
+    let rtf_external_object_count = if is_rtf_text_with_cancellation(text, cancellation_checkpoint)?
+    {
         count_terms_with_cancellation(
             text,
             &[
@@ -110,7 +113,8 @@ fn extract_indicators_from_text_with_cancellation(
     } else {
         0
     };
-    let pdf_active_content_count = if is_pdf_text(text) {
+    let pdf_active_content_count = if is_pdf_text_with_cancellation(text, cancellation_checkpoint)?
+    {
         count_terms_with_cancellation(
             text,
             &[
@@ -128,27 +132,28 @@ fn extract_indicators_from_text_with_cancellation(
     } else {
         0
     };
-    let web_document_active_content_count = if is_web_document_text(text) {
-        count_terms_with_cancellation(
-            text,
-            &[
-                "<script",
-                "javascript:",
-                "onload=",
-                "onerror=",
-                "createobjecturl",
-                "mssaveoropenblob",
-                ".download",
-                "download=",
-                "atob(",
-                "fetch(",
-                "xmlhttprequest",
-            ],
-            cancellation_checkpoint,
-        )?
-    } else {
-        0
-    };
+    let web_document_active_content_count =
+        if is_web_document_text_with_cancellation(text, cancellation_checkpoint)? {
+            count_terms_with_cancellation(
+                text,
+                &[
+                    "<script",
+                    "javascript:",
+                    "onload=",
+                    "onerror=",
+                    "createobjecturl",
+                    "mssaveoropenblob",
+                    ".download",
+                    "download=",
+                    "atob(",
+                    "fetch(",
+                    "xmlhttprequest",
+                ],
+                cancellation_checkpoint,
+            )?
+        } else {
+            0
+        };
     let embedded_ip_count = embedded_ip_count_with_cancellation(text, cancellation_checkpoint)?;
     let suspicious_terms = [
         "invoke-expression",
@@ -173,9 +178,11 @@ fn extract_indicators_from_text_with_cancellation(
         cancellation_checkpoint,
     )?;
     cancellation_checkpoint()?;
-    let autorun_inf_executable_command_count = autorun_inf_executable_commands(text);
+    let autorun_inf_executable_command_count =
+        autorun_inf_executable_commands_with_cancellation(text, cancellation_checkpoint)?;
     let disk_image_autorun_executable_count = 0;
-    let email_executable_attachment_count = email_executable_attachments(text);
+    let email_executable_attachment_count =
+        email_executable_attachments_with_cancellation(text, cancellation_checkpoint)?;
     cancellation_checkpoint()?;
     let script_host_reference_count = count_terms_with_cancellation(
         text,
@@ -243,14 +250,24 @@ fn embedded_ip_count_with_cancellation(
     text: &str,
     cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
 ) -> Result<u32> {
-    let mut candidates_seen = 0usize;
     let mut count = 0u32;
-    for candidate in text.split(|c: char| !c.is_ascii_digit() && c != '.') {
-        if candidates_seen.is_multiple_of(STRING_REFERENCE_CANCELLATION_INTERVAL) {
+    let mut candidate_start = None;
+    let mut next_checkpoint = 0usize;
+    for (index, ch) in text.char_indices() {
+        if index >= next_checkpoint {
             cancellation_checkpoint()?;
+            next_checkpoint = index.saturating_add(STRING_STRUCTURED_CANCELLATION_CHUNK_BYTES);
         }
-        candidates_seen = candidates_seen.saturating_add(1);
-        if is_ipv4_candidate(candidate) {
+        if ch.is_ascii_digit() || ch == '.' {
+            candidate_start.get_or_insert(index);
+        } else if let Some(start) = candidate_start.take() {
+            if is_ipv4_candidate(&text[start..index]) {
+                count = count.saturating_add(1);
+            }
+        }
+    }
+    if let Some(start) = candidate_start {
+        if is_ipv4_candidate(&text[start..]) {
             count = count.saturating_add(1);
         }
     }
@@ -259,6 +276,9 @@ fn embedded_ip_count_with_cancellation(
 }
 
 fn is_ipv4_candidate(candidate: &str) -> bool {
+    if candidate.len() < 7 || candidate.len() > 15 {
+        return false;
+    }
     let mut octets = candidate.split('.');
     for _ in 0..4 {
         let Some(octet) = octets.next() else {
@@ -345,93 +365,444 @@ impl StringIndicators {
     }
 }
 
-fn is_rtf_text(text: &str) -> bool {
-    text.contains("{\\rtf") || text.contains("\\rtf1")
-}
-
-fn is_pdf_text(text: &str) -> bool {
-    text.contains("%pdf-")
-}
-
-fn is_web_document_text(text: &str) -> bool {
-    text.contains("<!doctype html") || text.contains("<html") || text.contains("<svg")
-}
-
-fn autorun_inf_executable_commands(text: &str) -> u32 {
-    if !text
-        .lines()
-        .any(|line| line.split(';').next().unwrap_or("").trim() == "[autorun]")
-    {
-        return 0;
+fn contains_any_exact_with_cancellation(
+    bytes: &[u8],
+    needles: &[&[u8]],
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<bool> {
+    for needle in needles {
+        if crate::signatures::search::contains_exact_with_cancellation(
+            bytes,
+            needle,
+            cancellation_checkpoint,
+        )? {
+            cancellation_checkpoint()?;
+            return Ok(true);
+        }
     }
-    text.lines()
-        .filter(|line| {
-            let line = line.split(';').next().unwrap_or("").trim();
-            let Some((key, value)) = line.split_once('=') else {
-                return false;
+    cancellation_checkpoint()?;
+    Ok(false)
+}
+
+fn find_first_ascii_byte_with_cancellation(
+    bytes: &[u8],
+    accepted: &[u8],
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<Option<usize>> {
+    if bytes.len() <= STRING_STRUCTURED_CANCELLATION_CHUNK_BYTES {
+        return Ok(bytes.iter().position(|byte| accepted.contains(byte)));
+    }
+
+    for chunk_start in (0..bytes.len()).step_by(STRING_STRUCTURED_CANCELLATION_CHUNK_BYTES) {
+        cancellation_checkpoint()?;
+        let chunk_end = chunk_start
+            .saturating_add(STRING_STRUCTURED_CANCELLATION_CHUNK_BYTES)
+            .min(bytes.len());
+        if let Some(relative) = bytes[chunk_start..chunk_end]
+            .iter()
+            .position(|byte| accepted.contains(byte))
+        {
+            return Ok(Some(chunk_start + relative));
+        }
+    }
+    cancellation_checkpoint()?;
+    Ok(None)
+}
+
+fn try_for_each_ascii_segment_with_cancellation<F>(
+    text: &str,
+    separator: u8,
+    strip_trailing_carriage_return: bool,
+    include_trailing_empty: bool,
+    checkpoint_small_input: bool,
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+    visitor: &mut F,
+) -> Result<()>
+where
+    F: FnMut(&str, &mut dyn FnMut() -> Result<()>) -> Result<()>,
+{
+    let bytes = text.as_bytes();
+    let checkpoint_chunks =
+        checkpoint_small_input || bytes.len() > STRING_STRUCTURED_CANCELLATION_CHUNK_BYTES;
+    let mut segment_start = 0usize;
+    for chunk_start in (0..bytes.len()).step_by(STRING_STRUCTURED_CANCELLATION_CHUNK_BYTES) {
+        if checkpoint_chunks {
+            cancellation_checkpoint()?;
+        }
+        let chunk_end = chunk_start
+            .saturating_add(STRING_STRUCTURED_CANCELLATION_CHUNK_BYTES)
+            .min(bytes.len());
+        for (relative, byte) in bytes[chunk_start..chunk_end].iter().enumerate() {
+            if *byte != separator {
+                continue;
+            }
+            let separator_at = chunk_start + relative;
+            let mut segment = &text[segment_start..separator_at];
+            if strip_trailing_carriage_return {
+                segment = segment.strip_suffix('\r').unwrap_or(segment);
+            }
+            visitor(segment, cancellation_checkpoint)?;
+            segment_start = separator_at + 1;
+        }
+    }
+
+    if segment_start < text.len() || include_trailing_empty {
+        let mut segment = &text[segment_start..];
+        if strip_trailing_carriage_return {
+            segment = segment.strip_suffix('\r').unwrap_or(segment);
+        }
+        visitor(segment, cancellation_checkpoint)?;
+    }
+    if checkpoint_chunks {
+        cancellation_checkpoint()?;
+    }
+    Ok(())
+}
+
+fn trim_matches_with_cancellation<'a>(
+    text: &'a str,
+    predicate: fn(char) -> bool,
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<&'a str> {
+    if text.len() <= STRING_STRUCTURED_CANCELLATION_CHUNK_BYTES {
+        return Ok(text.trim_matches(predicate));
+    }
+
+    let mut first = None;
+    let mut last = 0usize;
+    let mut next_checkpoint = 0usize;
+    for (index, ch) in text.char_indices() {
+        if index >= next_checkpoint {
+            cancellation_checkpoint()?;
+            next_checkpoint = index.saturating_add(STRING_STRUCTURED_CANCELLATION_CHUNK_BYTES);
+        }
+        if !predicate(ch) {
+            first.get_or_insert(index);
+            last = index + ch.len_utf8();
+        }
+    }
+    cancellation_checkpoint()?;
+    Ok(first.map_or("", |start| &text[start..last]))
+}
+
+fn trim_with_cancellation<'a>(
+    text: &'a str,
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<&'a str> {
+    trim_matches_with_cancellation(text, char::is_whitespace, cancellation_checkpoint)
+}
+
+fn path_before_query_or_fragment_with_cancellation<'a>(
+    path: &'a str,
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<&'a str> {
+    let end =
+        find_first_ascii_byte_with_cancellation(path.as_bytes(), b"?#", cancellation_checkpoint)?
+            .unwrap_or(path.len());
+    Ok(&path[..end])
+}
+
+fn is_rtf_text_with_cancellation(
+    text: &str,
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<bool> {
+    contains_any_exact_with_cancellation(
+        text.as_bytes(),
+        &[b"{\\rtf".as_slice(), b"\\rtf1".as_slice()],
+        cancellation_checkpoint,
+    )
+}
+
+fn is_pdf_text_with_cancellation(
+    text: &str,
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<bool> {
+    crate::signatures::search::contains_exact_with_cancellation(
+        text.as_bytes(),
+        b"%pdf-",
+        cancellation_checkpoint,
+    )
+}
+
+fn is_web_document_text_with_cancellation(
+    text: &str,
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<bool> {
+    contains_any_exact_with_cancellation(
+        text.as_bytes(),
+        &[
+            b"<!doctype html".as_slice(),
+            b"<html".as_slice(),
+            b"<svg".as_slice(),
+        ],
+        cancellation_checkpoint,
+    )
+}
+
+fn autorun_inf_executable_commands_with_cancellation(
+    text: &str,
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<u32> {
+    cancellation_checkpoint()?;
+    let mut has_autorun_section = false;
+    let mut executable_command_count = 0u32;
+    let mut visit_line =
+        |raw_line: &str, checkpoint: &mut dyn FnMut() -> Result<()>| -> Result<()> {
+            let comment_at =
+                find_first_ascii_byte_with_cancellation(raw_line.as_bytes(), b";", checkpoint)?
+                    .unwrap_or(raw_line.len());
+            let line = trim_with_cancellation(&raw_line[..comment_at], checkpoint)?;
+            if line == "[autorun]" {
+                has_autorun_section = true;
+                return Ok(());
+            }
+            let Some(equals_at) =
+                find_first_ascii_byte_with_cancellation(line.as_bytes(), b"=", checkpoint)?
+            else {
+                return Ok(());
             };
-            let key = key.trim();
+            let key = trim_with_cancellation(&line[..equals_at], checkpoint)?;
+            let value = trim_with_cancellation(&line[equals_at + 1..], checkpoint)?;
             let is_command_key = matches!(key, "open" | "shellexecute")
                 || (key.starts_with("shell\\") && key.ends_with("\\command"));
-            is_command_key && command_value_has_executable_or_script_reference(value.trim())
-        })
-        .count() as u32
+            if is_command_key
+                && command_value_has_executable_or_script_reference_with_cancellation(
+                    value, checkpoint,
+                )?
+            {
+                executable_command_count = executable_command_count.saturating_add(1);
+            }
+            Ok(())
+        };
+    try_for_each_ascii_segment_with_cancellation(
+        text,
+        b'\n',
+        true,
+        false,
+        true,
+        cancellation_checkpoint,
+        &mut visit_line,
+    )?;
+    cancellation_checkpoint()?;
+    Ok(if has_autorun_section {
+        executable_command_count
+    } else {
+        0
+    })
 }
 
-fn command_value_has_executable_or_script_reference(value: &str) -> bool {
-    value
-        .split(|ch: char| {
-            ch.is_whitespace()
-                || ch.is_control()
-                || matches!(
-                    ch,
-                    '"' | '\'' | ',' | '(' | ')' | '[' | ']' | '{' | '}' | '<' | '>'
-                )
-        })
-        .any(|token| {
-            let token = token.trim_matches(|ch: char| {
-                matches!(ch, '"' | '\'' | ',' | ';' | ')' | ']' | '}' | '<' | '>')
-            });
-            !token.is_empty() && path_has_executable_or_script_suffix(token)
-        })
+fn is_command_token_separator(ch: char) -> bool {
+    ch.is_whitespace()
+        || ch.is_control()
+        || matches!(
+            ch,
+            '"' | '\'' | ',' | '(' | ')' | '[' | ']' | '{' | '}' | '<' | '>'
+        )
 }
 
-fn disk_image_autorun_executables(bytes: &[u8], text: &str) -> u32 {
-    if !looks_like_optical_disk_image(bytes) || !text.contains("autorun.inf") {
-        return 0;
+fn is_command_token_trim_character(ch: char) -> bool {
+    matches!(ch, '"' | '\'' | ',' | ';' | ')' | ']' | '}' | '<' | '>')
+}
+
+fn command_token_has_executable_or_script_reference_with_cancellation(
+    token: &str,
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<bool> {
+    let token = trim_matches_with_cancellation(
+        token,
+        is_command_token_trim_character,
+        cancellation_checkpoint,
+    )?;
+    if token.is_empty() {
+        return Ok(false);
     }
-    u32::from(command_value_has_executable_or_script_reference(text))
+    let path = path_before_query_or_fragment_with_cancellation(token, cancellation_checkpoint)?;
+    Ok(path_has_executable_or_script_suffix(path))
 }
 
-fn looks_like_optical_disk_image(bytes: &[u8]) -> bool {
-    bytes
-        .windows(5)
-        .any(|window| matches!(window, b"CD001" | b"NSR02" | b"NSR03"))
-}
-
-fn email_executable_attachments(text: &str) -> u32 {
-    if !is_email_message_text(text) || !text.contains("content-disposition: attachment") {
-        return 0;
+fn command_value_has_executable_or_script_reference_with_cancellation(
+    value: &str,
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<bool> {
+    let mut token_start = None;
+    let mut next_checkpoint = 0usize;
+    let checkpoint_chunks = value.len() > STRING_STRUCTURED_CANCELLATION_CHUNK_BYTES;
+    for (index, ch) in value.char_indices() {
+        if checkpoint_chunks && index >= next_checkpoint {
+            cancellation_checkpoint()?;
+            next_checkpoint = index.saturating_add(STRING_STRUCTURED_CANCELLATION_CHUNK_BYTES);
+        }
+        if is_command_token_separator(ch) {
+            if let Some(start) = token_start.take() {
+                if command_token_has_executable_or_script_reference_with_cancellation(
+                    &value[start..index],
+                    cancellation_checkpoint,
+                )? {
+                    if checkpoint_chunks {
+                        cancellation_checkpoint()?;
+                    }
+                    return Ok(true);
+                }
+            }
+        } else if token_start.is_none() {
+            token_start = Some(index);
+        }
     }
-    text.lines()
-        .filter(|line| {
-            let line = line.split(';').collect::<Vec<_>>();
-            line.iter().any(|part| {
-                let Some((key, value)) = part.trim().split_once('=') else {
-                    return false;
-                };
-                let key = key.trim();
-                matches!(key, "filename" | "name")
-                    && command_value_has_executable_or_script_reference(value.trim())
-            })
-        })
-        .count() as u32
+    if let Some(start) = token_start {
+        if command_token_has_executable_or_script_reference_with_cancellation(
+            &value[start..],
+            cancellation_checkpoint,
+        )? {
+            if checkpoint_chunks {
+                cancellation_checkpoint()?;
+            }
+            return Ok(true);
+        }
+    }
+    if checkpoint_chunks {
+        cancellation_checkpoint()?;
+    }
+    Ok(false)
 }
 
-fn is_email_message_text(text: &str) -> bool {
-    text.contains("mime-version:")
-        && (text.contains("\nfrom:") || text.starts_with("from:"))
-        && (text.contains("\nsubject:") || text.starts_with("subject:"))
+fn disk_image_autorun_executables_with_cancellation(
+    bytes: &[u8],
+    text: &str,
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<u32> {
+    if !looks_like_optical_disk_image_with_cancellation(bytes, cancellation_checkpoint)?
+        || !crate::signatures::search::contains_exact_with_cancellation(
+            text.as_bytes(),
+            b"autorun.inf",
+            cancellation_checkpoint,
+        )?
+    {
+        return Ok(0);
+    }
+    Ok(u32::from(
+        command_value_has_executable_or_script_reference_with_cancellation(
+            text,
+            cancellation_checkpoint,
+        )?,
+    ))
+}
+
+fn looks_like_optical_disk_image_with_cancellation(
+    bytes: &[u8],
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<bool> {
+    contains_any_exact_with_cancellation(
+        bytes,
+        &[
+            b"CD001".as_slice(),
+            b"NSR02".as_slice(),
+            b"NSR03".as_slice(),
+        ],
+        cancellation_checkpoint,
+    )
+}
+
+fn email_executable_attachment_lines_with_cancellation(
+    text: &str,
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<u32> {
+    let mut count = 0u32;
+    let mut visit_line = |line: &str, checkpoint: &mut dyn FnMut() -> Result<()>| -> Result<()> {
+        let mut line_matches = false;
+        let mut visit_part = |part: &str,
+                              part_checkpoint: &mut dyn FnMut() -> Result<()>|
+         -> Result<()> {
+            if line_matches {
+                return Ok(());
+            }
+            let part = trim_with_cancellation(part, part_checkpoint)?;
+            let Some(equals_at) =
+                find_first_ascii_byte_with_cancellation(part.as_bytes(), b"=", part_checkpoint)?
+            else {
+                return Ok(());
+            };
+            let key = trim_with_cancellation(&part[..equals_at], part_checkpoint)?;
+            if !matches!(key, "filename" | "name") {
+                return Ok(());
+            }
+            let value = trim_with_cancellation(&part[equals_at + 1..], part_checkpoint)?;
+            line_matches = command_value_has_executable_or_script_reference_with_cancellation(
+                value,
+                part_checkpoint,
+            )?;
+            Ok(())
+        };
+        try_for_each_ascii_segment_with_cancellation(
+            line,
+            b';',
+            false,
+            true,
+            false,
+            checkpoint,
+            &mut visit_part,
+        )?;
+        if line_matches {
+            count = count.saturating_add(1);
+        }
+        Ok(())
+    };
+    try_for_each_ascii_segment_with_cancellation(
+        text,
+        b'\n',
+        true,
+        false,
+        true,
+        cancellation_checkpoint,
+        &mut visit_line,
+    )?;
+    cancellation_checkpoint()?;
+    Ok(count)
+}
+
+fn email_executable_attachments_with_cancellation(
+    text: &str,
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<u32> {
+    if !is_email_message_text_with_cancellation(text, cancellation_checkpoint)?
+        || !crate::signatures::search::contains_exact_with_cancellation(
+            text.as_bytes(),
+            b"content-disposition: attachment",
+            cancellation_checkpoint,
+        )?
+    {
+        return Ok(0);
+    }
+    email_executable_attachment_lines_with_cancellation(text, cancellation_checkpoint)
+}
+
+fn is_email_message_text_with_cancellation(
+    text: &str,
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<bool> {
+    if !crate::signatures::search::contains_exact_with_cancellation(
+        text.as_bytes(),
+        b"mime-version:",
+        cancellation_checkpoint,
+    )? {
+        return Ok(false);
+    }
+    let has_from = text.starts_with("from:")
+        || crate::signatures::search::contains_exact_with_cancellation(
+            text.as_bytes(),
+            b"\nfrom:",
+            cancellation_checkpoint,
+        )?;
+    if !has_from {
+        return Ok(false);
+    }
+    let has_subject = text.starts_with("subject:")
+        || crate::signatures::search::contains_exact_with_cancellation(
+            text.as_bytes(),
+            b"\nsubject:",
+            cancellation_checkpoint,
+        )?;
+    cancellation_checkpoint()?;
+    Ok(has_subject)
 }
 
 fn utf16le_text_view_with_cancellation(
@@ -553,19 +924,21 @@ fn embedded_url_counts_with_cancellation(
             let rest = &text[start..];
             let end = reference_end_with_cancellation(rest, cancellation_checkpoint)?;
             let url = &rest[..end];
+            let url_path =
+                path_before_query_or_fragment_with_cancellation(url, cancellation_checkpoint)?;
             counts.total = counts.total.saturating_add(1);
             counts.executable = counts
                 .executable
-                .saturating_add(u32::from(url_has_executable_or_script_suffix(url)));
+                .saturating_add(u32::from(path_has_executable_or_script_suffix(url_path)));
             counts.clickonce = counts
                 .clickonce
-                .saturating_add(u32::from(url_has_clickonce_suffix(url)));
+                .saturating_add(u32::from(path_has_clickonce_suffix(url_path)));
             counts.java_web_start = counts
                 .java_web_start
-                .saturating_add(u32::from(url_has_java_web_start_suffix(url)));
+                .saturating_add(u32::from(path_has_java_web_start_suffix(url_path)));
             counts.windows_app_package = counts
                 .windows_app_package
-                .saturating_add(u32::from(url_has_windows_app_package_suffix(url)));
+                .saturating_add(u32::from(path_has_windows_app_package_suffix(url_path)));
             references_seen = references_seen.saturating_add(1);
             search_start = start + marker.len();
         }
@@ -574,27 +947,19 @@ fn embedded_url_counts_with_cancellation(
     Ok(counts)
 }
 
-fn url_has_executable_or_script_suffix(url: &str) -> bool {
-    let path = url.split(['?', '#']).next().unwrap_or(url);
-    path_has_executable_or_script_suffix(path)
-}
-
-fn url_has_clickonce_suffix(url: &str) -> bool {
-    let path = url.split(['?', '#']).next().unwrap_or(url);
+fn path_has_clickonce_suffix(path: &str) -> bool {
     [".application", ".appref-ms"]
         .iter()
         .any(|suffix| path.ends_with(suffix))
 }
 
-fn url_has_java_web_start_suffix(url: &str) -> bool {
-    let path = url.split(['?', '#']).next().unwrap_or(url);
+fn path_has_java_web_start_suffix(path: &str) -> bool {
     [".jar", ".jnlp"]
         .iter()
         .any(|suffix| path.ends_with(suffix))
 }
 
-fn url_has_windows_app_package_suffix(url: &str) -> bool {
-    let path = url.split(['?', '#']).next().unwrap_or(url);
+fn path_has_windows_app_package_suffix(path: &str) -> bool {
     [".appx", ".msix", ".appxbundle", ".msixbundle"]
         .iter()
         .any(|suffix| path.ends_with(suffix))
@@ -621,7 +986,11 @@ fn remote_network_executable_path_count_with_cancellation(
             let rest = &text[start..];
             let end = reference_end_with_cancellation(rest, cancellation_checkpoint)?;
             let path = &rest[..end];
-            if is_remote_network_path(path) && path_has_executable_or_script_suffix(path) {
+            let path_without_query =
+                path_before_query_or_fragment_with_cancellation(path, cancellation_checkpoint)?;
+            if is_remote_network_path_with_cancellation(path, cancellation_checkpoint)?
+                && path_has_executable_or_script_suffix(path_without_query)
+            {
                 executable_count = executable_count.saturating_add(1);
             }
             references_seen = references_seen.saturating_add(1);
@@ -632,24 +1001,58 @@ fn remote_network_executable_path_count_with_cancellation(
     Ok(executable_count)
 }
 
-fn is_remote_network_path(path: &str) -> bool {
+fn is_remote_network_path_with_cancellation(
+    path: &str,
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<bool> {
     if path.starts_with("\\\\?\\") || path.starts_with("\\\\.\\") {
-        return false;
+        return Ok(false);
     }
     if path.starts_with("\\\\") {
-        let rest = path.trim_start_matches('\\');
-        let mut pieces = rest.split(['\\', '/']);
-        return pieces.next().is_some_and(|host| !host.is_empty())
-            && pieces.next().is_some_and(|share| !share.is_empty());
+        let mut host_start = 0usize;
+        let mut next_checkpoint = 0usize;
+        for (index, byte) in path.as_bytes().iter().enumerate() {
+            if path.len() > STRING_STRUCTURED_CANCELLATION_CHUNK_BYTES && index >= next_checkpoint {
+                cancellation_checkpoint()?;
+                next_checkpoint = index.saturating_add(STRING_STRUCTURED_CANCELLATION_CHUNK_BYTES);
+            }
+            if *byte != b'\\' {
+                host_start = index;
+                break;
+            }
+        }
+        if host_start == 0 {
+            return Ok(false);
+        }
+        let rest = &path[host_start..];
+        let Some(host_end) = find_first_ascii_byte_with_cancellation(
+            rest.as_bytes(),
+            b"\\/",
+            cancellation_checkpoint,
+        )?
+        else {
+            return Ok(false);
+        };
+        let share = &rest[host_end + 1..];
+        return Ok(host_end > 0
+            && !share.is_empty()
+            && !share.starts_with('\\')
+            && !share.starts_with('/'));
     }
     if let Some(rest) = path.strip_prefix("file://") {
         if rest.starts_with('/') || rest.is_empty() {
-            return false;
+            return Ok(false);
         }
-        let host = rest.split(['/', '\\']).next().unwrap_or_default();
-        return !host.is_empty() && host != "localhost";
+        let host_end = find_first_ascii_byte_with_cancellation(
+            rest.as_bytes(),
+            b"/\\",
+            cancellation_checkpoint,
+        )?
+        .unwrap_or(rest.len());
+        let host = &rest[..host_end];
+        return Ok(!host.is_empty() && host != "localhost");
     }
-    false
+    Ok(false)
 }
 
 fn path_has_executable_or_script_suffix(path: &str) -> bool {
@@ -658,7 +1061,6 @@ fn path_has_executable_or_script_suffix(path: &str) -> bool {
         ".psm1", ".vbs", ".vbe", ".js", ".jse", ".mjs", ".cjs", ".wsf", ".hta", ".sct", ".wsc",
         ".jar", ".jnlp", ".dll",
     ];
-    let path = path.split(['?', '#']).next().unwrap_or(path);
     EXECUTABLE_OR_SCRIPT_SUFFIXES
         .iter()
         .any(|suffix| path.ends_with(suffix))
@@ -959,6 +1361,202 @@ mod tests {
             reference_end_with_cancellation(&text, &mut never_cancel).unwrap(),
             prefix.len()
         );
+    }
+
+    #[test]
+    fn static_structured_indicator_cancellation_interrupts_carrier_marker_chunks() {
+        let text = "a".repeat(STRING_STRUCTURED_CANCELLATION_CHUNK_BYTES * 3);
+        let mut checks = 0usize;
+        let mut checkpoint = || {
+            checks += 1;
+            if checks == 2 {
+                anyhow::bail!("benign carrier marker cancellation")
+            }
+            Ok(())
+        };
+
+        let error = is_web_document_text_with_cancellation(&text, &mut checkpoint)
+            .expect_err("carrier marker cancellation must abort classification");
+
+        assert!(error
+            .to_string()
+            .contains("benign carrier marker cancellation"));
+        assert_eq!(checks, 2);
+    }
+
+    #[test]
+    fn static_structured_indicator_cancellation_interrupts_ip_candidate_chunks() {
+        let text = "1".repeat(STRING_STRUCTURED_CANCELLATION_CHUNK_BYTES * 3);
+        let mut checks = 0usize;
+        let mut checkpoint = || {
+            checks += 1;
+            if checks == 2 {
+                anyhow::bail!("benign IP candidate chunk cancellation")
+            }
+            Ok(())
+        };
+
+        let error = embedded_ip_count_with_cancellation(&text, &mut checkpoint)
+            .expect_err("IP candidate cancellation must abort counting");
+
+        assert!(error
+            .to_string()
+            .contains("benign IP candidate chunk cancellation"));
+        assert_eq!(checks, 2);
+    }
+
+    #[test]
+    fn static_structured_indicator_cancellation_interrupts_autorun_line_chunks() {
+        let text = format!(
+            "[autorun]\nopen={}.exe",
+            "a".repeat(STRING_STRUCTURED_CANCELLATION_CHUNK_BYTES * 3)
+        );
+        let mut checks = 0usize;
+        let mut checkpoint = || {
+            checks += 1;
+            if checks == 3 {
+                anyhow::bail!("benign autorun line cancellation")
+            }
+            Ok(())
+        };
+
+        let error = autorun_inf_executable_commands_with_cancellation(&text, &mut checkpoint)
+            .expect_err("autorun line cancellation must abort before a count");
+
+        assert!(error
+            .to_string()
+            .contains("benign autorun line cancellation"));
+        assert_eq!(checks, 3);
+    }
+
+    #[test]
+    fn static_structured_indicator_cancellation_interrupts_command_token_chunks() {
+        let value = format!(
+            "{}.exe",
+            "a".repeat(STRING_STRUCTURED_CANCELLATION_CHUNK_BYTES * 3)
+        );
+        let mut checks = 0usize;
+        let mut checkpoint = || {
+            checks += 1;
+            if checks == 2 {
+                anyhow::bail!("benign command token cancellation")
+            }
+            Ok(())
+        };
+
+        let error = command_value_has_executable_or_script_reference_with_cancellation(
+            &value,
+            &mut checkpoint,
+        )
+        .expect_err("command token cancellation must abort classification");
+
+        assert!(error
+            .to_string()
+            .contains("benign command token cancellation"));
+        assert_eq!(checks, 2);
+    }
+
+    #[test]
+    fn static_structured_indicator_cancellation_interrupts_optical_marker_chunks() {
+        let bytes = vec![b'a'; STRING_STRUCTURED_CANCELLATION_CHUNK_BYTES * 3];
+        let mut checks = 0usize;
+        let mut checkpoint = || {
+            checks += 1;
+            if checks == 2 {
+                anyhow::bail!("benign optical marker cancellation")
+            }
+            Ok(())
+        };
+
+        let error = looks_like_optical_disk_image_with_cancellation(&bytes, &mut checkpoint)
+            .expect_err("optical marker cancellation must abort classification");
+
+        assert!(error
+            .to_string()
+            .contains("benign optical marker cancellation"));
+        assert_eq!(checks, 2);
+    }
+
+    #[test]
+    fn static_structured_indicator_cancellation_interrupts_email_line_chunks() {
+        let text = format!(
+            "content-type: application/octet-stream; name=\"{}.exe\"",
+            "a".repeat(STRING_STRUCTURED_CANCELLATION_CHUNK_BYTES * 3)
+        );
+        let mut checks = 0usize;
+        let mut checkpoint = || {
+            checks += 1;
+            if checks == 2 {
+                anyhow::bail!("benign email line cancellation")
+            }
+            Ok(())
+        };
+
+        let error = email_executable_attachment_lines_with_cancellation(&text, &mut checkpoint)
+            .expect_err("email line cancellation must abort before a count");
+
+        assert!(error.to_string().contains("benign email line cancellation"));
+        assert_eq!(checks, 2);
+    }
+
+    #[test]
+    fn static_structured_indicator_cancellation_interrupts_query_path_chunks() {
+        let path = "a".repeat(STRING_STRUCTURED_CANCELLATION_CHUNK_BYTES * 3);
+        let mut checks = 0usize;
+        let mut checkpoint = || {
+            checks += 1;
+            if checks == 2 {
+                anyhow::bail!("benign query path cancellation")
+            }
+            Ok(())
+        };
+
+        let error = path_before_query_or_fragment_with_cancellation(&path, &mut checkpoint)
+            .expect_err("query path cancellation must abort classification");
+
+        assert!(error.to_string().contains("benign query path cancellation"));
+        assert_eq!(checks, 2);
+    }
+
+    #[test]
+    fn static_structured_indicator_cancellation_interrupts_network_host_chunks() {
+        let path = format!(
+            "\\\\{}",
+            "a".repeat(STRING_STRUCTURED_CANCELLATION_CHUNK_BYTES * 3)
+        );
+        let mut checks = 0usize;
+        let mut checkpoint = || {
+            checks += 1;
+            if checks == 2 {
+                anyhow::bail!("benign network host cancellation")
+            }
+            Ok(())
+        };
+
+        let error = is_remote_network_path_with_cancellation(&path, &mut checkpoint)
+            .expect_err("network host cancellation must abort classification");
+
+        assert!(error
+            .to_string()
+            .contains("benign network host cancellation"));
+        assert_eq!(checks, 2);
+    }
+
+    #[test]
+    fn static_structured_indicator_cancellation_preserves_structured_semantics() {
+        let text = b"[autorun]\r\nopen=setup.exe /quiet\r\n\
+From: support@example.invalid\r\nSubject: setup\r\nMIME-Version: 1.0\r\n\
+Content-Disposition: attachment; filename=\"support.ps1\"\r\n\
+https://example.invalid/readme.txt?download=payload.exe";
+        let indicators = extract_indicators(text);
+        let mut never_cancel = || Ok(());
+        let fallible = extract_indicators_with_cancellation(text, &mut never_cancel)
+            .expect("structured traversal must pass without cancellation");
+
+        assert_eq!(fallible, indicators);
+        assert_eq!(indicators.autorun_inf_executable_command_count, 1);
+        assert_eq!(indicators.email_executable_attachment_count, 1);
+        assert_eq!(indicators.remote_executable_url_count, 0);
     }
 
     #[test]
