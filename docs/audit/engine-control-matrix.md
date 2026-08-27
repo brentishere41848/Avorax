@@ -5237,31 +5237,27 @@ evidence. Checkpoint 2248 is closed; the complete antivirus goal remains active.
 
 | Control / engine | Responsibility | Status | Evidence / blocker |
 |---|---|---|---|
-| Shared ZIP name normalizer | Preserve lossy UTF-8 and ASCII-lowercase semantics with exact callback propagation | Locally verified / integration pending | Shared helper at all four production callsites; focused `4/4` and ZIP `42/42` pass |
-| Local-header sample collector | Normalize a validated name before collecting bounded in-memory entry bytes | Locally verified / integration pending | Callback error fixture aborts before sample publication |
-| Local-header static analyzer | Normalize before path, OOXML, autorun, and entry-count evidence | Locally verified / integration pending | Callback error fixture aborts before `ArchiveAnalysis` return |
-| Central-directory parser | Keep malformed structural fallback separate from fallible normalization | Locally verified / integration pending | `Result<Option<...>>`; malformed regressions and callback-error fixture pass |
-| Local/central consistency gate | Require matching normalized local and central names before body trust | Locally verified / integration pending | Matching/mismatch regressions and callback-error fixture pass |
+| Shared ZIP name normalizer | Preserve lossy UTF-8 and ASCII-lowercase semantics with exact callback propagation | Verified | Shared helper at all four production callsites; focused `4/4`, ZIP `42/42`, hosted, and destination evidence pass |
+| Local-header sample collector | Normalize a validated name before collecting bounded in-memory entry bytes | Verified | Callback error fixture aborts before sample publication |
+| Local-header static analyzer | Normalize before path, OOXML, autorun, and entry-count evidence | Verified | Callback error fixture aborts before `ArchiveAnalysis` return |
+| Central-directory parser | Keep malformed structural fallback separate from fallible normalization | Verified | `Result<Option<...>>`; malformed regressions and callback-error fixture pass |
+| Local/central consistency gate | Require matching normalized local and central names before body trust | Verified | Matching/mismatch regressions and callback-error fixture pass |
 | ZIP name callback latency | Bound cooperative work between callbacks | Partial / technically limited | One admitted header name, maximum 65,535 bytes, may finish before next callback |
 | Archive extraction/execution | Avoid materializing or launching archive content | Verified / unchanged | Existing in-memory bounded inspection; fixtures are benign and never executed |
 | Windows publisher trust | Validate bounded Microsoft Authenticode identity/hash binding | Partial / technically limited | Existing isolated helper; one active trust call is not hard-interrupted |
 | Reputation/correlated behavior providers | Require authenticated backend or trusted identity-bound telemetry | Disabled / blocked | Existing prerequisites remain unavailable |
 
-Verifier step 278 and Source contract 679 are scripted. No checkpoint-2249 test
-has run during this scripting phase, so no new row is promoted to Verified.
-Exact `278/278`, full regression, hosted, merge, package, guarded-sync, and
-destination evidence remain pending. No installed service, driver, kernel,
-production-accuracy, pre-execution, or Defender-replacement status is claimed.
-Checkpoint 2249 and the complete antivirus goal remain active.
+Verifier step 278, Source contract 679, Source `679/679`, focused `4/4`, Native
+609 active plus compiler `6/6`, Local Core `546/546`, Flutter analyze and
+`847/847`, locked build/tests, strict Clippy, safety gates, and definitive local
+`278/278` all pass. Exact-head branch, PR, and merged-main CI/package matrices
+pass with publication skipped. All three consolidated artifacts pass bounded
+non-extracting exact 8/6/7/CycloneDX-1.6/569 validation.
 
-Local Source `679/679`, Native 609 active plus compiler `6/6`, Local Core
-`546/546`, Flutter analyze and `847/847`, locked build/tests, strict Clippy,
-safety gates, locks, and vault evidence now pass. Implemented rows are promoted
-only to **Locally verified / integration pending**. Definitive `278/278`, hosted,
-integration, synchronization, and destination evidence remain required.
-
-Definitive local verification now passes exact `278/278`, zero failed/skipped,
-with independent dual-host validation and missing-step/scope rejection. Hosted,
-integration, synchronization, and destination evidence remain required before
-implemented rows can be promoted from **Locally verified / integration pending**
-to closed checkpoint evidence.
+Normal PR `#107`, exact `11/11` zero-delete guarded synchronization, independent
+target-blob comparison, destination Source `679/679`, focused `4/4`, formatting,
+and definitive `278/278` plus independent PS5/PS7 validation pass. Implemented
+rows are therefore **Verified**. Partial and disabled rows remain unchanged.
+This is cooperative user-mode post-start analysis, not installed-service,
+driver, kernel, production-accuracy, pre-execution, or Defender-replacement
+evidence. Checkpoint 2249 is closed; the complete antivirus goal remains active.

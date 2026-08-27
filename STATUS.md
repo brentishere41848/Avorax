@@ -7108,10 +7108,9 @@ Locks and vault remain exact. Checkpoint 2248 is fully finalized.
 
 ## Checkpoint 2249 ZIP Entry-Name Normalization Cancellation
 
-- **Scripted, not yet verified:** four ZIP entry-name normalization callsites
-  use the exact shared callback-aware helper; four benign fixtures, verifier
-  step 278, validator cardinality/scope, Source contract 679, and all audit docs
-  are scripted. No checkpoint-2249 test has run during this scripting phase.
+- **Verified implementation:** all four ZIP entry-name normalization callsites
+  use the shared callback-aware helper. Four benign fixtures, verifier step 278,
+  strict validator cardinality/scope, Source contract 679, and audit docs pass.
 - **Fail-visible boundary:** malformed ZIP metadata retains its existing safe
   fallback, while arbitrary callback failure remains an error before sample
   collection, archive evidence, or central-directory body trust.
@@ -7120,9 +7119,8 @@ Locks and vault remain exact. Checkpoint 2248 is fully finalized.
   authenticated cross-identity IPC, driver/kernel, production-accuracy,
   pre-execution, and Defender-replacement claims remain unavailable.
 - Reputation and correlation-dependent providers remain disabled with their
-  documented prerequisites. Exact `278/278`, hosted, merge, package,
-  synchronization, and destination evidence remain pending; checkpoint 2249
-  and the complete antivirus goal remain active.
+  documented prerequisites. No installed-service, driver, kernel,
+  production-accuracy, pre-execution, or Defender-replacement claim is added.
 
 ### Checkpoint 2249 Local Evidence
 
@@ -7134,13 +7132,30 @@ safety gates pass. One initial focused compile exposed and repaired a test-only
 `expect_err`/`Debug` constraint; two safety commands initially stopped in
 absolute-Python path preflight and passed with the existing bundled executable.
 No dependency was installed. Locks and the read-only protected vault remain
-exact. Status is **locally verified / integration pending**; definitive
-`278/278`, hosted CI/packages, merge, guarded sync, and destination evidence are
-still required.
-
-Definitive local verification now passes exact `278/278`, zero failed/skipped,
-in `489.3s`. Independent PS5/PS7 validators accept SHA-256
+exact. Definitive local verification passes `278/278` in `489.3s`; independent
+PS5/PS7 validators accept SHA-256
 `fd3e977d91b72cd217da10df0b43b11cae23b828e12390a12157102142e80a78`
-and both reject missing-step and missing-scope copies with exit `1`. Definitive
-local evidence is no longer a blocker; hosted, merge, package, guarded-sync, and
-destination closure evidence remain pending.
+and reject missing-step and missing-scope copies with exit `1`.
+
+- **Hosted and integrated:** implementation head
+  `4c5f73ad2251231c8bcb1f60035519552f0c35f5` passes package push
+  `33036903447`, PR `#107` CI `33037578015`, and PR packages `33037578011`.
+  PR `#107` merges normally as
+  `ee8267b16b0c1b88bad86d98e9b81c6a329eadfb` with exact parents
+  `5024093e76950151b89790ed6875373268a83022` and the implementation head.
+  Merged-main CI `33038527598` and packages `33038527578` pass; every
+  publication job is skipped.
+- **Artifact evidence:** consolidated branch, PR, and main artifacts
+  `9632555316`, `9632919862`, and `9633201962` match their GitHub SHA-256
+  digests and pass bounded non-extracting exact
+  8-root/6-platform/7-checksum/CycloneDX-1.6/569-component validation. No
+  artifact is extracted or executed.
+- **Destination verified:** guarded synchronization changes exact `11/11`
+  paths with one addition, zero deletes, exact independent target-blob equality,
+  and zero staging residue. Focused `4/4`, Source `679/679`, and formatting pass.
+  Definitive destination verification passes exact `278/278`, zero
+  failed/skipped, in `558.4s`; independent PS5/PS7 validators accept report
+  SHA-256
+  `2fccc4b000f629f2eb7d62412a21cf684fb409e3b2ab34315b1842556d100c58`.
+  All locks and the protected vault invariant remain exact. Checkpoint 2249 is
+  closed; the complete antivirus hardening goal remains active.
