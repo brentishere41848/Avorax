@@ -3688,3 +3688,12 @@ Focused, broad, and definitive exact `284/284` evidence now makes this mitigatio
 scope rejection bind the report. The residual cooperative interval, hostile
 host resource pressure, installed-service/driver boundary, pre-execution limit,
 and Defender-replacement non-claim remain unchanged pending later evidence.
+
+Exact implementation-head CI and both PR/push package runs now pass on
+`67f2d26`. Independent, non-extracting validation of both consolidated
+artifacts confirms the expected safe inventory, matching checksums, and
+CycloneDX 1.6/569-unique-ref lockfile SBOM; publication is skipped. This adds
+reproducibility evidence, not a stronger runtime boundary. Evidence-head,
+merge, merged-main, synchronized-destination, and destination verification
+remain open, and all cooperative/installed/kernel/pre-execution/Defender limits
+remain unchanged.

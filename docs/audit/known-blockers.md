@@ -3592,3 +3592,12 @@ CI/packages, normal integration, merged-main evidence, guarded destination sync,
 and destination verification remain open. Cooperative at-most-4,096-section
 latency and the separate installed-service, kernel, signing/calibration,
 pre-execution, and Defender-replacement blockers remain unchanged.
+
+Exact implementation-head hosted CI `33117139169` and package runs
+`33117139213`/`33117116754` now clear the branch/PR package blocker, including
+six platform artifacts, checksums, CycloneDX 1.6 with 569 unique refs, and
+skipped publication. Evidence-head CI/packages, normal integration,
+merged-main evidence, guarded destination synchronization, and destination
+verification remain open. Cooperative latency and all separate installed-
+service, driver/kernel, signing/calibration, pre-execution, and Defender-
+replacement blockers remain unchanged.

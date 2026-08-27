@@ -1844,6 +1844,16 @@ strict linting. The root Cargo, Native Cargo, and Flutter lock hashes remain
 Checkpoint 2255 adds no dependency or license obligation. Hosted package/SBOM,
 signed-final-binary notice, notarization/signing, and release approval remain open.
 
+Exact implementation `67f2d26` now passes PR CI `33117139169` and Desktop
+Packages `33117139213`/`33117116754`. Each package run builds all six platform
+artifacts, produces seven matching checksum targets and a CycloneDX 1.6
+lockfile SBOM with 569 components/unique refs, and skips publication. Untouched
+consolidated artifacts `9665343047`/`9665714554` match GitHub digests and pass
+bounded non-extracting validation. Evidence-head/merged-main package proof and
+complete signed final-artifact license, notice, copyright, binary-resolution,
+signing/notarization, and release approval remain open; no dependency or lock
+changed.
+
 ## Checkpoint 2254 ZIP EOCD Cancellation Dependency Delta
 
 Checkpoint 2254 adds no dependency, feature, package source, downloaded

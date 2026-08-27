@@ -1,6 +1,6 @@
 # Checkpoint 2255: PE Resource Section Cancellation
 
-Status: **Scripted, unverified**
+Status: **Verified locally and at implementation head; integration open**
 
 ## Objective
 
@@ -122,3 +122,31 @@ protected vault at exactly 16,072 files, zero directories, 4,522,733 bytes,
 unknown or reparse entries. Checkpoint 2255 is **verified locally**. Hosted
 exact-head evidence, normal integration, guarded destination synchronization,
 and destination verification remain open; the full antivirus goal stays active.
+
+## Hosted Implementation-Head Evidence
+
+Exact implementation commit `67f2d26c73c56087f6e602b299803326f1bbd7b5`
+passes PR `#119` Avorax CI run `33117139169`. Rust Local Core/Guard/update/API,
+Flutter/protocol, security/protection/performance, Unix quarantine-permission,
+and branding/copy jobs all succeed. PR Desktop Packages run `33117139213` and
+push run `33117116754` pass package contracts, Windows x64 MSI/EXE, Linux x64
+DEB/tar, macOS arm64/x64 DMG, and consolidation. Prerelease publication is
+explicitly skipped and no release is created.
+
+GitHub reports PR consolidated artifact `9665343047` as 132,103,528 bytes with
+SHA-256 `a21eda3625a88c2abfdda9b9ef440bd34c337eb74e398fab707828e473fa9c1e`.
+The independently downloaded untouched ZIP matches both values. Push artifact
+`9665714554` is 132,138,884 bytes and independently matches GitHub SHA-256
+`2251c3834f63054493a6749d731397a3d1a63cedab4fc1159fd573654fbf0f6c`.
+Bounded non-extracting review of both archives verifies exactly eight safe root
+entries, six platform packages, seven matching checksum targets, and one
+CycloneDX 1.6 lockfile SBOM with 569 components and 569 unique non-empty
+`bom-ref` values. It finds zero unsafe, duplicate, encrypted, or link entries.
+
+No artifact was extracted, installed, or executed. The exact temporary ZIPs
+and their empty owned directories were removed; one policy-rejected cleanup
+command did not execute and is uncredited, after which checked .NET exact-file
+cleanup succeeded. `.verification` and the protected vault remained untouched.
+Evidence-head CI/packages, normal PR integration, merged-main evidence, guarded
+destination synchronization, and destination verification remain required.
+The complete antivirus-hardening goal remains active.

@@ -628,3 +628,11 @@ Clippy/offline/release builds, Flutter `847/847`, and Dart `14/14 + 6/6`.
 Definitive verification passes exact `284/284` in `695.9s`; separate PS5/PS7
 validation passes and isolated missing-step/missing-scope reports are rejected.
 The definitive report SHA-256 is `ff8411143e5437e15266c87e789c02d3d5c151a701543651aab3f7e297de7d3b`.
+
+Exact implementation `67f2d26` also passes hosted CI `33117139169` and package
+runs `33117139213`/`33117116754`, with all platform and consolidation jobs
+green and publication skipped. Untouched consolidated artifacts
+`9665343047`/`9665714554` match GitHub digests and each pass bounded,
+non-extracting exact 8-entry/6-package/7-checksum/CycloneDX-1.6/569-unique-ref
+validation. Evidence-head, integration, merged-main, guarded synchronization,
+and destination reruns remain required.

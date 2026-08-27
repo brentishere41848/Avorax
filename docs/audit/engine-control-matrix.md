@@ -5329,8 +5329,8 @@ complete antivirus-hardening goal remains active.
 
 | Control / engine | Responsibility | State | Evidence required |
 |---|---|---|---|
-| PE resource directory analyzer | Map the declared resource RVA into validated in-sample PE sections and validate/count top-level entries | **Verified locally** | Benign focused `3/3`, PE resource `6/6`, Native/full regression, Source contract 685, and exact verifier `284/284` |
-| PE resource section cancellation | Propagate the exact scan callback before directory handling, each at-most-4,096-entry section chunk, and exhausted search | **Verified locally** | Exact callback-error preservation and no later analysis/verdict publication |
+| PE resource directory analyzer | Map the declared resource RVA into validated in-sample PE sections and validate/count top-level entries | **Verified locally and at implementation head** | Benign focused `3/3`, PE resource `6/6`, Native/full regression, Source contract 685, exact verifier `284/284`, and exact-head hosted CI/packages |
+| PE resource section cancellation | Propagate the exact scan callback before directory handling, each at-most-4,096-entry section chunk, and exhausted search | **Verified locally and at implementation head** | Exact callback-error preservation and no later analysis/verdict publication |
 
 Checkpoint 2255 does not give the PE resource analyzer execution, reputation,
 blocking, quarantine, or independent-verdict responsibility. Installed service,
@@ -5340,6 +5340,12 @@ Local evidence includes both locked workspace variants, strict lint/offline/
 release gates, Flutter/Dart suites, exact `284/284`, independent PS5/PS7 report
 acceptance, and hostile scope/step rejection. Hosted, integration, synchronized
 destination, and destination verifier evidence remain open.
+
+Exact implementation `67f2d26` now passes PR `#119` CI and both PR/push package
+runs. The two untouched consolidated artifacts pass bounded non-extracting
+8-root/6-package/7-checksum/CycloneDX-1.6/569-unique-ref review and publication
+is skipped. Evidence-head, integration, merged-main, synchronized-destination,
+and destination-verifier evidence remain open.
 
 ## Checkpoint 2254 ZIP EOCD Search Cancellation Matrix
 

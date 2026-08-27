@@ -7252,6 +7252,15 @@ while hostile missing-step/scope copies are rejected. Hosted, integration,
 guarded-sync, and destination evidence remain open; product-level driver,
 pre-execution, calibration, signing, and Defender-replacement limits are unchanged.
 
+Checkpoint 2255 is now also **verified at the exact implementation head**.
+Commit `67f2d26` passes PR `#119` CI `33117139169` plus PR/push package runs
+`33117139213`/`33117116754`; all six platform artifacts, consolidation,
+checksums, and lockfile SBOM succeed with publication skipped. Untouched PR and
+push artifacts `9665343047`/`9665714554` match GitHub and pass bounded
+non-extracting exact 8/6/7/CycloneDX-1.6/569-unique-ref review. Evidence-head,
+normal merge, merged-main, guarded-sync, and destination proof remain open, so
+the checkpoint and complete antivirus-hardening goal remain active.
+
 ## Checkpoint 2254 ZIP EOCD Search Cancellation
 
 - Scripted a shared fallible ZIP EOCD finder for central-directory sampling and

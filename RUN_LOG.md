@@ -13077,3 +13077,22 @@ pending.
 - Final read-only checks find zero product processes and preserve the vault at
   `16072/0/4522733`, with exact sidecars/key and zero unknown/reparse entries.
   Checkpoint 2255 is verified locally; hosted and integration evidence is open.
+
+## Checkpoint 2255 Hosted Implementation-Head Evidence
+
+- Exact implementation `67f2d26c73c56087f6e602b299803326f1bbd7b5`
+  passes PR `#119` CI `33117139169`, PR packages `33117139213`, and push
+  packages `33117116754`. All platform/consolidation jobs pass and publication
+  is skipped.
+- Untouched PR artifact `9665343047` is 132,103,528 bytes with SHA-256
+  `a21eda3625a88c2abfdda9b9ef440bd34c337eb74e398fab707828e473fa9c1e`;
+  push artifact `9665714554` is 132,138,884 bytes with SHA-256
+  `2251c3834f63054493a6749d731397a3d1a63cedab4fc1159fd573654fbf0f6c`.
+  Both independently downloaded ZIPs match GitHub.
+- Bounded non-extracting review passes exact 8 root entries, 6 packages, 7
+  checksum targets, CycloneDX 1.6, and 569 unique non-empty component refs,
+  with zero unsafe/duplicate/encrypted/link entries. No package was extracted,
+  installed, or executed; exact owned temp data was removed.
+- Evidence-head hosted runs, normal merge, merged-main evidence, guarded sync,
+  and destination verification remain open. `.verification` and the protected
+  vault remain untouched; the complete goal stays active.
