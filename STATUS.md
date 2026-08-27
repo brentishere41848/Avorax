@@ -7209,3 +7209,53 @@ Locks and the protected vault remain exact. Checkpoint 2250 is closed; the
 complete antivirus-hardening goal remains active, with installed service,
 driver/kernel, production-accuracy, pre-execution, and Defender-replacement
 claims still partial, blocked, technically limited, or unclaimed.
+
+## Checkpoint 2251 Static Reference-Search Cancellation
+
+- **Scripted / unverified:** String Indicator URL and remote network-path marker
+  searches now use one shared exact finder with at-most-64-KiB candidate chunks.
+  Reference terminator traversal uses UTF-8-safe at-most-64-KiB chunks while
+  preserving Unicode whitespace and the existing delimiter set.
+- **Evidence scripted first:** eight benign in-memory regressions cover marker
+  and body interruption, first cross-chunk match, empty-needle failure, and a
+  multibyte Unicode delimiter across a chunk boundary. Verifier step 280, exact
+  280-step validation, and Source contract 681 pin the implementation and
+  fail-visible publication boundary.
+- **Custom-engine responsibility:** the shared search module finds exact byte
+  markers; the String Indicator engine alone parses/classifies URL and network
+  path references. Neither module executes a reference or performs reputation
+  lookup, blocking, quarantine, or network access.
+- **Honest limit:** cancellation is cooperative. One admitted 64-KiB marker or
+  body chunk, an entered system call, another bounded analyzer interval, or one
+  trust call may finish before the next callback. Existing installed-service,
+  driver/kernel, production-accuracy, pre-execution, and Defender-replacement
+  limits are unchanged.
+- No checkpoint-2251 test has run during this scripting phase. Focused/full,
+  definitive `280/280`, hosted, integration, guarded synchronization, and
+  destination evidence remain pending; checkpoint 2251 and the complete goal
+  remain active.
+
+### Checkpoint 2251 Local Evidence
+
+Rustfmt, PS5/PS7 parsers, Source `681/681`, focused reference `8/8`, term
+search `6/6`, all String Indicator `45/45`, and adjacent cancellation `15/15`
+pass. Full Native passes 623 active plus compiler `6/6` with 21 documented
+child fixtures ignored; Local Core passes `546/546` in both locked workspace
+variants. Strict Native/Local/Guard Clippy, standalone locked/offline Native,
+locked release workspace, Flutter analyze and `847/847`, and Dart `14/14`
+pass. Two initial test/contract issues were repaired and complete reruns pass.
+Locks and the read-only protected vault remain exact. Definitive `280/280`,
+hosted, integration, guarded-sync, and destination closure remain pending.
+
+### Checkpoint 2251 Definitive Local Evidence
+
+The definitive PS5 verifier now passes exact `280/280`, zero failures, in
+`662.9` seconds. The new reference-search step appears once and passes. The
+report SHA-256 is
+`17b60115b7a419310646789d4dc8b17b157b3e62ab0f1b2da6ec48d0dbe8b5f4`;
+independent PS5/PS7 full-suite validation accepts it. Both validators correctly
+reject a missing-step 279-step copy and a separate 280-step copy missing the
+new scope claim; those temporary copies were removed. Locks and the protected
+vault remain exact. Checkpoint 2251 is **verified locally** but remains active
+pending hosted exact-head evidence, PR integration, guarded synchronization,
+and destination reruns. The complete antivirus-hardening goal remains active.

@@ -5299,3 +5299,39 @@ destination Source `680/680`, focused `6/6`, formatting, and definitive
 `279/279` plus PS5/PS7 acceptance pass. Implemented rows are **Verified**;
 partial and disabled rows are unchanged. Checkpoint 2250 is closed, while the
 complete antivirus-hardening goal remains active.
+
+## Checkpoint 2251 Static Reference-Search Cancellation Matrix
+
+| Control / engine | Responsibility | Status | Evidence / blocker |
+|---|---|---|---|
+| Shared exact reference finder | Return the first exact marker offset with bounded callback latency | Verified locally | At-most-64-KiB candidate chunks; cross-chunk/first-match/empty-needle fixtures pass |
+| String Indicator reference terminator | Locate Unicode whitespace or an existing delimiter without splitting UTF-8 | Verified locally | UTF-8-safe at-most-64-KiB chunks and cross-boundary Unicode fixture pass |
+| Embedded URL classifier | Count URL references and classify executable, ClickOnce, Java Web Start, and Windows package suffixes | Verified locally | Marker/body cancellation fixtures pass; classification logic and saturating counts remain unchanged |
+| Remote network-path classifier | Count executable UNC or remote `file://` references while excluding device/local forms | Verified locally | Marker/body cancellation fixtures pass; existing path predicates remain unchanged |
+| String Indicator publication | Return no partial `StringIndicators` after arbitrary callback failure | Verified locally | Fallible marker/body paths propagate `Result` before analyzer/verdict publication |
+| Static reference callback latency | Bound cooperative work between callbacks | Partial / technically limited | One admitted marker candidate or UTF-8-safe body chunk of at most 64 KiB may finish first |
+| Reference execution/network access | Keep static parsing detection-only and offline | Verified / unchanged | Engine only examines bounded in-memory text; it does not open URLs/paths or perform lookup/action |
+| Windows publisher trust | Validate bounded Microsoft Authenticode identity/hash binding | Partial / technically limited | Existing isolated helper; one active trust call is not hard-interrupted |
+| Reputation/correlated behavior providers | Require authenticated backend or trusted identity-bound telemetry | Disabled / blocked | Existing prerequisites remain unavailable |
+
+Checkpoint 2251 verifier step 280 and Source contract 681 are fully scripted.
+No checkpoint-2251 test has run during this scripting phase. Focused, full,
+definitive exact `280/280`, hosted, integration, guarded-sync, and destination
+evidence remain pending, so new implementation rows remain **Scripted /
+unverified**. Existing verified, partial, and disabled engine statuses are
+otherwise unchanged. The complete antivirus-hardening goal remains active.
+
+Local focused/adjacent and full compatibility evidence now passes: reference
+`8/8`, terms `6/6`, strings `45/45`, cancellation `15/15`, Source `681/681`,
+Native 623 active plus compiler `6/6`, Local Core `546/546`, both locked
+workspace variants, strict lint, locked/offline and release builds, Flutter
+analyze and `847/847`, and Dart `14/14`. New implementation rows are therefore
+**Verified locally**. Definitive `280/280`, hosted, integration, guarded-sync,
+and destination evidence remain open; partial and disabled rows are unchanged.
+
+Definitive local evidence now passes exact `280/280`, zero failures, in `662.9`
+seconds; report SHA-256 is
+`17b60115b7a419310646789d4dc8b17b157b3e62ab0f1b2da6ec48d0dbe8b5f4`.
+PS5/PS7 accept the exact report and both reject missing-step and missing-scope
+adversarial copies. Hosted exact-head, integration, guarded-sync, and
+destination evidence remain open; partial and disabled rows are unchanged.

@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use crate::signatures::text::ascii_lowercase_lossy_with_cancellation;
 
 const STRING_REFERENCE_CANCELLATION_INTERVAL: usize = 1024;
+const STRING_REFERENCE_CANCELLATION_CHUNK_BYTES: usize = 64 * 1024;
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct StringIndicators {
@@ -503,6 +504,34 @@ struct EmbeddedUrlCounts {
     windows_app_package: u32,
 }
 
+fn reference_end_with_cancellation(
+    text: &str,
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<usize> {
+    let mut chunk_start = 0usize;
+    while chunk_start < text.len() {
+        cancellation_checkpoint()?;
+        let mut chunk_end = chunk_start
+            .saturating_add(STRING_REFERENCE_CANCELLATION_CHUNK_BYTES)
+            .min(text.len());
+        while chunk_end > chunk_start && !text.is_char_boundary(chunk_end) {
+            chunk_end -= 1;
+        }
+
+        if let Some((relative_end, _)) =
+            text[chunk_start..chunk_end].char_indices().find(|(_, ch)| {
+                ch.is_whitespace() || matches!(ch, '"' | '\'' | '<' | '>' | ')' | ']' | '}')
+            })
+        {
+            return Ok(chunk_start + relative_end);
+        }
+        chunk_start = chunk_end;
+    }
+
+    cancellation_checkpoint()?;
+    Ok(text.len())
+}
+
 fn embedded_url_counts_with_cancellation(
     text: &str,
     cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
@@ -512,17 +541,17 @@ fn embedded_url_counts_with_cancellation(
     for marker in ["http://", "https://"] {
         cancellation_checkpoint()?;
         let mut search_start = 0;
-        while let Some(relative_start) = text[search_start..].find(marker) {
+        while let Some(relative_start) = crate::signatures::search::find_exact_with_cancellation(
+            &text.as_bytes()[search_start..],
+            marker.as_bytes(),
+            cancellation_checkpoint,
+        )? {
             if references_seen.is_multiple_of(STRING_REFERENCE_CANCELLATION_INTERVAL) {
                 cancellation_checkpoint()?;
             }
             let start = search_start + relative_start;
             let rest = &text[start..];
-            let end = rest
-                .find(|ch: char| {
-                    ch.is_whitespace() || matches!(ch, '"' | '\'' | '<' | '>' | ')' | ']' | '}')
-                })
-                .unwrap_or(rest.len());
+            let end = reference_end_with_cancellation(rest, cancellation_checkpoint)?;
             let url = &rest[..end];
             counts.total = counts.total.saturating_add(1);
             counts.executable = counts
@@ -580,17 +609,17 @@ fn remote_network_executable_path_count_with_cancellation(
     for marker in ["\\\\", "file://"] {
         cancellation_checkpoint()?;
         let mut search_start = 0;
-        while let Some(relative_start) = text[search_start..].find(marker) {
+        while let Some(relative_start) = crate::signatures::search::find_exact_with_cancellation(
+            &text.as_bytes()[search_start..],
+            marker.as_bytes(),
+            cancellation_checkpoint,
+        )? {
             if references_seen.is_multiple_of(STRING_REFERENCE_CANCELLATION_INTERVAL) {
                 cancellation_checkpoint()?;
             }
             let start = search_start + relative_start;
             let rest = &text[start..];
-            let end = rest
-                .find(|ch: char| {
-                    ch.is_whitespace() || matches!(ch, '"' | '\'' | '<' | '>' | ')' | ']' | '}')
-                })
-                .unwrap_or(rest.len());
+            let end = reference_end_with_cancellation(rest, cancellation_checkpoint)?;
             let path = &rest[..end];
             if is_remote_network_path(path) && path_has_executable_or_script_suffix(path) {
                 executable_count = executable_count.saturating_add(1);
@@ -826,6 +855,110 @@ mod tests {
             .to_string()
             .contains("benign string term-search cancellation"));
         assert_eq!(checks, 2);
+    }
+
+    #[test]
+    fn static_reference_cancellation_interrupts_url_marker_search_before_evidence() {
+        let text = "a".repeat(STRING_REFERENCE_CANCELLATION_CHUNK_BYTES * 3);
+        let mut checks = 0usize;
+        let mut checkpoint = || {
+            checks += 1;
+            if checks == 3 {
+                anyhow::bail!("benign URL marker-search cancellation")
+            }
+            Ok(())
+        };
+
+        let error = match embedded_url_counts_with_cancellation(&text, &mut checkpoint) {
+            Ok(_) => panic!("URL marker-search cancellation must abort before evidence"),
+            Err(error) => error,
+        };
+
+        assert!(error
+            .to_string()
+            .contains("benign URL marker-search cancellation"));
+        assert_eq!(checks, 3);
+    }
+
+    #[test]
+    fn static_reference_cancellation_interrupts_url_body_before_evidence() {
+        let text = format!(
+            "http://safe.invalid/{}.exe",
+            "a".repeat(STRING_REFERENCE_CANCELLATION_CHUNK_BYTES * 3)
+        );
+        let mut checks = 0usize;
+        let mut checkpoint = || {
+            checks += 1;
+            if checks == 5 {
+                anyhow::bail!("benign URL body cancellation")
+            }
+            Ok(())
+        };
+
+        let error = match embedded_url_counts_with_cancellation(&text, &mut checkpoint) {
+            Ok(_) => panic!("URL body cancellation must abort before evidence"),
+            Err(error) => error,
+        };
+
+        assert!(error.to_string().contains("benign URL body cancellation"));
+        assert_eq!(checks, 5);
+    }
+
+    #[test]
+    fn static_reference_cancellation_interrupts_network_marker_search_before_evidence() {
+        let text = "a".repeat(STRING_REFERENCE_CANCELLATION_CHUNK_BYTES * 3);
+        let mut checks = 0usize;
+        let mut checkpoint = || {
+            checks += 1;
+            if checks == 3 {
+                anyhow::bail!("benign network marker-search cancellation")
+            }
+            Ok(())
+        };
+
+        let error = remote_network_executable_path_count_with_cancellation(&text, &mut checkpoint)
+            .expect_err("network marker-search cancellation must abort before evidence");
+
+        assert!(error
+            .to_string()
+            .contains("benign network marker-search cancellation"));
+        assert_eq!(checks, 3);
+    }
+
+    #[test]
+    fn static_reference_cancellation_interrupts_network_body_before_evidence() {
+        let text = format!(
+            "\\\\fileserver\\share\\{}.exe",
+            "a".repeat(STRING_REFERENCE_CANCELLATION_CHUNK_BYTES * 3)
+        );
+        let mut checks = 0usize;
+        let mut checkpoint = || {
+            checks += 1;
+            if checks == 5 {
+                anyhow::bail!("benign network body cancellation")
+            }
+            Ok(())
+        };
+
+        let error = remote_network_executable_path_count_with_cancellation(&text, &mut checkpoint)
+            .expect_err("network body cancellation must abort before evidence");
+
+        assert!(error
+            .to_string()
+            .contains("benign network body cancellation"));
+        assert_eq!(checks, 5);
+    }
+
+    #[test]
+    fn static_reference_cancellation_preserves_unicode_delimiter_across_chunks() {
+        let prefix = "a".repeat(STRING_REFERENCE_CANCELLATION_CHUNK_BYTES - 1);
+        let text = format!("{prefix}\u{2003}ordinary");
+        let mut never_cancel = || Ok(());
+
+        assert_eq!(
+            reference_end_with_cancellation(&text, &mut never_cancel).unwrap(),
+            prefix.len()
+        );
     }
 
     #[test]
