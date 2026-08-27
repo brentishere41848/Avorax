@@ -56,7 +56,7 @@ proving it is empty and non-reparse. There is no recursive delete.
 | Schema v2 dual-host validator | Verified locally (focused) | PS5 and PS7 accept the authentic report and reject all six mutations |
 | Full verifier integration | Verified locally | Exact `282/282` definitive report with zero non-passing steps |
 | Source and documentation contract | Verified locally | Exact Source contract `683/683` |
-| Hosted/integrated/destination state | Pending | Exact-head CI/package evidence, normal merge, guarded sync, destination rerun |
+| Hosted/integrated/destination state | Implementation head verified; integration pending | Exact-head CI/package evidence passes; normal merge, guarded sync, and destination rerun remain required |
 
 No checkpoint-2253 test has run during this scripting phase. Nothing in this
 checkpoint changes detection, quarantine, update, service, driver, Defender,
@@ -124,3 +124,30 @@ product process residue. Checkpoint 2253 is **verified locally**. Hosted
 exact-head CI/packages, normal integration, guarded synchronization, and
 destination verification remain pending. The complete antivirus-hardening goal
 remains active.
+
+## Hosted Implementation-Head Evidence
+
+Exact implementation commit `3fc1fb0907cc194211064784f9ba95cc34f32732`
+passes PR `#115` CI run `33091441105`: branding, security/protection/
+performance, Flutter/protocol, Rust Local Core/Guard, and Unix quarantine
+permission jobs all succeed. Manually dispatched Desktop Packages run
+`33091417691` is bound to the same exact head with version `0.1.15`, tag input
+`v0.1.15-beta.1`, and `publish_prerelease=false`. Package contracts, Windows
+MSI/EXE, Linux DEB/tar, both macOS DMGs, and consolidation succeed; the
+publication job is explicitly skipped and no release is created.
+
+GitHub reports consolidated artifact `9655292568`,
+`avorax-desktop-release-0.1.15`, as 132,050,923 bytes with digest
+`sha256:6079a51cdf15760aa6f8c0fd8d1bab821f1075f3050f566292753cd340225e49`.
+The independently downloaded untouched ZIP has that exact size and SHA-256.
+A bounded non-extracting review verifies exactly eight safe root entries, six
+platform packages, seven matching checksum targets, and one CycloneDX 1.6
+lockfile SBOM with 569 components and 569 unique references. It finds zero
+unsafe, duplicate, encrypted, or link entries. No artifact content is
+installed, extracted, or executed; the exact temporary ZIP and its empty owned
+directory are removed afterward.
+
+This closes implementation-head hosted evidence only. Evidence-head CI and
+packages, normal PR integration, merged-main CI/packages, guarded destination
+synchronization, and destination verification remain required. The complete
+antivirus-hardening goal remains active.

@@ -12912,3 +12912,21 @@ pending.
 - Locks, zero product-process residue, and the read-only protected-vault exact
   `16072/0/4522733` invariant pass. Hosted, integration, guarded-sync, and
   destination closure remain pending; no release/publication occurred.
+
+## 2026-08-27 - Checkpoint 2253 Hosted Implementation Evidence
+
+- Exact implementation `3fc1fb0907cc194211064784f9ba95cc34f32732`
+  passes PR `#115` CI run `33091441105`, all five jobs green.
+- Manual Desktop Packages run `33091417691` is exact-head bound with
+  `publish_prerelease=false`; contracts, four platform jobs, and consolidation
+  pass, while prerelease publication is explicitly skipped.
+- Consolidated artifact `9655292568` is 132,050,923 bytes. GitHub and the
+  untouched download match SHA-256
+  `6079a51cdf15760aa6f8c0fd8d1bab821f1075f3050f566292753cd340225e49`.
+- Bounded non-extracting review passes exact `8` root entries, `6` platform
+  packages, `7` matching checksum targets, CycloneDX 1.6, `569` components,
+  `569` unique references, and zero unsafe/duplicate/encrypted/link entries.
+  The review ZIP and its empty exact-owned directory were removed.
+- Evidence-head checks, normal merge, merged-main checks, guarded destination
+  synchronization, and destination verification remain pending. No package was
+  installed, executed, released, or published.

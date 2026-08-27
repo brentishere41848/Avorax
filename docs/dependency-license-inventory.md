@@ -1989,3 +1989,15 @@ SHA-256 values remain exactly
 `4de19695f9207273746341ca2221541b5b86d9f72af83727afca78541e177694`.
 The direct pytest-module miss caused no installation; the dependency-free
 Source runner passes `683/683`. Hosted package/SBOM evidence remains pending.
+
+Implementation-head hosted package evidence now passes at exact commit
+`3fc1fb0907cc194211064784f9ba95cc34f32732` in Desktop Packages run
+`33091417691`, with publication skipped. Consolidated artifact `9655292568`
+matches GitHub's 132,050,923-byte SHA-256
+`6079a51cdf15760aa6f8c0fd8d1bab821f1075f3050f566292753cd340225e49`.
+Bounded non-extracting review verifies six platform packages, all seven
+checksum targets, and CycloneDX 1.6 with exactly 569 components and 569 unique
+references. No dependency, feature, source, lockfile, license classification,
+or runtime installation changed. Evidence-head and merged-main package/SBOM
+evidence plus complete signed final-binary license/notice review remain
+required.

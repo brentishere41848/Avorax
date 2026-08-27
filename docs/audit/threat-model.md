@@ -3591,3 +3591,14 @@ it does not authenticate repository evidence remotely or change installed
 service, IPC, production-calibration, kernel, pre-execution, or Defender-
 replacement boundaries. Hosted, integration, synchronization, and destination
 evidence remain pending.
+
+Exact-head hosted evidence now passes at
+`3fc1fb0907cc194211064784f9ba95cc34f32732`: PR CI `33091441105` and Desktop
+Packages `33091417691` are green, package publication is skipped, and
+consolidated artifact `9655292568` matches its GitHub digest. Bounded
+non-extracting review validates exact safe inventory, checksums, and CycloneDX
+1.6/569 unique components before exact cleanup. This supplies reproducible
+remote build evidence, not authenticated runtime attestation, installed
+cross-identity IPC, signed production binaries, kernel mediation,
+pre-execution blocking, or Defender replacement. Integration, merged-main,
+guarded synchronization, and destination proof remain pending.

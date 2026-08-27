@@ -5449,3 +5449,12 @@ reject both missing-step and missing-scope copies. Hosted, integration,
 guarded-sync, and destination evidence remain open. Detection/verdict behavior
 is unchanged; installed service, driver/kernel, and Defender-replacement rows
 remain partial, disabled, blocked, technically limited, or unclaimed.
+
+Exact implementation head `3fc1fb0907cc194211064784f9ba95cc34f32732`
+now passes five-job PR CI `33091441105` and full Desktop Packages run
+`33091417691` with publication skipped. Consolidated artifact `9655292568`
+matches GitHub's 132,050,923-byte SHA-256 and passes bounded non-extracting
+exact 8-root/6-package/7-checksum/CycloneDX-1.6/569-unique-component review.
+The reporting controls are therefore **Verified locally and at implementation
+head**. Evidence-head, integration, merged-main, guarded-sync, and destination
+evidence remain open; no product-engine or protection claim changes.

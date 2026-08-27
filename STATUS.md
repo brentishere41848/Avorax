@@ -7268,6 +7268,21 @@ vault remain exact. Checkpoint 2253 is **verified locally**; hosted,
 integration, guarded-sync, and destination evidence remain pending. The full
 antivirus-hardening goal remains active.
 
+### Checkpoint 2253 Hosted Implementation Evidence
+
+Exact implementation `3fc1fb0907cc194211064784f9ba95cc34f32732`
+passes PR `#115` CI `33091441105` and manually dispatched package run
+`33091417691`. All five CI jobs and package contracts, Windows, Linux, both
+macOS architectures, and consolidation pass; publication is explicitly
+skipped. Consolidated artifact `9655292568` is 132,050,923 bytes and its
+download matches GitHub SHA-256
+`6079a51cdf15760aa6f8c0fd8d1bab821f1075f3050f566292753cd340225e49`.
+Bounded non-extracting review passes exact `8/6/7` root/package/checksum
+inventory and CycloneDX 1.6 with `569` unique components. Temporary review data
+is removed. Evidence-head, integration, merged-main, guarded-sync, and
+destination evidence remain pending; checkpoint 2253 and the complete goal
+remain active.
+
 ## Checkpoint 2252 Local Verification Progress
 
 - PS5/PS7 parsers pass `2/2` each, Source contracts pass exact `682/682`, the
