@@ -7261,6 +7261,19 @@ non-extracting exact 8/6/7/CycloneDX-1.6/569-unique-ref review. Evidence-head,
 normal merge, merged-main, guarded-sync, and destination proof remain open, so
 the checkpoint and complete antivirus-hardening goal remain active.
 
+### Checkpoint 2255 Closure
+
+Evidence head `7211293` and merge `d1e2b0a` pass exact-head and merged-main CI/
+packages with publication skipped. Both consolidated artifacts match their
+recorded bytes/hash and pass bounded non-extracting
+`8/6/7/CycloneDX-1.6/569` review. Guarded synchronization passes `13/13`, with
+12 modified, one added, zero deleted, independent target-byte equality, and no
+residue. Destination focused evidence passes, and the full report is exact
+`284/284` in `667.7s` under independent PS5/PS7 validation. Locks, product
+process state, and the protected vault remain exact. Checkpoint 2255 is
+**Closed**; the complete antivirus-hardening goal and product-level blockers
+remain active.
+
 ## Checkpoint 2254 ZIP EOCD Search Cancellation
 
 - Scripted a shared fallible ZIP EOCD finder for central-directory sampling and

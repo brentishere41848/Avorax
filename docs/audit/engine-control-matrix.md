@@ -5329,8 +5329,8 @@ complete antivirus-hardening goal remains active.
 
 | Control / engine | Responsibility | State | Evidence required |
 |---|---|---|---|
-| PE resource directory analyzer | Map the declared resource RVA into validated in-sample PE sections and validate/count top-level entries | **Verified locally and at implementation head** | Benign focused `3/3`, PE resource `6/6`, Native/full regression, Source contract 685, exact verifier `284/284`, and exact-head hosted CI/packages |
-| PE resource section cancellation | Propagate the exact scan callback before directory handling, each at-most-4,096-entry section chunk, and exhausted search | **Verified locally and at implementation head** | Exact callback-error preservation and no later analysis/verdict publication |
+| PE resource directory analyzer | Map the declared resource RVA into validated in-sample PE sections and validate/count top-level entries | **Closed / verified for this checkpoint** | Benign focused `3/3`, PE resource `6/6`, Native/full regression, Source contract 685, exact verifier `284/284`, hosted CI/packages, and destination proof |
+| PE resource section cancellation | Propagate the exact scan callback before directory handling, each at-most-4,096-entry section chunk, and exhausted search | **Closed / verified for this checkpoint** | Exact callback-error preservation, no later analysis/verdict publication, merged-main and synchronized-destination evidence |
 
 Checkpoint 2255 does not give the PE resource analyzer execution, reputation,
 blocking, quarantine, or independent-verdict responsibility. Installed service,
@@ -5346,6 +5346,12 @@ runs. The two untouched consolidated artifacts pass bounded non-extracting
 8-root/6-package/7-checksum/CycloneDX-1.6/569-unique-ref review and publication
 is skipped. Evidence-head, integration, merged-main, synchronized-destination,
 and destination-verifier evidence remain open.
+
+Evidence-head and merged-main CI/packages, bounded artifact inspection, guarded
+`13/13` synchronization, focused destination checks, and definitive destination
+`284/284` now pass. The two rows are **Closed / verified for this checkpoint**.
+Installed-service, driver/kernel, production calibration, pre-execution, and
+Defender-replacement rows remain partial, blocked, limited, or unclaimed.
 
 ## Checkpoint 2254 ZIP EOCD Search Cancellation Matrix
 

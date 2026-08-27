@@ -1854,6 +1854,12 @@ complete signed final-artifact license, notice, copyright, binary-resolution,
 signing/notarization, and release approval remain open; no dependency or lock
 changed.
 
+Evidence-head and merged-main package artifacts each retain exact CycloneDX 1.6
+inventory with 569 unique components and seven matching checksums. No lock,
+dependency, source, or license delta occurred. Checkpoint 2255 dependency
+evidence is closed; production notices, signing/notarization, legal approval,
+and release approval remain separate prerequisites.
+
 ## Checkpoint 2254 ZIP EOCD Cancellation Dependency Delta
 
 Checkpoint 2254 adds no dependency, feature, package source, downloaded

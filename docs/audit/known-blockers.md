@@ -3601,3 +3601,10 @@ merged-main evidence, guarded destination synchronization, and destination
 verification remain open. Cooperative latency and all separate installed-
 service, driver/kernel, signing/calibration, pre-execution, and Defender-
 replacement blockers remain unchanged.
+
+Evidence-head, normal integration, merged-main, guarded synchronization, and
+destination verification now pass, closing checkpoint 2255. Cooperative
+at-most-4,096-section latency remains bounded but non-preemptive. Installed
+cross-identity service/IPC, signed-driver/kernel mediation, production
+accuracy/signing, demonstrated pre-execution blocking, and Defender replacement
+remain open product blockers.

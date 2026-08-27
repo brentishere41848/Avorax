@@ -3697,3 +3697,9 @@ reproducibility evidence, not a stronger runtime boundary. Evidence-head,
 merge, merged-main, synchronized-destination, and destination verification
 remain open, and all cooperative/installed/kernel/pre-execution/Defender limits
 remain unchanged.
+
+Evidence-head, merged-main, synchronized-destination, and exact destination
+verification now close this threat delta. PE resource mapping observes
+cancellation at the documented cooperative intervals; it still does not
+establish a wall-clock deadline, kernel mediation, pre-execution blocking, or
+Defender replacement.

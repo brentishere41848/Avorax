@@ -636,3 +636,9 @@ green and publication skipped. Untouched consolidated artifacts
 non-extracting exact 8-entry/6-package/7-checksum/CycloneDX-1.6/569-unique-ref
 validation. Evidence-head, integration, merged-main, guarded synchronization,
 and destination reruns remain required.
+
+Checkpoint-2255 closure additionally passes evidence-head and merged-main CI/
+packages, guarded `13/13` destination synchronization, destination PS5/PS7
+parser `2/2`, formatting, Source `685/685`, cancellation `3/3`, and definitive
+destination `284/284` in `667.7s`. The destination report SHA-256 is
+`853db9a32a3e18f1b8704d9965bf60ab56f52f89f2c280a828278ac73cfade58`.
