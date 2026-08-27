@@ -5411,10 +5411,10 @@ complete antivirus-hardening goal remains active.
 
 | Control / engine | Responsibility | Status | Evidence / blocker |
 |---|---|---|---|
-| Small-threat MVP step runner | Preserve the exact invoked command, bounded error, and elapsed time before rethrow | Scripted / unverified | Schema-v2 producer and focused intentional first-step failure smoke are scripted; execution pending |
-| Verification report serializer | Distinguish invoked-step failure from orchestration failure without converting either to success | Scripted / unverified | `failure_kind=step|orchestration`; atomic repo-contained JSON path unchanged |
-| Small-threat MVP report validator | Reject missing, multiple, non-terminal, or errorless failed-step evidence and invalid passed-step errors | Scripted / unverified | PS5/PS7 acceptance plus six report-only mutation rejections scripted |
-| Full-suite verifier | Include the safe failed-step regression in every definitive run | Scripted / unverified | New mandatory step 282; exact `282/282` execution pending |
+| Small-threat MVP step runner | Preserve the exact invoked command, bounded error, and elapsed time before rethrow | Verified | Authentic first-step failure and local/destination definitive evidence pass |
+| Verification report serializer | Distinguish invoked-step failure from orchestration failure without converting either to success | Verified | Schema-v2 `failure_kind` and exact terminal-error contracts pass |
+| Small-threat MVP report validator | Reject missing, multiple, non-terminal, or errorless failed-step evidence and invalid passed-step errors | Verified | PS5/PS7 acceptance and all six report-only mutation rejections pass |
+| Full-suite verifier | Include the safe failed-step regression in every definitive run | Verified | Mandatory step 282; local and destination exact `282/282` pass |
 | Detection and verdict engines | Continue existing scan, trust, quarantine, and verdict responsibilities unchanged | Verified / unchanged | No engine implementation or threshold changes in checkpoint 2253 |
 | Installed service, driver, and Defender replacement | Require installed authenticated IPC, production signing, kernel mediation, and host proof | Disabled / blocked or technically limited | This reporting checkpoint supplies no such proof and makes no protection expansion claim |
 
@@ -5458,3 +5458,13 @@ exact 8-root/6-package/7-checksum/CycloneDX-1.6/569-unique-component review.
 The reporting controls are therefore **Verified locally and at implementation
 head**. Evidence-head, integration, merged-main, guarded-sync, and destination
 evidence remain open; no product-engine or protection claim changes.
+
+Checkpoint 2253 is now closed through evidence `09e5a9c`, PR `#115`, merge
+`61311d9`, exact-head and merged-main CI/packages, bounded review of all three
+consolidated package artifacts, guarded `12/12` zero-delete synchronization,
+destination focused checks, and destination exact `282/282` with independent
+PS5/PS7 validation. All four reporting rows are **Verified**. Detection and
+verdict rows remain unchanged; installed service, cross-identity IPC,
+production signing, driver/kernel, pre-execution, and Defender-replacement rows
+remain partial, disabled, blocked, technically limited, or unclaimed. The
+complete antivirus-hardening goal remains active.

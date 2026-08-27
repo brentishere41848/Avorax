@@ -2001,3 +2001,17 @@ references. No dependency, feature, source, lockfile, license classification,
 or runtime installation changed. Evidence-head and merged-main package/SBOM
 evidence plus complete signed final-binary license/notice review remain
 required.
+
+Evidence-head package run `33093775519` and merged-main package run
+`33095665829` pass all platform, contract, and consolidation jobs with
+publication skipped. Consolidated artifacts `9656100498` and `9656858505`
+have independently matched SHA-256 values
+`36756f9dbb1aad926231e4a27008f3c30f985506eb43e23d625d5b926c88c1c5` and
+`e1631fbb11088c624309351326a311408ebacb8a71cb2b824906be0e3ba9b8d0`.
+Both bounded reviews verify all seven checksums and CycloneDX 1.6 with 569
+components and 569 unique references. Destination exact `282/282` and all
+three unchanged lock hashes pass. Checkpoint 2253 adds no dependency, feature,
+package source, license class, lockfile, downloaded runtime, or machine-wide
+component. Final-binary legal/notice resolution, production signing/
+notarization, installed-service stress, enterprise deployment approval, and
+release approval remain separate prerequisites.

@@ -56,7 +56,7 @@ proving it is empty and non-reparse. There is no recursive delete.
 | Schema v2 dual-host validator | Verified locally (focused) | PS5 and PS7 accept the authentic report and reject all six mutations |
 | Full verifier integration | Verified locally | Exact `282/282` definitive report with zero non-passing steps |
 | Source and documentation contract | Verified locally | Exact Source contract `683/683` |
-| Hosted/integrated/destination state | Implementation head verified; integration pending | Exact-head CI/package evidence passes; normal merge, guarded sync, and destination rerun remain required |
+| Hosted/integrated/destination state | Verified | Evidence-head and merged-main CI/packages, normal merge, guarded sync, and destination rerun pass |
 
 No checkpoint-2253 test has run during this scripting phase. Nothing in this
 checkpoint changes detection, quarantine, update, service, driver, Defender,
@@ -151,3 +151,80 @@ This closes implementation-head hosted evidence only. Evidence-head CI and
 packages, normal PR integration, merged-main CI/packages, guarded destination
 synchronization, and destination verification remain required. The complete
 antivirus-hardening goal remains active.
+
+## Hosted Integration And Package Evidence
+
+Evidence commit `09e5a9caf64925029316aeb6054306eb872866fb` passes PR
+`#115` exact-head CI run `33093781090` and Desktop Packages run `33093775519`.
+All five CI jobs and package contract, Windows, Linux, both macOS, and
+consolidation jobs pass; publication is skipped. Consolidated artifact
+`9656100498` is 132,067,452 bytes and its untouched download matches GitHub
+SHA-256 `36756f9dbb1aad926231e4a27008f3c30f985506eb43e23d625d5b926c88c1c5`.
+Bounded non-extracting review passes exact 8-root/6-package/7-checksum and
+CycloneDX 1.6/569-unique-component validation.
+
+PR `#115` merged normally as
+`61311d967168a3cac5cecafce7b1c1c4fcf974f3`. Merged-main CI run
+`33095648643` and Desktop Packages run `33095665829` pass on that exact merge;
+publication is skipped. Main artifact `9656858505` is 132,060,157 bytes and its
+untouched download matches GitHub SHA-256
+`e1631fbb11088c624309351326a311408ebacb8a71cb2b824906be0e3ba9b8d0`.
+The same bounded review passes exact 8/6/7/CycloneDX-1.6/569 inventory with
+zero unsafe, duplicate, encrypted, or link entries. Exact temporary archives
+and their empty owned directories were removed without extraction, execution,
+installation, release, or publication.
+
+## Guarded Destination Synchronization
+
+The exact delta from prior closure
+`4ad5a96dfe9af786713c19aee6324e73efc68e3d` to merge
+`61311d967168a3cac5cecafce7b1c1c4fcf974f3` contains ten modified, two added,
+and zero deleted paths. Read-only preflight required every existing destination
+file to match the old or new Git-clean blob, required both additions to be
+absent or already exact, and rejected links, non-files, unsafe containment, and
+unexpected statuses. All ten existing files matched the old blobs and both new
+paths were absent.
+
+All 12 source blobs were staged to separate same-directory regular temporary
+files, verified against the merge blobs, atomically activated, and verified
+again. Exact cleanup removed only any still-owned staging files. Independent
+post-sync comparison passes `12/12`, with zero mismatches and zero deletes; no
+unrelated destination file changed.
+
+## Destination Verification
+
+The first focused invocation selected the WindowsApps Python reparse shim and
+the smoke rejected it before testing. That attempt is uncredited and no
+security rule changed. The corrected complete focused rerun uses the checked
+regular Python host and passes PS5/PS7 parsers `3/3`, Source `683/683`, and the
+failed-step smoke with one authentic failure plus six adversarial rejections.
+
+With test-only `CARGO_PROFILE_TEST_DEBUG=0`, `CARGO_INCREMENTAL=0`,
+`CARGO_PROFILE_TEST_CODEGEN_UNITS=1`, and
+`CARGO_PROFILE_TEST_STRIP=symbols`, the from-start destination verifier passes
+exact `282/282`, zero non-passing steps, in `578.3s` from
+`2026-08-27T17:17:22.5186220Z` through
+`2026-08-27T17:27:00.8349357Z`. Its 193,682-byte schema-v2 report is
+`.workflow/ultracode/avorax-hardening/results/checkpoint-2253-small-threat-mvp-verification-report-destination.json`
+with SHA-256
+`bb4d1bda31c67c40c8b4139463234fda0bed87577c70ad7a68f215ea3b1b6fe8`.
+It records `failure_kind=null`, 282 passed steps with JSON-null errors, the
+expected first step, and terminal `Dependency evidence gate`. Independent PS5
+and PS7 full-suite validators pass.
+
+An initial post-run blob summary called `git diff` from the non-Git destination
+and produced an invalid zero-path summary; it is uncredited. The corrected
+audit runs Git from the authoritative worktree, asserts cardinality 12, and
+passes all `12/12` destination blobs. The three recorded lock hashes, zero
+product processes, and zero temporary-test entries are exact. The protected
+vault was audited read-only and remains 16,072 files, zero directories,
+4,522,733 bytes, 5,357 each `.avoraxq`/`.json`/`.auth`, one metadata key, and
+zero pending/temp/reparse entries. `.verification` was never staged or deleted.
+
+Checkpoint 2253 is closed through local, hosted, merged-main, synchronized, and
+destination evidence. This reporting change does not expand antivirus
+detection or installed protection. Same-user repository evidence, process or
+power-loss serialization, installed cross-identity service/IPC, production
+calibration/signing, signed-driver/kernel mediation, pre-execution blocking,
+and Defender replacement remain technically limited, blocked, or unclaimed.
+The complete antivirus-hardening goal remains active.

@@ -3513,3 +3513,21 @@ CI/packages, normal integration, merged-main CI/packages, guarded sync, and
 destination verification remain checkpoint-closure blockers. Installed
 service/IPC, production calibration/signing, driver/kernel, pre-execution, and
 Defender-replacement blockers remain unchanged.
+
+Checkpoint 2253 closure blockers are now cleared: evidence `09e5a9c`, PR
+`#115`, merge `61311d9`, exact-head and merged-main CI/packages, bounded
+artifact/SBOM reviews, guarded `12/12` zero-delete synchronization, corrected
+focused destination checks, and destination exact `282/282` plus dual-host
+validation pass. The rejected Python reparse-shim attempt and invalid zero-path
+blob summary remain uncredited; both failed visibly and their corrected routes
+pass. The failed-step observability gap from checkpoint 2252 is closed.
+
+Product blockers remain: same-user repository evidence is not remote
+attestation; process termination can prevent report serialization; monitoring
+and cancellation remain best-effort/cooperative at documented boundaries;
+installed cross-identity service ownership and authenticated IPC, production
+accuracy/calibration, production signing/notarization, signed driver/kernel
+mediation, demonstrated pre-execution blocking, and Defender replacement remain
+open. Reputation and correlated telemetry engines remain disabled until their
+trust prerequisites are met. The complete antivirus-hardening goal remains
+active.

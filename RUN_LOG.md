@@ -12930,3 +12930,29 @@ pending.
 - Evidence-head checks, normal merge, merged-main checks, guarded destination
   synchronization, and destination verification remain pending. No package was
   installed, executed, released, or published.
+
+## 2026-08-27 - Checkpoint 2253 Integration And Destination Closure
+
+- Evidence `09e5a9c` passes PR `#115` exact-head CI `33093781090` and packages
+  `33093775519`. Artifact `9656100498` is 132,067,452 bytes, SHA-256
+  `36756f9dbb1aad926231e4a27008f3c30f985506eb43e23d625d5b926c88c1c5`.
+- PR `#115` merged normally as `61311d9`. Main CI `33095648643` and packages
+  `33095665829` pass with publication skipped. Artifact `9656858505` is
+  132,060,157 bytes, SHA-256
+  `e1631fbb11088c624309351326a311408ebacb8a71cb2b824906be0e3ba9b8d0`.
+  Both untouched artifacts pass bounded non-extracting exact
+  8-root/6-package/7-checksum/CycloneDX-1.6/569-component review and cleanup.
+- Guarded destination sync from `4ad5a96` to `61311d9` passes exact `12/12`:
+  ten modified, two added, zero deleted, with every old/new/source/staged/final
+  blob precondition and containment/type/reparse check passing.
+- A focused attempt chose the WindowsApps Python reparse shim and was rejected
+  before testing. The corrected checked-host rerun passes PS5/PS7 `3/3`, Source
+  `683/683`, and one authentic plus six adversarial failed-step cases.
+- Destination verifier passes exact `282/282`, zero non-passing, in `578.3s`.
+  Independent PS5/PS7 validators accept the 193,682-byte report with SHA-256
+  `bb4d1bda31c67c40c8b4139463234fda0bed87577c70ad7a68f215ea3b1b6fe8`.
+- A wrong-working-directory zero-path blob summary is uncredited; corrected
+  hard-cardinality audit passes all 12 blobs. Three locks, zero product/temp
+  residue, and the read-only `16072/0/4522733` vault invariant pass.
+  `.verification` remains untouched. Checkpoint 2253 is closed; the complete
+  antivirus-hardening goal remains active.

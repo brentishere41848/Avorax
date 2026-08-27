@@ -3602,3 +3602,19 @@ remote build evidence, not authenticated runtime attestation, installed
 cross-identity IPC, signed production binaries, kernel mediation,
 pre-execution blocking, or Defender replacement. Integration, merged-main,
 guarded synchronization, and destination proof remain pending.
+
+Hosted and destination closure now verify the reporting mitigation without
+expanding its trust boundary. PR `#115` merged as `61311d9`; exact-head and
+merged-main CI/package matrices pass with publication skipped, all three
+consolidated artifacts pass bounded non-extracting checksum/SBOM review,
+guarded destination sync passes `12/12`, and destination verifier exact
+`282/282` passes with independent PS5/PS7 acceptance. The protected vault,
+locks, and process/temp residue remain exact.
+
+The destination evidence confirms exact terminal failed-step attribution and
+continued rethrow under the tested benign adversarial inputs. It does not make
+repository evidence an authenticated remote attestation, guarantee report
+serialization after process/power/disk failure, alter detection calibration,
+provide installed cross-identity authentication, add kernel mediation or
+pre-execution blocking, or establish Defender replacement. Those residual
+risks remain.
