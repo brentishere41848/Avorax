@@ -163,3 +163,27 @@ active.
 5. Obtain exact-head hosted CI/package evidence with publication skipped, merge
    through a normal PR, verify merged main, guarded-sync with zero deletes, and
    repeat destination focused/full/definitive evidence before closure.
+
+## Closure-Document Finalization Evidence
+
+- Closure-document commit `d4ec776fed288b76538c63267a64d4b1eff3fe17`
+  passes PR `#104` CI `33026575011` and merges normally as
+  `01b0701422bd8f620be5df5ee9f56a0ea5d0754b`, with exact parents
+  `d51c82346b60826b369412d9572680eba8c0304d` and
+  `d4ec776fed288b76538c63267a64d4b1eff3fe17`. Merged-main CI
+  `33027022675` passes all five jobs; docs-only path policy starts no package or
+  publication workflow.
+- Guarded synchronization changes exactly four documentation blobs, with zero
+  additions/deletes/mismatches/residue. Final destination Source `677/677`,
+  focused normalization `7/7`, and formatting checks pass.
+- The first final definitive verifier is uncredited because its broad
+  Authenticode filter exited `101` without a captured test name or diagnostic.
+  The exact focused rerun passed 83 active tests with 21 documented child
+  fixtures ignored. A complete clean rerun passed exact `276/276`, zero
+  failed/skipped, from `2026-08-27T00:39:50.7509959Z` through
+  `2026-08-27T00:48:19.24196Z` in `508.5s`. Embedded and independent PS5/PS7
+  validators accept report SHA-256
+  `ff23775d20ad62821d8fbc7f6bdeaf4e58c2f5b59ade7d01958b0669a32363be`.
+- All synchronized blobs, dependency locks, and the read-only protected-vault
+  invariant remain exact. Checkpoint 2247 is fully finalized; the complete
+  antivirus hardening goal remains active.

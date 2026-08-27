@@ -4,6 +4,7 @@ use anyhow::{bail, Result};
 use flate2::read::DeflateDecoder;
 
 use crate::analyzers::strings;
+use crate::signatures::text::ascii_lowercase_lossy_with_cancellation;
 
 use super::ArchiveAnalysis;
 
@@ -795,7 +796,7 @@ fn inspect_ooxml_relationship_entry(
         entry.uncompressed_size,
         cancellation_checkpoint,
     )? {
-        Ok(Some(body)) => inspect_ooxml_relationship_body(&body, result),
+        Ok(Some(body)) => inspect_ooxml_relationship_body(&body, result, cancellation_checkpoint)?,
         Ok(None) => {}
         Err(()) => {
             result.limit_exceeded = true;
@@ -832,10 +833,7 @@ fn inspect_archive_autorun_inf_entry(
         cancellation_checkpoint,
     )? {
         Ok(Some(body)) => {
-            let indicators = strings::extract_indicators(&body);
-            result.autorun_inf_executable_command_count = result
-                .autorun_inf_executable_command_count
-                .saturating_add(indicators.autorun_inf_executable_command_count);
+            inspect_autorun_inf_body_with_cancellation(&body, result, cancellation_checkpoint)?
         }
         Ok(None) => {}
         Err(()) => {
@@ -1061,21 +1059,40 @@ fn inflate_zip_body_with_cancellation(
     Ok(Ok(Some(inflated)))
 }
 
-fn inspect_ooxml_relationship_body(body: &[u8], result: &mut ArchiveAnalysis) {
-    let text = String::from_utf8_lossy(body).to_ascii_lowercase();
+fn inspect_ooxml_relationship_body(
+    body: &[u8],
+    result: &mut ArchiveAnalysis,
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<()> {
+    let text = ascii_lowercase_lossy_with_cancellation(body, cancellation_checkpoint)?;
     if !text.contains("targetmode") || !text.contains("external") {
-        return;
+        return Ok(());
     }
+    let indicators =
+        strings::extract_indicators_with_cancellation(text.as_bytes(), cancellation_checkpoint)?;
+    let remote_executable = indicators.remote_executable_url_count > 0
+        || indicators.remote_network_executable_path_count > 0;
+
     result.ooxml_external_relationship_count =
         result.ooxml_external_relationship_count.saturating_add(1);
-    let indicators = strings::extract_indicators(text.as_bytes());
-    if indicators.remote_executable_url_count > 0
-        || indicators.remote_network_executable_path_count > 0
-    {
+    if remote_executable {
         result.ooxml_remote_executable_relationship_count = result
             .ooxml_remote_executable_relationship_count
             .saturating_add(1);
     }
+    Ok(())
+}
+
+fn inspect_autorun_inf_body_with_cancellation(
+    body: &[u8],
+    result: &mut ArchiveAnalysis,
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<()> {
+    let indicators = strings::extract_indicators_with_cancellation(body, cancellation_checkpoint)?;
+    result.autorun_inf_executable_command_count = result
+        .autorun_inf_executable_command_count
+        .saturating_add(indicators.autorun_inf_executable_command_count);
+    Ok(())
 }
 
 #[cfg(test)]
@@ -1496,6 +1513,59 @@ mod tests {
         assert!(error
             .to_string()
             .contains("benign static relationship cancellation"));
+    }
+
+    #[test]
+    fn static_text_normalization_rejects_ooxml_callback_failure_before_evidence() {
+        let mut result = ArchiveAnalysis::default();
+        let mut checks = 0usize;
+        let mut checkpoint = || {
+            checks += 1;
+            if checks == 3 {
+                anyhow::bail!("benign OOXML post-normalization callback failure")
+            }
+            Ok(())
+        };
+
+        let error = inspect_ooxml_relationship_body(
+            br#"<Relationship TargetMode="External" Target="https://example.invalid/tool.exe"/>"#,
+            &mut result,
+            &mut checkpoint,
+        )
+        .expect_err("OOXML callback failure must abort before archive evidence");
+
+        assert!(error
+            .to_string()
+            .contains("benign OOXML post-normalization callback failure"));
+        assert_eq!(checks, 3);
+        assert_eq!(result.ooxml_external_relationship_count, 0);
+        assert_eq!(result.ooxml_remote_executable_relationship_count, 0);
+    }
+
+    #[test]
+    fn static_text_normalization_rejects_autorun_callback_failure_before_evidence() {
+        let mut result = ArchiveAnalysis::default();
+        let mut checks = 0usize;
+        let mut checkpoint = || {
+            checks += 1;
+            if checks == 4 {
+                anyhow::bail!("benign autorun post-normalization callback failure")
+            }
+            Ok(())
+        };
+
+        let error = inspect_autorun_inf_body_with_cancellation(
+            b"[autorun]\nopen=setup.exe\n",
+            &mut result,
+            &mut checkpoint,
+        )
+        .expect_err("autorun callback failure must abort before archive evidence");
+
+        assert!(error
+            .to_string()
+            .contains("benign autorun post-normalization callback failure"));
+        assert_eq!(checks, 4);
+        assert_eq!(result.autorun_inf_executable_command_count, 0);
     }
 
     #[test]

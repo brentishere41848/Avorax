@@ -3315,3 +3315,33 @@ definitive `276/276` evidence now passes locally. Dual validators pass; removing
 the mandatory step or technical-scope phrase is rejected. Hosted, integration,
 synchronization, and destination evidence remain open. Disabled reputation and
 telemetry-dependent behavior providers remain disabled with their prerequisites.
+
+## Checkpoint 2248 Static Text Normalization Cancellation Threat Delta
+
+**Threat:** a bounded 64 MiB file keeps string, script, or PE-import analysis in
+one whole-sample lossy UTF-8/lowercase operation after its exact scan job is
+cancelled. An arbitrary callback failure during OOXML or autorun inspection
+could otherwise be hidden after partial archive evidence mutation.
+
+**Mitigation:** all three non-archive normalizers reuse the semantics-preserving
+provider helper, which checks the exact callback before every at-most-64-KiB
+input chunk and after final input. OOXML relationship and autorun body paths
+propagate that callback through indicator extraction and update result counters
+only after every fallible operation succeeds. Five benign adversarial fixtures,
+verifier step 277, and Source contract 678 are scripted to make errors
+fail-visible before static analysis or verdict publication.
+
+**Residual risk:** cancellation remains cooperative. One normalization chunk,
+one UTF-16 interval, one term search, an entered OS/filesystem operation, or one
+Windows trust call may finish first. ZIP entry names still normalize in one
+header-bounded interval of at most 65,535 bytes. This is not constant-memory or
+hard-preemption proof and adds no installed service, authenticated cross-identity
+IPC, driver/kernel, production-accuracy, pre-execution, or Defender-replacement
+claim. Reputation and correlation-dependent engines remain disabled.
+
+No checkpoint-2248 test has run during this scripting phase. Checkpoint 2248
+normalization evidence was not promoted before execution. Focused, broad, strict,
+locked-build, Source `678/678`, and exact `277/277` local evidence now passes;
+dual validators also reject missing-step and missing-scope reports. Hosted,
+integration, guarded synchronization, and destination checks remain pending, so
+the residual risks and complete-goal status above are unchanged.

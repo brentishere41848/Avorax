@@ -3278,3 +3278,23 @@ limited. The complete antivirus hardening goal remains active.
   unsupported claims. Reputation and correlation-dependent providers remain
   disabled until their documented authenticated backend/telemetry prerequisites
   exist.
+
+## Checkpoint 2248 Static Text Normalization Cancellation
+
+- The implementation, five benign regression fixtures, verifier step 277,
+  Source contract 678, and documentation are scripted. No checkpoint-2248 test
+  has run during this scripting phase. After the batch froze, focused, broad,
+  strict, locked-build, Source `678/678`, and definitive exact `277/277` local
+  evidence passed. Hosted exact-head, package, merge, guarded-sync, and
+  destination evidence remain checkpoint-closure blockers.
+- Static normalization cancellation is cooperative. One at-most-64-KiB text
+  chunk, one UTF-16 interval, one term search, or one entered system operation
+  can complete before the next callback. ZIP entry-name normalization remains
+  one header-bounded interval of at most 65,535 bytes.
+- Installed cross-identity service ownership, authenticated service IPC,
+  production signing and calibration, signed driver/kernel mediation,
+  demonstrated pre-execution blocking, and Defender replacement remain genuine
+  blockers or unsupported claims.
+- Reputation and correlation-dependent behavior engines remain disabled until
+  their documented authenticated backend and trusted identity-bound telemetry
+  prerequisites exist. Checkpoint 2248 and the complete goal remain active.
