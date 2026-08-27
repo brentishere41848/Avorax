@@ -1949,3 +1949,55 @@ package source, license class, lockfile, or downloaded runtime content.
 Final-binary legal/notice resolution, production signing/notarization,
 installed-service stress, enterprise deployment approval, and release approval
 remain separate prerequisites.
+
+## Checkpoint 2253 Dependency Scope
+
+Failed-step report hardening reuses Windows PowerShell 5.1, the existing checked
+PowerShell 7 and Python executables, .NET `Process`, JSON, stopwatch, path, GUID,
+and file APIs, plus the repository's existing security-gate helpers. It adds no
+dependency, feature, build script, package source, license obligation, network
+source, downloaded runtime content, or lockfile change.
+
+The focused smoke intentionally supplies the already checked Python executable
+as the Cargo path so the first Cargo-style invocation fails immediately. It
+creates no candidate fixture, EICAR content, archive, executable, service,
+driver, or Defender exclusion and executes no untrusted content. Exact verifier
+step 282 and Source contract 683 are scripted; no checkpoint-2253 test has run
+during this scripting phase. The three expected lock hashes remain unchanged
+in source and require post-execution confirmation.
+
+Focused dual-parser, Source `683/683`, and failed-step smoke execution passes
+without a dependency or lockfile change. Root Cargo, Native Cargo, and Flutter
+lock SHA-256 values remain exactly `7c7c8aa006c2ac80eb89fa64d3b8ec09b32b26598b1a85bceb3c2af5a2d20e39`,
+`7f4393c81896600c4a5e84cad288a1a5360eccbc1c458b38f615082f66391383`, and
+`4de19695f9207273746341ca2221541b5b86d9f72af83727afca78541e177694`.
+Full and hosted package/SBOM evidence remain pending.
+
+Broad local verification also passes the locked all-features workspace,
+standalone Native locked/offline check, locked release workspace, strict
+Native/Local/Guard Clippy, Flutter analyze and `847/847`, and Dart `14/14`.
+The three lock hashes remain unchanged. Checkpoint 2253 still adds no dependency,
+feature, build script, package source, license obligation, downloaded runtime,
+or machine-wide component. Definitive step 282 and hosted package/SBOM evidence
+remain pending.
+
+Definitive exact `282/282`, independent PS5/PS7 acceptance, and missing-step /
+missing-scope rejection now pass. Root Cargo, Native Cargo, and Flutter lock
+SHA-256 values remain exactly
+`7c7c8aa006c2ac80eb89fa64d3b8ec09b32b26598b1a85bceb3c2af5a2d20e39`,
+`7f4393c81896600c4a5e84cad288a1a5360eccbc1c458b38f615082f66391383`, and
+`4de19695f9207273746341ca2221541b5b86d9f72af83727afca78541e177694`.
+The direct pytest-module miss caused no installation; the dependency-free
+Source runner passes `683/683`. Hosted package/SBOM evidence remains pending.
+
+Implementation-head hosted package evidence now passes at exact commit
+`3fc1fb0907cc194211064784f9ba95cc34f32732` in Desktop Packages run
+`33091417691`, with publication skipped. Consolidated artifact `9655292568`
+matches GitHub's 132,050,923-byte SHA-256
+`6079a51cdf15760aa6f8c0fd8d1bab821f1075f3050f566292753cd340225e49`.
+Bounded non-extracting review verifies six platform packages, all seven
+checksum targets, and CycloneDX 1.6 with exactly 569 components and 569 unique
+references. No dependency, feature, source, lockfile, license classification,
+or runtime installation changed. Evidence-head and merged-main package/SBOM
+evidence plus complete signed final-binary license/notice review remain
+required.

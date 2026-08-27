@@ -3463,3 +3463,53 @@ production signing/notarization, signed driver/kernel mediation, demonstrated
 pre-execution blocking, and Defender replacement. Reputation and correlated
 telemetry engines remain disabled until their separate trust prerequisites are
 met. The complete antivirus-hardening goal remains active.
+
+## Checkpoint 2253 Failed-Step Reporting Blocker
+
+The checkpoint-2252 observability gap is now **scripted for repair but not yet
+verified**. Schema v2 records an invoked failure as one terminal failed step,
+uses `failure_kind=orchestration` for non-step failures, and preserves the
+original throw. A benign intentional first-step failure and six dual-host
+report-mutation rejections are scripted as verifier step 282; Source contract
+683 pins the boundary.
+
+The blocker remains open until focused execution, exact `282/282` definitive
+verification, hosted evidence, normal integration, guarded synchronization,
+and destination verification pass. This is evidence-harness hardening only; it
+does not reduce the installed service/IPC, production calibration, production
+signing/notarization, signed driver/kernel, pre-execution, or Defender-
+replacement blockers.
+
+Focused evidence now clears the local producer/validator behavior blocker:
+dual parsers, Source `683/683`, one authentic terminal failed-step report, and
+six dual-host adversarial rejections pass after the fail-visible `$Host`
+variable repair. Broad regression, exact `282/282`, hosted, integration,
+guarded-sync, and destination closure remain required. Product blockers are
+unchanged.
+
+Broad local regression is no longer a checkpoint blocker: complete Native and
+Local Core, locked all-features workspace, standalone Native locked/offline,
+locked release workspace, strict Native/Local/Guard lint, Flutter analyze and
+`847/847`, Dart `14/14`, and formatting pass. Definitive exact `282/282`, hosted
+exact-head evidence, normal integration, guarded synchronization, and
+destination verification remain checkpoint-closure blockers. Installed
+service/IPC, production calibration/signing, driver/kernel, pre-execution, and
+Defender-replacement blockers remain unchanged.
+
+Definitive local verification is no longer a checkpoint blocker: exact
+`282/282` passes in `768.6s`, independent PS5/PS7 validation accepts report
+SHA-256 `3ad67ee7b7d6aed00b4aafece608a61b664aff1949dd67c2a0b04ff1a592894d`,
+and both reject missing-step and missing-scope copies. Exact lock, residue, and
+protected-vault audits pass. Hosted exact-head CI/packages, normal integration,
+guarded synchronization, and destination verification remain checkpoint-
+closure blockers. Product blockers remain unchanged.
+
+Implementation-head hosting is no longer a checkpoint blocker: exact commit
+`3fc1fb0907cc194211064784f9ba95cc34f32732` passes PR CI `33091441105` and
+Desktop Packages `33091417691`; publication is skipped. Consolidated artifact
+`9655292568` matches its GitHub digest and passes bounded non-extracting exact
+8-root/6-package/7-checksum/CycloneDX-1.6/569-component review. Evidence-head
+CI/packages, normal integration, merged-main CI/packages, guarded sync, and
+destination verification remain checkpoint-closure blockers. Installed
+service/IPC, production calibration/signing, driver/kernel, pre-execution, and
+Defender-replacement blockers remain unchanged.

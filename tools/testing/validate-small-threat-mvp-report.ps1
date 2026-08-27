@@ -535,11 +535,22 @@ function Assert-Step {
   Assert-JsonObject $Step "step $Index"
   [void](Assert-JsonString (Get-RequiredProperty $Step "name" "step $Index") "step $Index name")
   [void](Assert-JsonString (Get-RequiredProperty $Step "command" "step $Index") "step $Index command")
-  [void](Assert-JsonNumber (Get-RequiredProperty $Step "seconds" "step $Index") "step $Index seconds")
-  $stepStatus = Assert-JsonString (Get-RequiredProperty $Step "status" "step $Index") "step $Index status"
-  if ($stepStatus -ne "passed") {
-    throw "step $Index status must be 'passed': $stepStatus"
+  $stepSeconds = Assert-JsonNumber (Get-RequiredProperty $Step "seconds" "step $Index") "step $Index seconds"
+  if ($stepSeconds -lt 0) {
+    throw "step $Index seconds must not be negative: $stepSeconds"
   }
+  $stepStatus = Assert-JsonString (Get-RequiredProperty $Step "status" "step $Index") "step $Index status"
+  $stepError = Get-RequiredProperty $Step "error" "step $Index"
+  if ($stepStatus -eq "passed") {
+    if ($null -ne $stepError) {
+      throw "passed step $Index error must be JSON null."
+    }
+  } elseif ($stepStatus -eq "failed") {
+    [void](Assert-JsonString $stepError "failed step $Index error")
+  } else {
+    throw "step $Index status must be 'passed' or 'failed': $stepStatus"
+  }
+  $stepStatus
 }
 
 function Assert-ReportContainsStep {
@@ -1793,13 +1804,25 @@ $reportPathFull = Resolve-SmallThreatMvpReportPath $ReportPath $repo
 $report = Read-SmallThreatMvpReport $reportPathFull
 
 $schemaVersion = Get-RequiredProperty $report "schema_version" "small-threat MVP verification report"
-if (-not ($schemaVersion -is [int] -or $schemaVersion -is [long]) -or [int64]$schemaVersion -ne 1) {
-  throw "small-threat MVP verification report schema_version must be integer 1."
+if (-not ($schemaVersion -is [int] -or $schemaVersion -is [long]) -or [int64]$schemaVersion -ne 2) {
+  throw "small-threat MVP verification report schema_version must be integer 2."
 }
 
 $status = Assert-JsonString (Get-RequiredProperty $report "status" "small-threat MVP verification report") "small-threat MVP verification report status"
 if ($status -ne "passed" -and $status -ne "failed") {
   throw "small-threat MVP verification report status must be 'passed' or 'failed': $status"
+}
+$failureKindValue = Get-RequiredProperty $report "failure_kind" "small-threat MVP verification report"
+$failureKind = $null
+if ($status -eq "passed") {
+  if ($null -ne $failureKindValue) {
+    throw "passed small-threat MVP verification report failure_kind must be JSON null."
+  }
+} else {
+  $failureKind = Assert-JsonString $failureKindValue "failed small-threat MVP verification report failure_kind"
+  if ($failureKind -ne "step" -and $failureKind -ne "orchestration") {
+    throw "failed small-threat MVP verification report failure_kind must be 'step' or 'orchestration': $failureKind"
+  }
 }
 
 $repository = Assert-JsonString (Get-RequiredProperty $report "repository" "small-threat MVP verification report") "small-threat MVP verification report repository"
@@ -1864,8 +1887,29 @@ if ($null -ne $stepsValue) {
 if ($status -eq "passed" -and $steps.Count -eq 0) {
   throw "passed small-threat MVP verification report must include at least one passed step."
 }
+$stepStatuses = @()
 for ($i = 0; $i -lt $steps.Count; $i++) {
-  Assert-Step $steps[$i] ($i + 1)
+  $stepStatuses += Assert-Step $steps[$i] ($i + 1)
+}
+$failedStepIndexes = @()
+for ($i = 0; $i -lt $stepStatuses.Count; $i++) {
+  if ($stepStatuses[$i] -eq "failed") {
+    $failedStepIndexes += $i
+  }
+}
+if ($status -eq "passed" -and $failedStepIndexes.Count -ne 0) {
+  throw "passed small-threat MVP verification report must not contain failed steps."
+}
+if ($status -eq "failed" -and $failureKind -eq "step") {
+  if ($failedStepIndexes.Count -ne 1) {
+    throw "failed step report must contain exactly one failed step; found $($failedStepIndexes.Count)."
+  }
+  if ($failedStepIndexes[0] -ne ($steps.Count - 1)) {
+    throw "failed step report must record the failed step as the terminal step."
+  }
+}
+if ($status -eq "failed" -and $failureKind -eq "orchestration" -and $failedStepIndexes.Count -ne 0) {
+  throw "failed orchestration report must not contain a failed step."
 }
 
 $verificationScope = Get-RequiredProperty $report "verification_scope" "small-threat MVP verification report"
@@ -1881,7 +1925,10 @@ if ($status -eq "passed") {
     throw "passed small-threat MVP verification report must not contain an error message."
   }
 } else {
-  [void](Assert-JsonString $errorValue "failed small-threat MVP verification report error")
+  $failureError = Assert-JsonString $errorValue "failed small-threat MVP verification report error"
+  if ($failureKind -eq "step" -and $steps[$steps.Count - 1].error -cne $failureError) {
+    throw "failed step error must exactly match the top-level failure error."
+  }
 }
 
 if ($status -eq "passed" -and -not $skipFlutter) {
@@ -1904,8 +1951,8 @@ if ($RequireFullSuite) {
   if ($skipFlutter -or $skipRust) {
     throw "-RequireFullSuite requires skip_flutter=false and skip_rust=false."
   }
-  if ($steps.Count -ne 281) {
-    throw "-RequireFullSuite expected exactly 281 verifier steps for this source revision, found $($steps.Count)."
+  if ($steps.Count -ne 282) {
+    throw "-RequireFullSuite expected exactly 282 verifier steps for this source revision, found $($steps.Count)."
   }
   if ($steps[0].name -ne "local-core safe simulator scan reporting") {
     throw "-RequireFullSuite first step mismatch: $($steps[0].name)"
@@ -1918,6 +1965,7 @@ if ($RequireFullSuite) {
   Assert-ReportContainsStep $steps "Protection gate without driver feature claim"
   Assert-ReportContainsStep $steps "Safe synthetic performance/resource gate"
   Assert-ReportContainsStep $steps "Dependency evidence gate"
+  Assert-ReportContainsStep $steps "Small-threat MVP failed-step report smoke"
   Assert-ReportContainsStep $steps "Desktop package builder source contracts"
   Assert-ReportContainsStep $steps "native-engine native Windows root regressions"
   Assert-ReportContainsStep $steps "Client UI inventory source gate"
@@ -2409,6 +2457,7 @@ if ($RequireFullSuite) {
   Assert-ReportScopeContains $verifiedScopeText "bundled signature/rule pack validation" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "parsed without PowerShell 7 timestamp coercion" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "distinct checked Windows PowerShell 5.1 and PowerShell 7 executables" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "small-threat MVP report schema 2 distinguishes terminal invoked-step failure from orchestration failure" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "app-lifetime scheduled quick scans including target-selection skip and scan-mode busy guards" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "scan concurrency target-selection controller guards" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "custom-picker scan-busy controller guards" "verification_scope.verified"

@@ -12,6 +12,7 @@
 )
 
 $ErrorActionPreference = "Stop"
+$script:SmallThreatMvpFailedStepResult = $null
 
 function Resolve-ToolPath {
   param(
@@ -95,24 +96,52 @@ function Invoke-Step {
   Write-Host ""
   Write-Host "== $Name =="
   Write-Host $commandLine
+  $script:SmallThreatMvpFailedStepResult = $null
   $timer = [System.Diagnostics.Stopwatch]::StartNew()
-  Push-Location -LiteralPath $WorkingDirectory
+  $locationPushed = $false
   try {
-    & $Executable @Arguments
-    $exitCode = if ($null -eq $LASTEXITCODE) { 0 } else { $LASTEXITCODE }
-  } finally {
-    Pop-Location
-    $timer.Stop()
+    try {
+      Push-Location -LiteralPath $WorkingDirectory
+      $locationPushed = $true
+      & $Executable @Arguments
+      $exitCode = if ($null -eq $LASTEXITCODE) { 0 } else { $LASTEXITCODE }
+      if ($exitCode -ne 0) {
+        throw "$Name failed with exit code $exitCode"
+      }
+    } finally {
+      if ($locationPushed) {
+        Pop-Location
+      }
+      if ($timer.IsRunning) {
+        $timer.Stop()
+      }
+    }
+  } catch {
+    if ($timer.IsRunning) {
+      $timer.Stop()
+    }
+    $elapsed = $timer.Elapsed.TotalSeconds
+    $diagnostic = Get-AvoraxGateBoundedDiagnostic $_.Exception.Message
+    if ([string]::IsNullOrWhiteSpace($diagnostic)) {
+      $diagnostic = "$Name failed without a diagnostic."
+    }
+    $script:SmallThreatMvpFailedStepResult = [pscustomobject]@{
+      Name = $Name
+      Command = $commandLine
+      Seconds = [Math]::Round($elapsed, 1)
+      Status = "failed"
+      Error = $diagnostic
+    }
+    throw
   }
   $elapsed = $timer.Elapsed.TotalSeconds
-  if ($exitCode -ne 0) {
-    throw "$Name failed with exit code $exitCode after $([Math]::Round($elapsed, 1))s"
-  }
   Write-Host "PASS $Name ($([Math]::Round($elapsed, 1))s)"
   [pscustomobject]@{
     Name = $Name
     Command = $commandLine
     Seconds = [Math]::Round($elapsed, 1)
+    Status = "passed"
+    Error = $null
   }
 }
 
@@ -151,13 +180,24 @@ function New-SmallThreatMvpVerificationReport {
       name = $_.Name
       command = $_.Command
       seconds = $_.Seconds
-      status = "passed"
+      status = $_.Status
+      error = $_.Error
     }
   })
 
+  $failureKind = $null
+  if ($Status -eq "failed") {
+    $failureKind = if ($steps.Count -gt 0 -and $steps[$steps.Count - 1].status -eq "failed") {
+      "step"
+    } else {
+      "orchestration"
+    }
+  }
+
   [ordered]@{
-    schema_version = 1
+    schema_version = 2
     status = $Status
+    failure_kind = $failureKind
     repository = $Repo
     started_at_utc = $StartedAt.ToUniversalTime().ToString("o")
     completed_at_utc = (Get-Date).ToUniversalTime().ToString("o")
@@ -427,6 +467,7 @@ $verifiedScope = $verifiedScope.Replace(
 $verifiedScope += " Additional verified boundary: Native and Local Core risk fusion use overflow-safe bounded score accumulation; only positive Local Core reasons count toward evidence quality and source independence; reported Native evidence is stably prioritized by absolute decision weight, retains decisive late evidence, includes synthetic TrustStore provenance, and bounds identifiers, titles, details, and explanations at valid UTF-8 byte boundaries."
 $verifiedScope += " Additional verified boundary: Native process-start behavior validates nonzero event identity before file I/O, rejects embedded-NUL command lines, preserves caller-reported bounded command omission, uses bounded UTF-8-safe head/tail command-line sampling, exact executable-name context, and distinct capped security-tamper indicators. Script-host identity alone has zero weight, command indicators remain post-start review evidence, high-risk process-start verdicts return recommendations rather than fake block success, and the behavior provider inventory explicitly disables engines missing correlated telemetry. Browser-data, credential/network, persistence-write, and parent-image lineage engines remain disabled with exact blockers. Local Core connects relevant caller-supplied app-lifetime process observations to file-plus-behavior Native review with an exact 16-review limit, a hard 16 MiB per-process executable total-read limit, exact allowlist bypass before file I/O, positive observed behavior remains review-visible despite trusted-file offsets, bounded fail-visible diagnostics, per-batch completion counters, and no process stop or quarantine action."
 $verifiedScope += " Additional verified boundary: ZIP local-header sampling/static analysis and central-directory entry/local-name consistency normalize header-bounded entry names through the exact callback-aware lossy UTF-8 and ASCII case-fold helper. Arbitrary callback errors remain errors instead of malformed, limited, no-match, or clean fallback and abort before sample collection, archive evidence, or trusted entry-body use."
+$verifiedScope += " Additional verified boundary: small-threat MVP report schema 2 distinguishes terminal invoked-step failure from orchestration failure, records bounded command, elapsed time, status, and exact error for the failed step before rethrow, and requires dual-host rejection of missing, non-terminal, or errorless failed-step evidence."
 $optionalDefenderScope = "Optional: standard EICAR file/Defender integration is skipped by default to avoid repeated Microsoft Defender DOS/EICAR_Test_File alerts; rerun with -IncludeDefenderEicar for that host integration proof."
 $partialScope = "Partial: packaged desktop click-through E2E, installed local-core/service E2E, installer-owned service repair/install E2E, installed update/rollback E2E, installed UI filesystem picker flows, installed log export filesystem E2E, installed realtime watcher smoke/E2E, installed process observation service/driver loop/E2E, full release-host SBOM/license output, release-host performance baselines, and production false-positive-rate evidence."
 $technicalLimits = "Technically limited: no live malware, no controlled benign multi-signed system-catalog fixture for positive secondary-catalog acceptance, Authenticode helper Job commit ceilings do not bound physical working set or I/O bytes and its user-CPU limit excludes kernel execution, the write-restricted Authenticode helper impersonation token keeps the parent SID, integrity level, desktop, and ordinary read access because WinRestrictedCodeSid is evaluated only for write access; its four-variable launch environment is attack-surface reduction and carries only parent-PID, handshake-name, SystemRoot, and WINDIR expectations rather than a secret or identity boundary, and same-process code can mutate its own environment; process-creation mitigations do not constrain the already mapped helper image or non-image data, do not isolate identity/profile/registry/desktop/read access, and can be incompatible with non-Microsoft trust providers or injected security modules; no weaker retry is configured; the inherited and read-back-verified TOKEN_MANDATORY_POLICY_NO_WRITE_UP policy enforces no-write-up but does not add no-read-up, no-execute-up, identity, profile, registry, desktop, or AppContainer isolation; TOKEN_MANDATORY_POLICY_NEW_PROCESS_MIN may also be present as a documented valid bit; unprivileged SetTokenInformation(TokenMandatoryPolicy) is not used because Windows rejected it with ERROR_PRIVILEGE_NOT_HELD and policy creation remains LSA-owned; the primary process token is privilege-stripped but not write-restricted and same-process code can technically call RevertToSelf; WinTrust/catalog execute under that primary token because the Windows trust stack failed under write restriction with error 127 on the verified host; no AppContainer, separate desktop, or cross-identity IPC is configured, no pre-execution blocking claim without a signed installed driver, no kernel realtime blocking claim, polling can miss processes that start and exit between snapshots, Guard process enumeration is disabled on unsupported non-Windows/non-Linux platforms, no installed service or OS-level polling-loop claim from app-lifetime snapshot observation, no driver-latency claim from synthetic user-mode performance evidence, no Windows Scheduled Task/background-service scheduling claim, no secure-erase claim, no machine-wide dependency installation, and no enterprise update/deployment approval claim."
@@ -789,6 +830,7 @@ try {
   $results.Add((Invoke-Step "Threat-intel pack metadata smoke" $repo $powershell @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "tools\testing\run-threat-intel-category-smoke.ps1", "-PythonPath", $python)))
   $bundledPackInventoryReport = Join-Path $repo ".workflow\ultracode\avorax-hardening\results\small-threat-mvp-bundled-pack-inventory.json"
   $results.Add((Invoke-Step "Bundled signature/rule pack validation" $repo $powershell @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "tools\testing\run-bundled-pack-validation.ps1", "-PythonPath", $python, "-ReportPath", $bundledPackInventoryReport)))
+  $results.Add((Invoke-Step "Small-threat MVP failed-step report smoke" $repo $powershell @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "tools\testing\run-small-threat-mvp-failed-step-report-smoke.ps1", "-RepoRoot", $repo, "-PythonPath", $python, "-FlutterPath", $flutter, "-DartPath", $dart, "-PowerShell7Path", $powerShell7)))
   $results.Add((Invoke-Step "Python source contracts" $repo $python @("-B", "tools\testing\run-python-source-contracts.py")))
   $results.Add((Invoke-Step "Desktop package builder source contracts" $repo $python @("-B", "-m", "unittest", "discover", "-s", "tests", "-p", "test_packaging_tools.py", "-v")))
   $results.Add((Invoke-Step "Branding gate" $repo $powershell @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "tools\branding\branding-check.ps1", "-Root", $repo)))
@@ -828,6 +870,10 @@ try {
 } catch {
   $elapsedAll = $overallTimer.Elapsed.TotalSeconds
   $errorMessage = Get-AvoraxGateBoundedDiagnostic $_.Exception.Message
+  if ($null -ne $script:SmallThreatMvpFailedStepResult) {
+    $results.Add($script:SmallThreatMvpFailedStepResult)
+    $script:SmallThreatMvpFailedStepResult = $null
+  }
   try {
     $failureReport = New-SmallThreatMvpVerificationReport "failed" $repo $startedAll $elapsedAll $results $python $cargo $flutter $dart $powershell ([bool]$IncludeDefenderEicar) ([bool]$SkipFlutter) ([bool]$SkipRust) $protectionSelfTestReport $dependencyEvidenceReport $performanceGateReport $performanceBenchmarkReport $bundledPackInventoryReport $noEicarHarmlessThreatReport $installedCoreLifecycleReport $releasePrereqHostReport $verifiedScope $optionalDefenderScope $partialScope $technicalLimits $errorMessage
     Write-SmallThreatMvpVerificationReport $verificationReportPath $failureReport

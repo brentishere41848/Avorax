@@ -7223,6 +7223,66 @@ complete antivirus-hardening goal remains active, with installed service,
 driver/kernel, production-accuracy, pre-execution, and Defender-replacement
 claims still partial, blocked, technically limited, or unclaimed.
 
+## Checkpoint 2253 Failed-Step Reporting
+
+- **Scripted / unverified:** verifier report schema 2 now records a thrown
+  invoked step with exact command, bounded error, elapsed time, terminal
+  `status=failed`, and `failure_kind=step`; non-step failures use
+  `failure_kind=orchestration`.
+- **Evidence scripted first:** one benign intentional first-step failure, PS5
+  and PS7 authentic-report acceptance, six report-only adversarial rejections,
+  exact full-suite step 282, Source contract 683, and maintained checkpoint,
+  control, threat, blocker, dependency, status, and run-log records.
+- No checkpoint-2253 test has run during this scripting phase. Focused/full,
+  definitive exact `282/282`, hosted, integration, guarded-sync, and destination
+  evidence remain pending. Checkpoint 2253 and the complete antivirus-hardening
+  goal remain active.
+
+### Checkpoint 2253 Focused Evidence
+
+PS5/PS7 parsers pass for verifier, validator, and smoke; Source passes exact
+`683/683`; and the corrected smoke passes one authentic terminal failed-step
+report plus six dual-host adversarial rejections. The first `$Host`-variable
+attempt is uncredited. Locks and the read-only protected vault remain exact.
+Broad regression and definitive exact `282/282` remain pending.
+
+### Checkpoint 2253 Broad Local Evidence
+
+Rustfmt, Flutter analyze, Dart protocol `14/14`, Flutter `847/847`, Local Core
+`546/546`, Native 632 active plus compiler `6/6` with 21 documented helper
+fixtures ignored, and the locked all-features workspace pass. Standalone Native
+locked/offline check, locked release workspace, and strict Native/Local/Guard
+Clippy with `-D warnings` also pass. Definitive exact `282/282`, hosted,
+integration, guarded-sync, and destination closure remain pending. The complete
+antivirus-hardening goal remains active.
+
+### Checkpoint 2253 Definitive Local Evidence
+
+The from-start verifier passes exact `282/282`, zero non-passing, in `768.6s`.
+Independent PS5/PS7 validators accept report SHA-256
+`3ad67ee7b7d6aed00b4aafece608a61b664aff1949dd67c2a0b04ff1a592894d` and
+both reject missing-step and missing-scope copies. Schema 2 has null
+`failure_kind`, 282 passed rows with null step errors, one failed-step smoke,
+and the dependency gate last. Locks, no process/temp residue, and the protected
+vault remain exact. Checkpoint 2253 is **verified locally**; hosted,
+integration, guarded-sync, and destination evidence remain pending. The full
+antivirus-hardening goal remains active.
+
+### Checkpoint 2253 Hosted Implementation Evidence
+
+Exact implementation `3fc1fb0907cc194211064784f9ba95cc34f32732`
+passes PR `#115` CI `33091441105` and manually dispatched package run
+`33091417691`. All five CI jobs and package contracts, Windows, Linux, both
+macOS architectures, and consolidation pass; publication is explicitly
+skipped. Consolidated artifact `9655292568` is 132,050,923 bytes and its
+download matches GitHub SHA-256
+`6079a51cdf15760aa6f8c0fd8d1bab821f1075f3050f566292753cd340225e49`.
+Bounded non-extracting review passes exact `8/6/7` root/package/checksum
+inventory and CycloneDX 1.6 with `569` unique components. Temporary review data
+is removed. Evidence-head, integration, merged-main, guarded-sync, and
+destination evidence remain pending; checkpoint 2253 and the complete goal
+remain active.
+
 ## Checkpoint 2252 Local Verification Progress
 
 - PS5/PS7 parsers pass `2/2` each, Source contracts pass exact `682/682`, the
