@@ -3446,3 +3446,20 @@ only debug/incremental metadata disabled and no Defender weakening. Exact-head
 hosted CI/packages, normal integration, guarded synchronization, and destination
 reruns remain checkpoint-closure blockers. Broader product blockers and the
 complete antivirus-hardening goal remain unchanged and active.
+
+Checkpoint 2252 closure blockers are now cleared: PR `#113`, merge `4370debc`,
+exact-head and merged-main CI/packages, bounded artifact/SBOM review, guarded
+`11/11` synchronization, focused destination checks, and destination exact
+`281/281` plus dual validation pass. The disk-full and Defender-blocked attempts
+remain uncredited and documented; Defender was not weakened. The verifier's
+top-level failure is fail-visible, but a thrown `Invoke-Step` is not appended as
+a failed step before report serialization. Improving that per-step diagnostic is
+an open verification-harness hardening item, not an antivirus clean verdict.
+
+The checkpoint is closed, but product blockers remain: cooperative rather than
+preemptive cancellation for entered operations, installed cross-identity
+service ownership and authenticated IPC, production accuracy/calibration,
+production signing/notarization, signed driver/kernel mediation, demonstrated
+pre-execution blocking, and Defender replacement. Reputation and correlated
+telemetry engines remain disabled until their separate trust prerequisites are
+met. The complete antivirus-hardening goal remains active.

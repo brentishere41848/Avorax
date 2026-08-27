@@ -1935,3 +1935,17 @@ lockfile SBOM containing 569 unique component references. This is generated
 package evidence, not final-binary legal approval, production signing,
 notarization, installed-service stress, enterprise deployment approval, or a
 published release. PR and merged-main package/SBOM evidence remain pending.
+
+PR `#113` exact-head package run `33071437817` and merged-main package run
+`33073230873` now pass all six platform packages, contracts, and consolidation,
+with publication skipped. Consolidated artifacts `9646509990` and `9647242232`
+have independently matched SHA-256 values
+`03a806c44b179a2c0660037c0d9b26a9c98e2aed3eb3e79af7813fefb9329e56` and
+`abd7069509543b8a50f631a94964b82679a1faeb20a2840acdce6ce03262b620`.
+Both bounded reviews verify all seven checksums and CycloneDX 1.6 with 569
+components and 569 unique references. Destination exact `281/281` and all
+three unchanged lock hashes pass. Checkpoint 2252 adds no dependency, feature,
+package source, license class, lockfile, or downloaded runtime content.
+Final-binary legal/notice resolution, production signing/notarization,
+installed-service stress, enterprise deployment approval, and release approval
+remain separate prerequisites.
