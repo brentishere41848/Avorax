@@ -1951,8 +1951,8 @@ if ($RequireFullSuite) {
   if ($skipFlutter -or $skipRust) {
     throw "-RequireFullSuite requires skip_flutter=false and skip_rust=false."
   }
-  if ($steps.Count -ne 282) {
-    throw "-RequireFullSuite expected exactly 282 verifier steps for this source revision, found $($steps.Count)."
+  if ($steps.Count -ne 283) {
+    throw "-RequireFullSuite expected exactly 283 verifier steps for this source revision, found $($steps.Count)."
   }
   if ($steps[0].name -ne "local-core safe simulator scan reporting") {
     throw "-RequireFullSuite first step mismatch: $($steps[0].name)"
@@ -2030,6 +2030,7 @@ if ($RequireFullSuite) {
   Assert-ReportContainsStep $steps "native-engine provider text-normalization cancellation regressions"
   Assert-ReportContainsStep $steps "native-engine static text-normalization cancellation regressions"
   Assert-ReportContainsStep $steps "native-engine ZIP entry-name normalization cancellation regressions"
+  Assert-ReportContainsStep $steps "native-engine ZIP EOCD search cancellation regressions"
   Assert-ReportContainsStep $steps "native-engine static term-search cancellation regressions"
   Assert-ReportContainsStep $steps "native-engine static reference-search cancellation regressions"
   Assert-ReportContainsStep $steps "native-engine static structured-indicator cancellation regressions"
@@ -2068,6 +2069,10 @@ if ($RequireFullSuite) {
   Assert-ReportScopeContains $verifiedScopeText "ZIP local-header sampling/static analysis and central-directory entry/local-name consistency normalize header-bounded entry names through the exact callback-aware lossy UTF-8 and ASCII case-fold helper" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "Arbitrary callback errors remain errors instead of malformed, limited, no-match, or clean fallback and abort before sample collection, archive evidence, or trusted entry-body use" "verification_scope.verified"
   Assert-ReportScopeContains $technicalLimitText "ZIP entry-name normalization is cooperative, not preemptive: one header-bounded name of at most 65,535 bytes can complete before the next checkpoint" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $verifiedScopeText "ZIP central-directory sampling and static analysis share one fallible end-of-central-directory search that checkpoints before the first candidate and every next at-most-4,096 backward candidate offsets" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Existing bounded comment lookup and valid commented-archive semantics are preserved; arbitrary callback errors abort before central-directory metadata, samples, archive evidence, local-header fallback, or verdict publication" "verification_scope.verified"
+  Assert-ReportScopeContains $technicalLimitText "one at-most-4,096-candidate backward search chunk can complete before the next checkpoint" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "existing 65,557-byte search window is a work bound, not a deadline" "verification_scope.technically_limited"
   Assert-ReportScopeContains $verifiedScopeText "bounded UTF-8-safe head/tail command-line sampling" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "command indicators remain post-start review evidence" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "high-risk process-start verdicts return recommendations rather than fake block success" "verification_scope.verified"

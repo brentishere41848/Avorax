@@ -1951,3 +1951,12 @@ Threat-intel generated JSON and JSONL packs are detection inputs. Shared `tools/
 Native threat-intel records are detection-source evidence, not extensible policy blobs. `ThreatIntelIndicator` and `ThreatIntelSource` schemas must reject unknown fields so allow overrides, enabled flags, or importer-only controls cannot be silently ignored while appearing present in compiled intelligence evidence.
 
 Temporary output cleanup is part of release evidence integrity. Static ML, native ML, threat-intel, benchmark, and evaluator report helpers may accept the expected race where their own temporary file has already disappeared, but they must not use broad or empty cleanup handlers; unexpected cleanup-target mismatches must fail visibly with contextual diagnostics.
+
+ZIP EOCD discovery is attacker-controlled metadata traversal. Checkpoint 2254
+requires central-directory sampling and static analysis to use one fallible
+finder that checks cancellation before the first candidate and every next
+at-most-4,096 backward candidates inside the existing 65,557-byte bound.
+Callback failure must abort before metadata, sample, evidence, local-header
+fallback, or verdict publication. This cooperative boundary and verifier step
+283 now have focused and broad local evidence; definitive exact-cardinality,
+hosted, integration, synchronization, and destination evidence remain open.

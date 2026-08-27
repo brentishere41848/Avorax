@@ -3531,3 +3531,38 @@ mediation, demonstrated pre-execution blocking, and Defender replacement remain
 open. Reputation and correlated telemetry engines remain disabled until their
 trust prerequisites are met. The complete antivirus-hardening goal remains
 active.
+
+## Checkpoint 2254 ZIP EOCD Cancellation Blocker
+
+The bounded ZIP EOCD traversal now has a scripted cooperative cancellation
+repair, but it is not yet verified. Both central-directory consumers, three
+benign runtime regressions, mandatory verifier step 283, exact validator scope,
+and Source contract 684 are present. Focused, broad, definitive `283/283`,
+hosted, integration, guarded-sync, and destination evidence remain checkpoint
+blockers.
+
+The residual limitation remains explicit: one at-most-4,096-candidate chunk may
+finish before cancellation is observed, and the existing 65,557-byte work bound
+is not a deadline. Installed cross-identity service ownership/authenticated IPC,
+production calibration/signing, signed driver/kernel mediation, demonstrated
+pre-execution blocking, and Defender replacement remain separate blockers.
+No checkpoint-2254 test has run during this scripting phase.
+
+Focused execution clears the local implementation blocker: EOCD `3/3`, full
+ZIP `45/45`, adjacent cancellation filters `4/4` each, Source `684/684`, and
+dual-host parsing pass. Broad regression, definitive exact `283/283`, hostile
+report validation, hosted exact-head, integration, guarded synchronization, and
+destination evidence remain checkpoint blockers. Product blockers are unchanged.
+
+Broad local regression, locked/offline and release builds, strict linting,
+Flutter/Dart regression, lock integrity, zero product processes, and the exact
+read-only vault invariant now pass. This clears the broad local blocker only.
+Definitive exact `283/283`, hostile report validation, hosted exact-head,
+integration, guarded synchronization, and destination evidence remain open.
+
+Definitive exact `283/283`, hostile missing-step/missing-scope rejection, and
+exact implementation-head CI/packages now clear those checkpoint blockers.
+Evidence-head hosted runs, normal integration, merged-main evidence, guarded
+synchronization, and destination verification remain open. Product-level
+installed-service, kernel, pre-execution, calibration, and Defender-replacement
+blockers are unchanged.

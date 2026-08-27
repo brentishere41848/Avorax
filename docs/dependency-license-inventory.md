@@ -1017,6 +1017,13 @@ changes. Evidence-head/merged-main package proof and complete signed final-
 artifact license, notice, copyright, and binary-resolution review remain
 pending.
 
+Implementation-head package consolidation produces the existing CycloneDX 1.6
+lockfile SBOM with exactly 569 components and 569 unique references. The
+untouched consolidated artifact passes all seven checksums without extraction,
+and publication is skipped. Evidence-head and merged-main hosted SBOM evidence,
+production signing/notarization, legal approval, and release approval remain
+pending.
+
 ## Checkpoint 2252 Dependency Scope
 
 Static structured-indicator cancellation reuses Rust slices, UTF-8 character
@@ -1814,6 +1821,24 @@ Flutter lock SHA-256 values remain respectively
 Hosted lockfile SBOM evidence remains pending. Final-binary SBOM resolution,
 production signing/notarization, legal approval, installed-service stress, and
 release approval remain separate prerequisites.
+
+## Checkpoint 2254 ZIP EOCD Cancellation Dependency Delta
+
+Checkpoint 2254 adds no dependency, feature, package source, downloaded
+artifact, runtime installation, or license obligation. It reuses Rust slices,
+checked/saturating arithmetic, the existing `anyhow::Result` callback boundary,
+and already locked Native Engine dependencies. There is no lockfile change.
+
+The checkpoint's verifier step 283 and Source contract 684 are scripted but not
+yet executed. Focused through destination verification remains required; final
+binary notices, production signing/notarization, release approval, installed
+service stress, and enterprise deployment approval remain separate work.
+
+Broad locked tests, locked/offline Native check, locked release build, and
+strict Clippy pass without lockfile mutation. Root Cargo, Native Cargo, and
+Flutter lock SHA-256 values remain exact at their checkpoint-2253 baselines.
+No new dependency or license review is introduced; hosted SBOM evidence remains
+pending.
 
 ## Checkpoint 2249 Dependency Scope
 

@@ -12956,3 +12956,70 @@ pending.
   residue, and the read-only `16072/0/4522733` vault invariant pass.
   `.verification` remains untouched. Checkpoint 2253 is closed; the complete
   antivirus-hardening goal remains active.
+
+## 2026-08-27 - Checkpoint 2254 ZIP EOCD Cancellation Scripting
+
+- Confirmed the next highest-value unblocked production gap after checkpoint
+  2253: ZIP central-directory sampling and static analysis could each scan the
+  bounded 65,557-byte EOCD window without observing cancellation.
+- Scripted one shared fallible finder with an initial callback and at-most-4,096
+  candidate chunks, exact error propagation in both callers, three ordinary
+  in-memory fixtures, verifier step 283, exact validator requirements, Source
+  contract 684, and all audit/verification documentation.
+- No checkpoint-2254 test has run during this scripting phase. No fixture was
+  executed or extracted; no dependency, lockfile, Defender setting, install,
+  service/driver, release/publication, `.verification`, or protected-vault
+  state was intentionally changed. Focused through destination evidence remains
+  pending and checkpoint 2254 stays open.
+
+## 2026-08-27 - Checkpoint 2254 Focused Local Verification
+
+- Exact EOCD cancellation passes `3/3` twice; the complete ZIP module passes
+  `45/45`; adjacent static-archive, archive-collection, and ZIP name filters
+  each pass `4/4`.
+- PS5 and PS7 parsers each pass verifier/validator `2/2`; Source contracts pass
+  exact `684/684`; formatting and `git diff --check` pass.
+- The first format check exposed one layout-only difference and was repaired.
+  Two initial parser commands were malformed by outer-shell variable expansion
+  and are uncredited; corrected literal child-host commands pass. A partial
+  custom-only Source run passed `673`, followed by the required default exact
+  `684` run.
+- Full regression, definitive `283/283`, adversarial report validation, hosted,
+  integration, guarded-sync, and destination evidence remain pending. No live
+  malware, extraction/execution, Defender change, installation, service/driver,
+  release/publication, `.verification`, or vault mutation was used.
+
+## 2026-08-27 - Checkpoint 2254 Broad Local Verification
+
+- Standard and all-features locked workspace suites each exit `0`: Native
+  `635/635` with 21 documented ignored benign helper fixtures, signature
+  compiler `6/6`, Local Core `546/546`, Platform Security `9/9`, and updater
+  `203/203`. Flutter analyze is clean, Flutter passes `847/847`, and Dart
+  protocol passes `14/14`.
+- Standalone Native locked/offline check, full locked release workspace build,
+  and strict Native/Local/Guard Clippy with `-D warnings` all exit `0`.
+- Root Cargo, Native Cargo, and Flutter lock hashes remain exact. Read-only
+  checks find zero Avorax/Zentor processes and preserve the protected vault at
+  `16072/0/4522733`, `5357` each payload/metadata/auth, one key, and zero
+  pending/temp/reparse entries.
+- Definitive exact `283/283`, hostile report validation, hosted exact-head,
+  integration, guarded-sync, and destination evidence remain pending.
+
+## 2026-08-27 - Checkpoint 2254 Definitive And Hosted Head Evidence
+
+- The no-skip/no-Defender from-start verifier passes exact `283/283` in
+  `837.4s`. Its 203,497-byte schema-v2 report SHA-256 is
+  `cf38010ecb1c7d6d016d09b9cfe338b0604b8183eb2898b06e578d96e0c59e74`;
+  both built-in and independent PS5/PS7 full-suite validators pass.
+- PS5 rejects a 282-step copy missing the EOCD step; PS7 rejects a 283-step copy
+  missing the EOCD scope. Both exact temporary copies were removed.
+- Exact implementation head `216542ca6bcd22f013e089b45a0756fc40aed22f`
+  passes PR CI `33103301314`, PR packages `33103301308`, and push packages
+  `33103285518`; publication is skipped.
+- Consolidated artifact `9660015011` is exactly 132,076,431 bytes with SHA-256
+  `e08a36fcc3bf12462c2f1747f155445101b39473ed8364753f0a789a933b5089`.
+  Non-extracting validation passes exact 8 root entries, 6 packages, 7 checksum
+  targets, and CycloneDX 1.6 with 569 unique components. The owned ZIP/root were
+  removed. Locks, zero product processes, and the read-only vault remain exact.
+- Evidence-head hosted runs, normal merge, merged-main evidence, guarded sync,
+  and destination verification remain pending; the complete goal stays active.
