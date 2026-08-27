@@ -5180,22 +5180,26 @@ package evidence remains the already verified six-platform-artifact set.
 
 ## Checkpoint 2247 Provider Text Normalization Cancellation Matrix
 
-| Control / engine | Responsibility | Status | Scripted evidence / blocker |
+| Control / engine | Responsibility | Status | Evidence / blocker |
 |---|---|---|---|
-| Shared provider text normalizer | Prepare lossy UTF-8, ASCII-lowercase text with bounded cancellation latency | Locally verified | `7/7` dedicated and `26/26` provider regressions; at-most-64-KiB new input per callback interval; final callback; arbitrary error propagation |
-| UTF-8 boundary compatibility | Preserve one-shot replacement grouping across valid, malformed, and truncated input | Locally verified | Maximum three-byte carry plus parity fixtures at the exact chunk boundary |
-| Native signature provider | Normalize once before signature/context/search evaluation | Locally verified | Signature `62/62` plus compiler `6/6`; DB, direct matcher, and ASCII wrapper use the same fallible helper |
-| Native rule provider | Normalize sample/path once before condition evaluation | Locally verified | Rule `44/44`; DB and direct VM use shared helper; empty DB retains no-sample fast path |
-| Archive-entry provider path | Apply the same bounded normalizer to in-memory sampled entry content | Locally verified | Archive `71/71`; existing exact-job callback reaches shared signature/rule DB paths before outer verdict |
-| Provider error boundary | Prevent cancellation/probe errors from becoming no-match, clean, or partial success | Locally verified | Arbitrary callback failures abort; partial prepared text remains local and is dropped on `Err` |
+| Shared provider text normalizer | Prepare lossy UTF-8, ASCII-lowercase text with bounded cancellation latency | Verified | `7/7` dedicated and `26/26` provider regressions; at-most-64-KiB new input per callback interval; final callback; arbitrary error propagation |
+| UTF-8 boundary compatibility | Preserve one-shot replacement grouping across valid, malformed, and truncated input | Verified | Maximum three-byte carry plus parity fixtures at the exact chunk boundary |
+| Native signature provider | Normalize once before signature/context/search evaluation | Verified | Signature `62/62` plus compiler `6/6`; DB, direct matcher, and ASCII wrapper use the same fallible helper |
+| Native rule provider | Normalize sample/path once before condition evaluation | Verified | Rule `44/44`; DB and direct VM use shared helper; empty DB retains no-sample fast path |
+| Archive-entry provider path | Apply the same bounded normalizer to in-memory sampled entry content | Verified | Archive `71/71`; existing exact-job callback reaches shared signature/rule DB paths before outer verdict |
+| Provider error boundary | Prevent cancellation/probe errors from becoming no-match, clean, or partial success | Verified | Arbitrary callback failures abort; partial prepared text remains local and is dropped on `Err` |
 | Non-archive static analyzers | Normalize and inspect separate static text views | Partial / technically limited | Separate bounded analyzer work remains cooperative; not changed in checkpoint 2247 |
 | Windows publisher trust | Validate bounded Microsoft Authenticode identity/hash binding | Partial / technically limited | Existing isolated helper bounds; one active trust call is not hard-interrupted |
 | Reputation provider | Remote reputation only after authenticated privacy-reviewed backend exists | Disabled / blocked | No approved authenticated backend; unchanged |
 | Browser/credential/network/persistence/lineage correlation | Require trusted correlated per-process telemetry | Disabled / blocked | Required durable identity-bound telemetry is unavailable; unchanged |
 
 Exact verifier step 276 and Source contract 677 pass in the definitive
-`276/276` and Source `677/677` runs. Independent PS5/PS7 validators pass and
-missing-step/scope mutations are rejected. Rows are locally verified only;
-hosted, integration, synchronization, and destination evidence remain pending.
-This remains cooperative user-mode post-start analysis, not service, driver,
-kernel, production-accuracy, or pre-execution proof.
+`276/276` and Source `677/677` runs. Exact-head/PR/main CI and package matrices
+pass with publication skipped; three consolidated artifacts pass bounded
+non-extracting 8/6/7/CycloneDX-1.6/569 checks. Guarded synchronization passes
+`18/18` with zero deletes, and destination Source `677/677`, focused `7/7`,
+formatting, and definitive `276/276` plus dual validators pass. Implemented rows
+are therefore **Verified**. The partial and disabled rows remain unchanged. This
+is cooperative user-mode post-start analysis, not service, driver, kernel,
+production-accuracy, or pre-execution proof. Checkpoint 2247 is closed; the
+complete antivirus goal remains active.
