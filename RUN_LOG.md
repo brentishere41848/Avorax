@@ -12636,3 +12636,21 @@ pending.
   synchronization, and destination reruns remain pending. No release,
   publication, install, service/driver start, Defender change, or vault mutation
   occurred; checkpoint 2250 and the complete goal remain active.
+
+## 2026-08-27 - Checkpoint 2250 Hosted And Destination Closure
+
+- Exact implementation `0847f3e`, PR `#109`, normal merge `a423fb6`, PR CI and
+  packages `33046384310`/`33046384413`, and merged-main CI and packages
+  `33047841657`/`33047841686` pass. Package publication is skipped.
+- Branch, PR, and main consolidated artifacts `9635711594`, `9636300557`, and
+  `9636729381` match GitHub size/SHA-256 and pass bounded non-extracting
+  8-root/6-platform/7-checksum/CycloneDX-1.6/569-component validation.
+- Guarded synchronization applies exact `14/14` paths with thirteen
+  modifications, one addition, zero deletes, independent target-blob equality,
+  and no staging residue. Destination Source `680/680`, static term search
+  `6/6`, and formatting pass.
+- Destination definitive verification passes exact `279/279` in `687.6s`;
+  independent PS5/PS7 validators accept SHA-256
+  `70ade0c2a2929b022f95a5469eb7f548ac1415fe9ca2661c0414b56ccb533ab5`.
+  Locks and the read-only protected vault invariant remain exact. Checkpoint
+  2250 is closed; the complete antivirus-hardening goal remains active.

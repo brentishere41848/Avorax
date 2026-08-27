@@ -5266,12 +5266,12 @@ evidence. Checkpoint 2249 is closed; the complete antivirus goal remains active.
 
 | Control / engine | Responsibility | Status | Evidence / blocker |
 |---|---|---|---|
-| Shared static term counter | Count exact non-overlapping byte terms with bounded callback latency | Verified locally | At-most-64-KiB candidate chunks; cross-chunk/count/empty-needle fixtures pass in focused `6/6` |
-| String Indicator term groups | Produce explainable static category counts | Verified locally | Shared counter and no-evidence cancellation fixture pass; verifier step 279 pending |
-| Script term groups and any-term probe | Count or detect bounded script indicators | Verified locally | Shared counter/exact search, Source `680/680`, and full Native pass |
-| PE-import term groups | Count suspicious imported API categories | Verified locally | Shared counter and cancellation-before-evidence fixture pass |
-| UTF-16 marker probes | Detect decoded executable/document markers | Verified locally | Shared exact search replaces whole-view `contains`; full Native compatibility passes |
-| Static verdict publication | Publish only after all fallible analysis completes | Verified locally | Callback errors propagate before `StaticAnalysis` and file verdict; full Native/Local pass |
+| Shared static term counter | Count exact non-overlapping byte terms with bounded callback latency | Verified | At-most-64-KiB candidate chunks; cross-chunk/count/empty-needle fixtures pass in focused `6/6` |
+| String Indicator term groups | Produce explainable static category counts | Verified | Shared counter and no-evidence cancellation fixture pass; verifier step 279 and destination evidence pass |
+| Script term groups and any-term probe | Count or detect bounded script indicators | Verified | Shared counter/exact search, Source `680/680`, hosted, and destination evidence pass |
+| PE-import term groups | Count suspicious imported API categories | Verified | Shared counter and cancellation-before-evidence fixture pass |
+| UTF-16 marker probes | Detect decoded executable/document markers | Verified | Shared exact search replaces whole-view `contains`; full compatibility and destination verification pass |
+| Static verdict publication | Publish only after all fallible analysis completes | Verified | Callback errors propagate before `StaticAnalysis` and file verdict; full Native/Local and destination verifier pass |
 | Structured static traversal | Process bounded line, predicate, and decode work | Partial / technically limited | One separate bounded traversal or UTF-16 interval may complete before callback |
 | Windows publisher trust | Validate bounded Microsoft Authenticode identity/hash binding | Partial / technically limited | Existing isolated helper; an entered trust call is not hard-interrupted |
 | Reputation/correlated behavior providers | Require authenticated backend or trusted identity-bound telemetry | Disabled / blocked | Existing prerequisites remain unavailable |
@@ -5291,6 +5291,11 @@ evidence remain open; partial and disabled rows are unchanged.
 
 Definitive local verification now passes exact `279/279`, zero failed/skipped,
 in `649.9s`; independent PS5/PS7 validators accept the report and reject both
-required adversarial mutations. Implemented rows remain **Verified locally**.
-Hosted exact-head CI/packages, integration, guarded synchronization, and clean
-destination verification remain open; partial and disabled rows are unchanged.
+required adversarial mutations. Exact implementation `0847f3e`, PR `#109`,
+normal merge `a423fb6`, exact-head and merged-main CI/package matrices, and all
+three bounded non-extracting artifact reviews pass with publication skipped.
+Guarded `14/14` zero-delete synchronization, independent target-blob equality,
+destination Source `680/680`, focused `6/6`, formatting, and definitive
+`279/279` plus PS5/PS7 acceptance pass. Implemented rows are **Verified**;
+partial and disabled rows are unchanged. Checkpoint 2250 is closed, while the
+complete antivirus-hardening goal remains active.
