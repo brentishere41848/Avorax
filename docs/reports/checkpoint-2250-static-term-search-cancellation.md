@@ -1,6 +1,6 @@
 # Checkpoint 2250 - Static Term-Search Cancellation
 
-Status: **Definitive local verification passed / hosted integration pending**
+Status: **Verified, hosted, merged, synchronized, and destination-tested**
 
 The complete antivirus-hardening goal remains active. This checkpoint narrows
 one cancellation-latency gap in bounded Native static analysis; it does not by
@@ -163,8 +163,52 @@ integration, guarded-sync, or destination closure requirements.
   5,357 each payload/metadata/auth, one key, zero pending/temp, and zero reparse
   points.
 
-Exact-head hosted CI/packages, bounded non-extracting artifact review, normal PR
-integration, merged-main evidence, guarded zero-delete destination sync, and
-clean destination focused/definitive reruns remain required. No release,
-publication, installation, service/driver start, Defender change, or protected
-vault mutation occurred.
+## Hosted, Integration, And Destination Evidence
+
+- Exact implementation head `0847f3e1e0e907eea4db62dd8a4a5d1aadaad177`
+  passes package push run `33045290583`, PR `#109` CI run `33046384310`, and PR
+  package run `33046384413`. PR `#109` merges normally as
+  `a423fb6f2b926f44c04f21702f708514691f9bc5` with exact parents
+  `be7eecc30df459ed922d6c96550fd19823ee63c8` and the implementation head.
+- Merged-main CI `33047841657` passes all five jobs. Merged-main packages
+  `33047841686` pass contracts, Windows MSI/EXE, Linux DEB/tar, both macOS DMGs,
+  and consolidation. Publication is skipped in every package workflow.
+- Consolidated artifacts `9635711594`, `9636300557`, and `9636729381` are
+  respectively 131,980,599, 132,101,087, and 131,977,967 bytes. Their SHA-256
+  values are
+  `0bb20102ce08747c86f3307167af096c39915626c401f2c1f49b77b7e52fe02e`,
+  `d5583851a3dfbc91e8e04b5838d8c59c461cd09b8a40ecda02f0e2625637d4bf`,
+  and `71e8024f83d2cdf366c86cdf3745d288ad42189060b131fd57f079f35a6f50e1`.
+  Every digest and size matches GitHub. Bounded in-stream review confirms exact
+  eight root entries, six platform packages, seven checksum targets, and a
+  CycloneDX 1.6 SBOM with 569 unique components. No artifact is extracted or
+  executed.
+- Guarded synchronization from `be7eecc` to `a423fb6` audits and applies exact
+  `14/14` paths: thirteen modifications, one addition, and zero deletions.
+  Independent Git-filter-aware comparison passes `14/14`; no staging residue
+  remains.
+- Destination Source contracts pass `680/680`; focused static term-search tests
+  pass `6/6`; formatting passes. The definitive destination verifier passes
+  exact `279/279`, zero failed or skipped, from
+  `2026-08-27T07:18:04.9339385Z` through
+  `2026-08-27T07:29:32.6075212Z` in `687.6s`. Embedded and independently invoked
+  PS5 and PS7 validators accept report SHA-256
+  `70ade0c2a2929b022f95a5469eb7f548ac1415fe9ca2661c0414b56ccb533ab5`.
+- All three lock hashes remain exact in source and destination. The protected
+  vault remains read-only and exact at 16,072 files, zero directories,
+  4,522,733 bytes, 5,357 each payload/metadata/auth, one key, zero pending/temp,
+  and zero reparse points.
+
+## Closure
+
+The implementation sequence, local and definitive verification, exact-head
+hosted checks, bounded artifact review, normal integration, merged-main checks,
+zero-delete guarded synchronization, and destination verification all pass.
+Checkpoint 2250 is closed. The complete antivirus-hardening goal remains active.
+
+Cancellation remains cooperative and the technical limits in this report are
+unchanged. This checkpoint does not claim installed service ownership,
+driver/kernel mediation, production detection accuracy, pre-execution blocking,
+or Defender replacement. No release, publication, installation, service/driver
+start, Defender change, live-malware action, or protected-vault mutation
+occurred.

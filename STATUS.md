@@ -7193,3 +7193,19 @@ independent PS5/PS7 validators accept report SHA-256
 `b011b66f3c6af642898170b4192a94889eb8fe8d4c6b0e8419a93f7b40baee40`
 and reject missing-step and missing-scope copies with exit `1`. Hosted,
 integration, guarded-sync, and destination closure are still pending.
+
+### Checkpoint 2250 Hosted And Destination Evidence
+
+Exact implementation `0847f3e`, PR `#109`, and normal merge `a423fb6` pass
+exact-head PR CI/packages and merged-main CI/packages. Package publication is
+skipped. All three consolidated artifacts match GitHub and pass bounded
+non-extracting validation for eight root entries, six platform packages, seven
+checksums, and CycloneDX 1.6 with 569 components. Guarded synchronization passes
+exact `14/14` with zero deletes and no residue. Destination Source `680/680`,
+focused `6/6`, formatting, and definitive `279/279` in `687.6s` pass; both PS5
+and PS7 validators accept report SHA-256
+`70ade0c2a2929b022f95a5469eb7f548ac1415fe9ca2661c0414b56ccb533ab5`.
+Locks and the protected vault remain exact. Checkpoint 2250 is closed; the
+complete antivirus-hardening goal remains active, with installed service,
+driver/kernel, production-accuracy, pre-execution, and Defender-replacement
+claims still partial, blocked, technically limited, or unclaimed.
