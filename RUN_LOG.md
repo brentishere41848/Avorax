@@ -12706,3 +12706,26 @@ pending.
 - Post-verifier lock hashes and read-only protected-vault inventory remain
   exact. Hosted exact-head CI/packages, PR integration, guarded synchronization,
   and destination reruns remain required; no release or publication occurred.
+
+## 2026-08-27 - Checkpoint 2251 Hosted And Destination Closure
+
+- Exact implementation `96a3e73`, PR `#111`, and normal merge `3e58dc15` pass
+  package push `33056399005`, PR CI/packages `33057936885`/`33057936960`, and
+  merged-main CI/packages `33059344281`/`33059344276`. Every publish job is
+  skipped; no release or prerelease is created.
+- Consolidated branch, PR, and main artifacts `9640316965`, `9640970990`, and
+  `9641615032` have exact GitHub sizes/digests. Bounded non-extracting branch
+  and main review passes eight root entries, six platform packages, seven
+  checksum targets, and CycloneDX 1.6 with 569 unique components. No package is
+  extracted or executed; final main review retains no temp file.
+- Guarded synchronization applies exact `12/12` merge-delta paths with eleven
+  modifications, one addition, zero deletes, `6,897,688` bytes, independent
+  raw-blob equality, and zero residue. Precondition and first-invocation script
+  failures stop before writes/staging and are uncredited.
+- Destination Source `681/681`, focused reference search `8/8`, and formatting
+  pass. Definitive destination verification passes exact `280/280`, zero
+  non-passing steps, in `717.5s`; independent PS5/PS7 validators accept SHA-256
+  `d3e26d29be79899efdcae8b7982256dff93cfe78f238301a9f751065f4815e6b`.
+  Locks, synced blobs, process/residue checks, and the read-only protected vault
+  remain exact. Checkpoint 2251 is closed; the complete antivirus goal remains
+  active.

@@ -1,6 +1,6 @@
 # Checkpoint 2251 - Static Reference-Search Cancellation
 
-Status: **Verified locally / hosted integration pending**
+Status: **Verified, hosted, merged, synchronized, and destination-tested**
 
 The complete antivirus-hardening goal remains active. This checkpoint narrows
 one cooperative cancellation-latency gap in the Avorax Native Engine string
@@ -185,3 +185,73 @@ This supersedes the earlier definitive-local pending statement. Exact-head
 hosted CI/packages, normal PR integration, guarded source synchronization, and
 destination reruns remain required before checkpoint closure. Cancellation
 remains cooperative, and the complete antivirus-hardening goal remains active.
+
+## Hosted, Integration, And Artifact Evidence
+
+- Exact implementation head
+  `96a3e7364be610e8d39d8439298d1754281e86f5` passes package push run
+  `33056399005`, PR `#111` Avorax CI `33057936885`, and PR packages
+  `33057936960`. PR `#111` merges normally as
+  `3e58dc15bf4cf9d11ffa71eea190cd02630bfa72` with exact parents
+  `aaa0885ecf49a101764d3806c8a92e2f9288c136` and the implementation head.
+- Merged-main Avorax CI `33059344281` passes all five jobs. Merged-main
+  Desktop Packages `33059344276` passes package contracts, Windows MSI/EXE,
+  Linux DEB/tar, both macOS DMGs, and consolidation. Its publish job is
+  explicitly skipped; no release or prerelease is created.
+- Consolidated branch, PR, and merged-main artifacts are respectively
+  `9640316965` (`132,038,711` bytes, SHA-256
+  `618f3df58f74949429a06fd334dbc2613c8dd37534f40239c120f2b52d89ca81`),
+  `9640970990` (`132,034,629` bytes, SHA-256
+  `cc1b8551b7bc25661f0736a51a6520ebf7771ff5fbd0de130ae6afd1f26cf4c2`),
+  and `9641615032` (`132,263,957` bytes, SHA-256
+  `ad33996687f71102c5acdb8b3f4ae923e815e45496de4f4f76aec284ac97e604`).
+  GitHub binds all three to their exact workflow heads.
+- Bounded non-extracting review of the branch and merged-main artifacts
+  verifies eight safe root entries, six platform packages, seven checksum
+  targets, and CycloneDX 1.6 with 569 unique components. The merged-main
+  archive has `135,675,404` uncompressed bytes. No package is extracted or
+  executed and the final main review is memory-only with zero retained temp
+  files. The PR artifact is recorded from GitHub metadata and the successful
+  hosted package job; it was not independently downloaded.
+- Initial local artifact-review attempts with an overly narrow SBOM/checksum
+  filename assumption or cleanup syntax error are uncredited and fail visibly.
+  One exact `132,263,957`-byte temp ZIP left by the cleanup typo was found only
+  under the Windows temp root and deleted by exact file path; a follow-up found
+  zero matching residue. The final memory-only review passes.
+
+## Guarded Destination Evidence
+
+- Git-filter-aware preconditions prove the eleven existing destination files
+  equal base `aaa0885` and the new report path is absent. The initial raw-byte
+  precheck correctly stops on expected CRLF/LF differences and writes nothing.
+- Guarded Git-blob synchronization from `aaa0885` to merge `3e58dc15` applies
+  exact `12/12` paths: eleven modifications, one addition, zero deletions, and
+  `6,897,688` bytes. Containment, parent/target reparse, object-type, base-blob,
+  staged-blob, atomic replacement, rollback, and final raw-blob checks pass.
+  One first invocation has a PowerShell collision-expression parse error before
+  staging; the report remains absent and zero sync residue is confirmed before
+  the corrected invocation. Independent comparison then passes `12/12`.
+- Destination Source contracts pass `681/681`; focused static reference-search
+  tests pass `8/8`; workspace formatting passes. The definitive destination
+  verifier passes exact `280/280`, zero non-passing steps, from
+  `2026-08-27T10:01:41.8866849Z` through
+  `2026-08-27T10:13:39.3773608Z` in `717.5s`.
+- Embedded and independently invoked Windows PowerShell 5.1 and PowerShell 7
+  validators accept destination report SHA-256
+  `d3e26d29be79899efdcae8b7982256dff93cfe78f238301a9f751065f4815e6b`.
+  The three lock hashes, all 12 synchronized blobs, zero test-process/sync
+  residue, and the read-only protected-vault invariant remain exact.
+
+## Closure
+
+Checkpoint 2251 is closed. Its implementation, test contracts, local and
+definitive verification, exact-head hosted checks, normal integration,
+merged-main checks, bounded artifact review, guarded zero-delete sync, and
+destination reruns pass.
+
+The complete antivirus-hardening goal remains active. Cancellation is still
+cooperative, and this checkpoint does not claim installed-service ownership,
+driver/kernel mediation, production detection accuracy, pre-execution
+blocking, or Defender replacement. No release, publication, installation,
+service/driver start, Defender change, live-malware action, or protected-vault
+mutation occurred.
