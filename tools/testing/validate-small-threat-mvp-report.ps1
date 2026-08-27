@@ -1904,8 +1904,8 @@ if ($RequireFullSuite) {
   if ($skipFlutter -or $skipRust) {
     throw "-RequireFullSuite requires skip_flutter=false and skip_rust=false."
   }
-  if ($steps.Count -ne 280) {
-    throw "-RequireFullSuite expected exactly 280 verifier steps for this source revision, found $($steps.Count)."
+  if ($steps.Count -ne 281) {
+    throw "-RequireFullSuite expected exactly 281 verifier steps for this source revision, found $($steps.Count)."
   }
   if ($steps[0].name -ne "local-core safe simulator scan reporting") {
     throw "-RequireFullSuite first step mismatch: $($steps[0].name)"
@@ -1984,6 +1984,7 @@ if ($RequireFullSuite) {
   Assert-ReportContainsStep $steps "native-engine ZIP entry-name normalization cancellation regressions"
   Assert-ReportContainsStep $steps "native-engine static term-search cancellation regressions"
   Assert-ReportContainsStep $steps "native-engine static reference-search cancellation regressions"
+  Assert-ReportContainsStep $steps "native-engine static structured-indicator cancellation regressions"
   Assert-ReportScopeContains $verifiedScopeText "entropy 4096-byte traversal and PE section entropy use fallible checkpoints" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "string references stream counts without URL/path vectors while term groups, IP candidates, and UTF16 traversal checkpoint" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "PE section/import/debug and script term passes checkpoint" "verification_scope.verified"
@@ -1993,8 +1994,11 @@ if ($RequireFullSuite) {
   Assert-ReportScopeContains $verifiedScopeText "Cross-chunk matches and existing non-overlapping count semantics are preserved; arbitrary callback errors return before analyzer evidence or verdict publication" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "static URL and remote network-path reference marker searches use the shared exact finder, and reference-body terminator traversal checkpoints before every at-most-64-KiB UTF-8-safe byte chunk" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "Existing first-match, Unicode whitespace/delimiter, count, classification, and ordering semantics are preserved; arbitrary callback errors return before StringIndicators or verdict publication" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "structured String Indicator carrier markers, IPv4 candidates, URL query/fragment paths, remote host/share parsing, autorun lines and command tokens, optical-image markers, and email lines/fields checkpoint every at-most-64-KiB byte or UTF-8-safe character chunk" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Existing CRLF, comment, token, suffix, per-line count, and conservative classification semantics are preserved; arbitrary callback errors return before StringIndicators or verdict publication" "verification_scope.verified"
   Assert-ReportScopeContains $technicalLimitText "one at-most-64-KiB static text-normalization chunk, one UTF-16 decode interval, one at-most-64-KiB static term-search candidate chunk, or one separately bounded structured text traversal can complete before the next checkpoint" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "one at-most-64-KiB static reference-marker candidate or UTF-8-safe reference-body chunk can complete before the next checkpoint" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "one at-most-64-KiB carrier, candidate, line, token, path, host, optical-marker, or email-field chunk can complete before the next checkpoint" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "existing 64 MiB sample cap" "verification_scope.technically_limited"
   Assert-ReportScopeContains $verifiedScopeText "Native signature, rule, and ML providers propagate the exact job-bound cancellation callback before publishing evidence" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "searches checkpoint every at-most-64-KiB candidate chunk" "verification_scope.verified"

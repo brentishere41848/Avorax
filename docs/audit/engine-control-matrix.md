@@ -5172,6 +5172,31 @@ technically limited**, and all correlation-dependent rows remain **Disabled /
 blocked** with their listed prerequisites. The complete antivirus goal remains
 active.
 
+## Checkpoint 2252 Static Structured-Indicator Cancellation Matrix
+
+| Control / engine | Responsibility | Status | Evidence / blocker |
+|---|---|---|---|
+| Structured traversal boundary | Check cancellation during delimiter, trim, candidate, token, and host traversal | Scripted / unverified | Shared at-most-64-KiB byte or UTF-8-safe character intervals; focused/full evidence pending |
+| Carrier classifier | Recognize RTF, PDF, and web-document carriers before counting active-content terms | Scripted / unverified | Bounded exact markers and injected carrier-search error fixture scripted |
+| IPv4 candidate classifier | Count syntactically valid IPv4-looking candidates without reputation lookup | Scripted / unverified | Chunked candidate traversal plus representable-length guard and error fixture scripted |
+| URL/query suffix classifier | Classify payload suffix before query or fragment without treating query text as a payload | Scripted / unverified | Bounded first delimiter and preservation fixture scripted |
+| Remote path classifier | Validate UNC and remote `file://` host/share shape while excluding device/local forms | Scripted / unverified | Bounded leading-host traversal and host cancellation fixture scripted |
+| Autorun classifier | Count executable/script command values only when an autorun section exists | Scripted / unverified | CRLF, comments, accepted keys, tokens, suffixes, and line/token cancellation fixtures scripted |
+| Optical-image marker classifier | Recognize bounded ISO/UDF markers and autorun executable references | Scripted / unverified | Shared exact marker search and injected optical-marker error fixture scripted |
+| Email attachment classifier | Count lines containing executable/script `filename` or `name` fields in an email carrier | Scripted / unverified | Streaming semicolon fields, no per-line vector, per-line semantics, and error fixture scripted |
+| String Indicator publication | Publish no partial aggregate after arbitrary callback failure | Scripted / unverified | Every new helper is fallible; focused/full and verdict propagation evidence pending |
+| Structured callback latency | Bound cooperative work between callbacks | Partial / technically limited | One admitted structured chunk of at most 64 KiB may finish before cancellation is observed |
+| Network/action ownership | Keep the provider deterministic, offline, detection-only, and non-mutating | Verified / unchanged | No URL/path access, execution, blocking, quarantine, or network lookup is added |
+| Installed/kernel prevention | Mediate cross-identity or pre-execution events | Disabled / blocked | Requires installed authenticated service boundary and production-signed driver evidence |
+
+Checkpoint 2252 verifier step 281 and Source contract 682 are fully scripted.
+No checkpoint-2252 test has run during this scripting phase. Focused/full,
+definitive exact `281/281`, hosted, integration, guarded-sync, and destination
+evidence remain pending. New rows remain **Scripted / unverified**; existing
+verified, partial, technically limited, disabled, and blocked statuses are
+unchanged. The complete antivirus-hardening goal remains active.
+
+
 Closure docs passed PR `#102` exact-head CI and normal merge `146b536`; its
 merged-main CI passed. Exact four-path, zero-delete guarded synchronization and
 the final destination `275/275` verifier plus independent PS5/PS7 validation
@@ -5341,3 +5366,24 @@ focused `8/8`, formatting, and definitive `280/280` plus independent PS5/PS7
 acceptance pass. Implemented rows are **Verified**; partial and disabled rows
 are unchanged. Checkpoint 2251 is closed, while the complete antivirus goal
 remains active.
+
+Checkpoint 2252 local evidence now passes Source `682/682`, focused structured
+`9/9`, all String Indicator `54/54`, adjacent reference `8/8`, Native 632 active
+plus compiler `6/6`, Local Core `546/546`, locked workspace/release/offline
+checks, strict Native/Local/Guard lint, Flutter analyze and `847/847`, and Dart
+`14/14`. The first Native Clippy type-complexity failure was repaired with a
+generic callback helper and exact reruns pass. Implemented checkpoint-2252 rows
+are therefore **Verified locally**. Exact `281/281`, hosted, integration,
+guarded-sync, and destination evidence remain open; all partial/disabled limits
+and the complete antivirus-hardening goal remain unchanged and active.
+
+Definitive local evidence promotes the implemented checkpoint-2252 rows to
+**Verified locally**: exact `281/281`, zero non-passing steps, in `786.9s`, with
+independent PS5/PS7 acceptance of report SHA-256
+`039f30500f4a842f7f9785653df8a49b4b01f22963ecb1c340cb7265a2815153`.
+Both validators reject missing-step and missing-scope copies. The first run's
+Defender `Wacatac.C!ml` block of a generated debug test binary is uncredited;
+the exact filter and from-start verifier pass with test-only debug/incremental
+metadata disabled and without weakening Defender. Hosted, integration,
+guarded-sync, and destination evidence remain open. Partial/disabled rows and
+the complete antivirus goal remain unchanged.

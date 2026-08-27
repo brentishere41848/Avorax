@@ -1017,6 +1017,28 @@ changes. Evidence-head/merged-main package proof and complete signed final-
 artifact license, notice, copyright, and binary-resolution review remain
 pending.
 
+## Checkpoint 2252 Dependency Scope
+
+Static structured-indicator cancellation reuses Rust slices, UTF-8 character
+indices, checked/saturating arithmetic, the existing shared search module, and
+the already locked `anyhow` error boundary. It adds no dependency, feature,
+build script, downloaded or network source, package source, license obligation,
+or lockfile change.
+
+Tests use only benign in-memory ASCII/UTF-8, reserved `.invalid` references,
+and injected callback errors. They never download, unpack, retain, execute, or
+write candidate content and do not create a live EICAR file. Exact verifier
+step 281 and Source contract 682 are scripted; no checkpoint-2252 test has run
+during this scripting phase. Root Cargo, Native Cargo, and Flutter lock SHA-256
+values are expected to remain respectively
+`7c7c8aa006c2ac80eb89fa64d3b8ec09b32b26598b1a85bceb3c2af5a2d20e39`,
+`7f4393c81896600c4a5e84cad288a1a5360eccbc1c458b38f615082f66391383`, and
+`4de19695f9207273746341ca2221541b5b86d9f72af83727afca78541e177694`;
+verification remains pending. Final-binary SBOM resolution, production
+signing/notarization, legal approval, installed-service stress, and release
+approval remain separate prerequisites.
+
+
 Definitive exact `278/278` and dual-host validation pass without dependency or
 lockfile change. Hosted package lockfile-SBOM evidence remains pending; this
 checkpoint still adds no dependency, feature, package source, or license
@@ -1881,3 +1903,25 @@ exactly the three values recorded above after the definitive run. No dependency,
 feature, package source, license obligation, lockfile, download, or machine-wide
 installation change occurred. Hosted exact-head package/SBOM evidence remains
 pending.
+
+## Checkpoint 2252 Local Dependency Verification
+
+Source `682/682`, focused/full tests, all locked workspace variants, standalone
+locked/offline Native, locked release workspace, strict lint, Flutter analyze
+and tests, and Dart protocol tests pass. No dependency, feature, build script,
+package source, license obligation, download, or lockfile change occurred. Root
+Cargo, Native Cargo, and Flutter lock SHA-256 values remain exactly
+`7c7c8aa006c2ac80eb89fa64d3b8ec09b32b26598b1a85bceb3c2af5a2d20e39`,
+`7f4393c81896600c4a5e84cad288a1a5360eccbc1c458b38f615082f66391383`, and
+`4de19695f9207273746341ca2221541b5b86d9f72af83727afca78541e177694`.
+Definitive step 281 and hosted package/SBOM evidence remain pending; final-
+binary SBOM resolution, production signing/notarization, legal approval,
+installed-service stress, and release approval remain separate prerequisites.
+
+Definitive exact `281/281`, dual-validator acceptance, and adversarial missing-
+step/missing-scope rejection now pass. Root Cargo, Native Cargo, and Flutter
+lock hashes remain exact after the run. `CARGO_PROFILE_TEST_DEBUG=0` and
+`CARGO_INCREMENTAL=0` changed only generated test-binary metadata after active
+Defender removed one debug test binary; they add no dependency, feature,
+package source, license, lockfile, release setting, Defender exclusion, or
+machine-wide installation. Hosted package/SBOM evidence remains pending.

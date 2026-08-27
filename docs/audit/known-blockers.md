@@ -3403,3 +3403,46 @@ SHA-256 is
 Exact-head hosted CI/packages, normal integration, guarded synchronization, and
 destination reruns remain checkpoint-closure blockers. The cooperative limit
 and the broader installed-service/driver/production blockers remain unchanged.
+
+## Checkpoint 2252 Static Structured-Indicator Cancellation
+
+- Structured callback boundaries, nine benign regressions, verifier step 281,
+  exact-cardinality/scope validation, Source contract 682, and documentation
+  are scripted. No checkpoint-2252 test has run during this scripting phase.
+- Focused/adjacent tests, Source `682/682`, full local suites, definitive exact
+  `281/281`, dual-validator/adversarial checks, exact-head hosted CI/packages,
+  normal integration, guarded synchronization, and destination reruns remain
+  checkpoint-closure blockers.
+- Cancellation remains cooperative. One at-most-64-KiB carrier, candidate,
+  line, token, path, host, optical-marker, or email-field chunk, another bounded
+  analyzer interval, entered operation, archive read, ML sort, or trust call
+  may finish before the next callback. Existing input caps are not deadlines.
+- Installed cross-identity service ownership and authenticated IPC, production
+  signing/calibration, signed driver/kernel mediation, demonstrated
+  pre-execution blocking, and Defender replacement remain genuine blockers or
+  unsupported claims. Reputation/correlation engines remain disabled pending
+  an approved authenticated backend and trusted telemetry.
+- Checkpoint 2252 and the complete antivirus-hardening goal remain active.
+
+Focused/adjacent and full local checks now pass, including Source `682/682`,
+structured cancellation `9/9`, all String Indicator `54/54`, reference `8/8`,
+Native 632 active plus compiler `6/6`, Local Core `546/546`, locked workspace,
+release/offline builds, strict lint, Flutter `847/847`, and Dart `14/14`. The
+first Native Clippy failure was fail-visible and repaired with a generic
+callback helper; exact reruns pass. This supersedes the local-verification part
+of the second bullet. Definitive `281/281`, adversarial report validation,
+exact-head hosted CI/packages, normal integration, guarded synchronization, and
+destination reruns remain checkpoint-closure blockers. Broader installed
+service/IPC, driver/kernel, production-accuracy, pre-execution, and Defender-
+replacement blockers are unchanged.
+
+Definitive local `281/281` is no longer a blocker: zero steps are non-passing in
+`786.9s`, independent PS5/PS7 validation accepts report SHA-256
+`039f30500f4a842f7f9785653df8a49b4b01f22963ecb1c340cb7265a2815153`, and
+both validators reject missing-step and missing-scope copies. The initial
+Defender block of a generated debug test binary and missing-file retry are
+uncredited; an exact focused run and complete from-start rerun pass with test-
+only debug/incremental metadata disabled and no Defender weakening. Exact-head
+hosted CI/packages, normal integration, guarded synchronization, and destination
+reruns remain checkpoint-closure blockers. Broader product blockers and the
+complete antivirus-hardening goal remain unchanged and active.
