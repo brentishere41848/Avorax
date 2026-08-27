@@ -3330,3 +3330,38 @@ Definitive local `278/278`, dual-host validation, and missing-step/scope
 rejection now pass and supersede those local blockers. Exact-head hosted
 CI/packages, normal PR/merged-main integration, guarded synchronization, and
 destination focused/definitive reruns remain open.
+
+## Checkpoint 2250 Static Term-Search Cancellation
+
+- Shared term-search implementation, six benign regressions, verifier step 279,
+  exact-cardinality/scope validation, Source contract 680, and documentation are
+  scripted. No checkpoint-2250 test has run during this scripting phase.
+- Verification is the immediate blocker: focused and adjacent cancellation
+  tests, Source `680/680`, full local suites, definitive exact `279/279`, dual
+  validator and hostile-report checks, exact-head hosted CI/packages, normal
+  integration, guarded synchronization, and destination reruns remain required.
+- Cancellation is cooperative. One admitted at-most-64-KiB static term-search
+  candidate chunk, UTF-16 decode interval, separate bounded structured traversal,
+  entered system operation, ML sort, or trust call may complete before the next
+  callback. Existing input caps bound work but do not provide hard preemption.
+- Installed cross-identity service ownership, authenticated service IPC,
+  production signing/calibration, signed driver/kernel mediation, demonstrated
+  pre-execution blocking, and Defender replacement remain genuine blockers or
+  unsupported claims. Reputation and correlation-dependent engines remain
+  disabled pending an approved authenticated backend and trusted telemetry.
+- Checkpoint 2250 and the complete antivirus hardening goal remain active.
+
+Focused/adjacent, Source `680/680`, full Native/Local/Flutter, locked workspace
+rerun/release, strict lint, formatting, parser, lock, and vault checks pass. This
+supersedes the local-verification portion of the second bullet. The initial
+workspace Defender OS-error-225 child-launch block is evidenced by passing exact
+reruns and required no Defender change. Definitive exact `279/279`, hostile
+report validation, hosted, integration, guarded synchronization, and destination
+evidence remain checkpoint-closure blockers.
+
+Definitive local verification now passes exact `279/279`, and both PS5/PS7
+validators accept the authentic report while rejecting missing-step and
+missing-scope copies. This supersedes the remaining local and hostile-report
+portions above. Exact-head hosted CI/packages, normal integration, guarded
+synchronization, and clean destination reruns remain checkpoint-closure
+blockers.

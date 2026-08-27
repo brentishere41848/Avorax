@@ -85,8 +85,13 @@ fn count_import_terms(
 ) -> Result<u32> {
     let mut total = 0u32;
     for term in terms {
-        cancellation_checkpoint()?;
-        total = total.saturating_add(text.matches(term).count() as u32);
+        total = total.saturating_add(
+            crate::signatures::search::count_exact_non_overlapping_with_cancellation(
+                text.as_bytes(),
+                term.as_bytes(),
+                cancellation_checkpoint,
+            )?,
+        );
     }
     cancellation_checkpoint()?;
     Ok(total)
@@ -135,5 +140,26 @@ mod tests {
             .to_string()
             .contains("benign PE import normalization cancellation"));
         assert_eq!(checks, 3);
+    }
+
+    #[test]
+    fn static_term_search_interrupts_pe_import_term_chunks_before_evidence() {
+        let text = "a".repeat(crate::signatures::search::SEARCH_CANCELLATION_CHUNK_CANDIDATES * 3);
+        let mut checks = 0usize;
+        let mut checkpoint = || {
+            checks += 1;
+            if checks == 2 {
+                anyhow::bail!("benign PE import term-search cancellation")
+            }
+            Ok(())
+        };
+
+        let error = count_import_terms(&text, &["zz"], &mut checkpoint)
+            .expect_err("PE import term cancellation must abort before evidence");
+
+        assert!(error
+            .to_string()
+            .contains("benign PE import term-search cancellation"));
+        assert_eq!(checks, 2);
     }
 }

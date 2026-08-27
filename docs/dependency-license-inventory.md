@@ -1813,3 +1813,36 @@ respectively
 verification remains pending. Final-binary SBOM resolution, production
 signing/notarization, legal approval, installed-service stress, and release
 approval remain separate prerequisites.
+
+Local focused/full and definitive exact `279/279` verification pass without a
+dependency or lockfile change. Root Cargo, Native Cargo, and Flutter lock hashes
+remain exact at the values above. Hosted package/SBOM evidence remains pending;
+production signing/notarization, legal approval, installed-service stress, and
+release approval remain separate prerequisites.
+
+Local Source `680/680`, focused and full suites, locked workspace tests, locked
+release build, and strict lint now pass. The three expected lock SHA-256 values
+remain exact after Flutter analysis/tests and all Rust work; no lockfile change
+or dependency upgrade occurred. Definitive step 279 and hosted SBOM/package
+evidence remain pending.
+
+
+## Checkpoint 2250 Dependency Scope
+
+Static term-search cancellation reuses Rust slices, iterators, checked and
+saturating arithmetic, the existing shared search module, and the already locked
+`anyhow` error boundary. It adds no dependency, feature, build script, downloaded
+or network source, package source, license obligation, or lockfile change.
+
+Tests use only ordinary benign in-memory text/byte arrays and injected callback
+errors. They never download, unpack, retain, execute, or write candidate content
+and do not create a live EICAR file. Exact verifier step 279 and Source contract
+680 are scripted; no checkpoint-2250 test has run during this scripting phase.
+Root Cargo, Native Cargo, and Flutter lock SHA-256 values are expected to remain
+respectively
+`7c7c8aa006c2ac80eb89fa64d3b8ec09b32b26598b1a85bceb3c2af5a2d20e39`,
+`7f4393c81896600c4a5e84cad288a1a5360eccbc1c458b38f615082f66391383`, and
+`4de19695f9207273746341ca2221541b5b86d9f72af83727afca78541e177694`;
+verification remains pending. Final-binary SBOM resolution, production
+signing/notarization, legal approval, installed-service stress, and release
+approval remain separate prerequisites.
