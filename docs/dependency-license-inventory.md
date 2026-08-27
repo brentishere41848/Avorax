@@ -1846,3 +1846,38 @@ respectively
 verification remains pending. Final-binary SBOM resolution, production
 signing/notarization, legal approval, installed-service stress, and release
 approval remain separate prerequisites.
+
+## Checkpoint 2251 Dependency Scope
+
+Static reference-search cancellation reuses Rust slices, strings, iterators,
+UTF-8 boundary checks, checked/saturating arithmetic, the existing shared
+search module, and the already locked `anyhow` error boundary. It adds no
+dependency, feature, build script, downloaded or network source, package
+source, license obligation, or lockfile change.
+
+Tests use only ordinary benign in-memory text/byte arrays and injected callback
+errors. They never download, unpack, retain, execute, or write candidate
+content and do not create a live EICAR file. Exact verifier step 280 and Source
+contract 681 are scripted; no checkpoint-2251 test has run during this
+scripting phase. Root Cargo, Native Cargo, and Flutter lock SHA-256 values are
+expected to remain respectively
+`7c7c8aa006c2ac80eb89fa64d3b8ec09b32b26598b1a85bceb3c2af5a2d20e39`,
+`7f4393c81896600c4a5e84cad288a1a5360eccbc1c458b38f615082f66391383`, and
+`4de19695f9207273746341ca2221541b5b86d9f72af83727afca78541e177694`;
+verification remains pending. Final-binary SBOM resolution, production
+signing/notarization, legal approval, installed-service stress, and release
+approval remain separate prerequisites.
+
+Local Source `681/681`, focused/full suites, both locked workspace variants,
+standalone locked/offline Native, locked release workspace, strict lint,
+Flutter/Dart, and exact lock hashes now pass. No dependency, feature, package
+source, license obligation, or lockfile change occurred. Definitive step 280
+and hosted SBOM/package evidence remain pending.
+
+Definitive local verification now passes exact `280/280` with zero failures,
+and dual-validator plus adversarial missing-step/missing-scope report checks
+pass. The root Cargo, Native Cargo, and Flutter lock SHA-256 values remain
+exactly the three values recorded above after the definitive run. No dependency,
+feature, package source, license obligation, lockfile, download, or machine-wide
+installation change occurred. Hosted exact-head package/SBOM evidence remains
+pending.

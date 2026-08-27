@@ -3365,3 +3365,41 @@ missing-scope copies. This supersedes the remaining local and hostile-report
 portions above. Exact-head hosted CI/packages, normal integration, guarded
 synchronization, and clean destination reruns remain checkpoint-closure
 blockers.
+
+## Checkpoint 2251 Static Reference-Search Cancellation
+
+- Shared marker and reference-body cancellation boundaries, eight benign
+  regressions, verifier step 280, exact-cardinality/scope validation, Source
+  contract 681, and documentation are scripted. No checkpoint-2251 test has run
+  during this scripting phase.
+- Verification is the immediate blocker: focused and adjacent reference/static
+  cancellation tests, Source `681/681`, full local suites, definitive exact
+  `280/280`, dual-validator/adversarial report checks, exact-head hosted
+  CI/packages, normal integration, guarded synchronization, and destination
+  reruns remain required.
+- Cancellation is cooperative. One admitted at-most-64-KiB reference-marker
+  candidate or UTF-8-safe body chunk, another bounded analyzer interval,
+  entered system operation, ML sort, archive read, or trust call may finish
+  before the next callback. Existing input caps are not hard deadlines.
+- Installed cross-identity service ownership, authenticated service IPC,
+  production signing/calibration, signed driver/kernel mediation, demonstrated
+  pre-execution blocking, and Defender replacement remain genuine blockers or
+  unsupported claims. Reputation and correlation-dependent engines remain
+  disabled pending an approved authenticated backend and trusted telemetry.
+- Checkpoint 2251 and the complete antivirus-hardening goal remain active.
+
+Focused/full local checks, both locked workspace variants, strict lint,
+Flutter/Dart, Source `681/681`, exact locks, and read-only vault inventory now
+pass. This supersedes the local-verification portion above. Definitive exact
+`280/280`, adversarial report validation, exact-head hosted CI/packages, normal
+integration, guarded synchronization, and destination reruns remain closure
+blockers.
+
+Definitive local `280/280` is no longer a blocker: the exact report passes with
+zero failures in `662.9` seconds, independent PS5/PS7 validation accepts it, and
+both validators reject missing-step and missing-scope adversarial copies. Report
+SHA-256 is
+`17b60115b7a419310646789d4dc8b17b157b3e62ab0f1b2da6ec48d0dbe8b5f4`.
+Exact-head hosted CI/packages, normal integration, guarded synchronization, and
+destination reruns remain checkpoint-closure blockers. The cooperative limit
+and the broader installed-service/driver/production blockers remain unchanged.

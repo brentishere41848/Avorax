@@ -38,6 +38,38 @@ pub fn contains_exact_with_cancellation(
     Ok(false)
 }
 
+pub(crate) fn find_exact_with_cancellation(
+    bytes: &[u8],
+    needle: &[u8],
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<Option<usize>> {
+    if needle.is_empty() {
+        bail!("reference search needle is empty");
+    }
+    let Some(last_start) = bytes.len().checked_sub(needle.len()) else {
+        cancellation_checkpoint()?;
+        return Ok(None);
+    };
+    let candidate_count = last_start + 1;
+
+    for chunk_start in (0..candidate_count).step_by(SEARCH_CANCELLATION_CHUNK_CANDIDATES) {
+        cancellation_checkpoint()?;
+        let chunk_end = chunk_start
+            .saturating_add(SEARCH_CANCELLATION_CHUNK_CANDIDATES)
+            .min(candidate_count);
+        let search_end = chunk_end + needle.len() - 1;
+        if let Some(relative_start) = bytes[chunk_start..search_end]
+            .windows(needle.len())
+            .position(|window| window == needle)
+        {
+            return Ok(Some(chunk_start + relative_start));
+        }
+    }
+
+    cancellation_checkpoint()?;
+    Ok(None)
+}
+
 pub(crate) fn count_exact_non_overlapping_with_cancellation(
     bytes: &[u8],
     needle: &[u8],
@@ -233,5 +265,51 @@ mod tests {
                 .expect_err("empty term needles must fail visibly");
 
         assert!(error.to_string().contains("term search needle is empty"));
+    }
+
+    #[test]
+    fn static_reference_cancellation_interrupts_shared_find_chunks() {
+        let bytes = vec![b'a'; SEARCH_CANCELLATION_CHUNK_CANDIDATES * 3];
+        let mut checks = 0usize;
+        let mut checkpoint = || {
+            checks += 1;
+            if checks == 2 {
+                anyhow::bail!("benign static reference-search cancellation")
+            }
+            Ok(())
+        };
+
+        let error = find_exact_with_cancellation(&bytes, b"zz", &mut checkpoint)
+            .expect_err("the second reference-search chunk must propagate cancellation");
+
+        assert!(error
+            .to_string()
+            .contains("benign static reference-search cancellation"));
+        assert_eq!(checks, 2);
+    }
+
+    #[test]
+    fn static_reference_cancellation_preserves_first_cross_chunk_offset() {
+        let boundary = SEARCH_CANCELLATION_CHUNK_CANDIDATES;
+        let mut bytes = vec![b'x'; boundary + 24];
+        bytes[boundary - 2..boundary + 2].copy_from_slice(b"safe");
+        bytes[boundary + 10..boundary + 14].copy_from_slice(b"safe");
+        let mut never_cancel = || Ok(());
+
+        assert_eq!(
+            find_exact_with_cancellation(&bytes, b"safe", &mut never_cancel).unwrap(),
+            Some(boundary - 2)
+        );
+    }
+
+    #[test]
+    fn static_reference_cancellation_rejects_empty_find_needles() {
+        let mut never_cancel = || Ok(());
+        let error = find_exact_with_cancellation(b"ordinary", b"", &mut never_cancel)
+            .expect_err("empty reference-search needles must fail visibly");
+
+        assert!(error
+            .to_string()
+            .contains("reference search needle is empty"));
     }
 }

@@ -12654,3 +12654,55 @@ pending.
   `70ade0c2a2929b022f95a5469eb7f548ac1415fe9ca2661c0414b56ccb533ab5`.
   Locks and the read-only protected vault invariant remain exact. Checkpoint
   2250 is closed; the complete antivirus-hardening goal remains active.
+
+## 2026-08-27 - Checkpoint 2251 Static Reference-Search Scripting
+
+- Added a shared first-match exact finder with cancellation before every
+  at-most-64-KiB candidate-start chunk. URL and remote network-path marker
+  searches now use that boundary.
+- Added an analyzer-owned UTF-8-safe reference terminator scanner that checks
+  before each at-most-64-KiB body chunk and preserves Unicode whitespace,
+  existing delimiters, first-match ordering, counts, and classification.
+- Eight benign `static_reference_cancellation_` regressions, verifier step 280,
+  strict exact-280 validator scope, Source contract 681, matrix, threat,
+  blocker, dependency, status, and checkpoint records are scripted.
+- No checkpoint-2251 test has run during this scripting phase. Focused, full,
+  definitive `280/280`, hosted, integration, guarded-sync, and destination
+  evidence remain pending. No dependency, lockfile, malware, EICAR, Defender,
+  install, service/driver, release, publication, or protected-vault action
+  occurs.
+
+## 2026-08-27 - Checkpoint 2251 Local Verification
+
+- Formatting and PS5/PS7 parsers pass. Source contracts pass `681/681`.
+  Dedicated reference cancellation passes `8/8`; term search `6/6`; all String
+  Indicator tests `45/45`; adjacent non-archive cancellation `15/15`.
+- Full Native passes 623 active plus compiler `6/6`, with 21 documented child
+  fixtures ignored. Local Core passes `546/546` in standard/all-feature locked
+  workspace runs. Locked release and standalone offline Native builds pass.
+- Strict Native/Local/Guard Clippy passes. Flutter analyze is clean, Flutter
+  passes `847/847`, and Dart protocol passes `14/14`.
+- Initial failures were fail-visible and repaired: two URL tests used a
+  test-only `expect_err` requiring `Debug`, and the first Source run found one
+  replaced historical technical-scope sentence. Explicit error matching and a
+  separately appended new limit preserve production and historical contracts;
+  reruns pass.
+- All three lock hashes and the read-only protected vault invariant remain
+  exact. Definitive `280/280`, adversarial validator, hosted, integration,
+  guarded-sync, and destination evidence remain pending.
+
+## 2026-08-27 - Checkpoint 2251 Definitive Local Verification
+
+- The definitive Windows PowerShell 5.1 verifier passes exact `280/280` with
+  zero failures in `662.9` seconds. The new static reference-search
+  cancellation step is present exactly once and passes.
+- The report SHA-256 is
+  `17b60115b7a419310646789d4dc8b17b157b3e62ab0f1b2da6ec48d0dbe8b5f4`.
+  Independent PS5 and PS7 `-RequireFullSuite` validation accepts the original
+  report.
+- Both validators reject a 279-step copy missing the new step and a separate
+  280-step copy missing the new verified-scope sentence. The exact temporary
+  copies were removed after the adversarial checks.
+- Post-verifier lock hashes and read-only protected-vault inventory remain
+  exact. Hosted exact-head CI/packages, PR integration, guarded synchronization,
+  and destination reruns remain required; no release or publication occurred.

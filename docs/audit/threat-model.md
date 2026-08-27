@@ -3428,3 +3428,50 @@ validation accepts the authentic report and rejects missing-step and
 missing-scope mutations. This closes the local evidence blocker but does not
 change the cooperative residual limit. Hosted CI/packages, integration,
 guarded synchronization, and destination reruns remain required.
+
+## Checkpoint 2251 Static Reference-Search Cancellation Threat Delta
+
+**Threat:** after scan cancellation, one absent or late URL/UNC/`file://`
+marker or one very long unterminated reference can keep the bounded String
+Indicator engine in a complete-tail standard-library search. Group and
+per-1,024-reference callbacks did not interrupt one such search.
+
+**Mitigation:** the shared exact finder checks the exact callback before every
+at-most-64-KiB candidate-start chunk and preserves first-match/cross-chunk
+offsets. The analyzer-owned terminator scanner checks before every at-most-
+64-KiB UTF-8-safe body chunk, preserving `char::is_whitespace` and the existing
+delimiter set. URL and network-path reference paths use both boundaries;
+arbitrary callback errors return before `StringIndicators` or file-verdict
+publication. Verifier step 280 and Source contract 681 pin the boundary and
+eight benign regressions.
+
+**Residual risk:** cancellation is cooperative. One admitted 64-KiB marker or
+body chunk, normalization/decode interval, separate structured traversal,
+entered OS/filesystem operation, archive inflate read, bounded ML sort, or
+Windows trust call may finish first. The 64 MiB ordinary-sample cap bounds
+input, not elapsed time. This adds no installed cross-identity service,
+authenticated IPC, driver/kernel, production-accuracy, pre-execution, or
+Defender-replacement proof; reputation and correlation-dependent engines
+remain disabled.
+
+No checkpoint-2251 test has run during this scripting phase. Exact `280/280`,
+focused/full regression, adversarial report mutation, hosted, integration,
+guarded-sync, and destination evidence remain pending. The mitigation is not
+yet promoted to verified, and checkpoint 2251 plus the complete antivirus goal
+remain active.
+
+Focused and full local regression now passes, including all String Indicator
+compatibility, both locked workspace variants, strict lint, Flutter/Dart, and
+Source `681/681`. Locks and the read-only vault remain exact. This verifies the
+mitigation locally but does not change its cooperative residual risk or satisfy
+definitive `280/280`, hosted, integration, synchronization, and destination
+requirements.
+
+Definitive local verification now passes exact `280/280`, zero failures, in
+`662.9` seconds, including the exact new reference-search step. Independent PS5
+and PS7 validators accept report SHA-256
+`17b60115b7a419310646789d4dc8b17b157b3e62ab0f1b2da6ec48d0dbe8b5f4` and
+reject both a missing-step 279-step copy and a separate missing-scope copy.
+Locks and the read-only vault remain exact. This promotes the mitigation to
+verified locally but does not change the cooperative residual risk or satisfy
+hosted, integration, guarded-sync, or destination closure evidence.
