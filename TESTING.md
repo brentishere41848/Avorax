@@ -612,3 +612,19 @@ packages, corrected guarded `13/13` destination synchronization, destination
 PS5/PS7 parser `2/2`, formatting, Source `684/684`, EOCD `3/3`, and definitive
 destination `283/283` in `702.4s`. The destination report SHA-256 is
 `13e7ad30df65a3e85ae9747627b1687c91aa54930cb6e3403fa5dd5c2377f981`.
+
+## Checkpoint 2255 Scripted Coverage
+
+Checkpoint 2255 adds three benign PE resource cancellation regressions under
+`pe_resource_section_cancellation_`: chunk interruption, valid resource-count
+compatibility, and exact parser-level callback-error propagation. Definitive
+verification now has 284 required steps and Source contract 685. These tests and
+contracts are scripted but have not run in this phase; no pass claim is made
+until focused, broad, definitive, and independent validation complete.
+
+Checkpoint 2255 local verification now passes focused `3/3`, full PE resource
+`6/6`, Source `685/685`, dual-host syntax, both locked workspace suites, strict
+Clippy/offline/release builds, Flutter `847/847`, and Dart `14/14 + 6/6`.
+Definitive verification passes exact `284/284` in `695.9s`; separate PS5/PS7
+validation passes and isolated missing-step/missing-scope reports are rejected.
+The definitive report SHA-256 is `ff8411143e5437e15266c87e789c02d3d5c151a701543651aab3f7e297de7d3b`.

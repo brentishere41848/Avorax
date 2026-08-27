@@ -5325,6 +5325,22 @@ destination Source `680/680`, focused `6/6`, formatting, and definitive
 partial and disabled rows are unchanged. Checkpoint 2250 is closed, while the
 complete antivirus-hardening goal remains active.
 
+## Checkpoint 2255 Control Delta
+
+| Control / engine | Responsibility | State | Evidence required |
+|---|---|---|---|
+| PE resource directory analyzer | Map the declared resource RVA into validated in-sample PE sections and validate/count top-level entries | **Verified locally** | Benign focused `3/3`, PE resource `6/6`, Native/full regression, Source contract 685, and exact verifier `284/284` |
+| PE resource section cancellation | Propagate the exact scan callback before directory handling, each at-most-4,096-entry section chunk, and exhausted search | **Verified locally** | Exact callback-error preservation and no later analysis/verdict publication |
+
+Checkpoint 2255 does not give the PE resource analyzer execution, reputation,
+blocking, quarantine, or independent-verdict responsibility. Installed service,
+driver/kernel, pre-execution, and Defender-replacement controls are unchanged.
+
+Local evidence includes both locked workspace variants, strict lint/offline/
+release gates, Flutter/Dart suites, exact `284/284`, independent PS5/PS7 report
+acceptance, and hostile scope/step rejection. Hosted, integration, synchronized
+destination, and destination verifier evidence remain open.
+
 ## Checkpoint 2254 ZIP EOCD Search Cancellation Matrix
 
 | Control / engine | Responsibility | Status | Evidence / blocker |

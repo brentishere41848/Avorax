@@ -1828,6 +1828,22 @@ Hosted lockfile SBOM evidence remains pending. Final-binary SBOM resolution,
 production signing/notarization, legal approval, installed-service stress, and
 release approval remain separate prerequisites.
 
+## Checkpoint 2255 Dependency Delta
+
+Checkpoint 2255 changes only first-party Rust PE resource cancellation wiring,
+benign tests, verifier/validator contracts, Source contract 685, and documents.
+It adds no dependency, feature, package source, license class, downloaded
+runtime, machine-wide component, or lockfile change. Definitive verifier step
+284 and later hosted package/SBOM evidence remain unverified in this scripting
+phase; final signed-binary legal/notice review remains a release prerequisite.
+
+Local dependency evidence now passes exact verifier step 284, both locked
+workspace variants, offline Native resolution, the locked release build, and
+strict linting. The root Cargo, Native Cargo, and Flutter lock hashes remain
+`7c7c8aa...`, `7f4393c...`, and `4de1969...`; no lockfile change occurred.
+Checkpoint 2255 adds no dependency or license obligation. Hosted package/SBOM,
+signed-final-binary notice, notarization/signing, and release approval remain open.
+
 ## Checkpoint 2254 ZIP EOCD Cancellation Dependency Delta
 
 Checkpoint 2254 adds no dependency, feature, package source, downloaded

@@ -94,7 +94,12 @@ pub fn parse_pe_with_cancellation(
     cancellation_checkpoint()?;
     let overlay_size = bytes.len().saturating_sub(max_section_end) as u64;
     let resource_directory_entry_count =
-        super::resources::resource_directory_entry_count(bytes, &sections, resource_directory)?;
+        super::resources::resource_directory_entry_count_with_cancellation(
+            bytes,
+            &sections,
+            resource_directory,
+            cancellation_checkpoint,
+        )?;
     cancellation_checkpoint()?;
     let suspicious_imports =
         super::imports::categorize_imports_with_cancellation(bytes, cancellation_checkpoint)?;
@@ -262,8 +267,7 @@ mod tests {
 
         assert!(production
             .contains("pe_data_directory(bytes, optional_header_start, optional_header_size, 4)?"));
-        assert!(production
-            .contains("resource_directory_entry_count(bytes, &sections, resource_directory)?"));
+        assert!(production.contains("resource_directory_entry_count_with_cancellation("));
         assert!(!production.contains(&old_certificate_default));
         assert!(!production.contains(&old_resource_default));
     }
@@ -315,6 +319,45 @@ mod tests {
 
         assert!(error.to_string().contains("benign PE debug cancellation"));
         assert_eq!(checks, 2);
+    }
+
+    #[test]
+    fn pe_resource_section_cancellation_propagates_through_parser_before_analysis() {
+        const SECTION_COUNT: u16 = 4_097;
+        const PE_OFFSET: usize = 0x80;
+        const OPTIONAL_HEADER_SIZE: usize = 0xe0;
+        const OPTIONAL_HEADER_START: usize = PE_OFFSET + 24;
+        const SECTION_TABLE: usize = OPTIONAL_HEADER_START + OPTIONAL_HEADER_SIZE;
+
+        let mut bytes = vec![0_u8; SECTION_TABLE + usize::from(SECTION_COUNT) * 40];
+        bytes[0..2].copy_from_slice(b"MZ");
+        write_u32(&mut bytes, 0x3c, PE_OFFSET as u32);
+        bytes[PE_OFFSET..PE_OFFSET + 4].copy_from_slice(b"PE\0\0");
+        write_u16(&mut bytes, PE_OFFSET + 4, 0x14c);
+        write_u16(&mut bytes, PE_OFFSET + 6, SECTION_COUNT);
+        write_u16(&mut bytes, PE_OFFSET + 20, OPTIONAL_HEADER_SIZE as u16);
+        write_u16(&mut bytes, OPTIONAL_HEADER_START, 0x10b);
+        write_u32(&mut bytes, OPTIONAL_HEADER_START + 92, 16);
+        write_u32(&mut bytes, OPTIONAL_HEADER_START + 96 + 2 * 8, 0x7000_0000);
+        write_u32(&mut bytes, OPTIONAL_HEADER_START + 96 + 2 * 8 + 4, 16);
+
+        let fail_at = usize::from(SECTION_COUNT) + 5;
+        let mut checks = 0usize;
+        let mut checkpoint = || {
+            checks += 1;
+            if checks == fail_at {
+                anyhow::bail!("benign PE resource parser cancellation")
+            }
+            Ok(())
+        };
+
+        let error = parse_pe_with_cancellation(&bytes, &mut checkpoint)
+            .expect_err("resource RVA section traversal cancellation must abort PE analysis");
+
+        assert_eq!(checks, fail_at);
+        assert!(error
+            .to_string()
+            .contains("benign PE resource parser cancellation"));
     }
 
     fn pe_with_resource_and_certificate_directories() -> Vec<u8> {

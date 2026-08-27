@@ -3667,3 +3667,24 @@ Evidence-head, merged-main, synchronized-destination, and exact destination
 verification now close this threat delta. The finder observes cancellation at
 the documented cooperative intervals; it still does not establish a wall-clock
 deadline, kernel mediation, pre-execution blocking, or Defender replacement.
+
+## Checkpoint 2255 Threat Delta
+
+A hostile but structurally admitted PE can maximize its `u16` section count.
+Before Checkpoint 2255, PE resource RVA mapping could linearly rescan that
+validated section vector after the parser's earlier section-table checkpoints
+without consulting cancellation. The scripted mitigation propagates the exact
+callback before resource handling, every at-most-4,096 section candidates, and
+after an exhausted search; arbitrary callback errors stop before resource or
+later PE/string evidence and before verdict publication.
+
+The mitigation is **unverified** until focused tests, broad regression, Source
+contract 685, and exact verifier `284/284` pass. Residual PE resource latency is
+cooperative rather than preemptive. Header and in-sample bounds are not timing
+deadlines and add no kernel, pre-execution, or Defender-replacement guarantee.
+
+Focused, broad, and definitive exact `284/284` evidence now makes this mitigation
+**Verified locally**. Independent PS5/PS7 validation and hostile missing-step/
+scope rejection bind the report. The residual cooperative interval, hostile
+host resource pressure, installed-service/driver boundary, pre-execution limit,
+and Defender-replacement non-claim remain unchanged pending later evidence.
