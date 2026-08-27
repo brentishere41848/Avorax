@@ -7259,3 +7259,23 @@ new scope claim; those temporary copies were removed. Locks and the protected
 vault remain exact. Checkpoint 2251 is **verified locally** but remains active
 pending hosted exact-head evidence, PR integration, guarded synchronization,
 and destination reruns. The complete antivirus-hardening goal remains active.
+
+### Checkpoint 2251 Hosted And Destination Evidence
+
+Exact implementation `96a3e73`, PR `#111`, and normal merge `3e58dc15` pass
+branch package, exact-head PR CI/packages, and merged-main CI/packages. Package
+publication is skipped. Consolidated branch, PR, and main artifact metadata is
+exact; bounded branch/main review verifies eight root entries, six platform
+packages, seven checksum targets, and CycloneDX 1.6 with 569 unique components
+without extraction or execution.
+
+Guarded synchronization passes exact `12/12` with eleven modifications, one
+addition, zero deletes, independent raw-blob equality, and no residue.
+Destination Source `681/681`, focused reference tests `8/8`, formatting, and
+definitive exact `280/280` in `717.5s` pass. Independent PS5/PS7 validators
+accept report SHA-256
+`d3e26d29be79899efdcae8b7982256dff93cfe78f238301a9f751065f4815e6b`.
+Locks and the protected-vault invariant remain exact. Checkpoint 2251 is closed;
+the complete antivirus-hardening goal remains active, with installed service,
+driver/kernel, production-accuracy, pre-execution, and Defender-replacement
+claims still partial, blocked, technically limited, or unclaimed.
