@@ -3656,3 +3656,9 @@ release, offline, and strict-lint gates now pass. The mitigation is therefore
 **Verified locally**. Definitive exact-cardinality, hostile report, hosted,
 integration, synchronization, and destination evidence remain open; the
 cooperative-latency and product-level residual risks are unchanged.
+
+Definitive exact-cardinality and hostile report evidence now pass, as do exact
+implementation-head CI and cross-platform packaging with publication skipped.
+This strengthens evidence for the local EOCD boundary without changing its
+cooperative latency or any installed-service, driver, pre-execution,
+calibration, or Defender-replacement limitation.

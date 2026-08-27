@@ -5354,6 +5354,12 @@ Native check, and strict Native/Local/Guard Clippy. The first four rows are
 **Verified locally**; the definitive-evidence row remains **Scripted /
 unverified** until exact `283/283` and hostile validator checks pass.
 
+Definitive exact `283/283`, dual-host acceptance, missing-step/missing-scope
+rejection, and exact implementation-head CI/packages now pass. The first five
+rows are **Verified locally and at implementation head**. Installed service,
+driver/kernel, Defender replacement, evidence-head, integration, merged-main,
+guarded-sync, and destination rows remain unchanged or open.
+
 ## Checkpoint 2251 Static Reference-Search Cancellation Matrix
 
 | Control / engine | Responsibility | Status | Evidence / blocker |

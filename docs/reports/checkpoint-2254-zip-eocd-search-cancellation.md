@@ -2,7 +2,7 @@
 
 Date: 2026-08-27
 
-Status: verified locally / definitive and hosted evidence pending
+Status: verified locally and at implementation head / integration pending
 
 ## Objective
 
@@ -142,3 +142,54 @@ pending/temp/reparse entries. No vault item was modified. The local broad
 implementation is verified; definitive `283/283`, hostile report mutations,
 exact-head hosted evidence, integration, guarded synchronization, and
 destination reruns remain open.
+
+## Definitive Local Evidence
+
+The from-start Windows PowerShell verifier passes exact `283/283`, with zero
+failed or skipped steps, in `837.4s` from
+`2026-08-27T18:24:36.8209444Z` through
+`2026-08-27T18:38:34.2663802Z`. The 203,497-byte schema-v2 report is
+`.workflow/ultracode/avorax-hardening/results/checkpoint-2254-small-threat-mvp-verification-report.json`
+with SHA-256
+`cf38010ecb1c7d6d016d09b9cfe338b0604b8183eb2898b06e578d96e0c59e74`.
+It records `failure_kind=null`, 283 passed-step `error=null` values, exactly one
+checkpoint EOCD step, the expected first step, and terminal `Dependency evidence
+gate`. Flutter and Rust were not skipped; the Defender/EICAR host probe was not
+requested.
+
+The verifier's built-in PS5/PS7 validation and separate independent PS5/PS7
+full-suite validation accept the report. PS5 rejects a 282-step copy missing the
+new EOCD step; PS7 rejects a separate 283-step copy missing the exact new
+verified scope. Both exact regular-file copies were removed, and zero
+checkpoint-2254 temporary entries remain.
+
+Post-verifier read-only checks reconfirm all three lock hashes, zero product
+processes, and the protected vault at exactly 16,072 files, zero directories,
+4,522,733 bytes, 5,357 each payload/metadata/auth, one metadata key, and zero
+pending/temp/reparse entries. Checkpoint 2254 is **verified locally**; hosted,
+integration, guarded-sync, and destination closure remain separate gates.
+
+## Hosted Implementation-Head Evidence
+
+Exact implementation commit `216542ca6bcd22f013e089b45a0756fc40aed22f`
+passes PR `#117` Avorax CI run `33103301314`. Branding/copy,
+security/protection/performance, Flutter/protocol, Rust Local Core/Guard/update/
+API, and Unix quarantine-permission jobs all succeed. PR Desktop Packages run
+`33103301308` and push run `33103285518` pass package contracts, Windows x64
+MSI/EXE, Linux x64 DEB/tar, macOS arm64/x64 DMG, and consolidation; publication
+is explicitly skipped and no release is created.
+
+GitHub reports consolidated push artifact `9660015011`,
+`avorax-desktop-release-0.1.15`, as 132,076,431 bytes with digest
+`sha256:e08a36fcc3bf12462c2f1747f155445101b39473ed8364753f0a789a933b5089`.
+The independently downloaded untouched ZIP matches both values. A bounded,
+non-extracting review verifies exactly eight safe root entries, six platform
+packages, seven matching checksum targets, and one CycloneDX 1.6 lockfile SBOM
+with 569 components and 569 unique references. It finds zero unsafe, duplicate,
+encrypted, or link entries. No artifact was extracted, installed, or executed;
+the exact temporary ZIP and its empty owned directory were removed.
+
+This closes implementation-head evidence only. Evidence-head CI/packages,
+normal PR integration, merged-main evidence, guarded destination synchronization,
+and destination verification remain required. The complete antivirus-hardening
+goal remains active.

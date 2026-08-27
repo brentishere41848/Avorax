@@ -3559,3 +3559,10 @@ Flutter/Dart regression, lock integrity, zero product processes, and the exact
 read-only vault invariant now pass. This clears the broad local blocker only.
 Definitive exact `283/283`, hostile report validation, hosted exact-head,
 integration, guarded synchronization, and destination evidence remain open.
+
+Definitive exact `283/283`, hostile missing-step/missing-scope rejection, and
+exact implementation-head CI/packages now clear those checkpoint blockers.
+Evidence-head hosted runs, normal integration, merged-main evidence, guarded
+synchronization, and destination verification remain open. Product-level
+installed-service, kernel, pre-execution, calibration, and Defender-replacement
+blockers are unchanged.

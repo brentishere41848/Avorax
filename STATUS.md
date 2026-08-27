@@ -7270,6 +7270,17 @@ Checkpoint 2254 is **Verified locally / definitive evidence pending**; exact
 `283/283`, hostile validation, hosted, merge, sync, and destination evidence
 remain required.
 
+### Checkpoint 2254 Definitive And Hosted Head Evidence
+
+The definitive verifier passes exact `283/283` in `837.4s`; built-in and
+independent PS5/PS7 validators accept it, while missing-step and missing-scope
+copies are rejected and removed. Exact implementation head `216542c` passes
+PR CI `33103301314` plus package runs `33103301308` and `33103285518`, with
+publication skipped. Consolidated artifact `9660015011` matches GitHub's exact
+size/hash and passes bounded non-extracting `8/6/7/CycloneDX-1.6/569` review.
+Checkpoint 2254 is **Verified locally and at implementation head**; evidence-
+head, integration, merged-main, guarded-sync, and destination closure remain.
+
 ## Checkpoint 2253 Failed-Step Reporting
 
 - **Scripted / unverified:** verifier report schema 2 now records a thrown

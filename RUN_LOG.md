@@ -13004,3 +13004,22 @@ pending.
   pending/temp/reparse entries.
 - Definitive exact `283/283`, hostile report validation, hosted exact-head,
   integration, guarded-sync, and destination evidence remain pending.
+
+## 2026-08-27 - Checkpoint 2254 Definitive And Hosted Head Evidence
+
+- The no-skip/no-Defender from-start verifier passes exact `283/283` in
+  `837.4s`. Its 203,497-byte schema-v2 report SHA-256 is
+  `cf38010ecb1c7d6d016d09b9cfe338b0604b8183eb2898b06e578d96e0c59e74`;
+  both built-in and independent PS5/PS7 full-suite validators pass.
+- PS5 rejects a 282-step copy missing the EOCD step; PS7 rejects a 283-step copy
+  missing the EOCD scope. Both exact temporary copies were removed.
+- Exact implementation head `216542ca6bcd22f013e089b45a0756fc40aed22f`
+  passes PR CI `33103301314`, PR packages `33103301308`, and push packages
+  `33103285518`; publication is skipped.
+- Consolidated artifact `9660015011` is exactly 132,076,431 bytes with SHA-256
+  `e08a36fcc3bf12462c2f1747f155445101b39473ed8364753f0a789a933b5089`.
+  Non-extracting validation passes exact 8 root entries, 6 packages, 7 checksum
+  targets, and CycloneDX 1.6 with 569 unique components. The owned ZIP/root were
+  removed. Locks, zero product processes, and the read-only vault remain exact.
+- Evidence-head hosted runs, normal merge, merged-main evidence, guarded sync,
+  and destination verification remain pending; the complete goal stays active.

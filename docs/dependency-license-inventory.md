@@ -1017,6 +1017,13 @@ changes. Evidence-head/merged-main package proof and complete signed final-
 artifact license, notice, copyright, and binary-resolution review remain
 pending.
 
+Implementation-head package consolidation produces the existing CycloneDX 1.6
+lockfile SBOM with exactly 569 components and 569 unique references. The
+untouched consolidated artifact passes all seven checksums without extraction,
+and publication is skipped. Evidence-head and merged-main hosted SBOM evidence,
+production signing/notarization, legal approval, and release approval remain
+pending.
+
 ## Checkpoint 2252 Dependency Scope
 
 Static structured-indicator cancellation reuses Rust slices, UTF-8 character
