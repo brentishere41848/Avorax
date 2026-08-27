@@ -4,6 +4,17 @@
 
 Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-install, repair, recovery, offline, and manual-install paths only. Normal app updates target signed `.aup` packages applied by Avorax Update Service.
 
+- Current checkpoint 2253 closure: verifier schema v2 records exact terminal
+  failed-step evidence and distinguishes orchestration failures without
+  swallowing the original exception. Local and destination exact `282/282`,
+  Source `683/683`, dual-host validators, PR `#115`, merge `61311d9`, exact-head
+  and merged-main CI/package evidence, bounded artifact review, and guarded
+  `12/12` zero-delete destination sync pass. Destination report SHA-256 is
+  `bb4d1bda31c67c40c8b4139463234fda0bed87577c70ad7a68f215ea3b1b6fe8`.
+  Locks, zero process/temp residue, and the read-only 16,072-file vault remain
+  exact. This is evidence-harness hardening, not expanded detection, installed
+  cross-identity IPC, driver/pre-execution protection, or Defender replacement.
+  Checkpoint 2253 is closed; the complete antivirus goal remains active.
 - Current checkpoint 2252 closure: structured-indicator cancellation is verified
   through local exact `281/281`, PR `#113`, merge `4370debc`, merged-main CI and
   six-platform package evidence, guarded `11/11` zero-delete destination sync,
