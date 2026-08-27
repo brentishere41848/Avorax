@@ -7234,6 +7234,33 @@ complete antivirus-hardening goal remains active, with installed service,
 driver/kernel, production-accuracy, pre-execution, and Defender-replacement
 claims still partial, blocked, technically limited, or unclaimed.
 
+## Checkpoint 2255 Status
+
+Checkpoint 2255 is **scripted, unverified**. PE resource section mapping now
+propagates the exact static-analysis cancellation callback before directory
+handling, every at-most-4,096 section entries, and after an exhausted search.
+Three benign regressions, definitive verifier step 284, Source contract 685,
+validator scope, and audit records are present. No test has run for this batch;
+focused checks, full local regression, definitive verification, hosted evidence,
+integration, guarded synchronization, and destination proof remain open.
+
+Checkpoint 2255 is now **verified locally**. Focused `3/3`, PE resource `6/6`,
+Source `685/685`, both locked workspace variants, strict lint/offline/release
+builds, Flutter `847/847`, Dart `14/14 + 6/6`, and definitive exact `284/284`
+pass. Independent PS5/PS7 accept report SHA-256 `ff8411143e5437e15266c87e789c02d3d5c151a701543651aab3f7e297de7d3b`,
+while hostile missing-step/scope copies are rejected. Hosted, integration,
+guarded-sync, and destination evidence remain open; product-level driver,
+pre-execution, calibration, signing, and Defender-replacement limits are unchanged.
+
+Checkpoint 2255 is now also **verified at the exact implementation head**.
+Commit `67f2d26` passes PR `#119` CI `33117139169` plus PR/push package runs
+`33117139213`/`33117116754`; all six platform artifacts, consolidation,
+checksums, and lockfile SBOM succeed with publication skipped. Untouched PR and
+push artifacts `9665343047`/`9665714554` match GitHub and pass bounded
+non-extracting exact 8/6/7/CycloneDX-1.6/569-unique-ref review. Evidence-head,
+normal merge, merged-main, guarded-sync, and destination proof remain open, so
+the checkpoint and complete antivirus-hardening goal remain active.
+
 ## Checkpoint 2254 ZIP EOCD Search Cancellation
 
 - Scripted a shared fallible ZIP EOCD finder for central-directory sampling and

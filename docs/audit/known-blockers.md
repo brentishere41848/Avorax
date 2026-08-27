@@ -3572,3 +3572,32 @@ destination verification now pass, closing checkpoint 2254. Cooperative EOCD
 cancellation remains bounded but non-preemptive. Installed cross-identity
 service/IPC, signed-driver/kernel mediation, production accuracy/signing,
 demonstrated pre-execution blocking, and Defender replacement remain open.
+
+## Checkpoint 2255 Open Evidence
+
+Checkpoint 2255 scripts cooperative PE resource section mapping cancellation,
+but no checkpoint test has run yet. Focused `3/3`, formatting, Native and full
+local regression, Source contract 685, exact definitive `284/284`, hostile
+validator mutations, hosted exact-head evidence, integration, guarded sync, and
+destination verification remain blockers to a verified checkpoint claim.
+
+Even after those gates pass, one at-most-4,096-section chunk can complete before
+the next callback. Installed cross-identity service/IPC, signed driver/kernel
+mediation, production calibration/signing, demonstrated pre-execution blocking,
+and Defender replacement remain separate product blockers.
+
+Focused, broad, exact `284/284`, hostile report, lock, process, and protected-
+vault evidence now clear the local Checkpoint 2255 blockers. Exact-head hosted
+CI/packages, normal integration, merged-main evidence, guarded destination sync,
+and destination verification remain open. Cooperative at-most-4,096-section
+latency and the separate installed-service, kernel, signing/calibration,
+pre-execution, and Defender-replacement blockers remain unchanged.
+
+Exact implementation-head hosted CI `33117139169` and package runs
+`33117139213`/`33117116754` now clear the branch/PR package blocker, including
+six platform artifacts, checksums, CycloneDX 1.6 with 569 unique refs, and
+skipped publication. Evidence-head CI/packages, normal integration,
+merged-main evidence, guarded destination synchronization, and destination
+verification remain open. Cooperative latency and all separate installed-
+service, driver/kernel, signing/calibration, pre-execution, and Defender-
+replacement blockers remain unchanged.

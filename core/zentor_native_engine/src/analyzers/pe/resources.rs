@@ -1,5 +1,7 @@
 use anyhow::{bail, Result};
 
+const PE_RESOURCE_SECTION_CANCELLATION_CHUNK_ENTRIES: usize = 4 * 1024;
+
 #[derive(Debug, Clone, Copy)]
 pub(super) struct PeDataDirectory {
     pub virtual_address: u32,
@@ -14,15 +16,23 @@ pub(super) struct PeSectionBounds {
     pub raw_size: u32,
 }
 
-pub(super) fn resource_directory_entry_count(
+pub(super) fn resource_directory_entry_count_with_cancellation(
     bytes: &[u8],
     sections: &[PeSectionBounds],
     directory: Option<PeDataDirectory>,
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
 ) -> Result<u32> {
+    cancellation_checkpoint()?;
     let Some(directory) = directory else {
         return Ok(0);
     };
-    let Some(offset) = rva_to_file_offset(directory.virtual_address, sections, bytes.len()) else {
+    let Some(offset) = rva_to_file_offset_with_cancellation(
+        directory.virtual_address,
+        sections,
+        bytes.len(),
+        cancellation_checkpoint,
+    )?
+    else {
         bail!("PE resource directory RVA is not mapped to scanned section data");
     };
     if directory.size < 16 {
@@ -55,26 +65,45 @@ pub(super) fn resource_directory_entry_count(
     Ok(entry_count)
 }
 
-fn rva_to_file_offset(rva: u32, sections: &[PeSectionBounds], bytes_len: usize) -> Option<usize> {
-    for section in sections {
+fn rva_to_file_offset_with_cancellation(
+    rva: u32,
+    sections: &[PeSectionBounds],
+    bytes_len: usize,
+    cancellation_checkpoint: &mut dyn FnMut() -> Result<()>,
+) -> Result<Option<usize>> {
+    for (index, section) in sections.iter().enumerate() {
+        if index % PE_RESOURCE_SECTION_CANCELLATION_CHUNK_ENTRIES == 0 {
+            cancellation_checkpoint()?;
+        }
         let span = section.virtual_size.max(section.raw_size);
         if span == 0 || section.raw_size == 0 {
             continue;
         }
-        let virtual_end = section.virtual_address.checked_add(span)?;
+        let Some(virtual_end) = section.virtual_address.checked_add(span) else {
+            return Ok(None);
+        };
         if rva < section.virtual_address || rva >= virtual_end {
             continue;
         }
-        let delta = rva.checked_sub(section.virtual_address)?;
+        let Some(delta) = rva.checked_sub(section.virtual_address) else {
+            return Ok(None);
+        };
         if delta >= section.raw_size {
             continue;
         }
-        let file_offset = section.raw_ptr.checked_add(delta)? as usize;
+        let Some(file_offset) = section
+            .raw_ptr
+            .checked_add(delta)
+            .map(|value| value as usize)
+        else {
+            return Ok(None);
+        };
         if file_offset < bytes_len {
-            return Some(file_offset);
+            return Ok(Some(file_offset));
         }
     }
-    None
+    cancellation_checkpoint()?;
+    Ok(None)
 }
 
 fn read_u16_at(bytes: &[u8], offset: usize) -> Result<u16> {
@@ -103,13 +132,15 @@ mod tests {
         bytes[0x200 + 12..0x200 + 14].copy_from_slice(&2_u16.to_le_bytes());
         bytes[0x200 + 14..0x200 + 16].copy_from_slice(&3_u16.to_le_bytes());
 
-        let count = resource_directory_entry_count(
+        let mut never_cancel = || Ok(());
+        let count = resource_directory_entry_count_with_cancellation(
             &bytes,
             &sections,
             Some(PeDataDirectory {
                 virtual_address: 0x1000,
                 size: 0x40,
             }),
+            &mut never_cancel,
         )
         .unwrap();
 
@@ -127,13 +158,15 @@ mod tests {
             raw_size: 0x100,
         }];
 
-        let error = resource_directory_entry_count(
+        let mut never_cancel = || Ok(());
+        let error = resource_directory_entry_count_with_cancellation(
             &bytes,
             &sections,
             Some(PeDataDirectory {
                 virtual_address: 0x1000,
                 size: 0x40,
             }),
+            &mut never_cancel,
         )
         .unwrap_err()
         .to_string();
@@ -150,5 +183,74 @@ mod tests {
         assert!(source.contains("rva_to_file_offset"));
         assert!(source.contains("PE resource directory entries are truncated"));
         assert!(!source.contains(&old_stub));
+    }
+
+    #[test]
+    fn pe_resource_section_cancellation_interrupts_rva_mapping_chunks() {
+        let sections = vec![
+            PeSectionBounds {
+                virtual_address: 0,
+                virtual_size: 0,
+                raw_ptr: 0,
+                raw_size: 0,
+            };
+            PE_RESOURCE_SECTION_CANCELLATION_CHUNK_ENTRIES + 1
+        ];
+        let mut calls = 0usize;
+        let mut checkpoint = || {
+            calls += 1;
+            if calls == 3 {
+                anyhow::bail!("benign PE resource section cancellation")
+            }
+            Ok(())
+        };
+
+        let error = resource_directory_entry_count_with_cancellation(
+            &[0_u8; 16],
+            &sections,
+            Some(PeDataDirectory {
+                virtual_address: 0x7000_0000,
+                size: 16,
+            }),
+            &mut checkpoint,
+        )
+        .expect_err("resource section traversal cancellation must abort RVA mapping");
+
+        assert_eq!(calls, 3);
+        assert!(error
+            .to_string()
+            .contains("benign PE resource section cancellation"));
+    }
+
+    #[test]
+    fn pe_resource_section_cancellation_preserves_resource_count_semantics() {
+        let mut bytes = vec![0_u8; 0x300];
+        let sections = [PeSectionBounds {
+            virtual_address: 0x1000,
+            virtual_size: 0x200,
+            raw_ptr: 0x200,
+            raw_size: 0x100,
+        }];
+        bytes[0x200 + 12..0x200 + 14].copy_from_slice(&2_u16.to_le_bytes());
+        bytes[0x200 + 14..0x200 + 16].copy_from_slice(&3_u16.to_le_bytes());
+        let mut calls = 0usize;
+        let mut checkpoint = || {
+            calls += 1;
+            Ok(())
+        };
+
+        let count = resource_directory_entry_count_with_cancellation(
+            &bytes,
+            &sections,
+            Some(PeDataDirectory {
+                virtual_address: 0x1000,
+                size: 0x40,
+            }),
+            &mut checkpoint,
+        )
+        .expect("valid PE resource directory must retain its entry count");
+
+        assert_eq!(count, 5);
+        assert_eq!(calls, 2);
     }
 }

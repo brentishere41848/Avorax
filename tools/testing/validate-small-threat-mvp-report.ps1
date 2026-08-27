@@ -1951,8 +1951,8 @@ if ($RequireFullSuite) {
   if ($skipFlutter -or $skipRust) {
     throw "-RequireFullSuite requires skip_flutter=false and skip_rust=false."
   }
-  if ($steps.Count -ne 283) {
-    throw "-RequireFullSuite expected exactly 283 verifier steps for this source revision, found $($steps.Count)."
+  if ($steps.Count -ne 284) {
+    throw "-RequireFullSuite expected exactly 284 verifier steps for this source revision, found $($steps.Count)."
   }
   if ($steps[0].name -ne "local-core safe simulator scan reporting") {
     throw "-RequireFullSuite first step mismatch: $($steps[0].name)"
@@ -2031,6 +2031,7 @@ if ($RequireFullSuite) {
   Assert-ReportContainsStep $steps "native-engine static text-normalization cancellation regressions"
   Assert-ReportContainsStep $steps "native-engine ZIP entry-name normalization cancellation regressions"
   Assert-ReportContainsStep $steps "native-engine ZIP EOCD search cancellation regressions"
+  Assert-ReportContainsStep $steps "native-engine PE resource-section cancellation regressions"
   Assert-ReportContainsStep $steps "native-engine static term-search cancellation regressions"
   Assert-ReportContainsStep $steps "native-engine static reference-search cancellation regressions"
   Assert-ReportContainsStep $steps "native-engine static structured-indicator cancellation regressions"
@@ -2071,8 +2072,12 @@ if ($RequireFullSuite) {
   Assert-ReportScopeContains $technicalLimitText "ZIP entry-name normalization is cooperative, not preemptive: one header-bounded name of at most 65,535 bytes can complete before the next checkpoint" "verification_scope.technically_limited"
   Assert-ReportScopeContains $verifiedScopeText "ZIP central-directory sampling and static analysis share one fallible end-of-central-directory search that checkpoints before the first candidate and every next at-most-4,096 backward candidate offsets" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "Existing bounded comment lookup and valid commented-archive semantics are preserved; arbitrary callback errors abort before central-directory metadata, samples, archive evidence, local-header fallback, or verdict publication" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "PE resource-directory RVA mapping propagates the exact static-analysis callback before directory handling, before every at-most-4,096 section entries, and after an exhausted mapping search" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Existing resource count, truncation, and unmapped-RVA failures are preserved; arbitrary callback errors abort before resource evidence, later PE/string evidence, StaticAnalysis, or file verdict publication" "verification_scope.verified"
   Assert-ReportScopeContains $technicalLimitText "one at-most-4,096-candidate backward search chunk can complete before the next checkpoint" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "existing 65,557-byte search window is a work bound, not a deadline" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "one at-most-4,096-section mapping chunk can complete before the next checkpoint" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "PE header's u16 section count and validated in-sample section table are work bounds, not deadlines" "verification_scope.technically_limited"
   Assert-ReportScopeContains $verifiedScopeText "bounded UTF-8-safe head/tail command-line sampling" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "command indicators remain post-start review evidence" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "high-risk process-start verdicts return recommendations rather than fake block success" "verification_scope.verified"

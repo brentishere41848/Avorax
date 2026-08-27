@@ -13047,3 +13047,52 @@ pending.
 - All 13 blobs, three locks, zero product/temp residue, and the read-only
   `16072/0/4522733` vault invariant pass. `.verification` remains untouched.
   Checkpoint 2254 is closed; the complete antivirus-hardening goal stays active.
+
+## Checkpoint 2255 PE Resource Section Cancellation - Scripting
+
+- A validated PE can declare up to 65,535 sections. The PE resource RVA mapper
+  previously rescanned that bounded vector without observing cancellation.
+- The exact parser callback is now scripted before directory handling, before
+  every at-most-4,096 PE resource section entries, and after an exhausted search.
+  Existing count, truncation, overflow, and unmapped-RVA failures remain visible.
+- Three benign in-memory tests, verifier step 284, exact-cardinality validation,
+  Source contract 685, and audit documentation are scripted.
+- Checkpoint 2255 remains **unverified**. No checkpoint-2255 test ran during this
+  scripting phase; focused and broad verification follow only after the full
+  batch is complete.
+
+## Checkpoint 2255 Local Verification
+
+- Focused PE resource cancellation passes `3/3`, complete PE resource coverage
+  `6/6`, Source `685/685`, dual-host parser checks, formatting, and diff checks.
+- Standard and all-features locked workspace suites pass: Platform `9/9`,
+  updater `203/203`, Local `546/546`, Native `638` plus 21 isolated ignored
+  child fixtures, and compiler `6/6`. Flutter is clean at `847/847`; Dart passes
+  Zentor `14/14` and Avorax `6/6` with clean analysis.
+- Locked/offline Native check, strict Native/Local/Guard Clippy, locked release
+  workspace build, and all three unchanged lock hashes pass.
+- Definitive verification passes exact `284/284` in `695.9s`. Independent PS5/
+  PS7 accept the 204,626-byte report with SHA-256 `ff8411143e5437e15266c87e789c02d3d5c151a701543651aab3f7e297de7d3b`;
+  hostile missing-step and missing-scope copies are rejected and leave no residue.
+- Final read-only checks find zero product processes and preserve the vault at
+  `16072/0/4522733`, with exact sidecars/key and zero unknown/reparse entries.
+  Checkpoint 2255 is verified locally; hosted and integration evidence is open.
+
+## Checkpoint 2255 Hosted Implementation-Head Evidence
+
+- Exact implementation `67f2d26c73c56087f6e602b299803326f1bbd7b5`
+  passes PR `#119` CI `33117139169`, PR packages `33117139213`, and push
+  packages `33117116754`. All platform/consolidation jobs pass and publication
+  is skipped.
+- Untouched PR artifact `9665343047` is 132,103,528 bytes with SHA-256
+  `a21eda3625a88c2abfdda9b9ef440bd34c337eb74e398fab707828e473fa9c1e`;
+  push artifact `9665714554` is 132,138,884 bytes with SHA-256
+  `2251c3834f63054493a6749d731397a3d1a63cedab4fc1159fd573654fbf0f6c`.
+  Both independently downloaded ZIPs match GitHub.
+- Bounded non-extracting review passes exact 8 root entries, 6 packages, 7
+  checksum targets, CycloneDX 1.6, and 569 unique non-empty component refs,
+  with zero unsafe/duplicate/encrypted/link entries. No package was extracted,
+  installed, or executed; exact owned temp data was removed.
+- Evidence-head hosted runs, normal merge, merged-main evidence, guarded sync,
+  and destination verification remain open. `.verification` and the protected
+  vault remain untouched; the complete goal stays active.
