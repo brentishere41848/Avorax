@@ -5208,12 +5208,12 @@ complete antivirus goal remains active.
 
 | Control / engine | Responsibility | Status | Evidence / blocker |
 |---|---|---|---|
-| Shared static text normalizer | Preserve lossy UTF-8 and ASCII-lowercase semantics with bounded callback latency | Verified locally / hosted pending | At-most-64-KiB chunks plus final callback; focused and broad local evidence passes |
-| String-indicator analyzer | Extract URL/path/IP/autorun/reference evidence without whole-sample normalization interval | Verified locally / hosted pending | Callback-aware helper; `39/39` string and multi-chunk cancellation evidence |
-| Script analyzer | Normalize script content before bounded term passes | Verified locally / hosted pending | Shared helper; `5/5` script and cancellation-before-analysis evidence |
-| PE-import analyzer | Normalize PE sample before explainable import category counts | Verified locally / hosted pending | Shared helper; `2/2` import and cancellation-before-categories evidence |
-| OOXML relationship analyzer | Count external/remote-executable relationships only after successful body analysis | Verified locally / hosted pending | Callback through normalization and indicators; zero-evidence error fixture plus ZIP `38/38` |
-| Archive autorun analyzer | Count executable autorun commands only after successful body analysis | Verified locally / hosted pending | Callback-aware indicators; zero-evidence error fixture plus ZIP `38/38` |
+| Shared static text normalizer | Preserve lossy UTF-8 and ASCII-lowercase semantics with bounded callback latency | Verified | At-most-64-KiB chunks plus final callback; local, hosted, merged-main, and destination evidence passes |
+| String-indicator analyzer | Extract URL/path/IP/autorun/reference evidence without whole-sample normalization interval | Verified | Callback-aware helper; `39/39` string and multi-chunk cancellation evidence |
+| Script analyzer | Normalize script content before bounded term passes | Verified | Shared helper; `5/5` script and cancellation-before-analysis evidence |
+| PE-import analyzer | Normalize PE sample before explainable import category counts | Verified | Shared helper; `2/2` import and cancellation-before-categories evidence |
+| OOXML relationship analyzer | Count external/remote-executable relationships only after successful body analysis | Verified | Callback through normalization and indicators; zero-evidence error fixture plus ZIP `38/38` |
+| Archive autorun analyzer | Count executable autorun commands only after successful body analysis | Verified | Callback-aware indicators; zero-evidence error fixture plus ZIP `38/38` |
 | ZIP entry-name normalization | Normalize format-header-bounded names | Partial / technically limited | One cooperative interval, maximum 65,535 bytes |
 | UTF-16 and term traversal | Decode/search remaining bounded static views | Partial / technically limited | Existing explicit intervals; not hard preemption |
 | Windows publisher trust | Validate bounded Microsoft Authenticode identity/hash binding | Partial / technically limited | Existing isolated helper; one active trust call is not hard-interrupted |
@@ -5223,9 +5223,12 @@ Exact verifier step 277 and Source contract 678 are scripted. No
 checkpoint-2248 test has run during this scripting phase, so no implemented row
 was promoted before execution. Source `678/678`, focused `5/5`, full Native,
 Local Core, Flutter, locked workspace/release, and definitive exact `277/277`
-local evidence now passes, so implemented rows are locally verified while hosted
-and destination evidence remains pending. The 64 MiB ordinary sample cap and 64-KiB/16-KiB OOXML
-relationship/autorun body caps remain. This is cooperative user-mode
-normalization, not installed service, driver, kernel, production-accuracy,
-pre-execution, or Defender-replacement evidence. The checkpoint and complete
-antivirus goal remain active.
+local evidence now passes. Exact-head push/PR packages and PR CI, normal PR
+`#105`, merged-main CI/packages, bounded non-extracting artifact review, guarded
+`15/15` synchronization, destination Source `678/678`, focused `5/5`,
+formatting, and definitive `277/277` plus dual validators pass. Implemented rows
+are therefore **Verified**; partial and disabled rows remain unchanged. The 64
+MiB ordinary sample cap and 64-KiB/16-KiB OOXML relationship/autorun body caps
+remain. This is cooperative user-mode normalization, not installed service,
+driver, kernel, production-accuracy, pre-execution, or Defender-replacement
+evidence. Checkpoint 2248 is closed; the complete antivirus goal remains active.

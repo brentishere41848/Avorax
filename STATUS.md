@@ -7077,6 +7077,18 @@ complete antivirus hardening goal stays active.
   operations remain cooperative. Ordinary sample input stays capped at 64 MiB.
 - This checkpoint adds no service, driver, kernel, production-accuracy,
   pre-execution, or Defender-replacement claim. Disabled providers remain
-  disabled. Hosted exact-head, merge, package, guarded synchronization, and
-  destination evidence remain pending. Checkpoint 2248 and the complete
-  antivirus goal remain active.
+  disabled.
+- **Hosted and integrated:** exact head `eb9b2f1f529cca328e0e45d2a6e358ff02cd24cc`
+  passes package push `33030242047`, PR CI `33030430576`, and PR packages
+  `33030430739`; both consolidated artifacts pass bounded non-extracting exact
+  8/6/7/CycloneDX-1.6/569 validation and publication is skipped. PR `#105`
+  merges normally as `43b4fe3441d20d9b6e39c69162ea384d96f16081`.
+- **Merged main and destination:** main CI `33031710247` and packages
+  `33031710233` pass with publication skipped; artifact `9630807301` passes the
+  same bounded validation. Guarded sync passes exact `15/15` with zero deletes,
+  mismatches, or residue. Destination Source `678/678`, focused `5/5`,
+  formatting, and definitive `277/277` pass in `536.2s`; independent PS5/PS7
+  validators accept SHA-256
+  `c110ed4a994978550a536e9e984459296dba8a5bad59b93423792a64bc9e2e17`.
+  Locks and the protected vault remain exact. Checkpoint 2248 is closed; the
+  complete antivirus goal remains active.

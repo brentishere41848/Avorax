@@ -12437,3 +12437,31 @@ pending.
 - All three lock hashes and the read-only protected vault remain exact. Hosted,
   integration, package, guarded-sync, and destination evidence remain pending;
   checkpoint 2248 and the complete antivirus goal remain active.
+
+## 2026-08-27 - Checkpoint 2248 Hosted, Integration, And Destination Closure
+
+- Exact evidence head `eb9b2f1f529cca328e0e45d2a6e358ff02cd24cc`
+  passes package push `33030242047`, PR CI `33030430576`, and PR packages
+  `33030430739`; publication is skipped. Untouched consolidated push artifact
+  `9630413284` and PR artifact `9630373063` pass bounded non-extracting exact
+  8-root/6-platform/7-checksum/CycloneDX-1.6/569-component validation.
+- PR `#105` merges normally as
+  `43b4fe3441d20d9b6e39c69162ea384d96f16081` with exact parents
+  `01b0701422bd8f620be5df5ee9f56a0ea5d0754b` and
+  `eb9b2f1f529cca328e0e45d2a6e358ff02cd24cc`. Merged-main CI
+  `33031710247` and packages `33031710233` pass, publication remains skipped,
+  and main artifact `9630807301` passes the same bounded validation.
+- Guarded synchronization from `01b0701` to `43b4fe3` passes audit, apply, and
+  independent Git-attribute-aware comparison for exact `15/15` paths, with one
+  addition, zero deletes, mismatches, or staging residue. Destination Source
+  contracts pass `678/678`, dedicated static normalization passes `5/5`, and
+  workspace formatting passes.
+- Destination definitive verification passes exact `277/277`, zero failed or
+  skipped, from `2026-08-27T02:20:01.494236Z` through
+  `2026-08-27T02:28:57.7621101Z` in `536.2s`. Embedded and independently
+  invoked PS5/PS7 validators accept report SHA-256
+  `c110ed4a994978550a536e9e984459296dba8a5bad59b93423792a64bc9e2e17`.
+- All three lock hashes remain exact. The protected vault remains read-only at
+  16,072 files, zero directories, 4,522,733 bytes, 5,357 each payload/metadata/
+  auth, one key, zero pending/temp files, and zero reparse points. Checkpoint
+  2248 is closed; the complete antivirus hardening goal remains active.
