@@ -3566,3 +3566,9 @@ Evidence-head hosted runs, normal integration, merged-main evidence, guarded
 synchronization, and destination verification remain open. Product-level
 installed-service, kernel, pre-execution, calibration, and Defender-replacement
 blockers are unchanged.
+
+Evidence-head, normal integration, merged-main, guarded synchronization, and
+destination verification now pass, closing checkpoint 2254. Cooperative EOCD
+cancellation remains bounded but non-preemptive. Installed cross-identity
+service/IPC, signed-driver/kernel mediation, production accuracy/signing,
+demonstrated pre-execution blocking, and Defender replacement remain open.

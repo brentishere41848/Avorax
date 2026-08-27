@@ -5360,6 +5360,13 @@ rows are **Verified locally and at implementation head**. Installed service,
 driver/kernel, Defender replacement, evidence-head, integration, merged-main,
 guarded-sync, and destination rows remain unchanged or open.
 
+Evidence-head and merged-main CI/packages, bounded artifact inspection,
+corrected guarded `13/13` synchronization, focused destination checks, and
+definitive destination `283/283` now pass. The first five rows are **Closed /
+verified for this checkpoint**. Installed-service, driver/kernel, production
+calibration, pre-execution, and Defender-replacement rows remain partial,
+blocked, technically limited, or unclaimed.
+
 ## Checkpoint 2251 Static Reference-Search Cancellation Matrix
 
 | Control / engine | Responsibility | Status | Evidence / blocker |

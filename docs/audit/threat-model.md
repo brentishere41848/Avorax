@@ -3662,3 +3662,8 @@ implementation-head CI and cross-platform packaging with publication skipped.
 This strengthens evidence for the local EOCD boundary without changing its
 cooperative latency or any installed-service, driver, pre-execution,
 calibration, or Defender-replacement limitation.
+
+Evidence-head, merged-main, synchronized-destination, and exact destination
+verification now close this threat delta. The finder observes cancellation at
+the documented cooperative intervals; it still does not establish a wall-clock
+deadline, kernel mediation, pre-execution blocking, or Defender replacement.

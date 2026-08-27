@@ -13023,3 +13023,27 @@ pending.
   removed. Locks, zero product processes, and the read-only vault remain exact.
 - Evidence-head hosted runs, normal merge, merged-main evidence, guarded sync,
   and destination verification remain pending; the complete goal stays active.
+
+## 2026-08-27 - Checkpoint 2254 Integration And Destination Closure
+
+- Evidence `ed9e9aa` passes PR `#117` CI `33105265906` and packages
+  `33105265820`. Artifact `9660772598` is 132,065,928 bytes, SHA-256
+  `675ff10b62dad1d558d48b9cd5e55e43823f0b9e00fc24a98425f3e04a041b9e`.
+- PR `#117` merged normally as `84041c0`. Main CI `33106959423` and packages
+  `33106959387` pass with publication skipped. Artifact `9661355729` is
+  132,084,304 bytes, SHA-256
+  `097ba28b3a3de307f37255327a9fc8e8f6dc0846c21d86cd0b4a303e9a0aa2b7`.
+  Both artifacts pass non-extracting exact 8/6/7/CycloneDX-1.6/569 review.
+- A raw-byte sync preflight stopped on expected CRLF conversion before writes.
+  A first activation then visibly rejected an empty backup path; complete
+  recheck proved no activation and zero residue. Both attempts are uncredited.
+- Corrected terminating-error, explicit-backup synchronization passes `13/13`,
+  12 modified plus one added and zero deleted, 7,482,242 staged bytes, zero
+  rollback/residue, and independent exact merge-blob verification.
+- Destination parsers pass `2/2` under each host, Source `684/684`, formatting,
+  and EOCD `3/3`. Its verifier passes `283/283` in `702.4s`; independent PS5/
+  PS7 accept report SHA-256
+  `13e7ad30df65a3e85ae9747627b1687c91aa54930cb6e3403fa5dd5c2377f981`.
+- All 13 blobs, three locks, zero product/temp residue, and the read-only
+  `16072/0/4522733` vault invariant pass. `.verification` remains untouched.
+  Checkpoint 2254 is closed; the complete antivirus-hardening goal stays active.
