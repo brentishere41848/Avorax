@@ -5176,15 +5176,15 @@ active.
 
 | Control / engine | Responsibility | Status | Evidence / blocker |
 |---|---|---|---|
-| Structured traversal boundary | Check cancellation during delimiter, trim, candidate, token, and host traversal | Scripted / unverified | Shared at-most-64-KiB byte or UTF-8-safe character intervals; focused/full evidence pending |
-| Carrier classifier | Recognize RTF, PDF, and web-document carriers before counting active-content terms | Scripted / unverified | Bounded exact markers and injected carrier-search error fixture scripted |
-| IPv4 candidate classifier | Count syntactically valid IPv4-looking candidates without reputation lookup | Scripted / unverified | Chunked candidate traversal plus representable-length guard and error fixture scripted |
-| URL/query suffix classifier | Classify payload suffix before query or fragment without treating query text as a payload | Scripted / unverified | Bounded first delimiter and preservation fixture scripted |
-| Remote path classifier | Validate UNC and remote `file://` host/share shape while excluding device/local forms | Scripted / unverified | Bounded leading-host traversal and host cancellation fixture scripted |
-| Autorun classifier | Count executable/script command values only when an autorun section exists | Scripted / unverified | CRLF, comments, accepted keys, tokens, suffixes, and line/token cancellation fixtures scripted |
-| Optical-image marker classifier | Recognize bounded ISO/UDF markers and autorun executable references | Scripted / unverified | Shared exact marker search and injected optical-marker error fixture scripted |
-| Email attachment classifier | Count lines containing executable/script `filename` or `name` fields in an email carrier | Scripted / unverified | Streaming semicolon fields, no per-line vector, per-line semantics, and error fixture scripted |
-| String Indicator publication | Publish no partial aggregate after arbitrary callback failure | Scripted / unverified | Every new helper is fallible; focused/full and verdict propagation evidence pending |
+| Structured traversal boundary | Check cancellation during delimiter, trim, candidate, token, and host traversal | Verified | Shared at-most-64-KiB byte or UTF-8-safe character intervals; local/hosted/destination evidence passes |
+| Carrier classifier | Recognize RTF, PDF, and web-document carriers before counting active-content terms | Verified | Bounded exact markers and injected carrier-search error fixture pass |
+| IPv4 candidate classifier | Count syntactically valid IPv4-looking candidates without reputation lookup | Verified | Chunked candidate traversal, representable-length guard, and error fixture pass |
+| URL/query suffix classifier | Classify payload suffix before query or fragment without treating query text as a payload | Verified | Bounded first delimiter and preservation fixture pass |
+| Remote path classifier | Validate UNC and remote `file://` host/share shape while excluding device/local forms | Verified | Bounded leading-host traversal and host cancellation fixture pass |
+| Autorun classifier | Count executable/script command values only when an autorun section exists | Verified | CRLF, comments, accepted keys, tokens, suffixes, and line/token cancellation fixtures pass |
+| Optical-image marker classifier | Recognize bounded ISO/UDF markers and autorun executable references | Verified | Shared exact marker search and injected optical-marker error fixture pass |
+| Email attachment classifier | Count lines containing executable/script `filename` or `name` fields in an email carrier | Verified | Streaming semicolon fields, no per-line vector, per-line semantics, and error fixture pass |
+| String Indicator publication | Publish no partial aggregate after arbitrary callback failure | Verified | Every new helper is fallible; full Native/Local and destination verifier pass |
 | Structured callback latency | Bound cooperative work between callbacks | Partial / technically limited | One admitted structured chunk of at most 64 KiB may finish before cancellation is observed |
 | Network/action ownership | Keep the provider deterministic, offline, detection-only, and non-mutating | Verified / unchanged | No URL/path access, execution, blocking, quarantine, or network lookup is added |
 | Installed/kernel prevention | Mediate cross-identity or pre-execution events | Disabled / blocked | Requires installed authenticated service boundary and production-signed driver evidence |
@@ -5395,3 +5395,14 @@ and consolidated artifact `9645762246` exact at 132,039,189 bytes and SHA-256
 Bounded non-extracting 8-root/6-package/7-checksum/CycloneDX-1.6/569-component
 review passes. PR/main and destination closure remain open; engine limits and
 the complete goal remain unchanged.
+
+Checkpoint 2252 is now closed through evidence `4d8aac4`, PR `#113`, merge
+`4370debc`, exact-head and merged-main CI/packages, bounded review of both
+consolidated package artifacts, guarded `11/11` zero-delete synchronization,
+destination focused checks, and destination definitive `281/281` plus
+independent PS5/PS7 validation. The implemented rows are **Verified**. The
+structured callback latency row remains **Partial / technically limited**, and
+the installed/kernel row remains **Disabled / blocked**. The verifier's
+top-level failed-report path is fail-visible, but recording the thrown step in
+the `steps` array remains a separate harness-observability hardening item. The
+complete antivirus-hardening goal remains active.

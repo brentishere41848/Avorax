@@ -1,6 +1,6 @@
 # Checkpoint 2252 - Static Structured-Indicator Cancellation
 
-Status: **Scripted / unverified**
+Status: **Implementation closed / complete antivirus goal active**
 
 The complete antivirus-hardening goal remains active. This checkpoint narrows
 cooperative cancellation latency inside the Avorax Native Engine String
@@ -199,3 +199,109 @@ its empty owned directory were removed after review.
 
 Normal PR exact-head CI/packages, merge, merged-main CI/packages, guarded
 destination synchronization, and destination verification remain pending.
+
+## Hosted Integration And Package Evidence
+
+Evidence commit `4d8aac4af3a84de68e41446ab0aa8946cfd826c0` passes
+PR `#113` exact-head CI run `33071437926` and Desktop Packages run
+`33071437817`. All five CI jobs and all package contract/platform/
+consolidation jobs pass; publication is skipped. Consolidated artifact
+`9646509990` is 132,102,783 bytes with independently matched SHA-256
+`03a806c44b179a2c0660037c0d9b26a9c98e2aed3eb3e79af7813fefb9329e56`.
+Bounded non-extracting review passes the exact 8-root/6-package/7-checksum
+inventory and CycloneDX 1.6 SBOM with 569 components and 569 unique references.
+
+PR `#113` merged normally as
+`4370debc2d448bd1d40406f40d0c3d81d384b136`. Merged-main CI run
+`33073230812` passes all five jobs. Desktop Packages run `33073230873` passes
+contracts, Windows MSI/EXE, both macOS DMGs, Linux DEB/tar, and consolidation;
+publication is skipped. Consolidated artifact `9647242232` is 132,046,900
+bytes with independently matched SHA-256
+`abd7069509543b8a50f631a94964b82679a1faeb20a2840acdce6ce03262b620`.
+Its same bounded review passes 8 roots, 6 packages, 7 checksums, CycloneDX 1.6,
+569 components, 569 unique references, and zero unsafe, duplicate, encrypted,
+or link entries. Review temporary data was removed without installing or
+executing package content.
+
+## Guarded Destination Synchronization
+
+The exact delta from prior closure `ec75c23fa943d7ed40db12076758462b523c0c29`
+to merge `4370debc2d448bd1d40406f40d0c3d81d384b136` contains 10 modified,
+one added, and zero deleted paths, totaling 6,941,146 target Git-blob bytes.
+Every existing destination precondition matched the base blob through Git clean
+filters; the new report was absent; path, parent, containment, kind, and reparse
+checks passed.
+
+The first guarded sync activated all 11 target files and verified them, then a
+PowerShell spacing error occurred while constructing the final summary after
+backups had already been removed. The catch removed the new addition but could
+not restore the ten modifications. This attempt is uncredited. A read-only
+audit proved all ten modifications still exactly matched target blobs and that
+only the added checkpoint report was absent, with zero staging/backup residue.
+A bounded resume staged and activated only that missing addition, then an
+independent raw-blob comparison passed all `11/11`. Final destination state is
+10 modified, one added, zero deleted paths and 6,941,146 raw bytes, exactly
+matching the merge.
+
+## Destination Verification
+
+Focused destination checks pass Source `682/682`, structured cancellation
+`9/9`, all String Indicator `54/54`, adjacent reference cancellation `8/8`, and
+Rust formatting. Two attempted `pytest` commands failed visibly because the
+destination Python environment does not include `pytest`; they are uncredited,
+no package was installed, and the repository-owned source runner supplied the
+credited `682/682` result.
+
+The first definitive destination attempt stopped during workspace compilation
+with Windows error 112 because `C:` had zero free bytes; even its requested
+final report could not be written. It is uncredited. To preserve user data, the
+authoritative worktree's generated Rust `target` cache was moved, not discarded,
+from `C:` to
+`D:\Avorax-Codex-BuildCache\authoritative-target-checkpoint-2252` after exact
+containment, type, root, and zero-reparse checks. The source cache path is now
+absent and the destination cache is present as a normal directory. Its initial
+live inventory was 105,782 files and 59,841,150,304 logical bytes; the completed
+move contains 105,781 files and 59,833,912,672 logical bytes. One generated
+7,237,632-byte volatile cache artifact therefore was not preserved bit-exactly.
+This is rebuildable compiler output, not source, product content, evidence, or
+quarantine data; no project source or protected-vault item was deleted.
+
+The next definitive attempt stopped fail-visibly when active Defender blocked
+generated test executable
+`target/debug/deps/zentor_native_engine-8883e15aec36b06b.exe` as
+`Trojan:Win32/Wacatac.C!ml`. Defender reports `DidThreatExecute=False`,
+`IsActive=False`, and `ActionSuccess=True`. Defender was not weakened and the
+binary was not restored or allowlisted. The failed report is retained at
+`.workflow/ultracode/avorax-hardening/results/checkpoint-2252-destination-verification-report-attempt-2-defender-blocked.json`
+with SHA-256
+`edb8ecf63e9bcf419b63d6fefb6f9af8b7c203043db4f4189664f104b5cfa30c`.
+It records status failed and 34 completed steps; because the current verifier
+throws before appending a failing `Invoke-Step`, it contains zero failed-step
+records. The top-level failure is visible, but per-step failure recording is a
+remaining verifier-observability hardening target.
+
+The exact blocked filter passes `4/4` after adding only test-profile variables
+`CARGO_PROFILE_TEST_CODEGEN_UNITS=1` and `CARGO_PROFILE_TEST_STRIP=symbols` to
+the existing debug/incremental settings. No source, release profile, dependency,
+or Defender policy changed. A from-start definitive destination run then passes
+exact `281/281`, zero non-passing steps, from
+`2026-08-27T14:13:23.2189550Z` through `2026-08-27T14:26:43.7096137Z` in
+`800.5` seconds. Its report is
+`.workflow/ultracode/avorax-hardening/results/checkpoint-2252-destination-verification-report-final.json`,
+181,505 bytes, SHA-256
+`2c00e016b7b59e2ce7c6124b9b13f3ae29e7a2b4b5fd8b8c01f9b829b17fa30a`.
+Independent Windows PowerShell 5.1 and PowerShell 7 full-suite validators pass.
+
+All 11 synchronized blobs, all three recorded lock hashes, and zero residual
+Cargo/Rust/Flutter/Dart/Avorax test processes remain exact. The protected vault
+was audited read-only and remains exactly 16,072 files, zero directories,
+4,522,733 bytes, 5,357 each `.avoraxq`/`.json`/`.auth`, one metadata key, and
+zero pending/temp/reparse entries. `.verification` was never staged or deleted.
+No release or publication occurred.
+
+Checkpoint 2252's implemented structured-indicator rows are therefore verified
+through local, hosted, merged-main, synchronized, and destination evidence. The
+cooperative 64-KiB interval, entered-call latency, user-mode monitoring,
+installed cross-identity service/IPC, production calibration, signed-driver,
+pre-execution, and Defender-replacement limits remain partial, blocked, or
+unclaimed. The complete antivirus-hardening goal remains active.

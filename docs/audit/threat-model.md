@@ -3524,3 +3524,19 @@ pass with test-only debug/incremental metadata disabled. This closes the local
 evidence blocker without changing cooperative, installed-service, kernel,
 production-accuracy, pre-execution, or Defender-replacement residual limits.
 Hosted, integration, guarded-sync, and destination evidence remain pending.
+
+Hosted and destination closure now verifies the mitigation without expanding
+its boundary. PR `#113` merged as `4370debc`; exact-head and merged-main CI and
+package matrices pass with publication skipped, both consolidated artifacts pass
+bounded non-extracting checksum/SBOM review, guarded sync passes `11/11`, and the
+destination verifier passes exact `281/281` with independent PS5/PS7 acceptance.
+An active Defender false-positive block was fail-visible and occurred before the
+generated test executable ran; no Defender setting changed. The successful run
+used test-profile metadata/codegen controls only.
+
+The destination evidence confirms callback propagation and no partial aggregate
+publication under the tested benign adversarial inputs. It does not make one
+entered OS/filesystem, archive, ML, or trust operation preemptible; turn the
+64-MiB input cap into a deadline; prove production detection calibration; add
+installed cross-identity authentication, kernel mediation, or pre-execution
+blocking; or establish Defender replacement. Those residual risks remain.

@@ -12809,3 +12809,36 @@ pending.
   installed or executed, and the exact temporary archive is removed.
 - PR exact-head CI/packages, merge, merged-main evidence, guarded sync, and
   destination reruns remain pending. No release or publication occurred.
+
+## 2026-08-27 - Checkpoint 2252 Integration And Destination Closure
+
+- Evidence `4d8aac4` passes PR `#113` exact-head CI `33071437926` and packages
+  `33071437817`. PR consolidation artifact `9646509990` is 132,102,783 bytes,
+  SHA-256 `03a806c44b179a2c0660037c0d9b26a9c98e2aed3eb3e79af7813fefb9329e56`.
+- PR `#113` merged normally as `4370debc`. Main CI `33073230812` and packages
+  `33073230873` pass; publication is skipped. Main artifact `9647242232` is
+  132,046,900 bytes, SHA-256
+  `abd7069509543b8a50f631a94964b82679a1faeb20a2840acdce6ce03262b620`.
+  Both artifacts pass bounded 8-root/6-package/7-checksum/CycloneDX-1.6/569-
+  component non-extracting review.
+- Guarded sync from `ec75c23` to `4370debc` finishes at exact `11/11`: ten
+  modified, one added, zero deleted, 6,941,146 raw target-blob bytes. A first
+  attempt's post-activation PowerShell summary error is uncredited; audit proved
+  ten exact modifications, and a bounded resume added only the missing report.
+- A destination definitive attempt failed with disk-full error 112. The
+  authoritative generated Rust cache was moved to
+  `D:\Avorax-Codex-BuildCache\authoritative-target-checkpoint-2252`; one
+  volatile 7,237,632-byte generated artifact was not preserved bit-exactly.
+  No project source, product content, or protected-vault data was deleted.
+- A second attempt failed when active Defender blocked one generated Native test
+  executable before execution. Its failed report SHA-256 is
+  `edb8ecf63e9bcf419b63d6fefb6f9af8b7c203043db4f4189664f104b5cfa30c`.
+  Defender was not weakened and the binary was not restored or allowlisted.
+- With test-only debug, incremental, codegen-unit, and strip controls, the exact
+  blocked filter passes `4/4` and the from-start destination verifier passes
+  `281/281`, zero non-passing, in `800.5s`. Independent PS5/PS7 validators
+  accept report SHA-256
+  `2c00e016b7b59e2ce7c6124b9b13f3ae29e7a2b4b5fd8b8c01f9b829b17fa30a`.
+- All 11 blobs, three locks, zero test-process residue, and the read-only vault
+  invariant remain exact. `.verification` was untouched. Checkpoint 2252 is
+  closed; the complete antivirus-hardening goal remains active.
