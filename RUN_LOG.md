@@ -56,6 +56,27 @@ Lead-engineer product-hardening pass across the Avorax repository. Goal is to mo
   Hosted exact-head, PR/merge, guarded synchronization, and destination evidence
   remain pending; the checkpoint and full goal remain active.
 
+## 2026-08-28 Checkpoint 2261 hosted implementation-head evidence
+
+- Implementation commit `0f223dacf412876f3c0da27b3207fc23aa605741`
+  is the exact head of PR `#131`. Avorax CI `33187857398` passed all five jobs.
+- Desktop Packages dispatch `33187853083` and PR `33187857457` passed package
+  contracts, Windows MSI/setup EXE, Linux DEB/tar, macOS x64/arm64 DMGs, and
+  consolidation. Automatic push run `33187798963` attempt 1 was cancelled by
+  branch concurrency after the explicit dispatch; attempt 2 passed the same
+  full matrix on the exact head. The first attempt is not called a pass.
+- All three publication jobs were skipped. Consolidated artifacts
+  `9693158463`/`9693163466`/`9693831394` have exact ZIP SHA-256 values
+  `ac42a24680f72996ffe29ba3c4b45542a028eb74a096917f7f6b0693dc1c086c`,
+  `445195d629f5a06af300bd369784f98cae45f1f7b75bf522326988d47a5b24a6`,
+  and
+  `87958194aa4103cd42ff4b436e4471487e3e3d04fd3393329f98bb5507f6ff37`.
+- Bounded in-stream review, without extraction or execution, passed exact
+  8-entry/6-platform/7-checksum/CycloneDX 1.6/569-component evidence in each
+  bundle. The retained validation result SHA-256 is
+  `b87c19f39bc9e75fb42c5caf4c02fccb7cc28a12108d5262ad8e22a931a5f3a5`.
+  Merge, merged-main, guarded-sync, and destination evidence remain pending.
+
 ## 2026-08-28 Checkpoint 2260 scripting
 
 - Audited the Native-verdict-to-Local-Core quarantine path. Local Core previously

@@ -24,7 +24,12 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
   `659.6s`; its 213,157-byte report SHA-256 is
   `0074fd8b38a7edf01c132b4ac3ec0d6a8428ad738ebaaf09c985b4ccb59274a8`.
   Dual-host authentic and four adversarial validator outcomes pass. Locks and
-  the exact protected vault are unchanged. Hosted exact-head, integration,
+  the exact protected vault are unchanged. Implementation head `0f223dac`
+  passes Avorax CI `33187857398`, Desktop dispatch/PR
+  `33187853083`/`33187857457`, and Desktop push `33187798963` attempt 2; push
+  attempt 1 was concurrency-cancelled and is not called a pass. All publication
+  jobs were skipped. Three consolidated bundles pass bounded non-extracting
+  8-entry/6-platform/7-checksum/CycloneDX 1.6/569-component review. Integration,
   guarded synchronization, and destination evidence remain pending. User-mode
   final path races, installed-service/driver proof, pre-execution blocking,
   production accuracy, and Defender replacement remain partial, blocked,

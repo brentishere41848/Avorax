@@ -993,6 +993,14 @@ with `-RequireFullSuite` and rejected both a missing-required-scope and a
 missing-required-step copy. The report SHA-256 is
 `0074fd8b38a7edf01c132b4ac3ec0d6a8428ad738ebaaf09c985b4ccb59274a8`.
 
+Exact implementation head `0f223dacf412876f3c0da27b3207fc23aa605741`
+also passes Avorax CI `33187857398`, Desktop Packages dispatch/PR
+`33187853083`/`33187857457`, and Desktop push `33187798963` attempt 2. Push
+attempt 1 was cancelled by workflow concurrency and is retained as a non-pass.
+All publication jobs were skipped. Three consolidated artifact ZIP streams pass
+bounded non-extracting exact 8-entry/6-platform/7-checksum/CycloneDX 1.6/569-
+component review; no installer was extracted or executed.
+
 Tests never execute candidate content and did not mutate the protected
 production vault. The result remains user-mode/path-based and does not prove
 atomic final path mutation, installed service/UI E2E, driver/kernel mediation,

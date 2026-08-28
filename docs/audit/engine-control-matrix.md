@@ -5747,7 +5747,10 @@ synchronization, and unchanged lock/vault evidence. Its first five rows are
 Verifier step 289, the existing Flutter manual-quarantine IPC step, exact-289
 validation, and Source contract 691 pass locally. Definitive no-skip/no-Defender
 verification is `289/289` in `659.6s`; dual-host authentic and adversarial report
-validation pass. The first four rows are **Verified locally**. Installed
-UI/service E2E, hosted/integration/destination evidence, signed driver/kernel,
-production accuracy, pre-execution, Defender-replacement, and privileged-race
-claims remain partial, blocked, limited, or unclaimed.
+validation pass. Exact implementation-head Avorax CI and Desktop dispatch/PR/
+push attempt 2 pass, while the concurrency-cancelled push attempt 1 is retained
+as a non-pass and publication is skipped. The first four rows are **Verified
+locally and at hosted source/package gates**. Installed UI/service E2E,
+integration/destination evidence, signed driver/kernel, production accuracy,
+pre-execution, Defender-replacement, and privileged-race claims remain partial,
+blocked, limited, or unclaimed.

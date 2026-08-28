@@ -3836,13 +3836,15 @@ Four harmless Local Core tests, Flutter IPC regressions, verifier step 289,
 exact-289 validator scope, and Source contract 691 now pass locally. Broad
 locked workspaces, release build, Flutter/protocol suites, definitive exact
 `289/289` in `659.6s`, and dual-host authentic/adversarial report validation
-also pass. Hosted exact-head, integration, guarded-sync, and destination proof
-remain checkpoint blockers.
+also pass. Exact implementation-head CI and Desktop dispatch/PR/push attempt 2
+pass with publication skipped; the initial push attempt was concurrency-
+cancelled and remains an explicit non-pass. Integration, guarded-sync, and
+destination proof remain checkpoint blockers.
 
 Final path mutation is still a cross-platform user-mode operation rather than
 one atomic filesystem transaction. Installed cross-identity UI/service proof,
 signed driver/kernel mediation, production calibration/signing, demonstrated
 pre-execution blocking, and Defender replacement remain separate product
 blockers or technical limits. The checkpoint is locally verified but remains
-active pending hosted/integration/destination evidence; the complete antivirus
-goal remains active.
+active pending integration/destination evidence; the complete antivirus goal
+remains active.

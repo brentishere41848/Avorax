@@ -2,7 +2,7 @@
 
 Date: 2026-08-28 (Europe/Brussels)
 
-Status: **Locally verified; hosted and integration evidence pending**
+Status: **Implementation and hosted evidence verified; integration and destination evidence pending**
 
 ## Risk
 
@@ -109,9 +109,44 @@ apostrophes; they changed no tracked source and left two empty unique untracked
 evidence directories. The corrected raw prefix mutation produced the four
 expected validator rejections above.
 
-Hosted exact-head CI/packages, PR/merge, guarded synchronization, and
-destination verification remain pending. This checkpoint is locally verified,
-not closed, and the complete antivirus-hardening goal remains active.
+## Hosted Implementation-Head Evidence
+
+Implementation commit
+`0f223dacf412876f3c0da27b3207fc23aa605741` is the exact head of PR `#131`.
+Hosted evidence at that head is:
+
+- Avorax CI pull-request run `33187857398` passed all five jobs: security,
+  protection, and performance gates; Rust Local Core and Guard; branding and
+  copy; Unix quarantine permissions; and Flutter client/protocol.
+- Desktop Packages workflow-dispatch run `33187853083` and pull-request run
+  `33187857457` passed package contracts, Windows x64 MSI/setup EXE, Linux x64
+  DEB/tar, macOS x64/arm64 DMGs, and consolidation/checksum jobs.
+- Automatic Desktop Packages push run `33187798963` attempt 1 was cancelled by
+  the workflow's `cancel-in-progress` concurrency group when the explicit
+  dispatch started. This is retained as cancelled evidence, not reported as a
+  pass. The same exact push event and head passed as attempt 2, including all
+  platform, MSI administrative-extraction, dependency/SBOM, and consolidation
+  jobs.
+- `Publish desktop beta prerelease` was skipped in the dispatch, PR, and
+  successful push attempt. No package or release was published.
+- Consolidated artifacts `9693158463` (dispatch, 132,214,694 bytes),
+  `9693163466` (PR, 132,198,418 bytes), and `9693831394` (push attempt 2,
+  132,269,927 bytes) have exact outer SHA-256 values respectively
+  `ac42a24680f72996ffe29ba3c4b45542a028eb74a096917f7f6b0693dc1c086c`,
+  `445195d629f5a06af300bd369784f98cae45f1f7b75bf522326988d47a5b24a6`,
+  and
+  `87958194aa4103cd42ff4b436e4471487e3e3d04fd3393329f98bb5507f6ff37`.
+- Bounded in-stream review under untracked `.verification` passed for all three
+  untouched ZIP streams: exactly eight safe root entries, six platform release
+  files, seven independently matching SHA-256 rows, and one CycloneDX 1.6
+  lockfile SBOM with 569 components per bundle. Nothing was extracted,
+  installed, or executed. The three-artifact result SHA-256 is
+  `b87c19f39bc9e75fb42c5caf4c02fccb7cc28a12108d5262ad8e22a931a5f3a5`.
+
+PR merge, merged-main evidence, guarded synchronization, and destination
+verification remain pending. This checkpoint has verified implementation and
+hosted evidence but is not closed; the complete antivirus-hardening goal
+remains active.
 
 ## Verification Classification
 
@@ -120,8 +155,8 @@ not closed, and the complete antivirus-hardening goal remains active.
   standalone fresh-snapshot distinction, benign regressions, full local suites,
   and strict report validation.
 - **Partial:** packaged installed UI-to-Local-Core click-through, installed
-  cross-identity service behavior, hosted exact-head workflows, integration,
-  and destination evidence are not yet complete for this checkpoint.
+  cross-identity service behavior, PR integration, merged-main workflows, and
+  destination evidence are not yet complete for this checkpoint.
 - **Disabled / blocked:** no checkpoint-2261 control is silently disabled.
   Signed driver/kernel mediation, production signing and calibration, and a
   Defender-replacement claim remain broader blocked product prerequisites.

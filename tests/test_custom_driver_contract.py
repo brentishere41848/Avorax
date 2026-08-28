@@ -32377,7 +32377,7 @@ def test_checkpoint_2261_manual_threat_quarantine_hash_binding_contract():
     assert "fresh bounded snapshot" in normalized_local_readme
     normalized_checkpoint = re.sub(r"\s+", " ", checkpoint)
     assert (
-        "Status: **Locally verified; hosted and integration evidence pending**"
+        "Status: **Implementation and hosted evidence verified; integration and destination evidence pending**"
         in normalized_checkpoint
     )
     assert "No checkpoint-2261 test ran during the scripting phase" in normalized_checkpoint
@@ -32389,9 +32389,24 @@ def test_checkpoint_2261_manual_threat_quarantine_hash_binding_contract():
         "52572e56b14600e371427faa9cf58023ae30ee6bacbc077e943dc8d01f4ebd58",
         "16,072 files",
         "zero pending files",
-        "This checkpoint is locally verified, not closed",
+        "This checkpoint has verified implementation and hosted evidence but is not closed",
     ]:
         assert evidence_marker in normalized_checkpoint
+    for hosted_marker in [
+        "0f223dacf412876f3c0da27b3207fc23aa605741",
+        "33187857398",
+        "33187853083",
+        "33187857457",
+        "33187798963",
+        "attempt 1 was cancelled",
+        "attempt 2",
+        "9693158463",
+        "9693163466",
+        "9693831394",
+        "b87c19f39bc9e75fb42c5caf4c02fccb7cc28a12108d5262ad8e22a931a5f3a5",
+        "Nothing was extracted, installed, or executed",
+    ]:
+        assert hosted_marker in normalized_checkpoint
     assert "adds no dependency" in normalized_checkpoint.lower()
     assert "lockfile change" in normalized_checkpoint.lower()
     normalized_dependencies = re.sub(r"\s+", " ", documents[-1]).lower()

@@ -2290,3 +2290,12 @@ signing/notarization, enterprise deployment approval, and release approval
 remain separate. No package was downloaded, installed, released, or published
 during scripting; verification resolved only the already pinned project graph
 and installed no machine-wide component.
+
+Exact implementation-head Desktop dispatch `33187853083`, PR `33187857457`,
+and push `33187798963` attempt 2 pass dependency/SBOM and complete package gates;
+push attempt 1 is retained as concurrency-cancelled rather than a pass. All
+publication jobs were skipped. Consolidated artifacts `9693158463`,
+`9693163466`, and `9693831394` each pass bounded in-stream review with one
+CycloneDX 1.6 lockfile SBOM containing exactly 569 components, six platform
+files, and seven independently matching checksum rows. No archive entry was
+extracted or executed.
