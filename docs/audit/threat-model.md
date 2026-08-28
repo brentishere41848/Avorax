@@ -3877,3 +3877,30 @@ progress are verified in the synchronized tree. Residual exact I/O/syscall/
 kernel/CPU/RAM accounting, stalled-OS-call preemption, installed-service,
 driver/kernel, production-calibration/signing, pre-execution, and Defender-
 replacement risks remain as documented.
+
+## Checkpoint 2259 Threat Delta
+
+An adversarial regular file can advertise or grow to a very large size, forcing
+a standard full SHA-256 read even though static analyzers retain only a bounded
+sample. A slow file or trust provider can also consume the total scan deadline
+inside one retained target, after the pre-target check and before the post-target
+check. Before 2259, cooperative Native callbacks distinguished explicit user
+cancellation but not the Local Core total elapsed limit.
+
+The implemented mitigation rejects standard Native content above 1 GiB at metadata
+preflight and detects streaming growth past the same ceiling before hash/verdict
+completion. It propagates cancellation-first elapsed classification through all
+existing Native checkpoints. A timeout during inspection produces no partial
+verdict, accounts the current and queued files as skipped and not clean, and
+keeps progress incomplete. Four harmless regressions, verifier step 288, and
+Source contract 689 pin these properties. Focused and broad local evidence,
+exact `288/288`, and all six expected dual-host adversarial rejections pass, so
+this threat delta is verified locally. Hosted integration, guarded sync, and
+destination evidence remain pending.
+
+Residual risk is explicit. An entered filesystem, Authenticode, security-provider,
+or kernel call cannot be preempted by a user-mode callback; one at-most-1-MiB
+hash read or separately bounded analysis chunk may overrun. The 1 GiB cap does
+not bound wall time, CPU, kernel work, exact RAM, storage latency, mapped writes,
+or later mutation and does not establish installed-service, driver, hard-realtime,
+pre-execution, production-calibration, or Defender-replacement protection.

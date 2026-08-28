@@ -7746,3 +7746,21 @@ All locks, synchronized blobs, zero active product processes, and the read-only
 service/driver ownership, production calibration/signing, pre-execution
 blocking, Defender replacement, and the complete antivirus-hardening goal stay
 open.
+
+Checkpoint 2259 is **verified locally through definitive regression; hosted
+integration pending**. Standard Native inspection enforces the shared 1 GiB
+total-read ceiling, while Local Core carries cancellation-first mode elapsed
+classification through Native inspection and publishes no partial timeout
+verdict. Formatting, Source `689/689`, four focused and all overlapping tests,
+Local Core `564/564`, Native Engine 640 passed / 21 intentionally ignored,
+compiler `6/6`, strict changed-crate Clippy, locked workspace/release builds,
+Flutter `847/847`, Dart `14/14` plus `6/6`, and all analyzers pass. Definitive
+step 288 passes in exact `288/288`; PS5/PS7 accept the 210,919-byte report with
+SHA-256 `aba47033b18eead7eca3c192b13c6f9c599743b768bce4c28fbd0b6ed0a7d224`
+and reject all six expected adversarial mutations with zero residue. An extra
+uncredited repo-wide Clippy experiment exposed only three pre-existing
+`services/api` lints outside CI's Clippy scope. Entered OS/trust calls remain
+cooperatively bounded rather than preemptible, and the 1 GiB ceiling is not a
+wall-time, CPU, RAM, kernel-work, or pre-execution guarantee. Hosted exact-head,
+integration, guarded sync, and destination evidence remain open; the complete
+antivirus-hardening goal remains active.

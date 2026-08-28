@@ -8,6 +8,7 @@ use sha2::{Digest, Sha256};
 use super::cancellation::check_scan_cancellation;
 
 pub const MAX_FILE_BYTES: u64 = 64 * 1024 * 1024;
+pub const MAX_SCAN_CONTENT_BYTES: u64 = 1024 * 1024 * 1024;
 const HASH_BUFFER_BYTES: usize = 1024 * 1024;
 
 #[derive(Debug, Clone)]
@@ -21,7 +22,7 @@ pub struct ScanContent {
 
 pub fn read_scan_content(path: &Path) -> Result<ScanContent> {
     let mut never_cancel = || Ok(false);
-    read_scan_content_with_limit_and_cancellation(path, u64::MAX, &mut never_cancel)
+    read_scan_content_with_limit_and_cancellation(path, MAX_SCAN_CONTENT_BYTES, &mut never_cancel)
 }
 
 pub fn read_scan_content_with_limit(path: &Path, max_total_bytes: u64) -> Result<ScanContent> {
@@ -33,7 +34,7 @@ pub(crate) fn read_scan_content_with_cancellation(
     path: &Path,
     should_cancel: &mut dyn FnMut() -> Result<bool>,
 ) -> Result<ScanContent> {
-    read_scan_content_with_limit_and_cancellation(path, u64::MAX, should_cancel)
+    read_scan_content_with_limit_and_cancellation(path, MAX_SCAN_CONTENT_BYTES, should_cancel)
 }
 
 fn read_scan_content_with_limit_and_cancellation(
@@ -44,13 +45,7 @@ fn read_scan_content_with_limit_and_cancellation(
     check_scan_cancellation(should_cancel, "content preflight")?;
     let metadata = ensure_regular_scan_content_file(path)?;
     let file_size_bytes = metadata.len();
-    if file_size_bytes > max_total_bytes {
-        anyhow::bail!(
-            "scan content {} exceeds total read limit of {} bytes",
-            path.display(),
-            max_total_bytes
-        );
-    }
+    ensure_scan_content_size_within_limit(path, file_size_bytes, max_total_bytes)?;
     let sample_limit = MAX_FILE_BYTES.min(file_size_bytes) as usize;
     let mut file = fs::File::open(path)?;
     let mut hasher = Sha256::new();
@@ -90,6 +85,21 @@ fn read_scan_content_with_limit_and_cancellation(
         scanned_bytes: sample_limit as u64,
         sample_limited: bytes_read_total > MAX_FILE_BYTES,
     })
+}
+
+fn ensure_scan_content_size_within_limit(
+    path: &Path,
+    file_size_bytes: u64,
+    max_total_bytes: u64,
+) -> Result<()> {
+    if file_size_bytes > max_total_bytes {
+        anyhow::bail!(
+            "scan content {} exceeds total read limit of {} bytes",
+            path.display(),
+            max_total_bytes
+        );
+    }
+    Ok(())
 }
 
 pub fn read_scan_bytes(path: &Path) -> Result<Vec<u8>> {
@@ -135,6 +145,43 @@ mod tests {
     use super::read_scan_content;
     use super::{read_scan_content_with_cancellation, HASH_BUFFER_BYTES};
     use std::fs;
+    use std::path::Path;
+
+    #[test]
+    fn scan_inspection_resource_budget_standard_read_limit_is_one_gib() {
+        assert_eq!(super::MAX_SCAN_CONTENT_BYTES, 1024 * 1024 * 1024);
+        super::ensure_scan_content_size_within_limit(
+            Path::new("exact-limit-benign.bin"),
+            super::MAX_SCAN_CONTENT_BYTES,
+            super::MAX_SCAN_CONTENT_BYTES,
+        )
+        .expect("the exact standard scan limit must remain admitted");
+
+        let error = super::ensure_scan_content_size_within_limit(
+            Path::new("oversized-benign.bin"),
+            super::MAX_SCAN_CONTENT_BYTES + 1,
+            super::MAX_SCAN_CONTENT_BYTES,
+        )
+        .expect_err("one byte over the standard scan limit must fail before file I/O");
+
+        assert!(error.to_string().contains("exceeds total read limit"));
+        assert!(error
+            .to_string()
+            .contains(&super::MAX_SCAN_CONTENT_BYTES.to_string()));
+    }
+
+    #[test]
+    fn scan_inspection_resource_budget_standard_entrypoints_share_limit() {
+        let source = include_str!("content_reader.rs");
+        let start = source.find("pub fn read_scan_content(").unwrap();
+        let end = source
+            .find("fn read_scan_content_with_limit_and_cancellation(")
+            .unwrap();
+        let entrypoints = &source[start..end];
+
+        assert_eq!(entrypoints.matches("MAX_SCAN_CONTENT_BYTES").count(), 2);
+        assert!(!entrypoints.contains("u64::MAX"));
+    }
 
     #[cfg(unix)]
     #[test]

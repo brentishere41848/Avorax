@@ -13439,6 +13439,29 @@ pending.
   destination evidence remain open. The complete antivirus-hardening goal stays
   active.
 
+## 2026-08-28 - Checkpoint 2259 In-Target Scan Inspection Resource Scripting
+
+- Audit found that Checkpoint 2258 enforced total elapsed limits around retained
+  files, while the callback inside Native hashing and analyzers still observed
+  only explicit cancellation. One slow file could therefore continue
+  cooperative user-mode work past the Quick/Full/Custom elapsed budget.
+- Standard Native scans now share a hard 1 GiB total content-read ceiling with
+  Local Core's existing hash ceiling. Initial oversize metadata and streaming
+  growth fail visibly before a verdict; the 64 MiB analyzer sample is unchanged.
+- Local Core now propagates cancellation-first `Cancelled` versus
+  `TimeLimitReached` classification through the existing Native callback. An
+  in-target timeout publishes no partial verdict and counts the interrupted and
+  queued files as skipped and explicitly not clean.
+- Four benign regressions, verifier step 288, strict validator requirements,
+  Source contract 689, the checkpoint report, and all audit/dependency deltas
+  were scripted as one batch. No checkpoint-2259 test ran during scripting.
+- Verification is pending. Cooperative checkpoints cannot preempt an entered
+  filesystem, Authenticode, security-provider, or kernel call; the 1 GiB cap is
+  not a wall-time, CPU, memory, kernel-work, or pre-execution guarantee.
+- No dependency or lockfile changes, live malware, Defender changes,
+  installation, service/driver start, release, publication, or protected-vault
+  write are part of this checkpoint.
+
 ### Checkpoint 2258 Integration And Destination Closure
 
 - Evidence `1523810728b0a4b5e67765e31f7d6d30473afeec` passes CI
@@ -13518,3 +13541,29 @@ pending.
 - Hosted exact-head, PR/merge, merged-main, guarded destination sync, and
   destination evidence remain open. The complete antivirus-hardening goal stays
   active.
+
+### Checkpoint 2259 Definitive Local Evidence
+
+- The scripting boundary held: implementation, four regressions, verifier step
+  288, validator requirements, Source contract 689, and documents were complete
+  before the first Checkpoint 2259 test ran.
+- Formatting, dual-host parsing, Source `689/689`, the new `4/4` filter, all
+  overlapping filters, Local Core `564/564`, Native Engine 640 passed / 21
+  intentionally ignored, compiler `6/6`, and strict changed-crate Clippy pass.
+  Both locked workspace variants, locked release build, Flutter `847/847`, and
+  Dart `14/14` plus `6/6` with all analyzers pass.
+- The no-skip/no-Defender verifier passes exact `288/288` with zero failed or
+  non-null-error steps in `667.4s`. Independent PS5/PS7 validation accepts its
+  210,919-byte schema-2 report with SHA-256
+  `aba47033b18eead7eca3c192b13c6f9c599743b768bce4c28fbd0b6ed0a7d224`.
+  Both hosts reject all six expected step/scope mutations; residue is zero.
+- An extra uncredited repo-wide Clippy experiment found three unchanged
+  `services/api` warnings outside CI's Clippy scope. Exact strict Clippy for the
+  two changed crates passes; the failed experiment remains documented.
+- A mistaken uncredited `pytest` command ran no tests because the optional
+  module is absent. The repository-owned dependency-free Source runner then
+  passed exact `689/689` on the same source.
+- All three lock hashes, zero active product processes, and the read-only
+  16,072-file / 4,522,733-byte vault invariant remain exact. Hosted exact-head,
+  integration, guarded sync, and destination evidence remain open; the complete
+  antivirus-hardening goal stays active.

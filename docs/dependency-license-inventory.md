@@ -2216,3 +2216,18 @@ Native, and Flutter locks remain exact after guarded `14/14` synchronization and
 definitive `287/287`. Checkpoint 2258 adds no dependency or lockfile change and
 is closed; final-binary legal/notice provenance, production signing/
 notarization, enterprise approval, and release approval remain separate.
+
+Checkpoint 2259 adds no dependency, feature, package source, license class,
+downloaded runtime, machine-wide component, or lockfile change. The shared 1 GiB
+standard-read ceiling and cancellation-first in-target elapsed classification
+reuse Rust standard-library arithmetic/time types and existing Native/Local Core
+callbacks and errors. Four harmless regressions use small text bytes and pure
+size-policy values; no 1 GiB fixture is allocated and no candidate is executed.
+Verifier step 288 and Source contract 689 were scripted before testing. Both
+locked workspaces, the locked release build, exact `288/288`, and all local
+focused/broad checks pass with root, Native, and Flutter lock SHA-256 values
+unchanged. No new package source, dependency, feature, license class, artifact
+extraction, candidate execution, installation, or publication was introduced.
+Existing final-binary license/notice provenance, production signing/
+notarization, enterprise deployment approval, and release approval remain
+unresolved and separate from this checkpoint.

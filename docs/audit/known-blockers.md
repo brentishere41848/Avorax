@@ -3749,3 +3749,25 @@ preemption of stalled OS calls, installed cross-identity service ownership,
 signed driver/kernel mediation, production calibration/signing, demonstrated
 pre-execution blocking, and Defender replacement remain product blockers or
 technical limits.
+
+## Checkpoint 2259 Blocker Delta
+
+Checkpoint 2259 implements a bounded answer to two remaining user-mode scan risks:
+unbounded standard full-file SHA-256 reads and total elapsed limits that were
+observed only before/after, not inside, one retained Native inspection. The new
+shared 1 GiB ceiling and cancellation-first in-target callback classification
+are fail-visible; timeout files cannot become clean or produce partial verdicts.
+Verifier step 288, Source `689/689`, focused and overlapping tests, complete
+changed-crate suites, strict Clippy, both locked workspaces, locked release
+build, Flutter/Dart, exact `288/288`, and all six dual-host adversarial
+rejections pass. The local evidence blocker is cleared. Hosted exact-head,
+integration, guarded synchronization, and destination verification remain the
+Checkpoint 2259 blockers.
+
+Hard preemption remains technically blocked in user mode: one entered
+filesystem, Authenticode/security-provider, or kernel call may stall past a
+deadline. The 1 GiB byte cap is not exact I/O/syscall/kernel/CPU/RAM/time
+accounting. Installed cross-identity watchdog ownership, signed driver/kernel
+mediation, production calibration/signing, demonstrated pre-execution blocking,
+and Defender replacement remain separate product blockers. Checkpoint 2259 does
+not claim to clear them, and the full antivirus-hardening goal remains active.

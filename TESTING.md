@@ -870,3 +870,30 @@ validators accept the 200,845-byte report with SHA-256
 All locks and the read-only protected vault remain exact. Checkpoint 2258 is
 closed, while product-level kernel, service/driver, production, pre-execution,
 and Defender-replacement verification remains open.
+
+Checkpoint 2259 preserved the scripting boundary: implementation, four benign
+regressions, verifier/validator changes, Source contract 689, and docs were
+completed before any new test command. The focused
+`scan_inspection_resource_budget_` filter passes `4/4`; Native content and
+cancellation overlaps pass `3/3` and `61/61`, while Local resource and
+cancellation overlaps pass `8/8` and `14/14`. Source passes exact `689/689`,
+Local Core `564/564`, Native Engine 640 passed / 21 intentionally ignored,
+compiler `6/6`, and exact strict Clippy passes for both changed crates. Both
+locked workspace variants, the locked all-feature release build, Flutter
+analyze plus `847/847`, and both Dart analyzers plus `14/14` and `6/6` pass.
+
+Definitive step 288 is `native/local in-target scan inspection resource-budget
+regressions`. The no-skip/no-Defender verifier passes exact `288/288` in
+`667.4s`; PS5/PS7 accept its 210,919-byte report with SHA-256
+`aba47033b18eead7eca3c192b13c6f9c599743b768bce4c28fbd0b6ed0a7d224`.
+Both hosts reject missing-step, missing-verified-scope, and missing-technical-
+scope mutations with exit 1, and owned residue is zero. The root, Native, and
+Flutter lock hashes and read-only 16,072-file vault remain exact. An additional
+repo-wide Clippy command is not credited because three unchanged `services/api`
+lints fail outside the official CI Clippy scope; changed-crate strict Clippy is
+green. A mistaken `pytest` invocation ran no contract because the optional
+module is not installed; it is uncredited, and the repository-owned dependency-
+free Source runner passes exact `689/689`. Tests use harmless bytes and pure
+boundary values; they neither allocate a 1 GiB fixture nor execute candidate
+content. Hosted exact-head matrices, integration, guarded destination sync, and
+destination evidence remain required.
