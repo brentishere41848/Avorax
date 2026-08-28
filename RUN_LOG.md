@@ -13218,3 +13218,58 @@ pending.
 - One closure check invoked an obsolete, absent source-validator filename and
   stopped immediately with file-not-found; it is uncredited. The exact repo
   runner subsequently passes Source `686/686`.
+
+## 2026-08-28 - Checkpoint 2257 File Discovery Memory Scripting
+
+- Added 8 MiB Quick and 128 MiB Full/Custom aggregate encoded-path-payload
+  ceilings alongside the existing 5,000/250,000 path-count limits. Exhaustion
+  or arithmetic overflow is incomplete and fail-visible, never clean.
+- Replaced final stable sorting with stable three-bucket priority
+  classification. Each path is classified once; the exact job callback runs
+  before every at-most-128-path bucket and after completion. Cancellation
+  retains all discovered paths, while callback errors abort before scanning.
+- Added five benign regressions, verifier step 286, exact `286/286` validator
+  cardinality, Source contract 687, and the complete audit/documentation batch.
+- Checkpoint 2257 is **Scripted / unverified**. No checkpoint test has run in
+  this scripting phase. The payload ceilings exclude collection/allocator
+  overhead and do not bound I/O, time, or kernel work. `.verification` and the
+  protected vault remain untouched; the complete antivirus goal stays active.
+
+### Checkpoint 2257 Focused Local Evidence
+
+- PS5/PS7 parser `2/2` each, final rustfmt/diff checks, Source `687/687`, and
+  strict Local Core all-target/all-feature Clippy pass. The initial rustfmt
+  check found four mechanical line wraps; formatting and the repeat check pass.
+- New path-memory tests pass `5/5`; overlapping discovery `10/10`, walker
+  `15/15`, Full Scan `3/3`, cancellation `8/8`, and Local Core `556/556` pass.
+- Zero product processes and exact read-only `16072/0/4522733` protected-vault
+  state pass. Checkpoint 2257 is **verified locally for focused/Local Core
+  scope**; broad, exact `286/286`, hosted, integration, sync, and destination
+  evidence remain open. The complete antivirus-hardening goal stays active.
+
+### Checkpoint 2257 Broad Local Evidence
+
+- Standard and all-feature locked Rust workspace suites pass; Native Engine is
+  `638` passed / `21` intentionally ignored child fixtures and Local Core is
+  `556/556` in both variants. The locked all-feature release build passes.
+- Flutter passes `847/847` and analyzes cleanly. Zentor/Avorax Dart protocols
+  pass `14/14` and `6/6`, and both analyze cleanly.
+- No lockfile changed. Hosted, integration, guarded-sync, and destination
+  evidence remain open. The complete antivirus-hardening goal remains active.
+
+### Checkpoint 2257 Definitive Local Evidence
+
+- Definitive verification passes exact `286/286` with zero failed/error steps
+  in `643.3s`; Defender/EICAR host integration is disabled by default.
+- The canonical 207,098-byte report has SHA-256
+  `b989a2cc9d0d42a0a7404e6d778c97617ad449af8ddef520c6b732d3ce3d1833`.
+  Independent PS5 and PS7 validation both pass.
+- PS5 and PS7 each reject all three structured adversarial reports: 285 steps,
+  missing verified path-memory scope, and missing technical-limit scope. Every
+  rejection exits 1 and owned mutation residue is zero.
+- Root Cargo, Native Cargo, and Flutter lock hashes remain exact. Zero product
+  processes and the read-only `16072/0/4522733` protected-vault invariant pass;
+  `.verification` remains untracked and untouched.
+- Checkpoint 2257 is **verified locally through definitive regression**. Hosted
+  exact-head evidence, normal integration, guarded synchronization, and
+  destination verification remain open; the complete goal stays active.

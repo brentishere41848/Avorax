@@ -5,6 +5,8 @@ const MAX_WALK_ERROR_DETAIL_CHARS: usize = 4096;
 const WALK_ERROR_TRUNCATION_SUFFIX: &str = "...[truncated]";
 const WALK_CANCELLATION_CHUNK_ENTRIES: usize = 128;
 const MAX_FULL_SCAN_DISCOVERED_FILES: usize = 250_000;
+const MAX_QUICK_SCAN_DISCOVERED_PATH_BYTES: usize = 8 * 1024 * 1024;
+const MAX_FULL_SCAN_DISCOVERED_PATH_BYTES: usize = 128 * 1024 * 1024;
 
 #[derive(Debug, Clone, Default)]
 pub struct FileWalk {
@@ -16,12 +18,15 @@ pub struct FileWalk {
     pub scan_errors: Vec<String>,
     pub discovery_cancelled: bool,
     pub file_limit_reached: bool,
+    pub path_bytes_collected: usize,
+    pub path_byte_limit_reached: bool,
 }
 
 #[derive(Debug, Clone)]
 pub struct WalkOptions {
     pub max_depth: Option<usize>,
     pub max_files: Option<usize>,
+    pub max_path_bytes: Option<usize>,
     pub risky_files_only: bool,
 }
 
@@ -30,6 +35,7 @@ impl WalkOptions {
         Self {
             max_depth: Some(4),
             max_files: Some(5_000),
+            max_path_bytes: Some(MAX_QUICK_SCAN_DISCOVERED_PATH_BYTES),
             risky_files_only: true,
         }
     }
@@ -38,6 +44,7 @@ impl WalkOptions {
         Self {
             max_depth: None,
             max_files: Some(MAX_FULL_SCAN_DISCOVERED_FILES),
+            max_path_bytes: Some(MAX_FULL_SCAN_DISCOVERED_PATH_BYTES),
             risky_files_only: false,
         }
     }
@@ -70,8 +77,14 @@ pub fn collect_accessible_files_with_options_and_cancellation(
                 break;
             }
         }
+        if let Some(limit) = options.max_path_bytes {
+            if walk.path_bytes_collected >= limit {
+                mark_path_byte_limit_reached(&mut walk, limit);
+                break;
+            }
+        }
         collect_one_with_cancellation(root, &mut walk, options, should_cancel)?;
-        if walk.discovery_cancelled || walk.file_limit_reached {
+        if walk.discovery_cancelled || walk.file_limit_reached || walk.path_byte_limit_reached {
             break;
         }
         if should_cancel()? {
@@ -83,10 +96,8 @@ pub fn collect_accessible_files_with_options_and_cancellation(
         walk.discovery_cancelled = true;
     }
     if !walk.discovery_cancelled {
-        walk.files.sort_by_key(|path| priority(path));
-        if should_cancel()? {
-            walk.discovery_cancelled = true;
-        }
+        walk.discovery_cancelled =
+            prioritize_files_with_cancellation(&mut walk.files, should_cancel)?;
     }
     Ok(walk)
 }
@@ -132,8 +143,14 @@ fn collect_one_with_cancellation(
                 return Ok(());
             }
         }
+        if let Some(limit) = options.max_path_bytes {
+            if walk.path_bytes_collected >= limit {
+                mark_path_byte_limit_reached(walk, limit);
+                return Ok(());
+            }
+        }
         add_file(root, walk, options);
-        if should_cancel()? {
+        if !walk.path_byte_limit_reached && should_cancel()? {
             walk.discovery_cancelled = true;
         }
         return Ok(());
@@ -168,6 +185,12 @@ fn collect_one_with_cancellation(
                 break;
             }
         }
+        if let Some(limit) = options.max_path_bytes {
+            if walk.path_bytes_collected >= limit {
+                mark_path_byte_limit_reached(walk, limit);
+                break;
+            }
+        }
         entries_since_checkpoint += 1;
         match entry {
             Ok(entry) if entry.file_type().is_dir() => walk.folders_scanned += 1,
@@ -193,11 +216,18 @@ fn collect_one_with_cancellation(
                 }
             }
         }
+        if walk.path_byte_limit_reached {
+            break;
+        }
         if entries_since_checkpoint >= WALK_CANCELLATION_CHUNK_ENTRIES {
             entries_since_checkpoint = 0;
         }
     }
-    if !walk.discovery_cancelled && !walk.file_limit_reached && should_cancel()? {
+    if !walk.discovery_cancelled
+        && !walk.file_limit_reached
+        && !walk.path_byte_limit_reached
+        && should_cancel()?
+    {
         walk.discovery_cancelled = true;
     }
     Ok(())
@@ -213,6 +243,20 @@ fn mark_file_limit_reached(walk: &mut FileWalk, limit: usize) {
         walk,
         format!(
             "file discovery limit of {limit} files reached; remaining entries were not enumerated or reported clean"
+        ),
+    );
+}
+
+fn mark_path_byte_limit_reached(walk: &mut FileWalk, limit: usize) {
+    if walk.path_byte_limit_reached {
+        return;
+    }
+    walk.path_byte_limit_reached = true;
+    walk.skipped_files = walk.skipped_files.saturating_add(1);
+    push_walk_error(
+        walk,
+        format!(
+            "file discovery encoded path-byte limit of {limit} bytes reached; remaining entries were not enumerated or reported clean"
         ),
     );
 }
@@ -333,6 +377,47 @@ fn priority(path: &Path) -> u8 {
     2
 }
 
+fn prioritize_files_with_cancellation(
+    files: &mut Vec<PathBuf>,
+    should_cancel: &mut dyn FnMut() -> anyhow::Result<bool>,
+) -> anyhow::Result<bool> {
+    let source = std::mem::take(files);
+    let mut remaining = source.into_iter();
+    let mut immediate = Vec::new();
+    let mut risky = Vec::new();
+    let mut ordinary = Vec::new();
+
+    while remaining.len() > 0 {
+        if should_cancel()? {
+            *files = assemble_priority_buckets(immediate, risky, ordinary, remaining);
+            return Ok(true);
+        }
+        for path in remaining.by_ref().take(WALK_CANCELLATION_CHUNK_ENTRIES) {
+            match priority(&path) {
+                0 => immediate.push(path),
+                1 => risky.push(path),
+                _ => ordinary.push(path),
+            }
+        }
+    }
+
+    *files = assemble_priority_buckets(immediate, risky, ordinary, remaining);
+    should_cancel()
+}
+
+fn assemble_priority_buckets(
+    mut immediate: Vec<PathBuf>,
+    mut risky: Vec<PathBuf>,
+    mut ordinary: Vec<PathBuf>,
+    remaining: std::vec::IntoIter<PathBuf>,
+) -> Vec<PathBuf> {
+    immediate.reserve(risky.len() + ordinary.len() + remaining.len());
+    immediate.append(&mut risky);
+    immediate.append(&mut ordinary);
+    immediate.extend(remaining);
+    immediate
+}
+
 fn add_file(path: &Path, walk: &mut FileWalk, options: &WalkOptions) {
     if options.risky_files_only && !is_quick_scan_candidate(path) {
         walk.skipped_files = walk.skipped_files.saturating_add(1);
@@ -349,6 +434,18 @@ fn add_file(path: &Path, walk: &mut FileWalk, options: &WalkOptions) {
                 walk.skipped_files = walk.skipped_files.saturating_add(1);
                 return;
             }
+            let path_bytes = path.as_os_str().as_encoded_bytes().len();
+            let Some(next_path_bytes) = walk.path_bytes_collected.checked_add(path_bytes) else {
+                mark_path_byte_limit_reached(walk, options.max_path_bytes.unwrap_or(usize::MAX));
+                return;
+            };
+            if let Some(limit) = options.max_path_bytes {
+                if next_path_bytes > limit {
+                    mark_path_byte_limit_reached(walk, limit);
+                    return;
+                }
+            }
+            walk.path_bytes_collected = next_path_bytes;
             walk.bytes_estimated = walk.bytes_estimated.saturating_add(metadata.len());
             walk.files.push(path.to_path_buf());
         }
@@ -598,6 +695,7 @@ mod tests {
         let options = WalkOptions {
             max_depth: None,
             max_files: Some(3),
+            max_path_bytes: Some(MAX_FULL_SCAN_DISCOVERED_PATH_BYTES),
             risky_files_only: false,
         };
         let mut never_cancel = || Ok(false);
@@ -621,6 +719,158 @@ mod tests {
             error.contains("file discovery limit of 3 files reached")
                 && error.contains("not enumerated or reported clean")
         }));
+    }
+
+    #[test]
+    fn file_discovery_memory_path_byte_limit_is_fail_visible() {
+        let dir = tempdir().unwrap();
+        let first = dir.path().join("benign-memory-0.txt");
+        for index in 0..3 {
+            fs::write(
+                dir.path().join(format!("benign-memory-{index}.txt")),
+                b"ordinary benign path-memory fixture",
+            )
+            .unwrap();
+        }
+        let one_path_bytes = first.as_os_str().as_encoded_bytes().len();
+        let options = WalkOptions {
+            max_depth: None,
+            max_files: Some(MAX_FULL_SCAN_DISCOVERED_FILES),
+            max_path_bytes: Some(one_path_bytes),
+            risky_files_only: false,
+        };
+        let mut never_cancel = || Ok(false);
+
+        let walk = collect_accessible_files_with_options_and_cancellation(
+            &[dir.path().to_path_buf()],
+            &options,
+            &mut never_cancel,
+        )
+        .unwrap();
+
+        assert_eq!(
+            WalkOptions::quick().max_path_bytes,
+            Some(MAX_QUICK_SCAN_DISCOVERED_PATH_BYTES)
+        );
+        assert_eq!(
+            WalkOptions::full().max_path_bytes,
+            Some(MAX_FULL_SCAN_DISCOVERED_PATH_BYTES)
+        );
+        assert_eq!(walk.files.len(), 1);
+        assert_eq!(walk.path_bytes_collected, one_path_bytes);
+        assert!(walk.path_byte_limit_reached);
+        assert!(!walk.file_limit_reached);
+        assert!(!walk.discovery_cancelled);
+        assert!(walk.skipped_files >= 1);
+        assert!(walk.scan_errors.iter().any(|error| {
+            error.contains(&format!(
+                "file discovery encoded path-byte limit of {one_path_bytes} bytes reached"
+            )) && error.contains("not enumerated or reported clean")
+        }));
+    }
+
+    #[test]
+    fn file_discovery_memory_path_byte_overflow_is_fail_visible() {
+        let dir = tempdir().unwrap();
+        let file = dir.path().join("benign-overflow.txt");
+        fs::write(&file, b"ordinary benign path-overflow fixture").unwrap();
+        let options = WalkOptions {
+            max_depth: None,
+            max_files: None,
+            max_path_bytes: None,
+            risky_files_only: false,
+        };
+        let mut walk = FileWalk {
+            path_bytes_collected: usize::MAX,
+            ..FileWalk::default()
+        };
+
+        add_file(&file, &mut walk, &options);
+
+        assert!(walk.files.is_empty());
+        assert_eq!(walk.path_bytes_collected, usize::MAX);
+        assert_eq!(walk.bytes_estimated, 0);
+        assert!(walk.path_byte_limit_reached);
+        assert_eq!(walk.skipped_files, 1);
+        assert!(walk.scan_errors.iter().any(|error| {
+            error.contains(&format!(
+                "file discovery encoded path-byte limit of {} bytes reached",
+                usize::MAX
+            )) && error.contains("not enumerated or reported clean")
+        }));
+    }
+
+    #[test]
+    fn file_discovery_memory_priority_bucketing_is_stable() {
+        let mut files = vec![
+            PathBuf::from("ordinary-z.txt"),
+            PathBuf::from("Downloads/first.txt"),
+            PathBuf::from("driver.sys"),
+            PathBuf::from("ordinary-a.txt"),
+            PathBuf::from("Desktop/later.bin"),
+            PathBuf::from("script.ps1"),
+        ];
+        let mut never_cancel = || Ok(false);
+
+        let cancelled = prioritize_files_with_cancellation(&mut files, &mut never_cancel).unwrap();
+
+        assert!(!cancelled);
+        assert_eq!(
+            files,
+            vec![
+                PathBuf::from("Downloads/first.txt"),
+                PathBuf::from("Desktop/later.bin"),
+                PathBuf::from("driver.sys"),
+                PathBuf::from("script.ps1"),
+                PathBuf::from("ordinary-z.txt"),
+                PathBuf::from("ordinary-a.txt"),
+            ]
+        );
+    }
+
+    #[test]
+    fn file_discovery_memory_priority_bucketing_observes_cancellation() {
+        use std::collections::BTreeSet;
+
+        let mut files = (0..300)
+            .map(|index| PathBuf::from(format!("benign-priority-{index}.txt")))
+            .collect::<Vec<_>>();
+        let expected = files.iter().cloned().collect::<BTreeSet<_>>();
+        let mut checkpoints = 0usize;
+        let mut should_cancel = || {
+            checkpoints += 1;
+            Ok(checkpoints >= 2)
+        };
+
+        let cancelled = prioritize_files_with_cancellation(&mut files, &mut should_cancel).unwrap();
+
+        assert!(cancelled);
+        assert_eq!(checkpoints, 2);
+        assert_eq!(files.len(), 300);
+        assert_eq!(files.into_iter().collect::<BTreeSet<_>>(), expected);
+    }
+
+    #[test]
+    fn file_discovery_memory_priority_bucketing_propagates_probe_errors() {
+        let mut files = (0..300)
+            .map(|index| PathBuf::from(format!("benign-priority-error-{index}.txt")))
+            .collect::<Vec<_>>();
+        let mut checkpoints = 0usize;
+        let mut should_cancel = || {
+            checkpoints += 1;
+            if checkpoints >= 2 {
+                anyhow::bail!("benign priority cancellation probe failure");
+            }
+            Ok(false)
+        };
+
+        let error = prioritize_files_with_cancellation(&mut files, &mut should_cancel)
+            .expect_err("priority cancellation callback failure must propagate");
+
+        assert_eq!(checkpoints, 2);
+        assert!(error
+            .to_string()
+            .contains("benign priority cancellation probe failure"));
     }
 
     #[test]

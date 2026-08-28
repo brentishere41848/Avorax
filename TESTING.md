@@ -691,3 +691,44 @@ destination `285/285` in `649.5s`. The destination report contains zero failed
 or non-null-error steps and has SHA-256
 `2e71dd42a28345c602580bf70297a862f010a516873ae81cf6a074436dd5734f`.
 No candidate fixture or package was extracted, installed, or executed.
+
+## Checkpoint 2257 Scripted Coverage
+
+Checkpoint 2257 adds five benign `file_discovery_memory_` tests: encoded
+path-payload exhaustion and checked-add overflow are fail-visible; three-bucket
+priority ordering remains stable; cancellation at the second at-most-128-path
+checkpoint retains all 300 in-memory path values; and an arbitrary callback
+error propagates exactly. No candidate file is executed.
+
+Source contract 687 binds the 8 MiB Quick and 128 MiB Full/Custom payload caps,
+checked byte accumulation before path retention, limit/error wiring, absence of
+the old `sort_by_key`, the five regressions, verifier step 286, exact `286/286`
+validator cardinality, scope claims, and all checkpoint docs. No Checkpoint
+2257 test ran during scripting. Focused checks began only after this entire
+batch; broad and definitive/adversarial local verification now pass. Hosted
+exact-head evidence, integration, guarded synchronization, and destination
+reruns follow.
+
+Checkpoint 2257 focused results: PS5/PS7 parser `2/2` each, final rustfmt and
+diff checks, Source `687/687`, new path-memory `5/5`, discovery `10/10`, walker
+`15/15`, Full Scan `3/3`, scan cancellation `8/8`, Local Core `556/556`, and
+strict all-target/all-feature Clippy pass. The first rustfmt check reported four
+mechanical line wraps; `cargo fmt --all` and the repeat check pass. No live
+malware or candidate execution was used. Broad and definitive local suites now
+pass; hosted evidence, integration, guarded sync, and destination reruns remain
+required.
+
+Checkpoint 2257 broad results: standard and all-feature locked Rust workspace
+tests pass, as does the locked all-feature release build. Native Engine reports
+638 passed / 21 intentionally ignored child fixtures and Local Core `556/556`
+in each variant. Flutter passes `847/847`; Zentor and Avorax protocols pass
+`14/14` and `6/6`; all analyzers are clean. Lockfiles remain unchanged.
+
+Checkpoint 2257 definitive results: exact `286/286`, zero failed/error steps,
+and `643.3s`. The canonical report is 207,098 bytes with SHA-256
+`b989a2cc9d0d42a0a7404e6d778c97617ad449af8ddef520c6b732d3ce3d1833`;
+Defender/EICAR host integration remained disabled by default. Independent PS5
+and PS7 strict validation pass. Both hosts reject each structured 285-step,
+missing-verified-scope, and missing-technical-scope mutation with exit 1, and
+owned mutation residue is zero. Hosted evidence, integration, guarded sync, and
+destination reruns remain required.

@@ -2133,3 +2133,32 @@ package source, license class, lockfile, downloaded runtime, or machine-wide
 component. Final-binary legal/notice resolution, production signing/
 notarization, installed-service stress, enterprise deployment approval, and
 release approval remain separate prerequisites.
+
+## Checkpoint 2257 Dependency Delta
+
+Checkpoint 2257 file discovery path-memory bounds and cancellable priority
+bucketing add no dependency, feature, package source, license class, downloaded
+runtime, machine-wide component, or lockfile change. The implementation reuses
+Rust standard-library `OsStr` encoding, checked integer arithmetic, `Vec`, and
+the existing `anyhow`, `walkdir`, and Local Core cancellation contracts.
+
+Source contract 687 and definitive verifier step 286 / exact `286/286` were
+scripted before testing. No Checkpoint 2257 dependency re-resolution, new
+package download, artifact extraction, installation, or candidate execution
+occurred. Existing final-binary license/notice resolution, production signing/
+notarization, installed-service stress, enterprise deployment approval, and
+release approval remain separate prerequisites.
+
+Focused Checkpoint 2257 verification passes Source `687/687`, all five new
+memory regressions, Local Core `556/556`, strict Clippy, and formatting without
+dependency resolution, package download, or lockfile change. Broad locked
+workspace/build, hosted package/SBOM, and final-binary legal evidence remain
+pending; no publication is authorized.
+
+Both locked Rust workspace variants and the locked all-feature release build
+pass. Flutter `847/847`, Dart `14/14` plus `6/6`, and analyzers pass after
+routine resolution of the already pinned dependency graphs; all lockfiles
+remain byte-unchanged. Checkpoint 2257 still adds no dependency, feature,
+package source, license class, or lockfile change. Definitive `286/286` passes
+in `643.3s`; the three lock hashes remain exact. Hosted package/SBOM evidence
+and final-binary legal evidence remain pending.
