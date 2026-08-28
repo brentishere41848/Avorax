@@ -115,3 +115,29 @@ untracked and untouched. Checkpoint 2256 is **verified locally**. Hosted
 exact-head CI/packages, normal integration, guarded destination synchronization,
 and destination verification remain open; the complete antivirus-hardening goal
 remains active.
+
+## Hosted Implementation-Head Evidence
+
+Exact implementation commit `75a962003a6efc7ff3be6090ed0500448a547787`
+passes PR `#121` Avorax CI run `33128336666`, PR Desktop Packages run
+`33128336642`, and push Desktop Packages run `33128313733`. All five CI jobs,
+both package-contract jobs, all eight platform build jobs, and both consolidation
+jobs pass. Both prerelease-publication jobs are intentionally skipped.
+
+The untouched push consolidated artifact `9669627890` is 132,046,962 bytes with
+SHA-256 `2856e896f7ba3510c9516f7138fc086886e3327ef79b0c99093b081571e10767`.
+The untouched PR artifact `9669595520` is 132,219,375 bytes with SHA-256
+`a1effb753a5eed441e5d1d885b141003dd3ebe5c17168f630cdf1b539ea88a34`.
+Both local downloads match GitHub artifact metadata exactly.
+
+Bounded, non-extracting review of each artifact passes exactly eight safe root
+entries, six packages, seven checksum targets, CycloneDX 1.6, and 569 non-empty
+unique component references, with zero duplicate, unsafe, encrypted, directory,
+or link entries. No package was extracted, installed, or executed. The exact
+owned review directory and both downloaded ZIPs were removed non-recursively,
+leaving zero residue.
+
+Hosted implementation-head evidence is complete. Exact evidence-head hosted
+runs, normal PR merge, merged-main evidence, guarded destination synchronization,
+and destination verification remain open. `.verification` and the protected
+vault remain untouched; the complete antivirus-hardening goal remains active.

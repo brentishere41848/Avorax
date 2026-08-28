@@ -675,3 +675,10 @@ and both reject missing-step and missing-scope mutations. The three lock hashes,
 zero product processes/residue, and protected-vault invariant remain exact.
 Hosted exact-head, integration, guarded synchronization, and destination reruns
 remain required for checkpoint closure.
+
+Checkpoint 2256 exact implementation head `75a9620` additionally passes PR CI
+`33128336666` and PR/push package runs `33128336642`/`33128313733`. Both
+consolidated artifacts pass bounded non-extracting 8/6/7/CycloneDX-1.6/569
+review and publication is skipped. Exact evidence-head reruns, merged-main,
+guarded destination synchronization, and destination verification remain
+required for closure.

@@ -3735,3 +3735,10 @@ missing-step/missing-scope mutations. Locks, product-process/residue checks, and
 the protected-vault invariant remain exact. This closes the local evidence gap,
 not the residual cooperative latency or any hosted, installed-service, kernel,
 pre-execution, Defender-replacement, or production-accuracy requirement.
+
+Hosted implementation-head CI/packages and two independent consolidated
+artifact reviews now pass on exact `75a9620`. This adds cross-platform build and
+source/package-contract evidence; it does not add a wall-clock filesystem
+deadline, installed service ownership, kernel mediation, pre-execution blocking,
+Defender replacement, production detection calibration, or release approval.
+Evidence-head, merged-main, and destination proof remain pending.

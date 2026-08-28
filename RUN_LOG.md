@@ -13172,3 +13172,19 @@ pending.
   failed from shell quoting. All three attempts are uncredited; a complete
   verifier rerun plus literal-script PS5/PS7 parser and standalone validation
   produced the passing final evidence above.
+
+### Checkpoint 2256 Hosted Implementation-Head Evidence
+
+- Exact implementation `75a962003a6efc7ff3be6090ed0500448a547787`
+  passes PR `#121` CI `33128336666`, PR packages `33128336642`, and push
+  packages `33128313733`; package publication is skipped.
+- Push artifact `9669627890` is 132,046,962 bytes, SHA-256
+  `2856e896f7ba3510c9516f7138fc086886e3327ef79b0c99093b081571e10767`;
+  PR artifact `9669595520` is 132,219,375 bytes, SHA-256
+  `a1effb753a5eed441e5d1d885b141003dd3ebe5c17168f630cdf1b539ea88a34`.
+- Both downloads exactly match GitHub and pass bounded non-extracting review:
+  8 root entries, 6 packages, 7 checksum targets, CycloneDX 1.6, 569 unique
+  refs, and zero unsafe/duplicate/encrypted/link entries. No package is
+  extracted, installed, or executed; owned review residue is zero.
+- Evidence-head hosted reruns, normal merge, merged-main evidence, guarded sync,
+  and destination verification remain open. The complete goal remains active.

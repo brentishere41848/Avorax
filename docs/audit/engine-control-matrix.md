@@ -5353,6 +5353,12 @@ Hosted exact-head, integration, guarded synchronization, and destination proof
 remain open. The cooperative, path-byte/I/O, cross-identity, kernel,
 pre-execution, and Defender-replacement limits are unchanged.
 
+Exact implementation `75a9620` passes hosted PR CI and both PR/push package
+matrices. Bounded non-extracting review passes exact 8/6/7/CycloneDX-1.6/569
+for both consolidated artifacts with publication skipped. Checkpoint 2256 rows
+remain **Verified locally and on implementation-head CI**; evidence-head,
+merged-main, synchronized-destination, and destination evidence remain open.
+
 ## Checkpoint 2255 Control Delta
 
 | Control / engine | Responsibility | State | Evidence required |

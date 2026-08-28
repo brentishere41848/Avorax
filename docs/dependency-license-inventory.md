@@ -1859,6 +1859,16 @@ Cargo, and Flutter lock SHA-256 values remain respectively
 Hosted package/SBOM evidence and final-binary legal/notice resolution remain
 pending; no publication is authorized.
 
+Hosted implementation-head package/SBOM evidence now passes on exact
+`75a962003a6efc7ff3be6090ed0500448a547787` in PR/push runs `33128336642` and
+`33128313733`, with publication skipped. Consolidated artifacts `9669595520`
+and `9669627890` match GitHub SHA-256 metadata and each passes exact seven-target
+checksum plus CycloneDX 1.6 review with 569 components and 569 unique refs. This
+does not change dependencies, lockfiles, licenses, or installation state and is
+not final-binary legal/notice approval, production signing/notarization,
+enterprise deployment approval, or release approval. Evidence-head and
+merged-main package/SBOM evidence remain pending.
+
 ## Checkpoint 2255 Dependency Delta
 
 Checkpoint 2255 changes only first-party Rust PE resource cancellation wiring,

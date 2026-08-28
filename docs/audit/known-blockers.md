@@ -3640,3 +3640,11 @@ checkpoint blockers. Cooperative discovery latency, aggregate path-byte/I/O
 bounds, installed cross-identity service ownership, signed-driver/kernel
 mediation, production calibration/signing, demonstrated pre-execution blocking,
 and Defender replacement remain separate open product blockers.
+
+Hosted implementation-head CI and package blockers are cleared on exact
+`75a9620`: PR CI plus PR/push package matrices and both bounded non-extracting
+artifact reviews pass, while publication is skipped. Exact evidence-head runs,
+normal merge, merged-main evidence, guarded synchronization, and destination
+verification remain checkpoint blockers. All cooperative, installed-service,
+driver/kernel, production-calibration, pre-execution, and Defender-replacement
+product blockers remain unchanged.

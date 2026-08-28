@@ -7269,6 +7269,14 @@ and the read-only vault invariant remain exact. Hosted exact-head, integration,
 guarded-sync, and destination evidence remain open, so the checkpoint and the
 complete antivirus-hardening goal remain active.
 
+Exact implementation `75a962003a6efc7ff3be6090ed0500448a547787` now has
+hosted Checkpoint 2256 evidence: PR `#121` CI `33128336666`, PR packages
+`33128336642`, and push packages `33128313733` pass, with publication skipped.
+Both consolidated artifacts match GitHub and pass non-extracting exact
+8-root/6-package/7-checksum/CycloneDX-1.6/569-unique-ref review. Evidence-head
+hosted reruns, merge/main, guarded destination sync, and destination verification
+remain open, so the checkpoint and complete antivirus-hardening goal stay active.
+
 ## Checkpoint 2255 Status
 
 Checkpoint 2255 is **scripted, unverified**. PE resource section mapping now
