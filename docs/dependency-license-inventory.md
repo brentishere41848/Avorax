@@ -2231,3 +2231,12 @@ extraction, candidate execution, installation, or publication was introduced.
 Existing final-binary license/notice provenance, production signing/
 notarization, enterprise deployment approval, and release approval remain
 unresolved and separate from this checkpoint.
+
+Checkpoint 2259 implementation-head CI and both package workflows pass on exact
+`97e16e7`, with publication skipped. Consolidated artifacts `9681909119` and
+`9681997334` each contain the expected CycloneDX 1.6 lockfile SBOM with 569
+non-empty unique component references and pass all seven checksums under bounded
+non-extracting review. This is hosted source-lock inventory evidence, not final-
+binary legal/notice provenance, production signing/notarization, enterprise
+deployment approval, or release approval. Evidence-head, merged-main, and
+destination package/SBOM evidence remain pending.

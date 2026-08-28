@@ -3898,6 +3898,14 @@ exact `288/288`, and all six expected dual-host adversarial rejections pass, so
 this threat delta is verified locally. Hosted integration, guarded sync, and
 destination evidence remain pending.
 
+Exact implementation-head CI and Windows/Linux/macOS package matrices pass on
+`97e16e7`. Both consolidated artifacts pass bounded non-extracting checksum and
+CycloneDX 1.6/569-unique-ref review with publication skipped. This adds hosted
+build and packaging regression evidence; it does not add signing, notarization,
+installed-service isolation, kernel enforcement, production detection-rate, or
+pre-execution evidence. Evidence-head, merged-main, sync, and destination proof
+remain pending.
+
 Residual risk is explicit. An entered filesystem, Authenticode, security-provider,
 or kernel call cannot be preempted by a user-mode callback; one at-most-1-MiB
 hash read or separately bounded analysis chunk may overrun. The 1 GiB cap does

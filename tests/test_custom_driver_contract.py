@@ -32030,7 +32030,7 @@ def test_checkpoint_2259_in_target_scan_inspection_resource_bounds_contract():
         assert "1 GiB" in normalized or "1,073,741,824" in normalized
     normalized_checkpoint = re.sub(r"\s+", " ", checkpoint)
     assert (
-        "Status: **Verified locally through definitive regression; hosted integration pending**"
+        "Status: **Hosted implementation-head verified; integration pending**"
         in normalized_checkpoint
     )
     assert "No checkpoint-2259 test ran during this scripting phase" in normalized_checkpoint

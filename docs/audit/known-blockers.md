@@ -3764,6 +3764,12 @@ rejections pass. The local evidence blocker is cleared. Hosted exact-head,
 integration, guarded synchronization, and destination verification remain the
 Checkpoint 2259 blockers.
 
+Exact implementation-head CI and both package matrices now pass on `97e16e7`,
+including bounded non-extracting checksum/SBOM review with publication skipped.
+The hosted implementation-head blocker is cleared. Evidence-head hosting,
+normal integration, merged-main evidence, guarded destination synchronization,
+and destination verification remain checkpoint blockers.
+
 Hard preemption remains technically blocked in user mode: one entered
 filesystem, Authenticode/security-provider, or kernel call may stall past a
 deadline. The 1 GiB byte cap is not exact I/O/syscall/kernel/CPU/RAM/time

@@ -1,6 +1,6 @@
 # Checkpoint 2259 - In-Target Scan Inspection Resource Bounds
 
-Status: **Verified locally through definitive regression; hosted integration pending**
+Status: **Hosted implementation-head verified; integration pending**
 
 ## Scope
 
@@ -114,6 +114,33 @@ the same final source at exact `689/689`.
 Exact-head CI/packages, normal PR integration, merged-main evidence, guarded
 zero-delete synchronization, and independent destination verification remain
 required before Checkpoint 2259 can close.
+
+## Hosted Implementation-Head Evidence
+
+Exact implementation commit
+`97e16e7b6e1051788f36bbd51e68b1e3890c5d0c` passes PR `#127` Avorax CI run
+`33160451724`, push Desktop Packages run `33160424802`, and PR Desktop Packages
+run `33160451797`. All five CI jobs, both package-contract jobs, all eight
+platform build jobs, both consolidation jobs, Windows administrative MSI
+extraction without installation, and checksum/SBOM generation pass. Both beta-
+prerelease publication jobs are intentionally skipped.
+
+The untouched push consolidated artifact `9681909119` is 132,172,341 bytes with
+SHA-256 `a0ad670646b91f125a85d87d01f9f82379663a9ddf26aeec152d38a0b8a86d34`.
+The untouched PR consolidated artifact `9681997334` is 132,198,805 bytes with
+SHA-256 `ea18f2b7bb9722b35e6e755ff8a9b322933d65bf2aaf85d8efde912cd07987a7`.
+Both local downloads match GitHub metadata exactly.
+
+Bounded, non-extracting in-stream review of each archive passes exactly eight
+safe root entries, six platform packages, seven matching checksum targets,
+CycloneDX 1.6, and 569 non-empty unique component references. Declared
+uncompressed totals are 136,155,889 and 136,154,604 bytes. There are zero
+duplicate, unsafe, encrypted, directory, link, or unsupported-special entries.
+No package was extracted, installed, or executed. Both owned review ZIPs were
+removed with zero residue. The first PowerShell cleanup forms were blocked
+before execution by shell policy; exact Python `Path.unlink` cleanup then
+succeeded. Evidence-head hosted checks, normal PR merge, merged-main evidence,
+guarded destination synchronization, and destination verification remain open.
 
 ## Technical Limits
 

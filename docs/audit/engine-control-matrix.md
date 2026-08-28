@@ -5690,3 +5690,9 @@ first three rows are therefore Verified locally. Hosted, integration, guarded-
 sync, and destination proof remain pending. The 1 GiB cap does not establish
 wall-time, CPU, exact RAM, kernel-work, driver, hard-realtime, or pre-execution
 enforcement.
+
+Exact implementation-head CI and both package matrices pass on `97e16e7`,
+including Windows/Linux/macOS package verification and bounded non-extracting
+review of both consolidated checksum/SBOM artifacts. Publication is skipped.
+The first three rows remain locally and hosted-build verified; evidence-head,
+normal merge, merged-main, sync, and destination proof remain pending.

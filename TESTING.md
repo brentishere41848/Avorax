@@ -897,3 +897,12 @@ free Source runner passes exact `689/689`. Tests use harmless bytes and pure
 boundary values; they neither allocate a 1 GiB fixture nor execute candidate
 content. Hosted exact-head matrices, integration, guarded destination sync, and
 destination evidence remain required.
+
+Exact implementation `97e16e7b6e1051788f36bbd51e68b1e3890c5d0c` passes PR
+`#127` CI `33160451724`, push packages `33160424802`, and PR packages
+`33160451797`; both publication jobs are skipped. Consolidated artifacts
+`9681909119` and `9681997334` match GitHub byte size/SHA-256 and each pass a
+bounded non-extracting exact 8-root/6-package/7-checksum/CycloneDX-1.6/569-
+unique-ref review. No artifact was extracted, installed, or executed, and owned
+review residue is zero. Evidence-head CI/packages, normal merge, merged-main
+evidence, guarded destination sync, and destination testing remain required.
