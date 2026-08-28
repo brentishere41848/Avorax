@@ -32377,7 +32377,7 @@ def test_checkpoint_2261_manual_threat_quarantine_hash_binding_contract():
     assert "fresh bounded snapshot" in normalized_local_readme
     normalized_checkpoint = re.sub(r"\s+", " ", checkpoint)
     assert (
-        "Status: **Implementation and hosted evidence verified; integration and destination evidence pending**"
+        "Status: **Closed; implementation integrated and destination verified**"
         in normalized_checkpoint
     )
     assert "No checkpoint-2261 test ran during the scripting phase" in normalized_checkpoint
@@ -32389,7 +32389,7 @@ def test_checkpoint_2261_manual_threat_quarantine_hash_binding_contract():
         "52572e56b14600e371427faa9cf58023ae30ee6bacbc077e943dc8d01f4ebd58",
         "16,072 files",
         "zero pending files",
-        "This checkpoint has verified implementation and hosted evidence but is not closed",
+        "Checkpoint 2261 is closed",
     ]:
         assert evidence_marker in normalized_checkpoint
     for hosted_marker in [
@@ -32407,6 +32407,21 @@ def test_checkpoint_2261_manual_threat_quarantine_hash_binding_contract():
         "Nothing was extracted, installed, or executed",
     ]:
         assert hosted_marker in normalized_checkpoint
+    for closure_marker in [
+        "b66aaed3388139c19ff76385bf5ec5cc06adf219",
+        "1877bbabaeb1fd6e6169d1ca3f92a9438185b3d4",
+        "33194037678",
+        "33194037671",
+        "18 paths, 17 modified, one added, zero deleted",
+        "Trojan:Win32/Wacatac.C!ml",
+        "Defender was not weakened",
+        "passed exact `289/289`",
+        "651.5s",
+        "4b7f531dd61c0c7c00496ad331061d50161c9a6487f6b7ecd1046bb5e8bdcf25",
+        "all eight lockfile hashes",
+        "The complete antivirus-hardening goal remains active",
+    ]:
+        assert closure_marker in normalized_checkpoint
     assert "adds no dependency" in normalized_checkpoint.lower()
     assert "lockfile change" in normalized_checkpoint.lower()
     normalized_dependencies = re.sub(r"\s+", " ", documents[-1]).lower()

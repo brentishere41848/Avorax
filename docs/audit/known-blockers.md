@@ -3836,15 +3836,23 @@ Four harmless Local Core tests, Flutter IPC regressions, verifier step 289,
 exact-289 validator scope, and Source contract 691 now pass locally. Broad
 locked workspaces, release build, Flutter/protocol suites, definitive exact
 `289/289` in `659.6s`, and dual-host authentic/adversarial report validation
-also pass. Exact implementation-head CI and Desktop dispatch/PR/push attempt 2
-pass with publication skipped; the initial push attempt was concurrency-
-cancelled and remains an explicit non-pass. Integration, guarded-sync, and
-destination proof remain checkpoint blockers.
+also pass. Exact implementation/evidence-head CI and Desktop workflows, normal
+PR `#131`, merged-main CI/packages, guarded 18-path zero-delete synchronization,
+all eight lockfiles, destination exact `289/289` in `651.5s`, and the unchanged
+protected vault pass. Publication was skipped. The initial implementation-head
+push attempt was concurrency-cancelled and remains an explicit non-pass.
+
+One broad destination Rust orchestration is also retained as a non-pass:
+Defender removed a generated Native test harness as inactive
+`Trojan:Win32/Wacatac.C!ml`, causing Windows error 225. Defender was not
+weakened. Isolated unchanged Native default/all-feature suites each passed
+`640/640` plus 21 intentional ignores, and the definitive destination verifier
+subsequently passed. This is documented host-security interference, not a
+silently converted pass and not a reason to weaken Defender.
 
 Final path mutation is still a cross-platform user-mode operation rather than
 one atomic filesystem transaction. Installed cross-identity UI/service proof,
 signed driver/kernel mediation, production calibration/signing, demonstrated
 pre-execution blocking, and Defender replacement remain separate product
-blockers or technical limits. The checkpoint is locally verified but remains
-active pending integration/destination evidence; the complete antivirus goal
-remains active.
+blockers or technical limits. Checkpoint 2261 is closed; the complete antivirus
+goal remains active.

@@ -221,9 +221,12 @@ privileged writer may still race the last identity check and path mutation on
 some filesystems. Such a failure is not reported as successful quarantine;
 post-move mismatch remains visible or recovery-journaled. This is not kernel
 mediation, pre-execution blocking, administrator/SYSTEM isolation, or a claim
-that Avorax replaces Defender. Six harmless Checkpoint 2260 regressions and
-Source contract 690 are scripted; verification requires an explicit rescan and
-remains pending at the scripting boundary.
+that Avorax replaces Defender. Checkpoint 2261 is closed through exact local
+and destination `289/289`, normal PR integration, merged-main CI/package
+evidence, guarded 18-path zero-delete synchronization, all eight exact
+lockfiles, and an unchanged protected vault. Installed UI-to-service
+click-through and atomic kernel path mediation remain outside this proof;
+changed evidence requires an explicit rescan.
 
 ## Restore, Delete, And Allowlist
 
