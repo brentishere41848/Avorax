@@ -13915,3 +13915,44 @@ pending.
   all six adversarial mutations reject. Final audit passes 26/26 paths, 8/8
   locks, zero sidecars/processes, and the exact 16,072-file vault. Checkpoint
   2262 is closed; the complete antivirus-hardening goal remains active.
+
+## Checkpoint 2263 - Quarantine Restore No-Replace (Scripted)
+
+- Audited the restore activation boundary after checkpoint 2262 closure.
+  General Unix rename could replace a destination created between the final
+  absence check and activation.
+- Scripted a shared atomic no-replace primitive: zero-flag `MoveFileExW` on
+  Windows, `renameat2(RENAME_NOREPLACE)` on Linux/Android, and
+  `renamex_np(RENAME_EXCL)` on Apple platforms. Unsupported targets fail
+  visibly with no replacement-capable fallback.
+- Scripted Local Core wiring, harmless direct collision fixtures, safe restore
+  smoke assertions, a named definitive-verifier step, exact `291`-step report
+  validation, adversarial scope requirements, source contracts, and docs.
+- No checkpoint-2263 test ran during the scripting phase. Execution evidence is
+  pending. No live malware, fixture execution, Defender change, protected-vault
+  mutation, install, service/driver start, release, or publication is allowed.
+
+### Checkpoint 2263 Local Evidence
+
+- After the scripted batch was frozen, formatting, dual-host parser checks,
+  Source `693/693`, Platform `2/2`, Local Core `1/1`, the safe restore collision
+  smoke, strict changed-crate Clippy, both locked Rust workspace suites, the
+  all-feature release build, Flutter analyze/`852/852`, and protocols `14/14`
+  plus `6/6` passed.
+- The first format check reported four formatting-only diffs; `cargo fmt --all`
+  resolved them. The first Source run found one obsolete general-rename literal,
+  which was corrected. A parser wrapper had a shell quoting error before script
+  parsing; the corrected invocation passed. These were harness/source-contract
+  preparation failures, not product runtime successes.
+- The definitive verifier passed exact `291/291`, zero failed/skipped, in
+  `666.2s`. Its 216,409-byte report has SHA-256
+  `92360dc643cb81f8e4c4eb1bdcd181a1c705870524d29213bf842a44f5e61f3b`.
+  Independent PS5/PS7 validation passed. A corrected untracked dual-host audit
+  accepted the authentic report twice and rejected all six adversarial
+  mutations; summary SHA-256 is
+  `ee70503c16b53aedccd5da6777fce7569f8bd6d6f89bf4617d7e452e40104db7`.
+- No product process or temporary smoke root remains. The production vault is
+  unchanged at 16,072 files, zero directories, 4,522,733 bytes, 5,357 each
+  payload/metadata/authenticator, one metadata key, and zero pending. Hosted,
+  merge, guarded-sync, and destination evidence remains pending; the complete
+  antivirus-hardening goal remains active.

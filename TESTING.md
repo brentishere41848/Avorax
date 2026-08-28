@@ -1080,3 +1080,29 @@ paths, 8/8 locks, zero sidecars/processes, and the exact vault.
 The protected production vault is never a test root. No live malware, fixture
 execution, Defender weakening, installation, service/driver start, release, or
 publication is permitted. Checkpoint 2262 is closed; the full goal remains open.
+
+## Checkpoint 2263 Scripted Verification
+
+No checkpoint-2263 test ran during the scripting phase. After the batch is
+frozen, run formatting and parser checks, focused platform and Local Core
+`quarantine_restore_no_replace` regressions, the safe quarantine/restore smoke,
+source contracts, strict lint, locked workspaces, client/protocol regression,
+release builds, and the definitive verifier. Full report validation now
+requires exact `291` steps including `quarantine restore atomic no-replace
+regressions`, plus the verified no-replace scope and its ancestor-race limit.
+Only harmless temporary ASCII fixtures are permitted; the production vault is
+never a test root.
+
+After that freeze, Source `693/693`, focused Platform `2/2`, focused Local Core
+`1/1`, safe restore collision smoke, strict changed-crate Clippy, both locked
+Rust workspace suites, the all-feature release build, Flutter analyze/`852/852`,
+and protocol `14/14` plus `6/6` passed. The definitive verifier passed exact
+`291/291`, zero failed/skipped, in `666.2s`; its 216,409-byte report SHA-256 is
+`92360dc643cb81f8e4c4eb1bdcd181a1c705870524d29213bf842a44f5e61f3b`.
+PS5/PS7 full-suite validation passed, the authentic report was accepted twice,
+and all six adversarial missing-step/scope/limit mutations rejected. The first
+format/source/parser-wrapper findings and the first adversarial stderr-capture
+failure are retained as tooling preparation evidence; corrected checks reran
+from the beginning. No product process or smoke root remains and the protected
+vault is exact. Hosted, merge, guarded-sync, and destination execution remains
+pending.

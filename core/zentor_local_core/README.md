@@ -65,3 +65,14 @@ blocking.
 ```powershell
 cargo test
 ```
+
+## Checkpoint 2263 Restore Activation
+
+Restore still verifies authenticated metadata, payload SHA-256, destination
+absence, and path ancestors before staging. Final activation now uses the
+shared atomic no-replace platform boundary: Windows `MoveFileExW` without
+replace flags, Linux/Android `RENAME_NOREPLACE`, and Apple `RENAME_EXCL`.
+A competing destination is preserved and failure remains visible; unsupported
+platforms do not fall back to replacement-capable rename. Checkpoint 2263 does
+not remove the documented privileged path-ancestor race or add kernel/driver
+enforcement.

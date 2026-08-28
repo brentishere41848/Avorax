@@ -910,7 +910,8 @@ impl QuarantineStore {
                 })?;
             return Err(error);
         }
-        if let Err(error) = fs::rename(&temp_destination, original_path) {
+        if let Err(error) = activate_quarantine_restore_no_replace(&temp_destination, original_path)
+        {
             cleanup_quarantine_partial_file(&temp_destination, "partial quarantine restore")
                 .with_context(|| {
                     format!(
@@ -1816,6 +1817,10 @@ fn ensure_quarantine_file_parent_directory(path: &Path, label: &str) -> Result<(
             parent.display()
         ))
     }
+}
+
+fn activate_quarantine_restore_no_replace(staged: &Path, destination: &Path) -> Result<()> {
+    avorax_platform_security::rename_file_no_replace(staged, destination, "quarantine restore")
 }
 
 fn optional_quarantine_path_present(path: &Path, label: &str) -> Result<bool> {
@@ -3651,6 +3656,28 @@ mod tests {
         assert_eq!(fs::read(&file).unwrap(), b"bad");
     }
 
+    #[cfg(any(
+        windows,
+        target_os = "linux",
+        target_os = "android",
+        all(unix, target_vendor = "apple")
+    ))]
+    #[test]
+    fn quarantine_restore_no_replace_activation_preserves_competing_file() {
+        let dir = tempdir().unwrap();
+        let staged = dir.path().join("avorax-restore-fixture.tmp");
+        let destination = dir.path().join("original.bin");
+        fs::write(&staged, b"harmless quarantined bytes").unwrap();
+        fs::write(&destination, b"harmless competing bytes").unwrap();
+
+        let error = activate_quarantine_restore_no_replace(&staged, &destination).unwrap_err();
+        let detail = format!("{error:#}");
+
+        assert!(detail.contains("without replacing"), "{detail}");
+        assert_eq!(fs::read(&staged).unwrap(), b"harmless quarantined bytes");
+        assert_eq!(fs::read(&destination).unwrap(), b"harmless competing bytes");
+    }
+
     #[test]
     fn restore_records_status_before_payload_cleanup() {
         let source = include_str!("quarantine_store.rs");
@@ -3772,9 +3799,10 @@ mod tests {
                 .find("if let Err(error) = reject_link_ancestors(parent, \"quarantine restore parent\")")
                 .unwrap()
                 < staged_source
-                    .find("if let Err(error) = fs::rename(&temp_destination, original_path)")
+                    .find("if let Err(error) = activate_quarantine_restore_no_replace(")
                     .unwrap()
         );
+        assert!(!staged_source.contains("fs::rename(&temp_destination, original_path)"));
     }
 
     #[test]

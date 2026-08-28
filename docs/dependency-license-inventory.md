@@ -2340,3 +2340,18 @@ package was extracted, installed, executed, released, or published. Final
 signed-binary legal/notice provenance, production signing/notarization,
 enterprise deployment approval, and release approval remain separate; this
 evidence does not authorize publication.
+
+## Checkpoint 2263 Dependency Delta
+
+Checkpoint 2263 adds no dependency, package source, binary fixture, license
+class, network fetch, or lockfile change. Atomic restore no-replace support uses
+the already pinned `windows-sys` and `libc` dependencies of
+`avorax_platform_security`; Windows, Linux/Android, and Apple calls are selected
+only by target configuration. Unsupported targets return a visible error.
+
+Both locked workspace tests, all-feature locked release build, the local
+dependency gate, Source `693/693`, and definitive `291/291` passed after the
+scripted batch froze. No tracked lockfile changed. Hosted package/SBOM, merge,
+and destination evidence remains pending. No package is authorized for
+extraction, installation, execution, release, or publication. The complete
+antivirus-hardening goal remains active.

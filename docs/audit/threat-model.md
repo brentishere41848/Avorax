@@ -4045,3 +4045,24 @@ removed inactive generated Native harness remains documented as a failed first
 destination attempt; Defender was not weakened and the complete verifier
 restarted from step one. Checkpoint 2262 is closed; the complete antivirus-
 hardening goal remains active.
+
+## Checkpoint 2263 - Restore Destination Race
+
+**Threat.** A file can appear at the original restore name after absence
+preflight. Replacement-capable Unix rename could overwrite that competing file.
+
+**Scripted control.** Final activation uses atomic no-replace operations on the
+supported Windows, Linux/Android, and Apple targets. Unsupported platforms fail
+closed. Direct harmless fixtures require both competing destination bytes and
+staged restore bytes to survive rejection. The safe restore smoke additionally
+requires unchanged authenticated quarantined state and payload.
+
+**Residual risk.** Checkpoint 2263 narrows the final destination-name race; it
+does not hold every ancestor through a handle-relative transaction. Privileged
+ancestor replacement, administrators, SYSTEM/root, hostile filesystems, and
+kernel compromise remain outside the user-mode guarantee. No checkpoint-2263
+test ran during scripting. After the batch freeze, direct fixtures, safe smoke,
+locked workspaces, exact Source `693/693`, and definitive `291/291` passed;
+PS5/PS7 accepted the report and all six adversarial mutations rejected. The
+production vault remained exact. Hosted, merge, and destination state remains
+pending and the complete antivirus-hardening goal remains active.

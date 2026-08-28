@@ -3891,3 +3891,22 @@ start, release, or publication is part of checkpoint 2262. The complete
 antivirus-hardening goal remains active. Checkpoint 2262 is closed; the
 cross-identity, immutable-lease, driver, production, pre-execution, and Defender-
 replacement limits above remain blockers or technical limits.
+
+## Checkpoint 2263 Remaining Limits
+
+Checkpoint 2263 scripts atomic quarantine restore no-replace activation for
+Windows, Linux/Android, and Apple targets. Unsupported platforms are disabled
+for this activation and fail visibly. No checkpoint-2263 test ran during
+scripting. Local runtime now passes direct Platform `2/2`, Local Core `1/1`,
+safe smoke, both locked workspaces, Source `693/693`, Flutter `852/852`, exact
+definitive `291/291`, dual-host report validation, and all six adversarial
+mutations. Hosted, merge, and destination evidence remains pending.
+
+The final destination component can no longer be intentionally replaced by the
+supported activation primitive, but existing ancestor checks remain
+point-in-time. A fully handle-relative transaction across every path ancestor,
+administrator/SYSTEM/root resistance, hostile-filesystem guarantees, installed
+cross-identity service authorization, signed-driver mediation, and
+pre-execution blocking remain blockers or technical limits. No live malware,
+Defender weakening, vault mutation, install, service/driver start, release, or
+publication is authorized.

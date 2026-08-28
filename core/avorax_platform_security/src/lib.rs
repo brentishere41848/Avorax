@@ -30,6 +30,117 @@ pub fn ensure_path_matches_open_file(file: &fs::File, path: &Path, label: &str) 
     Ok(())
 }
 
+/// Atomically moves a staged file into an absent destination without replacing
+/// a competing filesystem object that appears after caller preflight.
+pub fn rename_file_no_replace(source: &Path, destination: &Path, label: &str) -> Result<()> {
+    rename_file_no_replace_impl(source, destination, label)
+}
+
+#[cfg(windows)]
+fn rename_file_no_replace_impl(source: &Path, destination: &Path, label: &str) -> Result<()> {
+    use std::os::windows::ffi::OsStrExt;
+    use windows_sys::Win32::Storage::FileSystem::MoveFileExW;
+
+    fn bounded_wide_path(path: &Path, role: &str, label: &str) -> Result<Vec<u16>> {
+        let mut wide: Vec<u16> = path
+            .as_os_str()
+            .encode_wide()
+            .take(MAX_WINDOWS_SECURITY_PATH_UNITS.saturating_add(1))
+            .collect();
+        if wide.is_empty() {
+            return Err(anyhow!("{label} {role} path is empty"));
+        }
+        if wide.len() > MAX_WINDOWS_SECURITY_PATH_UNITS {
+            return Err(anyhow!("{label} {role} path is too long"));
+        }
+        if wide.contains(&0) {
+            return Err(anyhow!("{label} {role} path contains NUL"));
+        }
+        wide.push(0);
+        Ok(wide)
+    }
+
+    let source_wide = bounded_wide_path(source, "source", label)?;
+    let destination_wide = bounded_wide_path(destination, "destination", label)?;
+    if unsafe { MoveFileExW(source_wide.as_ptr(), destination_wide.as_ptr(), 0) } == 0 {
+        return Err(std::io::Error::last_os_error()).with_context(|| {
+            format!(
+                "failed to atomically activate {label} {} without replacing {}",
+                source.display(),
+                destination.display()
+            )
+        });
+    }
+    Ok(())
+}
+
+#[cfg(any(target_os = "linux", target_os = "android"))]
+fn rename_file_no_replace_impl(source: &Path, destination: &Path, label: &str) -> Result<()> {
+    use std::ffi::CString;
+    use std::os::unix::ffi::OsStrExt;
+
+    let source_c = CString::new(source.as_os_str().as_bytes())
+        .map_err(|_| anyhow!("{label} source path contains NUL"))?;
+    let destination_c = CString::new(destination.as_os_str().as_bytes())
+        .map_err(|_| anyhow!("{label} destination path contains NUL"))?;
+    if unsafe {
+        libc::renameat2(
+            libc::AT_FDCWD,
+            source_c.as_ptr(),
+            libc::AT_FDCWD,
+            destination_c.as_ptr(),
+            libc::RENAME_NOREPLACE,
+        )
+    } != 0
+    {
+        return Err(std::io::Error::last_os_error()).with_context(|| {
+            format!(
+                "failed to atomically activate {label} {} without replacing {}",
+                source.display(),
+                destination.display()
+            )
+        });
+    }
+    Ok(())
+}
+
+#[cfg(all(unix, target_vendor = "apple"))]
+fn rename_file_no_replace_impl(source: &Path, destination: &Path, label: &str) -> Result<()> {
+    use std::ffi::CString;
+    use std::os::unix::ffi::OsStrExt;
+
+    let source_c = CString::new(source.as_os_str().as_bytes())
+        .map_err(|_| anyhow!("{label} source path contains NUL"))?;
+    let destination_c = CString::new(destination.as_os_str().as_bytes())
+        .map_err(|_| anyhow!("{label} destination path contains NUL"))?;
+    if unsafe { libc::renamex_np(source_c.as_ptr(), destination_c.as_ptr(), libc::RENAME_EXCL) }
+        != 0
+    {
+        return Err(std::io::Error::last_os_error()).with_context(|| {
+            format!(
+                "failed to atomically activate {label} {} without replacing {}",
+                source.display(),
+                destination.display()
+            )
+        });
+    }
+    Ok(())
+}
+
+#[cfg(not(any(
+    windows,
+    target_os = "linux",
+    target_os = "android",
+    all(unix, target_vendor = "apple")
+)))]
+fn rename_file_no_replace_impl(source: &Path, destination: &Path, label: &str) -> Result<()> {
+    Err(anyhow!(
+        "atomic no-replace activation is unsupported for {label} {} to {} on this platform",
+        source.display(),
+        destination.display()
+    ))
+}
+
 #[cfg(unix)]
 fn open_file_identity(file: &fs::File, path: &Path, label: &str) -> Result<(u64, u64)> {
     use std::os::unix::fs::MetadataExt;
@@ -914,6 +1025,48 @@ fn combine_result_and_cleanup<T>(result: Result<T>, cleanup: Result<()>, label: 
 mod tests {
     use super::*;
     use std::fs;
+
+    #[cfg(any(
+        windows,
+        target_os = "linux",
+        target_os = "android",
+        all(unix, target_vendor = "apple")
+    ))]
+    #[test]
+    fn quarantine_restore_no_replace_activation_moves_into_absent_destination() {
+        let root = tempfile::tempdir().unwrap();
+        let staged = root.path().join("staged.tmp");
+        let destination = root.path().join("restored.bin");
+        fs::write(&staged, b"harmless restored bytes").unwrap();
+
+        rename_file_no_replace(&staged, &destination, "quarantine restore fixture").unwrap();
+
+        assert!(!staged.exists());
+        assert_eq!(fs::read(&destination).unwrap(), b"harmless restored bytes");
+    }
+
+    #[cfg(any(
+        windows,
+        target_os = "linux",
+        target_os = "android",
+        all(unix, target_vendor = "apple")
+    ))]
+    #[test]
+    fn quarantine_restore_no_replace_activation_preserves_competing_destination() {
+        let root = tempfile::tempdir().unwrap();
+        let staged = root.path().join("staged.tmp");
+        let destination = root.path().join("restored.bin");
+        fs::write(&staged, b"harmless restored bytes").unwrap();
+        fs::write(&destination, b"harmless competing bytes").unwrap();
+
+        let error = rename_file_no_replace(&staged, &destination, "quarantine restore fixture")
+            .unwrap_err();
+        let detail = format!("{error:#}");
+
+        assert!(detail.contains("without replacing"), "{detail}");
+        assert_eq!(fs::read(&staged).unwrap(), b"harmless restored bytes");
+        assert_eq!(fs::read(&destination).unwrap(), b"harmless competing bytes");
+    }
 
     #[test]
     fn scan_quarantine_binding_accepts_unchanged_open_file_identity() {
