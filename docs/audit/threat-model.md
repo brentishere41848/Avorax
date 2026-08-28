@@ -4038,6 +4038,10 @@ same-user stores, and privileged writers, administrators, SYSTEM, or kernel
 compromise can race or bypass this boundary. Installed cross-identity service
 authentication, signed-driver mediation, pre-execution blocking, production
 accuracy, and Defender replacement remain blocked, partial, limited, or
-unclaimed. Hosted integration, guarded synchronization, and destination proof
-remain pending. Checkpoint 2262 and the complete antivirus-hardening goal remain
-active.
+unclaimed. Exact evidence/head and merged-main workflows, normal PR `#133`,
+bounded package review, guarded 26-path zero-delete synchronization, destination
+exact `290/290`, all eight locks, and the unchanged vault pass. A Defender-
+removed inactive generated Native harness remains documented as a failed first
+destination attempt; Defender was not weakened and the complete verifier
+restarted from step one. Checkpoint 2262 is closed; the complete antivirus-
+hardening goal remains active.

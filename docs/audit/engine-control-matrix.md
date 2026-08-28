@@ -5759,13 +5759,13 @@ antivirus-hardening goal remains active.
 
 | Control / engine responsibility | Status | Scripted evidence and boundary |
 | --- | --- | --- |
-| Scan-result allowlist request | **Verified locally** | Flutter sends the exact row path/SHA-256 and `confirmed=true`; Local Core independently requires confirmation. IPC `97/97` and full client `852/852` pass. |
-| Allowlist hash admission | **Verified locally** | Bounded expected SHA-256 is validated before store/file access, freshly hashed bytes must match before atomic store persistence, and later suppression still requires exact path plus hash. Focused Local Core passes `8/8`. |
-| Allowlist success receipt | **Verified locally** | Flutter requires active file type, exact normalized local path, and exact normalized SHA-256 before success state/history. |
-| False-positive / malicious feedback request | **Verified locally** | Exact row SHA-256, requested label, previous verdict, and confirmation cross IPC; unsupported labels fail visibly. |
-| Feedback feature/hash admission | **Verified locally** | Local Core hashes before and after bounded feature extraction and appends nothing for stale or observed changing bytes. |
-| Feedback success receipt | **Verified locally** | Compact persisted label ID/hash/label/previous-verdict/store evidence matches the request and isolated persisted state. |
-| Release-binary benign adversarial proof | **Verified locally on PS5/PS7** | Isolated ASCII fixtures cover changed bytes, missing confirmation, matching persistence, store/receipt equality, unchanged sources, zero quarantine, no execution/EICAR/Defender change. |
+| Scan-result allowlist request | **Verified** | Flutter sends the exact row path/SHA-256 and `confirmed=true`; Local Core independently requires confirmation. IPC `97/97` and full client `852/852` pass locally and in the synchronized destination. |
+| Allowlist hash admission | **Verified** | Bounded expected SHA-256 is validated before store/file access, freshly hashed bytes must match before atomic store persistence, and later suppression still requires exact path plus hash. Focused Local Core passes `8/8` locally and at destination. |
+| Allowlist success receipt | **Verified** | Flutter requires active file type, exact normalized local path, and exact normalized SHA-256 before success state/history. Local, hosted, merged, and destination evidence passes. |
+| False-positive / malicious feedback request | **Verified** | Exact row SHA-256, requested label, previous verdict, and confirmation cross IPC; unsupported labels fail visibly. Local and destination proof passes. |
+| Feedback feature/hash admission | **Verified** | Local Core hashes before and after bounded feature extraction and appends nothing for stale or observed changing bytes. Local and destination proof passes. |
+| Feedback success receipt | **Verified** | Compact persisted label ID/hash/label/previous-verdict/store evidence matches the request and isolated persisted state. Local and destination adversarial proof passes. |
+| Release-binary benign adversarial proof | **Verified on PS5/PS7** | Isolated ASCII fixtures cover changed bytes, missing confirmation, matching persistence, store/receipt equality, unchanged sources, zero quarantine, no execution/EICAR/Defender change in both source and destination. |
 | Signature and exact-hash matching engines | **Unchanged** | No signature pack, known-bad feed, or threshold change; this checkpoint binds user trust state only. |
 | Local rule/YARA engine | **Unchanged** | Rule parsing, bounded evaluation, and fail-visible responsibilities are unchanged. |
 | Static file, PE, and archive engines | **Unchanged** | Detection responsibilities and archive limits are unchanged; feedback reuses existing bounded feature extraction. |
@@ -5778,8 +5778,10 @@ Checkpoint 2262 advances the definitive verifier to exact 290 steps and adds a
 dedicated release-binary trust-mutation smoke plus strict report scope. Focused,
 full workspace/client/protocol, release, Source `692/692`, definitive `290/290`,
 dual-host authentic validation, and all six adversarial report rejections pass
-locally. Hosted, integration, guarded-sync, and destination evidence remain
-pending. The protected 16,072-file vault remains read-only. No live malware,
+locally and at destination. Exact evidence-head and merged-main CI/packages,
+normal PR `#133`, bounded package review, guarded 26-path zero-delete sync, all
+eight locks, and the exact vault pass. The first seven rows are **Verified**.
+The protected 16,072-file vault remains read-only. No live malware,
 fixture execution, Defender weakening, installation, service/driver start,
 release, or publication is used. The complete antivirus-hardening goal remains
 active.
@@ -5788,5 +5790,7 @@ Exact implementation `0460c4f5a4db237ee261d642e3f94ef1ff285719`
 passes CI `33206972057` and package push/PR `33206952538`/`33206972034`.
 Both consolidated package artifacts pass bounded non-extracting exact
 8-root/6-package/7-checksum/CycloneDX-1.6/569-component review with publication
-skipped. Evidence-head, merge, merged-main, guarded-sync, and destination matrix
-proof remain pending.
+skipped. Evidence `61c3ed2`, merge `25115ffe`, exact merged-main workflows,
+guarded sync, destination `290/290`, and final 26/26-path plus 8/8-lock audit
+close checkpoint 2262. Installed cross-identity service/driver, immutable lease,
+production accuracy, pre-execution, and Defender-replacement claims remain open.

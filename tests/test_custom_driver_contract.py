@@ -32594,6 +32594,23 @@ def test_checkpoint_2262_manual_trust_mutation_hash_binding_contract():
     assert "zero pending" in normalized_checkpoint
     assert "no live malware" in normalized_checkpoint.lower()
     assert "complete antivirus-hardening goal remains active" in normalized_checkpoint.lower()
+    for closure_marker in [
+        "Status: **Closed; implementation integrated and synchronized destination verified**",
+        "61c3ed2d16b2422cf18924c63bb33272a4f16036",
+        "25115ffef2be5595b9a8744245dbecacef4e227f",
+        "33208443938",
+        "33208443931",
+        "33209411475",
+        "33209411481",
+        "9700940590",
+        "9701360508",
+        "24 modified, two added, zero deleted",
+        "1713a3c856c5d8d860b04021c5011485042119b3649e184ec62a0828b08b0032",
+        "dd2471f176fca7c3138198cb52e034d539e5a4808ffb2ae5b9d2e759301c8cea",
+        "b4f08d6d022cf0e880b3f27baded377f27b2f7ed8f766dffaff39eec63f33fd6",
+        "Checkpoint 2262 is closed",
+    ]:
+        assert closure_marker in normalized_checkpoint
     normalized_dependencies = re.sub(r"\s+", " ", documents[-1]).lower()
     assert "checkpoint 2262 dependency delta" in normalized_dependencies
     assert "adds no dependency" in normalized_dependencies

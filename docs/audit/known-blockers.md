@@ -3867,9 +3867,13 @@ persisted evidence; Flutter requires exact request/receipt equality. Harmless
 Rust/Flutter adversarial tests, an isolated release-binary smoke, exact-290
 verifier/validator contracts, and Source/audit contracts pass locally. The
 definitive verifier passes `290/290` in `621.9s`; both validator hosts accept the
-authentic report and reject all six expected mutations. Hosted integration,
-installed package/service evidence, guarded sync, and destination proof remain
-pending.
+authentic report and reject all six expected mutations. Evidence/head and
+merged-main CI/packages, PR `#133`, bounded package review, guarded 26-path
+zero-delete synchronization, all eight locks, destination exact `290/290`, and
+the unchanged protected vault pass. One earlier destination verifier remains a
+visible non-pass because Defender removed an inactive generated Native harness
+before execution with error 225 and `DidThreatExecute=False`; Defender was not
+weakened, a fresh exact target passed `4/4`, and the full verifier restarted.
 
 This does not create an authenticated cross-identity service boundary or a
 kernel-enforced immutable file lease. A privileged writer can still race a
@@ -3884,4 +3888,6 @@ carried 16,072 files, zero directories, 4,522,733 bytes, 5,357 each payload/
 metadata/authenticator, one metadata key, and zero pending. No live malware,
 fixture execution, Defender weakening, machine-wide install, service/driver
 start, release, or publication is part of checkpoint 2262. The complete
-antivirus-hardening goal remains active.
+antivirus-hardening goal remains active. Checkpoint 2262 is closed; the
+cross-identity, immutable-lease, driver, production, pre-execution, and Defender-
+replacement limits above remain blockers or technical limits.

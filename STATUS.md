@@ -7889,5 +7889,26 @@ publication skipped. Consolidated artifacts `9700500463` and `9700448185`
 match GitHub byte size/SHA-256 and pass bounded non-extracting
 8-root/6-package/7-checksum/CycloneDX-1.6/569-component review. Evidence-head,
 normal merge, merged-main checks, guarded synchronization, and destination proof
-remain pending; no package was extracted, installed, executed, released, or
-published.
+were completed as recorded below; no package was extracted, installed, executed,
+released, or published.
+
+Checkpoint 2262 is now **closed through hosted integration and synchronized
+destination verification**. Evidence `61c3ed2d16b2422cf18924c63bb33272a4f16036`
+passes CI/packages `33208443938`/`33208443931`; PR `#133` merges normally as
+`25115ffef2be5595b9a8744245dbecacef4e227f`; merged-main CI/packages
+`33209411475`/`33209411481` pass. Evidence and main artifacts
+`9700940590`/`9701360508` pass bounded non-extracting 8/6/7/CycloneDX-1.6/569
+review with publication skipped. Guarded sync applies exact 26/26 paths: 24
+modified, two added, zero deleted. Destination Source `692/692`, focused `8/8`,
+IPC `97/97`, strict Clippy, both locked Rust workspaces, all-feature release,
+Flutter analyze/`852/852`, and protocols pass. A first verifier attempt is
+retained as failed when Defender removed a generated inactive Native harness
+before execution (`DidThreatExecute=False`, error 225); Defender was not
+weakened. A fresh target passed `4/4`, then a complete from-start rerun passed
+exact `290/290` in `728.3s`. PS5/PS7 accept report SHA-256
+`dd2471f176fca7c3138198cb52e034d539e5a4808ffb2ae5b9d2e759301c8cea`
+and all six adversarial mutations reject. Final audit passes 26/26 paths, 8/8
+locks, zero residue/processes, and the exact 16,072-file vault. Installed
+cross-identity service proof, immutable file leases, signed driver/kernel
+mediation, production accuracy/signing, pre-execution blocking, Defender
+replacement, and the complete antivirus-hardening goal remain open.
