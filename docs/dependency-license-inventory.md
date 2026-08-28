@@ -2162,3 +2162,10 @@ remain byte-unchanged. Checkpoint 2257 still adds no dependency, feature,
 package source, license class, or lockfile change. Definitive `286/286` passes
 in `643.3s`; the three lock hashes remain exact. Hosted package/SBOM evidence
 and final-binary legal evidence remain pending.
+
+Checkpoint 2257 hosted implementation-head package workflows pass for Windows,
+Linux, macOS arm64, and macOS x64 with publication skipped. Both consolidated
+artifacts pass non-extracting checksum and CycloneDX 1.6 review with 569 unique
+lockfile component references. This is hosted source-lock inventory evidence,
+not final-binary license/notice provenance, production signing/notarization, or
+release approval; those remain pending.

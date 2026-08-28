@@ -13273,3 +13273,19 @@ pending.
 - Checkpoint 2257 is **verified locally through definitive regression**. Hosted
   exact-head evidence, normal integration, guarded synchronization, and
   destination verification remain open; the complete goal stays active.
+
+### Checkpoint 2257 Hosted Implementation-Head Evidence
+
+- Exact implementation `c3e24b3c976febc732b04338f6bd8142a88411a4`
+  passes PR `#123` CI `33136854819`, PR packages `33136854871`, and push
+  packages `33136852044`. Both publication jobs are intentionally skipped.
+- Push artifact `9672583268` is 132,204,612 bytes with SHA-256
+  `24f342d72764884ebdf260cd7830e77c6d6f13f209d864220603cd0379d2ac00`;
+  PR artifact `9672658548` is 132,126,515 bytes with SHA-256
+  `290c18f8812003886c977195f96670e66ec8ae6af96aaed2b51c578cb6918e51`.
+- Both downloads match GitHub metadata and pass bounded non-extracting exact
+  8-root/6-package/7-checksum/CycloneDX-1.6/569-unique-ref review with zero
+  unsafe, duplicate, encrypted, directory, or link entries. Nothing was
+  extracted, installed, or executed; owned review residue is zero.
+- Evidence-head hosted reruns, normal merge, merged-main evidence, guarded sync,
+  and destination verification remain open. The complete goal stays active.

@@ -3693,3 +3693,11 @@ report validation pass. Hosted exact-head evidence, integration, guarded
 synchronization, and destination verification remain checkpoint blockers.
 Resource, service, driver, production, pre-execution, and Defender-replacement
 blockers remain.
+
+Checkpoint 2257 exact implementation-head CI and both package workflows now
+pass, including bounded non-extracting artifact/checksum/SBOM review and skipped
+publication. The hosted implementation-head blocker is cleared. Evidence-head
+reruns, normal merge, merged-main evidence, guarded destination synchronization,
+and destination verification remain checkpoint blockers. Exact total resource,
+installed-service, driver, production, pre-execution, and Defender-replacement
+blockers remain unchanged.

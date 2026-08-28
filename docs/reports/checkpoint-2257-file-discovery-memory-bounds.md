@@ -101,6 +101,35 @@ and `4de19695f9207273746341ca2221541b5b86d9f72af83727afca78541e177694`.
 The final read-only state check again found zero product processes and the exact
 protected-vault invariant. `.verification` remained untracked and untouched.
 
+## Hosted Implementation-Head Evidence
+
+Exact implementation commit `c3e24b3c976febc732b04338f6bd8142a88411a4`
+passes PR `#123` Avorax CI run `33136854819`, PR Desktop Packages run
+`33136854871`, and push Desktop Packages run `33136852044`. All five CI jobs,
+both package-contract jobs, all eight platform build jobs, and both
+consolidation jobs pass. Both prerelease-publication jobs are intentionally
+skipped.
+
+The untouched push consolidated artifact `9672583268` is 132,204,612 bytes
+with SHA-256
+`24f342d72764884ebdf260cd7830e77c6d6f13f209d864220603cd0379d2ac00`.
+The untouched PR artifact `9672658548` is 132,126,515 bytes with SHA-256
+`290c18f8812003886c977195f96670e66ec8ae6af96aaed2b51c578cb6918e51`.
+Both local downloads match GitHub artifact metadata exactly.
+
+Bounded, non-extracting review of each artifact passes exactly eight safe root
+entries, six packages, seven matching checksum targets, CycloneDX 1.6, and 569
+non-empty unique component references, with zero duplicate, unsafe, encrypted,
+directory, or link entries. No package was extracted, installed, or executed.
+The exact owned review directory and both downloaded ZIPs were removed non-
+recursively, leaving zero residue.
+
+Hosted implementation-head evidence is complete. Exact evidence-head hosted
+runs, normal PR merge, merged-main evidence, guarded destination
+synchronization, and destination verification remain open. `.verification` and
+the protected vault remain untouched; the complete antivirus-hardening goal
+remains active.
+
 ## Focused Local Evidence
 
 After the scripting boundary, PS5 and PS7 each parse verifier and validator

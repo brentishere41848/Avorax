@@ -5610,3 +5610,10 @@ implementation rows are **Verified locally through broad regression**.
 Definitive exact `286/286` and dual-host adversarial validation pass. Hosted,
 integration, guarded-sync, and destination evidence remain open; the exact-
 total-resource row remains limited.
+
+All four checkpoint implementation rows are also verified at exact hosted
+implementation commit `c3e24b3` through CI, Windows/Linux/macOS package builds,
+checksums, and bounded non-extracting SBOM review. Publication is skipped.
+Evidence-head, merged-main, guarded-sync, and destination evidence remain open;
+the exact-total-resource row and all service/driver/pre-execution limitations
+remain unchanged.

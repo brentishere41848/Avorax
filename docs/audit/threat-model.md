@@ -3792,3 +3792,12 @@ protected vault remains exact. PS5 and PS7 also reject missing-step and missing-
 scope report mutations. This verifies the local threat controls through
 definitive regression, not hosted/integrated code, exact total RAM, I/O/time/
 kernel bounds, installed ownership, or pre-execution enforcement.
+
+Hosted implementation-head CI and cross-platform packages pass on exact commit
+`c3e24b3`; both consolidated artifacts pass bounded non-extracting path,
+duplicate, encryption, link, checksum, and SBOM validation. Publication is
+skipped and no package is extracted, installed, or executed. This reduces
+regression and supply-chain evidence risk for the implementation head; it does
+not establish installed-service ownership, production signing, release
+approval, exact runtime resource bounds, kernel mediation, pre-execution
+blocking, or Defender replacement.
