@@ -15,10 +15,10 @@ use serde_json::json;
 use sha2::{Digest, Sha256};
 use zentor_native_engine::{
     is_cooperative_scan_cancellation, is_scan_cancellation_check_failure,
-    Confidence as AneConfidence, EngineConfig, EngineStatus as AneEngineStatus,
-    FileScanVerdict as AneFileScanVerdict, ScanActionMode as AneScanActionMode,
-    SelfTestReport as AneSelfTestReport, ThreatCategory as AneThreatCategory,
-    Verdict as AneVerdict, ZentorNativeEngine,
+    scan::content_reader::MAX_SCAN_CONTENT_BYTES, Confidence as AneConfidence, EngineConfig,
+    EngineStatus as AneEngineStatus, FileScanVerdict as AneFileScanVerdict,
+    ScanActionMode as AneScanActionMode, SelfTestReport as AneSelfTestReport,
+    ThreatCategory as AneThreatCategory, Verdict as AneVerdict, ZentorNativeEngine,
 };
 
 #[cfg_attr(not(test), allow(dead_code, unused_imports))]
@@ -60,7 +60,7 @@ use watcher::{
 const QUICK_SCAN_MAX_SECONDS: u64 = 30 * 60;
 const FULL_SCAN_MAX_SECONDS: u64 = 3 * 60 * 60;
 const CUSTOM_SCAN_MAX_SECONDS: u64 = 3 * 60 * 60;
-const MAX_LOCAL_CORE_HASH_BYTES: u64 = 1024 * 1024 * 1024;
+const MAX_LOCAL_CORE_HASH_BYTES: u64 = MAX_SCAN_CONTENT_BYTES;
 const MAX_SCAN_ERROR_DETAILS: usize = 20;
 const MAX_SCAN_ERROR_DETAIL_CHARS: usize = 4096;
 const SCAN_ERROR_TRUNCATION_SUFFIX: &str = "...[truncated]";
@@ -1579,21 +1579,49 @@ fn scan_paths(
 enum JobBoundNativeScan {
     Verdict(Box<AneFileScanVerdict>),
     Cancelled,
+    TimeLimitReached,
 }
 
 fn scan_native_file_for_job(
     engine: &mut ZentorNativeEngine,
     path: PathBuf,
     job_id: Uuid,
+    kind: &ScanKind,
+    started: Instant,
 ) -> anyhow::Result<JobBoundNativeScan> {
-    let mut should_cancel = || scan_cancellation_requested(job_id);
-    match engine.scan_file_with_cancellation(
-        path,
-        AneScanActionMode::DetectOnly,
-        &mut should_cancel,
-    ) {
+    scan_native_file_with_stop_probe(engine, path, || {
+        Ok(scan_stop_reason(
+            kind,
+            scan_cancellation_requested(job_id)?,
+            started.elapsed(),
+        ))
+    })
+}
+
+fn scan_native_file_with_stop_probe(
+    engine: &mut ZentorNativeEngine,
+    path: PathBuf,
+    mut stop_reason: impl FnMut() -> anyhow::Result<ScanStopReason>,
+) -> anyhow::Result<JobBoundNativeScan> {
+    let mut observed_stop = ScanStopReason::Continue;
+    let mut should_cancel = || {
+        let reason = stop_reason()?;
+        if reason != ScanStopReason::Continue {
+            observed_stop = reason;
+        }
+        Ok(reason != ScanStopReason::Continue)
+    };
+    let result =
+        engine.scan_file_with_cancellation(path, AneScanActionMode::DetectOnly, &mut should_cancel);
+    match result {
         Ok(verdict) => Ok(JobBoundNativeScan::Verdict(Box::new(verdict))),
-        Err(error) if is_cooperative_scan_cancellation(&error) => Ok(JobBoundNativeScan::Cancelled),
+        Err(error) if is_cooperative_scan_cancellation(&error) => match observed_stop {
+            ScanStopReason::Cancelled => Ok(JobBoundNativeScan::Cancelled),
+            ScanStopReason::TimeLimitReached => Ok(JobBoundNativeScan::TimeLimitReached),
+            ScanStopReason::Continue => Err(error).context(
+                "native scan stopped cooperatively without an observed Local Core stop reason",
+            ),
+        },
         Err(error) => Err(error),
     }
 }
@@ -1848,7 +1876,7 @@ fn scan_paths_for_job(
                     continue;
                 }
             };
-            match scan_native_file_for_job(engine, path.clone(), job_id) {
+            match scan_native_file_for_job(engine, path.clone(), job_id, &kind, started) {
                 Ok(JobBoundNativeScan::Cancelled) => {
                     cancelled = true;
                     cancelled_remaining_files = total_files.saturating_sub(index as u64);
@@ -1859,6 +1887,21 @@ fn scan_paths_for_job(
                             "scan cancelled by user request during bounded inspection of {}; the interrupted file and {remaining_after_current} queued file(s) were not scanned",
                             path.display(),
                             remaining_after_current = cancelled_remaining_files.saturating_sub(1),
+                        ),
+                    );
+                    break;
+                }
+                Ok(JobBoundNativeScan::TimeLimitReached) => {
+                    scan_time_limit_reached = true;
+                    time_limit_remaining_files = total_files.saturating_sub(index as u64);
+                    skipped_files = skipped_files.saturating_add(time_limit_remaining_files);
+                    let scan_label = scan_kind_label(&kind);
+                    push_scan_error(
+                        &mut scan_errors,
+                        format!(
+                            "{scan_label} scan time budget reached during bounded inspection of {}; the interrupted file and {remaining_after_current} queued file(s) were not scanned or reported clean",
+                            path.display(),
+                            remaining_after_current = time_limit_remaining_files.saturating_sub(1),
                         ),
                     );
                     break;
@@ -6139,7 +6182,7 @@ mod tests {
     fn scan_paths_does_not_count_failed_native_inspections_as_scanned() {
         let source = crate::normalized_test_source(include_str!("main.rs"));
         let scan_call = source
-            .find("match scan_native_file_for_job(engine, path.clone(), job_id)")
+            .find("match scan_native_file_for_job(engine, path.clone(), job_id, &kind, started)")
             .expect("scan call marker");
         let verdict_branch = source
             .find("Ok(JobBoundNativeScan::Verdict(verdict)) => {")
@@ -6277,6 +6320,79 @@ mod tests {
         zero_byte_progress.files_scanned = 0;
         zero_byte_progress.calculate_eta();
         assert!(zero_byte_progress.progress_percent.is_none());
+    }
+
+    #[test]
+    fn scan_inspection_resource_budget_in_target_time_limit_stops_before_verdict() {
+        const CASE: &str = "native-file-scan-in-target-time-limit";
+        if !is_isolated_environment_case(CASE) {
+            run_isolated_environment_case(
+                "tests::scan_inspection_resource_budget_in_target_time_limit_stops_before_verdict",
+                CASE,
+                |_| {},
+            );
+            return;
+        }
+        let _lock = env_lock();
+        let dir = tempdir().unwrap();
+        std::env::set_var("AVORAX_DATA_DIR", dir.path().join("data"));
+        let file = dir.path().join("benign-in-target-time-limit.bin");
+        fs::write(&file, b"ordinary benign in-target time fixture").unwrap();
+        let mut engine = native_engine().unwrap();
+        let mut checks = 0_u32;
+
+        let outcome = scan_native_file_with_stop_probe(&mut engine, file, || {
+            checks += 1;
+            Ok(if checks >= 2 {
+                ScanStopReason::TimeLimitReached
+            } else {
+                ScanStopReason::Continue
+            })
+        })
+        .unwrap();
+
+        assert!(matches!(outcome, JobBoundNativeScan::TimeLimitReached));
+        assert_eq!(checks, 2);
+        std::env::remove_var("AVORAX_DATA_DIR");
+    }
+
+    #[test]
+    fn scan_inspection_resource_budget_in_target_exit_is_incomplete() {
+        let source = crate::normalized_test_source(include_str!("main.rs"));
+        let helper_start = source
+            .find("fn scan_native_file_for_job(")
+            .expect("job-bound native scan helper");
+        let helper_end = source[helper_start..]
+            .find("fn scan_time_budget(")
+            .map(|offset| helper_start + offset)
+            .expect("scan time budget helper");
+        let helper = &source[helper_start..helper_end];
+        let branch = source
+            .find("Ok(JobBoundNativeScan::TimeLimitReached) => {")
+            .expect("in-target time-limit branch");
+        let verdict = source[branch..]
+            .find("Ok(JobBoundNativeScan::Verdict(verdict)) => {")
+            .map(|offset| branch + offset)
+            .expect("verdict branch");
+        let time_branch = &source[branch..verdict];
+
+        assert!(helper.contains("scan_native_file_with_stop_probe"));
+        assert!(
+            helper
+                .find("scan_cancellation_requested(job_id)?")
+                .expect("cancellation state read")
+                < helper
+                    .find("started.elapsed()")
+                    .expect("monotonic elapsed read")
+        );
+        assert!(time_branch
+            .contains("time_limit_remaining_files = total_files.saturating_sub(index as u64);"));
+        assert!(time_branch
+            .contains("skipped_files = skipped_files.saturating_add(time_limit_remaining_files);"));
+        assert!(time_branch.contains("the interrupted file"));
+        assert!(time_branch.contains("were not scanned or reported clean"));
+        assert!(time_branch.contains("break;"));
+        assert!(!time_branch.contains("files_scanned += 1;"));
     }
 
     #[test]
@@ -6449,7 +6565,9 @@ mod tests {
         let token = request_scan_cancellation(job_id).unwrap();
         let mut engine = native_engine().unwrap();
 
-        let outcome = scan_native_file_for_job(&mut engine, file, job_id).unwrap();
+        let outcome =
+            scan_native_file_for_job(&mut engine, file, job_id, &ScanKind::Custom, Instant::now())
+                .unwrap();
 
         assert!(matches!(outcome, JobBoundNativeScan::Cancelled));
         assert!(token.exists());
@@ -6479,8 +6597,9 @@ mod tests {
         fs::write(&token, b"not-json").unwrap();
         let mut engine = native_engine().unwrap();
 
-        let error = scan_native_file_for_job(&mut engine, file, job_id)
-            .expect_err("malformed cancellation token must fail visibly");
+        let error =
+            scan_native_file_for_job(&mut engine, file, job_id, &ScanKind::Custom, Instant::now())
+                .expect_err("malformed cancellation token must fail visibly");
 
         assert!(is_scan_cancellation_check_failure(&error));
         assert!(!is_cooperative_scan_cancellation(&error));

@@ -5672,3 +5672,27 @@ filesystem/kernel resource enforcement remains **Technically limited**;
 installed-service, signed-driver/kernel, production-calibration/signing,
 pre-execution, and Defender-replacement rows remain partial, blocked, limited,
 or unclaimed. Checkpoint 2258 is closed; the complete goal remains active.
+
+## Checkpoint 2259 - In-Target Inspection Resource Bounds
+
+| Control / engine responsibility | Status | Scripted evidence and boundary |
+| --- | --- | --- |
+| Native standard content admission and full SHA-256 read | **Verified locally** | Shared `MAX_SCAN_CONTENT_BYTES` rejects metadata or stream growth beyond 1 GiB before hash/verdict completion; analyzer sampling remains 64 MiB. Focused, overlapping, complete-crate, workspace, and exact `288/288` evidence pass. |
+| Local Core total elapsed enforcement inside Native work | **Verified locally** | Existing callbacks classify cancellation first, then mode deadline, across hash, static analysis, Authenticode completion, providers, heuristics, ML, and verdict publication. Focused `4/4`, Local `564/564`, and definitive step 288 pass. |
+| Timeout verdict and scan accounting | **Verified locally** | No partial current-file verdict; interrupted plus queued files become skipped, explicitly not clean, with incomplete progress. Dual-host report validation and all six adversarial mutations pass. |
+| Hard interruption of entered OS/trust/kernel work | **Technically limited** | Cooperative callback checkpoints cannot preempt an entered filesystem, WinTrust/security-provider, or kernel call. |
+
+Checkpoint 2259 adds no new detection engine or overlapping responsibility. It
+hardens the Native inspection resource boundary and Local Core orchestration.
+Verifier step 288, Source contract `689/689`, focused and broad local suites,
+exact `288/288`, and independent dual-host adversarial validation pass; the
+first three rows are therefore Verified locally. Hosted, integration, guarded-
+sync, and destination proof remain pending. The 1 GiB cap does not establish
+wall-time, CPU, exact RAM, kernel-work, driver, hard-realtime, or pre-execution
+enforcement.
+
+Exact implementation-head CI and both package matrices pass on `97e16e7`,
+including Windows/Linux/macOS package verification and bounded non-extracting
+review of both consolidated checksum/SBOM artifacts. Publication is skipped.
+The first three rows remain locally and hosted-build verified; evidence-head,
+normal merge, merged-main, sync, and destination proof remain pending.

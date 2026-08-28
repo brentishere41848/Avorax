@@ -2216,3 +2216,27 @@ Native, and Flutter locks remain exact after guarded `14/14` synchronization and
 definitive `287/287`. Checkpoint 2258 adds no dependency or lockfile change and
 is closed; final-binary legal/notice provenance, production signing/
 notarization, enterprise approval, and release approval remain separate.
+
+Checkpoint 2259 adds no dependency, feature, package source, license class,
+downloaded runtime, machine-wide component, or lockfile change. The shared 1 GiB
+standard-read ceiling and cancellation-first in-target elapsed classification
+reuse Rust standard-library arithmetic/time types and existing Native/Local Core
+callbacks and errors. Four harmless regressions use small text bytes and pure
+size-policy values; no 1 GiB fixture is allocated and no candidate is executed.
+Verifier step 288 and Source contract 689 were scripted before testing. Both
+locked workspaces, the locked release build, exact `288/288`, and all local
+focused/broad checks pass with root, Native, and Flutter lock SHA-256 values
+unchanged. No new package source, dependency, feature, license class, artifact
+extraction, candidate execution, installation, or publication was introduced.
+Existing final-binary license/notice provenance, production signing/
+notarization, enterprise deployment approval, and release approval remain
+unresolved and separate from this checkpoint.
+
+Checkpoint 2259 implementation-head CI and both package workflows pass on exact
+`97e16e7`, with publication skipped. Consolidated artifacts `9681909119` and
+`9681997334` each contain the expected CycloneDX 1.6 lockfile SBOM with 569
+non-empty unique component references and pass all seven checksums under bounded
+non-extracting review. This is hosted source-lock inventory evidence, not final-
+binary legal/notice provenance, production signing/notarization, enterprise
+deployment approval, or release approval. Evidence-head, merged-main, and
+destination package/SBOM evidence remain pending.
