@@ -32030,11 +32030,26 @@ def test_checkpoint_2259_in_target_scan_inspection_resource_bounds_contract():
         assert "1 GiB" in normalized or "1,073,741,824" in normalized
     normalized_checkpoint = re.sub(r"\s+", " ", checkpoint)
     assert (
-        "Status: **Hosted implementation-head verified; integration pending**"
+        "Status: **Closed through hosted integration and synchronized destination verification**"
         in normalized_checkpoint
     )
     assert "No checkpoint-2259 test ran during this scripting phase" in normalized_checkpoint
     assert "Source contract 689" in normalized_checkpoint
+    assert "fe3797bcac088f8cddca2f65dd7e26eb7536191d" in normalized_checkpoint
+    assert "33162469870" in normalized_checkpoint
+    assert "33162470034" in normalized_checkpoint
+    assert "9682604225" in normalized_checkpoint
+    assert "46b212de6dc445487c49fb850ad3f4e67ee0c5996fb5f4f977550c4fa3fca33f" in normalized_checkpoint
+    assert "5481ba6ed1322ee78d59a43c63dd0d74dc06f560" in normalized_checkpoint
+    assert "33163723172" in normalized_checkpoint
+    assert "33163723171" in normalized_checkpoint
+    assert "9683155445" in normalized_checkpoint
+    assert "c1ea2fa43f092bf6bce149db90c3100d1e590005b263bf2931bd115a184e2763" in normalized_checkpoint
+    assert "13/13" in normalized_checkpoint
+    assert "7,571,661" in normalized_checkpoint
+    assert "685.6s" in normalized_checkpoint
+    assert "202,267-byte" in normalized_checkpoint
+    assert "601d7eb11e5c6e09f917f4810f5d409f95b7ae15d2e8947c07b1eabcce482ab9" in normalized_checkpoint
     normalized_dependencies = re.sub(r"\s+", " ", documents[-1]).lower()
     assert "adds no dependency" in normalized_dependencies
     assert "lockfile change" in normalized_dependencies

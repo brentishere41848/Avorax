@@ -3777,3 +3777,12 @@ accounting. Installed cross-identity watchdog ownership, signed driver/kernel
 mediation, production calibration/signing, demonstrated pre-execution blocking,
 and Defender replacement remain separate product blockers. Checkpoint 2259 does
 not claim to clear them, and the full antivirus-hardening goal remains active.
+
+Evidence-head and merged-main CI/packages, normal PR `#127` integration,
+bounded artifact review, guarded `13/13` synchronization, destination focused
+checks, and destination exact `288/288` now clear every Checkpoint 2259 evidence
+blocker. The checkpoint is closed. Hard preemption of entered OS calls, exact
+filesystem/kernel resource accounting, installed cross-identity service
+ownership, signed driver/kernel mediation, production calibration/signing,
+demonstrated pre-execution blocking, and Defender replacement remain product
+blockers or technical limits.

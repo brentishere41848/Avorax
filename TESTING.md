@@ -906,3 +906,18 @@ bounded non-extracting exact 8-root/6-package/7-checksum/CycloneDX-1.6/569-
 unique-ref review. No artifact was extracted, installed, or executed, and owned
 review residue is zero. Evidence-head CI/packages, normal merge, merged-main
 evidence, guarded destination sync, and destination testing remain required.
+
+Checkpoint 2259 closure evidence now passes. Evidence-head CI/packages and
+merged-main CI/packages pass with publication skipped; both consolidated
+artifacts pass bounded non-extracting exact 8-root/6-package/7-checksum/
+CycloneDX-1.6/569-unique-ref review. Guarded destination sync passes `13/13`
+with 12 modifications, one addition, zero deletes, 7,571,661 activated bytes,
+and zero residue. Destination parsers, Source `689/689`, formatting, focused
+`4/4`, Local Core `564/564`, and strict changed-crate Clippy pass. The
+destination no-skip/no-Defender verifier passes exact `288/288` in `685.6s`;
+independent PS5/PS7 validators accept the 202,267-byte report with SHA-256
+`601d7eb11e5c6e09f917f4810f5d409f95b7ae15d2e8947c07b1eabcce482ab9`.
+All locks and the read-only protected vault remain exact. Checkpoint 2259 is
+closed, while hard OS-call preemption, exact kernel accounting, installed
+service/driver, production, pre-execution, and Defender-replacement verification
+remain open.

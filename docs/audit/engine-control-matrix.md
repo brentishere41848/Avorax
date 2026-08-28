@@ -5696,3 +5696,12 @@ including Windows/Linux/macOS package verification and bounded non-extracting
 review of both consolidated checksum/SBOM artifacts. Publication is skipped.
 The first three rows remain locally and hosted-build verified; evidence-head,
 normal merge, merged-main, sync, and destination proof remain pending.
+
+Evidence-head and merged-main CI/packages, normal PR `#127` integration,
+bounded review of all consolidated artifacts, guarded `13/13` zero-delete
+destination synchronization, destination focused tests, and exact destination
+`288/288` now pass. The first three Checkpoint 2259 rows are **Verified**. Hard
+preemption of entered OS/trust/kernel calls remains **Technically limited**;
+installed-service, signed-driver/kernel, production-calibration/signing,
+pre-execution, and Defender-replacement rows remain partial, blocked, limited,
+or unclaimed. Checkpoint 2259 is closed; the complete goal remains active.

@@ -3912,3 +3912,13 @@ hash read or separately bounded analysis chunk may overrun. The 1 GiB cap does
 not bound wall time, CPU, kernel work, exact RAM, storage latency, mapped writes,
 or later mutation and does not establish installed-service, driver, hard-realtime,
 pre-execution, production-calibration, or Defender-replacement protection.
+
+Evidence-head and merged-main CI/packages, normal PR `#127` integration,
+bounded review of all consolidated artifacts, guarded `13/13` destination sync,
+destination focused checks, and destination exact `288/288` close the
+Checkpoint 2259 threat delta. Standard-read admission, cancellation-first
+in-target elapsed classification, no-partial-timeout-verdict behavior, and
+incomplete-result honesty are verified in the synchronized tree. Residual hard
+preemption of entered OS/trust/kernel calls, exact I/O/syscall/kernel/CPU/RAM
+accounting, installed-service, driver/kernel, production-calibration/signing,
+pre-execution, and Defender-replacement risks remain as documented.

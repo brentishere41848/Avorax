@@ -13583,3 +13583,32 @@ pending.
   package is extracted, installed, or executed; owned review residue is zero.
 - Evidence-head hosting, normal PR merge, merged-main evidence, guarded sync,
   and destination verification remain open. The complete goal remains active.
+
+### Checkpoint 2259 Integration And Destination Closure
+
+- Evidence `fe3797bcac088f8cddca2f65dd7e26eb7536191d` passes CI
+  `33162469870` and packages `33162470034`. Its consolidated artifact
+  `9682604225` matches 132,169,216 bytes / SHA-256
+  `46b212de6dc445487c49fb850ad3f4e67ee0c5996fb5f4f977550c4fa3fca33f`
+  and passes bounded non-extracting 8/6/7/CycloneDX-1.6/569 review.
+- PR `#127` merges normally as `5481ba6ed1322ee78d59a43c63dd0d74dc06f560`.
+  Merged-main CI `33163723172` and packages `33163723171` pass with publication
+  skipped. Main artifact `9683155445` matches 132,266,298 bytes / SHA-256
+  `c1ea2fa43f092bf6bce149db90c3100d1e590005b263bf2931bd115a184e2763`
+  and passes the same bounded non-extracting review with zero residue.
+- Guarded correct-base/absence preconditions and same-directory atomic
+  activation synchronize exact `13/13` paths to
+  `C:\Users\Brent\Documents\Avorax-main`: 12 modified, one added, zero deleted,
+  7,571,661 activated bytes, no rollback, exact merge equality, and zero
+  staging/backup residue.
+- Destination parsers `2/2` on PS5/PS7, Source `689/689`, formatting, focused
+  `4/4`, Local Core `564/564`, and strict changed-crate Clippy pass. Definitive
+  verification passes exact `288/288` in `685.6s`; independent PS5/PS7
+  validation accepts the 202,267-byte report with SHA-256
+  `601d7eb11e5c6e09f917f4810f5d409f95b7ae15d2e8947c07b1eabcce482ab9`.
+- All three locks, all synchronized blobs, zero process/sync residue, and the
+  read-only `16072/0/4522733` vault invariant remain exact. Publication is
+  skipped and nothing is installed, released, or executed. Checkpoint 2259 is
+  closed; hard OS-call preemption, exact kernel resource accounting, installed
+  service/driver ownership, production calibration/signing, pre-execution
+  blocking, Defender replacement, and the complete goal remain open.
