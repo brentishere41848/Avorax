@@ -13956,3 +13956,19 @@ pending.
   payload/metadata/authenticator, one metadata key, and zero pending. Hosted,
   merge, guarded-sync, and destination evidence remains pending; the complete
   antivirus-hardening goal remains active.
+
+### Checkpoint 2263 Hosted Implementation Evidence
+
+- Exact implementation `db43c763cd2094f467983b5fe9262c847dcf2a2b` passes
+  CI `33218470626` and package push/PR runs `33218432833`/`33218470623`.
+  Both publication jobs are skipped.
+- Consolidated artifacts `9704536389` and `9704698986` are 132,295,955 and
+  132,293,647 bytes with SHA-256
+  `93b68faf96a312a0f2abe7f61ffc12ebbd6e3425f59d7a1d2b7274e2f0d57d32`
+  and `c3696035a78047c3dfbe88b37bea0b2a332a15fccd4c6928561f8f8e6100aae5`.
+  Bounded stream review passes exact 8-root/6-package/7-checksum/
+  CycloneDX-1.6/569-component inventory; neither ZIP was extracted or executed.
+- PR `#135` merged normally as
+  `ed0484a605c7f5cc7a62d8c2dd8459ee969cec57`. Closure-head and merged-main
+  workflows, guarded synchronization, and destination verification remain
+  pending; checkpoint 2263 and the complete goal remain open.

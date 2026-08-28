@@ -1,6 +1,6 @@
 # Checkpoint 2263 - Quarantine Restore No-Replace Activation
 
-Status: **Locally verified; hosted integration pending**
+Status: **Implementation merged; closure verification pending**
 
 Checkpoint 2263 prevents a quarantine restore from replacing a file that
 appears at the original path after the last destination preflight. It does not
@@ -82,6 +82,24 @@ Its first untracked run exposed only a harness stderr-capture issue under
 PowerShell 5.1; no product test was bypassed, and the corrected harness reran
 the authentic and all adversarial cases from the beginning.
 
+## Hosted Implementation Evidence
+
+Implementation commit `db43c763cd2094f467983b5fe9262c847dcf2a2b`
+passed exact-head CI run `33218470626`, push package run `33218432833`, and PR
+package run `33218470623`. Both package publication jobs were skipped. The
+consolidated artifacts were downloaded as untouched ZIP containers and reviewed
+only through a bounded stream validator:
+
+| Run | Artifact | Bytes | Outer SHA-256 | Stream result |
+| --- | --- | ---: | --- | --- |
+| Push `33218432833` | `9704536389` | 132,295,955 | `93b68faf96a312a0f2abe7f61ffc12ebbd6e3425f59d7a1d2b7274e2f0d57d32` | Exact 8 roots, 6 platform packages, 7 checksum targets, CycloneDX 1.6 / 569 components. |
+| PR `33218470623` | `9704698986` | 132,293,647 | `c3696035a78047c3dfbe88b37bea0b2a332a15fccd4c6928561f8f8e6100aae5` | Exact 8 roots, 6 platform packages, 7 checksum targets, CycloneDX 1.6 / 569 components. |
+
+Neither container was extracted or executed. PR `#135` merged normally, with
+exact head binding, as `ed0484a605c7f5cc7a62d8c2dd8459ee969cec57`.
+Closure-head CI/package, merged-main CI/package, guarded synchronization, and
+destination verification remain required before checkpoint closure.
+
 ## Control Matrix
 
 | Control / engine responsibility | Current checkpoint state | Evidence boundary |
@@ -111,8 +129,9 @@ and `.auth`, one `.metadata_auth_key`, and zero pending files.
 Checkpoint 2263 adds no dependency, package source, binary fixture, license
 class, network fetch, or lockfile change. It uses the already pinned `libc` and
 `windows-sys` dependencies of `avorax_platform_security`. Exact lockfiles,
-license evidence and local locked tests/builds pass. Hosted package SBOMs,
-final diff review, merge, and destination review remain required before closure.
+license evidence and local locked tests/builds pass. Implementation-head package
+SBOMs and normal merge pass. Closure-head and merged-main package/SBOM evidence,
+final diff review, and destination review remain required before closure.
 
 The complete antivirus-hardening goal remains active; completion of checkpoint
 2263 must not be represented as completion of the whole antivirus project.
