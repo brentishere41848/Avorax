@@ -7598,3 +7598,61 @@ Locks and the protected-vault invariant remain exact. Checkpoint 2251 is closed;
 the complete antivirus-hardening goal remains active, with installed service,
 driver/kernel, production-accuracy, pre-execution, and Defender-replacement
 claims still partial, blocked, technically limited, or unclaimed.
+
+## Checkpoint 2257 Status
+
+Checkpoint 2257 file discovery path-memory bounds were scripted as one complete
+batch before testing and are now **verified locally through definitive
+regression**.
+Quick scans now have 5,000-file plus 8 MiB encoded-path-payload caps;
+Full/Custom scans have 250,000-file plus 128 MiB payload caps. Cap exhaustion
+or arithmetic overflow records incomplete discovery and cannot report clean.
+
+Stable three-bucket priority classification replaces the non-cancellable sort,
+preserves within-priority order, checks cancellation every at-most 128 paths,
+retains all discovered paths on cancellation, and propagates callback errors.
+Five benign tests, Source contract 687, and definitive step 286 (`286/286`) are
+implemented. Focused, broad, and definitive local evidence pass. Hosted,
+integration, guarded-sync, and destination evidence remain open.
+
+The path-payload caps exclude `Vec`/`PathBuf`/allocator overhead and do not
+bound filesystem I/O, elapsed time, or kernel work. Installed cross-identity
+service ownership, driver/kernel mediation, production calibration/signing,
+demonstrated pre-execution blocking, and Defender replacement remain partial,
+blocked, technically limited, or unclaimed. The complete goal remains active.
+
+Checkpoint 2257 focused evidence is now **Verified locally**: dual-host parser
+`2/2`, final formatting/diff checks, Source `687/687`, new memory tests `5/5`,
+discovery `10/10`, walker `15/15`, Full Scan `3/3`, cancellation `8/8`, Local
+Core `556/556`, and strict Clippy pass. Zero product processes and the exact
+read-only `16072/0/4522733` vault invariant also pass. Broad and definitive local
+regression now pass; hosted, integration, guarded-sync, and destination evidence
+remain open, so the checkpoint and complete goal stay active.
+
+Checkpoint 2257 broad local evidence now passes both locked Rust workspace
+variants, the locked all-feature release build, Flutter `847/847`, Dart
+`14/14` plus `6/6`, and all three analyzers. No lockfile changed. The
+checkpoint is **verified locally through broad regression**. Definitive local
+evidence also passes; hosted exact-head, integration, guarded-sync, and
+destination evidence remain open. The complete antivirus goal stays active.
+
+Checkpoint 2257 definitive verification passes exact `286/286` in `643.3s`
+with zero failed/error steps. Independent PS5 and PS7 validation accept the
+207,098-byte report with SHA-256
+`b989a2cc9d0d42a0a7404e6d778c97617ad449af8ddef520c6b732d3ce3d1833`.
+Both hosts reject 285-step, missing-verified-scope, and missing-technical-scope
+structured mutations with exit 1; mutation residue is zero. Lock hashes, zero
+product processes, and the read-only protected-vault invariant remain exact.
+Hosted/integrated/destination evidence and all documented total-resource,
+installed-service, driver, pre-execution, production-calibration, and Defender-
+replacement limits remain open.
+
+Checkpoint 2257 hosted implementation-head evidence passes on exact commit
+`c3e24b3c976febc732b04338f6bd8142a88411a4`: PR `#123` CI `33136854819`, PR
+packages `33136854871`, and push packages `33136852044`. Publication is skipped.
+Push artifact `9672583268` and PR artifact `9672658548` match GitHub metadata and
+pass bounded non-extracting 8-root/6-package/7-checksum/CycloneDX-1.6/569-ref
+review with zero unsafe or special entries and zero owned residue. Evidence-head
+runs, merge, merged-main evidence, guarded destination sync, and destination
+verification remain open; product technical limits and the complete goal remain
+active.

@@ -5579,3 +5579,41 @@ verdict rows remain unchanged; installed service, cross-identity IPC,
 production signing, driver/kernel, pre-execution, and Defender-replacement rows
 remain partial, disabled, blocked, technically limited, or unclaimed. The
 complete antivirus-hardening goal remains active.
+
+## Checkpoint 2257 Control Delta
+
+| Control / engine | Responsibility | State | Evidence required |
+|---|---|---|---|
+| Quick discovery path-memory bound | Stop retaining paths after 8 MiB of aggregate encoded path payload, alongside the 5,000-file cap | **Verified locally through broad regression** | Benign cap exhaustion, bounded diagnostic, incomplete status, Source contract 687, verifier step 286 / exact `286/286` |
+| Full/Custom discovery path-memory bound | Stop retaining paths after 128 MiB of aggregate encoded path payload, alongside the 250,000-file cap | **Verified locally through broad regression** | Checked-add/overflow contract, no false clean result, Local Core regression and definitive evidence |
+| Discovery priority bucketing | Classify each retained path once into stable immediate/risky/ordinary order | **Verified locally through broad regression** | Stable-order regression and proof that production no longer uses `sort_by_key` |
+| Priority cancellation/error boundary | Check the exact job callback before every at-most-128-path bucket and after completion; retain paths on cancel and propagate errors | **Verified locally through broad regression** | 300-path cancellation retention, callback-error regression, no Native initialization or result publication |
+| Exact total discovery RAM/I/O/time bound | Bound all allocator overhead, transient buckets, filesystem calls, elapsed time, and kernel work | **Technically limited** | Payload caps exclude `Vec`/`PathBuf`/allocator overhead; installed/service or kernel mediation would require separate design and proof |
+
+Checkpoint 2257 adds Source contract 687 and definitive verifier step 286. No
+test ran during scripting; focused, broad, and exact `286/286` local evidence
+now pass. The rows cannot move to fully integrated until hosted, merged-main,
+guarded-sync, and destination evidence pass. No installed service, driver, pre-
+execution, or Defender-replacement capability is claimed; the complete
+antivirus goal remains active.
+
+Focused evidence now passes Source `687/687`, memory `5/5`, discovery `10/10`,
+walker `15/15`, Full Scan `3/3`, cancellation `8/8`, Local Core `556/556`, and
+strict Clippy. The four implementation rows are **Verified locally for focused
+scope**. Broad locked and exact `286/286` also pass; hosted, merged-main,
+guarded-sync, and destination evidence remain required. The total-RAM/I/O/time
+row remains technically limited.
+
+Both locked Rust workspace variants, the locked all-feature release build,
+Flutter `847/847`, Dart `14/14` plus `6/6`, and all analyzers now pass. The four
+implementation rows are **Verified locally through broad regression**.
+Definitive exact `286/286` and dual-host adversarial validation pass. Hosted,
+integration, guarded-sync, and destination evidence remain open; the exact-
+total-resource row remains limited.
+
+All four checkpoint implementation rows are also verified at exact hosted
+implementation commit `c3e24b3` through CI, Windows/Linux/macOS package builds,
+checksums, and bounded non-extracting SBOM review. Publication is skipped.
+Evidence-head, merged-main, guarded-sync, and destination evidence remain open;
+the exact-total-resource row and all service/driver/pre-execution limitations
+remain unchanged.

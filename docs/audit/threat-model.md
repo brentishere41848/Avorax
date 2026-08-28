@@ -2604,6 +2604,13 @@ both response and MAC. This is not encryption, cross-identity authentication,
 AppContainer/LPAC, installed LocalSystem, signed-driver, or pre-execution
 enforcement.
 
+Both locked Rust workspace variants, release build, Flutter `847/847`, Dart
+`14/14` and `6/6`, and all analyzers pass. This broad regression adds confidence
+that the path-memory controls preserve adjacent engines and UI/protocol
+contracts. Definitive `286/286` and adversarial local evidence now pass; hosted/
+integrated evidence and the documented exact-resource and privilege limits
+remain open.
+
 **Local evidence:** After scripting completed, source contracts `660/660`, the
 new real benign child, adjacent identity/token/MAC targets, complete Native,
 Local Core, Guard, both workspace modes, strict lint/offline/release checks,
@@ -3751,3 +3758,46 @@ chunk, the bounded non-cancellable sort, aggregate path bytes, filesystem I/O,
 elapsed time, and kernel work. This evidence does not establish installed
 cross-identity ownership, kernel mediation, pre-execution blocking, production
 detection calibration, release approval, or Defender replacement.
+
+## Checkpoint 2257 Threat Delta
+
+Threat: an attacker-controlled or unusually large directory tree can force
+Local Core to retain many long path values, or delay cancellation in final
+priority ordering. Checkpoint 2257 scripts 8 MiB Quick and 128 MiB Full/Custom
+encoded-path-payload ceilings in addition to the existing count caps. Checked
+addition occurs before path retention; exhaustion or overflow stops discovery
+with an incomplete error and cannot become clean.
+
+The old sort is replaced with stable three-bucket classification that examines
+each path once. The exact job callback runs before every at-most-128-path chunk
+and after completion. Cancellation retains all discovered paths for honest
+skipped accounting; arbitrary callback errors abort before Native Engine
+initialization or result publication. Five benign regressions, Source contract
+687, and definitive step 286 / exact `286/286` are implemented and locally
+verified.
+
+Residual risk: encoded payload excludes `Vec`, `PathBuf`, allocator overhead,
+the source vector, and transient destination buckets. One entered OS operation,
+one at-most-128-entry discovery chunk, or one at-most-128-path classification
+chunk can finish before cancellation. Filesystem I/O, elapsed time, and kernel
+work remain outside this bound. No installed service ownership, cross-identity
+IPC, kernel mediation, pre-execution blocking, production calibration, release
+approval, or Defender replacement is established by Checkpoint 2257.
+
+Focused tests now exercise path-cap exhaustion and overflow, stable ordering,
+300-path cancellation retention, arbitrary callback failure, and adjacent scan
+semantics. Source `687/687`, Local Core `556/556`, strict Clippy, both locked
+workspace variants, Flutter/Dart, and definitive `286/286` pass; the read-only
+protected vault remains exact. PS5 and PS7 also reject missing-step and missing-
+scope report mutations. This verifies the local threat controls through
+definitive regression, not hosted/integrated code, exact total RAM, I/O/time/
+kernel bounds, installed ownership, or pre-execution enforcement.
+
+Hosted implementation-head CI and cross-platform packages pass on exact commit
+`c3e24b3`; both consolidated artifacts pass bounded non-extracting path,
+duplicate, encryption, link, checksum, and SBOM validation. Publication is
+skipped and no package is extracted, installed, or executed. This reduces
+regression and supply-chain evidence risk for the implementation head; it does
+not establish installed-service ownership, production signing, release
+approval, exact runtime resource bounds, kernel mediation, pre-execution
+blocking, or Defender replacement.

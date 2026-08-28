@@ -3657,3 +3657,47 @@ limits. Installed cross-identity service ownership and authenticated IPC,
 signed-driver/kernel mediation, production accuracy/signing, demonstrated
 pre-execution blocking, and Microsoft Defender replacement remain open product
 blockers; checkpoint closure does not clear them.
+
+## Checkpoint 2257 Path-Memory Blocker Delta
+
+Checkpoint 2257 scripts aggregate encoded-path-payload caps of 8 MiB for Quick
+and 128 MiB for Full/Custom discovery and replaces non-cancellable sorting with
+stable, cancellable at-most-128-path priority buckets. Exhaustion, overflow, and
+callback errors are fail-visible and cannot become a clean scan. Source
+contract 687 and definitive step 286 / exact `286/286` were scripted before
+testing and are now locally verified.
+
+The earlier lack of any aggregate path-payload ceiling and cancellation during
+priority ordering is superseded once verification passes. Exact total memory
+remains technically limited because `Vec`, `PathBuf`, allocator overhead, the
+source vector, and transient bucket allocations are outside the payload count.
+Filesystem I/O, elapsed time, and kernel work also remain unbounded by this
+control. Focused, broad, definitive, hosted, integration, guarded-sync, and
+destination evidence are checkpoint blockers. Installed cross-identity service
+ownership, signed driver/kernel mediation, production calibration/signing,
+pre-execution blocking, and Defender replacement remain product blockers.
+
+Focused Checkpoint 2257 verification now passes Source `687/687`, the five new
+memory regressions, all overlapping discovery/walker/full/cancellation filters,
+Local Core `556/556`, and strict Clippy. The checkpoint's local focused blocker
+is cleared. Broad locked regression, exact `286/286`, and adversarial validation
+also pass. Hosted exact-head evidence, integration, guarded synchronization, and
+destination verification remain checkpoint blockers. Exact total memory,
+filesystem I/O/time/kernel work, installed-service, driver, production,
+pre-execution, and Defender-replacement limits remain unchanged.
+
+Both locked workspace variants, the locked release build, Flutter `847/847`,
+Dart `14/14` and `6/6`, and all analyzers pass for Checkpoint 2257. The broad
+local regression blocker is cleared. Exact `286/286` and dual-host adversarial
+report validation pass. Hosted exact-head evidence, integration, guarded
+synchronization, and destination verification remain checkpoint blockers.
+Resource, service, driver, production, pre-execution, and Defender-replacement
+blockers remain.
+
+Checkpoint 2257 exact implementation-head CI and both package workflows now
+pass, including bounded non-extracting artifact/checksum/SBOM review and skipped
+publication. The hosted implementation-head blocker is cleared. Evidence-head
+reruns, normal merge, merged-main evidence, guarded destination synchronization,
+and destination verification remain checkpoint blockers. Exact total resource,
+installed-service, driver, production, pre-execution, and Defender-replacement
+blockers remain unchanged.

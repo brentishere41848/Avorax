@@ -1630,7 +1630,7 @@ fn scan_paths_for_job(
     )
     .with_context(|| "job-bound cancellation state became unreadable during file discovery")?;
     let cancelled_during_discovery = walk.discovery_cancelled;
-    let discovery_limit_reached = walk.file_limit_reached;
+    let discovery_limit_reached = walk.file_limit_reached || walk.path_byte_limit_reached;
     if cancelled_during_discovery {
         cancelled = true;
         cancelled_remaining_files = walk.files.len() as u64;
