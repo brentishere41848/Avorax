@@ -847,3 +847,12 @@ Independent PS5/PS7 strict validation passes; both hosts reject the 286-step,
 missing-verified-scope, and missing-technical-scope copies with exit 1. Exact
 mutation residue is zero. Hosted, integration, guarded-sync, and destination
 evidence remain required.
+
+Exact implementation `709e8a9d56f89dd13b8e296334b187ff2a99d6f2`
+passes PR `#125` CI `33149543048`, PR packages `33149543030`, and push packages
+`33149509580`; both publication jobs are skipped. Consolidated artifacts
+`9677471939` and `9677431721` match GitHub byte size/SHA-256 and each pass bounded
+non-extracting exact 8-root/6-package/7-checksum/CycloneDX-1.6/569-unique-ref
+review with zero unsafe, duplicate, encrypted, directory, or link entries. No
+artifact was extracted, installed, or executed and owned review residue is zero.
+Evidence-head, merged-main, guarded-sync, and destination testing remain required.

@@ -1,6 +1,6 @@
 # Checkpoint 2258 - File Discovery Work And Time Bounds
 
-Status: **Verified locally on final source through definitive regression; hosted evidence pending**
+Status: **Verified locally and hosted at implementation head; evidence-head integration pending**
 
 ## Scope
 
@@ -242,6 +242,29 @@ structured adversarial copies with exit code 1: 286 steps, missing checkpoint
 verified scope, and missing checkpoint technical-limit scope. The exact owned
 mutation files were removed and residue is zero. Hosted exact-head, integration,
 guarded-sync, and destination evidence remain open.
+
+## Hosted Implementation-Head Evidence
+
+Exact implementation commit `709e8a9d56f89dd13b8e296334b187ff2a99d6f2`
+passes PR `#125` Avorax CI run `33149543048`, PR Desktop Packages run
+`33149543030`, and push Desktop Packages run `33149509580`. All five CI jobs,
+both package-contract jobs, all eight platform build jobs, both consolidation
+jobs, Windows administrative MSI extraction without installation, and checksum/
+SBOM generation pass. Both prerelease-publication jobs are intentionally skipped.
+
+The untouched push consolidated artifact `9677471939` is 132,106,765 bytes with
+SHA-256 `ee1a1f997370d837a52622aa442e3b4f2d09f33ee6a04a3fa8a067f0767c2b51`.
+The untouched PR artifact `9677431721` is 132,150,306 bytes with SHA-256
+`94624412693ce298859e59f14c8977ec159711740bb693eaf3a935d2ee5a3c7f`.
+Both local downloads match GitHub artifact metadata exactly.
+
+Bounded, non-extracting in-stream review of each artifact passes exactly eight
+safe root entries, six packages, seven matching checksum targets, CycloneDX
+1.6, and 569 non-empty unique component references, with zero duplicate, unsafe,
+encrypted, directory, or link entries. No package was extracted, installed, or
+executed. The exact owned review files and script were removed with zero residue.
+Evidence-head hosted checks, normal PR merge, merged-main evidence, guarded
+destination synchronization, and destination verification remain open.
 
 ## Technical Limits
 

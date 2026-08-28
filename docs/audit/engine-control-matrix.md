@@ -5656,3 +5656,10 @@ validation accepts the 209,503-byte report with SHA-256
 `078a4edc9a25aed4ab572936c0d34629152af0f4c0ee633e6e5a7a2c2177cad0` and
 rejects all six expected mutations. Hosted/integration evidence remains pending;
 exact kernel/resource enforcement remains technically limited.
+
+Exact implementation `709e8a9d56f89dd13b8e296334b187ff2a99d6f2`
+passes PR `#125` CI `33149543048`, PR packages `33149543030`, and push packages
+`33149509580`. Both consolidated artifacts pass bounded non-extracting exact
+8-root/6-package/7-checksum/CycloneDX-1.6/569-unique-ref review; publication is
+skipped. Evidence-head, merge, merged-main, sync, and destination evidence remain
+pending.

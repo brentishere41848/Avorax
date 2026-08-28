@@ -31877,7 +31877,7 @@ def test_checkpoint_2258_file_discovery_work_time_bounds_contract():
         assert "287" in normalized
     normalized_checkpoint = re.sub(r"\s+", " ", checkpoint)
     assert (
-        "Status: **Verified locally on final source through definitive regression; hosted evidence pending**"
+        "Status: **Verified locally and hosted at implementation head; evidence-head integration pending**"
         in normalized_checkpoint
     )
     assert "No checkpoint-2258 test ran during the scripting phase" in normalized_checkpoint
@@ -31890,11 +31890,20 @@ def test_checkpoint_2258_file_discovery_work_time_bounds_contract():
     assert "Superseded Final Definitive Local Evidence" in normalized_checkpoint
     assert "Zero-Byte Progress Repair Scripting" in normalized_checkpoint
     assert "Final-Source Definitive Local Evidence" in normalized_checkpoint
+    assert "Hosted Implementation-Head Evidence" in normalized_checkpoint
     assert "688/688" in normalized_checkpoint
     assert "847/847" in normalized_checkpoint
     assert "287/287" in normalized_checkpoint
     assert "401d4d4cb50dc7a61750ae26b7de529df3f2033063d3915649c4717aa6c78208" in normalized_checkpoint
     assert "078a4edc9a25aed4ab572936c0d34629152af0f4c0ee633e6e5a7a2c2177cad0" in normalized_checkpoint
+    assert "709e8a9d56f89dd13b8e296334b187ff2a99d6f2" in normalized_checkpoint
+    assert "33149543048" in normalized_checkpoint
+    assert "33149543030" in normalized_checkpoint
+    assert "33149509580" in normalized_checkpoint
+    assert "9677471939" in normalized_checkpoint
+    assert "9677431721" in normalized_checkpoint
+    assert "ee1a1f997370d837a52622aa442e3b4f2d09f33ee6a04a3fa8a067f0767c2b51" in normalized_checkpoint
+    assert "94624412693ce298859e59f14c8977ec159711740bb693eaf3a935d2ee5a3c7f" in normalized_checkpoint
     assert "owned mutation files were removed and residue is zero" in normalized_checkpoint
     normalized_dependencies = re.sub(r"\s+", " ", documents[-1]).lower()
     assert "adds no dependency" in normalized_dependencies

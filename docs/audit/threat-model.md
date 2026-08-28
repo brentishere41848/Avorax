@@ -3860,3 +3860,10 @@ documented user-mode resource limits. Final-source focused/broad evidence,
 release build, exact `287/287` definitive verification, dual-host validation,
 and all six expected adversarial rejections pass. Hosted exact-head,
 integration, guarded-sync, and destination evidence remain pending.
+
+Hosted implementation-head CI and both package matrices pass on exact
+`709e8a9`, including bounded non-extracting checksum/SBOM review of both
+consolidated artifacts with publication skipped. This adds cross-platform build
+and packaging regression evidence; it does not add signing, notarization,
+installed-service isolation, kernel enforcement, or production detection-rate
+evidence. Evidence-head, merged-main, sync, and destination proof remain pending.

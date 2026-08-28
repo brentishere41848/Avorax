@@ -2201,3 +2201,10 @@ Local Core/std types. Final-source locked standard/all-feature tests, locked
 all-feature release build, and exact `287/287` definitive verification pass
 without dependency or lockfile mutation. Hosted and destination lock evidence
 remain pending.
+
+Implementation-head CI and both package matrices pass on exact `709e8a9`.
+Consolidated artifacts `9677471939`/`9677431721` each contain the expected
+CycloneDX 1.6 lockfile SBOM with 569 non-empty unique component references and
+pass all seven checksums under bounded non-extracting review; publication is
+skipped. Evidence-head, merged-main, and destination package/SBOM evidence remain
+pending, as do final-binary legal/notice provenance and release approval.

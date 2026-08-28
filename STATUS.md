@@ -7718,6 +7718,15 @@ SHA-256 `078a4edc9a25aed4ab572936c0d34629152af0f4c0ee633e6e5a7a2c2177cad0`.
 Both hosts reject all three structured mutations with exit 1 and exact mutation
 residue is zero. Hosted exact-head, integration, guarded-sync, and destination
 evidence remain pending.
+
+Checkpoint 2258 implementation-head hosting passes on exact commit
+`709e8a9d56f89dd13b8e296334b187ff2a99d6f2`: PR `#125` CI `33149543048`, PR
+packages `33149543030`, and push packages `33149509580`. Publication is skipped.
+Push artifact `9677471939` and PR artifact `9677431721` match GitHub byte size/
+SHA-256 and pass bounded non-extracting 8-root/6-package/7-checksum/
+CycloneDX-1.6/569-unique-ref review with zero unsafe or special entries and zero
+owned residue. Evidence-head checks, merge, merged-main evidence, guarded sync,
+and destination verification remain open.
 Work items remain a proxy rather than exact I/O/syscall/kernel/CPU/RAM
 accounting, and user mode cannot preempt a stalled kernel/filesystem call. The
 complete antivirus-hardening goal remains active.

@@ -3729,6 +3729,12 @@ repair. Final-source formatting, focused/broad suites, release build, definitive
 `287/287`, dual-host validation, and all six adversarial rejections now pass.
 Hosted exact-head, integration, guarded-sync, and destination blockers remain.
 
+Exact implementation-head CI and both package matrices now pass on `709e8a9`,
+including bounded non-extracting review of both consolidated artifacts with
+publication skipped. The remaining checkpoint blockers are evidence-head and
+merged-main hosting, normal integration, guarded destination synchronization,
+and destination verification.
+
 Exact filesystem I/O bytes, syscall count, kernel work, storage latency, CPU,
 allocator/`PathBuf` RAM, and interruption of a stalled kernel/filesystem call
 remain technically limited. Installed cross-identity service watchdogs, signed
