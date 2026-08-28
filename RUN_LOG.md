@@ -81,6 +81,40 @@ Lead-engineer product-hardening pass across the Avorax repository. Goal is to mo
   published. Evidence-head checks, normal merge, merged-main evidence, guarded
   destination synchronization, and destination verification remain pending.
 
+## 2026-08-28 Checkpoint 2260 integration and destination closure
+
+- Evidence `6d2e8dd05f3b0bd4d194035fe798292c0895e46f` passed exact-head CI
+  `33172824444` and packages `33172824319`. PR `#129` merged normally as
+  `375948899048556d93afd55d452db8ea08ab67b7`; merged-main CI `33174390956`
+  and packages `33174390945` passed. Publication was skipped throughout.
+- Main package evidence contains Windows MSI/setup EXE, Linux DEB/tar, macOS
+  x64/arm64 DMGs, checksums, MSI administrative extraction, and a 569-component
+  lockfile SBOM. Consolidated artifact `9687291783` is 132,198,446 bytes with
+  GitHub digest
+  `ca20e847b6a547b7475c3199ea8ee47b323cf243ed8246566c1e18ae23bca168`.
+  Nothing was released, installed, extracted locally, or executed.
+- Guarded old-base/absence preconditions and same-directory atomic activation
+  synchronized exact `16/16` paths to `C:\Users\Brent\Documents\Avorax-main`:
+  15 modified, one added, zero deleted, exact merged-blob equality, and zero
+  sync residue.
+- Destination Source `690/690`, formatting, focused binding `6/6`, Platform
+  `11/11`, Local Core `568/568`, Guard `248/248`, strict Clippy, both locked
+  workspaces, and the locked all-feature release build passed. Native Engine
+  passed `640/640` with 21 intentional ignores and compiler `6/6`.
+- The first destination verifier attempt stopped before tests on a nonexistent
+  Python path. The second correctly rejected a WindowsApps reparse path during
+  signed hash-intelligence package verification. The clean normal-file Python
+  retry passed exact `288/288` in `673.9s`; independent PS5/PS7 validation
+  accepts the 203,537-byte report with SHA-256
+  `0d18940568c0e4f132a7160d6d7931bbcd6d5843d64b7756037f7b6e74f485fc`.
+  Both hosts reject copies missing required verified or technically-limited
+  scope.
+- All eight lockfiles, all synchronized blobs, zero product processes, zero
+  sync residue, and the read-only `16072/0/4522733` vault invariant remain
+  exact. Checkpoint 2260 is closed; user-mode final-path races, installed
+  service/driver ownership, pre-execution blocking, Defender replacement, and
+  the complete antivirus-hardening goal remain open.
+
 ## Professional assumptions
 
 - Current repository path is `C:\Users\Brent\Documents\Avorax-main` for this Codex continuation.

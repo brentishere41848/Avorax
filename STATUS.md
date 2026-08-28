@@ -4,7 +4,7 @@
 
 Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-install, repair, recovery, offline, and manual-install paths only. Normal app updates target signed `.aup` packages applied by Avorax Update Service.
 
-- Current Checkpoint 2260 implementation-head pass: automatic quarantine now carries the exact
+- Current Checkpoint 2260 closure: automatic quarantine now carries the exact
   Native verdict SHA-256 into Local Core's quarantine store. Guard likewise
   hashes its already-opened source and binds it to the selected path. Both reject
   invalid hashes, mismatched scan paths, changed bytes, and replaced open-file
@@ -18,6 +18,9 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
   Dual-host full-suite validation and two adversarial missing-scope rejections
   pass; the report SHA-256 is
   `3011587770e133542bf6f007f7213130722d9ff0fbd1e22af65d7b64ba23433b`.
+  Destination verification also passes exact `288/288` in `673.9s`; its
+  203,537-byte report SHA-256 is
+  `0d18940568c0e4f132a7160d6d7931bbcd6d5843d64b7756037f7b6e74f485fc`.
   The protected vault and zero-product-process state remain exact. Final path
   operations remain user-mode and non-transactional; privileged final-check
   races, kernel/pre-execution enforcement, installed-service proof, and Defender
@@ -25,10 +28,12 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
   `864bfddd` passes Avorax CI `33171430624` and Desktop Packages push/PR runs
   `33171402684`/`33171430602`. Both package runs built and verified the six
   Windows/Linux/macOS release files, checksums, and a 569-component lockfile
-  SBOM; both publication jobs were skipped. Evidence-head checks, PR/merge,
-  merged-main evidence, guarded destination sync, and destination verification
-  remain pending. Checkpoint 2259 is closed; checkpoint 2260 and the full
-  antivirus goal remain active.
+  SBOM; both publication jobs were skipped. Evidence `6d2e8dd` passes CI
+  `33172824444` and packages `33172824319`; PR `#129` merged normally as
+  `3759488`. Merged-main CI `33174390956` and packages `33174390945` pass, with
+  publication skipped. Guarded synchronization matched all 16 paths, deleted
+  nothing, and left no residue; all eight lockfiles remain exact. Checkpoints
+  2259 and 2260 are closed; the full antivirus goal remains active.
 - Current checkpoint 2253 closure: verifier schema v2 records exact terminal
   failed-step evidence and distinguishes orchestration failures without
   swallowing the original exception. Local and destination exact `282/282`,

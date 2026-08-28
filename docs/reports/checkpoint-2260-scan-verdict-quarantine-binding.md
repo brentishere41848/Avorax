@@ -1,6 +1,6 @@
 # Checkpoint 2260 - Scan Verdict Quarantine Binding
 
-Status: **Implementation-head local and hosted verification complete; merge and destination integration pending**
+Status: **Closed through merged-main evidence, guarded destination synchronization, and destination verification**
 
 ## Scope
 
@@ -106,8 +106,8 @@ Local verification completed on 2026-08-28:
 
 ## Hosted Implementation-Head Verification
 
-Commit `864bfddd14f8dfd9710878b15388fad4a3ee8e07` is the exact head of
-PR `#129`. Hosted evidence completed on 2026-08-28:
+Implementation commit `864bfddd14f8dfd9710878b15388fad4a3ee8e07` is contained in
+PR `#129`. Its hosted evidence completed on 2026-08-28:
 
 - Avorax CI pull-request run `33171430624` passed all five jobs: security,
   protection, and performance gates; Rust Local Core and Guard; branding and
@@ -124,9 +124,61 @@ PR `#129`. Hosted evidence completed on 2026-08-28:
 - Both `Publish desktop beta prerelease` jobs were skipped. No hosted artifact
   was installed, released, or published.
 
-The evidence-only documentation commit, its exact-head hosted checks, normal PR
-merge, merged-main verification, guarded zero-delete destination
-synchronization, and destination verification remain pending.
+## Integration And Destination Closure
+
+Evidence commit `6d2e8dd05f3b0bd4d194035fe798292c0895e46f` passed exact-head
+Avorax CI `33172824444` and Desktop Packages `33172824319`. The consolidated
+package bundle reported SHA-256
+`7e1069395546b5dc2289864720512bacb064aea3ba428b46ae3d8047f48bbda2`;
+publication was skipped.
+
+PR `#129` merged normally as
+`375948899048556d93afd55d452db8ea08ab67b7`, with exact parents
+`20586cd4d3342e114017db8781cc80d6924836a6` and
+`6d2e8dd05f3b0bd4d194035fe798292c0895e46f`. Merged-main Avorax CI
+`33174390956` and Desktop Packages `33174390945` passed at that exact merge.
+The package run passed Windows x64 MSI/setup EXE, Linux x64 DEB/tar, macOS
+x64/arm64 DMGs, checksums, a 569-component lockfile SBOM, MSI administrative
+extraction, and consolidation. Main consolidated artifact `9687291783` is
+132,198,446 bytes with GitHub digest
+`ca20e847b6a547b7475c3199ea8ee47b323cf243ed8246566c1e18ae23bca168`.
+The prerelease-publication job was skipped; no package was released, installed,
+or executed.
+
+The guarded synchronizer verified exact old-base or absence preconditions and
+atomically synchronized 16 paths from merge base
+`20586cd4d3342e114017db8781cc80d6924836a6` to merge
+`375948899048556d93afd55d452db8ea08ab67b7` in
+`C:\Users\Brent\Documents\Avorax-main`: 15 modified, one added, and zero
+deleted. Independent post-sync and post-test Git-filtered blob checks matched
+all 16 paths, with zero staging residue.
+
+Destination verification passed formatting, Source `690/690`, focused binding
+`6/6`, Platform `11/11`, Local Core `568/568`, Guard `248/248`, strict
+all-target/all-feature changed-crate Clippy, both locked workspace variants,
+and the locked all-feature release build. Native Engine passed `640/640` with
+21 intentional isolated child fixtures ignored and compiler `6/6`; the
+all-feature Guard variant passed `249/249`.
+
+The first destination verifier attempt named a nonexistent Python executable
+and stopped before executing a test. A second uncredited attempt correctly
+failed the signed hash-intelligence package smoke because the WindowsApps
+Python path traversed a reparse point. No bypass was added. The clean third run
+used the bundled normal-file Python runtime and passed exact `288/288` in
+`673.9s`, from `2026-08-28T13:42:56.6705493Z` through
+`2026-08-28T13:54:10.5966871Z`. Its 203,537-byte report is
+`.workflow/ultracode/avorax-hardening/results/2260-destination-scan-verdict-quarantine-binding-report.json`
+with SHA-256
+`0d18940568c0e4f132a7160d6d7931bbcd6d5843d64b7756037f7b6e74f485fc`.
+Independent Windows PowerShell 5.1 and PowerShell 7 full-suite validation
+passed. Both hosts rejected adversarial copies missing `verified` or
+`technically_limited` scope.
+
+Post-verification checks found zero product processes, all eight Rust/Dart lock
+files exact to merged main, and zero sync residue. The protected vault remained
+exactly 16,072 files, zero directories, 4,522,733 bytes, 5,357 each
+`.avoraxq`/`.json`/`.auth`, one `.metadata_auth_key`, and zero pending. This
+checkpoint is closed; the complete antivirus-hardening goal remains active.
 
 ## Technical Limits
 
