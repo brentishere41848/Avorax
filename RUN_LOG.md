@@ -4,6 +4,83 @@
 
 Lead-engineer product-hardening pass across the Avorax repository. Goal is to move Avorax toward a professional, reliable, secure, honest endpoint protection product through documented architecture, prioritized backlog, tests, and incremental implementation.
 
+## 2026-08-28 Checkpoint 2260 scripting
+
+- Audited the Native-verdict-to-Local-Core quarantine path. Local Core previously
+  recomputed the current path SHA-256 and `QuarantineStore` ignored the Native
+  verdict hash, so changed bytes could be quarantined under stale detection
+  evidence.
+- Scripted exact verdict-hash propagation, strict result-path/hash validation,
+  hashing from the already-opened single-link source, Unix device/inode and
+  Windows volume/file-index identity checks before move, and a repeated identity
+  check before copy-fallback source removal. A mismatch remains in place and
+  returns a visible rescan-required error without a finalized record.
+- Applied the same open-handle hashing and path-identity boundary to Guard
+  Service, which already compared its expected process-observation SHA-256 but
+  previously reopened the path for hashing. Existing Guard post-launch and
+  no-pre-execution claims remain unchanged.
+- Scripted six harmless `scan_quarantine_binding_` regressions, definitive
+  verifier/validator scope, Source contract 690, the control matrix, threat
+  model, blocker record, quarantine operations guide, dependency evidence, and
+  checkpoint report. Existing definitive steps remain exact `288/288` because
+  the platform and Local Core quarantine steps already execute these tests.
+- No checkpoint-2260 test ran during this scripting phase. Focused, broad,
+  definitive, hosted, merge, and destination execution begins only after this
+  complete source/test/evidence/document batch. No live malware, EICAR file,
+  Defender change, install, service/driver start, release, publication, or
+  protected-vault mutation is involved.
+
+## 2026-08-28 Checkpoint 2260 local verification
+
+- Initial execution found only three stale test expectations for the removed
+  path-reopen marker and old empty-vault-directory behavior. The tests were
+  corrected to require open-handle hashing and no vault creation; complete
+  Local Core and Guard reruns passed.
+- Formatting and diff checks passed; Windows PowerShell 5.1 and PowerShell 7
+  parsed both verifier files. Source contracts passed `690/690`; the six focused
+  binding tests, Platform `11/11`, Local Core `568/568`, Guard `248/248`, and
+  strict all-target/all-feature no-dependency Clippy passed.
+- Both locked Rust workspace variants passed. Native Engine passed `640/640`
+  with 21 intentional isolated child fixtures ignored and compiler `6/6`; the
+  all-feature Guard variant passed `249/249`. The locked all-feature release
+  workspace build passed.
+- Flutter analyze passed with no issues and its complete suite passed `847/847`.
+  Zentor Protocol and Avorax Protocol analyzed cleanly and passed `14/14` and
+  `6/6`.
+- The definitive no-skip/no-Defender verifier passed exactly `288/288` in
+  `651.3s`; both Windows PowerShell 5.1 and PowerShell 7 full-suite validators
+  passed. Report:
+  `.workflow/ultracode/avorax-hardening/results/2260-small-threat-mvp-scan-verdict-quarantine-binding-report.json`,
+  SHA-256
+  `3011587770e133542bf6f007f7213130722d9ff0fbd1e22af65d7b64ba23433b`.
+  Adversarial copies missing the new verified scope or technical limitation were
+  rejected.
+- Pre/post checks found zero Avorax/Zentor product processes. The protected
+  vault remained exactly 16,072 files, zero directories, 4,522,733 bytes, 5,357
+  each `.avoraxq`/`.json`/`.auth`, one `.metadata_auth_key`, and zero pending.
+  Exact-head hosted evidence, normal PR merge, guarded destination sync, and
+  destination verification remain pending.
+
+## 2026-08-28 Checkpoint 2260 implementation-head hosting
+
+- Committed checkpoint implementation, benign regressions, verifier/validator,
+  Source contract 690, and audit evidence as
+  `864bfddd14f8dfd9710878b15388fad4a3ee8e07`, pushed only branch
+  `agent/checkpoint-2260-scan-file-stability`, and opened PR `#129`.
+- Exact-head Avorax CI `33171430624` passed all five security, Rust, Flutter,
+  branding, and Unix permission jobs. Desktop Packages push `33171402684` and
+  PR `33171430602` passed package contracts, Windows x64 MSI/setup EXE, Linux
+  x64 DEB/tar, macOS x64/arm64 DMGs, and consolidation/checksum jobs.
+- Each package run produced Windows, Linux, macOS x64, macOS arm64, and
+  consolidated release evidence bundles. Consolidation required all six native
+  package files, generated the 569-component lockfile SBOM and checksums, and
+  uploaded eight files. Consolidated push/PR archive SHA-256 digests are
+  `e72222ee154a0221fce703eb4896230954048278f1cffa5c79ef9fdd33e61442`
+  and `399c150f26e62972d178564d37436fead1b6519b012261367eec21adc2f9c2c0`.
+- Both publication jobs were skipped; nothing was installed, released, or
+  published. Evidence-head checks, normal merge, merged-main evidence, guarded
+  destination synchronization, and destination verification remain pending.
+
 ## Professional assumptions
 
 - Current repository path is `C:\Users\Brent\Documents\Avorax-main` for this Codex continuation.

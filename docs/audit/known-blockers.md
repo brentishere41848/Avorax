@@ -3786,3 +3786,29 @@ filesystem/kernel resource accounting, installed cross-identity service
 ownership, signed driver/kernel mediation, production calibration/signing,
 demonstrated pre-execution blocking, and Defender replacement remain product
 blockers or technical limits.
+
+## Checkpoint 2260 Blocker Delta
+
+Checkpoint 2260 removes the known fail-open binding where automatic quarantine
+could recompute and accept bytes different from the Native verdict SHA-256. The
+scripted store now requires a valid matching result path/hash, hashes the
+already-opened single-link source, checks Unix or Windows file identity before
+move, repeats identity before copy-source removal, and emits a rescan-required
+failure without finalized metadata when evidence changed. Six harmless tests,
+exact-`288/288` definitive verifier/validator coverage, and Source contract 690
+are scripted, but local execution is still pending.
+
+Guard Service now uses the same open-handle hash and identity boundary while
+retaining its existing expected process-observation SHA-256. This closes the
+equivalent Guard path-reopen gap without claiming pre-execution prevention.
+
+One technical blocker remains: portable cross-platform user mode cannot make the
+last identity comparison and following path rename/removal an atomic filesystem
+transaction. A privileged writer may race that narrow window. Existing payload
+SHA-256 verification and authenticated finalization recovery keep detected
+failure visible, but prevention against administrators, SYSTEM, or kernel
+compromise requires a different privilege/kernel architecture and is not
+claimed. Installed cross-identity service proof, signed driver/kernel mediation,
+production calibration/signing, demonstrated pre-execution blocking, and
+Defender replacement remain separate product blockers. Changed files require a
+rescan; checkpoint 2260 and the full antivirus goal remain active.

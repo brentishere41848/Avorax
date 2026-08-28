@@ -3878,6 +3878,43 @@ kernel/CPU/RAM accounting, stalled-OS-call preemption, installed-service,
 driver/kernel, production-calibration/signing, pre-execution, and Defender-
 replacement risks remain as documented.
 
+## Checkpoint 2260 Threat Delta
+
+Before Checkpoint 2260, Local Core retained the Native Engine verdict SHA-256 in
+the visible threat result but recomputed the current path hash when constructing
+the quarantine request. `QuarantineStore` then ignored the supplied result hash
+and accepted its own current-path hash as authority. A writer or path replacement
+between scan and quarantine could therefore bind stale threat metadata to
+different bytes and report a successful mutation.
+
+Automatic quarantine now propagates the exact Native verdict SHA-256. The store
+rejects invalid hashes, result/selected-path mismatch, bytes that do not match
+the verdict when read from the already-opened single-link source, and open-
+handle/path identity mismatch before move. Copy fallback verifies destination
+bytes and rechecks the opened source against the path before removal. Every
+preflight mismatch leaves the current file in place, creates no finalized
+record, reports the error, and requires a rescan. Manual quarantine remains a
+distinct user action with a fresh bounded current-file hash snapshot.
+
+Guard already compared an expected process-observation SHA-256, but its hash
+helper reopened the path and the open single-link guard was not identity-bound
+to that path immediately before move. Guard now hashes the guarded handle,
+delays vault creation until the expected hash matches, and applies the same
+identity check before move and copy-source removal. It remains post-launch.
+
+Six harmless regressions, the existing exact-`288/288` platform, Local Core, and
+Guard quarantine verifier steps, validator scope, and Source contract 690 pin this
+boundary. No checkpoint-2260 test has run during scripting, so the threat delta
+is implemented but not yet verified.
+
+Residual risk is explicit. Identity comparison and the following path mutation
+are not one atomic cross-platform user-mode transaction. A privileged writer
+may race the last check and rename/removal; a post-move SHA-256 mismatch remains
+fail-visible and authenticated-recovery-journaled rather than successful. This
+does not resist administrators, SYSTEM, or kernel compromise and does not prove
+installed-service isolation, kernel mediation, pre-execution blocking,
+production detection quality, or Defender replacement.
+
 ## Checkpoint 2259 Threat Delta
 
 An adversarial regular file can advertise or grow to a very large size, forcing

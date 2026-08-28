@@ -10556,7 +10556,7 @@ def test_guard_quarantine_expected_hash_is_validated_before_payload_work():
     )
     assert (
         quarantine_source.index("let expected_sha256 = normalize_sha256(sha256)")
-        < quarantine_source.index("let source_sha256 = sha256_file(path)?")
+        < quarantine_source.index("let source_sha256 = sha256_open_guard_file(&source_link_guard, path)?")
     )
     assert (
         quarantine_source.index("let expected_sha256 = normalize_sha256(sha256)")
@@ -11471,10 +11471,10 @@ def test_local_quarantine_hash_input_is_byte_bounded():
     ]
 
     assert "const MAX_LOCAL_QUARANTINE_HASH_BYTES: u64 = 1024 * 1024 * 1024" in source
-    assert (
-        "let metadata = ensure_regular_quarantine_payload(path, \"quarantine hash input\")?"
-        in hash_source
-    )
+    assert "ensure_regular_quarantine_payload(path, \"quarantine hash input\")?" in hash_source
+    assert "sha256_for_open_file(&file, path)" in hash_source
+    assert "fn sha256_for_open_file(" in hash_source
+    assert "let metadata = file.metadata()" in hash_source
     assert "metadata.len() > MAX_LOCAL_QUARANTINE_HASH_BYTES" in hash_source
     assert "let mut total = 0_u64" in hash_source
     assert "checked_add(read as u64)" in hash_source
@@ -14572,7 +14572,11 @@ def test_guard_service_hash_input_is_byte_bounded():
     ]
 
     assert "const MAX_GUARD_HASH_BYTES: u64 = 1024 * 1024 * 1024" in guard
-    assert "let metadata = regular_guard_file_metadata(path, \"file to hash\")?" in hash_source
+    assert "regular_guard_file_metadata(path, \"file to hash\")?" in hash_source
+    assert "sha256_open_guard_file(&file, path)" in hash_source
+    assert "fn sha256_open_guard_file(" in hash_source
+    assert "let metadata = file" in hash_source
+    assert ".metadata()" in hash_source
     assert "metadata.len() > MAX_GUARD_HASH_BYTES" in hash_source
     assert "let mut total = 0_u64" in hash_source
     assert "checked_add(read as u64)" in hash_source
@@ -32050,6 +32054,179 @@ def test_checkpoint_2259_in_target_scan_inspection_resource_bounds_contract():
     assert "685.6s" in normalized_checkpoint
     assert "202,267-byte" in normalized_checkpoint
     assert "601d7eb11e5c6e09f917f4810f5d409f95b7ae15d2e8947c07b1eabcce482ab9" in normalized_checkpoint
+    normalized_dependencies = re.sub(r"\s+", " ", documents[-1]).lower()
+    assert "adds no dependency" in normalized_dependencies
+    assert "lockfile change" in normalized_dependencies
+
+
+def test_checkpoint_2260_scan_verdict_quarantine_binding_contract():
+    local_core = read(LOCAL_CORE_MAIN)
+    quarantine_store = read(LOCAL_QUARANTINE_STORE)
+    guard = read(GUARD_MAIN)
+    platform_security = read(PLATFORM_SECURITY)
+    verifier = read(SMALL_THREAT_MVP_VERIFIER)
+    validator = read(SMALL_THREAT_MVP_REPORT_VALIDATOR)
+    checkpoint = read(
+        ROOT
+        / "docs"
+        / "reports"
+        / "checkpoint-2260-scan-verdict-quarantine-binding.md"
+    )
+    documents = [
+        checkpoint,
+        read(RUN_LOG),
+        read(STATUS_DOC),
+        read(ROOT / "TESTING.md"),
+        read(ROOT / "docs" / "quarantine.md"),
+        read(ROOT / "docs" / "audit" / "engine-control-matrix.md"),
+        read(ROOT / "docs" / "audit" / "threat-model.md"),
+        read(ROOT / "docs" / "audit" / "known-blockers.md"),
+        read(DEPENDENCY_LICENSE_INVENTORY),
+    ]
+
+    local_production = local_core.split("#[cfg(test)]", 1)[0]
+    helper = local_production[
+        local_production.index("fn quarantine_selected_file("):
+        local_production.index("fn run_watch_poll_scan(")
+    ]
+    assert "expected_scan_sha256: Option<&str>" in helper
+    assert "Some(expected)" in helper
+    assert "sha256_for_file(path)?" in helper
+    assert "Hash-bound quarantine from an Avorax scan verdict" in helper
+    assert "Manual quarantine from Avorax UI" in helper
+    assert "quarantine_selected_file(&path, &threat_name, &engine, None)" in local_production
+    assert "Some(&threat.sha256)" in local_production
+
+    store_production = quarantine_store
+    quarantine = store_production[
+        store_production.index("pub fn quarantine_file(&self"):
+        store_production.index("fn write_finalization_journal(")
+    ]
+    for contract in [
+        "normalize_quarantine_sha256(&result.sha256)",
+        "infected scan result has an invalid SHA-256",
+        "result.scanned_path != original_path",
+        "scan-result path does not match the selected source; rescan required",
+        "sha256_for_open_file(&source_link_guard, path)?",
+        "source_sha256 != expected_sha256",
+        "changed after its scan verdict; rescan required before quarantine",
+        "ensure_path_matches_open_file(",
+        "quarantine source identity changed after scan; rescan required",
+    ]:
+        assert contract in quarantine
+    assert quarantine.index("source_sha256 != expected_sha256") < quarantine.index(
+        "self.ensure_base_directory()?"
+    )
+    assert quarantine.index("ensure_path_matches_open_file(") < quarantine.index(
+        "fs::rename(path, &quarantine_path)"
+    )
+    copy_fallback = store_production[
+        store_production.index("fn copy_then_remove_verified("):
+        store_production.index("fn ensure_quarantine_payload_destination_absent(")
+    ]
+    assert "ensure_path_matches_open_file(" in copy_fallback
+    assert copy_fallback.index("ensure_path_matches_open_file(") < copy_fallback.index(
+        "fs::remove_file(source)"
+    )
+
+    platform_production = platform_security.split("#[cfg(test)]", 1)[0]
+    assert "pub fn ensure_path_matches_open_file(" in platform_production
+    assert "open_file_identity(file, path, label)?" in platform_production
+    assert "path now identifies a different file" in platform_production
+    assert "metadata.dev(), metadata.ino()" in platform_production
+    assert "info.dwVolumeSerialNumber" in platform_production
+    assert "info.nFileIndexHigh" in platform_production
+    assert "info.nFileIndexLow" in platform_production
+
+    guard_quarantine = guard[
+        guard.index("fn quarantine_file("):
+        guard.index("#[allow(dead_code)]\nfn reject_symlink_source(")
+    ]
+    for contract in [
+        "sha256_open_guard_file(&source_link_guard, path)?",
+        "quarantine source hash changed before move; rescan required",
+        "ensure_path_matches_open_file(",
+        "guard quarantine source identity changed after scan; rescan required",
+    ]:
+        assert contract in guard_quarantine
+    assert guard_quarantine.index("source_sha256_body != expected_sha256") < guard_quarantine.index(
+        "ensure_quarantine_base_directory_path(&base)?"
+    )
+    assert guard_quarantine.index("ensure_path_matches_open_file(") < guard_quarantine.index(
+        "fs::rename(path, &destination)"
+    )
+    guard_copy = guard[
+        guard.index("fn copy_then_remove_verified("):
+        guard.index("fn ensure_quarantine_payload_destination_absent(")
+    ]
+    assert "ensure_path_matches_open_file(" in guard_copy
+    assert guard_copy.index("ensure_path_matches_open_file(") < guard_copy.index(
+        "fs::remove_file(source)"
+    )
+    guard_hash = guard[
+        guard.index("fn sha256_file("):
+        guard.index("fn normalize_sha256(")
+    ]
+    assert "fn sha256_open_guard_file(" in guard_hash
+    assert "let metadata = file" in guard_hash
+    assert ".metadata()" in guard_hash
+    assert "guard_quarantine_rejects_changed_source_hash" in guard
+
+    for marker in [
+        "scan_quarantine_binding_accepts_unchanged_open_file_identity",
+        "scan_quarantine_binding_rejects_replaced_open_file_identity",
+        "scan_quarantine_binding_rejects_changed_payload_without_vault_mutation",
+        "scan_quarantine_binding_rejects_invalid_verdict_hash_without_vault_mutation",
+        "scan_quarantine_binding_rejects_mismatched_verdict_path_without_vault_mutation",
+        "scan_quarantine_binding_changed_payload_is_visible_and_preserved",
+    ]:
+        assert marker in platform_security or marker in quarantine_store or marker in local_core
+
+    assert "platform quarantine permission regressions" in verifier
+    assert "local-core quarantine metadata regressions" in verifier
+    assert "guard-service quarantine metadata regressions" in verifier
+    assert '"quarantine"' in verifier
+    assert "if ($steps.Count -ne 288)" in validator
+    assert "expected exactly 288 verifier steps" in validator
+    for scope in [
+        "Local Core and Guard automatic quarantine carry the exact originating scan SHA-256 into their quarantine boundary",
+        "matching bytes from the already-opened single-link source, and matching open-handle/path identity before mutation",
+        "A changed, replaced, malformed, or mismatched source remains in place with a visible rescan-required error and no finalized quarantine record",
+        "Local Core requires an infected result and matching selected path; both paths require a valid expected SHA-256",
+        "Manual Local Core quarantine takes a fresh bounded hash snapshot and crosses the same store boundary",
+        "Copied payloads are hash-verified before source removal and path identity is rechecked immediately before removal",
+    ]:
+        assert scope in verifier
+        assert scope in validator
+    for limit in [
+        "Scan-verdict quarantine binding is user-mode and path-based",
+        "cannot atomically prevent a privileged writer or a final path swap after the last identity check and before rename or removal on every supported filesystem",
+        "Such failures remain visible or recovery-journaled",
+    ]:
+        assert limit in verifier
+        assert limit in validator
+
+    for document in documents:
+        normalized = re.sub(r"\s+", " ", document)
+        assert "Checkpoint 2260" in normalized
+        assert "SHA-256" in normalized
+        assert "rescan" in normalized.lower()
+    normalized_checkpoint = re.sub(r"\s+", " ", checkpoint)
+    assert "Status: **Implementation-head local and hosted verification complete; merge and destination integration pending**" in normalized_checkpoint
+    assert "No checkpoint-2260 test ran during the initial scripting phase" in normalized_checkpoint
+    assert "Source contract 690" in normalized_checkpoint
+    assert "passed exactly `288/288` in `651.3s`" in normalized_checkpoint
+    assert "3011587770e133542bf6f007f7213130722d9ff0fbd1e22af65d7b64ba23433b" in normalized_checkpoint
+    assert "Adversarial copies missing either the checkpoint verified scope" in normalized_checkpoint
+    for hosted_marker in [
+        "864bfddd14f8dfd9710878b15388fad4a3ee8e07",
+        "33171430624",
+        "33171402684",
+        "33171430602",
+        "569-component lockfile SBOM",
+        "Both `Publish desktop beta prerelease` jobs were skipped",
+    ]:
+        assert hosted_marker in normalized_checkpoint
     normalized_dependencies = re.sub(r"\s+", " ", documents[-1]).lower()
     assert "adds no dependency" in normalized_dependencies
     assert "lockfile change" in normalized_dependencies

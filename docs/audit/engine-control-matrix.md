@@ -5705,3 +5705,25 @@ preemption of entered OS/trust/kernel calls remains **Technically limited**;
 installed-service, signed-driver/kernel, production-calibration/signing,
 pre-execution, and Defender-replacement rows remain partial, blocked, limited,
 or unclaimed. Checkpoint 2259 is closed; the complete goal remains active.
+
+## Checkpoint 2260 - Scan Verdict Quarantine Binding
+
+| Control / engine responsibility | Status | Scripted evidence and boundary |
+| --- | --- | --- |
+| Native verdict to Local Core automatic-quarantine wiring | **Scripted; verification pending** | The exact Native verdict SHA-256 is passed into `quarantine_selected_file`; manual quarantine deliberately takes a fresh bounded snapshot. Source contract 690 and the Local Core harmless regression account for both branches. |
+| Local Core quarantine admission | **Scripted; verification pending** | Requires infected status, valid expected SHA-256, exact result/selected path, already-opened single-link source bytes matching the verdict, and no vault mutation on mismatch. Changed or malformed input remains in place with a rescan-required error. |
+| Guard post-launch quarantine admission | **Scripted; verification pending** | Guard retains its exact expected process-observation SHA-256, now hashes the already-opened single-link source, delays vault creation until it matches, and checks handle/path identity before move and copy-source removal. This adds no pre-execution claim. |
+| Cross-platform source identity | **Scripted; verification pending** | Unix device/inode and Windows volume serial/file index bind the opened source to the selected path immediately before move; copy fallback repeats the identity check before source removal. Two harmless platform regressions cover stable and replaced paths. |
+| Quarantine payload/finalization integrity | **Existing verified control; regression pending** | Existing copy and final payload SHA-256 checks, protected permissions, authenticated finalization journal, HMAC metadata, atomic writes, and recovery remain unchanged and are exercised by the existing quarantine suite. |
+| Atomic prevention of every final path race | **Technically limited** | User-mode path checks cannot make the final identity-check-plus-rename/removal transaction atomic on every filesystem or defeat administrators, SYSTEM, or kernel compromise. Mismatch remains fail-visible or recovery-journaled. |
+
+Checkpoint 2260 adds no detection engine and changes no signature, rule,
+heuristic, static, archive, Authenticode, ML, process-observation, allowlist, or
+verdict-aggregation responsibility. It binds the existing quarantine action to
+the detected content. Six harmless `scan_quarantine_binding_` regressions,
+existing definitive platform/Local Core/Guard quarantine steps at exact `288/288`,
+strict validator scope, and Source contract 690 are scripted. No checkpoint-
+2260 test has run yet; a changed file requires a visible rescan. Installed-
+service, signed-driver/kernel, production-calibration/signing, pre-execution,
+Defender-replacement, and privileged final-race claims remain blocked, partial,
+limited, or unclaimed.

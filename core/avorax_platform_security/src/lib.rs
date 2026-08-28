@@ -18,6 +18,61 @@ pub fn ensure_open_file_has_single_link(file: &fs::File, path: &Path, label: &st
     Ok(())
 }
 
+pub fn ensure_path_matches_open_file(file: &fs::File, path: &Path, label: &str) -> Result<()> {
+    let current = fs::File::open(path)
+        .with_context(|| format!("failed to reopen {label} {}", path.display()))?;
+    if open_file_identity(file, path, label)? != open_file_identity(&current, path, label)? {
+        return Err(anyhow!(
+            "refusing to use {label} {} because its path now identifies a different file",
+            path.display()
+        ));
+    }
+    Ok(())
+}
+
+#[cfg(unix)]
+fn open_file_identity(file: &fs::File, path: &Path, label: &str) -> Result<(u64, u64)> {
+    use std::os::unix::fs::MetadataExt;
+
+    let metadata = file
+        .metadata()
+        .with_context(|| format!("failed to identify opened {label} {}", path.display()))?;
+    if !metadata.is_file() {
+        return Err(anyhow!("opened {label} {} is not a file", path.display()));
+    }
+    Ok((metadata.dev(), metadata.ino()))
+}
+
+#[cfg(windows)]
+fn open_file_identity(file: &fs::File, path: &Path, label: &str) -> Result<(u32, u64)> {
+    use std::os::windows::io::AsRawHandle;
+    use windows_sys::Win32::Storage::FileSystem::{
+        GetFileInformationByHandle, BY_HANDLE_FILE_INFORMATION,
+    };
+
+    let handle = file.as_raw_handle() as windows_sys::Win32::Foundation::HANDLE;
+    let mut info = BY_HANDLE_FILE_INFORMATION::default();
+    if unsafe { GetFileInformationByHandle(handle, &mut info) } == 0 {
+        return Err(std::io::Error::last_os_error())
+            .with_context(|| format!("failed to identify opened {label} {}", path.display()));
+    }
+    if info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY != 0 {
+        return Err(anyhow!("opened {label} {} is not a file", path.display()));
+    }
+    Ok((
+        info.dwVolumeSerialNumber,
+        (u64::from(info.nFileIndexHigh) << 32) | u64::from(info.nFileIndexLow),
+    ))
+}
+
+#[cfg(not(any(unix, windows)))]
+fn open_file_identity(_file: &fs::File, path: &Path, label: &str) -> Result<(u64, u64)> {
+    Err(anyhow!(
+        "file identity inspection is unsupported for {label} {} on this platform",
+        path.display()
+    ))
+}
+
 #[cfg(unix)]
 fn open_file_link_count(file: &fs::File, path: &Path, label: &str) -> Result<u64> {
     use std::os::unix::fs::MetadataExt;
@@ -859,6 +914,33 @@ fn combine_result_and_cleanup<T>(result: Result<T>, cleanup: Result<()>, label: 
 mod tests {
     use super::*;
     use std::fs;
+
+    #[test]
+    fn scan_quarantine_binding_accepts_unchanged_open_file_identity() {
+        let root = tempfile::tempdir().unwrap();
+        let path = root.path().join("unchanged.bin");
+        fs::write(&path, b"harmless identity fixture").unwrap();
+        let opened = fs::File::open(&path).unwrap();
+
+        ensure_path_matches_open_file(&opened, &path, "fixture source").unwrap();
+    }
+
+    #[test]
+    fn scan_quarantine_binding_rejects_replaced_open_file_identity() {
+        let root = tempfile::tempdir().unwrap();
+        let path = root.path().join("candidate.bin");
+        let displaced = root.path().join("displaced.bin");
+        fs::write(&path, b"harmless scanned fixture").unwrap();
+        let opened = fs::File::open(&path).unwrap();
+        fs::rename(&path, &displaced).unwrap();
+        fs::write(&path, b"harmless replacement fixture").unwrap();
+
+        let error = ensure_path_matches_open_file(&opened, &path, "fixture source").unwrap_err();
+
+        assert!(format!("{error:#}").contains("path now identifies a different file"));
+        assert_eq!(fs::read(&path).unwrap(), b"harmless replacement fixture");
+        assert_eq!(fs::read(&displaced).unwrap(), b"harmless scanned fixture");
+    }
 
     #[test]
     fn quarantine_directory_preflight_accepts_only_vault_shaped_files() {
