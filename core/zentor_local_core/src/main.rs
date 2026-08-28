@@ -74,6 +74,7 @@ const MAX_CORE_IPC_MODE_CHARS: usize = 64;
 const MAX_CORE_IPC_LABEL_CHARS: usize = 128;
 const MAX_CORE_IPC_ENGINE_CHARS: usize = 128;
 const MAX_CORE_IPC_THREAT_NAME_CHARS: usize = 256;
+const MAX_CORE_IPC_SHA256_CHARS: usize = 71;
 const MAX_CORE_IPC_NOTE_CHARS: usize = 4096;
 const MAX_RANSOMWARE_ACTIVITY_RENAMED_COUNT: u32 = 100_000;
 const MAX_RANSOMWARE_ACTIVITY_TIME_WINDOW_SECONDS: u32 = 3_600;
@@ -648,7 +649,21 @@ fn handle(command: CoreCommand) -> serde_json::Value {
                     Ok(None) => "zentor-manual-review".to_string(),
                     Err(error) => return json!({"ok": false, "error": error.to_string()}),
                 };
-            match quarantine_selected_file(&path, &threat_name, &engine, None) {
+            let expected_scan_sha256 = match command.sha256 {
+                None => None,
+                Some(value) => {
+                    match required_core_ipc_text(Some(value), "sha256", MAX_CORE_IPC_SHA256_CHARS) {
+                        Ok(value) => Some(value),
+                        Err(error) => return json!({"ok": false, "error": error.to_string()}),
+                    }
+                }
+            };
+            match quarantine_selected_file(
+                &path,
+                &threat_name,
+                &engine,
+                expected_scan_sha256.as_deref(),
+            ) {
                 Ok(record) => json!({"ok": true, "record": record}),
                 Err(error) => json!({"ok": false, "error": error.to_string()}),
             }
@@ -10104,6 +10119,118 @@ placeholder
         assert!(format!("{error:#}").contains("rescan required"));
         assert_eq!(fs::read(&file).unwrap(), b"harmless replacement bytes");
         assert!(!quarantine_base.exists());
+    }
+
+    #[test]
+    fn manual_threat_quarantine_binding_ipc_rejects_changed_payload_without_vault_mutation() {
+        let dir = tempdir().unwrap();
+        let file = dir.path().join("candidate.bin");
+        let quarantine_base = dir.path().join("Quarantine");
+        fs::write(&file, b"harmless scanned bytes").unwrap();
+        let expected_sha256 = sha256_for_file(&file).unwrap();
+        fs::write(&file, b"harmless replacement bytes").unwrap();
+        let _quarantine_override =
+            quarantine::override_test_quarantine_base(quarantine_base.clone());
+        let mut command = test_core_command("quarantine_file");
+        command.path = Some(file.display().to_string());
+        command.threat_name = Some("Harmless fixture detection".to_string());
+        command.engine = Some("Avorax Native Engine".to_string());
+        command.sha256 = Some(expected_sha256);
+
+        let response = handle(command);
+
+        assert_eq!(response["ok"], false);
+        let error = response["error"].as_str().unwrap();
+        assert!(error.contains("changed after its scan verdict"));
+        assert!(error.contains("rescan required"));
+        assert_eq!(fs::read(&file).unwrap(), b"harmless replacement bytes");
+        assert!(!quarantine_base.exists());
+    }
+
+    #[test]
+    fn manual_threat_quarantine_binding_ipc_accepts_matching_scan_sha256() {
+        let dir = tempdir().unwrap();
+        let file = dir.path().join("candidate.bin");
+        let quarantine_base = dir.path().join("Quarantine");
+        fs::write(&file, b"harmless unchanged scanned bytes").unwrap();
+        let expected_sha256 = sha256_for_file(&file).unwrap();
+        let _quarantine_override =
+            quarantine::override_test_quarantine_base(quarantine_base.clone());
+        let mut command = test_core_command("quarantine_file");
+        command.path = Some(file.display().to_string());
+        command.threat_name = Some("Harmless fixture detection".to_string());
+        command.engine = Some("Avorax Native Engine".to_string());
+        command.sha256 = Some(expected_sha256.clone());
+
+        let response = handle(command);
+
+        assert_eq!(response["ok"], true, "{response:#}");
+        let expected_record_sha256 = format!("sha256:{expected_sha256}");
+        assert_eq!(response["record"]["sha256"], expected_record_sha256);
+        assert!(!file.exists());
+        assert!(quarantine_base.exists());
+    }
+
+    #[test]
+    fn manual_threat_quarantine_binding_manual_picker_without_hash_keeps_fresh_snapshot() {
+        let dir = tempdir().unwrap();
+        let file = dir.path().join("manual.bin");
+        let quarantine_base = dir.path().join("Quarantine");
+        fs::write(&file, b"harmless explicitly selected bytes").unwrap();
+        let expected_sha256 = sha256_for_file(&file).unwrap();
+        let _quarantine_override =
+            quarantine::override_test_quarantine_base(quarantine_base.clone());
+        let mut command = test_core_command("quarantine_file");
+        command.path = Some(file.display().to_string());
+        command.threat_name = Some("Manual quarantine".to_string());
+        command.engine = Some("avorax-ui-manual-quarantine".to_string());
+
+        let response = handle(command);
+
+        assert_eq!(response["ok"], true, "{response:#}");
+        let expected_record_sha256 = format!("sha256:{expected_sha256}");
+        assert_eq!(response["record"]["sha256"], expected_record_sha256);
+        assert!(!file.exists());
+        assert!(quarantine_base.exists());
+    }
+
+    #[test]
+    fn manual_threat_quarantine_binding_ipc_bounds_scan_sha256_before_store_access() {
+        let dir = tempdir().unwrap();
+        let file = dir.path().join("candidate.bin");
+        let quarantine_base = dir.path().join("Quarantine");
+        fs::write(&file, b"harmless unchanged scanned bytes").unwrap();
+        let _quarantine_override =
+            quarantine::override_test_quarantine_base(quarantine_base.clone());
+
+        for (sha256, expected_error) in [
+            ("   ".to_string(), "sha256 is required"),
+            (
+                "a".repeat(MAX_CORE_IPC_SHA256_CHARS + 1),
+                "sha256 exceeds maximum length",
+            ),
+            (
+                format!("{}\0", "a".repeat(64)),
+                "sha256 contains a NUL byte",
+            ),
+            ("g".repeat(64), "invalid SHA-256"),
+        ] {
+            let mut command = test_core_command("quarantine_file");
+            command.path = Some(file.display().to_string());
+            command.threat_name = Some("Harmless fixture detection".to_string());
+            command.engine = Some("Avorax Native Engine".to_string());
+            command.sha256 = Some(sha256);
+
+            let response = handle(command);
+
+            assert_eq!(response["ok"], false);
+            assert!(response["error"].as_str().unwrap().contains(expected_error));
+            assert_eq!(
+                fs::read(&file).unwrap(),
+                b"harmless unchanged scanned bytes"
+            );
+            assert!(!quarantine_base.exists());
+        }
     }
 
     #[test]

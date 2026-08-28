@@ -4,6 +4,79 @@
 
 Lead-engineer product-hardening pass across the Avorax repository. Goal is to move Avorax toward a professional, reliable, secure, honest endpoint protection product through documented architecture, prioritized backlog, tests, and incremental implementation.
 
+## 2026-08-28 Checkpoint 2261 scripting
+
+- Audited the confirmed `Quarantine` action on a visible scan-result threat row
+  after closing checkpoint 2260. The Flutter request omitted the verdict
+  SHA-256, so Local Core deliberately entered its fresh manual-snapshot branch;
+  changed bytes could be quarantined under stale row metadata. Client success
+  validation also did not bind the returned record to the requested path/hash.
+- Scripted the exact threat SHA-256 over bounded strict `quarantine_file` IPC,
+  routed present evidence through the existing open-handle quarantine boundary,
+  and made Flutter reject success records with a different original path or
+  SHA-256. Empty, oversized, NUL-bearing, malformed, changed, or mismatched evidence
+  remains fail-visible and cannot create or mutate the vault.
+- Preserved the distinct confirmed `Quarantine file` picker: it has no prior
+  verdict, omits `sha256`, and takes a fresh bounded current-file snapshot.
+- Scripted four harmless Local Core regressions, Flutter request/response IPC
+  regressions, definitive verifier step 289, exact-289 validator and scope
+  checks, Source contract 691, audit/threat/dependency docs, and this checkpoint
+  report as one complete pre-test batch.
+- No checkpoint-2261 test ran during scripting. Focused, broad, definitive,
+  adversarial, hosted, merge, guarded-sync, and destination execution begins
+  only after the complete batch. No live malware, EICAR file, Defender change,
+  install, service/driver start, release, publication, or protected-vault
+  mutation is involved.
+
+## 2026-08-28 Checkpoint 2261 local verification
+
+- After the complete scripting batch froze, focused Local Core execution first
+  found two test-only expectations missing the established `sha256:` record
+  prefix; compilation and the other two tests passed. Corrected assertions then
+  passed `4/4`. Flutter manual-quarantine IPC passed `3/3` immediately.
+- Source contracts first passed `689/691`; two stale source-contract
+  expectations were corrected, then Source passed `691/691`. Broader Local Core
+  quarantine `137/137`, Flutter IPC `94/94`, offline controller `27/27`, strict
+  all-feature Local Core Clippy, both locked workspace suites, and the locked
+  all-feature release build passed.
+- Full local totals include Platform `11/11`, Local Core `572/572`, Native Engine
+  `640/640` plus 21 intentional child-fixture ignores, Native compiler `6/6`,
+  Flutter analyze with no issues and `849/849`, Zentor protocol `14/14`, and
+  Avorax protocol analyze plus `6/6`.
+- Definitive no-skip/no-Defender verification passed exact `289/289`, zero
+  failures/skips, in `659.6s`. The 213,157-byte report SHA-256 is
+  `0074fd8b38a7edf01c132b4ac3ec0d6a8428ad738ebaaf09c985b4ccb59274a8`.
+  Integrated and independent Windows PowerShell 5.1/PowerShell 7 validators
+  accepted it. Both hosts rejected missing-scope and missing-step adversarial
+  copies; retained result SHA-256 is
+  `52572e56b14600e371427faa9cf58023ae30ee6bacbc077e943dc8d01f4ebd58`.
+- Root Cargo, standalone Native Cargo, and Flutter lock hashes remain exact.
+  The protected vault remains `16072` files, `0` directories, `4522733` bytes,
+  `5357` each payload/JSON/auth records, one metadata key, and zero pending.
+  Hosted exact-head, PR/merge, guarded synchronization, and destination evidence
+  remain pending; the checkpoint and full goal remain active.
+
+## 2026-08-28 Checkpoint 2261 hosted implementation-head evidence
+
+- Implementation commit `0f223dacf412876f3c0da27b3207fc23aa605741`
+  is the exact head of PR `#131`. Avorax CI `33187857398` passed all five jobs.
+- Desktop Packages dispatch `33187853083` and PR `33187857457` passed package
+  contracts, Windows MSI/setup EXE, Linux DEB/tar, macOS x64/arm64 DMGs, and
+  consolidation. Automatic push run `33187798963` attempt 1 was cancelled by
+  branch concurrency after the explicit dispatch; attempt 2 passed the same
+  full matrix on the exact head. The first attempt is not called a pass.
+- All three publication jobs were skipped. Consolidated artifacts
+  `9693158463`/`9693163466`/`9693831394` have exact ZIP SHA-256 values
+  `ac42a24680f72996ffe29ba3c4b45542a028eb74a096917f7f6b0693dc1c086c`,
+  `445195d629f5a06af300bd369784f98cae45f1f7b75bf522326988d47a5b24a6`,
+  and
+  `87958194aa4103cd42ff4b436e4471487e3e3d04fd3393329f98bb5507f6ff37`.
+- Bounded in-stream review, without extraction or execution, passed exact
+  8-entry/6-platform/7-checksum/CycloneDX 1.6/569-component evidence in each
+  bundle. The retained validation result SHA-256 is
+  `b87c19f39bc9e75fb42c5caf4c02fccb7cc28a12108d5262ad8e22a931a5f3a5`.
+  Merge, merged-main, guarded-sync, and destination evidence remain pending.
+
 ## 2026-08-28 Checkpoint 2260 scripting
 
 - Audited the Native-verdict-to-Local-Core quarantine path. Local Core previously

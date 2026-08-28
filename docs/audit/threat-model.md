@@ -3959,3 +3959,40 @@ incomplete-result honesty are verified in the synchronized tree. Residual hard
 preemption of entered OS/trust/kernel calls, exact I/O/syscall/kernel/CPU/RAM
 accounting, installed-service, driver/kernel, production-calibration/signing,
 pre-execution, and Defender-replacement risks remain as documented.
+
+## Checkpoint 2261 Threat Delta
+
+A user may leave a scan-result row visible while another process rewrites or
+replaces its path. Before checkpoint 2261, clicking that row's confirmed
+`Quarantine` action omitted the verdict SHA-256. Local Core then took a fresh
+manual snapshot and could move different current bytes while retaining the
+stale threat name and engine. A malformed local success response could also
+name another valid quarantine record because Flutter checked status but not the
+request path/hash.
+
+The scripted mitigation sends the exact row SHA-256 through bounded strict IPC.
+Present evidence must be non-empty and uses the existing checkpoint-2260
+open-handle hash, single-link,
+selected-path, platform identity, copy-verification, and authenticated
+finalization boundary. Changed, oversized, NUL-bearing, malformed, or mismatched
+evidence fails before vault mutation and requires a rescan. Flutter independently
+requires matching original path and, for threat rows, matching normalized
+SHA-256 before accepting action success or changing visible/audit state.
+
+The separately confirmed file-picker action intentionally has no earlier
+detection identity. It omits SHA-256 and quarantines only the current selected
+regular single-link file after a fresh bounded snapshot. That explicit action is
+not represented as a new malware verdict.
+
+Four harmless Local Core regressions, Flutter request/response regressions,
+verifier step 289, exact-289 dual-host validator contracts, and Source contract
+691 pass locally. Definitive no-skip/no-Defender verification passes `289/289`
+in `659.6s`; both PowerShell hosts accept the authentic report and reject the
+missing-scope and missing-step variants. Exact implementation-head CI and
+Desktop source/package workflows also pass with publication skipped. The
+residual final-check/path-mutation
+race is unchanged: user mode cannot provide a portable atomic transaction or
+resist administrators, SYSTEM, or kernel compromise. Installed UI/service E2E,
+integration/destination evidence, driver/kernel mediation, pre-execution
+blocking, production accuracy, secure erase, and Defender replacement remain
+partial, blocked, limited, or unclaimed.

@@ -718,6 +718,7 @@ class LocalCoreClient {
       'path': threat.path,
       'threat_name': threat.threatName,
       'engine': threat.engine,
+      'sha256': threat.sha256,
     });
     return _actionResult(
       response,
@@ -725,6 +726,8 @@ class LocalCoreClient {
       successEvidenceError: (response) => _quarantineActionEvidenceError(
         response,
         expectedStatus: QuarantineItemStatus.quarantined,
+        expectedOriginalPath: threat.path,
+        expectedSha256: threat.sha256,
       ),
     );
   }
@@ -746,6 +749,7 @@ class LocalCoreClient {
       successEvidenceError: (response) => _quarantineActionEvidenceError(
         response,
         expectedStatus: QuarantineItemStatus.quarantined,
+        expectedOriginalPath: path,
       ),
     );
   }
@@ -1929,6 +1933,8 @@ if ($service.Status -ne 'Running') {
     Map<String, Object?> response, {
     required QuarantineItemStatus expectedStatus,
     String? expectedId,
+    String? expectedOriginalPath,
+    String? expectedSha256,
   }) {
     final recordJson = _actionEvidenceObject(response['record']);
     if (recordJson == null) {
@@ -1943,6 +1949,17 @@ if ($service.Status -ne 'Running') {
     }
     if (expectedId != null && record.quarantineId != expectedId) {
       return 'the quarantine record identifier did not match the request.';
+    }
+    if (expectedOriginalPath != null &&
+        record.originalPath != expectedOriginalPath) {
+      return 'the quarantine record original path did not match the request.';
+    }
+    if (expectedSha256 != null) {
+      final normalizedExpectedSha256 = _normalizedSha256(expectedSha256);
+      if (normalizedExpectedSha256 == null ||
+          record.sha256 != normalizedExpectedSha256) {
+        return 'the quarantine record SHA-256 did not match the request.';
+      }
     }
     return null;
   }

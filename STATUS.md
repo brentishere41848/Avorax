@@ -4,6 +4,37 @@
 
 Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-install, repair, recovery, offline, and manual-install paths only. Normal app updates target signed `.aup` packages applied by Avorax Update Service.
 
+- Current Checkpoint 2261 local verification: confirmed quarantine from a visible
+  scan-result threat row now sends that row's exact SHA-256 through bounded
+  Local Core IPC. Present evidence crosses checkpoint 2260's existing
+  open-handle hash/path-identity store boundary; empty, oversized, NUL-bearing,
+  malformed, changed, or mismatched present input fails before vault mutation and
+  requires a rescan. Flutter also rejects success records whose original path
+  or SHA-256 does not match the request, preventing false quarantined state or
+  success history. The separate confirmed `Quarantine file` picker intentionally
+  omits prior-verdict SHA-256 and keeps a fresh bounded snapshot. Four harmless
+  Local Core tests, Flutter IPC tests, verifier step 289, exact-289 validator,
+  Source contract 691, and audit/dependency docs are implemented. Focused Local
+  Core passes `4/4`, quarantine `137/137`, Flutter IPC `94/94`, offline
+  controller `27/27`, Source `691/691`, strict all-feature Clippy, both locked
+  workspaces, and the locked all-feature release build pass. Full totals include
+  Local Core `572/572`, Native `640/640` plus 21 intentional fixture ignores,
+  Flutter `849/849`, Zentor protocol `14/14`, and Avorax protocol `6/6`.
+  Definitive no-skip/no-Defender verification passes exact `289/289` in
+  `659.6s`; its 213,157-byte report SHA-256 is
+  `0074fd8b38a7edf01c132b4ac3ec0d6a8428ad738ebaaf09c985b4ccb59274a8`.
+  Dual-host authentic and four adversarial validator outcomes pass. Locks and
+  the exact protected vault are unchanged. Implementation head `0f223dac`
+  passes Avorax CI `33187857398`, Desktop dispatch/PR
+  `33187853083`/`33187857457`, and Desktop push `33187798963` attempt 2; push
+  attempt 1 was concurrency-cancelled and is not called a pass. All publication
+  jobs were skipped. Three consolidated bundles pass bounded non-extracting
+  8-entry/6-platform/7-checksum/CycloneDX 1.6/569-component review. Integration,
+  guarded synchronization, and destination evidence remain pending. User-mode
+  final path races, installed-service/driver proof, pre-execution blocking,
+  production accuracy, and Defender replacement remain partial, blocked,
+  technically limited, or unclaimed; the checkpoint and complete antivirus-
+  hardening goal remain active.
 - Current Checkpoint 2260 closure: automatic quarantine now carries the exact
   Native verdict SHA-256 into Local Core's quarantine store. Guard likewise
   hashes its already-opened source and binds it to the selected path. Both reject

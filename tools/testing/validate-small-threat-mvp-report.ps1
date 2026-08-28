@@ -1951,8 +1951,8 @@ if ($RequireFullSuite) {
   if ($skipFlutter -or $skipRust) {
     throw "-RequireFullSuite requires skip_flutter=false and skip_rust=false."
   }
-  if ($steps.Count -ne 288) {
-    throw "-RequireFullSuite expected exactly 288 verifier steps for this source revision, found $($steps.Count)."
+  if ($steps.Count -ne 289) {
+    throw "-RequireFullSuite expected exactly 289 verifier steps for this source revision, found $($steps.Count)."
   }
   if ($steps[0].name -ne "local-core safe simulator scan reporting") {
     throw "-RequireFullSuite first step mismatch: $($steps[0].name)"
@@ -2101,6 +2101,10 @@ if ($RequireFullSuite) {
   Assert-ReportScopeContains $verifiedScopeText "A changed, replaced, malformed, or mismatched source remains in place with a visible rescan-required error and no finalized quarantine record" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "Manual Local Core quarantine takes a fresh bounded hash snapshot and crosses the same store boundary" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "Copied payloads are hash-verified before source removal and path identity is rechecked immediately before removal" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "confirmed quarantine from a visible scan-result threat row sends that row's exact SHA-256 through bounded Local Core IPC" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Local Core rejects empty, oversized, NUL-bearing, malformed, changed, or mismatched evidence before vault mutation" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Flutter client rejects success records whose original path or SHA-256 does not match the request" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "separate confirmed Quarantine file picker intentionally omits prior-verdict SHA-256 and takes a fresh bounded current-file snapshot" "verification_scope.verified"
   Assert-ReportScopeContains $technicalLimitText "Filesystem enumeration and metadata probes are cooperative, not preemptive; one operating-system directory read or metadata call plus one at-most-128-entry chunk can complete before cancellation is observed" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "Priority bucketing is cooperative rather than preemptive, so one at-most-128-path classification chunk can complete before cancellation is observed" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "The encoded path-payload cap excludes Vec, PathBuf, and allocator overhead; priority bucketing transiently owns the source path vector and destination bucket allocations" "verification_scope.technically_limited"
@@ -2253,6 +2257,7 @@ if ($RequireFullSuite) {
   Assert-ReportContainsStep $steps "Release host prerequisite ready-or-blocked evidence"
   Assert-ReportContainsStep $steps "Flutter shell notification priority tests"
   Assert-ReportContainsStep $steps "Flutter manual quarantine IPC tests"
+  Assert-ReportContainsStep $steps "local-core manual threat quarantine hash-binding regressions"
   Assert-ReportContainsStep $steps "Flutter update controller/UI tests"
   Assert-ReportContainsStep $steps "Flutter watch-poll IPC diagnostics tests"
   Assert-ReportContainsStep $steps "Flutter watch-poll loop controller tests"

@@ -2265,3 +2265,37 @@ Native, and Flutter locks remain exact after guarded `13/13` synchronization and
 definitive `288/288`. Checkpoint 2259 adds no dependency or lockfile change and
 is closed; final-binary legal/notice provenance, production signing/
 notarization, enterprise approval, and release approval remain separate.
+
+## Checkpoint 2261 Dependency Delta
+
+Checkpoint 2261 adds no dependency, feature, package source, license class,
+downloaded runtime, machine-wide component, or lockfile change. Manual
+scan-result quarantine reuses the existing strict JSON `sha256` command field,
+`ThreatResult.sha256`, Local Core non-empty text validation and bounds,
+quarantine-store SHA-256 and
+open-handle identity checks, and Flutter action-evidence parser. The separate
+file-picker action keeps its existing fresh snapshot path.
+
+Four Local Core and three Flutter harmless temporary-fixture regressions add no
+binary fixture and execute no candidate content. Verifier step 289, exact-289
+validation, Source contract `691/691`, both locked workspace suites, the locked
+all-feature release build, Flutter/protocol suites, and definitive `289/289`
+pass locally. Root Cargo, standalone Native Cargo, and Flutter lock SHA-256
+values remain respectively
+`7c7c8aa006c2ac80eb89fa64d3b8ec09b32b26598b1a85bceb3c2af5a2d20e39`,
+`7f4393c81896600c4a5e84cad288a1a5360eccbc1c458b38f615082f66391383`, and
+`4de19695f9207273746341ca2221541b5b86d9f72af83727afca78541e177694`.
+No tracked lockfile changed. Final-binary legal/notice provenance, production
+signing/notarization, enterprise deployment approval, and release approval
+remain separate. No package was downloaded, installed, released, or published
+during scripting; verification resolved only the already pinned project graph
+and installed no machine-wide component.
+
+Exact implementation-head Desktop dispatch `33187853083`, PR `33187857457`,
+and push `33187798963` attempt 2 pass dependency/SBOM and complete package gates;
+push attempt 1 is retained as concurrency-cancelled rather than a pass. All
+publication jobs were skipped. Consolidated artifacts `9693158463`,
+`9693163466`, and `9693831394` each pass bounded in-stream review with one
+CycloneDX 1.6 lockfile SBOM containing exactly 569 components, six platform
+files, and seven independently matching checksum rows. No archive entry was
+extracted or executed.

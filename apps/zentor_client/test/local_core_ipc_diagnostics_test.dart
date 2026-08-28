@@ -3704,7 +3704,8 @@ Future<void> main() async {
   final ok = command['command'] == 'quarantine_file' &&
       command['path'] == 'C:/Users/Brent/Downloads/manual.bin' &&
       command['threat_name'] == 'Manual quarantine' &&
-      command['engine'] == 'avorax-ui-manual-quarantine';
+      command['engine'] == 'avorax-ui-manual-quarantine' &&
+      !command.containsKey('sha256');
   print(jsonEncode(<String, Object?>{
     'ok': ok,
     if (ok)
@@ -3741,6 +3742,98 @@ Future<void> main() async {
 
     expect(result.ok, isTrue);
   });
+
+  test('manual quarantine IPC binds scan-result SHA-256', () async {
+    final dir = Directory.systemTemp.createTempSync(
+      'avorax-threat-quarantine-ipc-',
+    );
+    addTearDown(() => dir.deleteSync(recursive: true));
+    final script =
+        File('${dir.path}${Platform.pathSeparator}threat_quarantine.dart')
+          ..writeAsStringSync(r'''
+import 'dart:convert';
+import 'dart:io';
+
+Future<void> main() async {
+  final raw = await stdin.transform(utf8.decoder).join();
+  final command = jsonDecode(raw) as Map<String, Object?>;
+  const expectedSha256 =
+      'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+  final ok = command['command'] == 'quarantine_file' &&
+      command['path'] == 'C:/Users/Brent/Downloads/detected.bin' &&
+      command['threat_name'] == 'Harmless fixture detection' &&
+      command['engine'] == 'Avorax Native Engine' &&
+      command['sha256'] == expectedSha256;
+  print(jsonEncode(<String, Object?>{
+    'ok': ok,
+    if (ok)
+      'record': <String, Object?>{
+        'quarantineId': 'threat_record',
+        'originalPath': 'C:/Users/Brent/Downloads/detected.bin',
+        'quarantinePath':
+            'C:/ProgramData/Avorax/Quarantine/threat_record.avoraxq',
+        'sha256': expectedSha256,
+        'quarantinedAt': '2024-01-01T00:00:00Z',
+        'status': 'quarantined',
+        'fileSize': 32,
+        'detectionName': 'Harmless fixture detection',
+        'engine': 'Avorax Native Engine',
+        'source': 'scanner',
+        'actionTaken': 'quarantined',
+        'blockedBeforeExecution': false,
+        'processStarted': false,
+      },
+  }));
+}
+''');
+    final client = LocalCoreClient(
+      executableOverride: _dartExecutable(),
+      executableArguments: [script.path],
+    );
+
+    final result = await client.quarantineThreat(_manualThreatFixture());
+
+    expect(result.ok, isTrue);
+  });
+
+  test(
+    'manual quarantine IPC rejects mismatched threat success evidence',
+    () async {
+      final variants = <String, Map<String, Object?>>{
+        'path': <String, Object?>{
+          'originalPath': 'C:/Users/Brent/Downloads/replacement.bin',
+        },
+        'hash': <String, Object?>{'sha256': 'b' * 64},
+      };
+
+      for (final variant in variants.entries) {
+        final dir = Directory.systemTemp.createTempSync(
+          'avorax-threat-quarantine-${variant.key}-',
+        );
+        addTearDown(() => dir.deleteSync(recursive: true));
+        final client = _localCoreClientForPayload(
+          dir,
+          'mismatched_${variant.key}.dart',
+          <String, Object?>{
+            'ok': true,
+            'record': _quarantineRecordFixture(<String, Object?>{
+              'quarantineId': 'threat_record',
+              'originalPath': 'C:/Users/Brent/Downloads/detected.bin',
+              'sha256': 'a' * 64,
+              'detectionName': 'Harmless fixture detection',
+              'engine': 'Avorax Native Engine',
+              ...variant.value,
+            }),
+          },
+        );
+
+        final result = await client.quarantineThreat(_manualThreatFixture());
+
+        expect(result.ok, isFalse);
+        expect(result.error, contains('did not match the request'));
+      }
+    },
+  );
 
   test(
     'quarantine list rejects records with missing required evidence',
@@ -4423,6 +4516,30 @@ Map<String, Object?> _quarantineRecordFixture(Map<String, Object?> overrides) {
   record.addAll(overrides);
   return record;
 }
+
+ThreatResult _manualThreatFixture() => ThreatResult(
+  id: 'threat_fixture',
+  path: 'C:/Users/Brent/Downloads/detected.bin',
+  fileName: 'detected.bin',
+  sha256: 'a' * 64,
+  sizeBytes: 32,
+  detectionType: DetectionType.signature,
+  threatCategory: ThreatCategory.trojan,
+  threatName: 'Harmless fixture detection',
+  confidence: ThreatConfidence.confirmed,
+  engine: 'Avorax Native Engine',
+  detectedAt: DateTime.utc(2024),
+  recommendedAction: RecommendedAction.quarantine,
+  status: ThreatResultStatus.detected,
+  riskScore: const RiskScore(
+    score: 100,
+    verdict: RiskVerdict.confirmedMalware,
+    confidence: ThreatConfidence.confirmed,
+    reasons: <RiskReason>[],
+    recommendedAction: RecommendedAction.quarantine,
+    enginesUsed: <DetectionType>[DetectionType.signature],
+  ),
+);
 
 Map<String, Object?> _allowlistEntryFixture(Map<String, Object?> overrides) {
   final entry = <String, Object?>{
