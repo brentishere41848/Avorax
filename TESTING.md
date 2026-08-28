@@ -950,3 +950,51 @@ Post-move SHA-256 verification and authenticated recovery remain fail-visible.
 No Defender weakening, machine-wide installation, service/driver start, live
 malware, release, publication, or protected production-vault mutation is part
 of these tests; changed files require an explicit rescan.
+
+## Checkpoint 2261 - Manual Threat Quarantine Hash Binding
+
+The complete implementation/test/verifier/document batch must exist before
+running this focused benign regression:
+
+```powershell
+cargo test --manifest-path core/zentor_local_core/Cargo.toml manual_threat_quarantine_binding_ -- --test-threads=1
+```
+
+The four tests use only temporary harmless bytes. They prove changed scan-result
+content remains in place with no vault creation, a matching SHA-256 succeeds
+through real `quarantine_file` command handling, the separate hash-less manual
+file-picker path keeps its fresh snapshot, and empty/whitespace-only/
+oversized/NUL/malformed SHA-256 evidence fails before mutation.
+
+The Flutter `manual quarantine IPC` filter proves a visible threat row sends
+its exact SHA-256, the standalone picker omits it, and path/hash-mismatched
+success records fail instead of updating controller state. The definitive
+verifier adds `local-core manual threat quarantine hash-binding regressions` as
+step 289; full-suite validation requires exact `289/289`, that step, and the
+new verified-scope contract. Source contract 691 pins the complete boundary.
+
+No checkpoint-2261 test ran during scripting. After that batch froze, focused
+Local Core passed `4/4`, quarantine coverage `137/137`, Flutter Local Core IPC
+`94/94`, offline controller coverage `27/27`, Source `691/691`, strict
+all-feature Local Core Clippy, both locked workspace suites, the locked
+all-feature release build, Flutter analyze and `849/849`, Zentor protocol
+`14/14`, and Avorax protocol analyze plus `6/6`.
+
+The definitive command used explicit checked tool paths, no skip switch, and no
+Defender-EICAR integration switch:
+
+```powershell
+powershell.exe -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File tools/testing/verify-small-threat-mvp.ps1 -RepoRoot <repo> -PythonPath <bundled-python> -CargoPath <cargo.exe> -FlutterPath <flutter.bat> -DartPath <dart.bat> -PowerShell7Path <pwsh.exe> -ReportPath .workflow/ultracode/avorax-hardening/results/2261-small-threat-mvp-manual-threat-quarantine-hash-binding-report.json
+```
+
+It passed exact `289/289`, zero failed/skipped, in `659.6s`. Both Windows
+PowerShell 5.1 and PowerShell 7 independently accepted the authentic report
+with `-RequireFullSuite` and rejected both a missing-required-scope and a
+missing-required-step copy. The report SHA-256 is
+`0074fd8b38a7edf01c132b4ac3ec0d6a8428ad738ebaaf09c985b4ccb59274a8`.
+
+Tests never execute candidate content and did not mutate the protected
+production vault. The result remains user-mode/path-based and does not prove
+atomic final path mutation, installed service/UI E2E, driver/kernel mediation,
+pre-execution blocking, secure erase, production detection quality, or Defender
+replacement.

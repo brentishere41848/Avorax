@@ -5727,3 +5727,27 @@ strict validator scope, and Source contract 690 are scripted. No checkpoint-
 service, signed-driver/kernel, production-calibration/signing, pre-execution,
 Defender-replacement, and privileged final-race claims remain blocked, partial,
 limited, or unclaimed.
+
+Checkpoint 2260 is closed through exact local/destination `288/288`, hosted
+exact-head and merged-main CI/packages, normal integration, guarded zero-delete
+synchronization, and unchanged lock/vault evidence. Its first five rows are
+**Verified**; the final atomic-race row remains **Technically limited**.
+
+## Checkpoint 2261 - Manual Threat Quarantine Hash Binding
+
+| Control / engine responsibility | Status | Scripted evidence and boundary |
+| --- | --- | --- |
+| Scan-result threat-row quarantine request | **Verified locally** | Flutter sends the exact `ThreatResult.sha256` with path, threat name, and engine only after existing explicit confirmation/busy guards. Dedicated and complete IPC regressions account for the exact payload. Installed click-through remains partial. |
+| Local Core manual threat admission | **Verified locally** | Optional `sha256` is required non-empty when present, bounded to 71 characters, and NUL-rejected before store access; present evidence selects hash-bound quarantine and the store rejects malformed, changed, path-mismatched, or identity-mismatched content before vault mutation. Four harmless focused regressions and the exact verifier pass. |
+| Flutter action-success evidence | **Verified locally** | New quarantine success must return a valid quarantined record with the exact request original path; threat-row success also requires the normalized request SHA-256. Mismatch becomes failure and cannot update the row or emit success history. |
+| Standalone confirmed file-picker quarantine | **Verified locally** | Deliberately omits prior-verdict SHA-256 because there is no scan row; Local Core takes a fresh bounded current-file snapshot before the same store boundary. This is an explicit disposition action, not a malware verdict. |
+| Detection/custom-engine responsibilities | **Unchanged** | No signature, native rule, YARA, static/PE/archive, heuristic, ML, Authenticode, allowlist, exclusion, process-observation, or verdict-fusion responsibility changes. |
+| Atomic prevention of every final path race | **Technically limited** | User-mode path checks cannot make identity-check-plus-rename/removal atomic on every filesystem or defeat administrators, SYSTEM, or kernel compromise; mismatch remains visible or recovery-journaled. |
+
+Verifier step 289, the existing Flutter manual-quarantine IPC step, exact-289
+validation, and Source contract 691 pass locally. Definitive no-skip/no-Defender
+verification is `289/289` in `659.6s`; dual-host authentic and adversarial report
+validation pass. The first four rows are **Verified locally**. Installed
+UI/service E2E, hosted/integration/destination evidence, signed driver/kernel,
+production accuracy, pre-execution, Defender-replacement, and privileged-race
+claims remain partial, blocked, limited, or unclaimed.

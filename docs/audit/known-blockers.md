@@ -3812,3 +3812,37 @@ claimed. Installed cross-identity service proof, signed driver/kernel mediation,
 production calibration/signing, demonstrated pre-execution blocking, and
 Defender replacement remain separate product blockers. Changed files require a
 rescan; checkpoint 2260 and the full antivirus goal remain active.
+
+Checkpoint 2260 is now closed through exact local and destination `288/288`,
+dual-host adversarial report validation, exact-head and merged-main CI/package
+evidence, normal PR integration, guarded zero-delete synchronization, and an
+unchanged protected vault. The portable user-mode final path race remains a
+technical limit rather than an unreported implementation blocker.
+
+## Checkpoint 2261 Blocker Delta
+
+Checkpoint 2261 removes the remaining stale-evidence path for user-confirmed
+`Quarantine` from a visible scan-result row. Flutter now sends the row's exact
+SHA-256; Local Core rejects empty present evidence, bounds the optional field,
+and routes it through the existing
+open-handle hash/path-identity store boundary. Changed, oversized, NUL-bearing,
+malformed, or mismatched evidence fails before vault mutation and requires a
+rescan. Flutter also rejects success records with a different original path or
+SHA-256, preventing false quarantined state and audit success.
+
+The separately confirmed `Quarantine file` picker is not a scan-result action
+and deliberately remains a fresh bounded snapshot of the current selected file.
+Four harmless Local Core tests, Flutter IPC regressions, verifier step 289,
+exact-289 validator scope, and Source contract 691 now pass locally. Broad
+locked workspaces, release build, Flutter/protocol suites, definitive exact
+`289/289` in `659.6s`, and dual-host authentic/adversarial report validation
+also pass. Hosted exact-head, integration, guarded-sync, and destination proof
+remain checkpoint blockers.
+
+Final path mutation is still a cross-platform user-mode operation rather than
+one atomic filesystem transaction. Installed cross-identity UI/service proof,
+signed driver/kernel mediation, production calibration/signing, demonstrated
+pre-execution blocking, and Defender replacement remain separate product
+blockers or technical limits. The checkpoint is locally verified but remains
+active pending hosted/integration/destination evidence; the complete antivirus
+goal remains active.

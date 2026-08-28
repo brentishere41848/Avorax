@@ -29,7 +29,6 @@ pub struct CoreCommand {
     pub quarantine_id: Option<String>,
     pub allowlist_id: Option<String>,
     pub confirmed: Option<bool>,
-    #[allow(dead_code)]
     pub sha256: Option<String>,
     pub user_label: Option<String>,
     pub user_note: Option<String>,

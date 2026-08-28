@@ -38,6 +38,13 @@ The Windows MSI bundles the ClamAV runtime beside the app. Signature database up
 
 Infected files are moved to the Avorax quarantine folder, renamed with `.avoraxq`, stripped of executable bits where supported, and paired with JSON metadata. Legacy quarantine records remain readable.
 
+`quarantine_file` accepts an optional bounded `sha256`; when present it must
+be non-empty. A confirmed action from a scan-result row must send that row's
+exact SHA-256; changed or mismatched
+content fails before vault mutation and requires a rescan. A separately
+confirmed manual file-picker request omits `sha256` because it has no prior
+verdict and takes a fresh bounded snapshot of the selected current file.
+
 ## Tests
 
 ```powershell

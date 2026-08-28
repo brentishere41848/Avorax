@@ -204,11 +204,17 @@ post-launch quarantine. Checkpoint 2260 makes Guard hash the already-opened
 single-link source, delays vault creation until that match succeeds, and applies
 the same open-handle/path identity check before move and copy-source removal.
 
-Manual quarantine remains explicit: it takes a fresh bounded current-file hash
-snapshot and then crosses the same store boundary. Copy fallback verifies the
-copied payload SHA-256 and rechecks source identity before removing the source.
-Final payload hashing and the authenticated recovery journal still protect
-failures after a move.
+Checkpoint 2261 distinguishes two explicit manual actions. `Quarantine` on a
+visible scan-result row carries that row's exact non-empty SHA-256 and rejects
+empty, malformed, or changed evidence with a visible rescan-required error
+before vault mutation. The separate
+confirmed `Quarantine file` picker has no prior verdict, deliberately omits the
+hash, takes a fresh bounded current-file snapshot, and then crosses the same
+store boundary. Flutter requires matching original-path evidence for either
+success and matching SHA-256 evidence for a threat-row success. Copy fallback
+verifies the copied payload SHA-256 and rechecks source identity before removing
+the source. Final payload hashing and the authenticated recovery journal still
+protect failures after a move.
 
 These checks are user-mode and path-based, not a filesystem transaction. A
 privileged writer may still race the last identity check and path mutation on
