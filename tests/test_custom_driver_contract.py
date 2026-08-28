@@ -32212,7 +32212,7 @@ def test_checkpoint_2260_scan_verdict_quarantine_binding_contract():
         assert "SHA-256" in normalized
         assert "rescan" in normalized.lower()
     normalized_checkpoint = re.sub(r"\s+", " ", checkpoint)
-    assert "Status: **Implementation-head local and hosted verification complete; merge and destination integration pending**" in normalized_checkpoint
+    assert "Status: **Closed through merged-main evidence, guarded destination synchronization, and destination verification**" in normalized_checkpoint
     assert "No checkpoint-2260 test ran during the initial scripting phase" in normalized_checkpoint
     assert "Source contract 690" in normalized_checkpoint
     assert "passed exactly `288/288` in `651.3s`" in normalized_checkpoint
@@ -32227,6 +32227,21 @@ def test_checkpoint_2260_scan_verdict_quarantine_binding_contract():
         "Both `Publish desktop beta prerelease` jobs were skipped",
     ]:
         assert hosted_marker in normalized_checkpoint
+    for closure_marker in [
+        "6d2e8dd05f3b0bd4d194035fe798292c0895e46f",
+        "33172824444",
+        "33172824319",
+        "375948899048556d93afd55d452db8ea08ab67b7",
+        "33174390956",
+        "33174390945",
+        "16 paths",
+        "zero deleted",
+        "passed exact `288/288` in `673.9s`",
+        "0d18940568c0e4f132a7160d6d7931bbcd6d5843d64b7756037f7b6e74f485fc",
+        "all eight Rust/Dart lock files exact",
+        "This checkpoint is closed; the complete antivirus-hardening goal remains active",
+    ]:
+        assert closure_marker in normalized_checkpoint
     normalized_dependencies = re.sub(r"\s+", " ", documents[-1]).lower()
     assert "adds no dependency" in normalized_dependencies
     assert "lockfile change" in normalized_dependencies
