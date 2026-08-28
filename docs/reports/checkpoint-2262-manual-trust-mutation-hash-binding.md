@@ -1,6 +1,6 @@
 # Checkpoint 2262 - Manual Trust-Mutation Hash Binding
 
-Status: **Locally verified; hosted integration and destination verification pending**
+Status: **Locally and implementation-head hosted verified; integration and destination verification pending**
 
 Checkpoint 2262 addresses stale scan evidence and false action-success evidence
 for the two manual trust mutations reachable from a visible scan-result row:
@@ -99,9 +99,33 @@ this evidence:
   Its retained 6,245-byte result has SHA-256
   `555c8217fd2e3b46a18f202e9d5ea5e013c9358f9dc9cdb82ea3c86afc9a4730`.
 
-Exact-head hosted CI/package evidence, normal PR integration, guarded
-destination synchronization, and destination verification remain pending and
-must not be inferred from the local result.
+The local result alone did not establish hosted behavior. The independently
+recorded implementation-head evidence below now covers that commit; evidence-
+head hosting, integration, and destination proof remain separate.
+
+## Hosted Implementation-Head Evidence
+
+Exact implementation commit
+`0460c4f5a4db237ee261d642e3f94ef1ff285719` passes PR `#133` CI run
+`33206972057`, package push run `33206952538`, and package PR run
+`33206972034`. Every CI job passes. In both package runs the package contract,
+Windows x64 MSI/EXE, Linux x64 DEB/tar, macOS arm64/x64 DMG, and consolidation
+jobs pass; `Publish desktop beta prerelease` is explicitly skipped.
+
+Consolidated artifacts `9700500463` and `9700448185` match GitHub metadata
+exactly:
+
+- push: 132,346,685 bytes, SHA-256
+  `f52b71490729d9dfc123b9d7b459bc8189374331f3544eb30f11ae97891ae9b2`;
+- PR: 132,471,456 bytes, SHA-256
+  `ad9af733b6a1795058214ade742e484828951f7fffb95146c6f5349ebfc562cd`.
+
+Bounded non-extracting ZIP-stream review passes for both: exact eight unique
+safe root files, six platform packages, seven matching checksum targets,
+CycloneDX 1.6 with 569 components, and zero encrypted, special, traversal, or
+over-limit entries. No package was extracted, installed, or executed. Evidence-
+head hosted checks, normal merge, merged-main checks, guarded destination sync,
+and destination verification remain pending.
 
 ## Verification Commands
 
