@@ -7234,6 +7234,41 @@ complete antivirus-hardening goal remains active, with installed service,
 driver/kernel, production-accuracy, pre-execution, and Defender-replacement
 claims still partial, blocked, technically limited, or unclaimed.
 
+## Checkpoint 2256 Status
+
+Checkpoint 2256 file discovery cancellation and bounds are **Scripted /
+unverified**. Local Core now carries the exact job-bound cancellation callback
+through root discovery at at-most-128-entry intervals and around its bounded
+sort. Pre-discovery cancellation scans no files; malformed token evidence fails
+visibly. Quick remains capped at 5,000 discovered files and full/custom at
+250,000; cap exhaustion is `CompletedWithErrors`, never clean.
+
+Five benign tests, definitive verifier step 285, exact `285/285` validator
+cardinality, Source contract 686, and audit coverage are scripted. No Checkpoint
+2256 test has run in this phase. The file-count limit does not bound aggregate
+path bytes, I/O, one OS metadata/directory operation, or sort latency. Focused,
+broad, definitive, hosted, integration, guarded-sync, and destination evidence
+remain open. The complete antivirus-hardening goal remains active.
+
+Checkpoint 2256 focused evidence is now **Verified locally**: PS5/PS7 parser
+`2/2`, formatting, Source `686/686`, checkpoint `5/5`, walker `10/10`, full scan
+`3/3`, cancellation `8/8`, and Local Core `551/551` pass. The first Local Core
+run was `550/551` because an indentation-sensitive source-order assertion no
+longer matched; its semantic replacement passes and still proves failed Native
+inspections cannot increment `files_scanned`. Broad workspace, definitive
+`285/285`, hosted, integration, guarded-sync, and destination evidence remain
+open, so the checkpoint and complete antivirus-hardening goal remain active.
+
+Checkpoint 2256 is now **verified locally across focused, broad, definitive,
+and adversarial scope**. Both locked workspace variants, strict Local Core
+Clippy, locked release build, Flutter `847/847`, Dart `14/14` plus `6/6`, and
+exact verifier `285/285` pass. PS5/PS7 accept report SHA-256
+`74681a86670805ffeb23b9903a7f5cd70a0c008b91bbe7aff7ab256228b23f33`
+and reject missing-step/missing-scope mutations. Locks, process/residue checks,
+and the read-only vault invariant remain exact. Hosted exact-head, integration,
+guarded-sync, and destination evidence remain open, so the checkpoint and the
+complete antivirus-hardening goal remain active.
+
 ## Checkpoint 2255 Status
 
 Checkpoint 2255 is **scripted, unverified**. PE resource section mapping now

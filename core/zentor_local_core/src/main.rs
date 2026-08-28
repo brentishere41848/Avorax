@@ -45,7 +45,7 @@ use allowlist::{AllowlistEntryType, AllowlistStore};
 use api::{CoreCommand, CoreResponse};
 use quarantine::QuarantineStore;
 use scanner::{
-    file_walker::{collect_accessible_files, collect_accessible_files_with_options, WalkOptions},
+    file_walker::{collect_accessible_files_with_options_and_cancellation, WalkOptions},
     DetectionType, RecommendedAction, ReportStatus, ReputationProvider, RiskEngine, RiskReason,
     RiskReasonSource, RiskScore, RiskSeverity, RiskVerdict, ScanActionMode, ScanJob, ScanJobStatus,
     ScanKind, ScanProgress, ScanStatus, ThreatCategory, ThreatConfidence, ThreatResult,
@@ -1617,23 +1617,31 @@ fn scan_paths_for_job(
     let mut cancelled_remaining_files: u64 = 0;
     let mut last_path = None;
     let mut scan_errors = Vec::new();
-    let mut native_engine = match native_engine() {
-        Ok(engine) => Some(engine),
-        Err(error) => {
-            push_scan_error(
-                &mut scan_errors,
-                format!("native engine unavailable: {error:#}"),
-            );
-            None
-        }
-    };
-    let engine_unavailable = native_engine.is_none();
-
-    let walk = if kind == ScanKind::Quick {
-        collect_accessible_files_with_options(&roots, &WalkOptions::quick())
+    let walk_options = if kind == ScanKind::Quick {
+        WalkOptions::quick()
     } else {
-        collect_accessible_files(&roots)
+        WalkOptions::full()
     };
+    let mut discovery_should_cancel = || scan_cancellation_requested(job_id);
+    let walk = collect_accessible_files_with_options_and_cancellation(
+        &roots,
+        &walk_options,
+        &mut discovery_should_cancel,
+    )
+    .with_context(|| "job-bound cancellation state became unreadable during file discovery")?;
+    let cancelled_during_discovery = walk.discovery_cancelled;
+    let discovery_limit_reached = walk.file_limit_reached;
+    if cancelled_during_discovery {
+        cancelled = true;
+        cancelled_remaining_files = walk.files.len() as u64;
+        skipped_files = skipped_files.saturating_add(cancelled_remaining_files);
+        push_scan_error(
+            &mut scan_errors,
+            format!(
+                "scan cancelled by user request during file discovery; {cancelled_remaining_files} discovered file(s) were not scanned and additional undiscovered entries were not counted"
+            ),
+        );
+    }
     skipped_files += walk.skipped_files;
     permission_denied_count += walk.permission_denied_count;
     for error in &walk.scan_errors {
@@ -1641,6 +1649,21 @@ fn scan_paths_for_job(
     }
     let total_files = walk.files.len() as u64;
     let total_bytes = walk.bytes_estimated;
+    let mut native_engine = if cancelled_during_discovery {
+        None
+    } else {
+        match native_engine() {
+            Ok(engine) => Some(engine),
+            Err(error) => {
+                push_scan_error(
+                    &mut scan_errors,
+                    format!("native engine unavailable: {error:#}"),
+                );
+                None
+            }
+        }
+    };
+    let engine_unavailable = !cancelled_during_discovery && native_engine.is_none();
     if engine_unavailable {
         skipped_files = skipped_files.saturating_add(total_files);
     }
@@ -1669,171 +1692,182 @@ fn scan_paths_for_job(
         emit(&progress);
     }
 
-    for (index, path) in walk.files.into_iter().enumerate() {
-        if scan_cancellation_requested(job_id)? {
-            cancelled = true;
-            cancelled_remaining_files = total_files.saturating_sub(index as u64);
-            skipped_files = skipped_files.saturating_add(cancelled_remaining_files);
-            push_scan_error(
-                &mut scan_errors,
-                format!(
-                    "scan cancelled by user request; skipped {cancelled_remaining_files} remaining file(s)"
-                ),
-            );
-            break;
-        }
-        if kind == ScanKind::Full && started.elapsed().as_secs() >= FULL_SCAN_MAX_SECONDS {
-            let remaining_files = total_files.saturating_sub(index as u64);
-            skipped_files = skipped_files.saturating_add(remaining_files);
-            push_scan_error(
-                &mut scan_errors,
-                format!(
-                    "{}: full scan time budget reached; skipped {remaining_files} remaining file(s)",
-                    path.display()
-                ),
-            );
-            break;
-        }
-        let Some(engine) = native_engine.as_mut() else {
-            break;
-        };
-        let current = path.display().to_string();
-        last_path = Some(current.clone());
-        let file_size = match inspect_regular_scan_target(&path, "scan target") {
-            Ok(metadata) => metadata.len(),
-            Err(error) => {
-                skipped_files = skipped_files.saturating_add(1);
-                push_scan_error(
-                    &mut scan_errors,
-                    format!("{}: metadata failed before scan: {error}", path.display()),
-                );
-                update_progress(
-                    &mut progress,
-                    &current,
-                    files_scanned,
-                    bytes_scanned,
-                    threats.len() as u64,
-                    suspicious_found,
-                    skipped_files,
-                    permission_denied_count,
-                    started,
-                );
-                if let Some(emit) = emit_progress.as_deref_mut() {
-                    emit(&progress);
-                }
-                continue;
-            }
-        };
-        match scan_native_file_for_job(engine, path.clone(), job_id) {
-            Ok(JobBoundNativeScan::Cancelled) => {
+    if !cancelled_during_discovery {
+        for (index, path) in walk.files.into_iter().enumerate() {
+            if scan_cancellation_requested(job_id)? {
                 cancelled = true;
                 cancelled_remaining_files = total_files.saturating_sub(index as u64);
                 skipped_files = skipped_files.saturating_add(cancelled_remaining_files);
                 push_scan_error(
                     &mut scan_errors,
                     format!(
-                        "scan cancelled by user request during bounded inspection of {}; the interrupted file and {remaining_after_current} queued file(s) were not scanned",
-                        path.display(),
-                        remaining_after_current = cancelled_remaining_files.saturating_sub(1),
+                        "scan cancelled by user request; skipped {cancelled_remaining_files} remaining file(s)"
                     ),
                 );
                 break;
             }
-            Ok(JobBoundNativeScan::Verdict(verdict)) => {
-                files_scanned += 1;
-                bytes_scanned = bytes_scanned.saturating_add(file_size);
-                if should_surface_native_verdict(verdict.final_verdict.verdict) {
-                    let mut threat = threat_from_native(&path, &verdict);
-                    suspicious_found += u64::from(threat.confidence != ThreatConfidence::Confirmed);
-                    let allowlisted = match AllowlistStore::new() {
-                        Ok(store) => store.is_allowlisted(&path, &threat.sha256),
-                        Err(error) => {
-                            push_scan_error(
-                                &mut scan_errors,
-                                format!("allowlist unavailable: {error:#}"),
-                            );
-                            false
-                        }
-                    };
-                    if allowlisted {
-                        threat.status = ThreatResultStatus::Allowlisted;
-                        threat.recommended_action = RecommendedAction::Allowlist;
-                    } else if native_should_quarantine(action_mode.clone(), &threat) {
-                        match quarantine_selected_file(&path, &threat.threat_name, &threat.engine) {
-                            Ok(record) => {
-                                threat.status = ThreatResultStatus::Quarantined;
-                                threat.path = record.original_path;
-                                threat.quarantine_id = Some(record.quarantine_id);
-                                threat.quarantine_path = Some(record.quarantine_path);
-                                threat.quarantine_action_taken = Some(record.action_taken);
-                                quarantined_files += 1;
-                            }
-                            Err(error) => {
-                                push_scan_error(
-                                    &mut scan_errors,
-                                    format!(
-                                        "{}: auto-quarantine failed: {error:#}",
-                                        path.display()
-                                    ),
-                                );
-                            }
-                        }
-                    }
-                    threats.push(threat);
-                } else if let Some(detail) = native_archive_content_scan_limited_detail(&verdict) {
-                    skipped_files = skipped_files.saturating_add(1);
-                    push_scan_error(&mut scan_errors, format!("{}: {detail}", path.display()));
-                }
-            }
-            Err(error) if is_scan_cancellation_check_failure(&error) => {
-                return Err(error).with_context(|| {
+            if kind == ScanKind::Full && started.elapsed().as_secs() >= FULL_SCAN_MAX_SECONDS {
+                let remaining_files = total_files.saturating_sub(index as u64);
+                skipped_files = skipped_files.saturating_add(remaining_files);
+                push_scan_error(
+                    &mut scan_errors,
                     format!(
-                        "job-bound cancellation state became unreadable while scanning {}",
+                        "{}: full scan time budget reached; skipped {remaining_files} remaining file(s)",
                         path.display()
-                    )
-                });
+                    ),
+                );
+                break;
             }
-            Err(error) => {
-                if windows_antimalware_blocked_scan_error(&error) {
-                    threats.push(threat_from_windows_antimalware_block(
-                        &path, file_size, &error,
-                    ));
+            let Some(engine) = native_engine.as_mut() else {
+                break;
+            };
+            let current = path.display().to_string();
+            last_path = Some(current.clone());
+            let file_size = match inspect_regular_scan_target(&path, "scan target") {
+                Ok(metadata) => metadata.len(),
+                Err(error) => {
+                    skipped_files = skipped_files.saturating_add(1);
+                    push_scan_error(
+                        &mut scan_errors,
+                        format!("{}: metadata failed before scan: {error}", path.display()),
+                    );
+                    update_progress(
+                        &mut progress,
+                        &current,
+                        files_scanned,
+                        bytes_scanned,
+                        threats.len() as u64,
+                        suspicious_found,
+                        skipped_files,
+                        permission_denied_count,
+                        started,
+                    );
+                    if let Some(emit) = emit_progress.as_deref_mut() {
+                        emit(&progress);
+                    }
+                    continue;
+                }
+            };
+            match scan_native_file_for_job(engine, path.clone(), job_id) {
+                Ok(JobBoundNativeScan::Cancelled) => {
+                    cancelled = true;
+                    cancelled_remaining_files = total_files.saturating_sub(index as u64);
+                    skipped_files = skipped_files.saturating_add(cancelled_remaining_files);
                     push_scan_error(
                         &mut scan_errors,
                         format!(
-                            "{}: Windows anti-malware blocked file access; surfaced as a confirmed detection, but Avorax could not read the file for quarantine: {error:#}",
-                            path.display()
+                            "scan cancelled by user request during bounded inspection of {}; the interrupted file and {remaining_after_current} queued file(s) were not scanned",
+                            path.display(),
+                            remaining_after_current = cancelled_remaining_files.saturating_sub(1),
                         ),
                     );
-                } else {
-                    skipped_files = skipped_files.saturating_add(1);
-                    push_scan_error(
-                        &mut scan_errors,
-                        format!("{}: native scan failed: {error:#}", path.display()),
-                    );
+                    break;
+                }
+                Ok(JobBoundNativeScan::Verdict(verdict)) => {
+                    files_scanned += 1;
+                    bytes_scanned = bytes_scanned.saturating_add(file_size);
+                    if should_surface_native_verdict(verdict.final_verdict.verdict) {
+                        let mut threat = threat_from_native(&path, &verdict);
+                        suspicious_found +=
+                            u64::from(threat.confidence != ThreatConfidence::Confirmed);
+                        let allowlisted = match AllowlistStore::new() {
+                            Ok(store) => store.is_allowlisted(&path, &threat.sha256),
+                            Err(error) => {
+                                push_scan_error(
+                                    &mut scan_errors,
+                                    format!("allowlist unavailable: {error:#}"),
+                                );
+                                false
+                            }
+                        };
+                        if allowlisted {
+                            threat.status = ThreatResultStatus::Allowlisted;
+                            threat.recommended_action = RecommendedAction::Allowlist;
+                        } else if native_should_quarantine(action_mode.clone(), &threat) {
+                            match quarantine_selected_file(
+                                &path,
+                                &threat.threat_name,
+                                &threat.engine,
+                            ) {
+                                Ok(record) => {
+                                    threat.status = ThreatResultStatus::Quarantined;
+                                    threat.path = record.original_path;
+                                    threat.quarantine_id = Some(record.quarantine_id);
+                                    threat.quarantine_path = Some(record.quarantine_path);
+                                    threat.quarantine_action_taken = Some(record.action_taken);
+                                    quarantined_files += 1;
+                                }
+                                Err(error) => {
+                                    push_scan_error(
+                                        &mut scan_errors,
+                                        format!(
+                                            "{}: auto-quarantine failed: {error:#}",
+                                            path.display()
+                                        ),
+                                    );
+                                }
+                            }
+                        }
+                        threats.push(threat);
+                    } else if let Some(detail) =
+                        native_archive_content_scan_limited_detail(&verdict)
+                    {
+                        skipped_files = skipped_files.saturating_add(1);
+                        push_scan_error(&mut scan_errors, format!("{}: {detail}", path.display()));
+                    }
+                }
+                Err(error) if is_scan_cancellation_check_failure(&error) => {
+                    return Err(error).with_context(|| {
+                        format!(
+                            "job-bound cancellation state became unreadable while scanning {}",
+                            path.display()
+                        )
+                    });
+                }
+                Err(error) => {
+                    if windows_antimalware_blocked_scan_error(&error) {
+                        threats.push(threat_from_windows_antimalware_block(
+                            &path, file_size, &error,
+                        ));
+                        push_scan_error(
+                            &mut scan_errors,
+                            format!(
+                                "{}: Windows anti-malware blocked file access; surfaced as a confirmed detection, but Avorax could not read the file for quarantine: {error:#}",
+                                path.display()
+                            ),
+                        );
+                    } else {
+                        skipped_files = skipped_files.saturating_add(1);
+                        push_scan_error(
+                            &mut scan_errors,
+                            format!("{}: native scan failed: {error:#}", path.display()),
+                        );
+                    }
                 }
             }
-        }
-        update_progress(
-            &mut progress,
-            &current,
-            files_scanned,
-            bytes_scanned,
-            threats.len() as u64,
-            suspicious_found,
-            skipped_files,
-            permission_denied_count,
-            started,
-        );
-        if files_scanned == total_files || files_scanned.is_multiple_of(25) {
-            if let Some(emit) = emit_progress.as_deref_mut() {
-                emit(&progress);
+            update_progress(
+                &mut progress,
+                &current,
+                files_scanned,
+                bytes_scanned,
+                threats.len() as u64,
+                suspicious_found,
+                skipped_files,
+                permission_denied_count,
+                started,
+            );
+            if files_scanned == total_files || files_scanned.is_multiple_of(25) {
+                if let Some(emit) = emit_progress.as_deref_mut() {
+                    emit(&progress);
+                }
             }
         }
     }
 
     let status = if cancelled {
         ReportStatus::Cancelled
+    } else if discovery_limit_reached {
+        ReportStatus::CompletedWithErrors
     } else if !threats.is_empty() {
         ReportStatus::ThreatsFound
     } else if engine_unavailable {
@@ -1892,10 +1926,19 @@ fn scan_paths_for_job(
         permission_denied_count,
         elapsed_ms: started.elapsed().as_millis(),
         current_path: last_path,
-        message: if cancelled {
+        message: if cancelled_during_discovery {
+            Some(format!(
+                "Scan cancelled by user request during file discovery; {cancelled_remaining_files} discovered file(s) were not scanned, and undiscovered entries were not counted."
+            ))
+        } else if cancelled {
             Some(format!(
                 "Scan cancelled by user request; {cancelled_remaining_files} queued file(s) were not scanned."
             ))
+        } else if discovery_limit_reached {
+            Some(
+                "Scan file-discovery limit reached; undiscovered entries were not counted or reported clean."
+                    .to_string(),
+            )
         } else if engine_unavailable {
             Some("Avorax Native Engine is unavailable; files were not reported clean.".to_string())
         } else if !scan_errors.is_empty() {
@@ -5918,13 +5961,19 @@ mod tests {
         let scan_call = source
             .find("match scan_native_file_for_job(engine, path.clone(), job_id)")
             .expect("scan call marker");
-        let success_increment = source
-            .find("Ok(JobBoundNativeScan::Verdict(verdict)) => {\n                files_scanned += 1;")
-            .expect("success increment marker");
+        let verdict_branch = source
+            .find("Ok(JobBoundNativeScan::Verdict(verdict)) => {")
+            .expect("successful verdict branch marker");
+        let success_increment = verdict_branch
+            + source[verdict_branch..]
+                .find("files_scanned += 1;")
+                .expect("success increment marker");
         let failure_detail = source
             .find("native scan failed")
             .expect("failure detail marker");
 
+        assert!(scan_call < verdict_branch);
+        assert!(!source[scan_call..verdict_branch].contains("files_scanned += 1;"));
         assert!(scan_call < success_increment);
         assert!(scan_call < failure_detail);
         assert!(source.contains("skipped_files = skipped_files.saturating_add(1);"));
@@ -6025,6 +6074,95 @@ mod tests {
             .iter()
             .any(|error| error.contains("scan cancelled by user request")));
         assert!(!scan_cancellation_requested(job_id).unwrap());
+        std::env::remove_var("AVORAX_DATA_DIR");
+    }
+
+    #[test]
+    fn scan_file_discovery_cancellation_returns_cancelled_report() {
+        const CASE: &str = "scan-file-discovery-cancelled-report";
+        if !is_isolated_environment_case(CASE) {
+            run_isolated_environment_case(
+                "tests::scan_file_discovery_cancellation_returns_cancelled_report",
+                CASE,
+                |_| {},
+            );
+            return;
+        }
+        let _lock = env_lock();
+        let dir = tempdir().unwrap();
+        std::env::set_var("AVORAX_DATA_DIR", dir.path().join("data"));
+        let scan_root = dir.path().join("scan-root");
+        fs::create_dir_all(&scan_root).unwrap();
+        fs::write(scan_root.join("benign.txt"), b"ordinary benign fixture").unwrap();
+        let job_id = Uuid::new_v4();
+        let token = request_scan_cancellation(job_id).unwrap();
+
+        let report = scan_paths_for_job(
+            vec![scan_root],
+            ScanActionMode::DetectOnly,
+            ScanKind::Custom,
+            job_id,
+            None,
+        )
+        .unwrap();
+
+        assert_eq!(report.status, ReportStatus::Cancelled);
+        assert_eq!(report.files_scanned, 0);
+        assert_eq!(report.progress.as_ref().unwrap().job_id, job_id.to_string());
+        assert_eq!(
+            report.progress.as_ref().unwrap().status,
+            ScanJobStatus::Cancelled
+        );
+        assert!(report
+            .message
+            .as_deref()
+            .is_some_and(|message| message.contains("during file discovery")));
+        assert!(report.scan_errors.iter().any(|error| {
+            error.contains("during file discovery")
+                && error.contains("undiscovered entries were not counted")
+        }));
+        assert!(!token.exists());
+        assert!(!scan_cancellation_requested(job_id).unwrap());
+        std::env::remove_var("AVORAX_DATA_DIR");
+    }
+
+    #[test]
+    fn scan_file_discovery_cancellation_probe_failure_is_visible() {
+        const CASE: &str = "scan-file-discovery-cancellation-probe-failure";
+        if !is_isolated_environment_case(CASE) {
+            run_isolated_environment_case(
+                "tests::scan_file_discovery_cancellation_probe_failure_is_visible",
+                CASE,
+                |_| {},
+            );
+            return;
+        }
+        let _lock = env_lock();
+        let dir = tempdir().unwrap();
+        std::env::set_var("AVORAX_DATA_DIR", dir.path().join("data"));
+        let scan_root = dir.path().join("scan-root");
+        fs::create_dir_all(&scan_root).unwrap();
+        fs::write(scan_root.join("benign.txt"), b"ordinary benign fixture").unwrap();
+        let job_id = Uuid::new_v4();
+        let token = request_scan_cancellation(job_id).unwrap();
+        fs::write(&token, b"not-json").unwrap();
+
+        let error = scan_paths_for_job(
+            vec![scan_root],
+            ScanActionMode::DetectOnly,
+            ScanKind::Custom,
+            job_id,
+            None,
+        )
+        .expect_err("malformed discovery cancellation token must fail visibly");
+        let detail = format!("{error:#}");
+
+        assert!(
+            detail.contains("job-bound cancellation state became unreadable during file discovery")
+        );
+        assert!(detail.contains("malformed"));
+        assert!(token.exists());
+        fs::remove_file(&token).unwrap();
         std::env::remove_var("AVORAX_DATA_DIR");
     }
 

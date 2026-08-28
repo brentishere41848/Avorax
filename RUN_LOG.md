@@ -13120,3 +13120,55 @@ pending.
 - All 13 blobs, three locks, zero product/sync residue, and the read-only
   `16072/0/4522733` vault invariant pass. `.verification` remains untouched.
   Checkpoint 2255 is closed; the complete antivirus-hardening goal stays active.
+
+## 2026-08-28 - Checkpoint 2256 File Discovery Scripting
+
+- Scripted fallible job-bound cancellation during Local Core file discovery:
+  before each root, every at-most-128 `WalkDir` entries, after roots, and around
+  the bounded priority sort. Cancellation scans no discovered files; invalid
+  token evidence aborts visibly.
+- Retained the quick 5,000-file cap and added an explicit 250,000-file cap for
+  full/custom discovery. A reached cap records incomplete discovery and returns
+  `CompletedWithErrors`; undiscovered entries are not counted or reported clean.
+- Added five benign regressions, verifier step 285, validator cardinality
+  `285/285`, Source contract 686, and the complete audit/documentation batch.
+- Status is **Scripted / unverified**. No Checkpoint 2256 test has run yet.
+  Filesystem probes remain cooperative; the cap bounds path count rather than
+  aggregate path bytes or I/O. `.verification` and the protected vault remain
+  untouched, and the complete antivirus-hardening goal remains active.
+
+### Checkpoint 2256 Focused Local Evidence
+
+- PS5/PS7 parser `2/2` each, formatting, diff check, and Source `686/686` pass.
+- New file discovery regressions pass `5/5`; walker `10/10`, full scan `3/3`,
+  and cancellation `8/8` pass.
+- An initial Local Core `550/551` exposed an obsolete indentation-sensitive
+  source marker, not a runtime failure. The strengthened semantic-order test
+  passes `1/1`; the full rerun passes `551/551` in `38.24s`.
+- Checkpoint 2256 is **verified locally for focused and Local Core scope**.
+  Broad workspace, exact `285/285`, hosted, integration, guarded sync, and
+  destination evidence remain open; the complete goal remains active.
+
+### Checkpoint 2256 Broad And Definitive Local Evidence
+
+- Standard and all-features locked workspace tests, strict Local Core Clippy,
+  and the locked all-features release workspace build pass.
+- Flutter passes `847/847`; Zentor and Avorax Dart protocols pass `14/14` and
+  `6/6`, with both analyzers clean.
+- Definitive verification passes exact `285/285`, zero failed/non-null-error
+  steps, in `629.9s`. Independent PS5/PS7 validators accept the 206,090-byte
+  report with SHA-256
+  `74681a86670805ffeb23b9903a7f5cd70a0c008b91bbe7aff7ab256228b23f33`.
+- Both validator hosts reject missing-step and missing-scope mutations with
+  exit code 1; no owned mutation residue remains.
+- All three lock hashes, zero product processes, zero validator residue, and
+  the read-only `16072/0/4522733` vault invariant pass. `.verification` stays
+  untracked and untouched.
+- Checkpoint 2256 is **verified locally**. Hosted exact-head CI/packages,
+  integration, guarded sync, and destination verification remain open; the
+  complete antivirus-hardening goal remains active.
+- A standalone validator correctly rejected the superseded pre-release-build
+  report because its binary hash was stale. Two inline parser wrappers also
+  failed from shell quoting. All three attempts are uncredited; a complete
+  verifier rerun plus literal-script PS5/PS7 parser and standalone validation
+  produced the passing final evidence above.

@@ -5325,6 +5325,34 @@ destination Source `680/680`, focused `6/6`, formatting, and definitive
 partial and disabled rows are unchanged. Checkpoint 2250 is closed, while the
 complete antivirus-hardening goal remains active.
 
+## Checkpoint 2256 File Discovery Control Matrix
+
+| Control / engine | Responsibility | Scripted state | Honest limit / blocker |
+|---|---|---|---|
+| Local Core file walker | Enumerate safe regular scan candidates without following links; retain bounded errors and estimates | **Scripted / unverified** under verifier step 285 and Source contract 686 | Cooperative OS metadata/directory calls; one at-most-128-entry chunk may finish before cancellation |
+| Job-bound discovery cancellation | Read the exact scan UUID token before roots, during traversal, after roots, and around sorting; cancel without scanning discovered paths | **Scripted / unverified** | Same-user capability token, not cross-identity service authentication, kernel cancellation, or pre-execution blocking |
+| Quick discovery cap | Stop at 5,000 discovered risky files and report incomplete discovery | **Scripted / unverified** | Undiscovered paths are not counted; cap is coverage reduction, never a clean claim |
+| Full/custom discovery cap | Stop at 250,000 discovered files and force `CompletedWithErrors` with fail-visible details | **Scripted / unverified** | Bounds path count only, not aggregate path bytes, I/O, elapsed time, or sort latency |
+| Native Engine | Scan only completely discovered queued files after discovery succeeds | Existing engine behavior preserved; Checkpoint 2256 integration **unverified** | Not initialized for a pre-discovery cancel; no driver/kernel or Defender-replacement claim |
+
+No Checkpoint 2256 test has run during this scripting phase. Exact `285/285`,
+focused/broad, hosted, integration, guarded destination, and destination evidence
+remain required.
+
+Focused Checkpoint 2256 evidence promotes the Local Core walker/cancellation/
+cap rows to **Verified locally**: new `5/5`, walker `10/10`, full scan `3/3`,
+cancellation `8/8`, Source `686/686`, and Local Core `551/551` pass. Exact
+verifier `285/285`, hosted, integration, guarded-sync, destination, and all
+documented technical/product limits remain open.
+
+Broad and adversarial local evidence now promotes every Checkpoint 2256 row to
+**Verified locally**: both locked workspace variants, strict Local Core Clippy,
+release build, Flutter/Dart regressions, and exact verifier `285/285` pass;
+PS5/PS7 accept the exact report and reject missing-step/missing-scope mutations.
+Hosted exact-head, integration, guarded synchronization, and destination proof
+remain open. The cooperative, path-byte/I/O, cross-identity, kernel,
+pre-execution, and Defender-replacement limits are unchanged.
+
 ## Checkpoint 2255 Control Delta
 
 | Control / engine | Responsibility | State | Evidence required |

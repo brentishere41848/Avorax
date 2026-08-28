@@ -3,6 +3,8 @@ use std::path::{Path, PathBuf};
 const MAX_WALK_ERROR_DETAILS: usize = 20;
 const MAX_WALK_ERROR_DETAIL_CHARS: usize = 4096;
 const WALK_ERROR_TRUNCATION_SUFFIX: &str = "...[truncated]";
+const WALK_CANCELLATION_CHUNK_ENTRIES: usize = 128;
+const MAX_FULL_SCAN_DISCOVERED_FILES: usize = 250_000;
 
 #[derive(Debug, Clone, Default)]
 pub struct FileWalk {
@@ -12,6 +14,8 @@ pub struct FileWalk {
     pub skipped_files: u64,
     pub permission_denied_count: u64,
     pub scan_errors: Vec<String>,
+    pub discovery_cancelled: bool,
+    pub file_limit_reached: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -33,7 +37,7 @@ impl WalkOptions {
     pub fn full() -> Self {
         Self {
             max_depth: None,
-            max_files: None,
+            max_files: Some(MAX_FULL_SCAN_DISCOVERED_FILES),
             risky_files_only: false,
         }
     }
@@ -44,34 +48,65 @@ pub fn collect_accessible_files(roots: &[PathBuf]) -> FileWalk {
 }
 
 pub fn collect_accessible_files_with_options(roots: &[PathBuf], options: &WalkOptions) -> FileWalk {
+    let mut never_cancel = || Ok(false);
+    collect_accessible_files_with_options_and_cancellation(roots, options, &mut never_cancel)
+        .expect("the non-cancelling file-discovery callback cannot fail")
+}
+
+pub fn collect_accessible_files_with_options_and_cancellation(
+    roots: &[PathBuf],
+    options: &WalkOptions,
+    should_cancel: &mut dyn FnMut() -> anyhow::Result<bool>,
+) -> anyhow::Result<FileWalk> {
     let mut walk = FileWalk::default();
     for root in roots {
-        collect_one(root, &mut walk, options);
-        if options
-            .max_files
-            .is_some_and(|limit| walk.files.len() >= limit)
-        {
+        if should_cancel()? {
+            walk.discovery_cancelled = true;
+            break;
+        }
+        if let Some(limit) = options.max_files {
+            if walk.files.len() >= limit {
+                mark_file_limit_reached(&mut walk, limit);
+                break;
+            }
+        }
+        collect_one_with_cancellation(root, &mut walk, options, should_cancel)?;
+        if walk.discovery_cancelled || walk.file_limit_reached {
+            break;
+        }
+        if should_cancel()? {
+            walk.discovery_cancelled = true;
             break;
         }
     }
-    walk.files.sort_by_key(|path| priority(path));
-    if let Some(limit) = options.max_files {
-        if walk.files.len() > limit {
-            let extra = walk.files.len() - limit;
-            walk.files.truncate(limit);
-            walk.skipped_files = walk.skipped_files.saturating_add(extra as u64);
+    if !walk.discovery_cancelled && should_cancel()? {
+        walk.discovery_cancelled = true;
+    }
+    if !walk.discovery_cancelled {
+        walk.files.sort_by_key(|path| priority(path));
+        if should_cancel()? {
+            walk.discovery_cancelled = true;
         }
     }
-    walk
+    Ok(walk)
 }
 
-fn collect_one(root: &Path, walk: &mut FileWalk, options: &WalkOptions) {
+fn collect_one_with_cancellation(
+    root: &Path,
+    walk: &mut FileWalk,
+    options: &WalkOptions,
+    should_cancel: &mut dyn FnMut() -> anyhow::Result<bool>,
+) -> anyhow::Result<()> {
+    if should_cancel()? {
+        walk.discovery_cancelled = true;
+        return Ok(());
+    }
     let root_metadata = match std::fs::symlink_metadata(root) {
         Ok(metadata) => metadata,
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
             walk.skipped_files += 1;
             push_walk_error(walk, format!("scan root missing: {}", root.display()));
-            return;
+            return Ok(());
         }
         Err(error) => {
             walk.skipped_files += 1;
@@ -82,17 +117,26 @@ fn collect_one(root: &Path, walk: &mut FileWalk, options: &WalkOptions) {
             if error.kind() == std::io::ErrorKind::PermissionDenied {
                 walk.permission_denied_count += 1;
             }
-            return;
+            return Ok(());
         }
     };
     if let Err(error) = ensure_walk_metadata_safe(root, "scan root", &root_metadata) {
         walk.skipped_files += 1;
         push_walk_error(walk, error.to_string());
-        return;
+        return Ok(());
     }
     if root_metadata.is_file() {
+        if let Some(limit) = options.max_files {
+            if walk.files.len() >= limit {
+                mark_file_limit_reached(walk, limit);
+                return Ok(());
+            }
+        }
         add_file(root, walk, options);
-        return;
+        if should_cancel()? {
+            walk.discovery_cancelled = true;
+        }
+        return Ok(());
     }
     if !root_metadata.is_dir() {
         walk.skipped_files += 1;
@@ -100,23 +144,31 @@ fn collect_one(root: &Path, walk: &mut FileWalk, options: &WalkOptions) {
             walk,
             format!("scan root is not a file or directory: {}", root.display()),
         );
-        return;
+        return Ok(());
     }
     let mut walker = walkdir::WalkDir::new(root).follow_links(false);
     if let Some(max_depth) = options.max_depth {
         walker = walker.max_depth(max_depth);
     }
-    for entry in walker
+    let mut entries = walker
         .into_iter()
-        .filter_entry(|entry| should_descend(entry.path()))
-    {
-        if options
-            .max_files
-            .is_some_and(|limit| walk.files.len() >= limit)
-        {
-            walk.skipped_files = walk.skipped_files.saturating_add(1);
+        .filter_entry(|entry| should_descend(entry.path()));
+    let mut entries_since_checkpoint = 0usize;
+    loop {
+        if entries_since_checkpoint == 0 && should_cancel()? {
+            walk.discovery_cancelled = true;
             break;
         }
+        let Some(entry) = entries.next() else {
+            break;
+        };
+        if let Some(limit) = options.max_files {
+            if walk.files.len() >= limit {
+                mark_file_limit_reached(walk, limit);
+                break;
+            }
+        }
+        entries_since_checkpoint += 1;
         match entry {
             Ok(entry) if entry.file_type().is_dir() => walk.folders_scanned += 1,
             Ok(entry) if entry.file_type().is_file() => add_file(entry.path(), walk, options),
@@ -141,7 +193,28 @@ fn collect_one(root: &Path, walk: &mut FileWalk, options: &WalkOptions) {
                 }
             }
         }
+        if entries_since_checkpoint >= WALK_CANCELLATION_CHUNK_ENTRIES {
+            entries_since_checkpoint = 0;
+        }
     }
+    if !walk.discovery_cancelled && !walk.file_limit_reached && should_cancel()? {
+        walk.discovery_cancelled = true;
+    }
+    Ok(())
+}
+
+fn mark_file_limit_reached(walk: &mut FileWalk, limit: usize) {
+    if walk.file_limit_reached {
+        return;
+    }
+    walk.file_limit_reached = true;
+    walk.skipped_files = walk.skipped_files.saturating_add(1);
+    push_walk_error(
+        walk,
+        format!(
+            "file discovery limit of {limit} files reached; remaining entries were not enumerated or reported clean"
+        ),
+    );
 }
 
 fn should_descend(path: &Path) -> bool {
@@ -466,6 +539,89 @@ mod tests {
     use super::*;
     use std::fs;
     use tempfile::tempdir;
+
+    #[test]
+    fn file_discovery_cancellation_stops_before_next_entry_chunk() {
+        let dir = tempdir().unwrap();
+        for index in 0..300 {
+            fs::write(
+                dir.path().join(format!("benign-discovery-{index}.txt")),
+                b"ordinary benign discovery fixture",
+            )
+            .unwrap();
+        }
+        let mut checkpoints = 0usize;
+        let mut should_cancel = || {
+            checkpoints += 1;
+            Ok(checkpoints >= 4)
+        };
+
+        let walk = collect_accessible_files_with_options_and_cancellation(
+            &[dir.path().to_path_buf()],
+            &WalkOptions::full(),
+            &mut should_cancel,
+        )
+        .unwrap();
+
+        assert!(walk.discovery_cancelled);
+        assert!(!walk.file_limit_reached);
+        assert!(walk.files.len() < 300);
+        assert_eq!(checkpoints, 4);
+    }
+
+    #[test]
+    fn file_discovery_cancellation_propagates_probe_error() {
+        let dir = tempdir().unwrap();
+        fs::write(dir.path().join("benign.txt"), b"benign fixture").unwrap();
+        let mut should_cancel = || anyhow::bail!("benign discovery probe failure");
+
+        let error = collect_accessible_files_with_options_and_cancellation(
+            &[dir.path().to_path_buf()],
+            &WalkOptions::full(),
+            &mut should_cancel,
+        )
+        .expect_err("discovery callback failure must propagate");
+
+        assert!(error.to_string().contains("benign discovery probe failure"));
+    }
+
+    #[test]
+    fn file_discovery_limit_is_bounded_and_fail_visible() {
+        let dir = tempdir().unwrap();
+        for index in 0..5 {
+            fs::write(
+                dir.path().join(format!("benign-limit-{index}.txt")),
+                b"ordinary benign discovery fixture",
+            )
+            .unwrap();
+        }
+        let options = WalkOptions {
+            max_depth: None,
+            max_files: Some(3),
+            risky_files_only: false,
+        };
+        let mut never_cancel = || Ok(false);
+
+        let walk = collect_accessible_files_with_options_and_cancellation(
+            &[dir.path().to_path_buf()],
+            &options,
+            &mut never_cancel,
+        )
+        .unwrap();
+
+        assert_eq!(
+            WalkOptions::full().max_files,
+            Some(MAX_FULL_SCAN_DISCOVERED_FILES)
+        );
+        assert_eq!(walk.files.len(), 3);
+        assert!(walk.file_limit_reached);
+        assert!(!walk.discovery_cancelled);
+        assert!(walk.skipped_files >= 1);
+        assert!(walk.scan_errors.iter().any(|error| {
+            error.contains("file discovery limit of 3 files reached")
+                && error.contains("not enumerated or reported clean")
+        }));
+    }
 
     #[test]
     fn quick_walk_keeps_risky_files_and_skips_plain_documents() {

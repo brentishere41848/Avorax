@@ -3608,3 +3608,35 @@ at-most-4,096-section latency remains bounded but non-preemptive. Installed
 cross-identity service/IPC, signed-driver/kernel mediation, production
 accuracy/signing, demonstrated pre-execution blocking, and Defender replacement
 remain open product blockers.
+
+## Checkpoint 2256 Open Evidence And Limits
+
+Checkpoint 2256 file discovery cancellation and bounds are scripted but not yet
+verified. Five focused benign regressions, Source contract 686, exact definitive
+`285/285`, hostile validator mutations, broad locked/all-features regression,
+hosted exact-head CI/packages, normal integration, guarded synchronization, and
+destination verification remain blockers to closure.
+
+Even after those pass, discovery is cooperative: one OS directory or metadata
+operation, one at-most-128-entry chunk, and the bounded priority sort can finish
+before cancellation is observed. The 250,000 full/custom cap bounds stored path
+count, not aggregate path bytes, filesystem I/O, elapsed time, or kernel work.
+Installed cross-identity service ownership, signed-driver/kernel mediation,
+production calibration/signing, demonstrated pre-execution blocking, and
+Microsoft Defender replacement remain separate open product blockers.
+
+Focused Checkpoint 2256 blockers are cleared by file discovery `5/5`, Source
+`686/686`, and Local Core `551/551`. Broad locked/all-features workspace,
+definitive exact `285/285`, hostile report validation, hosted exact-head,
+integration, guarded synchronization, and destination verification remain open.
+All cooperative and separate installed-service/driver/product blockers remain.
+
+Broad and definitive local blockers are now cleared: both locked workspace
+variants, strict Local Core Clippy, locked release build, Flutter/Dart suites,
+exact verifier `285/285`, independent PS5/PS7 acceptance, and hostile
+missing-step/missing-scope rejection pass. Hosted exact-head CI/packages,
+normal integration, guarded synchronization, and destination verification remain
+checkpoint blockers. Cooperative discovery latency, aggregate path-byte/I/O
+bounds, installed cross-identity service ownership, signed-driver/kernel
+mediation, production calibration/signing, demonstrated pre-execution blocking,
+and Defender replacement remain separate open product blockers.

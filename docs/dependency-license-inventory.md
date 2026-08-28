@@ -1828,6 +1828,37 @@ Hosted lockfile SBOM evidence remains pending. Final-binary SBOM resolution,
 production signing/notarization, legal approval, installed-service stress, and
 release approval remain separate prerequisites.
 
+## Checkpoint 2256 Dependency Delta
+
+Checkpoint 2256 file discovery cancellation and bounds add no dependency,
+feature, package source, license class, downloaded runtime, machine-wide
+component, or lockfile change. The implementation reuses existing `anyhow`,
+`walkdir`, `uuid`, Rust standard-library filesystem APIs, and the existing Local
+Core cancellation-token contract.
+
+The scripted verification surface is Source contract 686 and definitive step
+285 (`local-core file-discovery cancellation and bounds regressions`). No
+Checkpoint 2256 test, dependency re-resolution, package download, artifact
+extraction, installation, or execution has occurred during this scripting
+phase. Existing final-binary notice/license, production signing/notarization,
+enterprise deployment, and release-approval blockers are unchanged.
+
+Focused Checkpoint 2256 verification passed without dependency resolution or
+lockfile edits: Source `686/686`, file discovery `5/5`, and Local Core `551/551`.
+The dependency delta remains empty; definitive step 285, hosted package/SBOM,
+and final-binary legal evidence remain pending.
+
+Broad and definitive Checkpoint 2256 verification also passes both locked
+workspace variants, strict Local Core Clippy, the locked all-features release
+build, Flutter/Dart regressions, and exact `285/285` without a dependency,
+feature, package source, license class, or lockfile change. Root Cargo, Native
+Cargo, and Flutter lock SHA-256 values remain respectively
+`7c7c8aa006c2ac80eb89fa64d3b8ec09b32b26598b1a85bceb3c2af5a2d20e39`,
+`7f4393c81896600c4a5e84cad288a1a5360eccbc1c458b38f615082f66391383`, and
+`4de19695f9207273746341ca2221541b5b86d9f72af83727afca78541e177694`.
+Hosted package/SBOM evidence and final-binary legal/notice resolution remain
+pending; no publication is authorized.
+
 ## Checkpoint 2255 Dependency Delta
 
 Checkpoint 2255 changes only first-party Rust PE resource cancellation wiring,

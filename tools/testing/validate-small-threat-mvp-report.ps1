@@ -1951,8 +1951,8 @@ if ($RequireFullSuite) {
   if ($skipFlutter -or $skipRust) {
     throw "-RequireFullSuite requires skip_flutter=false and skip_rust=false."
   }
-  if ($steps.Count -ne 284) {
-    throw "-RequireFullSuite expected exactly 284 verifier steps for this source revision, found $($steps.Count)."
+  if ($steps.Count -ne 285) {
+    throw "-RequireFullSuite expected exactly 285 verifier steps for this source revision, found $($steps.Count)."
   }
   if ($steps[0].name -ne "local-core safe simulator scan reporting") {
     throw "-RequireFullSuite first step mismatch: $($steps[0].name)"
@@ -2032,6 +2032,7 @@ if ($RequireFullSuite) {
   Assert-ReportContainsStep $steps "native-engine ZIP entry-name normalization cancellation regressions"
   Assert-ReportContainsStep $steps "native-engine ZIP EOCD search cancellation regressions"
   Assert-ReportContainsStep $steps "native-engine PE resource-section cancellation regressions"
+  Assert-ReportContainsStep $steps "local-core file-discovery cancellation and bounds regressions"
   Assert-ReportContainsStep $steps "native-engine static term-search cancellation regressions"
   Assert-ReportContainsStep $steps "native-engine static reference-search cancellation regressions"
   Assert-ReportContainsStep $steps "native-engine static structured-indicator cancellation regressions"
@@ -2078,6 +2079,11 @@ if ($RequireFullSuite) {
   Assert-ReportScopeContains $technicalLimitText "existing 65,557-byte search window is a work bound, not a deadline" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "one at-most-4,096-section mapping chunk can complete before the next checkpoint" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "PE header's u16 section count and validated in-sample section table are work bounds, not deadlines" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $verifiedScopeText "Local Core path discovery checks the exact job-bound cancellation token before each root, before every at-most-128 WalkDir entries, after each root, and before and after bounded priority sorting" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Cancellation during discovery returns a cancelled report without scanning discovered files; malformed or mismatched token evidence aborts visibly rather than becoming cancelled, clean, or completed" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Quick scans retain a 5,000-file discovery cap and full/custom scans stop at an explicit 250,000-file cap; reaching either cap records an incomplete discovery error and undiscovered entries are not counted or reported clean" "verification_scope.verified"
+  Assert-ReportScopeContains $technicalLimitText "Filesystem enumeration and metadata probes are cooperative, not preemptive; one operating-system directory read or metadata call plus one at-most-128-entry chunk can complete before cancellation is observed" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "The 250,000-file cap bounds stored paths rather than path-byte allocation or filesystem I/O, and the final bounded priority sort does not observe cancellation while it is running" "verification_scope.technically_limited"
   Assert-ReportScopeContains $verifiedScopeText "bounded UTF-8-safe head/tail command-line sampling" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "command indicators remain post-start review evidence" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "high-risk process-start verdicts return recommendations rather than fake block success" "verification_scope.verified"

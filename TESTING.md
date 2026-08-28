@@ -642,3 +642,36 @@ packages, guarded `13/13` destination synchronization, destination PS5/PS7
 parser `2/2`, formatting, Source `685/685`, cancellation `3/3`, and definitive
 destination `284/284` in `667.7s`. The destination report SHA-256 is
 `853db9a32a3e18f1b8704d9965bf60ab56f52f89f2c280a828278ac73cfade58`.
+
+## Checkpoint 2256 Scripted Coverage
+
+Checkpoint 2256 adds Local Core file discovery `file_discovery_` regressions for cancellation
+before the next at-most-128-entry chunk, callback-error propagation, explicit
+file-limit failure, a cancelled scan report before Native Engine startup, and a
+malformed job-token error. All fixtures are ordinary benign text and are never
+executed.
+
+Definitive verification now requires 285 steps, including `local-core
+file-discovery cancellation and bounds regressions`; Source contract 686 binds
+the source, tests, validator, and docs. No Checkpoint 2256 test has run during
+the scripting phase. Required order is focused parser/format/source and Cargo
+checks, broad locked and all-features regression, exact `285/285` verification,
+independent/hostile validation, hosted exact-head evidence, normal integration,
+guarded destination sync, and destination reruns.
+
+Checkpoint 2256 focused results: PS5/PS7 parser `2/2` each, rustfmt and diff
+check pass, Source contract `686/686`, file discovery `5/5`, walker `10/10`,
+full scan `3/3`, cancellation `8/8`, and Local Core `551/551`. The first Local
+Core attempt was `550/551` due only to an obsolete indentation-sensitive source
+marker; the strengthened semantic-order assertion passes `1/1` before the clean
+full rerun. Definitive verifier `285/285` and later evidence remain pending.
+
+Broad and definitive Checkpoint 2256 results supersede that pending statement:
+standard/all-features locked workspace tests, strict Local Core Clippy, locked
+release build, Flutter `847/847`, Dart `14/14` and `6/6`, and exact `285/285`
+pass. Independent PS5/PS7 validators accept the 206,090-byte report, SHA-256
+`74681a86670805ffeb23b9903a7f5cd70a0c008b91bbe7aff7ab256228b23f33`,
+and both reject missing-step and missing-scope mutations. The three lock hashes,
+zero product processes/residue, and protected-vault invariant remain exact.
+Hosted exact-head, integration, guarded synchronization, and destination reruns
+remain required for checkpoint closure.
