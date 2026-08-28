@@ -13439,6 +13439,34 @@ pending.
   destination evidence remain open. The complete antivirus-hardening goal stays
   active.
 
+### Checkpoint 2258 Integration And Destination Closure
+
+- Evidence `1523810728b0a4b5e67765e31f7d6d30473afeec` passes CI
+  `33150862275` and packages `33150862448`. Its consolidated artifact
+  `9677952419` matches 132,149,066 bytes / SHA-256
+  `76b4972b196c916cfb9eef9db7dd10e141d0e377b745da3c713783efea4c58b4`
+  and passes bounded non-extracting 8/6/7/CycloneDX-1.6/569 review.
+- PR `#125` merges normally as `73920a978cfa15e803e29b40d37a9964e91ee0be`.
+  Merged-main CI `33151851259` and packages `33151851251` pass with publication
+  skipped. Main artifact `9678412188` matches 132,179,061 bytes / SHA-256
+  `d10e677c23360fdfdaf4db99511f823d4c325fb2d89412a7f6ef65f732eb7450`
+  and passes the same bounded non-extracting review with zero residue.
+- Guarded old-base/absence preconditions and same-directory atomic activation
+  synchronize exact `14/14` paths to `C:\Users\Brent\Documents\Avorax-main`:
+  13 modified, one added, zero deleted, 7,588,496 staged bytes, no rollback,
+  exact merge equality, and zero staging/backup residue.
+- Destination parsers `2/2` on PS5/PS7, Source `688/688`, formatting, resource
+  `6/6`, Local Core `562/562`, and strict Clippy pass. Definitive verification
+  passes exact `287/287` in `698.5s`; independent PS5/PS7 validation accepts the
+  200,845-byte report with SHA-256
+  `70ff765a95fd881aafd11255d2a92cb22bff9f447efecdc222a777fa93cdb379`.
+- All three locks, all synchronized blobs, zero process/sync residue, and the
+  read-only `16072/0/4522733` vault invariant remain exact. Publication is
+  skipped and nothing is installed, released, or executed. Checkpoint 2258 is
+  closed; exact kernel resource enforcement, installed service/driver,
+  production calibration/signing, pre-execution blocking, Defender replacement,
+  and the complete antivirus-hardening goal remain open.
+
 ### Checkpoint 2258 Hosted Implementation-Head Evidence
 
 - Exact implementation `709e8a9d56f89dd13b8e296334b187ff2a99d6f2`

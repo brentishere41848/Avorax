@@ -5663,3 +5663,12 @@ passes PR `#125` CI `33149543048`, PR packages `33149543030`, and push packages
 8-root/6-package/7-checksum/CycloneDX-1.6/569-unique-ref review; publication is
 skipped. Evidence-head, merge, merged-main, sync, and destination evidence remain
 pending.
+
+Evidence-head and merged-main CI/packages, normal PR `#125` integration,
+bounded review of all consolidated artifacts, guarded `14/14` zero-delete
+destination synchronization, destination focused tests, and exact destination
+`287/287` now pass. The first four Checkpoint 2258 rows are **Verified**. Exact
+filesystem/kernel resource enforcement remains **Technically limited**;
+installed-service, signed-driver/kernel, production-calibration/signing,
+pre-execution, and Defender-replacement rows remain partial, blocked, limited,
+or unclaimed. Checkpoint 2258 is closed; the complete goal remains active.

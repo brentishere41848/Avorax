@@ -2208,3 +2208,11 @@ CycloneDX 1.6 lockfile SBOM with 569 non-empty unique component references and
 pass all seven checksums under bounded non-extracting review; publication is
 skipped. Evidence-head, merged-main, and destination package/SBOM evidence remain
 pending, as do final-binary legal/notice provenance and release approval.
+
+Evidence-head and merged-main package workflows pass with publication skipped.
+Artifacts `9677952419` and `9678412188` independently pass all seven checksums
+and CycloneDX 1.6/569-unique-ref bounded non-extracting review. Destination root,
+Native, and Flutter locks remain exact after guarded `14/14` synchronization and
+definitive `287/287`. Checkpoint 2258 adds no dependency or lockfile change and
+is closed; final-binary legal/notice provenance, production signing/
+notarization, enterprise approval, and release approval remain separate.
