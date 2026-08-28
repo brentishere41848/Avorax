@@ -3910,3 +3910,10 @@ cross-identity service authorization, signed-driver mediation, and
 pre-execution blocking remain blockers or technical limits. No live malware,
 Defender weakening, vault mutation, install, service/driver start, release, or
 publication is authorized.
+
+Implementation-head CI/package and bounded artifact review pass, publication
+skips, and PR `#135` merges normally. This closes no authority limitation:
+privileged ancestor replacement, hostile filesystems, installed cross-identity
+service authorization, signed-driver mediation, and pre-execution blocking
+remain blocked or technically limited. Closure-head, merged-main,
+synchronization, and destination evidence remains pending.

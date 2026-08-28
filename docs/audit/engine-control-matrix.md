@@ -5815,3 +5815,12 @@ PS5/PS7 accepted report SHA-256
 `92360dc643cb81f8e4c4eb1bdcd181a1c705870524d29213bf842a44f5e61f3b`
 and all six adversarial mutations rejected. Hosted, merge, synchronization, and
 destination evidence remains pending; the complete goal remains active.
+
+Exact implementation `db43c763cd2094f467983b5fe9262c847dcf2a2b` passes
+hosted CI `33218470626` and package push/PR `33218432833`/`33218470623`.
+Both consolidated artifacts pass bounded non-extracting exact
+8-root/6-package/7-checksum/CycloneDX-1.6/569-component review, and publication
+is skipped. PR `#135` merges normally as
+`ed0484a605c7f5cc7a62d8c2dd8459ee969cec57`. The first three rows are now
+**Verified and implementation-integrated**; closure-head, merged-main,
+synchronization, and destination columns remain pending.

@@ -1106,3 +1106,15 @@ failure are retained as tooling preparation evidence; corrected checks reran
 from the beginning. No product process or smoke root remains and the protected
 vault is exact. Hosted, merge, guarded-sync, and destination execution remains
 pending.
+
+Implementation-head hosting now passes CI `33218470626` and package push/PR
+`33218432833`/`33218470623` at exact SHA
+`db43c763cd2094f467983b5fe9262c847dcf2a2b`; both publication jobs skip.
+Untouched consolidated artifacts `9704536389` and `9704698986` pass bounded
+stream validation with exact 8 roots, 6 packages, 7 checksums, and CycloneDX
+1.6 / 569 components. Their outer SHA-256 values are
+`93b68faf96a312a0f2abe7f61ffc12ebbd6e3425f59d7a1d2b7274e2f0d57d32`
+and `c3696035a78047c3dfbe88b37bea0b2a332a15fccd4c6928561f8f8e6100aae5`;
+neither ZIP is extracted or executed. PR `#135` merges normally as
+`ed0484a605c7f5cc7a62d8c2dd8459ee969cec57`. Closure-head, merged-main,
+guarded-sync, and destination tests remain pending.

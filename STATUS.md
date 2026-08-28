@@ -7915,7 +7915,7 @@ replacement, and the complete antivirus-hardening goal remain open.
 
 ## Checkpoint 2263 - Restore No-Replace
 
-Checkpoint 2263 is locally verified and awaiting hosted integration. Quarantine restore
+Checkpoint 2263 is implementation-merged and awaiting closure verification. Quarantine restore
 activation now uses an atomic no-replace OS primitive on Windows, Linux/Android,
 and Apple platforms; unsupported platforms fail visibly. A destination created
 after preflight must be preserved rather than replaced. Local Core, platform
@@ -7926,7 +7926,12 @@ scripting phase. After the batch freeze, Source `693/693`, focused `2/2` plus
 Flutter analyze/`852/852`, protocols, and exact definitive `291/291` in `666.2s`
 passed. Both validator hosts accepted report SHA-256
 `92360dc643cb81f8e4c4eb1bdcd181a1c705870524d29213bf842a44f5e61f3b`;
-all six adversarial mutations rejected. The vault remains exact. Hosted, merge,
-sync, and destination proof remain pending. Path-ancestor replacement by
+all six adversarial mutations rejected. The vault remains exact. Implementation
+`db43c763cd2094f467983b5fe9262c847dcf2a2b` also passes CI `33218470626`
+and package push/PR `33218432833`/`33218470623`; publication is skipped.
+Artifacts `9704536389`/`9704698986` pass bounded non-extracting
+8/6/7/CycloneDX-1.6/569 review. PR `#135` merges normally as
+`ed0484a605c7f5cc7a62d8c2dd8459ee969cec57`. Closure-head, merged-main, sync,
+and destination proof remain pending. Path-ancestor replacement by
 privileged actors remains a documented point-in-time user-mode limitation; the
 full goal remains active.
