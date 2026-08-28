@@ -1059,7 +1059,24 @@ smokes passed on PowerShell 5.1/7. Both locked Rust workspaces, all-feature
 release build, Flutter analyze plus `852/852`, and protocol `14/14` plus `6/6`
 passed. Definitive verification passed exact `290/290` in `621.9s`; both hosts
 accepted the authentic report and rejected all six adversarial mutations.
-Hosted, integration, guarded-sync, and destination evidence remain pending.
+Evidence/head CI/packages, normal PR integration, merged-main CI/packages, and
+bounded non-extracting package review passed with publication skipped.
+
+Guarded destination synchronization applied exact 26 paths: 24 modified, two
+added, zero deleted. Destination Source `692/692`, focused Local Core `8/8`, IPC
+`97/97`, strict all-feature Clippy, both-host release smoke, both locked Rust
+workspaces, all-feature release, Flutter analyze/`852/852`, and both protocol
+suites passed. A first destination verifier attempt stopped after 39 passes
+because Defender removed the generated Native harness before execution as
+inactive `Trojan:Win32/Wacatac.C!ml` with `DidThreatExecute=False` (error 225).
+Defender was not weakened; failed report SHA-256 is
+`1713a3c856c5d8d860b04021c5011485042119b3649e184ec62a0828b08b0032`.
+A fresh isolated target passed `4/4`; the complete verifier then restarted and
+passed exact `290/290`, zero failed/skipped, in `728.3s`. Integrated and
+independent PS5/PS7 validators accept its 206,462-byte report with SHA-256
+`dd2471f176fca7c3138198cb52e034d539e5a4808ffb2ae5b9d2e759301c8cea`;
+all six destination adversarial mutations reject. Final audit passes 26/26
+paths, 8/8 locks, zero sidecars/processes, and the exact vault.
 The protected production vault is never a test root. No live malware, fixture
 execution, Defender weakening, installation, service/driver start, release, or
-publication is permitted. Checkpoint 2262 and the full goal remain open.
+publication is permitted. Checkpoint 2262 is closed; the full goal remains open.

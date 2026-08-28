@@ -13880,4 +13880,38 @@ pending.
 - Both pass bounded non-extracting exact 8-root/6-package/7-checksum/
   CycloneDX-1.6/569-component review. Nothing is extracted, installed,
   executed, released, or published. Evidence-head, merge, merged-main, guarded
-  sync, and destination proof remain pending; the complete goal stays active.
+  sync, and destination proof followed below.
+
+### Checkpoint 2262 Integration And Destination Closure
+
+- Evidence `61c3ed2d16b2422cf18924c63bb33272a4f16036` passes CI
+  `33208443938` and packages `33208443931`; artifact `9700940590` matches
+  132,285,278 bytes / SHA-256
+  `836dbfcf7898aaf7fb27884438f449035c899112ce6679ffa106ca0f72d0e5ad`
+  and passes bounded non-extracting 8/6/7/CycloneDX-1.6/569 review.
+- PR `#133` merges normally as `25115ffef2be5595b9a8744245dbecacef4e227f`.
+  Merged-main CI `33209411475` and packages `33209411481` pass with
+  publication skipped. Main artifact `9701360508` matches 132,284,228 bytes /
+  SHA-256
+  `aecc5ca29045e5740e50e6a6c785317849d974d9acd5f0f5803d0208f046a427`
+  and passes the same non-extracting review.
+- Guarded exact-base/absence, link, process, source-blob, and vault preconditions
+  synchronize 26 paths to `C:\Users\Brent\Documents\Avorax-main`: 24 modified,
+  two added, zero deleted. Apply report SHA-256 is
+  `deea441065b58d2f78162ffaa8815a9a9b49ef3b7d3515e7994fe1f00789bb0e`.
+- Destination Source `692/692`, focused `8/8`, IPC `97/97`, strict Clippy,
+  dual-host release smoke, both locked Rust workspaces, all-feature release,
+  Flutter analyze/`852/852`, and protocols `14/14` plus `6/6` pass.
+- A first definitive attempt remains honestly failed after 39 passed steps:
+  Defender removed the generated Native harness before execution as inactive
+  `Trojan:Win32/Wacatac.C!ml`, `DidThreatExecute=False`, causing error 225.
+  Defender was not weakened. Failed report SHA-256 is
+  `1713a3c856c5d8d860b04021c5011485042119b3649e184ec62a0828b08b0032`.
+  A fresh exact isolated target then passed `4/4`.
+- The complete verifier restarted from step one and passed exact `290/290`, zero
+  failed/skipped, in `728.3s`. Independent PS5/PS7 validators accept destination
+  report SHA-256
+  `dd2471f176fca7c3138198cb52e034d539e5a4808ffb2ae5b9d2e759301c8cea`;
+  all six adversarial mutations reject. Final audit passes 26/26 paths, 8/8
+  locks, zero sidecars/processes, and the exact 16,072-file vault. Checkpoint
+  2262 is closed; the complete antivirus-hardening goal remains active.

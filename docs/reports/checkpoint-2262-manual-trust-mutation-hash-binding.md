@@ -1,6 +1,6 @@
 # Checkpoint 2262 - Manual Trust-Mutation Hash Binding
 
-Status: **Locally and implementation-head hosted verified; integration and destination verification pending**
+Status: **Closed; implementation integrated and synchronized destination verified**
 
 Checkpoint 2262 addresses stale scan evidence and false action-success evidence
 for the two manual trust mutations reachable from a visible scan-result row:
@@ -123,9 +123,74 @@ exactly:
 Bounded non-extracting ZIP-stream review passes for both: exact eight unique
 safe root files, six platform packages, seven matching checksum targets,
 CycloneDX 1.6 with 569 components, and zero encrypted, special, traversal, or
-over-limit entries. No package was extracted, installed, or executed. Evidence-
-head hosted checks, normal merge, merged-main checks, guarded destination sync,
-and destination verification remain pending.
+over-limit entries. No package was extracted, installed, or executed.
+
+## Evidence-Head And Integration Evidence
+
+Evidence commit `61c3ed2d16b2422cf18924c63bb33272a4f16036` passed
+Avorax CI `33208443938` and Desktop Packages PR run `33208443931`. Every
+source and platform package job passed; publication was skipped. Consolidated
+artifact `9700940590` matched GitHub at 132,285,278 bytes and SHA-256
+`836dbfcf7898aaf7fb27884438f449035c899112ce6679ffa106ca0f72d0e5ad`.
+Bounded non-extracting review again passed exact 8-root/6-package/7-checksum/
+CycloneDX-1.6/569-component evidence.
+
+PR `#133` merged normally as
+`25115ffef2be5595b9a8744245dbecacef4e227f`, with exact parents
+`4db4d92ff9bc8e4d1ea057841db9f2cbe2c410e9` and
+`61c3ed2d16b2422cf18924c63bb33272a4f16036`. Merged-main CI
+`33209411475` and Desktop Packages `33209411481` passed, with publication
+again skipped. Consolidated main artifact `9701360508` matched GitHub at
+132,284,228 bytes and SHA-256
+`aecc5ca29045e5740e50e6a6c785317849d974d9acd5f0f5803d0208f046a427`.
+It passed the same bounded non-extracting validation. No hosted artifact was
+installed, extracted, executed, released, or published.
+
+## Guarded Synchronization And Destination Evidence
+
+Guarded synchronization required every existing destination file to match the
+exact old Git blob and both new paths to be absent. It rejected links/reparse
+parents, active product processes, source drift, staging collisions, or any
+protected-vault deviation before activation. Short verified backups and
+same-directory staging supported rollback. Exact activation synchronized 26
+paths to `C:\Users\Brent\Documents\Avorax-main`: 24 modified, two added, zero
+deleted. The generated apply report has SHA-256
+`deea441065b58d2f78162ffaa8815a9a9b49ef3b7d3515e7994fe1f00789bb0e`.
+
+Destination Source passed `692/692`; focused Local Core passed `8/8`; Flutter
+IPC passed `97/97`; strict all-feature Local Core Clippy and both-host release
+smokes passed. Both locked Rust workspace variants passed with Platform
+`11/11`, Update Service `203/203`, Local Core `580/580`, Native `640/640` plus
+21 intentional isolated-child ignores, and compiler `6/6`. The all-feature
+release workspace build, Flutter analyze and `852/852`, and protocol `14/14`
+plus `6/6` passed.
+
+The first destination definitive attempt is retained as a failed host-security
+event, not a pass. After 39 passed steps, Defender removed the generated Native
+test harness before execution as inactive `Trojan:Win32/Wacatac.C!ml` with
+`DidThreatExecute=False`, causing Windows error 225. Its 85,458-byte schema-v2
+failed report has SHA-256
+`1713a3c856c5d8d860b04021c5011485042119b3649e184ec62a0828b08b0032`.
+Defender was not weakened and nothing was restored or allowlisted. A fresh
+isolated build of the exact failed Native target then passed `4/4`.
+
+The full verifier restarted from step one and passed exact `290/290`, zero
+failed/skipped, in `728.3s`, from `2026-08-28T21:11:23.4782666Z` through
+`2026-08-28T21:23:31.8534843Z`. Its 206,462-byte destination report is
+`.workflow/ultracode/avorax-hardening/results/2262-destination-small-threat-mvp-manual-trust-mutation-hash-binding-report.json`
+with SHA-256
+`dd2471f176fca7c3138198cb52e034d539e5a4808ffb2ae5b9d2e759301c8cea`.
+Integrated and independently rerun Windows PowerShell 5.1 and PowerShell 7
+validators accepted it. A fresh dual-host adversarial audit accepted both
+authentic validations and rejected all six missing-step/scope/limit mutations;
+its 7,026-byte result SHA-256 is
+`ccbe1ea62a8baddb2872c2644cb55e18e3d416ccc83f91cb72ace77dd0732a94`.
+
+Final independent audit passed all 26 raw and normalized path hashes, all eight
+lockfiles, zero synchronization sidecars, zero product processes, and the exact
+protected vault. Its report SHA-256 is
+`b4f08d6d022cf0e880b3f27baded377f27b2f7ed8f766dffaff39eec63f33fd6`.
+Checkpoint 2262 is closed; the complete antivirus-hardening goal remains active.
 
 ## Verification Commands
 
@@ -154,10 +219,10 @@ integration and wrote the checkpoint-specific report above.
 
 | Control / engine responsibility | Current checkpoint state | Evidence boundary |
 | --- | --- | --- |
-| Scan-result allowlist request binding | **Verified locally** | Exact row path/SHA-256 and explicit confirmation cross Flutter IPC; success requires active file type plus exact path/hash. |
-| Scan-result feedback request binding | **Verified locally** | Exact row SHA-256, requested label, previous verdict, and explicit confirmation cross IPC. |
-| Local Core trust admission | **Verified locally** | Malformed evidence fails before access; stale bytes fail before persistence; unsupported labels fail visibly. |
-| Persisted success evidence | **Verified locally** | Allowlist entry and compact persisted label receipt match request and isolated persisted evidence. |
+| Scan-result allowlist request binding | **Verified** | Exact row path/SHA-256 and explicit confirmation cross Flutter IPC; success requires active file type plus exact path/hash. Local, hosted, merged, and destination evidence passes. |
+| Scan-result feedback request binding | **Verified** | Exact row SHA-256, requested label, previous verdict, and explicit confirmation cross IPC. Local and synchronized destination evidence passes. |
+| Local Core trust admission | **Verified** | Malformed evidence fails before access; stale bytes fail before persistence; unsupported labels fail visibly. Local and destination release paths pass. |
+| Persisted success evidence | **Verified** | Allowlist entry and compact persisted label receipt match request and isolated persisted evidence. Local and destination adversarial proof passes. |
 | Signature/hash/rule/static/PE/archive/heuristic/ML/Authenticode/process/verdict engines | **Unchanged** | No detection-engine responsibility or threshold changes in checkpoint 2262. |
 | Installed packaged UI/service click-through | **Partial** | Source/widget/controller/IPC and release-child proof pass; installed package and cross-process service E2E remain separate. |
 | Cross-identity authorization and immutable file lease | **Disabled / blocked** | Current Local Core is a same-user child interface; no signed service/driver or kernel lease is introduced. |
@@ -181,9 +246,10 @@ is started, and no package is published or released.
 
 Checkpoint 2262 adds no dependency, package source, binary fixture, license
 class, network fetch, or lockfile change. Existing pinned Rust and Flutter/Dart
-graphs remain authoritative. Local dependency evidence and locked builds pass;
-hosted package/SBOM, final-diff, and destination reviews remain required before
-closure.
+graphs remain authoritative. Local and destination dependency evidence, both
+locked workspace variants, all eight exact lockfiles, hosted package/SBOM
+review, final diff, and destination audit pass. Final-binary legal/notice
+provenance and production signing/notarization remain separate release work.
 
-The complete antivirus-hardening goal remains active after this checkpoint; a
-checkpoint pass must not be represented as completion of the whole antivirus.
+Checkpoint 2262 is closed. The complete antivirus-hardening goal remains active;
+this checkpoint must not be represented as completion of the whole antivirus.

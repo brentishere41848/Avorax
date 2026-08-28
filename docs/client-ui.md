@@ -204,8 +204,10 @@ verdict, and consistent absolute local store paths. Any absent, malformed, or
 contradictory success evidence becomes a visible failure; the row and audit log
 must not be marked successful.
 
-Checkpoint 2262 harmless IPC/runtime proof passes locally: IPC `97/97`,
-overlapping UI `238/238`, full client `852/852`, analyzer, release smoke, and
-definitive `290/290`. Installed packaged click-through remains pending. This is same-user stale-
+Checkpoint 2262 harmless IPC/runtime proof passes locally and in the synchronized
+destination: IPC `97/97`, overlapping UI `238/238`, full client `852/852`,
+analyzer, release smoke, and definitive `290/290`. Exact hosted/merged source and
+package gates plus guarded zero-delete sync pass. Installed packaged click-
+through remains partial. This is same-user stale-
 verdict and false-success defense, not cross-identity service authentication,
 an immutable file lease, pre-execution blocking, or Defender replacement.
