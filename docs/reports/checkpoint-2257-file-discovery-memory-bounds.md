@@ -130,6 +130,44 @@ synchronization, and destination verification remain open. `.verification` and
 the protected vault remain untouched; the complete antivirus-hardening goal
 remains active.
 
+## Integration And Destination Closure
+
+Exact evidence commit `c8be8364d0b78a750971a2c5a636e181b7e896a0`
+passes PR `#123` CI `33138006413` and Desktop Packages `33138006348`.
+Evidence artifact `9673127100` is 131,765,677 bytes with SHA-256
+`495fff1ce0d365462b5c383b2ca1a84b1469f4cf4228245f619d0d0dfa481533`.
+PR `#123` merged normally as
+`9752f19d8c24fe71114d5d0de8302a8580f266a8`; merged-main CI `33139060154`
+and Desktop Packages `33139060075` pass with publication skipped. Main artifact
+`9673419837` is 132,138,388 bytes with SHA-256
+`1c3f3039028582a7c01a9c18526c984a0d4fc3ae7317ccde6b5a3bcfb16e3f9b`.
+Both artifacts pass bounded non-extracting exact 8-root/6-package/7-checksum/
+CycloneDX-1.6/569-unique-ref review with zero unsafe, duplicate, encrypted,
+directory, or link entries. No package was extracted, installed, or executed;
+owned review residue is zero.
+
+Read-only destination preflight passes all 13 paths against old merge
+`4bbb11f`: three raw-byte exact, nine repository-filter exact, and one addition
+absent. Guarded same-directory staging, backup, and atomic activation pass
+`13/13`: 12 modified, one added, zero deleted, 7,540,063 staged bytes, no
+rollback, exact merged-blob equality, and zero stage/backup residue. Final
+destination equality is three raw and ten repository-filter exact.
+
+The destination passes PS5/PS7 parser `2/2`, Source `687/687`, formatting, the
+new `5/5` regressions, and all three exact lock hashes. Its no-skip/no-Defender
+definitive verifier passes exact `286/286` with zero failed/error steps in
+`640s`. Independent PS5 and PS7 validators accept the 198,448-byte report with
+SHA-256
+`8c2d69538f3853efc0b17a86888776a1fab37297a29a39a0247bc8f7ea4e6ec2`.
+Zero product/sync residue and the protected-vault invariant remain exact;
+`.verification` is untouched.
+
+Checkpoint 2257 is closed. Exact total discovery RAM, filesystem I/O, elapsed
+time, and kernel work remain technically limited; installed cross-identity
+service ownership, signed driver/kernel mediation, production calibration and
+signing, demonstrated pre-execution blocking, and Defender replacement remain
+open. The complete antivirus-hardening goal stays active.
+
 ## Focused Local Evidence
 
 After the scripting boundary, PS5 and PS7 each parse verifier and validator

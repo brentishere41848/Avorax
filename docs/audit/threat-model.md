@@ -3801,3 +3801,11 @@ regression and supply-chain evidence risk for the implementation head; it does
 not establish installed-service ownership, production signing, release
 approval, exact runtime resource bounds, kernel mediation, pre-execution
 blocking, or Defender replacement.
+
+Evidence-head and merged-main CI/packages, bounded artifact review, guarded
+destination synchronization, destination focused checks, and destination exact
+`286/286` now close the Checkpoint 2257 threat delta. Path-payload exhaustion,
+overflow, priority cancellation, and arbitrary callback failure are verified in
+the synchronized tree. Residual exact-memory, allocator, filesystem I/O/time,
+kernel, installed-service, driver, production-calibration, pre-execution, and
+Defender-replacement risks remain as documented.

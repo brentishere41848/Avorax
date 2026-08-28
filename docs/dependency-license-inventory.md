@@ -2169,3 +2169,10 @@ artifacts pass non-extracting checksum and CycloneDX 1.6 review with 569 unique
 lockfile component references. This is hosted source-lock inventory evidence,
 not final-binary license/notice provenance, production signing/notarization, or
 release approval; those remain pending.
+
+Evidence-head and merged-main package workflows also pass with publication
+skipped. Their consolidated artifacts independently pass all seven checksums and
+CycloneDX 1.6/569-unique-ref review. Destination lock hashes remain exact after
+guarded synchronization and definitive `286/286`. Checkpoint 2257 adds no
+dependency or lockfile and is closed; final-binary legal/notice provenance,
+production signing/notarization, and release approval remain separate.

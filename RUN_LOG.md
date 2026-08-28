@@ -13289,3 +13289,26 @@ pending.
   extracted, installed, or executed; owned review residue is zero.
 - Evidence-head hosted reruns, normal merge, merged-main evidence, guarded sync,
   and destination verification remain open. The complete goal stays active.
+
+## 2026-08-28 - Checkpoint 2257 Integration And Destination Closure
+
+- Evidence `c8be836` passes PR `#123` CI `33138006413` and packages
+  `33138006348`. Artifact `9673127100` is 131,765,677 bytes, SHA-256
+  `495fff1ce0d365462b5c383b2ca1a84b1469f4cf4228245f619d0d0dfa481533`.
+- PR `#123` merged normally as `9752f19`; main CI `33139060154` and packages
+  `33139060075` pass with publication skipped. Main artifact `9673419837` is
+  132,138,388 bytes, SHA-256
+  `1c3f3039028582a7c01a9c18526c984a0d4fc3ae7317ccde6b5a3bcfb16e3f9b`.
+  Both artifacts pass bounded non-extracting exact 8/6/7/CycloneDX-1.6/569
+  review and leave zero owned residue.
+- Read-only old-blob preflight passes 13 paths: three raw, nine filtered, one
+  absent addition. Guarded atomic sync passes `13/13`: 12 modified, one added,
+  zero deleted, 7,540,063 staged bytes, no rollback, and zero residue.
+- Destination PS5/PS7 parsers, Source `687/687`, formatting, new tests `5/5`,
+  and lock hashes pass. Definitive verification passes `286/286` in `640s`;
+  both validators accept the 198,448-byte report with SHA-256
+  `8c2d69538f3853efc0b17a86888776a1fab37297a29a39a0247bc8f7ea4e6ec2`.
+- All 13 blobs, zero product/sync residue, and the read-only
+  `16072/0/4522733` vault invariant pass. Checkpoint 2257 is closed; exact
+  resource, service, driver, production, pre-execution, and Defender-
+  replacement limits remain. The complete antivirus goal stays active.

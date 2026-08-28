@@ -5617,3 +5617,10 @@ checksums, and bounded non-extracting SBOM review. Publication is skipped.
 Evidence-head, merged-main, guarded-sync, and destination evidence remain open;
 the exact-total-resource row and all service/driver/pre-execution limitations
 remain unchanged.
+
+Evidence-head, merged-main, bounded artifacts, guarded `13/13` destination sync,
+focused destination checks, and exact destination `286/286` now pass. The first
+four checkpoint rows are **Verified**. The exact-total-resource row remains
+**Technically limited**, and installed-service, driver/kernel, production,
+pre-execution, and Defender-replacement controls remain unchanged. Checkpoint
+2257 is closed; the complete antivirus-hardening goal remains active.

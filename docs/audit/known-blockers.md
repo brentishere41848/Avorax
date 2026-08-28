@@ -3701,3 +3701,11 @@ reruns, normal merge, merged-main evidence, guarded destination synchronization,
 and destination verification remain checkpoint blockers. Exact total resource,
 installed-service, driver, production, pre-execution, and Defender-replacement
 blockers remain unchanged.
+
+Evidence-head, normal merge, merged-main, guarded destination synchronization,
+and destination exact `286/286` now pass, clearing all Checkpoint 2257 evidence
+blockers. The checkpoint is closed. Aggregate encoded path payload is bounded,
+but exact total RAM, filesystem I/O, elapsed time, kernel work, installed cross-
+identity service ownership, signed driver/kernel mediation, production
+calibration/signing, demonstrated pre-execution blocking, and Defender
+replacement remain product blockers or technical limits.
