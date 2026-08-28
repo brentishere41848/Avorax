@@ -2240,3 +2240,11 @@ non-extracting review. This is hosted source-lock inventory evidence, not final-
 binary legal/notice provenance, production signing/notarization, enterprise
 deployment approval, or release approval. Evidence-head, merged-main, and
 destination package/SBOM evidence remain pending.
+
+Evidence-head and merged-main package workflows pass with publication skipped.
+Artifacts `9682604225` and `9683155445` independently pass all seven checksums
+and CycloneDX 1.6/569-unique-ref bounded non-extracting review. Destination root,
+Native, and Flutter locks remain exact after guarded `13/13` synchronization and
+definitive `288/288`. Checkpoint 2259 adds no dependency or lockfile change and
+is closed; final-binary legal/notice provenance, production signing/
+notarization, enterprise approval, and release approval remain separate.

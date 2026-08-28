@@ -7773,3 +7773,19 @@ size/SHA-256 and pass bounded non-extracting 8-root/6-package/7-checksum/
 CycloneDX-1.6/569-unique-ref review with zero unsafe/special entries and zero
 owned residue. Evidence-head hosting, merge, merged-main proof, guarded sync,
 and destination verification remain open; the full goal remains active.
+
+Checkpoint 2259 is now **closed through hosted integration and synchronized
+destination verification**. Evidence `fe3797bcac088f8cddca2f65dd7e26eb7536191d`,
+PR `#127`, merge `5481ba6ed1322ee78d59a43c63dd0d74dc06f560`, evidence-head
+and merged-main CI/packages, and all consolidated artifact reviews pass with
+publication skipped. Guarded sync applies exact `13/13` paths with 12
+modifications, one addition, zero deletes, and zero residue. Destination Source
+`689/689`, focused `4/4`, Local Core `564/564`, strict changed-crate Clippy, and
+definitive `288/288` in `685.6s` pass; independent PS5/PS7 validators accept
+report SHA-256
+`601d7eb11e5c6e09f917f4810f5d409f95b7ae15d2e8947c07b1eabcce482ab9`.
+All locks, synchronized blobs, zero active product processes, and the read-only
+16,072-file vault remain exact. Hard preemption of entered OS calls, exact
+kernel resource accounting, installed service/driver ownership, production
+calibration/signing, pre-execution blocking, Defender replacement, and the
+complete antivirus-hardening goal stay open.
