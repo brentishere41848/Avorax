@@ -921,3 +921,32 @@ All locks and the read-only protected vault remain exact. Checkpoint 2259 is
 closed, while hard OS-call preemption, exact kernel accounting, installed
 service/driver, production, pre-execution, and Defender-replacement verification
 remain open.
+
+## Checkpoint 2260 - Scan Verdict Quarantine Binding
+
+Checkpoint 2260 uses six harmless tests with the shared
+`scan_quarantine_binding_` prefix. Run the focused batch only after the complete
+checkpoint source/test/verifier/validator/document scripting boundary:
+
+```powershell
+cargo test --workspace scan_quarantine_binding_ -- --test-threads=1
+```
+
+The tests replace or rewrite only isolated temporary harmless text files. They
+verify open-file identity, exact Native verdict SHA-256 binding, invalid-hash and
+path rejection, no vault creation on preflight failure, current-file
+preservation, and visible rescan-required diagnostics. Candidate fixtures are
+never executed. The definitive verifier's existing `platform quarantine
+permission regressions`, `local-core quarantine metadata regressions`, and
+`guard-service quarantine metadata regressions` steps cover the same tests plus
+existing Guard changed-hash coverage while keeping the expected full-suite
+count at `288/288`.
+Source contract 690 additionally pins call wiring, check ordering, both platform
+identity representations, validator scope, documents, and dependency honesty.
+
+This evidence does not prove atomic kernel mediation: a privileged final-check
+path race may remain between the last identity comparison and rename/removal.
+Post-move SHA-256 verification and authenticated recovery remain fail-visible.
+No Defender weakening, machine-wide installation, service/driver start, live
+malware, release, publication, or protected production-vault mutation is part
+of these tests; changed files require an explicit rescan.

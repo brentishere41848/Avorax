@@ -188,6 +188,37 @@ complete operation is not a filesystem transaction. Alternate paths must still
 be scanned as separate targets, and Avorax does not claim volume-wide
 neutralization.
 
+## Scan-Verdict Content Binding
+
+Checkpoint 2260 binds automatic quarantine to the exact SHA-256 returned by the
+Native Engine verdict. Local Core no longer replaces that evidence with a fresh
+current-path hash. Before vault creation or mutation, the quarantine store
+requires a valid infected result, an exact selected-path match, matching bytes
+read from the already-opened single-link source, and matching Unix device/inode
+or Windows volume/file-index identity for the selected path. If the file changed
+or was replaced, Avorax leaves it in place, creates no finalized record, reports
+the failure, and requires a rescan.
+
+Guard Service already required its process-observation SHA-256 to match before
+post-launch quarantine. Checkpoint 2260 makes Guard hash the already-opened
+single-link source, delays vault creation until that match succeeds, and applies
+the same open-handle/path identity check before move and copy-source removal.
+
+Manual quarantine remains explicit: it takes a fresh bounded current-file hash
+snapshot and then crosses the same store boundary. Copy fallback verifies the
+copied payload SHA-256 and rechecks source identity before removing the source.
+Final payload hashing and the authenticated recovery journal still protect
+failures after a move.
+
+These checks are user-mode and path-based, not a filesystem transaction. A
+privileged writer may still race the last identity check and path mutation on
+some filesystems. Such a failure is not reported as successful quarantine;
+post-move mismatch remains visible or recovery-journaled. This is not kernel
+mediation, pre-execution blocking, administrator/SYSTEM isolation, or a claim
+that Avorax replaces Defender. Six harmless Checkpoint 2260 regressions and
+Source contract 690 are scripted; verification requires an explicit rescan and
+remains pending at the scripting boundary.
+
 ## Restore, Delete, And Allowlist
 
 Restoring requires explicit confirmation. If a restored file is still detected, the UI must warn the user. Deleting permanently is always a user action.

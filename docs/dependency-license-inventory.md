@@ -2217,6 +2217,23 @@ definitive `287/287`. Checkpoint 2258 adds no dependency or lockfile change and
 is closed; final-binary legal/notice provenance, production signing/
 notarization, enterprise approval, and release approval remain separate.
 
+## Checkpoint 2260 Dependency Delta
+
+Checkpoint 2260 adds no dependency, package source, feature, license class,
+downloaded runtime, machine-wide component, or lockfile change. Exact Native
+verdict SHA-256 propagation and rescan-required quarantine rejection reuse
+existing `sha2` hashing, Rust file handles/metadata, the already-pinned
+`windows-sys` `GetFileInformationByHandle` API, Unix device/inode metadata, and
+existing bounded quarantine copy, journal, HMAC, and permission code.
+The same primitives cover Local Core and Guard Service; no second platform API
+or Guard-only package is introduced.
+
+Six harmless temporary-file regressions and Source contract 690 add no fixture
+binary and execute no candidate content. Final-binary legal/notice provenance,
+production signing/notarization, enterprise deployment approval, and release
+approval remain separate. No package was downloaded, installed, released, or
+published during the Checkpoint 2260 scripting phase.
+
 Checkpoint 2259 adds no dependency, feature, package source, license class,
 downloaded runtime, machine-wide component, or lockfile change. The shared 1 GiB
 standard-read ceiling and cancellation-first in-target elapsed classification

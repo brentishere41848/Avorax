@@ -648,7 +648,7 @@ fn handle(command: CoreCommand) -> serde_json::Value {
                     Ok(None) => "zentor-manual-review".to_string(),
                     Err(error) => return json!({"ok": false, "error": error.to_string()}),
                 };
-            match quarantine_selected_file(&path, &threat_name, &engine) {
+            match quarantine_selected_file(&path, &threat_name, &engine, None) {
                 Ok(record) => json!({"ok": true, "record": record}),
                 Err(error) => json!({"ok": false, "error": error.to_string()}),
             }
@@ -1376,17 +1376,28 @@ fn quarantine_selected_file(
     path: &Path,
     threat_name: &str,
     engine: &str,
+    expected_scan_sha256: Option<&str>,
 ) -> anyhow::Result<quarantine::QuarantineRecord> {
+    let (sha256, raw_engine_summary) = match expected_scan_sha256 {
+        Some(expected) => (
+            expected.to_string(),
+            "Hash-bound quarantine from an Avorax scan verdict".to_string(),
+        ),
+        None => (
+            sha256_for_file(path)?,
+            "Manual quarantine from Avorax UI".to_string(),
+        ),
+    };
     let result = scanner::ScanResult {
         status: ScanStatus::Infected,
         scanned_path: path.display().to_string(),
-        sha256: sha256_for_file(path)?,
+        sha256,
         engine: engine.to_string(),
         signature_name: None,
         threat_name: Some(threat_name.to_string()),
         scanned_at: Utc::now(),
         duration_ms: 0,
-        raw_engine_summary: Some("Manual quarantine from Avorax UI".to_string()),
+        raw_engine_summary: Some(raw_engine_summary),
     };
     QuarantineStore::new()?.quarantine_file(path, &result)
 }
@@ -1931,6 +1942,7 @@ fn scan_paths_for_job(
                                 &path,
                                 &threat.threat_name,
                                 &threat.engine,
+                                Some(&threat.sha256),
                             ) {
                                 Ok(record) => {
                                     threat.status = ThreatResultStatus::Quarantined;
@@ -10067,6 +10079,31 @@ placeholder
             .scan_errors
             .iter()
             .any(|error| error.contains("auto-quarantine failed")));
+    }
+
+    #[test]
+    fn scan_quarantine_binding_changed_payload_is_visible_and_preserved() {
+        let dir = tempdir().unwrap();
+        let file = dir.path().join("candidate.bin");
+        let quarantine_base = dir.path().join("Quarantine");
+        fs::write(&file, b"harmless scanned bytes").unwrap();
+        let expected_sha256 = sha256_for_file(&file).unwrap();
+        fs::write(&file, b"harmless replacement bytes").unwrap();
+        let _quarantine_override =
+            quarantine::override_test_quarantine_base(quarantine_base.clone());
+
+        let error = quarantine_selected_file(
+            &file,
+            "Harmless fixture detection",
+            "Avorax Native Engine",
+            Some(&expected_sha256),
+        )
+        .unwrap_err();
+
+        assert!(format!("{error:#}").contains("changed after its scan verdict"));
+        assert!(format!("{error:#}").contains("rescan required"));
+        assert_eq!(fs::read(&file).unwrap(), b"harmless replacement bytes");
+        assert!(!quarantine_base.exists());
     }
 
     #[test]

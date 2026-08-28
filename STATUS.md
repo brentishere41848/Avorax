@@ -4,6 +4,27 @@
 
 Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-install, repair, recovery, offline, and manual-install paths only. Normal app updates target signed `.aup` packages applied by Avorax Update Service.
 
+- Current Checkpoint 2260 local pass: automatic quarantine now carries the exact
+  Native verdict SHA-256 into Local Core's quarantine store. Guard likewise
+  hashes its already-opened source and binds it to the selected path. Both reject
+  invalid hashes, mismatched scan paths, changed bytes, and replaced open-file
+  identity before vault mutation; failures preserve the current file and demand
+  a visible rescan. Copy fallback rechecks source identity before removal.
+  Manual Local Core quarantine takes a fresh bounded hash snapshot and crosses
+  the same boundary. Source `690/690`, focused `6/6`, Platform `11/11`, Local
+  Core `568/568`, Guard `248/248`, strict lint, both locked workspaces, locked
+  all-feature release build, Flutter analyze and `847/847`, both protocol
+  packages, and definitive no-skip/no-Defender `288/288` in `651.3s` pass.
+  Dual-host full-suite validation and two adversarial missing-scope rejections
+  pass; the report SHA-256 is
+  `3011587770e133542bf6f007f7213130722d9ff0fbd1e22af65d7b64ba23433b`.
+  The protected vault and zero-product-process state remain exact. Final path
+  operations remain user-mode and non-transactional; privileged final-check
+  races, kernel/pre-execution enforcement, installed-service proof, and Defender
+  replacement remain technically limited or blocked. Exact-head hosted
+  evidence, PR/merge, guarded destination sync, and destination verification are
+  pending. Checkpoint 2259 is closed; checkpoint 2260 and the full antivirus goal
+  remain active.
 - Current checkpoint 2253 closure: verifier schema v2 records exact terminal
   failed-step evidence and distinguishes orchestration failures without
   swallowing the original exception. Local and destination exact `282/282`,

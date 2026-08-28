@@ -2245,16 +2245,22 @@ fn quarantine_file(
     let destination = base.join(format!("{id}.{QUARANTINE_EXTENSION}"));
     let quarantine_path = destination.display().to_string();
     validate_guard_quarantine_record_path_text("payload path", &quarantine_path, true)?;
-    ensure_quarantine_base_directory_path(&base)?;
-    let metadata = regular_guard_file_metadata(path, "quarantine source")?;
+    regular_guard_file_metadata(path, "quarantine source")?;
     let source_link_guard = open_single_link_guard_file(path, "quarantine source")?;
-    let source_sha256 = sha256_file(path)?;
+    let metadata = source_link_guard.metadata().with_context(|| {
+        format!(
+            "failed to inspect opened quarantine source {}",
+            path.display()
+        )
+    })?;
+    let source_sha256 = sha256_open_guard_file(&source_link_guard, path)?;
     let source_sha256_body = normalize_sha256(&source_sha256).ok_or_else(|| {
         anyhow::anyhow!("guard quarantine source hash helper returned invalid SHA-256")
     })?;
     if source_sha256_body != expected_sha256 {
-        anyhow::bail!("quarantine source hash changed before move");
+        anyhow::bail!("quarantine source hash changed before move; rescan required");
     }
+    ensure_quarantine_base_directory_path(&base)?;
     let file_size = metadata.len();
     let record = GuardQuarantineRecord {
         quarantine_id: id.clone(),
@@ -2294,6 +2300,12 @@ fn quarantine_file(
                 path,
                 "guard quarantine source immediately before move",
             )?;
+            avorax_platform_security::ensure_path_matches_open_file(
+                &source_link_guard,
+                path,
+                "guard quarantine source immediately before move",
+            )
+            .context("guard quarantine source identity changed after scan; rescan required")?;
             ensure_quarantine_payload_destination_absent(&destination)?;
             match fs::rename(path, &destination)
                 .or_else(|_| copy_then_remove_verified(path, &destination, &source_sha256))
@@ -2512,6 +2524,25 @@ fn copy_then_remove_verified(
             })?;
         return Err(error).context(
             "guard quarantine copy source link count changed before removal; original was preserved",
+        );
+    }
+    if let Err(error) = (|| -> anyhow::Result<()> {
+        regular_guard_file_metadata(source, "guard quarantine copy source before removal")?;
+        avorax_platform_security::ensure_path_matches_open_file(
+            &source_file,
+            source,
+            "guard quarantine copy source before removal",
+        )
+    })() {
+        cleanup_guard_quarantine_partial_file(destination, "copied guard quarantine destination")
+            .with_context(|| {
+                format!(
+                    "failed to clean up copied guard quarantine destination {} after source identity failure: {error:#}",
+                    destination.display()
+                )
+            })?;
+        return Err(error).context(
+            "guard quarantine copy source path changed before removal; current path was preserved and rescan is required",
         );
     }
     if let Err(error) = fs::remove_file(source) {
@@ -3778,7 +3809,21 @@ fn validate_guard_quarantine_override_leaf(name: &str, path: &Path) -> anyhow::R
 }
 
 fn sha256_file(path: &Path) -> anyhow::Result<String> {
-    let metadata = regular_guard_file_metadata(path, "file to hash")?;
+    regular_guard_file_metadata(path, "file to hash")?;
+    let file = fs::File::open(path)?;
+    sha256_open_guard_file(&file, path)
+}
+
+fn sha256_open_guard_file(file: &fs::File, path: &Path) -> anyhow::Result<String> {
+    let metadata = file
+        .metadata()
+        .with_context(|| format!("failed to inspect opened file to hash {}", path.display()))?;
+    if !metadata.is_file() {
+        anyhow::bail!(
+            "opened file to hash {} is not a regular file",
+            path.display()
+        );
+    }
     if metadata.len() > MAX_GUARD_HASH_BYTES {
         anyhow::bail!(
             "file to hash {} exceeds maximum size of {} bytes",
@@ -3786,12 +3831,12 @@ fn sha256_file(path: &Path) -> anyhow::Result<String> {
             MAX_GUARD_HASH_BYTES
         );
     }
-    let mut file = fs::File::open(path)?;
+    let mut reader = file;
     let mut hasher = Sha256::new();
     let mut total = 0_u64;
     let mut buffer = [0_u8; 64 * 1024];
     loop {
-        let read = file.read(&mut buffer)?;
+        let read = reader.read(&mut buffer)?;
         if read == 0 {
             break;
         }
@@ -5201,8 +5246,7 @@ mod tests {
         assert!(detail.contains("hard-link count is 2"), "{detail}");
         assert!(file.exists());
         assert!(alternate.exists());
-        assert!(base.exists());
-        assert!(fs::read_dir(&base).unwrap().next().is_none());
+        assert!(!base.exists());
         std::env::remove_var("AVORAX_GUARD_QUARANTINE_DIR");
     }
 
@@ -7788,8 +7832,11 @@ mod tests {
         let sha_source = &source[start..end];
 
         assert!(source.contains("const MAX_GUARD_HASH_BYTES"));
-        assert!(sha_source
-            .contains("let metadata = regular_guard_file_metadata(path, \"file to hash\")?"));
+        assert!(sha_source.contains("regular_guard_file_metadata(path, \"file to hash\")?"));
+        assert!(sha_source.contains("sha256_open_guard_file(&file, path)"));
+        assert!(sha_source.contains("fn sha256_open_guard_file("));
+        assert!(sha_source.contains("let metadata = file"));
+        assert!(sha_source.contains(".metadata()"));
         assert!(sha_source.contains("metadata.len() > MAX_GUARD_HASH_BYTES"));
         assert!(sha_source.contains("fs::File::open(path)?"));
         assert!(sha_source.contains("let mut total = 0_u64"));
