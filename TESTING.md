@@ -741,3 +741,12 @@ non-extracting exact 8-root/6-package/7-checksum/CycloneDX-1.6/569-unique-ref
 review. No package was extracted, installed, or executed and owned review
 residue is zero. Evidence-head, merged-main, guarded-sync, and destination
 evidence remain required.
+
+Checkpoint 2257 closure results: evidence-head CI/packages and merged-main
+CI/packages pass with publication skipped. Evidence and main artifacts pass the
+same bounded non-extracting 8/6/7/CycloneDX-1.6/569 review. Guarded destination
+sync passes `13/13` with zero delete or residue. Destination parsers, Source
+`687/687`, formatting, focused `5/5`, lock hashes, and definitive exact
+`286/286` pass. Independent PS5/PS7 validation accepts the 198,448-byte report,
+SHA-256
+`8c2d69538f3853efc0b17a86888776a1fab37297a29a39a0247bc8f7ea4e6ec2`.

@@ -7656,3 +7656,14 @@ review with zero unsafe or special entries and zero owned residue. Evidence-head
 runs, merge, merged-main evidence, guarded destination sync, and destination
 verification remain open; product technical limits and the complete goal remain
 active.
+
+Checkpoint 2257 is now closed through evidence `c8be836`, PR `#123`, merge
+`9752f19`, exact-head and merged-main CI/packages, bounded review of all three
+consolidated artifacts, guarded `13/13` zero-delete synchronization, destination
+focused checks, and destination exact `286/286` in `640s`. Independent PS5/PS7
+validators accept report SHA-256
+`8c2d69538f3853efc0b17a86888776a1fab37297a29a39a0247bc8f7ea4e6ec2`.
+All locks, synchronized blobs, zero residue, and the read-only 16,072-file vault
+remain exact. Exact resource, installed-service, driver/kernel, production,
+pre-execution, and Defender-replacement limits remain open; the complete
+antivirus-hardening goal stays active.
