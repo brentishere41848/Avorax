@@ -750,3 +750,109 @@ sync passes `13/13` with zero delete or residue. Destination parsers, Source
 `286/286` pass. Independent PS5/PS7 validation accepts the 198,448-byte report,
 SHA-256
 `8c2d69538f3853efc0b17a86888776a1fab37297a29a39a0247bc8f7ea4e6ec2`.
+
+Checkpoint 2258 adds the `resource_budget_` Local Core filter with six benign
+tests: non-candidate work accounting, checked-counter overflow, zero-deadline
+pre-I/O exit, cancellation-before-deadline precedence, deadline-safe priority
+path retention, and inclusive Quick/Full/Custom total elapsed limits. Definitive
+step 287 is `local-core scan discovery work and elapsed-budget regressions`; the
+full-suite validator requires exact `287/287` and the new verified/technical
+scope. Source contract 688 pins the complete batch.
+
+No checkpoint-2258 test ran during scripting. After the scripting boundary, run
+dual PowerShell parsing, formatting/diff checks, Source contracts, the new and
+overlapping Local Core filters, complete Local Core/Clippy, locked workspace and
+release builds, Flutter/Dart suites, definitive verification, dual-host
+validation, structured adversarial report mutations, safety/lock gates, hosted
+integration, and guarded destination synchronization. Never enable the optional
+Defender/EICAR host integration for this checkpoint.
+
+Checkpoint 2258 focused results now pass: PS5/PS7 parser `2/2` each, Source
+`688/688`, formatting/diff checks, `resource_budget_` `6/6`, discovery `15/15`,
+walker `20/20`, Full Scan `3/3`, cancellation `8/8`, Local Core `562/562`, and
+strict all-target/all-feature Local Core Clippy. Broad results also pass both
+locked Rust workspace variants, the locked all-feature release build, Flutter
+analyze and `847/847`, plus clean Zentor/Avorax Dart analysis and `14/14` and
+`6/6`. Definitive and later evidence are recorded below.
+
+Checkpoint 2258 pre-final-diff definitive results passed exact `287/287`, zero
+failed or non-null-error steps, in `712.7s`. The superseded report is 209,030 bytes with
+SHA-256
+`732ddae0269b7d1987d2b157fcd449ef092c684058a0d7c7c3ad89e333784c51`;
+Defender/EICAR host integration remained disabled. Independent PS5 and PS7
+strict validation pass. Both hosts reject each 286-step,
+missing-verified-scope, and missing-technical-scope structured mutation with
+exit 1; owned mutation residue is zero. Hosted, integration, guarded-sync, and
+destination reruns remain required. Final review then added post-target and
+zero-file elapsed checkpoints plus engine-unavailable skip isolation, so
+final-source focused, broad Rust, and definitive evidence must be rerun.
+
+Checkpoint 2258 final-repair focused and broad Rust reruns pass: formatting,
+Source `688/688`, resource-budget `6/6`, Local Core `562/562`, strict Clippy,
+both locked workspace variants, and the locked all-feature release build. In
+both workspace variants Native Engine reports 638 passed / 21 intentionally
+ignored isolated child fixtures and Local Core `562/562`. Final-source
+definitive verification then passes exact `287/287`, zero failed/non-null-error
+steps, in `633.1s`, with optional Defender/EICAR host integration false. The
+209,024-byte report has SHA-256
+`7d26d4ae9327a4b186462dbe894222b65702975fb8334ea7e5465ce37cd595bd`.
+Independent PS5/PS7 strict validation passes; both hosts reject the 286-step,
+missing-verified-scope, and missing-technical-scope mutations with exit 1. Exact
+owned mutation residue is zero. Hosted, integration, guarded-sync, and
+destination evidence remain required.
+
+Late final review then found two related honesty edges: EngineUnavailable could
+publish final 100-percent progress, and cancellation arriving during the final
+metadata/inspection operation could lack a next loop iteration for observation.
+Implementation, the existing benign regression, verifier/validator scope,
+Source contract, and documents were updated as one batch before another test.
+The preceding `287/287` report is superseded; final-source focused, broad,
+definitive, adversarial, hosted, integration, guarded-sync, and destination
+evidence must be rerun.
+
+The first post-scripting `resource_budget_` command failed during compilation,
+before any test ran, because the new zero-file cancellation diagnostic supplied
+`&str` where the bounded error helper requires `String`. The source now performs
+the explicit conversion. This failed attempt is not credited; the focused filter
+and all later suites must pass on the repaired source.
+
+On the repaired source, PS5/PS7 parser checks pass `2/2` each, Source passes
+`688/688`, resource tests pass `6/6`, Local Core passes `562/562`, strict Clippy
+passes, both locked workspace variants pass, and the locked all-feature release
+build passes. Native Engine reports 638 passed / 21 intentionally ignored
+isolated child fixtures in each workspace variant. The final no-skip/no-Defender
+verifier passes exact `287/287`, zero failed/non-null step errors, in `638.5s`.
+Its 209,286-byte report has SHA-256
+`401d4d4cb50dc7a61750ae26b7de529df3f2033063d3915649c4717aa6c78208`.
+Independent PS5/PS7 strict validation passes and both hosts reject all three
+structured mutations with exit 1; exact mutation residue is zero. Hosted,
+integration, guarded-sync, and destination evidence remain required.
+
+Final progress review then found that a zero total-byte estimate could produce
+100 percent before retained zero-byte files were inspected. The shared progress
+calculator, existing `resource_budget_` regression, verifier/validator scope,
+Source contract, and documents were updated as one complete batch before any
+new test. Running progress now uses file-count fallback for retained zero-byte
+files and stays indeterminate for zero retained files. The preceding `287/287`
+report is superseded; final-source focused, broad, definitive, adversarial,
+hosted, integration, guarded-sync, and destination evidence must be rerun.
+
+On the final zero-byte-repaired source, formatting, PS5/PS7 parser checks,
+Source `688/688`, resource-budget `6/6`, Local Core `562/562`, strict Clippy,
+both locked workspace variants, and the locked all-feature release build pass.
+The definitive no-skip/no-Defender verifier passes exact `287/287`, zero failed
+or non-null-error steps, in `634.4s`. Its 209,503-byte schema-2 report has SHA-256
+`078a4edc9a25aed4ab572936c0d34629152af0f4c0ee633e6e5a7a2c2177cad0`.
+Independent PS5/PS7 strict validation passes; both hosts reject the 286-step,
+missing-verified-scope, and missing-technical-scope copies with exit 1. Exact
+mutation residue is zero. Hosted, integration, guarded-sync, and destination
+evidence remain required.
+
+Exact implementation `709e8a9d56f89dd13b8e296334b187ff2a99d6f2`
+passes PR `#125` CI `33149543048`, PR packages `33149543030`, and push packages
+`33149509580`; both publication jobs are skipped. Consolidated artifacts
+`9677471939` and `9677431721` match GitHub byte size/SHA-256 and each pass bounded
+non-extracting exact 8-root/6-package/7-checksum/CycloneDX-1.6/569-unique-ref
+review with zero unsafe, duplicate, encrypted, directory, or link entries. No
+artifact was extracted, installed, or executed and owned review residue is zero.
+Evidence-head, merged-main, guarded-sync, and destination testing remain required.

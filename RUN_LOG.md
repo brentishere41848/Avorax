@@ -13312,3 +13312,181 @@ pending.
   `16072/0/4522733` vault invariant pass. Checkpoint 2257 is closed; exact
   resource, service, driver, production, pre-execution, and Defender-
   replacement limits remain. The complete antivirus goal stays active.
+
+## 2026-08-28 - Checkpoint 2258 Discovery Work And Time Scripting
+
+- Audited the post-2257 discovery boundary. Retained paths were bounded, but
+  directories, filtered non-candidates, non-regular entries, enumeration errors,
+  and iterator exhaustion work were not counted. Discovery also lacked its own
+  monotonic deadline, and Quick/Custom inspection lacked total elapsed limits.
+- Scripted Quick discovery limits of 100,000 work items/600 seconds and
+  Full/Custom limits of 1,000,000 work items/3,600 seconds. Each explicit root
+  inspection and `WalkDir` advance consumes one checked work item. Reached or
+  overflowed limits are incomplete and fail-visible.
+- Scripted cancellation-first shared checkpoints, deadline-aware stable priority
+  bucketing that retains all paths, and total scan limits of 1,800 seconds for
+  Quick plus 10,800 seconds for Full/Custom measured from before discovery.
+- Scripted six benign `resource_budget_` regressions, verifier step 287, exact
+  validator scope/cardinality, Source contract 688, matrix, threat, blocker,
+  dependency, testing, status, and checkpoint evidence.
+- No checkpoint-2258 test ran during this scripting phase. `.verification` and
+  the protected `16072/0/4522733` vault remain untouched. The complete antivirus
+  goal remains active.
+
+### Checkpoint 2258 Focused And Broad Local Evidence
+
+- Dual-host parser checks pass `2/2` each; Source contracts pass `688/688`;
+  formatting, diff checks, exact lock hashes, and strict all-target/all-feature
+  Local Core Clippy pass.
+- New `resource_budget_` tests pass `6/6`; discovery `15/15`, walker `20/20`,
+  Full Scan `3/3`, cancellation `8/8`, and complete Local Core `562/562` pass.
+- Standard and all-feature locked workspace suites pass. Native Engine reports
+  638 passed and 21 intentionally ignored isolated child fixtures in both;
+  Local Core reports `562/562`. The locked all-feature release build passes.
+- Flutter analyzes cleanly and passes `847/847`; Zentor and Avorax Dart
+  protocols analyze cleanly and pass `14/14` and `6/6`. No dependency or
+  lockfile changed.
+- Checkpoint 2258 is **verified locally through definitive regression**. Hosted,
+  integration, guarded-sync, and destination evidence remain pending; the
+  complete goal remains active.
+
+### Checkpoint 2258 Superseded Definitive Local Evidence
+
+- The no-skip/no-Defender-host-integration verifier passes exact `287/287`,
+  zero failed/non-null-error steps, in `712.7s`.
+- The 209,030-byte canonical report has SHA-256
+  `732ddae0269b7d1987d2b157fcd449ef092c684058a0d7c7c3ad89e333784c51`.
+  Independent PS5 and PS7 `-RequireFullSuite` validation both pass.
+- Both hosts reject all three structured mutations with exit 1: 286 steps,
+  missing checkpoint verified scope, and missing checkpoint technical scope.
+  Exact owned mutation files were removed and residue is zero.
+- Two combined mutation orchestration/cleanup shell commands were rejected by
+  command policy before their intended writes or deletes completed and are
+  uncredited. The explicit generation, six validator invocations, exact-file
+  patch cleanup, and residue check above provide the credited evidence.
+- This report was later superseded by the final-diff repair. Hosted exact-head
+  evidence, normal PR integration, merged-main evidence,
+  guarded destination sync, and destination verification remain open. The
+  complete antivirus-hardening goal remains active.
+
+### Checkpoint 2258 Final Diff Repair
+
+- Final review found that a last retained target could finish after the total
+  elapsed ceiling without a next loop iteration to classify the overrun. The
+  scan now checks time after every successful or failed target inspection and
+  after zero-file Native Engine initialization.
+- Engine-unavailable scans no longer enter the inspection loop after accounting
+  for all retained files, preventing a late cancellation/time observation from
+  double-counting skipped files. The earlier `287/287` report is superseded;
+  final-source focused, broad Rust, and definitive evidence remain required.
+- Final-source formatting, Source `688/688`, resource `6/6`, Local Core
+  `562/562`, strict Clippy, both locked Rust workspace variants, and the locked
+  all-feature release workspace build pass. Native Engine is 638 passed / 21
+  intentionally ignored isolated child fixtures in both workspace variants.
+  Final-source definitive and hostile-validator evidence now pass below.
+
+### Checkpoint 2258 Superseded Final-Source Definitive Local Evidence
+
+- The no-skip/no-Defender-host-integration verifier passes exact `287/287`,
+  zero failed/non-null-error steps, in `633.1s`; Defender/EICAR host integration
+  is false.
+- The 209,024-byte canonical report has SHA-256
+  `7d26d4ae9327a4b186462dbe894222b65702975fb8334ea7e5465ce37cd595bd`.
+  Independent PS5 and PS7 `-RequireFullSuite` validation both pass.
+- Both hosts reject all three final-source structured mutations with exit 1:
+  286 steps, missing checkpoint verified scope, and missing checkpoint technical
+  scope. Exact owned mutation files were removed and residue is zero.
+- Late final review then found that EngineUnavailable could still publish final
+  100-percent progress and that a cancellation arriving during the final target
+  metadata/inspection operation could be missed without a following iteration.
+  This report is superseded.
+
+### Checkpoint 2258 Late Final-Diff Repair Scripting
+
+- Scripted one cancellation-first stop classifier for before/after target work
+  and the zero-file post-initialization checkpoint. Cancellation now wins over
+  an elapsed limit at every such checkpoint and remains fail-visible.
+- EngineUnavailable retains its exact single skipped-file accounting, bypasses
+  target inspection, and leaves final progress indeterminate rather than 100%.
+- Updated the existing benign regression, verifier/validator scope, Source
+  contract, status/testing/matrix/blocker/threat/dependency evidence, and this
+  checkpoint report before running another test. Final-source verification is
+  pending; the complete antivirus-hardening goal remains active.
+- The first post-scripting `resource_budget_` compile attempt failed before test
+  execution because the new zero-file cancellation diagnostic passed `&str` to
+  the existing `String`-accepting error helper. The diagnostic now uses an
+  explicit owned conversion; the failed attempt is uncredited and the focused
+  run must pass from a clean retry.
+
+### Checkpoint 2258 Final Definitive Local Evidence
+
+- After the owned-string repair, parser checks pass `2/2` under PS5 and PS7,
+  Source passes `688/688`, resource tests pass `6/6`, complete Local Core passes
+  `562/562`, and strict all-target/all-feature Clippy passes.
+- Both locked standard/all-feature workspaces pass: Local Core `562/562` and
+  Native Engine 638 passed / 21 intentionally ignored isolated child fixtures.
+  The locked all-feature release workspace build passes; no lockfile changed.
+- The final no-skip/no-Defender-host-integration verifier passes exact `287/287`
+  with zero failed/non-null step errors in `638.5s`. Its 209,286-byte schema-2
+  report has SHA-256
+  `401d4d4cb50dc7a61750ae26b7de529df3f2033063d3915649c4717aa6c78208`;
+  `skip_flutter=false`, `skip_rust=false`, and Defender/EICAR host integration
+  is false.
+- Independent PS5/PS7 strict validation passes. Both hosts reject the 286-step,
+  missing-verified-scope, and missing-technical-scope copies with exit 1. Exact
+  owned mutation residue is zero.
+- Hosted exact-head, PR/merge, merged-main, guarded destination sync, and
+  destination evidence remain open. The complete antivirus-hardening goal stays
+  active.
+
+### Checkpoint 2258 Hosted Implementation-Head Evidence
+
+- Exact implementation `709e8a9d56f89dd13b8e296334b187ff2a99d6f2`
+  passes PR `#125` CI `33149543048`, PR packages `33149543030`, and push
+  packages `33149509580`. All platform builds and consolidation pass; both
+  prerelease-publication jobs are intentionally skipped.
+- Push artifact `9677471939` is 132,106,765 bytes with SHA-256
+  `ee1a1f997370d837a52622aa442e3b4f2d09f33ee6a04a3fa8a067f0767c2b51`.
+  PR artifact `9677431721` is 132,150,306 bytes with SHA-256
+  `94624412693ce298859e59f14c8977ec159711740bb693eaf3a935d2ee5a3c7f`.
+  Both downloads match GitHub metadata.
+- Both untouched consolidated ZIPs pass bounded non-extracting exact
+  8-root/6-package/7-checksum/CycloneDX-1.6/569-unique-ref review with zero
+  unsafe, duplicate, encrypted, directory, or link entries. Nothing was
+  extracted, installed, or executed; exact owned review residue is zero.
+- Evidence-head hosting, PR merge, merged-main evidence, guarded sync, and
+  destination verification remain open. The complete goal remains active.
+
+### Checkpoint 2258 Zero-Byte Progress Repair Scripting
+
+- Final progress review found that `ScanProgress::calculate_eta` treated a zero
+  total byte estimate as 100 percent even when retained zero-byte files had not
+  been inspected. A running empty scan could also transiently publish 100 before
+  terminal classification.
+- Scripted bounded file-count fallback for retained zero-byte files and
+  indeterminate progress for a running zero-file scan. Extended the existing
+  `resource_budget_` regression without increasing test or verifier cardinality.
+- Updated verifier/validator scope, Source contract 688, checkpoint, status,
+  testing, matrix, threat, blocker, dependency, and run evidence before testing.
+  The preceding `287/287` report is superseded; final-source evidence is pending
+  and the complete antivirus-hardening goal remains active.
+
+### Checkpoint 2258 Final-Source Definitive Local Evidence
+
+- Final-source formatting, PS5/PS7 parser checks, Source `688/688`, resource
+  tests `6/6`, complete Local Core `562/562`, strict all-target/all-feature
+  Clippy, both locked workspace variants, and the locked all-feature release
+  build pass. Native Engine reports 638 passed / 21 intentionally ignored
+  isolated child fixtures in both workspace variants.
+- The final no-skip/no-Defender-host-integration verifier passes exact `287/287`
+  with zero failed or non-null step errors in `634.4s`. Its 209,503-byte schema-2
+  report has SHA-256
+  `078a4edc9a25aed4ab572936c0d34629152af0f4c0ee633e6e5a7a2c2177cad0`;
+  `skip_flutter=false`, `skip_rust=false`, and Defender/EICAR host integration
+  is false.
+- Independent PS5/PS7 strict validation passes. Both hosts reject the 286-step,
+  missing-verified-scope, and missing-technical-scope copies with exit 1. Exact
+  owned mutation residue is zero.
+- Hosted exact-head, PR/merge, merged-main, guarded destination sync, and
+  destination evidence remain open. The complete antivirus-hardening goal stays
+  active.

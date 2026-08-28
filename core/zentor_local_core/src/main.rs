@@ -57,7 +57,9 @@ use watcher::{
     WatcherState,
 };
 
+const QUICK_SCAN_MAX_SECONDS: u64 = 30 * 60;
 const FULL_SCAN_MAX_SECONDS: u64 = 3 * 60 * 60;
+const CUSTOM_SCAN_MAX_SECONDS: u64 = 3 * 60 * 60;
 const MAX_LOCAL_CORE_HASH_BYTES: u64 = 1024 * 1024 * 1024;
 const MAX_SCAN_ERROR_DETAILS: usize = 20;
 const MAX_SCAN_ERROR_DETAIL_CHARS: usize = 4096;
@@ -1596,6 +1598,47 @@ fn scan_native_file_for_job(
     }
 }
 
+fn scan_time_budget(kind: &ScanKind) -> Duration {
+    Duration::from_secs(match kind {
+        ScanKind::Quick => QUICK_SCAN_MAX_SECONDS,
+        ScanKind::Full => FULL_SCAN_MAX_SECONDS,
+        ScanKind::Custom => CUSTOM_SCAN_MAX_SECONDS,
+    })
+}
+
+fn scan_time_budget_reached(kind: &ScanKind, elapsed: Duration) -> bool {
+    elapsed >= scan_time_budget(kind)
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum ScanStopReason {
+    Continue,
+    Cancelled,
+    TimeLimitReached,
+}
+
+fn scan_stop_reason(
+    kind: &ScanKind,
+    cancellation_requested: bool,
+    elapsed: Duration,
+) -> ScanStopReason {
+    if cancellation_requested {
+        ScanStopReason::Cancelled
+    } else if scan_time_budget_reached(kind, elapsed) {
+        ScanStopReason::TimeLimitReached
+    } else {
+        ScanStopReason::Continue
+    }
+}
+
+fn scan_kind_label(kind: &ScanKind) -> &'static str {
+    match kind {
+        ScanKind::Quick => "quick",
+        ScanKind::Full => "full",
+        ScanKind::Custom => "custom",
+    }
+}
+
 fn scan_paths_for_job(
     roots: Vec<PathBuf>,
     action_mode: ScanActionMode,
@@ -1615,6 +1658,8 @@ fn scan_paths_for_job(
     let mut quarantined_files: u64 = 0;
     let mut cancelled = false;
     let mut cancelled_remaining_files: u64 = 0;
+    let mut scan_time_limit_reached = false;
+    let mut time_limit_remaining_files: u64 = 0;
     let mut last_path = None;
     let mut scan_errors = Vec::new();
     let walk_options = if kind == ScanKind::Quick {
@@ -1630,7 +1675,10 @@ fn scan_paths_for_job(
     )
     .with_context(|| "job-bound cancellation state became unreadable during file discovery")?;
     let cancelled_during_discovery = walk.discovery_cancelled;
-    let discovery_limit_reached = walk.file_limit_reached || walk.path_byte_limit_reached;
+    let discovery_limit_reached = walk.file_limit_reached
+        || walk.path_byte_limit_reached
+        || walk.work_item_limit_reached
+        || walk.time_limit_reached;
     if cancelled_during_discovery {
         cancelled = true;
         cancelled_remaining_files = walk.files.len() as u64;
@@ -1692,31 +1740,41 @@ fn scan_paths_for_job(
         emit(&progress);
     }
 
-    if !cancelled_during_discovery {
+    if !cancelled_during_discovery && !engine_unavailable {
         for (index, path) in walk.files.into_iter().enumerate() {
-            if scan_cancellation_requested(job_id)? {
-                cancelled = true;
-                cancelled_remaining_files = total_files.saturating_sub(index as u64);
-                skipped_files = skipped_files.saturating_add(cancelled_remaining_files);
-                push_scan_error(
-                    &mut scan_errors,
-                    format!(
-                        "scan cancelled by user request; skipped {cancelled_remaining_files} remaining file(s)"
-                    ),
-                );
-                break;
-            }
-            if kind == ScanKind::Full && started.elapsed().as_secs() >= FULL_SCAN_MAX_SECONDS {
-                let remaining_files = total_files.saturating_sub(index as u64);
-                skipped_files = skipped_files.saturating_add(remaining_files);
-                push_scan_error(
-                    &mut scan_errors,
-                    format!(
-                        "{}: full scan time budget reached; skipped {remaining_files} remaining file(s)",
-                        path.display()
-                    ),
-                );
-                break;
+            match scan_stop_reason(
+                &kind,
+                scan_cancellation_requested(job_id)?,
+                started.elapsed(),
+            ) {
+                ScanStopReason::Cancelled => {
+                    cancelled = true;
+                    cancelled_remaining_files = total_files.saturating_sub(index as u64);
+                    skipped_files = skipped_files.saturating_add(cancelled_remaining_files);
+                    push_scan_error(
+                        &mut scan_errors,
+                        format!(
+                            "scan cancelled by user request; skipped {cancelled_remaining_files} remaining file(s)"
+                        ),
+                    );
+                    break;
+                }
+                ScanStopReason::TimeLimitReached => {
+                    let remaining_files = total_files.saturating_sub(index as u64);
+                    scan_time_limit_reached = true;
+                    time_limit_remaining_files = remaining_files;
+                    skipped_files = skipped_files.saturating_add(remaining_files);
+                    let scan_label = scan_kind_label(&kind);
+                    push_scan_error(
+                        &mut scan_errors,
+                        format!(
+                            "{}: {scan_label} scan time budget reached; skipped {remaining_files} remaining file(s)",
+                            path.display()
+                        ),
+                    );
+                    break;
+                }
+                ScanStopReason::Continue => {}
             }
             let Some(engine) = native_engine.as_mut() else {
                 break;
@@ -1731,6 +1789,41 @@ fn scan_paths_for_job(
                         &mut scan_errors,
                         format!("{}: metadata failed before scan: {error}", path.display()),
                     );
+                    let remaining_files =
+                        total_files.saturating_sub((index as u64).saturating_add(1));
+                    let metadata_stop = scan_stop_reason(
+                        &kind,
+                        scan_cancellation_requested(job_id)?,
+                        started.elapsed(),
+                    );
+                    match metadata_stop {
+                        ScanStopReason::Cancelled => {
+                            cancelled = true;
+                            cancelled_remaining_files = remaining_files;
+                            skipped_files = skipped_files.saturating_add(remaining_files);
+                            push_scan_error(
+                                &mut scan_errors,
+                                format!(
+                                    "{}: scan cancelled by user request after target metadata failure; skipped {remaining_files} remaining file(s)",
+                                    path.display()
+                                ),
+                            );
+                        }
+                        ScanStopReason::TimeLimitReached => {
+                            scan_time_limit_reached = true;
+                            time_limit_remaining_files = remaining_files;
+                            skipped_files = skipped_files.saturating_add(remaining_files);
+                            let scan_label = scan_kind_label(&kind);
+                            push_scan_error(
+                                &mut scan_errors,
+                                format!(
+                                    "{}: {scan_label} scan time budget reached after target metadata failure; skipped {remaining_files} remaining file(s)",
+                                    path.display()
+                                ),
+                            );
+                        }
+                        ScanStopReason::Continue => {}
+                    }
                     update_progress(
                         &mut progress,
                         &current,
@@ -1742,8 +1835,15 @@ fn scan_paths_for_job(
                         permission_denied_count,
                         started,
                     );
+                    if metadata_stop != ScanStopReason::Continue {
+                        progress.progress_percent = None;
+                        progress.estimated_remaining_seconds = None;
+                    }
                     if let Some(emit) = emit_progress.as_deref_mut() {
                         emit(&progress);
+                    }
+                    if metadata_stop != ScanStopReason::Continue {
+                        break;
                     }
                     continue;
                 }
@@ -1856,6 +1956,49 @@ fn scan_paths_for_job(
                 permission_denied_count,
                 started,
             );
+            let remaining_files = total_files.saturating_sub((index as u64).saturating_add(1));
+            let post_target_stop = scan_stop_reason(
+                &kind,
+                scan_cancellation_requested(job_id)?,
+                started.elapsed(),
+            );
+            match post_target_stop {
+                ScanStopReason::Cancelled => {
+                    cancelled = true;
+                    cancelled_remaining_files = remaining_files;
+                    skipped_files = skipped_files.saturating_add(remaining_files);
+                    push_scan_error(
+                        &mut scan_errors,
+                        format!(
+                            "{}: scan cancelled by user request after bounded inspection; skipped {remaining_files} remaining file(s)",
+                            path.display()
+                        ),
+                    );
+                }
+                ScanStopReason::TimeLimitReached => {
+                    scan_time_limit_reached = true;
+                    time_limit_remaining_files = remaining_files;
+                    skipped_files = skipped_files.saturating_add(remaining_files);
+                    let scan_label = scan_kind_label(&kind);
+                    push_scan_error(
+                        &mut scan_errors,
+                        format!(
+                            "{}: {scan_label} scan time budget reached after bounded inspection; skipped {remaining_files} remaining file(s)",
+                            path.display()
+                        ),
+                    );
+                }
+                ScanStopReason::Continue => {}
+            }
+            if post_target_stop != ScanStopReason::Continue {
+                progress.skipped_files = skipped_files;
+                progress.progress_percent = None;
+                progress.estimated_remaining_seconds = None;
+                if let Some(emit) = emit_progress.as_deref_mut() {
+                    emit(&progress);
+                }
+                break;
+            }
             if files_scanned == total_files || files_scanned.is_multiple_of(25) {
                 if let Some(emit) = emit_progress.as_deref_mut() {
                     emit(&progress);
@@ -1864,9 +2007,42 @@ fn scan_paths_for_job(
         }
     }
 
+    if !cancelled
+        && !discovery_limit_reached
+        && !engine_unavailable
+        && !scan_time_limit_reached
+        && total_files == 0
+    {
+        match scan_stop_reason(
+            &kind,
+            scan_cancellation_requested(job_id)?,
+            started.elapsed(),
+        ) {
+            ScanStopReason::Cancelled => {
+                cancelled = true;
+                push_scan_error(
+                    &mut scan_errors,
+                    "scan cancelled by user request after initialization with no retained files"
+                        .to_string(),
+                );
+            }
+            ScanStopReason::TimeLimitReached => {
+                scan_time_limit_reached = true;
+                push_scan_error(
+                    &mut scan_errors,
+                    format!(
+                        "{} scan time budget reached after initialization with no retained files",
+                        scan_kind_label(&kind)
+                    ),
+                );
+            }
+            ScanStopReason::Continue => {}
+        }
+    }
+
     let status = if cancelled {
         ReportStatus::Cancelled
-    } else if discovery_limit_reached {
+    } else if discovery_limit_reached || scan_time_limit_reached {
         ReportStatus::CompletedWithErrors
     } else if !threats.is_empty() {
         ReportStatus::ThreatsFound
@@ -1892,7 +2068,7 @@ fn scan_paths_for_job(
     progress.suspicious_found = suspicious_found;
     progress.skipped_files = skipped_files;
     progress.permission_denied_count = permission_denied_count;
-    if cancelled {
+    if cancelled || discovery_limit_reached || scan_time_limit_reached || engine_unavailable {
         progress.progress_percent = None;
         progress.estimated_remaining_seconds = None;
     } else {
@@ -1939,6 +2115,10 @@ fn scan_paths_for_job(
                 "Scan file-discovery limit reached; undiscovered entries were not counted or reported clean."
                     .to_string(),
             )
+        } else if scan_time_limit_reached {
+            Some(format!(
+                "Scan time budget reached; {time_limit_remaining_files} retained file(s) were not scanned or reported clean."
+            ))
         } else if engine_unavailable {
             Some("Avorax Native Engine is unavailable; files were not reported clean.".to_string())
         } else if !scan_errors.is_empty() {
@@ -6009,11 +6189,94 @@ mod tests {
 
         assert!(source.contains("for (index, path) in walk.files.into_iter().enumerate()"));
         assert!(source.contains("let remaining_files = total_files.saturating_sub(index as u64);"));
-        assert!(source.contains("full scan time budget reached"));
+        assert!(source.contains("scan_time_budget_reached(&kind, started.elapsed())"));
+        assert!(source.contains("{scan_label} scan time budget reached"));
         assert!(source.contains("skipped {remaining_files} remaining file(s)"));
         assert!(!source.contains(
             "if kind == ScanKind::Full && started.elapsed().as_secs() >= FULL_SCAN_MAX_SECONDS {\n            skipped_files = skipped_files.saturating_add(1);\n            break;"
         ));
+    }
+
+    #[test]
+    fn scan_resource_budget_applies_inclusive_elapsed_limits_to_every_mode() {
+        let cases = [
+            (ScanKind::Quick, QUICK_SCAN_MAX_SECONDS),
+            (ScanKind::Full, FULL_SCAN_MAX_SECONDS),
+            (ScanKind::Custom, CUSTOM_SCAN_MAX_SECONDS),
+        ];
+
+        assert_eq!(QUICK_SCAN_MAX_SECONDS, 1_800);
+        assert_eq!(FULL_SCAN_MAX_SECONDS, 10_800);
+        assert_eq!(CUSTOM_SCAN_MAX_SECONDS, 10_800);
+        for (kind, seconds) in cases {
+            assert_eq!(scan_time_budget(&kind), Duration::from_secs(seconds));
+            assert!(!scan_time_budget_reached(
+                &kind,
+                Duration::from_secs(seconds - 1)
+            ));
+            assert!(scan_time_budget_reached(
+                &kind,
+                Duration::from_secs(seconds)
+            ));
+            assert_eq!(
+                scan_stop_reason(&kind, true, Duration::from_secs(seconds)),
+                ScanStopReason::Cancelled
+            );
+            assert_eq!(
+                scan_stop_reason(&kind, false, Duration::from_secs(seconds)),
+                ScanStopReason::TimeLimitReached
+            );
+        }
+
+        let source = include_str!("main.rs");
+        assert!(source.contains("discovery_limit_reached || scan_time_limit_reached"));
+        assert!(source.contains(
+            "cancelled || discovery_limit_reached || scan_time_limit_reached || engine_unavailable"
+        ));
+        assert!(source.contains("if !cancelled_during_discovery && !engine_unavailable"));
+        assert!(source.contains("scan time budget reached after bounded inspection"));
+        assert!(source.contains("scan time budget reached after target metadata failure"));
+        assert!(
+            source.contains("scan time budget reached after initialization with no retained files")
+        );
+        assert!(source.contains(
+            "scan cancelled by user request after initialization with no retained files"
+        ));
+        assert!(source.contains("scan cancelled by user request after target metadata failure"));
+        assert!(source.contains("scan cancelled by user request after bounded inspection"));
+        assert!(source.contains(
+            "{time_limit_remaining_files} retained file(s) were not scanned or reported clean"
+        ));
+
+        let mut zero_byte_progress = ScanProgress {
+            job_id: "zero-byte-resource-progress".to_string(),
+            scan_type: ScanKind::Quick,
+            status: ScanJobStatus::Running,
+            current_path: None,
+            files_scanned: 0,
+            folders_scanned: 0,
+            bytes_scanned: 0,
+            total_files_estimated: Some(2),
+            total_bytes_estimated: Some(0),
+            threats_found: 0,
+            suspicious_found: 0,
+            skipped_files: 0,
+            permission_denied_count: 0,
+            started_at: Utc::now(),
+            updated_at: Utc::now(),
+            elapsed_seconds: 0,
+            estimated_remaining_seconds: None,
+            progress_percent: None,
+        };
+        zero_byte_progress.calculate_eta();
+        assert_eq!(zero_byte_progress.progress_percent, Some(0.0));
+        zero_byte_progress.files_scanned = 1;
+        zero_byte_progress.calculate_eta();
+        assert_eq!(zero_byte_progress.progress_percent, Some(50.0));
+        zero_byte_progress.total_files_estimated = Some(0);
+        zero_byte_progress.files_scanned = 0;
+        zero_byte_progress.calculate_eta();
+        assert!(zero_byte_progress.progress_percent.is_none());
     }
 
     #[test]

@@ -1951,8 +1951,8 @@ if ($RequireFullSuite) {
   if ($skipFlutter -or $skipRust) {
     throw "-RequireFullSuite requires skip_flutter=false and skip_rust=false."
   }
-  if ($steps.Count -ne 286) {
-    throw "-RequireFullSuite expected exactly 286 verifier steps for this source revision, found $($steps.Count)."
+  if ($steps.Count -ne 287) {
+    throw "-RequireFullSuite expected exactly 287 verifier steps for this source revision, found $($steps.Count)."
   }
   if ($steps[0].name -ne "local-core safe simulator scan reporting") {
     throw "-RequireFullSuite first step mismatch: $($steps[0].name)"
@@ -2034,6 +2034,7 @@ if ($RequireFullSuite) {
   Assert-ReportContainsStep $steps "native-engine PE resource-section cancellation regressions"
   Assert-ReportContainsStep $steps "local-core file-discovery cancellation and bounds regressions"
   Assert-ReportContainsStep $steps "local-core file-discovery path-memory and priority cancellation regressions"
+  Assert-ReportContainsStep $steps "local-core scan discovery work and elapsed-budget regressions"
   Assert-ReportContainsStep $steps "native-engine static term-search cancellation regressions"
   Assert-ReportContainsStep $steps "native-engine static reference-search cancellation regressions"
   Assert-ReportContainsStep $steps "native-engine static structured-indicator cancellation regressions"
@@ -2084,9 +2085,19 @@ if ($RequireFullSuite) {
   Assert-ReportScopeContains $verifiedScopeText "Cancellation during discovery returns a cancelled report without scanning discovered files; malformed or mismatched token evidence aborts visibly rather than becoming cancelled, clean, or completed" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "Quick scans retain a 5,000-file and 8 MiB encoded-path-payload discovery cap; full/custom scans retain a 250,000-file cap and add a 128 MiB encoded-path-payload cap; reaching any cap records an incomplete discovery error and undiscovered entries are not counted or reported clean" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "Stable three-bucket priority classification evaluates each discovered path once, preserves within-priority order, retains all discovered paths on cancellation, and propagates arbitrary callback errors before Native Engine initialization or scan-result publication" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Quick discovery consumes at most 100,000 application work items within a 600-second monotonic discovery budget; full/custom discovery consumes at most 1,000,000 work items within a 3,600-second budget" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "One work item gates every explicit root inspection and every WalkDir iterator advance, including directories, non-candidate files, non-regular entries, errors, and the exhaustion probe" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Cancellation is evaluated before the deadline at each cooperative checkpoint, including before and after retained target work and after successful zero-file Native Engine initialization, so an observed user cancellation remains Cancelled rather than a time-limit error" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Quick total scan elapsed time is capped at 1,800 seconds and full/custom elapsed time at 10,800 seconds from before discovery; every discovery or total-time limit is fail-visible, counts retained unscanned files as skipped where known, cannot report clean, and keeps incomplete progress indeterminate rather than 100 percent" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Native Engine unavailability skips each retained file once, bypasses target inspection, and leaves final progress indeterminate rather than publishing 100 percent" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Running scans with retained zero-byte files use bounded file-count progress instead of publishing 100 percent before inspection; a running zero-file scan remains indeterminate until its terminal result" "verification_scope.verified"
   Assert-ReportScopeContains $technicalLimitText "Filesystem enumeration and metadata probes are cooperative, not preemptive; one operating-system directory read or metadata call plus one at-most-128-entry chunk can complete before cancellation is observed" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "Priority bucketing is cooperative rather than preemptive, so one at-most-128-path classification chunk can complete before cancellation is observed" "verification_scope.technically_limited"
-  Assert-ReportScopeContains $technicalLimitText "The encoded path-payload cap excludes Vec, PathBuf, and allocator overhead and does not bound filesystem I/O, elapsed time, or kernel work; priority bucketing transiently owns the source path vector and destination bucket allocations" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "The encoded path-payload cap excludes Vec, PathBuf, and allocator overhead; priority bucketing transiently owns the source path vector and destination bucket allocations" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "Discovery work-item and monotonic time budgets are cooperative rather than preemptive: one operating-system root metadata call or directory-iterator advance and one at-most-128-entry or path-classification chunk can overrun before the next checkpoint" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "Work items are an application-level work proxy, not an exact filesystem-I/O, syscall, kernel-work, storage-latency, CPU, or RAM bound" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "User mode cannot interrupt a kernel or filesystem call that stalls indefinitely" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "The elapsed budgets are checked only at explicit checkpoints and are not installed-service watchdog, signed-driver, kernel mediation, hard realtime, or pre-execution evidence" "verification_scope.technically_limited"
   Assert-ReportScopeContains $verifiedScopeText "bounded UTF-8-safe head/tail command-line sampling" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "command indicators remain post-start review evidence" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "high-risk process-start verdicts return recommendations rather than fake block success" "verification_scope.verified"

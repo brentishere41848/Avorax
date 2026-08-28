@@ -3709,3 +3709,34 @@ but exact total RAM, filesystem I/O, elapsed time, kernel work, installed cross-
 identity service ownership, signed driver/kernel mediation, production
 calibration/signing, demonstrated pre-execution blocking, and Defender
 replacement remain product blockers or technical limits.
+
+Checkpoint 2258 reduces the discovery resource blocker by scripting checked
+Quick `100,000` and Full/Custom `1,000,000` application work-item ceilings,
+Quick `600s` and Full/Custom `3,600s` monotonic discovery deadlines, and total
+Quick `1,800s` plus Full/Custom `10,800s` elapsed budgets. All limit exits are
+fail-visible and incomplete. Hosted integration, guarded sync, and destination
+evidence remain checkpoint blockers until commands actually pass. Verifier step
+287 and Source contract 688 pass locally.
+
+Final-source formatting, Source `688/688`, resource `6/6`, Local Core
+`562/562`, strict Clippy, both locked Rust workspace variants, and the locked
+all-feature release build now pass. The later local definitive `287/287`,
+independent dual-host validation, and all six expected adversarial rejections
+passed but are superseded by a cancellation/progress honesty repair. Final-source
+focused/broad and definitive `287/287` now pass on the repair, including all six
+expected adversarial rejections, but are superseded by the zero-byte progress
+repair. Final-source formatting, focused/broad suites, release build, definitive
+`287/287`, dual-host validation, and all six adversarial rejections now pass.
+Hosted exact-head, integration, guarded-sync, and destination blockers remain.
+
+Exact implementation-head CI and both package matrices now pass on `709e8a9`,
+including bounded non-extracting review of both consolidated artifacts with
+publication skipped. The remaining checkpoint blockers are evidence-head and
+merged-main hosting, normal integration, guarded destination synchronization,
+and destination verification.
+
+Exact filesystem I/O bytes, syscall count, kernel work, storage latency, CPU,
+allocator/`PathBuf` RAM, and interruption of a stalled kernel/filesystem call
+remain technically limited. Installed cross-identity service watchdogs, signed
+driver/kernel mediation, production calibration/signing, demonstrated
+pre-execution blocking, and Defender replacement remain separate blockers.
