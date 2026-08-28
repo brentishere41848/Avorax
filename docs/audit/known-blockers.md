@@ -3740,3 +3740,12 @@ allocator/`PathBuf` RAM, and interruption of a stalled kernel/filesystem call
 remain technically limited. Installed cross-identity service watchdogs, signed
 driver/kernel mediation, production calibration/signing, demonstrated
 pre-execution blocking, and Defender replacement remain separate blockers.
+
+Evidence-head and merged-main CI/packages, normal PR `#125` integration,
+bounded artifact review, guarded `14/14` synchronization, destination focused
+checks, and destination exact `287/287` now clear every Checkpoint 2258 evidence
+blocker. The checkpoint is closed. Exact filesystem/kernel resource accounting,
+preemption of stalled OS calls, installed cross-identity service ownership,
+signed driver/kernel mediation, production calibration/signing, demonstrated
+pre-execution blocking, and Defender replacement remain product blockers or
+technical limits.

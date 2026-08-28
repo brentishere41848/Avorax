@@ -31877,7 +31877,7 @@ def test_checkpoint_2258_file_discovery_work_time_bounds_contract():
         assert "287" in normalized
     normalized_checkpoint = re.sub(r"\s+", " ", checkpoint)
     assert (
-        "Status: **Verified locally and hosted at implementation head; evidence-head integration pending**"
+        "Status: **Closed through hosted integration and synchronized destination verification**"
         in normalized_checkpoint
     )
     assert "No checkpoint-2258 test ran during the scripting phase" in normalized_checkpoint
@@ -31904,6 +31904,21 @@ def test_checkpoint_2258_file_discovery_work_time_bounds_contract():
     assert "9677431721" in normalized_checkpoint
     assert "ee1a1f997370d837a52622aa442e3b4f2d09f33ee6a04a3fa8a067f0767c2b51" in normalized_checkpoint
     assert "94624412693ce298859e59f14c8977ec159711740bb693eaf3a935d2ee5a3c7f" in normalized_checkpoint
+    assert "1523810728b0a4b5e67765e31f7d6d30473afeec" in normalized_checkpoint
+    assert "33150862275" in normalized_checkpoint
+    assert "33150862448" in normalized_checkpoint
+    assert "9677952419" in normalized_checkpoint
+    assert "76b4972b196c916cfb9eef9db7dd10e141d0e377b745da3c713783efea4c58b4" in normalized_checkpoint
+    assert "73920a978cfa15e803e29b40d37a9964e91ee0be" in normalized_checkpoint
+    assert "33151851259" in normalized_checkpoint
+    assert "33151851251" in normalized_checkpoint
+    assert "9678412188" in normalized_checkpoint
+    assert "d10e677c23360fdfdaf4db99511f823d4c325fb2d89412a7f6ef65f732eb7450" in normalized_checkpoint
+    assert "14/14" in normalized_checkpoint
+    assert "7,588,496" in normalized_checkpoint
+    assert "698.5s" in normalized_checkpoint
+    assert "200,845-byte" in normalized_checkpoint
+    assert "70ff765a95fd881aafd11255d2a92cb22bff9f447efecdc222a777fa93cdb379" in normalized_checkpoint
     assert "owned mutation files were removed and residue is zero" in normalized_checkpoint
     normalized_dependencies = re.sub(r"\s+", " ", documents[-1]).lower()
     assert "adds no dependency" in normalized_dependencies

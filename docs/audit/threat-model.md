@@ -3867,3 +3867,13 @@ consolidated artifacts with publication skipped. This adds cross-platform build
 and packaging regression evidence; it does not add signing, notarization,
 installed-service isolation, kernel enforcement, or production detection-rate
 evidence. Evidence-head, merged-main, sync, and destination proof remain pending.
+
+Evidence-head and merged-main CI/packages, normal PR `#125` integration,
+bounded review of all consolidated artifacts, guarded `14/14` destination sync,
+destination focused checks, and destination exact `287/287` close the
+Checkpoint 2258 threat delta. Work/time exhaustion, overflow, cancellation
+priority, incomplete-result honesty, engine-unavailable progress, and zero-byte
+progress are verified in the synchronized tree. Residual exact I/O/syscall/
+kernel/CPU/RAM accounting, stalled-OS-call preemption, installed-service,
+driver/kernel, production-calibration/signing, pre-execution, and Defender-
+replacement risks remain as documented.

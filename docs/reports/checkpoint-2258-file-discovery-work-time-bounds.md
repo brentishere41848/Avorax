@@ -1,6 +1,6 @@
 # Checkpoint 2258 - File Discovery Work And Time Bounds
 
-Status: **Verified locally and hosted at implementation head; evidence-head integration pending**
+Status: **Closed through hosted integration and synchronized destination verification**
 
 ## Scope
 
@@ -264,7 +264,52 @@ safe root entries, six packages, seven matching checksum targets, CycloneDX
 encrypted, directory, or link entries. No package was extracted, installed, or
 executed. The exact owned review files and script were removed with zero residue.
 Evidence-head hosted checks, normal PR merge, merged-main evidence, guarded
-destination synchronization, and destination verification remain open.
+destination synchronization, and destination verification are recorded below.
+
+## Integration And Destination Closure
+
+Exact evidence commit `1523810728b0a4b5e67765e31f7d6d30473afeec`
+passes Avorax CI `33150862275` and PR Desktop Packages `33150862448`; the
+publication job is intentionally skipped. Consolidated artifact `9677952419`
+is 132,149,066 bytes with SHA-256
+`76b4972b196c916cfb9eef9db7dd10e141d0e377b745da3c713783efea4c58b4`.
+Its bounded, non-extracting review passes exact 8-root/6-package/7-checksum/
+CycloneDX-1.6/569-unique-ref inventory with zero unsafe or special entries and
+zero residue.
+
+PR `#125` merges normally as
+`73920a978cfa15e803e29b40d37a9964e91ee0be`. Merged-main CI `33151851259`
+and Desktop Packages `33151851251` pass all jobs; publication remains skipped.
+The untouched merged-main artifact `9678412188` is 132,179,061 bytes with
+SHA-256 `d10e677c23360fdfdaf4db99511f823d4c325fb2d89412a7f6ef65f732eb7450`.
+Bounded in-stream review passes exact 8/6/7 inventory, CycloneDX 1.6 with 569
+unique non-empty component references, 136,138,120 declared uncompressed bytes,
+and zero unsafe, duplicate, encrypted, directory, link, extraction, execution,
+installation, or owned residue.
+
+Read-only destination preflight verifies all old-base/absence conditions.
+Guarded same-directory staging, backup, and atomic activation synchronize exact
+`14/14` paths: 13 modified, one added, zero deleted, 7,588,496 staged bytes,
+no rollback, exact merged-blob equality, and zero staging/backup residue.
+
+The synchronized destination passes PS5/PS7 parser `2/2`, Source `688/688`,
+formatting, resource-budget `6/6`, complete Local Core `562/562`, and strict
+all-target/all-feature Local Core Clippy. Its no-skip/no-Defender definitive
+verifier passes exact `287/287` with zero failed or non-null-error steps in
+`698.5s`. Independent PS5 and PS7 validators accept the 200,845-byte schema-2
+report with SHA-256
+`70ff765a95fd881aafd11255d2a92cb22bff9f447efecdc222a777fa93cdb379`.
+
+Root, Native, and Flutter lock SHA-256 values remain exact at
+`7c7c8aa006c2ac80eb89fa64d3b8ec09b32b26598b1a85bceb3c2af5a2d20e39`,
+`7f4393c81896600c4a5e84cad288a1a5360eccbc1c458b38f615082f66391383`,
+and `4de19695f9207273746341ca2221541b5b86d9f72af83727afca78541e177694`.
+No Avorax/Zentor process remains. The read-only protected-vault invariant is
+exactly 16,072 files, zero directories, 4,522,733 bytes, 5,357 each payload/
+metadata/auth file, one metadata key, and zero unknown, pending, temporary, or
+reparse entry. `.verification` remains untracked and untouched. No artifact was
+installed, released, or published. Checkpoint 2258 is closed; the complete
+antivirus-hardening goal and all limits below remain active.
 
 ## Technical Limits
 

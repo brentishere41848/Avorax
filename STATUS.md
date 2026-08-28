@@ -7730,3 +7730,19 @@ and destination verification remain open.
 Work items remain a proxy rather than exact I/O/syscall/kernel/CPU/RAM
 accounting, and user mode cannot preempt a stalled kernel/filesystem call. The
 complete antivirus-hardening goal remains active.
+
+Checkpoint 2258 is now **closed through hosted integration and synchronized
+destination verification**. Evidence `1523810728b0a4b5e67765e31f7d6d30473afeec`,
+PR `#125`, merge `73920a978cfa15e803e29b40d37a9964e91ee0be`, evidence-head
+and merged-main CI/packages, and all four bounded non-extracting consolidated
+artifact reviews pass with publication skipped. Guarded sync applies exact
+`14/14` paths with 13 modifications, one addition, zero deletes, and zero
+residue. Destination Source `688/688`, resource `6/6`, Local Core `562/562`,
+strict Clippy, and definitive `287/287` in `698.5s` pass; independent PS5/PS7
+validators accept report SHA-256
+`70ff765a95fd881aafd11255d2a92cb22bff9f447efecdc222a777fa93cdb379`.
+All locks, synchronized blobs, zero active product processes, and the read-only
+16,072-file vault remain exact. Exact kernel resource enforcement, installed
+service/driver ownership, production calibration/signing, pre-execution
+blocking, Defender replacement, and the complete antivirus-hardening goal stay
+open.
