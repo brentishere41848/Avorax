@@ -301,6 +301,7 @@ if ($Action -eq "Add") {
   $command = [ordered]@{
     command = "add_allowlist_entry"
     path = $targetFull
+    confirmed = $true
   }
 } elseif ($Action -eq "Remove") {
   $command = [ordered]@{

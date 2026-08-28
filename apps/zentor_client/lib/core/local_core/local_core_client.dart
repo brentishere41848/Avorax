@@ -754,16 +754,23 @@ class LocalCoreClient {
     );
   }
 
-  Future<LocalCoreActionResult> addAllowlistEntry(String path) async {
+  Future<LocalCoreActionResult> addAllowlistEntry(ThreatResult threat) async {
     final response = await _call({
       'command': 'add_allowlist_entry',
-      'path': path,
+      'path': threat.path,
+      'sha256': threat.sha256,
+      'confirmed': true,
     });
     return _actionResult(
       response,
       fallbackError: 'Allowlist add request failed.',
-      successEvidenceError: (response) =>
-          _allowlistActionEvidenceError(response, expectedActive: true),
+      successEvidenceError: (response) => _allowlistActionEvidenceError(
+        response,
+        expectedActive: true,
+        expectedType: AllowlistEntryType.file,
+        expectedPath: threat.path,
+        expectedSha256: threat.sha256,
+      ),
     );
   }
 
@@ -829,18 +836,25 @@ class LocalCoreClient {
     String label, {
     String? note,
   }) async {
+    final previousVerdict = threat.riskScore.verdict.name;
     final response = await _call({
       'command': 'label_detection',
       'path': threat.path,
+      'sha256': threat.sha256,
       'user_label': label,
       'user_note': note,
-      'previous_verdict': threat.riskScore.verdict.name,
+      'previous_verdict': previousVerdict,
+      'confirmed': true,
     });
     return _actionResult(
       response,
       fallbackError: 'Detection label request failed.',
-      successEvidenceError: (response) =>
-          _pathActionEvidenceError(response, fieldName: 'path'),
+      successEvidenceError: (response) => _labelActionEvidenceError(
+        response,
+        expectedSha256: threat.sha256,
+        expectedLabel: label,
+        expectedPreviousVerdict: previousVerdict,
+      ),
     );
   }
 
@@ -1968,6 +1982,9 @@ if ($service.Status -ne 'Running') {
     Map<String, Object?> response, {
     required bool expectedActive,
     String? expectedId,
+    AllowlistEntryType? expectedType,
+    String? expectedPath,
+    String? expectedSha256,
   }) {
     final entryJson = _actionEvidenceObject(response['entry']);
     if (entryJson == null) {
@@ -1983,7 +2000,79 @@ if ($service.Status -ne 'Running') {
     if (expectedId != null && entry.id != expectedId) {
       return 'the allowlist entry identifier did not match the request.';
     }
+    if (expectedType != null && entry.type != expectedType) {
+      return 'the allowlist entry type did not match the request.';
+    }
+    if (expectedPath != null &&
+        !_localActionPathsMatch(entry.path, expectedPath)) {
+      return 'the allowlist entry path did not match the request.';
+    }
+    if (expectedSha256 != null) {
+      final normalizedExpectedSha256 = _normalizedSha256(expectedSha256);
+      if (normalizedExpectedSha256 == null ||
+          entry.sha256 != normalizedExpectedSha256) {
+        return 'the allowlist entry SHA-256 did not match the request.';
+      }
+    }
     return null;
+  }
+
+  String? _labelActionEvidenceError(
+    Map<String, Object?> response, {
+    required String expectedSha256,
+    required String expectedLabel,
+    required String expectedPreviousVerdict,
+  }) {
+    final evidence = _actionEvidenceObject(response['evidence']);
+    if (evidence == null) {
+      return 'the detection feedback evidence was missing or malformed.';
+    }
+    final labelId = _recordId(_field(evidence, 'labelId', 'label_id'));
+    final sha256 = _normalizedSha256(
+      _field(evidence, 'fileSha256', 'file_sha256'),
+    );
+    final userLabel = _ipcStringOrNull(
+      _field(evidence, 'userLabel', 'user_label'),
+    );
+    final previousVerdict = _ipcStringOrNull(
+      _field(evidence, 'previousVerdict', 'previous_verdict'),
+    );
+    final storePath = _recordPathField(
+      _field(evidence, 'storePath', 'store_path'),
+    );
+    final responsePath = _recordPathField(response['path']);
+    final normalizedExpectedSha256 = _normalizedSha256(expectedSha256);
+    if (labelId == null) {
+      return 'the detection feedback identifier was missing or malformed.';
+    }
+    if (normalizedExpectedSha256 == null ||
+        sha256 != normalizedExpectedSha256) {
+      return 'the detection feedback SHA-256 did not match the request.';
+    }
+    if (userLabel != expectedLabel) {
+      return 'the detection feedback label did not match the request.';
+    }
+    if (previousVerdict != expectedPreviousVerdict) {
+      return 'the detection feedback previous verdict did not match the request.';
+    }
+    if (storePath == null || responsePath == null) {
+      return 'the detection feedback store path was missing or malformed.';
+    }
+    if (!_localActionPathsMatch(storePath, responsePath)) {
+      return 'the detection feedback store path evidence was contradictory.';
+    }
+    return null;
+  }
+
+  bool _localActionPathsMatch(String left, String right) {
+    final leftPath = _recordPathField(left);
+    final rightPath = _recordPathField(right);
+    if (leftPath == null || rightPath == null) return false;
+    try {
+      return _normalizeLocalPath(leftPath) == _normalizeLocalPath(rightPath);
+    } on Object {
+      return false;
+    }
   }
 
   String? _pathActionEvidenceError(

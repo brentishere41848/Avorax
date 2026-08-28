@@ -4001,3 +4001,43 @@ resist administrators, SYSTEM, or kernel compromise. Installed UI/service E2E,
 driver/kernel mediation, pre-execution blocking, production accuracy, secure
 erase, and Defender replacement remain partial, blocked, limited, or unclaimed.
 Checkpoint 2261 is closed; the complete antivirus-hardening goal remains active.
+
+## Checkpoint 2262 - Stale Trust Mutation And False Success
+
+**Threat.** A visible detection row identifies bytes by path and SHA-256, but
+manual allowlist and feedback IPC previously sent only the path. Replacement
+between scan and action could persist trust for different bytes. A malformed or
+compromised same-user child response could also claim success for another
+allowlist path/hash or feedback label/hash/store while Flutter updated visible
+state and history.
+
+**Mitigation.** Flutter sends the row SHA-256 and explicit
+confirmation. Local Core validates bounded syntax before file/store access and
+repeats confirmation enforcement. File allowlisting compares the fresh hash to
+the expected verdict before persistence; later allowlist matching still needs
+the exact path and hash. Feedback compares a bounded hash before and after
+feature extraction, rejects unsupported labels, then returns evidence derived
+from the persisted label. Flutter independently validates all request-bound
+allowlist or feedback fields and converts contradictions into visible failure.
+
+**Adversarial evidence.** Harmless Rust tests cover omitted confirmation,
+malformed evidence, stale bytes, matching persistence, and zero store mutation.
+Flutter tests cover captured requests and mismatched receipts. A release-binary
+smoke uses only GUID-scoped ASCII fixtures and isolated data/allowlist/
+quarantine roots; it never executes fixtures or uses live malware/EICAR.
+Focused Local Core `8/8`, IPC `97/97`, full client `852/852`, Source `692/692`,
+both locked workspaces, all-feature release build, and exact definitive
+`290/290` pass. Both validator hosts accept the authentic report and reject all
+six expected missing-step/scope/limit mutations.
+
+**Residual risk.** These are same-user, user-mode path operations. Hash-bound
+allowlisting remains conservative after its snapshot because changed bytes no
+longer match, while double-hashed feedback detects ordinary stale/mid-read
+change; neither is a kernel-enforced immutable lease. Same-user code can access
+same-user stores, and privileged writers, administrators, SYSTEM, or kernel
+compromise can race or bypass this boundary. Installed cross-identity service
+authentication, signed-driver mediation, pre-execution blocking, production
+accuracy, and Defender replacement remain blocked, partial, limited, or
+unclaimed. Hosted integration, guarded synchronization, and destination proof
+remain pending. Checkpoint 2262 and the complete antivirus-hardening goal remain
+active.

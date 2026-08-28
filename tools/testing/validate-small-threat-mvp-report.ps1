@@ -1951,8 +1951,8 @@ if ($RequireFullSuite) {
   if ($skipFlutter -or $skipRust) {
     throw "-RequireFullSuite requires skip_flutter=false and skip_rust=false."
   }
-  if ($steps.Count -ne 289) {
-    throw "-RequireFullSuite expected exactly 289 verifier steps for this source revision, found $($steps.Count)."
+  if ($steps.Count -ne 290) {
+    throw "-RequireFullSuite expected exactly 290 verifier steps for this source revision, found $($steps.Count)."
   }
   if ($steps[0].name -ne "local-core safe simulator scan reporting") {
     throw "-RequireFullSuite first step mismatch: $($steps[0].name)"
@@ -2105,6 +2105,10 @@ if ($RequireFullSuite) {
   Assert-ReportScopeContains $verifiedScopeText "Local Core rejects empty, oversized, NUL-bearing, malformed, changed, or mismatched evidence before vault mutation" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "Flutter client rejects success records whose original path or SHA-256 does not match the request" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "separate confirmed Quarantine file picker intentionally omits prior-verdict SHA-256 and takes a fresh bounded current-file snapshot" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "confirmed allowlist and detection-feedback actions from a visible scan-result row send that row's exact SHA-256 through bounded Local Core IPC" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Local Core independently requires explicit confirmation, validates bounded SHA-256 syntax before store or file access, rejects bytes changed since the scan verdict, and persists only matching hash-bound state" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Detection feedback hashes before and after bounded feature extraction, rejects unsupported labels, and returns compact persisted label evidence" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Flutter client accepts success only when allowlist type/path/hash/active state or feedback identifier/hash/label/previous-verdict/store path exactly matches the request and response contract" "verification_scope.verified"
   Assert-ReportScopeContains $technicalLimitText "Filesystem enumeration and metadata probes are cooperative, not preemptive; one operating-system directory read or metadata call plus one at-most-128-entry chunk can complete before cancellation is observed" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "Priority bucketing is cooperative rather than preemptive, so one at-most-128-path classification chunk can complete before cancellation is observed" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "The encoded path-payload cap excludes Vec, PathBuf, and allocator overhead; priority bucketing transiently owns the source path vector and destination bucket allocations" "verification_scope.technically_limited"
@@ -2117,6 +2121,10 @@ if ($RequireFullSuite) {
   Assert-ReportScopeContains $technicalLimitText "Scan-verdict quarantine binding is user-mode and path-based" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "cannot atomically prevent a privileged writer or a final path swap after the last identity check and before rename or removal on every supported filesystem" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "Such failures remain visible or recovery-journaled; this is not kernel mediation, pre-execution blocking, or protection against administrators, SYSTEM, or kernel compromise" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "Trust-mutation hash binding is user-mode and path-based" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "File allowlisting remains safe after its hash snapshot because later scan suppression also requires that exact hash" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "neither operation holds a kernel-enforced immutable file lease" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "This is confirmation and stale-verdict defense, not cross-identity authorization, malware execution prevention, driver enforcement, or protection against administrators, SYSTEM, or kernel compromise" "verification_scope.technically_limited"
   Assert-ReportScopeContains $verifiedScopeText "bounded UTF-8-safe head/tail command-line sampling" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "command indicators remain post-start review evidence" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "high-risk process-start verdicts return recommendations rather than fake block success" "verification_scope.verified"
@@ -2240,6 +2248,7 @@ if ($RequireFullSuite) {
   Assert-ReportContainsStep $steps "release local-core binary invalid native-model fail-safe smoke"
   Assert-ReportContainsStep $steps "release local-core binary invalid native trust-store fail-safe smoke"
   Assert-ReportContainsStep $steps "release local-core binary allowlist confirmed-fixture no-quarantine smoke"
+  Assert-ReportContainsStep $steps "release local-core binary trust-mutation hash-binding smoke"
   Assert-ReportContainsStep $steps "release local-core binary corrupt allowlist fail-closed smoke"
   Assert-ReportContainsStep $steps "release local-core binary quarantine metadata/payload tamper fail-safe smoke"
   Assert-ReportContainsStep $steps "release local-core binary ransomware guard config/activity smoke"

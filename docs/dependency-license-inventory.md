@@ -2309,3 +2309,29 @@ after destination exact `289/289`. Checkpoint 2261 is closed without a
 dependency or license delta. Final-binary legal/notice provenance, production
 signing/notarization, enterprise deployment approval, and release approval
 remain separate.
+
+## Checkpoint 2262 Dependency Delta
+
+Checkpoint 2262 adds no dependency, package source, binary fixture, license
+class, downloaded artifact, or lockfile change. It uses existing Rust `sha2`,
+Serde, UUID, filesystem, bounded static-feature, allowlist, and training-label
+code plus existing Dart/Flutter JSON/path validation. The new PowerShell smoke
+uses only .NET process, JSON, SHA-256, and temporary-filesystem APIs already
+used by repository verification.
+
+All new test bytes are harmless temporary ASCII fixtures, never candidate
+executables, and never executed. No live malware or EICAR is included. No
+network content, machine-wide component, service/driver registration, Defender
+change, release, or publication is required. Locked workspace/release builds,
+the local dependency gate, and all source/client/protocol regressions pass with
+no tracked lockfile change. Hosted package/SBOM, final-binary legal, and
+destination checks remain pending. The protected-vault invariant remains
+read-only. Checkpoint 2262 and the complete antivirus-hardening goal remain
+active.
+
+Implementation-head package runs `33206952538` and `33206972034` pass all four
+platform builds and consolidation with publication skipped. Their consolidated
+artifacts `9700500463` and `9700448185` pass exact checksum inventory and
+CycloneDX 1.6 / 569-component review as bounded ZIP streams without extraction.
+Evidence-head, merged-main, destination, and final signed-binary legal review
+remain pending; this hosted evidence does not authorize publication.

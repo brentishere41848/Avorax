@@ -45,6 +45,21 @@ content fails before vault mutation and requires a rescan. A separately
 confirmed manual file-picker request omits `sha256` because it has no prior
 verdict and takes a fresh bounded snapshot of the selected current file.
 
+Checkpoint 2262 hardens manual trust mutation IPC. `add_allowlist_entry` now
+requires `confirmed=true`; callers with a visible scan verdict may also provide
+that row's bounded `sha256`, which must match the freshly hashed regular file
+before the entry is persisted. A standalone confirmed add without earlier
+verdict evidence intentionally takes a fresh current-file hash.
+
+`label_detection` requires `confirmed=true`, an exact bounded `sha256`, and a
+supported user label. Local Core hashes before and after static-feature
+extraction and persists nothing if the file differs from the scan verdict or
+changes during collection. Success includes compact `evidence` containing the
+persisted label ID, file SHA-256, user label, previous verdict, and local store
+path. This checkpoint 2262 contract is same-user stale-verdict defense; it is
+not cross-identity authorization, a kernel file lease, or pre-execution
+blocking.
+
 ## Tests
 
 ```powershell

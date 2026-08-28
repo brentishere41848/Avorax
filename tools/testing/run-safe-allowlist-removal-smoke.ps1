@@ -138,6 +138,7 @@ try {
   $entry = Invoke-LocalCoreJson @{
     command = "add_allowlist_entry"
     path = $fixture
+    confirmed = $true
   } $inputJson $repo $cargo $manifest $TimeoutSeconds
   if ($entry.ok -ne $true -or [string]::IsNullOrWhiteSpace([string]$entry.entry.id)) {
     throw "safe allowlist removal smoke could not add the simulator allowlist entry: $(Get-BoundedText ($entry | ConvertTo-Json -Compress))"

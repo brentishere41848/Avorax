@@ -228,6 +228,7 @@ try {
   $entry = Invoke-LocalCoreBinaryJson @{
     command = "add_allowlist_entry"
     path = $fixture
+    confirmed = $true
   } $inputJson $repo $binary $TimeoutSeconds
   if ($entry.ok -ne $true -or [string]::IsNullOrWhiteSpace([string]$entry.entry.id)) {
     throw "release local-core could not add the allowlisted fixture entry: $(Get-BoundedText ($entry | ConvertTo-Json -Compress -Depth 8))"
