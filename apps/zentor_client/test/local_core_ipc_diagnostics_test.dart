@@ -3836,6 +3836,186 @@ Future<void> main() async {
   );
 
   test(
+    'manual trust mutation IPC binds confirmation, path, hash, and label',
+    () async {
+      final dir = Directory.systemTemp.createTempSync(
+        'avorax-trust-mutation-ipc-',
+      );
+      addTearDown(() => dir.deleteSync(recursive: true));
+      final script =
+          File('${dir.path}${Platform.pathSeparator}trust_mutation.dart')
+            ..writeAsStringSync(r'''
+import 'dart:convert';
+import 'dart:io';
+
+Future<void> main() async {
+  final raw = await stdin.transform(utf8.decoder).join();
+  final command = jsonDecode(raw) as Map<String, Object?>;
+  const expectedPath = 'C:/Users/Brent/Downloads/detected.bin';
+  const expectedSha256 =
+      'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+  final common = command['path'] == expectedPath &&
+      command['sha256'] == expectedSha256 &&
+      command['confirmed'] == true;
+  if (command['command'] == 'add_allowlist_entry') {
+    print(jsonEncode(<String, Object?>{
+      'ok': common,
+      if (common)
+        'entry': <String, Object?>{
+          'id': 'allow_fixture',
+          'entryType': 'file',
+          'path': expectedPath,
+          'sha256': expectedSha256,
+          'createdAt': '2024-01-01T00:00:00Z',
+          'active': true,
+          'reason': 'User-approved benign fixture.',
+          'createdBy': 'local_user',
+        },
+    }));
+    return;
+  }
+  final labelMatches = common &&
+      command['command'] == 'label_detection' &&
+      command['user_label'] == 'falsePositive' &&
+      command['previous_verdict'] == 'confirmedMalware';
+  const storePath =
+      'C:/Users/Brent/AppData/Local/Avorax/data/training_labels.jsonl';
+  print(jsonEncode(<String, Object?>{
+    'ok': labelMatches,
+    if (labelMatches) 'path': storePath,
+    if (labelMatches)
+      'evidence': <String, Object?>{
+        'label_id': 'label_fixture',
+        'file_sha256': expectedSha256,
+        'user_label': 'falsePositive',
+        'previous_verdict': 'confirmedMalware',
+        'store_path': storePath,
+      },
+  }));
+}
+''');
+      final client = LocalCoreClient(
+        executableOverride: _dartExecutable(),
+        executableArguments: [script.path],
+      );
+      final threat = _manualThreatFixture();
+
+      final allowlistResult = await client.addAllowlistEntry(threat);
+      final labelResult = await client.labelDetection(threat, 'falsePositive');
+
+      expect(allowlistResult.ok, isTrue);
+      expect(labelResult.ok, isTrue);
+    },
+  );
+
+  test('allowlist add rejects mismatched trust success evidence', () async {
+    final variants = <String, Map<String, Object?>>{
+      'inactive': <String, Object?>{'active': false},
+      'type': <String, Object?>{'entryType': 'folder', 'sha256': null},
+      'path': <String, Object?>{
+        'path': 'C:/Users/Brent/Downloads/replacement.bin',
+      },
+      'hash': <String, Object?>{'sha256': 'b' * 64},
+    };
+
+    for (final variant in variants.entries) {
+      final dir = Directory.systemTemp.createTempSync(
+        'avorax-allowlist-evidence-${variant.key}-',
+      );
+      addTearDown(() => dir.deleteSync(recursive: true));
+      final client = _localCoreClientForPayload(
+        dir,
+        'mismatched_${variant.key}.dart',
+        <String, Object?>{
+          'ok': true,
+          'entry': _allowlistEntryFixture(<String, Object?>{
+            'path': 'C:/Users/Brent/Downloads/detected.bin',
+            'sha256': 'a' * 64,
+            ...variant.value,
+          }),
+        },
+      );
+
+      final result = await client.addAllowlistEntry(_manualThreatFixture());
+
+      expect(result.ok, isFalse, reason: variant.key);
+      expect(result.error, contains('did not match the request'));
+    }
+  });
+
+  test(
+    'detection feedback rejects malformed or mismatched success evidence',
+    () async {
+      const storePath =
+          'C:/Users/Brent/AppData/Local/Avorax/data/training_labels.jsonl';
+      final validEvidence = <String, Object?>{
+        'label_id': 'label_fixture',
+        'file_sha256': 'a' * 64,
+        'user_label': 'falsePositive',
+        'previous_verdict': 'confirmedMalware',
+        'store_path': storePath,
+      };
+      final variants = <String, Map<String, Object?>>{
+        'missing evidence': <String, Object?>{'evidence': null},
+        'identifier': <String, Object?>{
+          'evidence': <String, Object?>{...validEvidence, 'label_id': 'bad id'},
+        },
+        'hash': <String, Object?>{
+          'evidence': <String, Object?>{
+            ...validEvidence,
+            'file_sha256': 'b' * 64,
+          },
+        },
+        'label': <String, Object?>{
+          'evidence': <String, Object?>{
+            ...validEvidence,
+            'user_label': 'confirmedMalicious',
+          },
+        },
+        'verdict': <String, Object?>{
+          'evidence': <String, Object?>{
+            ...validEvidence,
+            'previous_verdict': 'clean',
+          },
+        },
+        'store contradiction': <String, Object?>{
+          'evidence': <String, Object?>{
+            ...validEvidence,
+            'store_path':
+                'C:/Users/Brent/AppData/Local/Avorax/data/other.jsonl',
+          },
+        },
+      };
+
+      for (final variant in variants.entries) {
+        final dir = Directory.systemTemp.createTempSync(
+          'avorax-label-evidence-${variant.key.replaceAll(' ', '-')}-',
+        );
+        addTearDown(() => dir.deleteSync(recursive: true));
+        final client = _localCoreClientForPayload(
+          dir,
+          'mismatched_label.dart',
+          <String, Object?>{
+            'ok': true,
+            'path': storePath,
+            ...variant.value,
+            if (!variant.value.containsKey('evidence'))
+              'evidence': validEvidence,
+          },
+        );
+
+        final result = await client.labelDetection(
+          _manualThreatFixture(),
+          'falsePositive',
+        );
+
+        expect(result.ok, isFalse, reason: variant.key);
+        expect(result.error, contains('valid evidence'));
+      }
+    },
+  );
+
+  test(
     'quarantine list rejects records with missing required evidence',
     () async {
       final variants = <String, Map<String, Object?>>{

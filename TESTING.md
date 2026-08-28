@@ -1028,3 +1028,38 @@ production vault. The result remains user-mode/path-based and does not prove
 atomic final path mutation, installed service/UI E2E, driver/kernel mediation,
 pre-execution blocking, secure erase, production detection quality, or Defender
 replacement.
+
+## Checkpoint 2262 - Manual Trust-Mutation Hash Binding
+
+The complete batch was scripted before execution. Scan-result allowlist and
+detection-feedback requests now carry exact SHA-256 plus server-side explicit
+confirmation; Local Core rejects malformed or changed evidence before storage;
+and Flutter requires request-bound persisted success evidence. All fixtures are
+ordinary temporary ASCII bytes and are never executed.
+
+No checkpoint-2262 test ran during the scripting phase. After the scripting
+batch froze, the focused checks used were:
+
+```powershell
+cargo fmt --all -- --check
+cargo test --locked --manifest-path core\zentor_local_core\Cargo.toml manual_trust_mutation_binding_ -- --test-threads=1
+flutter test test\local_core_ipc_diagnostics_test.dart
+powershell.exe -NoLogo -NoProfile -NonInteractive -Command "[void][scriptblock]::Create([IO.File]::ReadAllText('tools/testing/run-release-local-core-trust-mutation-binding-smoke.ps1'))"
+pwsh.exe -NoLogo -NoProfile -NonInteractive -Command "[void][scriptblock]::Create([IO.File]::ReadAllText('tools/testing/run-release-local-core-trust-mutation-binding-smoke.ps1'))"
+python -B tools\testing\run-python-source-contracts.py
+```
+
+Build the locked release Local Core before running
+`tools/testing/run-release-local-core-trust-mutation-binding-smoke.ps1`. The
+definitive verifier adds `release local-core binary trust-mutation hash-binding
+smoke`; `-RequireFullSuite` requires exact `290/290`, zero failed/skipped, the
+new step, and the new verified/technical-limit scope. Focused Local Core passed
+`8/8`, IPC `97/97`, overlapping UI `238/238`, Source `692/692`, and release
+smokes passed on PowerShell 5.1/7. Both locked Rust workspaces, all-feature
+release build, Flutter analyze plus `852/852`, and protocol `14/14` plus `6/6`
+passed. Definitive verification passed exact `290/290` in `621.9s`; both hosts
+accepted the authentic report and rejected all six adversarial mutations.
+Hosted, integration, guarded-sync, and destination evidence remain pending.
+The protected production vault is never a test root. No live malware, fixture
+execution, Defender weakening, installation, service/driver start, release, or
+publication is permitted. Checkpoint 2262 and the full goal remain open.

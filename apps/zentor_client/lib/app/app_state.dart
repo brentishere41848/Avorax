@@ -5540,7 +5540,7 @@ class ZentorController extends StateNotifier<ZentorState> {
     try {
       LocalCoreActionResult result;
       try {
-        result = await _localCoreClient.addAllowlistEntry(threat.path);
+        result = await _localCoreClient.addAllowlistEntry(threat);
       } on Object catch (error) {
         final details = _boundedUiDiagnostic(error);
         await logEvent(

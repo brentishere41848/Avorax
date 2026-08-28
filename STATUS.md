@@ -7862,3 +7862,22 @@ All locks, synchronized blobs, zero active product processes, and the read-only
 kernel resource accounting, installed service/driver ownership, production
 calibration/signing, pre-execution blocking, Defender replacement, and the
 complete antivirus-hardening goal stay open.
+
+Checkpoint 2262 is **locally verified; hosted integration and destination proof
+remain pending**. Manual
+allowlist and detection-feedback actions from a visible scan row now carry that
+row's exact SHA-256 and explicit confirmation. Local Core rejects malformed or
+stale evidence before persistence; feedback hashes before and after bounded
+feature extraction; and Flutter accepts success only when the persisted
+allowlist or feedback receipt matches path/hash/type/state/label/verdict/store
+contracts. Focused Local Core `8/8`, IPC `97/97`, overlapping UI `238/238`,
+Source `692/692`, strict Clippy, dual-host release smoke, both locked Rust
+workspaces, all-feature release build, Flutter analyze and `852/852`, and
+protocol `14/14` plus `6/6` pass. Definitive verification passes exact `290/290`
+in `621.9s`; PS5/PS7 accept the 214,814-byte report with SHA-256
+`d0d544184c5f5974abb48b111bb2e274519b27d493f53e9d6a2aa5b2fd0f735b` and
+reject all six expected adversarial mutations. Installed UI/service E2E, cross-identity authorization,
+immutable file leases, signed-driver/kernel enforcement, production accuracy,
+pre-execution blocking, Defender replacement, and the complete antivirus-
+hardening goal remain partial, blocked, technically limited, or open. The
+protected 16,072-file vault remains explicitly read-only.

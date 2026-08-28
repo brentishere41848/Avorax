@@ -13826,3 +13826,43 @@ pending.
   closed; hard OS-call preemption, exact kernel resource accounting, installed
   service/driver ownership, production calibration/signing, pre-execution
   blocking, Defender replacement, and the complete goal remain open.
+
+### Checkpoint 2262 Manual Trust-Mutation Hash Binding
+
+- Audit found that visible scan-row allowlist and detection-feedback actions
+  crossed IPC with a path but without the row SHA-256. A replacement could
+  therefore create trust state for bytes different from the visible verdict;
+  Flutter also did not bind every success field to the request.
+- The complete implementation/test/verifier/documentation batch is scripted
+  before any checkpoint test: exact row hash plus server confirmation, Local
+  Core stale-byte rejection, double-hashed feedback feature collection,
+  compact persisted receipts, strict Flutter response binding, harmless Rust/
+  Dart adversarial tests, and an isolated release-binary smoke.
+- Full-suite validation is advanced to exact 290 steps. No checkpoint-2262
+  result is claimed yet. Focused, full, hosted, integration, guarded-sync, and
+  destination verification remain pending.
+- No live malware, candidate execution, EICAR, Defender change, machine-wide
+  install, service/driver start, release, or publication is used. The protected
+  16,072-file / 0-directory / 4,522,733-byte vault with 5,357 payload/metadata/
+  authenticator triples, one key, and zero pending remains out of scope and
+  read-only. Checkpoint 2262 and the full antivirus-hardening goal remain open.
+
+### Checkpoint 2262 Definitive Local Evidence
+
+- The scripting boundary held: all implementation, regressions, smoke,
+  verifier/validator, Source, and audit documents existed before execution.
+- Focused Local Core passes `8/8` after correcting two test-only fixture setup
+  errors; IPC passes `97/97`, overlapping UI `238/238`, Source `692/692`, strict
+  Clippy, release build, and PS5/PS7 release smoke pass. Two earlier smoke runs
+  exposed only stdin-encoding harness incompatibilities and are not credited.
+- Both locked Rust workspaces pass with Platform `11`, Update Service `203`,
+  Guard `248`, Local Core `580`, Native `640` plus 21 intentional ignores, and
+  compiler `6`. The all-feature release workspace build, Flutter analyze and
+  `852/852`, and protocols `14/14` plus `6/6` pass.
+- Definitive no-skip/no-Defender verification passes exact `290/290`, zero
+  failed/skipped, in `621.9s`. The 214,814-byte report has SHA-256
+  `d0d544184c5f5974abb48b111bb2e274519b27d493f53e9d6a2aa5b2fd0f735b`.
+  Both hosts accept it and reject all six expected adversarial mutations.
+- No tracked lock changed; the read-only `16072/0/4522733` vault invariant is
+  exact. Hosted exact-head, merge, guarded sync, and destination evidence remain
+  pending; the complete antivirus-hardening goal stays active.

@@ -3856,3 +3856,32 @@ signed driver/kernel mediation, production calibration/signing, demonstrated
 pre-execution blocking, and Defender replacement remain separate product
 blockers or technical limits. Checkpoint 2261 is closed; the complete antivirus
 goal remains active.
+
+## Checkpoint 2262 - Remaining Trust-Mutation Limits
+
+Checkpoint 2262 implements stale-verdict and false-success defenses for visible
+scan-row allowlist and feedback actions. Exact row SHA-256 plus explicit
+confirmation now cross IPC; Local Core validates before access, rejects changed
+bytes before persistence, double-hashes feedback feature collection, and emits
+persisted evidence; Flutter requires exact request/receipt equality. Harmless
+Rust/Flutter adversarial tests, an isolated release-binary smoke, exact-290
+verifier/validator contracts, and Source/audit contracts pass locally. The
+definitive verifier passes `290/290` in `621.9s`; both validator hosts accept the
+authentic report and reject all six expected mutations. Hosted integration,
+installed package/service evidence, guarded sync, and destination proof remain
+pending.
+
+This does not create an authenticated cross-identity service boundary or a
+kernel-enforced immutable file lease. A privileged writer can still race a
+user-mode path, and same-user code remains within the same-user store boundary.
+Installed package/UI/service E2E, service identity and ACL proof, signed-driver
+kernel mediation, production calibration/signing, demonstrated pre-execution
+blocking, and Defender replacement remain separate blockers or technical
+limits. Existing broad-root allowlist/exclusion prohibitions remain unchanged.
+
+The protected production vault is not a test root and remains read-only at the
+carried 16,072 files, zero directories, 4,522,733 bytes, 5,357 each payload/
+metadata/authenticator, one metadata key, and zero pending. No live malware,
+fixture execution, Defender weakening, machine-wide install, service/driver
+start, release, or publication is part of checkpoint 2262. The complete
+antivirus-hardening goal remains active.

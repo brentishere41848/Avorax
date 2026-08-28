@@ -3349,7 +3349,7 @@ void main() {
     expect(addAllowlist, contains('allowlist_entry_add_confirmation_required'));
     expect(
       addAllowlist.indexOf('if (!confirmed)'),
-      lessThan(addAllowlist.indexOf('addAllowlistEntry(threat.path)')),
+      lessThan(addAllowlist.indexOf('addAllowlistEntry(threat)')),
     );
   });
 
@@ -10381,7 +10381,7 @@ class _FakeLocalCoreClient extends LocalCoreClient {
   }
 
   @override
-  Future<LocalCoreActionResult> addAllowlistEntry(String path) async {
+  Future<LocalCoreActionResult> addAllowlistEntry(ThreatResult threat) async {
     addAllowlistCalls += 1;
     final pending = pendingAddAllowlist;
     if (pending != null) return pending.future;

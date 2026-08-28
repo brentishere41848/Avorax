@@ -1541,9 +1541,9 @@ class _RecordingLocalCoreClient extends LocalCoreClient {
   ScanKind? lastScanKind;
 
   @override
-  Future<LocalCoreActionResult> addAllowlistEntry(String path) async {
+  Future<LocalCoreActionResult> addAllowlistEntry(ThreatResult threat) async {
     addAllowlistEntryCalls += 1;
-    lastAllowlistPath = path;
+    lastAllowlistPath = threat.path;
     return const LocalCoreActionResult.ok();
   }
 

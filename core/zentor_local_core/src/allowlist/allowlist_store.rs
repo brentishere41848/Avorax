@@ -76,8 +76,32 @@ impl AllowlistStore {
         path: String,
         reason: String,
     ) -> Result<AllowlistEntry> {
+        self.add_with_expected_sha256(entry_type, path, reason, None)
+    }
+
+    pub fn add_with_expected_sha256(
+        &mut self,
+        entry_type: AllowlistEntryType,
+        path: String,
+        reason: String,
+        expected_sha256: Option<&str>,
+    ) -> Result<AllowlistEntry> {
+        let normalized_expected_sha256 =
+            expected_sha256.map(normalize_required_sha256).transpose()?;
         validate_path(&path)?;
         let sha256 = hash_required_for_entry(&entry_type, Path::new(&path))?;
+        if let Some(expected) = normalized_expected_sha256 {
+            let Some(actual) = sha256.as_deref().map(normalize_hash_text) else {
+                return Err(anyhow!(
+                    "expected SHA-256 binding is supported only for file/app/executable allowlist entries"
+                ));
+            };
+            if actual != expected {
+                return Err(anyhow!(
+                    "allowlist source changed after its scan verdict; rescan required before allowlisting"
+                ));
+            }
+        }
         let entry = AllowlistEntry {
             id: Uuid::new_v4().to_string(),
             entry_type,
@@ -577,6 +601,13 @@ fn normalize_path_text(path: &Path) -> String {
 fn normalize_hash_text(hash: &str) -> String {
     let normalized = hash.trim().to_ascii_lowercase();
     normalized_sha256_body(&normalized).to_string()
+}
+
+fn normalize_required_sha256(hash: &str) -> Result<String> {
+    if !is_valid_sha256(hash) {
+        return Err(anyhow!("invalid expected allowlist SHA-256"));
+    }
+    Ok(normalize_hash_text(hash))
 }
 
 fn is_valid_sha256(hash: &str) -> bool {
@@ -1117,6 +1148,96 @@ mod tests {
         assert!(write_source.contains("after activation preflight failure"));
         assert!(write_source.contains("after activation failure"));
         assert!(!write_source.contains(&ignored_cleanup));
+    }
+
+    #[test]
+    fn manual_trust_mutation_binding_allowlist_rejects_changed_payload_without_store_mutation() {
+        let dir = tempfile::tempdir().unwrap();
+        let fixture = dir.path().join("review.bin");
+        let store_path = dir.path().join("allowlist.json");
+        fs::write(&fixture, b"harmless scanned allowlist bytes").unwrap();
+        let expected_sha256 = sha256_file(&fixture).unwrap();
+        fs::write(&fixture, b"harmless replacement allowlist bytes").unwrap();
+        let mut store = AllowlistStore {
+            entries: Vec::new(),
+            path: Some(store_path.clone()),
+        };
+
+        let error = store
+            .add_with_expected_sha256(
+                AllowlistEntryType::File,
+                fixture.display().to_string(),
+                "test".to_string(),
+                Some(&expected_sha256),
+            )
+            .unwrap_err()
+            .to_string();
+
+        assert!(error.contains("changed after its scan verdict"));
+        assert!(error.contains("rescan required"));
+        assert!(store.entries.is_empty());
+        assert!(!store_path.exists());
+        assert_eq!(
+            fs::read(&fixture).unwrap(),
+            b"harmless replacement allowlist bytes"
+        );
+    }
+
+    #[test]
+    fn manual_trust_mutation_binding_allowlist_accepts_matching_payload_and_persists_hash() {
+        let dir = tempfile::tempdir().unwrap();
+        let fixture = dir.path().join("review.bin");
+        let store_path = dir.path().join("allowlist.json");
+        fs::write(&fixture, b"harmless unchanged allowlist bytes").unwrap();
+        let expected_sha256 = sha256_file(&fixture).unwrap();
+        let mut store = AllowlistStore {
+            entries: Vec::new(),
+            path: Some(store_path.clone()),
+        };
+
+        let persisted = store
+            .add_with_expected_sha256(
+                AllowlistEntryType::File,
+                fixture.display().to_string(),
+                "test".to_string(),
+                Some(&expected_sha256.to_ascii_uppercase()),
+            )
+            .unwrap();
+
+        assert_eq!(persisted.sha256.as_deref(), Some(expected_sha256.as_str()));
+        assert!(persisted.active);
+        assert_eq!(store.entries.len(), 1);
+        assert!(store_path.is_file());
+        assert_eq!(
+            fs::read(&fixture).unwrap(),
+            b"harmless unchanged allowlist bytes"
+        );
+    }
+
+    #[test]
+    fn manual_trust_mutation_binding_allowlist_rejects_malformed_hash_before_file_access() {
+        let dir = tempfile::tempdir().unwrap();
+        let missing_fixture = dir.path().join("missing.bin");
+        let store_path = dir.path().join("allowlist.json");
+        let mut store = AllowlistStore {
+            entries: Vec::new(),
+            path: Some(store_path.clone()),
+        };
+
+        let error = store
+            .add_with_expected_sha256(
+                AllowlistEntryType::File,
+                missing_fixture.display().to_string(),
+                "test".to_string(),
+                Some(&"g".repeat(64)),
+            )
+            .unwrap_err()
+            .to_string();
+
+        assert!(error.contains("invalid expected allowlist SHA-256"));
+        assert!(!error.contains("unable to inspect allowlist entry file"));
+        assert!(store.entries.is_empty());
+        assert!(!store_path.exists());
     }
 
     #[test]

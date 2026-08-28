@@ -551,11 +551,34 @@ fn handle(command: CoreCommand) -> serde_json::Value {
                 Ok(path) => path,
                 Err(error) => return json!({"ok": false, "error": error.to_string()}),
             };
+            let expected_scan_sha256 = match command.sha256 {
+                None => None,
+                Some(value) => {
+                    let value = match required_core_ipc_text(
+                        Some(value),
+                        "sha256",
+                        MAX_CORE_IPC_SHA256_CHARS,
+                    ) {
+                        Ok(value) => value,
+                        Err(error) => return json!({"ok": false, "error": error.to_string()}),
+                    };
+                    match normalize_expected_scan_sha256(&value) {
+                        Ok(value) => Some(value),
+                        Err(error) => return json!({"ok": false, "error": error.to_string()}),
+                    }
+                }
+            };
+            if let Err(error) =
+                require_explicit_confirmation(command.confirmed, "allowlist addition")
+            {
+                return json!({"ok": false, "error": error.to_string()});
+            }
             match AllowlistStore::new().and_then(|mut store| {
-                store.add(
+                store.add_with_expected_sha256(
                     AllowlistEntryType::File,
                     path.display().to_string(),
                     "Added by local user".to_string(),
+                    expected_scan_sha256.as_deref(),
                 )
             }) {
                 Ok(entry) => json!({"ok": true, "entry": entry}),
@@ -715,6 +738,14 @@ fn handle(command: CoreCommand) -> serde_json::Value {
                 Ok(label) => label,
                 Err(error) => return json!({"ok": false, "error": error.to_string()}),
             };
+            let expected_scan_sha256 =
+                match required_core_ipc_text(command.sha256, "sha256", MAX_CORE_IPC_SHA256_CHARS) {
+                    Ok(value) => match normalize_expected_scan_sha256(&value) {
+                        Ok(value) => value,
+                        Err(error) => return json!({"ok": false, "error": error.to_string()}),
+                    },
+                    Err(error) => return json!({"ok": false, "error": error.to_string()}),
+                };
             let user_note = match optional_core_ipc_text(
                 command.user_note,
                 "user_note",
@@ -732,8 +763,29 @@ fn handle(command: CoreCommand) -> serde_json::Value {
                 Ok(None) => "unknown".to_string(),
                 Err(error) => return json!({"ok": false, "error": error.to_string()}),
             };
-            match save_training_label(&path, &raw_label, user_note, previous_verdict) {
-                Ok(label_path) => json!({"ok": true, "path": label_path}),
+            if let Err(error) =
+                require_explicit_confirmation(command.confirmed, "detection feedback")
+            {
+                return json!({"ok": false, "error": error.to_string()});
+            }
+            match save_training_label(
+                &path,
+                &expected_scan_sha256,
+                &raw_label,
+                user_note,
+                previous_verdict,
+            ) {
+                Ok((label_path, label)) => json!({
+                    "ok": true,
+                    "path": label_path,
+                    "evidence": {
+                        "label_id": label.label_id,
+                        "file_sha256": label.file_sha256,
+                        "user_label": label.user_label,
+                        "previous_verdict": label.previous_verdict,
+                        "store_path": label_path,
+                    }
+                }),
                 Err(error) => json!({"ok": false, "error": error.to_string()}),
             }
         }
@@ -1344,10 +1396,11 @@ fn display_file_path_fallback(path: &Path) -> String {
 
 fn save_training_label(
     path: &Path,
+    expected_scan_sha256: &str,
     raw_label: &str,
     user_note: Option<String>,
     previous_verdict: String,
-) -> anyhow::Result<String> {
+) -> anyhow::Result<(String, ai::training_labels::TrainingLabel)> {
     use ai::feature_extractor::{extract_static_features, LocationCategory};
     use ai::training_labels::{TrainingLabel, TrainingLabelStore, UserTrainingLabel};
 
@@ -1356,9 +1409,22 @@ fn save_training_label(
         "confirmedMalicious" => UserTrainingLabel::ConfirmedMalicious,
         "trustedApp" => UserTrainingLabel::TrustedApp,
         "potentiallyUnwantedButAllowed" => UserTrainingLabel::PotentiallyUnwantedButAllowed,
-        _ => UserTrainingLabel::Unsure,
+        "unsure" => UserTrainingLabel::Unsure,
+        _ => anyhow::bail!("unsupported detection feedback label"),
     };
+    let before_features_sha256 = sha256_for_file(path)?;
+    if before_features_sha256 != expected_scan_sha256 {
+        anyhow::bail!(
+            "detection feedback source changed after its scan verdict; rescan required before saving feedback"
+        );
+    }
     let features = extract_static_features(path)?;
+    let after_features_sha256 = sha256_for_file(path)?;
+    if after_features_sha256 != before_features_sha256 {
+        anyhow::bail!(
+            "detection feedback source changed while collecting evidence; rescan required before saving feedback"
+        );
+    }
     let path_category = match &features.location_category {
         LocationCategory::Downloads => "downloads",
         LocationCategory::Temp => "temp",
@@ -1371,7 +1437,7 @@ fn save_training_label(
     .to_string();
     let label = TrainingLabel {
         label_id: String::new(),
-        file_sha256: sha256_for_file(path)?,
+        file_sha256: after_features_sha256,
         file_name: display_file_name(path),
         file_path_category: path_category,
         extracted_features: features,
@@ -1383,8 +1449,20 @@ fn save_training_label(
         model_version: ai::ModelRunner::default().status().to_string(),
     };
     let store = TrainingLabelStore::new()?;
-    store.append(label)?;
-    Ok(store.path().display().to_string())
+    let persisted = store.append(label)?;
+    Ok((store.path().display().to_string(), persisted))
+}
+
+fn normalize_expected_scan_sha256(value: &str) -> anyhow::Result<String> {
+    let trimmed = value.trim();
+    let raw = match trimmed.strip_prefix("sha256:") {
+        Some(raw) => raw,
+        None => trimmed,
+    };
+    if raw.len() != 64 || !raw.bytes().all(|byte| byte.is_ascii_hexdigit()) {
+        anyhow::bail!("invalid SHA-256 scan evidence");
+    }
+    Ok(raw.to_ascii_lowercase())
 }
 
 fn quarantine_selected_file(
@@ -4622,21 +4700,38 @@ mod tests {
     #[test]
     fn destructive_commands_do_not_default_missing_confirmation() {
         let source = include_str!("main.rs");
+        let add_allowlist_start = source.find("\"add_allowlist_entry\"").unwrap();
+        let add_allowlist_end = add_allowlist_start
+            + source[add_allowlist_start..]
+                .find("\"list_allowlist\"")
+                .unwrap();
+        let add_allowlist_source = &source[add_allowlist_start..add_allowlist_end];
         let restore_start = source.find("\"restore_quarantine_item\"").unwrap();
         let label_start =
             restore_start + source[restore_start..].find("\"label_detection\"").unwrap();
         let destructive_source = &source[restore_start..label_start];
+        let label_end = label_start
+            + source[label_start..]
+                .find("\"configure_guard_mode\"")
+                .unwrap();
+        let label_source = &source[label_start..label_end];
         let allowlist_start = source.find("\"remove_allowlist_entry\"").unwrap();
         let allowlist_end = allowlist_start + source[allowlist_start..].find("_ =>").unwrap();
         let allowlist_source = &source[allowlist_start..allowlist_end];
 
+        assert!(add_allowlist_source
+            .contains("require_explicit_confirmation(command.confirmed, \"allowlist addition\")"));
         assert!(destructive_source
             .contains("require_explicit_confirmation(command.confirmed, \"restore\")"));
         assert!(destructive_source
             .contains("require_explicit_confirmation(command.confirmed, \"delete\")"));
         assert!(allowlist_source
             .contains("require_explicit_confirmation(command.confirmed, \"allowlist removal\")"));
+        assert!(label_source
+            .contains("require_explicit_confirmation(command.confirmed, \"detection feedback\")"));
+        assert!(!add_allowlist_source.contains("command.confirmed != Some(true)"));
         assert!(!destructive_source.contains("confirmed.unwrap_or(false)"));
+        assert!(!label_source.contains("confirmed.unwrap_or(false)"));
         assert!(!allowlist_source.contains("command.confirmed != Some(true)"));
     }
 
@@ -4644,8 +4739,10 @@ mod tests {
     fn label_detection_rejects_oversized_user_note() {
         let mut command = test_core_command("label_detection");
         command.path = Some("C:/Temp/review.exe".to_string());
+        command.sha256 = Some("a".repeat(64));
         command.user_label = Some("falsePositive".to_string());
         command.user_note = Some("x".repeat(MAX_CORE_IPC_NOTE_CHARS + 1));
+        command.confirmed = Some(true);
 
         let response = handle(command);
 
@@ -10231,6 +10328,234 @@ placeholder
             );
             assert!(!quarantine_base.exists());
         }
+    }
+
+    #[test]
+    fn manual_trust_mutation_binding_ipc_requires_explicit_confirmation_without_mutation() {
+        let _lock = env_lock();
+        let dir = tempdir().unwrap();
+        let fixture = dir.path().join("review.bin");
+        let data_dir = dir.path().join("data");
+        let allowlist_file = dir.path().join("allowlist.json");
+        fs::write(&fixture, b"harmless trust confirmation fixture").unwrap();
+        let expected_sha256 = sha256_for_file(&fixture).unwrap();
+        std::env::set_var("AVORAX_DATA_DIR", &data_dir);
+        std::env::set_var("ZENTOR_ALLOWLIST_FILE", &allowlist_file);
+
+        let mut allowlist = test_core_command("add_allowlist_entry");
+        allowlist.path = Some(fixture.display().to_string());
+        allowlist.sha256 = Some(expected_sha256.clone());
+        let allowlist_response = handle(allowlist);
+
+        let mut label = test_core_command("label_detection");
+        label.path = Some(fixture.display().to_string());
+        label.sha256 = Some(expected_sha256);
+        label.user_label = Some("falsePositive".to_string());
+        label.previous_verdict = Some("review".to_string());
+        let label_response = handle(label);
+
+        std::env::remove_var("ZENTOR_ALLOWLIST_FILE");
+        std::env::remove_var("AVORAX_DATA_DIR");
+        assert_eq!(allowlist_response["ok"], false);
+        assert!(allowlist_response["error"]
+            .as_str()
+            .unwrap()
+            .contains("allowlist addition requires explicit confirmation"));
+        assert_eq!(label_response["ok"], false);
+        assert!(label_response["error"]
+            .as_str()
+            .unwrap()
+            .contains("detection feedback requires explicit confirmation"));
+        assert!(!allowlist_file.exists());
+        assert!(!data_dir.join("training_labels.jsonl").exists());
+        assert_eq!(
+            fs::read(&fixture).unwrap(),
+            b"harmless trust confirmation fixture"
+        );
+    }
+
+    #[test]
+    fn manual_trust_mutation_binding_ipc_rejects_changed_payloads_without_mutation() {
+        let _lock = env_lock();
+        let dir = tempdir().unwrap();
+        let fixture = dir.path().join("review.bin");
+        let data_dir = dir.path().join("data");
+        let allowlist_file = dir.path().join("allowlist.json");
+        fs::write(&fixture, b"harmless scanned trust bytes").unwrap();
+        let expected_sha256 = sha256_for_file(&fixture).unwrap();
+        fs::write(&fixture, b"harmless replacement trust bytes").unwrap();
+        fs::write(&allowlist_file, b"[]\n").unwrap();
+        std::env::set_var("AVORAX_DATA_DIR", &data_dir);
+        std::env::set_var("ZENTOR_ALLOWLIST_FILE", &allowlist_file);
+
+        let mut allowlist = test_core_command("add_allowlist_entry");
+        allowlist.path = Some(fixture.display().to_string());
+        allowlist.sha256 = Some(expected_sha256.clone());
+        allowlist.confirmed = Some(true);
+        let allowlist_response = handle(allowlist);
+
+        let mut label = test_core_command("label_detection");
+        label.path = Some(fixture.display().to_string());
+        label.sha256 = Some(expected_sha256);
+        label.user_label = Some("falsePositive".to_string());
+        label.previous_verdict = Some("review".to_string());
+        label.confirmed = Some(true);
+        let label_response = handle(label);
+
+        std::env::remove_var("ZENTOR_ALLOWLIST_FILE");
+        std::env::remove_var("AVORAX_DATA_DIR");
+        for response in [&allowlist_response, &label_response] {
+            assert_eq!(response["ok"], false, "{response:#}");
+            let error = response["error"].as_str().unwrap();
+            assert!(error.contains("changed after its scan verdict"));
+            assert!(error.contains("rescan required"));
+        }
+        assert_eq!(fs::read(&allowlist_file).unwrap(), b"[]\n");
+        assert!(!data_dir.join("training_labels.jsonl").exists());
+        assert_eq!(
+            fs::read(&fixture).unwrap(),
+            b"harmless replacement trust bytes"
+        );
+    }
+
+    #[test]
+    fn manual_trust_mutation_binding_ipc_accepts_matching_payloads_with_exact_evidence() {
+        let _lock = env_lock();
+        let dir = tempdir().unwrap();
+        let fixture = dir.path().join("review.bin");
+        let data_dir = dir.path().join("data");
+        let allowlist_file = dir.path().join("allowlist.json");
+        let labels_file = data_dir.join("training_labels.jsonl");
+        fs::write(&fixture, b"harmless unchanged trust bytes").unwrap();
+        fs::write(&allowlist_file, b"[]\n").unwrap();
+        let expected_sha256 = sha256_for_file(&fixture).unwrap();
+        std::env::set_var("AVORAX_DATA_DIR", &data_dir);
+        std::env::set_var("ZENTOR_ALLOWLIST_FILE", &allowlist_file);
+
+        let mut allowlist = test_core_command("add_allowlist_entry");
+        allowlist.path = Some(fixture.display().to_string());
+        allowlist.sha256 = Some(expected_sha256.clone());
+        allowlist.confirmed = Some(true);
+        let allowlist_response = handle(allowlist);
+
+        let mut label = test_core_command("label_detection");
+        label.path = Some(fixture.display().to_string());
+        label.sha256 = Some(expected_sha256.clone());
+        label.user_label = Some("falsePositive".to_string());
+        label.previous_verdict = Some("review".to_string());
+        label.confirmed = Some(true);
+        let label_response = handle(label);
+        let persisted_labels = fs::read_to_string(&labels_file).unwrap();
+
+        std::env::remove_var("ZENTOR_ALLOWLIST_FILE");
+        std::env::remove_var("AVORAX_DATA_DIR");
+        assert_eq!(allowlist_response["ok"], true, "{allowlist_response:#}");
+        assert_eq!(
+            allowlist_response["entry"]["sha256"],
+            format!("sha256:{expected_sha256}")
+        );
+        assert_eq!(allowlist_response["entry"]["active"], true);
+        assert_eq!(label_response["ok"], true, "{label_response:#}");
+        assert_eq!(label_response["evidence"]["file_sha256"], expected_sha256);
+        assert_eq!(label_response["evidence"]["user_label"], "falsePositive");
+        assert_eq!(label_response["evidence"]["previous_verdict"], "review");
+        assert_eq!(
+            label_response["evidence"]["store_path"],
+            labels_file.display().to_string()
+        );
+        assert_eq!(
+            label_response["path"],
+            label_response["evidence"]["store_path"]
+        );
+        assert!(label_response["evidence"]["label_id"]
+            .as_str()
+            .is_some_and(|value| !value.is_empty()));
+        assert!(persisted_labels.contains("\"user_label\":\"falsePositive\""));
+        assert!(persisted_labels.contains(&format!("\"file_sha256\":\"{expected_sha256}\"")));
+        assert_eq!(
+            fs::read(&fixture).unwrap(),
+            b"harmless unchanged trust bytes"
+        );
+    }
+
+    #[test]
+    fn manual_trust_mutation_binding_ipc_bounds_sha256_before_store_or_file_access() {
+        let _lock = env_lock();
+        let dir = tempdir().unwrap();
+        let missing_fixture = dir.path().join("missing.bin");
+        let data_dir = dir.path().join("data");
+        let allowlist_file = dir.path().join("allowlist.json");
+        std::env::set_var("AVORAX_DATA_DIR", &data_dir);
+        std::env::set_var("ZENTOR_ALLOWLIST_FILE", &allowlist_file);
+        let mut responses = Vec::new();
+
+        for command_name in ["add_allowlist_entry", "label_detection"] {
+            for sha256 in [
+                "   ".to_string(),
+                "a".repeat(MAX_CORE_IPC_SHA256_CHARS + 1),
+                format!("{}\0", "a".repeat(64)),
+                "g".repeat(64),
+            ] {
+                let mut command = test_core_command(command_name);
+                command.path = Some(missing_fixture.display().to_string());
+                command.sha256 = Some(sha256);
+                command.confirmed = Some(true);
+                if command_name == "label_detection" {
+                    command.user_label = Some("falsePositive".to_string());
+                    command.previous_verdict = Some("review".to_string());
+                }
+                responses.push(handle(command));
+            }
+        }
+
+        std::env::remove_var("ZENTOR_ALLOWLIST_FILE");
+        std::env::remove_var("AVORAX_DATA_DIR");
+        assert_eq!(responses.len(), 8);
+        for response in responses {
+            assert_eq!(response["ok"], false, "{response:#}");
+            let error = response["error"].as_str().unwrap();
+            assert!(
+                error.contains("sha256 is required")
+                    || error.contains("sha256 exceeds maximum length")
+                    || error.contains("sha256 contains a NUL byte")
+                    || error.contains("invalid SHA-256"),
+                "{error}"
+            );
+            assert!(!error.contains("missing.bin"));
+        }
+        assert!(!allowlist_file.exists());
+        assert!(!data_dir.join("training_labels.jsonl").exists());
+    }
+
+    #[test]
+    fn manual_trust_mutation_binding_ipc_rejects_unsupported_label_without_store_mutation() {
+        let _lock = env_lock();
+        let dir = tempdir().unwrap();
+        let fixture = dir.path().join("review.bin");
+        let data_dir = dir.path().join("data");
+        fs::write(&fixture, b"harmless unsupported feedback fixture").unwrap();
+        let expected_sha256 = sha256_for_file(&fixture).unwrap();
+        std::env::set_var("AVORAX_DATA_DIR", &data_dir);
+
+        let mut command = test_core_command("label_detection");
+        command.path = Some(fixture.display().to_string());
+        command.sha256 = Some(expected_sha256);
+        command.user_label = Some("futureUnknownLabel".to_string());
+        command.previous_verdict = Some("review".to_string());
+        command.confirmed = Some(true);
+        let response = handle(command);
+
+        std::env::remove_var("AVORAX_DATA_DIR");
+        assert_eq!(response["ok"], false, "{response:#}");
+        assert!(response["error"]
+            .as_str()
+            .unwrap()
+            .contains("unsupported detection feedback label"));
+        assert!(!data_dir.join("training_labels.jsonl").exists());
+        assert_eq!(
+            fs::read(&fixture).unwrap(),
+            b"harmless unsupported feedback fixture"
+        );
     }
 
     #[test]

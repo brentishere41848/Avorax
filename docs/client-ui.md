@@ -191,3 +191,21 @@ configuration, and analyzer tests. This refresh does not convert packaged
 desktop click-through, OS picker/elevation dialogs, Windows notifications,
 installed service mutation, or signed-driver behavior from partial/blocked to
 verified.
+
+## Checkpoint 2262 Trust-Action Evidence
+
+`Allowlist` and `Mark false positive` / `Mark malicious` remain explicit,
+confirmation-gated scan-result actions. Their Local Core requests now include
+the selected `ThreatResult` path and exact SHA-256 plus server-side
+`confirmed=true`. Allowlist success is accepted only for an active file entry
+whose path and hash match the selected row. Feedback success is accepted only
+for a valid persisted label ID with matching hash, requested label, previous
+verdict, and consistent absolute local store paths. Any absent, malformed, or
+contradictory success evidence becomes a visible failure; the row and audit log
+must not be marked successful.
+
+Checkpoint 2262 harmless IPC/runtime proof passes locally: IPC `97/97`,
+overlapping UI `238/238`, full client `852/852`, analyzer, release smoke, and
+definitive `290/290`. Installed packaged click-through remains pending. This is same-user stale-
+verdict and false-success defense, not cross-identity service authentication,
+an immutable file lease, pre-execution blocking, or Defender replacement.
