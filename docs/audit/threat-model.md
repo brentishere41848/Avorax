@@ -3703,3 +3703,42 @@ verification now close this threat delta. PE resource mapping observes
 cancellation at the documented cooperative intervals; it still does not
 establish a wall-clock deadline, kernel mediation, pre-execution blocking, or
 Defender replacement.
+
+## Checkpoint 2256 Threat Delta
+
+Before Checkpoint 2256, full/custom file discovery could materialize an entire
+hostile or unusually large directory tree before the scan loop first consulted
+its exact job cancellation token. This enabled avoidable cancellation latency
+and unbounded path-vector growth. The scripted mitigation probes the fallible
+job token before roots, every at-most-128 traversal entries, after roots, and
+around sorting; callback failures abort before Native Engine scan evidence.
+
+Quick file discovery remains capped at 5,000 and full/custom discovery is now
+capped at 250,000. Limit exhaustion records incomplete discovery and forces
+`CompletedWithErrors`; undiscovered paths cannot become a clean claim. The
+remaining threat is cooperative latency in an OS directory read or metadata
+call, one 128-entry chunk, and the final sort. Path count does not bound total
+path bytes, I/O, time, or kernel work. No Checkpoint 2256 test has run yet;
+Source contract 686 and exact verifier `285/285` remain unverified, as do hosted,
+installed-service, driver/kernel, pre-execution, and Defender-replacement claims.
+
+Focused and full Local Core evidence now verifies this mitigation locally:
+file discovery `5/5`, adjacent filters, Source `686/686`, and Local Core
+`551/551` pass. This does not close the residual cooperative latency or upgrade
+any installed-service, kernel, pre-execution, or Defender-replacement claim;
+exact definitive `285/285` and later hosted/destination evidence remain open.
+
+Broad and definitive local evidence now passes both locked workspace variants,
+strict Local Core Clippy, the locked release build, Flutter/Dart regressions,
+exact `285/285`, dual-host validator acceptance, and dual-host rejection of
+missing-step/missing-scope mutations. Locks, product-process/residue checks, and
+the protected-vault invariant remain exact. This closes the local evidence gap,
+not the residual cooperative latency or any hosted, installed-service, kernel,
+pre-execution, Defender-replacement, or production-accuracy requirement.
+
+Hosted implementation-head CI/packages and two independent consolidated
+artifact reviews now pass on exact `75a9620`. This adds cross-platform build and
+source/package-contract evidence; it does not add a wall-clock filesystem
+deadline, installed service ownership, kernel mediation, pre-execution blocking,
+Defender replacement, production detection calibration, or release approval.
+Evidence-head, merged-main, and destination proof remain pending.
