@@ -1,4 +1,5 @@
 use std::path::{Path, PathBuf};
+use std::time::{Duration, Instant};
 
 const MAX_WALK_ERROR_DETAILS: usize = 20;
 const MAX_WALK_ERROR_DETAIL_CHARS: usize = 4096;
@@ -7,6 +8,10 @@ const WALK_CANCELLATION_CHUNK_ENTRIES: usize = 128;
 const MAX_FULL_SCAN_DISCOVERED_FILES: usize = 250_000;
 const MAX_QUICK_SCAN_DISCOVERED_PATH_BYTES: usize = 8 * 1024 * 1024;
 const MAX_FULL_SCAN_DISCOVERED_PATH_BYTES: usize = 128 * 1024 * 1024;
+const MAX_QUICK_SCAN_DISCOVERY_WORK_ITEMS: usize = 100_000;
+const MAX_FULL_SCAN_DISCOVERY_WORK_ITEMS: usize = 1_000_000;
+const MAX_QUICK_SCAN_DISCOVERY_SECONDS: u64 = 10 * 60;
+const MAX_FULL_SCAN_DISCOVERY_SECONDS: u64 = 60 * 60;
 
 #[derive(Debug, Clone, Default)]
 pub struct FileWalk {
@@ -20,6 +25,9 @@ pub struct FileWalk {
     pub file_limit_reached: bool,
     pub path_bytes_collected: usize,
     pub path_byte_limit_reached: bool,
+    pub work_items_consumed: usize,
+    pub work_item_limit_reached: bool,
+    pub time_limit_reached: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -27,6 +35,8 @@ pub struct WalkOptions {
     pub max_depth: Option<usize>,
     pub max_files: Option<usize>,
     pub max_path_bytes: Option<usize>,
+    pub max_work_items: Option<usize>,
+    pub max_duration: Option<Duration>,
     pub risky_files_only: bool,
 }
 
@@ -36,6 +46,8 @@ impl WalkOptions {
             max_depth: Some(4),
             max_files: Some(5_000),
             max_path_bytes: Some(MAX_QUICK_SCAN_DISCOVERED_PATH_BYTES),
+            max_work_items: Some(MAX_QUICK_SCAN_DISCOVERY_WORK_ITEMS),
+            max_duration: Some(Duration::from_secs(MAX_QUICK_SCAN_DISCOVERY_SECONDS)),
             risky_files_only: true,
         }
     }
@@ -45,6 +57,8 @@ impl WalkOptions {
             max_depth: None,
             max_files: Some(MAX_FULL_SCAN_DISCOVERED_FILES),
             max_path_bytes: Some(MAX_FULL_SCAN_DISCOVERED_PATH_BYTES),
+            max_work_items: Some(MAX_FULL_SCAN_DISCOVERY_WORK_ITEMS),
+            max_duration: Some(Duration::from_secs(MAX_FULL_SCAN_DISCOVERY_SECONDS)),
             risky_files_only: false,
         }
     }
@@ -66,9 +80,9 @@ pub fn collect_accessible_files_with_options_and_cancellation(
     should_cancel: &mut dyn FnMut() -> anyhow::Result<bool>,
 ) -> anyhow::Result<FileWalk> {
     let mut walk = FileWalk::default();
+    let discovery_started = Instant::now();
     for root in roots {
-        if should_cancel()? {
-            walk.discovery_cancelled = true;
+        if apply_discovery_checkpoint(&mut walk, options, discovery_started, should_cancel)? {
             break;
         }
         if let Some(limit) = options.max_files {
@@ -83,33 +97,118 @@ pub fn collect_accessible_files_with_options_and_cancellation(
                 break;
             }
         }
-        collect_one_with_cancellation(root, &mut walk, options, should_cancel)?;
-        if walk.discovery_cancelled || walk.file_limit_reached || walk.path_byte_limit_reached {
+        if !consume_discovery_work_item(&mut walk, options) {
             break;
         }
-        if should_cancel()? {
-            walk.discovery_cancelled = true;
+        collect_one_with_cancellation(root, &mut walk, options, discovery_started, should_cancel)?;
+        if walk.discovery_cancelled
+            || walk.file_limit_reached
+            || walk.path_byte_limit_reached
+            || walk.work_item_limit_reached
+            || walk.time_limit_reached
+        {
+            break;
+        }
+        if apply_discovery_checkpoint(&mut walk, options, discovery_started, should_cancel)? {
             break;
         }
     }
-    if !walk.discovery_cancelled && should_cancel()? {
-        walk.discovery_cancelled = true;
-    }
-    if !walk.discovery_cancelled {
-        walk.discovery_cancelled =
-            prioritize_files_with_cancellation(&mut walk.files, should_cancel)?;
+    if !walk.discovery_cancelled
+        && !walk.file_limit_reached
+        && !walk.path_byte_limit_reached
+        && !walk.work_item_limit_reached
+        && !walk.time_limit_reached
+        && !apply_discovery_checkpoint(&mut walk, options, discovery_started, should_cancel)?
+    {
+        let stop_reason = prioritize_files_with_limits(
+            &mut walk.files,
+            options,
+            discovery_started,
+            should_cancel,
+        )?;
+        apply_discovery_stop_reason(&mut walk, options, stop_reason);
     }
     Ok(walk)
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum DiscoveryStopReason {
+    Continue,
+    Cancelled,
+    TimeLimitReached,
+}
+
+fn discovery_checkpoint(
+    options: &WalkOptions,
+    discovery_started: Instant,
+    should_cancel: &mut dyn FnMut() -> anyhow::Result<bool>,
+) -> anyhow::Result<DiscoveryStopReason> {
+    if should_cancel()? {
+        return Ok(DiscoveryStopReason::Cancelled);
+    }
+    if options
+        .max_duration
+        .is_some_and(|limit| discovery_started.elapsed() >= limit)
+    {
+        return Ok(DiscoveryStopReason::TimeLimitReached);
+    }
+    Ok(DiscoveryStopReason::Continue)
+}
+
+fn apply_discovery_checkpoint(
+    walk: &mut FileWalk,
+    options: &WalkOptions,
+    discovery_started: Instant,
+    should_cancel: &mut dyn FnMut() -> anyhow::Result<bool>,
+) -> anyhow::Result<bool> {
+    let reason = discovery_checkpoint(options, discovery_started, should_cancel)?;
+    Ok(apply_discovery_stop_reason(walk, options, reason))
+}
+
+fn apply_discovery_stop_reason(
+    walk: &mut FileWalk,
+    options: &WalkOptions,
+    reason: DiscoveryStopReason,
+) -> bool {
+    match reason {
+        DiscoveryStopReason::Continue => false,
+        DiscoveryStopReason::Cancelled => {
+            walk.discovery_cancelled = true;
+            true
+        }
+        DiscoveryStopReason::TimeLimitReached => {
+            mark_time_limit_reached(walk, options.max_duration.unwrap_or(Duration::from_secs(0)));
+            true
+        }
+    }
+}
+
+fn consume_discovery_work_item(walk: &mut FileWalk, options: &WalkOptions) -> bool {
+    if walk.work_item_limit_reached {
+        return false;
+    }
+    if let Some(limit) = options.max_work_items {
+        if walk.work_items_consumed >= limit {
+            mark_work_item_limit_reached(walk, limit);
+            return false;
+        }
+    }
+    let Some(next) = walk.work_items_consumed.checked_add(1) else {
+        mark_work_item_limit_reached(walk, options.max_work_items.unwrap_or(usize::MAX));
+        return false;
+    };
+    walk.work_items_consumed = next;
+    true
 }
 
 fn collect_one_with_cancellation(
     root: &Path,
     walk: &mut FileWalk,
     options: &WalkOptions,
+    discovery_started: Instant,
     should_cancel: &mut dyn FnMut() -> anyhow::Result<bool>,
 ) -> anyhow::Result<()> {
-    if should_cancel()? {
-        walk.discovery_cancelled = true;
+    if apply_discovery_checkpoint(walk, options, discovery_started, should_cancel)? {
         return Ok(());
     }
     let root_metadata = match std::fs::symlink_metadata(root) {
@@ -150,8 +249,8 @@ fn collect_one_with_cancellation(
             }
         }
         add_file(root, walk, options);
-        if !walk.path_byte_limit_reached && should_cancel()? {
-            walk.discovery_cancelled = true;
+        if !walk.path_byte_limit_reached {
+            apply_discovery_checkpoint(walk, options, discovery_started, should_cancel)?;
         }
         return Ok(());
     }
@@ -172,8 +271,12 @@ fn collect_one_with_cancellation(
         .filter_entry(|entry| should_descend(entry.path()));
     let mut entries_since_checkpoint = 0usize;
     loop {
-        if entries_since_checkpoint == 0 && should_cancel()? {
-            walk.discovery_cancelled = true;
+        if entries_since_checkpoint == 0
+            && apply_discovery_checkpoint(walk, options, discovery_started, should_cancel)?
+        {
+            break;
+        }
+        if !consume_discovery_work_item(walk, options) {
             break;
         }
         let Some(entry) = entries.next() else {
@@ -216,7 +319,7 @@ fn collect_one_with_cancellation(
                 }
             }
         }
-        if walk.path_byte_limit_reached {
+        if walk.path_byte_limit_reached || walk.work_item_limit_reached {
             break;
         }
         if entries_since_checkpoint >= WALK_CANCELLATION_CHUNK_ENTRIES {
@@ -226,9 +329,11 @@ fn collect_one_with_cancellation(
     if !walk.discovery_cancelled
         && !walk.file_limit_reached
         && !walk.path_byte_limit_reached
-        && should_cancel()?
+        && !walk.work_item_limit_reached
+        && !walk.time_limit_reached
+        && apply_discovery_checkpoint(walk, options, discovery_started, should_cancel)?
     {
-        walk.discovery_cancelled = true;
+        return Ok(());
     }
     Ok(())
 }
@@ -257,6 +362,35 @@ fn mark_path_byte_limit_reached(walk: &mut FileWalk, limit: usize) {
         walk,
         format!(
             "file discovery encoded path-byte limit of {limit} bytes reached; remaining entries were not enumerated or reported clean"
+        ),
+    );
+}
+
+fn mark_work_item_limit_reached(walk: &mut FileWalk, limit: usize) {
+    if walk.work_item_limit_reached {
+        return;
+    }
+    walk.work_item_limit_reached = true;
+    walk.skipped_files = walk.skipped_files.saturating_add(1);
+    push_walk_error(
+        walk,
+        format!(
+            "file discovery work-item limit of {limit} root-inspection or directory-iterator attempts reached; remaining entries were not enumerated or reported clean"
+        ),
+    );
+}
+
+fn mark_time_limit_reached(walk: &mut FileWalk, limit: Duration) {
+    if walk.time_limit_reached {
+        return;
+    }
+    walk.time_limit_reached = true;
+    walk.skipped_files = walk.skipped_files.saturating_add(1);
+    push_walk_error(
+        walk,
+        format!(
+            "file discovery monotonic time budget of {} seconds reached; remaining entries were not enumerated or reported clean",
+            limit.as_secs()
         ),
     );
 }
@@ -403,6 +537,30 @@ fn prioritize_files_with_cancellation(
 
     *files = assemble_priority_buckets(immediate, risky, ordinary, remaining);
     should_cancel()
+}
+
+fn prioritize_files_with_limits(
+    files: &mut Vec<PathBuf>,
+    options: &WalkOptions,
+    discovery_started: Instant,
+    should_cancel: &mut dyn FnMut() -> anyhow::Result<bool>,
+) -> anyhow::Result<DiscoveryStopReason> {
+    let mut stop_reason = DiscoveryStopReason::Continue;
+    let mut should_stop = || {
+        let reason = discovery_checkpoint(options, discovery_started, should_cancel)?;
+        if reason == DiscoveryStopReason::Continue {
+            Ok(false)
+        } else {
+            stop_reason = reason;
+            Ok(true)
+        }
+    };
+    let stopped = prioritize_files_with_cancellation(files, &mut should_stop)?;
+    if stopped {
+        Ok(stop_reason)
+    } else {
+        Ok(DiscoveryStopReason::Continue)
+    }
 }
 
 fn assemble_priority_buckets(
@@ -696,6 +854,8 @@ mod tests {
             max_depth: None,
             max_files: Some(3),
             max_path_bytes: Some(MAX_FULL_SCAN_DISCOVERED_PATH_BYTES),
+            max_work_items: None,
+            max_duration: None,
             risky_files_only: false,
         };
         let mut never_cancel = || Ok(false);
@@ -737,6 +897,8 @@ mod tests {
             max_depth: None,
             max_files: Some(MAX_FULL_SCAN_DISCOVERED_FILES),
             max_path_bytes: Some(one_path_bytes),
+            max_work_items: None,
+            max_duration: None,
             risky_files_only: false,
         };
         let mut never_cancel = || Ok(false);
@@ -778,6 +940,8 @@ mod tests {
             max_depth: None,
             max_files: None,
             max_path_bytes: None,
+            max_work_items: None,
+            max_duration: None,
             risky_files_only: false,
         };
         let mut walk = FileWalk {
@@ -798,6 +962,175 @@ mod tests {
                 usize::MAX
             )) && error.contains("not enumerated or reported clean")
         }));
+    }
+
+    #[test]
+    fn file_discovery_resource_budget_counts_non_candidate_work_and_fails_visible() {
+        let dir = tempdir().unwrap();
+        for index in 0..5 {
+            fs::write(
+                dir.path().join(format!("benign-work-{index}.txt")),
+                b"ordinary non-candidate discovery fixture",
+            )
+            .unwrap();
+        }
+        let options = WalkOptions {
+            max_depth: None,
+            max_files: Some(5_000),
+            max_path_bytes: Some(MAX_QUICK_SCAN_DISCOVERED_PATH_BYTES),
+            max_work_items: Some(3),
+            max_duration: None,
+            risky_files_only: true,
+        };
+        let mut never_cancel = || Ok(false);
+
+        let walk = collect_accessible_files_with_options_and_cancellation(
+            &[dir.path().to_path_buf()],
+            &options,
+            &mut never_cancel,
+        )
+        .unwrap();
+
+        assert_eq!(
+            WalkOptions::quick().max_work_items,
+            Some(MAX_QUICK_SCAN_DISCOVERY_WORK_ITEMS)
+        );
+        assert_eq!(
+            WalkOptions::full().max_work_items,
+            Some(MAX_FULL_SCAN_DISCOVERY_WORK_ITEMS)
+        );
+        assert_eq!(walk.work_items_consumed, 3);
+        assert!(walk.files.is_empty());
+        assert!(walk.work_item_limit_reached);
+        assert!(!walk.time_limit_reached);
+        assert!(!walk.discovery_cancelled);
+        assert!(walk.skipped_files >= 1);
+        assert!(walk.scan_errors.iter().any(|error| {
+            error.contains("file discovery work-item limit of 3")
+                && error.contains("root-inspection or directory-iterator attempts")
+                && error.contains("not enumerated or reported clean")
+        }));
+    }
+
+    #[test]
+    fn file_discovery_resource_budget_work_counter_overflow_is_fail_visible() {
+        let options = WalkOptions {
+            max_depth: None,
+            max_files: None,
+            max_path_bytes: None,
+            max_work_items: None,
+            max_duration: None,
+            risky_files_only: false,
+        };
+        let mut walk = FileWalk {
+            work_items_consumed: usize::MAX,
+            ..FileWalk::default()
+        };
+
+        assert!(!consume_discovery_work_item(&mut walk, &options));
+        assert_eq!(walk.work_items_consumed, usize::MAX);
+        assert!(walk.work_item_limit_reached);
+        assert_eq!(walk.skipped_files, 1);
+        assert!(walk.scan_errors.iter().any(|error| {
+            error.contains(&format!("file discovery work-item limit of {}", usize::MAX))
+                && error.contains("not enumerated or reported clean")
+        }));
+    }
+
+    #[test]
+    fn file_discovery_resource_budget_zero_deadline_stops_before_root_io() {
+        let options = WalkOptions {
+            max_depth: None,
+            max_files: None,
+            max_path_bytes: None,
+            max_work_items: None,
+            max_duration: Some(Duration::ZERO),
+            risky_files_only: false,
+        };
+        let mut never_cancel = || Ok(false);
+
+        let walk = collect_accessible_files_with_options_and_cancellation(
+            &[PathBuf::from("missing-root-must-not-be-inspected")],
+            &options,
+            &mut never_cancel,
+        )
+        .unwrap();
+
+        assert_eq!(
+            WalkOptions::quick().max_duration,
+            Some(Duration::from_secs(MAX_QUICK_SCAN_DISCOVERY_SECONDS))
+        );
+        assert_eq!(
+            WalkOptions::full().max_duration,
+            Some(Duration::from_secs(MAX_FULL_SCAN_DISCOVERY_SECONDS))
+        );
+        assert!(walk.files.is_empty());
+        assert_eq!(walk.work_items_consumed, 0);
+        assert!(walk.time_limit_reached);
+        assert!(!walk.work_item_limit_reached);
+        assert!(!walk.discovery_cancelled);
+        assert_eq!(walk.skipped_files, 1);
+        assert!(walk.scan_errors.iter().any(|error| {
+            error.contains("file discovery monotonic time budget of 0 seconds reached")
+                && error.contains("not enumerated or reported clean")
+        }));
+        assert!(!walk
+            .scan_errors
+            .iter()
+            .any(|error| error.contains("scan root missing")));
+    }
+
+    #[test]
+    fn file_discovery_resource_budget_cancellation_precedes_expired_deadline() {
+        let options = WalkOptions {
+            max_depth: None,
+            max_files: None,
+            max_path_bytes: None,
+            max_work_items: None,
+            max_duration: Some(Duration::ZERO),
+            risky_files_only: false,
+        };
+        let mut should_cancel = || Ok(true);
+
+        let walk = collect_accessible_files_with_options_and_cancellation(
+            &[PathBuf::from("missing-root-must-not-be-inspected")],
+            &options,
+            &mut should_cancel,
+        )
+        .unwrap();
+
+        assert!(walk.discovery_cancelled);
+        assert!(!walk.time_limit_reached);
+        assert!(!walk.work_item_limit_reached);
+        assert_eq!(walk.work_items_consumed, 0);
+        assert!(walk.scan_errors.is_empty());
+    }
+
+    #[test]
+    fn file_discovery_resource_budget_priority_deadline_retains_all_paths() {
+        use std::collections::BTreeSet;
+
+        let mut files = (0..300)
+            .map(|index| PathBuf::from(format!("benign-priority-time-{index}.txt")))
+            .collect::<Vec<_>>();
+        let expected = files.iter().cloned().collect::<BTreeSet<_>>();
+        let options = WalkOptions {
+            max_depth: None,
+            max_files: None,
+            max_path_bytes: None,
+            max_work_items: None,
+            max_duration: Some(Duration::ZERO),
+            risky_files_only: false,
+        };
+        let mut never_cancel = || Ok(false);
+
+        let reason =
+            prioritize_files_with_limits(&mut files, &options, Instant::now(), &mut never_cancel)
+                .unwrap();
+
+        assert_eq!(reason, DiscoveryStopReason::TimeLimitReached);
+        assert_eq!(files.len(), 300);
+        assert_eq!(files.into_iter().collect::<BTreeSet<_>>(), expected);
     }
 
     #[test]

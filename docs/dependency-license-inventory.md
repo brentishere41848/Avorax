@@ -2176,3 +2176,28 @@ CycloneDX 1.6/569-unique-ref review. Destination lock hashes remain exact after
 guarded synchronization and definitive `286/286`. Checkpoint 2257 adds no
 dependency or lockfile and is closed; final-binary legal/notice provenance,
 production signing/notarization, and release approval remain separate.
+
+Checkpoint 2258 adds no dependency, feature, package source, license class, or
+lockfile change. Discovery deadlines use `std::time::{Duration, Instant}`;
+checked work accounting and report propagation use the existing standard
+library, `walkdir`, `anyhow`, and Local Core types. Existing root, Native, and
+Flutter lockfiles must remain byte-exact through focused, definitive, hosted,
+and destination verification. Verifier step 287 and Source contract 688 are
+scripted. This dependency statement is not final-binary license/notice
+provenance or release approval.
+
+Final-source locked standard/all-feature workspace tests and the locked
+all-feature release build pass after the elapsed-check repair. All lockfiles
+remain unchanged; the dependency and license statement above is unchanged.
+A later definitive `287/287` and independent dual-host report validation passed
+without dependency or lockfile mutation but is superseded by the final
+cancellation/progress honesty repair. The repair also uses only existing Local
+Core/std types. Final-source, hosted, and destination lock evidence remain
+pending.
+Repaired-source locked standard/all-feature tests, locked all-feature release
+build, and definitive `287/287` pass with all three lock hashes unchanged.
+That report is superseded by a zero-byte progress repair using only existing
+Local Core/std types. Final-source locked standard/all-feature tests, locked
+all-feature release build, and exact `287/287` definitive verification pass
+without dependency or lockfile mutation. Hosted and destination lock evidence
+remain pending.

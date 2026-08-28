@@ -3809,3 +3809,54 @@ overflow, priority cancellation, and arbitrary callback failure are verified in
 the synchronized tree. Residual exact-memory, allocator, filesystem I/O/time,
 kernel, installed-service, driver, production-calibration, pre-execution, and
 Defender-replacement risks remain as documented.
+
+## Checkpoint 2258 Threat Delta
+
+An attacker-controlled or damaged tree can contain very large numbers of
+directories, harmless-extension files, non-regular entries, or enumeration
+errors without filling the retained-file vector. Before 2258 those entries could
+drive discovery work beyond the file/path caps. A slow filesystem could also
+consume the scan indefinitely before the existing Full scan-loop time check.
+
+The scripted mitigation gates every explicit root inspection and `WalkDir`
+advance with checked work accounting, applies mode-specific monotonic discovery
+deadlines, retains cancellation priority, preserves every path on priority exit,
+and applies total elapsed limits to all scan modes from before discovery. Limit
+and overflow paths add bounded errors and cannot become clean.
+
+Final review adds a total-time checkpoint after every successful or failed
+target inspection, including the final retained target, plus a zero-file check
+after Native Engine initialization. Engine-unavailable scans account retained
+files once and bypass inspection, preventing duplicate skipped-file evidence.
+
+Residual risk is explicit: application work items are not exact I/O/syscall/
+kernel/CPU/RAM measures; one OS call and one bounded chunk can overrun; a user-
+mode deadline cannot interrupt a kernel/filesystem call that never returns; and
+no installed watchdog, driver, hard-realtime, or pre-execution boundary exists.
+Verifier step 287, Source contract 688, and local runtime evidence pass after the
+scripting boundary. Hosted integration evidence remains pending.
+
+Final-source focused and broad Rust evidence now passes, including Local Core
+`562/562`, both locked workspace variants, strict Clippy, and locked release
+build. A later definitive `287/287`, dual-host report validation, and all six
+expected adversarial mutation rejections passed but are superseded by the final
+cancellation/progress honesty repair. Final-source focused/broad and definitive
+`287/287` now pass, including all six expected adversarial rejections. Hosted,
+integration, guarded-sync, and destination evidence remain pending; technical
+limits are unchanged.
+
+The late repair makes total-scan stop classification cancellation-first before
+and after target work and after zero-file initialization. It also prevents an
+EngineUnavailable result from publishing 100-percent completion. These changes
+do not make cancellation or elapsed limits preemptive and do not expand the
+user-mode, installed-service, driver, or pre-execution boundary.
+
+Final review identified a presentation-integrity risk rather than a detection
+bypass: an attacker-controlled set of retained zero-byte files could make the
+byte-only progress estimate read 100 percent before inspection. File-count
+fallback now bounds that progress, and a running zero-file scan remains
+indeterminate. This does not change verdicts, deadlines, cancellation, or the
+documented user-mode resource limits. Final-source focused/broad evidence,
+release build, exact `287/287` definitive verification, dual-host validation,
+and all six expected adversarial rejections pass. Hosted exact-head,
+integration, guarded-sync, and destination evidence remain pending.

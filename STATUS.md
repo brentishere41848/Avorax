@@ -7667,3 +7667,57 @@ All locks, synchronized blobs, zero residue, and the read-only 16,072-file vault
 remain exact. Exact resource, installed-service, driver/kernel, production,
 pre-execution, and Defender-replacement limits remain open; the complete
 antivirus-hardening goal stays active.
+
+Checkpoint 2258 scripting was completed as one batch before testing. A final
+zero-byte progress repair is now **fully scripted with final-source verification
+pending**. Local Core has checked
+application work-item ceilings for every explicit discovery root
+inspection and `WalkDir` advance: Quick `100,000`, Full/Custom `1,000,000`.
+Monotonic discovery limits are Quick `600s`, Full/Custom `3,600s`; total scan
+limits measured from before discovery are Quick `1,800s`, Full/Custom `10,800s`.
+All exits are incomplete/fail-visible and retained remaining files are counted
+as skipped where known. Cancellation precedes deadline classification.
+
+Six benign regressions, exact verifier/validator step `287`, Source contract
+`688`, and the audit/threat/dependency evidence are implemented. Focused checks
+pass: dual-host parser `2/2`, Source `688/688`, new tests `6/6`, discovery
+`15/15`, walker `20/20`, Full Scan `3/3`, cancellation `8/8`, Local Core
+`562/562`, strict Clippy, formatting, and diff checks. Broad locked standard and
+all-feature Rust suites, release build, Flutter analyze and `847/847`, and Dart
+analyze plus `14/14` and `6/6` pass. A pre-final-diff definitive report was
+superseded after final review added post-target/zero-file elapsed checks and
+engine-unavailable skip isolation. Final-source focused and broad reruns pass;
+the final no-skip/no-Defender verifier passes exact `287/287` in `633.1s`, zero
+failed/non-null-error steps. Independent PS5/PS7 validation accepts the
+209,024-byte report with SHA-256
+`7d26d4ae9327a4b186462dbe894222b65702975fb8334ea7e5465ce37cd595bd`,
+and both hosts reject all three structured scope/cardinality mutations. Late
+review then added cancellation-first post-target/zero-file checkpoints and made
+EngineUnavailable final progress indeterminate rather than 100 percent. That
+report is superseded. After the explicit owned-string compile repair, final-
+source Source `688/688`, resource `6/6`, Local Core `562/562`, strict Clippy,
+both locked workspaces, and the locked all-feature release build pass. The final
+no-skip/no-Defender verifier passes `287/287` in `638.5s`; independent PS5/PS7
+validation accepts the 209,286-byte report with SHA-256
+`401d4d4cb50dc7a61750ae26b7de529df3f2033063d3915649c4717aa6c78208`
+and rejects all six expected structured mutations. Hosted, integration,
+guarded-sync, and destination evidence remained pending. Final review then found
+that running retained zero-byte files could transiently publish 100 percent.
+File-count fallback and zero-file indeterminate progress are now scripted across
+implementation, the existing regression, verifier/validator, Source, and docs;
+the preceding report is superseded. Final-source local and later evidence remain
+pending.
+
+Checkpoint 2258 is now **verified locally on final source through definitive
+regression**. Formatting, dual-host parser checks, Source `688/688`, resource
+tests `6/6`, Local Core `562/562`, strict Clippy, both locked workspace variants,
+and the locked all-feature release build pass. The final no-skip/no-Defender
+verifier passes exact `287/287` in `634.4s` with zero failed/non-null-error steps;
+independent PS5/PS7 validation accepts the 209,503-byte schema-2 report with
+SHA-256 `078a4edc9a25aed4ab572936c0d34629152af0f4c0ee633e6e5a7a2c2177cad0`.
+Both hosts reject all three structured mutations with exit 1 and exact mutation
+residue is zero. Hosted exact-head, integration, guarded-sync, and destination
+evidence remain pending.
+Work items remain a proxy rather than exact I/O/syscall/kernel/CPU/RAM
+accounting, and user mode cannot preempt a stalled kernel/filesystem call. The
+complete antivirus-hardening goal remains active.

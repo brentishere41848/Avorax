@@ -44,7 +44,18 @@ impl ScanProgress {
             self.progress_percent = None;
             return;
         };
-        if total_bytes == 0 || self.bytes_scanned >= total_bytes {
+        if total_bytes == 0 {
+            self.estimated_remaining_seconds = None;
+            self.progress_percent = self.total_files_estimated.and_then(|total_files| {
+                if total_files == 0 {
+                    None
+                } else {
+                    Some((self.files_scanned.min(total_files) as f64 / total_files as f64) * 100.0)
+                }
+            });
+            return;
+        }
+        if self.bytes_scanned >= total_bytes {
             self.estimated_remaining_seconds = Some(0);
             self.progress_percent = Some(100.0);
             return;
@@ -120,5 +131,17 @@ mod tests {
         progress.calculate_eta();
         assert_eq!(progress.progress_percent, Some(50.0));
         assert_eq!(progress.estimated_remaining_seconds, Some(5));
+
+        progress.total_bytes_estimated = Some(0);
+        progress.bytes_scanned = 0;
+        progress.calculate_eta();
+        assert_eq!(progress.progress_percent, Some(50.0));
+        assert!(progress.estimated_remaining_seconds.is_none());
+
+        progress.total_files_estimated = Some(0);
+        progress.files_scanned = 0;
+        progress.calculate_eta();
+        assert!(progress.progress_percent.is_none());
+        assert!(progress.estimated_remaining_seconds.is_none());
     }
 }

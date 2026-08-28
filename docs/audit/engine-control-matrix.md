@@ -5624,3 +5624,35 @@ four checkpoint rows are **Verified**. The exact-total-resource row remains
 **Technically limited**, and installed-service, driver/kernel, production,
 pre-execution, and Defender-replacement controls remain unchanged. Checkpoint
 2257 is closed; the complete antivirus-hardening goal remains active.
+
+## Checkpoint 2258 - Discovery Work And Time Bounds
+
+| Control / engine responsibility | Scripted state | Evidence or blocker |
+|---|---|---|
+| Local Core discovery work accounting | Locally verified on final source; hosted evidence pending | Quick gates 100,000 and Full/Custom 1,000,000 checked work items across explicit root inspections and every `WalkDir` advance, including non-candidates/errors/exhaustion probes. |
+| Local Core discovery monotonic deadline | Locally verified on final source; hosted evidence pending | Quick gates 600s and Full/Custom 3,600s at cancellation-first cooperative checkpoints; reached limits are incomplete. |
+| Local Core priority classification | Locally verified on final source; hosted evidence pending | Stable buckets retain every path on deadline/cancellation and propagate callback errors. |
+| Quick/Full/Custom total elapsed budget | Locally verified on final source; hosted evidence pending | Quick gates 1,800s and Full/Custom 10,800s from before discovery; cancellation precedes elapsed limits before/after every target and after successful zero-file initialization, retained remaining files become skipped, no clean result is allowed, incomplete/EngineUnavailable progress stays indeterminate, and retained zero-byte targets use file-count progress. |
+| Exact filesystem/kernel resource enforcement | Technically limited | Work items proxy application work only; user mode cannot preempt a stalled kernel/filesystem call or prove exact I/O/syscall/kernel/CPU/RAM bounds. |
+
+No custom detection-engine responsibility changes. Signature, rule, static,
+heuristic, archive, Authenticode, ML, process-observation, verdict aggregation,
+allowlist, quarantine, and update controls retain their prior states. Verifier
+step 287, Source contract 688, and six benign tests pass locally.
+
+Final-source repair evidence passes Source `688/688`, resource `6/6`, Local
+Core `562/562`, strict Clippy, both locked Rust workspace variants, and the
+locked all-feature release build. Final-source definitive verification passes
+exact `287/287` in `633.1s`; independent PS5/PS7 validation accepts report
+SHA-256 `7d26d4ae9327a4b186462dbe894222b65702975fb8334ea7e5465ce37cd595bd`
+and rejects all three structured mutations, but that report is superseded by the
+late cancellation/progress repair. Repaired-source focused/broad evidence and
+final exact `287/287` in `638.5s` pass; independent PS5/PS7 accepts SHA-256
+`401d4d4cb50dc7a61750ae26b7de529df3f2033063d3915649c4717aa6c78208`
+and rejects all six expected mutations. Hosted/integration evidence remains
+pending, but the report is superseded by the zero-byte progress repair. Final-
+source verification now passes exact `287/287` in `634.4s`; independent PS5/PS7
+validation accepts the 209,503-byte report with SHA-256
+`078a4edc9a25aed4ab572936c0d34629152af0f4c0ee633e6e5a7a2c2177cad0` and
+rejects all six expected mutations. Hosted/integration evidence remains pending;
+exact kernel/resource enforcement remains technically limited.
