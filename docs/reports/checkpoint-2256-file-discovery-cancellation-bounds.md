@@ -1,6 +1,6 @@
 # Checkpoint 2256: File Discovery Cancellation And Bounds
 
-Status: **Verified locally; hosted and integration evidence pending**
+Status: **Closed; verified through merged-main and destination evidence**
 
 ## Objective
 
@@ -141,3 +141,42 @@ Hosted implementation-head evidence is complete. Exact evidence-head hosted
 runs, normal PR merge, merged-main evidence, guarded destination synchronization,
 and destination verification remain open. `.verification` and the protected
 vault remain untouched; the complete antivirus-hardening goal remains active.
+
+## Integration And Destination Closure
+
+Exact evidence commit `4d7de8eafededac6dcfc700a338b5eeea97cab3a` passes
+PR `#121` CI run `33129647036` and Desktop Packages run `33129647055`.
+Consolidated artifact `9670029088` is 132,110,544 bytes with SHA-256
+`ffd05933f6206f112036d26cc1a75218e4e3529f6d0cb8aa6be7f44b3f89853c`.
+PR `#121` merged normally as
+`e7c46e77b509b9b014fbf29c83769e9bca398e6a`; merged-main CI run
+`33130685313` and Desktop Packages run `33130685232` pass. Main artifact
+`9670342529` is 132,110,327 bytes with SHA-256
+`f54bfc35b3645e128ffa294505d76f2d5689e353673f49f23c23d4deef8c10df`.
+Publication is intentionally skipped. Both artifacts pass bounded,
+non-extracting exact 8-root/6-package/7-checksum/CycloneDX-1.6/569-unique-ref
+review without executing candidate content; owned review data is removed.
+
+Read-only destination preflight proves the exact 13-path delta against the old
+merge: three paths are raw-byte exact, nine are exact after repository line-
+ending filtering, and the added report path is absent. Guarded same-directory
+staging/backups and atomic replacement then pass `13/13`: 12 modified, one
+added, zero deleted, 7,486,551 staged bytes, no rollback, exact new-blob
+equality, and zero staging/backup residue. Three wrapper or summary mistakes
+that performed no writes are uncredited.
+
+The synchronized destination passes PS5/PS7 parser `2/2` each, Source contract
+`686/686`, formatting, focused discovery `5/5`, and all three exact unchanged
+lock hashes. Its no-skip/no-Defender definitive verifier passes `285/285`, zero
+failed steps, and zero non-null errors in `649.5s`. Independent PS5 and PS7
+validators accept the 197,442-byte report with SHA-256
+`2e71dd42a28345c602580bf70297a862f010a516873ae81cf6a074436dd5734f`.
+All 13 destination blobs, zero product/checkpoint/sync residue, and the protected
+vault invariant remain exact; `.verification` remains untouched.
+
+Checkpoint 2256 is closed. Cancellation remains cooperative, and the cap still
+does not bound aggregate path bytes, I/O, elapsed time, or kernel work. Installed
+cross-identity service ownership, driver/kernel mediation, production detection
+calibration and signing, demonstrated pre-execution blocking, and Microsoft
+Defender replacement remain partial, blocked, technically limited, or unclaimed.
+The complete antivirus-hardening goal remains active.

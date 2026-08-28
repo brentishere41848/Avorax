@@ -13188,3 +13188,33 @@ pending.
   extracted, installed, or executed; owned review residue is zero.
 - Evidence-head hosted reruns, normal merge, merged-main evidence, guarded sync,
   and destination verification remain open. The complete goal remains active.
+
+## 2026-08-28 - Checkpoint 2256 Integration And Destination Closure
+
+- Evidence `4d7de8e` passes PR `#121` exact-head CI `33129647036` and packages
+  `33129647055`. Artifact `9670029088` is 132,110,544 bytes, SHA-256
+  `ffd05933f6206f112036d26cc1a75218e4e3529f6d0cb8aa6be7f44b3f89853c`.
+- PR `#121` merged normally as `e7c46e7`. Main CI `33130685313` and packages
+  `33130685232` pass with publication skipped. Artifact `9670342529` is
+  132,110,327 bytes, SHA-256
+  `f54bfc35b3645e128ffa294505d76f2d5689e353673f49f23c23d4deef8c10df`.
+  Both artifacts pass bounded non-extracting exact
+  8/6/7/CycloneDX-1.6/569 review and leave zero owned residue.
+- Read-only old-blob preflight passes for all 13 paths: three raw exact, nine
+  repository-filter exact, and one addition absent. Guarded same-directory
+  staging/backups plus atomic activation pass `13/13`: 12 modified, one added,
+  zero deleted, 7,486,551 staged bytes, no rollback, and zero residue. Three
+  no-write wrapper/summary failures are uncredited.
+- Destination PS5/PS7 parsers pass `2/2` each, formatting, Source `686/686`,
+  focused discovery `5/5`, and exact lock checks. Its definitive verifier passes
+  exact `285/285`, zero failed/non-null-error steps, in `649.5s`; independent
+  PS5/PS7 accept the 197,442-byte report with SHA-256
+  `2e71dd42a28345c602580bf70297a862f010a516873ae81cf6a074436dd5734f`.
+- All 13 blobs, zero product/checkpoint/sync residue, and the read-only
+  `16072/0/4522733` vault invariant pass. `.verification` remains untouched.
+  Checkpoint 2256 is closed; cooperative discovery and all installed-service,
+  driver/kernel, production-calibration, pre-execution, and Defender-replacement
+  product limits remain open. The complete antivirus-hardening goal stays active.
+- One closure check invoked an obsolete, absent source-validator filename and
+  stopped immediately with file-not-found; it is uncredited. The exact repo
+  runner subsequently passes Source `686/686`.

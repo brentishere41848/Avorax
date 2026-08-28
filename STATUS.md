@@ -7277,6 +7277,26 @@ Both consolidated artifacts match GitHub and pass non-extracting exact
 hosted reruns, merge/main, guarded destination sync, and destination verification
 remain open, so the checkpoint and complete antivirus-hardening goal stay active.
 
+### Checkpoint 2256 Closure
+
+Evidence `4d7de8e`, PR `#121`, and normal merge `e7c46e7` pass exact evidence-
+head and merged-main CI/packages (`33129647036`/`33129647055` and
+`33130685313`/`33130685232`), with publication skipped. Both consolidated
+artifacts pass bounded non-extracting exact 8/6/7/CycloneDX-1.6/569 review.
+Guarded destination synchronization passes `13/13`, with 12 modifications, one
+addition, zero deletions, exact merge-blob equality, and zero residue.
+
+Destination parsers pass `2/2` on PS5 and PS7, Source `686/686`, formatting,
+focused discovery `5/5`, unchanged lock hashes, and definitive `285/285` in
+`649.5s`. Both independent validators accept report SHA-256
+`2e71dd42a28345c602580bf70297a862f010a516873ae81cf6a074436dd5734f`.
+Product processes, checkpoint/sync residue, `.verification`, and the protected
+vault remain unchanged. Checkpoint 2256 is **closed**; cooperative filesystem
+latency, aggregate path-byte/I/O/time bounds, installed cross-identity service,
+driver/kernel, production calibration/signing, demonstrated pre-execution
+blocking, and Defender replacement remain limited, blocked, or unclaimed. The
+complete antivirus-hardening goal remains active.
+
 ## Checkpoint 2255 Status
 
 Checkpoint 2255 is **scripted, unverified**. PE resource section mapping now

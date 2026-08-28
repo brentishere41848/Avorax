@@ -3742,3 +3742,12 @@ source/package-contract evidence; it does not add a wall-clock filesystem
 deadline, installed service ownership, kernel mediation, pre-execution blocking,
 Defender replacement, production detection calibration, or release approval.
 Evidence-head, merged-main, and destination proof remain pending.
+
+Evidence-head, merged-main, synchronized-destination, and exact destination
+`285/285` verification now close this threat delta. The discovered-path vector
+is bounded and cancellation/error evidence cannot become a clean scan result.
+Residual risk remains for one entered OS operation, one at-most-128-entry
+chunk, the bounded non-cancellable sort, aggregate path bytes, filesystem I/O,
+elapsed time, and kernel work. This evidence does not establish installed
+cross-identity ownership, kernel mediation, pre-execution blocking, production
+detection calibration, release approval, or Defender replacement.

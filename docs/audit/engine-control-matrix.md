@@ -5359,6 +5359,13 @@ for both consolidated artifacts with publication skipped. Checkpoint 2256 rows
 remain **Verified locally and on implementation-head CI**; evidence-head,
 merged-main, synchronized-destination, and destination evidence remain open.
 
+Evidence-head and merged-main CI/packages, bounded artifact inspection, guarded
+`13/13` synchronization, destination focused checks, and definitive destination
+`285/285` now pass. Every Checkpoint 2256 row is **Closed / verified for this
+checkpoint**. The walker remains a cooperative user-mode discovery control, not
+a byte/I/O/time bound, installed service, driver/kernel control, pre-execution
+blocker, production-calibrated verdict engine, or Defender replacement.
+
 ## Checkpoint 2255 Control Delta
 
 | Control / engine | Responsibility | State | Evidence required |

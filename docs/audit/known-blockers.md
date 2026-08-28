@@ -3648,3 +3648,12 @@ normal merge, merged-main evidence, guarded synchronization, and destination
 verification remain checkpoint blockers. All cooperative, installed-service,
 driver/kernel, production-calibration, pre-execution, and Defender-replacement
 product blockers remain unchanged.
+
+Evidence-head, normal integration, merged-main, guarded `13/13`
+synchronization, and destination focused plus exact `285/285` verification now
+pass, closing Checkpoint 2256. Cooperative OS-call/chunk/sort latency and the
+lack of aggregate path-byte, I/O, and elapsed-time bounds remain technical
+limits. Installed cross-identity service ownership and authenticated IPC,
+signed-driver/kernel mediation, production accuracy/signing, demonstrated
+pre-execution blocking, and Microsoft Defender replacement remain open product
+blockers; checkpoint closure does not clear them.

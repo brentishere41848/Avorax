@@ -1869,6 +1869,20 @@ not final-binary legal/notice approval, production signing/notarization,
 enterprise deployment approval, or release approval. Evidence-head and
 merged-main package/SBOM evidence remain pending.
 
+Evidence-head package run `33129647055` and merged-main package run
+`33130685232` pass all platform, contract, and consolidation jobs with
+publication skipped. Consolidated artifacts `9670029088` and `9670342529` have
+independently matched SHA-256 values
+`ffd05933f6206f112036d26cc1a75218e4e3529f6d0cb8aa6be7f44b3f89853c` and
+`f54bfc35b3645e128ffa294505d76f2d5689e353673f49f23c23d4deef8c10df`.
+Both bounded reviews verify all seven checksums and CycloneDX 1.6 with 569
+components and 569 unique references. Destination exact `285/285` and all
+three unchanged lock hashes pass. Checkpoint 2256 adds no dependency, feature,
+package source, license class, downloaded runtime, or machine-wide component.
+Final-binary legal/notice resolution, production signing/notarization,
+installed-service stress, enterprise deployment approval, and release approval
+remain separate prerequisites.
+
 ## Checkpoint 2255 Dependency Delta
 
 Checkpoint 2255 changes only first-party Rust PE resource cancellation wiring,
