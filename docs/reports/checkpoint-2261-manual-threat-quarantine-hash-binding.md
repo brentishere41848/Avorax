@@ -2,7 +2,7 @@
 
 Date: 2026-08-28 (Europe/Brussels)
 
-Status: **Implementation and hosted evidence verified; integration and destination evidence pending**
+Status: **Closed; implementation integrated and destination verified**
 
 ## Risk
 
@@ -143,20 +143,90 @@ Hosted evidence at that head is:
   installed, or executed. The three-artifact result SHA-256 is
   `b87c19f39bc9e75fb42c5caf4c02fccb7cc28a12108d5262ad8e22a931a5f3a5`.
 
-PR merge, merged-main evidence, guarded synchronization, and destination
-verification remain pending. This checkpoint has verified implementation and
-hosted evidence but is not closed; the complete antivirus-hardening goal
-remains active.
+## Evidence-Head And Integration Evidence
+
+Evidence commit `b66aaed3388139c19ff76385bf5ec5cc06adf219` passed
+Avorax CI run `33191586704`, Desktop Packages PR run `33191586726`, and
+Desktop Packages dispatch run `33191612118`. Publication was skipped.
+Consolidated artifacts `9694473804` (PR, 132,227,078 bytes, SHA-256
+`0fd7ea2cb25c0cf0bbc8dd1c214f4473ec139e64bfa1638b8dd120d2b7fb9799`)
+and `9694729048` (dispatch, 132,717,251 bytes, SHA-256
+`f5293bece97c4399ee0b40f1b185e2924d3e0fa77565183b5b2e717642b6350c`)
+both passed non-extracting 8-root-entry, 6-platform-file, 7-checksum,
+CycloneDX 1.6/569-component validation. The retained validation result SHA-256
+is `4aeeb7626e6ad0887c8814b6cbe875b401faecb93c0bbd6327f1c1ed906bf421`.
+
+PR `#131` merged normally as
+`1877bbabaeb1fd6e6169d1ca3f92a9438185b3d4`, with exact parents
+`aff5ca943856c02cce51ef39c952c41de89b6ac7` and
+`b66aaed3388139c19ff76385bf5ec5cc06adf219`. Merged-main Avorax CI
+`33194037678` and Desktop Packages `33194037671` passed; publication was
+skipped. Merged artifact `9695496543` is 132,207,174 bytes with SHA-256
+`97fe2aacffd4da4bb403b7a335c4de083404542ee218937c7a563b32d622b570`
+and passed the same bounded non-extracting validation. Its retained validation
+result SHA-256 is
+`aba548de268cff08b47574b9c25c4258c74c359c2832ea72af30f1cb44d8d352`.
+
+## Guarded Synchronization And Destination Evidence
+
+Read-only preflight proved all 18 merge paths were at the exact old base or
+absent, with zero product processes and the exact protected-vault invariant.
+The first synchronization attempt stopped before activation because its
+untracked nested backup path exceeded the Windows path-length limit. It left
+three owned pending sidecars and no changed product file; those exact sidecars
+were removed, the evidence backup was retained, and no protected-vault path was
+touched. A shortened flat backup layout then passed guarded synchronization:
+18 paths, 17 modified, one added, zero deleted. The apply report SHA-256 is
+`2d98a915ccab5f074ac529dd89b49bac890aa9a61334e6d8b0dc69988ea92182`.
+Independent post-sync evidence passed 18/18 raw and normalized path matches,
+8/8 lockfiles, zero residue, zero product processes, and the exact vault. Its
+report SHA-256 is
+`a011021674318dd58a081b5adc1b6e3361a5a4fad1fd40025f4d2ff1cf81b1a7`.
+
+The first broad destination `cargo test --locked --workspace` orchestration is
+not credited as a pass: after Platform `11/11` and Local Core `572/572`,
+Microsoft Defender removed the generated Native test harness and Cargo failed
+with Windows error 225. Read-only Defender evidence classified that generated
+binary as `Trojan:Win32/Wacatac.C!ml`, severity 5, inactive, and
+`DidThreatExecute=False`; Defender also blocked the suite's permitted temporary
+EICAR file. Defender was not weakened and nothing was restored or allowlisted.
+
+Equivalent unchanged-target coverage was then run without hiding the failure:
+
+- isolated Native default and all-feature runs each passed `640/640`, with 21
+  intentional child-fixture ignores; Native compiler passed `6/6`;
+- the locked workspace excluding Native passed Platform `11/11` and Local Core
+  `572/572`; its all-feature variant passed, and the locked all-feature release
+  workspace build passed;
+- Flutter analyze reported no issues and all `849/849` tests passed; Zentor
+  protocol passed `14/14`, while Avorax protocol analyzed cleanly and passed
+  `6/6`;
+- the definitive destination verifier, with no skip or Defender switch, passed
+  exact `289/289`, zero failed/skipped, in `651.5s` from
+  `2026-08-28T17:59:47.8947923Z` through
+  `2026-08-28T18:10:39.4388652Z`. Its 204,507-byte report is
+  `.workflow/ultracode/avorax-hardening/results/2261-destination-small-threat-mvp-manual-threat-quarantine-hash-binding-report.json`
+  with SHA-256
+  `4b7f531dd61c0c7c00496ad331061d50161c9a6487f6b7ecd1046bb5e8bdcf25`;
+- integrated and independently rerun Windows PowerShell 5.1 and PowerShell 7
+  `-RequireFullSuite` validators accepted that destination report.
+
+The final independent read-only audit again passed all 18 synchronized path
+hashes, all eight lockfile hashes, zero synchronization sidecars, zero product
+processes, and the protected vault at 16,072 files, zero directories,
+4,522,733 bytes, 5,357 each `.avoraxq`/`.json`/`.auth`, one
+`.metadata_auth_key`, and zero pending. Checkpoint 2261 is closed. The complete
+antivirus-hardening goal remains active.
 
 ## Verification Classification
 
-- **Verified locally:** exact threat-row request hash, bounded Local Core IPC,
+- **Verified:** exact threat-row request hash, bounded Local Core IPC,
   store-level hash/path binding, visible client response mismatch rejection,
-  standalone fresh-snapshot distinction, benign regressions, full local suites,
-  and strict report validation.
-- **Partial:** packaged installed UI-to-Local-Core click-through, installed
-  cross-identity service behavior, PR integration, merged-main workflows, and
-  destination evidence are not yet complete for this checkpoint.
+  standalone fresh-snapshot distinction, benign regressions, local and
+  destination full-suite evidence, normal PR integration, merged-main CI and
+  package evidence, and guarded zero-delete synchronization.
+- **Partial:** packaged installed UI-to-Local-Core click-through and installed
+  cross-identity service behavior remain outside this source/runtime proof.
 - **Disabled / blocked:** no checkpoint-2261 control is silently disabled.
   Signed driver/kernel mediation, production signing and calibration, and a
   Defender-replacement claim remain broader blocked product prerequisites.

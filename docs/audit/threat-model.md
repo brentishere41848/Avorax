@@ -3989,10 +3989,15 @@ verifier step 289, exact-289 dual-host validator contracts, and Source contract
 691 pass locally. Definitive no-skip/no-Defender verification passes `289/289`
 in `659.6s`; both PowerShell hosts accept the authentic report and reject the
 missing-scope and missing-step variants. Exact implementation-head CI and
-Desktop source/package workflows also pass with publication skipped. The
-residual final-check/path-mutation
+Desktop source/package workflows also pass with publication skipped. Evidence
+head, normal PR `#131`, merged-main CI/packages, guarded 18-path zero-delete
+synchronization, destination exact `289/289` in `651.5s`, all eight lockfiles,
+and the unchanged protected vault pass. One Defender-removed generated Native
+test harness remains a visible failed broad orchestration; isolated unchanged
+Native suites and the definitive destination verifier passed without weakening
+Defender. The residual final-check/path-mutation
 race is unchanged: user mode cannot provide a portable atomic transaction or
 resist administrators, SYSTEM, or kernel compromise. Installed UI/service E2E,
-integration/destination evidence, driver/kernel mediation, pre-execution
-blocking, production accuracy, secure erase, and Defender replacement remain
-partial, blocked, limited, or unclaimed.
+driver/kernel mediation, pre-execution blocking, production accuracy, secure
+erase, and Defender replacement remain partial, blocked, limited, or unclaimed.
+Checkpoint 2261 is closed; the complete antivirus-hardening goal remains active.

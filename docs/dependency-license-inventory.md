@@ -2299,3 +2299,13 @@ publication jobs were skipped. Consolidated artifacts `9693158463`,
 CycloneDX 1.6 lockfile SBOM containing exactly 569 components, six platform
 files, and seven independently matching checksum rows. No archive entry was
 extracted or executed.
+
+Evidence-head Desktop PR/dispatch artifacts `9694473804`/`9694729048` and
+merged-main artifact `9695496543` passed the same bounded non-extracting
+8-entry/6-platform/7-checksum/CycloneDX 1.6/569-component validation.
+Publication remained skipped. Guarded synchronization changed no lockfile;
+independent destination audit passed all eight exact lock hashes before and
+after destination exact `289/289`. Checkpoint 2261 is closed without a
+dependency or license delta. Final-binary legal/notice provenance, production
+signing/notarization, enterprise deployment approval, and release approval
+remain separate.

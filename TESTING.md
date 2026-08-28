@@ -1001,6 +1001,28 @@ All publication jobs were skipped. Three consolidated artifact ZIP streams pass
 bounded non-extracting exact 8-entry/6-platform/7-checksum/CycloneDX 1.6/569-
 component review; no installer was extracted or executed.
 
+Evidence head `b66aaed3388139c19ff76385bf5ec5cc06adf219` and normal PR
+`#131` integration passed. Merge `1877bbabaeb1fd6e6169d1ca3f92a9438185b3d4`
+passed merged-main CI/packages. Guarded synchronization copied exactly 18
+paths, changed 17, added one, deleted none, and preserved all eight lockfiles.
+
+In `C:\Users\Brent\Documents\Avorax-main`, one broad locked Rust orchestration
+is retained as failed because Defender removed the generated Native harness as
+inactive `Trojan:Win32/Wacatac.C!ml` (`DidThreatExecute=False`), producing
+Windows error 225 after Platform `11/11` and Local Core `572/572`. Defender was
+not weakened. Isolated unchanged Native default/all-feature runs each passed
+`640/640` with 21 intentional ignores, compiler passed `6/6`, both non-Native
+workspace variants and the locked all-feature release build passed, Flutter
+analyze and `849/849` passed, and protocols passed `14/14` and `6/6`.
+
+The same definitive command in the destination tree passed exact `289/289`,
+zero failed/skipped, in `651.5s`. Its 204,507-byte report SHA-256 is
+`4b7f531dd61c0c7c00496ad331061d50161c9a6487f6b7ecd1046bb5e8bdcf25`.
+Integrated and independent Windows PowerShell 5.1 and PowerShell 7 validators
+accepted it with `-RequireFullSuite`. Final audit passed 18/18 synchronized
+paths, 8/8 locks, zero sidecars/processes, and the exact protected vault.
+Checkpoint 2261 is closed; the complete antivirus-hardening goal remains active.
+
 Tests never execute candidate content and did not mutate the protected
 production vault. The result remains user-mode/path-based and does not prove
 atomic final path mutation, installed service/UI E2E, driver/kernel mediation,

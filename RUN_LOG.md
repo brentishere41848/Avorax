@@ -75,7 +75,37 @@ Lead-engineer product-hardening pass across the Avorax repository. Goal is to mo
   8-entry/6-platform/7-checksum/CycloneDX 1.6/569-component evidence in each
   bundle. The retained validation result SHA-256 is
   `b87c19f39bc9e75fb42c5caf4c02fccb7cc28a12108d5262ad8e22a931a5f3a5`.
-  Merge, merged-main, guarded-sync, and destination evidence remain pending.
+  Merge, merged-main, guarded-sync, and destination evidence followed below.
+
+## 2026-08-28 Checkpoint 2261 integration and destination closure
+
+- Evidence head `b66aaed` passed CI `33191586704`, Desktop PR
+  `33191586726`, and Desktop dispatch `33191612118`; publication was skipped.
+  PR `#131` merged normally as `1877bbab`. Merged-main CI `33194037678` and
+  Desktop `33194037671` passed, again with publication skipped.
+- Evidence-head artifacts `9694473804`/`9694729048` and merged artifact
+  `9695496543` each passed bounded non-extracting exact
+  8-entry/6-platform/7-checksum/CycloneDX 1.6/569-component validation.
+- A first guarded-sync attempt stopped safely before activation on a Windows
+  backup path-length limit. Three exact owned sidecars were removed; no product
+  or vault file had changed. The shortened-backup rerun synchronized 18 paths,
+  17 modified and one added, with zero deletion. Independent audit passed all
+  18 path hashes, all eight locks, zero residue/processes, and the exact vault.
+- The first destination-wide Rust orchestration is retained as failed after
+  Platform `11/11` and Local Core `572/572`: Defender removed the generated
+  Native harness as inactive `Trojan:Win32/Wacatac.C!ml` with
+  `DidThreatExecute=False`, causing error 225. Defender was not weakened.
+  Isolated unchanged Native default/all-feature runs then each passed `640/640`
+  plus 21 intentional ignores; Native compiler `6/6`, both non-Native workspace
+  variants, locked all-feature release, Flutter analyze and `849/849`, and both
+  protocol packages passed.
+- Definitive destination verification passed exact `289/289`, zero
+  failed/skipped, in `651.5s`. Its 204,507-byte report SHA-256 is
+  `4b7f531dd61c0c7c00496ad331061d50161c9a6487f6b7ecd1046bb5e8bdcf25`;
+  integrated and independent Windows PowerShell 5.1/PowerShell 7 validators
+  accepted it. Final read-only audit again passed 18/18 paths, 8/8 locks, zero
+  sidecars/processes, and the exact 16,072-file vault. Checkpoint 2261 is
+  closed; the complete antivirus-hardening goal remains active.
 
 ## 2026-08-28 Checkpoint 2260 scripting
 

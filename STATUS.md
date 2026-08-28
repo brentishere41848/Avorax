@@ -4,7 +4,7 @@
 
 Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-install, repair, recovery, offline, and manual-install paths only. Normal app updates target signed `.aup` packages applied by Avorax Update Service.
 
-- Current Checkpoint 2261 local verification: confirmed quarantine from a visible
+- Current Checkpoint 2261 closure: confirmed quarantine from a visible
   scan-result threat row now sends that row's exact SHA-256 through bounded
   Local Core IPC. Present evidence crosses checkpoint 2260's existing
   open-handle hash/path-identity store boundary; empty, oversized, NUL-bearing,
@@ -29,12 +29,24 @@ Product-hardening sprint for Avorax Anti-Virus. MSI/EXE installers remain first-
   `33187853083`/`33187857457`, and Desktop push `33187798963` attempt 2; push
   attempt 1 was concurrency-cancelled and is not called a pass. All publication
   jobs were skipped. Three consolidated bundles pass bounded non-extracting
-  8-entry/6-platform/7-checksum/CycloneDX 1.6/569-component review. Integration,
-  guarded synchronization, and destination evidence remain pending. User-mode
-  final path races, installed-service/driver proof, pre-execution blocking,
-  production accuracy, and Defender replacement remain partial, blocked,
-  technically limited, or unclaimed; the checkpoint and complete antivirus-
-  hardening goal remain active.
+  8-entry/6-platform/7-checksum/CycloneDX 1.6/569-component review. Evidence
+  `b66aaed` passes CI `33191586704` and Desktop PR/dispatch
+  `33191586726`/`33191612118`. PR `#131` merged normally as `1877bbab`;
+  merged-main CI `33194037678` and Desktop `33194037671` pass, with publication
+  skipped. Guarded synchronization copied all 18 paths, modified 17, added one,
+  deleted none, and preserved all eight locks and the protected vault.
+  Destination verification passes exact `289/289` in `651.5s`; its 204,507-byte
+  report SHA-256 is
+  `4b7f531dd61c0c7c00496ad331061d50161c9a6487f6b7ecd1046bb5e8bdcf25`.
+  A first broad destination Rust orchestration remains honestly failed because
+  Defender removed a generated Native harness as inactive
+  `Trojan:Win32/Wacatac.C!ml`; Defender was not weakened, and isolated unchanged
+  Native default/all-feature runs each passed `640/640` plus 21 intentional
+  ignores. Final audit passed 18/18 paths, 8/8 locks, zero residue/processes,
+  and the exact vault. User-mode final path races, installed-service/driver
+  proof, pre-execution blocking, production accuracy, and Defender replacement
+  remain partial, blocked, technically limited, or unclaimed. Checkpoint 2261
+  is closed; the complete antivirus-hardening goal remains active.
 - Current Checkpoint 2260 closure: automatic quarantine now carries the exact
   Native verdict SHA-256 into Local Core's quarantine store. Guard likewise
   hashes its already-opened source and binds it to the selected path. Both reject
