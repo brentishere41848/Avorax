@@ -1,6 +1,6 @@
 # Checkpoint 2260 - Scan Verdict Quarantine Binding
 
-Status: **Implementation and local verification complete; hosted integration pending**
+Status: **Implementation-head local and hosted verification complete; merge and destination integration pending**
 
 ## Scope
 
@@ -104,9 +104,29 @@ Local verification completed on 2026-08-28:
   4,522,733 bytes, 5,357 each `.avoraxq`/`.json`/`.auth`, one
   `.metadata_auth_key`, and zero pending files.
 
-Hosted exact-head CI/package evidence without publication, normal PR merge,
-merged-main verification, guarded zero-delete destination synchronization, and
-destination verification remain pending.
+## Hosted Implementation-Head Verification
+
+Commit `864bfddd14f8dfd9710878b15388fad4a3ee8e07` is the exact head of
+PR `#129`. Hosted evidence completed on 2026-08-28:
+
+- Avorax CI pull-request run `33171430624` passed all five jobs: security,
+  protection, and performance gates; Rust Local Core and Guard; branding and
+  copy; Unix quarantine permissions; and Flutter client/protocol.
+- Desktop Packages push run `33171402684` and pull-request run `33171430602`
+  both passed package contracts, Windows x64 MSI/setup EXE, Linux x64 DEB/tar,
+  macOS x64/arm64 DMGs, and consolidation/checksum jobs at the same exact head.
+- Each package run produced five evidence bundles: Windows, Linux, macOS x64,
+  macOS arm64, and `avorax-desktop-release-0.1.15`. The consolidated bundle
+  contains the required six native release files plus a 569-component lockfile
+  SBOM and `SHA256SUMS.txt`; its push/PR archive SHA-256 digests are
+  `e72222ee154a0221fce703eb4896230954048278f1cffa5c79ef9fdd33e61442`
+  and `399c150f26e62972d178564d37436fead1b6519b012261367eec21adc2f9c2c0`.
+- Both `Publish desktop beta prerelease` jobs were skipped. No hosted artifact
+  was installed, released, or published.
+
+The evidence-only documentation commit, its exact-head hosted checks, normal PR
+merge, merged-main verification, guarded zero-delete destination
+synchronization, and destination verification remain pending.
 
 ## Technical Limits
 

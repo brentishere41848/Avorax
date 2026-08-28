@@ -32212,12 +32212,21 @@ def test_checkpoint_2260_scan_verdict_quarantine_binding_contract():
         assert "SHA-256" in normalized
         assert "rescan" in normalized.lower()
     normalized_checkpoint = re.sub(r"\s+", " ", checkpoint)
-    assert "Status: **Implementation and local verification complete; hosted integration pending**" in normalized_checkpoint
+    assert "Status: **Implementation-head local and hosted verification complete; merge and destination integration pending**" in normalized_checkpoint
     assert "No checkpoint-2260 test ran during the initial scripting phase" in normalized_checkpoint
     assert "Source contract 690" in normalized_checkpoint
     assert "passed exactly `288/288` in `651.3s`" in normalized_checkpoint
     assert "3011587770e133542bf6f007f7213130722d9ff0fbd1e22af65d7b64ba23433b" in normalized_checkpoint
     assert "Adversarial copies missing either the checkpoint verified scope" in normalized_checkpoint
+    for hosted_marker in [
+        "864bfddd14f8dfd9710878b15388fad4a3ee8e07",
+        "33171430624",
+        "33171402684",
+        "33171430602",
+        "569-component lockfile SBOM",
+        "Both `Publish desktop beta prerelease` jobs were skipped",
+    ]:
+        assert hosted_marker in normalized_checkpoint
     normalized_dependencies = re.sub(r"\s+", " ", documents[-1]).lower()
     assert "adds no dependency" in normalized_dependencies
     assert "lockfile change" in normalized_dependencies

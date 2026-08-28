@@ -61,6 +61,26 @@ Lead-engineer product-hardening pass across the Avorax repository. Goal is to mo
   Exact-head hosted evidence, normal PR merge, guarded destination sync, and
   destination verification remain pending.
 
+## 2026-08-28 Checkpoint 2260 implementation-head hosting
+
+- Committed checkpoint implementation, benign regressions, verifier/validator,
+  Source contract 690, and audit evidence as
+  `864bfddd14f8dfd9710878b15388fad4a3ee8e07`, pushed only branch
+  `agent/checkpoint-2260-scan-file-stability`, and opened PR `#129`.
+- Exact-head Avorax CI `33171430624` passed all five security, Rust, Flutter,
+  branding, and Unix permission jobs. Desktop Packages push `33171402684` and
+  PR `33171430602` passed package contracts, Windows x64 MSI/setup EXE, Linux
+  x64 DEB/tar, macOS x64/arm64 DMGs, and consolidation/checksum jobs.
+- Each package run produced Windows, Linux, macOS x64, macOS arm64, and
+  consolidated release evidence bundles. Consolidation required all six native
+  package files, generated the 569-component lockfile SBOM and checksums, and
+  uploaded eight files. Consolidated push/PR archive SHA-256 digests are
+  `e72222ee154a0221fce703eb4896230954048278f1cffa5c79ef9fdd33e61442`
+  and `399c150f26e62972d178564d37436fead1b6519b012261367eec21adc2f9c2c0`.
+- Both publication jobs were skipped; nothing was installed, released, or
+  published. Evidence-head checks, normal merge, merged-main evidence, guarded
+  destination synchronization, and destination verification remain pending.
+
 ## Professional assumptions
 
 - Current repository path is `C:\Users\Brent\Documents\Avorax-main` for this Codex continuation.
