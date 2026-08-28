@@ -178,6 +178,37 @@ try {
     throw "safe quarantine smoke record payload is missing: $($record.quarantine_path)"
   }
 
+  $competingContent = "harmless competing restore destination"
+  [System.IO.File]::WriteAllText(
+    $fixture,
+    $competingContent,
+    [System.Text.Encoding]::ASCII
+  )
+  $blockedRestore = Invoke-LocalCoreJson @{
+    command = "restore_quarantine_item"
+    quarantine_id = $record.quarantine_id
+    confirmed = $true
+  } $inputJson $repo $cargo $manifest $TimeoutSeconds
+  if ($blockedRestore.ok -ne $false -or [string]$blockedRestore.error -notlike "*original path already exists*") {
+    throw "safe quarantine smoke did not reject a competing restore destination: $(Get-BoundedText ($blockedRestore | ConvertTo-Json -Compress))"
+  }
+  if ([System.IO.File]::ReadAllText($fixture, [System.Text.Encoding]::ASCII) -ne $competingContent) {
+    throw "safe quarantine smoke changed the competing restore destination"
+  }
+  if (-not (Test-Path -LiteralPath $record.quarantine_path -PathType Leaf)) {
+    throw "safe quarantine smoke removed the quarantined payload after blocked restore"
+  }
+  $blockedList = Invoke-LocalCoreJson @{ command = "list_quarantine" } $inputJson $repo $cargo $manifest $TimeoutSeconds
+  $stillQuarantined = @($blockedList.records) | Where-Object {
+    $_.quarantine_id -eq $record.quarantine_id -and
+    $_.status -eq "quarantined" -and
+    $_.action_taken -eq "quarantined"
+  } | Select-Object -First 1
+  if ($blockedList.ok -ne $true -or $null -eq $stillQuarantined) {
+    throw "safe quarantine smoke changed metadata after blocked restore: $(Get-BoundedText ($blockedList | ConvertTo-Json -Compress))"
+  }
+  Remove-Item -LiteralPath $fixture -Force -ErrorAction Stop
+
   $restore = Invoke-LocalCoreJson @{
     command = "restore_quarantine_item"
     quarantine_id = $record.quarantine_id
@@ -203,6 +234,7 @@ try {
   Write-Host "Threats: $($threats.Count)"
   Write-Host "Action mode: autoQuarantineConfirmedOnly"
   Write-Host "Quarantine id: $($record.quarantine_id)"
+  Write-Host "Competing destination preserved: true"
   Write-Host "Restore status: $($restore.record.status)"
 } finally {
   $env:PATH = $previousPath

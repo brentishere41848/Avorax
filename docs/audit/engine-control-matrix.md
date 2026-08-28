@@ -5794,3 +5794,24 @@ skipped. Evidence `61c3ed2`, merge `25115ffe`, exact merged-main workflows,
 guarded sync, destination `290/290`, and final 26/26-path plus 8/8-lock audit
 close checkpoint 2262. Installed cross-identity service/driver, immutable lease,
 production accuracy, pre-execution, and Defender-replacement claims remain open.
+
+## Checkpoint 2263 Restore No-Replace Matrix
+
+| Control / engine responsibility | State | Evidence boundary |
+| --- | --- | --- |
+| Final restore activation | **Locally verified** | Windows zero-flag `MoveFileExW`, Linux/Android `renameat2(RENAME_NOREPLACE)`, and Apple `renamex_np(RENAME_EXCL)` are the only supported activation paths; hosted target evidence remains pending. |
+| Competing destination | **Locally verified** | Direct Platform `2/2` and Local Core `1/1` harmless fixtures preserve destination and staged bytes after rejection. |
+| Safe restore smoke | **Locally verified** | Temporary collision fails, preserves authenticated quarantined state and payload, and normal restore proceeds only after fixture-owned collision removal. |
+| Other operating systems | **Disabled / fail-visible** | No replacement-capable rename fallback exists. |
+| Ancestor/path authority | **Technically limited** | User-mode ancestor checks remain point-in-time and cannot defeat administrators, SYSTEM/root, hostile filesystems, or kernel compromise. |
+| Detection pipeline engines | **Unchanged** | Signature/hash, local rule/YARA, static/PE/archive, heuristic, ML, Authenticode, process observation, and verdict aggregation are unaffected. |
+
+Checkpoint 2263 source, tests, smoke, exact `291`-step verifier/validator,
+source contracts, and docs were scripted before execution. No checkpoint-2263
+test ran during that phase. After the batch freeze, Source `693/693`, focused
+fixtures, safe smoke, strict Clippy, both locked workspaces, all-feature release,
+Flutter `852/852`, protocols, and exact definitive `291/291` in `666.2s` passed.
+PS5/PS7 accepted report SHA-256
+`92360dc643cb81f8e4c4eb1bdcd181a1c705870524d29213bf842a44f5e61f3b`
+and all six adversarial mutations rejected. Hosted, merge, synchronization, and
+destination evidence remains pending; the complete goal remains active.

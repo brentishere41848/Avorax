@@ -7912,3 +7912,21 @@ locks, zero residue/processes, and the exact 16,072-file vault. Installed
 cross-identity service proof, immutable file leases, signed driver/kernel
 mediation, production accuracy/signing, pre-execution blocking, Defender
 replacement, and the complete antivirus-hardening goal remain open.
+
+## Checkpoint 2263 - Restore No-Replace
+
+Checkpoint 2263 is locally verified and awaiting hosted integration. Quarantine restore
+activation now uses an atomic no-replace OS primitive on Windows, Linux/Android,
+and Apple platforms; unsupported platforms fail visibly. A destination created
+after preflight must be preserved rather than replaced. Local Core, platform
+fixtures, safe smoke, verifier/validator, exact `291`-step contract, source
+contracts, and audit docs are scripted. No checkpoint-2263 test ran during the
+scripting phase. After the batch freeze, Source `693/693`, focused `2/2` plus
+`1/1`, safe smoke, strict Clippy, both locked workspaces, all-feature release,
+Flutter analyze/`852/852`, protocols, and exact definitive `291/291` in `666.2s`
+passed. Both validator hosts accepted report SHA-256
+`92360dc643cb81f8e4c4eb1bdcd181a1c705870524d29213bf842a44f5e61f3b`;
+all six adversarial mutations rejected. The vault remains exact. Hosted, merge,
+sync, and destination proof remain pending. Path-ancestor replacement by
+privileged actors remains a documented point-in-time user-mode limitation; the
+full goal remains active.
