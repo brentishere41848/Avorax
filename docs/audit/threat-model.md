@@ -3705,6 +3705,57 @@ merge, merged-main, synchronized-destination, and destination verification
 remain open, and all cooperative/installed/kernel/pre-execution/Defender limits
 remain unchanged.
 
+Checkpoint 2270 post-freeze local evidence passes Source `701/701`, Windows
+recovery `19/19`, update service `229/229 + 4/4`, both locked workspaces/
+release, Flutter/protocols, exact `298/298`, authentic PS5/PS7 validation, and
+all `14/14` hostile report cases. The exact report and adversarial SHA-256
+values are `fb35ed8fe64b352418b461d7e53f048fa380cd301bc18a1f703a059c1c5571ef`
+and `63e13f73af15cea62d8221efda72174bdb2de3abdcc2ec5d0d9fbb93f2182914`.
+This verifies the route contract and local regression state, not target Unix
+filesystem behavior. The residual threats above remain until hosted Ubuntu
+passes, and privileged/hostile, confidentiality, transaction, installed,
+kernel/pre-execution, and Defender boundaries remain unchanged afterward.
+
+Permission repair narrows later pathname access but cannot revoke an existing
+file descriptor or undo prior disclosure. An attacker that copied the HMAC key
+while modes were broad can forge otherwise well-formed recovery state; Avorax
+cannot infer that history from current mode bits. Suspected exposure therefore
+requires key replacement and manual review rather than trusted automatic
+reconciliation.
+
+Exact implementation `4a01376b` adds target evidence: hosted Ubuntu 24.04 CI
+job `99171298396` runs all three selected recovery tests and passes. This proves
+the intended mode creation and repair behavior on that runner filesystem. It
+does not prove that modes were never broad before recovery, revoke a previously
+opened handle, invalidate a copied key, or expand the trusted boundary to root,
+hostile storage, installed services, kernels, drivers, or pre-execution control.
+
+## Checkpoint 2270 Unix Recovery Permission Threat Delta
+
+Threat: a permissive umask, pre-existing broad modes, or later mode drift can
+expose or make executable the local Unix recovery directory, HMAC key, lock,
+or authenticated journal. Source-only permission claims do not prove target
+filesystem behavior.
+
+Scripted mitigation: fixed Ubuntu 24.04 CI creates only harmless temporary
+recovery state, requires exact directory mode `0700` and file mode `0600`,
+deliberately broadens those temporary objects to `0777`, and requires the
+shared hardeners to repair permissions before authenticated reconciliation.
+The verifier and validator pin both the route and its exact limitations.
+
+Residual threat: Unix modes are access control, not encryption. Root,
+administrators, a hostile filesystem, storage rollback/reordering, kernel
+compromise, or key deletion remain outside the guarantee. macOS and Android
+runtime semantics, installed service identity, power-cut durability, whole-
+package atomicity, driver/pre-execution authority, and Defender replacement
+remain unverified or technically limited.
+
+No checkpoint-2270 test ran during the scripting phase. No live malware,
+EICAR, fixture execution, Defender weakening, install, service/driver start,
+release, publication, or protected-vault mutation occurred. The 16,072-file
+vault has zero pending, and the complete antivirus-hardening goal remains
+active.
+
 ## Checkpoint 2269 Authenticated Directory Recovery Threat Delta
 
 The protected transition is an update or rollback directory activation that

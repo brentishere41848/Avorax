@@ -87,6 +87,15 @@ jobs:
             --manifest-path core/avorax_platform_security/Cargo.toml \
             -- --test-threads=1
 
+      - name: Test update recovery Unix runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo test --locked \
+            --manifest-path core/avorax_update_service/Cargo.toml \
+            activation_recovery_unix_ \
+            -- --test-threads=1
+
       - name: Test Local Core Unix permission routing
         shell: bash
         run: |

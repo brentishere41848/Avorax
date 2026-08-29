@@ -2424,6 +2424,38 @@ blob comparisons pass. Checkpoint 2265 is closed with no dependency, license,
 or network-surface delta. Production signing/notarization, final notice
 provenance, enterprise deployment, and release approval remain separate.
 
+Checkpoint 2270 post-freeze strict locked Clippy, both locked workspace test
+variants, locked all-target/all-feature release, the dependency gate inside
+exact `298/298`, and read-only lockfile-diff checks pass. No manifest or
+lockfile changed and no package, version, registry source, feature, runtime
+fetch, dependency, notice obligation, or license class was added. Hosted
+package/SBOM comparison, integration, destination eight-lock audit, and
+closure remain pending.
+
+Implementation-head Desktop Packages push/PR runs `33279152023` and
+`33279187604` pass dependency/license evidence, six platform assets, seven
+checksums, and CycloneDX 1.6 with 569 components; publication skips. Untouched
+consolidated artifacts `9722589339`/`9722639285` pass bounded in-stream review
+without extraction or execution. No manifest, lockfile, dependency, version,
+source, feature, runtime fetch, notice obligation, or license class changed.
+Evidence-head, merged-main, destination eight-lock audit, and closure remain.
+
+## Checkpoint 2270 Dependency Delta
+
+Checkpoint 2270 adds no dependency and requires no lockfile change. The Unix
+mode fixtures use only Rust standard-library `PermissionsExt`, the existing
+update-service crate, the already pinned internal platform-security crate, and
+the existing fixed Ubuntu 24.04 GitHub Actions toolchain. No package, version,
+registry, source, feature, network runtime, or license class changes.
+
+No checkpoint-2270 test ran during the scripting phase. Locked builds/tests,
+exact-298 dependency gate, hosted package/SBOM comparison, synchronization,
+and destination eight-lock audit remain pending. No live malware, EICAR,
+fixture execution, Defender change, install, service/driver start, release,
+publication, or protected-vault mutation is involved. The vault remains 16,072
+files with zero pending, and the complete antivirus-hardening goal remains
+active.
+
 ## Checkpoint 2269 Dependency Delta
 
 Checkpoint 2269 adds direct update-service dependency edges to already locked

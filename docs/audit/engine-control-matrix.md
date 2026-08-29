@@ -6094,3 +6094,49 @@ close checkpoint 2269. Installed elevated-service and Unix runtime recovery,
 power-cut/multi-component atomicity, privileged-hostile filesystem resistance,
 driver/pre-execution authority, Defender replacement, and the complete
 antivirus-hardening goal remain partial, technically limited, or open.
+
+## Checkpoint 2270 Control Delta
+
+| Control/engine | Responsibility | Status before execution | Exact blocker or evidence route |
+| --- | --- | --- | --- |
+| Unix recovery directory hardening | Keep recovery state owner-only and non-executable | Partial | Exact `0700` Ubuntu fixture is scripted, not run |
+| Unix recovery key hardening | Restrict local HMAC key reads/writes | Partial | Exact `0600` Ubuntu fixture is scripted; key is not encrypted |
+| Unix lock and journal hardening | Restrict synchronization/authenticated state files | Partial | Exact `0600` Ubuntu fixture is scripted, not run |
+| Unix permission repair | Repair broadened modes before authenticated recovery | Partial | Harmless `0777` repair fixture is scripted, not run |
+| Windows recovery security | DPAPI and exact DACL | Verified checkpoint 2269 | Unchanged |
+| macOS/Android recovery runtime | Exercise target filesystem semantics | Partial | No target runtime route in this checkpoint |
+| Hash/signature intelligence | Match trusted local definitions | Unchanged | No checkpoint-2270 detector change |
+| Local rules/YARA | Parse and evaluate bounded rules | Unchanged | No checkpoint-2270 rule change |
+| Static/PE/archive analysis | Inspect bounded file structure/content | Unchanged | No checkpoint-2270 analyzer change |
+| Heuristics/ML/verdict aggregation | Produce conservative explainable verdicts | Unchanged | No checkpoint-2270 threshold or model change |
+| Suspicious-process observation | Best-effort user-mode post-start observation | Unchanged | No checkpoint-2270 process authority change |
+| All other custom engines and UI controls | Retain documented responsibility/status | Unchanged | Existing matrix entries remain authoritative |
+
+No checkpoint-2270 test ran during the scripting phase. Fixed Ubuntu CI,
+Source 701, verifier/validator exact 298, and seven dual-host adversarial
+mutations are scripted. Until hosted execution passes, Unix runtime remains
+partial. Root/hostile filesystem, installed service, macOS/Android, power-loss,
+driver/pre-execution, Defender replacement, and complete-project claims remain
+limited or open. The protected vault remains 16,072 files with zero pending.
+
+Post-freeze local regression and route-contract evidence now passes Source
+`701/701`, recovery `19/19`, update service `229/229 + 4/4`, platform `18/18`,
+both locked workspaces/release, Flutter/protocols, exact `298/298`, and dual-
+host authentic plus `14/14` adversarial validation. The Unix rows remain
+**Partial** because these local Windows runs cannot select the two `cfg(unix)`
+runtime fixtures. They become verified only after the fixed Ubuntu 24.04 job
+selects all three filtered tests and passes. Every detection/custom-engine row
+is unchanged.
+
+Unix permission repair is **Technically limited** for prior exposure: it cannot
+revoke an existing handle, erase a copied key/journal, or restore journal trust
+after key disclosure. The control must fail to manual review and key replacement
+when such exposure is suspected.
+
+Implementation `4a01376b` passes hosted CI `33279187609`; Ubuntu job
+`99171298396` executes exact filter `activation_recovery_unix_` and passes all
+three selected tests. The Unix recovery-directory, key/lock/journal, and mode-
+repair rows are therefore **Verified on hosted Ubuntu 24.04**. Package push/PR
+runs also pass all desktop outputs and bounded SBOM review. macOS/Android runtime
+and every prior-exposure, privileged, installed, transaction, driver,
+pre-execution, and Defender row retain their prior partial/limited/open state.

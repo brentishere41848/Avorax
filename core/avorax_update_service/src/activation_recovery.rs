@@ -1030,6 +1030,15 @@ mod tests {
     use super::*;
     use tempfile::tempdir;
 
+    #[cfg(unix)]
+    fn assert_unix_mode(path: &Path, expected: u32) {
+        use std::os::unix::fs::PermissionsExt;
+
+        let metadata = std::fs::symlink_metadata(path).unwrap();
+        assert!(!metadata.file_type().is_symlink());
+        assert_eq!(metadata.permissions().mode() & 0o7777, expected);
+    }
+
     fn setup_transaction() -> (tempfile::TempDir, PathBuf, DirectoryActivationTransaction) {
         let root = tempdir().unwrap();
         let install = root.path().join("install");
@@ -1434,5 +1443,93 @@ mod tests {
             MAX_RECOVERY_REPORT_ERROR_CHARS
         );
         assert_eq!(bounded_error_text("short"), "short");
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn activation_recovery_unix_artifacts_are_owner_only_and_non_executable() {
+        let (_root, _install, mut transaction) = setup_transaction();
+        transaction.record.had_destination = true;
+        write_authenticated_journal(
+            &transaction.recovery_root,
+            &transaction.journal_path,
+            &transaction.record,
+        )
+        .unwrap();
+
+        let key_path = transaction.recovery_root.join(RECOVERY_KEY_NAME);
+        let lock_path = transaction.recovery_root.join(RECOVERY_LOCK_NAME);
+        assert_unix_mode(&transaction.recovery_root, 0o700);
+        assert_unix_mode(&key_path, 0o600);
+        assert_unix_mode(&lock_path, 0o600);
+        assert_unix_mode(&transaction.journal_path, 0o600);
+        assert!(std::fs::read_to_string(key_path)
+            .unwrap()
+            .starts_with("unix-private:"));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn activation_recovery_unix_repairs_private_modes_before_use() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let (_root, install, mut transaction) = setup_transaction();
+        transaction.record.had_destination = true;
+        write_authenticated_journal(
+            &transaction.recovery_root,
+            &transaction.journal_path,
+            &transaction.record,
+        )
+        .unwrap();
+
+        let recovery_root = transaction.recovery_root.clone();
+        let key_path = recovery_root.join(RECOVERY_KEY_NAME);
+        let lock_path = recovery_root.join(RECOVERY_LOCK_NAME);
+        let journal_path = transaction.journal_path.clone();
+        std::fs::set_permissions(&recovery_root, std::fs::Permissions::from_mode(0o777)).unwrap();
+        for path in [&key_path, &lock_path, &journal_path] {
+            std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o777)).unwrap();
+        }
+        drop(transaction);
+
+        let summary = recover_pending_directory_activations(&install).unwrap();
+
+        assert_eq!(summary.aborted_pre_activation, 1);
+        assert_eq!(summary.removed_journals, 1);
+        assert_unix_mode(&recovery_root, 0o700);
+        assert_unix_mode(&key_path, 0o600);
+        assert_unix_mode(&lock_path, 0o600);
+        assert!(!journal_path.exists());
+    }
+
+    #[test]
+    fn activation_recovery_unix_runtime_contract_is_wired() {
+        let source = include_str!("activation_recovery.rs");
+        let workflow = include_str!("../../../.github/workflows/ci.yml");
+
+        for marker in [
+            "activation_recovery_unix_artifacts_are_owner_only_and_non_executable",
+            "activation_recovery_unix_repairs_private_modes_before_use",
+            "assert_unix_mode(&transaction.recovery_root, 0o700)",
+            "assert_unix_mode(&key_path, 0o600)",
+            "assert_unix_mode(&lock_path, 0o600)",
+            "assert_unix_mode(&transaction.journal_path, 0o600)",
+        ] {
+            assert!(
+                source.contains(marker),
+                "missing Unix recovery marker: {marker}"
+            );
+        }
+        for marker in [
+            "name: Test update recovery Unix runtime",
+            "--manifest-path core/avorax_update_service/Cargo.toml",
+            "activation_recovery_unix_",
+            "-- --test-threads=1",
+        ] {
+            assert!(
+                workflow.contains(marker),
+                "missing Unix CI marker: {marker}"
+            );
+        }
     }
 }

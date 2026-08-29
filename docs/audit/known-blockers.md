@@ -4224,3 +4224,41 @@ No installed elevated service E2E, Windows power-cut VM test, Unix runtime
 recovery test, production signing/deployment, driver/pre-execution proof, or
 Defender replacement is claimed. The 16,072-file vault remains untouched with
 zero pending, and the complete antivirus-hardening goal remains active.
+
+## Checkpoint 2270 Unix Recovery Runtime Limits
+
+Checkpoint 2270 scripts exact Ubuntu runtime evidence for `0700` recovery
+directory and `0600` key/lock/journal modes, including repair from deliberately
+broad temporary modes before authenticated recovery. No checkpoint-2270 test
+ran during the scripting phase, so the control remains partial until the fixed
+hosted Ubuntu 24.04 job passes.
+
+This does not encrypt the Unix key, protect against root/administrators or a
+hostile filesystem, prove macOS/Android semantics, exercise an installed
+service identity, or provide power-loss-proof multi-component transactions.
+Driver/pre-execution enforcement, Defender replacement, production signing/
+deployment, and the complete antivirus-hardening goal remain open. No live
+malware or protected-vault mutation is involved; the exact 16,072-file vault
+has zero pending.
+
+The post-freeze local batch passes Source `701/701`, recovery `19/19`, update
+service `229/229 + 4/4`, strict locked lint/workspaces/release, Flutter and
+protocols, exact `298/298`, and both authentic plus `14/14` hostile report
+cases. This removes local source/wiring/regression uncertainty only. The exact
+Ubuntu permission-runtime blocker remains until hosted CI executes the two
+`cfg(unix)` fixtures; all root/hostile-filesystem, key-confidentiality,
+macOS/Android, installed-service, transaction, driver/pre-execution, Defender-
+replacement, signing/deployment, and whole-goal blockers above remain.
+
+Unix mode repair also cannot revoke handles opened before repair or undo a
+copied recovery key/journal. Authenticity is blocked after suspected disclosure
+until key replacement and manual review; automatic reconciliation must not be
+claimed as trustworthy in that state.
+
+Hosted Ubuntu runtime is no longer a blocker for this control: exact commit
+`4a01376b` passes CI `33279187609`, and job `99171298396` reports all three
+selected Unix recovery tests green. Package push/PR and bounded consolidated
+artifact review also pass with publication skipped. macOS/Android runtime,
+prior disclosure/open handles, key confidentiality, installed identity,
+transactionality, privileged actors/hostile filesystems, signing/deployment,
+driver/pre-execution, Defender replacement, and whole-goal blockers remain.
