@@ -1682,3 +1682,12 @@ Final review tightened the mandatory technical-limit contract: mode repair
 cannot undo prior key/journal disclosure, revoke existing handles, or restore
 authenticity after key copying. The earlier exact-298 report is superseded; the
 final-source verifier and both-host hostile-validation result above are final.
+
+Implementation-head hosted verification passes Avorax CI `33279187609`; fixed
+Ubuntu job `99171298396` selects exact `activation_recovery_unix_` tests and
+reports `3 passed; 0 failed; 244 filtered out`. Package push/PR runs
+`33279152023`/`33279187604` pass all six platform outputs and skip publication.
+Consolidated artifacts `9722589339`/`9722639285` pass bounded in-stream exact
+8-root/6-platform/7-checksum/CycloneDX-1.6/569-component validation without
+extraction or execution. Evidence-head, merged-main, and destination reruns are
+still required.

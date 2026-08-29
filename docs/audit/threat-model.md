@@ -3723,6 +3723,13 @@ cannot infer that history from current mode bits. Suspected exposure therefore
 requires key replacement and manual review rather than trusted automatic
 reconciliation.
 
+Exact implementation `4a01376b` adds target evidence: hosted Ubuntu 24.04 CI
+job `99171298396` runs all three selected recovery tests and passes. This proves
+the intended mode creation and repair behavior on that runner filesystem. It
+does not prove that modes were never broad before recovery, revoke a previously
+opened handle, invalidate a copied key, or expand the trusted boundary to root,
+hostile storage, installed services, kernels, drivers, or pre-execution control.
+
 ## Checkpoint 2270 Unix Recovery Permission Threat Delta
 
 Threat: a permissive umask, pre-existing broad modes, or later mode drift can

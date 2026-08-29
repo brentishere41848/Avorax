@@ -14739,3 +14739,26 @@ pending.
   Source, and audit docs now require key replacement/manual review after copied-
   key exposure. The preceding definitive report is superseded; the final-source
   `298/298` rerun above includes this stricter contract and is authoritative.
+
+## 2026-08-30 - Checkpoint 2270 Implementation-Head Hosted Evidence
+
+- Exact implementation `4a01376b27c332376815a031775baf7d456cb9bd`
+  passes all five Avorax CI jobs in run `33279187609`.
+- Ubuntu 24.04 job `99171298396` passes the dedicated recovery step with exact
+  tests `activation_recovery_unix_artifacts_are_owner_only_and_non_executable`,
+  `activation_recovery_unix_repairs_private_modes_before_use`, and
+  `activation_recovery_unix_runtime_contract_is_wired`: `3 passed`, zero
+  failed, 244 filtered out.
+- Desktop Packages push/PR runs `33279152023`/`33279187604` pass contracts,
+  Windows MSI/EXE, Linux DEB/tar, both macOS DMGs, consolidation, checksums, and
+  lockfile SBOM. Both publication jobs skip.
+- Consolidated artifact `9722589339` is 132,644,983 bytes with SHA-256
+  `06ab72f4b4aa1b326fed68735a9c7d8f5fac30ceedccbaee9e8ba1248f28473c`;
+  artifact `9722639285` is 132,671,691 bytes with SHA-256
+  `54d084be42011a21886d513d1bbb867f170c67e0c1b234673c54bcc536e2d091`.
+  Both pass bounded in-stream 8-root/6-platform/7-checksum/CycloneDX-1.6/
+  569-component review without extraction or execution.
+- Hosted Ubuntu mode/repair evidence is verified. Prior disclosure/open handles,
+  macOS/Android runtime, installed authority, transactionality, privileged
+  actors, pre-execution/driver, Defender replacement, integration, destination,
+  and the whole goal remain open.

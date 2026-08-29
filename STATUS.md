@@ -8401,3 +8401,16 @@ prior Unix key/journal disclosure, revoke already-open handles, or restore
 authenticity after key copying; replacement and manual review are required.
 The preceding local report predating this stricter validator contract is
 superseded; the authoritative final-source exact-298 result is recorded above.
+
+Exact implementation `4a01376b27c332376815a031775baf7d456cb9bd`
+now passes all five Avorax CI jobs in `33279187609`. Hosted Ubuntu job
+`99171298396` runs exact filter `activation_recovery_unix_` and passes the two
+runtime fixtures plus wiring contract, `3/3`; Ubuntu `0700`/`0600` modes and
+repair are therefore verified. Desktop Packages push/PR
+`33279152023`/`33279187604` pass all six platform artifacts, checksums, and
+CycloneDX 1.6/569-component SBOM, with publication skipped. Consolidated
+artifacts `9722589339`/`9722639285` pass bounded non-extracting review. macOS/
+Android runtime, prior-disclosure/open-handle recovery, installed context,
+power-loss transactionality, privileged actors, driver/pre-execution,
+Defender replacement, integration, destination, and whole-goal closure remain
+open.

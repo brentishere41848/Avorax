@@ -6132,3 +6132,11 @@ Unix permission repair is **Technically limited** for prior exposure: it cannot
 revoke an existing handle, erase a copied key/journal, or restore journal trust
 after key disclosure. The control must fail to manual review and key replacement
 when such exposure is suspected.
+
+Implementation `4a01376b` passes hosted CI `33279187609`; Ubuntu job
+`99171298396` executes exact filter `activation_recovery_unix_` and passes all
+three selected tests. The Unix recovery-directory, key/lock/journal, and mode-
+repair rows are therefore **Verified on hosted Ubuntu 24.04**. Package push/PR
+runs also pass all desktop outputs and bounded SBOM review. macOS/Android runtime
+and every prior-exposure, privileged, installed, transaction, driver,
+pre-execution, and Defender row retain their prior partial/limited/open state.

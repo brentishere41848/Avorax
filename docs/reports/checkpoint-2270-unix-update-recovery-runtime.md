@@ -113,3 +113,31 @@ access only. It cannot undo prior key/journal disclosure or revoke existing
 handles; copied-key state requires key replacement and manual review. The first
 local `298/298` report predating this contract is superseded; the final-source
 `635.4s` report above includes the mandatory limitation and is authoritative.
+
+## Implementation-head hosted evidence
+
+Exact implementation `4a01376b27c332376815a031775baf7d456cb9bd`
+passes all five Avorax CI jobs in run `33279187609`. Ubuntu 24.04 job
+`99171298396` passes the dedicated step and selects exactly the two Unix runtime
+fixtures plus the wiring contract: `3 passed; 0 failed; 244 filtered out`.
+This verifies exact `0700` recovery-directory, exact `0600` key/lock/journal,
+and successful mode repair on the hosted Ubuntu filesystem.
+
+Desktop Packages push/PR runs `33279152023`/`33279187604` pass contracts,
+Windows MSI/EXE, Linux DEB/tar, macOS arm64/x64 DMG, consolidation, checksums,
+and lockfile SBOM; both publication jobs are skipped. Untouched consolidated
+artifacts `9722589339` and `9722639285` were reviewed in-stream without
+extraction or execution. They are respectively 132,644,983 bytes with SHA-256
+`06ab72f4b4aa1b326fed68735a9c7d8f5fac30ceedccbaee9e8ba1248f28473c`
+and 132,671,691 bytes with SHA-256
+`54d084be42011a21886d513d1bbb867f170c67e0c1b234673c54bcc536e2d091`.
+Both pass exact 8-root/6-platform/7-checksum inventory and CycloneDX 1.6 with
+569 components.
+
+The Ubuntu 24.04 mode and repair rows are now **Verified hosted**. This does
+not undo prior disclosure, revoke open handles, encrypt the key, prove macOS/
+Android runtime, exercise an installed service identity, or close any power-
+loss, privileged actor, hostile filesystem, driver/pre-execution, Defender-
+replacement, signing/deployment, or whole-project limit. Evidence-head hosted
+checks, normal merge, guarded destination synchronization, destination
+verification, and closure remain pending.

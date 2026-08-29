@@ -4254,3 +4254,11 @@ Unix mode repair also cannot revoke handles opened before repair or undo a
 copied recovery key/journal. Authenticity is blocked after suspected disclosure
 until key replacement and manual review; automatic reconciliation must not be
 claimed as trustworthy in that state.
+
+Hosted Ubuntu runtime is no longer a blocker for this control: exact commit
+`4a01376b` passes CI `33279187609`, and job `99171298396` reports all three
+selected Unix recovery tests green. Package push/PR and bounded consolidated
+artifact review also pass with publication skipped. macOS/Android runtime,
+prior disclosure/open handles, key confidentiality, installed identity,
+transactionality, privileged actors/hostile filesystems, signing/deployment,
+driver/pre-execution, Defender replacement, and whole-goal blockers remain.
