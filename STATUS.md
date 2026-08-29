@@ -8032,7 +8032,7 @@ accuracy, signing, deployment, or Defender-replacement limits.
 
 ## Checkpoint 2266 - Signed Update Extraction No-Replace
 
-Status: **Local definitive verification passed / hosted pending**.
+Status: **Closed through hosted integration and synchronized destination verification**.
 
 Signed update-package extraction now activates each completed, synced temporary
 payload through the shared operating-system atomic no-replace primitive after
@@ -8077,3 +8077,15 @@ skipped. Both consolidated artifacts pass bounded non-extracting/non-executing
 8-root/6-platform/7-checksum/CycloneDX-1.6/569-component review. Evidence-head,
 normal merge, merged-main, guarded synchronization, destination verification,
 and closure remain pending.
+
+Evidence `954f7139` and normal PR `#141` merge `7c90919a` pass exact-head and
+merged-main CI/packages with publication skipped. Both additional consolidated
+artifacts pass bounded non-extracting/non-executing 8-root/6-platform/
+7-checksum/CycloneDX-1.6/569-component review. After two fail-visible
+pre-activation PowerShell 5.1 compatibility failures, guarded synchronization
+applies the exact 15-path zero-delete batch. Destination Source `696/696`, broad
+Rust/Flutter/protocol regressions, exact `294/294`, all eight lockfiles, zero
+pending residue/processes, all preserved backups, and the exact vault pass.
+Checkpoint 2266 is closed. Per-file transaction, privileged actor, hostile
+filesystem, installed service/driver, pre-execution, signing, deployment,
+Defender-replacement, and whole-project limits remain open.

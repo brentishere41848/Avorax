@@ -4208,3 +4208,14 @@ or execution. This is cross-target build and regression evidence, not an
 installed race, driver, or pre-execution proof. Android, normal integration,
 merged-main, synchronization, destination, and closure evidence remains pending;
 all residual threats above remain active.
+
+Evidence-head and merged-main CI/packages, bounded artifact inspection, normal
+PR merge, guarded exact synchronization, full destination regressions, exact
+`294/294`, and final 15-blob/8-lock/backup/vault audit close this checkpoint
+threat delta. Two sync attempts failed before activation on PowerShell 5.1 API
+compatibility and did not mutate the destination; the repaired third attempt
+passed. This proves the implemented Windows final-name collision control and
+desktop cross-target build compatibility only. Android runtime/build,
+whole-package atomicity, point-in-time ancestor authority, privileged actors,
+hostile filesystems, installed service/driver authority, pre-execution
+blocking, and every other residual threat above remain unchanged.

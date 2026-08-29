@@ -1,6 +1,6 @@
 # Checkpoint 2266 - Signed Update Extraction No-Replace
 
-Status: **Implementation-head hosted verification passed / integration pending**
+Status: **Closed through hosted integration and synchronized destination verification**
 
 ## Risk
 
@@ -26,13 +26,13 @@ created after the last absence check could be silently overwritten.
 
 | Control | Current state | Evidence boundary |
 | --- | --- | --- |
-| Absent target activation | Locally verified | Harmless staged bytes move to the final target and the staging name disappears. |
-| Competing target race | Locally verified | Both staged and competing ASCII bytes remain; error contains `without replacing`. |
-| Parent/path ordering | Locally verified | Two destination-parent checks surround the absent-target preflight and precede no-replace activation. |
-| Platform boundary | Windows runtime verified / cross-target build pending | The Windows focused fixture passes; Linux/Android and Apple hosted package builds remain pending. |
+| Absent target activation | Verified | Harmless staged bytes move to the final target and the staging name disappears in local and synchronized-destination tests. |
+| Competing target race | Verified | Both staged and competing ASCII bytes remain; error contains `without replacing` in local and destination tests. |
+| Parent/path ordering | Verified | Source contract pins two destination-parent checks around absent-target preflight and before no-replace activation. |
+| Platform boundary | Windows runtime and desktop cross-target build verified | Windows runtime fixture passes; hosted Windows, Linux, and Apple package builds pass. Android runtime/build remains unverified. |
 | Unsupported target behavior | Disabled / fail-visible | No replacement-capable fallback. |
-| Definitive evidence | Locally verified | Focused verifier step, exact `294/294`, strict PS5/PS7 validation, and ten host/mutation rejections pass. |
-| Detection/custom engines | Unchanged | Full regression keeps every existing signal, threshold, allowlist, exclusion, and verdict responsibility accounted for. |
+| Definitive evidence | Verified | Local and destination exact `294/294`, strict PS5/PS7 validation, local content mutation rejection, hosted integration, and exact-blob audit pass. |
+| Detection/custom engines | Unchanged / broad regression green | Full local, hosted, and destination regression keeps every existing signal, threshold, allowlist, exclusion, and verdict responsibility accounted for. |
 
 The new focused step is `update-service payload extraction atomic no-replace
 regressions` with filter `payload_extraction_no_replace`. Source contract 696
@@ -118,6 +118,55 @@ Bounded stream inspection, without extraction or execution, verifies exact
 both artifacts. Evidence-head reruns, normal merge, merged-main evidence,
 guarded synchronization, destination verification, and closure remain pending.
 
+## Evidence Head And Merge
+
+Evidence commit `954f713990f725d4bb8263466f43bb2f64968eb2` passes exact-head
+CI `33240400063` and Desktop Packages `33240400070`, with publication skipped.
+Artifact `9711435827` is 132,342,121 bytes with SHA-256
+`806d79252cb8ca2d969072c03815efdeb9e754c0a8afe48c64126ee0f546aaad`.
+Bounded stream review passes exact 8 roots, 6 platform files, 7 checksum
+targets, and CycloneDX 1.6 / 569 components without extraction or execution.
+
+PR `#141` merges normally as
+`7c90919a6a859b7b366f8da2ae12e5567f846f53`. Exact merged-main CI
+`33241371058` and Desktop Packages `33241371099` pass, with publication
+skipped. Artifact `9711617151` is 132,346,444 bytes with SHA-256
+`f0ef070e5934050e3f067b56a55b85a55cb43349e89a63749fa4388d5f10358b`
+and passes the same bounded non-extracting/non-executing review.
+
+## Synchronized Destination Closure
+
+- The first guarded-sync attempt failed before activation because Windows
+  PowerShell 5.1 lacks the requested three-argument `System.IO.File.Move`
+  overload. The second failed before activation because PowerShell 5.1 rejected
+  a null `System.IO.File.Replace` backup path. Both destination snapshots stayed
+  unchanged; their 14-file exact-base backup inventories are preserved.
+- The repaired third attempt uses an explicit replacement-backup path and the
+  two-argument move for additions. It applies 14 modified plus one added path,
+  zero deleted. The sync report SHA-256 is
+  `e18645465b6b89da9828767adee730fd8a8a1dee922d49c25c5b22e3505a1791`.
+- Destination formatting, Source `696/696`, focused extraction `3/3`, update
+  service `209/209`, strict Clippy, both locked workspace variants, locked
+  all-feature release, Flutter analyze and `852/852`, and protocol analyze/tests
+  `14/14 + 6/6` pass.
+- The destination no-skip/no-Defender verifier passes exact `294/294`, zero
+  failed steps, in `634.6s`. Its 211,753-byte report SHA-256 is
+  `922c46f6896c665d76938c6379c57231ffc44183ef842e4420b5cae8761b343c`;
+  embedded PowerShell 5.1 and 7 validation accepts it.
+- The destination adversarial audit accepts both authentic hosts and rejects
+  ten mutation candidates. Because those candidates live under the source
+  `.verification`, repository containment rejects them before their content is
+  evaluated; this is not credited as duplicate content-mutation evidence. The
+  definitive local run already rejects all five intended content mutations on
+  both hosts, and final audit proves the destination validator is the exact
+  merged blob. Destination adversarial result SHA-256 is
+  `128ac21c94496eab98dab1e1107d3900e8d04c637f9bee8e826ec1d56c6e833c`.
+- Final destination audit report SHA-256
+  `d933d3f2e3e9270ec32b3e4c2cb1399d8c9d9546dd22a1d1b41e7022f656d2d2`
+  confirms all 15 exact merge/source/destination blobs, all eight lockfiles,
+  three preserved backup inventories, zero pending residue or product
+  processes, and the exact protected-vault invariant.
+
 ## Safety and Limits
 
 Only harmless temporary ASCII bytes are used and fixtures are never executed.
@@ -134,3 +183,8 @@ not defeat administrators, SYSTEM/root, hostile filesystems, or kernel
 compromise. Installed authenticated service authority, production signing,
 signed-driver mediation, demonstrated pre-execution blocking, Defender
 replacement remain open. The complete antivirus-hardening goal remains active.
+
+Checkpoint 2266 is closed. Closure does not expand the per-file no-replace
+boundary or close any whole-package transaction, installed authority,
+production signing, driver, pre-execution, Defender-replacement, or complete-
+project limit above.

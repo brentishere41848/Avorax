@@ -14236,3 +14236,36 @@ pending.
   8-root/6-platform/7-checksum/CycloneDX-1.6/569-component review.
 - Evidence-head reruns, normal merge, merged-main, guarded synchronization,
   destination verification, and closure remain pending.
+
+## 2026-08-29 - Checkpoint 2266 Integration And Destination Closure
+
+- Evidence `954f713990f725d4bb8263466f43bb2f64968eb2` passes CI
+  `33240400063` and Desktop Packages `33240400070`; publication is skipped.
+  Artifact `9711435827` is 132,342,121 bytes with SHA-256
+  `806d79252cb8ca2d969072c03815efdeb9e754c0a8afe48c64126ee0f546aaad`
+  and passes bounded non-extracting/non-executing exact 8-root/6-platform/
+  7-checksum/CycloneDX-1.6/569-component review.
+- PR `#141` merges normally as
+  `7c90919a6a859b7b366f8da2ae12e5567f846f53`. Merged-main CI
+  `33241371058` and Desktop Packages `33241371099` pass; publication is
+  skipped. Artifact `9711617151` is 132,346,444 bytes with SHA-256
+  `f0ef070e5934050e3f067b56a55b85a55cb43349e89a63749fa4388d5f10358b`
+  and passes the same bounded review without extraction or execution.
+- Two guarded-sync attempts failed visibly before first activation because
+  Windows PowerShell 5.1 lacked the requested three-argument `File.Move`
+  overload and then rejected a null `File.Replace` backup path. Both left the
+  destination unchanged and their exact base-blob backup sets are preserved.
+  The repaired third attempt applies 14 modified plus one added path with zero
+  deletes; sync report SHA-256 is
+  `e18645465b6b89da9828767adee730fd8a8a1dee922d49c25c5b22e3505a1791`.
+- Destination Source `696/696`, focused `3/3`, update service `209/209`, strict
+  lint, both locked workspaces, locked release, Flutter `852/852`, protocols
+  `14/14 + 6/6`, and exact verifier `294/294` in `634.6s` pass. The 211,753-byte
+  report SHA-256 is
+  `922c46f6896c665d76938c6379c57231ffc44183ef842e4420b5cae8761b343c`.
+- Final destination audit SHA-256
+  `d933d3f2e3e9270ec32b3e4c2cb1399d8c9d9546dd22a1d1b41e7022f656d2d2`
+  passes all 15 blobs, eight lockfiles, three backup inventories, zero pending
+  residue or product processes, and the unchanged 16,072-file vault.
+  Checkpoint 2266 is closed; the complete antivirus-hardening goal remains
+  active.

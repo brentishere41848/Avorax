@@ -1282,3 +1282,25 @@ validation without extraction or execution: exact eight root entries, six
 platform files, seven checksum targets, and CycloneDX 1.6 with 569 components.
 Evidence-head reruns, integration, merged-main, synchronization, destination,
 and closure tests remain pending.
+
+Checkpoint 2266 closure additionally passes evidence-head and merged-main
+CI/packages with publication skipped, bounded non-extracting review of both
+additional consolidated artifacts, and guarded exact 15-path zero-delete
+synchronization. Two sync attempts failed before activation on PowerShell 5.1
+API compatibility and are retained as failed evidence; the repaired attempt
+passed without deleting destination data.
+
+The complete destination rerun passes Source `696/696`, focused `3/3`, update
+service `209/209`, strict Clippy, both locked workspace variants, locked
+all-feature release, Flutter `852/852`, protocols `14/14 + 6/6`, and definitive
+`294/294` in `634.6s`. Both validators accept the authentic 211,753-byte report
+with SHA-256
+`922c46f6896c665d76938c6379c57231ffc44183ef842e4420b5cae8761b343c`.
+The destination adversarial run accepts both authentic hosts and rejects all ten
+candidates, but those candidates are rejected first by repository containment
+because evidence intentionally remains under the source `.verification`; it is
+not credited as duplicate content-mutation proof. The earlier local run proves
+all five content mutations on both hosts, and final blob audit proves the
+destination validator is exact merged content. Final audit passes 15/15 blobs,
+8/8 locks, all three backup inventories, zero residue/processes, and the
+protected-vault invariant.
