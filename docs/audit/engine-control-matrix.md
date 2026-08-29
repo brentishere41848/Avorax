@@ -5871,3 +5871,10 @@ quarantine, strict changed-crate lint, both locked workspaces, release, safe
 smoke, UI/protocol, exact `293/293`, and dual-host authentic plus `16/16`
 adversarial validation pass locally. Hosted, integration, guarded-sync, and
 destination evidence remain pending; the complete goal remains active.
+
+Exact implementation `e4a1bb8` passes CI `33233682635` and package push/PR
+`33233673950`/`33233682629`, with publication skipped. Consolidated artifacts
+`9709386808`/`9709458957` pass bounded non-extracting exact
+8-root/6-platform/7-checksum/CycloneDX-1.6/569-component review. The first five
+rows are now implementation-head verified; evidence-head, merge, merged-main,
+guarded-sync, and destination columns remain pending.

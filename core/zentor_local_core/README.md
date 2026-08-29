@@ -112,4 +112,6 @@ during the scripting phase. After the batch froze, focused `3/3`, broader
 quarantine, strict changed-crate lint, both locked workspaces, release, safe
 smoke, UI/protocol regressions, Source `695/695`, and exact definitive
 `293/293` pass locally. Hosted and synchronized-destination evidence remains
-pending.
+pending. Implementation-head CI and cross-platform package builds now pass at
+`e4a1bb8` with publication skipped; evidence-head, merge, merged-main, and
+synchronized-destination proof remain open.

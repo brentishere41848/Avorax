@@ -14121,3 +14121,18 @@ pending.
 - Final local audit finds no lockfile delta, product process, or smoke residue,
   and the exact protected-vault invariant remains unchanged. Hosted exact-head,
   merge, guarded sync, and destination evidence remain pending.
+
+## 2026-08-29 - Checkpoint 2265 Hosted Implementation Head
+
+- Exact implementation `e4a1bb81dda30b9b9d4377a8f1f43e1f968c8713` is
+  PR `#139` head. Avorax CI `33233682635` passes all five jobs.
+- Desktop Packages push/PR runs `33233673950`/`33233682629` pass all six
+  platform packages, checksums, and lockfile SBOM; publication is skipped.
+- Consolidated artifacts `9709386808`/`9709458957` are 132,317,128/
+  132,858,881 bytes with SHA-256
+  `9ddc8d0251921b8e6dfd19289cad0ff70268f0f13e7f67c1fd748e5f51ac8401`/
+  `0adf6846efcb82dfd06ee9d3e80b97b102223737252e175c6ba405e74c424a4e`.
+  Both pass bounded non-extracting/non-executing exact
+  8-root/6-platform/7-checksum/CycloneDX-1.6/569-component review.
+- Evidence-head reruns, normal merge, merged-main evidence, guarded sync, and
+  destination verification remain pending.

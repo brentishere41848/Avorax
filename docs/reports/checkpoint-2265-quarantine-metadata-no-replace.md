@@ -2,7 +2,7 @@
 
 Date: 2026-08-29
 
-Status: **Verified locally through definitive regression; hosted integration pending**
+Status: **Verified locally and at implementation head; integration pending**
 
 ## Risk
 
@@ -68,6 +68,24 @@ checkpoint smoke root. The protected vault read-only inventory remains exact.
 Hosted exact-head CI/packages, normal PR integration, guarded destination
 synchronization, and a complete destination rerun remain pending.
 
+## Hosted Implementation-Head Evidence
+
+Implementation commit `e4a1bb81dda30b9b9d4377a8f1f43e1f968c8713` is
+the first head of PR `#139`. Avorax CI run `33233682635` passes all five jobs.
+Desktop Packages push run `33233673950` and PR run `33233682629` each pass
+package contracts plus Windows x64 MSI/EXE, Linux x64 DEB/tar, and macOS arm64/
+x64 DMG builds. Their publication jobs are skipped.
+
+Consolidated artifacts `9709386808` and `9709458957` are 132,317,128 and
+132,858,881 bytes with SHA-256 values
+`9ddc8d0251921b8e6dfd19289cad0ff70268f0f13e7f67c1fd748e5f51ac8401`
+and
+`0adf6846efcb82dfd06ee9d3e80b97b102223737252e175c6ba405e74c424a4e`.
+Both pass bounded non-extracting, non-executing review with exact 8 root
+entries, 6 platform files, 7 checksum targets, and CycloneDX 1.6 / 569
+components. Evidence-head reruns, normal merge, merged-main evidence, guarded
+destination synchronization, and destination verification remain pending.
+
 ## Verification Matrix
 
 | Control / engine | Scripted state | Required execution evidence |
@@ -78,7 +96,7 @@ synchronization, and a complete destination rerun remain pending.
 | Native compatibility metadata activation | Regression verified; production-disabled | Focused collision, Native regressions, workspaces, release, and definitive verifier pass |
 | Competing destination preservation | Locally verified | All three harmless fixtures preserve staged and destination bytes with visible error |
 | Verifier/report schema | Verified locally at exact 293 | Both hosts accept authentic evidence and reject all 16 mutation/host cases |
-| Hosted/package evidence | Pending | Exact-head and merged-main CI/package evidence with publication skipped |
+| Hosted/package evidence | Implementation head verified; integration pending | CI plus push/PR packages pass at `e4a1bb8`; evidence-head and merged-main reruns remain |
 | Original-tree synchronization | Pending | Guarded exact-path, zero-delete sync and destination rerun |
 
 ## Safety And Limits

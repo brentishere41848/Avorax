@@ -8007,6 +8007,12 @@ Flutter `852/852`, protocols `14/14 + 6/6`, and definitive `293/293` in
 protected vault pass final local audit. Hosted, merge, guarded synchronization,
 and destination evidence remain pending.
 
+Implementation commit `e4a1bb8` is PR `#139` head. CI `33233682635` and
+Desktop Packages push/PR `33233673950`/`33233682629` pass at that exact SHA;
+publication skips. Both consolidated artifacts pass bounded non-extracting
+8-root/6-platform/7-checksum/CycloneDX-1.6/569-component review. Evidence-head,
+merge, merged-main, synchronization, and destination evidence remain pending.
+
 The boundary is per final name, not a transaction across journal/record/auth
 files. Authenticated recovery detects incomplete state but cannot make those
 files atomic or defend against privileged actors, hostile filesystems, or kernel

@@ -4138,3 +4138,10 @@ locked workspace/release, safe smoke, UI/protocol, Source `695/695`, definitive
 integration, synchronization, and destination evidence remain pending. No live
 malware, Defender weakening, vault mutation, machine-wide install,
 service/driver start, release, or publication is involved.
+
+Implementation-head CI and all six hosted platform packages now pass at exact
+commit `e4a1bb8`; publication skips and both consolidated artifacts pass
+bounded non-extracting checksum/SBOM review. This is build and regression
+evidence only. It does not make metadata multi-file atomic, close privileged
+filesystem races, or demonstrate installed service/driver or pre-execution
+authority. Integration and destination evidence remain pending.

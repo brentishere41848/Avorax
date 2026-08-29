@@ -1201,3 +1201,10 @@ validation accepts the 219,352-byte report with SHA-256
 `d526b2548ed90a62fd7e6a23b4383d393bbe878ce4488d5073fcbce8c5bf3a94`;
 both hosts reject all eight missing-evidence mutations (`16/16`). Hosted,
 integration, guarded-sync, and destination execution remain pending.
+
+Implementation-head CI `33233682635` and package push/PR runs
+`33233673950`/`33233682629` pass at exact commit `e4a1bb8`; both publication
+jobs skip. Consolidated artifacts `9709386808`/`9709458957` pass bounded stream
+validation without extraction or execution: exact 8 root entries, 6 platform
+files, 7 checksums, and CycloneDX 1.6 with 569 components. Evidence-head,
+merged-main, guarded-sync, and destination reruns remain pending.
