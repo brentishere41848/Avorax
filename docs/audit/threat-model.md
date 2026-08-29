@@ -4219,3 +4219,65 @@ desktop cross-target build compatibility only. Android runtime/build,
 whole-package atomicity, point-in-time ancestor authority, privileged actors,
 hostile filesystems, installed service/driver authority, pre-execution
 blocking, and every other residual threat above remain unchanged.
+
+## Checkpoint 2267 - Staged Update Activation Final-Name Race
+
+### Threat
+
+Shared update-service copy/write staging intentionally removed a checked
+existing target and then used ordinary rename. An object created between the
+post-removal absence check and the final mutation could be silently replaced,
+causing data or forensic-evidence loss.
+
+### Scripted mitigation
+
+Final activation now uses the shared OS atomic no-replace primitive after the
+existing staged-file kind checks, target removal, absence check, and repeated
+parent-chain validation. Harmless absent-target and competing-target fixtures
+require success without collision and preservation of both files with visible
+failure on collision. Source contracts forbid ordinary rename on this path.
+
+### Residual risk and evidence state
+
+The target is still deliberately removed before activation. A crash or
+activation failure can therefore leave it absent, and multiple staged/install
+files are not transactionally committed. Parent/path checks are point-in-time
+user-mode evidence, not authority over administrators, SYSTEM/root, hostile
+filesystems, or kernel compromise. Unsupported platforms fail visibly. This is
+not driver mediation or pre-execution blocking.
+
+No checkpoint-2267 test ran during the scripting phase. Exact-295 local,
+dual-host adversarial, hosted, integration, synchronized-destination, and
+closure evidence remains pending. No live malware, EICAR, fixture execution,
+Defender change, protected-vault mutation, install, service/driver start,
+release, or publication is involved. The vault remains exactly 16,072 files
+and zero pending. The complete antivirus-hardening goal remains active.
+
+Local checkpoint 2267 execution now passes focused collision behavior, full
+update-service and workspace regressions, strict lint, release, Flutter,
+protocols, Source `697/697`, and exact post-run vault/process checks. This is
+Windows local regression evidence for the final-name race only. Exact-295,
+hostile report, cross-target hosted, integration, synchronization, destination,
+and closure evidence remains pending, and every residual threat above remains
+in force.
+
+The first definitive checkpoint 2267 run exposed a separate availability/
+compatibility threat: `MoveFileExW` without a verbatim prefix failed a valid
+absolute long update-log path after deliberate target removal. The failed
+report is retained and not credited. The scripted repair converts bounded
+absolute local-drive and UNC paths to verbatim form, preserves valid verbatim
+local/UNC paths, rejects device namespaces, and adds platform plus update-
+service long-path fixtures. Relative paths retain legacy Win32 limits. No
+repair test ran during repair scripting; Source 698, focused 5/5, platform
+15/15, update service 212/212, exact 295/295, and adversarial 14/14 remain
+pending with all prior residual threats unchanged.
+
+The repaired local implementation now passes platform `15/15`, update staged
+activation `5/5`, full update service `212/212`, Source `698/698`, both locked
+workspaces/release, Flutter/protocol regressions, exact `295/295`, and all 14
+dual-host adversarial rejection cases. The earlier long-path failure is retained
+as failed evidence. Final audit confirms the exact path/lock/process/residue and
+read-only vault invariants. This verifies the Windows local final-name and
+bounded absolute-path behavior only; hosted, integration, synchronized-
+destination, and closure evidence remains pending, and every residual threat
+above remains active.

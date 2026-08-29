@@ -14269,3 +14269,89 @@ pending.
   residue or product processes, and the unchanged 16,072-file vault.
   Checkpoint 2266 is closed; the complete antivirus-hardening goal remains
   active.
+
+## 2026-08-29 - Checkpoint 2267 Update Staged-File No-Replace Scripting
+
+- Replaced the final ordinary rename in shared update-service staged copy/write
+  activation with the existing operating-system atomic no-replace helper.
+  Existing target removal, absence recheck, and destination-parent validation
+  remain fail-visible.
+- Scripted five harmless update-service Rust tests, updated Source ordering contracts, a new
+  checkpoint contract, a focused definitive verifier step, exact-295 report
+  validation, and seven dual-host adversarial report mutations.
+- No checkpoint-2267 test ran during the scripting phase. Focused, broad,
+  definitive, hosted, integration, destination, and closure evidence is
+  pending. No live malware, EICAR, fixture execution, Defender change,
+  machine-wide install, service/driver start, release, publication, or
+  protected-vault mutation is involved.
+- Final-name overwrite is closed only if verification passes. The deliberate
+  remove-to-activate availability gap, non-transactional multi-file activation,
+  point-in-time path authority, privileged actors, hostile filesystems,
+  installed service/driver authority, pre-execution blocking, production
+  signing/deployment, Defender replacement, and the complete antivirus-
+  hardening goal remain open or technically limited.
+
+## 2026-08-29 - Checkpoint 2267 Local Broad Verification
+
+- The first PowerShell parser invocation failed before parsing because of host
+  argument binding; the corrected absolute-path command passes all three
+  scripts on PowerShell 5.1 and 7.
+- Two `python -m pytest` invocations stopped before collection because `pytest`
+  is absent from both available Python runtimes. Nothing was installed. The
+  documented dependency-free runner passes exact Source `697/697`.
+- Formatting, focused no-replace `4/4`, update service `211/211`, strict
+  Clippy, both locked workspace variants, and locked all-feature release pass.
+  Native is `642/642` with 21 intentional isolated child-fixture ignores.
+- Flutter analyze plus `852/852` and protocol analyze/tests `14/14 + 6/6`
+  pass. Post-run product-process and exact 16,072-file/4,522,733-byte/zero-
+  pending vault checks pass.
+- Exact `295/295`, hostile report validation, hosted exact-head CI/packages,
+  integration, guarded synchronization, destination rerun, and closure remain
+  pending. No live malware, EICAR, fixture execution, Defender change,
+  install, service/driver start, release, publication, or vault mutation
+  occurred.
+
+## 2026-08-29 - Checkpoint 2267 First Definitive Failure And Repair Scripting
+
+- The first definitive run passed through the new no-replace step and update
+  apply/rollback smokes, then failed visibly at `release update-package builder
+  signed verify smoke`: zero-flag `MoveFileExW` returned error 3 for an
+  absolute staged update-log path beyond legacy `MAX_PATH`.
+- The failed 152,351-byte report is preserved untracked with SHA-256
+  `282747873caa9a0b7ba0caf8a85f13eb66287044d7446b9021ab08d6adc4dd77`
+  and is not passing evidence.
+- Scripted bounded Windows verbatim local-drive/UNC conversion, explicit device-
+  namespace rejection, platform and update-service harmless long-path tests,
+  Source contract 698, verifier/validator scope, a seventh adversarial report
+  mutation, and documentation before repair execution.
+- No repair test ran during the repair scripting phase. Expected reruns are
+  focused `5/5`, platform `15/15`, update service `212/212`, Source `698/698`,
+  exact `295/295`, and dual-host adversarial `14/14`. Relative inputs retain
+  Win32 legacy path-length behavior; caller path checks and all broader limits
+  remain unchanged.
+
+## 2026-08-29 - Checkpoint 2267 Repaired Definitive Local Evidence
+
+- The first post-repair format check exposed two layout-only diffs; formatting
+  was applied and the repeat check passes. Source `698/698`, platform `15/15`,
+  staged activation `5/5`, update service `212/212`, and strict Clippy for both
+  affected crates pass. The previously failing release package-builder smoke
+  passes on its long absolute Windows update-log path.
+- Both locked workspace variants and the locked all-feature release build pass.
+  Native is `642/642` with 21 intentional child-fixture ignores in each
+  variant. Flutter analyze plus `852/852` and protocol analyze/tests `14/14 +
+  6/6` pass. One root-level Flutter test command failed before collection; the
+  corrected project-directory invocation passes and is documented.
+- The no-skip/no-Defender verifier passes exact `295/295` in 684 seconds. Its
+  222,196-byte report SHA-256 is
+  `17a32dd8ee483963cbf95c72cc8542910baee414f86f4ed1353d18d1beeebe6d`.
+  Both validator hosts accept it and reject all seven mutations (`14/14`). The
+  14,882-byte adversarial result SHA-256 is
+  `3522a224bfa32f90c52b7f22780df97d7682b7d8576b2b1ce7c791786f96e65a`.
+- Final local audit passes 13 modified plus one added path, zero deletes, eight
+  unchanged lockfiles, zero product processes/pending/workflow residue, the
+  preserved checkpoint-2194 temporary root, and the exact read-only vault.
+  Audit SHA-256 is
+  `1c85496c4af5992a7640bde84c2dbef18acc0fc5be05845478e873f7e235f892`.
+  Hosted, integration, destination, and closure evidence remains pending; the
+  complete antivirus-hardening goal remains active.

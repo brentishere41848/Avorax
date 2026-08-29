@@ -2442,6 +2442,14 @@ hosted SBOM/package review, integration, synchronization, and destination
 8-lock audit remain pending. The protected vault remains 16,072 files with zero
 pending, and the complete antivirus-hardening goal remains active.
 
+After batch freeze, both locked workspace suites, the locked all-feature
+release build, strict update-service lint, and all local broad regressions pass.
+The two unavailable-`pytest` invocations caused no installation or dependency
+change; the dependency-free Source runner passes `697/697`. Git status retains
+no manifest or lockfile delta. Exact-295 dependency gate, hosted SBOM/package,
+integration, synchronization, destination eight-lock audit, and closure remain
+pending; the third-party and license delta remains zero.
+
 After batch freeze, both locked workspace test variants and the locked all-
 feature release build pass with the root lockfile's single internal dependency
 edge. Full update service `209/209`, strict lint, Source `696/696`, Flutter
@@ -2471,3 +2479,39 @@ Checkpoint 2266 is closed with no new third-party package, version, source,
 runtime fetch, or license class. Android runtime/build, production signing/
 notarization, final notice provenance, enterprise deployment, and release
 approval remain separate.
+
+## Checkpoint 2267 Dependency Delta
+
+Checkpoint 2267 adds no dependency and requires no lockfile change. The update
+service already depends on the existing internal `avorax_platform_security`
+crate introduced and pinned in checkpoint 2266; this repair reuses that exact
+workspace API. No third-party crate, version, registry, source, feature,
+downloaded runtime, network surface, or license class changes.
+
+The five update-service tests and one platform test use only temporary harmless
+ASCII bytes and never
+execute candidate content. No live malware, EICAR, network download, Defender
+change, machine-wide component, service/driver registration, protected-vault
+mutation, release, or publication is introduced. No checkpoint-2267 test ran
+during the scripting phase. Locked dependency/build gates, exact-295 verifier,
+hosted checksum/SBOM review, integration, synchronization, destination 8-lock
+audit, and closure remain pending. The vault remains 16,072 files with zero
+pending, and the complete antivirus-hardening goal remains active.
+
+The long-path repair following the failed first definitive run adds only
+standard-library UTF-16/path handling around the existing pinned `windows-sys`
+`MoveFileExW` API. It adds no dependency and no lockfile change. No package was
+installed when both optional `pytest` invocations found the module absent.
+Platform/update long-path fixtures, Source contract 698, and report contracts
+are scripted; no repair test ran during repair scripting. Locked reruns, exact-
+295 dependency evidence, hosted SBOM, integration, destination eight-lock
+audit, and closure remain pending with zero third-party/license delta.
+
+Post-repair locked workspace tests, locked all-feature release, strict lint,
+the definitive dependency gate inside exact `295/295`, and byte comparison of
+all eight active lockfiles pass. The package-builder long-path repair continues
+to use only standard-library path conversion and the already pinned
+`windows-sys` API. No dependency was installed and no manifest, lockfile,
+third-party version, source, feature, runtime fetch, or license class changed.
+Hosted SBOM/package, integration, synchronization, destination, and closure
+evidence remains pending with the dependency and license delta at zero.

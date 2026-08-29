@@ -37,31 +37,110 @@ pub fn rename_file_no_replace(source: &Path, destination: &Path, label: &str) ->
 }
 
 #[cfg(windows)]
-fn rename_file_no_replace_impl(source: &Path, destination: &Path, label: &str) -> Result<()> {
-    use std::os::windows::ffi::OsStrExt;
-    use windows_sys::Win32::Storage::FileSystem::MoveFileExW;
+const WINDOWS_UNC_PREFIX: &[u16] = &[b'\\' as u16, b'\\' as u16];
+#[cfg(windows)]
+const WINDOWS_VERBATIM_PREFIX: &[u16] = &[b'\\' as u16, b'\\' as u16, b'?' as u16, b'\\' as u16];
+#[cfg(windows)]
+const WINDOWS_VERBATIM_UNC_PREFIX: &[u16] = &[
+    b'\\' as u16,
+    b'\\' as u16,
+    b'?' as u16,
+    b'\\' as u16,
+    b'U' as u16,
+    b'N' as u16,
+    b'C' as u16,
+    b'\\' as u16,
+];
+#[cfg(windows)]
+const WINDOWS_DEVICE_NAMESPACE_PREFIX: &[u16] =
+    &[b'\\' as u16, b'\\' as u16, b'.' as u16, b'\\' as u16];
 
-    fn bounded_wide_path(path: &Path, role: &str, label: &str) -> Result<Vec<u16>> {
-        let mut wide: Vec<u16> = path
-            .as_os_str()
-            .encode_wide()
-            .take(MAX_WINDOWS_SECURITY_PATH_UNITS.saturating_add(1))
-            .collect();
-        if wide.is_empty() {
-            return Err(anyhow!("{label} {role} path is empty"));
-        }
-        if wide.len() > MAX_WINDOWS_SECURITY_PATH_UNITS {
-            return Err(anyhow!("{label} {role} path is too long"));
-        }
-        if wide.contains(&0) {
-            return Err(anyhow!("{label} {role} path contains NUL"));
-        }
-        wide.push(0);
-        Ok(wide)
+#[cfg(windows)]
+fn windows_drive_absolute_at(path: &[u16], offset: usize) -> bool {
+    let drive = path.get(offset).copied().unwrap_or_default();
+    path.len() > offset + 2
+        && ((drive >= b'A' as u16 && drive <= b'Z' as u16)
+            || (drive >= b'a' as u16 && drive <= b'z' as u16))
+        && path[offset + 1] == b':' as u16
+        && path[offset + 2] == b'\\' as u16
+}
+
+#[cfg(windows)]
+fn bounded_windows_move_path(path: &Path, role: &str, label: &str) -> Result<Vec<u16>> {
+    use std::os::windows::ffi::OsStrExt;
+
+    let raw: Vec<u16> = path
+        .as_os_str()
+        .encode_wide()
+        .take(MAX_WINDOWS_SECURITY_PATH_UNITS.saturating_add(1))
+        .collect();
+    if raw.is_empty() {
+        return Err(anyhow!("{label} {role} path is empty"));
+    }
+    if raw.len() > MAX_WINDOWS_SECURITY_PATH_UNITS {
+        return Err(anyhow!("{label} {role} path is too long"));
+    }
+    if raw.contains(&0) {
+        return Err(anyhow!("{label} {role} path contains NUL"));
+    }
+    if raw.starts_with(WINDOWS_DEVICE_NAMESPACE_PREFIX) {
+        return Err(anyhow!(
+            "{label} {role} path uses a forbidden Windows device namespace"
+        ));
     }
 
-    let source_wide = bounded_wide_path(source, "source", label)?;
-    let destination_wide = bounded_wide_path(destination, "destination", label)?;
+    let mut wide = if raw.starts_with(WINDOWS_VERBATIM_UNC_PREFIX) {
+        anyhow::ensure!(
+            raw.len() > WINDOWS_VERBATIM_UNC_PREFIX.len(),
+            "{label} {role} verbatim UNC path is incomplete"
+        );
+        raw
+    } else if raw.starts_with(WINDOWS_VERBATIM_PREFIX) {
+        anyhow::ensure!(
+            windows_drive_absolute_at(&raw, WINDOWS_VERBATIM_PREFIX.len()),
+            "{label} {role} path uses a forbidden Windows verbatim device namespace"
+        );
+        raw
+    } else if path.is_absolute() {
+        if raw.starts_with(WINDOWS_UNC_PREFIX) {
+            anyhow::ensure!(
+                raw.len() > WINDOWS_UNC_PREFIX.len(),
+                "{label} {role} UNC path is incomplete"
+            );
+            let mut prefixed = Vec::with_capacity(
+                WINDOWS_VERBATIM_UNC_PREFIX.len() + raw.len() - WINDOWS_UNC_PREFIX.len() + 1,
+            );
+            prefixed.extend_from_slice(WINDOWS_VERBATIM_UNC_PREFIX);
+            prefixed.extend_from_slice(&raw[WINDOWS_UNC_PREFIX.len()..]);
+            prefixed
+        } else {
+            anyhow::ensure!(
+                windows_drive_absolute_at(&raw, 0),
+                "{label} {role} absolute path is not a local drive or UNC path"
+            );
+            let mut prefixed = Vec::with_capacity(WINDOWS_VERBATIM_PREFIX.len() + raw.len() + 1);
+            prefixed.extend_from_slice(WINDOWS_VERBATIM_PREFIX);
+            prefixed.extend_from_slice(&raw);
+            prefixed
+        }
+    } else {
+        raw
+    };
+    if wide.len() > MAX_WINDOWS_SECURITY_PATH_UNITS {
+        return Err(anyhow!(
+            "{label} {role} path is too long after Windows verbatim normalization"
+        ));
+    }
+    wide.push(0);
+    Ok(wide)
+}
+
+#[cfg(windows)]
+fn rename_file_no_replace_impl(source: &Path, destination: &Path, label: &str) -> Result<()> {
+    use windows_sys::Win32::Storage::FileSystem::MoveFileExW;
+
+    let source_wide = bounded_windows_move_path(source, "source", label)?;
+    let destination_wide = bounded_windows_move_path(destination, "destination", label)?;
     if unsafe { MoveFileExW(source_wide.as_ptr(), destination_wide.as_ptr(), 0) } == 0 {
         return Err(std::io::Error::last_os_error()).with_context(|| {
             format!(
@@ -1066,6 +1145,66 @@ mod tests {
         assert!(detail.contains("without replacing"), "{detail}");
         assert_eq!(fs::read(&staged).unwrap(), b"harmless restored bytes");
         assert_eq!(fs::read(&destination).unwrap(), b"harmless competing bytes");
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn quarantine_restore_no_replace_supports_long_absolute_windows_paths() {
+        use std::os::windows::ffi::OsStrExt;
+
+        let root = tempfile::tempdir().unwrap();
+        let mut long_parent = root.path().to_path_buf();
+        while long_parent.as_os_str().encode_wide().count() < 280 {
+            long_parent.push("harmless-long-path-segment-2267");
+        }
+        fs::create_dir_all(&long_parent).unwrap();
+        let staged = long_parent.join("staged.tmp");
+        let destination = long_parent.join("restored.bin");
+        assert!(destination.as_os_str().encode_wide().count() > 260);
+        fs::write(&staged, b"harmless long-path restored bytes").unwrap();
+
+        rename_file_no_replace(&staged, &destination, "long quarantine restore fixture").unwrap();
+
+        assert!(!staged.exists());
+        assert_eq!(
+            fs::read(&destination).unwrap(),
+            b"harmless long-path restored bytes"
+        );
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn windows_no_replace_path_builder_normalizes_local_unc_and_rejects_devices() {
+        let local = bounded_windows_move_path(
+            Path::new(r"C:\harmless\staged.tmp"),
+            "source",
+            "path fixture",
+        )
+        .unwrap();
+        assert!(local.starts_with(WINDOWS_VERBATIM_PREFIX));
+
+        let unc = bounded_windows_move_path(
+            Path::new(r"\\server\share\harmless\staged.tmp"),
+            "source",
+            "path fixture",
+        )
+        .unwrap();
+        assert!(unc.starts_with(WINDOWS_VERBATIM_UNC_PREFIX));
+
+        let relative =
+            bounded_windows_move_path(Path::new(r"harmless\staged.tmp"), "source", "path fixture")
+                .unwrap();
+        assert!(!relative.starts_with(WINDOWS_VERBATIM_PREFIX));
+
+        for forbidden in [
+            Path::new(r"\\.\PhysicalDrive0"),
+            Path::new(r"\\?\GLOBALROOT\Device\HarddiskVolumeShadowCopy1"),
+        ] {
+            let detail = bounded_windows_move_path(forbidden, "source", "path fixture")
+                .unwrap_err()
+                .to_string();
+            assert!(detail.contains("forbidden Windows"), "{detail}");
+        }
     }
 
     #[test]

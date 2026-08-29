@@ -1951,8 +1951,8 @@ if ($RequireFullSuite) {
   if ($skipFlutter -or $skipRust) {
     throw "-RequireFullSuite requires skip_flutter=false and skip_rust=false."
   }
-  if ($steps.Count -ne 294) {
-    throw "-RequireFullSuite expected exactly 294 verifier steps for this source revision, found $($steps.Count)."
+  if ($steps.Count -ne 295) {
+    throw "-RequireFullSuite expected exactly 295 verifier steps for this source revision, found $($steps.Count)."
   }
   if ($steps[0].name -ne "local-core safe simulator scan reporting") {
     throw "-RequireFullSuite first step mismatch: $($steps[0].name)"
@@ -1973,6 +1973,7 @@ if ($RequireFullSuite) {
   Assert-ReportContainsStep $steps "quarantine restore atomic no-replace regressions"
   Assert-ReportContainsStep $steps "quarantine ingest atomic no-replace regressions"
   Assert-ReportContainsStep $steps "quarantine metadata atomic no-replace regressions"
+  Assert-ReportContainsStep $steps "update-service staged file activation atomic no-replace regressions"
   Assert-ReportContainsStep $steps "update-service payload extraction atomic no-replace regressions"
   Assert-ReportContainsStep $steps "native-engine file-type classifier regressions"
   Assert-ReportContainsStep $steps "native-engine detection-only mutation boundary regressions"
@@ -2146,6 +2147,15 @@ if ($RequireFullSuite) {
   Assert-ReportScopeContains $verifiedScopeText "Harmless extraction collision fixtures preserve both staged payload bytes and competing destination bytes" "verification_scope.verified"
   Assert-ReportScopeContains $technicalLimitText "Signed update-package extraction no-replace protects only each final extracted filename" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "this does not make install-tree activation, rollback, multi-file updates, or privileged filesystem races atomic" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $verifiedScopeText "Update-service staged file copy/write replacement uses the shared operating-system atomic no-replace primitive" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Harmless staged-file collision fixtures preserve both staged bytes and competing destination bytes" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Bounded verbatim local-drive and UNC conversion preserves atomic no-replace behavior for long absolute Windows paths" "verification_scope.verified"
+  Assert-ReportScopeContains $technicalLimitText "Update staged-file no-replace closes only the final-name collision after deliberate target removal" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "The remove-to-activate availability gap remains" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "a crash or activation failure can leave the target absent" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "multi-file staging/install activation is not transactional" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "relative inputs retain Win32 legacy path-length behavior" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "device-namespace paths are rejected" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "File allowlisting remains safe after its hash snapshot because later scan suppression also requires that exact hash" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "neither operation holds a kernel-enforced immutable file lease" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "This is confirmation and stale-verdict defense, not cross-identity authorization, malware execution prevention, driver enforcement, or protection against administrators, SYSTEM, or kernel compromise" "verification_scope.technically_limited"

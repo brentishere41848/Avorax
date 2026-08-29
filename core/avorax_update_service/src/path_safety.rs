@@ -366,7 +366,7 @@ mod tests {
     }
 
     #[test]
-    fn staged_activation_replaces_existing_regular_file() {
+    fn staged_activation_no_replace_replaces_existing_regular_file() {
         let dir = tempdir().unwrap();
         let target = dir.path().join("Avorax.exe");
         let temp_target = dir.path().join(".Avorax.exe.test.0.avorax-part");
@@ -377,6 +377,83 @@ mod tests {
 
         assert_eq!(std::fs::read(&target).unwrap(), b"new");
         assert!(!temp_target.exists());
+    }
+
+    #[cfg(any(
+        windows,
+        target_os = "linux",
+        target_os = "android",
+        all(unix, target_vendor = "apple")
+    ))]
+    #[test]
+    fn staged_activation_no_replace_moves_to_absent_target() {
+        let dir = tempdir().unwrap();
+        let target = dir.path().join("Avorax.exe");
+        let temp_target = dir.path().join(".Avorax.exe.absent.avorax-part");
+        std::fs::write(&temp_target, b"benign staged update bytes").unwrap();
+
+        activate_staged_file_no_replace(&temp_target, &target, "test staged update").unwrap();
+
+        assert!(!temp_target.exists());
+        assert_eq!(
+            std::fs::read(&target).unwrap(),
+            b"benign staged update bytes"
+        );
+    }
+
+    #[cfg(any(
+        windows,
+        target_os = "linux",
+        target_os = "android",
+        all(unix, target_vendor = "apple")
+    ))]
+    #[test]
+    fn staged_activation_no_replace_preserves_competing_file() {
+        let dir = tempdir().unwrap();
+        let target = dir.path().join("Avorax.exe");
+        let temp_target = dir.path().join(".Avorax.exe.collision.avorax-part");
+        std::fs::write(&temp_target, b"benign staged update bytes").unwrap();
+        std::fs::write(&target, b"benign competing target bytes").unwrap();
+
+        let error = activate_staged_file_no_replace(&temp_target, &target, "test staged update")
+            .expect_err("a competing staged-file target must not be replaced");
+        let detail = format!("{error:#}");
+
+        assert!(detail.contains("without replacing"), "{detail}");
+        assert_eq!(
+            std::fs::read(&temp_target).unwrap(),
+            b"benign staged update bytes"
+        );
+        assert_eq!(
+            std::fs::read(&target).unwrap(),
+            b"benign competing target bytes"
+        );
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn staged_activation_no_replace_supports_long_absolute_windows_paths() {
+        use std::os::windows::ffi::OsStrExt;
+
+        let dir = tempdir().unwrap();
+        let mut long_parent = dir.path().to_path_buf();
+        while long_parent.as_os_str().encode_wide().count() < 280 {
+            long_parent.push("benign-long-update-path-segment-2267");
+        }
+        std::fs::create_dir_all(&long_parent).unwrap();
+        let target = long_parent.join("Avorax.exe");
+        let temp_target = long_parent.join(".Avorax.exe.long.avorax-part");
+        assert!(target.as_os_str().encode_wide().count() > 260);
+        std::fs::write(&target, b"benign old long-path bytes").unwrap();
+        std::fs::write(&temp_target, b"benign staged long-path bytes").unwrap();
+
+        activate_staged_file(&temp_target, &target, dir.path(), "long staged update").unwrap();
+
+        assert!(!temp_target.exists());
+        assert_eq!(
+            std::fs::read(&target).unwrap(),
+            b"benign staged long-path bytes"
+        );
     }
 
     #[test]
@@ -429,7 +506,7 @@ mod tests {
     }
 
     #[test]
-    fn staged_activation_rechecks_parent_chain_after_target_removal_before_rename() {
+    fn staged_activation_no_replace_rechecks_parent_chain_after_target_removal() {
         let source = include_str!("path_safety.rs");
         let start = source.rfind("fn activate_staged_file").unwrap();
         let end = source[start..]
@@ -454,9 +531,12 @@ mod tests {
                 .find("ensure_existing_path_chain_not_link(parent, boundary, label)?")
                 .unwrap()
                 < activation_source
-                    .find("std::fs::rename(temp_target, target)?")
+                    .find("activate_staged_file_no_replace(temp_target, target, label)")
                     .unwrap()
         );
+        assert!(source.contains("fn activate_staged_file_no_replace("));
+        assert!(source.contains("avorax_platform_security::rename_file_no_replace("));
+        assert!(!activation_source.contains("std::fs::rename(temp_target, target)"));
     }
 
     #[test]
@@ -564,6 +644,10 @@ fn staged_temp_path(target: &Path, attempt: u32) -> Result<PathBuf> {
     )))
 }
 
+fn activate_staged_file_no_replace(temp_target: &Path, target: &Path, label: &str) -> Result<()> {
+    avorax_platform_security::rename_file_no_replace(temp_target, target, label)
+}
+
 fn activate_staged_file(
     temp_target: &Path,
     target: &Path,
@@ -584,7 +668,12 @@ fn activate_staged_file(
     if let Some(parent) = target.parent() {
         ensure_existing_path_chain_not_link(parent, boundary, label)?;
     }
-    std::fs::rename(temp_target, target)?;
+    activate_staged_file_no_replace(temp_target, target, label).with_context(|| {
+        format!(
+            "failed to activate {label} staged file without replacing {}",
+            target.display()
+        )
+    })?;
     Ok(())
 }
 

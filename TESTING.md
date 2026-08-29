@@ -1304,3 +1304,72 @@ all five content mutations on both hosts, and final blob audit proves the
 destination validator is exact merged content. Final audit passes 15/15 blobs,
 8/8 locks, all three backup inventories, zero residue/processes, and the
 protected-vault invariant.
+
+## Checkpoint 2267 Update Staged-File No-Replace
+
+The full implementation/test/verifier/documentation batch was scripted before
+execution. No checkpoint-2267 test ran during the scripting phase. Run only
+after the batch is frozen:
+
+```powershell
+cargo fmt --all -- --check
+python -B tools\testing\run-python-source-contracts.py
+cargo test --manifest-path core\avorax_platform_security\Cargo.toml -- --test-threads=1
+cargo test --manifest-path core\avorax_update_service\Cargo.toml staged_activation_no_replace -- --test-threads=1
+cargo test --manifest-path core\avorax_update_service\Cargo.toml -- --test-threads=1
+cargo clippy --manifest-path core\avorax_update_service\Cargo.toml --all-targets --all-features -- -D warnings
+cargo test --workspace --locked
+cargo test --workspace --all-features --locked
+cargo build --workspace --all-features --release --locked
+Push-Location apps\zentor_client; flutter analyze; flutter test; Pop-Location
+Push-Location packages\zentor_protocol; flutter analyze; flutter test; Pop-Location
+Push-Location packages\avorax_protocol; flutter analyze; flutter test; Pop-Location
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools\testing\verify-small-threat-mvp.ps1 -ReportPath .workflow\ultracode\avorax-hardening\results\2267-update-staged-file-no-replace-report.json
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools\testing\validate-small-threat-mvp-report.ps1 -ReportPath .workflow\ultracode\avorax-hardening\results\2267-update-staged-file-no-replace-report.json -RequireFullSuite
+```
+
+The focused filter must select five harmless tests. The platform suite must
+select fifteen tests, including its long absolute Windows path and namespace
+builder fixtures. The definitive report must
+pass exact `295/295`, include the staged-file activation step and exact scope/
+limit text, and be accepted by PowerShell 5.1 and 7. Both hosts must reject all
+seven bounded report mutations (`14/14`). No live malware, EICAR, fixture
+execution, Defender change, machine-wide install, service/driver start,
+release, publication, or protected-vault test root is allowed. The 16,072-file
+vault must remain read-only with zero pending.
+
+Checkpoint 2267 local broad execution passes PowerShell 5.1/7 parsing after one
+pre-parse argument-binding failure, formatting, dependency-free Source
+`697/697`, focused `4/4`, update service `211/211`, strict Clippy, both locked
+workspaces, locked release, Flutter `852/852`, and protocols `14/14 + 6/6`.
+Two `python -m pytest` commands collected no tests because `pytest` is absent;
+the documented dependency-free runner was used without installing packages.
+Exact `295/295`, dual-host report mutation rejection, hosted/integration,
+synchronization, destination, and closure testing remains pending.
+
+The first definitive attempt failed visibly at the release update-package
+builder smoke because the shared Windows no-replace call did not convert a long
+absolute update-log path to bounded verbatim form. Preserve failed report hash
+`282747873caa9a0b7ba0caf8a85f13eb66287044d7446b9021ab08d6adc4dd77`.
+The scripted repair must rerun formatting, parsing, Source `698/698`, platform
+`15/15`, focused staged activation `5/5`, update service `212/212`, strict
+Clippy, both workspaces/release, Flutter/protocols, exact `295/295`, and seven
+mutations on both hosts. No repair test ran before that repair batch froze.
+
+Post-repair execution passes Source `698/698`, platform `15/15`, focused
+staged activation `5/5`, update service `212/212`, strict platform/update
+Clippy, both locked workspace variants, locked all-feature release, Flutter
+analysis and `852/852`, and both protocol analyses plus `14/14 + 6/6`. The
+initial post-repair format check found two layout-only diffs; formatting and the
+repeat check pass. Flutter 3.44.4 rejected `flutter test apps\zentor_client`
+before collection, so the reproducible commands above enter each project
+directory; that client invocation passes all 852 tests.
+
+Definitive no-skip/no-Defender verification passes exact `295/295` in 684
+seconds. The 222,196-byte report SHA-256 is
+`17a32dd8ee483963cbf95c72cc8542910baee414f86f4ed1353d18d1beeebe6d`.
+PowerShell 5.1 and 7 independently accept it and reject all seven content
+mutations on both hosts (`14/14`). Final audit passes 13 modified plus one
+added path, zero deletes, eight unchanged lockfiles, zero product processes or
+pending/workflow residue, and the exact protected-vault invariant. Hosted,
+integration, destination, and closure testing remains pending.
