@@ -14063,3 +14063,25 @@ pending.
   `576bc69c42d9e788fab4d47f8ea2c01d5157b0ce81dbeaff14f422a74ad669e5`.
 - Evidence-head checks, merge, merged-main evidence, guarded sync, and
   destination verification remain pending.
+
+## Checkpoint 2264 - Integration And Destination Closure
+
+- Evidence `9dd2877ac4baa3e7646a7be665025710b6a2cc20` passes CI
+  `33227073270` and packages `33227073200`. PR `#137` merges normally as
+  `f0b13bb558087cc371f676874b8a663b8e73a3cb`; merged-main CI
+  `33227697064` and packages `33227697096` pass. Publication is skipped.
+- Evidence/main artifacts `9707407539`/`9707575076` are 132,299,069/
+  132,348,182 bytes with SHA-256
+  `785e9b30b7c52aca0e7f1d708790c33570485c29d1e8bd595a3737d633233419`/
+  `53c2880c828adb1e97b4f7909f71be0f115632194c92d952b63c03787f72eeb2`.
+  Both pass bounded non-extracting/non-executing exact 8-root/6-platform/
+  7-checksum/CycloneDX-1.6/569-component review.
+- Guarded synchronization applies 17 exact paths, 16 modified and one added,
+  with zero deleted. Destination Source `694/694`, focused/broader quarantine,
+  safe smoke, strict lint, both locked workspaces, release, Flutter `852/852`,
+  protocols, and definitive `292/292` in `713.9s` pass. Both validators accept
+  the authentic report and the corrected in-repository adversarial audit
+  rejects all six content mutations.
+- Final audit passes 17/17 blobs, 8/8 active lockfiles, zero staging residue or
+  product processes, and the unchanged 16,072-file vault. Checkpoint 2264 is
+  closed; user-mode authority limits and the complete goal remain active.

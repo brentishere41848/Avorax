@@ -4098,4 +4098,10 @@ administrators, SYSTEM/root, hostile filesystems, and kernel compromise remain
 outside the guarantee. Native direct quarantine remains disabled compatibility
 code. No checkpoint-2264 test ran during scripting. Focused collision and broad
 local workspace/release/UI/protocol evidence and definitive exact-292 validation
-now pass. Hosted, integration, and destination evidence remains pending.
+now pass. Evidence-head and merged-main CI/packages, bounded artifacts, normal
+PR `#137` integration, guarded 17-path zero-delete synchronization, destination
+exact `292/292`, corrected dual-host adversarial content validation, all eight
+lockfiles, and final process/residue/vault audit close this checkpoint threat
+delta. The stated user-mode, privileged-actor, hostile-filesystem, installed-
+service/driver, pre-execution, production-accuracy, and Defender-replacement
+risks remain unchanged.

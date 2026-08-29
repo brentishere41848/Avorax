@@ -2385,5 +2385,11 @@ live malware or EICAR, network content, machine-wide component, Defender
 change, service/driver registration, release, or publication is involved.
 Both locked workspace suites and the locked all-feature release build pass.
 No lockfile is present in the tracked diff. The definitive dependency gate
-passes inside exact-292 verification. Hosted package/SBOM, guarded
-synchronization, and destination dependency evidence remain pending.
+passes inside exact-292 verification. Evidence-head and merged-main package
+runs pass with publication skipped. Consolidated artifacts `9707407539` and
+`9707575076` independently pass all seven checksums and CycloneDX 1.6 / 569-
+component bounded stream review without extraction or execution. Guarded
+synchronization changes no lockfile; destination locked builds/tests and the
+all-eight-lockfile audit pass. Checkpoint 2264 is closed without a dependency
+or license delta. Final signed-binary notice provenance, production signing/
+notarization, enterprise deployment, and release approval remain separate.

@@ -3943,3 +3943,11 @@ and Defender replacement remain blocked or technically limited. Native direct
 quarantine remains disabled; active mutation ownership stays with Local Core
 and Guard. No live malware, Defender weakening, vault mutation, machine-wide
 install, service/driver start, release, or publication is authorized.
+
+The pending checkpoint-evidence statement above is superseded by exact
+evidence-head and merged-main CI/packages, bounded artifacts, normal PR `#137`
+integration, guarded zero-delete synchronization, destination `292/292`, dual-
+host authentic and adversarial content validation, all eight lockfiles, zero
+residue/processes, and the exact protected vault. Checkpoint 2264 is closed.
+The authority, installed-service/driver, production-calibration, pre-execution,
+and Defender-replacement limits above remain blockers or technical limits.

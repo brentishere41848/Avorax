@@ -1154,5 +1154,17 @@ recorded as non-passing because untouched `services/api` triggers Rust 1.96
 `items_after_test_module` and `enum_variant_names`; this checkpoint does not
 hide or broaden itself to repair that unrelated crate. Definitive exact-292 now
 passes `292/292`, zero failed/skipped, in `659.4s`; independent PS5/PS7
-validation and all six adversarial missing-step/scope rejections pass. Hosted
-and destination verification remains pending.
+validation and all six adversarial missing-step/scope rejections pass.
+
+Checkpoint 2264 closure additionally passes exact evidence-head and merged-main
+CI/packages with publication skipped, bounded non-extracting review of both
+consolidated artifacts, guarded 17-path zero-delete synchronization, and the
+complete destination rerun. Destination Source is `694/694`; focused collision
+is `3/3`; both locked workspaces, release, Flutter `852/852`, protocols, and
+exact definitive `292/292` pass. Independent PS5/PS7 validation accepts report
+SHA-256 `2d019c6dfe7faae629b28f9a9b11c6e6694db76b1950221281cfcd83d11c423e`.
+The first destination adversarial attempt is not credited because path
+containment rejected outside-repository candidates before content checks; its
+corrected in-repository rerun rejects all six intended mutations. Final audit
+passes all 17 blobs, eight lockfiles, zero residue/processes, and the protected
+vault invariant.
