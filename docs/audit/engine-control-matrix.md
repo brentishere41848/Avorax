@@ -5833,15 +5833,19 @@ process/residue, and protected-vault evidence. Checkpoint 2263 is closed.
 
 | Control / engine responsibility | State | Evidence boundary |
 | --- | --- | --- |
-| Local Core payload ingestion | **Definitively verified locally** | Shared no-replace rename and retained fallback pass collision/broader coverage, strict lint, locked workspaces, safe smoke, and exact-292 verification. |
-| Guard payload ingestion | **Definitively verified locally** | Same boundary and fail-visible dual-error contract pass focused/broader Guard tests, strict lint, workspaces, release, and exact-292 verification. |
-| Native direct quarantine compatibility | **Disabled / definitively verified locally** | Dormant path passes focused/broader Native coverage, strict lint, and exact-292 verification, but production mutation remains Local Core/Guard owned. |
-| Exclusive copy fallback | **Locally re-verified** | Existing bounded read, exclusive create, payload hash, source identity/link, cleanup, and source-removal regressions pass. |
-| Collision error reporting | **Verified locally** | All three fixtures retain both errors and preserve distinct source/destination bytes; no fake success. |
-| Detection engines and verdict aggregation | **Unchanged / broad local regression green** | Hash/signature, local rule/YARA, static/PE/archive, heuristic, ML, Authenticode, process observation, allowlist/exclusion, and aggregation contracts remain green in locked workspace tests. |
+| Local Core payload ingestion | **Verified** | Shared no-replace rename and retained fallback pass local/destination collision and broader coverage, strict lint, locked workspaces, safe smoke, exact-292 verification, hosted CI/packages, merge, and synchronization. |
+| Guard payload ingestion | **Verified** | The same boundary and fail-visible dual-error contract pass local/destination Guard tests, strict lint, workspaces, release, hosted Windows evidence, merge, and synchronization. |
+| Native direct quarantine compatibility | **Disabled / regression verified** | Dormant path passes local/destination Native coverage and hosted cross-target packages, but production mutation remains Local Core/Guard owned. |
+| Exclusive copy fallback | **Verified** | Existing bounded read, exclusive create, payload hash, source identity/link, cleanup, and source-removal regressions pass locally and at destination. |
+| Collision error reporting | **Verified** | All three fixtures retain both errors and preserve distinct source/destination bytes; exact dual-host content validation rejects missing evidence. |
+| Detection engines and verdict aggregation | **Unchanged / broad regression green** | Hash/signature, local rule/YARA, static/PE/archive, heuristic, ML, Authenticode, process observation, allowlist/exclusion, and aggregation contracts remain green locally, hosted, and at destination. |
 | Privileged source/ancestor mutation | **Technically limited** | Atomicity covers only the final destination-name operation; user-mode checks remain point-in-time. |
 
 Checkpoint 2264 production, test, exact-292 verifier/validator, source-contract,
 audit, dependency, and safety scripting completed before execution. No
 checkpoint-2264 test ran during that phase. Focused, broad, and exact-292 local
-evidence now passes; hosted, integration, sync, and destination evidence remains.
+evidence now passes. Evidence-head and merged-main CI/packages, normal PR `#137`
+integration, bounded artifact review, guarded 17-path zero-delete synchronization,
+destination exact `292/292`, validators/adversarial content checks, eight locks,
+and final vault/process/residue audit also pass. Checkpoint 2264 is closed; the
+privileged source/ancestor row remains technically limited.

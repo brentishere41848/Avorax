@@ -7948,7 +7948,8 @@ pending status is superseded; the complete goal remains active.
 
 ## Checkpoint 2264 - Quarantine Ingest No-Replace
 
-Checkpoint 2264 is **locally verified / hosted integration pending**. Local Core, Guard, and the
+Checkpoint 2264 is **closed through hosted integration and synchronized
+destination verification**. Local Core, Guard, and the
 disabled Native compatibility quarantine path now attempt the shared atomic
 no-replace operation before existing exclusive verified copy fallback. Three
 harmless collision fixtures require rejection with source and destination
@@ -7965,17 +7966,22 @@ under Rust 1.96. The no-skip/no-Defender verifier passes exact `292/292` in
 `1c2ecc9ab68b9baf0b1da1240dc524759b18484df5aaeb29a4c973315c3a3d18`.
 Both independent validator hosts accept it and reject all six required
 mutations. Final local audit confirms zero product processes/temp residue, no
-lockfile diff, and the exact unchanged 16,072-file protected vault. Hosted,
-merge, sync, and destination proof remains.
+lockfile diff, and the exact unchanged 16,072-file protected vault.
 Implementation commit `2d1148e` is PR `#137` exact head; Avorax CI
 `33226157011` and Desktop Packages push/PR
 `33226139023`/`33226157015` pass. Both package runs build all six platform
 files, checksums, and lockfile SBOM with publication skipped. Their
 consolidated artifacts pass bounded non-extracting exact
-8-root/6-platform/7-checksum/CycloneDX-1.6/569-component review. Evidence-head,
-merge, merged-main, guarded sync, and destination proof remains.
+8-root/6-platform/7-checksum/CycloneDX-1.6/569-component review. Evidence
+`9dd2877` and normal PR `#137` merge `f0b13bb` pass exact-head and merged-main
+CI/packages with publication skipped; both additional consolidated artifacts
+pass the same bounded review. Guarded 17-path zero-delete synchronization,
+destination Source `694/694`, broad regressions, exact `292/292`, corrected
+dual-host adversarial content rejection, all eight locks, zero residue/
+processes, and the exact vault pass.
 Active production mutation remains owned by Local Core and Guard; Native direct
 quarantine remains disabled.
 Privileged source/ancestor races, installed cross-identity authority, kernel
 mediation, pre-execution blocking, Defender replacement, production accuracy,
 and the complete antivirus-hardening goal remain limited, blocked, or open.
+Checkpoint 2264 closure does not close those product-level limits.

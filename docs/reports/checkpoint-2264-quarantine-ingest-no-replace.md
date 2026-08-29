@@ -1,6 +1,6 @@
 # Checkpoint 2264 - Quarantine Ingest No-Replace
 
-Status: **Definitively verified locally; hosted integration pending**
+Status: **Closed through hosted implementation integration and synchronized destination verification**
 
 Checkpoint 2264 prevents quarantine ingestion from replacing an opaque payload
 that appears after destination preflight. It changes no detector, verdict
@@ -48,9 +48,8 @@ the exclusive copy fallback had a chance to reject it.
   validator, documentation, dependency, and safety claims.
 
 No checkpoint-2264 test ran during the scripting phase. Execution began only
-after the complete batch was frozen. Focused and broad local results are
-recorded below; definitive, adversarial, hosted, merge, and synchronized-
-destination evidence remains pending.
+after the complete batch was frozen. Focused, broad, definitive, adversarial,
+hosted, merge, and synchronized-destination results are recorded below.
 
 ## Local Verification
 
@@ -113,19 +112,63 @@ passed `3/3`; this was a harness invocation failure, not a product pass.
   result SHA-256 is
   `576bc69c42d9e788fab4d47f8ea2c01d5157b0ce81dbeaff14f422a74ad669e5`.
 
-Evidence-head CI/packages, merge, merged-main, guarded synchronization, and
-destination verification remain pending.
+Evidence commit `9dd2877ac4baa3e7646a7be665025710b6a2cc20` passes exact-head
+CI `33227073270` and Desktop Packages `33227073200`, with publication skipped.
+Consolidated artifact `9707407539` is 132,299,069 bytes with SHA-256
+`785e9b30b7c52aca0e7f1d708790c33570485c29d1e8bd595a3737d633233419`.
+Bounded stream validation again passes exact 8 roots, 6 platform files, 7
+checksum targets, and CycloneDX 1.6 / 569 components without extraction or
+execution; validation result SHA-256 is
+`5ee57f4363f92167b3d1373dcf3d8b98c2e131f8460f851bab60652e5f077e27`.
+
+PR `#137` merged normally as
+`f0b13bb558087cc371f676874b8a663b8e73a3cb`. Exact merged-main CI
+`33227697064` and Desktop Packages `33227697096` pass, with publication job
+`99035949564` skipped. Consolidated artifact `9707575076` is 132,348,182
+bytes with SHA-256
+`53c2880c828adb1e97b4f7909f71be0f115632194c92d952b63c03787f72eeb2`.
+It passes the same bounded non-extracting/non-executing 8/6/7/CycloneDX-1.6/
+569-component review; validation result SHA-256 is
+`b51d390f7971a21823b0651f01d39fbf129f74ffd2687171a62ca6e4972e2aed`.
+
+## Closure Evidence
+
+- Guarded exact-base synchronization from
+  `63de2a46494b136e55e6ad165f665806dd8add4e` to the merged implementation
+  applied exactly 17 paths: 16 modified, one added, zero deleted. Source,
+  staging, backup, activation, process, and vault pre/postconditions passed.
+  Sync report SHA-256 is
+  `5bf6f9ea056ed4202f88b335736c2285e9c8caef396a882fa2c506f377c7ba6a`.
+- Destination formatting, Source `694/694`, focused collision `3/3`, broader
+  quarantine filters, safe smoke, strict changed-crate Clippy, both locked
+  workspace variants, locked all-feature release, Flutter analyze and
+  `852/852`, and protocol analyze/tests `14/14 + 6/6` pass.
+- The destination no-skip/no-Defender verifier passes exact `292/292`, zero
+  failed/skipped, in `713.9s`. Its 209,108-byte report SHA-256 is
+  `2d019c6dfe7faae629b28f9a9b11c6e6694db76b1950221281cfcd83d11c423e`.
+  Independent PS5/PS7 validation accepts the authentic report. The first
+  destination adversarial attempt was discarded because containment rejected
+  its outside-repository mutation paths before content validation. The
+  corrected inside-repository rerun accepts the authentic report twice and
+  rejects all six missing-step/scope mutations for their intended content
+  reasons; result SHA-256 is
+  `e7b024f9f6348ced4db43a574992d7017b1219d0fca4f80c337d96d5766dfa6a`.
+- Final audit report SHA-256
+  `b9cc15d0d7f1150eac6d4fc25c3288170925a0e84a8091d56173b4cc629f2bdf`
+  confirms 17/17 exact blobs, all eight active lockfiles, zero deleted paths,
+  staging residue, or product processes, the removed safe-smoke root, and the
+  unchanged protected vault.
 
 ## Verification Matrix
 
 | Control / engine responsibility | Current state | Required evidence |
 | --- | --- | --- |
-| Local Core quarantine ingest | **Definitively verified locally** | Collision fixture, broader quarantine filter, strict changed-crate lint, safe quarantine smoke, both locked workspaces, and exact-292 verifier pass; hosted evidence remains. |
-| Guard quarantine ingest | **Definitively verified locally** | Collision fixture, broader Guard quarantine tests, strict changed-crate lint, workspace regressions, release build, and exact-292 verifier pass; hosted Windows evidence remains. |
-| Native compatibility quarantine ingest | **Disabled / definitively verified locally** | Collision fixture, Native quarantine/default/all-feature coverage, strict lint, release build, and exact-292 verifier pass. The feature remains disabled in production; hosted cross-target evidence remains. |
-| Existing exclusive verified copy fallback | **Locally re-verified** | Existing hash/link/identity/exclusive-create coverage, broader filters, locked workspaces, and safe smoke pass. |
-| Error reporting | **Definitively verified locally** | All three collision tests expose both atomic rename and fallback contexts while preserving source and destination bytes; exact validator scope is adversarially guarded. |
-| Signature/hash/local-rule/YARA/static/PE/archive/heuristic/ML/Authenticode/process/verdict engines | **Unchanged / definitive local regression green** | Both locked workspace variants, release build, Flutter/protocol suites, and exact-292 verifier pass; hosted evidence remains. |
+| Local Core quarantine ingest | **Verified** | Local and destination collision/broader tests, strict lint, safe smoke, locked workspaces, exact-292 verification, hosted CI/packages, merge, and exact-blob synchronization pass. |
+| Guard quarantine ingest | **Verified** | Local and destination collision/broader Guard tests, strict lint, release/workspace coverage, hosted Windows evidence, merge, and exact-blob synchronization pass. |
+| Native compatibility quarantine ingest | **Disabled / regression verified** | Local/destination Native coverage, hosted cross-target packages, merge, and synchronization pass. The feature remains disabled in production. |
+| Existing exclusive verified copy fallback | **Verified** | Existing hash/link/identity/exclusive-create coverage, broader filters, locked workspaces, safe smoke, hosted and synchronized-destination regressions pass. |
+| Error reporting | **Verified** | All three collision tests expose both atomic rename and fallback contexts while preserving source and destination bytes; exact validator scope is dual-host adversarially guarded locally and at destination. |
+| Signature/hash/local-rule/YARA/static/PE/archive/heuristic/ML/Authenticode/process/verdict engines | **Unchanged / broad regression green** | Both locked workspace variants, release build, Flutter/protocol suites, exact-292 verification, hosted CI/packages, and destination reruns pass. |
 | Cross-filesystem or unsupported atomic rename | **Safest viable fallback** | Exclusive verified copy may succeed; otherwise both errors remain visible. |
 | Ancestor/source races against privileged actors | **Technically limited** | Final-name no-replace is atomic, but user-mode path/ancestor/source checks are point-in-time. |
 
@@ -151,8 +194,9 @@ remains untracked and must never be staged or deleted.
 Checkpoint 2264 adds no dependency, package source, binary fixture, license
 class, network fetch, or lockfile change. It reuses the pinned
 `avorax_platform_security` dependency already present in all three crates.
-Locked builds pass and no lockfile appears in the tracked diff. Hosted SBOM and
-synchronized-destination reviews remain pending.
+Locked builds, hosted CycloneDX/checksum evidence, and the synchronized all-
+eight-lockfile review pass; no lockfile appears in the tracked diff.
 
-The complete antivirus-hardening goal remains active. Completion of checkpoint
-2264 must not be represented as completion of the whole antivirus project.
+Checkpoint 2264 is closed. The complete antivirus-hardening goal remains active;
+this checkpoint must not be represented as completion of the whole antivirus
+project.
