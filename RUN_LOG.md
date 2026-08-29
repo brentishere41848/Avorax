@@ -14503,3 +14503,39 @@ pending.
   destination verification, and closure remain pending. Hosted compilation
   expands no runtime, transaction, installed authority, pre-execution, signing,
   deployment, or Defender-replacement claim.
+
+## 2026-08-29 - Checkpoint 2268 Integration And Destination Closure
+
+- Evidence commit `635ccc21e3b7d106c33dd5bd719fdc22926e209f` passes CI
+  `33254651157` and Desktop Packages `33254651121`; publication is skipped.
+  Consolidated artifact `9715575145` is 132,522,226 bytes with SHA-256
+  `803fdc2f63f63c21a7f56474f7b22df02d7a946344f5961e00707c7af5a79e77`
+  and passes bounded non-extracting/non-executing exact
+  8-root/6-platform/7-checksum/CycloneDX-1.6/569-component validation.
+- PR `#145` merges normally as
+  `99891d10c387c196f84b30630e2177ba7e8a9333`. Merged-main CI
+  `33255233149` and Desktop Packages `33255233172` pass with publication
+  skipped. Artifact `9715798339` is 133,137,514 bytes with SHA-256
+  `9d9acefdf87d186d81b5975cae9adbb6c9899ba7415d97aff5067478c45b915c`
+  and passes the same bounded review without extraction or execution.
+- Guarded synchronization applies exactly 17 modified plus one added project
+  path with zero deletes. Its report SHA-256 is
+  `586ef969e3a21ec729a0afd82eda85123575b548809dadf614c6160c505249ff`;
+  all 34 expected before/replaced backups are present.
+- Destination parsing, formatting, Source `699/699`, focused `2/2 + 4/4`,
+  platform `17/17`, update service `216/216`, strict lint, both locked
+  workspaces, locked release, Flutter analyze plus `852/852`, and protocol
+  analyze/tests `14/14 + 6/6` pass. The no-skip/no-Defender verifier passes
+  exact `296/296` in `665.0s`; its 214,543-byte report SHA-256 is
+  `77cecb9be36bc4350dcf1e321e1c7cc0e11ea52b0303da1554f9c9c993da02e7`.
+- Both validator hosts accept the authentic destination report and reject all
+  14 adversarial host/mutation cases. The 12,970-byte result SHA-256 is
+  `3bcc0829a3d972e49c23ba77d8691377822f2841cf6cee61955d93c6d1a9ea32`.
+  The first final-audit invocation failed visibly because the previously
+  recorded checkpoint-2194 temporary root was absent; the corrected audit
+  records zero product temporary roots instead of fabricating preservation.
+  Final destination audit SHA-256
+  `8826367c8fbd9e79622311f8f2f92095bd3c4e999ec6b77f7cd051a83676d066`
+  passes 18/18 exact merge blobs, 8/8 locks, 34 backups, zero processes/pending,
+  and the exact protected-vault invariant. Checkpoint 2268 is closed; the
+  complete antivirus-hardening goal remains active.

@@ -1,6 +1,6 @@
 # Checkpoint 2268 - Update Directory No-Replace
 
-Status: **Verified locally; hosted integration and destination evidence pending**
+Status: **Closed through hosted integration and synchronized destination verification**
 
 Date: 2026-08-29
 
@@ -184,3 +184,57 @@ synchronization, destination verification, and closure remain pending. Hosted
 build evidence does not prove cross-platform runtime semantics, whole-update
 transactionality, production signing/deployment, installed authority,
 driver/pre-execution behavior, or Defender replacement.
+
+## Evidence Head And Normal Integration
+
+Evidence commit `635ccc21e3b7d106c33dd5bd719fdc22926e209f` passes Avorax
+CI `33254651157` and Desktop Packages `33254651121`; publication is skipped.
+Consolidated artifact `9715575145` is 132,522,226 bytes with SHA-256
+`803fdc2f63f63c21a7f56474f7b22df02d7a946344f5961e00707c7af5a79e77`.
+Bounded stream validation, without extraction or execution, confirms exact
+8-root/6-platform/7-checksum inventory and CycloneDX 1.6 with 569 components;
+the 606-byte validation result SHA-256 is
+`653ea925f3b3ad188a2b8ca4c206942b21d577e29b7797a259c81debd05ad64c`.
+
+PR `#145` merges normally as
+`99891d10c387c196f84b30630e2177ba7e8a9333`. Merged-main Avorax CI
+`33255233149` and Desktop Packages `33255233172` pass; publication is skipped.
+Artifact `9715798339` is 133,137,514 bytes with SHA-256
+`9d9acefdf87d186d81b5975cae9adbb6c9899ba7415d97aff5067478c45b915c`
+and passes the same bounded non-extracting/non-executing review. The 604-byte
+validation result SHA-256 is
+`70b2dbcc635ec37dc7107c48edb591213b9d1053448ac10d1d5fbc46f8fe3e88`.
+
+## Guarded Synchronization And Destination Evidence
+
+Guarded synchronization applies exactly 17 modified plus one added project
+path with zero deletes. The sync report SHA-256 is
+`586ef969e3a21ec729a0afd82eda85123575b548809dadf614c6160c505249ff`;
+all 34 expected before/replaced backup files are present.
+
+At `C:\Users\Brent\Documents\Avorax-main`, PowerShell 5.1/7 parsing,
+formatting, Source `699/699`, focused platform `2/2`, focused update/rollback
+`4/4`, platform `17/17`, update service `216/216`, strict lint, both locked
+workspace variants, locked all-feature release, Flutter analysis plus
+`852/852`, and protocol analyses/tests `14/14 + 6/6` pass. The no-skip/no-
+Defender verifier passes exact `296/296` in `665.0s`. Its 214,543-byte report
+SHA-256 is
+`77cecb9be36bc4350dcf1e321e1c7cc0e11ea52b0303da1554f9c9c993da02e7`.
+
+PowerShell 5.1 and 7 accept the authentic destination report and reject all 14
+adversarial host/mutation cases. The 12,970-byte adversarial result SHA-256 is
+`3bcc0829a3d972e49c23ba77d8691377822f2841cf6cee61955d93c6d1a9ea32`.
+The first final-audit invocation failed visibly because the previously recorded
+checkpoint-2194 temporary root was absent. Read-only inspection found zero
+Avorax/Zentor temporary roots; the corrected audit records that absence and
+still rejects every unexpected root instead of fabricating preservation.
+
+Final destination audit SHA-256
+`8826367c8fbd9e79622311f8f2f92095bd3c4e999ec6b77f7cd051a83676d066`
+passes 18/18 exact merge blobs, 8/8 active lockfiles, 34 backups, zero product
+processes or pending/temporary roots, and the exact read-only vault invariant.
+
+Checkpoint 2268 is closed. Every documented whole-update transaction, crash/
+manual-recovery, point-in-time path, privileged-actor, hostile-filesystem,
+cross-platform runtime, installed service/driver, pre-execution, signing/
+deployment, Defender-replacement, and whole-project limit remains active.

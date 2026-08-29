@@ -8182,7 +8182,7 @@ limits remain open.
 
 ## Checkpoint 2268 - Update Directory No-Replace
 
-Status: **Scripted; execution evidence pending**.
+Status: **Closed through hosted integration and synchronized destination verification**.
 
 Update tree replacement and rollback directory activation now route the three
 final-name directory moves through the shared operating-system atomic no-
@@ -8250,3 +8250,21 @@ Exact implementation `821d17666fd5739525c3803c15c98341046035eb` is PR
 8/6/7/CycloneDX-1.6/569-component review. Evidence-head hosted checks, normal
 merge, merged-main checks, guarded synchronization, destination verification,
 and closure remain pending; the whole antivirus-hardening goal stays active.
+
+That pending state is superseded. Evidence `635ccc21` passes CI/packages
+`33254651157`/`33254651121`; normal PR `#145` merge `99891d10` passes
+merged-main CI/packages `33255233149`/`33255233172`. Both later consolidated
+artifacts pass bounded non-extracting/non-executing exact inventory, checksum,
+and 569-component SBOM review; publication remains skipped.
+
+Guarded synchronization changes exactly 17 existing paths plus one added report
+with zero deletes and preserves 34 expected backups. Destination Source
+`699/699`, focused `2/2 + 4/4`, platform `17/17`, update service `216/216`,
+strict lint, both locked workspaces, locked release, Flutter `852/852`,
+protocols `14/14 + 6/6`, and exact no-skip/no-Defender verifier `296/296` in
+`665.0s` pass. Both hosts accept the authentic report and reject all 14
+mutation cases. Final audit passes 18/18 merge blobs, 8/8 locks, zero product
+processes/pending/temporary roots, and the exact protected vault. Checkpoint
+2268 is closed. Whole-update transactionality, cross-platform runtime,
+privileged filesystems, installed authority, driver/pre-execution,
+signing/deployment, Defender replacement, and whole-project limits remain open.
