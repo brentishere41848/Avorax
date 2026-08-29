@@ -14085,3 +14085,54 @@ pending.
 - Final audit passes 17/17 blobs, 8/8 active lockfiles, zero staging residue or
   product processes, and the unchanged 16,072-file vault. Checkpoint 2264 is
   closed; user-mode authority limits and the complete goal remain active.
+
+## 2026-08-29 - Checkpoint 2265 Quarantine Metadata No-Replace Scripting
+
+- Identified a post-preflight replacement race in final quarantine journal,
+  metadata-record, and authentication-sidecar activation: ordinary Unix rename
+  could overwrite a destination created after the absence check.
+- Scripted Local Core and Guard production activation through the shared OS
+  no-replace primitive. Native compatibility metadata receives the same repair
+  but remains disabled; Local Core and Guard remain active mutation owners.
+- Preserved Local Core's required status/recovery replacement semantics: remove
+  the validated old file, then activate no-replace. A destination appearing in
+  that deliberate gap is preserved and the operation fails visibly.
+- Scripted three harmless collision fixtures, a focused workspace verifier step,
+  exact-293 report validation, a new source contract, a control matrix, threat
+  model, blocker, dependency, and operational documentation update.
+- No checkpoint-2265 test ran during the scripting phase. Execution evidence is
+  pending until the complete scripting batch is reviewed and formatted.
+- No live malware, Defender change, machine-wide install, service/driver start,
+  release, publication, or protected-vault mutation is involved. The 16,072-file
+  vault and the complete antivirus-hardening goal remain active invariants.
+
+## 2026-08-29 - Checkpoint 2265 Local Verification
+
+- After the full scripting batch froze, formatting, Source `695/695`, focused
+  metadata collision `3/3`, broader quarantine `8 + 3 + 51 + 140 + 39`, strict
+  changed-crate Clippy, both locked workspaces, locked all-feature release,
+  safe quarantine/restore smoke, Flutter analyze plus `852/852`, and protocols
+  `14/14 + 6/6` pass.
+- The no-skip/no-Defender verifier passes exact `293/293`, zero failed/skipped,
+  in `659.4s`. Report size is 219,352 bytes and SHA-256 is
+  `d526b2548ed90a62fd7e6a23b4383d393bbe878ce4488d5073fcbce8c5bf3a94`.
+- Independent PowerShell 5.1/7 validators accept the authentic report; all
+  eight required evidence mutations are rejected by both hosts (`16/16`).
+- Final local audit finds no lockfile delta, product process, or smoke residue,
+  and the exact protected-vault invariant remains unchanged. Hosted exact-head,
+  merge, guarded sync, and destination evidence remain pending.
+
+## 2026-08-29 - Checkpoint 2265 Hosted Implementation Head
+
+- Exact implementation `e4a1bb81dda30b9b9d4377a8f1f43e1f968c8713` is
+  PR `#139` head. Avorax CI `33233682635` passes all five jobs.
+- Desktop Packages push/PR runs `33233673950`/`33233682629` pass all six
+  platform packages, checksums, and lockfile SBOM; publication is skipped.
+- Consolidated artifacts `9709386808`/`9709458957` are 132,317,128/
+  132,858,881 bytes with SHA-256
+  `9ddc8d0251921b8e6dfd19289cad0ff70268f0f13e7f67c1fd748e5f51ac8401`/
+  `0adf6846efcb82dfd06ee9d3e80b97b102223737252e175c6ba405e74c424a4e`.
+  Both pass bounded non-extracting/non-executing exact
+  8-root/6-platform/7-checksum/CycloneDX-1.6/569-component review.
+- Evidence-head reruns, normal merge, merged-main evidence, guarded sync, and
+  destination verification remain pending.

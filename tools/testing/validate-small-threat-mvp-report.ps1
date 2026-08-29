@@ -1951,8 +1951,8 @@ if ($RequireFullSuite) {
   if ($skipFlutter -or $skipRust) {
     throw "-RequireFullSuite requires skip_flutter=false and skip_rust=false."
   }
-  if ($steps.Count -ne 292) {
-    throw "-RequireFullSuite expected exactly 292 verifier steps for this source revision, found $($steps.Count)."
+  if ($steps.Count -ne 293) {
+    throw "-RequireFullSuite expected exactly 293 verifier steps for this source revision, found $($steps.Count)."
   }
   if ($steps[0].name -ne "local-core safe simulator scan reporting") {
     throw "-RequireFullSuite first step mismatch: $($steps[0].name)"
@@ -1972,6 +1972,7 @@ if ($RequireFullSuite) {
   Assert-ReportContainsStep $steps "platform quarantine permission regressions"
   Assert-ReportContainsStep $steps "quarantine restore atomic no-replace regressions"
   Assert-ReportContainsStep $steps "quarantine ingest atomic no-replace regressions"
+  Assert-ReportContainsStep $steps "quarantine metadata atomic no-replace regressions"
   Assert-ReportContainsStep $steps "native-engine file-type classifier regressions"
   Assert-ReportContainsStep $steps "native-engine detection-only mutation boundary regressions"
   Assert-ReportContainsStep $steps "native-engine archive content sampling regressions"
@@ -2112,6 +2113,8 @@ if ($RequireFullSuite) {
   Assert-ReportScopeContains $verifiedScopeText "A destination created after preflight is preserved byte-for-byte" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "Local Core, Guard, and the disabled Native compatibility quarantine path attempt payload ingestion with the shared operating-system atomic no-replace primitive" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "Harmless competing-destination fixtures prove all three paths preserve both source bytes and destination bytes while retaining the atomic rename error and exclusive copy fallback error" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Local Core and Guard activate new quarantine finalization journals, metadata records, and authentication sidecars with the shared operating-system atomic no-replace primitive" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Harmless competing-metadata fixtures prove all three owners preserve both staged bytes and competing destination bytes and fail visibly instead of overwriting the destination" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "Local Core independently requires explicit confirmation, validates bounded SHA-256 syntax before store or file access, rejects bytes changed since the scan verdict, and persists only matching hash-bound state" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "Detection feedback hashes before and after bounded feature extraction, rejects unsupported labels, and returns compact persisted label evidence" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "Flutter client accepts success only when allowlist type/path/hash/active state or feedback identifier/hash/label/previous-verdict/store path exactly matches the request and response contract" "verification_scope.verified"
@@ -2133,6 +2136,11 @@ if ($RequireFullSuite) {
   Assert-ReportScopeContains $technicalLimitText "Atomic quarantine ingestion protects only the final destination-name operation on supported Windows, Linux, and Apple primitives" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "cross-filesystem or unsupported atomic rename safely degrades to exclusive verified copy" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "Native direct quarantine remains disabled compatibility code rather than active mutation ownership" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "Quarantine metadata no-replace protects only each final destination-name activation" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "Local Core replacement still has a deliberate remove-to-activate gap" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "journal/record/auth files are separate non-transactional files" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "unsupported platforms fail rather than use replacement-capable rename" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "Authenticated recovery detects incomplete state but cannot make multi-file activation atomic" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "File allowlisting remains safe after its hash snapshot because later scan suppression also requires that exact hash" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "neither operation holds a kernel-enforced immutable file lease" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "This is confirmation and stale-verdict defense, not cross-identity authorization, malware execution prevention, driver enforcement, or protection against administrators, SYSTEM, or kernel compromise" "verification_scope.technically_limited"

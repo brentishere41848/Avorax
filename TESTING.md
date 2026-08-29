@@ -1168,3 +1168,43 @@ containment rejected outside-repository candidates before content checks; its
 corrected in-repository rerun rejects all six intended mutations. Final audit
 passes all 17 blobs, eight lockfiles, zero residue/processes, and the protected
 vault invariant.
+
+## Checkpoint 2265 Quarantine Metadata No-Replace
+
+Checkpoint 2265 adds a focused Rust workspace filter:
+
+```powershell
+cargo test --workspace quarantine_metadata_no_replace -- --test-threads=1
+```
+
+The filter selects one harmless collision fixture in each of Local Core, Guard,
+and the disabled Native compatibility writer. Each fixture calls its production
+metadata activation wrapper, requires a visible no-replace error, and verifies
+that both staged fixture bytes and competing destination bytes remain unchanged.
+The Python source contract also verifies production wiring, Local Core's
+validated remove-before-no-replace replacement order, verifier/validator scope,
+documentation, safety, and dependency claims.
+
+The definitive verifier now requires the new step and exact 293-step full-suite
+evidence. The validator rejects missing per-file atomicity, remove-to-activation,
+multi-file transaction, unsupported-platform, or authenticated-recovery limits.
+No checkpoint-2265 test ran during the scripting phase. Focused checks, broad
+local regression, exact-293 verification, hosted evidence, merge, guarded sync,
+and destination rerun remain pending.
+
+After the frozen batch, formatting, Source `695/695`, focused collision `3/3`,
+broader quarantine `8 + 3 + 51 + 140 + 39`, strict changed-crate Clippy, both
+locked workspaces, locked all-feature release, safe smoke, Flutter `852/852`,
+and protocols `14/14 + 6/6` pass. Definitive verification passes exact
+`293/293`, zero failed/skipped, in `659.4s`. Independent PowerShell 5.1 and 7
+validation accepts the 219,352-byte report with SHA-256
+`d526b2548ed90a62fd7e6a23b4383d393bbe878ce4488d5073fcbce8c5bf3a94`;
+both hosts reject all eight missing-evidence mutations (`16/16`). Hosted,
+integration, guarded-sync, and destination execution remain pending.
+
+Implementation-head CI `33233682635` and package push/PR runs
+`33233673950`/`33233682629` pass at exact commit `e4a1bb8`; both publication
+jobs skip. Consolidated artifacts `9709386808`/`9709458957` pass bounded stream
+validation without extraction or execution: exact 8 root entries, 6 platform
+files, 7 checksums, and CycloneDX 1.6 with 569 components. Evidence-head,
+merged-main, guarded-sync, and destination reruns remain pending.

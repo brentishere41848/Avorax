@@ -274,7 +274,9 @@ fn write_record_staged(path: &Path, bytes: &[u8]) -> Result<()> {
         })?;
         return Err(error);
     }
-    if let Err(error) = fs::rename(&temp_path, path) {
+    if let Err(error) =
+        activate_native_quarantine_metadata_no_replace(&temp_path, path, "quarantine metadata")
+    {
         cleanup_quarantine_metadata_temp_file(&temp_path).with_context(|| {
             format!(
                 "failed to clean up temporary quarantine metadata {} after activation failure: {error:#}",
@@ -285,6 +287,14 @@ fn write_record_staged(path: &Path, bytes: &[u8]) -> Result<()> {
             .with_context(|| format!("failed to activate quarantine metadata {}", path.display()));
     }
     Ok(())
+}
+
+fn activate_native_quarantine_metadata_no_replace(
+    staged: &Path,
+    destination: &Path,
+    label: &str,
+) -> Result<()> {
+    avorax_platform_security::rename_file_no_replace(staged, destination, label)
 }
 
 fn ensure_native_quarantine_metadata_parent_directory(path: &Path) -> Result<()> {
@@ -1056,6 +1066,34 @@ mod tests {
             b"existing metadata"
         );
         assert_eq!(fs::read_dir(temp.path()).expect("temp entries").count(), 1);
+    }
+
+    #[test]
+    fn native_quarantine_metadata_no_replace_activation_preserves_competing_file() {
+        let temp = tempfile::tempdir().expect("tempdir");
+        let staged = temp.path().join("record.json.tmp-benign");
+        let destination = temp.path().join("record.json");
+        fs::write(&staged, b"benign staged native quarantine metadata").expect("staged");
+        fs::write(&destination, b"benign competing native quarantine metadata")
+            .expect("destination");
+
+        let error = activate_native_quarantine_metadata_no_replace(
+            &staged,
+            &destination,
+            "native quarantine metadata fixture",
+        )
+        .expect_err("a competing native quarantine metadata file must not be replaced");
+        let detail = format!("{error:#}");
+
+        assert!(detail.contains("without replacing"), "{detail}");
+        assert_eq!(
+            fs::read(&staged).expect("staged bytes"),
+            b"benign staged native quarantine metadata"
+        );
+        assert_eq!(
+            fs::read(&destination).expect("destination bytes"),
+            b"benign competing native quarantine metadata"
+        );
     }
 
     #[test]

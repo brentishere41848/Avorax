@@ -1727,7 +1727,7 @@ fn write_staged_quarantine_file(path: &Path, bytes: &[u8], label: &str) -> Resul
         })?;
         return Err(error);
     }
-    if let Err(error) = fs::rename(&temp_path, path) {
+    if let Err(error) = activate_quarantine_metadata_no_replace(&temp_path, path, label) {
         cleanup_quarantine_staged_file(&temp_path, label).with_context(|| {
             format!(
                 "failed to clean up temporary {label} {} after activation failure: {error:#}",
@@ -1771,7 +1771,7 @@ fn replace_staged_quarantine_file(path: &Path, bytes: &[u8], label: &str) -> Res
         })?;
         return Err(error);
     }
-    if let Err(error) = fs::rename(&temp_path, path) {
+    if let Err(error) = activate_quarantine_metadata_no_replace(&temp_path, path, label) {
         cleanup_quarantine_staged_file(&temp_path, label).with_context(|| {
             format!(
                 "failed to clean up temporary {label} {} after activation failure: {error:#}",
@@ -1782,6 +1782,14 @@ fn replace_staged_quarantine_file(path: &Path, bytes: &[u8], label: &str) -> Res
             .with_context(|| format!("failed to activate {label} {}", path.display()));
     }
     Ok(())
+}
+
+fn activate_quarantine_metadata_no_replace(
+    staged: &Path,
+    destination: &Path,
+    label: &str,
+) -> Result<()> {
+    avorax_platform_security::rename_file_no_replace(staged, destination, label)
 }
 
 fn quarantine_staged_temp_path(path: &Path, label: &str) -> Result<PathBuf> {
@@ -5016,6 +5024,33 @@ mod tests {
             .contains("quarantine metadata auth sidecar destination already exists"));
         assert_eq!(fs::read(&auth_path).unwrap(), b"existing auth");
         assert!(!base.join("record.json.auth.tmp").exists());
+    }
+
+    #[test]
+    fn quarantine_metadata_no_replace_activation_preserves_competing_file() {
+        let dir = tempdir().unwrap();
+        let staged = dir.path().join("record.json.tmp-benign");
+        let destination = dir.path().join("record.json");
+        fs::write(&staged, b"benign staged quarantine metadata").unwrap();
+        fs::write(&destination, b"benign competing quarantine metadata").unwrap();
+
+        let error = activate_quarantine_metadata_no_replace(
+            &staged,
+            &destination,
+            "quarantine metadata fixture",
+        )
+        .expect_err("a competing quarantine metadata file must not be replaced");
+        let detail = format!("{error:#}");
+
+        assert!(detail.contains("without replacing"), "{detail}");
+        assert_eq!(
+            fs::read(&staged).unwrap(),
+            b"benign staged quarantine metadata"
+        );
+        assert_eq!(
+            fs::read(&destination).unwrap(),
+            b"benign competing quarantine metadata"
+        );
     }
 
     #[test]

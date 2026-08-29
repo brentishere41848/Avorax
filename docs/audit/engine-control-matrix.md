@@ -5849,3 +5849,32 @@ integration, bounded artifact review, guarded 17-path zero-delete synchronizatio
 destination exact `292/292`, validators/adversarial content checks, eight locks,
 and final vault/process/residue audit also pass. Checkpoint 2264 is closed; the
 privileged source/ancestor row remains technically limited.
+
+## Checkpoint 2265 - Quarantine Metadata No-Replace Matrix
+
+| Control / engine responsibility | State | Evidence boundary |
+| --- | --- | --- |
+| Local Core new finalization journal activation | **Locally verified / hosted pending** | Shared no-replace activation passes focused collision, broad quarantine, workspace/release, and exact-293 local verification. |
+| Local Core new metadata record/auth sidecar activation | **Locally verified / hosted pending** | Competing destination preservation and fail-visible behavior pass focused, broad, source-contract, and definitive evidence. |
+| Local Core status/recovery metadata replacement | **Locally verified / technically limited** | Validated old object is deliberately removed before no-replace activation; local regressions pass, but the remove-to-activation gap remains. |
+| Guard metadata record/auth sidecar activation | **Locally verified / hosted pending** | Active Guard owner passes collision, broad Guard, locked workspace/release, and definitive local evidence. |
+| Native compatibility metadata activation | **Disabled / regression verified locally** | Same primitive passes Native collision/broad regression, but direct quarantine remains disabled and owns no production mutation. |
+| Journal/record/auth atomicity | **Technically limited** | Each final name is protected independently; the three files are separate non-transactional objects. Authenticated recovery detects incomplete state. |
+| Unsupported platforms | **Fail-visible** | Shared helper returns an error instead of using replacement-capable rename. |
+| Detection pipeline and verdict aggregation | **Unchanged** | Hash/signature, local rule/YARA, static/PE/archive, heuristics, ML, Authenticode, process observation, allowlist/exclusion, and aggregator responsibilities do not change. |
+
+Checkpoint 2265 production code, three harmless fixtures, a focused workspace
+step, exact-293 verifier/validator, 695th source contract, audit, dependency, and
+safety documentation are scripted. No checkpoint-2265 test ran during the
+scripting phase. After batch freeze, Source `695/695`, collision `3/3`, broad
+quarantine, strict changed-crate lint, both locked workspaces, release, safe
+smoke, UI/protocol, exact `293/293`, and dual-host authentic plus `16/16`
+adversarial validation pass locally. Hosted, integration, guarded-sync, and
+destination evidence remain pending; the complete goal remains active.
+
+Exact implementation `e4a1bb8` passes CI `33233682635` and package push/PR
+`33233673950`/`33233682629`, with publication skipped. Consolidated artifacts
+`9709386808`/`9709458957` pass bounded non-extracting exact
+8-root/6-platform/7-checksum/CycloneDX-1.6/569-component review. The first five
+rows are now implementation-head verified; evidence-head, merge, merged-main,
+guarded-sync, and destination columns remain pending.
