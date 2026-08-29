@@ -5854,14 +5854,14 @@ privileged source/ancestor row remains technically limited.
 
 | Control / engine responsibility | State | Evidence boundary |
 | --- | --- | --- |
-| Local Core new finalization journal activation | **Locally verified / hosted pending** | Shared no-replace activation passes focused collision, broad quarantine, workspace/release, and exact-293 local verification. |
-| Local Core new metadata record/auth sidecar activation | **Locally verified / hosted pending** | Competing destination preservation and fail-visible behavior pass focused, broad, source-contract, and definitive evidence. |
-| Local Core status/recovery metadata replacement | **Locally verified / technically limited** | Validated old object is deliberately removed before no-replace activation; local regressions pass, but the remove-to-activation gap remains. |
-| Guard metadata record/auth sidecar activation | **Locally verified / hosted pending** | Active Guard owner passes collision, broad Guard, locked workspace/release, and definitive local evidence. |
-| Native compatibility metadata activation | **Disabled / regression verified locally** | Same primitive passes Native collision/broad regression, but direct quarantine remains disabled and owns no production mutation. |
+| Local Core new finalization journal activation | **Verified** | Local/destination collision and broad regressions, workspace/release, exact-293, hosted CI/packages, merge, and exact-blob synchronization pass. |
+| Local Core new metadata record/auth sidecar activation | **Verified** | Competing destination preservation and fail-visible behavior pass local/destination focused, broad, source-contract, definitive, hosted, and synchronized evidence. |
+| Local Core status/recovery metadata replacement | **Verified / technically limited** | Validated old object is deliberately removed before no-replace activation; local/destination regressions pass, but the remove-to-activation gap remains. |
+| Guard metadata record/auth sidecar activation | **Verified** | Active Guard owner passes local/destination collision and broad tests, locked workspace/release, hosted Windows packages, merge, and synchronization. |
+| Native compatibility metadata activation | **Disabled / regression verified** | Local/destination Native regressions and hosted cross-target packages pass; direct quarantine remains disabled and owns no production mutation. |
 | Journal/record/auth atomicity | **Technically limited** | Each final name is protected independently; the three files are separate non-transactional objects. Authenticated recovery detects incomplete state. |
 | Unsupported platforms | **Fail-visible** | Shared helper returns an error instead of using replacement-capable rename. |
-| Detection pipeline and verdict aggregation | **Unchanged** | Hash/signature, local rule/YARA, static/PE/archive, heuristics, ML, Authenticode, process observation, allowlist/exclusion, and aggregator responsibilities do not change. |
+| Detection pipeline and verdict aggregation | **Unchanged / broad regression green** | Hash/signature, local rule/YARA, static/PE/archive, heuristics, ML, Authenticode, process observation, allowlist/exclusion, and aggregator responsibilities pass local, hosted, and destination regression. |
 
 Checkpoint 2265 production code, three harmless fixtures, a focused workspace
 step, exact-293 verifier/validator, 695th source contract, audit, dependency, and
@@ -5870,11 +5870,16 @@ scripting phase. After batch freeze, Source `695/695`, collision `3/3`, broad
 quarantine, strict changed-crate lint, both locked workspaces, release, safe
 smoke, UI/protocol, exact `293/293`, and dual-host authentic plus `16/16`
 adversarial validation pass locally. Hosted, integration, guarded-sync, and
-destination evidence remain pending; the complete goal remains active.
+destination evidence then also passed; the complete goal remains active.
 
 Exact implementation `e4a1bb8` passes CI `33233682635` and package push/PR
 `33233673950`/`33233682629`, with publication skipped. Consolidated artifacts
 `9709386808`/`9709458957` pass bounded non-extracting exact
 8-root/6-platform/7-checksum/CycloneDX-1.6/569-component review. The first five
 rows are now implementation-head verified; evidence-head, merge, merged-main,
-guarded-sync, and destination columns remain pending.
+guarded-sync, and destination columns now pass. Evidence `e19d700`, merge
+`7f25166`, merged-main CI/packages, all three later bounded artifacts, guarded
+16-path zero-delete synchronization, destination exact `293/293`, dual-host
+adversarial validation, 16/16 blobs, 8/8 locks, zero residue/processes, and the
+protected-vault invariant close checkpoint 2265. Per-file and privileged-actor
+limits remain technically limited.

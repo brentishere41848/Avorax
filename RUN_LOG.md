@@ -14136,3 +14136,28 @@ pending.
   8-root/6-platform/7-checksum/CycloneDX-1.6/569-component review.
 - Evidence-head reruns, normal merge, merged-main evidence, guarded sync, and
   destination verification remain pending.
+
+## 2026-08-29 - Checkpoint 2265 Integration And Destination Closure
+
+- Evidence `e19d7001835cb654ba5e73341f38be974dbe7563` passes CI
+  `33234522995` and Desktop Packages push/PR runs
+  `33234521052`/`33234522982`; publication is skipped. Their artifacts
+  `9709672772`/`9709640926` pass bounded 8-root/6-platform/7-checksum/
+  CycloneDX-1.6/569-component review without extraction or execution.
+- PR `#139` merges normally as
+  `7f25166f00661fa65df068e5c40ae2894ab05e39`. Merged-main CI
+  `33235167076` and packages `33235167096` pass with publication skipped.
+  Official artifact `9709853653` is 132,319,200 bytes with SHA-256
+  `7cdf9838ef454d5011b3ea37af20d19bfadcc21a8016c5084ee4d98973ec76ec`
+  and passes the same bounded review. A temporary secondary API throttle
+  affected polling/download only; the later exact download passed.
+- Guarded synchronization applies exactly 16 paths, 15 modified and one added,
+  with zero deleted. Destination Source `695/695`, collision `3/3`, broad
+  quarantine, strict lint, both locked workspaces, release, safe smoke, Flutter
+  `852/852`, protocols `14/14 + 6/6`, and exact definitive `293/293` in
+  `641.1s` pass. Both validators accept the authentic report and reject all
+  eight mutations on both hosts (`16/16`).
+- Final audit passes 16/16 blobs, 8/8 active lockfiles, zero staging/smoke
+  residue or product processes, and the unchanged 16,072-file vault.
+  Checkpoint 2265 is closed; all broader user-mode authority limits and the
+  complete antivirus-hardening goal remain active.

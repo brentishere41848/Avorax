@@ -3961,9 +3961,9 @@ Core status/recovery replacement also uses no-replace after removing the
 validated previous object. A race-created destination is preserved and failure
 is visible.
 
-This closes only replacement at each final filename once execution evidence
-passes. Local execution evidence now passes. It does not provide a transaction
-across journal, record, and auth files;
+This closes only replacement at each final filename. Local, hosted, integration,
+and synchronized-destination execution evidence passes. It does not provide a
+transaction across journal, record, and auth files;
 Local Core replacement retains a remove-to-activation gap. Authenticated recovery
 detects incomplete state but cannot make multi-file activation atomic. Privileged
 ancestor/path mutation, administrators, SYSTEM/root, hostile filesystems, kernel
@@ -3975,7 +3975,7 @@ No checkpoint-2265 test ran during the scripting phase. Focused and complete
 verification was then pending. Focused/broad local regression, strict lint,
 locked build/test, safe smoke, Source `695/695`, definitive `293/293`, and
 dual-host authentic/adversarial validation now pass. Hosted, integration,
-guarded-sync, and destination verification remain pending. No live malware,
+guarded-sync, and destination verification then also pass. No live malware,
 Defender change, protected-vault mutation, machine-wide install, service/driver
 start, release, or publication is authorized.
 
@@ -3983,5 +3983,10 @@ Implementation-head CI/packages and bounded artifact review pass with
 publication skipped. These results close no remaining metadata-transaction,
 privileged-actor, hostile-filesystem, installed-authority, driver,
 pre-execution, production-calibration, or Defender-replacement limitation.
-Evidence-head, merge, merged-main, guarded-sync, and destination verification
-remain pending.
+Evidence `e19d700`, normal merge `7f25166`, exact merged-main CI/packages,
+bounded artifact review, guarded 16-path zero-delete synchronization,
+destination exact `293/293`, dual-host adversarial rejection, exact blobs/locks,
+zero residue/processes, and the protected-vault invariant close checkpoint 2265.
+The listed metadata-transaction, privileged-actor, hostile-filesystem,
+installed-authority, driver, pre-execution, production-calibration, signing,
+deployment, and Defender-replacement limits remain open.

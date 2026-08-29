@@ -2,7 +2,7 @@
 
 Date: 2026-08-29
 
-Status: **Verified locally and at implementation head; integration pending**
+Status: **Closed through hosted integration and synchronized destination verification**
 
 ## Risk
 
@@ -40,10 +40,10 @@ remove-to-activation interval in which a new competing object could be replaced.
 - The definitive verifier gains one required step. The exact full-suite schema
   advances from 292 to 293 steps and rejects missing scope or limitation text.
 
-No checkpoint-2265 test ran during the scripting phase. Focused and broader
-execution, exact-293 definitive verification, hosted evidence, integration, and
-guarded destination synchronization remain pending until the scripting batch is
-complete.
+No checkpoint-2265 test ran during the scripting phase. Execution began only
+after the complete batch was frozen. Focused, broad, definitive, adversarial,
+hosted, merge, synchronized-destination, and final-audit results are recorded
+below.
 
 ## Local Verification
 
@@ -65,8 +65,6 @@ the adversarial result SHA-256 is
 
 Final local audit finds no tracked lockfile change, product process, or retained
 checkpoint smoke root. The protected vault read-only inventory remains exact.
-Hosted exact-head CI/packages, normal PR integration, guarded destination
-synchronization, and a complete destination rerun remain pending.
 
 ## Hosted Implementation-Head Evidence
 
@@ -83,21 +81,65 @@ and
 `0adf6846efcb82dfd06ee9d3e80b97b102223737252e175c6ba405e74c424a4e`.
 Both pass bounded non-extracting, non-executing review with exact 8 root
 entries, 6 platform files, 7 checksum targets, and CycloneDX 1.6 / 569
-components. Evidence-head reruns, normal merge, merged-main evidence, guarded
-destination synchronization, and destination verification remain pending.
+components.
+
+Evidence commit `e19d7001835cb654ba5e73341f38be974dbe7563` passes
+exact-head CI `33234522995` and Desktop Packages push/PR runs
+`33234521052`/`33234522982`; publication is skipped. Consolidated artifacts
+`9709672772` and `9709640926` are 132,349,305 and 132,317,514 bytes with
+SHA-256 values
+`6072a1b583dcba251df9eb199a062f06806c65baa38d3a755ccd290c995604b7`
+and
+`26c2c471d869d4ce291d803f007b83301bd9699c1d45916ee8c47eb3de0750a0`.
+Both pass the same bounded 8/6/7/CycloneDX-1.6/569-component review without
+extraction or execution.
+
+PR `#139` merged normally as
+`7f25166f00661fa65df068e5c40ae2894ab05e39`. Exact merged-main CI
+`33235167076` and Desktop Packages `33235167096` pass; publication is skipped.
+Official consolidated artifact `9709853653` is 132,319,200 bytes with SHA-256
+`7cdf9838ef454d5011b3ea37af20d19bfadcc21a8016c5084ee4d98973ec76ec`.
+It independently passes the same bounded, non-extracting, non-executing review.
+A temporary authenticated GitHub secondary API throttle interrupted only the
+first polling/download attempt; the official run was already successful and the
+later exact artifact download and validation passed without a partial file.
+
+## Closure Evidence
+
+- Guarded synchronization from
+  `7e7cb85a856cc11dc09ceb3855a9234f20e65ed1` to merged implementation
+  `7f25166f00661fa65df068e5c40ae2894ab05e39` applied exactly 16 paths: 15
+  modified, one added, and zero deleted. Source, blob, parent, process, backup,
+  activation, rollback, and vault pre/postconditions passed. Sync report SHA-256
+  is `31145a7f62f4aabf4ccf258cfe8289700ebdf6f8a058ebc60984232ea9b350c2`.
+- Destination formatting, Source `695/695`, collision `3/3`, broader quarantine
+  Platform `8/8`, API `3/3`, Guard `51/51`, Local Core `140/140`, and Native
+  `39/39`, strict changed-crate Clippy, both locked workspace variants, locked
+  all-feature release, safe quarantine/restore smoke, Flutter analyze and
+  `852/852`, and protocol analyze/tests `14/14 + 6/6` pass.
+- The destination no-skip/no-Defender verifier passes exact `293/293`, zero
+  failed/skipped, in `641.1s`. Its 210,606-byte report SHA-256 is
+  `db38434aaf46278bda4c68b425f1de34890c33b11e03873d7b25786c49018a7a`.
+  Independent PowerShell 5.1 and 7 validators accept it. Eight unique content
+  mutations are each rejected by both hosts (`16/16`); adversarial result
+  SHA-256 is
+  `6f139935aee964dad3efad33bbf040896e87f81c2052bcc2cc4f6966e0a1b556`.
+- Final audit passes 16/16 exact implementation blobs, 8/8 active lockfiles,
+  zero sync staging residue, safe-smoke residue, or product processes, and the
+  unchanged protected-vault invariant.
 
 ## Verification Matrix
 
 | Control / engine | Scripted state | Required execution evidence |
 | --- | --- | --- |
-| Local Core new metadata activation | Locally verified | Focused collision, broad quarantine, workspaces, release, and definitive verifier pass |
-| Local Core status/recovery replacement | Locally verified; technically limited | Recovery/status regressions, collision, and source contract pass; remove gap remains |
-| Guard new metadata activation | Locally verified | Focused collision, Guard regressions, workspaces, release, and definitive verifier pass |
-| Native compatibility metadata activation | Regression verified; production-disabled | Focused collision, Native regressions, workspaces, release, and definitive verifier pass |
-| Competing destination preservation | Locally verified | All three harmless fixtures preserve staged and destination bytes with visible error |
-| Verifier/report schema | Verified locally at exact 293 | Both hosts accept authentic evidence and reject all 16 mutation/host cases |
-| Hosted/package evidence | Implementation head verified; integration pending | CI plus push/PR packages pass at `e4a1bb8`; evidence-head and merged-main reruns remain |
-| Original-tree synchronization | Pending | Guarded exact-path, zero-delete sync and destination rerun |
+| Local Core new metadata activation | Verified | Local and destination focused/broad/workspace/release/exact-293 evidence, hosted CI/packages, merge, and exact-blob synchronization pass |
+| Local Core status/recovery replacement | Verified; technically limited | Local/destination recovery, collision, source-contract, and exact-293 evidence pass; remove gap remains |
+| Guard new metadata activation | Verified | Local/destination collision and Guard regressions, release/workspaces, hosted Windows packages, merge, and synchronization pass |
+| Native compatibility metadata activation | Disabled / regression verified | Local/destination Native regressions and hosted cross-target packages pass; production mutation remains disabled |
+| Competing destination preservation | Verified | All three harmless fixtures preserve staged and destination bytes with visible errors locally and at destination |
+| Verifier/report schema | Verified at exact 293 | Both hosts accept authentic local/destination evidence and reject all 16 mutation/host cases |
+| Hosted/package evidence | Verified | Implementation/evidence heads and merged main pass CI/packages; five consolidated artifacts pass bounded review with publication skipped |
+| Original-tree synchronization | Verified | Guarded exact 16-path, zero-delete sync, full destination rerun, exact blobs/locks, and final safety audit pass |
 
 ## Safety And Limits
 
@@ -119,7 +161,7 @@ remain point-in-time user-mode checks and do not defend against administrators,
 SYSTEM/root, hostile filesystems, or kernel compromise. This is not
 pre-execution blocking, kernel mediation, or a Defender-replacement claim.
 
-Checkpoint 2265 is one bounded hardening checkpoint. The complete
+Checkpoint 2265 is closed as one bounded hardening checkpoint. The complete
 antivirus-hardening goal remains active after this checkpoint.
 
 ## Dependency Delta
@@ -127,4 +169,6 @@ antivirus-hardening goal remains active after this checkpoint.
 Checkpoint 2265 adds no dependency, changes no dependency class or network
 surface, and requires no lockfile change. All three crates already depend on the
 workspace `avorax_platform_security` helper established by earlier checkpoints.
-License obligations and pinned dependency versions are unchanged.
+License obligations and pinned dependency versions are unchanged. Locked local
+and destination builds, all eight active lockfiles, and hosted CycloneDX 1.6 /
+569-component package evidence pass.
