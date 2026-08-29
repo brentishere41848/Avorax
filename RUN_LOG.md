@@ -14046,3 +14046,20 @@ pending.
   retained safe-smoke root, and the protected vault still at `16072` files,
   `0` directories, `4522733` bytes, `5357` each payload/JSON/auth records, one
   metadata key, and zero pending.
+
+## Checkpoint 2264 - Hosted Implementation Head
+
+- Commit `2d1148ebd90bdc017f45040539f2d78e90475984` is exact PR `#137`
+  implementation head. Avorax CI `33226157011` passes all five jobs.
+- Desktop Packages push/PR `33226139023`/`33226157015` pass six platform
+  packages, checksums, and lockfile SBOM; both publication jobs skip.
+- Consolidated artifacts `9707188077`/`9707168993` have SHA-256 values
+  `3df7955dd5367cb47428edd089227d31f4bb325189ac3207a7329076932d05fd`
+  and
+  `892d559c95ca57b6ef0a372d110a6f253120a20ddbd1159d320624ae87dde099`.
+  Both pass bounded non-extracting/non-executing exact
+  8-root/6-platform/7-checksum/CycloneDX-1.6/569-component review; validation
+  result SHA-256 is
+  `576bc69c42d9e788fab4d47f8ea2c01d5157b0ce81dbeaff14f422a74ad669e5`.
+- Evidence-head checks, merge, merged-main evidence, guarded sync, and
+  destination verification remain pending.

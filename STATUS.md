@@ -7967,6 +7967,13 @@ Both independent validator hosts accept it and reject all six required
 mutations. Final local audit confirms zero product processes/temp residue, no
 lockfile diff, and the exact unchanged 16,072-file protected vault. Hosted,
 merge, sync, and destination proof remains.
+Implementation commit `2d1148e` is PR `#137` exact head; Avorax CI
+`33226157011` and Desktop Packages push/PR
+`33226139023`/`33226157015` pass. Both package runs build all six platform
+files, checksums, and lockfile SBOM with publication skipped. Their
+consolidated artifacts pass bounded non-extracting exact
+8-root/6-platform/7-checksum/CycloneDX-1.6/569-component review. Evidence-head,
+merge, merged-main, guarded sync, and destination proof remains.
 Active production mutation remains owned by Local Core and Guard; Native direct
 quarantine remains disabled.
 Privileged source/ancestor races, installed cross-identity authority, kernel

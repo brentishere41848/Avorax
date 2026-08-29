@@ -91,6 +91,31 @@ The initial PowerShell 5.1 parser wrapper also failed before parsing because
 the outer PowerShell command expanded inner variables. Corrected quoting then
 passed `3/3`; this was a harness invocation failure, not a product pass.
 
+## Hosted Implementation-Head Evidence
+
+- Exact implementation commit
+  `2d1148ebd90bdc017f45040539f2d78e90475984` is the head of PR `#137`.
+  Avorax CI PR run `33226157011` passes all five jobs, including Unix runtime,
+  Rust/Flutter/protocol, security, dependency, false-positive, and performance
+  gates.
+- Desktop Packages push/PR runs `33226139023` and `33226157015` pass package
+  contracts, Windows MSI/setup EXE, Linux DEB/tar, macOS x64/arm64 DMGs,
+  consolidation, checksums, and lockfile SBOM. Both publication jobs are
+  skipped.
+- Consolidated artifacts `9707188077` and `9707168993` are 132,300,566 and
+  132,339,432 bytes with SHA-256 values
+  `3df7955dd5367cb47428edd089227d31f4bb325189ac3207a7329076932d05fd`
+  and
+  `892d559c95ca57b6ef0a372d110a6f253120a20ddbd1159d320624ae87dde099`.
+  Bounded stream inspection, without extraction or execution, passes exact
+  eight root entries, six platform files, seven checksum targets, and a
+  CycloneDX 1.6 SBOM with 569 components for both bundles. Retained validation
+  result SHA-256 is
+  `576bc69c42d9e788fab4d47f8ea2c01d5157b0ce81dbeaff14f422a74ad669e5`.
+
+Evidence-head CI/packages, merge, merged-main, guarded synchronization, and
+destination verification remain pending.
+
 ## Verification Matrix
 
 | Control / engine responsibility | Current state | Required evidence |
