@@ -4200,3 +4200,11 @@ Final local audit passes the exact path/lock/process/residue and protected-vault
 invariants. This closes local regression evidence for the final-name race only.
 Hosted cross-target, integration, synchronization, destination, and closure
 evidence remains pending, and every residual risk above remains in force.
+
+Implementation-head CI and both package matrices pass at exact commit
+`36325846`; Windows, Linux, and Apple desktop package builds complete and the
+two consolidated artifacts pass bounded checksum/SBOM review without extraction
+or execution. This is cross-target build and regression evidence, not an
+installed race, driver, or pre-execution proof. Android, normal integration,
+merged-main, synchronization, destination, and closure evidence remains pending;
+all residual threats above remain active.

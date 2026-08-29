@@ -14221,3 +14221,18 @@ pending.
   `86481f29f90e88bd06664b806c08a11c73935d9426e58361706256889e3795d3`.
 - Hosted exact-head CI/packages, PR/merge, guarded synchronization, destination
   rerun, and closure evidence remain pending.
+
+## 2026-08-29 - Checkpoint 2266 Hosted Implementation Head
+
+- Implementation `36325846ccc0b61ef5a86d75c62e7fe3463835da` is PR
+  `#141` exact head. CI `33239461936` passes all five jobs.
+- Desktop Packages push/PR runs `33239451192`/`33239461879` pass all six
+  platform packages, checksums, and lockfile SBOM; publication is skipped.
+- Consolidated artifacts `9711051283`/`9711127072` are 132,341,276/
+  132,614,885 bytes with SHA-256
+  `5d542ec008bc0d6b226544f8c9726ce4987a689d88ea867516a8b2c5cc59cd71`/
+  `a9a4b954a6dd95cd7580ade4e6af7b365a076357470f254d2dcff6528902207e`.
+  Both pass bounded, non-extracting, non-executing exact
+  8-root/6-platform/7-checksum/CycloneDX-1.6/569-component review.
+- Evidence-head reruns, normal merge, merged-main, guarded synchronization,
+  destination verification, and closure remain pending.

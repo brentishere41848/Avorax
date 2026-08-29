@@ -2454,3 +2454,10 @@ audit confirms only one added root-lock dependency line for the existing
 internal workspace crate and byte-normalized equality for the other seven
 active lockfiles. Hosted SBOM/package, merge, synchronization, destination, and
 closure evidence remains pending; the third-party and license delta stays zero.
+
+Implementation-head package push/PR runs `33239451192`/`33239461879` pass
+dependency/license evidence, six platform assets, checksums, and CycloneDX 1.6
+with 569 components at exact commit `36325846`; publication skips. Both
+consolidated artifacts pass bounded non-extracting review. The SBOM retains the
+same third-party inventory; evidence-head, merge, merged-main, synchronization,
+destination, and closure dependency evidence remains pending.

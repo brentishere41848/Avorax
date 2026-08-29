@@ -8069,3 +8069,11 @@ with zero deletes, intended single internal lock edge, seven unchanged locks,
 zero product processes/pending residue, preserved checkpoint-2194 temp root,
 and exact vault invariant. Hosted exact-head CI/packages, PR integration,
 guarded synchronization, destination verification, and closure remain pending.
+
+Implementation `36325846` is PR `#141` exact head. Avorax CI `33239461936`
+passes all five jobs; Desktop Packages push/PR `33239451192`/`33239461879`
+pass all six platform assets, checksums, and lockfile SBOM with publication
+skipped. Both consolidated artifacts pass bounded non-extracting/non-executing
+8-root/6-platform/7-checksum/CycloneDX-1.6/569-component review. Evidence-head,
+normal merge, merged-main, guarded synchronization, destination verification,
+and closure remain pending.

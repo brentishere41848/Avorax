@@ -4030,3 +4030,11 @@ pass. Hosted cross-target evidence, normal integration, synchronization,
 destination, and closure remain pending. Per-file no-replace still does not
 close any update transaction, privileged actor, hostile filesystem, installed
 service/driver, pre-execution, signing, deployment, or Defender blocker.
+
+Implementation-head CI and Windows/Linux/macOS package matrices pass at exact
+commit `36325846`; publication skips and bounded checksum/SBOM artifact review
+passes without extraction or execution. Android runtime/build, normal merge,
+merged-main, synchronization, destination, and closure remain pending. Hosted
+compilation closes no update transaction, privileged actor, hostile filesystem,
+installed authority, driver, pre-execution, signing, deployment, or Defender
+blocker.

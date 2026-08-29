@@ -1,6 +1,6 @@
 # Checkpoint 2266 - Signed Update Extraction No-Replace
 
-Status: **Local definitive verification passed / hosted evidence pending**
+Status: **Implementation-head hosted verification passed / integration pending**
 
 ## Risk
 
@@ -100,6 +100,23 @@ seven other lockfiles unchanged, zero product processes or pending residue, the
 preserved checkpoint-2194 temporary root, and the exact protected-vault
 invariant. Hosted, integration, synchronization, destination, and closure
 evidence remains pending.
+
+## Hosted Implementation Head
+
+Implementation commit `36325846ccc0b61ef5a86d75c62e7fe3463835da` is PR
+`#141` exact head. Avorax CI `33239461936` passes all five jobs. Desktop
+Packages push/PR runs `33239451192` and `33239461879` pass Windows x64 MSI/EXE,
+Linux x64 DEB/tar, macOS x64/arm64 DMG, package contracts, checksums, and the
+lockfile SBOM. Both publish jobs are skipped.
+
+Consolidated artifacts `9711051283` and `9711127072` are 132,341,276 and
+132,614,885 bytes with SHA-256
+`5d542ec008bc0d6b226544f8c9726ce4987a689d88ea867516a8b2c5cc59cd71` and
+`a9a4b954a6dd95cd7580ade4e6af7b365a076357470f254d2dcff6528902207e`.
+Bounded stream inspection, without extraction or execution, verifies exact
+8-root/6-platform/7-checksum inventory and CycloneDX 1.6 with 569 components in
+both artifacts. Evidence-head reruns, normal merge, merged-main evidence,
+guarded synchronization, destination verification, and closure remain pending.
 
 ## Safety and Limits
 

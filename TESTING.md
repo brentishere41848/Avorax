@@ -1274,3 +1274,11 @@ failure became terminating PowerShell 5.1 stderr. After a successful-query
 repair and dual-host parse, final audit passes 14 modified plus one added path,
 zero deletes, eight lock checks, zero processes/residue, and the exact vault.
 Hosted, merge, synchronization, destination, and closure testing remains.
+
+Implementation-head CI `33239461936` and package push/PR runs
+`33239451192`/`33239461879` pass at exact SHA `36325846`; both publication
+jobs skip. Consolidated artifacts `9711051283`/`9711127072` pass bounded stream
+validation without extraction or execution: exact eight root entries, six
+platform files, seven checksum targets, and CycloneDX 1.6 with 569 components.
+Evidence-head reruns, integration, merged-main, synchronization, destination,
+and closure tests remain pending.

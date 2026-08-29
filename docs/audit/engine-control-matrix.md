@@ -5920,3 +5920,12 @@ invariant. The final extracted-file and competing-target rows are therefore
 **Locally verified** on Windows. Hosted Linux/Android/Apple package builds,
 integration, synchronization, destination, and closure columns remain pending;
 install-tree transactions and privileged-actor limits remain unchanged.
+
+Exact implementation-head CI and package push/PR matrices now pass on commit
+`36325846`. Windows, Linux, and Apple desktop package builds, checksums, and
+lockfile SBOM pass; publication skips. Both consolidated artifacts pass bounded
+non-extracting 8/6/7/CycloneDX-1.6/569 review. The shared supported-platform
+build boundary is now **Hosted build verified** for Windows, Linux, and Apple;
+Android runtime/build evidence, normal integration, merged-main,
+synchronization, destination, and closure remain pending. No runtime or
+pre-execution claim is inferred from package compilation.
