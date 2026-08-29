@@ -4182,3 +4182,14 @@ CycloneDX-1.6/569 review. This closes no cross-platform runtime, crash
 transactionality, manual recovery, privileged filesystem, installed authority,
 driver/pre-execution, signing/deployment, Defender replacement, or whole-goal
 blocker. Evidence-head, integration, destination, and closure remain pending.
+
+Evidence-head and merged-main CI/packages, normal PR `#145` integration,
+bounded artifact review, guarded 18-path zero-delete synchronization,
+destination Source `699/699`, broad regression, exact `296/296`, dual-host
+authentic plus `14/14` adversarial validation, 18/18 blobs, 8/8 locks, 34
+backups, zero product residue/processes, and the exact protected-vault invariant
+close checkpoint 2268. Closure does not make service/file/component activation
+transactional or eliminate crash/manual-recovery windows. Cross-platform
+runtime, privileged filesystems, installed service/driver authority, production
+signing/deployment, pre-execution blocking, Defender replacement, and the
+complete antivirus-hardening goal remain open.

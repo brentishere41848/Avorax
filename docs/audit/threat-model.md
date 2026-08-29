@@ -4371,3 +4371,14 @@ This demonstrates build/regression compatibility across the hosted desktop
 matrix only. It does not add cross-platform runtime evidence or change any
 transaction, point-in-time path, privileged actor, installed authority,
 driver/pre-execution, signing/deployment, or Defender-replacement boundary.
+
+Evidence-head and merged-main CI/packages, bounded artifact inspection, normal
+PR `#145` merge, guarded exact 18-path synchronization, complete destination
+regressions, exact `296/296`, dual-host authentic plus `14/14` adversarial
+validation, and final 18-blob/8-lock/34-backup/vault audit close this checkpoint
+threat delta. This verifies the implemented Windows final-directory-name
+collision control and desktop cross-target build compatibility. Cross-platform
+runtime, whole-update transactionality, crash/manual recovery, point-in-time
+ancestor authority, privileged actors, hostile filesystems, installed service/
+driver authority, pre-execution blocking, and every other residual threat above
+remain unchanged.

@@ -6010,11 +6010,11 @@ technically limited exactly as stated.
 
 | Control / engine responsibility | State | Evidence boundary |
 | --- | --- | --- |
-| Shared directory activation primitive | **Scripted / unverified** | Windows, Linux/Android, and Apple reuse the existing OS atomic no-replace implementation; unsupported targets return a visible error. |
-| Update tree destination-to-backup | **Scripted / unverified** | A late backup collision must preserve the active tree, staged tree, and competing backup. |
-| Update tree staged activation and recovery | **Scripted / unverified** | A late destination must reject activation and no-replace recovery while preserving staged, backup, and competing destination trees with both failures visible. |
-| Rollback destination-to-backup | **Scripted / unverified** | The same no-replace collision behavior is required before rollback activation. |
-| Rollback staged activation and recovery | **Scripted / unverified** | The same preservation and fail-visible recovery contract applies to rollback. |
+| Shared directory activation primitive | **Verified and integrated on Windows; hosted build verified elsewhere** | Local/destination Windows runtime, exact verification, hosted desktop builds, normal merge, and exact-blob synchronization pass; Linux/Android/Apple runtime remains unverified and unsupported targets return a visible error. |
+| Update tree destination-to-backup | **Verified on Windows** | Local and destination late-backup fixtures preserve the active tree, staged tree, and competing backup. |
+| Update tree staged activation and recovery | **Verified on Windows** | Local and destination late-destination fixtures reject activation and recovery while preserving staged, backup, and competing trees with both failures visible. |
+| Rollback destination-to-backup | **Verified on Windows** | Local and destination fixtures verify the same no-replace collision behavior before rollback activation. |
+| Rollback staged activation and recovery | **Verified on Windows** | Local and destination fixtures verify the same preservation and fail-visible recovery contract for rollback. |
 | Whole update transaction | **Technically limited / not claimed** | Service stop/start, file items, cleanup, crash recovery, and component activations remain separate operations; preserved backup state can require manual recovery. |
 | Detection and custom engines | **Unchanged** | Hash/signature, local rules/YARA, static/PE/archive, bounded heuristics, ML, Authenticode, process observation, allowlists/exclusions, cache, and explainable aggregation retain their documented responsibilities and states. |
 | Installed/kernel prevention | **Blocked / technically limited** | Point-in-time user-mode path checks do not defeat administrators, SYSTEM/root, hostile filesystems, or kernel compromise and do not demonstrate pre-execution blocking. |
@@ -6055,3 +6055,14 @@ review. The supported-platform build row is therefore **Hosted build verified**
 for this implementation head. Runtime, transaction, installed/kernel,
 pre-execution, Defender-replacement, integration, destination, and closure rows
 retain their prior states.
+
+Evidence `635ccc21`, normal PR `#145` merge `99891d10`, exact evidence-head and
+merged-main CI/packages, two later bounded artifacts, guarded 18-path zero-
+delete synchronization, destination Source `699/699`, broad regressions, exact
+`296/296`, dual-host authentic plus `14/14` adversarial validation, 18/18
+blobs, 8/8 locks, 34 backups, zero product residue/processes, and the protected-
+vault invariant close checkpoint 2268. Cross-platform runtime, whole-update
+transactionality, point-in-time ancestors, privileged actors, hostile
+filesystems, installed authority, driver/pre-execution, and Defender-
+replacement rows remain disabled, blocked, or technically limited exactly as
+stated.

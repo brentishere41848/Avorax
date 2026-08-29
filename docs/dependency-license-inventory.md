@@ -2470,6 +2470,18 @@ checked-in lockfiles into its user cache; no manifest, dependency, feature,
 license class, machine-wide component, or publication changed. Hosted checksum/
 SBOM and final eight-lock audits remain pending.
 
+Evidence-head package run `33254651121` and merged-main package run
+`33255233172` pass at exact commits `635ccc21` and `99891d10`; publication
+skips. Consolidated artifacts `9715575145` and `9715798339` retain exact
+8-root/6-platform/7-checksum inventory and CycloneDX 1.6 with 569 components
+under bounded review without extraction or execution. Guarded synchronization
+and destination locked tests/builds pass with all eight active lockfiles exact.
+Final audit confirms zero manifest, lockfile, third-party dependency, registry,
+source, feature, network-runtime, license-class, or notice-obligation delta.
+Checkpoint 2268 is closed; cross-platform runtime, production signing/
+notarization, final notice provenance, enterprise deployment, and release
+approval remain separate.
+
 ## Checkpoint 2266 Dependency Delta
 
 Checkpoint 2266 adds one internal workspace dependency from
