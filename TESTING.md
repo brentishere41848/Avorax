@@ -1632,3 +1632,53 @@ passes 21 exact blobs, eight locks, 38 backups, zero product process/pending/
 temporary residue, and the protected-vault invariant. Checkpoint 2269 testing
 is closed; installed-context, Unix runtime, power-cut, service/driver, and
 pre-execution limits remain unverified or technically limited.
+
+## Checkpoint 2270 Unix Recovery Test Plan
+
+The complete checkpoint-2270 test batch is scripted before execution. The
+fixed Ubuntu 24.04 route will run `activation_recovery_unix_` and is expected
+to select two `cfg(unix)` runtime fixtures plus one wiring contract. Windows
+focused recovery is expected to rise to `19/19`, update-service aggregate to
+`233/233`, Source to `701/701`, and the definitive verifier to exact `298/298`.
+These are expected contracts, not results.
+
+Post-freeze execution must include script parsing, focused permission/recovery
+checks, strict locked lint, both locked workspace suites, locked release,
+Flutter `852/852`, protocols `14/14 + 6/6`, exact verifier validation, authentic
+PowerShell 5.1/7 acceptance, exact `14/14` adversarial rejection, hosted Ubuntu,
+package/SBOM checks, destination regression, and final read-only audit. No
+checkpoint-2270 test ran during the scripting phase. No live malware, EICAR,
+fixture execution, Defender change, service/driver start, install, release,
+publication, or protected-vault write is permitted; the 16,072-file vault has
+zero pending. The complete antivirus-hardening goal remains active.
+
+## Checkpoint 2270 Local Results
+
+After the scripted batch froze, focused and broad local execution passed:
+
+```powershell
+cargo test --locked --manifest-path core/avorax_update_service/Cargo.toml activation_recovery -- --test-threads=1
+cargo test --workspace --locked -- --test-threads=1
+cargo test --workspace --all-targets --all-features --locked -- --test-threads=1
+cargo build --workspace --release --all-targets --all-features --locked
+flutter analyze
+flutter test
+powershell.exe -File tools/testing/verify-small-threat-mvp.ps1 ... -ReportPath .workflow/ultracode/avorax-hardening/results/checkpoint-2270-unix-update-recovery-report.json
+```
+
+Results are recovery `19/19`, update service `229/229 + 4/4`, Source
+`701/701`, platform security `18/18`, both locked Rust suites and release,
+Flutter `852/852`, protocols `14/14 + 6/6`, and exact verifier `298/298` in
+`635.4s`. PowerShell 5.1/7 accept report SHA-256
+`fb35ed8fe64b352418b461d7e53f048fa380cd301bc18a1f703a059c1c5571ef`;
+the independent runner rejects `14/14` mutations with results SHA-256
+`63e13f73af15cea62d8221efda72174bdb2de3abdcc2ec5d0d9fbb93f2182914`.
+The first full Source run's stale workflow counters failed visibly and were
+repaired before this credited repeat. Hosted Ubuntu must still run
+`activation_recovery_unix_`; local Windows success is not Unix permission
+runtime evidence.
+
+Final review tightened the mandatory technical-limit contract: mode repair
+cannot undo prior key/journal disclosure, revoke existing handles, or restore
+authenticity after key copying. The earlier exact-298 report is superseded; the
+final-source verifier and both-host hostile-validation result above are final.

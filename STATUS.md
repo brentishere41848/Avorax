@@ -8359,3 +8359,45 @@ protected vault. Checkpoint 2269 is closed; installed-context recovery, Unix
 runtime recovery, power-cut/multi-component atomicity, privileged actors,
 driver/pre-execution enforcement, signing/deployment, Defender replacement,
 and whole-project completion remain open.
+
+## Checkpoint 2270 - Unix Update Recovery Runtime
+
+Checkpoint 2270 is fully scripted and not yet executed. Two harmless Unix
+fixtures require exact `0700` recovery-directory and `0600` key/lock/journal
+modes and repair deliberately broadened temporary modes before authenticated
+recovery. Fixed Ubuntu 24.04 CI, Source contract 701, verifier step 298,
+exact-298 validation, seven dual-host adversarial mutations, and audit docs are
+also scripted.
+
+Until the post-freeze hosted job passes, Unix runtime remains partial rather
+than verified. macOS/Android runtime, installed-service context, root/hostile-
+filesystem resistance, encrypted Unix key storage, power-loss transactionality,
+driver/pre-execution authority, Defender replacement, and the complete goal
+remain open or technically limited. No checkpoint-2270 test ran during the
+scripting phase; no live malware or protected-vault mutation occurred. The
+vault remains 16,072 files with zero pending.
+
+Post-freeze local verification now passes corrected format and Source
+`701/701`, recovery `19/19`, update service `229/229 + 4/4`, platform security
+`18/18`, strict locked Clippy, both locked workspace variants, locked all-
+feature release, Flutter analysis/tests `852/852`, and protocols
+`14/14 + 6/6`. The first full Source run failed visibly on stale CI command
+counters and passed after repair. Definitive verification passes exact
+`298/298` in `635.4s`, with no skips and Defender/EICAR disabled; report
+SHA-256 is
+`fb35ed8fe64b352418b461d7e53f048fa380cd301bc18a1f703a059c1c5571ef`.
+Both PowerShell hosts accept it and the independent audit rejects all `14/14`
+hostile host/mutation cases; result SHA-256 is
+`63e13f73af15cea62d8221efda72174bdb2de3abdcc2ec5d0d9fbb93f2182914`.
+No lockfile changed; product process/residue is zero and the protected vault is
+exact. Final local audit SHA-256 is
+`fb351451b345bf1dcce7e0291cb0443ea50dc4f714e2d62ac58c05855fcd9471`.
+Unix runtime remains partial because Windows cannot execute the two
+`cfg(unix)` fixtures; hosted Ubuntu, integration, destination, and closure
+evidence remain pending. The complete antivirus-hardening goal stays active.
+
+Final threat review adds a mandatory limitation: permission repair cannot undo
+prior Unix key/journal disclosure, revoke already-open handles, or restore
+authenticity after key copying; replacement and manual review are required.
+The preceding local report predating this stricter validator contract is
+superseded; the authoritative final-source exact-298 result is recorded above.

@@ -14684,3 +14684,58 @@ pending.
   recovery, power-cut/multi-component atomicity, privileged-hostile filesystem
   resistance, production signing/deployment, driver/pre-execution authority,
   Defender replacement, and the complete antivirus-hardening goal remain open.
+
+## 2026-08-29 - Checkpoint 2270 Unix Update Recovery Runtime Scripting
+
+- Continued from closed checkpoint 2269 at exact merged-main
+  `ca8894a90ea165f6afd03a048e84aaa6e7903c56` on branch
+  `agent/checkpoint-2270-unix-update-recovery`.
+- Scripted two harmless Unix filesystem-mode fixtures: exact `0700` recovery
+  root, exact `0600` key/lock/journal, and repair from temporary `0777` modes
+  before authenticated state reconciliation.
+- Scripted a fixed `ubuntu-24.04` CI route, dedicated local wiring verifier,
+  exact-298 validator/source contracts, seven dual-host adversarial mutations,
+  and full status/threat/dependency/control documentation.
+- No checkpoint-2270 test ran during the scripting phase. No live malware,
+  EICAR, network content, fixture execution, Defender change, machine-wide
+  install, service/driver start, release, publication, or protected-vault write
+  occurred. The vault remains exactly 16,072 files with zero pending.
+- Unix runtime remains partial until hosted execution passes. macOS/Android,
+  installed service, root/hostile filesystem, encrypted Unix key, power-loss
+  transaction, driver/pre-execution, Defender-replacement, and whole-project
+  limits remain open. The complete antivirus-hardening goal remains active.
+
+## 2026-08-30 - Checkpoint 2270 Post-Freeze Local Verification
+
+- Corrected parser calls pass on PowerShell 5.1 and 7. The two first outer-
+  shell calls were malformed before parsing and are uncredited. Initial format
+  check found layout only; `cargo fmt --all` repaired it.
+- Wiring passes `1/1`; Windows recovery passes `19/19`; update service passes
+  `229/229 + 4/4`; platform security passes `18/18`. The first complete Source
+  run exposed stale 12/3 CI command counts after the new route; repaired 13/4
+  counters pass exact `701/701`.
+- Strict locked Clippy, both locked workspace variants, locked all-feature
+  release, Flutter analysis/client `852/852`, and protocol analysis/tests
+  `14/14 + 6/6` pass. Rust workspace groups are
+  `18 + 4 + 229 + 41 + 251 + 583 + 642 + 6`, zero failures, with 21 documented
+  isolated native child fixtures ignored.
+- Definitive no-skip/no-Defender verification passes `298/298` in `635.4s`.
+  The 225,988-byte report SHA-256 is
+  `fb35ed8fe64b352418b461d7e53f048fa380cd301bc18a1f703a059c1c5571ef`;
+  PowerShell 5.1 and 7 accept it.
+- Independent validation accepts both authentic host cases and rejects all
+  `14/14` hostile host/mutation cases. The 14,503-byte results SHA-256 is
+  `63e13f73af15cea62d8221efda72174bdb2de3abdcc2ec5d0d9fbb93f2182914`.
+- Read-only checks pass zero lockfile diff, zero product processes/residue, and
+  the exact protected vault. Final local audit SHA-256 is
+  `fb351451b345bf1dcce7e0291cb0443ea50dc4f714e2d62ac58c05855fcd9471`.
+  These Windows checks verify the route contract,
+  not Unix filesystem semantics. Hosted Ubuntu, package evidence, normal
+  integration, guarded destination sync, destination regression, and closure
+  remain pending; the complete antivirus-hardening goal remains active.
+
+- Final threat review found that permission repair cannot undo prior Unix key/
+  journal disclosure or revoke already-open handles. Verifier, validator,
+  Source, and audit docs now require key replacement/manual review after copied-
+  key exposure. The preceding definitive report is superseded; the final-source
+  `298/298` rerun above includes this stricter contract and is authoritative.
