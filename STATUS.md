@@ -8153,3 +8153,11 @@ guarded synchronization, destination execution, and closure remain pending.
 The availability gap, non-transactional multi-file activation, privileged
 actor, hostile filesystem, installed service/driver, pre-execution, signing,
 deployment, Defender-replacement, and whole-project limits remain open.
+
+Implementation `6e06ac51` is PR `#143` exact head. Avorax CI `33247109048`
+passes all five jobs; Desktop Packages push/PR `33247093108`/`33247109041`
+pass all six platform assets, checksums, and lockfile SBOM with publication
+skipped. Both consolidated artifacts pass bounded non-extracting/non-executing
+8-root/6-platform/7-checksum/CycloneDX-1.6/569-component review. Evidence-head,
+normal merge, merged-main, guarded synchronization, destination verification,
+and closure remain pending.

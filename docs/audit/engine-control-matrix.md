@@ -5985,3 +5985,12 @@ adversarial rejection `14/14`. Final local path/lock/process/residue/vault audit
 also passes. Hosted cross-target, integration, synchronization, destination,
 and closure evidence remains pending; technically limited and blocked rows are
 not promoted.
+
+Exact implementation-head CI and package push/PR matrices now pass on commit
+`6e06ac51`. Windows, Linux, and Apple desktop package builds, checksums, and
+lockfile SBOM pass; publication skips. Both consolidated artifacts pass bounded
+non-extracting 8/6/7/CycloneDX-1.6/569 review. The shared supported-platform
+build boundary is now **Hosted build verified** for Windows, Linux, and Apple;
+Android runtime/build evidence, normal integration, merged-main,
+synchronization, destination, and closure remain pending. No runtime or
+pre-execution claim is inferred from package compilation.

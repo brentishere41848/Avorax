@@ -4281,3 +4281,11 @@ read-only vault invariants. This verifies the Windows local final-name and
 bounded absolute-path behavior only; hosted, integration, synchronized-
 destination, and closure evidence remains pending, and every residual threat
 above remains active.
+
+Implementation-head CI and both package matrices pass at exact commit
+`6e06ac51`; Windows, Linux, and Apple desktop package builds complete and the
+two consolidated artifacts pass bounded checksum/SBOM review without extraction
+or execution. This is cross-target build and regression evidence, not an
+installed race, driver, or pre-execution proof. Android, normal integration,
+merged-main, synchronization, destination, and closure evidence remains pending;
+all residual threats above remain active.

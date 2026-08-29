@@ -1,7 +1,7 @@
 # Checkpoint 2267: Update Staged-File No-Replace
 
 Date: 2026-08-29  
-Status: local implementation and definitive verification complete; hosted and destination evidence pending
+Status: implementation-head hosted verification passed; integration and destination evidence pending
 
 ## Risk
 
@@ -160,3 +160,20 @@ read-only vault invariant. Audit SHA-256 is
 Hosted exact-head CI/packages, normal PR integration, guarded destination
 synchronization, destination reruns, and closure remain pending. All technical
 limits above and the complete antivirus-hardening goal remain active.
+
+## Hosted Implementation Head
+
+Implementation commit `6e06ac51043e3a9c3e76f33ed9152149171b0c30` is PR
+`#143` exact head. Avorax CI `33247109048` passes all five jobs. Desktop
+Packages push/PR runs `33247093108` and `33247109041` pass Windows x64 MSI/EXE,
+Linux x64 DEB/tar, macOS x64/arm64 DMG, package contracts, checksums, and the
+lockfile SBOM. Both publication jobs are skipped.
+
+Consolidated artifacts `9713357241` and `9713425200` are 132,370,079 and
+132,399,216 bytes with SHA-256
+`3c41b7b64e89cfba05e88b0e49e923a68819bf363e76843ebbdad84aa515b4db` and
+`a73ea1449e9918571855a2d3be693bf8283ea3a2457d2b41afa5a2972b58ac91`.
+Bounded stream inspection, without extraction or execution, verifies exact
+8-root/6-platform/7-checksum inventory and CycloneDX 1.6 with 569 components in
+both artifacts. Evidence-head reruns, normal merge, merged-main evidence,
+guarded synchronization, destination verification, and closure remain pending.

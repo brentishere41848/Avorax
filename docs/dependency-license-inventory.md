@@ -2515,3 +2515,10 @@ to use only standard-library path conversion and the already pinned
 third-party version, source, feature, runtime fetch, or license class changed.
 Hosted SBOM/package, integration, synchronization, destination, and closure
 evidence remains pending with the dependency and license delta at zero.
+
+Implementation-head package push/PR runs `33247093108`/`33247109041` pass
+dependency/license evidence, six platform assets, checksums, and CycloneDX 1.6
+with 569 components at exact commit `6e06ac51`; publication skips. Both
+consolidated artifacts pass bounded non-extracting review. The SBOM retains the
+same third-party inventory; evidence-head, merge, merged-main, synchronization,
+destination, and closure dependency evidence remains pending.

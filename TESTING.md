@@ -1373,3 +1373,11 @@ mutations on both hosts (`14/14`). Final audit passes 13 modified plus one
 added path, zero deletes, eight unchanged lockfiles, zero product processes or
 pending/workflow residue, and the exact protected-vault invariant. Hosted,
 integration, destination, and closure testing remains pending.
+
+Implementation-head CI `33247109048` and package push/PR runs
+`33247093108`/`33247109041` pass at exact SHA `6e06ac51`; both publication
+jobs skip. Consolidated artifacts `9713357241`/`9713425200` pass bounded stream
+validation without extraction or execution: exact eight root entries, six
+platform files, seven checksum targets, and CycloneDX 1.6 with 569 components.
+Evidence-head reruns, integration, merged-main, synchronization, destination,
+and closure tests remain pending.

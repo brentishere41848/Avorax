@@ -13381,6 +13381,21 @@ pending.
 - Checkpoint 2256 is **verified locally**. Hosted exact-head CI/packages,
   integration, guarded sync, and destination verification remain open; the
   complete antivirus-hardening goal remains active.
+
+## 2026-08-29 - Checkpoint 2267 Hosted Implementation Head
+
+- Implementation `6e06ac51043e3a9c3e76f33ed9152149171b0c30` is PR
+  `#143` exact head. CI `33247109048` passes all five jobs.
+- Desktop Packages push/PR runs `33247093108`/`33247109041` pass all six
+  platform packages, checksums, and lockfile SBOM; publication is skipped.
+- Consolidated artifacts `9713357241`/`9713425200` are 132,370,079/
+  132,399,216 bytes with SHA-256
+  `3c41b7b64e89cfba05e88b0e49e923a68819bf363e76843ebbdad84aa515b4db`/
+  `a73ea1449e9918571855a2d3be693bf8283ea3a2457d2b41afa5a2972b58ac91`.
+  Both pass bounded, non-extracting, non-executing exact
+  8-root/6-platform/7-checksum/CycloneDX-1.6/569-component review.
+- Evidence-head reruns, normal merge, merged-main, guarded synchronization,
+  destination verification, and closure remain pending.
 - A standalone validator correctly rejected the superseded pre-release-build
   report because its binary hash was stale. Two inline parser wrappers also
   failed from shell quoting. All three attempts are uncredited; a complete
