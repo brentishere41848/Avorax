@@ -3734,8 +3734,12 @@ review. Pre-journal copy interruption is detected as an orphan rather than
 automatically deleted. No checkpoint-2269 test ran during the scripting phase,
 and post-freeze focused/broad local regression now verifies the listed state,
 tamper, lock, key, ordering, and wiring controls. Exact-297 and dual-host
-hostile-report validation now pass; hosted, installed-context, integration,
-and destination evidence remain pending. The exact
+hostile-report validation now pass. Exact implementation `d44b5c65` passes all
+five hosted CI jobs and every desktop package path; both consolidated artifacts
+pass bounded in-stream inventory/checksum/SBOM review without extraction or
+execution, and publication is skipped. This adds hosted build/package evidence,
+not installed recovery or power-loss durability. Evidence-head, installed-
+context, integration, and destination evidence remain pending. The exact
 16,072-file vault remains read-only with zero pending; no live malware is used;
 the complete antivirus-hardening goal remains active.
 

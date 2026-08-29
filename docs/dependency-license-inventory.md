@@ -2442,8 +2442,12 @@ installed.
 
 No checkpoint-2269 test ran during the scripting phase. Both locked workspaces
 and the locked all-feature release build now pass locally. Exact-297 dependency
-gate also passes. Hosted checksum/SBOM comparison, exact component inventory, integration,
-destination lock comparison, and closure remain pending. All
+gate also passes. Exact implementation head `d44b5c65` passes package push/PR
+runs `33271310749`/`33271345821`; untouched consolidated artifacts
+`9720317057`/`9720376440` pass bounded in-stream exact 8-root/6-platform/
+7-checksum and CycloneDX 1.6/569-component review without extraction or
+execution. Publication is skipped. Evidence-head, integration, destination
+lock comparison, and closure remain pending. All
 fixtures are harmless temporary data; no live malware, network download,
 Defender change, protected-vault mutation, release, or publication is involved.
 The vault remains 16,072 files with zero pending, and the complete antivirus-

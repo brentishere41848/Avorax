@@ -1585,4 +1585,20 @@ the repaired adversarial script rejects all `14/14` host/mutation cases. The
 first adversarial call stopped before fixture execution because of a
 PowerShell 5.1 parameter-default incompatibility and is uncredited. Read-only
 audit passes exact diff, lock, process, pending, temporary-residue, and vault
-invariants. Hosted and destination verification commands remain next.
+invariants. Exact implementation-head hosted results follow; evidence-head,
+merged-main, and destination verification remain next.
+
+Exact implementation head `d44b5c65c009d7378852b86246812ebe7115b1f2`
+passes Avorax CI `33271345848` and Desktop Packages push/PR runs
+`33271310749`/`33271345821`. Publication is skipped. The two downloaded
+consolidated artifacts were validated without extraction or execution:
+
+```powershell
+.verification\checkpoint-2237-validate-consolidated.ps1 -Path .verification\checkpoint-2269-implementation-push-artifact-9720317057.zip -ExpectedBytes 132640696 -ExpectedSha256 1c1a6d752ac08fad2b54fc665e7eff919d66443f1583efa65705f98aa5bff9f9
+.verification\checkpoint-2237-validate-consolidated.ps1 -Path .verification\checkpoint-2269-implementation-pr-artifact-9720376440.zip -ExpectedBytes 132629422 -ExpectedSha256 bada0debaf61adcd46396a60ab2ef49bf81b01d46fd0e328fbf3979ed118d2c5
+```
+
+Both report exact eight root entries, seven matching streamed checksums,
+CycloneDX 1.6, and 569 components. Evidence-head, merged-main, and destination
+verification remain required; these package checks are not installation or
+runtime-recovery evidence.

@@ -14622,3 +14622,24 @@ pending.
 - Two loose no-malware-gate calls with relative/WindowsApps Python paths were
   rejected before scanning and are uncredited. The corrected exact bundled
   verifier Python path passes the gate.
+
+## 2026-08-29 - Checkpoint 2269 Implementation-Head Hosted Evidence
+
+- Commit `d44b5c65c009d7378852b86246812ebe7115b1f2` passes all five Avorax
+  CI jobs in PR run `33271345848`. PR `#147` remains open, clean, and mergeable.
+- Desktop Packages push/PR runs `33271310749`/`33271345821` pass contracts,
+  Windows MSI/EXE, Linux DEB/tar, both macOS DMGs, and consolidation. Both
+  prerelease publication jobs are skipped.
+- Untouched consolidated artifacts `9720317057` and `9720376440` were
+  downloaded into untracked `.verification` and inspected in-stream without
+  extraction or execution. They are respectively 132,640,696 bytes with
+  SHA-256 `1c1a6d752ac08fad2b54fc665e7eff919d66443f1583efa65705f98aa5bff9f9`
+  and 132,629,422 bytes with SHA-256
+  `bada0debaf61adcd46396a60ab2ef49bf81b01d46fd0e328fbf3979ed118d2c5`.
+- Both pass exact 8-root/6-platform/7-checksum inventory and CycloneDX 1.6
+  with 569 components. This proves hosted build/package compatibility, not
+  installation, elevated-service recovery, Unix recovery runtime, production
+  signing/notarization, release approval, or publication.
+- Evidence-head checks, normal merge, merged-main checks, guarded zero-delete
+  synchronization, destination verification, and checkpoint closure remain.
+  The protected vault is untouched and the whole hardening goal stays active.

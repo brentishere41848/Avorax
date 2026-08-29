@@ -4199,9 +4199,12 @@ complete antivirus-hardening goal remain open.
 Checkpoint 2269 implements authenticated recovery for the directory backup-
 move gap. No checkpoint-2269 test ran during the scripting phase; post-freeze
 compilation and focused/broad local regression now pass. Exact-297 validation,
-hostile-report checks, and read-only final audit now pass. Hosted evidence,
-installed-service behavior, integration, destination verification, and closure
-are still pending.
+hostile-report checks, and read-only final audit now pass. Exact implementation
+`d44b5c65` also passes Avorax CI `33271345848` and package push/PR runs
+`33271310749`/`33271345821`; both consolidated artifacts pass bounded
+non-extracting inventory/checksum/SBOM review and publication is skipped.
+Evidence-head, installed-service behavior, integration, destination
+verification, and closure are still pending.
 
 Recovery is per allowlisted tree and runs on the next apply, rollback, update-
 service start, or explicit `--recover`. It is not a durable all-package commit

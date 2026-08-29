@@ -2,7 +2,8 @@
 
 Date: 2026-08-29 (Europe/Brussels)
 
-Status: **Definitive local verification passed; hosted integration pending**
+Status: **Implementation-head local and hosted verification passed; integration
+pending**
 
 ## Objective
 
@@ -78,6 +79,28 @@ hosts, exact `14/14`.
 | Pre-journal staging-copy interruption | Partial | Orphan is detected and blocked, not automatically deleted |
 | Unsupported non-Windows/non-Unix targets | Disabled | Secure private-key storage fails visibly |
 | Detection/custom engines | Unchanged | This checkpoint adds no detection coverage or blocking authority |
+
+Exact implementation head `d44b5c65c009d7378852b86246812ebe7115b1f2`
+passes all five Avorax CI jobs in pull-request run `33271345848`. Desktop
+Packages push/PR runs `33271310749`/`33271345821` pass package contracts,
+Windows x64 MSI/EXE, Linux x64 DEB/tar, macOS arm64/x64 DMGs, consolidation,
+checksums, and lockfile SBOM generation. Both prerelease publication jobs are
+skipped.
+
+The untouched consolidated artifacts were downloaded only into untracked
+`.verification` and inspected in-stream without extraction or execution:
+
+- push artifact `9720317057`: 132,640,696 bytes, SHA-256
+  `1c1a6d752ac08fad2b54fc665e7eff919d66443f1583efa65705f98aa5bff9f9`;
+- PR artifact `9720376440`: 132,629,422 bytes, SHA-256
+  `bada0debaf61adcd46396a60ab2ef49bf81b01d46fd0e328fbf3979ed118d2c5`.
+
+Each contains exactly eight expected root entries, six platform packages,
+seven checksum targets whose streamed SHA-256 values match, and one valid
+CycloneDX 1.6 lockfile SBOM with 569 components. This is clean hosted build,
+package-contract, inventory, and checksum evidence. It is not package
+installation, production signing/notarization, runtime recovery on Unix,
+elevated-service E2E, power-cut durability, release approval, or publication.
 
 ## Local execution evidence
 
@@ -174,16 +197,16 @@ Python executable as the definitive verifier and passes.
 
 ## Remaining execution sequence
 
-Commit only the 21 project paths, keep `.verification` untracked, then obtain
-exact-head CI/packages, perform normal PR/merge and merged-main checks, apply
-guarded zero-delete destination synchronization, run destination full
-verification, and close the checkpoint without closing the whole hardening
-goal.
+Commit only the hosted-evidence documentation, keep `.verification` untracked,
+then obtain exact evidence-head CI/packages, perform normal PR/merge and
+merged-main checks, apply guarded zero-delete destination synchronization, run
+destination full verification, and close the checkpoint without closing the
+whole hardening goal.
 
 Recovery filter `18/18`, platform `18/18`, update service `232/232`, Source
-`700/700`, definitive verifier `297/297`, and adversarial rejection `14/14` are
-now locally evidenced. Hosted and synchronized-destination evidence remains
-pending.
+`700/700`, definitive verifier `297/297`, adversarial rejection `14/14`, and
+exact implementation-head hosted CI/packages are now evidenced. Evidence-head,
+merged-main, and synchronized-destination evidence remain pending.
 
 ## Safety and current evidence
 
@@ -191,8 +214,10 @@ No checkpoint-2269 test ran during the scripting phase; the execution above
 started only after that complete batch was frozen. No live malware,
 EICAR, Defender weakening, fixture execution, network download, machine-wide
 installation, service/driver start, force reset, direct-main push, release,
-publication, or protected-vault write occurred. `.verification` remains
-untracked and must never be staged or deleted.
+publication, or protected-vault write occurred during local execution. Hosted
+artifacts were treated as untrusted opaque ZIP containers and were not
+extracted or executed. `.verification` remains untracked and must never be
+staged or deleted.
 
 The protected vault remains exactly 16,072 files, zero directories, 4,522,733
 bytes, 5,357 each `.avoraxq`/`.json`/`.auth`, one `.metadata_auth_key`, and zero
@@ -204,8 +229,9 @@ machine-bound DPAPI key protection on Windows, owner-only key storage on Unix,
 HMAC-bound strict journals, an exclusive cross-process lock, exact allowlisted
 path derivation, bounded parsing, and harmless state fixtures to restore the
 backup-move gap or finish completed cleanup without overwriting a competing
-object. This scope is locally runtime/source verified as listed above; hosted
-and installed-context evidence remains pending.
+object. This scope is locally runtime/source verified and exact implementation-
+head hosted build/package verified as listed above; installed-context evidence
+remains pending.
 
 Directory activation recovery is per-tree and next-start/best-effort; it is not
 a power-loss-proof package transaction, does not make service/file/multiple-
