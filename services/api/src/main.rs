@@ -161,6 +161,8 @@ async fn run_migrations(db: &Pool<Postgres>) -> anyhow::Result<()> {
 }
 
 #[cfg(test)]
+// Keep router contract tests beside router construction while setup helpers follow.
+#[allow(clippy::items_after_test_module)]
 mod tests {
     use super::*;
     use axum::body::Body;

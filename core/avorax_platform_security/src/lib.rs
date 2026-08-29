@@ -33,7 +33,13 @@ pub fn ensure_path_matches_open_file(file: &fs::File, path: &Path, label: &str) 
 /// Atomically moves a staged file into an absent destination without replacing
 /// a competing filesystem object that appears after caller preflight.
 pub fn rename_file_no_replace(source: &Path, destination: &Path, label: &str) -> Result<()> {
-    rename_file_no_replace_impl(source, destination, label)
+    rename_no_replace_impl(source, destination, label)
+}
+
+/// Atomically moves a staged directory into an absent destination without
+/// replacing a competing filesystem object that appears after caller preflight.
+pub fn rename_directory_no_replace(source: &Path, destination: &Path, label: &str) -> Result<()> {
+    rename_no_replace_impl(source, destination, label)
 }
 
 #[cfg(windows)]
@@ -73,6 +79,13 @@ fn bounded_windows_move_path(path: &Path, role: &str, label: &str) -> Result<Vec
         .as_os_str()
         .encode_wide()
         .take(MAX_WINDOWS_SECURITY_PATH_UNITS.saturating_add(1))
+        .map(|unit| {
+            if unit == b'/' as u16 {
+                b'\\' as u16
+            } else {
+                unit
+            }
+        })
         .collect();
     if raw.is_empty() {
         return Err(anyhow!("{label} {role} path is empty"));
@@ -136,7 +149,7 @@ fn bounded_windows_move_path(path: &Path, role: &str, label: &str) -> Result<Vec
 }
 
 #[cfg(windows)]
-fn rename_file_no_replace_impl(source: &Path, destination: &Path, label: &str) -> Result<()> {
+fn rename_no_replace_impl(source: &Path, destination: &Path, label: &str) -> Result<()> {
     use windows_sys::Win32::Storage::FileSystem::MoveFileExW;
 
     let source_wide = bounded_windows_move_path(source, "source", label)?;
@@ -154,7 +167,7 @@ fn rename_file_no_replace_impl(source: &Path, destination: &Path, label: &str) -
 }
 
 #[cfg(any(target_os = "linux", target_os = "android"))]
-fn rename_file_no_replace_impl(source: &Path, destination: &Path, label: &str) -> Result<()> {
+fn rename_no_replace_impl(source: &Path, destination: &Path, label: &str) -> Result<()> {
     use std::ffi::CString;
     use std::os::unix::ffi::OsStrExt;
 
@@ -184,7 +197,7 @@ fn rename_file_no_replace_impl(source: &Path, destination: &Path, label: &str) -
 }
 
 #[cfg(all(unix, target_vendor = "apple"))]
-fn rename_file_no_replace_impl(source: &Path, destination: &Path, label: &str) -> Result<()> {
+fn rename_no_replace_impl(source: &Path, destination: &Path, label: &str) -> Result<()> {
     use std::ffi::CString;
     use std::os::unix::ffi::OsStrExt;
 
@@ -212,7 +225,7 @@ fn rename_file_no_replace_impl(source: &Path, destination: &Path, label: &str) -
     target_os = "android",
     all(unix, target_vendor = "apple")
 )))]
-fn rename_file_no_replace_impl(source: &Path, destination: &Path, label: &str) -> Result<()> {
+fn rename_no_replace_impl(source: &Path, destination: &Path, label: &str) -> Result<()> {
     Err(anyhow!(
         "atomic no-replace activation is unsupported for {label} {} to {} on this platform",
         source.display(),
@@ -1145,6 +1158,65 @@ mod tests {
         assert!(detail.contains("without replacing"), "{detail}");
         assert_eq!(fs::read(&staged).unwrap(), b"harmless restored bytes");
         assert_eq!(fs::read(&destination).unwrap(), b"harmless competing bytes");
+    }
+
+    #[cfg(any(
+        windows,
+        target_os = "linux",
+        target_os = "android",
+        all(unix, target_vendor = "apple")
+    ))]
+    #[test]
+    fn directory_no_replace_activation_moves_into_absent_destination() {
+        let root = tempfile::tempdir().unwrap();
+        let staged = root.path().join("engine/staged-tree");
+        let destination = root.path().join("engine/active-tree");
+        fs::create_dir_all(&staged).unwrap();
+        fs::write(staged.join("marker.bin"), b"harmless staged tree bytes").unwrap();
+
+        rename_directory_no_replace(&staged, &destination, "directory activation fixture").unwrap();
+
+        assert!(!staged.exists());
+        assert_eq!(
+            fs::read(destination.join("marker.bin")).unwrap(),
+            b"harmless staged tree bytes"
+        );
+    }
+
+    #[cfg(any(
+        windows,
+        target_os = "linux",
+        target_os = "android",
+        all(unix, target_vendor = "apple")
+    ))]
+    #[test]
+    fn directory_no_replace_activation_preserves_competing_destination() {
+        let root = tempfile::tempdir().unwrap();
+        let staged = root.path().join("staged-tree");
+        let destination = root.path().join("active-tree");
+        fs::create_dir_all(&staged).unwrap();
+        fs::create_dir_all(&destination).unwrap();
+        fs::write(staged.join("marker.bin"), b"harmless staged tree bytes").unwrap();
+        fs::write(
+            destination.join("marker.bin"),
+            b"harmless competing tree bytes",
+        )
+        .unwrap();
+
+        let error =
+            rename_directory_no_replace(&staged, &destination, "directory activation fixture")
+                .unwrap_err();
+        let detail = format!("{error:#}");
+
+        assert!(detail.contains("without replacing"), "{detail}");
+        assert_eq!(
+            fs::read(staged.join("marker.bin")).unwrap(),
+            b"harmless staged tree bytes"
+        );
+        assert_eq!(
+            fs::read(destination.join("marker.bin")).unwrap(),
+            b"harmless competing tree bytes"
+        );
     }
 
     #[cfg(windows)]

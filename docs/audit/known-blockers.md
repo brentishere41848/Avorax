@@ -4121,3 +4121,56 @@ gap or make multi-file activation transactional. Android runtime/build,
 privileged filesystems, installed service/driver authority, production signing
 and deployment, pre-execution blocking, Defender replacement, and the complete
 antivirus-hardening goal remain open.
+
+## Checkpoint 2268 - Update Directory Activation Remaining Limits
+
+Checkpoint 2268 scripts atomic no-replace behavior for the three final-name
+directory moves in update tree replacement and rollback activation. It closes
+neither the process-wide nor package-wide transaction gap. Service stop/start,
+file-item replacement, backup cleanup, crash recovery, and multiple component
+activations are separate operations. Power loss or process termination after a
+backup move can leave the destination absent and the original tree in its
+sibling backup. A race-created destination is intentionally preserved, so an
+operator may need to recover the original from the preserved backup.
+
+Path and ancestor validation is still point-in-time. Administrators,
+SYSTEM/root, hostile or unusual filesystems, and kernel compromise remain
+outside the user-mode guarantee; unsupported platforms fail visibly. No
+installed authenticated privileged service boundary, signed driver,
+pre-execution interception, production signing/deployment, or Defender
+replacement is demonstrated.
+
+No checkpoint-2268 test ran during the scripting phase. Focused, broad,
+exact-296, dual-host adversarial, hosted package, integration, synchronized-
+destination, and closure evidence remains pending. No live malware, EICAR,
+fixture execution, Defender weakening, protected-vault mutation, install,
+service/driver start, release, or publication is authorized. The vault remains
+exactly 16,072 files with zero pending. The complete antivirus-hardening goal
+remains active.
+
+The first focused checkpoint-2268 update run is uncredited after exposing
+Windows error 123: adding a verbatim prefix without normalizing a retained Rust
+`/` separator made a valid nested absolute path invalid for `MoveFileExW`.
+Separator normalization and a nested-path fixture are scripted; post-repair
+focused and broad evidence remains pending.
+
+Post-repair local broad evidence now passes through both locked workspaces,
+release, Flutter/protocols, strict lint, all six focused fixtures, Source
+`699/699`, platform `17/17`, and update aggregate `216/216`. This closes the
+local Windows separator/runtime blocker only. Exact-296, adversarial, hosted,
+integration, destination, and closure evidence remains pending, while crash
+transactionality, manual backup recovery, cross-platform runtime, privileged
+filesystems, installed authority, driver/pre-execution, signing/deployment,
+Defender replacement, and the whole antivirus goal remain open.
+
+Definitive checkpoint-2268 local evidence now passes exact `296/296` in
+`673.5s`; both PowerShell hosts accept the authentic report and reject all
+`14/14` adversarial cases. Exact report/adversarial SHA-256 values are
+`8b87d0aa72cd0ee51d0c2b6ff9d1ac87dbb392ad19298b4a704a94b2f0f8970c` and
+`217771abe632d0647aef3071654190609e367d120ec7afdfaee6ffd057033826`.
+Locks, processes, pending files, and the protected vault remain exact. Hosted,
+integration, guarded-sync, destination, and closure evidence remain pending;
+crash transactionality, manual backup recovery, cross-platform runtime,
+privileged filesystems, installed authority, driver/pre-execution,
+signing/deployment, Defender replacement, and the whole antivirus goal remain
+open.

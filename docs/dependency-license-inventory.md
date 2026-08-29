@@ -2424,6 +2424,44 @@ blob comparisons pass. Checkpoint 2265 is closed with no dependency, license,
 or network-surface delta. Production signing/notarization, final notice
 provenance, enterprise deployment, and release approval remain separate.
 
+Checkpoint 2268 definitive local verification passes exact `296/296` in
+`673.5s`, including the dependency evidence gate, with report SHA-256
+`8b87d0aa72cd0ee51d0c2b6ff9d1ac87dbb392ad19298b4a704a94b2f0f8970c`.
+Both PowerShell hosts accept it and reject all `14/14` adversarial report cases.
+The three active lock hashes remain exact and no lockfile is modified. Hosted,
+integration, guarded-sync, destination, and closure evidence remain pending;
+checkpoint 2268 still adds no dependency, license class, network surface, or
+notice obligation.
+
+## Checkpoint 2268 Dependency Delta
+
+Checkpoint 2268 adds no dependency and requires no lockfile change. The update
+service already has an exact internal path dependency on
+`avorax_platform_security`; the directory wrapper reuses its existing pinned
+Windows `windows-sys`, Linux/Android `libc`, and Apple `libc` OS calls. No crate,
+version, registry, source, feature, network runtime, build script, binary blob,
+license class, or notice obligation changes.
+
+The six new Rust fixtures use existing `tempfile` development support and inert
+ASCII marker bytes only. They never execute fixtures and do not use live
+malware, EICAR, a network download, Defender changes, machine-wide components,
+service/driver registration, protected-vault mutation, release, or publication.
+No checkpoint-2268 test ran during the scripting phase. Locked dependency/build
+gates, exact-296 verification, hosted checksum/SBOM review, integration,
+synchronization, destination eight-lock audit, and closure remain pending. The
+vault remains 16,072 files with zero pending, and the complete antivirus-
+hardening goal remains active.
+
+The strict Clippy 1.96 compatibility repair adds three source attributes only;
+it changes no manifest, lockfile, dependency, version, feature, serialized API
+value, runtime component, license, or notice obligation.
+
+Local locked tests, strict lint, and all-feature release pass with zero tracked
+lockfile delta. Flutter resolved only versions already constrained by the
+checked-in lockfiles into its user cache; no manifest, dependency, feature,
+license class, machine-wide component, or publication changed. Hosted checksum/
+SBOM and final eight-lock audits remain pending.
+
 ## Checkpoint 2266 Dependency Delta
 
 Checkpoint 2266 adds one internal workspace dependency from

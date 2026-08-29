@@ -68,6 +68,8 @@ pub struct HeartbeatRequest {
 
 #[derive(Debug, Deserialize)]
 #[serde(tag = "event_type", rename_all = "snake_case", deny_unknown_fields)]
+// The Event suffix is part of the stable externally tagged JSON protocol.
+#[allow(clippy::enum_variant_names)]
 pub enum SecurityEventRequest {
     FileScanEvent { payload: Value },
     ProtectionDecisionEvent { payload: Value },

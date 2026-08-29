@@ -810,6 +810,8 @@ async fn authenticated_project_from_request(
 }
 
 #[cfg(test)]
+// Keep request contract tests beside normalization while database helpers follow.
+#[allow(clippy::items_after_test_module)]
 mod tests {
     use super::*;
 
