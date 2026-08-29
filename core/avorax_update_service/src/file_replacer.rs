@@ -1,8 +1,8 @@
 use anyhow::{Context, Result};
 use std::io::ErrorKind;
-use std::path::{Path, PathBuf};
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::path::Path;
 
+use crate::activation_recovery::begin_directory_activation;
 use crate::path_safety::{
     copy_file_staged, create_dir_all_checked, ensure_existing_path_chain_not_link,
     ensure_not_link_or_reparse,
@@ -70,66 +70,24 @@ pub fn replace_tree_atomically(source: &Path, destination: &Path, boundary: &Pat
     })?;
     ensure_existing_path_chain_not_link(parent, boundary, "atomic tree replacement parent")?;
     create_dir_all_checked(parent, "atomic tree replacement parent")?;
+    ensure_tree_replacement_destination_ready(destination)?;
 
-    let staging = allocate_tree_sibling(destination, boundary, "staging")?;
-    let backup = allocate_tree_sibling(destination, boundary, "backup")?;
+    let transaction = begin_directory_activation(boundary, destination)?;
+    let staging = transaction.staging_path().to_path_buf();
     if let Err(error) = copy_tree_overwrite(source, &staging) {
-        cleanup_tree_sibling(&staging, "atomic tree replacement staging").with_context(|| {
+        cleanup_tree_sibling(&staging, "authenticated tree replacement staging").with_context(|| {
             format!(
-                "failed to clean atomic tree replacement staging {} after copy failure: {error:#}",
+                "failed to clean authenticated tree replacement staging {} after copy failure: {error:#}",
                 staging.display()
             )
         })?;
         return Err(error);
     }
-
-    if let Err(error) = activate_replacement_tree(&staging, destination, &backup, boundary) {
-        cleanup_tree_sibling(&staging, "atomic tree replacement staging").with_context(|| {
-            format!(
-                "failed to clean atomic tree replacement staging {} after activation failure: {error:#}",
-                staging.display()
-            )
-        })?;
-        return Err(error);
-    }
-    Ok(())
+    transaction.commit()
 }
 
-fn activate_replacement_tree(
-    staging: &Path,
-    destination: &Path,
-    backup: &Path,
-    boundary: &Path,
-) -> Result<()> {
-    activate_replacement_tree_with_hooks(
-        staging,
-        destination,
-        backup,
-        boundary,
-        || Ok(()),
-        || Ok(()),
-    )
-}
-
-fn activate_replacement_tree_with_hooks<BeforeBackupMove, BeforeActivation>(
-    staging: &Path,
-    destination: &Path,
-    backup: &Path,
-    boundary: &Path,
-    before_backup_move: BeforeBackupMove,
-    before_activation: BeforeActivation,
-) -> Result<()>
-where
-    BeforeBackupMove: FnOnce() -> Result<()>,
-    BeforeActivation: FnOnce() -> Result<()>,
-{
-    ensure_existing_path_chain_not_link(staging, boundary, "atomic tree staging")?;
-    ensure_existing_update_directory(staging, "atomic tree staging")?;
-    ensure_existing_path_chain_not_link(destination, boundary, "atomic tree destination")?;
-    ensure_existing_path_chain_not_link(backup, boundary, "atomic tree backup")?;
-    ensure_tree_sibling_absent(backup, "atomic tree backup")?;
-
-    let destination_exists = match std::fs::symlink_metadata(destination) {
+fn ensure_tree_replacement_destination_ready(destination: &Path) -> Result<()> {
+    match std::fs::symlink_metadata(destination) {
         Ok(metadata) => {
             ensure_not_link_or_reparse(destination, "atomic tree destination")?;
             anyhow::ensure!(
@@ -137,120 +95,16 @@ where
                 "atomic tree destination is not a directory: {}",
                 destination.display()
             );
-            true
+            Ok(())
         }
-        Err(error) if error.kind() == ErrorKind::NotFound => false,
-        Err(error) => {
-            return Err(error).with_context(|| {
-                format!(
-                    "failed to inspect atomic tree destination {}",
-                    destination.display()
-                )
-            });
-        }
-    };
-
-    if destination_exists {
-        before_backup_move()?;
-        avorax_platform_security::rename_directory_no_replace(
-            destination,
-            backup,
-            "atomic tree destination backup move",
-        )
-        .with_context(|| {
+        Err(error) if error.kind() == ErrorKind::NotFound => Ok(()),
+        Err(error) => Err(error).with_context(|| {
             format!(
-                "failed to move atomic tree destination {} to backup {}",
-                destination.display(),
-                backup.display()
-            )
-        })?;
-    }
-
-    before_activation()?;
-    if let Err(error) = avorax_platform_security::rename_directory_no_replace(
-        staging,
-        destination,
-        "atomic tree staging activation",
-    )
-    .with_context(|| {
-        format!(
-            "failed to activate atomic tree staging {} as {}",
-            staging.display(),
-            destination.display()
-        )
-    }) {
-        if destination_exists {
-            if let Err(restore_error) = avorax_platform_security::rename_directory_no_replace(
-                backup,
-                destination,
-                "atomic tree backup recovery",
-            ) {
-                return Err(error).context(format!(
-                    "failed to restore atomic tree backup {} after activation failure: {restore_error:#}",
-                    backup.display()
-                ));
-            }
-        }
-        return Err(error);
-    }
-
-    if destination_exists {
-        cleanup_tree_sibling(backup, "atomic tree backup")?;
-    }
-    Ok(())
-}
-
-fn allocate_tree_sibling(destination: &Path, boundary: &Path, role: &str) -> Result<PathBuf> {
-    let parent = destination.parent().ok_or_else(|| {
-        anyhow::anyhow!(
-            "atomic tree replacement destination has no parent: {}",
-            destination.display()
-        )
-    })?;
-    let name = destination
-        .file_name()
-        .ok_or_else(|| {
-            anyhow::anyhow!(
-                "atomic tree replacement destination has no name: {}",
+                "failed to inspect atomic tree destination {}",
                 destination.display()
             )
-        })?
-        .to_string_lossy();
-    let unique = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map(|duration| duration.as_nanos())
-        .context("failed to read time for atomic tree replacement")?;
-    for attempt in 0..16 {
-        let candidate = parent.join(format!(
-            ".{name}.{}.{}.{}.{}.avorax-dir",
-            std::process::id(),
-            unique,
-            attempt,
-            role
-        ));
-        anyhow::ensure!(
-            candidate.starts_with(boundary),
-            "atomic tree replacement sibling escaped boundary: {}",
-            candidate.display()
-        );
-        ensure_existing_path_chain_not_link(&candidate, boundary, "atomic tree sibling")?;
-        match std::fs::symlink_metadata(&candidate) {
-            Ok(_) => {}
-            Err(error) if error.kind() == ErrorKind::NotFound => return Ok(candidate),
-            Err(error) => {
-                return Err(error).with_context(|| {
-                    format!(
-                        "failed to inspect atomic tree sibling {}",
-                        candidate.display()
-                    )
-                });
-            }
-        }
+        }),
     }
-    anyhow::bail!(
-        "could not allocate atomic tree replacement {role} path for {}",
-        destination.display()
-    )
 }
 
 fn cleanup_tree_sibling(path: &Path, label: &str) -> Result<()> {
@@ -264,16 +118,6 @@ fn cleanup_tree_sibling(path: &Path, label: &str) -> Result<()> {
             );
             crate::path_safety::remove_dir_all_checked(path, label)
         }
-        Err(error) if error.kind() == ErrorKind::NotFound => Ok(()),
-        Err(error) => {
-            Err(error).with_context(|| format!("failed to inspect {label} {}", path.display()))
-        }
-    }
-}
-
-fn ensure_tree_sibling_absent(path: &Path, label: &str) -> Result<()> {
-    match std::fs::symlink_metadata(path) {
-        Ok(_) => anyhow::bail!("{label} already exists: {}", path.display()),
         Err(error) if error.kind() == ErrorKind::NotFound => Ok(()),
         Err(error) => {
             Err(error).with_context(|| format!("failed to inspect {label} {}", path.display()))
@@ -501,32 +345,31 @@ mod tests {
         let dir = tempdir().unwrap();
         let install = dir.path().join("install");
         let destination = install.join("engine/signatures");
-        let staging = install.join("engine/.signatures.test.staging.avorax-dir");
-        let backup = install.join("engine/.signatures.test.backup.avorax-dir");
         std::fs::create_dir_all(&destination).unwrap();
+        let transaction = begin_directory_activation(&install, &destination).unwrap();
+        let staging = transaction.staging_path().to_path_buf();
+        let backup = transaction.backup_path().to_path_buf();
         std::fs::create_dir_all(&staging).unwrap();
         std::fs::write(destination.join("marker.bin"), b"harmless current tree").unwrap();
         std::fs::write(staging.join("marker.bin"), b"harmless staged tree").unwrap();
 
-        let error = activate_replacement_tree_with_hooks(
-            &staging,
-            &destination,
-            &backup,
-            &install,
-            || {
-                std::fs::create_dir_all(&backup)?;
-                std::fs::write(backup.join("marker.bin"), b"harmless competing backup")?;
-                Ok(())
-            },
-            || Ok(()),
-        )
-        .unwrap_err();
+        let error = transaction
+            .commit_with_hooks(
+                || {
+                    std::fs::create_dir_all(&backup)?;
+                    std::fs::write(backup.join("marker.bin"), b"harmless competing backup")?;
+                    Ok(())
+                },
+                || Ok(()),
+            )
+            .unwrap_err();
         let detail = format!("{error:#}");
 
         assert!(
-            detail.contains("failed to move atomic tree destination"),
+            detail.contains("failed to move update activation destination"),
             "{detail}"
         );
+        assert!(detail.contains("preserved ambiguous evidence"), "{detail}");
         assert!(detail.contains("without replacing"), "{detail}");
         assert_eq!(
             std::fs::read(destination.join("marker.bin")).unwrap(),
@@ -547,37 +390,36 @@ mod tests {
         let dir = tempdir().unwrap();
         let install = dir.path().join("install");
         let destination = install.join("engine/signatures");
-        let staging = install.join("engine/.signatures.test.staging.avorax-dir");
-        let backup = install.join("engine/.signatures.test.backup.avorax-dir");
         std::fs::create_dir_all(&destination).unwrap();
+        let transaction = begin_directory_activation(&install, &destination).unwrap();
+        let staging = transaction.staging_path().to_path_buf();
+        let backup = transaction.backup_path().to_path_buf();
+        let activation_destination = transaction.destination_path().to_path_buf();
         std::fs::create_dir_all(&staging).unwrap();
         std::fs::write(destination.join("marker.bin"), b"harmless current tree").unwrap();
         std::fs::write(staging.join("marker.bin"), b"harmless staged tree").unwrap();
 
-        let error = activate_replacement_tree_with_hooks(
-            &staging,
-            &destination,
-            &backup,
-            &install,
-            || Ok(()),
-            || {
-                std::fs::create_dir_all(&destination)?;
-                std::fs::write(
-                    destination.join("marker.bin"),
-                    b"harmless competing destination",
-                )?;
-                Ok(())
-            },
-        )
-        .unwrap_err();
+        let error = transaction
+            .commit_with_hooks(
+                || Ok(()),
+                || {
+                    std::fs::create_dir_all(&activation_destination)?;
+                    std::fs::write(
+                        activation_destination.join("marker.bin"),
+                        b"harmless competing destination",
+                    )?;
+                    Ok(())
+                },
+            )
+            .unwrap_err();
         let detail = format!("{error:#}");
 
         assert!(
-            detail.contains("failed to restore atomic tree backup"),
+            detail.contains("authenticated recovery preserved ambiguous evidence"),
             "{detail}"
         );
         assert!(
-            detail.contains("failed to activate atomic tree staging"),
+            detail.contains("failed to activate staged update directory"),
             "{detail}"
         );
         assert!(detail.contains("without replacing"), "{detail}");

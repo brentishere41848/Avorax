@@ -1520,3 +1520,85 @@ Final destination audit SHA-256
 passes exact 18 blobs, eight locks, 34 backups, zero product processes/pending/
 temporary roots, and the protected-vault invariant. Checkpoint 2268 testing is
 closed; technical limits remain as documented.
+
+## Checkpoint 2269 Authenticated Update Activation Recovery
+
+The complete implementation, benign-fixture, verifier, validator, adversarial,
+source-contract, and documentation batch was scripted before execution. No
+checkpoint-2269 test ran during the scripting phase. After freezing this batch,
+run in this order:
+
+```powershell
+cargo fmt --all -- --check
+powershell.exe -NoProfile -Command "[void][scriptblock]::Create([IO.File]::ReadAllText('tools/testing/verify-small-threat-mvp.ps1')); [void][scriptblock]::Create([IO.File]::ReadAllText('tools/testing/validate-small-threat-mvp-report.ps1')); [void][scriptblock]::Create([IO.File]::ReadAllText('.verification/checkpoint-2269-validator-adversarial.ps1'))"
+pwsh.exe -NoProfile -Command "[void][scriptblock]::Create([IO.File]::ReadAllText('tools/testing/verify-small-threat-mvp.ps1')); [void][scriptblock]::Create([IO.File]::ReadAllText('tools/testing/validate-small-threat-mvp-report.ps1')); [void][scriptblock]::Create([IO.File]::ReadAllText('.verification/checkpoint-2269-validator-adversarial.ps1'))"
+cargo test --manifest-path core\avorax_platform_security\Cargo.toml windows_machine_secret_dpapi_round_trip_is_non_plaintext -- --test-threads=1
+cargo test --manifest-path core\avorax_update_service\Cargo.toml activation_recovery -- --test-threads=1
+$env:PYTHONDONTWRITEBYTECODE='1'; python tools\testing\run-python-source-contracts.py
+cargo test --manifest-path core\avorax_platform_security\Cargo.toml -- --test-threads=1
+cargo test --manifest-path core\avorax_update_service\Cargo.toml -- --test-threads=1
+cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
+cargo test --workspace --locked -- --test-threads=1
+cargo test --workspace --all-targets --all-features --locked -- --test-threads=1
+cargo build --workspace --all-targets --all-features --release --locked
+Push-Location apps\zentor_client; flutter analyze; flutter test; Pop-Location
+Push-Location packages\zentor_protocol; flutter analyze; flutter test; Pop-Location
+Push-Location packages\avorax_protocol; flutter analyze; flutter test; Pop-Location
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools\testing\verify-small-threat-mvp.ps1 -ReportPath .workflow\ultracode\avorax-hardening\results\2269-update-activation-recovery-report.json
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools\testing\validate-small-threat-mvp-report.ps1 -ReportPath .workflow\ultracode\avorax-hardening\results\2269-update-activation-recovery-report.json -RequireFullSuite
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .verification\checkpoint-2269-validator-adversarial.ps1 -ReportPath .workflow\ultracode\avorax-hardening\results\2269-update-activation-recovery-report.json
+```
+
+Expected values are recovery filter `18/18`, platform `18/18`, update service
+`232/232`, Source `700/700`, and verifier `297/297`. They are expectations, not
+evidence. The adversarial audit must accept the authentic report under Windows
+PowerShell 5.1 and PowerShell 7 and reject seven mutations on both hosts, exact
+`14/14`. Tests may use only isolated temporary benign ASCII fixtures; they must
+not execute candidate content, touch the protected vault, install/start a
+service or driver, change Defender, release, or publish.
+
+The post-freeze local checkpoint-2269 run now passes both script parsers,
+format, focused DPAPI `1/1`, recovery `18/18`, Source `700/700`, platform
+`18/18`, update service `232/232`, strict locked Clippy, default and all-target/
+all-feature locked workspaces, and the locked all-feature release build. The
+all-feature test groups pass `18 + 4 + 228 + 41 + 251 + 583 + 642 + 6` with
+zero failures and 21 intentional isolated child-fixture ignores. Flutter
+analysis and `852/852` pass; protocol analysis/tests pass `14/14 + 6/6`.
+
+The first formatting check, recovery compile, Source, update aggregate, Clippy,
+and post-Clippy Source attempts are not credited; their exact defects and
+repairs are recorded in
+`docs/reports/checkpoint-2269-update-activation-recovery.md`. Run the exact-297
+verifier and validator/adversarial commands next, then perform read-only audit,
+hosted exact-head, integration, guarded sync, and destination verification.
+
+The first exact-297 run is not credited: its release apply-tamper smoke found
+that recovery initialized the install-local store before signature rejection.
+The repaired order is package verification, recovery, then extraction. The
+focused Rust ordering contract `1/1`, Source `700/700`, release rebuild, and
+the exact failed smoke pass. Repeat the complete verifier; do not substitute
+the focused rerun for definitive evidence.
+
+The complete repeat passes exact `297/297` in `685.6s` with no skips and no
+Defender/EICAR opt-in. Both PowerShell hosts accept the authentic report and
+the repaired adversarial script rejects all `14/14` host/mutation cases. The
+first adversarial call stopped before fixture execution because of a
+PowerShell 5.1 parameter-default incompatibility and is uncredited. Read-only
+audit passes exact diff, lock, process, pending, temporary-residue, and vault
+invariants. Exact implementation-head hosted results follow; evidence-head,
+merged-main, and destination verification remain next.
+
+Exact implementation head `d44b5c65c009d7378852b86246812ebe7115b1f2`
+passes Avorax CI `33271345848` and Desktop Packages push/PR runs
+`33271310749`/`33271345821`. Publication is skipped. The two downloaded
+consolidated artifacts were validated without extraction or execution:
+
+```powershell
+.verification\checkpoint-2237-validate-consolidated.ps1 -Path .verification\checkpoint-2269-implementation-push-artifact-9720317057.zip -ExpectedBytes 132640696 -ExpectedSha256 1c1a6d752ac08fad2b54fc665e7eff919d66443f1583efa65705f98aa5bff9f9
+.verification\checkpoint-2237-validate-consolidated.ps1 -Path .verification\checkpoint-2269-implementation-pr-artifact-9720376440.zip -ExpectedBytes 132629422 -ExpectedSha256 bada0debaf61adcd46396a60ab2ef49bf81b01d46fd0e328fbf3979ed118d2c5
+```
+
+Both report exact eight root entries, seven matching streamed checksums,
+CycloneDX 1.6, and 569 components. Evidence-head, merged-main, and destination
+verification remain required; these package checks are not installation or
+runtime-recovery evidence.

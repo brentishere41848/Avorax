@@ -2,6 +2,7 @@ use anyhow::{Context, Result};
 use serde_json::json;
 use std::path::{Path, PathBuf};
 
+mod activation_recovery;
 mod file_replacer;
 mod logging;
 mod path_safety;
@@ -54,7 +55,15 @@ fn main() {
 fn run_cli(args: Vec<String>) -> Result<()> {
     let mut args = args.into_iter().peekable();
     match args.next() {
-        Some(command) if command == "--service" => service::run_service(),
+        Some(command) if command == "--service" => {
+            let install_dir = default_install_dir()?;
+            activation_recovery::recover_pending_directory_activations_with_report(
+                &install_dir,
+                "service-start",
+            )
+            .context("update service startup recovery failed")?;
+            service::run_service()
+        }
         Some(command) if command == "--verify" => {
             let package = args.next().context("--verify requires a .aup path")?;
             let current = cli_current_version_or_default(cli_next_optional_positional(
@@ -92,6 +101,19 @@ fn run_cli(args: Vec<String>) -> Result<()> {
             cli_reject_unexpected_args(args, "--rollback")?;
             rollback::restore_latest_snapshot(&install_dir).map(|_| ())
         }
+        Some(command) if command == "--recover" => {
+            let install_dir = cli_install_dir_or_default(cli_next_optional_positional(
+                &mut args,
+                "update install directory",
+            )?)?;
+            cli_reject_unexpected_args(args, "--recover")?;
+            let summary = activation_recovery::recover_pending_directory_activations_with_report(
+                &install_dir,
+                "manual-cli",
+            )?;
+            println!("{}", serde_json::to_string(&summary)?);
+            Ok(())
+        }
         Some(command) if command == "--help" || command == "-h" => {
             print_cli_usage();
             Ok(())
@@ -109,7 +131,7 @@ fn run_cli(args: Vec<String>) -> Result<()> {
 
 fn print_cli_usage() {
     eprintln!(
-        "avorax_update_service --service | --verify <package.aup> [current] [--allow-development-key] | --apply <package.aup> [install_dir] [current] [--allow-development-key] | --rollback [install_dir]"
+        "avorax_update_service --service | --verify <package.aup> [current] [--allow-development-key] | --apply <package.aup> [install_dir] [current] [--allow-development-key] | --rollback [install_dir] | --recover [install_dir]"
     );
 }
 
@@ -675,6 +697,34 @@ mod tests {
 
         assert!(error.contains("unsupported --rollback argument"));
         assert!(error.contains("--allow-development-key"));
+    }
+
+    #[test]
+    fn recovery_cli_rejects_extra_arguments() {
+        let error = crate::cli_reject_unexpected_args(
+            vec!["--allow-development-key".to_string()],
+            "--recover",
+        )
+        .unwrap_err()
+        .to_string();
+
+        assert!(error.contains("unsupported --recover argument"));
+        assert!(error.contains("--allow-development-key"));
+    }
+
+    #[test]
+    fn update_cli_wires_fail_visible_activation_recovery() {
+        let source = include_str!("main.rs");
+        let test_start = source.find("#[cfg(test)]").unwrap();
+        let production = &source[..test_start];
+
+        assert!(production.contains("mod activation_recovery;"));
+        assert!(production.contains("\"service-start\""));
+        assert!(production.contains("Some(command) if command == \"--recover\""));
+        assert!(production.contains("\"manual-cli\""));
+        assert!(production.contains("cli_reject_unexpected_args(args, \"--recover\")?"));
+        assert!(production.contains("println!(\"{}\", serde_json::to_string(&summary)?)"));
+        assert!(production.contains("--rollback [install_dir] | --recover [install_dir]"));
     }
 
     #[test]

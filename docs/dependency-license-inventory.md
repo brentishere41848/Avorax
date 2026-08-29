@@ -2424,6 +2424,35 @@ blob comparisons pass. Checkpoint 2265 is closed with no dependency, license,
 or network-surface delta. Production signing/notarization, final notice
 provenance, enterprise deployment, and release approval remain separate.
 
+## Checkpoint 2269 Dependency Delta
+
+Checkpoint 2269 adds direct update-service dependency edges to already locked
+`hmac 0.12.1` and `zeroize 1.9.0`. Both exact registry package versions,
+checksums, transitive graphs, and existing MIT/Apache-2.0-compatible license
+classes were already present in the root lock/SBOM graph. The root lockfile
+changes only the `avorax_update_service` dependency list; there is no new
+package version, registry source, checksum, runtime download, executable tool,
+or network endpoint.
+
+The platform-security crate enables `Win32_Security_Cryptography` and
+`Win32_System_Memory` on its existing pinned `windows-sys 0.61.2` dependency;
+this adds no package or license class. DPAPI and `LocalFree` are operating-
+system APIs, not bundled third-party binaries. No machine-wide component is
+installed.
+
+No checkpoint-2269 test ran during the scripting phase. Both locked workspaces
+and the locked all-feature release build now pass locally. Exact-297 dependency
+gate also passes. Exact implementation head `d44b5c65` passes package push/PR
+runs `33271310749`/`33271345821`; untouched consolidated artifacts
+`9720317057`/`9720376440` pass bounded in-stream exact 8-root/6-platform/
+7-checksum and CycloneDX 1.6/569-component review without extraction or
+execution. Publication is skipped. Evidence-head, integration, destination
+lock comparison, and closure remain pending. All
+fixtures are harmless temporary data; no live malware, network download,
+Defender change, protected-vault mutation, release, or publication is involved.
+The vault remains 16,072 files with zero pending, and the complete antivirus-
+hardening goal remains active.
+
 Checkpoint 2268 definitive local verification passes exact `296/296` in
 `673.5s`, including the dependency evidence gate, with report SHA-256
 `8b87d0aa72cd0ee51d0c2b6ff9d1ac87dbb392ad19298b4a704a94b2f0f8970c`.

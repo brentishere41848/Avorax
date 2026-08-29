@@ -8268,3 +8268,74 @@ processes/pending/temporary roots, and the exact protected vault. Checkpoint
 2268 is closed. Whole-update transactionality, cross-platform runtime,
 privileged filesystems, installed authority, driver/pre-execution,
 signing/deployment, Defender replacement, and whole-project limits remain open.
+
+## Checkpoint 2269 - Authenticated Update Activation Recovery
+
+Status: **Definitive local and implementation-head hosted verification passed;
+integration evidence pending**.
+
+The update service now has a shared per-install recovery primitive for the
+directory activation gap. It binds strict bounded journals to the canonical
+install directory and an exact destination allowlist with HMAC-SHA-256, uses an
+exclusive file lock, and derives opaque staging/backup paths from a random
+lowercase-hex operation ID. Windows key material is machine-bound with DPAPI
+and protected by exact ACLs; Unix key material is owner-only. Apply, rollback,
+service startup, and manual `--recover` invoke recovery and write structured,
+bounded evidence. Ambiguous, forged, oversized, unknown, or orphan state fails
+visibly and is preserved for review.
+
+Sixteen recovery-module fixtures plus CLI/app-payload/platform tests, Source
+contract 700, focused verifier step 297, exact-297 validation, seven dual-host
+adversarial mutations, and all audit documents are scripted. No checkpoint-
+2269 test ran during the scripting phase. Expected, not yet credited, totals
+are recovery filter `18`, platform `18`, update service `232`, Source `700`, and
+definitive verifier `297`.
+
+Recovery remains per-tree and next-start/best-effort. It is not a power-loss-
+proof package transaction and does not make service lifecycle, file updates,
+or multiple components atomic. Pre-journal copy crashes leave a detected orphan
+for manual review. Privileged actors, hostile filesystems, key deletion, write
+reordering, installed service authority, driver/pre-execution, production
+signing/deployment, Defender replacement, and whole-project completion remain
+open. The protected 16,072-file vault remains read-only with zero pending, and
+the complete antivirus-hardening goal remains active.
+
+PowerShell parsing, format, focused DPAPI `1/1`, recovery `18/18`, Source
+`700/700`, platform `18/18`, update service `232/232`, strict locked Clippy,
+both locked workspace variants, locked all-feature release, Flutter analysis/
+tests `852/852`, and protocol analysis/tests `14/14 + 6/6` pass.
+
+The initial formatting, recovery compile, Source-shape, update/rollback
+preflight, and Clippy defects were fail-visible and are documented with their
+repairs in the checkpoint report. Exact-297 definitive/report-adversarial
+evidence, hosted CI/packages, PR/merge, guarded synchronization, destination
+verification, and closure remain pending. Recovery remains per-tree and next-
+start/best-effort; installed authority, power-cut atomicity, privileged-hostile
+filesystem resistance, Defender replacement, and whole-project completion are
+not claimed.
+
+The first definitive verifier attempt is uncredited because its release
+tamper-smoke correctly exposed recovery-store writes before package signature
+rejection. Apply now authenticates the package before recovery and still
+recovers before every staging/activation mutation. Focused ordering `1/1`,
+Source `700/700`, release rebuild, and the exact smoke pass; full exact-297
+repeat remains pending.
+
+The complete repeat now passes exact `297/297` in `685.6s`; both PowerShell
+hosts accept the authentic report and reject all `14/14` adversarial cases.
+Read-only audit passes the exact 19-modified/two-added/zero-delete diff, eight
+active locks, zero processes/pending/temp residue, and the protected vault.
+Checkpoint 2269 is definitive-local and exact implementation-head hosted
+verified. Evidence-head checks, normal integration, guarded destination
+synchronization, destination verification, and closure remain pending; the
+whole antivirus goal is active.
+
+Exact implementation head `d44b5c65c009d7378852b86246812ebe7115b1f2`
+now passes Avorax CI `33271345848` and Desktop Packages push/PR runs
+`33271310749`/`33271345821`. Both untouched consolidated artifacts pass bounded
+in-stream validation of exact 8-root/6-platform/7-checksum inventory and
+CycloneDX 1.6/569 components; publication is skipped. Evidence-head, normal
+merge, merged-main, guarded destination synchronization, destination full
+verification, and closure remain pending. Installed service authority,
+power-cut atomicity, production signing/deployment, Defender replacement, and
+whole-project completion are not claimed.

@@ -652,8 +652,18 @@ pub fn harden_windows_private_directory(path: &Path) -> Result<()> {
 }
 
 #[cfg(windows)]
+pub fn harden_windows_private_file(file: &fs::File, path: &Path) -> Result<()> {
+    harden_windows_private_file_with_label(file, path, "private file")
+}
+
+#[cfg(windows)]
 pub fn harden_windows_quarantine_file(file: &fs::File, path: &Path) -> Result<()> {
-    ensure_open_file_has_single_link(file, path, "quarantine file")?;
+    harden_windows_private_file_with_label(file, path, "quarantine file")
+}
+
+#[cfg(windows)]
+fn harden_windows_private_file_with_label(file: &fs::File, path: &Path, label: &str) -> Result<()> {
+    ensure_open_file_has_single_link(file, path, label)?;
     let sid = current_windows_process_sid()?;
     let mut aces = vec![
         "(D;;0x20;;;WD)".to_string(),
@@ -665,7 +675,108 @@ pub fn harden_windows_quarantine_file(file: &fs::File, path: &Path) -> Result<()
     }
     let sddl = format!("O:{sid}D:P{}", aces.join(""));
     set_and_verify_windows_dacl(path, false, &sddl, Some(file))
-        .with_context(|| format!("failed to harden quarantine file ACL {}", path.display()))
+        .with_context(|| format!("failed to harden {label} ACL {}", path.display()))
+}
+
+#[cfg(windows)]
+pub fn protect_windows_machine_secret(clear: &[u8]) -> Result<Vec<u8>> {
+    use std::ptr::{null, null_mut};
+    use windows_sys::Win32::Foundation::LocalFree;
+    use windows_sys::Win32::Security::Cryptography::{
+        CryptProtectData, CRYPTPROTECT_LOCAL_MACHINE, CRYPTPROTECT_UI_FORBIDDEN, CRYPT_INTEGER_BLOB,
+    };
+
+    anyhow::ensure!(!clear.is_empty(), "machine secret is empty");
+    anyhow::ensure!(
+        clear.len() <= u32::MAX as usize,
+        "machine secret exceeds the Windows DPAPI input limit"
+    );
+    let input = CRYPT_INTEGER_BLOB {
+        cbData: clear.len() as u32,
+        pbData: clear.as_ptr() as *mut u8,
+    };
+    let mut output = CRYPT_INTEGER_BLOB {
+        cbData: 0,
+        pbData: null_mut(),
+    };
+    let ok = unsafe {
+        CryptProtectData(
+            &input,
+            null(),
+            null(),
+            null_mut(),
+            null(),
+            CRYPTPROTECT_UI_FORBIDDEN | CRYPTPROTECT_LOCAL_MACHINE,
+            &mut output,
+        )
+    };
+    if ok == 0 {
+        return Err(std::io::Error::last_os_error())
+            .context("CryptProtectData failed for machine secret");
+    }
+    let result = if output.pbData.is_null() || output.cbData == 0 {
+        Err(anyhow!("CryptProtectData returned an empty machine secret"))
+    } else {
+        Ok(unsafe { std::slice::from_raw_parts(output.pbData, output.cbData as usize).to_vec() })
+    };
+    let free_result = unsafe { LocalFree(output.pbData as _) };
+    if !free_result.is_null() {
+        return Err(anyhow!("LocalFree failed for protected machine secret"));
+    }
+    result
+}
+
+#[cfg(windows)]
+pub fn unprotect_windows_machine_secret(protected: &[u8]) -> Result<Vec<u8>> {
+    use std::ptr::{null, null_mut};
+    use windows_sys::Win32::Foundation::LocalFree;
+    use windows_sys::Win32::Security::Cryptography::{
+        CryptUnprotectData, CRYPTPROTECT_UI_FORBIDDEN, CRYPT_INTEGER_BLOB,
+    };
+
+    anyhow::ensure!(!protected.is_empty(), "protected machine secret is empty");
+    anyhow::ensure!(
+        protected.len() <= u32::MAX as usize,
+        "protected machine secret exceeds the Windows DPAPI input limit"
+    );
+    let input = CRYPT_INTEGER_BLOB {
+        cbData: protected.len() as u32,
+        pbData: protected.as_ptr() as *mut u8,
+    };
+    let mut output = CRYPT_INTEGER_BLOB {
+        cbData: 0,
+        pbData: null_mut(),
+    };
+    let ok = unsafe {
+        CryptUnprotectData(
+            &input,
+            null_mut(),
+            null(),
+            null_mut(),
+            null(),
+            CRYPTPROTECT_UI_FORBIDDEN,
+            &mut output,
+        )
+    };
+    if ok == 0 {
+        return Err(std::io::Error::last_os_error())
+            .context("CryptUnprotectData failed for machine secret");
+    }
+    let result = if output.pbData.is_null() || output.cbData == 0 {
+        Err(anyhow!(
+            "CryptUnprotectData returned an empty machine secret"
+        ))
+    } else {
+        Ok(unsafe { std::slice::from_raw_parts(output.pbData, output.cbData as usize).to_vec() })
+    };
+    if !output.pbData.is_null() && output.cbData > 0 {
+        unsafe { std::ptr::write_bytes(output.pbData, 0, output.cbData as usize) };
+    }
+    let free_result = unsafe { LocalFree(output.pbData as _) };
+    if !free_result.is_null() {
+        return Err(anyhow!("LocalFree failed for unprotected machine secret"));
+    }
+    result
 }
 
 #[cfg(windows)]
@@ -1504,6 +1615,22 @@ mod tests {
         harden_windows_private_directory(&directory).unwrap();
         let opened = fs::File::open(&file).unwrap();
         harden_windows_quarantine_file(&opened, &file).unwrap();
+
+        let private = directory.join("recovery.json");
+        fs::write(&private, b"benign recovery metadata").unwrap();
+        let opened_private = fs::File::open(&private).unwrap();
+        harden_windows_private_file(&opened_private, &private).unwrap();
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn windows_machine_secret_dpapi_round_trip_is_non_plaintext() {
+        let clear = b"benign recovery authentication fixture";
+
+        let protected = protect_windows_machine_secret(clear).unwrap();
+
+        assert_ne!(protected, clear);
+        assert_eq!(unprotect_windows_machine_secret(&protected).unwrap(), clear);
     }
 
     #[cfg(windows)]

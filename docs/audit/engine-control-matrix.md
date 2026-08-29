@@ -6066,3 +6066,26 @@ transactionality, point-in-time ancestors, privileged actors, hostile
 filesystems, installed authority, driver/pre-execution, and Defender-
 replacement rows remain disabled, blocked, or technically limited exactly as
 stated.
+
+## Checkpoint 2269 Control Delta
+
+| Control / engine | Responsibility | Current checkpoint state | Evidence / blocker |
+| --- | --- | --- | --- |
+| Authenticated update directory recovery | Reconcile the destination-to-backup activation gap without overwriting a competing object | Definitive local and implementation-head hosted verification passed | Private store, HMAC journal, allowlist, path derivation, bounds, interrupted-state fixtures, exact-297 verifier, hostile-report checks, all five CI jobs, and every desktop package build pass; installed-context evidence remains pending |
+| Recovery key protection | Prevent ordinary local users or update payloads from forging recovery intent | Partial | Windows DPAPI `LOCAL_MACHINE` runtime and exact-DACL tests pass; Unix source/compile passes but hosted Unix runtime remains pending; privileged actors, key deletion, and hostile filesystems remain outside the guarantee |
+| Activation concurrency | Serialize update/rollback directory mutation and recovery | Definitive local verification passed | The exclusive OS file lock and harmless contention fixture pass locally and in the exact verifier |
+| Update apply / rollback / service startup / manual recovery | Authenticate apply packages before any install write, then invoke recovery before mutation or service operation and expose results | Partial | Ordering/unit/source/release-tamper smoke, `apply-preflight`, `rollback-preflight`, `service-start`, strict `--recover`, and bounded reports pass locally; installed elevated-service E2E remains pending |
+| Unauthenticated, ambiguous, oversized, unknown, or orphan recovery state | Preserve evidence and block unsafe automatic mutation | Definitive local verification passed | Strict schema, HMAC, bounds, state matrix, orphan fixtures, and hostile-report checks pass; manual review remains required for real ambiguous state |
+| Whole-package update transaction | Atomically cover service lifecycle, files, every engine component, and rollback | Technically limited | Directory recovery is per-tree and next-start/best-effort; no power-loss-proof multi-component transaction is claimed |
+| Malware detection/custom engines | Detect and explain covered threats | Unchanged | Checkpoint 2269 changes no hash, signature, rule/YARA, static/PE/archive, heuristic, ML, process, allowlist, exclusion, cache, threshold, or verdict responsibility |
+
+No checkpoint-2269 test ran during the scripting phase. Post-freeze focused and
+broad local regression, exact-297, and dual-host adversarial validation now
+pass. Exact implementation `d44b5c65` passes CI `33271345848` and package push/
+PR runs `33271310749`/`33271345821`; untouched artifacts `9720317057`/
+`9720376440` pass exact 8-root/6-platform/7-checksum/CycloneDX-1.6/569-component
+in-stream review without extraction or execution, and publication is skipped.
+Evidence-head, installed-context, integration, and destination evidence remain
+pending. The protected vault
+remains 16,072 files with zero pending, no live malware is involved, and the
+complete antivirus-hardening goal remains active.

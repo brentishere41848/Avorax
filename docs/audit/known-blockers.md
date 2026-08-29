@@ -4193,3 +4193,30 @@ transactional or eliminate crash/manual-recovery windows. Cross-platform
 runtime, privileged filesystems, installed service/driver authority, production
 signing/deployment, pre-execution blocking, Defender replacement, and the
 complete antivirus-hardening goal remain open.
+
+## Checkpoint 2269 Update Activation Recovery Limits
+
+Checkpoint 2269 implements authenticated recovery for the directory backup-
+move gap. No checkpoint-2269 test ran during the scripting phase; post-freeze
+compilation and focused/broad local regression now pass. Exact-297 validation,
+hostile-report checks, and read-only final audit now pass. Exact implementation
+`d44b5c65` also passes Avorax CI `33271345848` and package push/PR runs
+`33271310749`/`33271345821`; both consolidated artifacts pass bounded
+non-extracting inventory/checksum/SBOM review and publication is skipped.
+Evidence-head, installed-service behavior, integration, destination
+verification, and closure are still pending.
+
+Recovery is per allowlisted tree and runs on the next apply, rollback, update-
+service start, or explicit `--recover`. It is not a durable all-package commit
+protocol: service stop/start, app/service files, several engine components,
+report cleanup, and rollback are not one atomic transaction. A crash during
+pre-journal staging copy creates a detected orphan requiring manual review.
+Storage write reordering, full-volume loss, key deletion, ACL/mode changes by
+administrators or SYSTEM/root, hostile filesystems, and kernel compromise can
+still prevent or subvert recovery. Ambiguous or unauthenticated state is
+preserved rather than guessed.
+
+No installed elevated service E2E, Windows power-cut VM test, Unix runtime
+recovery test, production signing/deployment, driver/pre-execution proof, or
+Defender replacement is claimed. The 16,072-file vault remains untouched with
+zero pending, and the complete antivirus-hardening goal remains active.

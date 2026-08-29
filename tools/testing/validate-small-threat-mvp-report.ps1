@@ -1951,8 +1951,8 @@ if ($RequireFullSuite) {
   if ($skipFlutter -or $skipRust) {
     throw "-RequireFullSuite requires skip_flutter=false and skip_rust=false."
   }
-  if ($steps.Count -ne 296) {
-    throw "-RequireFullSuite expected exactly 296 verifier steps for this source revision, found $($steps.Count)."
+  if ($steps.Count -ne 297) {
+    throw "-RequireFullSuite expected exactly 297 verifier steps for this source revision, found $($steps.Count)."
   }
   if ($steps[0].name -ne "local-core safe simulator scan reporting") {
     throw "-RequireFullSuite first step mismatch: $($steps[0].name)"
@@ -1976,6 +1976,7 @@ if ($RequireFullSuite) {
   Assert-ReportContainsStep $steps "update-service staged file activation atomic no-replace regressions"
   Assert-ReportContainsStep $steps "update-service payload extraction atomic no-replace regressions"
   Assert-ReportContainsStep $steps "update-service directory activation atomic no-replace regressions"
+  Assert-ReportContainsStep $steps "update-service authenticated directory activation recovery regressions"
   Assert-ReportContainsStep $steps "native-engine file-type classifier regressions"
   Assert-ReportContainsStep $steps "native-engine detection-only mutation boundary regressions"
   Assert-ReportContainsStep $steps "native-engine archive content sampling regressions"
@@ -2160,9 +2161,17 @@ if ($RequireFullSuite) {
   Assert-ReportScopeContains $verifiedScopeText "Update-service tree replacement and rollback directory activation move validated destinations to absent backups" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "Harmless race fixtures prove a competing backup or destination is preserved together with the original or staged directory" "verification_scope.verified"
   Assert-ReportScopeContains $technicalLimitText "Directory no-replace protects only the three final-name moves within each user-mode update or rollback directory activation" "verification_scope.technically_limited"
-  Assert-ReportScopeContains $technicalLimitText "Service stop/start, file-item updates, cleanup, crash recovery, and multiple component activations are not one transaction" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "Service stop/start, file-item updates, cleanup, and multiple component activations are not one transaction" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "a competing destination can require manual recovery from the preserved backup" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "Path and ancestor checks remain point-in-time; unsupported platforms fail visibly, and administrators, SYSTEM/root, hostile filesystems, or kernel compromise remain outside the guarantee" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $verifiedScopeText "Authenticated update directory recovery uses a private per-install store" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "machine-bound DPAPI key protection on Windows" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "HMAC-bound strict journals" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "harmless state fixtures to restore the backup-move gap or finish completed cleanup" "verification_scope.verified"
+  Assert-ReportScopeContains $technicalLimitText "Directory activation recovery is per-tree and next-start/best-effort" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "does not make service/file/multiple-component activation atomic" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "Ambiguous or unauthenticated state is preserved and requires manual review" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "A crash during pre-journal staging copy leaves an orphan that is detected and blocked for manual review" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "File allowlisting remains safe after its hash snapshot because later scan suppression also requires that exact hash" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "neither operation holds a kernel-enforced immutable file lease" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "This is confirmation and stale-verdict defense, not cross-identity authorization, malware execution prevention, driver enforcement, or protection against administrators, SYSTEM, or kernel compromise" "verification_scope.technically_limited"
