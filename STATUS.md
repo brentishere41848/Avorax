@@ -7986,7 +7986,7 @@ mediation, pre-execution blocking, Defender replacement, production accuracy,
 and the complete antivirus-hardening goal remain limited, blocked, or open.
 Checkpoint 2264 closure does not close those product-level limits.
 
-## Checkpoint 2265 - Quarantine Metadata No-Replace (Locally Verified)
+## Checkpoint 2265 - Quarantine Metadata No-Replace (Closed)
 
 Checkpoint 2265 scripts shared operating-system no-replace activation for new
 Local Core and Guard quarantine journals, metadata records, and authentication
@@ -8004,14 +8004,19 @@ crate Clippy, both locked workspaces, locked all-feature release, safe smoke,
 Flutter `852/852`, protocols `14/14 + 6/6`, and definitive `293/293` in
 `659.4s` pass. Both validator hosts accept the authentic report and reject all
 16 adversarial host/mutation cases. Lockfiles, process/residue state, and the
-protected vault pass final local audit. Hosted, merge, guarded synchronization,
-and destination evidence remain pending.
+protected vault pass final local audit.
 
 Implementation commit `e4a1bb8` is PR `#139` head. CI `33233682635` and
 Desktop Packages push/PR `33233673950`/`33233682629` pass at that exact SHA;
 publication skips. Both consolidated artifacts pass bounded non-extracting
-8-root/6-platform/7-checksum/CycloneDX-1.6/569-component review. Evidence-head,
-merge, merged-main, synchronization, and destination evidence remain pending.
+8-root/6-platform/7-checksum/CycloneDX-1.6/569-component review. Evidence
+`e19d700` and normal PR `#139` merge `7f25166` pass evidence-head and
+merged-main CI/packages with publication skipped; all three additional
+consolidated artifacts pass the same bounded review without extraction or
+execution. Guarded 16-path zero-delete synchronization, complete destination
+regression, Source `695/695`, exact `293/293`, dual-host adversarial rejection,
+8/8 lockfiles, zero staging/smoke residue or processes, and the exact protected
+vault all pass.
 
 The boundary is per final name, not a transaction across journal/record/auth
 files. Authenticated recovery detects incomplete state but cannot make those
@@ -8019,3 +8024,8 @@ files atomic or defend against privileged actors, hostile filesystems, or kernel
 compromise. No live malware, vault mutation, Defender change, machine-wide
 install, service/driver start, release, or publication is involved. The complete
 antivirus-hardening goal remains active.
+
+Checkpoint 2265 is closed. That closure does not make journal/record/auth
+activation transactional and does not close installed service/driver,
+cross-identity authority, privileged-filesystem, pre-execution, production
+accuracy, signing, deployment, or Defender-replacement limits.
