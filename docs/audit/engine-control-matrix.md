@@ -5883,3 +5883,40 @@ guarded-sync, and destination columns now pass. Evidence `e19d700`, merge
 adversarial validation, 16/16 blobs, 8/8 locks, zero residue/processes, and the
 protected-vault invariant close checkpoint 2265. Per-file and privileged-actor
 limits remain technically limited.
+
+## Checkpoint 2266 - Signed Update Extraction No-Replace Matrix
+
+| Control / engine responsibility | State | Evidence boundary |
+| --- | --- | --- |
+| Signed package verification | **Locally regression verified** | Existing Ed25519 manifest and payload-hash verification remains mandatory before extraction; no trust key or package policy changes. |
+| Bounded payload extraction | **Locally regression verified** | Existing entry-count, path, per-entry, aggregate-byte, temporary-file, sync, and cleanup limits remain in force. |
+| Final extracted-file activation | **Locally verified on Windows / hosted targets pending** | Shared Windows, Linux/Android, and Apple atomic no-replace primitive replaces ordinary rename after repeated parent and absent-target checks. |
+| Competing extraction target | **Locally verified** | Harmless fixture requires staged and competing bytes to survive with a visible `without replacing` error. |
+| Unsupported platforms | **Disabled / fail-visible** | Shared platform helper returns an error instead of using replacement-capable rename. |
+| Install-tree activation and rollback | **Unchanged / technically limited** | This checkpoint does not make directory replacement, rollback, or a multi-file update transactional. |
+| Detection engines and verdict aggregation | **Unchanged** | Hash/signature, local rule/YARA, static/PE/archive, heuristic, ML, Authenticode, process observation, allowlist/exclusion, and verdict aggregation responsibilities do not change. |
+| Installed/kernel prevention | **Blocked / technically limited** | Point-in-time user-mode path checks cannot defeat administrators, SYSTEM/root, hostile filesystems, or kernel compromise and do not prove pre-execution blocking. |
+
+Checkpoint 2266 implementation, three harmless fixtures, focused verifier step,
+exact-294 validator, Source contract 696, root lock edge, and documentation are
+scripted. No checkpoint-2266 test ran during the scripting phase; every row
+requiring runtime evidence remains unverified. The protected 16,072-file vault
+with zero pending remains read-only. No live malware, EICAR, fixture execution,
+Defender change, install, service/driver start, release, or publication is part
+of this checkpoint. The complete antivirus-hardening goal remains active.
+
+After the frozen batch, Source `696/696`, focused `3/3`, full update service
+`209/209`, strict Clippy, both locked workspaces, release, Flutter `852/852`,
+and protocols `14/14 + 6/6` pass locally. Preliminary Source failures remained
+visible until three contract/document defects were fixed. Exact `294/294`,
+dual-host adversarial, hosted cross-target, integration, sync, destination, and
+closure columns remain pending; no disabled or technically limited engine is
+promoted by this local evidence.
+
+Definitive local evidence now passes exact `294/294`, dual-host authentic
+validation, all ten host/mutation rejection cases, the exact 15-path zero-delete
+inventory, eight lock checks, zero process/residue, and the protected-vault
+invariant. The final extracted-file and competing-target rows are therefore
+**Locally verified** on Windows. Hosted Linux/Android/Apple package builds,
+integration, synchronization, destination, and closure columns remain pending;
+install-tree transactions and privileged-actor limits remain unchanged.

@@ -1222,3 +1222,55 @@ Eight unique mutations are rejected by both hosts (`16/16`), result SHA-256
 `6f139935aee964dad3efad33bbf040896e87f81c2052bcc2cc4f6966e0a1b556`.
 Final audit passes all 16 blobs, eight active lockfiles, zero residue/processes,
 and the protected-vault invariant.
+
+## Checkpoint 2266 - Signed Update Extraction No-Replace
+
+All production, fixture, verifier, validator, Source-contract, lock, and
+documentation changes were scripted before execution. No checkpoint-2266 test
+ran during the scripting phase.
+
+Run the frozen batch in this order:
+
+```powershell
+cargo fmt --all -- --check
+& 'C:\Users\Brent\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe' tools\testing\run-python-source-contracts.py
+cargo test --manifest-path core\avorax_update_service\Cargo.toml payload_extraction_no_replace -- --test-threads=1
+cargo test --manifest-path core\avorax_update_service\Cargo.toml -- --test-threads=1
+cargo clippy --manifest-path core\avorax_update_service\Cargo.toml --all-targets --all-features -- -D warnings
+cargo test --workspace --locked
+cargo test --workspace --all-features --locked
+cargo build --workspace --all-features --release --locked
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools\testing\verify-small-threat-mvp.ps1 -ReportPath .workflow\ultracode\avorax-hardening\results\2266-update-extraction-no-replace-report.json
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools\testing\validate-small-threat-mvp-report.ps1 -ReportPath .workflow\ultracode\avorax-hardening\results\2266-update-extraction-no-replace-report.json -RequireFullSuite
+```
+
+The focused filter must run three harmless tests: absent-target activation,
+competing-target preservation, and activation source ordering. The definitive
+report must contain exact `294/294`, no skips or failed steps, the focused step,
+verified collision wording, and the final-name/ancestor/install-tree limits.
+PowerShell 5.1 and 7 must accept the authentic report and reject bounded
+content mutations. No live malware, EICAR, fixture execution, Defender change,
+machine-wide install, service/driver start, release, or publication is allowed.
+The 16,072-file protected vault is never a test root and must retain zero
+pending files.
+
+Local execution after batch freeze now passes formatting, final Source
+`696/696`, focused `3/3`, full update service `209/209`, strict Clippy, both
+locked workspace variants, locked all-feature release, Flutter analysis and
+`852/852`, and protocol analysis/tests `14/14 + 6/6`. Two earlier Source runs
+failed visibly with two then one contract defect; all three were repaired before
+the final pass. Exact `294/294`, authentic/adversarial dual-host validation,
+hosted evidence, integration, synchronization, destination execution, and final
+closure remain pending.
+
+Definitive local execution passes exact `294/294`, all passed, no skips and no
+Defender-EICAR, in `653.4s`. The report is 220,507 bytes with SHA-256
+`8f9e033d6e6cf1ace2025e8f0069787fdf05c391864cff93b335ad9561cd115f`.
+Both PowerShell hosts accept it and reject five unique mutations each (`10/10`);
+the result SHA-256 is
+`38d0f88b02e357cabdff92f76cacdc7129ddc354eddec035681f7d52e6c888a5`.
+The first final-audit invocation is not credited because its expected Git
+failure became terminating PowerShell 5.1 stderr. After a successful-query
+repair and dual-host parse, final audit passes 14 modified plus one added path,
+zero deletes, eight lock checks, zero processes/residue, and the exact vault.
+Hosted, merge, synchronization, destination, and closure testing remains.

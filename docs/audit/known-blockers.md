@@ -3990,3 +3990,43 @@ zero residue/processes, and the protected-vault invariant close checkpoint 2265.
 The listed metadata-transaction, privileged-actor, hostile-filesystem,
 installed-authority, driver, pre-execution, production-calibration, signing,
 deployment, and Defender-replacement limits remain open.
+
+## Checkpoint 2266 - Signed Update Extraction Remaining Limits
+
+Checkpoint 2266 scripts removal of the signed-package extraction final-name
+overwrite race. Completed temporary payloads now cross the shared OS atomic
+no-replace boundary after bounded extraction and repeated parent/target checks.
+A competing final object is preserved and failure remains visible.
+
+No checkpoint-2266 test ran during the scripting phase. Focused update-service,
+full crate, strict lint, locked workspace/release, definitive exact-294,
+dual-host adversarial, hosted package, integration, synchronization, and
+destination evidence remain pending. The production vault remains protected and
+read-only at 16,072 files, zero directories, 4,522,733 bytes, 5,357 each
+`.avoraxq`/`.json`/`.auth`, one `.metadata_auth_key`, and zero pending.
+
+The remaining update blockers are explicit. Final-name no-replace does not make
+install-tree activation, rollback, or multiple extracted files one transaction.
+Ancestor checks remain point-in-time user-mode checks, unsupported platforms
+fail visibly, and privileged actors or hostile filesystems remain outside this
+guarantee. Installed service authority, production signing ceremony, signed
+driver/kernel mediation, pre-execution blocking, Defender replacement, and the
+complete antivirus-hardening goal remain open. No live malware, EICAR, fixture
+execution, Defender weakening, machine-wide install, service/driver start,
+release, or publication is authorized.
+
+Local evidence after batch freeze now passes Source `696/696`, focused `3/3`,
+full update service `209/209`, strict lint, both locked workspace suites,
+release, Flutter `852/852`, and protocols `14/14 + 6/6`. Exact `294/294`,
+adversarial dual-host validation, hosted package targets, integration,
+synchronization, destination, and closure remain pending. These passes do not
+remove any transaction, privileged-actor, hostile-filesystem, installed-
+authority, driver, pre-execution, signing, deployment, or Defender-replacement
+blocker listed above.
+
+Definitive local exact `294/294`, dual-host authentic acceptance, `10/10`
+mutation rejection, lock/path/process/residue audit, and the exact vault now
+pass. Hosted cross-target evidence, normal integration, synchronization,
+destination, and closure remain pending. Per-file no-replace still does not
+close any update transaction, privileged actor, hostile filesystem, installed
+service/driver, pre-execution, signing, deployment, or Defender blocker.
