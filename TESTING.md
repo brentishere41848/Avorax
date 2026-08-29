@@ -1118,3 +1118,41 @@ and `c3696035a78047c3dfbe88b37bea0b2a332a15fccd4c6928561f8f8e6100aae5`;
 neither ZIP is extracted or executed. PR `#135` merges normally as
 `ed0484a605c7f5cc7a62d8c2dd8459ee969cec57`. Closure-head, merged-main,
 guarded-sync, and destination tests remain pending.
+
+The historical checkpoint-2263 pending status above is superseded: merged-main
+CI/packages, bounded artifact review, guarded zero-delete synchronization,
+destination Source `693/693`, exact `291/291`, both validators, all six
+adversarial mutations, and final exact-state audit pass. See the checkpoint
+report for commit, run, artifact, and digest evidence.
+
+## Checkpoint 2264 Scripted Verification
+
+No checkpoint-2264 test ran during the scripting phase. After the entire batch
+is frozen, begin with:
+
+```powershell
+cargo fmt --all -- --check
+python -B tools\testing\run-python-source-contracts.py
+cargo test --workspace quarantine_ingest_no_replace -- --test-threads=1
+```
+
+The focused workspace filter must run exactly the Local Core, Guard, and Native
+compatibility collision fixtures. Then run strict changed-crate Clippy, both
+locked workspaces, all-feature release, Flutter/client/protocol regressions,
+safe quarantine/restore smoke, and the definitive verifier. Full-suite report
+validation requires exact `292` steps including `quarantine ingest atomic
+no-replace regressions`, plus the ingest verified and technical-limit scope.
+Only harmless temporary ASCII fixtures may be used; never execute them or use
+the protected production vault as a test root.
+
+The frozen batch has now passed formatting, dual-host script parsing, Source
+`694/694`, focused collision `3/3`, broader quarantine filters, strict
+all-feature Clippy for all three changed crates, both locked workspace suites,
+locked all-feature release, safe quarantine/restore smoke, Flutter analyze and
+`852/852`, and protocol analyze/tests `14/14 + 6/6`. Broad workspace Clippy is
+recorded as non-passing because untouched `services/api` triggers Rust 1.96
+`items_after_test_module` and `enum_variant_names`; this checkpoint does not
+hide or broaden itself to repair that unrelated crate. Definitive exact-292 now
+passes `292/292`, zero failed/skipped, in `659.4s`; independent PS5/PS7
+validation and all six adversarial missing-step/scope rejections pass. Hosted
+and destination verification remains pending.

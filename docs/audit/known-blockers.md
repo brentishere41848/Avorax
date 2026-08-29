@@ -3917,3 +3917,29 @@ privileged ancestor replacement, hostile filesystems, installed cross-identity
 service authorization, signed-driver mediation, and pre-execution blocking
 remain blocked or technically limited. Closure-head, merged-main,
 synchronization, and destination evidence remains pending.
+
+The checkpoint-2263 closure evidence supersedes that pending status: exact
+merged-main CI/packages, bounded artifact review, guarded zero-delete sync,
+destination `291/291`, validators/adversarial checks, lockfiles, no residue or
+product process, and the protected-vault invariant pass. Checkpoint 2263 is
+closed; its stated authority limits remain.
+
+## Checkpoint 2264 Remaining Limits
+
+Checkpoint 2264 scripts atomic no-replace quarantine ingestion for Local Core,
+Guard, and disabled Native compatibility code, retaining exclusive verified
+copy as the safe fallback. No checkpoint-2264 test ran during scripting;
+focused, broad, and definitive exact-292 local evidence now passes. Hosted,
+merge, synchronization, and destination evidence remains pending. Broad
+workspace Clippy is separately blocked by pre-existing Rust 1.96 lints in
+untouched `services/api`; strict lint passes for all three changed crates.
+
+Final-name atomicity is not a kernel-held immutable source lease or a
+handle-relative transaction across every ancestor. Privileged source or
+ancestor mutation, administrators, SYSTEM/root, hostile filesystems, kernel
+compromise, installed cross-identity service authorization, signed-driver
+mediation, production accuracy/signing, demonstrated pre-execution blocking,
+and Defender replacement remain blocked or technically limited. Native direct
+quarantine remains disabled; active mutation ownership stays with Local Core
+and Guard. No live malware, Defender weakening, vault mutation, machine-wide
+install, service/driver start, release, or publication is authorized.

@@ -141,10 +141,7 @@ impl QuarantineStore {
             )
             .context("quarantine source identity changed after scan; rescan required")
         })
-        .and_then(|_| {
-            fs::rename(path, &quarantine_path)
-                .or_else(|_| copy_then_remove_verified(path, &quarantine_path, &source_sha256))
-        });
+        .and_then(|_| move_quarantine_payload_no_replace(path, &quarantine_path, &source_sha256));
         if let Err(error) = move_result {
             match optional_quarantine_path_present(
                 &quarantine_path,
@@ -2104,6 +2101,26 @@ fn harden_quarantine_base_permissions(path: &Path) -> Result<()> {
     Ok(())
 }
 
+fn move_quarantine_payload_no_replace(
+    source: &Path,
+    destination: &Path,
+    expected_sha256: &str,
+) -> Result<()> {
+    match avorax_platform_security::rename_file_no_replace(
+        source,
+        destination,
+        "local quarantine payload",
+    ) {
+        Ok(()) => Ok(()),
+        Err(rename_error) => copy_then_remove_verified(source, destination, expected_sha256)
+            .with_context(|| {
+                format!(
+                    "atomic no-replace quarantine rename failed: {rename_error}; exclusive verified copy fallback also failed"
+                )
+            }),
+    }
+}
+
 fn copy_then_remove_verified(
     source: &Path,
     destination: &Path,
@@ -2800,12 +2817,12 @@ mod tests {
                 .find("self.write_finalization_journal(&record)?")
                 .unwrap()
                 < quarantine_source
-                    .find("fs::rename(path, &quarantine_path)")
+                    .find("move_quarantine_payload_no_replace(")
                     .unwrap()
         );
         assert!(
             quarantine_source
-                .find("fs::rename(path, &quarantine_path)")
+                .find("move_quarantine_payload_no_replace(")
                 .unwrap()
                 < quarantine_source
                     .find("let finalize_result = (|| -> Result<QuarantineRecord>")
@@ -4509,6 +4526,29 @@ mod tests {
             .contains("quarantine payload destination already exists"));
         assert!(source.exists());
         assert_eq!(fs::read(&destination).unwrap(), b"existing");
+    }
+
+    #[test]
+    fn quarantine_ingest_no_replace_preserves_competing_destination() {
+        let dir = tempdir().unwrap();
+        let source = dir.path().join("source.exe");
+        let destination = dir.path().join("q").join("payload.avoraxq");
+        fs::create_dir_all(destination.parent().unwrap()).unwrap();
+        fs::write(&source, b"benign quarantine source").unwrap();
+        fs::write(&destination, b"benign competing destination").unwrap();
+        let expected_hash = sha256_for_file(&source).unwrap();
+
+        let error = move_quarantine_payload_no_replace(&source, &destination, &expected_hash)
+            .expect_err("a competing quarantine destination must not be replaced");
+        let detail = format!("{error:#}");
+
+        assert!(detail.contains("atomic no-replace quarantine rename failed"));
+        assert!(detail.contains("exclusive verified copy fallback also failed"));
+        assert_eq!(fs::read(&source).unwrap(), b"benign quarantine source");
+        assert_eq!(
+            fs::read(&destination).unwrap(),
+            b"benign competing destination"
+        );
     }
 
     #[cfg(unix)]

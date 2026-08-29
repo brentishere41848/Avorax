@@ -1,6 +1,6 @@
 # Checkpoint 2263 - Quarantine Restore No-Replace Activation
 
-Status: **Implementation merged; closure verification pending**
+Status: **Closed through hosted integration and synchronized destination verification**
 
 Checkpoint 2263 prevents a quarantine restore from replacing a file that
 appears at the original path after the last destination preflight. It does not
@@ -50,8 +50,7 @@ overwrite an existing destination.
 
 No checkpoint-2263 test ran during the scripting phase. Focused, broad,
 definitive, and adversarial execution began only after the complete scripted
-batch was frozen. Hosted, merge, and synchronized-destination evidence remains
-pending.
+batch was frozen.
 
 ## Local Verification
 
@@ -97,8 +96,35 @@ only through a bounded stream validator:
 
 Neither container was extracted or executed. PR `#135` merged normally, with
 exact head binding, as `ed0484a605c7f5cc7a62d8c2dd8459ee969cec57`.
-Closure-head CI/package, merged-main CI/package, guarded synchronization, and
-destination verification remain required before checkpoint closure.
+Closure-head and merged-main evidence, guarded synchronization, and destination
+verification subsequently passed as recorded below.
+
+## Closure Evidence
+
+- Final merged `main` commit
+  `63de2a46494b136e55e6ad165f665806dd8add4e` passed CI run `33221315634`
+  and exact-head package run `33221330616`; publication job `99019176194` was
+  skipped.
+- Consolidated artifact `9705654475` is 132,324,138 bytes with SHA-256
+  `47983930fd838705ceea2794cf08f50d0e8c6047a1904df9f7cb7265fca5b1ed`.
+  Bounded non-extracting stream validation found exact 8 roots, 6 platform
+  packages, 7 checksum targets, and a CycloneDX 1.6 SBOM with 569 components.
+  The ZIP was neither extracted nor executed.
+- Guarded synchronization from base
+  `f9780a9bdb5873f92416c1fd808d654dba09eda5` applied exact 16 paths to the
+  original tree: 15 modified, one added, zero deleted. Apply report SHA-256 is
+  `254b03a8ef0bb2d793ec65887a96852ef29d170488fdec475de90338e337c96a`.
+- Destination Source `693/693`, focused Platform `2/2`, Local Core `1/1`, safe
+  collision smoke, strict all-feature Clippy, both locked workspaces,
+  all-feature release, Flutter analyze/`852/852`, and protocols `14/14` plus
+  `6/6` passed. The definitive destination verifier passed exact `291/291`,
+  zero failed/skipped; both validators and all six adversarial mutations passed.
+  Report SHA-256 is
+  `974e2757fd97f86b080d6587cea64fbeefefb14283e8d0c5bb55c17777d9dcb6`.
+- Final audit report SHA-256
+  `09cc2c7298a6d98bcd03059f3a80845cc3ae31da66ae000c0e1f8efd9034ddf2`
+  confirms exact synchronized blobs, all eight lockfiles, no staging files or
+  product process, and the unchanged protected vault.
 
 ## Control Matrix
 
@@ -129,9 +155,10 @@ and `.auth`, one `.metadata_auth_key`, and zero pending files.
 Checkpoint 2263 adds no dependency, package source, binary fixture, license
 class, network fetch, or lockfile change. It uses the already pinned `libc` and
 `windows-sys` dependencies of `avorax_platform_security`. Exact lockfiles,
-license evidence and local locked tests/builds pass. Implementation-head package
-SBOMs and normal merge pass. Closure-head and merged-main package/SBOM evidence,
-final diff review, and destination review remain required before closure.
+license evidence and local locked tests/builds pass. Implementation-head,
+closure-head, and merged-main package/SBOM evidence, final diff review, guarded
+zero-delete synchronization, and destination review pass.
 
 The complete antivirus-hardening goal remains active; completion of checkpoint
-2263 must not be represented as completion of the whole antivirus project.
+2263 is closed but must not be represented as completion of the whole antivirus
+project.

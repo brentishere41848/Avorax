@@ -7935,3 +7935,47 @@ Artifacts `9704536389`/`9704698986` pass bounded non-extracting
 and destination proof remain pending. Path-ancestor replacement by
 privileged actors remains a documented point-in-time user-mode limitation; the
 full goal remains active.
+
+Checkpoint 2263 is now **closed through hosted integration and synchronized
+destination verification**. Final merged `main`
+`63de2a46494b136e55e6ad165f665806dd8add4e` passes CI/packages
+`33221315634`/`33221330616`; publication skips. Artifact `9705654475` passes
+bounded non-extracting 8/6/7/CycloneDX-1.6/569 review. Guarded zero-delete
+16-path synchronization and destination Source `693/693`, exact `291/291`,
+both validators, six adversarial mutations, broad builds/tests, exact locks,
+zero residue/processes, and the unchanged 16,072-file vault pass. The earlier
+pending status is superseded; the complete goal remains active.
+
+## Checkpoint 2264 - Quarantine Ingest No-Replace
+
+Checkpoint 2264 is **locally verified / hosted integration pending**. Local Core, Guard, and the
+disabled Native compatibility quarantine path now attempt the shared atomic
+no-replace operation before existing exclusive verified copy fallback. Three
+harmless collision fixtures require rejection with source and destination
+bytes preserved and both failure causes visible. Verifier step 292, strict
+validator scope, source contracts, and audit/dependency docs are scripted. No
+checkpoint-2264 test ran during scripting. After the batch froze, Source passes
+`694/694`, collision fixtures `3/3`, broader quarantine coverage Platform
+`8/8`, API `3/3`, Guard `50/50`, Local `139/139`, and Native `38/38`; both
+locked workspaces, locked all-feature release, strict changed-crate Clippy,
+safe smoke, Flutter analyze plus `852/852`, and protocols `14/14 + 6/6` pass.
+Broad workspace Clippy remains non-passing only in untouched `services/api`
+under Rust 1.96. The no-skip/no-Defender verifier passes exact `292/292` in
+`659.4s`; its 217,855-byte report SHA-256 is
+`1c2ecc9ab68b9baf0b1da1240dc524759b18484df5aaeb29a4c973315c3a3d18`.
+Both independent validator hosts accept it and reject all six required
+mutations. Final local audit confirms zero product processes/temp residue, no
+lockfile diff, and the exact unchanged 16,072-file protected vault. Hosted,
+merge, sync, and destination proof remains.
+Implementation commit `2d1148e` is PR `#137` exact head; Avorax CI
+`33226157011` and Desktop Packages push/PR
+`33226139023`/`33226157015` pass. Both package runs build all six platform
+files, checksums, and lockfile SBOM with publication skipped. Their
+consolidated artifacts pass bounded non-extracting exact
+8-root/6-platform/7-checksum/CycloneDX-1.6/569-component review. Evidence-head,
+merge, merged-main, guarded sync, and destination proof remains.
+Active production mutation remains owned by Local Core and Guard; Native direct
+quarantine remains disabled.
+Privileged source/ancestor races, installed cross-identity authority, kernel
+mediation, pre-execution blocking, Defender replacement, production accuracy,
+and the complete antivirus-hardening goal remain limited, blocked, or open.
