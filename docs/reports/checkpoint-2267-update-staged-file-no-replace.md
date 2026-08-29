@@ -1,7 +1,7 @@
 # Checkpoint 2267: Update Staged-File No-Replace
 
-Date: 2026-08-29  
-Status: implementation-head hosted verification passed; integration and destination evidence pending
+Date: 2026-08-29
+Status: closed through hosted integration and synchronized destination verification
 
 ## Risk
 
@@ -42,7 +42,7 @@ scripted for PowerShell 5.1 and 7 rejection.
 | Validation ordering | Source contract and Rust source-order test | Verified |
 | Definitive evidence | Focused step, exact 295 validator, seven hostile mutations on two hosts | Verified locally: 295/295 and 14/14 rejection |
 | Dependencies and licenses | Existing internal helper only; no manifest or lock delta | Verified locally; 8/8 lockfiles unchanged |
-| Destination and protected vault | Guarded exact-blob synchronization and invariant audit | Pending |
+| Destination and protected vault | Guarded exact-blob synchronization and invariant audit | Verified: 14/14 blobs, 8/8 locks, zero processes/pending, exact vault |
 
 ## Engine And Control Accounting
 
@@ -177,3 +177,49 @@ Bounded stream inspection, without extraction or execution, verifies exact
 8-root/6-platform/7-checksum inventory and CycloneDX 1.6 with 569 components in
 both artifacts. Evidence-head reruns, normal merge, merged-main evidence,
 guarded synchronization, destination verification, and closure remain pending.
+
+## Evidence Head And Normal Integration
+
+Evidence commit `2770e5a5b2395052260e3f639824bce451c5fbf3` passes
+Avorax CI `33248103914` and Desktop Packages `33248103915`; publication is
+skipped. Consolidated artifact `9713666252` is 132,379,337 bytes with SHA-256
+`499a245745af73a6e240d6ad575b3b247124ad6c80c5cdde7a92faf33d803d98`.
+Bounded stream validation, without extraction or execution, confirms exact
+8-root/6-platform/7-checksum inventory and CycloneDX 1.6 with 569 components.
+
+PR `#143` merges normally as
+`7079debec0a5c08b1531f34bb932e2e420a923de`. Merged-main Avorax CI
+`33248770005` and Desktop Packages `33248770099` pass; publication is skipped.
+Artifact `9713854005` is 132,372,059 bytes with SHA-256
+`698d223d09b1689e8af9907e9c6eb1824c43aa44370c9942c489ba6b1d3a0342`
+and passes the same bounded non-extracting/non-executing review.
+
+## Guarded Synchronization And Destination Evidence
+
+Guarded synchronization applies exactly 13 modified plus one added project
+path with zero deletes. The sync report SHA-256 is
+`e8df4ac7830f7e3d70b92f30e99f3562de5a841a667174cb6659650dd4e22e17`;
+all 26 expected before/replaced backup files are present.
+
+At `C:\Users\Brent\Documents\Avorax-main`, PowerShell 5.1/7 parsing,
+formatting, Source `698/698`, platform `15/15`, focused `5/5`, update service
+`212/212`, strict lint, both locked workspace variants, locked all-feature
+release, Flutter analysis plus `852/852`, and protocol analyses/tests `14/14 +
+6/6` pass. The no-skip/no-Defender verifier passes exact `295/295` in `658.4s`.
+Its 213,457-byte report SHA-256 is
+`fe90577d13ede4a77ad4464c9312344c254c74b2f6225ff085b8a187fe2662b9`.
+
+PowerShell 5.1 and 7 accept the authentic destination report and reject all 14
+adversarial host/mutation cases. The 13,470-byte adversarial result SHA-256 is
+`feada8887ecd9c10037eb167619cf5f4d04d5981eb281f8d12e1320aad0f30d1`.
+Final destination audit SHA-256
+`31b748f46cb34d72f65ae832528155802c90f7b69c596b1748f4630d19ee3e30`
+passes 14/14 exact merge blobs, 8/8 active lockfiles, 26 backups, zero product
+processes or pending files, the preserved checkpoint-2194 temporary root, and
+the exact read-only vault invariant.
+
+Checkpoint 2267 is closed. The first failed definitive report remains failed
+evidence, and every documented availability, transaction, privileged-actor,
+hostile-filesystem, Android runtime/build, installed service/driver,
+pre-execution, signing/deployment, Defender-replacement, and whole-project
+limit remains active.

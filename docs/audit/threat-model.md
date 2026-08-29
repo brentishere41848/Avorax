@@ -4289,3 +4289,14 @@ or execution. This is cross-target build and regression evidence, not an
 installed race, driver, or pre-execution proof. Android, normal integration,
 merged-main, synchronization, destination, and closure evidence remains pending;
 all residual threats above remain active.
+
+Evidence-head and merged-main CI/packages, bounded artifact inspection, normal
+PR `#143` merge, guarded exact 14-path synchronization, complete destination
+regressions, exact `295/295`, dual-host authentic plus `14/14` adversarial
+validation, and final 14-blob/8-lock/26-backup/vault audit close this checkpoint
+threat delta. This verifies the implemented Windows final-name collision and
+bounded absolute-path control plus desktop cross-target build compatibility.
+Android runtime/build, remove-to-activate availability, multi-file atomicity,
+point-in-time ancestor authority, privileged actors, hostile filesystems,
+installed service/driver authority, pre-execution blocking, and every other
+residual threat above remain unchanged.

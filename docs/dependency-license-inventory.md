@@ -2522,3 +2522,14 @@ with 569 components at exact commit `6e06ac51`; publication skips. Both
 consolidated artifacts pass bounded non-extracting review. The SBOM retains the
 same third-party inventory; evidence-head, merge, merged-main, synchronization,
 destination, and closure dependency evidence remains pending.
+
+Evidence-head package run `33248103915` and merged-main package run
+`33248770099` pass at exact commits `2770e5a5` and `7079debe`; publication
+skips. Consolidated artifacts `9713666252` and `9713854005` retain exact
+8-root/6-platform/7-checksum inventory and CycloneDX 1.6 with 569 components
+under bounded review without extraction or execution. Guarded synchronization
+and destination locked tests/builds pass with all eight active lockfiles exact.
+Final audit confirms zero manifest, lockfile, dependency, registry, source,
+feature, network-runtime, or license-class delta. Checkpoint 2267 is closed;
+Android runtime/build, production signing/notarization, final notice
+provenance, enterprise deployment, and release approval remain separate.

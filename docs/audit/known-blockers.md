@@ -4110,3 +4110,14 @@ merged-main, synchronization, destination, and closure remain pending. Hosted
 compilation closes no update transaction, privileged actor, hostile filesystem,
 installed authority, driver, pre-execution, signing, deployment, or Defender
 blocker.
+
+Evidence-head and merged-main CI/packages, normal PR `#143` integration,
+bounded artifact review, guarded 14-path zero-delete synchronization,
+destination Source `698/698`, broad regression, exact `295/295`, dual-host
+authentic plus `14/14` adversarial validation, 14/14 blobs, 8/8 locks, 26
+backups, zero residue/processes, and the exact protected-vault invariant close
+checkpoint 2267. Closure does not repair the remove-to-activate availability
+gap or make multi-file activation transactional. Android runtime/build,
+privileged filesystems, installed service/driver authority, production signing
+and deployment, pre-execution blocking, Defender replacement, and the complete
+antivirus-hardening goal remain open.

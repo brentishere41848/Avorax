@@ -14370,3 +14370,35 @@ pending.
   `1c85496c4af5992a7640bde84c2dbef18acc0fc5be05845478e873f7e235f892`.
   Hosted, integration, destination, and closure evidence remains pending; the
   complete antivirus-hardening goal remains active.
+
+## 2026-08-29 - Checkpoint 2267 Integration And Destination Closure
+
+- Evidence commit `2770e5a5b2395052260e3f639824bce451c5fbf3` passes CI
+  `33248103914` and Desktop Packages `33248103915`; publication is skipped.
+  Consolidated artifact `9713666252` is 132,379,337 bytes with SHA-256
+  `499a245745af73a6e240d6ad575b3b247124ad6c80c5cdde7a92faf33d803d98`
+  and passes bounded non-extracting/non-executing exact
+  8-root/6-platform/7-checksum/CycloneDX-1.6/569-component validation.
+- PR `#143` merges normally as
+  `7079debec0a5c08b1531f34bb932e2e420a923de`. Merged-main CI
+  `33248770005` and Desktop Packages `33248770099` pass with publication
+  skipped. Artifact `9713854005` is 132,372,059 bytes with SHA-256
+  `698d223d09b1689e8af9907e9c6eb1824c43aa44370c9942c489ba6b1d3a0342`
+  and passes the same bounded review without extraction or execution.
+- Guarded synchronization applies exactly 13 modified plus one added project
+  path with zero deletes. Its report SHA-256 is
+  `e8df4ac7830f7e3d70b92f30e99f3562de5a841a667174cb6659650dd4e22e17`;
+  all 26 expected before/replaced backups are present.
+- Destination parsing, formatting, Source `698/698`, platform `15/15`, focused
+  `5/5`, update service `212/212`, strict lint, both locked workspaces, locked
+  release, Flutter analyze plus `852/852`, and protocol analyze/tests `14/14 +
+  6/6` pass. The no-skip/no-Defender verifier passes exact `295/295` in
+  `658.4s`; its 213,457-byte report SHA-256 is
+  `fe90577d13ede4a77ad4464c9312344c254c74b2f6225ff085b8a187fe2662b9`.
+- Both validator hosts accept the authentic destination report and reject all
+  14 adversarial host/mutation cases. Final destination audit SHA-256
+  `31b748f46cb34d72f65ae832528155802c90f7b69c596b1748f4630d19ee3e30`
+  passes 14/14 exact merge blobs, 8/8 locks, zero product processes or pending
+  files, the preserved checkpoint-2194 temporary root, and the exact
+  16,072-file protected-vault invariant. Checkpoint 2267 is closed; the
+  complete antivirus-hardening goal remains active.
