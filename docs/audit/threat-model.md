@@ -3739,7 +3739,16 @@ five hosted CI jobs and every desktop package path; both consolidated artifacts
 pass bounded in-stream inventory/checksum/SBOM review without extraction or
 execution, and publication is skipped. This adds hosted build/package evidence,
 not installed recovery or power-loss durability. Evidence-head, installed-
-context, integration, and destination evidence remain pending. The exact
+context, integration, and destination evidence were pending at implementation
+head. Evidence `a933d451`, normal PR `#147` merge `dfcec4fa`, evidence-head and
+merged-main CI/packages, bounded artifact review, guarded exact 21-path zero-
+delete synchronization, destination broad regression and exact `297/297`,
+corrected dual-host destination-local adversarial rejection, exact blobs/locks/
+backups, zero process/residue, and the protected-vault invariant now close the
+checkpoint threat delta. Installed elevated-service and Unix runtime recovery,
+power-cut/multi-component atomicity, privileged actors/hostile filesystems,
+driver/pre-execution enforcement, signing/deployment, Defender replacement,
+and whole-project completion remain outside the verified boundary. The exact
 16,072-file vault remains read-only with zero pending; no live malware is used;
 the complete antivirus-hardening goal remains active.
 
