@@ -14161,3 +14161,78 @@ pending.
   residue or product processes, and the unchanged 16,072-file vault.
   Checkpoint 2265 is closed; all broader user-mode authority limits and the
   complete antivirus-hardening goal remain active.
+
+## Checkpoint 2266 - Signed Update Extraction No-Replace Scripting
+
+- Audited signed `.aup` payload extraction and found that
+  `activate_extracted_payload_file` repeated target/parent preflight but then
+  used replacement-capable ordinary rename. A competing file appearing after
+  preflight could therefore be overwritten.
+- Routed final extracted-file activation through the existing shared
+  `avorax_platform_security::rename_file_no_replace` OS boundary. The update
+  service now records an internal workspace dependency on that crate; no new
+  third-party version, package source, or license class is introduced.
+- Added harmless absent-target, competing-target, and source-order fixtures.
+  Added a focused verifier step, exact-294 validator contract, Source contract
+  696, and complete audit/threat/dependency/testing documentation.
+- No checkpoint-2266 test ran during the scripting phase. Focused, broad,
+  definitive, hosted, integration, synchronized-destination, and closure
+  evidence remain pending. No live malware, EICAR, package extraction outside
+  temporary test roots, fixture execution, Defender change, protected-vault
+  mutation, install, service/driver start, release, or publication is used.
+- The control is per extracted final filename. Ancestor checks remain
+  point-in-time user-mode checks; unsupported platforms fail visibly, and
+  install-tree activation, rollback, multi-file update transactions,
+  privileged races, signed-driver enforcement, pre-execution blocking, and
+  Defender replacement remain open or technically limited. The complete
+  antivirus-hardening goal remains active.
+
+## 2026-08-29 - Checkpoint 2266 Local Broad Verification
+
+- Execution began only after the full scripting batch froze. Two preliminary
+  Source runs failed visibly with two and one contract defects; the obsolete
+  rename assertion, report grammar, and dependency-document marker were fixed.
+  Final Source passes exact `696/696`.
+- Formatting and PowerShell 5.1/7 parsing pass. Focused no-replace extraction
+  passes `3/3`; full update service passes `209/209`; strict all-target/all-
+  feature update-service Clippy passes.
+- Both locked workspace suites and the locked all-feature release build pass.
+  Flutter analysis plus `852/852` tests and protocol analysis plus
+  `14/14 + 6/6` tests pass.
+- Exact `294/294`, dual-host adversarial, hosted, PR/merge, guarded-sync,
+  destination, and closure evidence remain pending. No live malware, Defender
+  change, install, service/driver start, release, publication, or protected-
+  vault mutation occurred.
+
+## 2026-08-29 - Checkpoint 2266 Definitive Local Evidence
+
+- The no-skip/no-Defender verifier passes exact `294/294` in `653.4s`.
+  Report size is 220,507 bytes and SHA-256 is
+  `8f9e033d6e6cf1ace2025e8f0069787fdf05c391864cff93b335ad9561cd115f`.
+- PowerShell 5.1 and 7 accept the authentic report and reject all five bounded
+  mutations on both hosts (`10/10`). The 11,569-byte adversarial result SHA-256
+  is `38d0f88b02e357cabdff92f76cacdc7129ddc354eddec035681f7d52e6c888a5`.
+- A first final-audit attempt failed visibly on an expected nonzero Git probe
+  treated as terminating stderr by PowerShell 5.1. The script was corrected,
+  reparsed on both hosts, and passed: 14 modified, one added, zero deleted, one
+  internal root-lock edge, seven other locks unchanged, zero product processes
+  or pending residue, the preserved checkpoint-2194 temp root, and the exact
+  16,072-file vault. Audit SHA-256 is
+  `86481f29f90e88bd06664b806c08a11c73935d9426e58361706256889e3795d3`.
+- Hosted exact-head CI/packages, PR/merge, guarded synchronization, destination
+  rerun, and closure evidence remain pending.
+
+## 2026-08-29 - Checkpoint 2266 Hosted Implementation Head
+
+- Implementation `36325846ccc0b61ef5a86d75c62e7fe3463835da` is PR
+  `#141` exact head. CI `33239461936` passes all five jobs.
+- Desktop Packages push/PR runs `33239451192`/`33239461879` pass all six
+  platform packages, checksums, and lockfile SBOM; publication is skipped.
+- Consolidated artifacts `9711051283`/`9711127072` are 132,341,276/
+  132,614,885 bytes with SHA-256
+  `5d542ec008bc0d6b226544f8c9726ce4987a689d88ea867516a8b2c5cc59cd71`/
+  `a9a4b954a6dd95cd7580ade4e6af7b365a076357470f254d2dcff6528902207e`.
+  Both pass bounded, non-extracting, non-executing exact
+  8-root/6-platform/7-checksum/CycloneDX-1.6/569-component review.
+- Evidence-head reruns, normal merge, merged-main, guarded synchronization,
+  destination verification, and closure remain pending.

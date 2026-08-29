@@ -4150,3 +4150,61 @@ synchronization, destination exact `293/293`, dual-host adversarial rejection,
 exact blobs/locks, zero residue/processes, and the protected-vault invariant
 close this checkpoint threat delta. The residual risks above remain unchanged,
 and the complete antivirus-hardening goal remains active.
+
+## Checkpoint 2266 Threat Delta - Signed Extraction Final-Name Race
+
+### Threat
+
+An authenticated `.aup` package is still untrusted structured input. After a
+payload entry was bounded, written, synced, and the destination was checked
+absent, ordinary rename could replace a filesystem object created in the final
+preflight-to-activation interval. Same-user races, compromised update context,
+or privileged filesystem actors could exploit that gap to cause silent
+overwrite or evidence loss.
+
+### Scripted mitigation
+
+Final extracted-file activation now calls the shared OS no-replace primitive:
+zero-flag `MoveFileExW` on Windows, `renameat2(RENAME_NOREPLACE)` on Linux and
+Android, and `renamex_np(RENAME_EXCL)` on Apple targets. Harmless fixtures pin
+successful absent-target activation, preservation of both files on collision,
+repeated ancestor checks, and removal of ordinary rename from this path.
+Unsupported platforms fail visibly.
+
+### Residual risk and evidence state
+
+This is one final filename, not a transaction over all package entries,
+install-tree replacement, service stop/start, or rollback. Path and ancestor
+authority is checked at points in time and cannot defeat administrators,
+SYSTEM/root, hostile filesystems, or kernel compromise. It is not signed-driver
+mediation or pre-execution blocking.
+
+No checkpoint-2266 test ran during the scripting phase. Exact-294 local,
+hosted, integration, synchronized-destination, and adversarial evidence remains
+pending. No live malware, EICAR, fixture execution, Defender change, protected-
+vault mutation, machine-wide install, service/driver start, release, or
+publication is involved. The protected vault remains exactly 16,072 files and
+zero pending. The complete antivirus-hardening goal remains active.
+
+After the scripting batch froze, final Source `696/696`, focused collision and
+activation `3/3`, full update service `209/209`, strict lint, both locked
+workspace suites, release, Flutter `852/852`, and protocols `14/14 + 6/6` pass.
+Two preliminary Source runs exposed and retained three fail-visible contract/
+documentation defects until repaired. Definitive exact-294, hostile report,
+hosted cross-target, integration, synchronization, destination, and closure
+evidence remains pending, so the residual threat statements above are unchanged.
+
+The no-skip/no-Defender verifier now passes exact `294/294`; both PowerShell
+hosts accept its authentic evidence and reject all ten host/mutation cases.
+Final local audit passes the exact path/lock/process/residue and protected-vault
+invariants. This closes local regression evidence for the final-name race only.
+Hosted cross-target, integration, synchronization, destination, and closure
+evidence remains pending, and every residual risk above remains in force.
+
+Implementation-head CI and both package matrices pass at exact commit
+`36325846`; Windows, Linux, and Apple desktop package builds complete and the
+two consolidated artifacts pass bounded checksum/SBOM review without extraction
+or execution. This is cross-target build and regression evidence, not an
+installed race, driver, or pre-execution proof. Android, normal integration,
+merged-main, synchronization, destination, and closure evidence remains pending;
+all residual threats above remain active.

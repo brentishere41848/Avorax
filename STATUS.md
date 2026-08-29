@@ -8029,3 +8029,51 @@ Checkpoint 2265 is closed. That closure does not make journal/record/auth
 activation transactional and does not close installed service/driver,
 cross-identity authority, privileged-filesystem, pre-execution, production
 accuracy, signing, deployment, or Defender-replacement limits.
+
+## Checkpoint 2266 - Signed Update Extraction No-Replace
+
+Status: **Local definitive verification passed / hosted pending**.
+
+Signed update-package extraction now activates each completed, synced temporary
+payload through the shared operating-system atomic no-replace primitive after
+the existing bounded extraction, target-absence check, and repeated parent-chain
+validation. A file that appears at the final extraction path after preflight
+must be preserved; activation fails visibly and the caller retains the staged
+bytes for checked cleanup.
+
+Three harmless temporary ASCII fixtures, a focused update-service verifier
+step, exact-294 report validation, Source contract 696, root lock dependency
+evidence, and all required docs are scripted. No checkpoint-2266 test ran during
+the scripting phase. The protected production vault remains read-only at
+16,072 files, zero directories, 4,522,733 bytes, 5,357 each payload/metadata/
+authenticator, one metadata key, and zero pending.
+
+This is final-name protection only. It does not make install-tree activation,
+rollback, multi-file updates, or privileged filesystem races atomic. Installed
+cross-identity service proof, production signing ceremony, signed-driver
+mediation, pre-execution blocking, Defender replacement, and the complete
+antivirus-hardening goal remain open.
+
+After the batch froze, final Source `696/696`, focused extraction `3/3`, full
+update service `209/209`, strict Clippy, both locked workspace suites, locked
+all-feature release, Flutter analysis and `852/852`, and both protocol analyses
+and `14/14 + 6/6` pass. Two preliminary Source runs failed visibly with two and
+one contract defects before those test/document assertions were repaired.
+Definitive exact-294, adversarial, hosted, merge, guarded-sync, destination, and
+closure evidence remains pending.
+
+The definitive verifier now passes exact `294/294`, no skips or Defender-EICAR,
+in `653.4s`; both PowerShell hosts accept the authentic report and reject all
+five mutations (`10/10`). Final local audit passes the exact 15-path inventory
+with zero deletes, intended single internal lock edge, seven unchanged locks,
+zero product processes/pending residue, preserved checkpoint-2194 temp root,
+and exact vault invariant. Hosted exact-head CI/packages, PR integration,
+guarded synchronization, destination verification, and closure remain pending.
+
+Implementation `36325846` is PR `#141` exact head. Avorax CI `33239461936`
+passes all five jobs; Desktop Packages push/PR `33239451192`/`33239461879`
+pass all six platform assets, checksums, and lockfile SBOM with publication
+skipped. Both consolidated artifacts pass bounded non-extracting/non-executing
+8-root/6-platform/7-checksum/CycloneDX-1.6/569-component review. Evidence-head,
+normal merge, merged-main, guarded synchronization, destination verification,
+and closure remain pending.

@@ -2423,3 +2423,41 @@ destination locked tests/builds, the dependency gate, and 8/8 active lockfile
 blob comparisons pass. Checkpoint 2265 is closed with no dependency, license,
 or network-surface delta. Production signing/notarization, final notice
 provenance, enterprise deployment, and release approval remain separate.
+
+## Checkpoint 2266 Dependency Delta
+
+Checkpoint 2266 adds one internal workspace dependency from
+`avorax_update_service` to the existing pinned `avorax_platform_security`
+crate. The root Cargo.lock records that dependency edge. There is no new
+third-party crate, version, registry, package source, feature, downloaded
+runtime, or license class; the shared crate already uses the pinned `anyhow`,
+`libc`, and `windows-sys` graph documented by prior checkpoints.
+
+The three scripted tests use only temporary harmless ASCII bytes and never
+execute candidate content. No live malware, EICAR, network download, Defender
+change, machine-wide component, service/driver registration, protected-vault
+mutation, release, or publication is introduced. No checkpoint-2266 test ran
+during the scripting phase. Locked dependency/build gates, exact-294 verifier,
+hosted SBOM/package review, integration, synchronization, and destination
+8-lock audit remain pending. The protected vault remains 16,072 files with zero
+pending, and the complete antivirus-hardening goal remains active.
+
+After batch freeze, both locked workspace test variants and the locked all-
+feature release build pass with the root lockfile's single internal dependency
+edge. Full update service `209/209`, strict lint, Source `696/696`, Flutter
+`852/852`, and protocols `14/14 + 6/6` also pass. Exact-294 dependency-gate,
+hosted SBOM/package, merge, synchronization, destination, and final 8-lock audit
+evidence remain pending; no new third-party or license claim is promoted early.
+
+The definitive dependency gate inside exact `294/294` now passes. Final local
+audit confirms only one added root-lock dependency line for the existing
+internal workspace crate and byte-normalized equality for the other seven
+active lockfiles. Hosted SBOM/package, merge, synchronization, destination, and
+closure evidence remains pending; the third-party and license delta stays zero.
+
+Implementation-head package push/PR runs `33239451192`/`33239461879` pass
+dependency/license evidence, six platform assets, checksums, and CycloneDX 1.6
+with 569 components at exact commit `36325846`; publication skips. Both
+consolidated artifacts pass bounded non-extracting review. The SBOM retains the
+same third-party inventory; evidence-head, merge, merged-main, synchronization,
+destination, and closure dependency evidence remains pending.

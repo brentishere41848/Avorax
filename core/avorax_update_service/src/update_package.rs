@@ -305,7 +305,7 @@ impl UpdatePackage {
                 "payload extraction destination",
             )?;
         }
-        std::fs::rename(temp_target, target).with_context(|| {
+        activate_extracted_payload_no_replace(temp_target, target).with_context(|| {
             format!(
                 "failed to activate extracted payload file {}",
                 target.display()
@@ -418,6 +418,14 @@ impl UpdatePackage {
         ensure_opened_package_matches_checked_path(&before_open, &opened, &after_open)?;
         Ok(file)
     }
+}
+
+fn activate_extracted_payload_no_replace(temp_target: &Path, target: &Path) -> Result<()> {
+    avorax_platform_security::rename_file_no_replace(
+        temp_target,
+        target,
+        "signed update-package extracted payload",
+    )
 }
 
 #[cfg(unix)]
@@ -2230,8 +2238,59 @@ mod tests {
         assert_eq!(std::fs::read(&target).unwrap(), b"existing payload");
     }
 
+    #[cfg(any(
+        windows,
+        target_os = "linux",
+        target_os = "android",
+        all(unix, target_vendor = "apple")
+    ))]
     #[test]
-    fn payload_activation_rechecks_parent_chain_before_rename() {
+    fn payload_extraction_no_replace_activation_moves_to_absent_target() {
+        let dir = tempdir().unwrap();
+        let temp_target = dir.path().join(".Avorax.exe.absent.avorax-part");
+        let target = dir.path().join("Avorax.exe");
+        std::fs::write(&temp_target, b"benign signed package payload").unwrap();
+
+        activate_extracted_payload_no_replace(&temp_target, &target).unwrap();
+
+        assert!(!temp_target.exists());
+        assert_eq!(
+            std::fs::read(&target).unwrap(),
+            b"benign signed package payload"
+        );
+    }
+
+    #[cfg(any(
+        windows,
+        target_os = "linux",
+        target_os = "android",
+        all(unix, target_vendor = "apple")
+    ))]
+    #[test]
+    fn payload_extraction_no_replace_activation_preserves_competing_file() {
+        let dir = tempdir().unwrap();
+        let temp_target = dir.path().join(".Avorax.exe.collision.avorax-part");
+        let target = dir.path().join("Avorax.exe");
+        std::fs::write(&temp_target, b"benign staged signed package payload").unwrap();
+        std::fs::write(&target, b"benign competing destination payload").unwrap();
+
+        let error = activate_extracted_payload_no_replace(&temp_target, &target)
+            .expect_err("a competing extraction target must not be replaced");
+        let detail = format!("{error:#}");
+
+        assert!(detail.contains("without replacing"), "{detail}");
+        assert_eq!(
+            std::fs::read(&temp_target).unwrap(),
+            b"benign staged signed package payload"
+        );
+        assert_eq!(
+            std::fs::read(&target).unwrap(),
+            b"benign competing destination payload"
+        );
+    }
+
+    #[test]
+    fn payload_extraction_no_replace_rechecks_parent_chain_before_activation() {
         let source = include_str!("update_package.rs");
         let production = &source[..source.find("#[cfg(test)]").unwrap()];
         let activation_source = &production[production
@@ -2271,9 +2330,12 @@ mod tests {
                 .rfind("ensure_existing_path_chain_not_link(")
                 .unwrap()
                 < activation_source
-                    .find("std::fs::rename(temp_target, target)")
+                    .find("activate_extracted_payload_no_replace(temp_target, target)")
                     .unwrap()
         );
+        assert!(production.contains("fn activate_extracted_payload_no_replace("));
+        assert!(production.contains("avorax_platform_security::rename_file_no_replace("));
+        assert!(!activation_source.contains("std::fs::rename(temp_target, target)"));
     }
 
     #[test]

@@ -1951,8 +1951,8 @@ if ($RequireFullSuite) {
   if ($skipFlutter -or $skipRust) {
     throw "-RequireFullSuite requires skip_flutter=false and skip_rust=false."
   }
-  if ($steps.Count -ne 293) {
-    throw "-RequireFullSuite expected exactly 293 verifier steps for this source revision, found $($steps.Count)."
+  if ($steps.Count -ne 294) {
+    throw "-RequireFullSuite expected exactly 294 verifier steps for this source revision, found $($steps.Count)."
   }
   if ($steps[0].name -ne "local-core safe simulator scan reporting") {
     throw "-RequireFullSuite first step mismatch: $($steps[0].name)"
@@ -1973,6 +1973,7 @@ if ($RequireFullSuite) {
   Assert-ReportContainsStep $steps "quarantine restore atomic no-replace regressions"
   Assert-ReportContainsStep $steps "quarantine ingest atomic no-replace regressions"
   Assert-ReportContainsStep $steps "quarantine metadata atomic no-replace regressions"
+  Assert-ReportContainsStep $steps "update-service payload extraction atomic no-replace regressions"
   Assert-ReportContainsStep $steps "native-engine file-type classifier regressions"
   Assert-ReportContainsStep $steps "native-engine detection-only mutation boundary regressions"
   Assert-ReportContainsStep $steps "native-engine archive content sampling regressions"
@@ -2141,6 +2142,10 @@ if ($RequireFullSuite) {
   Assert-ReportScopeContains $technicalLimitText "journal/record/auth files are separate non-transactional files" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "unsupported platforms fail rather than use replacement-capable rename" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "Authenticated recovery detects incomplete state but cannot make multi-file activation atomic" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $verifiedScopeText "Signed update-package payload extraction uses the shared operating-system atomic no-replace primitive" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Harmless extraction collision fixtures preserve both staged payload bytes and competing destination bytes" "verification_scope.verified"
+  Assert-ReportScopeContains $technicalLimitText "Signed update-package extraction no-replace protects only each final extracted filename" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "this does not make install-tree activation, rollback, multi-file updates, or privileged filesystem races atomic" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "File allowlisting remains safe after its hash snapshot because later scan suppression also requires that exact hash" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "neither operation holds a kernel-enforced immutable file lease" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "This is confirmation and stale-verdict defense, not cross-identity authorization, malware execution prevention, driver enforcement, or protection against administrators, SYSTEM, or kernel compromise" "verification_scope.technically_limited"
