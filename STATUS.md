@@ -8179,3 +8179,74 @@ exact protected vault. Checkpoint 2267 is closed. The remove-to-activate gap,
 multi-file transaction, privileged filesystem, installed authority, driver/
 pre-execution, signing/deployment, Defender-replacement, and whole-project
 limits remain open.
+
+## Checkpoint 2268 - Update Directory No-Replace
+
+Status: **Scripted; execution evidence pending**.
+
+Update tree replacement and rollback directory activation now route the three
+final-name directory moves through the shared operating-system atomic no-
+replace primitive. A backup created after preflight can no longer be replaced;
+a destination created after backup movement blocks both staged activation and
+automatic backup recovery while preserving all three trees and returning the
+complete failure chain.
+
+Two platform fixtures, four update-service race fixtures, Source contract 699,
+focused verifier step 296, exact-296 validation, seven dual-host adversarial
+mutations, and all audit documents are scripted. No checkpoint-2268 test ran
+during the scripting phase. Therefore runtime behavior remains unverified until
+the frozen batch is executed.
+
+This checkpoint protects only three final-name moves per directory activation.
+It does not make service stop/start, file updates, cleanup, crash recovery, or
+multiple components one transaction. A crash can leave the original tree in a
+sibling backup; a competing destination can require manual recovery. Path and
+ancestor checks remain point-in-time, and privileged actors and hostile
+filesystems remain out of scope. Installed authority, driver/pre-execution,
+production signing/deployment, Defender replacement, and the complete
+antivirus-hardening goal remain open. The 16,072-file vault remains read-only
+with zero pending.
+
+The first focused execution is not credited: platform `2/2` passed, but update
+service stopped at `3/4` because verbatim Windows paths retained a Rust `/`
+separator and `MoveFileExW` returned error 123 before the intended race. The
+repair normalizes Windows separators before namespace validation and extends
+the platform fixture; post-repair execution is pending.
+
+Post-repair focused and broad crate checks pass through Source `699/699`,
+platform `17/17`, and aggregate update service `216/216`. Strict Clippy 1.96
+then stopped only on three pre-existing API layout lints after every changed
+crate checked cleanly. Narrow documented allowances preserve externally tagged
+event names and existing source-contract placement; the repeat lint remains
+pending and the first run is uncredited.
+
+Local broad checkpoint-2268 evidence now passes format, dual PowerShell parser,
+focused `2/2 + 4/4`, Source `699/699`, platform `17/17`, update aggregate
+`216/216`, strict Clippy, both locked workspace variants, locked all-feature
+release, Flutter analysis/tests `852/852`, and protocols `14/14 + 6/6`. No
+lockfile changed. Audit confirms zero product processes/pending and the exact
+16,072-file protected vault. Exact-296, dual-host adversarial, hosted,
+integration, destination, and closure evidence remains pending; status is not
+closed and the complete antivirus-hardening goal remains active.
+
+Checkpoint 2268 is now **verified locally through definitive regression**. The
+final-source verifier passes exact `296/296` in `673.5s`, with no failed steps,
+no Flutter/Rust skip, and Defender/EICAR opt-in false. Its 223,673-byte report
+SHA-256 is
+`8b87d0aa72cd0ee51d0c2b6ff9d1ac87dbb392ad19298b4a704a94b2f0f8970c`.
+Both PowerShell hosts accept the authentic report, and the independent audit
+rejects all 14 host/mutation cases; result SHA-256 is
+`217771abe632d0647aef3071654190609e367d120ec7afdfaee6ffd057033826`.
+Locks, zero product processes/pending files, and the exact protected vault pass.
+Hosted exact-head, integration, guarded synchronization, destination, and
+closure evidence remain pending. Transaction, privileged filesystem,
+installed authority, driver/pre-execution, signing/deployment, Defender-
+replacement, and whole-project limits remain open.
+
+Exact implementation `821d17666fd5739525c3803c15c98341046035eb` is PR
+`#145` and passes Avorax CI `33253639931` plus Desktop Packages push/PR
+`33253626820`/`33253639896`, with publication skipped. Consolidated artifacts
+`9715355338`/`9715311146` pass bounded non-extracting/non-executing exact
+8/6/7/CycloneDX-1.6/569-component review. Evidence-head hosted checks, normal
+merge, merged-main checks, guarded synchronization, destination verification,
+and closure remain pending; the whole antivirus-hardening goal stays active.

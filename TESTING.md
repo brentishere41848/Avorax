@@ -1408,3 +1408,88 @@ Final destination audit SHA-256
 passes exact 14 blobs, eight locks, 26 backups, zero product processes/pending,
 the preserved temporary root, and the protected-vault invariant. Checkpoint
 2267 testing is closed; technical limits remain as documented.
+
+## Checkpoint 2268 Update Directory No-Replace
+
+The complete implementation, test, verifier, adversarial, source-contract, and
+documentation batch was scripted before execution. No checkpoint-2268 test ran
+during the scripting phase. After the batch is frozen, run in this order:
+
+```powershell
+cargo fmt --all -- --check
+cargo test --manifest-path core\avorax_platform_security\Cargo.toml directory_no_replace_activation -- --test-threads=1
+cargo test --manifest-path core\avorax_update_service\Cargo.toml directory_activation_no_replace -- --test-threads=1
+$env:PYTHONDONTWRITEBYTECODE='1'; python -m pytest -q tests/test_custom_driver_contract.py
+cargo test --manifest-path core\avorax_platform_security\Cargo.toml -- --test-threads=1
+cargo test --manifest-path core\avorax_update_service\Cargo.toml -- --test-threads=1
+cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
+cargo test --workspace --locked -- --test-threads=1
+cargo test --workspace --all-targets --all-features --locked -- --test-threads=1
+cargo build --workspace --all-targets --all-features --release --locked
+Push-Location apps\zentor_client; flutter analyze; flutter test; Pop-Location
+Push-Location packages\zentor_protocol; flutter analyze; flutter test; Pop-Location
+Push-Location packages\avorax_protocol; flutter analyze; flutter test; Pop-Location
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools\testing\verify-small-threat-mvp.ps1 -ReportPath .workflow\ultracode\avorax-hardening\results\2268-update-directory-no-replace-report.json
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools\testing\validate-small-threat-mvp-report.ps1 -ReportPath .workflow\ultracode\avorax-hardening\results\2268-update-directory-no-replace-report.json -RequireFullSuite
+```
+
+Expected new focused counts are platform `2/2` and update-service `4/4`;
+expected broad totals after this batch are platform `17/17`, aggregate update
+service `216/216`, Source `699/699`, and verifier `296/296`. These are
+expectations, not credited evidence. The adversarial script must accept the
+authentic report under PowerShell 5.1 and 7 and reject all seven mutations on
+both hosts (`14/14`). Tests may touch only isolated temporary data. No live
+malware, EICAR, Defender change, fixture execution, machine-wide installation,
+service/driver start, release, publication, or protected-vault test root is
+allowed. The 16,072-file vault must remain read-only with zero pending.
+
+First focused attempt: format initially required layout-only changes, then
+passed; both PowerShell parsers passed. Platform `2/2` passed. Update service
+compiled and passed `3/4`, then exposed Windows error 123 because a `/`
+separator was retained under the verbatim prefix. That run is uncredited. The
+scripted repair normalizes separators before namespace validation and adds the
+case to the platform fixture. Repeat format, platform, and update filters before
+any broader test.
+
+Post-repair focused `2/2 + 4/4`, Source `699/699`, platform `17/17`, and update
+service aggregate `216/216` pass. The first strict Clippy 1.96 run is uncredited:
+all changed crates checked cleanly, then three existing API source-layout lints
+failed under `-D warnings`. Targeted documented allowances preserve stable JSON
+event names and adjacent source-contract modules without runtime changes. Repeat
+format and strict lint before locked workspaces.
+
+The documented `core\Cargo.toml` invocation was rejected before compilation
+because that workspace manifest does not exist. It is uncredited and corrected
+above to the checkpoint-2267 default locked root-workspace command. The stricter
+all-target/all-feature locked root workspace already passes; run the corrected
+default-feature variant next.
+
+Local broad repeat passes format, both PowerShell parsers, focused platform
+`2/2`, focused update/rollback `4/4`, Source `699/699`, platform `17/17`, update
+aggregate `216/216`, strict Clippy, default and all-target/all-feature locked
+workspaces, locked all-feature release, Flutter `852/852`, and protocols
+`14/14 + 6/6`. Both Native variants report `642 passed` with 21 intentional
+child-fixture ignores. No lockfile changed; post-run audit has zero product
+processes/pending and the exact protected-vault invariant. Definitive 296-step
+and adversarial evidence remain pending.
+
+Final-source definitive execution exits 0 in `673.5s`: exact `296/296`, no
+failed or skipped Rust/Flutter work, and no Defender/EICAR opt-in. The 223,673-
+byte report SHA-256 is
+`8b87d0aa72cd0ee51d0c2b6ff9d1ac87dbb392ad19298b4a704a94b2f0f8970c`.
+Both report-validator hosts accept the authentic report. Seven structured
+mutations on both hosts are rejected, exact `14/14`; the 16,805-byte result
+SHA-256 is
+`217771abe632d0647aef3071654190609e367d120ec7afdfaee6ffd057033826`.
+The first adversarial command used an unsupported parameter and stopped before
+execution; it is uncredited. Post-run process, pending-file, lock, and protected-
+vault audits pass. Hosted, integration, guarded-sync, destination, and closure
+evidence remain pending.
+
+Implementation-head PR `#145` at exact commit `821d17666fd5739525c3803c15c98341046035eb`
+passes CI `33253639931` and Desktop Packages push/PR
+`33253626820`/`33253639896`; publication is skipped. Untouched consolidated
+artifacts `9715355338` and `9715311146` pass bounded in-stream validation with
+exact 8 roots, 6 platform packages, 7 checksum targets, CycloneDX 1.6, and 569
+components. They were not extracted or executed. Evidence-head, merge,
+merged-main, guarded-sync, destination, and closure tests remain pending.

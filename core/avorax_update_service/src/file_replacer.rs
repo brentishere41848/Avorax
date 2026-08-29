@@ -101,6 +101,28 @@ fn activate_replacement_tree(
     backup: &Path,
     boundary: &Path,
 ) -> Result<()> {
+    activate_replacement_tree_with_hooks(
+        staging,
+        destination,
+        backup,
+        boundary,
+        || Ok(()),
+        || Ok(()),
+    )
+}
+
+fn activate_replacement_tree_with_hooks<BeforeBackupMove, BeforeActivation>(
+    staging: &Path,
+    destination: &Path,
+    backup: &Path,
+    boundary: &Path,
+    before_backup_move: BeforeBackupMove,
+    before_activation: BeforeActivation,
+) -> Result<()>
+where
+    BeforeBackupMove: FnOnce() -> Result<()>,
+    BeforeActivation: FnOnce() -> Result<()>,
+{
     ensure_existing_path_chain_not_link(staging, boundary, "atomic tree staging")?;
     ensure_existing_update_directory(staging, "atomic tree staging")?;
     ensure_existing_path_chain_not_link(destination, boundary, "atomic tree destination")?;
@@ -129,7 +151,13 @@ fn activate_replacement_tree(
     };
 
     if destination_exists {
-        std::fs::rename(destination, backup).with_context(|| {
+        before_backup_move()?;
+        avorax_platform_security::rename_directory_no_replace(
+            destination,
+            backup,
+            "atomic tree destination backup move",
+        )
+        .with_context(|| {
             format!(
                 "failed to move atomic tree destination {} to backup {}",
                 destination.display(),
@@ -138,7 +166,13 @@ fn activate_replacement_tree(
         })?;
     }
 
-    if let Err(error) = std::fs::rename(staging, destination).with_context(|| {
+    before_activation()?;
+    if let Err(error) = avorax_platform_security::rename_directory_no_replace(
+        staging,
+        destination,
+        "atomic tree staging activation",
+    )
+    .with_context(|| {
         format!(
             "failed to activate atomic tree staging {} as {}",
             staging.display(),
@@ -146,9 +180,13 @@ fn activate_replacement_tree(
         )
     }) {
         if destination_exists {
-            if let Err(restore_error) = std::fs::rename(backup, destination) {
+            if let Err(restore_error) = avorax_platform_security::rename_directory_no_replace(
+                backup,
+                destination,
+                "atomic tree backup recovery",
+            ) {
                 return Err(error).context(format!(
-                    "failed to restore atomic tree backup {} after activation failure: {restore_error}",
+                    "failed to restore atomic tree backup {} after activation failure: {restore_error:#}",
                     backup.display()
                 ));
             }
@@ -456,6 +494,105 @@ mod tests {
             b"wrong destination kind"
         );
         assert_no_tree_replacement_siblings(destination.parent().unwrap());
+    }
+
+    #[test]
+    fn directory_activation_no_replace_preserves_backup_created_after_preflight() {
+        let dir = tempdir().unwrap();
+        let install = dir.path().join("install");
+        let destination = install.join("engine/signatures");
+        let staging = install.join("engine/.signatures.test.staging.avorax-dir");
+        let backup = install.join("engine/.signatures.test.backup.avorax-dir");
+        std::fs::create_dir_all(&destination).unwrap();
+        std::fs::create_dir_all(&staging).unwrap();
+        std::fs::write(destination.join("marker.bin"), b"harmless current tree").unwrap();
+        std::fs::write(staging.join("marker.bin"), b"harmless staged tree").unwrap();
+
+        let error = activate_replacement_tree_with_hooks(
+            &staging,
+            &destination,
+            &backup,
+            &install,
+            || {
+                std::fs::create_dir_all(&backup)?;
+                std::fs::write(backup.join("marker.bin"), b"harmless competing backup")?;
+                Ok(())
+            },
+            || Ok(()),
+        )
+        .unwrap_err();
+        let detail = format!("{error:#}");
+
+        assert!(
+            detail.contains("failed to move atomic tree destination"),
+            "{detail}"
+        );
+        assert!(detail.contains("without replacing"), "{detail}");
+        assert_eq!(
+            std::fs::read(destination.join("marker.bin")).unwrap(),
+            b"harmless current tree"
+        );
+        assert_eq!(
+            std::fs::read(staging.join("marker.bin")).unwrap(),
+            b"harmless staged tree"
+        );
+        assert_eq!(
+            std::fs::read(backup.join("marker.bin")).unwrap(),
+            b"harmless competing backup"
+        );
+    }
+
+    #[test]
+    fn directory_activation_no_replace_preserves_competing_destination_and_backup() {
+        let dir = tempdir().unwrap();
+        let install = dir.path().join("install");
+        let destination = install.join("engine/signatures");
+        let staging = install.join("engine/.signatures.test.staging.avorax-dir");
+        let backup = install.join("engine/.signatures.test.backup.avorax-dir");
+        std::fs::create_dir_all(&destination).unwrap();
+        std::fs::create_dir_all(&staging).unwrap();
+        std::fs::write(destination.join("marker.bin"), b"harmless current tree").unwrap();
+        std::fs::write(staging.join("marker.bin"), b"harmless staged tree").unwrap();
+
+        let error = activate_replacement_tree_with_hooks(
+            &staging,
+            &destination,
+            &backup,
+            &install,
+            || Ok(()),
+            || {
+                std::fs::create_dir_all(&destination)?;
+                std::fs::write(
+                    destination.join("marker.bin"),
+                    b"harmless competing destination",
+                )?;
+                Ok(())
+            },
+        )
+        .unwrap_err();
+        let detail = format!("{error:#}");
+
+        assert!(
+            detail.contains("failed to restore atomic tree backup"),
+            "{detail}"
+        );
+        assert!(
+            detail.contains("failed to activate atomic tree staging"),
+            "{detail}"
+        );
+        assert!(detail.contains("without replacing"), "{detail}");
+        assert_eq!(
+            std::fs::read(destination.join("marker.bin")).unwrap(),
+            b"harmless competing destination"
+        );
+        assert_eq!(
+            std::fs::read(staging.join("marker.bin")).unwrap(),
+            b"harmless staged tree"
+        );
+        assert_eq!(
+            std::fs::read(backup.join("marker.bin")).unwrap(),
+            b"harmless current tree"
+        );
     }
 
     fn assert_no_tree_replacement_siblings(parent: &Path) {

@@ -14402,3 +14402,104 @@ pending.
   files, the preserved checkpoint-2194 temporary root, and the exact
   16,072-file protected-vault invariant. Checkpoint 2267 is closed; the
   complete antivirus-hardening goal remains active.
+
+## 2026-08-29 - Checkpoint 2268 Update Directory No-Replace Scripting
+
+- Added a shared operating-system atomic directory no-replace API over the
+  already pinned Windows `MoveFileExW`, Linux/Android `renameat2`, and Apple
+  `renamex_np` implementations; unsupported platforms continue to fail visibly.
+- Rewired all three final-name moves in update tree replacement and rollback
+  directory activation: destination-to-backup, staging-to-destination, and
+  backup recovery. Activation and recovery errors retain their full chain.
+- Scripted two platform directory fixtures and four harmless update/rollback
+  race fixtures. They create only temporary directories and inert marker bytes,
+  never execute fixtures, and prove late competing backups/destinations survive.
+- Added Source contract 699, focused verifier step 296, exact-296 validator
+  contracts, and seven dual-host adversarial report mutations. Updated every
+  checkpoint control/engine, threat, blocker, testing, dependency, and malware-
+  protection record.
+- No checkpoint-2268 test ran during the scripting phase. Focused, broad,
+  definitive, hosted, integration, destination, and closure evidence remains
+  pending. No live malware, EICAR, Defender change, protected-vault mutation,
+  install, service/driver start, release, publication, or fixture execution is
+  involved. The protected vault remains 16,072 files with zero pending. The
+  complete antivirus-hardening goal remains active.
+
+## 2026-08-29 - Checkpoint 2268 First Focused Failure And Repair Scripting
+
+- Format check initially found layout-only diffs; applied `rustfmt` and the
+  repeated check passes. PowerShell 5.1/7 parse all three scripts.
+- Platform directory no-replace passes `2/2`. The first update-service filter
+  compiled and passed `3/4`, then failed before the intended activation race:
+  a Rust absolute path retaining `/` became invalid after Windows verbatim
+  prefixing and `MoveFileExW` returned error 123. This run is not credited.
+- Scripted separator normalization before Windows namespace validation and
+  changed the absent-destination platform fixture to cover a nested forward-
+  slash path. No post-repair test has run yet. Broader guarantees and safety
+  invariants remain unchanged.
+- The first strict Clippy 1.96 run then reached all changed crates cleanly but
+  stopped on three pre-existing API layout lints. Scripted narrow allowances:
+  retain the stable externally tagged event names and keep adjacent source-
+  contract test modules without moving runtime helpers. No serialized value or
+  runtime behavior changes; the failed lint run is uncredited.
+- The all-target/all-feature locked root workspace passes, including Native
+  Engine `642 passed` with 21 intentional child-fixture ignores. A copied
+  `core\Cargo.toml` command was rejected before compilation because no such
+  manifest exists; it is uncredited. Corrected the checkpoint-2268 testing
+  command to the established default locked root-workspace variant.
+
+## 2026-08-29 - Checkpoint 2268 Local Broad Verification
+
+- Post-repair format and PowerShell 5.1/7 parsing pass. Focused platform and
+  update/rollback filters pass `2/2 + 4/4`; Source passes `699/699`; platform
+  passes `17/17`; aggregate update service passes `216/216`.
+- Strict all-target/all-feature Clippy passes after the documented API protocol/
+  source-layout compatibility attributes. Default and all-target/all-feature
+  locked workspaces pass; Native Engine is `642 passed, 21 intentional ignored`
+  in each. Locked all-feature release build passes.
+- Flutter analysis and client tests pass `852/852`; protocol analysis/tests pass
+  `14/14 + 6/6`. No tracked lockfile changed.
+- Post-run audit finds zero product processes, zero repository pending files,
+  and the protected vault exactly 16,072 files, 0 directories, 4,522,733 bytes,
+  5,357 each payload/record/auth, one metadata key, and zero pending.
+- Exact-296 definitive verification, dual-host adversarial validation, hosted
+  exact-head evidence, integration, guarded destination synchronization, and
+  closure remain pending. The complete antivirus-hardening goal remains active.
+
+## 2026-08-29 - Checkpoint 2268 Definitive Local Verification
+
+- The final-source definitive verifier exits 0 in `673.5s`: exact `296/296`
+  steps pass, including the new update-service directory activation regression,
+  with Defender/EICAR opt-in false and no Flutter or Rust skip. The 223,673-byte
+  report SHA-256 is
+  `8b87d0aa72cd0ee51d0c2b6ff9d1ac87dbb392ad19298b4a704a94b2f0f8970c`.
+- Integrated PowerShell 5.1 and 7 validation accepts the authentic report. The
+  independent adversarial run accepts it on both hosts and rejects all seven
+  mutations on both, exact `14/14`; the 16,805-byte result SHA-256 is
+  `217771abe632d0647aef3071654190609e367d120ec7afdfaee6ffd057033826`.
+  A first call using the unsupported `WindowsPowerShellPath` parameter stopped
+  before fixture execution and is uncredited; the corrected `PowerShell5Path`
+  call is the passing evidence.
+- Post-definitive audit passes zero product processes, zero repository pending
+  files, all three unchanged active lock hashes, and the exact read-only vault:
+  `16072/0/4522733`, `5357` each payload/metadata/auth, one key, zero pending.
+  `.verification` remains untracked. Hosted exact-head, PR integration, merged-
+  main, guarded synchronization, destination verification, and checkpoint
+  closure remain pending; the complete antivirus-hardening goal remains active.
+
+## 2026-08-29 - Checkpoint 2268 Hosted Implementation Evidence
+
+- Exact implementation `821d17666fd5739525c3803c15c98341046035eb` is PR
+  `#145`. Avorax CI `33253639931` passes all five jobs; Desktop Packages push/PR
+  `33253626820`/`33253639896` pass all platform builds, consolidation, checksums,
+  and SBOM work with publication skipped.
+- Untouched consolidated artifacts `9715355338` and `9715311146` are
+  132,522,285 and 132,521,280 bytes with SHA-256
+  `3d13592cc487928e2eb2e3e52b648ed131237a335b12552cf8dce89d86d209fd` and
+  `966977a56e6740963346c7464c7ed1b4ac6d9f89941c563c52d7f30507503a0b`.
+  Bounded non-extracting/non-executing review passes exact 8-root/6-platform/
+  7-checksum/CycloneDX-1.6/569-component inventory for both.
+- Evidence-head hosted checks, normal merge, merged-main checks, guarded sync,
+  destination verification, and closure remain pending. Hosted compilation
+  expands no runtime, transaction, installed authority, pre-execution, signing,
+  deployment, or Defender-replacement claim.

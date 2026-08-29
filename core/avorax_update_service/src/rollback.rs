@@ -260,6 +260,28 @@ fn activate_staged_restore_dir(
     backup: &Path,
     install_dir: &Path,
 ) -> Result<()> {
+    activate_staged_restore_dir_with_hooks(
+        staging,
+        destination,
+        backup,
+        install_dir,
+        || Ok(()),
+        || Ok(()),
+    )
+}
+
+fn activate_staged_restore_dir_with_hooks<BeforeBackupMove, BeforeActivation>(
+    staging: &Path,
+    destination: &Path,
+    backup: &Path,
+    install_dir: &Path,
+    before_backup_move: BeforeBackupMove,
+    before_activation: BeforeActivation,
+) -> Result<()>
+where
+    BeforeBackupMove: FnOnce() -> Result<()>,
+    BeforeActivation: FnOnce() -> Result<()>,
+{
     ensure_existing_path_chain_not_link(
         staging,
         install_dir,
@@ -292,7 +314,13 @@ fn activate_staged_restore_dir(
     };
 
     if destination_exists {
-        std::fs::rename(destination, backup).with_context(|| {
+        before_backup_move()?;
+        avorax_platform_security::rename_directory_no_replace(
+            destination,
+            backup,
+            "rollback destination backup move",
+        )
+        .with_context(|| {
             format!(
                 "failed to move rollback destination {} to backup {}",
                 destination.display(),
@@ -301,7 +329,13 @@ fn activate_staged_restore_dir(
         })?;
     }
 
-    if let Err(error) = std::fs::rename(staging, destination).with_context(|| {
+    before_activation()?;
+    if let Err(error) = avorax_platform_security::rename_directory_no_replace(
+        staging,
+        destination,
+        "rollback staged directory activation",
+    )
+    .with_context(|| {
         format!(
             "failed to activate staged rollback destination {} as {}",
             staging.display(),
@@ -310,9 +344,13 @@ fn activate_staged_restore_dir(
     }) {
         let activation_error = format!("{error:#}");
         if destination_exists {
-            if let Err(restore_error) = std::fs::rename(backup, destination) {
+            if let Err(restore_error) = avorax_platform_security::rename_directory_no_replace(
+                backup,
+                destination,
+                "rollback destination backup recovery",
+            ) {
                 return Err(error).context(format!(
-                    "failed to restore rollback destination backup {} after activation failure: {restore_error}",
+                    "failed to restore rollback destination backup {} after activation failure: {restore_error:#}",
                     backup.display()
                 ));
             }
@@ -1304,6 +1342,116 @@ mod tests {
     }
 
     #[test]
+    fn rollback_directory_activation_no_replace_preserves_backup_created_after_preflight() {
+        let dir = tempdir().unwrap();
+        let install = dir.path().join("install");
+        let destination = install.join("engine");
+        let staging = install.join(".engine.test.staged.avorax-dir");
+        let backup = install.join(".engine.test.backup.avorax-dir");
+        std::fs::create_dir_all(&destination).unwrap();
+        std::fs::create_dir_all(&staging).unwrap();
+        std::fs::write(
+            destination.join("marker.bin"),
+            b"harmless current rollback tree",
+        )
+        .unwrap();
+        std::fs::write(staging.join("marker.bin"), b"harmless staged rollback tree").unwrap();
+
+        let error = activate_staged_restore_dir_with_hooks(
+            &staging,
+            &destination,
+            &backup,
+            &install,
+            || {
+                std::fs::create_dir_all(&backup)?;
+                std::fs::write(
+                    backup.join("marker.bin"),
+                    b"harmless competing rollback backup",
+                )?;
+                Ok(())
+            },
+            || Ok(()),
+        )
+        .unwrap_err();
+        let detail = format!("{error:#}");
+
+        assert!(
+            detail.contains("failed to move rollback destination"),
+            "{detail}"
+        );
+        assert!(detail.contains("without replacing"), "{detail}");
+        assert_eq!(
+            std::fs::read(destination.join("marker.bin")).unwrap(),
+            b"harmless current rollback tree"
+        );
+        assert_eq!(
+            std::fs::read(staging.join("marker.bin")).unwrap(),
+            b"harmless staged rollback tree"
+        );
+        assert_eq!(
+            std::fs::read(backup.join("marker.bin")).unwrap(),
+            b"harmless competing rollback backup"
+        );
+    }
+
+    #[test]
+    fn rollback_directory_activation_no_replace_preserves_competing_destination_and_backup() {
+        let dir = tempdir().unwrap();
+        let install = dir.path().join("install");
+        let destination = install.join("engine");
+        let staging = install.join(".engine.test.staged.avorax-dir");
+        let backup = install.join(".engine.test.backup.avorax-dir");
+        std::fs::create_dir_all(&destination).unwrap();
+        std::fs::create_dir_all(&staging).unwrap();
+        std::fs::write(
+            destination.join("marker.bin"),
+            b"harmless current rollback tree",
+        )
+        .unwrap();
+        std::fs::write(staging.join("marker.bin"), b"harmless staged rollback tree").unwrap();
+
+        let error = activate_staged_restore_dir_with_hooks(
+            &staging,
+            &destination,
+            &backup,
+            &install,
+            || Ok(()),
+            || {
+                std::fs::create_dir_all(&destination)?;
+                std::fs::write(
+                    destination.join("marker.bin"),
+                    b"harmless competing rollback destination",
+                )?;
+                Ok(())
+            },
+        )
+        .unwrap_err();
+        let detail = format!("{error:#}");
+
+        assert!(
+            detail.contains("failed to restore rollback destination backup"),
+            "{detail}"
+        );
+        assert!(
+            detail.contains("failed to activate staged rollback destination"),
+            "{detail}"
+        );
+        assert!(detail.contains("without replacing"), "{detail}");
+        assert_eq!(
+            std::fs::read(destination.join("marker.bin")).unwrap(),
+            b"harmless competing rollback destination"
+        );
+        assert_eq!(
+            std::fs::read(staging.join("marker.bin")).unwrap(),
+            b"harmless staged rollback tree"
+        );
+        assert_eq!(
+            std::fs::read(backup.join("marker.bin")).unwrap(),
+            b"harmless current rollback tree"
+        );
+    }
+
+    #[test]
     fn restore_uses_staged_directory_activation_for_engine() {
         let source = include_str!("rollback.rs");
         let production = &source[..source.find("#[cfg(test)]").unwrap()];
@@ -1326,8 +1474,10 @@ mod tests {
         assert!(staged_helper_source.contains("fn cleanup_restore_directory"));
         assert!(staged_helper_source.contains("fn ensure_restore_sibling_absent"));
         assert!(staged_helper_source.contains("fn allocate_restore_sibling_dir_path"));
-        assert!(staged_helper_source.contains("std::fs::rename(destination, backup)"));
-        assert!(staged_helper_source.contains("std::fs::rename(staging, destination)"));
+        assert!(
+            staged_helper_source.contains("avorax_platform_security::rename_directory_no_replace(")
+        );
+        assert!(!staged_helper_source.contains("std::fs::rename("));
         assert!(staged_helper_source
             .contains("ensure_restore_sibling_absent(backup, \"rollback destination backup\")?"));
         assert!(staged_helper_source

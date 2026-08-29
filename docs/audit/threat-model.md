@@ -4300,3 +4300,74 @@ Android runtime/build, remove-to-activate availability, multi-file atomicity,
 point-in-time ancestor authority, privileged actors, hostile filesystems,
 installed service/driver authority, pre-execution blocking, and every other
 residual threat above remain unchanged.
+
+## Checkpoint 2268 - Update Directory Final-Name Races
+
+### Threat
+
+Update tree replacement and rollback prechecked sibling backup and destination
+paths, then used replacement-capable directory rename calls. On platforms where
+rename replaces an existing target, a competing filesystem object created
+between validation and the final-name move could be overwritten. Recovery
+could also overwrite a destination that appeared after the original tree moved
+to backup, hiding both the collision and the need for manual intervention.
+
+### Scripted mitigation
+
+All three moves now use one shared OS atomic no-replace primitive:
+destination-to-backup, staging-to-destination, and backup-to-destination
+recovery. Hooked harmless race fixtures create a competing backup immediately
+after preflight or a competing destination immediately after backup movement.
+The required result preserves every original, staged, backup, and competing
+tree that exists at failure and reports activation plus recovery errors.
+
+### Residual threat
+
+Only each final directory-name move is atomic. Service lifecycle, file items,
+cleanup, crash recovery, and component activations are not one transaction. A
+crash can leave an absent destination and preserved sibling backup; a competing
+destination can require manual recovery. Ancestor/path checks are point-in-time
+and do not defeat administrators, SYSTEM/root, hostile filesystems, or kernel
+compromise. Unsupported platforms fail visibly. This is not installed-service,
+driver, or pre-execution evidence.
+
+No checkpoint-2268 test ran during the scripting phase. Exact-296 local,
+dual-host adversarial, hosted, integration, synchronized-destination, and
+closure evidence remains pending. No live malware, EICAR, fixture execution,
+Defender change, protected-vault mutation, install, service/driver start,
+release, or publication is involved. The vault remains exactly 16,072 files
+with zero pending, and the complete antivirus-hardening goal remains active.
+
+The first focused run additionally exposed a Windows availability/compatibility
+threat: a retained `/` separator is invalid once an absolute path is converted
+to verbatim `\\?\` form. The uncredited run stopped with error 123. The repair
+normalizes separators before namespace validation and adds nested-path coverage;
+post-repair evidence is pending.
+
+Post-repair local broad execution now verifies separator normalization and all
+four deterministic race windows on this Windows host, with both locked
+workspaces, strict lint, release, Flutter/protocols, and exact vault/process
+invariants passing. This does not change the residual threat: only individual
+final-name moves are atomic, cross-platform runtime remains pending, and every
+transaction, privileged actor, hostile filesystem, installed authority,
+driver/pre-execution, and Defender-replacement limit above remains in force.
+
+Final-source definitive execution adds exact `296/296` in `673.5s`, authentic
+report acceptance on PowerShell 5.1 and 7, and exact `14/14` adversarial
+rejections. Report/adversarial SHA-256 values are
+`8b87d0aa72cd0ee51d0c2b6ff9d1ac87dbb392ad19298b4a704a94b2f0f8970c` and
+`217771abe632d0647aef3071654190609e367d120ec7afdfaee6ffd057033826`.
+Locks, processes, pending files, and the protected vault remain exact. This
+raises local Windows evidence confidence but changes none of the residual
+transaction, point-in-time path, privileged actor, hostile filesystem,
+cross-platform runtime, installed authority, driver/pre-execution, or Defender-
+replacement boundaries. Hosted, integration, destination, and closure evidence
+remain pending.
+
+Hosted implementation-head CI/packages pass exact `821d17666` in runs
+`33253639931`, `33253626820`, and `33253639896`, with publication skipped and
+bounded non-extracting/non-executing review of both consolidated artifacts.
+This demonstrates build/regression compatibility across the hosted desktop
+matrix only. It does not add cross-platform runtime evidence or change any
+transaction, point-in-time path, privileged actor, installed authority,
+driver/pre-execution, signing/deployment, or Defender-replacement boundary.

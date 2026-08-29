@@ -6005,3 +6005,53 @@ Android runtime/build, remove-to-activate availability, multi-file atomicity,
 privileged actors, hostile filesystems, installed authority, driver,
 pre-execution, and Defender-replacement rows remain disabled, blocked, or
 technically limited exactly as stated.
+
+## Checkpoint 2268 - Update Directory No-Replace Matrix
+
+| Control / engine responsibility | State | Evidence boundary |
+| --- | --- | --- |
+| Shared directory activation primitive | **Scripted / unverified** | Windows, Linux/Android, and Apple reuse the existing OS atomic no-replace implementation; unsupported targets return a visible error. |
+| Update tree destination-to-backup | **Scripted / unverified** | A late backup collision must preserve the active tree, staged tree, and competing backup. |
+| Update tree staged activation and recovery | **Scripted / unverified** | A late destination must reject activation and no-replace recovery while preserving staged, backup, and competing destination trees with both failures visible. |
+| Rollback destination-to-backup | **Scripted / unverified** | The same no-replace collision behavior is required before rollback activation. |
+| Rollback staged activation and recovery | **Scripted / unverified** | The same preservation and fail-visible recovery contract applies to rollback. |
+| Whole update transaction | **Technically limited / not claimed** | Service stop/start, file items, cleanup, crash recovery, and component activations remain separate operations; preserved backup state can require manual recovery. |
+| Detection and custom engines | **Unchanged** | Hash/signature, local rules/YARA, static/PE/archive, bounded heuristics, ML, Authenticode, process observation, allowlists/exclusions, cache, and explainable aggregation retain their documented responsibilities and states. |
+| Installed/kernel prevention | **Blocked / technically limited** | Point-in-time user-mode path checks do not defeat administrators, SYSTEM/root, hostile filesystems, or kernel compromise and do not demonstrate pre-execution blocking. |
+
+Checkpoint 2268 scripts two platform tests, four harmless race tests, Source
+contract 699, focused verifier step 296, exact-296 validator coverage, seven
+dual-host mutations, and supporting documents. No checkpoint-2268 test ran
+during the scripting phase, so all new runtime rows remain unverified. No live
+malware, EICAR, fixture execution, Defender change, install, service/driver
+start, release, publication, or vault mutation is involved. The protected vault
+remains 16,072 files with zero pending, and the complete antivirus-hardening
+goal remains active.
+
+Local checkpoint-2268 execution upgrades the new runtime rows to **verified on
+this Windows host**: focused `2/2 + 4/4`, Source `699/699`, platform `17/17`,
+update aggregate `216/216`, strict lint, both locked workspaces, release,
+Flutter `852/852`, protocols `14/14 + 6/6`, and exact process/vault audits pass.
+Cross-platform runtime, exact-296, adversarial, hosted, integration,
+synchronized-destination, and closure evidence remains pending. Whole-update
+transaction, privileged actor, hostile filesystem, installed authority,
+driver/pre-execution, and Defender-replacement rows remain limited or blocked.
+
+Definitive local verification now passes exact `296/296` in `673.5s`; both
+PowerShell hosts accept the authentic report and reject all `14/14` adversarial
+host/mutation cases. The exact report/adversarial SHA-256 values are
+`8b87d0aa72cd0ee51d0c2b6ff9d1ac87dbb392ad19298b4a704a94b2f0f8970c` and
+`217771abe632d0647aef3071654190609e367d120ec7afdfaee6ffd057033826`.
+Therefore the shared directory primitive and all update/rollback move rows are
+**Verified locally on Windows**. Whole-update transaction remains
+**Technically limited / not claimed**; installed/kernel prevention remains
+**Blocked / technically limited**. Cross-platform runtime, hosted, integration,
+guarded-sync, destination, and closure evidence remain pending.
+
+Exact implementation `821d17666` passes hosted CI `33253639931` and package
+push/PR `33253626820`/`33253639896`; publication skips. Both consolidated
+artifacts pass bounded non-extracting/non-executing 8/6/7/CycloneDX-1.6/569
+review. The supported-platform build row is therefore **Hosted build verified**
+for this implementation head. Runtime, transaction, installed/kernel,
+pre-execution, Defender-replacement, integration, destination, and closure rows
+retain their prior states.
