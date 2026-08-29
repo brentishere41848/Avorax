@@ -1381,3 +1381,30 @@ validation without extraction or execution: exact eight root entries, six
 platform files, seven checksum targets, and CycloneDX 1.6 with 569 components.
 Evidence-head reruns, integration, merged-main, synchronization, destination,
 and closure tests remain pending.
+
+Evidence-head CI/packages `33248103914`/`33248103915` pass at exact commit
+`2770e5a5`; normal PR `#143` merge `7079debe` passes merged-main CI/packages
+`33248770005`/`33248770099`. Consolidated artifacts `9713666252` and
+`9713854005` pass bounded non-extracting/non-executing exact
+8-root/6-platform/7-checksum/CycloneDX-1.6/569-component validation. All
+publication jobs skip.
+
+The guarded destination sync applies 13 modified plus one added path and zero
+deletes; report SHA-256 is
+`e8df4ac7830f7e3d70b92f30e99f3562de5a841a667174cb6659650dd4e22e17`.
+At `C:\Users\Brent\Documents\Avorax-main`, corrected parsing, formatting,
+Source `698/698`, platform `15/15`, focused `5/5`, update service `212/212`,
+strict lint, both locked workspaces, locked release, Flutter analyze/tests
+`852/852`, and Dart protocol analyze/tests `14/14 + 6/6` pass. The definitive
+command above passes exact `295/295` with no skips and Defender/EICAR opt-in
+false in `658.4s`; the 213,457-byte report SHA-256 is
+`fe90577d13ede4a77ad4464c9312344c254c74b2f6225ff085b8a187fe2662b9`.
+
+PowerShell 5.1 and 7 accept that authentic report and reject all 14 bounded
+mutation cases. The adversarial result SHA-256 is
+`feada8887ecd9c10037eb167619cf5f4d04d5981eb281f8d12e1320aad0f30d1`.
+Final destination audit SHA-256
+`31b748f46cb34d72f65ae832528155802c90f7b69c596b1748f4630d19ee3e30`
+passes exact 14 blobs, eight locks, 26 backups, zero product processes/pending,
+the preserved temporary root, and the protected-vault invariant. Checkpoint
+2267 testing is closed; technical limits remain as documented.

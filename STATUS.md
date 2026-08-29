@@ -8092,7 +8092,7 @@ Defender-replacement, and whole-project limits remain open.
 
 ## Checkpoint 2267 - Update Staged-File No-Replace
 
-Status: **Locally implemented and definitively verified; hosted and destination evidence pending**.
+Status: **Closed through hosted integration and synchronized destination verification**.
 
 Shared update-service staged copy/write activation no longer ends in ordinary
 replacement-capable rename. After validated target removal, an absence recheck,
@@ -8161,3 +8161,21 @@ skipped. Both consolidated artifacts pass bounded non-extracting/non-executing
 8-root/6-platform/7-checksum/CycloneDX-1.6/569-component review. Evidence-head,
 normal merge, merged-main, guarded synchronization, destination verification,
 and closure remain pending.
+
+That pending state is superseded. Evidence `2770e5a5` passes CI/packages
+`33248103914`/`33248103915`; normal PR `#143` merge `7079debe` passes
+merged-main CI/packages `33248770005`/`33248770099`. Both later consolidated
+artifacts pass bounded non-extracting/non-executing exact inventory, checksum,
+and 569-component SBOM review; publication remains skipped.
+
+Guarded synchronization changes exactly 13 existing paths plus one added report
+with zero deletes and preserves 26 expected backups. Destination Source
+`698/698`, platform `15/15`, focused `5/5`, update service `212/212`, strict
+lint, both locked workspaces, locked release, Flutter `852/852`, protocols
+`14/14 + 6/6`, and exact no-skip/no-Defender verifier `295/295` in `658.4s`
+pass. Both hosts accept the authentic report and reject all 14 mutation cases.
+Final audit passes 14/14 merge blobs, 8/8 locks, zero processes/pending, and the
+exact protected vault. Checkpoint 2267 is closed. The remove-to-activate gap,
+multi-file transaction, privileged filesystem, installed authority, driver/
+pre-execution, signing/deployment, Defender-replacement, and whole-project
+limits remain open.

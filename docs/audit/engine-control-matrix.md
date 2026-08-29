@@ -5951,11 +5951,11 @@ technically limited exactly as stated.
 
 | Control / engine responsibility | State | Evidence boundary |
 | --- | --- | --- |
-| Shared staged copy/write activation | **Locally verified on Windows** | Platform `15/15`, focused `5/5`, update service `212/212`, and exact-295 verification pass after removal and absence/parent rechecks. |
-| Existing regular target | **Locally verified** | Harmless fixture proves the remove-then-activate flow produces the staged bytes. |
-| Absent final target | **Locally verified** | Harmless fixture proves a successful no-replace move. |
-| Competing final target | **Locally verified** | Harmless collision fixture preserves both staged and competing bytes with visible failure. |
-| Long absolute Windows path | **Locally verified on Windows** | Bounded verbatim local-drive/UNC platform and update-service fixtures pass; device namespaces fail visibly. |
+| Shared staged copy/write activation | **Verified and integrated on Windows** | Local/destination platform `15/15`, focused `5/5`, update service `212/212`, exact-295, hosted CI/packages, normal merge, and exact-blob synchronization pass after removal and absence/parent rechecks. |
+| Existing regular target | **Verified** | Local and destination harmless fixtures prove the remove-then-activate flow produces the staged bytes. |
+| Absent final target | **Verified** | Local and destination harmless fixtures prove successful no-replace activation. |
+| Competing final target | **Verified on Windows** | Local and destination harmless collision fixtures preserve both staged and competing bytes with visible failure. |
+| Long absolute Windows path | **Verified on Windows** | Local/destination bounded verbatim local-drive/UNC platform and update-service fixtures pass; device namespaces fail visibly. |
 | Unsupported platforms | **Disabled / fail-visible** | Shared helper rejects unsupported platforms instead of using replacement-capable rename. |
 | Availability and multi-file transaction | **Technically limited** | Deliberate target removal can leave absence after crash/failure; multiple files are not one transaction. |
 | Detection and custom engines | **Unchanged** | Hash/signature, local rules/YARA, static/PE/archive, heuristics, ML, Authenticode, process observation, allowlist/exclusion, cache, and verdict aggregation retain prior states and responsibilities. |
@@ -5994,3 +5994,14 @@ build boundary is now **Hosted build verified** for Windows, Linux, and Apple;
 Android runtime/build evidence, normal integration, merged-main,
 synchronization, destination, and closure remain pending. No runtime or
 pre-execution claim is inferred from package compilation.
+
+Evidence `2770e5a5`, normal PR `#143` merge `7079debe`, exact evidence-head and
+merged-main CI/packages, two later bounded artifacts, guarded 14-path zero-
+delete synchronization, destination Source `698/698`, broad regressions, exact
+`295/295`, dual-host authentic plus `14/14` adversarial validation, 14/14
+blobs, 8/8 locks, 26 backups, zero residue/processes, and the protected-vault
+invariant close checkpoint 2267. Unsupported platforms remain fail-visible;
+Android runtime/build, remove-to-activate availability, multi-file atomicity,
+privileged actors, hostile filesystems, installed authority, driver,
+pre-execution, and Defender-replacement rows remain disabled, blocked, or
+technically limited exactly as stated.
