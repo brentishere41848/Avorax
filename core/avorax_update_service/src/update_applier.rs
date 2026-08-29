@@ -3,6 +3,7 @@ use serde_json::json;
 use std::io::ErrorKind;
 use std::path::{Component, Path, PathBuf};
 
+use crate::activation_recovery::recover_pending_directory_activations_with_report;
 use crate::file_replacer::{copy_tree_overwrite, replace_tree_atomically};
 use crate::logging::{program_data_dir, write_update_log};
 use crate::path_safety::{
@@ -67,6 +68,8 @@ fn apply_package_with_service_control(
     let package = UpdatePackage::new(package_path);
     let verifier = UpdateVerifier::new(policy);
     let verified = verifier.verify_package(&package)?;
+    recover_pending_directory_activations_with_report(&install_dir, "apply-preflight")
+        .context("failed to reconcile pending directory activation before update apply")?;
     let staging = staging_root()?.join(safe_update_id(&verified.manifest.package_id)?);
     if let Err(error) = remove_existing_staging_dir(&staging) {
         let staging_cleanup_error = Some(format!("{error:#}"));
@@ -447,7 +450,13 @@ fn validate_app_payload_section(source: &Path) -> Result<usize> {
 fn ensure_app_payload_relative_allowed(relative: &Path, path: &Path) -> Result<()> {
     let install_child = app_payload_first_component(relative, path)?;
     match install_child.as_str() {
-        "engine" | "docs" | "tools" | "driver" | "driver-tools" | "migrations" => {
+        "engine"
+        | "docs"
+        | "tools"
+        | "driver"
+        | "driver-tools"
+        | "migrations"
+        | ".avorax-update-recovery" => {
             anyhow::bail!(
                 "app update payload must not target restricted install path {install_child}: {}",
                 path.display()
@@ -1230,14 +1239,17 @@ mod tests {
         assert!(apply_source.contains("report_pre_activation_failure("));
         assert!(apply_source.contains("\"extract_error\""));
         assert!(apply_source.contains("\"staging_prepare_error\""));
-        assert!(
-            apply_source
-                .find("let verified = verifier.verify_package(&package)?")
-                .unwrap()
-                < apply_source
-                    .find("package.extract_payload_to_verified_hash")
-                    .unwrap()
-        );
+        let verify_index = apply_source
+            .find("let verified = verifier.verify_package(&package)?")
+            .unwrap();
+        let recovery_index = apply_source
+            .find("recover_pending_directory_activations_with_report")
+            .unwrap();
+        let extract_index = apply_source
+            .find("package.extract_payload_to_verified_hash")
+            .unwrap();
+        assert!(verify_index < recovery_index);
+        assert!(recovery_index < extract_index);
     }
 
     #[test]
@@ -1749,7 +1761,14 @@ mod tests {
         assert!(app_source.contains("app update payload must not target restricted install path"));
         assert!(app_source
             .contains("app update payload must not include managed service or updater executable"));
-        assert!(app_source.contains("\"engine\" | \"docs\" | \"tools\""));
+        for restricted in [
+            "\"engine\"",
+            "\"docs\"",
+            "\"tools\"",
+            "\".avorax-update-recovery\"",
+        ] {
+            assert!(app_source.contains(restricted));
+        }
         assert!(app_source.contains("\"avorax_update_service.exe\""));
     }
 
@@ -1762,6 +1781,22 @@ mod tests {
         let error = validate_app_payload_section(&app).unwrap_err().to_string();
 
         assert!(error.contains("app update payload must not target restricted install path engine"));
+    }
+
+    #[test]
+    fn app_payload_section_rejects_activation_recovery_directory() {
+        let dir = tempdir().unwrap();
+        let app = dir.path().join("app");
+        std::fs::create_dir_all(app.join(".avorax-update-recovery")).unwrap();
+        std::fs::write(
+            app.join(".avorax-update-recovery/forged.json"),
+            b"benign forged recovery metadata fixture",
+        )
+        .unwrap();
+
+        let error = validate_app_payload_section(&app).unwrap_err().to_string();
+
+        assert!(error.contains("restricted install path .avorax-update-recovery"));
     }
 
     #[test]

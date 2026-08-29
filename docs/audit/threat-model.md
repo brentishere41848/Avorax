@@ -3705,6 +3705,40 @@ merge, merged-main, synchronized-destination, and destination verification
 remain open, and all cooperative/installed/kernel/pre-execution/Defender limits
 remain unchanged.
 
+## Checkpoint 2269 Authenticated Directory Recovery Threat Delta
+
+The protected transition is an update or rollback directory activation that
+has durably authenticated intent and then stops after moving the current tree
+to an opaque sibling backup. The recovery record contains only schema version,
+strict random lowercase-hex operation ID, canonical install-boundary digest,
+exact allowlisted relative destination, and prior-destination presence. Staging
+and backup paths are derived locally. Network/package content cannot supply a
+restore destination or target the private recovery store.
+
+Ordinary-user journal forgery is reduced through a private per-install
+directory, exact Windows DACL or Unix owner-only modes, a 32-byte random key,
+Windows machine-bound DPAPI storage, HMAC-SHA-256 domain separation, strict
+unknown-field rejection, bounded file/entry enumeration, path/link/reparse and
+open-file identity checks, and one exclusive lock. Harmless fixtures cover
+pre-activation abort, fresh-call backup restoration, completed activation
+cleanup, tampering, ambiguity, orphan state, unknown entries, oversized input,
+and lock contention. Apply, rollback, service startup, and manual CLI recovery
+are fail-visible and produce bounded structured status.
+
+Directory activation recovery is per-tree and next-start/best-effort; it is not
+a power-loss-proof package transaction, does not make service/file/multiple-
+component activation atomic, and cannot defeat administrators, SYSTEM/root,
+hostile filesystems, key deletion, storage write reordering, or kernel
+compromise. Ambiguous or unauthenticated state is preserved and requires manual
+review. Pre-journal copy interruption is detected as an orphan rather than
+automatically deleted. No checkpoint-2269 test ran during the scripting phase,
+and post-freeze focused/broad local regression now verifies the listed state,
+tamper, lock, key, ordering, and wiring controls. Exact-297 and dual-host
+hostile-report validation now pass; hosted, installed-context, integration,
+and destination evidence remain pending. The exact
+16,072-file vault remains read-only with zero pending; no live malware is used;
+the complete antivirus-hardening goal remains active.
+
 Evidence-head, merged-main, synchronized-destination, and exact destination
 verification now close this threat delta. PE resource mapping observes
 cancellation at the documented cooperative intervals; it still does not

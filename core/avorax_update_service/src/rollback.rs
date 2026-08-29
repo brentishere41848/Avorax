@@ -2,8 +2,9 @@ use anyhow::{Context, Result};
 use std::cmp::Reverse;
 use std::io::ErrorKind;
 use std::path::{Component, Path, PathBuf};
-use std::time::{SystemTime, UNIX_EPOCH};
 
+use crate::activation_recovery::recover_pending_directory_activations_with_report;
+use crate::file_replacer::replace_tree_atomically;
 use crate::logging::program_data_dir;
 use crate::path_safety::{
     copy_file_staged, create_dir_all_checked, ensure_existing_path_chain_not_link,
@@ -112,6 +113,8 @@ pub fn restore_snapshot(snapshot: &Path, install_dir: &Path) -> Result<()> {
     let install_dir = canonical_install_dir(install_dir)?;
     ensure_existing_install_directory(&install_dir, "rollback install directory before restore")?;
     preflight_restore_snapshot(&snapshot, &install_dir)?;
+    recover_pending_directory_activations_with_report(&install_dir, "rollback-preflight")
+        .context("failed to reconcile pending directory activation before rollback restore")?;
     for item in ROLLBACK_ITEMS {
         let source = snapshot.join(item.name);
         ensure_required_item(&source, item, "rollback snapshot")?;
@@ -224,229 +227,8 @@ fn ensure_restore_directory_target_ready(target: &Path, install_dir: &Path) -> R
 
 fn replace_dir_from_snapshot(source: &Path, destination: &Path, install_dir: &Path) -> Result<()> {
     ensure_restore_directory_target_ready(destination, install_dir)?;
-    let staging = allocate_restore_sibling_dir_path(destination, install_dir, "staged")?;
-    let backup = allocate_restore_sibling_dir_path(destination, install_dir, "backup")?;
-
-    if let Err(error) = copy_dir(source, &staging) {
-        cleanup_restore_directory(&staging, "rollback destination staging directory").with_context(
-            || {
-                format!(
-                    "failed to clean rollback destination staging directory {} after copy failure: {error:#}",
-                    staging.display()
-                )
-            },
-        )?;
-        return Err(error);
-    }
-
-    if let Err(error) = activate_staged_restore_dir(&staging, destination, &backup, install_dir) {
-        cleanup_restore_directory(&staging, "rollback destination staging directory").with_context(
-            || {
-                format!(
-                    "failed to clean rollback destination staging directory {} after activation failure: {error:#}",
-                    staging.display()
-                )
-            },
-        )?;
-        return Err(error);
-    }
-
-    Ok(())
-}
-
-fn activate_staged_restore_dir(
-    staging: &Path,
-    destination: &Path,
-    backup: &Path,
-    install_dir: &Path,
-) -> Result<()> {
-    activate_staged_restore_dir_with_hooks(
-        staging,
-        destination,
-        backup,
-        install_dir,
-        || Ok(()),
-        || Ok(()),
-    )
-}
-
-fn activate_staged_restore_dir_with_hooks<BeforeBackupMove, BeforeActivation>(
-    staging: &Path,
-    destination: &Path,
-    backup: &Path,
-    install_dir: &Path,
-    before_backup_move: BeforeBackupMove,
-    before_activation: BeforeActivation,
-) -> Result<()>
-where
-    BeforeBackupMove: FnOnce() -> Result<()>,
-    BeforeActivation: FnOnce() -> Result<()>,
-{
-    ensure_existing_path_chain_not_link(
-        staging,
-        install_dir,
-        "rollback destination staging directory",
-    )?;
-    ensure_existing_rollback_directory(staging, "rollback destination staging directory")?;
-    ensure_restore_directory_target_ready(destination, install_dir)?;
-    ensure_existing_path_chain_not_link(backup, install_dir, "rollback destination backup")?;
-    ensure_restore_sibling_absent(backup, "rollback destination backup")?;
-
-    let destination_exists = match std::fs::symlink_metadata(destination) {
-        Ok(metadata) => {
-            ensure_not_link_or_reparse(destination, "rollback destination")?;
-            anyhow::ensure!(
-                metadata.is_dir(),
-                "rollback destination target is not a directory: {}",
-                destination.display()
-            );
-            true
-        }
-        Err(error) if error.kind() == ErrorKind::NotFound => false,
-        Err(error) => {
-            return Err(error).with_context(|| {
-                format!(
-                    "failed to inspect rollback destination target {}",
-                    destination.display()
-                )
-            });
-        }
-    };
-
-    if destination_exists {
-        before_backup_move()?;
-        avorax_platform_security::rename_directory_no_replace(
-            destination,
-            backup,
-            "rollback destination backup move",
-        )
-        .with_context(|| {
-            format!(
-                "failed to move rollback destination {} to backup {}",
-                destination.display(),
-                backup.display()
-            )
-        })?;
-    }
-
-    before_activation()?;
-    if let Err(error) = avorax_platform_security::rename_directory_no_replace(
-        staging,
-        destination,
-        "rollback staged directory activation",
-    )
-    .with_context(|| {
-        format!(
-            "failed to activate staged rollback destination {} as {}",
-            staging.display(),
-            destination.display()
-        )
-    }) {
-        let activation_error = format!("{error:#}");
-        if destination_exists {
-            if let Err(restore_error) = avorax_platform_security::rename_directory_no_replace(
-                backup,
-                destination,
-                "rollback destination backup recovery",
-            ) {
-                return Err(error).context(format!(
-                    "failed to restore rollback destination backup {} after activation failure: {restore_error:#}",
-                    backup.display()
-                ));
-            }
-        }
-        return Err(error).context(format!(
-            "rollback destination activation failed before backup cleanup: {activation_error}"
-        ));
-    }
-
-    if destination_exists {
-        cleanup_restore_directory(backup, "rollback destination backup").with_context(|| {
-            format!(
-                "failed to clean rollback destination backup {} after activation",
-                backup.display()
-            )
-        })?;
-    }
-    Ok(())
-}
-
-fn cleanup_restore_directory(path: &Path, label: &str) -> Result<()> {
-    match std::fs::symlink_metadata(path) {
-        Ok(_) => {
-            ensure_not_link_or_reparse(path, label)?;
-            remove_dir_all_checked(path, label)
-        }
-        Err(error) if error.kind() == ErrorKind::NotFound => Ok(()),
-        Err(error) => {
-            Err(error).with_context(|| format!("failed to inspect {label} {}", path.display()))
-        }
-    }
-}
-
-fn ensure_restore_sibling_absent(path: &Path, label: &str) -> Result<()> {
-    match std::fs::symlink_metadata(path) {
-        Ok(_) => anyhow::bail!("{label} already exists: {}", path.display()),
-        Err(error) if error.kind() == ErrorKind::NotFound => Ok(()),
-        Err(error) => {
-            Err(error).with_context(|| format!("failed to inspect {label} {}", path.display()))
-        }
-    }
-}
-
-fn allocate_restore_sibling_dir_path(
-    target: &Path,
-    install_dir: &Path,
-    role: &str,
-) -> Result<PathBuf> {
-    let parent = target.parent().ok_or_else(|| {
-        anyhow::anyhow!("rollback destination missing parent: {}", target.display())
-    })?;
-    let name = target
-        .file_name()
-        .ok_or_else(|| {
-            anyhow::anyhow!(
-                "rollback destination missing filename: {}",
-                target.display()
-            )
-        })?
-        .to_string_lossy();
-    let unique = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map(|duration| duration.as_nanos())
-        .context("failed to read system time for rollback destination staging directory")?;
-    for attempt in 0..16 {
-        let candidate = parent.join(format!(
-            ".{name}.{}.{}.{}.{}.avorax-dir",
-            std::process::id(),
-            unique,
-            attempt,
-            role
-        ));
-        ensure_restore_target_within_install(&candidate, install_dir)?;
-        ensure_existing_path_chain_not_link(
-            &candidate,
-            install_dir,
-            "rollback destination sibling directory",
-        )?;
-        ensure_not_link_or_reparse(&candidate, "rollback destination sibling directory")?;
-        match std::fs::symlink_metadata(&candidate) {
-            Ok(_) => {}
-            Err(error) if error.kind() == ErrorKind::NotFound => return Ok(candidate),
-            Err(error) => {
-                return Err(error).with_context(|| {
-                    format!(
-                        "failed to inspect rollback destination sibling directory {}",
-                        candidate.display()
-                    )
-                });
-            }
-        }
-    }
-    anyhow::bail!(
-        "could not allocate rollback destination {role} directory for {}",
-        target.display()
-    )
+    replace_tree_atomically(source, destination, install_dir)
+        .context("failed to activate rollback directory through authenticated recovery")
 }
 
 fn ensure_required_item(source: &Path, item: &RollbackItem, label: &str) -> Result<()> {
@@ -1314,144 +1096,6 @@ mod tests {
     }
 
     #[test]
-    fn staged_directory_activation_rejects_existing_backup_path() {
-        let dir = tempdir().unwrap();
-        let install = dir.path().join("install");
-        let destination = install.join("engine");
-        let staging = install.join(".engine.test.staged.avorax-dir");
-        let backup = install.join(".engine.test.backup.avorax-dir");
-        std::fs::create_dir_all(destination.join("signatures")).unwrap();
-        std::fs::create_dir_all(staging.join("signatures")).unwrap();
-        std::fs::write(destination.join("signatures/current.asig"), b"current").unwrap();
-        std::fs::write(staging.join("signatures/rollback.asig"), b"rollback").unwrap();
-        std::fs::write(&backup, b"preexisting backup collision").unwrap();
-
-        let error = activate_staged_restore_dir(&staging, &destination, &backup, &install)
-            .unwrap_err()
-            .to_string();
-
-        assert!(error.contains("rollback destination backup already exists"));
-        assert_eq!(
-            std::fs::read(destination.join("signatures/current.asig")).unwrap(),
-            b"current"
-        );
-        assert_eq!(
-            std::fs::read(staging.join("signatures/rollback.asig")).unwrap(),
-            b"rollback"
-        );
-    }
-
-    #[test]
-    fn rollback_directory_activation_no_replace_preserves_backup_created_after_preflight() {
-        let dir = tempdir().unwrap();
-        let install = dir.path().join("install");
-        let destination = install.join("engine");
-        let staging = install.join(".engine.test.staged.avorax-dir");
-        let backup = install.join(".engine.test.backup.avorax-dir");
-        std::fs::create_dir_all(&destination).unwrap();
-        std::fs::create_dir_all(&staging).unwrap();
-        std::fs::write(
-            destination.join("marker.bin"),
-            b"harmless current rollback tree",
-        )
-        .unwrap();
-        std::fs::write(staging.join("marker.bin"), b"harmless staged rollback tree").unwrap();
-
-        let error = activate_staged_restore_dir_with_hooks(
-            &staging,
-            &destination,
-            &backup,
-            &install,
-            || {
-                std::fs::create_dir_all(&backup)?;
-                std::fs::write(
-                    backup.join("marker.bin"),
-                    b"harmless competing rollback backup",
-                )?;
-                Ok(())
-            },
-            || Ok(()),
-        )
-        .unwrap_err();
-        let detail = format!("{error:#}");
-
-        assert!(
-            detail.contains("failed to move rollback destination"),
-            "{detail}"
-        );
-        assert!(detail.contains("without replacing"), "{detail}");
-        assert_eq!(
-            std::fs::read(destination.join("marker.bin")).unwrap(),
-            b"harmless current rollback tree"
-        );
-        assert_eq!(
-            std::fs::read(staging.join("marker.bin")).unwrap(),
-            b"harmless staged rollback tree"
-        );
-        assert_eq!(
-            std::fs::read(backup.join("marker.bin")).unwrap(),
-            b"harmless competing rollback backup"
-        );
-    }
-
-    #[test]
-    fn rollback_directory_activation_no_replace_preserves_competing_destination_and_backup() {
-        let dir = tempdir().unwrap();
-        let install = dir.path().join("install");
-        let destination = install.join("engine");
-        let staging = install.join(".engine.test.staged.avorax-dir");
-        let backup = install.join(".engine.test.backup.avorax-dir");
-        std::fs::create_dir_all(&destination).unwrap();
-        std::fs::create_dir_all(&staging).unwrap();
-        std::fs::write(
-            destination.join("marker.bin"),
-            b"harmless current rollback tree",
-        )
-        .unwrap();
-        std::fs::write(staging.join("marker.bin"), b"harmless staged rollback tree").unwrap();
-
-        let error = activate_staged_restore_dir_with_hooks(
-            &staging,
-            &destination,
-            &backup,
-            &install,
-            || Ok(()),
-            || {
-                std::fs::create_dir_all(&destination)?;
-                std::fs::write(
-                    destination.join("marker.bin"),
-                    b"harmless competing rollback destination",
-                )?;
-                Ok(())
-            },
-        )
-        .unwrap_err();
-        let detail = format!("{error:#}");
-
-        assert!(
-            detail.contains("failed to restore rollback destination backup"),
-            "{detail}"
-        );
-        assert!(
-            detail.contains("failed to activate staged rollback destination"),
-            "{detail}"
-        );
-        assert!(detail.contains("without replacing"), "{detail}");
-        assert_eq!(
-            std::fs::read(destination.join("marker.bin")).unwrap(),
-            b"harmless competing rollback destination"
-        );
-        assert_eq!(
-            std::fs::read(staging.join("marker.bin")).unwrap(),
-            b"harmless staged rollback tree"
-        );
-        assert_eq!(
-            std::fs::read(backup.join("marker.bin")).unwrap(),
-            b"harmless current rollback tree"
-        );
-    }
-
-    #[test]
     fn restore_uses_staged_directory_activation_for_engine() {
         let source = include_str!("rollback.rs");
         let production = &source[..source.find("#[cfg(test)]").unwrap()];
@@ -1470,18 +1114,13 @@ mod tests {
             restore_source.contains("replace_dir_from_snapshot(&source, &target, &install_dir)?;")
         );
         assert!(!restore_source.contains(&old_direct_restore));
-        assert!(staged_helper_source.contains("fn activate_staged_restore_dir"));
-        assert!(staged_helper_source.contains("fn cleanup_restore_directory"));
-        assert!(staged_helper_source.contains("fn ensure_restore_sibling_absent"));
-        assert!(staged_helper_source.contains("fn allocate_restore_sibling_dir_path"));
-        assert!(
-            staged_helper_source.contains("avorax_platform_security::rename_directory_no_replace(")
-        );
+        assert!(staged_helper_source
+            .contains("replace_tree_atomically(source, destination, install_dir)"));
+        assert!(staged_helper_source.contains("authenticated recovery"));
         assert!(!staged_helper_source.contains("std::fs::rename("));
-        assert!(staged_helper_source
-            .contains("ensure_restore_sibling_absent(backup, \"rollback destination backup\")?"));
-        assert!(staged_helper_source
-            .contains("ensure_restore_target_within_install(&candidate, install_dir)?"));
+        assert!(restore_source.contains(
+            "recover_pending_directory_activations_with_report(&install_dir, \"rollback-preflight\")"
+        ));
     }
 
     #[cfg(unix)]

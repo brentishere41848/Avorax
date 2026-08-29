@@ -14539,3 +14539,86 @@ pending.
   passes 18/18 exact merge blobs, 8/8 locks, 34 backups, zero processes/pending,
   and the exact protected-vault invariant. Checkpoint 2268 is closed; the
   complete antivirus-hardening goal remains active.
+
+## 2026-08-29 - Checkpoint 2269 Authenticated Update Activation Recovery Scripting
+
+- Scripted authenticated, fail-visible recovery for the update-service gap
+  between moving an installed directory to its sibling backup and activating
+  the staged replacement. Recovery state lives under the private per-install
+  `.avorax-update-recovery` directory and uses strict, bounded, HMAC-SHA-256
+  journals plus one exclusive file lock.
+- Scripted a 32-byte random authentication key. Windows stores only a machine-
+  bound DPAPI blob under a verified exact DACL; Unix stores the key only under
+  owner-only directory/file modes. Journal paths are derived from an exact
+  allowlist and a strict random lowercase-hex operation ID rather than accepted
+  from network or journal input.
+- Scripted safe state reconciliation: abort pre-activation staging, restore the
+  backup-move gap, finish completed cleanup, reject unauthenticated/unknown/
+  oversized/ambiguous state without overwriting evidence, and detect orphan
+  staging/backup siblings. Apply, rollback, service startup, and explicit
+  `--recover` now invoke the shared boundary and emit a structured bounded
+  report; app payloads cannot target the recovery store.
+- Added harmless temporary Rust fixtures, Windows DPAPI/private-file checks,
+  Source contract 700, verifier step 297, exact-297 validator requirements, and
+  a seven-mutation/two-host adversarial script. Updated the checkpoint-2268
+  contract to follow the shared recovery primitive without weakening its no-
+  replace guarantee.
+- No checkpoint-2269 test ran during the scripting phase. Implementation,
+  focused/broad tests, exact-297 verification, hostile-report validation,
+  hosted evidence, integration, guarded destination synchronization, and
+  closure remain pending. No live malware, EICAR, Defender change, fixture
+  execution, machine-wide install, service/driver start, release, publication,
+  or protected-vault mutation occurred. The vault remains exactly 16,072 files
+  with zero pending. The complete antivirus-hardening goal remains active.
+
+## 2026-08-29 - Checkpoint 2269 Local Broad Verification
+
+- After the complete scripting batch was frozen, both PowerShell hosts parsed
+  the verifier, validator, and adversarial script. Formatting, focused DPAPI
+  `1/1`, recovery `18/18`, Source `700/700`, platform `18/18`, update service
+  `232/232`, and strict locked Clippy pass.
+- The default locked workspace and locked all-target/all-feature workspace both
+  exit 0. The latter passes groups `18 + 4 + 228 + 41 + 251 + 583 + 642 + 6`
+  with zero failures and 21 intentional child-fixture ignores. The locked
+  all-feature release build exits 0.
+- Flutter analyzes cleanly and passes `852/852`; Zentor and Avorax protocol
+  analysis/tests pass `14/14 + 6/6`.
+- Uncredited first attempts found and repaired formatting drift, three recovery
+  compile defects, three stale Source shape contracts, update/rollback
+  preflight ordering plus poisoned-lock cascades, and three strict Clippy
+  defects. The checkpoint report records each failure and repeat evidence.
+- Exact-297 definitive verification, dual-host adversarial validation, read-only
+  audit, hosted exact-head evidence, PR/merge, guarded destination sync, and
+  destination verification remain pending. The protected vault was not touched
+  and the complete antivirus-hardening goal remains active.
+- The first exact-297 attempt is uncredited: after the new recovery and update
+  tests passed, the release apply-tamper smoke found recovery-store writes
+  before package signature rejection. Apply ordering is repaired to `verify <
+  recover < extract`; focused Rust `1/1`, Source `700/700`, release rebuild,
+  and the exact failed smoke now pass. Full definitive repeat remains pending.
+
+## 2026-08-29 - Checkpoint 2269 Definitive Local Evidence
+
+- The complete repeat passes exact `297/297` in `685.6s`, no failures/skips,
+  with Defender/EICAR opt-in false. The 225,076-byte report SHA-256 is
+  `a16a4b143964f6e2a5bae4a4b0ee10997cf882a166c155657f240e1429e62584`.
+- Both validator hosts accept the authentic report. The first adversarial call
+  stopped before mutations because a PowerShell 5.1 `$PSScriptRoot` parameter
+  default was empty and is uncredited. The repaired script parses on both hosts
+  and rejects seven mutations on both, exact `14/14`; its 14,332-byte result
+  SHA-256 is
+  `e0bf98f99510330d7ac2dfad8af34bd1b82ab55ed46b0ecdc3c332b76d76bebe`.
+- Read-only final local audit passes 19 modified plus two added paths, zero
+  deletes, eight active locks with only the intentional root lock delta, zero
+  processes/pending/temp residue, and the exact protected vault. Audit SHA-256
+  is `38e69a072e2c611200771c7c3847fd09e554f7ee53eec9922a41a7cbed2aaebf`.
+- Hosted exact-head, integration, guarded destination sync, destination
+  verification, and closure remain pending. The whole hardening goal stays
+  active.
+- Final post-repair all-target/all-feature locked workspace repeats exact green
+  groups `18 + 4 + 228 + 41 + 251 + 583 + 642 + 6`; locked all-feature release
+  also exits 0. Diff/threat/dependency review finds no known critical/high issue
+  and confirms no new package version or license class.
+- Two loose no-malware-gate calls with relative/WindowsApps Python paths were
+  rejected before scanning and are uncredited. The corrected exact bundled
+  verifier Python path passes the gate.
