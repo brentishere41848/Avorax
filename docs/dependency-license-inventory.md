@@ -2447,8 +2447,16 @@ runs `33271310749`/`33271345821`; untouched consolidated artifacts
 `9720317057`/`9720376440` pass bounded in-stream exact 8-root/6-platform/
 7-checksum and CycloneDX 1.6/569-component review without extraction or
 execution. Publication is skipped. Evidence-head, integration, destination
-lock comparison, and closure remain pending. All
-fixtures are harmless temporary data; no live malware, network download,
+lock comparison, and closure were pending at implementation head. Evidence
+`a933d451` and normal PR `#147` merge `dfcec4fa` pass evidence-head and merged-
+main CI/packages. Consolidated artifacts `9720745014`/`9720920236` retain exact
+8-root/6-platform/7-checksum inventory and CycloneDX 1.6 with 569 components
+under bounded review without extraction or execution; publication skips.
+Guarded synchronization and destination locked tests/builds pass with all eight
+active lockfiles exact: only root `Cargo.lock` contains the intended direct
+edges and the other seven are unchanged from the base. This closes checkpoint-
+2269 dependency evidence, not final signed-artifact notice/copyright approval.
+All fixtures are harmless temporary data; no live malware, network download,
 Defender change, protected-vault mutation, release, or publication is involved.
 The vault remains 16,072 files with zero pending, and the complete antivirus-
 hardening goal remains active.

@@ -6071,10 +6071,10 @@ stated.
 
 | Control / engine | Responsibility | Current checkpoint state | Evidence / blocker |
 | --- | --- | --- | --- |
-| Authenticated update directory recovery | Reconcile the destination-to-backup activation gap without overwriting a competing object | Definitive local and implementation-head hosted verification passed | Private store, HMAC journal, allowlist, path derivation, bounds, interrupted-state fixtures, exact-297 verifier, hostile-report checks, all five CI jobs, and every desktop package build pass; installed-context evidence remains pending |
+| Authenticated update directory recovery | Reconcile the destination-to-backup activation gap without overwriting a competing object | Verified through synchronized destination regression | Private store, HMAC journal, allowlist, path derivation, bounds, interrupted-state fixtures, exact-297 verifier, hostile-report checks, exact-head/merged-main CI and packages, zero-delete sync, and destination rerun pass; installed-context evidence remains pending |
 | Recovery key protection | Prevent ordinary local users or update payloads from forging recovery intent | Partial | Windows DPAPI `LOCAL_MACHINE` runtime and exact-DACL tests pass; Unix source/compile passes but hosted Unix runtime remains pending; privileged actors, key deletion, and hostile filesystems remain outside the guarantee |
 | Activation concurrency | Serialize update/rollback directory mutation and recovery | Definitive local verification passed | The exclusive OS file lock and harmless contention fixture pass locally and in the exact verifier |
-| Update apply / rollback / service startup / manual recovery | Authenticate apply packages before any install write, then invoke recovery before mutation or service operation and expose results | Partial | Ordering/unit/source/release-tamper smoke, `apply-preflight`, `rollback-preflight`, `service-start`, strict `--recover`, and bounded reports pass locally; installed elevated-service E2E remains pending |
+| Update apply / rollback / service startup / manual recovery | Authenticate apply packages before any install write, then invoke recovery before mutation or service operation and expose results | Partial | Ordering/unit/source/release-tamper smoke, `apply-preflight`, `rollback-preflight`, `service-start`, strict `--recover`, bounded reports, hosted builds, and synchronized destination regression pass; installed elevated-service E2E remains pending |
 | Unauthenticated, ambiguous, oversized, unknown, or orphan recovery state | Preserve evidence and block unsafe automatic mutation | Definitive local verification passed | Strict schema, HMAC, bounds, state matrix, orphan fixtures, and hostile-report checks pass; manual review remains required for real ambiguous state |
 | Whole-package update transaction | Atomically cover service lifecycle, files, every engine component, and rollback | Technically limited | Directory recovery is per-tree and next-start/best-effort; no power-loss-proof multi-component transaction is claimed |
 | Malware detection/custom engines | Detect and explain covered threats | Unchanged | Checkpoint 2269 changes no hash, signature, rule/YARA, static/PE/archive, heuristic, ML, process, allowlist, exclusion, cache, threshold, or verdict responsibility |
@@ -6085,7 +6085,12 @@ pass. Exact implementation `d44b5c65` passes CI `33271345848` and package push/
 PR runs `33271310749`/`33271345821`; untouched artifacts `9720317057`/
 `9720376440` pass exact 8-root/6-platform/7-checksum/CycloneDX-1.6/569-component
 in-stream review without extraction or execution, and publication is skipped.
-Evidence-head, installed-context, integration, and destination evidence remain
-pending. The protected vault
-remains 16,072 files with zero pending, no live malware is involved, and the
-complete antivirus-hardening goal remains active.
+Evidence `a933d451`, normal PR `#147` merge `dfcec4fa`, evidence-head and
+merged-main CI/packages, bounded artifact review, exact 21-path zero-delete
+synchronization, destination Source `700/700`, broad regressions, exact
+`297/297`, dual-host destination-local adversarial rejection, exact blobs/
+locks/backups, zero product residue/processes, and the protected-vault invariant
+close checkpoint 2269. Installed elevated-service and Unix runtime recovery,
+power-cut/multi-component atomicity, privileged-hostile filesystem resistance,
+driver/pre-execution authority, Defender replacement, and the complete
+antivirus-hardening goal remain partial, technically limited, or open.

@@ -8339,3 +8339,23 @@ merge, merged-main, guarded destination synchronization, destination full
 verification, and closure remain pending. Installed service authority,
 power-cut atomicity, production signing/deployment, Defender replacement, and
 whole-project completion are not claimed.
+
+That pending integration state is superseded. Evidence `a933d451` passes all
+five CI jobs in `33272364663` and Desktop Packages `33272364645`; normal PR
+`#147` merge `dfcec4fa` passes merged-main CI/packages
+`33273388570`/`33273388568`. Evidence-head and merged-main consolidated
+artifacts `9720745014`/`9720920236` pass bounded non-extracting exact
+8-root/6-platform/7-checksum/CycloneDX-1.6/569-component review, with
+publication skipped.
+
+Guarded synchronization applies exact 19 modified plus two added paths, zero
+deletes, and preserves 38 verified backups. The synchronized destination passes
+Source `700/700`, strict Rust format/lint, both locked workspace variants,
+locked release, Flutter `852/852`, protocols `14/14 + 6/6`, and no-skip/no-
+Defender verification `297/297` in `737.4s`. Both validator hosts accept the
+authentic report and reject all `14/14` destination-local content mutations.
+Final audit passes 21/21 blobs, 8/8 locks, zero process/residue, and the exact
+protected vault. Checkpoint 2269 is closed; installed-context recovery, Unix
+runtime recovery, power-cut/multi-component atomicity, privileged actors,
+driver/pre-execution enforcement, signing/deployment, Defender replacement,
+and whole-project completion remain open.

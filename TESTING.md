@@ -1602,3 +1602,33 @@ Both report exact eight root entries, seven matching streamed checksums,
 CycloneDX 1.6, and 569 components. Evidence-head, merged-main, and destination
 verification remain required; these package checks are not installation or
 runtime-recovery evidence.
+
+Checkpoint-2269 closure evidence now passes. Evidence-head CI/packages
+`33272364663`/`33272364645` pass exact commit `a933d451`; normal PR `#147`
+merge `dfcec4fa` passes merged-main CI/packages
+`33273388570`/`33273388568`. Consolidated artifacts `9720745014` and
+`9720920236` pass bounded non-extracting/non-executing exact
+8-root/6-platform/7-checksum/CycloneDX-1.6/569-component review; publication
+skips.
+
+The guarded destination sync applies 19 modified and two added paths with zero
+deletes; report SHA-256 is
+`3303650d17490017fb514b0cf6d9b14eda59c568f93708ac2f942480dcc01da9`.
+At `C:\Users\Brent\Documents\Avorax-main`, Source `700/700`, format, strict
+locked Clippy, both locked workspace variants, locked all-feature release,
+Flutter analysis/tests `852/852`, and protocols `14/14 + 6/6` pass. Exact
+verification passes `297/297` in `737.4s`, no skips and Defender/EICAR false;
+report SHA-256 is
+`7710ee35419bfbf9f4c1868291cc511703e9313706e9fcd050a793bd9345598d`.
+
+The first destination adversarial run is uncredited because its mutation files
+were outside the destination and every rejection was a path-boundary result.
+The corrected destination-local run is accepted on both PowerShell hosts and
+rejects all `14/14` content mutations; SHA-256 is
+`1b21fa2a7251f0d0e15871e47c941477f3612d79e5af32efa0d4d9e1c759c361`.
+Final audit SHA-256
+`6f82ec176934bfee9f8431ed77ba4800a6816503d1b8bd53d47ad31cc023ffa0`
+passes 21 exact blobs, eight locks, 38 backups, zero product process/pending/
+temporary residue, and the protected-vault invariant. Checkpoint 2269 testing
+is closed; installed-context, Unix runtime, power-cut, service/driver, and
+pre-execution limits remain unverified or technically limited.

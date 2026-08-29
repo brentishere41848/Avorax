@@ -4203,8 +4203,12 @@ hostile-report checks, and read-only final audit now pass. Exact implementation
 `d44b5c65` also passes Avorax CI `33271345848` and package push/PR runs
 `33271310749`/`33271345821`; both consolidated artifacts pass bounded
 non-extracting inventory/checksum/SBOM review and publication is skipped.
-Evidence-head, installed-service behavior, integration, destination
-verification, and closure are still pending.
+That pending integration state is superseded. Evidence `a933d451`, normal PR
+`#147` merge `dfcec4fa`, evidence-head and merged-main CI/packages, bounded
+artifact review, exact 21-path zero-delete synchronization, destination Source
+`700/700`, broad Rust/Flutter/protocol regression, exact `297/297`, corrected
+dual-host destination-local adversarial rejection, exact blobs/locks/backups,
+zero process/residue, and the protected-vault invariant close checkpoint 2269.
 
 Recovery is per allowlisted tree and runs on the next apply, rollback, update-
 service start, or explicit `--recover`. It is not a durable all-package commit

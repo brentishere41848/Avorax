@@ -195,18 +195,61 @@ relative text `python`, and one resolved the WindowsApps reparse alias; both
 were rejected before scanning. The corrected call uses the same checked bundled
 Python executable as the definitive verifier and passes.
 
-## Remaining execution sequence
+## Integration and destination closure evidence
 
-Commit only the hosted-evidence documentation, keep `.verification` untracked,
-then obtain exact evidence-head CI/packages, perform normal PR/merge and
-merged-main checks, apply guarded zero-delete destination synchronization, run
-destination full verification, and close the checkpoint without closing the
-whole hardening goal.
+Evidence commit `a933d451f8fd7f1f93b7add9cc271f0d1f242856` passes all five
+Avorax CI jobs in run `33272364663` and the complete Desktop Packages PR matrix
+in run `33272364645`; publication is skipped. Consolidated artifact
+`9720745014` is 132,642,606 bytes with SHA-256
+`c70a2476265b526ec6c0c89651d760891ba1e929427210793f5b099c17103b95`.
+Bounded in-stream validation, without extraction or execution, confirms eight
+root entries, six platform packages, seven matching checksums, CycloneDX 1.6,
+and 569 components.
 
-Recovery filter `18/18`, platform `18/18`, update service `232/232`, Source
-`700/700`, definitive verifier `297/297`, adversarial rejection `14/14`, and
-exact implementation-head hosted CI/packages are now evidenced. Evidence-head,
-merged-main, and synchronized-destination evidence remain pending.
+Normal PR `#147` merges as
+`dfcec4fa5cc75e1f298117864363bdd98de94aa2`. Merged-main Avorax CI run
+`33273388570` passes all five jobs; Desktop Packages run `33273388568` passes
+all platform, contract, and consolidation jobs with publication skipped.
+Consolidated artifact `9720920236` is 132,653,132 bytes with SHA-256
+`85997662be5d174a1ddac50896ba7de2d7af3611c549ee47ad81df7e918bf74b`
+and passes the same bounded non-extracting/non-executing review.
+
+The guarded synchronization from checkpoint-2268 closure
+`e995ea4ddb8167687c7884ffec2fcfd5399f1a6e` to merge `dfcec4fa` applies
+exactly 19 modified plus two added paths with zero deletes. It preserves 38
+ordinary/replaced backups under untracked verification storage and leaves zero
+product processes or pending residue. The sync report SHA-256 is
+`3303650d17490017fb514b0cf6d9b14eda59c568f93708ac2f942480dcc01da9`.
+
+At `C:\Users\Brent\Documents\Avorax-main`, the exact destination tree passes:
+
+- Source contracts `700/700`, Rust formatting, strict locked all-target/all-
+  feature Clippy, both locked workspace test variants, and locked all-target/
+  all-feature release build.
+- Default and all-feature Rust groups `18 + 4 + 228 + 41 + 251 + 583 + 642 +
+  6`, with zero failures and the same 21 intentional isolated child-fixture
+  ignores.
+- Flutter analysis with `852/852` client tests and both protocol analyzers with
+  `14/14 + 6/6` tests.
+- Exact no-skip/no-Defender verification `297/297` in `737.4s`. The 216,323-
+  byte report SHA-256 is
+  `7710ee35419bfbf9f4c1868291cc511703e9313706e9fcd050a793bd9345598d`.
+
+The first destination adversarial run is deliberately uncredited: its mutation
+evidence was outside the destination root, so all mutations were rejected at
+the path boundary rather than by their altered content. The corrected evidence
+is destination-local. PowerShell 5.1 and PowerShell 7 both accept the authentic
+report and reject all seven content mutations on both hosts, exact `14/14`,
+with zero boundary-only rejections. Its 13,723-byte SHA-256 is
+`1b21fa2a7251f0d0e15871e47c941477f3612d79e5af32efa0d4d9e1c759c361`.
+
+Final destination audit SHA-256
+`6f82ec176934bfee9f8431ed77ba4800a6816503d1b8bd53d47ad31cc023ffa0`
+passes exact 21/21 merge blobs, all eight active lockfiles, the one intended
+root-lock delta, 38 backups, zero product processes/pending/temporary roots,
+and the exact protected-vault invariant. No known critical/high issue remains
+inside the checkpoint scope. Checkpoint 2269 is closed; the complete antivirus-
+hardening goal is not closed.
 
 ## Safety and current evidence
 
@@ -229,9 +272,9 @@ machine-bound DPAPI key protection on Windows, owner-only key storage on Unix,
 HMAC-bound strict journals, an exclusive cross-process lock, exact allowlisted
 path derivation, bounded parsing, and harmless state fixtures to restore the
 backup-move gap or finish completed cleanup without overwriting a competing
-object. This scope is locally runtime/source verified and exact implementation-
-head hosted build/package verified as listed above; installed-context evidence
-remains pending.
+object. This scope is locally and synchronized-destination runtime/source
+verified and exact evidence-head/merged-main hosted build/package verified as
+listed above; installed-context evidence remains pending.
 
 Directory activation recovery is per-tree and next-start/best-effort; it is not
 a power-loss-proof package transaction, does not make service/file/multiple-

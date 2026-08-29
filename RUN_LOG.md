@@ -14643,3 +14643,44 @@ pending.
 - Evidence-head checks, normal merge, merged-main checks, guarded zero-delete
   synchronization, destination verification, and checkpoint closure remain.
   The protected vault is untouched and the whole hardening goal stays active.
+
+## 2026-08-29 - Checkpoint 2269 Integration And Destination Closure
+
+- Evidence commit `a933d451f8fd7f1f93b7add9cc271f0d1f242856` passes all five
+  Avorax CI jobs in run `33272364663` and the complete Desktop Packages PR
+  matrix in run `33272364645`; publication is skipped. Consolidated artifact
+  `9720745014` is 132,642,606 bytes with SHA-256
+  `c70a2476265b526ec6c0c89651d760891ba1e929427210793f5b099c17103b95`
+  and passes bounded non-extracting/non-executing exact 8-root/6-platform/
+  7-checksum/CycloneDX-1.6/569-component review.
+- Normal PR `#147` merges as
+  `dfcec4fa5cc75e1f298117864363bdd98de94aa2`. Merged-main CI
+  `33273388570` and Desktop Packages `33273388568` pass; publication is
+  skipped. Consolidated artifact `9720920236` is 132,653,132 bytes with
+  SHA-256 `85997662be5d174a1ddac50896ba7de2d7af3611c549ee47ad81df7e918bf74b`
+  and passes the same bounded review without extraction or execution.
+- Guarded destination synchronization applies the exact 19 modified and two
+  added merge paths with zero deletes, preserves 38 verified before/replaced
+  backups, and leaves no product process or pending residue. Sync report
+  SHA-256 is
+  `3303650d17490017fb514b0cf6d9b14eda59c568f93708ac2f942480dcc01da9`.
+- At `C:\Users\Brent\Documents\Avorax-main`, Source `700/700`, format,
+  strict locked Clippy, both locked workspace test variants, locked all-feature
+  release, Flutter analysis/tests `852/852`, and protocol analysis/tests
+  `14/14 + 6/6` pass. Exact no-skip/no-Defender verification passes `297/297`
+  in `737.4s`; the 216,323-byte report SHA-256 is
+  `7710ee35419bfbf9f4c1868291cc511703e9313706e9fcd050a793bd9345598d`.
+- The first destination adversarial run placed mutation evidence outside the
+  destination and therefore proved only path-boundary rejection; it is
+  uncredited. The corrected destination-local run is accepted by PowerShell
+  5.1 and 7 and rejects all `14/14` content mutations with zero boundary-only
+  rejections; its 13,723-byte report SHA-256 is
+  `1b21fa2a7251f0d0e15871e47c941477f3612d79e5af32efa0d4d9e1c759c361`.
+- Final destination audit SHA-256
+  `6f82ec176934bfee9f8431ed77ba4800a6816503d1b8bd53d47ad31cc023ffa0`
+  passes exact 21/21 merge blobs, 8/8 active lockfiles, 38 backups, zero
+  product processes/pending/temporary roots, and the exact read-only protected
+  vault. Checkpoint 2269 is closed. Installed elevated-service and Unix runtime
+  recovery, power-cut/multi-component atomicity, privileged-hostile filesystem
+  resistance, production signing/deployment, driver/pre-execution authority,
+  Defender replacement, and the complete antivirus-hardening goal remain open.
