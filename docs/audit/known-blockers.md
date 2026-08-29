@@ -3911,6 +3911,24 @@ pre-execution blocking remain blockers or technical limits. No live malware,
 Defender weakening, vault mutation, install, service/driver start, release, or
 publication is authorized.
 
+The first definitive checkpoint 2267 run failed at the release update-package
+builder smoke because long absolute Windows staged-log paths were not converted
+to verbatim local-drive/UNC form before `MoveFileExW`. The failed report is
+preserved and not credited. The repair rejects device namespaces and adds
+bounded harmless long-path fixtures, but no repair test ran during repair
+scripting. Relative paths retain legacy Win32 path-length behavior. Source 698,
+focused 5/5, platform 15/15, update service 212/212, definitive 295/295,
+adversarial 14/14, hosted, integration, destination, and closure remain pending;
+every earlier blocker remains open.
+
+Local checkpoint 2267 broad evidence passes Source `697/697`, focused `4/4`,
+update service `211/211`, strict lint, both locked workspaces, release, Flutter
+`852/852`, protocols `14/14 + 6/6`, and exact vault/process checks. Definitive,
+adversarial, hosted, integration, synchronization, destination, and closure
+evidence remains pending. These passes do not close the remove-to-activate,
+multi-file transaction, point-in-time authority, privileged actor, installed
+service/driver, pre-execution, signing/deployment, or Defender blockers above.
+
 Implementation-head CI/package and bounded artifact review pass, publication
 skips, and PR `#135` merges normally. This closes no authority limitation:
 privileged ancestor replacement, hostile filesystems, installed cross-identity
@@ -4048,3 +4066,47 @@ closure removes no blocker above: per-file no-replace is still not a package or
 install-tree transaction, and Android runtime/build, privileged filesystems,
 installed service/driver authority, pre-execution blocking, production signing,
 deployment, Defender replacement, and the complete antivirus goal remain open.
+
+## Checkpoint 2267 - Update Staged-File Remaining Limits
+
+Checkpoint 2267 scripts a final-name overwrite repair for shared update-service
+staged copy/write activation. A filesystem object appearing after target
+removal and the absence/parent rechecks must now be preserved by the shared OS
+no-replace primitive, with visible activation failure.
+
+No checkpoint-2267 test ran during the scripting phase. Focused, full crate,
+locked workspace/release, exact-295, hostile-report, hosted package,
+integration, synchronization, destination, and closure evidence remains
+pending. The protected vault remains read-only at 16,072 files, zero
+directories, 4,522,733 bytes, 5,357 each `.avoraxq`/`.json`/`.auth`, one
+`.metadata_auth_key`, and zero pending.
+
+No-replace does not repair the deliberate remove-to-activate availability gap:
+a crash or later failure can leave the target absent. Multi-file staging and
+install activation remain non-transactional. Ancestor authority is point-in-
+time and user-mode; unsupported platforms fail visibly, and administrators,
+SYSTEM/root, hostile filesystems, or kernel compromise remain outside the
+guarantee. Installed service authority, production signing/deployment, signed
+driver mediation, pre-execution blocking, Defender replacement, and the
+complete antivirus-hardening goal remain open. No live malware, EICAR, fixture
+execution, Defender weakening, install, service/driver start, release, or
+publication is authorized.
+
+Post-repair local evidence passes Source `698/698`, platform `15/15`, focused
+`5/5`, update service `212/212`, strict lint, both locked workspaces/release,
+Flutter `852/852`, protocols, exact `295/295`, dual-host adversarial `14/14`,
+eight unchanged lockfiles, zero process/residue, and the protected-vault
+invariant. This closes the local Windows final-name and long-absolute-path
+regression evidence only. Hosted cross-target, integration, synchronization,
+destination, and closure remain pending. The availability gap, multi-file
+transaction, privileged actor, hostile filesystem, installed authority,
+driver/pre-execution, signing/deployment, Defender replacement, and complete-
+project blockers above remain unchanged.
+
+Implementation-head CI and Windows/Linux/macOS package matrices pass at exact
+commit `6e06ac51`; publication skips and bounded checksum/SBOM artifact review
+passes without extraction or execution. Android runtime/build, normal merge,
+merged-main, synchronization, destination, and closure remain pending. Hosted
+compilation closes no update transaction, privileged actor, hostile filesystem,
+installed authority, driver, pre-execution, signing, deployment, or Defender
+blocker.

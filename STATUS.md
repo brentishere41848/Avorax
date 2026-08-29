@@ -8089,3 +8089,75 @@ pending residue/processes, all preserved backups, and the exact vault pass.
 Checkpoint 2266 is closed. Per-file transaction, privileged actor, hostile
 filesystem, installed service/driver, pre-execution, signing, deployment,
 Defender-replacement, and whole-project limits remain open.
+
+## Checkpoint 2267 - Update Staged-File No-Replace
+
+Status: **Locally implemented and definitively verified; hosted and destination evidence pending**.
+
+Shared update-service staged copy/write activation no longer ends in ordinary
+replacement-capable rename. After validated target removal, an absence recheck,
+and repeated parent-chain validation, it now enters the shared operating-system
+atomic no-replace primitive. Five harmless update-service fixtures and source-order contracts
+pin existing-target replacement, absent-target activation, competing-target
+preservation, and removal of ordinary rename.
+
+The focused definitive step, exact-295 validator, seven dual-host hostile report
+mutations, Source contract 698, audit matrix, threat model, testing commands,
+and dependency evidence are scripted. No checkpoint-2267 test ran during the
+scripting phase. Runtime, hosted, integration, synchronization, destination,
+and closure evidence remains pending. The protected vault remains read-only at
+16,072 files and zero pending.
+
+This repair does not remove the deliberate remove-to-activate availability gap
+or make multi-file staging/install activation transactional. Point-in-time
+path checks, privileged actors, hostile filesystems, installed authority,
+driver/pre-execution limits, signing/deployment, Defender replacement, and the
+complete antivirus-hardening goal remain open. No live malware, EICAR, fixture
+execution, Defender change, install, service/driver start, release, or
+publication is involved.
+
+Local broad execution now passes corrected dual-host parsing, formatting,
+Source `697/697` through the dependency-free runner, focused `4/4`, update
+service `211/211`, strict Clippy, both locked workspaces, locked all-feature
+release, Flutter analyze and `852/852`, and protocol analyze/tests `14/14 +
+6/6`. The first parse command and two `pytest` commands failed before parsing
+or test collection because of command binding and absent `pytest`; those
+failures are retained and no dependency was installed. Exact `295/295`,
+adversarial, hosted, integration, synchronization, destination, and closure
+evidence remains pending. The vault and every residual limit remain unchanged.
+
+The first definitive run then exposed a long-path integration defect at
+`release update-package builder signed verify smoke`: zero-flag `MoveFileExW`
+returned error 3 for a valid absolute staged update-log path beyond legacy
+`MAX_PATH`. Its failed report SHA-256 is
+`282747873caa9a0b7ba0caf8a85f13eb66287044d7446b9021ab08d6adc4dd77`
+and is not passing evidence. A complete repair batch is now scripted with
+bounded verbatim local-drive/UNC conversion, device-namespace rejection,
+harmless platform/update long-path fixtures, Source 698, and the seventh
+adversarial mutation. No repair test ran during repair scripting. Focused 5/5,
+platform 15/15, update service 212/212, exact 295/295, adversarial 14/14, and
+all broader reruns were required.
+
+The repaired local batch now passes formatting, dual-host parsing, Source
+`698/698`, platform `15/15`, focused activation `5/5`, update service
+`212/212`, strict affected-crate Clippy, both locked workspaces, locked release,
+Flutter `852/852`, and protocols `14/14 + 6/6`. The exact no-skip/no-Defender
+verifier passes `295/295` in 684 seconds with report SHA-256
+`17a32dd8ee483963cbf95c72cc8542910baee414f86f4ed1353d18d1beeebe6d`.
+Both PowerShell hosts accept it and reject all 14 host/mutation cases.
+
+Final local audit passes the exact 14-path batch with zero deletes, all eight
+lockfiles unchanged, zero product processes/pending/workflow residue, and the
+unchanged 16,072-file vault. Hosted exact-head CI/packages, PR integration,
+guarded synchronization, destination execution, and closure remain pending.
+The availability gap, non-transactional multi-file activation, privileged
+actor, hostile filesystem, installed service/driver, pre-execution, signing,
+deployment, Defender-replacement, and whole-project limits remain open.
+
+Implementation `6e06ac51` is PR `#143` exact head. Avorax CI `33247109048`
+passes all five jobs; Desktop Packages push/PR `33247093108`/`33247109041`
+pass all six platform assets, checksums, and lockfile SBOM with publication
+skipped. Both consolidated artifacts pass bounded non-extracting/non-executing
+8-root/6-platform/7-checksum/CycloneDX-1.6/569-component review. Evidence-head,
+normal merge, merged-main, guarded synchronization, destination verification,
+and closure remain pending.

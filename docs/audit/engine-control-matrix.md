@@ -5755,6 +5755,14 @@ accuracy, pre-execution, Defender-replacement, and privileged-race claims remain
 partial, blocked, limited, or unclaimed. Checkpoint 2261 is closed; the complete
 antivirus-hardening goal remains active.
 
+Local checkpoint 2267 evidence now passes Source `697/697`, focused `4/4`,
+update service `211/211`, strict lint, both locked workspaces, release, Flutter
+`852/852`, protocols `14/14 + 6/6`, and exact process/vault invariants. The
+shared activation, absent-target, existing-target, and competing-target rows
+are **Locally verified on Windows**. Cross-target hosted build, definitive
+exact-295, adversarial, integration, destination, and closure columns remain
+pending; no detection/custom-engine or technical-limit state is promoted.
+
 ## Checkpoint 2262 - Manual Trust-Mutation Hash Binding
 
 | Control / engine responsibility | Status | Scripted evidence and boundary |
@@ -5938,3 +5946,51 @@ invariant close checkpoint 2266. Android runtime/build, whole-package
 transactions, privileged-actor races, installed authority, driver,
 pre-execution, and Defender-replacement rows remain partial, blocked, or
 technically limited exactly as stated.
+
+## Checkpoint 2267 - Update Staged-File No-Replace Matrix
+
+| Control / engine responsibility | State | Evidence boundary |
+| --- | --- | --- |
+| Shared staged copy/write activation | **Locally verified on Windows** | Platform `15/15`, focused `5/5`, update service `212/212`, and exact-295 verification pass after removal and absence/parent rechecks. |
+| Existing regular target | **Locally verified** | Harmless fixture proves the remove-then-activate flow produces the staged bytes. |
+| Absent final target | **Locally verified** | Harmless fixture proves a successful no-replace move. |
+| Competing final target | **Locally verified** | Harmless collision fixture preserves both staged and competing bytes with visible failure. |
+| Long absolute Windows path | **Locally verified on Windows** | Bounded verbatim local-drive/UNC platform and update-service fixtures pass; device namespaces fail visibly. |
+| Unsupported platforms | **Disabled / fail-visible** | Shared helper rejects unsupported platforms instead of using replacement-capable rename. |
+| Availability and multi-file transaction | **Technically limited** | Deliberate target removal can leave absence after crash/failure; multiple files are not one transaction. |
+| Detection and custom engines | **Unchanged** | Hash/signature, local rules/YARA, static/PE/archive, heuristics, ML, Authenticode, process observation, allowlist/exclusion, cache, and verdict aggregation retain prior states and responsibilities. |
+| Installed/kernel prevention | **Blocked / technically limited** | User-mode point-in-time validation does not defeat privileged actors or demonstrate driver/pre-execution enforcement. |
+
+Checkpoint 2267 code, five harmless update-service tests plus one platform
+long-path test, focused verifier, exact-295 validator, Source contract 698,
+adversarial script, and documents are scripted.
+No checkpoint-2267 test ran during the scripting phase; runtime rows remain
+unverified. The protected 16,072-file vault with zero pending remains read-only.
+No live malware, EICAR, fixture execution, Defender change, install,
+service/driver start, release, or publication is involved. The complete
+antivirus-hardening goal remains active.
+
+The first definitive run is failed evidence: the release update-package builder
+smoke found that zero-flag `MoveFileExW` did not support its valid long absolute
+update-log path. The repair scripts bounded verbatim local-drive/UNC conversion,
+device-namespace rejection, and both long-path fixtures. No repair test ran
+during repair scripting. Runtime rows return to **Repair scripted / rerun
+pending** until Source 698, focused 5/5, platform 15/15, update service 212/212,
+exact 295/295, and adversarial 14/14 pass.
+
+Those post-repair gates now pass: Source `698/698`, focused `5/5`, platform
+`15/15`, update service `212/212`, both locked workspaces/release, Flutter
+`852/852`, protocols `14/14 + 6/6`, exact verifier `295/295`, and dual-host
+adversarial rejection `14/14`. Final local path/lock/process/residue/vault audit
+also passes. Hosted cross-target, integration, synchronization, destination,
+and closure evidence remains pending; technically limited and blocked rows are
+not promoted.
+
+Exact implementation-head CI and package push/PR matrices now pass on commit
+`6e06ac51`. Windows, Linux, and Apple desktop package builds, checksums, and
+lockfile SBOM pass; publication skips. Both consolidated artifacts pass bounded
+non-extracting 8/6/7/CycloneDX-1.6/569 review. The shared supported-platform
+build boundary is now **Hosted build verified** for Windows, Linux, and Apple;
+Android runtime/build evidence, normal integration, merged-main,
+synchronization, destination, and closure remain pending. No runtime or
+pre-execution claim is inferred from package compilation.
