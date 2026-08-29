@@ -5888,10 +5888,10 @@ limits remain technically limited.
 
 | Control / engine responsibility | State | Evidence boundary |
 | --- | --- | --- |
-| Signed package verification | **Locally regression verified** | Existing Ed25519 manifest and payload-hash verification remains mandatory before extraction; no trust key or package policy changes. |
-| Bounded payload extraction | **Locally regression verified** | Existing entry-count, path, per-entry, aggregate-byte, temporary-file, sync, and cleanup limits remain in force. |
-| Final extracted-file activation | **Locally verified on Windows / hosted targets pending** | Shared Windows, Linux/Android, and Apple atomic no-replace primitive replaces ordinary rename after repeated parent and absent-target checks. |
-| Competing extraction target | **Locally verified** | Harmless fixture requires staged and competing bytes to survive with a visible `without replacing` error. |
+| Signed package verification | **Verified regression** | Existing Ed25519 manifest and payload-hash verification remains mandatory; local, hosted, merged-main, and destination regressions pass. |
+| Bounded payload extraction | **Verified regression** | Existing entry-count, path, per-entry, aggregate-byte, temporary-file, sync, and cleanup limits pass local and destination exact-294 verification. |
+| Final extracted-file activation | **Windows runtime and desktop cross-target build verified** | Shared Windows, Linux/Android, and Apple atomic no-replace primitive replaces ordinary rename; Android runtime/build remains unverified. |
+| Competing extraction target | **Verified on Windows** | Local and destination harmless fixtures preserve staged and competing bytes with a visible `without replacing` error. |
 | Unsupported platforms | **Disabled / fail-visible** | Shared platform helper returns an error instead of using replacement-capable rename. |
 | Install-tree activation and rollback | **Unchanged / technically limited** | This checkpoint does not make directory replacement, rollback, or a multi-file update transactional. |
 | Detection engines and verdict aggregation | **Unchanged** | Hash/signature, local rule/YARA, static/PE/archive, heuristic, ML, Authenticode, process observation, allowlist/exclusion, and verdict aggregation responsibilities do not change. |
@@ -5929,3 +5929,12 @@ build boundary is now **Hosted build verified** for Windows, Linux, and Apple;
 Android runtime/build evidence, normal integration, merged-main,
 synchronization, destination, and closure remain pending. No runtime or
 pre-execution claim is inferred from package compilation.
+
+Evidence-head and merged-main CI/packages, bounded artifact review, normal PR
+merge, guarded exact 15-path zero-delete synchronization, destination Source
+`696/696`, broad regressions, exact `294/294`, 15/15 blob and 8/8 lock audit,
+zero residue/processes, all backup inventories, and the protected-vault
+invariant close checkpoint 2266. Android runtime/build, whole-package
+transactions, privileged-actor races, installed authority, driver,
+pre-execution, and Defender-replacement rows remain partial, blocked, or
+technically limited exactly as stated.
