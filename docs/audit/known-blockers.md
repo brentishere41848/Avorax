@@ -4174,3 +4174,11 @@ crash transactionality, manual backup recovery, cross-platform runtime,
 privileged filesystems, installed authority, driver/pre-execution,
 signing/deployment, Defender replacement, and the whole antivirus goal remain
 open.
+
+Implementation-head CI/packages now pass at exact `821d17666` in runs
+`33253639931`, `33253626820`, and `33253639896`; publication skips and both
+consolidated artifacts pass bounded non-extracting/non-executing 8/6/7/
+CycloneDX-1.6/569 review. This closes no cross-platform runtime, crash
+transactionality, manual recovery, privileged filesystem, installed authority,
+driver/pre-execution, signing/deployment, Defender replacement, or whole-goal
+blocker. Evidence-head, integration, destination, and closure remain pending.

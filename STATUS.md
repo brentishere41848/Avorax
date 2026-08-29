@@ -8242,3 +8242,11 @@ Hosted exact-head, integration, guarded synchronization, destination, and
 closure evidence remain pending. Transaction, privileged filesystem,
 installed authority, driver/pre-execution, signing/deployment, Defender-
 replacement, and whole-project limits remain open.
+
+Exact implementation `821d17666fd5739525c3803c15c98341046035eb` is PR
+`#145` and passes Avorax CI `33253639931` plus Desktop Packages push/PR
+`33253626820`/`33253639896`, with publication skipped. Consolidated artifacts
+`9715355338`/`9715311146` pass bounded non-extracting/non-executing exact
+8/6/7/CycloneDX-1.6/569-component review. Evidence-head hosted checks, normal
+merge, merged-main checks, guarded synchronization, destination verification,
+and closure remain pending; the whole antivirus-hardening goal stays active.

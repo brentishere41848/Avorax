@@ -6047,3 +6047,11 @@ Therefore the shared directory primitive and all update/rollback move rows are
 **Technically limited / not claimed**; installed/kernel prevention remains
 **Blocked / technically limited**. Cross-platform runtime, hosted, integration,
 guarded-sync, destination, and closure evidence remain pending.
+
+Exact implementation `821d17666` passes hosted CI `33253639931` and package
+push/PR `33253626820`/`33253639896`; publication skips. Both consolidated
+artifacts pass bounded non-extracting/non-executing 8/6/7/CycloneDX-1.6/569
+review. The supported-platform build row is therefore **Hosted build verified**
+for this implementation head. Runtime, transaction, installed/kernel,
+pre-execution, Defender-replacement, integration, destination, and closure rows
+retain their prior states.

@@ -14486,3 +14486,20 @@ pending.
   `.verification` remains untracked. Hosted exact-head, PR integration, merged-
   main, guarded synchronization, destination verification, and checkpoint
   closure remain pending; the complete antivirus-hardening goal remains active.
+
+## 2026-08-29 - Checkpoint 2268 Hosted Implementation Evidence
+
+- Exact implementation `821d17666fd5739525c3803c15c98341046035eb` is PR
+  `#145`. Avorax CI `33253639931` passes all five jobs; Desktop Packages push/PR
+  `33253626820`/`33253639896` pass all platform builds, consolidation, checksums,
+  and SBOM work with publication skipped.
+- Untouched consolidated artifacts `9715355338` and `9715311146` are
+  132,522,285 and 132,521,280 bytes with SHA-256
+  `3d13592cc487928e2eb2e3e52b648ed131237a335b12552cf8dce89d86d209fd` and
+  `966977a56e6740963346c7464c7ed1b4ac6d9f89941c563c52d7f30507503a0b`.
+  Bounded non-extracting/non-executing review passes exact 8-root/6-platform/
+  7-checksum/CycloneDX-1.6/569-component inventory for both.
+- Evidence-head hosted checks, normal merge, merged-main checks, guarded sync,
+  destination verification, and closure remain pending. Hosted compilation
+  expands no runtime, transaction, installed authority, pre-execution, signing,
+  deployment, or Defender-replacement claim.

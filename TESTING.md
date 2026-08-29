@@ -1485,3 +1485,11 @@ The first adversarial command used an unsupported parameter and stopped before
 execution; it is uncredited. Post-run process, pending-file, lock, and protected-
 vault audits pass. Hosted, integration, guarded-sync, destination, and closure
 evidence remain pending.
+
+Implementation-head PR `#145` at exact commit `821d17666fd5739525c3803c15c98341046035eb`
+passes CI `33253639931` and Desktop Packages push/PR
+`33253626820`/`33253639896`; publication is skipped. Untouched consolidated
+artifacts `9715355338` and `9715311146` pass bounded in-stream validation with
+exact 8 roots, 6 platform packages, 7 checksum targets, CycloneDX 1.6, and 569
+components. They were not extracted or executed. Evidence-head, merge,
+merged-main, guarded-sync, destination, and closure tests remain pending.

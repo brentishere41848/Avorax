@@ -156,3 +156,31 @@ and `4de19695f9207273746341ca2221541b5b86d9f72af83727afca78541e177694`.
 Hosted exact-head, normal PR integration, merged-main, guarded synchronization,
 destination verification, and closure remain pending. The complete antivirus-
 hardening goal remains active.
+
+## Hosted implementation-head evidence
+
+Exact implementation commit
+`821d17666fd5739525c3803c15c98341046035eb` is the head of normal PR `#145`.
+Avorax CI run `33253639931` passes all five jobs. Desktop Packages push run
+`33253626820` and PR run `33253639896` pass package contracts, Linux x64,
+Windows x64 MSI/EXE with non-installing administrative extraction, macOS arm64,
+macOS x64, consolidation, checksums, and lockfile SBOM generation. Publication
+is skipped in both runs.
+
+The untouched push consolidated artifact `9715355338` is 132,522,285 bytes with
+SHA-256
+`3d13592cc487928e2eb2e3e52b648ed131237a335b12552cf8dce89d86d209fd`.
+The untouched PR artifact `9715311146` is 132,521,280 bytes with SHA-256
+`966977a56e6740963346c7464c7ed1b4ac6d9f89941c563c52d7f30507503a0b`.
+Bounded in-stream review of each verifies exactly eight safe root entries, six
+platform packages, seven matching checksum targets, and CycloneDX 1.6 with 569
+components. Neither ZIP was extracted or executed. The retained validation
+result SHA-256 values are
+`062d71c7d977c888164a17472c7f70bd61ff537fd574a001f92bd4e852ac113b` and
+`c26ef57d6f0683253a3658118ba72ccfb9e81ce30c701c11bb52ba26a98b637a`.
+
+Evidence-head CI/packages, normal merge, merged-main CI/packages, guarded
+synchronization, destination verification, and closure remain pending. Hosted
+build evidence does not prove cross-platform runtime semantics, whole-update
+transactionality, production signing/deployment, installed authority,
+driver/pre-execution behavior, or Defender replacement.
