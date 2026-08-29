@@ -2393,3 +2393,21 @@ synchronization changes no lockfile; destination locked builds/tests and the
 all-eight-lockfile audit pass. Checkpoint 2264 is closed without a dependency
 or license delta. Final signed-binary notice provenance, production signing/
 notarization, enterprise deployment, and release approval remain separate.
+
+## Checkpoint 2265 Dependency Delta
+
+Checkpoint 2265 adds no dependency, changes no pinned version, introduces no
+network fetch or executable fixture, changes no license obligation, and requires
+no lockfile change. Local Core, Guard, and Native Engine already depend on the
+workspace `avorax_platform_security` crate and reuse its established OS
+no-replace primitive plus existing standard-library, `anyhow`, UUID, temporary-
+directory, and test facilities.
+
+All scripted collision fixtures contain harmless temporary ASCII and are never
+executed. No live malware or EICAR, network content, Defender change,
+machine-wide component, service/driver registration, protected-vault mutation,
+release, or publication is involved. No checkpoint-2265 test ran during the
+scripting phase. After batch freeze, both locked workspace suites, locked
+all-feature release, the definitive dependency gate inside exact `293/293`, and
+an explicit zero-lockfile-diff audit pass locally. Hosted package/SBOM and
+synchronized-destination dependency evidence remains pending.

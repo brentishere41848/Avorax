@@ -3299,7 +3299,7 @@ fn write_staged_quarantine_file(path: &Path, bytes: &[u8], label: &str) -> anyho
         })?;
         return Err(error);
     }
-    if let Err(error) = fs::rename(&temp_path, path) {
+    if let Err(error) = activate_guard_quarantine_metadata_no_replace(&temp_path, path, label) {
         cleanup_guard_quarantine_staged_file(&temp_path, label).with_context(|| {
             format!(
                 "failed to clean up temporary {label} {} after activation failure: {error:#}",
@@ -3310,6 +3310,14 @@ fn write_staged_quarantine_file(path: &Path, bytes: &[u8], label: &str) -> anyho
             .with_context(|| format!("failed to activate {label} {}", path.display()));
     }
     Ok(())
+}
+
+fn activate_guard_quarantine_metadata_no_replace(
+    staged: &Path,
+    destination: &Path,
+    label: &str,
+) -> anyhow::Result<()> {
+    avorax_platform_security::rename_file_no_replace(staged, destination, label)
 }
 
 fn guard_quarantine_staged_temp_path(path: &Path, label: &str) -> anyhow::Result<PathBuf> {
@@ -6041,6 +6049,33 @@ mod tests {
         assert_eq!(fs::read(&auth_path).unwrap(), b"existing auth");
         assert!(!auth_path.with_extension("auth.tmp").exists());
         std::env::remove_var("AVORAX_GUARD_QUARANTINE_DIR");
+    }
+
+    #[test]
+    fn guard_quarantine_metadata_no_replace_activation_preserves_competing_file() {
+        let dir = tempdir().unwrap();
+        let staged = dir.path().join("record.json.tmp-benign");
+        let destination = dir.path().join("record.json");
+        fs::write(&staged, b"benign staged guard quarantine metadata").unwrap();
+        fs::write(&destination, b"benign competing guard quarantine metadata").unwrap();
+
+        let error = activate_guard_quarantine_metadata_no_replace(
+            &staged,
+            &destination,
+            "guard quarantine metadata fixture",
+        )
+        .expect_err("a competing guard quarantine metadata file must not be replaced");
+        let detail = format!("{error:#}");
+
+        assert!(detail.contains("without replacing"), "{detail}");
+        assert_eq!(
+            fs::read(&staged).unwrap(),
+            b"benign staged guard quarantine metadata"
+        );
+        assert_eq!(
+            fs::read(&destination).unwrap(),
+            b"benign competing guard quarantine metadata"
+        );
     }
 
     #[cfg(unix)]

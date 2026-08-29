@@ -3951,3 +3951,30 @@ host authentic and adversarial content validation, all eight lockfiles, zero
 residue/processes, and the exact protected vault. Checkpoint 2264 is closed.
 The authority, installed-service/driver, production-calibration, pre-execution,
 and Defender-replacement limits above remain blockers or technical limits.
+
+## Checkpoint 2265 - Remaining Metadata Atomicity Limits
+
+Checkpoint 2265 scripts a repair for the known ordinary-rename final-name race:
+new Local Core and Guard quarantine journal/record/auth activations, plus the
+disabled Native compatibility path, now use shared no-replace activation. Local
+Core status/recovery replacement also uses no-replace after removing the
+validated previous object. A race-created destination is preserved and failure
+is visible.
+
+This closes only replacement at each final filename once execution evidence
+passes. Local execution evidence now passes. It does not provide a transaction
+across journal, record, and auth files;
+Local Core replacement retains a remove-to-activation gap. Authenticated recovery
+detects incomplete state but cannot make multi-file activation atomic. Privileged
+ancestor/path mutation, administrators, SYSTEM/root, hostile filesystems, kernel
+compromise, installed cross-identity service authority, signed-driver mediation,
+production calibration/signing, pre-execution blocking, and Defender replacement
+remain blockers or technical limits.
+
+No checkpoint-2265 test ran during the scripting phase. Focused and complete
+verification was then pending. Focused/broad local regression, strict lint,
+locked build/test, safe smoke, Source `695/695`, definitive `293/293`, and
+dual-host authentic/adversarial validation now pass. Hosted, integration,
+guarded-sync, and destination verification remain pending. No live malware,
+Defender change, protected-vault mutation, machine-wide install, service/driver
+start, release, or publication is authorized.

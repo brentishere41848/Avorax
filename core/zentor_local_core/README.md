@@ -93,3 +93,23 @@ Checkpoint 2264 focused collision, broader quarantine, strict changed-crate
 lint, locked workspace, release-build, and safe-smoke evidence passes locally.
 The definitive verifier passes exact `292/292`; hosted and synchronized-
 destination evidence remains pending.
+
+## Checkpoint 2265 Quarantine Metadata Activation
+
+Local Core now activates new quarantine finalization journals, metadata records,
+and authentication sidecars with the shared operating-system atomic no-replace
+primitive. Status and authenticated-recovery updates keep deliberate replacement
+semantics: the validated old file is removed before the staged file is activated
+with no-replace. A competing destination appearing during that gap is preserved
+and causes a visible failure instead of being overwritten.
+
+Guard uses the same boundary, and Native compatibility code receives matching
+regression coverage while remaining disabled. Atomicity covers one final name;
+the journal, record, and authentication sidecar are not a multi-file transaction.
+Checkpoint 2265 code, harmless collision tests, exact-293 verifier/validator,
+source contract, and documentation are scripted. No checkpoint-2265 test ran
+during the scripting phase. After the batch froze, focused `3/3`, broader
+quarantine, strict changed-crate lint, both locked workspaces, release, safe
+smoke, UI/protocol regressions, Source `695/695`, and exact definitive
+`293/293` pass locally. Hosted and synchronized-destination evidence remains
+pending.

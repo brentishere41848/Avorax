@@ -4105,3 +4105,36 @@ lockfiles, and final process/residue/vault audit close this checkpoint threat
 delta. The stated user-mode, privileged-actor, hostile-filesystem, installed-
 service/driver, pre-execution, production-accuracy, and Defender-replacement
 risks remain unchanged.
+
+## Checkpoint 2265 Threat Delta - Metadata Final-Name Replacement Race
+
+**Threat.** After an absence preflight, ordinary Unix rename could replace a
+quarantine finalization journal, metadata record, or authentication sidecar
+created at the final destination by a racing actor. Local Core's legitimate
+status/recovery replacement had the same risk after removing the validated old
+record.
+
+**Scripted controls.** Local Core and Guard activate new metadata through the
+shared operating-system no-replace primitive. Native compatibility code uses the
+same boundary but remains disabled. Local Core replacement preserves its
+required remove-old behavior, then activates no-replace. Three harmless fixtures
+require both staged and competing destination bytes to survive a direct
+activation collision and require fail-visible diagnostics. The exact verifier
+contract advances to 293 steps.
+
+**Residual risk.** No-replace protects one final destination name only. Local
+Core replacement retains a deliberate remove-to-activation gap. Journal, record,
+and auth files are separate non-transactional files; authenticated recovery can
+detect incomplete state but cannot make them atomic. Ancestor and path checks
+remain point-in-time user-mode checks. Administrators, SYSTEM/root, hostile
+filesystems, kernel compromise, installed cross-identity authority, signed-driver
+mediation, and demonstrated pre-execution blocking remain outside this control.
+
+No checkpoint-2265 test ran during the scripting phase. Focused, broad,
+definitive, hosted, integration, synchronization, and destination evidence were
+then pending. After batch freeze, focused `3/3`, broad quarantine, strict lint,
+locked workspace/release, safe smoke, UI/protocol, Source `695/695`, definitive
+`293/293`, and dual-host authentic/adversarial validation pass locally. Hosted,
+integration, synchronization, and destination evidence remain pending. No live
+malware, Defender weakening, vault mutation, machine-wide install,
+service/driver start, release, or publication is involved.
