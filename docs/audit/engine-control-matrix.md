@@ -5824,3 +5824,24 @@ is skipped. PR `#135` merges normally as
 `ed0484a605c7f5cc7a62d8c2dd8459ee969cec57`. The first three rows are now
 **Verified and implementation-integrated**; closure-head, merged-main,
 synchronization, and destination columns remain pending.
+
+The checkpoint-2263 pending columns above are superseded by exact merged-main,
+artifact, guarded-sync, destination `291/291`, validator/adversarial, lockfile,
+process/residue, and protected-vault evidence. Checkpoint 2263 is closed.
+
+## Checkpoint 2264 Quarantine Ingest No-Replace Matrix
+
+| Control / engine responsibility | State | Evidence boundary |
+| --- | --- | --- |
+| Local Core payload ingestion | **Definitively verified locally** | Shared no-replace rename and retained fallback pass collision/broader coverage, strict lint, locked workspaces, safe smoke, and exact-292 verification. |
+| Guard payload ingestion | **Definitively verified locally** | Same boundary and fail-visible dual-error contract pass focused/broader Guard tests, strict lint, workspaces, release, and exact-292 verification. |
+| Native direct quarantine compatibility | **Disabled / definitively verified locally** | Dormant path passes focused/broader Native coverage, strict lint, and exact-292 verification, but production mutation remains Local Core/Guard owned. |
+| Exclusive copy fallback | **Locally re-verified** | Existing bounded read, exclusive create, payload hash, source identity/link, cleanup, and source-removal regressions pass. |
+| Collision error reporting | **Verified locally** | All three fixtures retain both errors and preserve distinct source/destination bytes; no fake success. |
+| Detection engines and verdict aggregation | **Unchanged / broad local regression green** | Hash/signature, local rule/YARA, static/PE/archive, heuristic, ML, Authenticode, process observation, allowlist/exclusion, and aggregation contracts remain green in locked workspace tests. |
+| Privileged source/ancestor mutation | **Technically limited** | Atomicity covers only the final destination-name operation; user-mode checks remain point-in-time. |
+
+Checkpoint 2264 production, test, exact-292 verifier/validator, source-contract,
+audit, dependency, and safety scripting completed before execution. No
+checkpoint-2264 test ran during that phase. Focused, broad, and exact-292 local
+evidence now passes; hosted, integration, sync, and destination evidence remains.

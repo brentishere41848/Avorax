@@ -4074,3 +4074,28 @@ PR `#135` merges normally as
 `ed0484a605c7f5cc7a62d8c2dd8459ee969cec57`. This adds cross-target build
 evidence but does not expand the user-mode authority boundary. Closure-head,
 merged-main, guarded-sync, and destination verification remain pending.
+
+The checkpoint-2263 pending statement above is superseded by merged-main,
+artifact, guarded-sync, destination `291/291`, validator/adversarial, and exact
+final-state evidence. Checkpoint 2263 is closed without expanding user-mode
+authority.
+
+## Checkpoint 2264 - Quarantine Ingest Destination Race
+
+**Threat.** An opaque payload can appear after quarantine destination preflight.
+Ordinary Unix rename can replace that file before the exclusive copy fallback
+evaluates destination existence.
+
+**Scripted control.** Local Core, Guard, and disabled Native compatibility code
+call the shared OS atomic no-replace operation first. Cross-filesystem,
+unsupported, or other rename failure may use the existing exclusive verified
+copy path. A dual failure retains both causes. Three harmless runtime fixtures
+require unchanged source and competing destination bytes.
+
+**Residual risk.** The primitive protects the final destination name only.
+Source identity and ancestor checks remain point-in-time user-mode controls;
+administrators, SYSTEM/root, hostile filesystems, and kernel compromise remain
+outside the guarantee. Native direct quarantine remains disabled compatibility
+code. No checkpoint-2264 test ran during scripting. Focused collision and broad
+local workspace/release/UI/protocol evidence and definitive exact-292 validation
+now pass. Hosted, integration, and destination evidence remains pending.

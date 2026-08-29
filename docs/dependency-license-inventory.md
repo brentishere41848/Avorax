@@ -2365,3 +2365,25 @@ artifacts `9704536389` and `9704698986` pass exact bounded
 extraction or execution. PR `#135` merges as
 `ed0484a605c7f5cc7a62d8c2dd8459ee969cec57`. Closure-head, merged-main,
 synchronization, and destination dependency evidence remains pending.
+
+The checkpoint-2263 pending dependency status above is superseded. Merged-main
+package run `33221330616` and artifact `9705654475` pass exact-head bounded
+8/6/7/CycloneDX-1.6/569 review with publication skipped; guarded synchronization
+changes no lockfile, and destination locked builds/tests plus all-eight-lock
+audit pass. Checkpoint 2263 is closed without a dependency or license delta.
+
+## Checkpoint 2264 Dependency Delta
+
+Checkpoint 2264 adds no dependency, package source, binary fixture, license
+class, network fetch, or lockfile change. Local Core, Guard, and Native Engine
+already pin the workspace `avorax_platform_security` crate; the change reuses
+its checkpoint-2263 OS no-replace boundary and each owner's existing standard
+filesystem, `anyhow`, and hashing facilities.
+
+All scripted fixtures are harmless temporary ASCII and are never executed. No
+live malware or EICAR, network content, machine-wide component, Defender
+change, service/driver registration, release, or publication is involved.
+Both locked workspace suites and the locked all-feature release build pass.
+No lockfile is present in the tracked diff. The definitive dependency gate
+passes inside exact-292 verification. Hosted package/SBOM, guarded
+synchronization, and destination dependency evidence remain pending.

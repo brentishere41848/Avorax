@@ -13972,3 +13972,77 @@ pending.
   `ed0484a605c7f5cc7a62d8c2dd8459ee969cec57`. Closure-head and merged-main
   workflows, guarded synchronization, and destination verification remain
   pending; checkpoint 2263 and the complete goal remain open.
+
+### Checkpoint 2263 Closure
+
+- The historical pending status above is superseded. Final merged `main`
+  `63de2a46494b136e55e6ad165f665806dd8add4e` passes CI `33221315634` and
+  packages `33221330616`; publication skips. Artifact `9705654475` passes the
+  bounded non-extracting 8/6/7/CycloneDX-1.6/569 review.
+- Guarded exact-base synchronization applied 16 paths, 15 modified and one
+  added with zero deleted. Destination Source `693/693`, focused checks, safe
+  restore smoke, strict lint, both locked workspaces, release, Flutter
+  `852/852`, protocols, and exact verifier `291/291` pass. Both validators and
+  all six adversarial mutations pass. Final audit confirms exact blobs, all
+  eight lockfiles, no process/residue, and the unchanged 16,072-file vault.
+- Checkpoint 2263 is closed. Its privileged ancestor/user-mode limitations and
+  the complete antivirus-hardening goal remain active.
+
+## Checkpoint 2264 - Quarantine Ingest No-Replace (Scripted)
+
+- Audited Local Core, Guard, and disabled Native compatibility quarantine
+  ingestion. Ordinary Unix rename could replace an opaque payload created
+  after absence preflight.
+- Scripted shared atomic no-replace movement before the existing exclusive,
+  bounded, hash-verified copy fallback. If both paths fail, diagnostics retain
+  both causes. Three harmless collision fixtures require source and competing
+  destination bytes to remain unchanged.
+- Scripted definitive step `quarantine ingest atomic no-replace regressions`,
+  exact `292`-step validator requirements, source contracts, control matrix,
+  threat model, dependency review, and checkpoint report.
+- No checkpoint-2264 test ran during the scripting phase. Focused, broad,
+  definitive, hosted, integration, guarded-sync, and destination evidence is
+  pending. No live malware, fixture execution, Defender change, protected-vault
+  mutation, install, service/driver start, release, or publication is allowed.
+
+## Checkpoint 2264 - Local Verification
+
+- After the scripted batch froze, formatting and dual-host parser checks pass,
+  Source passes exact `694/694`, the corrected collision filter passes `3/3`,
+  and broader quarantine coverage passes Platform `8/8`, API `3/3`, Guard
+  `50/50`, Local Core `139/139`, and Native `38/38`.
+- Both locked workspace variants and the locked all-feature release build pass.
+  Strict all-feature Clippy passes for Local Core, Guard, and Native. Broad
+  workspace Clippy remains honestly non-passing only in untouched
+  `services/api` under Rust 1.96 (`items_after_test_module` and
+  `enum_variant_names`).
+- Safe temporary quarantine/restore smoke passes with the competing destination
+  preserved. Flutter analyze passes with `852/852` tests; both protocol
+  analyzers pass with Zentor `14/14` and Avorax `6/6`.
+- The first focused compile rejected missing required owner labels on all three
+  helper calls; fixed constant labels then passed. A first PS5 parser wrapper
+  was invalid due outer-shell variable expansion; corrected quoting passed.
+  Neither failed attempt is represented as product success.
+- Definitive verifier, independent/adversarial validation, hosted exact-head,
+  integration, guarded synchronization, and destination evidence remain
+  pending. The complete antivirus-hardening goal remains active.
+
+## Checkpoint 2264 - Definitive Local Evidence
+
+- The no-skip/no-Defender verifier passes exact `292/292`, zero failed/skipped,
+  in `659.4s`. Its 217,855-byte report SHA-256 is
+  `1c2ecc9ab68b9baf0b1da1240dc524759b18484df5aaeb29a4c973315c3a3d18`.
+- Integrated and independent Windows PowerShell 5.1/PowerShell 7 validators
+  accept the authentic report. Both hosts reject missing required step,
+  verified-scope, and technical-limit mutations (`6/6`); retained result
+  SHA-256 is
+  `f48d9038b494bb4dc6b107747e7f9d7470e1a6b9db79e9525197ee80bbd2fe3d`.
+- The first definitive invocation stopped before step 1 because a configured
+  PowerShell 7 path was first unquoted and then pointed to an absent standard
+  installation. The corrected bundled-runtime path produced the only claimed
+  verifier result. Hosted exact-head, merge, guarded sync, and destination
+  evidence remains pending.
+- Final local audit confirms no changed lockfile, zero product processes, no
+  retained safe-smoke root, and the protected vault still at `16072` files,
+  `0` directories, `4522733` bytes, `5357` each payload/JSON/auth records, one
+  metadata key, and zero pending.

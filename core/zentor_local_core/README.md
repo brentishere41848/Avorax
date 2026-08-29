@@ -76,3 +76,20 @@ A competing destination is preserved and failure remains visible; unsupported
 platforms do not fall back to replacement-capable rename. Checkpoint 2263 does
 not remove the documented privileged path-ancestor race or add kernel/driver
 enforcement.
+
+## Checkpoint 2264 Quarantine Ingestion
+
+Quarantine ingestion in Local Core and Guard now calls the same shared atomic
+no-replace platform boundary before the existing exclusive verified copy
+fallback. A destination created after preflight is preserved; if atomic rename
+and fallback both fail, both causes remain in the visible error. Cross-filesystem
+or unsupported atomic rename can still use the safe exclusive-copy path.
+
+The Native direct-quarantine compatibility implementation receives the same
+repair but remains disabled in production. Local Core and Guard remain active
+mutation owners. Final-name atomicity does not create an immutable source lease,
+cross-identity authorization, kernel mediation, or pre-execution blocking.
+Checkpoint 2264 focused collision, broader quarantine, strict changed-crate
+lint, locked workspace, release-build, and safe-smoke evidence passes locally.
+The definitive verifier passes exact `292/292`; hosted and synchronized-
+destination evidence remains pending.
