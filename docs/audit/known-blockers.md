@@ -4371,3 +4371,41 @@ filesystems, storage rollback/reordering, and kernel compromise; package-wide
 power-loss transactionality; production signing/deployment; signed driver and
 proven pre-execution enforcement; Defender replacement; and complete
 antivirus-goal closure.
+
+## Checkpoint 2273 Cleanup Tombstone Limits
+
+Checkpoint 2273 scripts exact typed cleanup tombstones and a distinct
+HMAC-authenticated cleanup-journal retirement state. This narrows the crash
+window in which a removed staging/backup name can later look like an unexplained
+active orphan. Exact recognized cleanup residue can be resumed; malformed,
+conflicting, tampered, restored-active-name, or ambiguous evidence remains
+blocked and preserved.
+
+No checkpoint-2273 test ran during the scripting phase. Post-freeze local
+Source `704/704`, focused cleanup `8/8`, activation recovery `30/30`, full
+update service `4 + 240`, workspace/release/Flutter/protocol suites, exact
+`301/301` verifier, dual-host authentic validation, `20/20` hostile mutation
+rejection, and final safety audit pass. Hosted package/CI, integration, merge,
+destination, and closure evidence remains pending.
+
+This checkpoint does not remove the Windows removal-durability blocker.
+`MOVEFILE_WRITE_THROUGH` and Unix directory synchronization are best-effort
+user-mode ordering evidence, not proof of same-volume Windows rename/delete
+persistence, truthful storage caches, filesystem replay ordering, or one atomic
+transaction. A replay that restores an active staging/backup name after the
+journal became cleanup state fails closed for manual review. Root/admin/SYSTEM,
+hostile filesystems, storage rollback, kernel compromise, installed identity,
+Android, production signing/deployment, driver/pre-execution enforcement,
+Defender replacement, and complete-goal closure remain blocked, partial, or
+technically limited. The 16,072-file vault remains untouched with zero pending.
+
+Exact implementation-head evidence removes only the narrow hosted-execution
+blocker for these scripted cleanup paths on the fixed Ubuntu CI route: job
+`99223208370` passes update service `4 + 240` and every one of the eight cleanup
+regressions. CI and both package matrices pass with publication skipped, and
+both consolidated artifacts pass bounded non-extracting review. Normal merge,
+merged-main evidence, destination synchronization, and closure remain pending.
+Windows removal persistence, truthful storage, broader filesystems/identities,
+Android, package-wide power-loss transactionality, privileged/hostile actors,
+signing/deployment, driver/pre-execution enforcement, Defender replacement,
+and complete-goal blockers are not removed.

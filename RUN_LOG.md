@@ -15003,3 +15003,77 @@ pending.
   the protected vault invariant. Checkpoint 2272 closes; all documented
   durability, privilege, driver/pre-execution, Defender, and whole-goal limits
   remain open.
+
+## 2026-08-30 - Checkpoint 2273 Cleanup Tombstone Scripting
+
+- Scripted a typed update-recovery cleanup protocol before running any test.
+  Staging and backup trees move no-replace into one of four exact cleanup names;
+  the HMAC-authenticated active journal then moves to a distinct cleanup-journal
+  name before either tombstone is removed.
+- A later locked recovery pass inventories at most 128 recovery entries, resumes
+  authenticated cleanup journals, removes exact orphan cleanup tombstones, and
+  rejects malformed names, multiple dispositions, tampered journals, restored
+  active names, links/reparse points, and ambiguous state without deleting the
+  evidence it cannot justify.
+- Added eight benign temporary-directory regressions, verifier step 301, exact-301
+  report validation, Source contract 704, and the full checkpoint audit,
+  threat-model, blocker, dependency, testing, protection, status, and matrix
+  documentation batch.
+- No checkpoint-2273 test ran during the scripting phase. After freeze, the
+  focused cleanup filter passed `8/8`, complete activation recovery passed
+  `30/30`, update service passed `4 + 240`, Source passed `704/704` after one
+  honest stale-contract failure was repaired, and both locked workspace
+  variants, strict Clippy, release, Flutter `852/852`, and protocols
+  `14/14 + 6/6` passed.
+- Final diff review found that an orphan tombstone could be removed before a
+  replay-restored active sibling was reported. The guard was moved before every
+  orphan cleanup, an eighth preservation regression and source-order contract
+  were added, and all affected/broad/definitive evidence was rerun. The earlier
+  seven-test verifier report is superseded and is not credited.
+- The definitive verifier passed exact `301/301` with zero failed/skipped or
+  non-null step errors in `597.3s`; Defender/EICAR integration opt-in remained
+  false. Its 229,793-byte report SHA-256 is
+  `412da5f6f77c0f1567293ae1903dbd0595094f0e0f9fe696606efbdc328bd88a`.
+  PowerShell 5.1 and 7 accepted the authentic report and rejected all `20/20`
+  adversarial host/path/status/count/step/scope mutations.
+- Final local audit passed exact 12 tracked modifications, one new report, zero
+  deletions, nine unchanged lockfiles, zero product process/pending/temp
+  residue, and the exact protected-vault invariant. Hosted, integration,
+  synchronized-destination, merge, and closure evidence remains pending.
+- Cleanup tombstones reduce stale active-name ambiguity; they do not prove
+  Windows same-volume rename/delete persistence, storage ordering, hostile-
+  filesystem safety, or package-wide power-loss atomicity. No live malware,
+  Defender weakening, install, service/driver start, release, publication, or
+  protected-vault mutation occurs. The eight checkpoint fixtures contain no
+  EICAR; the inherited verifier used only its established safe EICAR text and
+  simulator fixtures without Defender integration. The protected vault remains
+  16,072 files with zero pending, and the complete antivirus-hardening goal
+  remains active.
+
+## 2026-08-30 - Checkpoint 2273 Implementation-Head Hosted Evidence
+
+- Exact implementation `b594573f744b57dccf13f358e972720d54c288a3` passes all
+  six Avorax CI jobs in run `33298892119`. Rust job `99223208370` passes
+  update service `4 + 240`, including all eight cleanup-tombstone regressions;
+  macOS 15 job `99223208360` passes its four selected recovery-permission and
+  namespace-durability fixtures with 255 filtered out.
+- Desktop Packages push/PR runs `33298848017`/`33298892093` pass contracts,
+  Windows MSI/EXE, Linux DEB/tar, both macOS DMGs, consolidation, checksums,
+  and lockfile SBOM. Both prerelease-publication jobs are skipped.
+- Untouched consolidated artifacts `9728478108`/`9728452926` are
+  132,703,055/132,700,501 bytes with SHA-256
+  `13789e0101df1aa6a122b4053e2b6c8fb81266c17ce32f74483913e29ffbf8a4`/
+  `480605b3e0a8045cb230c0b9f113afb097561c68dd2d02853bea243d473da901`.
+  Both pass bounded in-stream 8-entry/6-platform/7-checksum/CycloneDX-1.6/
+  569-component review without extraction or execution.
+- Final local audit SHA-256
+  `9b85e79e2e93d9f6c724997123b1c42208e59c5e96af8ca9206d87d3eae4cba6`
+  passes exact 12-modified/one-added/zero-delete scope, nine unchanged locks,
+  zero product process/residue, and the exact protected vault.
+- Hosted evidence verifies the cleanup protocol inside the complete update-
+  service suite on the fixed Ubuntu runner and preserves the macOS recovery
+  regression route. Normal merge, merged-main evidence, guarded destination
+  sync, destination verification, and closure remain pending. Windows removal
+  durability, storage truthfulness, package transactionality, installed
+  identity, Android, privileged/hostile filesystems, driver/pre-execution,
+  Defender replacement, and whole-goal limits remain open.

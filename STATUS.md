@@ -8601,3 +8601,58 @@ package-wide atomicity, privileged actors, installed identity, Android,
 production signing/deployment, driver/pre-execution enforcement, Defender
 replacement, and complete antivirus-goal closure remain open or technically
 limited.
+
+## Checkpoint 2273 Local Verified State
+
+Checkpoint 2273 scripts recoverable cleanup tombstones for update activation.
+Before recursive removal, each staging or backup tree moves no-replace into the
+private recovery directory under one exact disposition name. After the active
+paths reach a valid final state, the HMAC-authenticated journal moves to an exact
+cleanup-journal name. Only then are the tree tombstone and cleanup journal
+removed. Restart recovery recognizes those bounded states and completes cleanup;
+malformed, conflicting, tampered, reparse, or ambiguous evidence fails visibly
+and remains available for review.
+
+Eight harmless temporary-directory tests, Source contract 704, verifier step
+301, exact-301 validation, and all audit/dependency/operational documents were
+scripted before execution. No checkpoint-2273 test ran during the scripting
+phase. Post-freeze local evidence passes cleanup `8/8`, activation recovery
+`30/30`, update service `4 + 240`, Source `704/704`, strict Clippy, both locked
+workspace variants, release, Flutter `852/852`, protocols `14/14 + 6/6`, and
+the definitive no-skip/no-Defender verifier `301/301`. Both validator hosts
+accept the authentic report and reject all `20/20` mutations. Hosted CI/package,
+merge, destination, and closure evidence remains pending.
+
+This narrows cleanup replay ambiguity but does not prove Windows same-volume
+rename or deletion persistence, storage write ordering, power-loss atomicity,
+or defense against administrators, SYSTEM/root, hostile filesystems, rollback,
+or kernel compromise. It changes no UI control, detector/custom-engine duty,
+threshold, quarantine authority, realtime authority, driver/pre-execution
+claim, or Defender relationship. No live malware is used; checkpoint-specific
+fixtures contain no EICAR, while the inherited full verifier uses only its safe
+EICAR text/simulator fixtures with Defender integration disabled. The protected
+vault remains exactly 16,072 files with zero pending, and the complete antivirus-
+hardening goal remains active.
+
+## Checkpoint 2273 Implementation-Head Hosted State
+
+Exact implementation `b594573f744b57dccf13f358e972720d54c288a3`
+passes all six Avorax CI jobs in run `33298892119`. Rust job `99223208370`
+passes update service `4 + 240` and explicitly reports all eight cleanup-
+tombstone tests green. macOS 15 job `99223208360` passes its four selected
+recovery-permission and namespace-durability fixtures with 255 filtered out.
+
+Desktop Packages push/PR `33298848017`/`33298892093` pass every platform and
+consolidation job; both publication jobs are skipped. Consolidated artifacts
+`9728478108`/`9728452926` pass bounded non-extracting/non-executing exact
+8-entry/6-platform/7-checksum/CycloneDX-1.6/569-component review. Final local
+audit SHA-256 is
+`9b85e79e2e93d9f6c724997123b1c42208e59c5e96af8ca9206d87d3eae4cba6`.
+
+The cleanup protocol is now locally and implementation-head hosted verified on
+the fixed runners. Normal merge, merged-main CI/packages, guarded destination
+synchronization, destination regression, and checkpoint closure remain
+pending. Windows removal durability, storage truthfulness, package-wide
+transactionality, privileged/hostile filesystems, installed identity, Android,
+production signing/deployment, driver/pre-execution enforcement, Defender
+replacement, and the complete antivirus goal remain open or limited.

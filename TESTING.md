@@ -1925,3 +1925,77 @@ PowerShell 5.1 and 7 accept it; eight content mutations on each host are
 rejected, exact `16/16`. Final destination audit verifies 14 blobs, nine
 unchanged locks, 26 backups, zero product process/pending/temp residue, and the
 exact protected vault.
+
+## Checkpoint 2273 Update Recovery Cleanup Tombstones
+
+Checkpoint 2273 tests only harmless ASCII files in isolated temporary
+directories. Fixtures are moved/read as data and are never executed. No live
+malware, EICAR, network content, Defender setting, machine-wide install,
+service/driver start, release, publication, or protected-vault mutation belongs
+to this checkpoint.
+
+The complete scripting batch must freeze before running these focused checks:
+
+```powershell
+python -B tools\testing\run-python-source-contracts.py
+cargo fmt --all -- --check
+cargo test --locked --manifest-path core\avorax_update_service\Cargo.toml `
+  activation_recovery_cleanup_ -- --test-threads=1
+cargo test --locked --manifest-path core\avorax_update_service\Cargo.toml `
+  activation_recovery -- --test-threads=1
+powershell.exe -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass `
+  -File tools\testing\verify-small-threat-mvp.ps1 `
+  -RepoRoot . `
+  -ReportPath .workflow\ultracode\avorax-hardening\results\checkpoint-2273-update-recovery-cleanup-tombstones-report.json
+```
+
+The focused filter must select all eight `activation_recovery_cleanup_` tests.
+Source must report exactly `704` tests, and the definitive no-skip/no-Defender
+report must contain exactly `301` passed steps before it may be credited. Both
+PowerShell 5.1 and 7 validators must accept the authentic report and reject
+wrong count, missing step/scope, malformed path, tampered host, and terminal
+status mutations.
+
+No checkpoint-2273 test ran during the scripting phase. After freeze, Source
+passed `704/704` after one initial stale-contract failure was repaired; cleanup
+passed `8/8`, activation recovery `30/30`, and the full update service
+`4 + 240`. Formatting/diff checks, strict affected and workspace Clippy, both
+locked workspace variants, and locked all-feature release passed. Flutter
+analysis/tests passed `852/852`; protocols passed `14/14 + 6/6`.
+
+The definitive no-skip verifier passed exact `301/301`, zero failed/skipped and
+zero non-null step errors, in `597.3s`. Defender/EICAR integration opt-in was
+false. The 229,793-byte report SHA-256 is
+`412da5f6f77c0f1567293ae1903dbd0595094f0e0f9fe696606efbdc328bd88a`.
+PowerShell 5.1 and 7 accepted the authentic report and rejected ten mutations
+per host, exact `20/20`. Final local audit passed 12 tracked modifications, one
+new report, zero deletions, nine unchanged lockfiles, zero product process,
+pending-file, or temporary-root residue, and the exact 16,072-file,
+4,522,733-byte protected-vault invariant.
+
+A final diff review after the first local sweep found and repaired an orphan-
+tombstone ordering issue: unexplained active staging/backup siblings are now
+rejected before any orphan tombstone is removed. The eighth regression proves
+both pieces of evidence survive. The exact results and report hash above come
+from the complete post-repair rerun; the earlier report is superseded.
+
+Hosted CI/package, merge, destination, and closure evidence remains pending.
+Windows same-volume rename/delete persistence, storage ordering, hostile
+filesystems, VM power-cut behavior, installed identity, package-wide atomicity,
+and the complete antivirus-hardening goal remain outside this focused test.
+
+### Checkpoint 2273 implementation-head hosted evidence
+
+Avorax CI `33298892119` passes all six jobs at exact SHA
+`b594573f744b57dccf13f358e972720d54c288a3`. Ubuntu Rust job `99223208370`
+runs the locked complete update-service suite and reports `4 + 240` passed,
+including each of the eight named `activation_recovery_cleanup_` tests. macOS
+15 job `99223208360` reports `4 passed; 0 failed; 255 filtered out` for its
+selected recovery-permission and namespace-durability fixtures.
+
+Desktop Packages push/PR `33298848017`/`33298892093` pass every build and
+consolidation job with publication skipped. Consolidated artifacts
+`9728478108`/`9728452926` pass bounded in-stream exact inventory, internal
+SHA-256, and CycloneDX checks without extraction or execution. Evidence-head,
+normal merge, merged-main, guarded zero-delete destination synchronization,
+destination full verification, and final closure audit remain required.

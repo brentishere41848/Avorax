@@ -2756,3 +2756,32 @@ Final audit confirms zero manifest, lockfile, dependency, registry, source,
 feature, network-runtime, or license-class delta. Checkpoint 2267 is closed;
 Android runtime/build, production signing/notarization, final notice
 provenance, enterprise deployment, and release approval remain separate.
+
+## Checkpoint 2273 Dependency Delta
+
+Checkpoint 2273 adds no dependency and requires no lockfile change. Typed
+cleanup state, bounded inventory, no-replace moves, HMAC journal verification,
+path checks, and temporary-directory tests reuse the Rust standard library plus
+the already pinned internal `avorax_platform_security`, `anyhow`, `serde`,
+`hmac`, and `sha2` surfaces. No manifest, registry source, version, feature,
+network runtime, binary fixture, or license class is added.
+
+No checkpoint-2273 test ran during the scripting phase. Post-freeze locked
+build/test, strict Clippy, release, dependency evidence, and no-malware-binaries
+gates pass; all nine tracked lockfiles are unchanged. Hosted final-artifact
+SBOM/package, integration, destination, and closure evidence remains pending.
+No live malware, Defender change, install, service/driver start, release,
+publication, or protected-vault mutation occurs. Checkpoint fixtures contain no
+EICAR; the inherited verifier's safe text/simulator fixtures run without
+Defender integration. The protected vault remains 16,072 files with zero
+pending, and the complete antivirus-hardening goal remains active.
+
+Implementation-head package push/PR runs `33298848017`/`33298892093` pass
+dependency/license evidence, six platform files, seven checksums, and
+CycloneDX 1.6 with the unchanged 569-component inventory; publication is
+skipped. Consolidated artifacts `9728478108`/`9728452926` pass bounded review
+without extraction or execution. All nine tracked lockfiles remain unchanged,
+so the dependency and license delta is still zero. Evidence-head, merge,
+destination, and closure evidence remains pending; Android runtime/build,
+production signing/notarization, final notice provenance, enterprise
+deployment, and release approval remain separate.

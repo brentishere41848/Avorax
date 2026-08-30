@@ -42,6 +42,7 @@ pub struct ActivationRecoverySummary {
     pub completed_activations: usize,
     pub aborted_pre_activation: usize,
     pub removed_journals: usize,
+    pub removed_cleanup_tombstones: usize,
 }
 
 impl ActivationRecoverySummary {
@@ -50,7 +51,64 @@ impl ActivationRecoverySummary {
         self.completed_activations += other.completed_activations;
         self.aborted_pre_activation += other.aborted_pre_activation;
         self.removed_journals += other.removed_journals;
+        self.removed_cleanup_tombstones += other.removed_cleanup_tombstones;
     }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum RecoveryCleanupDisposition {
+    AbortedExistingStaging,
+    RecoveredExistingStaging,
+    CompletedExistingBackup,
+    AbortedNewStaging,
+}
+
+impl RecoveryCleanupDisposition {
+    const ALL: [Self; 4] = [
+        Self::AbortedExistingStaging,
+        Self::RecoveredExistingStaging,
+        Self::CompletedExistingBackup,
+        Self::AbortedNewStaging,
+    ];
+
+    fn name(self) -> &'static str {
+        match self {
+            Self::AbortedExistingStaging => "aborted-existing-staging",
+            Self::RecoveredExistingStaging => "recovered-existing-staging",
+            Self::CompletedExistingBackup => "completed-existing-backup",
+            Self::AbortedNewStaging => "aborted-new-staging",
+        }
+    }
+
+    fn parse(value: &str) -> Result<Self> {
+        match value {
+            "aborted-existing-staging" => Ok(Self::AbortedExistingStaging),
+            "recovered-existing-staging" => Ok(Self::RecoveredExistingStaging),
+            "completed-existing-backup" => Ok(Self::CompletedExistingBackup),
+            "aborted-new-staging" => Ok(Self::AbortedNewStaging),
+            _ => anyhow::bail!("unknown update activation cleanup disposition: {value}"),
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum RecoveryJournalState {
+    Active,
+    Cleanup,
+}
+
+#[derive(Debug)]
+struct RecoveryCleanupTombstone {
+    operation_id: String,
+    disposition: RecoveryCleanupDisposition,
+    path: PathBuf,
+}
+
+#[derive(Debug, Default)]
+struct RecoveryEntryInventory {
+    active_journals: Vec<PathBuf>,
+    cleanup_journals: Vec<PathBuf>,
+    cleanup_tombstones: Vec<RecoveryCleanupTombstone>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
@@ -339,12 +397,48 @@ fn recover_pending_locked(
     boundary: &Path,
     recovery_root: &Path,
 ) -> Result<ActivationRecoverySummary> {
-    let journal_paths = enumerate_recovery_journals(recovery_root)?;
+    let inventory = enumerate_recovery_entries(recovery_root)?;
     let mut summary = ActivationRecoverySummary::default();
-    for journal_path in journal_paths {
+    for journal_path in inventory.active_journals {
         let record = read_authenticated_journal(recovery_root, &journal_path)?;
         let item = reconcile_record_locked(boundary, recovery_root, &journal_path, &record)?;
         summary.add_assign(&item);
+    }
+    for journal_path in inventory.cleanup_journals {
+        if path_is_absent(&journal_path)? {
+            continue;
+        }
+        let item = reconcile_cleanup_journal_locked(boundary, recovery_root, &journal_path)?;
+        summary.add_assign(&item);
+    }
+    let mut orphan_tombstones = Vec::new();
+    for tombstone in inventory.cleanup_tombstones {
+        if !path_is_absent(&tombstone.path)? {
+            orphan_tombstones.push(tombstone);
+        }
+    }
+    for tombstone in &orphan_tombstones {
+        anyhow::ensure!(
+            orphan_tombstones
+                .iter()
+                .filter(|candidate| candidate.operation_id == tombstone.operation_id)
+                .count()
+                == 1,
+            "multiple orphaned update activation cleanup tombstones exist for operation {}; preserving all evidence",
+            tombstone.operation_id
+        );
+    }
+    ensure_no_orphan_activation_siblings(boundary)?;
+    for tombstone in orphan_tombstones {
+        finish_recovery_directory_cleanup(
+            &tombstone.path,
+            &format!(
+                "orphaned {} update activation cleanup tombstone for {}",
+                tombstone.disposition.name(),
+                tombstone.operation_id
+            ),
+        )?;
+        summary.removed_cleanup_tombstones += 1;
     }
     ensure_no_orphan_activation_siblings(boundary)?;
     Ok(summary)
@@ -356,7 +450,13 @@ fn reconcile_record_locked(
     journal_path: &Path,
     record: &ActivationRecoveryRecord,
 ) -> Result<ActivationRecoverySummary> {
-    validate_record(boundary, recovery_root, journal_path, record)?;
+    validate_record(
+        boundary,
+        recovery_root,
+        journal_path,
+        record,
+        RecoveryJournalState::Active,
+    )?;
     let authenticated = read_authenticated_journal(recovery_root, journal_path)?;
     anyhow::ensure!(
         authenticated == *record,
@@ -367,19 +467,35 @@ fn reconcile_record_locked(
         path_is_directory_or_absent(&paths.destination, "recovery destination")?;
     let staging_exists = path_is_directory_or_absent(&paths.staging, "recovery staging")?;
     let backup_exists = path_is_directory_or_absent(&paths.backup, "recovery backup")?;
+    let cleanup_tombstones =
+        existing_operation_cleanup_tombstones(recovery_root, &record.operation_id)?;
+    anyhow::ensure!(
+        cleanup_tombstones.len() <= 1,
+        "multiple update activation cleanup tombstones exist for authenticated operation {}; preserving all evidence",
+        record.operation_id
+    );
+    let existing_cleanup = cleanup_tombstones.first();
     let mut summary = ActivationRecoverySummary::default();
+    let mut cleanup_tombstone = existing_cleanup.map(|entry| entry.path.clone());
 
     match (
         record.had_destination,
         destination_exists,
         staging_exists,
         backup_exists,
+        existing_cleanup.map(|entry| entry.disposition),
     ) {
-        (true, true, true, false) => {
-            cleanup_recovery_directory(&paths.staging, "aborted update activation staging")?;
+        (true, true, true, false, None) => {
+            cleanup_tombstone = Some(stage_recovery_directory_cleanup(
+                &paths.staging,
+                recovery_root,
+                &record.operation_id,
+                RecoveryCleanupDisposition::AbortedExistingStaging,
+                "aborted update activation staging",
+            )?);
             summary.aborted_pre_activation = 1;
         }
-        (true, false, true, true) => {
+        (true, false, true, true, None) => {
             avorax_platform_security::rename_directory_no_replace(
                 &paths.backup,
                 &paths.destination,
@@ -396,49 +512,125 @@ fn reconcile_record_locked(
                 &paths.destination,
                 "authenticated update activation backup recovery",
             )?;
-            cleanup_recovery_directory(&paths.staging, "recovered update activation staging")?;
+            cleanup_tombstone = Some(stage_recovery_directory_cleanup(
+                &paths.staging,
+                recovery_root,
+                &record.operation_id,
+                RecoveryCleanupDisposition::RecoveredExistingStaging,
+                "recovered update activation staging",
+            )?);
             summary.recovered_backups = 1;
         }
-        (true, true, false, true) => {
+        (true, true, false, true, None) => {
             synchronize_parent_namespace(
                 &paths.destination,
                 "completed update activation namespace",
             )?;
-            cleanup_recovery_directory(&paths.backup, "completed update activation backup")?;
+            cleanup_tombstone = Some(stage_recovery_directory_cleanup(
+                &paths.backup,
+                recovery_root,
+                &record.operation_id,
+                RecoveryCleanupDisposition::CompletedExistingBackup,
+                "completed update activation backup",
+            )?);
             summary.completed_activations = 1;
         }
-        (true, true, false, false) => {
+        (true, true, false, false, None) => {
             synchronize_parent_namespace(
                 &paths.destination,
                 "completed update activation namespace",
             )?;
             summary.completed_activations = 1;
         }
-        (false, false, true, false) => {
-            cleanup_recovery_directory(&paths.staging, "aborted new update activation staging")?;
+        (false, false, true, false, None) => {
+            cleanup_tombstone = Some(stage_recovery_directory_cleanup(
+                &paths.staging,
+                recovery_root,
+                &record.operation_id,
+                RecoveryCleanupDisposition::AbortedNewStaging,
+                "aborted new update activation staging",
+            )?);
             summary.aborted_pre_activation = 1;
         }
-        (false, true, false, false) => {
+        (false, true, false, false, None) => {
             synchronize_parent_namespace(
                 &paths.destination,
                 "completed new update activation namespace",
             )?;
             summary.completed_activations = 1;
         }
+        (true, true, false, false, Some(RecoveryCleanupDisposition::AbortedExistingStaging)) => {
+            summary.aborted_pre_activation = 1
+        }
+        (true, true, false, false, Some(RecoveryCleanupDisposition::RecoveredExistingStaging)) => {
+            summary.recovered_backups = 1
+        }
+        (true, true, false, false, Some(RecoveryCleanupDisposition::CompletedExistingBackup)) => {
+            summary.completed_activations = 1
+        }
+        (false, false, false, false, Some(RecoveryCleanupDisposition::AbortedNewStaging)) => {
+            summary.aborted_pre_activation = 1
+        }
         state => {
             anyhow::bail!(
-                "ambiguous authenticated update activation recovery state for {}: had_destination={}, destination={}, staging={}, backup={}; preserving all evidence",
+                "ambiguous authenticated update activation recovery state for {}: had_destination={}, destination={}, staging={}, backup={}, cleanup={:?}; preserving all evidence",
                 record.destination_relative,
                 state.0,
                 state.1,
                 state.2,
-                state.3
+                state.3,
+                state.4
             );
         }
     }
 
     ensure_reconciled_final_state(&paths, record.had_destination)?;
-    remove_private_regular_file(journal_path, "update activation recovery journal")?;
+    let cleanup_journal =
+        stage_recovery_journal_cleanup(journal_path, recovery_root, &record.operation_id)?;
+    if let Some(path) = cleanup_tombstone {
+        finish_recovery_directory_cleanup(&path, "update activation cleanup tombstone")?;
+        summary.removed_cleanup_tombstones = 1;
+    }
+    remove_private_regular_file(&cleanup_journal, "update activation cleanup journal")?;
+    summary.removed_journals = 1;
+    Ok(summary)
+}
+
+fn reconcile_cleanup_journal_locked(
+    boundary: &Path,
+    recovery_root: &Path,
+    cleanup_journal_path: &Path,
+) -> Result<ActivationRecoverySummary> {
+    let record = read_authenticated_journal(recovery_root, cleanup_journal_path)?;
+    validate_record(
+        boundary,
+        recovery_root,
+        cleanup_journal_path,
+        &record,
+        RecoveryJournalState::Cleanup,
+    )?;
+    let paths = derive_activation_paths(boundary, &record)?;
+    ensure_reconciled_final_state(&paths, record.had_destination)?;
+    let cleanup_tombstones =
+        existing_operation_cleanup_tombstones(recovery_root, &record.operation_id)?;
+    anyhow::ensure!(
+        cleanup_tombstones.len() <= 1,
+        "multiple update activation cleanup tombstones exist beside authenticated cleanup journal {}; preserving all evidence",
+        record.operation_id
+    );
+
+    let mut summary = ActivationRecoverySummary::default();
+    if let Some(tombstone) = cleanup_tombstones.first() {
+        finish_recovery_directory_cleanup(
+            &tombstone.path,
+            &format!(
+                "authenticated {} update activation cleanup tombstone",
+                tombstone.disposition.name()
+            ),
+        )?;
+        summary.removed_cleanup_tombstones = 1;
+    }
+    remove_private_regular_file(cleanup_journal_path, "update activation cleanup journal")?;
     summary.removed_journals = 1;
     Ok(summary)
 }
@@ -481,6 +673,7 @@ fn validate_record(
     recovery_root: &Path,
     journal_path: &Path,
     record: &ActivationRecoveryRecord,
+    journal_state: RecoveryJournalState,
 ) -> Result<()> {
     anyhow::ensure!(
         record.schema_version == RECOVERY_SCHEMA_VERSION,
@@ -493,10 +686,14 @@ fn validate_record(
         "update activation recovery boundary fingerprint mismatch"
     );
     validate_allowed_relative_text(&record.destination_relative)?;
-    let expected_journal = recovery_root.join(format!("{}.json", record.operation_id));
+    let expected_journal = match journal_state {
+        RecoveryJournalState::Active => recovery_root.join(format!("{}.json", record.operation_id)),
+        RecoveryJournalState::Cleanup => cleanup_journal_path(recovery_root, &record.operation_id)?,
+    };
     anyhow::ensure!(
         journal_path == expected_journal,
-        "update activation recovery journal filename does not match its authenticated operation id"
+        "update activation {:?} journal filename does not match its authenticated operation id",
+        journal_state
     );
     Ok(())
 }
@@ -515,6 +712,7 @@ fn write_authenticated_journal(
         recovery_root,
         journal_path,
         record,
+        RecoveryJournalState::Active,
     )?;
     let key = recovery_auth_key(recovery_root, true)?
         .context("update activation recovery authentication key was not created")?;
@@ -845,8 +1043,8 @@ fn ensure_private_file(file: &File, path: &Path) -> Result<()> {
     Ok(())
 }
 
-fn enumerate_recovery_journals(recovery_root: &Path) -> Result<Vec<PathBuf>> {
-    let mut journals = Vec::new();
+fn enumerate_recovery_entries(recovery_root: &Path) -> Result<RecoveryEntryInventory> {
+    let mut inventory = RecoveryEntryInventory::default();
     let mut entries = 0_usize;
     for entry in std::fs::read_dir(recovery_root)
         .context("failed to enumerate update activation recovery directory")?
@@ -868,15 +1066,35 @@ fn enumerate_recovery_journals(recovery_root: &Path) -> Result<Vec<PathBuf>> {
             ensure_private_recovery_entry_kind(&path, &name)?;
             continue;
         }
+        if name.ends_with(".cleanup.avorax-dir") {
+            let (operation_id, disposition) = parse_cleanup_tombstone_name(&name)?;
+            ensure_cleanup_tombstone_entry_kind(&path, &name)?;
+            inventory.cleanup_tombstones.push(RecoveryCleanupTombstone {
+                operation_id,
+                disposition,
+                path,
+            });
+            continue;
+        }
+        if let Some(operation_id) = name.strip_suffix(".cleanup.json") {
+            validate_operation_id(operation_id)?;
+            ensure_private_recovery_entry_kind(&path, &name)?;
+            inventory.cleanup_journals.push(path);
+            continue;
+        }
         let Some(operation_id) = name.strip_suffix(".json") else {
             anyhow::bail!("unrecognized update activation recovery entry: {name}");
         };
         validate_operation_id(operation_id)?;
         ensure_private_recovery_entry_kind(&path, &name)?;
-        journals.push(path);
+        inventory.active_journals.push(path);
     }
-    journals.sort();
-    Ok(journals)
+    inventory.active_journals.sort();
+    inventory.cleanup_journals.sort();
+    inventory
+        .cleanup_tombstones
+        .sort_by(|left, right| left.path.cmp(&right.path));
+    Ok(inventory)
 }
 
 fn ensure_private_recovery_entry_kind(path: &Path, name: &str) -> Result<()> {
@@ -885,6 +1103,16 @@ fn ensure_private_recovery_entry_kind(path: &Path, name: &str) -> Result<()> {
     anyhow::ensure!(
         metadata.is_file(),
         "update activation recovery entry is not a regular file: {name}"
+    );
+    Ok(())
+}
+
+fn ensure_cleanup_tombstone_entry_kind(path: &Path, name: &str) -> Result<()> {
+    ensure_not_link_or_reparse(path, "update activation cleanup tombstone")?;
+    let metadata = std::fs::symlink_metadata(path)?;
+    anyhow::ensure!(
+        metadata.is_dir(),
+        "update activation cleanup tombstone is not a directory: {name}"
     );
     Ok(())
 }
@@ -1045,6 +1273,71 @@ fn validate_operation_id(value: &str) -> Result<()> {
     Ok(())
 }
 
+fn cleanup_journal_path(recovery_root: &Path, operation_id: &str) -> Result<PathBuf> {
+    validate_operation_id(operation_id)?;
+    Ok(recovery_root.join(format!("{operation_id}.cleanup.json")))
+}
+
+fn cleanup_tombstone_path(
+    recovery_root: &Path,
+    operation_id: &str,
+    disposition: RecoveryCleanupDisposition,
+) -> Result<PathBuf> {
+    validate_operation_id(operation_id)?;
+    Ok(recovery_root.join(format!(
+        "{operation_id}.{}.cleanup.avorax-dir",
+        disposition.name()
+    )))
+}
+
+fn parse_cleanup_tombstone_name(name: &str) -> Result<(String, RecoveryCleanupDisposition)> {
+    let body = name
+        .strip_suffix(".cleanup.avorax-dir")
+        .context("update activation cleanup tombstone name has an invalid suffix")?;
+    let (operation_id, disposition) = body
+        .split_once('.')
+        .context("update activation cleanup tombstone name has no disposition")?;
+    validate_operation_id(operation_id)?;
+    Ok((
+        operation_id.to_string(),
+        RecoveryCleanupDisposition::parse(disposition)?,
+    ))
+}
+
+fn existing_operation_cleanup_tombstones(
+    recovery_root: &Path,
+    operation_id: &str,
+) -> Result<Vec<RecoveryCleanupTombstone>> {
+    let mut tombstones = Vec::new();
+    for disposition in RecoveryCleanupDisposition::ALL {
+        let path = cleanup_tombstone_path(recovery_root, operation_id, disposition)?;
+        match std::fs::symlink_metadata(&path) {
+            Ok(_) => {
+                let name = path
+                    .file_name()
+                    .and_then(|value| value.to_str())
+                    .context("update activation cleanup tombstone name is not Unicode")?;
+                ensure_cleanup_tombstone_entry_kind(&path, name)?;
+                tombstones.push(RecoveryCleanupTombstone {
+                    operation_id: operation_id.to_string(),
+                    disposition,
+                    path,
+                });
+            }
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+            Err(error) => {
+                return Err(error).with_context(|| {
+                    format!(
+                        "failed to inspect update activation cleanup tombstone {}",
+                        path.display()
+                    )
+                });
+            }
+        }
+    }
+    Ok(tombstones)
+}
+
 fn boundary_sha256(boundary: &Path) -> String {
     let mut hasher = Sha256::new();
     hasher.update(BOUNDARY_HASH_DOMAIN);
@@ -1111,8 +1404,76 @@ fn ensure_directory_state(path: &Path, label: &str) -> Result<()> {
     Ok(())
 }
 
-fn cleanup_recovery_directory(path: &Path, label: &str) -> Result<()> {
+fn stage_recovery_directory_cleanup(
+    path: &Path,
+    recovery_root: &Path,
+    operation_id: &str,
+    disposition: RecoveryCleanupDisposition,
+    label: &str,
+) -> Result<PathBuf> {
     ensure_directory_state(path, label)?;
+    let tombstone = cleanup_tombstone_path(recovery_root, operation_id, disposition)?;
+    ensure_path_absent(&tombstone, "update activation cleanup tombstone")?;
+    avorax_platform_security::rename_directory_no_replace(
+        path,
+        &tombstone,
+        "update activation recovery directory cleanup staging",
+    )
+    .with_context(|| {
+        format!(
+            "failed to stage {label} {} as cleanup tombstone {}",
+            path.display(),
+            tombstone.display()
+        )
+    })?;
+    synchronize_parent_namespace(path, label)?;
+    synchronize_parent_namespace(&tombstone, "update activation cleanup tombstone")?;
+    let name = tombstone
+        .file_name()
+        .and_then(|value| value.to_str())
+        .context("update activation cleanup tombstone name is not Unicode")?;
+    ensure_cleanup_tombstone_entry_kind(&tombstone, name)?;
+    Ok(tombstone)
+}
+
+fn stage_recovery_journal_cleanup(
+    journal_path: &Path,
+    recovery_root: &Path,
+    operation_id: &str,
+) -> Result<PathBuf> {
+    let cleanup_path = cleanup_journal_path(recovery_root, operation_id)?;
+    ensure_path_absent(&cleanup_path, "update activation cleanup journal")?;
+    avorax_platform_security::rename_file_no_replace(
+        journal_path,
+        &cleanup_path,
+        "update activation recovery journal cleanup staging",
+    )
+    .with_context(|| {
+        format!(
+            "failed to stage update activation recovery journal {} as cleanup journal {}",
+            journal_path.display(),
+            cleanup_path.display()
+        )
+    })?;
+    synchronize_parent_namespace(
+        &cleanup_path,
+        "update activation recovery journal cleanup staging",
+    )?;
+    let name = cleanup_path
+        .file_name()
+        .and_then(|value| value.to_str())
+        .context("update activation cleanup journal name is not Unicode")?;
+    ensure_private_recovery_entry_kind(&cleanup_path, name)?;
+    Ok(cleanup_path)
+}
+
+fn finish_recovery_directory_cleanup(path: &Path, label: &str) -> Result<()> {
+    let name = path
+        .file_name()
+        .and_then(|value| value.to_str())
+        .context("update activation cleanup tombstone name is not Unicode")?;
+    let _ = parse_cleanup_tombstone_name(name)?;
+    ensure_cleanup_tombstone_entry_kind(path, name)?;
     remove_dir_all_checked(path, label)?;
     synchronize_parent_namespace(path, label)
 }
@@ -1674,6 +2035,269 @@ mod tests {
         assert_unix_mode(&key_path, 0o600);
         assert_unix_mode(&lock_path, 0o600);
         assert!(!journal_path.exists());
+    }
+
+    #[test]
+    fn activation_recovery_cleanup_tombstone_resumes_before_journal_retirement() {
+        let (_root, install, mut transaction) = setup_transaction();
+        transaction.record.had_destination = true;
+        write_authenticated_journal(
+            &transaction.recovery_root,
+            &transaction.journal_path,
+            &transaction.record,
+        )
+        .unwrap();
+        let tombstone = stage_recovery_directory_cleanup(
+            &transaction.paths.staging,
+            &transaction.recovery_root,
+            &transaction.record.operation_id,
+            RecoveryCleanupDisposition::AbortedExistingStaging,
+            "benign interrupted cleanup fixture",
+        )
+        .unwrap();
+        let journal = transaction.journal_path.clone();
+        let destination = transaction.paths.destination.clone();
+        drop(transaction);
+
+        let summary = recover_pending_directory_activations(&install).unwrap();
+
+        assert_eq!(summary.aborted_pre_activation, 1);
+        assert_eq!(summary.removed_journals, 1);
+        assert_eq!(summary.removed_cleanup_tombstones, 1);
+        assert!(!journal.exists());
+        assert!(!tombstone.exists());
+        assert_eq!(
+            std::fs::read(destination.join("current.asig")).unwrap(),
+            b"benign current fixture"
+        );
+    }
+
+    #[test]
+    fn activation_recovery_cleanup_journal_finishes_authenticated_retirement() {
+        let (_root, install, mut transaction) = setup_transaction();
+        transaction.record.had_destination = true;
+        write_authenticated_journal(
+            &transaction.recovery_root,
+            &transaction.journal_path,
+            &transaction.record,
+        )
+        .unwrap();
+        let tombstone = stage_recovery_directory_cleanup(
+            &transaction.paths.staging,
+            &transaction.recovery_root,
+            &transaction.record.operation_id,
+            RecoveryCleanupDisposition::AbortedExistingStaging,
+            "benign cleanup-journal fixture",
+        )
+        .unwrap();
+        let cleanup_journal = stage_recovery_journal_cleanup(
+            &transaction.journal_path,
+            &transaction.recovery_root,
+            &transaction.record.operation_id,
+        )
+        .unwrap();
+        drop(transaction);
+
+        let summary = recover_pending_directory_activations(&install).unwrap();
+
+        assert_eq!(summary.removed_journals, 1);
+        assert_eq!(summary.removed_cleanup_tombstones, 1);
+        assert!(!cleanup_journal.exists());
+        assert!(!tombstone.exists());
+    }
+
+    #[test]
+    fn activation_recovery_cleanup_orphan_tombstone_is_bounded_and_removed() {
+        let (_root, install, mut transaction) = setup_transaction();
+        transaction.record.had_destination = true;
+        write_authenticated_journal(
+            &transaction.recovery_root,
+            &transaction.journal_path,
+            &transaction.record,
+        )
+        .unwrap();
+        let tombstone = stage_recovery_directory_cleanup(
+            &transaction.paths.staging,
+            &transaction.recovery_root,
+            &transaction.record.operation_id,
+            RecoveryCleanupDisposition::AbortedExistingStaging,
+            "benign orphan cleanup fixture",
+        )
+        .unwrap();
+        let cleanup_journal = stage_recovery_journal_cleanup(
+            &transaction.journal_path,
+            &transaction.recovery_root,
+            &transaction.record.operation_id,
+        )
+        .unwrap();
+        remove_private_regular_file(&cleanup_journal, "benign retired cleanup journal fixture")
+            .unwrap();
+        drop(transaction);
+
+        let summary = recover_pending_directory_activations(&install).unwrap();
+
+        assert_eq!(summary.removed_journals, 0);
+        assert_eq!(summary.removed_cleanup_tombstones, 1);
+        assert!(!tombstone.exists());
+    }
+
+    #[test]
+    fn activation_recovery_cleanup_orphan_tombstone_with_active_sibling_is_preserved() {
+        let (_root, install, mut transaction) = setup_transaction();
+        transaction.record.had_destination = true;
+        write_authenticated_journal(
+            &transaction.recovery_root,
+            &transaction.journal_path,
+            &transaction.record,
+        )
+        .unwrap();
+        let tombstone = stage_recovery_directory_cleanup(
+            &transaction.paths.staging,
+            &transaction.recovery_root,
+            &transaction.record.operation_id,
+            RecoveryCleanupDisposition::AbortedExistingStaging,
+            "benign orphan cleanup replay fixture",
+        )
+        .unwrap();
+        let cleanup_journal = stage_recovery_journal_cleanup(
+            &transaction.journal_path,
+            &transaction.recovery_root,
+            &transaction.record.operation_id,
+        )
+        .unwrap();
+        remove_private_regular_file(&cleanup_journal, "benign retired cleanup journal fixture")
+            .unwrap();
+        let restored_staging = transaction.paths.staging.clone();
+        std::fs::create_dir(&restored_staging).unwrap();
+        std::fs::write(
+            restored_staging.join("replayed.asig"),
+            b"benign replay fixture",
+        )
+        .unwrap();
+        drop(transaction);
+
+        let error = recover_pending_directory_activations(&install).unwrap_err();
+
+        assert!(format!("{error:#}").contains("orphan update activation staging or backup sibling"));
+        assert!(tombstone.exists());
+        assert!(restored_staging.exists());
+    }
+
+    #[test]
+    fn activation_recovery_cleanup_wrong_disposition_preserves_evidence() {
+        let (_root, install, mut transaction) = setup_transaction();
+        transaction.record.had_destination = true;
+        write_authenticated_journal(
+            &transaction.recovery_root,
+            &transaction.journal_path,
+            &transaction.record,
+        )
+        .unwrap();
+        let tombstone = stage_recovery_directory_cleanup(
+            &transaction.paths.staging,
+            &transaction.recovery_root,
+            &transaction.record.operation_id,
+            RecoveryCleanupDisposition::AbortedNewStaging,
+            "benign mismatched cleanup fixture",
+        )
+        .unwrap();
+        let journal = transaction.journal_path.clone();
+        drop(transaction);
+
+        let error = recover_pending_directory_activations(&install).unwrap_err();
+
+        assert!(format!("{error:#}").contains("ambiguous authenticated"));
+        assert!(journal.exists());
+        assert!(tombstone.exists());
+    }
+
+    #[test]
+    fn activation_recovery_cleanup_journal_tamper_is_rejected_and_preserved() {
+        let (_root, install, mut transaction) = setup_transaction();
+        transaction.record.had_destination = true;
+        write_authenticated_journal(
+            &transaction.recovery_root,
+            &transaction.journal_path,
+            &transaction.record,
+        )
+        .unwrap();
+        let tombstone = stage_recovery_directory_cleanup(
+            &transaction.paths.staging,
+            &transaction.recovery_root,
+            &transaction.record.operation_id,
+            RecoveryCleanupDisposition::AbortedExistingStaging,
+            "benign tampered cleanup fixture",
+        )
+        .unwrap();
+        let cleanup_journal = stage_recovery_journal_cleanup(
+            &transaction.journal_path,
+            &transaction.recovery_root,
+            &transaction.record.operation_id,
+        )
+        .unwrap();
+        let mut bytes = std::fs::read(&cleanup_journal).unwrap();
+        let last = bytes.last_mut().unwrap();
+        *last ^= 1;
+        std::fs::write(&cleanup_journal, bytes).unwrap();
+        drop(transaction);
+
+        let error = recover_pending_directory_activations(&install).unwrap_err();
+
+        let detail = format!("{error:#}");
+        assert!(
+            detail.contains("failed to parse authenticated")
+                || detail.contains("authentication failed"),
+            "{detail}"
+        );
+        assert!(cleanup_journal.exists());
+        assert!(tombstone.exists());
+    }
+
+    #[test]
+    fn activation_recovery_cleanup_malformed_name_is_rejected_and_preserved() {
+        let root = tempdir().unwrap();
+        let install = root.path().join("install");
+        std::fs::create_dir_all(&install).unwrap();
+        recover_pending_directory_activations(&install).unwrap();
+        let malformed = install
+            .join(RECOVERY_DIRECTORY_NAME)
+            .join("not-an-operation.completed-existing-backup.cleanup.avorax-dir");
+        std::fs::create_dir(&malformed).unwrap();
+
+        let error = recover_pending_directory_activations(&install).unwrap_err();
+
+        assert!(format!("{error:#}").contains("operation id is invalid"));
+        assert!(malformed.exists());
+    }
+
+    #[test]
+    fn activation_recovery_cleanup_multiple_orphan_dispositions_are_preserved() {
+        let root = tempdir().unwrap();
+        let install = root.path().join("install");
+        std::fs::create_dir_all(&install).unwrap();
+        recover_pending_directory_activations(&install).unwrap();
+        let recovery_root = install.join(RECOVERY_DIRECTORY_NAME);
+        let operation_id = "0123456789abcdef0123456789abcdef";
+        let first = cleanup_tombstone_path(
+            &recovery_root,
+            operation_id,
+            RecoveryCleanupDisposition::AbortedExistingStaging,
+        )
+        .unwrap();
+        let second = cleanup_tombstone_path(
+            &recovery_root,
+            operation_id,
+            RecoveryCleanupDisposition::CompletedExistingBackup,
+        )
+        .unwrap();
+        std::fs::create_dir(&first).unwrap();
+        std::fs::create_dir(&second).unwrap();
+
+        let error = recover_pending_directory_activations(&install).unwrap_err();
+
+        assert!(format!("{error:#}").contains("multiple orphaned"));
+        assert!(first.exists());
+        assert!(second.exists());
     }
 
     #[cfg(unix)]
