@@ -2,7 +2,7 @@
 
 Date: 2026-08-30
 
-Status: **Implementation-head verified; evidence-head, merge, destination, and closure pending**
+Status: **Closed through hosted integration and synchronized destination verification**
 
 ## Purpose
 
@@ -150,10 +150,67 @@ lockfiles, definitive/adversarial evidence, zero product processes, and the
 protected vault invariant.
 
 The cleanup state machine is verified locally and at implementation head on
-the fixed runners. Evidence-head CI/packages, normal merge, merged-main
-evidence, guarded destination synchronization, destination verification, and
-checkpoint closure remain pending, so the complete antivirus-hardening goal
-remains active.
+the fixed runners. The following closure section supersedes the then-pending
+evidence-head, merge, synchronization, destination, and closure state. The
+complete antivirus-hardening goal remains active.
+
+## Evidence-Head, Merge, And Destination Closure
+
+Evidence head `e5fb59f9a3eace0f96cb2e253180bc5c1af935a4` passes all six
+Avorax CI jobs in run `33299903289`. Ubuntu Rust job `99225949053` passes the
+complete update service, including all eight cleanup regressions. macOS 15 job
+`99225949039` passes the exact four selected recovery fixtures, `4 passed; 0
+failed; 255 filtered out`. Desktop Packages run `33299903309` passes with
+publication skipped. Consolidated artifact `9728821306` is 132,703,422 bytes
+with SHA-256
+`1046b7733dc4b6be17aadce5ff3b342af36a4933503680db755e847f89a6e74b`.
+
+Normal PR `#155` merges as
+`6bcfe8c62ff7c22a521a996fa9255ef6faaca79d`. Merged-main Avorax CI run
+`33300730156` passes all six jobs. Ubuntu Rust job `99228250332` passes update
+service `4 + 240` and names all eight cleanup regressions as green; macOS job
+`99228250162` passes exact `4/4`, with 255 filtered. Desktop Packages run
+`33300730155` passes with publication skipped. Consolidated artifact
+`9728990794` is 132,694,723 bytes with SHA-256
+`c7a01a1982d9c909e091b48509c083c874fbca05bad322ea1c4c7d8c83ccde6a`.
+Both artifacts pass bounded in-stream exact 8-entry/6-platform/7-checksum
+inventory and CycloneDX 1.6 with 569 components, without extraction or
+execution.
+
+Guarded synchronization copies exact 12 modified and one added path with zero
+deletes and preserves 24 verified backups. Sync-report SHA-256 is
+`b58c6642800d01ea04e886101148dc9834814c59f5577a86efb3012c02c850c9`.
+The synchronized `C:\Users\Brent\Documents\Avorax-main` destination passes:
+
+- `python -B tools/testing/run-python-source-contracts.py`: `704/704`.
+- Rust format, strict locked all-target/all-feature Clippy, both locked
+  workspace test variants, and locked all-target/all-feature release.
+- Flutter analysis and `852/852` tests.
+- Zentor and Avorax protocol analysis/tests: `14/14 + 6/6`.
+- The no-skip/no-Defender verifier: exact `301/301` in `706.2s`. Its 221,445-
+  byte report SHA-256 is
+  `deb434da82cd8c3b1ccf2f3f0ba3cfc1e596ee2aae70847facc2dfd5b5dd7948`.
+
+PowerShell 5.1 and 7 accept that authentic report. The first destination
+adversarial run is explicitly uncredited because its candidates were outside
+the repository and path rejection preceded content checks. The corrected in-
+root audit accepts both authentic host cases and rejects all `20/20` content
+mutations with zero unexpected candidate-path rejections; its 15,438-byte
+result SHA-256 is
+`8f2fbfdaee122208029c7f15625c3dae3ef74de6ebafa3718c197836a3d41adb`.
+Final audit SHA-256
+`6a7d8ab2d1ed18112e800d2b9e014df484fc22d5f200754d5dfcbe0080cb3eeb`
+passes 13 exact merge blobs, nine unchanged active lockfiles, 24 backups, zero
+product processes/pending files/temporary roots, and the unchanged protected-
+vault invariant.
+
+Checkpoint 2273 is closed. Verified scope remains the fixed hosted Ubuntu and
+macOS 15 runners plus the synchronized Windows destination. Storage hardware
+truthfulness, Windows removal durability, other filesystems/devices/identities,
+Android, privileged or hostile filesystem actors, package-wide power-loss
+transactionality, production signing/deployment, driver/pre-execution
+enforcement, Defender replacement, and the complete antivirus-hardening goal
+remain partial, blocked, or technically limited.
 
 ## Honest Limits
 

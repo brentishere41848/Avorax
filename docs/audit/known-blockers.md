@@ -4409,3 +4409,18 @@ Windows removal persistence, truthful storage, broader filesystems/identities,
 Android, package-wide power-loss transactionality, privileged/hostile actors,
 signing/deployment, driver/pre-execution enforcement, Defender replacement,
 and complete-goal blockers are not removed.
+
+Evidence-head and merged-main Ubuntu Rust jobs now pass the complete update
+service and all eight cleanup regressions; fixed macOS jobs retain exact `4/4`.
+Normal PR `#155`, guarded 13-path zero-delete synchronization, complete
+destination regressions, exact `301/301`, dual-host `20/20` content rejection,
+and final blob/lock/backup/process/vault audit close checkpoint 2273. The narrow
+hosted cleanup-execution and destination-evidence blockers are removed.
+
+The following blockers are deliberately not removed: Windows removal
+durability; storage hardware truthfulness; other filesystems, devices, OS
+versions, and installed identities; Android runtime; root/admin/SYSTEM, hostile
+filesystems, storage rollback/reordering, and kernel compromise; package-wide
+power-loss transactionality; production signing/deployment; signed driver and
+proven pre-execution enforcement; Defender replacement; and complete
+antivirus-goal closure.

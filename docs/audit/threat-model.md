@@ -4655,3 +4655,28 @@ runners, not power-loss persistence, storage truthfulness, Windows deletion
 durability, hostile filesystems, installed identity, package-wide atomicity, or
 the remaining privilege/driver/Defender/whole-goal limits. Merge, synchronized-
 destination, and closure evidence remain open.
+
+## Checkpoint 2273 Cleanup Tombstone Closure
+
+Evidence-head and merged-main fixed Ubuntu Rust jobs each execute the complete
+update service and all eight harmless cleanup/replay regressions. Fixed macOS
+15 recovery-permission jobs remain exact `4/4`. Bounded package review performs
+no extraction or execution and publication is skipped.
+
+Guarded 13-path zero-delete synchronization and destination Source, locked
+workspaces, lint, release, Flutter/protocol, exact `301/301`, dual-host
+authentic/adversarial, and final exact blob/lock/backup/process/vault audits all
+pass. The first destination mutation run is uncredited because off-root
+candidate rejection preceded content checks; the corrected in-root run rejects
+all `20/20` mutations for their intended content. This closes the checkpoint
+evidence chain without changing detector, custom-engine, quarantine, realtime,
+process, or driver authority.
+
+Residual threats remain explicit: tombstones and authenticated cleanup journals
+are user-mode replay evidence, not truthful-hardware or power-loss proof;
+Windows deletion durability remains unverified; fixed runners are not every
+filesystem/device/identity; root/admin/SYSTEM, hostile filesystems, storage
+rollback/reordering, and kernel compromise remain out of scope; multi-component
+activation is not one transaction; Android, production signing/deployment,
+signed-driver/pre-execution enforcement, Defender replacement, and whole-goal
+completion remain open.

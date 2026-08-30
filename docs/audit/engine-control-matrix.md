@@ -6223,6 +6223,21 @@ removal, storage-truthfulness, package-transaction, installed-identity,
 Android, privileged/hostile-filesystem, detector/custom-engine, driver/pre-
 execution, Defender-replacement, and whole-goal limitation remain unchanged.
 
+## Checkpoint 2273 Closure Classification
+
+| Control / engine | Final checkpoint status | Evidence / remaining limit |
+| --- | --- | --- |
+| Typed cleanup-tombstone activation | Verified on synchronized Windows destination and fixed hosted Ubuntu Rust route | Exact local/destination tests, both hosted heads, and `301/301` verifier pass; Windows deletion persistence and truthful storage remain unverified |
+| Authenticated cleanup-journal retirement | Verified for harmless modeled interruption/replay paths | HMAC revalidation, exact operation/disposition binding, and fail-visible preservation pass; package-wide power-loss atomicity is not claimed |
+| Bounded residue and ambiguity handling | Verified for the scripted inventory states | All eight cleanup regressions pass locally, at both hosted heads, and on destination; privileged/hostile filesystem replay remains outside the guarantee |
+| Validator and destination regression | Verified | Source `704/704`, both workspaces, release, Flutter `852/852`, protocols, exact `301/301`, authentic acceptance, and `20/20` content rejection pass |
+| Dependency and package regression | Verified for this checkpoint | Nine lockfiles are unchanged; bounded non-extracting 569-component SBOM review passes with publication skipped |
+| Detection and custom engines | Unchanged | No detector responsibility, threshold, verdict, quarantine, realtime, driver/pre-execution, or Defender authority changed |
+
+Checkpoint 2273 is closed through normal merge and exact zero-delete
+destination synchronization. The complete antivirus-hardening goal remains
+active.
+
 ## Checkpoint 2272 Control Delta
 
 | Control / engine | Responsibility | Classification before execution | Evidence / limitation |

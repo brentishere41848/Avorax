@@ -1999,3 +1999,53 @@ consolidation job with publication skipped. Consolidated artifacts
 SHA-256, and CycloneDX checks without extraction or execution. Evidence-head,
 normal merge, merged-main, guarded zero-delete destination synchronization,
 destination full verification, and final closure audit remain required.
+
+### Checkpoint 2273 closure evidence
+
+Evidence-head and merged-main fixed Ubuntu Rust jobs execute the full update
+service and name all eight cleanup regressions as passed. Fixed macOS 15 jobs
+each pass the exact four selected recovery fixtures (`4 passed; 0 failed; 255
+filtered out`). From the synchronized repository root, the credited destination
+commands are:
+
+```powershell
+python -B tools\testing\run-python-source-contracts.py
+cargo fmt --all -- --check
+cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
+cargo test --workspace --locked --no-fail-fast -- --test-threads=1
+cargo test --workspace --all-targets --all-features --locked --no-fail-fast -- --test-threads=1
+cargo build --workspace --release --all-targets --all-features --locked
+Push-Location apps\zentor_client
+flutter analyze
+flutter test
+Pop-Location
+Push-Location packages\zentor_protocol
+dart analyze
+dart test
+Pop-Location
+Push-Location packages\avorax_protocol
+dart analyze
+dart test
+Pop-Location
+```
+
+Source passes `704/704`; both Rust workspace variants have zero failures and
+21 documented isolated child-fixture ignores; release and lint pass; Flutter
+passes `852/852`; protocol tests pass `14/14 + 6/6`.
+
+```powershell
+powershell.exe -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass `
+  -File tools\testing\verify-small-threat-mvp.ps1 `
+  -RepoRoot . `
+  -ReportPath .workflow\ultracode\avorax-hardening\results\checkpoint-2273-destination-update-recovery-cleanup-tombstones-report.json
+```
+
+The verifier passes exact `301/301` in `706.2s`, with no failed/skipped steps,
+no non-null step errors, and Defender/EICAR opt-in false. The 221,445-byte
+report SHA-256 is
+`deb434da82cd8c3b1ccf2f3f0ba3cfc1e596ee2aae70847facc2dfd5b5dd7948`.
+PowerShell 5.1 and 7 accept it; ten content mutations on each host are rejected,
+exact `20/20`. An earlier off-root mutation run is uncredited because candidate
+path rejection preceded content validation. Final destination audit verifies
+13 blobs, nine unchanged locks, 24 backups, zero product process/pending/temp
+residue, and the exact protected vault.
