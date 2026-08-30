@@ -1951,8 +1951,8 @@ if ($RequireFullSuite) {
   if ($skipFlutter -or $skipRust) {
     throw "-RequireFullSuite requires skip_flutter=false and skip_rust=false."
   }
-  if ($steps.Count -ne 299) {
-    throw "-RequireFullSuite expected exactly 299 verifier steps for this source revision, found $($steps.Count)."
+  if ($steps.Count -ne 300) {
+    throw "-RequireFullSuite expected exactly 300 verifier steps for this source revision, found $($steps.Count)."
   }
   if ($steps[0].name -ne "local-core safe simulator scan reporting") {
     throw "-RequireFullSuite first step mismatch: $($steps[0].name)"
@@ -1979,6 +1979,7 @@ if ($RequireFullSuite) {
   Assert-ReportContainsStep $steps "update-service authenticated directory activation recovery regressions"
   Assert-ReportContainsStep $steps "update-service Unix activation recovery runtime contract"
   Assert-ReportContainsStep $steps "update-service macOS activation recovery runtime contract"
+  Assert-ReportContainsStep $steps "update-service activation recovery namespace durability regressions"
   Assert-ReportContainsStep $steps "native-engine file-type classifier regressions"
   Assert-ReportContainsStep $steps "native-engine detection-only mutation boundary regressions"
   Assert-ReportContainsStep $steps "native-engine archive content sampling regressions"
@@ -2186,6 +2187,12 @@ if ($RequireFullSuite) {
   Assert-ReportScopeContains $technicalLimitText "actual macOS permission semantics require the hosted macos-15 job" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "one hosted macOS 15 runner environment, not every macOS version, architecture, filesystem, installed service identity, or Android recovery runtime" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "Unix mode bits do not encrypt the recovery key, undo prior disclosure, revoke already-open handles, or resist root, administrators, hostile filesystems, storage rollback/reordering, or kernel compromise" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $verifiedScopeText "Windows update activation renames request MOVEFILE_WRITE_THROUGH" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Unix recovery namespace changes synchronize stable directory handles after key, lock, journal, rename, and cleanup mutations" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "A post-rename namespace synchronization failure fails visibly and preserves the authenticated journal plus activation directories for a later recovery pass" "verification_scope.verified"
+  Assert-ReportScopeContains $technicalLimitText "Durability barriers are best-effort user-mode filesystem evidence, not a power-loss-proof package transaction" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "Windows removal durability, storage hardware truthfulness, hostile filesystems, and multi-component atomicity remain unverified" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "Directory synchronization may fail after a namespace mutation; Avorax then reports the failure and preserves authenticated recovery evidence instead of claiming a durable success" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "File allowlisting remains safe after its hash snapshot because later scan suppression also requires that exact hash" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "neither operation holds a kernel-enforced immutable file lease" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "This is confirmation and stale-verdict defense, not cross-identity authorization, malware execution prevention, driver enforcement, or protection against administrators, SYSTEM, or kernel compromise" "verification_scope.technically_limited"

@@ -1801,3 +1801,80 @@ Defender/EICAR opt-in. The report is 218,889 bytes with SHA-256
 PowerShell 5.1/7 accept it; seven content mutations on each host are rejected,
 exact `14/14`. Final destination audit verifies 14 blobs, 8 unchanged locks,
 26 backups, zero product process/pending/temp residue, and the exact vault.
+
+## Checkpoint 2272 Update Recovery Namespace Durability
+
+No checkpoint-2272 test ran during the scripting phase. After the complete
+batch is frozen, run focused evidence first:
+
+```powershell
+$env:PYTHONDONTWRITEBYTECODE='1'
+python -B tools\testing\run-python-source-contracts.py
+cargo test --locked --manifest-path core\avorax_platform_security\Cargo.toml unix_directory_metadata_sync -- --test-threads=1
+cargo test --locked --manifest-path core\avorax_update_service\Cargo.toml activation_recovery_durability_ -- --test-threads=1
+cargo test --locked --manifest-path core\avorax_update_service\Cargo.toml activation_recovery_unix_runtime_contract_is_wired -- --test-threads=1
+cargo test --locked --manifest-path core\avorax_update_service\Cargo.toml activation_recovery_macos_runtime_contract_is_wired -- --test-threads=1
+```
+
+Then run format, strict locked all-target/all-feature lint, full platform and
+update crates, both locked workspace variants, locked release, Flutter, both
+protocol suites, and the definitive verifier. A full report must contain exact
+300 passed steps, no Rust/Flutter skip, and no Defender/EICAR opt-in. Test both
+PowerShell hosts against the authentic report and malformed count/scope/path/
+option copies.
+
+The hosted Ubuntu 24.04 and macOS 15 jobs must each select the additional
+`activation_recovery_unix_namespace_durability_barriers_execute` fixture. These
+tests use benign text and temporary directories only; no fixture is executed as
+a program. They do not prove Windows deletion durability, storage hardware,
+hostile filesystems, installed identity, Android, or package-wide atomicity.
+
+### Checkpoint 2272 local evidence
+
+Post-freeze local execution passes PowerShell 5.1/7 parsing, Source `703/703`,
+focused durability `2/2`, Unix/macOS route contracts `1/1` each, platform
+`18/18`, update service `232/232`, strict locked Clippy, both locked workspace
+variants, locked all-feature release, Flutter analysis/tests `852/852`, and
+protocol analysis/tests `14/14 + 6/6`.
+
+Run the definitive verifier with test-only no-debug/non-incremental codegen on a
+host where Defender heuristically blocks the generated debug test harness:
+
+```powershell
+$env:CARGO_PROFILE_TEST_DEBUG='0'
+$env:CARGO_INCREMENTAL='0'
+powershell.exe -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass `
+  -File tools\testing\verify-small-threat-mvp.ps1 `
+  -RepoRoot . `
+  -ReportPath .workflow\ultracode\avorax-hardening\results\checkpoint-2272-update-recovery-namespace-durability-report.json
+```
+
+This does not disable Defender or add an exclusion. The final report passes
+exact `300/300`, zero failed/skipped, in `575.4s`, with Defender/EICAR opt-in
+false; SHA-256 is
+`9f6c54f97135044f2ae7e6b63f881b1084b0959316c24ceeea618f171cc1d531`.
+Both validator hosts accept it and reject all `16/16` content mutations. Hosted
+Ubuntu/macOS, integration, guarded destination synchronization, destination
+full verification, and closure remain required.
+
+### Checkpoint 2272 implementation-head hosted evidence
+
+Avorax CI `33291974131` passes all six jobs at exact SHA
+`62d257c3d03bd093cc2159c3f0287bac93ec295c`. Its Ubuntu job `99205069601`
+and macOS 15 job `99205069619` each run:
+
+```bash
+cargo test --locked \
+  --manifest-path core/avorax_update_service/Cargo.toml \
+  activation_recovery_unix_ \
+  -- --test-threads=1
+```
+
+Each selects owner-only artifacts, private-mode repair, namespace durability,
+and workflow wiring: `4 passed; 0 failed; 247 filtered out`. Desktop Packages
+push/PR `33291944899`/`33291974128` pass every build and consolidation job with
+publication skipped. Consolidated artifacts `9726370706`/`9726376070` pass
+bounded in-stream exact inventory, internal SHA-256, and CycloneDX checks
+without extraction or execution. Merge, merged-main, guarded zero-delete
+destination synchronization, destination full verification, and final audit
+remain required before checkpoint closure.
