@@ -2452,6 +2452,26 @@ actual Ubuntu/macOS recovery, all six package files, seven checksums, a
 569-component lockfile SBOM, and publication skipped. Evidence-head and
 destination execution remain separate required evidence.
 
+Closure execution now passes evidence head `f335ffc6`, PR `#163`, merge
+`89c0449`, merged-main CI `33339046998`, and Desktop Packages `33339046993`.
+The latter passes all six platform release files, seven checksums, a
+569-component lockfile SBOM, and an explicitly skipped publication job.
+Guarded destination synchronization applies exact 16 modified plus one added
+path, zero deletions, and 32 backups.
+
+Destination focused commands pass Source `709/709`, platform `29/29`, recovery
+`13/13`, metadata `35/35`, Local Core quarantine `156/156`, strict workspace
+Clippy, and rustfmt. Exact no-skip/no-Defender verification passes `303/303` in
+`715.3s`; report SHA-256 is
+`b89ad35ff09da20987cd56f54e4e50c1ae4469c53111d63babe910e0fa3b35c7`.
+Both PowerShell hosts accept the authentic report and reject `62/62` hostile
+reports across 31 mutations; adversarial SHA-256 is
+`e6220274b406e634be381a735c9f0702dc1a818d89f8ba8060a7af11a6830ae2`.
+Final audit SHA-256 is
+`55b061e65b555eafea39ffd54d6f8d08a6d3f45893e200fb37bbcd4e2d98cb1d`;
+all 17 blobs, nine locks, process/residue controls, and the protected vault
+pass. Checkpoint 2277 is closed; the complete antivirus goal remains active.
+
 Fixtures use harmless isolated ASCII only and are never executed. They must not
 touch the protected vault, install/start services or drivers, alter Defender,
 download artifacts, or publish. Journal recovery proves bounded rollback of the

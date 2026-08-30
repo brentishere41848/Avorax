@@ -4605,3 +4605,12 @@ open, or technically limited. No checkpoint-2277 test ran during scripting;
 post-freeze local focused/full/release/Flutter/protocol and exact `303/303`
 verifier evidence now passes, including dual-host rejection of `62/62`
 adversarial cases. Hosted cross-platform and destination closure remains open.
+
+That hosted/destination closure is complete through evidence head `f335ffc6`,
+PR `#163`, merge `89c0449`, merged-main CI/packages, guarded exact 17-path
+zero-delete synchronization, destination `303/303`, dual-host `62/62` hostile
+rejection, and final blob/lock/process/residue/vault audit. The remaining
+blocker is narrower: restore/delete payload movement and action metadata still
+need bounded crash recovery. Two-file atomicity, hostile privileged/storage
+actors, installed identity, production signing/accuracy, driver/pre-execution,
+Defender replacement, and whole-goal completion remain open or limited.

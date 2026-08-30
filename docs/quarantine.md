@@ -279,3 +279,10 @@ full-workspace, release, and `303/303` definitive verification. It does not make
 JSON plus HMAC one atomic filesystem transaction and does not transactionally
 join metadata to restore/delete payload movement. Hosted cross-platform and
 destination closure remains required.
+
+That pending state is superseded. Evidence head, normal PR `#163`, merge
+`89c0449`, merged-main CI/packages, guarded 17-path zero-delete synchronization,
+destination focused checks, exact `303/303`, dual-host `62/62` hostile-report
+rejection, and final blob/lock/process/residue/vault audit pass. Checkpoint 2277
+is closed. Restore/delete payload-status crash coordination remains the next
+open quarantine recovery boundary.

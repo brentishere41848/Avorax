@@ -15643,3 +15643,45 @@ pending.
   checksums, and the 569-component lockfile SBOM; publication is skipped.
   Evidence-head checks, integration, destination synchronization, and final
   audits remain required.
+
+## 2026-08-31 - Checkpoint 2277 Integration And Destination Closure
+
+- Evidence head `f335ffc6519c14ff4a9fb4f60d0926f43b27fc54` passes Avorax CI
+  `33338324413` and Desktop Packages PR `33338324405`. PR `#163` merged
+  normally as `89c0449ca2dd44728226bee81129e821b8dcc67a`.
+- Merged-main CI `33339046998` passes all six jobs, including actual Ubuntu and
+  macOS metadata-update recovery. Desktop Packages `33339046993` passes
+  Windows MSI/setup EXE, Linux DEB/tar, macOS arm64/x64 DMG, and consolidation;
+  publication is explicitly skipped.
+- Consolidated artifact `9740229241` is 133,376,491 bytes with hosted digest
+  `514c7268abd6b80a6dd83a079ce31409b787e0aa1364475434f936e2f63e05eb`.
+  Hosted logs prove six release files, seven checksum targets, and a
+  569-component CycloneDX lockfile SBOM. No artifact was downloaded, extracted,
+  installed, executed, released, or published.
+- The first guarded-sync preflight failed before activation because its copied
+  helper contained an incorrectly expanded base commit. The helper was pinned
+  to actual merge parent `e53bd68a8817b1b56e11303376c6022e55c2efed`;
+  the complete repeat preflight passed. No destination file changed during the
+  failed attempt.
+- Guarded synchronization then applied exact 16 modified plus one added path,
+  zero deletions, and 32 verified backups. Sync report SHA-256 is
+  `948665c08676e725c6bcc354fbca749f8894eff4a4a4e00f1bc02abc12eb150d`.
+- Destination focused execution passes Source `709/709`, platform `29/29`,
+  recovery `13/13`, workspace metadata `35/35`, Local Core quarantine
+  `156/156`, strict workspace Clippy, and rustfmt.
+- Destination no-skip/no-Defender verification passes exact `303/303` in
+  `715.3s`; the 225,928-byte report SHA-256 is
+  `b89ad35ff09da20987cd56f54e4e50c1ae4469c53111d63babe910e0fa3b35c7`.
+  PowerShell 5.1 and 7 accept both authentic validations and reject all `62/62`
+  hostile cases across 31 mutations. The 62,057-byte adversarial report
+  SHA-256 is
+  `e6220274b406e634be381a735c9f0702dc1a818d89f8ba8060a7af11a6830ae2`.
+- Final destination audit SHA-256 is
+  `55b061e65b555eafea39ffd54d6f8d08a6d3f45893e200fb37bbcd4e2d98cb1d`.
+  It proves all 17 merge blobs, nine unchanged locks, 32 backups, zero product
+  process/pending/temp residue, and the exact protected vault: 16,072 files,
+  zero directories, 4,522,733 bytes, 5,357 each payload/JSON/auth, one metadata
+  key, and zero pending artifacts.
+- Checkpoint 2277 is closed through hosted integration and synchronized
+  destination verification. Restore/delete payload-status crash recovery and
+  the complete antivirus-hardening goal remain active.
