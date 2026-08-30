@@ -135,3 +135,7 @@ lint, both locked workspace variants, and definitive `302/302`. Hosted and
 synchronized-destination evidence remains pending; no broader mutation
 authority, pre-execution, driver, Defender-replacement, or detection-accuracy
 claim is made.
+
+Repaired implementation head `0be467e` passes hosted macOS and Ubuntu runtime,
+all six CI jobs, and both cross-platform package workflows with publication
+skipped. Evidence-head, merge, and synchronized-destination proof remain open.

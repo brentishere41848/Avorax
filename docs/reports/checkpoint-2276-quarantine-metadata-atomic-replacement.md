@@ -119,6 +119,25 @@ and zero failures. The regenerated definitive, adversarial, and final-audit
 evidence above is authoritative for the repaired source; exact-head hosted
 evidence is the next required phase.
 
+## Exact-Head Hosted Evidence
+
+Repaired implementation head `0be467e61cf775fc4812b804ee6ac00fcf0e2bbf`
+passes Avorax CI `33328100995` with all six jobs successful. The macOS 15 arm64
+runtime executes the repaired authenticated-pair fixture successfully; Ubuntu,
+Rust, Flutter/protocol, security/performance, and branding/copy jobs also pass.
+
+Desktop Packages push `33328099560` and PR `33328101027` each pass package
+contracts, Windows MSI/setup EXE, Linux DEB/tar, macOS x64/arm64 DMGs, and
+consolidation; each publication job is explicitly skipped. Consolidated
+artifacts `9737011004` and `9737035093` are 132,853,231 and 132,852,641 bytes
+with hosted SHA-256 digests
+`3db64ce970f7ba198015f23bc10a4b49c8d2302d67864f46ae57ab9071954742`
+and
+`89181b15a1aa498e22e824fca33fcb513abe14a4f5b2190b538996fbfaf72a0e`.
+No artifact was downloaded, extracted, installed, or executed. Evidence-head
+checks, normal merge, guarded destination synchronization, and destination
+verification remain required before checkpoint closure.
+
 The protected vault baseline remains read-only: 16,072 files, zero directories,
 4,522,733 bytes, 5,357 each `.avoraxq`, `.json`, and `.auth`, one
 `.metadata_auth_key`, and zero pending. This checkpoint must not mutate it.

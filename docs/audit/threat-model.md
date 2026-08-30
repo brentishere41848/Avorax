@@ -4869,3 +4869,9 @@ support. Path and opened-identity evidence is point-in-time and does not defeat
 privileged races, hostile filesystems/storage, or kernel compromise. Checkpoint
 2276 adds no driver, pre-execution, secure-erasure, Defender-replacement,
 production-accuracy, or complete-goal claim.
+
+Hosted repair evidence at `0be467e` proves the intended macOS and Ubuntu
+runtime routes without weakening linked-ancestor rejection. It remains one
+ephemeral runner filesystem per platform, not installed-service, hostile-
+filesystem, power-loss, administrator/root, kernel, or cross-file transaction
+evidence.

@@ -8963,4 +8963,7 @@ Source contract preventing regression; post-repair local and exact-head hosted
 reruns are required before merge. Post-repair local focus, the complete locked
 all-target/all-feature Rust suite, regenerated `302/302` in `667.1s`, dual-host
 `52/52` hostile rejection, and final audit now pass. New exact-head hosted CI
-and package evidence remains required before merge.
+and package evidence now also pass at `0be467e`: CI `33328100995` is six-for-
+six, package runs `33328099560` and `33328101027` pass all platform builds and
+consolidation, and publication is skipped. Evidence-head checks, normal merge,
+guarded destination synchronization, and destination verification remain.

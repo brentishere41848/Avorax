@@ -6382,3 +6382,8 @@ report rejection, lock review, and protected-vault audit. Checkpoint 2276 starts
 from that closure. Its local `302/302`, dual-host `52/52` hostile rejection,
 lock/path/process/residue, and protected-vault evidence now pass; hosted,
 integration, and destination evidence remain pending.
+
+Repaired implementation head `0be467e` now passes all six hosted CI controls,
+including real macOS and Ubuntu replacement runtime, plus both complete package
+workflows with publication skipped. Evidence-head, merge, and destination
+control execution remain pending.

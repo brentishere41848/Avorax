@@ -15548,3 +15548,20 @@ pending.
   pending/temp residue, and the exact vault. Its 3,086-byte SHA-256 is
   `a8c307c729835c02bdbbc2e8bfa3bacca560b01a546ce3db2f8184bcd67d0552`.
   New exact-head hosted CI and package evidence remains required.
+
+## 2026-08-30 - Checkpoint 2276 Repaired Implementation-Head Hosting
+
+- Repaired exact head `0be467e61cf775fc4812b804ee6ac00fcf0e2bbf` passes
+  Avorax CI `33328100995` all six jobs, including real macOS 15 arm64 and Ubuntu
+  runtime execution of the metadata replacement filter.
+- Desktop Packages push `33328099560` and PR `33328101027` each pass contracts,
+  Windows MSI/setup EXE, Linux DEB/tar, macOS x64/arm64 DMGs, and consolidation.
+  Both publication jobs are skipped.
+- Consolidated artifacts `9737011004` and `9737035093` are 132,853,231 and
+  132,852,641 bytes with hosted SHA-256 digests
+  `3db64ce970f7ba198015f23bc10a4b49c8d2302d67864f46ae57ab9071954742`
+  and
+  `89181b15a1aa498e22e824fca33fcb513abe14a4f5b2190b538996fbfaf72a0e`.
+  Only artifact metadata was read; nothing was downloaded, extracted,
+  installed, or executed. Evidence-head checks, merge, guarded sync, and
+  destination verification remain.

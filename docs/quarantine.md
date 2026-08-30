@@ -257,3 +257,7 @@ workspace metadata tests, Local Core quarantine `143/143`, and definitive
 `302/302`. Dual-host validation rejects all 52 hostile reports across 26
 mutations. Hosted Unix/macOS and synchronized-destination runtime evidence
 remain required.
+
+Hosted repaired-head macOS and Ubuntu runtime evidence now passes at
+`0be467e`. Synchronized-destination verification and the non-transactional
+JSON/HMAC residual limits remain.

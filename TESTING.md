@@ -2409,3 +2409,9 @@ passes `302/302` in `667.1s`; report SHA-256 is
 `1736eddd87c9ee03a0d1a2860ea5760b3fdb8ecf6a90ba7960018660e3a8c024`.
 Dual-host validation again rejects `52/52` hostile cases and the repaired final
 audit passes. Exact-head hosted evidence remains required.
+
+Hosted repaired-head evidence now passes Avorax CI `33328100995`, including
+real macOS and Ubuntu metadata replacement runtime, plus package push/PR
+`33328099560` and `33328101027` across Windows, Linux, and both macOS
+architectures. Both publication jobs are skipped. Evidence-head and destination
+reruns remain separate requirements.
