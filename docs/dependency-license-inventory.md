@@ -2456,6 +2456,17 @@ publication, or protected-vault mutation is involved. The vault remains 16,072
 files with zero pending, and the complete antivirus-hardening goal remains
 active.
 
+Evidence-head/merged-main package runs `33279985653`/`33280845849` pass all
+six platform outputs, checksum consolidation, and the lockfile-derived
+CycloneDX 1.6 SBOM with 569 components; publication is skipped. Both artifacts
+pass bounded in-stream review without extraction or execution. Guarded sync,
+both destination locked workspace variants, locked release, dependency gate,
+and final eight-lock audit pass with all lockfiles exact. Checkpoint 2270 closes
+with zero manifest, lockfile, package, version, registry source, feature,
+runtime fetch, dependency, notice-obligation, or license-class delta. Final
+signed-artifact notice provenance and production release approval remain
+separate.
+
 ## Checkpoint 2269 Dependency Delta
 
 Checkpoint 2269 adds direct update-service dependency edges to already locked

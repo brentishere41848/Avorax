@@ -4262,3 +4262,14 @@ artifact review also pass with publication skipped. macOS/Android runtime,
 prior disclosure/open handles, key confidentiality, installed identity,
 transactionality, privileged actors/hostile filesystems, signing/deployment,
 driver/pre-execution, Defender replacement, and whole-goal blockers remain.
+
+Evidence `6dc6f22a`, normal PR `#149` merge `4fcc4f1a`, evidence-head and
+merged-main CI/package runs, bounded artifact review, exact 14-path zero-delete
+sync, complete destination regression, `298/298`, dual-host destination-local
+`14/14` hostile rejection, and final blob/lock/backup/process/vault audit close
+checkpoint 2270. The Ubuntu runtime blocker is removed only for this hosted
+filesystem route. Prior disclosure/open handles, unencrypted Unix key,
+macOS/Android runtime, installed identity, power-loss/multi-component
+transactionality, privileged actors/hostile filesystems, production signing/
+deployment, driver/pre-execution, Defender replacement, and whole-goal blockers
+remain unchanged.

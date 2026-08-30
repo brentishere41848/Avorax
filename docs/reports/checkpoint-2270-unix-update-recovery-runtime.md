@@ -1,11 +1,11 @@
 # Checkpoint 2270 - Unix Update Recovery Runtime Evidence
 
-Date: 2026-08-29 (Europe/Brussels)
+Date: 2026-08-30 (Europe/Brussels)
 
-Status: **Complete scripting batch frozen; execution pending**
+Status: **Closed with exact hosted, integration, and destination evidence**
 
-Post-freeze status: **Local contracts and regressions verified; hosted Unix
-runtime, integration, and destination evidence pending**
+Post-freeze status: **Verified on hosted Ubuntu 24.04 and synchronized Windows
+destination; residual limits remain explicit**
 
 ## Objective
 
@@ -39,13 +39,13 @@ before authenticated recovery consumes state.
   PowerShell 5.1 and 7 and reject seven scope/step mutations on each host,
   exact `14/14`.
 
-## Control matrix before execution
+## Control matrix at closure
 
 | Surface | Status | Exact blocker or limitation |
 | --- | --- | --- |
-| Unix recovery directory mode | Partial | Exact `0700` fixture is scripted; hosted Ubuntu runtime has not run |
-| Unix key/lock/journal mode | Partial | Exact `0600` fixtures are scripted; hosted Ubuntu runtime has not run |
-| Mode repair before recovery | Partial | Benign `0777` repair fixture is scripted; hosted Ubuntu runtime has not run |
+| Unix recovery directory mode | Verified hosted Ubuntu 24.04 | Exact `0700` fixture passes on both implementation and merged-main heads |
+| Unix key/lock/journal mode | Verified hosted Ubuntu 24.04 | Exact `0600` fixtures pass on both implementation and merged-main heads; the key remains unencrypted |
+| Mode repair before recovery | Verified hosted Ubuntu 24.04 | Benign `0777` repair fixture passes on both implementation and merged-main heads |
 | Windows DPAPI/DACL recovery | Verified from checkpoint 2269 | Unchanged by this checkpoint |
 | macOS recovery runtime | Partial | Unix code path compiles, but no macOS permission/runtime fixture is routed |
 | Android recovery runtime | Partial | Unix code path may compile for target builds, but no Android runtime is routed |
@@ -138,6 +138,64 @@ The Ubuntu 24.04 mode and repair rows are now **Verified hosted**. This does
 not undo prior disclosure, revoke open handles, encrypt the key, prove macOS/
 Android runtime, exercise an installed service identity, or close any power-
 loss, privileged actor, hostile filesystem, driver/pre-execution, Defender-
-replacement, signing/deployment, or whole-project limit. Evidence-head hosted
-checks, normal merge, guarded destination synchronization, destination
-verification, and closure remain pending.
+replacement, signing/deployment, or whole-project limit. At implementation
+head, evidence-head hosted checks, normal merge, guarded destination
+synchronization, destination verification, and closure remained pending; the
+completed evidence below supersedes that state.
+
+## Integration and destination closure evidence
+
+Evidence commit `6dc6f22ac07465953b45a6c4b1dcd05bdc6dc424` passes all five
+Avorax CI jobs in run `33279985483`. Ubuntu job `99173414467` passes the two
+Unix runtime fixtures and wiring contract, exact `3 passed; 0 failed; 244
+filtered out`. Desktop Packages PR run `33279985653` passes all platform and
+consolidation jobs with publication skipped. Consolidated artifact
+`9722892732` is 132,637,119 bytes with SHA-256
+`6a7ff68e0dcc7fd5d472e9e1c547f4640e675c32ffea70abb64ac98569fbb61f`.
+
+Normal PR `#149` merges as
+`4fcc4f1aa5c34fc6a097c1036784a5766e120bb3`. Merged-main Avorax CI run
+`33280845843` passes all five jobs; Ubuntu job `99175636100` again reports
+exact `3 passed; 0 failed; 244 filtered out`. Desktop Packages run
+`33280845849` passes every build and consolidation job with publication
+skipped. Consolidated artifact `9723086300` is 132,643,423 bytes with SHA-256
+`6e3a2c09d6ae6011922c6eb505edbfd4d680ec6631e78ded5e888d4234992890`.
+Both artifacts pass bounded in-stream review without extraction or execution:
+eight root entries, six platform packages, seven matching checksums,
+CycloneDX 1.6, and 569 components.
+
+Guarded synchronization applies exactly 13 modified plus one added merge path
+with zero deletes and preserves 26 ordinary/replaced backups. Sync report
+SHA-256 is
+`70d1a323483c0522e258d90f9a9819f67c289fa2a89a84ad7470eccbb1d7478c`.
+At `C:\Users\Brent\Documents\Avorax-main`, Source `701/701`, formatting,
+strict locked all-target/all-feature Clippy, both locked workspace variants,
+locked all-target/all-feature release, Flutter analysis/client `852/852`, and
+protocol analysis/tests `14/14 + 6/6` pass. Rust groups are
+`18 + 4 + 229 + 41 + 251 + 583 + 642 + 6`, zero failures, with 21 documented
+isolated child-fixture ignores.
+
+The destination no-skip/no-Defender verifier passes exact `298/298` in
+`648.1s`. Its 217,645-byte report SHA-256 is
+`ad30b477fbb66e5c27036fcdaa0bdc8b03358b9085103b51c8247b3b85059c73`.
+PowerShell 5.1 and 7 accept it; the destination-local adversarial audit rejects
+all seven content mutations on both hosts, exact `14/14`, with zero boundary-
+only rejections. Its 14,267-byte SHA-256 is
+`34abb95fe97a19c187b1826de71fb71a43fac3d60f44ae84d8399353effb523c`.
+
+Final destination audit SHA-256
+`474ee7c3f0dd828bf7dcec770d32177b8d847f593c8ee0fa1dd47f8a527f918c`
+passes exact 14/14 merge blobs, all eight unchanged active lockfiles, 26
+backups, zero product processes/pending/temporary roots, and the exact
+protected-vault invariant. No known critical/high issue remains inside this
+checkpoint scope. Checkpoint 2270 is closed; the complete antivirus-hardening
+goal is not closed.
+
+No live malware, EICAR, Defender weakening, machine-wide installation,
+service/driver start, release, publication, or protected-vault write occurred.
+`.verification` remains untracked. Permission repair still cannot undo prior
+disclosure or revoke open handles; the Unix key is not encrypted; macOS and
+Android runtime, installed-service identity, power-loss package atomicity,
+privileged/hostile filesystem resistance, production signing/deployment,
+driver/pre-execution authority, Defender replacement, and whole-project
+completion remain partial, technically limited, blocked, or open.

@@ -14762,3 +14762,31 @@ pending.
   macOS/Android runtime, installed authority, transactionality, privileged
   actors, pre-execution/driver, Defender replacement, integration, destination,
   and the whole goal remain open.
+
+## 2026-08-30 - Checkpoint 2270 Integration And Destination Closure
+
+- Evidence commit `6dc6f22ac07465953b45a6c4b1dcd05bdc6dc424` passes Avorax CI
+  `33279985483` and Desktop Packages `33279985653`; artifact `9722892732` is
+  132,637,119 bytes with SHA-256
+  `6a7ff68e0dcc7fd5d472e9e1c547f4640e675c32ffea70abb64ac98569fbb61f`.
+- Normal PR `#149` merges as `4fcc4f1aa5c34fc6a097c1036784a5766e120bb3`.
+  Merged-main CI/packages `33280845843`/`33280845849` pass; artifact
+  `9723086300` is 132,643,423 bytes with SHA-256
+  `6e3a2c09d6ae6011922c6eb505edbfd4d680ec6631e78ded5e888d4234992890`.
+  Both Ubuntu jobs pass exact `3/3`; both artifacts pass bounded in-stream
+  8-root/6-platform/7-checksum/CycloneDX-1.6/569-component review without
+  extraction or execution. Publication is skipped.
+- Guarded sync applies exact 13 modified plus one added path with zero deletes
+  and 26 backups. Sync report SHA-256 is
+  `70d1a323483c0522e258d90f9a9819f67c289fa2a89a84ad7470eccbb1d7478c`.
+- Destination Source `701/701`, format, strict Clippy, both locked workspaces,
+  locked release, Flutter `852/852`, and protocols `14/14 + 6/6` pass. Exact
+  `298/298` verification takes `648.1s`; its 217,645-byte report SHA-256 is
+  `ad30b477fbb66e5c27036fcdaa0bdc8b03358b9085103b51c8247b3b85059c73`.
+- PowerShell 5.1/7 accept the authentic report and reject all `14/14`
+  destination-local content mutations. The 14,267-byte result SHA-256 is
+  `34abb95fe97a19c187b1826de71fb71a43fac3d60f44ae84d8399353effb523c`.
+- Final audit SHA-256
+  `474ee7c3f0dd828bf7dcec770d32177b8d847f593c8ee0fa1dd47f8a527f918c`
+  passes 14/14 blobs, 8/8 locks, 26 backups, zero product process/residue, and
+  the exact vault. Checkpoint 2270 closes; the complete goal remains active.
