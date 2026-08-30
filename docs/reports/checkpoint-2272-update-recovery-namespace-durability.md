@@ -2,6 +2,8 @@
 
 Date: 2026-08-30
 
+Status: **Closed through hosted integration and synchronized destination verification**
+
 ## Purpose
 
 Checkpoint 2272 narrows a crash-recovery gap between durable recovery-file
@@ -155,10 +157,62 @@ It passes the exact 13-modified/one-added/zero-delete scope, nine unchanged
 lockfiles, definitive/adversarial evidence, zero product processes, and the
 protected vault invariant.
 
-Hosted Ubuntu/macOS namespace durability is now verified on those fixed
-runners. Normal merge, merged-main evidence, guarded destination
-synchronization, destination verification, and checkpoint closure remain
-pending, so the complete antivirus-hardening goal remains active.
+Hosted Ubuntu/macOS namespace durability is verified on those fixed runners.
+The following closure section supersedes the then-pending merge,
+synchronization, destination, and closure state. The complete antivirus-
+hardening goal remains active.
+
+## Evidence-Head, Merge, And Destination Closure
+
+Evidence head `31fb2f4eb271d374f6c86d3eef30d61b7938d343` passes all six
+Avorax CI jobs in run `33292650533`. Ubuntu job `99206875322` and macOS 15 job
+`99206875245` each pass the exact four selected tests, `4 passed; 0 failed; 247
+filtered out`. Desktop Packages run `33292650535` passes with publication
+skipped. Consolidated artifact `9726612614` is 132,692,760 bytes with SHA-256
+`3b5cdf5c00d30af3d05059170eeadc11151ab4b580bf5efd3a4a1a318044b26f`.
+
+Normal PR `#153` merges as
+`0c4f151aeb5c7e3f9271b6d5567d4d6930fcb1d9`. Merged-main Avorax CI run
+`33293330097` passes all six jobs. Ubuntu job `99208660715` and macOS job
+`99208660662` each pass exact `4/4`, with 247 filtered. Desktop Packages run
+`33293330096` passes with publication skipped. Consolidated artifact
+`9726836596` is 133,279,297 bytes with SHA-256
+`a4afa9bb2f7456bac051e47843763c69b8cc55ffa8fcaa6259e19b6f0cf0da3b`.
+Both artifacts pass bounded in-stream exact 8-entry/6-platform/7-checksum
+inventory and CycloneDX 1.6 with 569 components, without extraction or
+execution.
+
+Guarded synchronization copies exact 13 modified and one added path with zero
+deletes and preserves 26 verified backups. Sync-report SHA-256 is
+`2cd375564f69d7f035f4d8c15230da35b3ee14ed18f8e030581fd0c305bf114e`.
+The synchronized `C:\Users\Brent\Documents\Avorax-main` destination passes:
+
+- `python -B tools/testing/run-python-source-contracts.py`: `703/703`.
+- Rust format, strict locked all-target/all-feature Clippy, both locked
+  workspace test variants, and locked all-target/all-feature release.
+- Flutter analysis and `852/852` tests.
+- Zentor and Avorax protocol analysis/tests: `14/14 + 6/6`.
+- The no-skip/no-Defender verifier: exact `300/300` in `717.8s`. Its 220,116-
+  byte report SHA-256 is
+  `ef4aba38c9c658cdf34b395a990abceff05b13e0458734e8923f16213438e94d`.
+
+PowerShell 5.1 and 7 accept that authentic report. The destination-local
+adversarial audit accepts both authentic host cases and rejects all `16/16`
+host/mutation cases; its 15,680-byte result SHA-256 is
+`8815c156e5fb451e4cc44afb17c2d98e1118d5c4356a5891eda98ab5d922619e`.
+Final audit SHA-256
+`503c4da1b8f72eab3f8fe2f39f7a61a41b73144e2f11b94225942a910a595935`
+passes 14 exact merge blobs, nine unchanged active lockfiles, 26 backups, zero
+product processes/pending files/temporary roots, and the unchanged protected-
+vault invariant.
+
+Checkpoint 2272 is closed. Verified scope remains fixed hosted Ubuntu 24.04 and
+macOS 15 runners plus the synchronized Windows destination. Storage hardware
+truthfulness, Windows removal durability, other filesystems/devices/identities,
+Android, privileged or hostile filesystem actors, package-wide power-loss
+transactionality, production signing/deployment, driver/pre-execution
+enforcement, Defender replacement, and the complete antivirus-hardening goal
+remain partial, blocked, or technically limited.
 
 ## Remaining Limits
 

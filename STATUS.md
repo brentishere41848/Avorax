@@ -8581,3 +8581,23 @@ removal durability, storage truthfulness, package-wide transactionality,
 privileged/hostile filesystems, installed identity, Android, production
 signing/deployment, driver/pre-execution enforcement, Defender replacement,
 and the complete antivirus goal remain open or limited.
+
+That pending state is superseded. Evidence head `31fb2f4e` and normal PR `#153`
+merge `0c4f151a` pass exact-head and merged-main CI/packages. The fixed Ubuntu
+24.04 and macOS 15 jobs each pass exact `4/4` namespace-durability fixtures at
+both heads. Publication remains skipped and bounded package review passes.
+
+Guarded synchronization applies exact 13 modified plus one added path, zero
+deletes, with 26 verified backups. The destination passes Source `703/703`,
+strict Rust format/lint, both locked workspaces, locked all-feature release,
+Flutter `852/852`, protocols `14/14 + 6/6`, and no-skip/no-Defender verification
+`300/300` in `717.8s`. Both validator hosts accept the authentic report and
+reject all `16/16` hostile cases. Final audit passes all 14 blobs, nine
+unchanged locks, zero product process/residue, and the exact protected vault.
+
+Checkpoint 2272 is closed through synchronized destination verification.
+Windows removal durability, truthful storage hardware, hostile filesystems,
+package-wide atomicity, privileged actors, installed identity, Android,
+production signing/deployment, driver/pre-execution enforcement, Defender
+replacement, and complete antivirus-goal closure remain open or technically
+limited.

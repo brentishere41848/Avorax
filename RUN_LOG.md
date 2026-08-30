@@ -14968,3 +14968,38 @@ pending.
   and closure remain pending. All storage, transaction, installed-identity,
   Android, privileged/hostile-filesystem, driver/pre-execution, Defender-
   replacement, and whole-goal limits remain open.
+
+## 2026-08-30 - Checkpoint 2272 Integration And Destination Closure
+
+- Evidence head `31fb2f4eb271d374f6c86d3eef30d61b7938d343` passes all six
+  Avorax CI jobs in run `33292650533`. Ubuntu job `99206875322` and macOS job
+  `99206875245` each pass exact `4/4`, with 247 filtered. Desktop Packages run
+  `33292650535` passes with publication skipped; artifact `9726612614` is
+  132,692,760 bytes with SHA-256
+  `3b5cdf5c00d30af3d05059170eeadc11151ab4b580bf5efd3a4a1a318044b26f`.
+- Normal PR `#153` merges as
+  `0c4f151aeb5c7e3f9271b6d5567d4d6930fcb1d9`. Merged-main CI run
+  `33293330097` passes all six jobs. Ubuntu job `99208660715` and macOS job
+  `99208660662` each pass exact `4/4`, with 247 filtered. Desktop Packages run
+  `33293330096` passes with publication skipped; artifact `9726836596` is
+  133,279,297 bytes with SHA-256
+  `a4afa9bb2f7456bac051e47843763c69b8cc55ffa8fcaa6259e19b6f0cf0da3b`.
+- Both artifacts pass bounded non-extracting exact 8-entry/6-platform/
+  7-checksum inventory and CycloneDX 1.6 with 569 components.
+- Guarded sync applies exact 13 modified plus one added path, zero deletes, and
+  verifies 26 backups. Sync-report SHA-256 is
+  `2cd375564f69d7f035f4d8c15230da35b3ee14ed18f8e030581fd0c305bf114e`.
+- The destination passes Source `703/703`, format, strict locked Clippy, both
+  locked workspace variants, locked all-feature release, Flutter `852/852`,
+  and protocols `14/14 + 6/6`. Exact no-Defender/no-skip verification passes
+  `300/300` in `717.8s`; its 220,116-byte report SHA-256 is
+  `ef4aba38c9c658cdf34b395a990abceff05b13e0458734e8923f16213438e94d`.
+- PowerShell 5.1 and 7 accept the authentic report and reject all `16/16`
+  hostile host/mutation cases. Adversarial result SHA-256 is
+  `8815c156e5fb451e4cc44afb17c2d98e1118d5c4356a5891eda98ab5d922619e`.
+  Final audit SHA-256
+  `503c4da1b8f72eab3f8fe2f39f7a61a41b73144e2f11b94225942a910a595935`
+  passes exact blobs, nine locks, 26 backups, zero product process/residue, and
+  the protected vault invariant. Checkpoint 2272 closes; all documented
+  durability, privilege, driver/pre-execution, Defender, and whole-goal limits
+  remain open.
