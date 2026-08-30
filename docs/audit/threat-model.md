@@ -3756,6 +3756,17 @@ release, publication, or protected-vault mutation occurred. The 16,072-file
 vault has zero pending, and the complete antivirus-hardening goal remains
 active.
 
+Evidence-head and merged-main Ubuntu jobs, normal PR `#149`, bounded hosted
+package review, exact 14-path zero-delete synchronization, destination broad
+regression and `298/298`, dual-host destination-local adversarial rejection,
+and final exact blob/lock/backup/process/vault audit close this threat delta.
+This verifies creation and repair behavior on the fixed Ubuntu runner plus
+source/build compatibility on the synchronized Windows destination. It does
+not prove historical confidentiality, revoke open handles, encrypt the Unix
+key, cover macOS/Android runtime, establish installed service authority, make
+multi-component updates power-loss atomic, resist privileged/hostile storage,
+or provide driver/pre-execution or Defender-replacement authority.
+
 ## Checkpoint 2269 Authenticated Directory Recovery Threat Delta
 
 The protected transition is an update or rollback directory activation that

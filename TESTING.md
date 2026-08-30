@@ -1691,3 +1691,36 @@ Consolidated artifacts `9722589339`/`9722639285` pass bounded in-stream exact
 8-root/6-platform/7-checksum/CycloneDX-1.6/569-component validation without
 extraction or execution. Evidence-head, merged-main, and destination reruns are
 still required.
+
+## Checkpoint 2270 Integration And Destination Results
+
+Evidence-head CI/packages `33279985483`/`33279985653` and merged-main
+CI/packages `33280845843`/`33280845849` pass. Ubuntu jobs
+`99173414467`/`99175636100` each select the two runtime fixtures plus wiring
+contract and report `3 passed; 0 failed; 244 filtered out`. Publication skips.
+Artifacts `9722892732`/`9723086300` pass bounded in-stream exact
+8-root/6-platform/7-checksum/CycloneDX-1.6/569-component review without
+extraction or execution.
+
+After guarded 13-modified/one-added/zero-delete synchronization, the exact
+destination commands pass:
+
+```powershell
+python -B tools/testing/run-python-source-contracts.py
+cargo fmt --all -- --check
+cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
+cargo test --workspace --locked -- --test-threads=1
+cargo test --workspace --all-targets --all-features --locked -- --test-threads=1
+cargo build --workspace --release --all-targets --all-features --locked
+flutter analyze
+flutter test
+powershell.exe -File tools/testing/verify-small-threat-mvp.ps1 ... -ReportPath .workflow/ultracode/avorax-hardening/results/checkpoint-2270-destination-unix-update-recovery-report.json
+```
+
+Results are Source `701/701`, Rust groups
+`18 + 4 + 229 + 41 + 251 + 583 + 642 + 6`, Flutter `852/852`, protocols
+`14/14 + 6/6`, and exact no-skip/no-Defender verifier `298/298` in `648.1s`.
+Both PowerShell hosts validate the authentic report and reject all `14/14`
+destination-local mutations with zero boundary-only rejections. The final
+14-blob/8-lock/26-backup/process/residue/vault audit passes. Checkpoint 2270 is
+closed; target/runtime and authority limits outside its scope remain.

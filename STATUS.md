@@ -8414,3 +8414,21 @@ Android runtime, prior-disclosure/open-handle recovery, installed context,
 power-loss transactionality, privileged actors, driver/pre-execution,
 Defender replacement, integration, destination, and whole-goal closure remain
 open.
+
+That pending integration state is superseded. Evidence `6dc6f22a` passes CI
+`33279985483` and Desktop Packages `33279985653`; normal PR `#149` merge
+`4fcc4f1a` passes merged-main CI/packages `33280845843`/`33280845849`.
+Evidence-head and merged-main Ubuntu jobs pass exact `3/3`, and both
+consolidated artifacts pass bounded non-extracting/non-executing exact
+8-root/6-platform/7-checksum/CycloneDX-1.6/569-component review.
+
+Guarded synchronization applies 13 modified plus one added path with zero
+deletes and 26 verified backups. The destination passes Source `701/701`,
+format, strict locked Clippy, both locked workspaces, locked release, Flutter
+`852/852`, protocols `14/14 + 6/6`, and no-skip/no-Defender verification
+`298/298` in `648.1s`. Both validator hosts accept the authentic report and
+reject all `14/14` destination-local content mutations. Final audit passes
+14/14 blobs, 8/8 unchanged locks, zero process/residue, and the exact protected
+vault. Checkpoint 2270 is closed. Its stated cross-platform, prior-exposure,
+installed-authority, transaction, privileged, driver/pre-execution, Defender-
+replacement, signing/deployment, and whole-project limits remain open.

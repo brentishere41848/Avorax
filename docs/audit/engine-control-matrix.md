@@ -6140,3 +6140,13 @@ repair rows are therefore **Verified on hosted Ubuntu 24.04**. Package push/PR
 runs also pass all desktop outputs and bounded SBOM review. macOS/Android runtime
 and every prior-exposure, privileged, installed, transaction, driver,
 pre-execution, and Defender row retain their prior partial/limited/open state.
+
+Checkpoint 2270 closure promotes only the four hosted Ubuntu rows above to
+**Verified on hosted Ubuntu 24.04**. Evidence/merged Ubuntu jobs pass `3/3`;
+normal merge, exact 14-path zero-delete destination sync, complete destination
+regression, `298/298`, dual-host `14/14` hostile rejection, exact blobs/locks/
+backups, and vault/process invariants pass. Every detection engine, custom
+engine, UI control, threshold, real-time authority, macOS/Android runtime,
+prior-exposure, root/administrator, installed-service, transaction, driver/
+pre-execution, signing/deployment, and Defender-replacement row remains at its
+previous responsibility and status. The complete antivirus goal remains open.
