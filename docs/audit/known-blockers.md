@@ -4291,3 +4291,13 @@ driver/pre-execution enforcement, Defender replacement, and the complete goal
 remain blocked, limited, or open. No live malware, EICAR, protected-vault
 mutation, installation, service/driver start, release, or publication occurs;
 the exact 16,072-file vault remains at zero pending.
+
+Exact implementation-head hosted evidence removes the narrow macOS runtime
+blocker for one `macos-15` runner: job `99186567140` passes the exact three
+fixtures (`3/3`, 245 filtered out), and CI/package/artifact/local-audit evidence
+is green with publication skipped. This does not remove Android, broader macOS
+environment, installed identity, unencrypted key, prior-disclosure/open-handle,
+root/admin, hostile filesystem, storage ordering, power-loss transaction,
+production signing/deployment, driver/pre-execution, Defender-replacement, or
+whole-project blockers. Evidence-head, merge, destination, and closure proof
+remain pending.

@@ -2442,6 +2442,15 @@ installation, service/driver start, release, publication, or protected-vault
 mutation occurs. The exact 16,072-file vault has zero pending; complete
 antivirus hardening remains active.
 
+Checkpoint 2271 implementation-head CI and package push/PR runs now pass with
+publication skipped. Both consolidated artifacts pass bounded in-stream exact
+8-root/6-platform/7-checksum/CycloneDX-1.6/569-component validation without
+extraction or execution. Eight active lockfiles remain unchanged, and the
+commit-bound local audit passes. This confirms zero dependency, lockfile,
+runtime-download, network-content, or license-class delta for the checkpoint;
+production signing/notarization, final notice provenance, deployment approval,
+evidence-head, merge, destination, and closure remain separate.
+
 Checkpoint 2270 post-freeze strict locked Clippy, both locked workspace test
 variants, locked all-target/all-feature release, the dependency gate inside
 exact `298/298`, and read-only lockfile-diff checks pass. No manifest or

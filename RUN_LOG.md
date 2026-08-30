@@ -14833,3 +14833,25 @@ pending.
   Actual macOS semantics still require exact-head `macos-15`; hosted packages,
   integration, guarded destination sync, destination regression, and closure
   remain pending. The complete antivirus-hardening goal remains active.
+
+## 2026-08-30 - Checkpoint 2271 Implementation-Head Hosted Evidence
+
+- Exact implementation `d818a806d52f36e60afb58c3f38e2db004ddfe4e`
+  passes all six Avorax CI jobs in run `33285011167`.
+- macOS 15 job `99186567140` passes exact tests for owner-only artifacts,
+  broad-mode repair before use, and Unix workflow wiring: `3 passed`, zero
+  failed, 245 filtered out.
+- Desktop Packages push/PR `33284997136`/`33285011165` pass all platform and
+  consolidation jobs; both publication jobs skip.
+- Consolidated artifacts `9724283198`/`9724343130` are 132,650,305/
+  132,649,381 bytes with SHA-256 `226c085cd2876174d2d12eba657f81c91f7dec0717efec2752a5bfeeb5ac4702`/
+  `1785eea9b14517c6a8a7bb6f21588f75dafb54701dc45beaa6465a049e76eb7d`.
+  Both pass bounded in-stream 8-root/6-platform/7-checksum/CycloneDX-1.6/
+  569-component review without extraction or execution.
+- Commit-bound local audit SHA-256
+  `9eb9457f6d85de21fc51ab41220ffe7a1f0796656d262877a79fe90639cced03`
+  passes exact paths, locks, reports, process/residue, and vault checks.
+- One hosted macOS 15 route is verified. Android, broader macOS/installed
+  identity, prior disclosure/open handles, unencrypted key, privileged/hostile
+  filesystem, transaction, driver/pre-execution, Defender replacement,
+  integration, destination, and whole-goal limits remain open.

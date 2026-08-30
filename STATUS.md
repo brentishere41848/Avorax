@@ -8470,3 +8470,19 @@ Locks, process/residue, and the exact vault pass read-only checks. Hosted
 `macos-15`, package, integration, guarded destination, destination regression,
 and closure evidence remain pending; the whole antivirus-hardening goal stays
 active.
+
+Exact implementation `d818a806d52f36e60afb58c3f38e2db004ddfe4e`
+now passes all six Avorax CI jobs in `33285011167`. Hosted macOS job
+`99186567140` passes exact owner-only, repair, and wiring tests, `3/3` with 245
+filtered out. Desktop Packages push/PR `33284997136`/`33285011165` pass every
+platform and consolidation job with publication skipped. Consolidated
+artifacts `9724283198`/`9724343130` pass bounded non-extracting/non-executing
+8-root/6-platform/7-checksum/CycloneDX-1.6/569-component review. Commit-bound
+local audit SHA-256 is
+`9eb9457f6d85de21fc51ab41220ffe7a1f0796656d262877a79fe90639cced03`.
+
+The hosted macOS 15 mode/repair route is verified for that runner. Android,
+other macOS environments, installed identity, key encryption/prior exposure,
+privileged and hostile filesystems, power-loss package transactionality,
+signing/deployment, driver/pre-execution, Defender replacement, evidence-head,
+integration, destination, and whole-project completion remain open or limited.

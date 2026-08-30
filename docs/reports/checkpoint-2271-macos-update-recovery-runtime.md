@@ -102,3 +102,36 @@ macOS filesystem semantics. Exact-head hosted `macos-15` execution, package
 evidence, normal integration, guarded zero-delete destination synchronization,
 destination regression, and closure remain pending. Android and all stated
 technical limits remain open; the complete antivirus-hardening goal is active.
+
+## Implementation-head hosted evidence
+
+Exact implementation `d818a806d52f36e60afb58c3f38e2db004ddfe4e`
+passes all six Avorax CI jobs in run `33285011167`. Hosted macOS 15 job
+`99186567140` passes the exact two harmless Unix runtime fixtures plus the Unix
+wiring contract: `3 passed; 0 failed; 245 filtered out`. This verifies `0700`
+recovery-directory mode, `0600` key/lock/journal modes, and repair from
+deliberately broadened temporary fixture modes on that hosted macOS filesystem.
+
+Desktop Packages push/PR runs `33284997136`/`33285011165` pass contracts,
+Windows MSI/EXE, Linux DEB/tar, macOS arm64/x64 DMG, consolidation, checksums,
+and lockfile SBOM; both publication jobs are skipped. Untouched consolidated
+artifacts `9724283198` and `9724343130` were reviewed in-stream without
+extraction or execution. They are respectively 132,650,305 bytes with SHA-256
+`226c085cd2876174d2d12eba657f81c91f7dec0717efec2752a5bfeeb5ac4702`
+and 132,649,381 bytes with SHA-256
+`1785eea9b14517c6a8a7bb6f21588f75dafb54701dc45beaa6465a049e76eb7d`.
+Both pass exact 8-root/6-platform/7-checksum inventory and CycloneDX 1.6 with
+569 components.
+
+The commit-bound final local audit passes the exact 13-modified/one-added/zero-
+delete path set, all eight unchanged lockfiles, definitive and adversarial
+evidence, zero product process/residue, and the protected vault. Its SHA-256 is
+`9eb9457f6d85de21fc51ab41220ffe7a1f0796656d262877a79fe90639cced03`.
+
+The three macOS mode/repair rows are now **Verified on one hosted macOS 15
+runner**. This does not undo prior disclosure, revoke open handles, encrypt the
+key, prove Android or every macOS environment, exercise an installed service
+identity, or close any power-loss, privileged actor, hostile filesystem,
+driver/pre-execution, Defender-replacement, signing/deployment, or whole-
+project limit. Evidence-head hosted checks, normal merge, guarded destination
+synchronization, destination verification, and closure remain pending.

@@ -3734,6 +3734,16 @@ publication, or protected-vault mutation occurs. The vault remains exactly
 16,072 files with zero pending, and the complete antivirus-hardening goal
 remains active.
 
+**Implementation-head evidence:** exact hosted macOS 15 job `99186567140`
+passes owner-only artifact modes, repair before authenticated use, and the
+wiring contract (`3/3`, 245 filtered out). This closes the narrow platform-
+specific runtime-evidence threat for that runner. It does not generalize to
+other macOS versions/architectures/filesystems, installed identity, Android,
+prior exposure/open handles, key encryption, privileged/hostile filesystems,
+storage rollback/reordering, or power-loss transactionality. Exact-head CI,
+packages, bounded in-stream artifact review, and commit-bound local audit pass;
+evidence-head, merge, destination, and closure remain pending.
+
 Checkpoint 2270 post-freeze local evidence passes Source `701/701`, Windows
 recovery `19/19`, update service `229/229 + 4/4`, both locked workspaces/
 release, Flutter/protocols, exact `298/298`, authentic PS5/PS7 validation, and

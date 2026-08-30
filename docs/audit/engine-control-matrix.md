@@ -6165,3 +6165,13 @@ No checkpoint-2271 test ran during scripting. No live malware, EICAR, Defender
 change, install, service/driver start, release, publication, fixture execution,
 or protected-vault mutation is involved. The exact 16,072-file vault has zero
 pending; complete antivirus hardening remains active.
+
+Implementation head `d818a806` supersedes the pre-execution classifications
+for the three macOS route/mode/repair rows only. Exact hosted macOS 15 job
+`99186567140` passes all three selected tests (`3/3`, 245 filtered out), so
+those rows are **Verified on one hosted macOS 15 runner**. CI, both package
+runs, exact package inventory/checksums/SBOM review, and the commit-bound local
+audit also pass with publication skipped. Platform breadth, installed identity,
+Android, key confidentiality/prior exposure, privileged/hostile filesystem,
+transaction, detector/custom-engine, driver/pre-execution, Defender, and whole-
+goal rows retain their documented status.
