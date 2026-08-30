@@ -2128,4 +2128,16 @@ The 231,401-byte report SHA-256 is
 Both hosts accept the authentic report and reject all `24/24` adversarial
 cases. Final audit passes 14 modified plus one added path, zero deletions, nine
 unchanged locks, zero product process/pending/temp residue, and the protected-
-vault invariant. Final-source hosted CI/package reruns remain pending.
+vault invariant.
+
+Final implementation head `c91519af3e03e8254e6dc215d9528f70a80fc2f5`
+passes all six jobs in Avorax CI run `33307588267`. Raw Ubuntu job
+`99246758706` evidence shows each fully qualified Unix cleanup/recovery test as
+`running 1 test`, named `ok`, and `1 passed; 0 failed`. Desktop Packages run
+`33307588380` passes package contracts, all four platform jobs, and
+consolidation. Its job log requires six platform files, creates seven checksums,
+and creates a CycloneDX 1.6 lockfile SBOM with 569 components; publication is
+skipped. GitHub metadata binds consolidated artifact `9731114476` and all four
+platform evidence bundles to the implementation head. No artifact was
+downloaded, extracted, or executed during review. Evidence-head hosted reruns,
+merge, destination, and closure testing remain pending.

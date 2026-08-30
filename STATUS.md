@@ -8721,7 +8721,13 @@ SHA-256 is
 `73f63eef30abbb2e1109ce112224128dc87717e9c6ba4363eb8d3842beb49552`.
 Both hosts accept it and reject all `24/24` adversarial cases. Final audit
 passes 14 modified plus one added path, zero deletions, nine unchanged locks,
-zero residue, and the protected vault. Final-source hosted CI/packages, normal
+zero residue, and the protected vault. Final implementation head `c91519af`
+passes all six CI jobs in run `33307588267`; Ubuntu job `99246758706` proves
+both exact Unix nested-link fixtures ran as named non-empty `1/1` tests.
+Desktop Packages run `33307588380` passes all four platform jobs,
+consolidation, six platform files, seven checksums, and CycloneDX 1.6 with 569
+components; publication is skipped. No artifact was downloaded, extracted, or
+executed during the metadata/log review. Evidence-head hosted runs, normal
 merge, destination synchronization/regression, and closure evidence are
 pending.
 Point-in-time same-identity races, privileged actors, hostile

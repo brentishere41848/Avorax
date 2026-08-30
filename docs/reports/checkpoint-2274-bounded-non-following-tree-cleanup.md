@@ -2,7 +2,8 @@
 
 Date: 2026-08-30
 
-Status: **Final-source definitive local verification passed; hosted reruns pending**
+Status: **Final-source local and implementation-head hosted verification passed;
+evidence-head, merge, destination, and closure pending**
 
 ## Purpose
 
@@ -157,13 +158,36 @@ valid pre-repair history but is not current final-source credit.
   unchanged locks, zero product process/pending/temp residue, and the protected-
   vault invariant.
 
+## Exact Implementation-Head Hosted Evidence
+
+Final implementation head
+`c91519af3e03e8254e6dc215d9528f70a80fc2f5` passes all six Avorax CI jobs in
+PR run `33307588267`. Ubuntu 24.04 job `99246758706` contains the dedicated
+`Test bounded cleanup Unix link safety` step. Its raw log proves non-empty exact
+execution:
+
+- `path_safety::tests::checked_tree_cleanup_nested_link_fails_before_mutation`:
+  `running 1 test`, named `ok`, `1 passed; 0 failed`;
+- `activation_recovery::tests::activation_recovery_checked_tree_cleanup_nested_link_preserves_evidence`:
+  `running 1 test`, named `ok`, `1 passed; 0 failed`.
+
+Desktop Packages PR run `33307588380` passes package contracts, Windows x64
+MSI/EXE, Linux x64 DEB/tar, macOS arm64/x64 DMG, and consolidation. The
+consolidation job requires six platform files, creates seven release checksums,
+and reports CycloneDX 1.6 with 569 lockfile components. The prerelease
+publication job is skipped. GitHub metadata binds all five retained workflow
+artifact bundles to the same implementation head. Consolidated artifact
+`9731114476` is 132,719,373 bytes with Actions archive SHA-256
+`a62b1e98c5dd161031216445c18f1666b42ef0517071e5257fffc7d28cb839a4`;
+the four platform evidence artifacts are `9731098756`, `9731024272`,
+`9731041481`, and `9731109966`. Inspection was limited to GitHub metadata and
+bounded workflow-log evidence; no artifact was downloaded, extracted, or
+executed, and no release was published.
+
 ## Remaining Evidence
 
-Push the repair and require exact-head hosted reruns. Windows does not execute
-the nested-link primitive and authenticated-recovery
-fixtures gated by `cfg(unix)`. Exact-head hosted Ubuntu must run both before
-cross-platform runtime credit. Exact-head CI/package review without extraction,
-execution, or publication; normal PR merge; merged-main checks; guarded zero-
-delete destination synchronization; full destination regression; and closure
-audit remain pending. Checkpoint 2274 and the complete antivirus-hardening goal
-remain active.
+Commit this hosted evidence and require exact evidence-head CI/package reruns.
+Then perform the normal PR merge, merged-main checks, guarded zero-delete
+destination synchronization, full destination regression, dual-host report
+validation, and closure audit. Checkpoint 2274 and the complete antivirus-
+hardening goal remain active.

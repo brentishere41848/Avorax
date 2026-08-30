@@ -4715,8 +4715,12 @@ reject all `24/24` adversarial cases, and final read-only audit passes. Both
 commands are now workflow- and Source-contract-wired; because that tracked
 repair followed the earlier local report, it was reverified. Final-source
 Source `705/705`, exact `302/302` in `665.5s`, dual-host `24/24` adversarial
-rejection, and final audit pass. Hosted exact-head rerun evidence remains
-pending.
+rejection, and final audit pass. Final implementation-head CI `33307588267`
+passes all six jobs. Raw Ubuntu job `99246758706` proves both exact Unix tests
+run non-empty and pass `1/1`; package run `33307588380` passes all platform and
+consolidation jobs with publication skipped. The modeled nested-link threat is
+therefore exercised on the fixed Ubuntu 24.04 runner. Evidence-head,
+merged-main, destination, and closure evidence remain pending.
 
 Residual threat: path and type checks remain point-in-time user-mode evidence.
 A same-identity attacker, administrator, SYSTEM/root, hostile filesystem,

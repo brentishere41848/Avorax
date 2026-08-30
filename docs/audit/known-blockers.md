@@ -4448,8 +4448,13 @@ residue, and protected-vault invariants. Initial exact-head CI `33306480962`
 passed but omitted the two Unix-only fixtures. Both exact Ubuntu commands and a
 Source contract are now wired. Final-source Source `705/705`, exact `302/302`
 in `665.5s`, dual-host `24/24` adversarial rejection, and final audit pass.
-Hosted exact-head reruns, merge, destination, and closure evidence remain
-pending.
+Final implementation-head CI `33307588267` passes all six jobs; raw Ubuntu job
+`99246758706` proves both exact Unix tests execute non-empty and pass `1/1`.
+Desktop Packages `33307588380` passes all platform and consolidation jobs with
+six files, seven checksums, a 569-component CycloneDX 1.6 SBOM, and publication
+skipped. The narrow hosted Unix execution blocker is removed on the fixed
+Ubuntu 24.04 runner. Evidence-head/merged-main, destination, and closure
+evidence remain pending.
 
 The bounds do not create an atomic delete transaction or a kernel-enforced
 immutable namespace. Inventory and per-entry revalidation remain point-in-time;

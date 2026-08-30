@@ -15116,7 +15116,7 @@ pending.
   durability, privilege, driver/pre-execution, Defender, and whole-goal limits
   remain open.
 
-## Checkpoint 2274 Bounded Non-Following Tree Cleanup (Definitive Local Passed; Hosted Pending)
+## Checkpoint 2274 Bounded Non-Following Tree Cleanup (Implementation-Head Hosted Passed)
 
 - Replaces the shared update-service `std::fs::remove_dir_all` cleanup with a
   two-phase no-mutation inventory followed by explicit regular-file and empty-
@@ -15171,8 +15171,22 @@ pending.
   both hosts accept it and reject all `24/24` adversarial cases.
 - Final read-only audit passes 14 modified plus one added path, zero deletions,
   nine unchanged locks, zero product process/pending/temp residue, and the
-  protected-vault invariant. Final-source hosted CI/package reruns,
-  integration, destination, and closure evidence remain pending.
+  protected-vault invariant.
+- Final implementation head `c91519af3e03e8254e6dc215d9528f70a80fc2f5`
+  passes all six jobs in CI run `33307588267`. Ubuntu job `99246758706` runs
+  both new fully qualified `cfg(unix)` tests with `--exact`; each names the test
+  as `ok` and reports `1 passed; 0 failed`, proving the filters are non-empty.
+- Desktop Packages run `33307588380` passes package contracts, Windows x64,
+  Linux x64, both macOS architectures, and consolidation. It requires six
+  platform files, creates seven checksums and a CycloneDX 1.6 SBOM with 569
+  components; publication is skipped. Consolidated artifact `9731114476` is
+  132,719,373 bytes with Actions archive SHA-256
+  `a62b1e98c5dd161031216445c18f1666b42ef0517071e5257fffc7d28cb839a4`.
+  Review used GitHub metadata and bounded logs only; no artifact was downloaded,
+  extracted, or executed.
+- Evidence-head hosted runs, normal merge, merged-main checks, guarded
+  destination synchronization, destination regression, and closure remain
+  pending.
 - No live malware, EICAR fixture, Defender change, installation, service/driver
   start, publication, release, or protected-vault mutation is part of this
   checkpoint. The exact 16,072-file vault remains at zero pending.
