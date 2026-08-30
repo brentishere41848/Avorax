@@ -6387,3 +6387,26 @@ Repaired implementation head `0be467e` now passes all six hosted CI controls,
 including real macOS and Ubuntu replacement runtime, plus both complete package
 workflows with publication skipped. Evidence-head, merge, and destination
 control execution remain pending.
+
+### Checkpoint 2277 metadata-update recovery delta
+
+| Control | Responsibility | State | Evidence / limit |
+| --- | --- | --- | --- |
+| Metadata-update journal | Bind exact previous/proposed JSON and HMAC bytes before existing-file mutation | Verified locally and hosted | Strict 1 MiB envelope, dedicated HMAC domain, atomic no-replace activation and lock |
+| Known-state rollback | Restore the previous authenticated pair from any exact previous/proposed combination | Verified locally and hosted | Four-state matrix plus exact post-rollback pair verification |
+| Unknown-state handling | Avoid guessing when files are missing, unknown, linked, conflicting, malformed, oversized, active, or tampered | Verified locally and hosted | Fail visible and preserve journal/evidence |
+| Update concurrency | Prevent two cooperating updates from sharing one record mutation | Verified locally and hosted | Active journal name is collision-preserving no-replace and exclusively locked |
+| Immutable threat evidence | Keep original path, payload path/hash/size, detection, engine, timestamp, source, and process evidence fixed | Verified locally and hosted | Update transition validator permits status/action/note changes only and rejects semantically unchanged rewrites |
+| JSON/HMAC transactionality | Coordinate rollback while journal exists | Partial / technically limited | Still two file replacements, not a filesystem transaction |
+| Restore/delete payload coordination | Join status and payload movement across crashes | Technically limited / open | Not addressed by checkpoint 2277; separate action recovery is needed |
+| Detection/custom engines | Preserve existing detection responsibilities | Unchanged | No accuracy or coverage delta |
+| Driver/pre-execution and Defender relationship | Preserve honest authority boundary | Technically limited / unchanged | No driver/service start or Defender weakening/replacement |
+
+No checkpoint-2277 test ran during scripting. Post-freeze local Source
+`709/709`, recovery `13/13`, metadata `35/35`, quarantine `156/156`, both full
+Rust variants (`1,823` executed, 21 intentional ignores), strict Clippy, release,
+Flutter `852/852`, protocols `14/14 + 6/6`, exact verifier `303/303`, and dual-
+host `62/62` adversarial validation pass. Exact implementation head `2e106e0`
+passes CI `33337128172` and package push/PR `33337101095`/`33337128179`,
+including actual Ubuntu/macOS recovery; publication is skipped. Evidence-head,
+integration, destination, and vault evidence remains required.

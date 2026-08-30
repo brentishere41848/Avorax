@@ -15600,3 +15600,46 @@ pending.
 - Checkpoint 2276 is closed. Cross-file JSON/HMAC transactionality, installed
   identity, production signing/accuracy, signed driver/pre-execution evidence,
   Defender replacement, and whole-goal completion remain open or limited.
+
+## 2026-08-30 - Checkpoint 2277 metadata-update rollback scripting
+
+- Checkpoint 2276 closure PR `#162` merged normally as `e53bd68`; exact-head PR
+  CI passed all six jobs. Three closure documents synchronized under exact blob
+  preconditions with six rollback files; the independent audit passed 3/3 docs,
+  9/9 locks, zero product process/residue, and the unchanged protected vault.
+- Scripted a strict, bounded, single-file, domain-separated HMAC metadata-update
+  journal that binds exact previous/proposed JSON and HMAC bytes before either
+  existing file changes. Journal presence means the update is uncommitted.
+- Scripted fail-closed rollback for all four exact old/new pair combinations,
+  journal locking/no-replace concurrency, immutable evidence checks, and
+  preservation of unknown, missing, linked, malformed, oversized, conflicting,
+  or tampered state.
+- Scripted fourteen cross-platform Local Core harmless recovery fixtures, one platform artifact-name
+  fixture, Ubuntu/macOS runtime wiring, definitive verifier step 303, dual-host
+  validator requirements, source contracts, and operational/security docs.
+- No checkpoint-2277 test ran during this scripting phase. No live malware,
+  EICAR, install, service/driver start, Defender change, release, publication,
+  artifact download, or protected-vault mutation occurred.
+- JSON/HMAC remains a rollback-journaled two-file update, not an atomic
+  transaction. Restore/delete payload movement remains separately
+  nontransactional, and whole-goal completion remains active.
+- Post-freeze local verification passes Source `709/709`, platform `29/29`,
+  recovery `13/13`, workspace metadata `35/35`, Local Core quarantine
+  `156/156`, strict workspace Clippy, both complete locked Rust variants with
+  `1,823` executed and 21 intentional ignores, locked release, Flutter
+  `852/852`, and protocols `14/14 + 6/6`.
+- The no-skip/no-Defender verifier passes exact `303/303` in `680.4s`; report
+  SHA-256 is `2dc118bcb78cbc1b1e7b1573ee368088868fb8085e2e9ed64e8363fa530a213c`.
+  PS5/PS7 accept the authentic report and reject `62/62` hostile cases across
+  31 mutations; adversarial SHA-256 is
+  `4d97b5ab0676a14b56fca5a60ff36e4915ddc4233663226dd948c621610cd6e2`.
+- Final local audit passes the exact 17-path diff, all nine unchanged locks,
+  zero process/pending/temp residue, and exact protected vault. Its SHA-256 is
+  `7c1cac6557848e5bd5fb9c80eeecf7b2e4c7378116e2fa4ec1274b35d38e5190`.
+- Exact implementation head `2e106e0ecafdc988b5eb2b0003462b7423a58a3e`
+  passes Avorax CI `33337128172` and Desktop Packages push/PR
+  `33337101095`/`33337128179`. CI passes all six jobs, including actual Ubuntu
+  and macOS recovery. Both package runs pass all six platform artifacts, seven
+  checksums, and the 569-component lockfile SBOM; publication is skipped.
+  Evidence-head checks, integration, destination synchronization, and final
+  audits remain required.

@@ -134,6 +134,19 @@ jobs:
             quarantine_metadata_atomic_replace_ \
             -- --test-threads=1
 
+      - name: Test Local Core quarantine metadata update recovery
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo test --locked \
+            --manifest-path core/avorax_platform_security/Cargo.toml \
+            tests::quarantine_metadata_update_recovery_artifact_names_are_bounded_and_recognized \
+            -- --exact --test-threads=1
+          cargo test --locked \
+            --manifest-path core/zentor_local_core/Cargo.toml \
+            quarantine_metadata_update_recovery_ \
+            -- --test-threads=1
+
       - name: Test Local Core Unix permission routing
         shell: bash
         run: |
@@ -230,6 +243,19 @@ jobs:
           cargo test --locked \
             --manifest-path core/zentor_local_core/Cargo.toml \
             quarantine_metadata_atomic_replace_ \
+            -- --test-threads=1
+
+      - name: Test Local Core quarantine metadata update recovery
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo test --locked \
+            --manifest-path core/avorax_platform_security/Cargo.toml \
+            tests::quarantine_metadata_update_recovery_artifact_names_are_bounded_and_recognized \
+            -- --exact --test-threads=1
+          cargo test --locked \
+            --manifest-path core/zentor_local_core/Cargo.toml \
+            quarantine_metadata_update_recovery_ \
             -- --test-threads=1
 
   flutter:

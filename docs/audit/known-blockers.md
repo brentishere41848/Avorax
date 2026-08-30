@@ -4585,3 +4585,23 @@ local runtime evidence passes new `3/3`, metadata `21/21`, complete regression,
 exact `302/302`, dual-host `52/52` hostile rejection, and final audit. Hosted,
 integration, synchronized-destination, installed-identity, and production
 evidence remain pending.
+
+## Checkpoint 2277 Remaining Recovery Limits
+
+Checkpoint 2277 scripts the durable authenticated metadata-update journal that
+checkpoint 2276 left as future work. Exact previous/proposed JSON/HMAC mismatch
+states can now be rolled back automatically while the journal remains.
+
+The blocker is narrowed, not eliminated. JSON and HMAC are still separate file
+operations; unknown/missing state needs manual review, journal unlink durability
+depends on filesystem/storage truthfulness, and Windows replacement ambiguity
+can retain backup evidence. Restore/delete payload movement is not transactionally
+joined to metadata and needs a separate bounded action-recovery design.
+
+Installed identity, production signing/deployment and accuracy, signed-driver
+pre-execution enforcement, Defender replacement, hostile-administrator/kernel
+resistance, secure erasure, and whole-goal closure remain blocked, partial,
+open, or technically limited. No checkpoint-2277 test ran during scripting;
+post-freeze local focused/full/release/Flutter/protocol and exact `303/303`
+verifier evidence now passes, including dual-host rejection of `62/62`
+adversarial cases. Hosted cross-platform and destination closure remains open.

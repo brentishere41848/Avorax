@@ -2415,3 +2415,44 @@ real macOS and Ubuntu metadata replacement runtime, plus package push/PR
 `33328099560` and `33328101027` across Windows, Linux, and both macOS
 architectures. Both publication jobs are skipped. Evidence-head and destination
 reruns remain separate requirements.
+
+## Checkpoint 2277 Quarantine Metadata Update Recovery
+
+Checkpoint 2277 scripts production, harmless fixtures, CI, verifier, validator,
+source contracts, and documentation before execution. No checkpoint 2277 test
+ran during that scripting phase.
+
+Focused commands after the scripting freeze:
+
+```powershell
+cargo fmt --all -- --check
+& 'C:\Users\Brent\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe' -B tools\testing\run-python-source-contracts.py
+cargo test --locked --manifest-path core\avorax_platform_security\Cargo.toml tests::quarantine_metadata_update_recovery_artifact_names_are_bounded_and_recognized -- --exact --test-threads=1
+cargo test --locked --manifest-path core\zentor_local_core\Cargo.toml quarantine_metadata_update_recovery_ -- --test-threads=1
+cargo test --locked --workspace quarantine_metadata_ -- --test-threads=1
+cargo clippy --locked --workspace --all-targets --all-features -- -D warnings
+```
+
+The complete sequence then requires both locked Rust workspace variants,
+release, Flutter/protocol analysis and tests, security regressions, exact
+`303/303` no-skip/no-Defender verification, dual-host authentic/adversarial
+validation, hosted exact-head evidence, normal PR integration, guarded
+destination synchronization, and final lock/process/residue/vault review.
+
+Post-freeze local execution now passes Source `709/709`, recovery `13/13`,
+workspace metadata `35/35`, Local Core quarantine `156/156`, strict workspace
+Clippy, both complete locked Rust variants with `1,823` executed tests and 21
+intentional ignores, locked release, Flutter analysis and `852/852`, and
+protocol analysis/tests `14/14 + 6/6`. The definitive verifier passes exact
+`303/303` in `680.4s`, with no skips/errors and Defender/EICAR opt-in false.
+PS5/PS7 accept the authentic report and reject all `62/62` adversarial cases
+across 31 mutations. Exact implementation head `2e106e0` passes Avorax CI
+`33337128172` and Desktop Packages push/PR `33337101095`/`33337128179`, with
+actual Ubuntu/macOS recovery, all six package files, seven checksums, a
+569-component lockfile SBOM, and publication skipped. Evidence-head and
+destination execution remain separate required evidence.
+
+Fixtures use harmless isolated ASCII only and are never executed. They must not
+touch the protected vault, install/start services or drivers, alter Defender,
+download artifacts, or publish. Journal recovery proves bounded rollback of the
+metadata pair only; it does not make restore/delete payload movement atomic.

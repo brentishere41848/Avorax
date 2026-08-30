@@ -8992,3 +8992,40 @@ Final audit SHA-256 is
 All 16 destination blobs and nine locks are exact, with zero process/residue and
 the unchanged protected vault. Checkpoint 2276 is closed; pair-wide
 transactionality and the complete antivirus goal remain open.
+
+## Checkpoint 2277: Metadata-Update Recovery Implementation-Head Verified
+
+Checkpoint 2277 is implementation-scripted and locally verified, and its exact
+implementation head has passing hosted evidence. It is not yet evidence-head,
+integration, or destination closed.
+Local Core now writes one bounded strict HMAC-authenticated
+`{id}.update.pending` envelope before replacing an existing JSON/HMAC pair.
+The journal binds both exact previous/proposed versions. Its presence means the
+proposed update is uncommitted; restart recovery accepts only the four exact
+version combinations and rolls back to the last authenticated previous pair.
+
+Unknown, missing, conflicting, malformed, oversized, linked, hard-linked, or
+tampered state remains preserved and fail-visible. Concurrent updates cannot
+replace the active journal, and the status update path rejects immutable threat-
+evidence changes. Fourteen cross-platform harmless Local Core fixtures, the platform namespace
+fixture, Linux/macOS jobs, exact verifier step 303, validator/source contracts,
+and docs are scripted. No checkpoint-2277 test ran during the scripting phase.
+
+Post-freeze Source `709/709`, recovery `13/13` on Windows, workspace metadata
+`35/35`, Local Core quarantine `156/156`, both complete locked Rust variants
+with `1,823` executed and 21 intentional ignores, strict Clippy, locked release,
+Flutter `852/852`, and protocols `14/14 + 6/6` pass. The no-skip/no-Defender
+verifier passes exact `303/303` in `680.4s`; PS5/PS7 accept the authentic report
+and reject `62/62` adversarial cases across 31 mutations. The final local audit
+passes the exact 17-path diff, nine unchanged locks, zero residue, and exact
+protected vault. Evidence-head checks, normal PR integration, guarded destination
+sync, and final audits remain open. Exact implementation head `2e106e0` passes
+CI `33337128172` and package push/PR runs `33337101095`/`33337128179`; all six
+CI jobs and both six-artifact package matrices pass, with both publication jobs
+skipped.
+
+This is bounded rollback recovery, not two-file atomicity. Payload movement for
+restore/delete remains a separate crash boundary. Driver/pre-execution,
+Defender replacement, installed identity, production detection accuracy,
+signing/deployment, and the complete antivirus-hardening goal remain open,
+partial, blocked, or technically limited.

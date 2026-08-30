@@ -21032,8 +21032,8 @@ def test_small_threat_mvp_report_validator_is_strict_and_local():
     assert "driver_request_known_good_allows_in_lockdown" in source
     assert "Get-AvoraxGateFile ([System.IO.Path]::GetFullPath($text)) $Description" in source
     assert "-RequireFullSuite requires skip_flutter=false and skip_rust=false" in source
-    assert "if ($steps.Count -ne 302)" in source
-    assert "-RequireFullSuite expected exactly 302 verifier steps" in source
+    assert "if ($steps.Count -ne 303)" in source
+    assert "-RequireFullSuite expected exactly 303 verifier steps" in source
     assert (
         'Assert-ReportContainsStep $steps "native-engine secondary catalog '
         'Authenticode selection regressions"'
@@ -25426,7 +25426,7 @@ def test_native_secondary_catalog_authenticode_is_bounded_exact_and_honestly_par
     assert "native_secondary_catalog_authenticode_primary_runtime_is_exact_and_hash_bound" in source
     assert "native-engine secondary catalog Authenticode selection regressions" in verifier
     assert '"native_secondary_catalog_authenticode"' in verifier
-    assert "if ($steps.Count -ne 302)" in validator
+    assert "if ($steps.Count -ne 303)" in validator
     assert "no controlled benign multi-signed system-catalog fixture" in verifier
     assert "no controlled benign multi-signed system-catalog fixture" in validator
     assert "$technicalLimitText = Assert-JsonString" in validator
@@ -25463,8 +25463,8 @@ def test_native_authenticode_helper_job_resources_are_exact_and_fail_visible():
     )
     assert "native-engine Authenticode helper Job resource-limit regressions" in verifier
     assert '"native_authenticode_helper_job_limits"' in verifier
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper Job '
         'resource-limit regressions"'
@@ -25530,8 +25530,8 @@ def test_native_authenticode_helper_job_ui_restrictions_are_exact_and_fail_visib
     assert "native_authenticode_helper_job_ui_restrictions_are_exact_and_fail_visible" in source
     assert "native-engine Authenticode helper Job UI-restriction regressions" in verifier
     assert '"native_authenticode_helper_job_ui_restrictions"' in verifier
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper Job '
         'UI-restriction regressions"'
@@ -25639,8 +25639,8 @@ def test_native_authenticode_helper_private_desktop_is_exact_and_fail_visible():
     assert "native_authenticode_helper_private_desktop_contract_is_exact_and_fail_visible" in source
     assert "native-engine Authenticode helper private-desktop regressions" in verifier
     assert '"native_authenticode_helper_private_desktop"' in verifier
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper '
         'private-desktop regressions"'
@@ -25742,8 +25742,8 @@ def test_native_authenticode_helper_standard_handles_are_exact_and_fail_visible(
     assert "AVORAX_STANDARD_HANDLE_BINDING_OK" in source
     assert "native-engine Authenticode helper standard-handle binding regressions" in verifier
     assert '"native_authenticode_helper_standard_handle"' in verifier
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper '
         'standard-handle binding regressions"'
@@ -25835,8 +25835,8 @@ def test_native_authenticode_helper_pipe_peers_bind_to_exact_parent_creator():
     assert "AVORAX_PIPE_PEER_PARENT_BINDING_OK" in source
     assert "native-engine Authenticode helper pipe-peer process regressions" in verifier
     assert '"native_authenticode_helper_pipe_peer_process"' in verifier
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper '
         'pipe-peer process regressions"'
@@ -25944,8 +25944,8 @@ def test_native_authenticode_helper_parent_child_handshake_is_mutually_pid_bound
     assert "AVORAX_PARENT_CHILD_PROCESS_BINDING_OK" in source
     assert "native-engine Authenticode helper parent-child handshake regressions" in verifier
     assert '"native_authenticode_helper_parent_child_handshake"' in verifier
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper '
         'parent-child handshake regressions"'
@@ -26039,8 +26039,8 @@ def test_native_authenticode_handshake_pipe_security_is_read_back_exactly():
     )
     assert "native-engine Authenticode handshake pipe security read-back regressions" in verifier
     assert '"native_authenticode_handshake_pipe_security_readback"' in verifier
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode handshake '
         'pipe security read-back regressions"'
@@ -26138,8 +26138,8 @@ def test_native_authenticode_handshake_client_security_is_read_back_before_token
         in verifier
     )
     assert '"native_authenticode_handshake_client_pipe_security_readback"' in verifier
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode handshake '
         'client security read-back regressions"'
@@ -26246,8 +26246,8 @@ def test_native_authenticode_handshake_pipe_dacl_is_least_privilege_and_exact():
     step = "native-engine Authenticode handshake pipe least-privilege DACL regressions"
     assert step in verifier
     assert '"native_authenticode_handshake_pipe_dacl_least_privilege"' in verifier
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
     verified_scope = (
         "Bounded structured ACL reads require a protected nondefault DACL containing exactly "
@@ -26352,8 +26352,8 @@ def test_native_authenticode_handshake_pipe_owner_rights_are_exact_and_fail_visi
     step = "native-engine Authenticode handshake pipe owner-rights regressions"
     assert step in verifier
     assert '"native_authenticode_handshake_pipe_owner_rights"' in verifier
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
     verified_owner = (
         "the handshake descriptor sets and reads back the exact current process-token user SID "
@@ -26507,8 +26507,8 @@ def test_native_authenticode_handshake_pipe_client_token_is_exact_and_fail_visib
     step = "native-engine Authenticode handshake pipe client-token regressions"
     assert step in verifier
     assert '"native_authenticode_handshake_pipe_client_token"' in verifier
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
     verified_sqos = (
         "the Authenticode helper opens the handshake client with explicit "
@@ -26641,8 +26641,8 @@ def test_native_authenticode_handshake_client_logon_session_is_exact_and_fail_vi
     step = "native-engine Authenticode handshake client logon-session regressions"
     assert step in verifier
     assert '"native_authenticode_handshake_client_logon_session"' in verifier
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
     scope_fragments = [
         "before handshake pipe creation, the parent queries exact TokenStatistics.AuthenticationId",
@@ -26744,8 +26744,8 @@ def test_native_authenticode_handshake_client_token_stability_is_exact_and_fail_
     step = "native-engine Authenticode handshake client token-stability regressions"
     assert step in verifier
     assert '"native_authenticode_handshake_client_token_stability"' in verifier
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
     scope_fragments = [
         "snapshots the exact TokenStatistics.TokenId and ModifiedId before all client-token property checks",
@@ -26868,8 +26868,8 @@ def test_native_authenticode_launch_token_stability_spans_creation_and_handshake
     step = "native-engine Authenticode launch token-stability regressions"
     assert step in verifier
     assert '"native_authenticode_launch_token_stability"' in verifier
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
     scope_fragments = [
         "before handshake pipe creation, the parent snapshots the exact launch primary TokenStatistics.TokenId and ModifiedId",
@@ -27039,8 +27039,8 @@ def test_native_authenticode_child_process_token_binding_is_key_confirmation_gat
     step = "native-engine Authenticode child process-token binding regressions"
     assert step in verifier
     assert '"native_authenticode_child_process_token_binding"' in verifier
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
     scope_fragments = [
         "Before disclosing the random launch key, the parent binds the connected pipe client PID to the exact retained child process",
@@ -27181,8 +27181,8 @@ def test_native_authenticode_post_response_token_stability_is_final_ack_gated():
     step = "native-engine Authenticode post-response token-stability regressions"
     assert step in verifier
     assert '"native_authenticode_post_response_token_stability"' in verifier
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
     scope_fragments = [
         "the same duplex handshake remains open through candidate trust work and bounded response production",
@@ -27285,8 +27285,8 @@ def test_native_authenticode_response_client_reauthentication_is_exact_and_fail_
     step = "native-engine Authenticode response client-reauthentication regressions"
     assert step in verifier
     assert '"native_authenticode_post_response_client_reauthentication"' in verifier
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
     scope_fragments = [
         "after accepting the exact response-binding frame marker, length, and MAC and before launch-token or child-process-token read-back and final ACK",
@@ -27422,8 +27422,8 @@ def test_native_authenticode_response_hash_binding_is_exact_and_fail_visible():
     step = "native-engine Authenticode response hash-binding regressions"
     assert step in verifier
     assert '"native_authenticode_response_hash_binding"' in verifier
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
     scope_fragments = [
         "After flushing exact bounded stdout, the child computes domain-separated HMAC-SHA-256 under the exact canonical 36-byte random launch-token key",
@@ -27514,8 +27514,8 @@ def test_native_authenticode_response_launch_key_mac_is_exact_and_fail_visible()
     step = "native-engine Authenticode response launch-key MAC regressions"
     assert step in verifier
     assert '"native_authenticode_response_mac_binding"' in verifier
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
     scope_fragments = [
         "exact canonical 36-byte random launch-token key",
@@ -27614,8 +27614,8 @@ def test_native_authenticode_launch_key_is_pipe_delivered_not_environment_inheri
     step = "native-engine Authenticode pipe-delivered launch-key regressions"
     assert step in verifier
     assert '"native_authenticode_pipe_delivered_launch_key"' in verifier
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
     scope_fragments = [
         "Before disclosing the random launch key, the parent binds the connected pipe client PID to the exact retained child process",
@@ -27730,8 +27730,8 @@ def test_native_authenticode_launch_key_confirmation_is_hmac_context_bound():
     step = "native-engine Authenticode launch-key confirmation HMAC regressions"
     assert step in verifier
     assert '"native_authenticode_handshake_key_confirmation"' in verifier
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
     scope_fragments = [
         "the child computes the handshake key confirmation as domain-separated HMAC-SHA-256",
@@ -27853,8 +27853,8 @@ def test_native_authenticode_launch_key_material_is_zeroized_best_effort():
     step = "native-engine Authenticode launch-key zeroization regressions"
     assert step in verifier
     assert '"native_authenticode_launch_key_zeroization"' in verifier
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     assert "if ($steps.Count -ne 261)" not in validator
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
     scope_fragments = [
@@ -27952,8 +27952,8 @@ def test_native_authenticode_launch_key_uses_one_guarded_fixed_buffer():
     step = "native-engine Authenticode fixed launch-key buffer regressions"
     assert step in verifier
     assert '"native_authenticode_launch_key_fixed_buffer"' in verifier
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     assert "if ($steps.Count -ne 262)" not in validator
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
     scope_fragments = [
@@ -28038,8 +28038,8 @@ def test_native_authenticode_helper_job_membership_is_exact_and_fail_visible():
     assert "AVORAX_JOB_MEMBERSHIP_OK" in source
     assert "native-engine Authenticode helper Job membership regressions" in verifier
     assert '"native_authenticode_helper_job_membership"' in verifier
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper Job '
         'membership regressions"'
@@ -28189,8 +28189,8 @@ def test_native_authenticode_helper_uses_restricted_primary_process_token_and_ex
     assert "AVORAX_RESTRICTED_PRIMARY_TOKEN_OK" in source
     assert "native-engine Authenticode helper restricted-process-token regressions" in verifier
     assert '"native_authenticode_helper_restricted_process"' in verifier
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper '
         'restricted-process-token regressions"'
@@ -28261,8 +28261,8 @@ def test_native_authenticode_helper_launch_environment_and_directory_are_sanitiz
     assert "AVORAX_SANITIZED_LAUNCH_CONTEXT_OK" in source
     assert "native-engine Authenticode helper sanitized-launch regressions" in verifier
     assert '"native_authenticode_helper_sanitized"' in verifier
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper '
         'sanitized-launch regressions"'
@@ -28338,8 +28338,8 @@ def test_native_authenticode_helper_process_mitigations_are_applied_and_read_bac
     assert "AVORAX_PROCESS_MITIGATION_POLICY_OK" in source
     assert "native-engine Authenticode helper process-mitigation regressions" in verifier
     assert '"native_authenticode_helper_process_mitigation"' in verifier
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper '
         'process-mitigation regressions"'
@@ -28423,8 +28423,8 @@ def test_native_authenticode_helper_primary_token_is_exact_low_integrity():
     assert "revert_authenticode_helper_thread_token().unwrap()" in source
     assert "native-engine Authenticode helper low-integrity-primary-token regressions" in verifier
     assert '"native_authenticode_helper_low_integrity"' in verifier
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper '
         'low-integrity-primary-token regressions"'
@@ -28499,8 +28499,8 @@ def test_native_authenticode_helper_mandatory_no_write_up_policy_is_inherited_an
     assert "AVORAX_MANDATORY_NO_WRITE_UP_POLICY_OK" in source
     assert "native-engine Authenticode helper mandatory no-write-up policy regressions" in verifier
     assert '"native_authenticode_helper_mandatory_policy"' in verifier
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper '
         'mandatory no-write-up policy regressions"'
@@ -28578,8 +28578,8 @@ def test_native_authenticode_helper_validates_capability_and_disables_active_vir
     assert "AVORAX_TOKEN_VIRTUALIZATION_UIACCESS_DISABLED_OK" in source
     assert "native-engine Authenticode helper virtualization/UIAccess token regressions" in verifier
     assert '"native_authenticode_helper_token_safety_flags"' in verifier
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper '
         'virtualization/UIAccess token regressions"'
@@ -28665,8 +28665,8 @@ def test_native_authenticode_helper_uses_exact_write_restricting_sid_and_readbac
     assert "AVORAX_WRITE_RESTRICTED_MUTATION_DENIED" in source
     assert "native-engine Authenticode helper write-restricted-thread-token regressions" in verifier
     assert '"native_authenticode_helper_write_restricted"' in verifier
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     assert (
         'Assert-ReportContainsStep $steps "native-engine Authenticode helper '
         'write-restricted-thread-token regressions"'
@@ -29398,6 +29398,7 @@ def test_ci_runs_native_unix_quarantine_permission_runtime_contracts():
         "Test update recovery Unix runtime",
         "Test bounded cleanup Unix link safety",
         "Test atomic existing-file replacement",
+        "Test Local Core quarantine metadata update recovery",
         "Test Local Core Unix permission routing",
         "Test Guard Unix permission routing",
         "set -euo pipefail",
@@ -29415,6 +29416,8 @@ def test_ci_runs_native_unix_quarantine_permission_runtime_contracts():
         "tests::atomic_existing_file_replacement_replaces_adjacent_regular_file",
         "path_safety::tests::staged_activation_atomic_replace_replaces_existing_regular_file",
         "quarantine_metadata_atomic_replace_",
+        "tests::quarantine_metadata_update_recovery_artifact_names_are_bounded_and_recognized",
+        "quarantine_metadata_update_recovery_",
         "-- --exact --test-threads=1",
         "hard_link",
         "active_pending_finalization_lock_blocks_concurrent_recovery",
@@ -29426,9 +29429,9 @@ def test_ci_runs_native_unix_quarantine_permission_runtime_contracts():
     ]:
         assert marker in job
 
-    assert job.count("cargo test --locked") == 18
+    assert job.count("cargo test --locked") == 20
     assert job.count("hard_link") == 2
-    assert job.count("set -euo pipefail") == 7
+    assert job.count("set -euo pipefail") == 8
     assert "continue-on-error" not in job
     assert "|| true" not in job
     assert "apt-get" not in job
@@ -29546,8 +29549,8 @@ def test_bounded_risk_fusion_is_overflow_safe_explainable_and_exactly_verified()
     assert step in verifier
     assert '"bounded_risk_fusion"' in verifier
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     assert "$technicalLimitsText" not in validator
     for scope in [
         "overflow-safe bounded score accumulation",
@@ -29662,8 +29665,8 @@ def test_checkpoint_2241_cooperative_in_engine_scan_cancellation_contract():
     assert step in verifier
     assert '"--workspace", "cooperative_scan_cancellation"' in verifier
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     for scope in [
         "job-bound cancellation is checked around at-most-1-MiB content-hash reads",
         "An interrupted file publishes no partial verdict and is counted with the remaining queue as unscanned",
@@ -29742,8 +29745,8 @@ def test_checkpoint_2242_cooperative_archive_inflate_cancellation_contract():
     assert step in verifier
     assert '"--workspace", "cooperative_archive_cancellation"' in verifier
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     for scope in [
         "bounded ZIP sampling checks cancellation before each local or central-directory entry",
         "before each at-most-64-KiB inflate output read",
@@ -29819,8 +29822,8 @@ def test_checkpoint_2243_parallel_authenticode_helper_lifecycle_contract():
     assert step in verifier
     assert '"native_authenticode_helper_lifecycle"' in verifier
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     for scope in [
         "Authenticode stdout and stderr drainers start before the initial authenticated handshake",
         "four concurrent helpers complete independently without product-wide serialization",
@@ -29904,8 +29907,8 @@ def test_checkpoint_2244_static_archive_analysis_cancellation_contract():
     assert step in verifier
     assert '"static_archive_cancellation"' in verifier
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     for scope in [
         "Native static ZIP analysis checks cancellation before parser traversal",
         "before every local or central-directory metadata entry",
@@ -30081,8 +30084,8 @@ def test_checkpoint_2245_non_archive_static_analysis_cancellation_contract():
     assert step in verifier
     assert '"non_archive_static_cancellation"' in verifier
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     for scope in [
         "entropy 4096-byte traversal and PE section entropy use fallible checkpoints",
         "string references stream counts without URL/path vectors while term groups, IP candidates, and UTF16 traversal checkpoint",
@@ -30258,8 +30261,8 @@ def test_checkpoint_2246_native_provider_cancellation_and_pack_limits_contract()
     assert step in verifier
     assert '"native_provider_"' in verifier
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     for scope in [
         "Native signature, rule, and ML providers propagate the exact job-bound cancellation callback before publishing evidence",
         "searches checkpoint every at-most-64-KiB candidate chunk",
@@ -30379,8 +30382,8 @@ def test_checkpoint_2239_scan_cancellation_generation_and_process_ownership_cont
     assert step in verifier
     assert '"scan cancellation"' in verifier
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     for scope in [
         "scan cancellation is generation-bound to the exact active scan",
         "replacement manual, scheduled, picker, and visible scan starts remain blocked until cancellation resolves",
@@ -30501,8 +30504,8 @@ def test_checkpoint_2240_scan_job_bound_cancellation_contract():
     assert step in verifier
     assert '"scan_cancellation_is_bound_to_exact_job_and_validated"' in verifier
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     for scope in [
         "every client scan receives a canonical random UUID before process start",
         "an old or wrong job token cannot cancel another scan",
@@ -30615,8 +30618,8 @@ def test_bounded_process_behavior_is_review_only_inventory_complete_and_exactly_
     assert step in verifier
     assert '"process_behavior"' in verifier
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     for scope in [
         "bounded UTF-8-safe head/tail command-line sampling",
         "command indicators remain post-start review evidence",
@@ -30741,8 +30744,8 @@ def test_process_observation_native_behavior_wiring_is_bounded_visible_and_exact
     assert step in verifier
     assert '"native_process_review"' in verifier
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     for scope in [
         "preserves caller-reported bounded command omission",
         "exact 16-review limit",
@@ -30827,8 +30830,8 @@ def test_protection_loop_generations_reject_stale_async_completion_and_are_exact
     assert step in verifier
     assert '"stale protection loop generation"' in verifier
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     for scope in [
         "process-snapshot and finite watch-poll completions are generation-bound",
         "stopping or replacing a protection loop invalidates late success and error state/event publication",
@@ -30928,8 +30931,8 @@ def test_checkpoint_2247_provider_text_normalization_cancellation_contract():
     assert step in verifier
     assert '"native_provider_normalization_"' in verifier
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     for scope in [
         "provider text normalization preserves lossy UTF-8 replacement and ASCII case-fold semantics",
         "before every at-most-64-KiB input chunk and after the final chunk",
@@ -31027,8 +31030,8 @@ def test_checkpoint_2263_quarantine_restore_no_replace_contract():
 
     assert "quarantine restore atomic no-replace regressions" in verifier
     assert '"quarantine_restore_no_replace"' in verifier
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     assert "quarantine restore atomic no-replace regressions" in validator
     for scope in [
         "quarantine restore staging activates with an operating-system atomic no-replace primitive on Windows, Linux, and Apple platforms",
@@ -31142,8 +31145,8 @@ def test_checkpoint_2264_quarantine_ingest_no_replace_contract():
     assert step in verifier
     assert '"--workspace", "quarantine_ingest_no_replace"' in verifier
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     for scope in [
         "Local Core, Guard, and the disabled Native compatibility quarantine path attempt payload ingestion with the shared operating-system atomic no-replace primitive",
         "Harmless competing-destination fixtures prove all three paths preserve both source bytes and destination bytes while retaining the atomic rename error and exclusive copy fallback error",
@@ -31286,14 +31289,12 @@ def test_checkpoint_2265_quarantine_metadata_no_replace_contract():
     assert step in verifier
     assert '"--workspace", "quarantine_metadata_"' in verifier
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     for scope in [
         "Local Core and Guard activate new quarantine finalization journals, metadata records, and authentication sidecars with the shared operating-system atomic no-replace primitive",
         "Harmless competing-metadata fixtures prove all three owners preserve both staged bytes and competing destination bytes and fail visibly instead of overwriting the destination",
         "Local Core status and authenticated-recovery record and sidecar updates independently use shared atomic existing-file replacement without first removing either destination name",
-        "Quarantine metadata atomic activation protects only one final destination-name operation at a time",
-        "The record and authentication sidecar remain separate non-transactional files",
     ]:
         assert scope in verifier
         assert scope in validator
@@ -31386,8 +31387,8 @@ def test_checkpoint_2266_update_extraction_no_replace_contract():
     assert step in verifier
     assert '"payload_extraction_no_replace"' in verifier
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     for scope in [
         "Signed update-package payload extraction uses the shared operating-system atomic no-replace primitive",
         "Harmless extraction collision fixtures preserve both staged payload bytes and competing destination bytes",
@@ -31476,8 +31477,8 @@ def test_checkpoint_2267_update_staged_file_no_replace_contract():
     assert step in verifier
     assert '"staged_activation_atomic_replace_"' in verifier
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     for scope in [
         "Update-service staged file copy/write activation keeps absent targets on the shared atomic no-replace primitive",
         "replaces an existing adjacent regular file without first removing its destination name",
@@ -31607,8 +31608,8 @@ def test_checkpoint_2253_failed_step_verification_reporting_contract():
     assert "failed step report must record the failed step as the terminal step" in validator
     assert "failed orchestration report must not contain a failed step" in validator
     assert "failed step error must exactly match the top-level failure error" in validator
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
 
     step = "Small-threat MVP failed-step report smoke"
     assert step in verifier
@@ -31713,8 +31714,8 @@ def test_checkpoint_2248_static_text_normalization_cancellation_contract():
     assert step in verifier
     assert '"static_text_normalization_"' in verifier
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     for scope in [
         "non-archive string-indicator, script, and PE-import text normalization uses the same lossy UTF-8 and ASCII case-fold helper",
         "Bounded OOXML relationship and autorun bodies propagate that callback through normalization and indicator extraction",
@@ -31795,8 +31796,8 @@ def test_checkpoint_2249_zip_entry_name_normalization_cancellation_contract():
     assert step in verifier
     assert '"zip_name_normalization_"' in verifier
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     for scope in [
         "ZIP local-header sampling/static analysis and central-directory entry/local-name consistency normalize header-bounded entry names through the exact callback-aware lossy UTF-8 and ASCII case-fold helper",
         "Arbitrary callback errors remain errors instead of malformed, limited, no-match, or clean fallback and abort before sample collection, archive evidence, or trusted entry-body use",
@@ -31883,8 +31884,8 @@ def test_checkpoint_2250_static_term_search_cancellation_contract():
     assert step in verifier
     assert '"static_term_search_"' in verifier
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     for scope in [
         "static String Indicator groups, script terms, PE-import terms, and UTF-16 marker probes reuse one non-overlapping exact byte search that checkpoints every at-most-64-KiB candidate chunk",
         "Cross-chunk matches and existing non-overlapping count semantics are preserved; arbitrary callback errors return before analyzer evidence or verdict publication",
@@ -31977,8 +31978,8 @@ def test_checkpoint_2251_static_reference_search_cancellation_contract():
     assert step in verifier
     assert '"static_reference_cancellation_"' in verifier
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     for scope in [
         "static URL and remote network-path reference marker searches use the shared exact finder, and reference-body terminator traversal checkpoints before every at-most-64-KiB UTF-8-safe byte chunk",
         "Existing first-match, Unicode whitespace/delimiter, count, classification, and ordering semantics are preserved; arbitrary callback errors return before StringIndicators or verdict publication",
@@ -32070,8 +32071,8 @@ def test_checkpoint_2252_static_structured_indicator_cancellation_contract():
     assert step in verifier
     assert '"static_structured_indicator_cancellation_"' in verifier
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     for scope in [
         "structured String Indicator carrier markers, IPv4 candidates, URL query/fragment paths, remote host/share parsing, autorun lines and command tokens, optical-image markers, and email lines/fields checkpoint every at-most-64-KiB byte or UTF-8-safe character chunk",
         "Existing CRLF, comment, token, suffix, per-line count, and conservative classification semantics are preserved; arbitrary callback errors return before StringIndicators or verdict publication",
@@ -32142,8 +32143,8 @@ def test_checkpoint_2254_zip_eocd_search_cancellation_contract():
     assert step in verifier
     assert '"zip_eocd_cancellation_"' in verifier
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     for scope in [
         "ZIP central-directory sampling and static analysis share one fallible end-of-central-directory search that checkpoints before the first candidate and every next at-most-4,096 backward candidate offsets",
         "Existing bounded comment lookup and valid commented-archive semantics are preserved; arbitrary callback errors abort before central-directory metadata, samples, archive evidence, local-header fallback, or verdict publication",
@@ -32219,8 +32220,8 @@ def test_checkpoint_2255_pe_resource_section_cancellation_contract():
     assert step in verifier
     assert '"pe_resource_section_cancellation_"' in verifier
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     for scope in [
         "PE resource-directory RVA mapping propagates the exact static-analysis callback before directory handling, before every at-most-4,096 section entries, and after an exhausted mapping search",
         "Existing resource count, truncation, and unmapped-RVA failures are preserved; arbitrary callback errors abort before resource evidence, later PE/string evidence, StaticAnalysis, or file verdict publication",
@@ -32317,8 +32318,8 @@ def test_checkpoint_2256_file_discovery_cancellation_and_bounds_contract():
     assert step in verifier
     assert '"file_discovery_"' in verifier
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     for scope in [
         "Local Core path discovery checks the exact job-bound cancellation token before each root, before every at-most-128 WalkDir entries, after each root, before every at-most-128-path priority bucket, and after completed bucketing",
         "Cancellation during discovery returns a cancelled report without scanning discovered files; malformed or mismatched token evidence aborts visibly rather than becoming cancelled, clean, or completed",
@@ -32412,8 +32413,8 @@ def test_checkpoint_2257_file_discovery_memory_bounds_contract():
     assert step in verifier
     assert '"file_discovery_memory_"' in verifier
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     for scope in [
         "before every at-most-128-path priority bucket, and after completed bucketing",
         "Quick scans retain a 5,000-file and 8 MiB encoded-path-payload discovery cap",
@@ -32578,8 +32579,8 @@ def test_checkpoint_2258_file_discovery_work_time_bounds_contract():
     assert step in verifier
     assert '"resource_budget_"' in verifier
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     for scope in [
         "Quick discovery consumes at most 100,000 application work items within a 600-second monotonic discovery budget",
         "One work item gates every explicit root inspection and every WalkDir iterator advance",
@@ -32729,8 +32730,8 @@ def test_checkpoint_2259_in_target_scan_inspection_resource_bounds_contract():
     assert step in verifier
     assert '"scan_inspection_resource_budget_"' in verifier
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     for scope in [
         "Local Core propagates cancellation-first total scan elapsed classification through the exact Native Engine callback",
         "A reached elapsed limit stops before any partial file verdict",
@@ -32910,8 +32911,8 @@ def test_checkpoint_2260_scan_verdict_quarantine_binding_contract():
     assert "local-core quarantine metadata regressions" in verifier
     assert "guard-service quarantine metadata regressions" in verifier
     assert '"quarantine"' in verifier
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     for scope in [
         "Local Core and Guard automatic quarantine carry the exact originating scan SHA-256 into their quarantine boundary",
         "matching bytes from the already-opened single-link source, and matching open-handle/path identity before mutation",
@@ -33072,8 +33073,8 @@ def test_checkpoint_2261_manual_threat_quarantine_hash_binding_contract():
 
     assert "local-core manual threat quarantine hash-binding regressions" in verifier
     assert '"manual_threat_quarantine_binding_"' in verifier
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     assert "local-core manual threat quarantine hash-binding regressions" in validator
     for scope in [
         "confirmed quarantine from a visible scan-result threat row sends that row's exact SHA-256 through bounded Local Core IPC",
@@ -33282,8 +33283,8 @@ def test_checkpoint_2262_manual_trust_mutation_hash_binding_contract():
 
     assert "release local-core binary trust-mutation hash-binding smoke" in verifier
     assert "run-release-local-core-trust-mutation-binding-smoke.ps1" in verifier
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     assert "release local-core binary trust-mutation hash-binding smoke" in validator
     for scope in [
         "confirmed allowlist and detection-feedback actions from a visible scan-result row send that row's exact SHA-256 through bounded Local Core IPC",
@@ -33388,8 +33389,8 @@ def test_checkpoint_2268_update_directory_activation_no_replace_contract():
 
     assert "update-service directory activation atomic no-replace regressions" in verifier
     assert '"directory_activation_no_replace"' in verifier
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     assert "update-service directory activation atomic no-replace regressions" in validator
     for scope in [
         "Update-service tree replacement and rollback directory activation move validated destinations to absent backups",
@@ -33511,8 +33512,8 @@ def test_checkpoint_2269_authenticated_update_activation_recovery_contract():
     step = "update-service authenticated directory activation recovery regressions"
     assert step in verifier
     assert '"activation_recovery"' in verifier
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     assert step in validator
     for scope in [
         "Authenticated update directory recovery uses a private per-install store",
@@ -33598,8 +33599,8 @@ def test_checkpoint_2270_unix_update_recovery_runtime_contract():
     step = "update-service Unix activation recovery runtime contract"
     assert step in verifier
     assert '"activation_recovery_unix_runtime_contract_is_wired"' in verifier
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     assert step in validator
     for scope in [
         "dedicated Ubuntu 24.04 execution of harmless Unix recovery fixtures",
@@ -33687,8 +33688,8 @@ def test_checkpoint_2271_macos_update_recovery_runtime_contract():
     step = "update-service macOS activation recovery runtime contract"
     assert step in verifier
     assert '"activation_recovery_macos_runtime_contract_is_wired"' in verifier
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     assert step in validator
     for scope in [
         "dedicated hosted macOS 15 execution of the harmless Unix recovery fixtures",
@@ -33786,8 +33787,8 @@ def test_checkpoint_2272_update_recovery_namespace_durability_contract():
     step = "update-service activation recovery namespace durability regressions"
     assert step in verifier
     assert '"activation_recovery_durability_"' in verifier
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     assert step in validator
     for scope in [
         "Windows update activation renames request MOVEFILE_WRITE_THROUGH",
@@ -33892,8 +33893,8 @@ def test_checkpoint_2273_update_recovery_cleanup_tombstone_contract():
     step = "update-service activation recovery cleanup tombstone regressions"
     assert step in verifier
     assert '"activation_recovery_cleanup_"' in verifier
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     assert step in validator
     for scope in [
         "Update recovery cleanup first moves staging or backup trees into exact typed no-replace cleanup tombstones",
@@ -34008,8 +34009,8 @@ def test_checkpoint_2274_bounded_non_following_tree_cleanup_contract():
     step = "update-service bounded non-following tree cleanup regressions"
     assert step in verifier
     assert '"checked_tree_cleanup_"' in verifier
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     assert step in validator
     for scope in [
         "Update-service tree cleanup performs a bounded no-mutation inventory before removal",
@@ -34185,8 +34186,8 @@ def test_checkpoint_2275_atomic_existing_file_replacement_contract():
     assert step in verifier
     assert '"staged_activation_atomic_replace_"' in verifier
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     for scope in [
         "Update-service staged file copy/write activation keeps absent targets on the shared atomic no-replace primitive",
         "replaces an existing adjacent regular file without first removing its destination name",
@@ -34325,17 +34326,13 @@ def test_checkpoint_2276_quarantine_metadata_atomic_replacement_contract():
     assert step in verifier
     assert '"--workspace", "quarantine_metadata_"' in verifier
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
-    assert "if ($steps.Count -ne 302)" in validator
-    assert "expected exactly 302 verifier steps" in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
     for scope in [
         "Local Core status and authenticated-recovery record and sidecar updates independently use shared atomic existing-file replacement without first removing either destination name",
         "Harmless existing-file fixtures prove ordinary JSON and HMAC sidecar replacement, authenticated pairing after success, missing-destination rejection, and zero temporary or backup residue",
-        "Quarantine metadata atomic activation protects only one final destination-name operation at a time",
-        "The record and authentication sidecar remain separate non-transactional files",
-        "a failure between their replacements can leave a mismatched pair that fails authenticated reads and may require manual recovery",
         "Windows may preserve an adjacent .avorax-replace-backup after an ambiguous replacement failure",
         "backup reservation requires same-volume hard-link support",
-        "Path and ancestor checks remain point-in-time user-mode checks",
     ]:
         assert scope in verifier
         assert scope in validator
@@ -34362,5 +34359,204 @@ def test_checkpoint_2276_quarantine_metadata_atomic_replacement_contract():
     assert "complete antivirus-hardening goal remains active" in normalized_checkpoint.lower()
     normalized_dependencies = re.sub(r"\s+", " ", documents[-1]).lower()
     assert "checkpoint 2276 dependency delta" in normalized_dependencies
+    assert "adds no dependency" in normalized_dependencies
+    assert "lockfile change" in normalized_dependencies
+
+
+def test_checkpoint_2277_quarantine_metadata_update_recovery_contract():
+    local_core = read(
+        ROOT
+        / "core"
+        / "zentor_local_core"
+        / "src"
+        / "quarantine"
+        / "quarantine_store.rs"
+    )
+    platform = read(ROOT / "core" / "avorax_platform_security" / "src" / "lib.rs")
+    workflow = read(CI_WORKFLOW)
+    verifier = read(SMALL_THREAT_MVP_VERIFIER)
+    validator = read(SMALL_THREAT_MVP_REPORT_VALIDATOR)
+    checkpoint = read(
+        ROOT
+        / "docs"
+        / "reports"
+        / "checkpoint-2277-quarantine-metadata-update-recovery.md"
+    )
+    documents = [
+        checkpoint,
+        read(RUN_LOG),
+        read(STATUS_DOC),
+        read(ROOT / "TESTING.md"),
+        read(ROOT / "core" / "zentor_local_core" / "README.md"),
+        read(ROOT / "docs" / "quarantine.md"),
+        read(ROOT / "docs" / "malware-protection.md"),
+        read(ROOT / "docs" / "audit" / "engine-control-matrix.md"),
+        read(ROOT / "docs" / "audit" / "threat-model.md"),
+        read(ROOT / "docs" / "audit" / "known-blockers.md"),
+        read(DEPENDENCY_LICENSE_INVENTORY),
+    ]
+
+    for marker in [
+        "QUARANTINE_METADATA_UPDATE_JOURNAL_FORMAT",
+        "QUARANTINE_METADATA_UPDATE_JOURNAL_AUTH_DOMAIN",
+        "MAX_QUARANTINE_METADATA_UPDATE_JOURNAL_BYTES",
+        "struct QuarantineMetadataUpdateJournal",
+        "struct QuarantineMetadataUpdateJournalBody",
+        '#[serde(rename_all = "camelCase", deny_unknown_fields)]',
+        'name.strip_suffix(".update.pending")',
+        "recover_metadata_update_journal",
+        "validated_metadata_update_journal",
+        "validate_metadata_update_record_version",
+        "write_metadata_update_journal",
+        "metadata_update_journal_path",
+        "cleanup_metadata_update_journal",
+        "hmac_metadata_update_journal_auth_tag",
+        "validate_metadata_update_transition",
+        "previous_record == next_record",
+        "previous authenticated pair was restored",
+        "recovery evidence was preserved",
+        "match neither authenticated journal version",
+        "attempted to change immutable threat evidence",
+        "journal failed post-write validation; recovery evidence was preserved",
+    ]:
+        assert marker in local_core
+    recovery = local_core[
+        local_core.index("fn recover_metadata_update_journal(") : local_core.index(
+            "fn recover_orphan_finalization_journal_auth("
+        )
+    ]
+    for marker in [
+        "record_is_previous",
+        "record_is_next",
+        "auth_is_previous",
+        "auth_is_next",
+        "body.previous_record_raw.as_bytes()",
+        "body.previous_record_auth.as_bytes()",
+        "self.ensure_metadata_pair_exact(",
+        "drop(journal_lock)",
+        "self.cleanup_metadata_update_journal(id)",
+    ]:
+        assert marker in recovery
+    assert recovery.index("self.cleanup_metadata_update_journal(id)") < recovery.index(
+        "drop(journal_lock)"
+    )
+    replace = local_core[
+        local_core.index("fn replace_record(&self") : local_core.index(
+            "fn read_current_metadata_pair("
+        )
+    ]
+    assert replace.index("self.write_metadata_update_journal(body)?") < replace.index(
+        "replace_staged_quarantine_file("
+    )
+    assert replace.index("self.ensure_metadata_pair_exact(") < replace.index(
+        "self.cleanup_metadata_update_journal(&record.quarantine_id)"
+    )
+    cleanup_tail = replace[replace.index("if let Err(cleanup_error)") :]
+    assert cleanup_tail.index(
+        "self.cleanup_metadata_update_journal(&record.quarantine_id)"
+    ) < cleanup_tail.index("drop(journal_lock)")
+    assert cleanup_tail.rindex("drop(journal_lock)") > cleanup_tail.index(
+        "self.cleanup_metadata_update_journal(&record.quarantine_id)"
+    )
+    assert "quarantine metadata update does not change" in replace
+    assert "metadata_auth_key(false)" in replace
+
+    update_marker = platform.index('".update.pending.tmp-"')
+    generic_temp_marker = platform.index('".pending.tmp-"', update_marker)
+    update_suffix = platform.index('".update.pending"', generic_temp_marker)
+    generic_suffix = platform.index('".pending"', update_suffix)
+    assert update_marker < generic_temp_marker
+    assert update_suffix < generic_suffix
+    for marker in [
+        "quarantine_metadata_update_recovery_artifact_names_are_bounded_and_recognized",
+        "record.update.pending",
+        "record.update.pending.tmp-fixture",
+        "record.update.pending.auth",
+        "record.with-dot.update.pending",
+    ]:
+        assert marker in platform
+
+    for marker in [
+        "quarantine_metadata_update_recovery_rolls_back_all_known_pair_states",
+        "quarantine_metadata_update_recovery_rejects_tampered_journal",
+        "quarantine_metadata_update_recovery_rejects_malformed_journal",
+        "quarantine_metadata_update_recovery_rejects_semantically_unchanged_record",
+        "quarantine_metadata_update_recovery_writer_preserves_invalid_journal",
+        "quarantine_metadata_update_recovery_rejects_conflicting_finalization_journal",
+        "quarantine_metadata_update_recovery_rejects_unknown_record_bytes",
+        "quarantine_metadata_update_recovery_rejects_unknown_auth_bytes",
+        "quarantine_metadata_update_recovery_rejects_missing_pair_member",
+        "quarantine_metadata_update_recovery_rejects_oversized_journal",
+        "quarantine_metadata_update_recovery_rejects_linked_journal",
+        "quarantine_metadata_update_recovery_active_lock_blocks_concurrent_list",
+        "quarantine_metadata_update_recovery_existing_journal_blocks_second_update",
+        "quarantine_metadata_update_recovery_rejects_immutable_evidence_change",
+        "previous-previous",
+        "next-previous",
+        "previous-next",
+        "next-next",
+        "benign external journal fixture",
+        "benign competing update fixture",
+    ]:
+        assert marker in local_core
+
+    ubuntu_job = workflow[
+        workflow.index("  quarantine-unix:\n") : workflow.index(
+            "  update-recovery-macos:\n"
+        )
+    ]
+    macos_job = workflow[
+        workflow.index("  update-recovery-macos:\n") : workflow.index(
+            "  flutter:\n", workflow.index("  update-recovery-macos:\n")
+        )
+    ]
+    for job in [ubuntu_job, macos_job]:
+        assert "Test Local Core quarantine metadata update recovery" in job
+        assert (
+            "tests::quarantine_metadata_update_recovery_artifact_names_are_bounded_and_recognized"
+            in job
+        )
+        assert "quarantine_metadata_update_recovery_" in job
+        assert "-- --exact --test-threads=1" in job
+        assert "-- --test-threads=1" in job
+        assert "set -euo pipefail" in job
+        assert "continue-on-error" not in job
+        assert "|| true" not in job
+
+    step = "quarantine metadata update recovery regressions"
+    assert step in verifier
+    assert (
+        '"--workspace", "quarantine_metadata_update_recovery_"' in verifier
+    )
+    assert f'Assert-ReportContainsStep $steps "{step}"' in validator
+    assert "if ($steps.Count -ne 303)" in validator
+    assert "expected exactly 303 verifier steps" in validator
+    for scope in [
+        "one bounded, strict, domain-separated HMAC-authenticated metadata-update journal",
+        "Journal presence means the proposed update is not committed",
+        "Recovery accepts only the four exact previous/proposed pair combinations",
+        "missing pair members plus malformed, oversized, linked, conflicting, unknown, or tampered evidence fail visibly and remain preserved",
+        "Successful updates verify the proposed authenticated pair before journal cleanup",
+        "Quarantine JSON and HMAC remain separate files",
+        "bounded rollback semantics, not a two-file atomic transaction",
+        "unknown or missing state requires manual review",
+        "Restore/delete payload movement is a separate operation and is not made transactional",
+        "A crash after journal removal but before its directory entry is durably persisted depends on truthful local filesystem and storage behavior",
+        "Journal, path, ancestor, and opened-identity checks remain point-in-time user-mode evidence",
+    ]:
+        assert scope in verifier
+        assert scope in validator
+
+    for document in documents:
+        normalized = re.sub(r"\s+", " ", document).lower()
+        assert "checkpoint 2277" in normalized
+    normalized_checkpoint = re.sub(r"\s+", " ", checkpoint)
+    assert "No checkpoint-2277 test ran during the scripting phase" in normalized_checkpoint
+    assert "16,072 files" in normalized_checkpoint
+    assert "zero pending" in normalized_checkpoint
+    assert "no live malware" in normalized_checkpoint.lower()
+    assert "complete antivirus-hardening goal remains active" in normalized_checkpoint.lower()
+    normalized_dependencies = re.sub(r"\s+", " ", documents[-1]).lower()
+    assert "checkpoint 2277 dependency delta" in normalized_dependencies
     assert "adds no dependency" in normalized_dependencies
     assert "lockfile change" in normalized_dependencies
