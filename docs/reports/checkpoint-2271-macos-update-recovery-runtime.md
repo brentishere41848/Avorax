@@ -2,7 +2,7 @@
 
 Date: 2026-08-30 (Europe/Brussels)
 
-Status: **Definitive local verification passed; hosted macOS execution pending**
+Status: **Closed through hosted integration and synchronized destination verification**
 
 ## Objective
 
@@ -133,5 +133,60 @@ runner**. This does not undo prior disclosure, revoke open handles, encrypt the
 key, prove Android or every macOS environment, exercise an installed service
 identity, or close any power-loss, privileged actor, hostile filesystem,
 driver/pre-execution, Defender-replacement, signing/deployment, or whole-
-project limit. Evidence-head hosted checks, normal merge, guarded destination
-synchronization, destination verification, and closure remain pending.
+project limit. The following closure section supersedes the then-pending
+evidence-head, merge, synchronization, and destination state.
+
+## Evidence-head, merge, and destination closure
+
+Evidence head `e6e44608ffa0b52caef62e4bc8f9be22936bbe6f` passes all six
+Avorax CI jobs in run `33285885786`; macOS job `99188900297` passes the exact
+three selected tests, `3 passed; 0 failed; 245 filtered out`. Desktop Packages
+run `33285885795` passes with publication skipped. Consolidated artifact
+`9724549078` is 132,679,651 bytes with SHA-256
+`46f27b2c88c91c97072991702899440ee24164e9e6661f3c47e6755b95c0e27f`.
+Bounded in-stream review, without extraction or execution, passes exact
+8-root/6-platform/7-checksum inventory and CycloneDX 1.6 with 569 components.
+
+Normal PR `#151` merges as
+`120eeec45d2f3570650937cc119f6c3a5e1f13ac`. Merged-main Avorax CI run
+`33286399368` passes all six jobs; macOS job `99190220258` again reports exact
+`3 passed; 0 failed; 245 filtered out`. Desktop Packages run `33286399375`
+passes with publication skipped. Consolidated artifact `9724693557` is
+132,654,635 bytes with SHA-256
+`9566aee1fc80192206e2acb6cbb1887f94704dbf65c01e4ec9a4c3b7ee3a6531`
+and passes the same bounded, non-extracting inventory/checksum/SBOM review.
+
+Guarded synchronization copies exact 13 modified and one added path with zero
+deletes and preserves 26 verified backups. Sync report SHA-256 is
+`ba7743d2d15e29e55a95018a433d0649816dff7653dc769561a8f6cfa117471f`.
+The synchronized `C:\Users\Brent\Documents\Avorax-main` destination passes:
+
+- `python -B tools/testing/run-python-source-contracts.py`: `702/702`.
+- `cargo fmt --all -- --check` and strict locked workspace Clippy.
+- `cargo test --workspace --locked -- --test-threads=1` and the corresponding
+  `--all-targets --all-features` run: all groups pass with zero failures and
+  the same 21 documented isolated child fixtures ignored.
+- `cargo build --workspace --release --all-targets --all-features --locked`.
+- `flutter analyze` and `flutter test --reporter compact`: `852/852`.
+- Both protocol analyses and tests: `14/14 + 6/6`.
+- The no-skip/no-Defender verifier: exact `299/299` in `661.9s`. Its 218,889-
+  byte schema-2 report SHA-256 is
+  `038e42e303cfff6f50327a78bde261f889de314458263bc56424ad6cb8d10bba`.
+
+PowerShell 5.1 and 7 accept that authentic report. The destination-local
+adversarial audit accepts both authentic host cases and rejects all `14/14`
+host/mutation cases; its 14,478-byte result SHA-256 is
+`42abfe2125528f0763661033a561db383d60e297112e51cc3cd5122c30ae0ab9`.
+Final audit SHA-256
+`bb785a1957e067c72176d1d1fef29662e31ef2ddc82f43df7abd7e14ba84b96f`
+passes 14 exact merge blobs, eight unchanged active lockfiles, 26 backups,
+zero product processes/pending files/temporary roots, and the unchanged
+protected-vault invariant.
+
+Checkpoint 2271 is closed. Verified scope remains one fixed hosted macOS 15
+runner plus the synchronized Windows destination. Android, other macOS
+environments and installed identities, unencrypted or previously disclosed
+keys, prior open handles, root/administrator or hostile-filesystem resistance,
+power-loss and package-wide transactionality, production signing/deployment,
+driver/pre-execution enforcement, Defender replacement, and the complete
+antivirus-hardening goal remain partial, blocked, or technically limited.

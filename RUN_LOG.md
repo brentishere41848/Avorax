@@ -14855,3 +14855,34 @@ pending.
   identity, prior disclosure/open handles, unencrypted key, privileged/hostile
   filesystem, transaction, driver/pre-execution, Defender replacement,
   integration, destination, and whole-goal limits remain open.
+
+## 2026-08-30 - Checkpoint 2271 Integration And Destination Closure
+
+- Evidence head `e6e44608ffa0b52caef62e4bc8f9be22936bbe6f` passes CI
+  `33285885786` and packages `33285885795`; macOS job `99188900297` passes
+  exact `3/3`. Artifact `9724549078` is 132,679,651 bytes with SHA-256
+  `46f27b2c88c91c97072991702899440ee24164e9e6661f3c47e6755b95c0e27f`.
+- Normal PR `#151` merges as `120eeec45d2f3570650937cc119f6c3a5e1f13ac`.
+  Merged-main CI/packages `33286399368`/`33286399375` pass; macOS job
+  `99190220258` passes exact `3/3`. Artifact `9724693557` is 132,654,635 bytes
+  with SHA-256
+  `9566aee1fc80192206e2acb6cbb1887f94704dbf65c01e4ec9a4c3b7ee3a6531`.
+  Both artifacts pass bounded non-extracting 8-root/6-platform/7-checksum/
+  CycloneDX-1.6/569-component review; publication skips.
+- Guarded sync applies 13 modified plus one added path, zero deletes, and 26
+  backups. Sync report SHA-256 is
+  `ba7743d2d15e29e55a95018a433d0649816dff7653dc769561a8f6cfa117471f`.
+- Destination Source `702/702`, format, strict locked Clippy, both locked
+  workspaces, locked all-feature release, Flutter `852/852`, and protocols
+  `14/14 + 6/6` pass. Exact `299/299` verification takes `661.9s`; report
+  SHA-256 is
+  `038e42e303cfff6f50327a78bde261f889de314458263bc56424ad6cb8d10bba`.
+- Both validator hosts accept the authentic destination report and reject all
+  `14/14` hostile cases. Result SHA-256 is
+  `42abfe2125528f0763661033a561db383d60e297112e51cc3cd5122c30ae0ab9`.
+  Final audit SHA-256
+  `bb785a1957e067c72176d1d1fef29662e31ef2ddc82f43df7abd7e14ba84b96f`
+  passes 14 blobs, 8 locks, 26 backups, zero process/residue, and the exact
+  vault. Checkpoint 2271 closes; all stated Android, installed-identity,
+  prior-exposure, privileged-filesystem, transaction, driver/pre-execution,
+  Defender-replacement, and whole-goal limits remain open.

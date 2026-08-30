@@ -1754,3 +1754,50 @@ closure. No checkpoint-2271 test ran during scripting. Android, installed
 identity, broader macOS environments, root/admin, hostile filesystems, key
 confidentiality/prior exposure, package transactionality, signing, driver/pre-
 execution, and Defender-replacement limits remain explicit.
+
+### Checkpoint 2271 closure evidence
+
+Exact-head and merged-main fixed `macos-15` jobs each pass the three selected
+`activation_recovery_unix_` tests (`3 passed; 0 failed; 245 filtered out`).
+From the synchronized repository root, the destination passes the following
+credited commands:
+
+```powershell
+python -B tools\testing\run-python-source-contracts.py
+cargo fmt --all -- --check
+cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
+cargo test --workspace --locked -- --test-threads=1
+cargo test --workspace --all-targets --all-features --locked -- --test-threads=1
+cargo build --workspace --release --all-targets --all-features --locked
+Push-Location apps\zentor_client
+flutter analyze
+flutter test --reporter compact
+Pop-Location
+Push-Location packages\zentor_protocol
+dart analyze
+dart test
+Pop-Location
+Push-Location packages\avorax_protocol
+dart analyze
+dart test
+Pop-Location
+```
+
+Source passes `702/702`; both Rust workspace variants have zero failures and
+21 documented isolated child-fixture ignores; release and lint pass; Flutter
+passes `852/852`. Zentor and Avorax protocol `dart analyze` plus `dart test`
+pass `14/14 + 6/6`.
+
+```powershell
+powershell.exe -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass `
+  -File tools\testing\verify-small-threat-mvp.ps1 `
+  -RepoRoot . `
+  -ReportPath .workflow\ultracode\avorax-hardening\results\checkpoint-2271-destination-macos-update-recovery-report.json
+```
+
+The verifier passes exact `299/299` in `661.9s`, with no skips and without the
+Defender/EICAR opt-in. The report is 218,889 bytes with SHA-256
+`038e42e303cfff6f50327a78bde261f889de314458263bc56424ad6cb8d10bba`.
+PowerShell 5.1/7 accept it; seven content mutations on each host are rejected,
+exact `14/14`. Final destination audit verifies 14 blobs, 8 unchanged locks,
+26 backups, zero product process/pending/temp residue, and the exact vault.

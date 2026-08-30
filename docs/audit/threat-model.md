@@ -4530,3 +4530,26 @@ runtime, whole-update transactionality, crash/manual recovery, point-in-time
 ancestor authority, privileged actors, hostile filesystems, installed service/
 driver authority, pre-execution blocking, and every other residual threat above
 remain unchanged.
+
+## Checkpoint 2271 macOS Recovery Runtime Closure
+
+Evidence-head and merged-main fixed macOS 15 jobs each execute the exact two
+harmless permission fixtures plus wiring contract, `3 passed; 0 failed; 245
+filtered out`. This verifies owner-only `0700` recovery-directory and `0600`
+key/lock/journal modes plus repair from deliberately broadened fixture modes on
+those hosted filesystems. Bounded package review performs no extraction or
+execution and publication is skipped.
+
+Guarded 14-path zero-delete synchronization and the destination Source,
+locked-workspace, lint, release, Flutter/protocol, exact `299/299`, dual-host
+authentic/adversarial, and final exact blob/lock/backup/process/vault audits all
+pass. This closes the checkpoint evidence chain without changing detector,
+custom-engine, quarantine, realtime, or process authority.
+
+Residual threats remain explicit: one hosted runner is not every macOS or
+installed identity; Unix mode bits are not encryption; repair cannot reverse
+prior disclosure or revoke an open handle; root/admin, hostile filesystems,
+storage rollback/reordering, and kernel compromise remain out of scope;
+recovery is not a power-loss-proof package transaction; Android runtime,
+production signing/deployment, signed-driver/pre-execution enforcement,
+Defender replacement, and whole-project completion remain open.

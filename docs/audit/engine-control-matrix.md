@@ -6175,3 +6175,19 @@ audit also pass with publication skipped. Platform breadth, installed identity,
 Android, key confidentiality/prior exposure, privileged/hostile filesystem,
 transaction, detector/custom-engine, driver/pre-execution, Defender, and whole-
 goal rows retain their documented status.
+
+## Checkpoint 2271 Closure Classification
+
+| Control / engine | Final checkpoint status | Evidence / remaining limit |
+| --- | --- | --- |
+| macOS authenticated recovery mode and repair | Verified on one hosted macOS 15 runner | Evidence-head and merged-main jobs each pass exact `3/3`; this is not every macOS environment or installed identity |
+| Windows destination regression | Verified | Source `702/702`, both locked workspaces, release, Flutter `852/852`, protocols, exact `299/299`, dual-host authentic acceptance, and `14/14` hostile rejection pass |
+| Dependency and package regression | Verified for this checkpoint | No lockfile changes; exact eight-lock audit and bounded non-extracting 569-component SBOM review pass with publication skipped |
+| Android recovery runtime | Partial | No Android device/emulator runtime route exists |
+| Key confidentiality and prior exposure | Technically limited | `0600` does not encrypt the key, undo copying, or revoke prior open handles |
+| Privileged/hostile filesystem and transaction resistance | Technically limited | Root/admin, hostile filesystems, storage rollback/reordering, and package-wide power-loss atomicity remain outside the guarantee |
+| Detection and custom engines | Unchanged | Checkpoint 2271 changes no detector responsibility, threshold, verdict, quarantine, real-time, driver/pre-execution, or Defender authority |
+
+Checkpoint 2271 is closed through normal merge and exact zero-delete
+destination synchronization. The complete antivirus-hardening goal remains
+active.
