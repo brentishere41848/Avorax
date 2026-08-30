@@ -1762,26 +1762,29 @@ fn replace_staged_quarantine_file(path: &Path, bytes: &[u8], label: &str) -> Res
         })?;
         return Err(error);
     }
-    if let Err(error) = remove_existing_quarantine_file(path, label) {
+    if let Err(error) = activate_quarantine_metadata_replace_existing(&temp_path, path, label) {
         cleanup_quarantine_staged_file(&temp_path, label).with_context(|| {
             format!(
-                "failed to clean up temporary {label} {} after replace preflight failure: {error:#}",
+                "failed to clean up temporary {label} {} after atomic replacement failure: {error:#}",
                 temp_path.display()
             )
         })?;
-        return Err(error);
-    }
-    if let Err(error) = activate_quarantine_metadata_no_replace(&temp_path, path, label) {
-        cleanup_quarantine_staged_file(&temp_path, label).with_context(|| {
+        return Err(error).with_context(|| {
             format!(
-                "failed to clean up temporary {label} {} after activation failure: {error:#}",
-                temp_path.display()
+                "failed to atomically replace existing {label} {}",
+                path.display()
             )
-        })?;
-        return Err(error)
-            .with_context(|| format!("failed to activate {label} {}", path.display()));
+        });
     }
     Ok(())
+}
+
+fn activate_quarantine_metadata_replace_existing(
+    staged: &Path,
+    destination: &Path,
+    label: &str,
+) -> Result<()> {
+    avorax_platform_security::replace_existing_file_atomically(staged, destination, label)
 }
 
 fn activate_quarantine_metadata_no_replace(
@@ -1939,33 +1942,6 @@ fn write_file_exclusive(path: &Path, bytes: &[u8], label: &str) -> Result<()> {
             .with_context(|| format!("failed to sync temporary {label} {}", path.display()));
     }
     Ok(())
-}
-
-fn remove_existing_quarantine_file(path: &Path, label: &str) -> Result<()> {
-    match fs::symlink_metadata(path) {
-        Ok(metadata) => {
-            if metadata.file_type().is_symlink() {
-                return Err(anyhow!("refusing to replace symbolic link {label}"));
-            }
-            #[cfg(windows)]
-            {
-                use std::os::windows::fs::MetadataExt;
-                if metadata.file_attributes() & FILE_ATTRIBUTE_REPARSE_POINT != 0 {
-                    return Err(anyhow!("refusing to replace reparse point {label}"));
-                }
-            }
-            if !metadata.is_file() {
-                return Err(anyhow!("refusing to replace non-file {label}"));
-            }
-            fs::remove_file(path)
-                .with_context(|| format!("failed to remove existing {label} {}", path.display()))?;
-            Ok(())
-        }
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
-        Err(error) => {
-            Err(error).with_context(|| format!("failed to inspect {label} {}", path.display()))
-        }
-    }
 }
 
 fn ensure_quarantine_file_destination_absent(path: &Path, label: &str) -> Result<()> {
@@ -2667,7 +2643,7 @@ mod tests {
     use super::*;
     use crate::scanner::{ScanResult, ScanStatus};
     use chrono::Utc;
-    use tempfile::tempdir;
+    use tempfile::{tempdir, tempdir_in};
 
     fn env_lock() -> std::sync::MutexGuard<'static, ()> {
         crate::test_env_lock()
@@ -4942,8 +4918,11 @@ mod tests {
             "path, encode_metadata_auth_key(&key)?)?",
         ]
         .concat();
-        let old_final_replace_pattern =
-            ["remove_existing_quarantine_file(path", ", label)?"].concat();
+        let atomic_replace_pattern = [
+            "avorax_platform_security::replace_existing_file_atomically(staged, destination, label)",
+        ]
+        .concat();
+        let old_remove_helper_pattern = ["fn remove_existing_", "quarantine_file("].concat();
         let old_record_temp_pattern = [".json", ".tmp"].concat();
         let old_auth_temp_pattern = [".json.auth", ".tmp"].concat();
         let old_key_temp_pattern = [".metadata_auth_key", ".tmp"].concat();
@@ -4968,6 +4947,7 @@ mod tests {
         assert!(source.contains("after parent preflight failure"));
         assert!(source.contains("after activation preflight failure"));
         assert!(source.contains("after activation failure"));
+        assert!(source.contains("after atomic replacement failure"));
         assert!(source.contains("{label} destination already exists"));
         assert!(source.contains("fn ensure_quarantine_file_parent_directory"));
         assert!(source.contains("refusing to replace symbolic link {label}"));
@@ -4976,7 +4956,8 @@ mod tests {
         assert!(!source.contains(&old_record_write_pattern));
         assert!(!source.contains(&old_auth_write_pattern));
         assert!(!source.contains(&old_key_write_pattern));
-        assert!(!source.contains(&old_final_replace_pattern));
+        assert!(source.contains(&atomic_replace_pattern));
+        assert!(!source.contains(&old_remove_helper_pattern));
         assert!(!write_sources.contains(&old_record_temp_pattern));
         assert!(!write_sources.contains(&old_auth_temp_pattern));
         assert!(!write_sources.contains(&old_key_temp_pattern));
@@ -5051,6 +5032,98 @@ mod tests {
             fs::read(&destination).unwrap(),
             b"benign competing quarantine metadata"
         );
+    }
+
+    #[test]
+    fn quarantine_metadata_atomic_replace_replaces_existing_regular_file() {
+        let dir = tempdir().unwrap();
+        let destination = dir.path().join("record.json");
+        fs::write(&destination, b"benign old quarantine metadata").unwrap();
+
+        replace_staged_quarantine_file(
+            &destination,
+            b"benign new quarantine metadata",
+            "quarantine metadata fixture",
+        )
+        .unwrap();
+
+        assert_eq!(
+            fs::read(&destination).unwrap(),
+            b"benign new quarantine metadata"
+        );
+        let residue = fs::read_dir(dir.path())
+            .unwrap()
+            .filter_map(|entry| entry.ok())
+            .map(|entry| entry.file_name().to_string_lossy().into_owned())
+            .filter(|name| name.contains(".tmp-") || name.contains(".avorax-replace-backup"))
+            .collect::<Vec<_>>();
+        assert!(residue.is_empty(), "replacement residue: {residue:?}");
+    }
+
+    #[test]
+    fn quarantine_metadata_atomic_replace_rejects_missing_existing_file() {
+        let dir = tempdir().unwrap();
+        let destination = dir.path().join("missing-record.json");
+
+        let error = replace_staged_quarantine_file(
+            &destination,
+            b"benign staged quarantine metadata",
+            "quarantine metadata fixture",
+        )
+        .expect_err("replacement must require an existing destination");
+        let detail = format!("{error:#}");
+
+        assert!(
+            detail.contains("failed to atomically replace existing quarantine metadata fixture"),
+            "{detail}"
+        );
+        assert!(!destination.exists());
+        let residue = fs::read_dir(dir.path())
+            .unwrap()
+            .filter_map(|entry| entry.ok())
+            .map(|entry| entry.file_name().to_string_lossy().into_owned())
+            .filter(|name| name.contains(".tmp-") || name.contains(".avorax-replace-backup"))
+            .collect::<Vec<_>>();
+        assert!(residue.is_empty(), "replacement residue: {residue:?}");
+    }
+
+    #[test]
+    fn quarantine_metadata_atomic_replace_updates_authenticated_record_pair() {
+        let dir = tempdir_in(std::env::current_dir().unwrap()).unwrap();
+        let base = dir.path().join("q");
+        let payload = base.join("record.avoraxq");
+        fs::create_dir_all(&base).unwrap();
+        fs::write(&payload, b"benign quarantined payload fixture").unwrap();
+        let store = QuarantineStore::with_base(base.clone());
+        let mut record = fixture_record("record", dir.path().join("restore.exe"), payload);
+        store.write_record(&record).unwrap();
+        let record_path = base.join("record.json");
+        let auth_path = base.join("record.json.auth");
+        let old_raw = fs::read_to_string(&record_path).unwrap();
+        let old_auth = fs::read_to_string(&auth_path).unwrap();
+
+        record.user_note = Some("benign atomic replacement fixture".to_string());
+        store.replace_record(&record).unwrap();
+
+        let new_raw = fs::read_to_string(&record_path).unwrap();
+        let new_auth = fs::read_to_string(&auth_path).unwrap();
+        let reparsed: QuarantineRecord = serde_json::from_str(&new_raw).unwrap();
+        assert_ne!(new_raw, old_raw);
+        assert_ne!(new_auth, old_auth);
+        assert_eq!(reparsed.user_note, record.user_note);
+        assert_eq!(
+            store
+                .verified_record_auth_scheme(&record_path, &new_raw)
+                .unwrap(),
+            QuarantineMetadataAuthScheme::HmacSha256V2
+        );
+        let residue = fs::read_dir(&base)
+            .unwrap()
+            .filter_map(|entry| entry.ok())
+            .map(|entry| entry.file_name().to_string_lossy().into_owned())
+            .filter(|name| name.contains(".tmp-") || name.contains(".avorax-replace-backup"))
+            .collect::<Vec<_>>();
+        assert!(residue.is_empty(), "replacement residue: {residue:?}");
     }
 
     #[test]

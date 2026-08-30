@@ -15483,3 +15483,85 @@ pending.
   mutation occurred. Checkpoint 2275 is closed through hosted integration and
   synchronized destination verification; the complete antivirus goal remains
   active.
+
+## 2026-08-30 - Checkpoint 2276 Quarantine Metadata Atomic Replacement Scripting
+
+- Selected the Local Core metadata remove-before-activate interval as the next
+  highest-value unblocked quarantine availability risk.
+- Scripted shared existing-file atomic replacement for existing JSON records
+  and HMAC sidecars while retaining no-replace activation for new metadata.
+- Added three harmless temporary-file regressions, Linux/macOS workflow
+  coverage, exact-302 verifier/validator scope, Source contract 708, threat and
+  control documentation, and a no-dependency statement.
+- No checkpoint 2276 test ran during scripting. No live malware or EICAR was
+  used; no protected-vault, Defender, install, service, driver, release, or
+  publication action occurred. Execution evidence remains pending.
+
+## 2026-08-30 - Checkpoint 2276 Local Verification
+
+- Focused verification passes the three new replacement fixtures, 21 workspace
+  metadata tests, Local Core quarantine `143/143`, Guard quarantine `51/51`,
+  platform `28/28`, strict lint, formatting, parsers, and final Source
+  `708/708`. Initial formatting and source-contract failures exposed formatting,
+  stale historical/count/wording contracts, and one accidentally broadened
+  marker; all failed visibly and were repaired before credit.
+- Broad verification passes strict workspace Clippy, both locked Rust workspace
+  variants with 1,809 executed tests, 21 intentional child-fixture ignores, and
+  zero failures, locked release, Flutter `852/852`, and protocols `14/14 + 6/6`.
+- The exact no-skip/no-Defender verifier passes `302/302` in `677.8s`. Report
+  SHA-256 is `62d917fadc40772e5db7dd14a6da17497db1e90d65224417fead7b74cfe0f32c`.
+  Both PowerShell hosts accept it and reject `52/52` hostile reports across 26
+  mutations; adversarial SHA-256 is
+  `273835ec3817f5bfa9c74612d67cbbe0a908f6a100bb00b92ad79d4fe99e43db`.
+- Final audit passes 15 modified plus one added path, zero deletions, nine
+  unchanged locks, zero staged `.verification` paths, zero process/pending/temp
+  residue, and the exact protected vault. Audit SHA-256 is
+  `9f979da7c84d784ebf83f23acbeb46652e43b992ae585289a0b9b168595881a1`.
+  Hosted exact-head, PR/merge, destination sync, and destination verification
+  remain pending; the complete antivirus goal remains active.
+
+## 2026-08-30 - Checkpoint 2276 Hosted macOS Fixture Repair Scripting
+
+- Exact-head Avorax CI `33326866656` failed visibly only in the new macOS
+  authenticated-pair fixture: `tempdir()` resolved beneath the `/var` symlink,
+  and production correctly returned `refusing to use symbolic link quarantine
+  base directory`.
+- Scripted a test-only repair that creates this owned fixture beneath the
+  non-linked checkout and added a Source contract requiring that route. No
+  production path or symlink rejection was weakened. Repair documentation was
+  completed before rerunning tests.
+
+## 2026-08-30 - Checkpoint 2276 Post-Repair Local Verification
+
+- Repaired focus passes fixture `3/3`, Source `708/708`, strict Local Core
+  Clippy, formatting, and diff checks. The complete locked all-target/all-
+  feature Rust suite passes with 1,809 executed tests, 21 intentional ignores,
+  and zero failures.
+- The regenerated no-skip/no-Defender verifier passes `302/302` in `667.1s`.
+  Its 233,119-byte report SHA-256 is
+  `1736eddd87c9ee03a0d1a2860ea5760b3fdb8ecf6a90ba7960018660e3a8c024`.
+  Both PowerShell hosts accept it and reject `52/52` hostile cases across 26
+  mutations; the 57,480-byte adversarial result SHA-256 is
+  `c6d91cdf381b8055b1a0d0204dd1dc430234b2b1aa55385bcd514bae826cb4c0`.
+- The repaired-source final audit passes 15 modified plus one added path, zero
+  deletions, nine unchanged locks, no staged `.verification`, no process/
+  pending/temp residue, and the exact vault. Its 3,086-byte SHA-256 is
+  `a8c307c729835c02bdbbc2e8bfa3bacca560b01a546ce3db2f8184bcd67d0552`.
+  New exact-head hosted CI and package evidence remains required.
+
+## 2026-08-30 - Checkpoint 2276 Repaired Implementation-Head Hosting
+
+- Repaired exact head `0be467e61cf775fc4812b804ee6ac00fcf0e2bbf` passes
+  Avorax CI `33328100995` all six jobs, including real macOS 15 arm64 and Ubuntu
+  runtime execution of the metadata replacement filter.
+- Desktop Packages push `33328099560` and PR `33328101027` each pass contracts,
+  Windows MSI/setup EXE, Linux DEB/tar, macOS x64/arm64 DMGs, and consolidation.
+  Both publication jobs are skipped.
+- Consolidated artifacts `9737011004` and `9737035093` are 132,853,231 and
+  132,852,641 bytes with hosted SHA-256 digests
+  `3db64ce970f7ba198015f23bc10a4b49c8d2302d67864f46ae57ab9071954742`
+  and
+  `89181b15a1aa498e22e824fca33fcb513abe14a4f5b2190b538996fbfaf72a0e`.
+  Only artifact metadata was read; nothing was downloaded, extracted,
+  installed, or executed. Evidence-head checks, merge, guarded sync, and
+  destination verification remain.

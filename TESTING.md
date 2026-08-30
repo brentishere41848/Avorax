@@ -2353,3 +2353,65 @@ Only harmless temporary ASCII fixtures are permitted and none is executed.
 Tests must not install/start services or drivers, change Defender, mutate the
 protected vault, download artifacts, publish a release, or claim package-wide
 transactionality.
+
+## Checkpoint 2276 Quarantine Metadata Atomic Replacement
+
+Checkpoint 2276 scripts the complete implementation, fixture, workflow,
+verifier, validator, source-contract, and documentation batch before testing.
+No checkpoint 2276 test ran during that scripting phase.
+
+Focused execution after freeze:
+
+```powershell
+cargo fmt --all -- --check
+& 'C:\Users\Brent\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe' -B tools\testing\run-python-source-contracts.py
+cargo test --locked --manifest-path core\zentor_local_core\Cargo.toml quarantine_metadata_atomic_replace_ -- --test-threads=1
+cargo test --locked --workspace quarantine_metadata_ -- --test-threads=1
+cargo clippy --locked --manifest-path core\zentor_local_core\Cargo.toml --all-targets --all-features -- -D warnings
+cargo clippy --locked --manifest-path core\avorax_platform_security\Cargo.toml --all-targets --all-features -- -D warnings
+```
+
+PowerShell 5.1 and PowerShell 7 must parse both verifier scripts. The complete
+post-focus sequence must rerun locked workspace Clippy/tests, all-target/all-
+feature tests and release, Flutter analysis/tests, both Dart protocol packages,
+security gates, the exact 302-step no-Defender verifier, dual-host authentic and
+adversarial report validation, lockfile/diff/process/residue review, and the
+read-only protected-vault audit.
+
+The focused fixtures contain harmless temporary ASCII, are never executed, and
+must touch only isolated temporary directories. No live malware or EICAR is
+permitted for checkpoint 2276.
+
+Post-freeze execution passes Source `708/708`, new replacement `3/3`, workspace
+metadata `21/21`, Local Core quarantine `143/143`, Guard quarantine `51/51`,
+platform `28/28`, strict lint, formatting, and both parser hosts. Both complete
+locked Rust variants pass with 1,809 executed tests, 21 intentional ignores,
+and zero failures; release, Flutter `852/852`, and protocols `14/14 + 6/6` pass.
+
+The definitive verifier passes exact `302/302` in `677.8s`, with Defender/EICAR
+opt-in false and no skipped Rust or Flutter suite. Report SHA-256 is
+`62d917fadc40772e5db7dd14a6da17497db1e90d65224417fead7b74cfe0f32c`.
+PowerShell 5.1 and 7 accept the authentic report and reject `52/52` hostile
+cases across 26 mutations. The final local path/lock/process/residue/vault audit
+passes. Hosted and destination execution remain separate required evidence.
+
+First exact-head macOS execution failed `2/3` only because the authenticated-
+pair fixture used the runner's `/var`-symlink temporary root; production link-
+ancestor rejection worked as designed. The scripted repair uses
+`tempdir_in(std::env::current_dir())` for that fixture only and leaves production
+path policy unchanged. Focused, broad affected, exact verifier/audit, and hosted
+evidence must be regenerated on the repaired head.
+
+The repaired rerun passes focus `3/3`, Source `708/708`, strict lint, formatting,
+and the complete locked all-target/all-feature Rust suite with 1,809 executed,
+21 intentional ignores, and zero failures. The regenerated exact verifier
+passes `302/302` in `667.1s`; report SHA-256 is
+`1736eddd87c9ee03a0d1a2860ea5760b3fdb8ecf6a90ba7960018660e3a8c024`.
+Dual-host validation again rejects `52/52` hostile cases and the repaired final
+audit passes. Exact-head hosted evidence remains required.
+
+Hosted repaired-head evidence now passes Avorax CI `33328100995`, including
+real macOS and Ubuntu metadata replacement runtime, plus package push/PR
+`33328099560` and `33328101027` across Windows, Linux, and both macOS
+architectures. Both publication jobs are skipped. Evidence-head and destination
+reruns remain separate requirements.

@@ -8921,3 +8921,49 @@ vault must remain unchanged with zero pending.
 Next exact task: select and script checkpoint 2276 against the highest-value
 remaining unblocked antivirus risk, preserving the scripting-before-testing
 discipline and the protected-vault invariant.
+
+## Checkpoint 2276 - Quarantine Metadata Atomic Replacement
+
+Status: locally verified; hosted integration pending.
+
+Local Core no longer deliberately removes an existing quarantine JSON record
+or HMAC sidecar before activating staged replacement bytes. Existing files now
+use `avorax_platform_security::replace_existing_file_atomically`; new journals,
+records, sidecars, and the metadata key remain on atomic no-replace activation.
+Three harmless temporary-file regressions cover successful replacement,
+missing-destination rejection, residue cleanup, and a final authenticated HMAC-
+SHA256-v2 pair. Ubuntu and macOS jobs run the focused filter.
+
+The exact verifier remains 302 steps: its previous metadata no-replace step is
+renamed and broadened to all `quarantine_metadata_` regressions. Source contract
+708 and the validator require the no-pre-delete implementation plus honest
+scope. The JSON record and sidecar are still two independent operations; an
+interruption between them can leave a mismatched pair that authenticated reads
+reject and manual recovery may need to inspect. Windows may retain an adjacent
+`.avorax-replace-backup`, same-volume hard-link support is required for backup
+reservation, and path evidence remains point-in-time user-mode evidence.
+
+No checkpoint 2276 test ran during scripting. After the freeze, focused tests,
+Source `708/708`, strict lint, both complete locked Rust variants (1,809
+executed, 21 intentional ignores, zero failed), release, Flutter `852/852`, and
+protocol `14/14 + 6/6` pass. The definitive no-skip/no-Defender verifier passes
+`302/302` in `677.8s`; both PowerShell hosts accept the authentic report and
+reject `52/52` hostile reports across 26 mutations. Final audit passes 15
+modified plus one added path, zero deletions, nine unchanged locks, zero staged
+`.verification` paths or process/pending/temp residue, and the exact protected
+vault at 16,072 files and zero pending. Exact-head hosted evidence, normal PR
+integration, guarded destination synchronization, and destination verification
+remain. The complete antivirus-hardening goal remains active.
+
+The first exact-head hosted run exposed a test-only macOS path issue: the new
+authenticated-pair fixture inherited macOS `/var` symlink ancestry and was
+rejected by the intended production link guard. Production validation remains
+unchanged. The fixture is now scripted to use the non-linked checkout, with a
+Source contract preventing regression; post-repair local and exact-head hosted
+reruns are required before merge. Post-repair local focus, the complete locked
+all-target/all-feature Rust suite, regenerated `302/302` in `667.1s`, dual-host
+`52/52` hostile rejection, and final audit now pass. New exact-head hosted CI
+and package evidence now also pass at `0be467e`: CI `33328100995` is six-for-
+six, package runs `33328099560` and `33328101027` pass all platform builds and
+consolidation, and publication is skipped. Evidence-head checks, normal merge,
+guarded destination synchronization, and destination verification remain.

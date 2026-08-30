@@ -12193,7 +12193,7 @@ def test_local_quarantine_staged_writes_are_final_destination_exclusive_and_clea
     ]
     file_writer_source = source[
         source.index("fn write_file_exclusive"):
-        source.index("fn remove_existing_quarantine_file")
+        source.index("fn ensure_quarantine_file_destination_absent")
     ]
     write_sources = source[
         source.index("fn write_record(&self"):
@@ -12276,7 +12276,8 @@ def test_local_quarantine_staged_writes_are_final_destination_exclusive_and_clea
     assert "ensure_quarantine_file_parent_directory(path, label)" in marker_source
     assert "ensure_quarantine_file_destination_absent(path, label)" in marker_source
     assert "cleanup_quarantine_staged_file(&temp_path, label)" in marker_source
-    assert "old_final_replace_pattern" in marker_source
+    assert "atomic_replace_pattern" in marker_source
+    assert "old_remove_helper_pattern" in marker_source
 
 
 def test_local_quarantine_write_record_validates_record_before_staged_persistence():
@@ -29413,6 +29414,7 @@ def test_ci_runs_native_unix_quarantine_permission_runtime_contracts():
         "activation_recovery::tests::activation_recovery_checked_tree_cleanup_nested_link_preserves_evidence",
         "tests::atomic_existing_file_replacement_replaces_adjacent_regular_file",
         "path_safety::tests::staged_activation_atomic_replace_replaces_existing_regular_file",
+        "quarantine_metadata_atomic_replace_",
         "-- --exact --test-threads=1",
         "hard_link",
         "active_pending_finalization_lock_blocks_concurrent_recovery",
@@ -29424,9 +29426,9 @@ def test_ci_runs_native_unix_quarantine_permission_runtime_contracts():
     ]:
         assert marker in job
 
-    assert job.count("cargo test --locked") == 17
+    assert job.count("cargo test --locked") == 18
     assert job.count("hard_link") == 2
-    assert job.count("set -euo pipefail") == 6
+    assert job.count("set -euo pipefail") == 7
     assert "continue-on-error" not in job
     assert "|| true" not in job
     assert "apt-get" not in job
@@ -31236,13 +31238,17 @@ def test_checkpoint_2265_quarantine_metadata_no_replace_contract():
     ]
 
     assert "activate_quarantine_metadata_no_replace(&temp_path, path, label)" in local_write
-    assert "activate_quarantine_metadata_no_replace(&temp_path, path, label)" in local_replace
+    assert (
+        "activate_quarantine_metadata_replace_existing(&temp_path, path, label)"
+        in local_replace
+    )
     assert "fn activate_quarantine_metadata_no_replace(" in local_activation
     assert "avorax_platform_security::rename_file_no_replace" in local_activation
+    assert "fn activate_quarantine_metadata_replace_existing(" in local_activation
+    assert "avorax_platform_security::replace_existing_file_atomically" in local_activation
     assert "fs::rename(&temp_path, path)" not in local_activation
-    assert local_replace.index(
-        "remove_existing_quarantine_file(path, label)"
-    ) < local_replace.index("activate_quarantine_metadata_no_replace")
+    assert "remove_existing_quarantine_file(path, label)" not in local_replace
+    assert "fn remove_existing_quarantine_file(" not in local_core
 
     assert "activate_guard_quarantine_metadata_no_replace(&temp_path, path, label)" in guard_activation
     assert "fn activate_guard_quarantine_metadata_no_replace(" in guard_activation
@@ -31276,20 +31282,18 @@ def test_checkpoint_2265_quarantine_metadata_no_replace_contract():
         assert 'format!("{error:#}")' in source
         assert "without replacing" in source
 
-    step = "quarantine metadata atomic no-replace regressions"
+    step = "quarantine metadata atomic activation regressions"
     assert step in verifier
-    assert '"--workspace", "quarantine_metadata_no_replace"' in verifier
+    assert '"--workspace", "quarantine_metadata_"' in verifier
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
     assert "if ($steps.Count -ne 302)" in validator
     assert "expected exactly 302 verifier steps" in validator
     for scope in [
         "Local Core and Guard activate new quarantine finalization journals, metadata records, and authentication sidecars with the shared operating-system atomic no-replace primitive",
         "Harmless competing-metadata fixtures prove all three owners preserve both staged bytes and competing destination bytes and fail visibly instead of overwriting the destination",
-        "Quarantine metadata no-replace protects only each final destination-name activation",
-        "Local Core replacement still has a deliberate remove-to-activate gap",
-        "journal/record/auth files are separate non-transactional files",
-        "unsupported platforms fail rather than use replacement-capable rename",
-        "Authenticated recovery detects incomplete state but cannot make multi-file activation atomic",
+        "Local Core status and authenticated-recovery record and sidecar updates independently use shared atomic existing-file replacement without first removing either destination name",
+        "Quarantine metadata atomic activation protects only one final destination-name operation at a time",
+        "The record and authentication sidecar remain separate non-transactional files",
     ]:
         assert scope in verifier
         assert scope in validator
@@ -34218,3 +34222,145 @@ def test_checkpoint_2275_atomic_existing_file_replacement_contract():
     assert "checkpoint 2275 dependency delta" in normalized_dependencies
     assert "adds no dependency" in normalized_dependencies
     assert "lockfile" in normalized_dependencies
+
+
+def test_checkpoint_2276_quarantine_metadata_atomic_replacement_contract():
+    local_core = read(
+        ROOT
+        / "core"
+        / "zentor_local_core"
+        / "src"
+        / "quarantine"
+        / "quarantine_store.rs"
+    )
+    local_cargo = read(ROOT / "core" / "zentor_local_core" / "Cargo.toml")
+    root_lock = read(ROOT / "Cargo.lock")
+    workflow = read(CI_WORKFLOW)
+    verifier = read(SMALL_THREAT_MVP_VERIFIER)
+    validator = read(SMALL_THREAT_MVP_REPORT_VALIDATOR)
+    checkpoint = read(
+        ROOT
+        / "docs"
+        / "reports"
+        / "checkpoint-2276-quarantine-metadata-atomic-replacement.md"
+    )
+    documents = [
+        checkpoint,
+        read(RUN_LOG),
+        read(STATUS_DOC),
+        read(ROOT / "TESTING.md"),
+        read(ROOT / "core" / "zentor_local_core" / "README.md"),
+        read(ROOT / "docs" / "quarantine.md"),
+        read(ROOT / "docs" / "malware-protection.md"),
+        read(ROOT / "docs" / "audit" / "engine-control-matrix.md"),
+        read(ROOT / "docs" / "audit" / "threat-model.md"),
+        read(ROOT / "docs" / "audit" / "known-blockers.md"),
+        read(DEPENDENCY_LICENSE_INVENTORY),
+    ]
+
+    write_start = local_core.index("fn write_staged_quarantine_file(")
+    replace_start = local_core.index("fn replace_staged_quarantine_file(")
+    no_replace_start = local_core.index("fn activate_quarantine_metadata_no_replace(")
+    staged_end = local_core.index("fn quarantine_staged_temp_path(")
+    new_write = local_core[write_start:replace_start]
+    existing_replace = local_core[replace_start:no_replace_start]
+    activation = local_core[replace_start:staged_end]
+
+    assert "activate_quarantine_metadata_no_replace(&temp_path, path, label)" in new_write
+    assert "ensure_quarantine_file_destination_absent(path, label)" in new_write
+    assert (
+        "activate_quarantine_metadata_replace_existing(&temp_path, path, label)"
+        in existing_replace
+    )
+    assert "after atomic replacement failure" in existing_replace
+    assert "failed to atomically replace existing {label}" in existing_replace
+    assert "fn activate_quarantine_metadata_replace_existing(" in activation
+    assert (
+        "avorax_platform_security::replace_existing_file_atomically(staged, destination, label)"
+        in activation
+    )
+    assert "remove_existing_quarantine_file(path, label)" not in existing_replace
+    assert "fn remove_existing_quarantine_file(" not in local_core
+
+    for marker in [
+        "quarantine_metadata_atomic_replace_replaces_existing_regular_file",
+        "quarantine_metadata_atomic_replace_rejects_missing_existing_file",
+        "quarantine_metadata_atomic_replace_updates_authenticated_record_pair",
+        "benign old quarantine metadata",
+        "benign new quarantine metadata",
+        "benign staged quarantine metadata",
+        "benign quarantined payload fixture",
+        "benign atomic replacement fixture",
+        ".avorax-replace-backup",
+        "replacement residue",
+        "QuarantineMetadataAuthScheme::HmacSha256V2",
+    ]:
+        assert marker in local_core
+    authenticated_pair_fixture = local_core[
+        local_core.index(
+            "fn quarantine_metadata_atomic_replace_updates_authenticated_record_pair()"
+        ) : local_core.index("fn quarantine_optional_metadata_presence_uses_non_following_helpers()")
+    ]
+    assert "tempdir_in(std::env::current_dir().unwrap())" in authenticated_pair_fixture
+
+    ubuntu_job = workflow[
+        workflow.index("  quarantine-unix:\n") : workflow.index(
+            "  update-recovery-macos:\n"
+        )
+    ]
+    macos_job = workflow[
+        workflow.index("  update-recovery-macos:\n") : workflow.index(
+            "  flutter:\n", workflow.index("  update-recovery-macos:\n")
+        )
+    ]
+    for job in [ubuntu_job, macos_job]:
+        assert "Test Local Core quarantine metadata atomic replacement" in job
+        assert "quarantine_metadata_atomic_replace_" in job
+        assert "-- --test-threads=1" in job
+        assert "set -euo pipefail" in job
+        assert "continue-on-error" not in job
+        assert "|| true" not in job
+
+    step = "quarantine metadata atomic activation regressions"
+    assert step in verifier
+    assert '"--workspace", "quarantine_metadata_"' in verifier
+    assert f'Assert-ReportContainsStep $steps "{step}"' in validator
+    assert "if ($steps.Count -ne 302)" in validator
+    assert "expected exactly 302 verifier steps" in validator
+    for scope in [
+        "Local Core status and authenticated-recovery record and sidecar updates independently use shared atomic existing-file replacement without first removing either destination name",
+        "Harmless existing-file fixtures prove ordinary JSON and HMAC sidecar replacement, authenticated pairing after success, missing-destination rejection, and zero temporary or backup residue",
+        "Quarantine metadata atomic activation protects only one final destination-name operation at a time",
+        "The record and authentication sidecar remain separate non-transactional files",
+        "a failure between their replacements can leave a mismatched pair that fails authenticated reads and may require manual recovery",
+        "Windows may preserve an adjacent .avorax-replace-backup after an ambiguous replacement failure",
+        "backup reservation requires same-volume hard-link support",
+        "Path and ancestor checks remain point-in-time user-mode checks",
+    ]:
+        assert scope in verifier
+        assert scope in validator
+
+    assert (
+        'avorax_platform_security = { path = "../avorax_platform_security" }'
+        in local_cargo
+    )
+    local_lock_entry = root_lock[
+        root_lock.index('name = "zentor_local_core"') : root_lock.index(
+            "[[package]]", root_lock.index('name = "zentor_local_core"')
+        )
+    ]
+    assert '"avorax_platform_security"' in local_lock_entry
+
+    for document in documents:
+        normalized = re.sub(r"\s+", " ", document).lower()
+        assert "checkpoint 2276" in normalized
+    normalized_checkpoint = re.sub(r"\s+", " ", checkpoint)
+    assert "No checkpoint-2276 test ran during the scripting phase" in normalized_checkpoint
+    assert "16,072 files" in normalized_checkpoint
+    assert "zero pending" in normalized_checkpoint
+    assert "no live malware" in normalized_checkpoint.lower()
+    assert "complete antivirus-hardening goal remains active" in normalized_checkpoint.lower()
+    normalized_dependencies = re.sub(r"\s+", " ", documents[-1]).lower()
+    assert "checkpoint 2276 dependency delta" in normalized_dependencies
+    assert "adds no dependency" in normalized_dependencies
+    assert "lockfile change" in normalized_dependencies

@@ -4847,3 +4847,31 @@ Final audit confirms zero process/pending/temp residue, nine unchanged locks,
 zero deletions, and the exact 16,072-file protected vault. Hosted and
 destination evidence remains pending; no whole-product completion or stronger
 authority claim follows from local closure.
+
+## Checkpoint 2276 Existing Quarantine Metadata Availability
+
+Threat: an interruption or ordinary activation failure after Local Core removes
+an existing status record or HMAC sidecar can leave that final name absent.
+
+Mitigation: stage and sync an adjacent private regular file, repeat parent/link
+validation, and invoke shared operating-system existing-file atomic replacement
+without pre-deleting the destination. Missing destinations and cleanup failures
+remain fail-visible. Harmless local fixtures pass `3/3`, the broadened workspace
+metadata filter passes `21/21`, and exact local verification passes `302/302`.
+Linux/macOS workflow wiring is scripted and requires exact-head hosted runtime
+evidence.
+
+Residual risk: JSON and HMAC remain separate non-transactional operations. An
+interruption between them may leave a mismatched pair that authenticated reads
+reject and manual recovery may need to inspect. Windows can preserve an
+adjacent `.avorax-replace-backup`; hard-link reservation requires same-volume
+support. Path and opened-identity evidence is point-in-time and does not defeat
+privileged races, hostile filesystems/storage, or kernel compromise. Checkpoint
+2276 adds no driver, pre-execution, secure-erasure, Defender-replacement,
+production-accuracy, or complete-goal claim.
+
+Hosted repair evidence at `0be467e` proves the intended macOS and Ubuntu
+runtime routes without weakening linked-ancestor rejection. It remains one
+ephemeral runner filesystem per platform, not installed-service, hostile-
+filesystem, power-loss, administrator/root, kernel, or cross-file transaction
+evidence.

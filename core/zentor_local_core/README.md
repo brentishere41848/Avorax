@@ -115,3 +115,27 @@ smoke, UI/protocol regressions, Source `695/695`, and exact definitive
 pending. Implementation-head CI and cross-platform package builds now pass at
 `e4a1bb8` with publication skipped; evidence-head, merge, merged-main, and
 synchronized-destination proof remain open.
+
+## Checkpoint 2276 Existing Metadata Replacement
+
+Checkpoint 2276 supersedes the checkpoint 2265 remove-before-activate behavior
+for existing Local Core status and authenticated-recovery metadata. Existing
+JSON records and HMAC sidecars are privately staged and passed to the shared
+operating-system atomic existing-file replacement primitive without first
+removing the destination name. New journals, records, sidecars, and the metadata
+key still use atomic no-replace activation.
+
+The record and HMAC sidecar are replaced independently, not transactionally. A
+failure between them remains visible because authenticated reads reject a
+mismatched pair and manual recovery may be required. Windows can retain an
+adjacent `.avorax-replace-backup` after an ambiguous failure and backup
+reservation requires same-volume hard links. Post-freeze local evidence passes
+the new `3/3`, workspace metadata `21/21`, complete quarantine `143/143`, strict
+lint, both locked workspace variants, and definitive `302/302`. Hosted and
+synchronized-destination evidence remains pending; no broader mutation
+authority, pre-execution, driver, Defender-replacement, or detection-accuracy
+claim is made.
+
+Repaired implementation head `0be467e` passes hosted macOS and Ubuntu runtime,
+all six CI jobs, and both cross-platform package workflows with publication
+skipped. Evidence-head, merge, and synchronized-destination proof remain open.
