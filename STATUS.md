@@ -8656,3 +8656,25 @@ pending. Windows removal durability, storage truthfulness, package-wide
 transactionality, privileged/hostile filesystems, installed identity, Android,
 production signing/deployment, driver/pre-execution enforcement, Defender
 replacement, and the complete antivirus goal remain open or limited.
+
+That pending state is superseded. Evidence head `e5fb59f9` and normal PR `#155`
+merge `6bcfe8c6` pass exact-head and merged-main CI/packages. Fixed Ubuntu Rust
+jobs pass the complete update service and all eight cleanup regressions at both
+heads; fixed macOS 15 jobs retain exact `4/4` recovery coverage. Publication is
+skipped and bounded package review passes.
+
+Guarded synchronization applies exact 12 modified plus one added path, zero
+deletes, with 24 verified backups. The destination passes Source `704/704`,
+strict Rust format/lint, both locked workspaces, locked all-feature release,
+Flutter `852/852`, protocols `14/14 + 6/6`, and no-skip/no-Defender verification
+`301/301` in `706.2s`. Both validator hosts accept the authentic report and
+reject all `20/20` credited content cases. Final audit passes all 13 blobs,
+nine unchanged locks, zero product process/residue, and the exact protected
+vault.
+
+Checkpoint 2273 is closed through synchronized destination verification.
+Windows removal durability, truthful storage hardware, hostile filesystems,
+package-wide atomicity, privileged actors, installed identity, Android,
+production signing/deployment, driver/pre-execution enforcement, Defender
+replacement, and complete antivirus-goal closure remain open or technically
+limited.
