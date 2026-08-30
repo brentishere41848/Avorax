@@ -4585,3 +4585,24 @@ disclosure, installed identity, Android, production signing/deployment, signed-
 driver/pre-execution enforcement, Defender replacement, and whole-goal closure
 remain outside this checkpoint. The protected 16,072-file vault remains read-
 only with zero pending.
+
+## Checkpoint 2272 Namespace Durability Closure
+
+Evidence-head and merged-main fixed Ubuntu 24.04 and macOS 15 jobs each execute
+the exact four harmless recovery/durability fixtures. Bounded package review
+performs no extraction or execution and publication is skipped.
+
+Guarded 14-path zero-delete synchronization and destination Source, locked
+workspaces, lint, release, Flutter/protocol, exact `300/300`, dual-host
+authentic/adversarial, and final exact blob/lock/backup/process/vault audits all
+pass. This closes the checkpoint evidence chain without changing detector,
+custom-engine, quarantine, realtime, process, or driver authority.
+
+Residual threats remain explicit: directory sync and write-through are
+best-effort user-mode filesystem evidence, not truthful-hardware or power-loss
+proof; Windows deletion durability remains unverified; one fixed runner per OS
+is not every filesystem/device/identity; root/admin/SYSTEM, hostile filesystems,
+storage rollback/reordering, and kernel compromise remain out of scope;
+multi-component activation is not one transaction; Android, production
+signing/deployment, signed-driver/pre-execution enforcement, Defender
+replacement, and whole-goal completion remain open.

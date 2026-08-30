@@ -1878,3 +1878,50 @@ bounded in-stream exact inventory, internal SHA-256, and CycloneDX checks
 without extraction or execution. Merge, merged-main, guarded zero-delete
 destination synchronization, destination full verification, and final audit
 remain required before checkpoint closure.
+
+### Checkpoint 2272 closure evidence
+
+Evidence-head and merged-main fixed Ubuntu 24.04 and macOS 15 jobs each pass
+the exact four selected `activation_recovery_unix_` tests (`4 passed; 0 failed;
+247 filtered out`). From the synchronized repository root, the credited
+destination commands are:
+
+```powershell
+python -B tools\testing\run-python-source-contracts.py
+cargo fmt --all -- --check
+cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
+cargo test --workspace --locked -- --test-threads=1
+cargo test --workspace --all-targets --all-features --locked -- --test-threads=1
+cargo build --workspace --release --all-targets --all-features --locked
+Push-Location apps\zentor_client
+flutter analyze
+flutter test --reporter compact
+Pop-Location
+Push-Location packages\zentor_protocol
+dart analyze
+dart test
+Pop-Location
+Push-Location packages\avorax_protocol
+dart analyze
+dart test
+Pop-Location
+```
+
+Source passes `703/703`; both Rust workspace variants have zero failures and
+21 documented isolated child-fixture ignores; release and lint pass; Flutter
+passes `852/852`; protocol tests pass `14/14 + 6/6`.
+
+```powershell
+powershell.exe -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass `
+  -File tools\testing\verify-small-threat-mvp.ps1 `
+  -RepoRoot . `
+  -ReportPath .workflow\ultracode\avorax-hardening\results\checkpoint-2272-destination-update-recovery-namespace-durability-report.json
+```
+
+The verifier passes exact `300/300` in `717.8s`, with no skips and Defender/
+EICAR opt-in false. The 220,116-byte report SHA-256 is
+`ef4aba38c9c658cdf34b395a990abceff05b13e0458734e8923f16213438e94d`.
+PowerShell 5.1 and 7 accept it; eight content mutations on each host are
+rejected, exact `16/16`. Final destination audit verifies 14 blobs, nine
+unchanged locks, 26 backups, zero product process/pending/temp residue, and the
+exact protected vault.

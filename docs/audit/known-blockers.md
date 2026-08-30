@@ -4357,3 +4357,17 @@ pending. Storage truthfulness, Windows removal persistence, broader filesystems,
 installed identities, Android, package-wide power-loss transactionality,
 privileged/hostile actors, signing/deployment, driver/pre-execution enforcement,
 Defender replacement, and whole-project blockers are not removed.
+
+Evidence-head and merged-main Ubuntu/macOS jobs now pass exact `4/4`; normal PR
+`#153`, guarded 14-path zero-delete synchronization, complete destination
+regressions, exact `300/300`, dual-host hostile-report rejection, and final
+blob/lock/backup/process/vault audit close checkpoint 2272. The narrow hosted
+namespace-durability evidence blocker is removed.
+
+The following blockers are deliberately not removed: Windows removal
+durability; storage hardware truthfulness; other filesystems, devices, OS
+versions, and installed identities; Android runtime; root/admin/SYSTEM, hostile
+filesystems, storage rollback/reordering, and kernel compromise; package-wide
+power-loss transactionality; production signing/deployment; signed driver and
+proven pre-execution enforcement; Defender replacement; and complete
+antivirus-goal closure.

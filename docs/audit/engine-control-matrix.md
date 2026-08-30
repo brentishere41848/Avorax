@@ -6223,3 +6223,18 @@ Ubuntu 24.04 and macOS 15 runners**. Integration/destination proof and every
 storage-truthfulness, Windows-removal, package-transaction, installed-identity,
 Android, privileged/hostile-filesystem, detector/custom-engine, driver/pre-
 execution, Defender-replacement, and whole-goal limitation remain unchanged.
+
+## Checkpoint 2272 Closure Classification
+
+| Control / engine | Final checkpoint status | Evidence / remaining limit |
+| --- | --- | --- |
+| Windows update activation rename durability request | Verified on synchronized Windows destination | Exact local and destination tests plus `300/300` verifier pass; removal durability and truthful storage hardware remain unverified |
+| Unix stable-directory namespace synchronization | Verified on fixed Ubuntu 24.04 and macOS 15 runners | Evidence-head and merged-main jobs each pass exact `4/4`; this is not every filesystem, device, OS, or installed identity |
+| Authenticated post-rename recovery | Verified for harmless injected failure paths | Failures remain visible and preserved state recovers on a fresh authenticated pass; package-wide power-loss atomicity is not claimed |
+| Validator and destination regression | Verified | Source `703/703`, both workspaces, release, Flutter `852/852`, protocols, exact `300/300`, authentic acceptance, and `16/16` hostile rejection pass |
+| Dependency and package regression | Verified for this checkpoint | Nine lockfiles are unchanged; bounded non-extracting 569-component SBOM review passes with publication skipped |
+| Detection and custom engines | Unchanged | No detector responsibility, threshold, verdict, quarantine, realtime, driver/pre-execution, or Defender authority changed |
+
+Checkpoint 2272 is closed through normal merge and exact zero-delete
+destination synchronization. The complete antivirus-hardening goal remains
+active.
