@@ -30,6 +30,11 @@ const QUARANTINE_AUTH_HMAC_DOMAIN: &[u8] = b"avorax-quarantine-record-v2\0";
 const QUARANTINE_FINALIZATION_JOURNAL_FORMAT: &str = "avorax-quarantine-finalization-journal-v1";
 const QUARANTINE_FINALIZATION_JOURNAL_AUTH_DOMAIN: &[u8] =
     b"avorax-quarantine-finalization-journal-v1\0";
+const QUARANTINE_METADATA_UPDATE_JOURNAL_FORMAT: &str =
+    "avorax-quarantine-metadata-update-journal-v1";
+const QUARANTINE_METADATA_UPDATE_JOURNAL_AUTH_DOMAIN: &[u8] =
+    b"avorax-quarantine-metadata-update-journal-v1\0";
+const MAX_QUARANTINE_METADATA_UPDATE_JOURNAL_BYTES: u64 = 1024 * 1024;
 const MAX_QUARANTINE_RECOVERY_ENTRIES: usize = 65_536;
 const QUARANTINE_AUTH_LEGACY_DOMAIN: &[u8] = b"avorax-quarantine-record-v1\0";
 const QUARANTINE_AUTH_GUARD_LEGACY_DOMAIN: &[u8] = b"avorax-guard-quarantine-record-v1\0";
@@ -53,6 +58,24 @@ enum ExclusiveCopySecurity {
 struct QuarantineFinalizationJournal {
     format: String,
     record: QuarantineRecord,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct QuarantineMetadataUpdateJournal {
+    body: QuarantineMetadataUpdateJournalBody,
+    authentication: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct QuarantineMetadataUpdateJournalBody {
+    format: String,
+    quarantine_id: String,
+    previous_record_raw: String,
+    previous_record_auth: String,
+    next_record_raw: String,
+    next_record_auth: String,
 }
 
 pub struct QuarantineStore {
@@ -279,6 +302,7 @@ impl QuarantineStore {
     }
 
     fn recover_pending_finalizations(&self) -> Result<()> {
+        let mut metadata_updates = Vec::new();
         let mut journals = Vec::new();
         let mut journal_auth = Vec::new();
         let mut count = 0_usize;
@@ -298,7 +322,10 @@ impl QuarantineStore {
                 .file_name()
                 .into_string()
                 .map_err(|_| anyhow!("quarantine recovery entry name is not Unicode"))?;
-            if let Some(id) = name.strip_suffix(".pending.auth") {
+            if let Some(id) = name.strip_suffix(".update.pending") {
+                validate_quarantine_id(id)?;
+                metadata_updates.push((id.to_string(), entry.path()));
+            } else if let Some(id) = name.strip_suffix(".pending.auth") {
                 validate_quarantine_id(id)?;
                 journal_auth.push((id.to_string(), entry.path()));
             } else if let Some(id) = name.strip_suffix(".pending") {
@@ -306,8 +333,20 @@ impl QuarantineStore {
                 journals.push((id.to_string(), entry.path()));
             }
         }
+        metadata_updates.sort_by(|left, right| left.0.cmp(&right.0));
         journals.sort_by(|left, right| left.0.cmp(&right.0));
         journal_auth.sort_by(|left, right| left.0.cmp(&right.0));
+
+        for (id, path) in &metadata_updates {
+            if journals.iter().any(|(journal_id, _)| journal_id == id)
+                || journal_auth.iter().any(|(journal_id, _)| journal_id == id)
+            {
+                return Err(anyhow!(
+                    "quarantine item {id} has conflicting metadata-update and finalization recovery journals"
+                ));
+            }
+            self.recover_metadata_update_journal(id, path)?;
+        }
 
         for (id, auth_path) in journal_auth {
             let journal_path = self.finalization_journal_path(&id)?;
@@ -321,6 +360,210 @@ impl QuarantineStore {
             self.recover_finalization_journal(&id, &path)?;
         }
         Ok(())
+    }
+
+    fn recover_metadata_update_journal(&self, id: &str, path: &Path) -> Result<()> {
+        let expected_path = self.metadata_update_journal_path(id)?;
+        if path != expected_path {
+            return Err(anyhow!(
+                "quarantine metadata-update journal path does not match id {id}"
+            ));
+        }
+        let (journal_lock, raw) = read_locked_bounded_quarantine_text(
+            path,
+            MAX_QUARANTINE_METADATA_UPDATE_JOURNAL_BYTES,
+            "quarantine metadata-update journal",
+        )
+        .with_context(|| {
+            format!(
+                "quarantine metadata-update journal {} is active or unavailable; recovery evidence was preserved",
+                path.display()
+            )
+        })?;
+        let body = self.validated_metadata_update_journal(path, &raw)?;
+        let metadata_path = self.base.join(format!("{id}.json"));
+        let metadata_auth_path = self.base.join(format!("{id}.json.auth"));
+        if !optional_quarantine_file_present(
+            &metadata_path,
+            "quarantine metadata record during update recovery",
+        )? || !optional_quarantine_file_present(
+            &metadata_auth_path,
+            "quarantine metadata auth sidecar during update recovery",
+        )? {
+            return Err(anyhow!(
+                "quarantine metadata-update recovery requires both record and authentication sidecar for {id}; recovery evidence was preserved"
+            ));
+        }
+
+        let current_record_raw = read_bounded_quarantine_text(
+            &metadata_path,
+            MAX_QUARANTINE_METADATA_BYTES,
+            "quarantine metadata record during update recovery",
+        )?;
+        let current_record_auth = read_bounded_quarantine_text(
+            &metadata_auth_path,
+            MAX_QUARANTINE_METADATA_AUTH_BYTES,
+            "quarantine metadata auth sidecar during update recovery",
+        )?;
+        let record_is_previous = current_record_raw == body.previous_record_raw;
+        let record_is_next = current_record_raw == body.next_record_raw;
+        let auth_is_previous = constant_time_eq(
+            current_record_auth.as_bytes(),
+            body.previous_record_auth.as_bytes(),
+        );
+        let auth_is_next = constant_time_eq(
+            current_record_auth.as_bytes(),
+            body.next_record_auth.as_bytes(),
+        );
+        if !record_is_previous && !record_is_next {
+            return Err(anyhow!(
+                "quarantine metadata-update recovery found record bytes that match neither authenticated journal version for {id}; recovery evidence was preserved"
+            ));
+        }
+        if !auth_is_previous && !auth_is_next {
+            return Err(anyhow!(
+                "quarantine metadata-update recovery found authentication bytes that match neither authenticated journal version for {id}; recovery evidence was preserved"
+            ));
+        }
+
+        if !record_is_previous {
+            replace_staged_quarantine_file(
+                &metadata_path,
+                body.previous_record_raw.as_bytes(),
+                "quarantine metadata record during update rollback",
+            )?;
+        }
+        if !auth_is_previous {
+            replace_staged_quarantine_file(
+                &metadata_auth_path,
+                body.previous_record_auth.as_bytes(),
+                "quarantine metadata auth sidecar during update rollback",
+            )?;
+        }
+        let previous_record: QuarantineRecord = serde_json::from_str(&body.previous_record_raw)
+            .with_context(|| {
+                "unable to parse authenticated previous quarantine metadata during update recovery"
+            })?;
+        self.ensure_metadata_pair_exact(
+            &previous_record,
+            &body.previous_record_raw,
+            &body.previous_record_auth,
+            "rolled-back quarantine metadata pair",
+        )?;
+        self.cleanup_metadata_update_journal(id)
+            .with_context(|| {
+                format!(
+                    "rolled back quarantine metadata update for {id}, but could not remove its authenticated recovery journal"
+                )
+            })?;
+        drop(journal_lock);
+        Ok(())
+    }
+
+    fn validated_metadata_update_journal(
+        &self,
+        path: &Path,
+        raw: &str,
+    ) -> Result<QuarantineMetadataUpdateJournalBody> {
+        let journal: QuarantineMetadataUpdateJournal = serde_json::from_str(raw)
+            .context("unable to parse quarantine metadata-update journal")?;
+        if journal.body.format != QUARANTINE_METADATA_UPDATE_JOURNAL_FORMAT {
+            return Err(anyhow!(
+                "unsupported quarantine metadata-update journal format"
+            ));
+        }
+        validate_quarantine_id(&journal.body.quarantine_id)?;
+        if self.metadata_update_journal_path(&journal.body.quarantine_id)? != path {
+            return Err(anyhow!(
+                "quarantine metadata-update journal id does not match its filename"
+            ));
+        }
+        let Some(key) = self.metadata_auth_key(false)? else {
+            return Err(anyhow!(
+                "quarantine metadata-update journal authentication key unavailable"
+            ));
+        };
+        let expected_journal_auth = hmac_metadata_update_journal_auth_tag(&key, &journal.body)?;
+        if !constant_time_eq(
+            expected_journal_auth.as_bytes(),
+            journal.authentication.as_bytes(),
+        ) {
+            return Err(anyhow!(
+                "quarantine metadata-update journal authentication failed for {}",
+                path.display()
+            ));
+        }
+
+        let previous_record = self.validate_metadata_update_record_version(
+            &journal.body.quarantine_id,
+            &journal.body.previous_record_raw,
+            &journal.body.previous_record_auth,
+            &key,
+            "previous",
+        )?;
+        let next_record = self.validate_metadata_update_record_version(
+            &journal.body.quarantine_id,
+            &journal.body.next_record_raw,
+            &journal.body.next_record_auth,
+            &key,
+            "next",
+        )?;
+        validate_metadata_update_transition(&previous_record, &next_record)?;
+        if previous_record == next_record
+            || journal.body.previous_record_raw == journal.body.next_record_raw
+            || constant_time_eq(
+                journal.body.previous_record_auth.as_bytes(),
+                journal.body.next_record_auth.as_bytes(),
+            )
+        {
+            return Err(anyhow!(
+                "quarantine metadata-update journal does not describe a changed authenticated record"
+            ));
+        }
+        Ok(journal.body)
+    }
+
+    fn validate_metadata_update_record_version(
+        &self,
+        id: &str,
+        raw: &str,
+        auth: &str,
+        key: &str,
+        version: &str,
+    ) -> Result<QuarantineRecord> {
+        if raw.len() as u64 > MAX_QUARANTINE_METADATA_BYTES {
+            return Err(anyhow!(
+                "{version} quarantine metadata-update record exceeds maximum size"
+            ));
+        }
+        if auth.len() as u64 > MAX_QUARANTINE_METADATA_AUTH_BYTES {
+            return Err(anyhow!(
+                "{version} quarantine metadata-update authentication exceeds maximum size"
+            ));
+        }
+        let record: QuarantineRecord = serde_json::from_str(raw).with_context(|| {
+            format!("unable to parse {version} quarantine metadata-update record")
+        })?;
+        validate_quarantine_record_for_write(&record)?;
+        if record.quarantine_id != id {
+            return Err(anyhow!(
+                "{version} quarantine metadata-update record id does not match journal id"
+            ));
+        }
+        self.ensure_record_path_matches_id(&self.base.join(format!("{id}.json")), id)?;
+        let expected_payload = self.base.join(format!("{id}.{QUARANTINE_EXTENSION}"));
+        if validate_quarantine_payload_path_text(&record.quarantine_path)? != expected_payload {
+            return Err(anyhow!(
+                "{version} quarantine metadata-update payload path does not match journal id"
+            ));
+        }
+        let expected_auth = format!("{}\n", hmac_record_auth_tag(key, raw)?);
+        if !constant_time_eq(expected_auth.as_bytes(), auth.as_bytes()) {
+            return Err(anyhow!(
+                "{version} quarantine metadata-update authentication does not match its record"
+            ));
+        }
+        Ok(record)
     }
 
     fn recover_orphan_finalization_journal_auth(&self, id: &str, auth_path: &Path) -> Result<()> {
@@ -620,6 +863,16 @@ impl QuarantineStore {
     fn finalization_journal_auth_path(&self, id: &str) -> Result<PathBuf> {
         validate_quarantine_id(id)?;
         Ok(self.base.join(format!("{id}.pending.auth")))
+    }
+
+    fn metadata_update_journal_path(&self, id: &str) -> Result<PathBuf> {
+        validate_quarantine_id(id)?;
+        Ok(self.base.join(format!("{id}.update.pending")))
+    }
+
+    fn cleanup_metadata_update_journal(&self, id: &str) -> Result<()> {
+        let path = self.metadata_update_journal_path(id)?;
+        cleanup_quarantine_partial_file(&path, "quarantine metadata-update journal")
     }
 
     pub fn list(&self) -> Result<Vec<QuarantineRecord>> {
@@ -941,10 +1194,206 @@ impl QuarantineStore {
     fn replace_record(&self, record: &QuarantineRecord) -> Result<()> {
         validate_quarantine_record_for_write(record)?;
         let path = self.base.join(format!("{}.json", record.quarantine_id));
+        let auth_path = self
+            .base
+            .join(format!("{}.json.auth", record.quarantine_id));
         self.ensure_base_directory()?;
-        let raw = serde_json::to_string_pretty(record)?;
-        replace_staged_quarantine_file(&path, raw.as_bytes(), "quarantine metadata record")?;
-        self.replace_record_auth(record, &raw)?;
+        let (previous_record, previous_raw, previous_auth) =
+            self.read_current_metadata_pair(&record.quarantine_id)?;
+        validate_metadata_update_transition(&previous_record, record)?;
+        let next_raw = serde_json::to_string_pretty(record)?;
+        if next_raw == previous_raw {
+            return Err(anyhow!(
+                "quarantine metadata update does not change the authenticated record"
+            ));
+        }
+        let Some(key) = self.metadata_auth_key(false)? else {
+            return Err(anyhow!(
+                "quarantine metadata authentication key unavailable"
+            ));
+        };
+        let next_auth = format!("{}\n", hmac_record_auth_tag(&key, &next_raw)?);
+        let body = QuarantineMetadataUpdateJournalBody {
+            format: QUARANTINE_METADATA_UPDATE_JOURNAL_FORMAT.to_string(),
+            quarantine_id: record.quarantine_id.clone(),
+            previous_record_raw: previous_raw.clone(),
+            previous_record_auth: previous_auth.clone(),
+            next_record_raw: next_raw.clone(),
+            next_record_auth: next_auth.clone(),
+        };
+        let journal_path = self.metadata_update_journal_path(&record.quarantine_id)?;
+        let journal_lock = self.write_metadata_update_journal(body)?;
+        let activation_result = (|| -> Result<()> {
+            self.ensure_metadata_pair_exact(
+                &previous_record,
+                &previous_raw,
+                &previous_auth,
+                "quarantine metadata pair immediately before update",
+            )?;
+            replace_staged_quarantine_file(
+                &path,
+                next_raw.as_bytes(),
+                "quarantine metadata record",
+            )?;
+            let record_after_replace = read_bounded_quarantine_text(
+                &path,
+                MAX_QUARANTINE_METADATA_BYTES,
+                "quarantine metadata record before auth replacement",
+            )?;
+            let auth_before_replace = read_bounded_quarantine_text(
+                &auth_path,
+                MAX_QUARANTINE_METADATA_AUTH_BYTES,
+                "quarantine metadata auth sidecar before replacement",
+            )?;
+            if record_after_replace != next_raw
+                || !constant_time_eq(auth_before_replace.as_bytes(), previous_auth.as_bytes())
+            {
+                return Err(anyhow!(
+                    "quarantine metadata pair changed unexpectedly between record and auth replacement"
+                ));
+            }
+            replace_staged_quarantine_file(
+                &auth_path,
+                next_auth.as_bytes(),
+                "quarantine metadata auth sidecar",
+            )?;
+            self.ensure_metadata_pair_exact(
+                record,
+                &next_raw,
+                &next_auth,
+                "proposed quarantine metadata pair after update",
+            )
+        })();
+        if let Err(update_error) = activation_result {
+            drop(journal_lock);
+            return match self.recover_metadata_update_journal(
+                &record.quarantine_id,
+                &journal_path,
+            ) {
+                Ok(()) => Err(update_error)
+                    .context("quarantine metadata update failed; previous authenticated pair was restored"),
+                Err(rollback_error) => Err(rollback_error).with_context(|| {
+                    format!(
+                        "quarantine metadata update failed and authenticated rollback also failed; journal was preserved: {update_error:#}"
+                    )
+                }),
+            };
+        }
+
+        if let Err(cleanup_error) = self.cleanup_metadata_update_journal(&record.quarantine_id) {
+            drop(journal_lock);
+            return match self.recover_metadata_update_journal(
+                &record.quarantine_id,
+                &journal_path,
+            ) {
+                Ok(()) => Err(cleanup_error).context(
+                    "quarantine metadata update journal cleanup failed; previous authenticated pair was restored",
+                ),
+                Err(rollback_error) => Err(rollback_error).with_context(|| {
+                    format!(
+                        "quarantine metadata update journal cleanup failed and authenticated rollback also failed; journal was preserved: {cleanup_error:#}"
+                    )
+                }),
+            };
+        }
+        drop(journal_lock);
+        Ok(())
+    }
+
+    fn read_current_metadata_pair(&self, id: &str) -> Result<(QuarantineRecord, String, String)> {
+        validate_quarantine_id(id)?;
+        let path = self.base.join(format!("{id}.json"));
+        let auth_path = self.base.join(format!("{id}.json.auth"));
+        let raw = read_bounded_quarantine_text(
+            &path,
+            MAX_QUARANTINE_METADATA_BYTES,
+            "current quarantine metadata record",
+        )?;
+        let auth = read_bounded_quarantine_text(
+            &auth_path,
+            MAX_QUARANTINE_METADATA_AUTH_BYTES,
+            "current quarantine metadata auth sidecar",
+        )?;
+        let Some(key) = self.metadata_auth_key(false)? else {
+            return Err(anyhow!(
+                "quarantine metadata authentication key unavailable"
+            ));
+        };
+        let record =
+            self.validate_metadata_update_record_version(id, &raw, &auth, &key, "current")?;
+        Ok((record, raw, auth))
+    }
+
+    fn write_metadata_update_journal(
+        &self,
+        body: QuarantineMetadataUpdateJournalBody,
+    ) -> Result<fs::File> {
+        let path = self.metadata_update_journal_path(&body.quarantine_id)?;
+        let Some(key) = self.metadata_auth_key(false)? else {
+            return Err(anyhow!(
+                "quarantine metadata-update journal authentication key unavailable"
+            ));
+        };
+        let journal = QuarantineMetadataUpdateJournal {
+            authentication: hmac_metadata_update_journal_auth_tag(&key, &body)?,
+            body,
+        };
+        let raw = serde_json::to_string_pretty(&journal)?;
+        if raw.len() as u64 > MAX_QUARANTINE_METADATA_UPDATE_JOURNAL_BYTES {
+            return Err(anyhow!(
+                "quarantine metadata-update journal exceeds maximum size"
+            ));
+        }
+        write_staged_quarantine_file(&path, raw.as_bytes(), "quarantine metadata-update journal")?;
+        let (journal_lock, persisted) = read_locked_bounded_quarantine_text(
+            &path,
+            MAX_QUARANTINE_METADATA_UPDATE_JOURNAL_BYTES,
+            "quarantine metadata-update journal",
+        )?;
+        if persisted != raw {
+            drop(journal_lock);
+            return Err(anyhow!(
+                "quarantine metadata-update journal changed after write; recovery evidence was preserved"
+            ));
+        }
+        if let Err(error) = self.validated_metadata_update_journal(&path, &persisted) {
+            drop(journal_lock);
+            return Err(error).context(
+                "quarantine metadata-update journal failed post-write validation; recovery evidence was preserved",
+            );
+        }
+        Ok(journal_lock)
+    }
+
+    fn ensure_metadata_pair_exact(
+        &self,
+        expected_record: &QuarantineRecord,
+        expected_raw: &str,
+        expected_auth: &str,
+        label: &str,
+    ) -> Result<()> {
+        let path = self
+            .base
+            .join(format!("{}.json", expected_record.quarantine_id));
+        let auth_path = self
+            .base
+            .join(format!("{}.json.auth", expected_record.quarantine_id));
+        let raw = read_bounded_quarantine_text(&path, MAX_QUARANTINE_METADATA_BYTES, label)?;
+        let auth =
+            read_bounded_quarantine_text(&auth_path, MAX_QUARANTINE_METADATA_AUTH_BYTES, label)?;
+        if raw != expected_raw || !constant_time_eq(auth.as_bytes(), expected_auth.as_bytes()) {
+            return Err(anyhow!("{label} does not match its expected bytes"));
+        }
+        if self.verified_record_auth_scheme(&path, &raw)?
+            != QuarantineMetadataAuthScheme::HmacSha256V2
+        {
+            return Err(anyhow!("{label} is not authenticated with current HMAC"));
+        }
+        let reparsed: QuarantineRecord =
+            serde_json::from_str(&raw).with_context(|| format!("unable to parse {label}"))?;
+        if reparsed != *expected_record {
+            return Err(anyhow!("{label} record does not match expected metadata"));
+        }
         Ok(())
     }
 
@@ -1267,6 +1716,30 @@ fn constant_time_eq(left: &[u8], right: &[u8]) -> bool {
         == 0
 }
 
+fn validate_metadata_update_transition(
+    previous: &QuarantineRecord,
+    next: &QuarantineRecord,
+) -> Result<()> {
+    if previous.quarantine_id != next.quarantine_id
+        || previous.original_path != next.original_path
+        || previous.quarantine_path != next.quarantine_path
+        || previous.sha256 != next.sha256
+        || previous.file_size != next.file_size
+        || previous.detection_name != next.detection_name
+        || previous.engine != next.engine
+        || previous.quarantined_at != next.quarantined_at
+        || previous.source != next.source
+        || previous.blocked_before_execution != next.blocked_before_execution
+        || previous.process_started != next.process_started
+        || previous.process_id != next.process_id
+    {
+        return Err(anyhow!(
+            "quarantine metadata update attempted to change immutable threat evidence"
+        ));
+    }
+    Ok(())
+}
+
 fn hmac_record_auth_tag(key: &str, raw: &str) -> Result<String> {
     let mut mac = Hmac::<Sha256>::new_from_slice(key.as_bytes())
         .map_err(|_| anyhow!("invalid quarantine metadata authentication key"))?;
@@ -1281,6 +1754,18 @@ fn hmac_finalization_journal_auth_tag(key: &str, raw: &str) -> Result<String> {
         .map_err(|_| anyhow!("invalid quarantine finalization journal authentication key"))?;
     mac.update(QUARANTINE_FINALIZATION_JOURNAL_AUTH_DOMAIN);
     mac.update(raw.as_bytes());
+    let tag = mac.finalize().into_bytes();
+    Ok(format!("{QUARANTINE_AUTH_HMAC_PREFIX}{}", hex_encode(&tag)))
+}
+
+fn hmac_metadata_update_journal_auth_tag(
+    key: &str,
+    body: &QuarantineMetadataUpdateJournalBody,
+) -> Result<String> {
+    let mut mac = Hmac::<Sha256>::new_from_slice(key.as_bytes())
+        .map_err(|_| anyhow!("invalid quarantine metadata-update journal authentication key"))?;
+    mac.update(QUARANTINE_METADATA_UPDATE_JOURNAL_AUTH_DOMAIN);
+    mac.update(&serde_json::to_vec(body)?);
     let tag = mac.finalize().into_bytes();
     Ok(format!("{QUARANTINE_AUTH_HMAC_PREFIX}{}", hex_encode(&tag)))
 }
@@ -5127,6 +5612,421 @@ mod tests {
     }
 
     #[test]
+    fn quarantine_metadata_update_recovery_rolls_back_all_known_pair_states() {
+        for state in [
+            "previous-previous",
+            "next-previous",
+            "previous-next",
+            "next-next",
+        ] {
+            let dir = tempdir_in(std::env::current_dir().unwrap()).unwrap();
+            let base = dir.path().join("q");
+            let fixture = stage_metadata_update_fixture(&base, dir.path(), "record");
+            if state == "next-previous" || state == "next-next" {
+                fs::write(&fixture.record_path, &fixture.next_raw).unwrap();
+            }
+            if state == "previous-next" || state == "next-next" {
+                fs::write(&fixture.auth_path, &fixture.next_auth).unwrap();
+            }
+
+            let records = fixture.store.list().unwrap();
+
+            assert_eq!(records, vec![fixture.previous_record.clone()], "{state}");
+            assert_eq!(
+                fs::read_to_string(&fixture.record_path).unwrap(),
+                fixture.previous_raw,
+                "{state}"
+            );
+            assert_eq!(
+                fs::read_to_string(&fixture.auth_path).unwrap(),
+                fixture.previous_auth,
+                "{state}"
+            );
+            assert!(!fixture.journal_path.exists(), "{state}");
+        }
+    }
+
+    #[test]
+    fn quarantine_metadata_update_recovery_rejects_tampered_journal() {
+        let dir = tempdir_in(std::env::current_dir().unwrap()).unwrap();
+        let base = dir.path().join("q");
+        let fixture = stage_metadata_update_fixture(&base, dir.path(), "record");
+        let raw = fs::read_to_string(&fixture.journal_path).unwrap();
+        let mut journal: QuarantineMetadataUpdateJournal = serde_json::from_str(&raw).unwrap();
+        journal.authentication = format!("{QUARANTINE_AUTH_HMAC_PREFIX}{}", "0".repeat(64));
+        fs::write(
+            &fixture.journal_path,
+            serde_json::to_string_pretty(&journal).unwrap(),
+        )
+        .unwrap();
+
+        let error = fixture.store.list().unwrap_err();
+        let detail = format!("{error:#}");
+
+        assert!(
+            detail.contains("metadata-update journal authentication failed"),
+            "{detail}"
+        );
+        assert!(fixture.journal_path.exists());
+        assert_eq!(
+            fs::read_to_string(&fixture.record_path).unwrap(),
+            fixture.previous_raw
+        );
+        assert_eq!(
+            fs::read_to_string(&fixture.auth_path).unwrap(),
+            fixture.previous_auth
+        );
+    }
+
+    #[test]
+    fn quarantine_metadata_update_recovery_rejects_malformed_journal() {
+        let dir = tempdir_in(std::env::current_dir().unwrap()).unwrap();
+        let base = dir.path().join("q");
+        let fixture = stage_metadata_update_fixture(&base, dir.path(), "record");
+        fs::write(&fixture.journal_path, b"{not-valid-json").unwrap();
+
+        let error = fixture.store.list().unwrap_err();
+        let detail = format!("{error:#}");
+
+        assert!(
+            detail.contains("unable to parse quarantine metadata-update journal"),
+            "{detail}"
+        );
+        assert!(fixture.journal_path.exists());
+        assert_eq!(
+            fs::read_to_string(&fixture.record_path).unwrap(),
+            fixture.previous_raw
+        );
+        assert_eq!(
+            fs::read_to_string(&fixture.auth_path).unwrap(),
+            fixture.previous_auth
+        );
+    }
+
+    #[test]
+    fn quarantine_metadata_update_recovery_rejects_semantically_unchanged_record() {
+        let dir = tempdir_in(std::env::current_dir().unwrap()).unwrap();
+        let base = dir.path().join("q");
+        let fixture = stage_metadata_update_fixture(&base, dir.path(), "record");
+        let raw = fs::read_to_string(&fixture.journal_path).unwrap();
+        let mut journal: QuarantineMetadataUpdateJournal = serde_json::from_str(&raw).unwrap();
+        let key = fixture.store.metadata_auth_key(false).unwrap().unwrap();
+        journal.body.next_record_raw = serde_json::to_string(&fixture.previous_record).unwrap();
+        journal.body.next_record_auth = format!(
+            "{}\n",
+            hmac_record_auth_tag(&key, &journal.body.next_record_raw).unwrap()
+        );
+        journal.authentication =
+            hmac_metadata_update_journal_auth_tag(&key, &journal.body).unwrap();
+        fs::write(
+            &fixture.journal_path,
+            serde_json::to_string_pretty(&journal).unwrap(),
+        )
+        .unwrap();
+
+        let error = fixture.store.list().unwrap_err();
+        let detail = format!("{error:#}");
+
+        assert!(
+            detail.contains("does not describe a changed authenticated record"),
+            "{detail}"
+        );
+        assert!(fixture.journal_path.exists());
+        assert_eq!(
+            fs::read_to_string(&fixture.record_path).unwrap(),
+            fixture.previous_raw
+        );
+        assert_eq!(
+            fs::read_to_string(&fixture.auth_path).unwrap(),
+            fixture.previous_auth
+        );
+    }
+
+    #[test]
+    fn quarantine_metadata_update_recovery_writer_preserves_invalid_journal() {
+        let dir = tempdir_in(std::env::current_dir().unwrap()).unwrap();
+        let base = dir.path().join("q");
+        fs::create_dir_all(&base).unwrap();
+        let payload = base.join("record.avoraxq");
+        fs::write(&payload, b"quarantined").unwrap();
+        let store = QuarantineStore::with_base(base.clone());
+        let record = fixture_record("record", dir.path().join("restore.exe"), payload);
+        store.write_record(&record).unwrap();
+        let previous_raw = fs::read_to_string(base.join("record.json")).unwrap();
+        let previous_auth = fs::read_to_string(base.join("record.json.auth")).unwrap();
+        let next_raw = serde_json::to_string(&record).unwrap();
+        let key = store.metadata_auth_key(false).unwrap().unwrap();
+        let next_auth = format!("{}\n", hmac_record_auth_tag(&key, &next_raw).unwrap());
+
+        let error = store
+            .write_metadata_update_journal(QuarantineMetadataUpdateJournalBody {
+                format: QUARANTINE_METADATA_UPDATE_JOURNAL_FORMAT.to_string(),
+                quarantine_id: record.quarantine_id.clone(),
+                previous_record_raw: previous_raw,
+                previous_record_auth: previous_auth,
+                next_record_raw: next_raw,
+                next_record_auth: next_auth,
+            })
+            .unwrap_err();
+        let detail = format!("{error:#}");
+        let journal_path = base.join("record.update.pending");
+
+        assert!(
+            detail.contains("does not describe a changed authenticated record"),
+            "{detail}"
+        );
+        assert!(
+            detail.contains("recovery evidence was preserved"),
+            "{detail}"
+        );
+        assert!(journal_path.exists());
+
+        let recovery_error = store.list().unwrap_err();
+        assert!(format!("{recovery_error:#}")
+            .contains("does not describe a changed authenticated record"));
+        assert!(journal_path.exists());
+    }
+
+    #[test]
+    fn quarantine_metadata_update_recovery_rejects_conflicting_finalization_journal() {
+        let dir = tempdir_in(std::env::current_dir().unwrap()).unwrap();
+        let base = dir.path().join("q");
+        let fixture = stage_metadata_update_fixture(&base, dir.path(), "record");
+        let finalization_lock = fixture
+            .store
+            .write_finalization_journal(&fixture.previous_record)
+            .unwrap();
+        drop(finalization_lock);
+
+        let error = fixture.store.list().unwrap_err();
+        let detail = format!("{error:#}");
+
+        assert!(
+            detail.contains("conflicting metadata-update and finalization recovery journals"),
+            "{detail}"
+        );
+        assert!(fixture.journal_path.exists());
+        assert!(base.join("record.pending").exists());
+        assert!(base.join("record.pending.auth").exists());
+        assert_eq!(
+            fs::read_to_string(&fixture.record_path).unwrap(),
+            fixture.previous_raw
+        );
+        assert_eq!(
+            fs::read_to_string(&fixture.auth_path).unwrap(),
+            fixture.previous_auth
+        );
+    }
+
+    #[test]
+    fn quarantine_metadata_update_recovery_rejects_unknown_record_bytes() {
+        let dir = tempdir_in(std::env::current_dir().unwrap()).unwrap();
+        let base = dir.path().join("q");
+        let fixture = stage_metadata_update_fixture(&base, dir.path(), "record");
+        fs::write(&fixture.record_path, b"{\"benign\":\"unknown-record\"}").unwrap();
+
+        let error = fixture.store.list().unwrap_err();
+        let detail = format!("{error:#}");
+
+        assert!(
+            detail.contains("match neither authenticated journal version"),
+            "{detail}"
+        );
+        assert!(fixture.journal_path.exists());
+        assert_eq!(
+            fs::read_to_string(&fixture.record_path).unwrap(),
+            "{\"benign\":\"unknown-record\"}"
+        );
+        assert_eq!(
+            fs::read_to_string(&fixture.auth_path).unwrap(),
+            fixture.previous_auth
+        );
+    }
+
+    #[test]
+    fn quarantine_metadata_update_recovery_rejects_unknown_auth_bytes() {
+        let dir = tempdir_in(std::env::current_dir().unwrap()).unwrap();
+        let base = dir.path().join("q");
+        let fixture = stage_metadata_update_fixture(&base, dir.path(), "record");
+        fs::write(
+            &fixture.auth_path,
+            format!("{QUARANTINE_AUTH_HMAC_PREFIX}{}\n", "1".repeat(64)),
+        )
+        .unwrap();
+
+        let error = fixture.store.list().unwrap_err();
+        let detail = format!("{error:#}");
+
+        assert!(
+            detail.contains("match neither authenticated journal version"),
+            "{detail}"
+        );
+        assert!(fixture.journal_path.exists());
+        assert_eq!(
+            fs::read_to_string(&fixture.record_path).unwrap(),
+            fixture.previous_raw
+        );
+        assert!(fs::read_to_string(&fixture.auth_path)
+            .unwrap()
+            .contains(&"1".repeat(64)));
+    }
+
+    #[test]
+    fn quarantine_metadata_update_recovery_rejects_missing_pair_member() {
+        let dir = tempdir_in(std::env::current_dir().unwrap()).unwrap();
+        let base = dir.path().join("q");
+        let fixture = stage_metadata_update_fixture(&base, dir.path(), "record");
+        fs::remove_file(&fixture.auth_path).unwrap();
+
+        let error = fixture.store.list().unwrap_err();
+        let detail = format!("{error:#}");
+
+        assert!(
+            detail.contains("requires both record and authentication sidecar"),
+            "{detail}"
+        );
+        assert!(fixture.journal_path.exists());
+        assert_eq!(
+            fs::read_to_string(&fixture.record_path).unwrap(),
+            fixture.previous_raw
+        );
+        assert!(!fixture.auth_path.exists());
+    }
+
+    #[test]
+    fn quarantine_metadata_update_recovery_rejects_oversized_journal() {
+        let dir = tempdir_in(std::env::current_dir().unwrap()).unwrap();
+        let base = dir.path().join("q");
+        let fixture = stage_metadata_update_fixture(&base, dir.path(), "record");
+        fs::write(
+            &fixture.journal_path,
+            vec![b'x'; MAX_QUARANTINE_METADATA_UPDATE_JOURNAL_BYTES as usize + 1],
+        )
+        .unwrap();
+
+        let error = fixture.store.list().unwrap_err();
+        let detail = format!("{error:#}");
+
+        assert!(detail.contains("metadata-update journal"), "{detail}");
+        assert!(detail.contains("exceeds maximum size"), "{detail}");
+        assert!(fixture.journal_path.exists());
+        assert_eq!(
+            fs::read_to_string(&fixture.record_path).unwrap(),
+            fixture.previous_raw
+        );
+        assert_eq!(
+            fs::read_to_string(&fixture.auth_path).unwrap(),
+            fixture.previous_auth
+        );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn quarantine_metadata_update_recovery_rejects_linked_journal() {
+        use std::os::unix::fs::symlink;
+
+        let dir = tempdir_in(std::env::current_dir().unwrap()).unwrap();
+        let base = dir.path().join("q");
+        let fixture = stage_metadata_update_fixture(&base, dir.path(), "record");
+        let external = dir.path().join("external-benign-journal.json");
+        fs::write(&external, b"benign external journal fixture").unwrap();
+        fs::remove_file(&fixture.journal_path).unwrap();
+        symlink(&external, &fixture.journal_path).unwrap();
+
+        let error = fixture.store.list().unwrap_err();
+        let detail = format!("{error:#}");
+
+        assert!(detail.contains("not a non-link regular file"), "{detail}");
+        assert_eq!(
+            fs::read(&external).unwrap(),
+            b"benign external journal fixture"
+        );
+        assert!(fs::symlink_metadata(&fixture.journal_path)
+            .unwrap()
+            .file_type()
+            .is_symlink());
+        assert_eq!(
+            fs::read_to_string(&fixture.record_path).unwrap(),
+            fixture.previous_raw
+        );
+        assert_eq!(
+            fs::read_to_string(&fixture.auth_path).unwrap(),
+            fixture.previous_auth
+        );
+    }
+
+    #[test]
+    fn quarantine_metadata_update_recovery_active_lock_blocks_concurrent_list() {
+        let dir = tempdir_in(std::env::current_dir().unwrap()).unwrap();
+        let base = dir.path().join("q");
+        let fixture = stage_metadata_update_fixture_with_lock(&base, dir.path(), "record");
+
+        let error = fixture.fixture.store.list().unwrap_err();
+        let detail = format!("{error:#}");
+
+        assert!(detail.contains("active or unavailable"), "{detail}");
+        assert!(fixture.fixture.journal_path.exists());
+        drop(fixture.journal_lock);
+        assert_eq!(fixture.fixture.store.list().unwrap().len(), 1);
+        assert!(!fixture.fixture.journal_path.exists());
+    }
+
+    #[test]
+    fn quarantine_metadata_update_recovery_existing_journal_blocks_second_update() {
+        let dir = tempdir_in(std::env::current_dir().unwrap()).unwrap();
+        let base = dir.path().join("q");
+        let fixture = stage_metadata_update_fixture(&base, dir.path(), "record");
+        let mut competing = fixture.previous_record.clone();
+        competing.user_note = Some("benign competing update fixture".to_string());
+
+        let error = fixture.store.replace_record(&competing).unwrap_err();
+        let detail = format!("{error:#}");
+
+        assert!(detail.contains("metadata-update journal"), "{detail}");
+        assert!(detail.contains("destination already exists"), "{detail}");
+        assert!(fixture.journal_path.exists());
+        assert_eq!(
+            fs::read_to_string(&fixture.record_path).unwrap(),
+            fixture.previous_raw
+        );
+        assert_eq!(
+            fs::read_to_string(&fixture.auth_path).unwrap(),
+            fixture.previous_auth
+        );
+    }
+
+    #[test]
+    fn quarantine_metadata_update_recovery_rejects_immutable_evidence_change() {
+        let dir = tempdir_in(std::env::current_dir().unwrap()).unwrap();
+        let base = dir.path().join("q");
+        let payload = base.join("record.avoraxq");
+        fs::create_dir_all(&base).unwrap();
+        fs::write(&payload, b"quarantined").unwrap();
+        let store = QuarantineStore::with_base(base.clone());
+        let record = fixture_record("record", dir.path().join("restore.exe"), payload);
+        store.write_record(&record).unwrap();
+        let previous_raw = fs::read_to_string(base.join("record.json")).unwrap();
+        let previous_auth = fs::read_to_string(base.join("record.json.auth")).unwrap();
+        let mut changed = record;
+        changed.engine = "benign but changed evidence".to_string();
+
+        let error = store.replace_record(&changed).unwrap_err();
+
+        assert!(error
+            .to_string()
+            .contains("attempted to change immutable threat evidence"));
+        assert_eq!(
+            fs::read_to_string(base.join("record.json")).unwrap(),
+            previous_raw
+        );
+        assert_eq!(
+            fs::read_to_string(base.join("record.json.auth")).unwrap(),
+            previous_auth
+        );
+        assert!(!base.join("record.update.pending").exists());
+    }
+
+    #[test]
     fn quarantine_optional_metadata_presence_uses_non_following_helpers() {
         let source = include_str!("quarantine_store.rs");
         let production_source = source.split("#[cfg(test)]").next().unwrap();
@@ -5768,6 +6668,79 @@ mod tests {
             format!("{tag}\n"),
         )
         .unwrap();
+    }
+
+    struct MetadataUpdateFixture {
+        store: QuarantineStore,
+        previous_record: QuarantineRecord,
+        previous_raw: String,
+        previous_auth: String,
+        next_raw: String,
+        next_auth: String,
+        record_path: PathBuf,
+        auth_path: PathBuf,
+        journal_path: PathBuf,
+    }
+
+    struct LockedMetadataUpdateFixture {
+        fixture: MetadataUpdateFixture,
+        journal_lock: fs::File,
+    }
+
+    fn stage_metadata_update_fixture(base: &Path, root: &Path, id: &str) -> MetadataUpdateFixture {
+        let LockedMetadataUpdateFixture {
+            fixture,
+            journal_lock,
+        } = stage_metadata_update_fixture_with_lock(base, root, id);
+        drop(journal_lock);
+        fixture
+    }
+
+    fn stage_metadata_update_fixture_with_lock(
+        base: &Path,
+        root: &Path,
+        id: &str,
+    ) -> LockedMetadataUpdateFixture {
+        fs::create_dir_all(base).unwrap();
+        let payload = base.join(format!("{id}.{QUARANTINE_EXTENSION}"));
+        fs::write(&payload, b"quarantined").unwrap();
+        let store = QuarantineStore::with_base(base.to_path_buf());
+        let previous_record = fixture_record(id, root.join("restore.exe"), payload);
+        store.write_record(&previous_record).unwrap();
+        let record_path = base.join(format!("{id}.json"));
+        let auth_path = base.join(format!("{id}.json.auth"));
+        let journal_path = base.join(format!("{id}.update.pending"));
+        let previous_raw = fs::read_to_string(&record_path).unwrap();
+        let previous_auth = fs::read_to_string(&auth_path).unwrap();
+        let mut next_record = previous_record.clone();
+        next_record.user_note = Some("benign metadata update recovery fixture".to_string());
+        let next_raw = serde_json::to_string_pretty(&next_record).unwrap();
+        let key = store.metadata_auth_key(false).unwrap().unwrap();
+        let next_auth = format!("{}\n", hmac_record_auth_tag(&key, &next_raw).unwrap());
+        let journal_lock = store
+            .write_metadata_update_journal(QuarantineMetadataUpdateJournalBody {
+                format: QUARANTINE_METADATA_UPDATE_JOURNAL_FORMAT.to_string(),
+                quarantine_id: id.to_string(),
+                previous_record_raw: previous_raw.clone(),
+                previous_record_auth: previous_auth.clone(),
+                next_record_raw: next_raw.clone(),
+                next_record_auth: next_auth.clone(),
+            })
+            .unwrap();
+        LockedMetadataUpdateFixture {
+            fixture: MetadataUpdateFixture {
+                store,
+                previous_record,
+                previous_raw,
+                previous_auth,
+                next_raw,
+                next_auth,
+                record_path,
+                auth_path,
+                journal_path,
+            },
+            journal_lock,
+        }
     }
 
     fn fixture_scan_result(path: &Path, status: ScanStatus) -> ScanResult {

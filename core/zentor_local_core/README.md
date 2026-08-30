@@ -139,3 +139,20 @@ claim is made.
 Repaired implementation head `0be467e` passes hosted macOS and Ubuntu runtime,
 all six CI jobs, and both cross-platform package workflows with publication
 skipped. Evidence-head, merge, and synchronized-destination proof remain open.
+
+## Checkpoint 2277 Authenticated Metadata Update Recovery
+
+Existing JSON/HMAC status updates now prepare one strict bounded
+`{id}.update.pending` envelope authenticated under a dedicated HMAC domain. It
+binds exact previous and proposed bytes before mutation. Successful updates
+verify the proposed pair before removing the journal; while the journal exists,
+recovery rolls any exact previous/proposed combination back to the previous
+authenticated pair.
+
+Missing or unknown pair bytes, journal tampering, malformed/oversized content,
+links, conflicts, or active locks fail visibly and preserve evidence. Competing
+updates cannot overwrite the journal and immutable threat evidence cannot be
+changed through this path. Checkpoint 2277 was fully scripted before tests and
+now passes focused, broad, full-workspace, release, and definitive local
+verification. This is rollback recovery rather than two-file atomicity; payload/status
+coordination for restore/delete remains outside this checkpoint.

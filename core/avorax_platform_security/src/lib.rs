@@ -909,6 +909,7 @@ fn is_recognized_quarantine_artifact_name(name: &str) -> bool {
         return is_safe_quarantine_component(token, MAX_QUARANTINE_ID_CHARS);
     }
     for marker in [
+        ".update.pending.tmp-",
         ".pending.auth.tmp-",
         ".pending.tmp-",
         ".json.auth.tmp-",
@@ -920,6 +921,7 @@ fn is_recognized_quarantine_artifact_name(name: &str) -> bool {
         }
     }
     for suffix in [
+        ".update.pending",
         ".pending.auth",
         ".pending",
         ".json.auth.tmp",
@@ -2271,6 +2273,8 @@ mod tests {
             "record.pending.auth",
             "record.pending.tmp-fixture",
             "record.pending.auth.tmp-fixture",
+            "record.update.pending",
+            "record.update.pending.tmp-fixture",
             "record.json",
             "record.json.auth",
             "record.json.tmp-fixture",
@@ -2280,6 +2284,26 @@ mod tests {
         }
 
         validate_quarantine_directory_contents(&directory).unwrap();
+    }
+
+    #[test]
+    fn quarantine_metadata_update_recovery_artifact_names_are_bounded_and_recognized() {
+        for name in [
+            "record.update.pending",
+            "record_2.update.pending",
+            "record.update.pending.tmp-fixture",
+        ] {
+            assert!(is_recognized_quarantine_artifact_name(name), "{name}");
+        }
+        for name in [
+            ".update.pending",
+            "record.update.pending.auth",
+            "record.update.pending.tmp-",
+            "record.with-dot.update.pending",
+            "record/update.pending",
+        ] {
+            assert!(!is_recognized_quarantine_artifact_name(name), "{name}");
+        }
     }
 
     #[test]

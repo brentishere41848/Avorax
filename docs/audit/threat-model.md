@@ -4875,3 +4875,34 @@ runtime routes without weakening linked-ancestor rejection. It remains one
 ephemeral runner filesystem per platform, not installed-service, hostile-
 filesystem, power-loss, administrator/root, kernel, or cross-file transaction
 evidence.
+
+## Checkpoint 2277 Authenticated Metadata Update Rollback
+
+Threat: interruption between Local Core's JSON and HMAC replacements can expose
+a mismatched pair. Blindly choosing either file could accept tampering or claim
+an action that never committed.
+
+Mitigation: before either replacement, atomically create and lock one bounded
+strict journal whose dedicated-domain HMAC binds the exact previous/proposed
+JSON and HMAC bytes. Journal presence means uncommitted. Recovery accepts only
+the four exact version combinations, restores and verifies the previous pair,
+then removes the journal. Unknown, missing, linked, hard-linked, conflicting,
+malformed, oversized, active, semantically invalid, or tampered evidence fails
+closed and remains preserved. Immutable threat evidence cannot change through
+the update path and a competing update cannot overwrite an active journal.
+
+Residual risk: this is rollback semantics, not two-file atomicity. Journal
+unlink durability depends on truthful filesystem/storage behavior. Windows
+ambiguous replacement can preserve `.avorax-replace-backup` and hard-link
+backup reservation requires same-volume support. Restore/delete payload
+movement is separate, so crashes outside metadata replacement can leave
+duplicated restore output or payload/status cleanup needing separate recovery.
+Point-in-time user-mode checks do not defeat administrators, SYSTEM/root,
+hostile filesystems/storage, or kernel compromise.
+
+No checkpoint-2277 test ran during scripting. Post-freeze focused, broad,
+complete locked Rust, release, Flutter/protocol, exact `303/303` verifier, and
+dual-host `62/62` adversarial validation pass locally. Hosted cross-platform and
+destination evidence remains open. No detection-accuracy, pre-execution,
+driver, Defender-replacement, secure-erasure, installed-service, or complete-
+goal claim follows.

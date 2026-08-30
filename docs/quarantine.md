@@ -261,3 +261,21 @@ remain required.
 Hosted repaired-head macOS and Ubuntu runtime evidence now passes at
 `0be467e`. Synchronized-destination verification and the non-transactional
 JSON/HMAC residual limits remain.
+
+## Checkpoint 2277 Metadata Update Recovery
+
+Local Core now records an existing metadata update in one bounded strict
+HMAC-authenticated journal before replacing JSON or its HMAC sidecar. The
+journal binds exact previous/proposed bytes and uses atomic no-replace creation.
+If it remains after interruption, only exact known version combinations are
+accepted and rolled back to the previous authenticated pair. Unknown, missing,
+linked, malformed, oversized, conflicting, active, or tampered evidence blocks
+the list/action and remains for review.
+
+Journal presence means the proposed status is uncommitted. Successful update
+returns only after the proposed pair verifies and journal cleanup succeeds.
+Checkpoint 2277 was scripted before tests and now passes local focused, broad,
+full-workspace, release, and `303/303` definitive verification. It does not make
+JSON plus HMAC one atomic filesystem transaction and does not transactionally
+join metadata to restore/delete payload movement. Hosted cross-platform and
+destination closure remains required.

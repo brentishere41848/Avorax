@@ -1951,8 +1951,8 @@ if ($RequireFullSuite) {
   if ($skipFlutter -or $skipRust) {
     throw "-RequireFullSuite requires skip_flutter=false and skip_rust=false."
   }
-  if ($steps.Count -ne 302) {
-    throw "-RequireFullSuite expected exactly 302 verifier steps for this source revision, found $($steps.Count)."
+  if ($steps.Count -ne 303) {
+    throw "-RequireFullSuite expected exactly 303 verifier steps for this source revision, found $($steps.Count)."
   }
   if ($steps[0].name -ne "local-core safe simulator scan reporting") {
     throw "-RequireFullSuite first step mismatch: $($steps[0].name)"
@@ -1973,6 +1973,7 @@ if ($RequireFullSuite) {
   Assert-ReportContainsStep $steps "quarantine restore atomic no-replace regressions"
   Assert-ReportContainsStep $steps "quarantine ingest atomic no-replace regressions"
   Assert-ReportContainsStep $steps "quarantine metadata atomic activation regressions"
+  Assert-ReportContainsStep $steps "quarantine metadata update recovery regressions"
   Assert-ReportContainsStep $steps "update-service staged file activation atomic replacement regressions"
   Assert-ReportContainsStep $steps "update-service payload extraction atomic no-replace regressions"
   Assert-ReportContainsStep $steps "update-service directory activation atomic no-replace regressions"
@@ -2147,12 +2148,19 @@ if ($RequireFullSuite) {
   Assert-ReportScopeContains $technicalLimitText "Atomic quarantine ingestion protects only the final destination-name operation on supported Windows, Linux, and Apple primitives" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "cross-filesystem or unsupported atomic rename safely degrades to exclusive verified copy" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "Native direct quarantine remains disabled compatibility code rather than active mutation ownership" "verification_scope.technically_limited"
-  Assert-ReportScopeContains $technicalLimitText "Quarantine metadata atomic activation protects only one final destination-name operation at a time" "verification_scope.technically_limited"
-  Assert-ReportScopeContains $technicalLimitText "The record and authentication sidecar remain separate non-transactional files" "verification_scope.technically_limited"
-  Assert-ReportScopeContains $technicalLimitText "a failure between their replacements can leave a mismatched pair that fails authenticated reads and may require manual recovery" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $verifiedScopeText "one bounded, strict, domain-separated HMAC-authenticated metadata-update journal" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Journal presence means the proposed update is not committed" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Recovery accepts only the four exact previous/proposed pair combinations" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "missing pair members plus malformed, oversized, linked, conflicting, unknown, or tampered evidence fail visibly and remain preserved" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Successful updates verify the proposed authenticated pair before journal cleanup" "verification_scope.verified"
+  Assert-ReportScopeContains $technicalLimitText "Quarantine JSON and HMAC remain separate files" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "bounded rollback semantics, not a two-file atomic transaction" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "unknown or missing state requires manual review" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "Restore/delete payload movement is a separate operation and is not made transactional" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "A crash after journal removal but before its directory entry is durably persisted depends on truthful local filesystem and storage behavior" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "Windows may preserve an adjacent .avorax-replace-backup after an ambiguous replacement failure" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "backup reservation requires same-volume hard-link support" "verification_scope.technically_limited"
-  Assert-ReportScopeContains $technicalLimitText "Path and ancestor checks remain point-in-time user-mode checks" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "Journal, path, ancestor, and opened-identity checks remain point-in-time user-mode evidence" "verification_scope.technically_limited"
   Assert-ReportScopeContains $verifiedScopeText "Signed update-package payload extraction uses the shared operating-system atomic no-replace primitive" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "Harmless extraction collision fixtures preserve both staged payload bytes and competing destination bytes" "verification_scope.verified"
   Assert-ReportScopeContains $technicalLimitText "Signed update-package extraction no-replace protects only each final extracted filename" "verification_scope.technically_limited"
