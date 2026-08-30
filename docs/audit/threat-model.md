@@ -4644,3 +4644,14 @@ malware is used; checkpoint fixtures contain no EICAR and inherited safe EICAR
 text/simulator verifier fixtures run without Defender integration. The
 16,072-file protected vault remains read-only with zero pending, and the
 complete antivirus-hardening goal remains active.
+
+Implementation-head hosted evidence exercises the exact cleanup state machine
+inside the full update-service suite on the fixed Ubuntu runner: job
+`99223208370` reports `4 + 240` passed and names all eight cleanup regressions.
+The fixed macOS 15 recovery-permission route remains green at `4/4`; all CI and
+package jobs pass, publication is skipped, and both consolidated artifacts pass
+bounded non-extracting review. This verifies modeled replay behavior on those
+runners, not power-loss persistence, storage truthfulness, Windows deletion
+durability, hostile filesystems, installed identity, package-wide atomicity, or
+the remaining privilege/driver/Defender/whole-goal limits. Merge, synchronized-
+destination, and closure evidence remain open.

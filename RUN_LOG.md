@@ -15049,3 +15049,31 @@ pending.
   simulator fixtures without Defender integration. The protected vault remains
   16,072 files with zero pending, and the complete antivirus-hardening goal
   remains active.
+
+## 2026-08-30 - Checkpoint 2273 Implementation-Head Hosted Evidence
+
+- Exact implementation `b594573f744b57dccf13f358e972720d54c288a3` passes all
+  six Avorax CI jobs in run `33298892119`. Rust job `99223208370` passes
+  update service `4 + 240`, including all eight cleanup-tombstone regressions;
+  macOS 15 job `99223208360` passes its four selected recovery-permission and
+  namespace-durability fixtures with 255 filtered out.
+- Desktop Packages push/PR runs `33298848017`/`33298892093` pass contracts,
+  Windows MSI/EXE, Linux DEB/tar, both macOS DMGs, consolidation, checksums,
+  and lockfile SBOM. Both prerelease-publication jobs are skipped.
+- Untouched consolidated artifacts `9728478108`/`9728452926` are
+  132,703,055/132,700,501 bytes with SHA-256
+  `13789e0101df1aa6a122b4053e2b6c8fb81266c17ce32f74483913e29ffbf8a4`/
+  `480605b3e0a8045cb230c0b9f113afb097561c68dd2d02853bea243d473da901`.
+  Both pass bounded in-stream 8-entry/6-platform/7-checksum/CycloneDX-1.6/
+  569-component review without extraction or execution.
+- Final local audit SHA-256
+  `9b85e79e2e93d9f6c724997123b1c42208e59c5e96af8ca9206d87d3eae4cba6`
+  passes exact 12-modified/one-added/zero-delete scope, nine unchanged locks,
+  zero product process/residue, and the exact protected vault.
+- Hosted evidence verifies the cleanup protocol inside the complete update-
+  service suite on the fixed Ubuntu runner and preserves the macOS recovery
+  regression route. Normal merge, merged-main evidence, guarded destination
+  sync, destination verification, and closure remain pending. Windows removal
+  durability, storage truthfulness, package transactionality, installed
+  identity, Android, privileged/hostile filesystems, driver/pre-execution,
+  Defender replacement, and whole-goal limits remain open.

@@ -2,7 +2,7 @@
 
 Date: 2026-08-30
 
-Status: **Locally verified; hosted, merge, destination, and closure pending**
+Status: **Implementation-head verified; evidence-head, merge, destination, and closure pending**
 
 ## Purpose
 
@@ -121,9 +121,39 @@ Local results:
 
 The adversarial summary SHA-256 is
 `13f43e1a2e0ed0700923d87ed87b611b7d04097ceda097dc596c0b5585e52c9d`.
-Hosted CI/packages, bounded artifact review, normal PR/merge, guarded zero-delete
-destination synchronization, destination verification, and closure remain
-pending and are not credited here.
+
+## Implementation-Head Hosted Evidence
+
+Exact implementation `b594573f744b57dccf13f358e972720d54c288a3` passes all
+six Avorax CI jobs in run `33298892119`. Rust job `99223208370` passes Local
+Core `583/583`, Guard `250/250`, update service `4 + 240`, and backend API
+`41/41`; its log names all eight cleanup-tombstone regressions as passed. macOS
+15 job `99223208360` passes its four selected harmless recovery-permission and
+namespace-durability fixtures with 255 filtered out.
+
+Desktop Packages push/PR runs `33298848017`/`33298892093` pass contracts,
+Windows MSI/EXE, Linux DEB/tar, macOS arm64/x64 DMG, consolidation, checksums,
+and lockfile SBOM. Both prerelease-publication jobs are explicitly skipped.
+Untouched consolidated artifacts `9728478108` and `9728452926` were retained
+under untracked `.verification` and reviewed in-stream without extraction or
+execution. They are respectively 132,703,055 bytes with SHA-256
+`13789e0101df1aa6a122b4053e2b6c8fb81266c17ce32f74483913e29ffbf8a4`
+and 132,700,501 bytes with SHA-256
+`480605b3e0a8045cb230c0b9f113afb097561c68dd2d02853bea243d473da901`.
+Both pass exact 8-entry/6-platform/7-checksum inventory and CycloneDX 1.6 with
+569 components.
+
+The final local audit is 2,530 bytes with SHA-256
+`9b85e79e2e93d9f6c724997123b1c42208e59c5e96af8ca9206d87d3eae4cba6`.
+It passes exact 12-modified/one-added/zero-delete scope, nine unchanged
+lockfiles, definitive/adversarial evidence, zero product processes, and the
+protected vault invariant.
+
+The cleanup state machine is verified locally and at implementation head on
+the fixed runners. Evidence-head CI/packages, normal merge, merged-main
+evidence, guarded destination synchronization, destination verification, and
+checkpoint closure remain pending, so the complete antivirus-hardening goal
+remains active.
 
 ## Honest Limits
 

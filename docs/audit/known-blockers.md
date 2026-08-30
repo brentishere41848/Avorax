@@ -4398,3 +4398,14 @@ hostile filesystems, storage rollback, kernel compromise, installed identity,
 Android, production signing/deployment, driver/pre-execution enforcement,
 Defender replacement, and complete-goal closure remain blocked, partial, or
 technically limited. The 16,072-file vault remains untouched with zero pending.
+
+Exact implementation-head evidence removes only the narrow hosted-execution
+blocker for these scripted cleanup paths on the fixed Ubuntu CI route: job
+`99223208370` passes update service `4 + 240` and every one of the eight cleanup
+regressions. CI and both package matrices pass with publication skipped, and
+both consolidated artifacts pass bounded non-extracting review. Normal merge,
+merged-main evidence, destination synchronization, and closure remain pending.
+Windows removal persistence, truthful storage, broader filesystems/identities,
+Android, package-wide power-loss transactionality, privileged/hostile actors,
+signing/deployment, driver/pre-execution enforcement, Defender replacement,
+and complete-goal blockers are not removed.

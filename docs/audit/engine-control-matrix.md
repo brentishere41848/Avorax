@@ -6212,6 +6212,17 @@ fixtures contain no EICAR; inherited full-suite EICAR text/simulator fixtures
 run without Defender integration. The exact 16,072-file vault has zero pending
 and the complete antivirus-hardening goal remains active.
 
+Implementation head `b594573f` supersedes the hosted-pending classification
+for the typed cleanup and bounded replay rows on the fixed Ubuntu CI route.
+Rust job `99223208370` passes update service `4 + 240` and all eight named
+cleanup regressions. macOS 15 retains exact `4/4` permission and namespace-
+durability coverage. All six CI jobs, both desktop package matrices,
+consolidation, checksums, SBOM, and bounded non-extracting artifact review pass
+with publication skipped. Integration/destination proof and every Windows-
+removal, storage-truthfulness, package-transaction, installed-identity,
+Android, privileged/hostile-filesystem, detector/custom-engine, driver/pre-
+execution, Defender-replacement, and whole-goal limitation remain unchanged.
+
 ## Checkpoint 2272 Control Delta
 
 | Control / engine | Responsibility | Classification before execution | Evidence / limitation |

@@ -1983,3 +1983,19 @@ Hosted CI/package, merge, destination, and closure evidence remains pending.
 Windows same-volume rename/delete persistence, storage ordering, hostile
 filesystems, VM power-cut behavior, installed identity, package-wide atomicity,
 and the complete antivirus-hardening goal remain outside this focused test.
+
+### Checkpoint 2273 implementation-head hosted evidence
+
+Avorax CI `33298892119` passes all six jobs at exact SHA
+`b594573f744b57dccf13f358e972720d54c288a3`. Ubuntu Rust job `99223208370`
+runs the locked complete update-service suite and reports `4 + 240` passed,
+including each of the eight named `activation_recovery_cleanup_` tests. macOS
+15 job `99223208360` reports `4 passed; 0 failed; 255 filtered out` for its
+selected recovery-permission and namespace-durability fixtures.
+
+Desktop Packages push/PR `33298848017`/`33298892093` pass every build and
+consolidation job with publication skipped. Consolidated artifacts
+`9728478108`/`9728452926` pass bounded in-stream exact inventory, internal
+SHA-256, and CycloneDX checks without extraction or execution. Evidence-head,
+normal merge, merged-main, guarded zero-delete destination synchronization,
+destination full verification, and final closure audit remain required.
