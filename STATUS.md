@@ -9029,3 +9029,25 @@ restore/delete remains a separate crash boundary. Driver/pre-execution,
 Defender replacement, installed identity, production detection accuracy,
 signing/deployment, and the complete antivirus-hardening goal remain open,
 partial, blocked, or technically limited.
+
+That pending state is superseded. Evidence head `f335ffc6`, normal PR `#163`,
+and merge `89c0449ca2dd44728226bee81129e821b8dcc67a` pass exact-head and
+merged-main CI/packages. Merged-main runs are CI `33339046998` and Desktop
+Packages `33339046993`; all platform builds and consolidation pass and
+publication is skipped. Consolidated artifact `9740229241` is 133,376,491
+bytes with hosted digest
+`514c7268abd6b80a6dd83a079ce31409b787e0aa1364475434f936e2f63e05eb`.
+
+Guarded synchronization applies exact 16 modified plus one added path, zero
+deletions, and 32 verified backups. Destination Source `709/709`, platform
+`29/29`, recovery `13/13`, metadata `35/35`, Local Core quarantine `156/156`,
+strict Clippy, and formatting pass. Exact destination verification passes
+`303/303` in `715.3s`; report SHA-256 is
+`b89ad35ff09da20987cd56f54e4e50c1ae4469c53111d63babe910e0fa3b35c7`.
+Both hosts reject `62/62` hostile reports across 31 mutations; adversarial
+SHA-256 is `e6220274b406e634be381a735c9f0702dc1a818d89f8ba8060a7af11a6830ae2`.
+Final audit SHA-256 is
+`55b061e65b555eafea39ffd54d6f8d08a6d3f45893e200fb37bbcd4e2d98cb1d`;
+all 17 destination blobs, nine locks, process/residue controls, and the exact
+protected vault pass. Checkpoint 2277 is closed; restore/delete action recovery
+and the complete antivirus goal remain active.

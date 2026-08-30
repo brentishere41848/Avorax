@@ -156,3 +156,9 @@ changed through this path. Checkpoint 2277 was fully scripted before tests and
 now passes focused, broad, full-workspace, release, and definitive local
 verification. This is rollback recovery rather than two-file atomicity; payload/status
 coordination for restore/delete remains outside this checkpoint.
+
+Checkpoint 2277 is now closed through evidence-head and merged-main
+Windows/Ubuntu/macOS CI, all desktop package targets, guarded exact 17-path
+zero-delete synchronization, destination focused checks and `303/303`, dual-
+host hostile-report rejection, and final blob/lock/process/residue/vault audit.
+The restore/delete payload-status crash boundary remains open.

@@ -4906,3 +4906,12 @@ dual-host `62/62` adversarial validation pass locally. Hosted cross-platform and
 destination evidence remains open. No detection-accuracy, pre-execution,
 driver, Defender-replacement, secure-erasure, installed-service, or complete-
 goal claim follows.
+
+The hosted/destination evidence gap is now closed. Evidence head, PR `#163`,
+merge `89c0449`, merged-main Windows/Ubuntu/macOS CI and all desktop package
+targets pass; publication is skipped. Guarded synchronization and destination
+verification pass exact 17 blobs, nine locks, focused recovery controls,
+`303/303`, dual-host `62/62` hostile rejection, zero process/residue, and the
+unchanged protected vault. The residual restore/delete crash boundary and all
+privileged, filesystem/storage, installed-identity, signing, driver,
+pre-execution, Defender-replacement, accuracy, and complete-goal limits remain.

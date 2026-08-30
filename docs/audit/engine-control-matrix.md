@@ -6410,3 +6410,14 @@ host `62/62` adversarial validation pass. Exact implementation head `2e106e0`
 passes CI `33337128172` and package push/PR `33337101095`/`33337128179`,
 including actual Ubuntu/macOS recovery; publication is skipped. Evidence-head,
 integration, destination, and vault evidence remains required.
+
+That pending evidence now passes. Evidence head `f335ffc6`, PR `#163`, merge
+`89c0449`, merged-main CI `33339046998`, and packages `33339046993` pass.
+Guarded synchronization applies exact 16 modified plus one added path with zero
+deletions and 32 backups. Destination focused controls, exact `303/303`, dual-
+host `62/62` hostile rejection, all 17 blobs, nine locks, zero process/residue,
+and the unchanged vault pass. The metadata-update journal, known-state rollback,
+unknown-state handling, update concurrency, and immutable-evidence controls are
+therefore verified locally, hosted on the fixed Windows/Ubuntu/macOS runners,
+and in the synchronized destination. Restore/delete payload coordination stays
+`Technically limited / open`; no stronger driver or Defender claim follows.
