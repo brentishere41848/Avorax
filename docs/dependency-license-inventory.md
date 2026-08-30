@@ -2424,6 +2424,24 @@ blob comparisons pass. Checkpoint 2265 is closed with no dependency, license,
 or network-surface delta. Production signing/notarization, final notice
 provenance, enterprise deployment, and release approval remain separate.
 
+## Checkpoint 2271 Dependency Delta
+
+Checkpoint 2271 adds no dependency and requires no lockfile change. The new
+fixed `macos-15` workflow route reuses pinned `actions/checkout`, pinned
+`dtolnay/rust-toolchain`, Rust `1.96.1`, the existing workspace lock, update-
+service crate, shared platform-security crate, and standard-library Unix
+permission APIs. No manifest, third-party package, version, source, feature,
+runtime download, network content, registry, or license class changes.
+
+Source contract 702, verifier step 299, and the adversarial report harness add
+only repository test/evidence logic. Native hosted CI, complete locked tests/
+builds, package checksum/SBOM review, eight-lock audit, integration, destination
+sync, and closure remain pending until the post-freeze phase. No checkpoint-
+2271 test ran during scripting. No live malware, EICAR, Defender change,
+installation, service/driver start, release, publication, or protected-vault
+mutation occurs. The exact 16,072-file vault has zero pending; complete
+antivirus hardening remains active.
+
 Checkpoint 2270 post-freeze strict locked Clippy, both locked workspace test
 variants, locked all-target/all-feature release, the dependency gate inside
 exact `298/298`, and read-only lockfile-diff checks pass. No manifest or

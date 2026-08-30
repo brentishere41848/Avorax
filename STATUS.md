@@ -8432,3 +8432,41 @@ reject all `14/14` destination-local content mutations. Final audit passes
 vault. Checkpoint 2270 is closed. Its stated cross-platform, prior-exposure,
 installed-authority, transaction, privileged, driver/pre-execution, Defender-
 replacement, signing/deployment, and whole-project limits remain open.
+
+## Checkpoint 2271 - macOS Update Recovery Runtime
+
+Checkpoint 2271 is fully scripted and not yet executed. A dedicated fixed
+`macos-15` CI job runs the harmless `activation_recovery_unix_` fixtures with
+the locked update-service manifest and one test thread. The route must prove
+exact `0700` recovery-directory and `0600` key/lock/journal modes plus repair
+before authenticated recovery. A separate wiring regression, Source contract
+702, verifier step 299, exact-299 validator, seven dual-host adversarial
+mutations, and audit documentation are scripted.
+
+Until exact-head hosted macOS CI passes, this is a contract and partial runtime
+surface, not verified macOS behavior. Android runtime, other macOS versions,
+architectures/filesystems, installed identity, unencrypted key storage, prior
+disclosure/open handles, privileged actors, hostile filesystems, power-loss
+package atomicity, signing/deployment, driver/pre-execution enforcement,
+Defender replacement, and the complete goal remain open or limited. No
+checkpoint-2271 test ran during the scripting phase; no live malware, EICAR,
+Defender change, installation, service/driver start, publication, or protected-
+vault mutation occurred. The vault remains 16,072 files with zero pending.
+
+Post-freeze local verification passes PowerShell 5.1/7 parsing, format, macOS
+wiring `1/1`, recovery `20/20`, platform security `18/18`, Source `702/702`,
+strict locked Clippy, both locked workspaces, locked release, Flutter
+`852/852`, and protocols `14/14 + 6/6`. The first full Source run failed one
+existing Ubuntu job-slice assertion after executing all 702 tests; the repaired
+job boundary passes on repeat.
+
+Definitive no-skip/no-Defender verification passes exact `299/299` in `665.1s`;
+the 227,630-byte report SHA-256 is
+`1d9b40247407ccb9ac3f009cd614051d05472f076c3bd8f52571a2a6c22c3d30`.
+Both PowerShell hosts accept it, and the independent audit rejects all `14/14`
+hostile host/mutation cases; result SHA-256 is
+`f19f29478bcf374b880c1788f1d71a4cb43300fa2cd0c214423c1d269bfba338`.
+Locks, process/residue, and the exact vault pass read-only checks. Hosted
+`macos-15`, package, integration, guarded destination, destination regression,
+and closure evidence remain pending; the whole antivirus-hardening goal stays
+active.

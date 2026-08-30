@@ -1951,8 +1951,8 @@ if ($RequireFullSuite) {
   if ($skipFlutter -or $skipRust) {
     throw "-RequireFullSuite requires skip_flutter=false and skip_rust=false."
   }
-  if ($steps.Count -ne 298) {
-    throw "-RequireFullSuite expected exactly 298 verifier steps for this source revision, found $($steps.Count)."
+  if ($steps.Count -ne 299) {
+    throw "-RequireFullSuite expected exactly 299 verifier steps for this source revision, found $($steps.Count)."
   }
   if ($steps[0].name -ne "local-core safe simulator scan reporting") {
     throw "-RequireFullSuite first step mismatch: $($steps[0].name)"
@@ -1978,6 +1978,7 @@ if ($RequireFullSuite) {
   Assert-ReportContainsStep $steps "update-service directory activation atomic no-replace regressions"
   Assert-ReportContainsStep $steps "update-service authenticated directory activation recovery regressions"
   Assert-ReportContainsStep $steps "update-service Unix activation recovery runtime contract"
+  Assert-ReportContainsStep $steps "update-service macOS activation recovery runtime contract"
   Assert-ReportContainsStep $steps "native-engine file-type classifier regressions"
   Assert-ReportContainsStep $steps "native-engine detection-only mutation boundary regressions"
   Assert-ReportContainsStep $steps "native-engine archive content sampling regressions"
@@ -2180,6 +2181,11 @@ if ($RequireFullSuite) {
   Assert-ReportScopeContains $technicalLimitText "Owner-only modes do not encrypt the Unix key" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "Permission repair cannot undo prior disclosure of a broadened Unix recovery key or journal, revoke already-open handles, or restore authenticity after the key was copied" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "macOS and Android recovery runtime remain unverified" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $verifiedScopeText "dedicated hosted macOS 15 execution of the harmless Unix recovery fixtures" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "exact owner-only 0700 recovery-directory and 0600 key, lock, and journal modes, and permission repair before authenticated recovery" "verification_scope.verified"
+  Assert-ReportScopeContains $technicalLimitText "actual macOS permission semantics require the hosted macos-15 job" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "one hosted macOS 15 runner environment, not every macOS version, architecture, filesystem, installed service identity, or Android recovery runtime" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "Unix mode bits do not encrypt the recovery key, undo prior disclosure, revoke already-open handles, or resist root, administrators, hostile filesystems, storage rollback/reordering, or kernel compromise" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "File allowlisting remains safe after its hash snapshot because later scan suppression also requires that exact hash" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "neither operation holds a kernel-enforced immutable file lease" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "This is confirmation and stale-verdict defense, not cross-identity authorization, malware execution prevention, driver enforcement, or protection against administrators, SYSTEM, or kernel compromise" "verification_scope.technically_limited"

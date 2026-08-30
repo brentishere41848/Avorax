@@ -1532,4 +1532,33 @@ mod tests {
             );
         }
     }
+
+    #[test]
+    fn activation_recovery_macos_runtime_contract_is_wired() {
+        let workflow = include_str!("../../../.github/workflows/ci.yml");
+        let job_start = workflow
+            .find("  update-recovery-macos:\n")
+            .expect("missing dedicated macOS update recovery job");
+        let job_end = workflow[job_start..]
+            .find("\n  flutter:\n")
+            .map(|offset| job_start + offset)
+            .expect("missing macOS update recovery job boundary");
+        let job = &workflow[job_start..job_end];
+
+        for marker in [
+            "name: macOS update recovery permission runtime",
+            "runs-on: macos-15",
+            "timeout-minutes: 30",
+            "actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd",
+            "dtolnay/rust-toolchain@fa04a1451ff1842e2626ccb99004d0195b455a88",
+            "toolchain: 1.96.1",
+            "name: Test update recovery macOS runtime",
+            "cargo test --locked",
+            "--manifest-path core/avorax_update_service/Cargo.toml",
+            "activation_recovery_unix_",
+            "-- --test-threads=1",
+        ] {
+            assert!(job.contains(marker), "missing macOS CI marker: {marker}");
+        }
+    }
 }

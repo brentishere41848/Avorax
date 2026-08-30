@@ -3705,6 +3705,35 @@ merge, merged-main, synchronized-destination, and destination verification
 remain open, and all cooperative/installed/kernel/pre-execution/Defender limits
 remain unchanged.
 
+## Checkpoint 2271 macOS Recovery Runtime Threat Delta
+
+**Threat:** compiling the shared Unix recovery path and proving it on Ubuntu
+does not demonstrate macOS filesystem mode enforcement or repair. Treating
+source compatibility or package construction as runtime evidence could hide a
+platform-specific failure and create a false recovery claim.
+
+**Scripted mitigation:** fixed hosted `macos-15` CI runs only the locked,
+serial, harmless `activation_recovery_unix_` fixtures. They require exact
+`0700`/`0600` modes and deliberately broaden only temporary fixture modes before
+requiring repair and authenticated reconciliation. A separate wiring test,
+Source 702, verifier 299, exact report validation, and dual-host adversarial
+mutations keep the route and its claims fail-visible.
+
+**Residual threat:** local Windows evidence can prove only the route contract;
+actual semantics require hosted success. One runner does not cover all macOS
+versions, architectures, filesystems, installed identities, or Android. Unix
+mode bits are not encryption, cannot undo copied-key/journal disclosure or
+revoke open handles, and do not resist root/admin, hostile filesystems, storage
+rollback/reordering, or kernel compromise. Recovery remains per-tree and best-
+effort, not package-atomic or power-loss-proof. No driver/pre-execution,
+Defender-replacement, signing/deployment, or complete-product claim changes.
+
+No checkpoint-2271 test ran during scripting. No live malware, EICAR, candidate
+execution, Defender change, installation, service/driver start, release,
+publication, or protected-vault mutation occurs. The vault remains exactly
+16,072 files with zero pending, and the complete antivirus-hardening goal
+remains active.
+
 Checkpoint 2270 post-freeze local evidence passes Source `701/701`, Windows
 recovery `19/19`, update service `229/229 + 4/4`, both locked workspaces/
 release, Flutter/protocols, exact `298/298`, authentic PS5/PS7 validation, and
