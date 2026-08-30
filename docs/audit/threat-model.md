@@ -4751,3 +4751,99 @@ outside the guarantee. Multi-component activation is not one transaction;
 Windows deletion persistence, installed identity, Android, production signing
 and deployment, signed-driver enforcement, Defender replacement, and complete-
 goal closure remain open.
+
+## Checkpoint 2275 Atomic Loose-File Replacement Threat Delta
+
+**Threat addressed:** process termination or activation failure after an update
+deleted an existing app/service/docs target but before the staged file reached
+that name. The result could be a missing executable or support file even though
+a rollback snapshot existed elsewhere.
+
+**Scripted control:** existing source and destination names must be distinct,
+adjacent ordinary files under an ordinary parent. Avorax opens both and binds
+each path to its file identity immediately before one OS replacement call.
+Initially absent targets retain atomic no-replace behavior.
+
+On Windows, Avorax first reserves a unique adjacent previous-file hard link
+through no-overwrite creation and preserves every colliding candidate.
+`ReplaceFileW` receives a null backup parameter and zero flags because its
+write-through flag is documented as unsupported. Its replacement-file open is
+unshared, so Avorax snapshots the opened staged-source file ID and closes that
+handle before the call. Complete success rebinds the active destination to that
+ID, binds the reserved backup to the retained previous-destination handle, and
+removes only that checked backup.
+A failed call with reserved backup plus missing destination immediately restores
+the backup through no-replace only after matching the already-opened old
+destination, then rebinds the restored name. Same-file aliases and spoofed
+backups are rejected. Backup plus destination is ambiguous and preserved.
+A failure whose reserved backup disappeared is reconciled only if the
+destination still identifies the opened old file; missing-both state is an
+explicit recovery error.
+Hard-link reservation requires same-volume filesystem hard-link support and
+fails visibly where unavailable.
+
+On Unix, same-directory rename atomically replaces the directory entry, the
+active destination must identify the opened staged file, and the stable parent
+directory is synchronized. Exact Ubuntu/macOS runtime commands are wired.
+
+**Evidence status:** earlier local Windows `3/3 + 5/5`, update `6/6`, Source
+`706/706`, verifier `302/302`, and dual-host `28/28` results are superseded for
+final-source credit. A harmless isolated probe proved that `ReplaceFileW`
+overwrites an already-existing API backup path. The no-overwrite hard-link
+repair now passes focused Source `706/706`, platform `3/3 + 7/7`, and update
+`6/6 + 2/2`. Full local, definitive, and hosted Unix proof remain pending.
+
+**Residual threats:** a process kill can occur after Windows moved the old file
+to backup and before immediate recovery or after successful replacement and
+before cleanup. The backup is not HMAC-journaled; ambiguous residue requires
+manual review. `ReplaceFileW` gives no supported write-through flag. Unix sync
+cannot prove truthful hardware caching. A same-identity or privileged actor can
+race after point-in-time checks; network/hostile filesystems, storage replay,
+administrators, SYSTEM/root, and kernel compromise remain outside the boundary.
+
+Loose-file replacement does not make app, services, docs, engine trees,
+rollback, reports, and service lifecycle one durable package transaction. It
+does not change malware detection, custom-engine authority, quarantine,
+monitoring, driver/pre-execution enforcement, or Defender. No checkpoint-2275
+test ran during scripting, no live malware/EICAR is used, and the exact
+16,072-file protected vault must remain unchanged with zero pending.
+
+### Defender interaction during checkpoint-2275 verification
+
+The first repaired-source definitive run exposed a verifier-host risk: the
+large Native unit-test executable contains an extensive benign adversarial
+detection corpus, and Defender's ML classified that generated harness as
+inactive `Trojan:Win32/Wacatac.C!ml`. It was removed before the late benign
+false-positive tests started. Treating OS error 225 as a pass, adding an
+exclusion, or weakening Defender would hide the failure and is forbidden.
+
+The late false-positive gate now executes a dedicated integration-test target
+that links the public production engine without compiling the Native
+`cfg(test)` fixture corpus. It creates only three harmless ASCII files in a
+temporary root, uses detect-only mode, and proves that no quarantine record or
+directory is created. The full malware-detection unit suite remains mandatory
+elsewhere. This reduces test-harness false positives; it does not prove
+production false-positive rates, bypass Defender, or alter Avorax detection.
+
+Focused post-freeze execution passes the dedicated target `3/3`, the complete
+false-positive gate, no-malware-binaries gate, and Source `707/707`. Read-only
+Defender history shows zero detections for the dedicated target. Broad and
+definitive reruns remain required, and the original Defender block remains
+recorded rather than reclassified.
+
+The broad post-repair run now passes both locked workspace variants, strict
+Clippy, locked release, 1,806 executed Rust tests with 21 intentional ignores,
+Flutter `852/852`, and both protocol packages. This confirms the dedicated
+target did not waive the full Native suite; exact-302 regeneration remains
+pending.
+
+The exact regeneration now passes `302/302`; both validator hosts accept the
+authentic report and reject all `34/34` adversarial cases. This closes the local
+verifier-host remediation proof while leaving hosted runners, production
+false-positive rates, installed identity, Defender replacement, and all prior
+technical limits open.
+
+Final audit confirms zero process/pending/temp residue, nine unchanged locks,
+zero deletions, and the exact 16,072-file protected vault. Hosted and
+destination evidence remains pending; no whole-product completion or stronger
+authority claim follows from local closure.

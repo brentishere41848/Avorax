@@ -8757,3 +8757,126 @@ package-wide atomicity, privileged/hostile actors, installed identity, Android,
 production signing/deployment, driver/pre-execution enforcement, Defender
 replacement, and complete antivirus-goal closure remain open or technically
 limited.
+
+## Checkpoint 2275 Status
+
+Checkpoint 2275 is **collision-safe repair local closure evidence passed / hosted and integration evidence pending**. Shared update staged-file
+activation no longer scripts deletion of an existing destination before
+activation. Existing adjacent regular files use one OS replacement operation;
+absent targets continue to use atomic no-replace activation.
+
+Windows first reserves an adjacent previous-file hard link through no-overwrite
+creation and preserves every colliding candidate. `ReplaceFileW` receives a
+null API backup parameter, an opened-source file-ID snapshot is rebound to the
+active name, and retained opened destination/reserved-backup identity checks
+guard immediate no-replace backup restore
+when an identity-bound failed-call backup leaves the destination absent,
+proof that a missing reserved backup still left the old destination active,
+same-file alias and
+spoofed-backup rejection, and checked success cleanup.
+Ambiguous destination-plus-backup state is preserved and reported. Unix uses
+same-directory atomic rename, destination/source identity binding, and stable
+parent-directory synchronization. Windows runs the complete platform suite;
+Linux and macOS workflows run the exact platform and update-service fixtures.
+
+Production code, harmless/adversarial tests, hosted wiring, Source contract
+706, the revised exact-302 verifier/validator contract, dependency statement,
+threat model, engine/control matrix, operational docs, and checkpoint report
+were completed before execution. After freeze, exact focused evidence passes:
+Source `706/706`, replacement `3/3`, Windows recovery/adversarial `5/5`, update
+activation `6/6`, rejection `2/2`, strict platform/update Clippy, formatting,
+PowerShell parsing, and diff checks. The first replacement run's sharing
+violation and the source-handle-close/file-ID repair are recorded in the report.
+
+Complete local regression passes strict locked workspace Clippy, both locked
+workspace test variants, locked all-target/all-feature release, Flutter
+analysis and `852/852`, and both protocol packages with `14/14 + 6/6`. The
+all-target/all-feature Rust run executes 1,801 tests with 21 intentional native
+child-fixture ignores and zero failures. Final-source no-skip/no-Defender
+verification passes exact `302/302` in `720.3s`; the 232,230-byte report SHA-256
+is `8cdec8f3d30f279a0faad434cd3238235e9fa7000526dcafc0919b2e36148867`.
+Both PowerShell hosts accept the authentic report and reject all `28/28`
+host/mutation cases across 14 unique adversarial changes; adversarial SHA-256
+is `a47ed3f1d7f2c0f75a1d69900748e03ccd2d9a2b82a56caa12300bc3e3428571`.
+Final read-only audit passes the exact 15 modified plus one added path set,
+zero deletions, nine unchanged locks, zero product process/pending/temp residue,
+and the exact protected vault; audit SHA-256 is
+`5793f7a6fbbc4da9b18855f7905816f909e6b621e5f42bd46b789c431e0cc7e8`.
+
+Those local definitive results are superseded for final-source credit. Final
+diff review and a harmless isolated Win32 probe proved that `ReplaceFileW`
+overwrites an already-existing API backup path. The complete repair batch now
+uses no-overwrite hard-link reservation and a null API backup parameter, adds a
+collision-preservation regression, and updates Source/verifier/docs contracts.
+Repaired-source focused checks pass Source `706/706`, replacement `3/3`,
+reservation/recovery `7/7`, update `6/6 + 2/2`, strict platform/update Clippy,
+formatting, all four PowerShell parsers, and diff checks.
+Complete repaired-source regression passes strict locked workspace Clippy, both
+locked test variants, locked all-target/all-feature release, Flutter analysis
+and `852/852`, plus protocol analysis/tests `14/14 + 6/6`. Exact Rust totals are
+1,803 executed, 21 intentional native child-fixture ignores, and zero failures;
+all nine tracked lockfiles remain unchanged.
+
+The first repaired-source definitive attempt is retained as failed evidence:
+it stopped after 298 recorded steps with 297 passing and only the
+`False-positive gate` failing. Microsoft Defender removed the generated Native
+unit-test executable as inactive `Trojan:Win32/Wacatac.C!ml` before any of the
+three requested Native benign tests could start (`os error 225`); Defender
+reported `DidThreatExecute=False`. Defender was not weakened or excluded.
+The failed 228,184-byte report has SHA-256
+`da9d426f915bf9d1010b335fff3587d5d2f9e98e9cec414ccd1b0407f4d12da0` and
+is not completion evidence.
+
+The repair batch adds a dedicated Native integration-test target containing
+only three benign ASCII installer fixtures and using the public production
+engine API in detect-only mode. The late false-positive gate now runs that
+target once instead of relaunching the malware-fixture-bearing unit-test
+harness three times; the earlier verifier normal-EXE guard uses the same small
+target, CI prebuilds it explicitly, and Source/report/adversarial contracts
+bind the route. No test had run when this verifier-harness batch froze.
+
+Post-freeze focused execution now passes Source `707/707`, rustfmt, all five
+PowerShell parsers, `git diff --check`, strict Native integration-target Clippy,
+the dedicated benign target `3/3`, the complete false-positive gate, and the
+no-malware-binaries gate. Defender reports zero detections for the 3,235,328-byte
+dedicated target; this is host evidence only, not a signing or production
+reputation claim. The broad rerun also passes strict locked workspace Clippy,
+both locked workspace suites, locked all-target/all-feature release, Flutter
+analysis and `852/852`, and protocol analysis/tests `14/14 + 6/6`. Exact Rust
+totals are 1,806 executed, 21 intentional Native child-fixture ignores, and zero
+failures; all nine lockfiles remain unchanged.
+
+That pending state is now superseded: the regenerated no-skip/no-Defender
+verifier passes exact `302/302` in `708.4s`, with zero non-passing or
+error-bearing steps and Defender/EICAR opt-in false. The 232,732-byte report
+SHA-256 is
+`13998e76443539d9eac4d9c38940a82d26011cc490c801d16de23df4f8edd3f0`;
+the checkpoint replacement step passes in `2.9s` and the repaired
+false-positive gate in `5.1s`. Windows PowerShell 5.1 and PowerShell 7 accept
+the authentic report and reject all `34/34` host/mutation cases across 17
+unique mutations. The 32,960-byte adversarial result SHA-256 is
+`3ea4610cdb1e89df351a454efbee340ab7395ee3ce2faac802ab390bf9655c9a`.
+Final read-only local audit passes 16 modified plus two added paths, zero
+deletions, nine unchanged locks, zero product processes/pending files/temporary
+roots, and the exact protected vault: 16,072 files, zero directories,
+4,522,733 bytes, 5,357 each payload/JSON/auth, one metadata key, and zero vault
+pending. Its 2,114-byte JSON SHA-256 is
+`98627e5c9dc3de32c885212e2770edb49eb28ec1734af6b55bfc4f37fd57f1c2`.
+Hosted exact-head, PR/merge, guarded synchronization, and destination evidence
+remain pending; the complete antivirus goal remains active.
+
+This remains one loose-file operation, not authenticated file-journal recovery
+or a package-wide transaction. Abrupt Windows termination can preserve the old
+file only under `.avorax-replace-backup`; `ReplaceFileW` has no supported
+write-through flag, hard-link backup reservation requires same-volume filesystem
+support, and its unshared source open requires the verified staged
+handle to close before the call. Same-identity final races, hostile filesystems/storage,
+privileged actors, installed identity, production signing/deployment,
+driver/pre-execution enforcement, Defender replacement, and the complete
+antivirus goal remain open or technically limited. The protected 16,072-file
+vault must remain unchanged with zero pending.
+
+Next exact task: compile and run the dedicated benign integration target,
+Source/contracts and the false-positive gate, then repeat full local and
+definitive verifier, dual-host adversarial, and final-audit evidence before any
+hosted integration.

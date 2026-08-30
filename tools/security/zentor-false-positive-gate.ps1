@@ -85,9 +85,7 @@ if ($cargo) {
 if ($cargo) {
   try {
     $nativeEngineCrate = Get-AvoraxGateDirectory (Join-Path $repo "core\zentor_native_engine") "native-engine crate"
-    Invoke-GateCommand $cargo @("test", "normal_exe_in_downloads_is_not_malware") "Native normal EXE false-positive suppression" $nativeEngineCrate
-    Invoke-GateCommand $cargo @("test", "avorax_installer_exe_is_likely_clean_not_quarantine_eligible") "Native Avorax installer trust" $nativeEngineCrate
-    Invoke-GateCommand $cargo @("test", "avorax_msi_is_likely_clean_not_quarantine_eligible") "Native Avorax MSI trust" $nativeEngineCrate
+    Invoke-GateCommand $cargo @("test", "--locked", "--test", "benign_false_positive_gate", "--", "--test-threads=1") "Native benign false-positive integration gate" $nativeEngineCrate
   } catch {
     Add-GateError $_.Exception.Message
   }

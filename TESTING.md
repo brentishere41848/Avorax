@@ -2191,3 +2191,165 @@ PowerShell 5.1 and 7 accept both authentic cases and reject twelve mutations per
 host, exact `24/24`, with no unexpected path-only content rejection. Final
 destination audit verifies 15 exact blobs, nine unchanged locks, 28 backups,
 zero product process/pending/temp residue, and the exact protected vault.
+
+## Checkpoint 2275 Atomic Existing-File Replacement
+
+No checkpoint-2275 command below ran during the scripting phase. The complete
+implementation, benign/adversarial tests, hosted routes, verifier/validator
+contracts, and docs were frozen first.
+
+Focused commands:
+
+```powershell
+cargo test --locked --manifest-path core\avorax_platform_security\Cargo.toml atomic_existing_file_replacement_ -- --test-threads=1
+cargo test --locked --manifest-path core\avorax_platform_security\Cargo.toml windows_atomic_replacement_failure_ -- --test-threads=1
+cargo test --locked --manifest-path core\avorax_update_service\Cargo.toml staged_activation_atomic_replace_ -- --test-threads=1
+cargo test --locked --manifest-path core\avorax_update_service\Cargo.toml staged_activation_rejects_ -- --test-threads=1
+& 'C:\Users\Brent\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe' tools\testing\run-python-source-contracts.py
+```
+
+Quality and broad regression commands:
+
+```powershell
+cargo fmt --all -- --check
+cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
+cargo test --workspace --locked --no-fail-fast -- --test-threads=1
+cargo test --workspace --all-targets --all-features --locked --no-fail-fast -- --test-threads=1
+cargo build --workspace --release --all-targets --all-features --locked
+Push-Location apps\zentor_client
+flutter analyze
+flutter test
+Pop-Location
+Push-Location packages\zentor_protocol
+dart analyze
+dart test
+Pop-Location
+Push-Location packages\avorax_protocol
+dart analyze
+dart test
+Pop-Location
+```
+
+The exact 302-step no-skip/no-Defender verifier must contain
+`update-service staged file activation atomic replacement regressions` and the
+full-suite report must pass both Windows PowerShell 5.1 and PowerShell 7
+validators. Exact hosted Ubuntu 24.04 and macOS 15 jobs must each execute the
+platform-security and update-service replacement fixtures by fully qualified
+name with `--exact`; the Windows Rust job must run the complete locked platform
+suite. A zero-test filter is not credit.
+
+Focused results after freeze:
+
+```text
+Source contracts: 706/706 passed (two complete runs after two stale historical scope strings were repaired)
+Atomic replacement: 3/3 passed (initial 2/3 exposed Windows source-handle sharing violation)
+Windows failed-call recovery: 5/5 passed
+Update staged atomic replacement: 6/6 passed
+Update staged rejection: 2/2 passed
+Platform strict Clippy: passed
+Update-service strict Clippy: passed
+Rustfmt, verifier/validator parse, git diff --check: passed
+```
+
+The production repair snapshots the verified Windows staged-source file ID,
+closes the source handle required by the unshared `ReplaceFileW` open, and
+rebinds the active name to that ID after activation.
+
+Full local results:
+
+```text
+Strict locked workspace Clippy: passed
+Locked workspace tests: passed
+Locked all-target/all-feature tests: 1801 executed, 21 intentional ignores, 0 failed
+Locked all-target/all-feature release build: passed
+Flutter: analyze passed; 852/852 tests passed
+Zentor protocol: analyze passed; 14/14 tests passed
+Avorax protocol: analyze passed; 6/6 tests passed
+Definitive verifier: 302/302 passed in 720.3s; 0 failed/skipped/error steps; Defender/EICAR opt-in false
+Report: 232230 bytes; SHA-256 8cdec8f3d30f279a0faad434cd3238235e9fa7000526dcafc0919b2e36148867
+Dual-host report validation: 2/2 authentic accepts; 28/28 adversarial rejects across 14 unique mutations
+Adversarial result: 26716 bytes; SHA-256 a47ed3f1d7f2c0f75a1d69900748e03ccd2d9a2b82a56caa12300bc3e3428571
+```
+
+These results are superseded for final-source credit. A harmless isolated
+Win32 probe proved that `ReplaceFileW` overwrites an already-existing API backup
+path. The repaired source reserves an adjacent no-overwrite hard-link backup,
+passes a null API backup parameter, preserves candidate collisions, and adds
+`windows_atomic_replacement_failure_backup_reservation_preserves_competing_candidate`.
+The same focused filter also runs
+`windows_atomic_replacement_failure_backup_reservation_rejects_exhausted_candidates`.
+After the repair batch freezes, repaired-source focused results pass Source
+`706/706`, replacement `3/3`, reservation/recovery `7/7`, update activation
+`6/6`, update rejection `2/2`, strict platform/update Clippy, formatting, all
+four PowerShell parsers, and diff checks. Verifier, adversarial, and audit
+commands still require rerun.
+
+Complete repaired-source local results:
+
+```text
+Strict locked workspace Clippy: passed
+Both locked workspace test variants: passed
+Locked all-target/all-feature tests: 1803 executed, 21 intentional ignores, 0 failed
+Locked all-target/all-feature release build: passed
+Flutter: analyze passed; 852/852 tests passed
+Zentor protocol: analyze passed; 14/14 tests passed
+Avorax protocol: analyze passed; 6/6 tests passed
+Tracked dependency locks: 9; changed: 0
+```
+
+The definitive verifier, new adversarial report validation, and final audit
+still require rerun on this repaired source.
+
+The first rerun stopped after 297 passing steps because Defender classified
+the generated, malware-fixture-bearing Native unit-test harness as inactive
+`Trojan:Win32/Wacatac.C!ml` before the late false-positive tests could start.
+Do not add a Defender exclusion. The scripted repair routes those benign checks
+through a dedicated integration target that links the production library but
+does not compile the Native unit-test fixture corpus:
+
+```powershell
+cargo test --manifest-path core\zentor_native_engine\Cargo.toml --locked --test benign_false_positive_gate -- --test-threads=1
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools\security\zentor-false-positive-gate.ps1 -RepoRoot . -CargoPath C:\Users\Brent\.cargo\bin\cargo.exe
+& 'C:\Users\Brent\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe' -B tools\testing\run-python-source-contracts.py
+```
+
+After these focused commands pass, repeat the complete broad regression and
+exact 302-step verifier above. The authentic report must be accepted by both
+PowerShell hosts; all 34 host/mutation cases across 17 unique mutations must be
+rejected. This harness change does not waive any Native unit-test suite or
+production false-positive-rate requirement.
+
+Focused post-freeze result: formatting/parsers/diff pass, Source `707/707`,
+strict integration-target Clippy passes, the dedicated target passes `3/3`,
+the full false-positive gate passes, and the no-malware-binaries gate passes.
+Read-only Defender history shows zero detections for the dedicated target.
+Broad and exact-302 reruns are still required.
+
+The broad rerun now passes. Exact all-target/all-feature Rust totals are 1,806
+executed with 21 intentional Native child-fixture ignores and zero failures;
+strict Clippy, the second locked workspace variant, locked release build,
+Flutter `852/852`, protocols `14/14 + 6/6`, and nine unchanged lockfiles pass.
+Only the regenerated exact-302, adversarial, and final-audit stages remain in
+the local closure sequence.
+
+The regenerated definitive verifier now passes exact `302/302` in `708.4s`.
+Its 232,732-byte report SHA-256 is
+`13998e76443539d9eac4d9c38940a82d26011cc490c801d16de23df4f8edd3f0`.
+Both validator hosts accept it and reject `34/34` adversarial cases across 17
+unique mutations; result SHA-256 is
+`3ea4610cdb1e89df351a454efbee340ab7395ee3ce2faac802ab390bf9655c9a`.
+Final local audit was the next required step before commit/hosted evidence.
+
+Final audit now passes 16 modified plus two added paths, zero deletions, nine
+unchanged locks, zero process/pending/temp residue, and the exact protected
+vault. Its 2,114-byte JSON SHA-256 is
+`98627e5c9dc3de32c885212e2770edb49eb28ec1734af6b55bfc4f37fd57f1c2`.
+Hosted and destination verification remain separate requirements.
+
+Hosted Linux/macOS runtime, exact-head package, PR/merge, destination-sync, and
+destination regression evidence remain pending.
+
+Only harmless temporary ASCII fixtures are permitted and none is executed.
+Tests must not install/start services or drivers, change Defender, mutate the
+protected vault, download artifacts, publish a release, or claim package-wide
+transactionality.

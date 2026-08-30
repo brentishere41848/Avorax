@@ -2850,3 +2850,44 @@ consolidated artifacts `9722589339`/`9722639285` pass bounded in-stream review
 without extraction or execution. No manifest, lockfile, dependency, version,
 source, feature, runtime fetch, notice obligation, or license class changed.
 Evidence-head, merged-main, destination eight-lock audit, and closure remain.
+
+## Checkpoint 2275 Dependency Delta
+
+Checkpoint 2275 adds no dependency, changes no Cargo/Dart/Flutter manifest or
+lockfile, and adds no package source, feature, runtime fetch, license class, or
+notice obligation. Windows replacement reuses the already pinned
+`windows-sys 0.61` `Win32_Storage_FileSystem` feature and its existing
+`ReplaceFileW` binding. Unix replacement reuses Rust standard-library rename
+and the existing `libc`-backed platform crate only where already configured.
+
+The workflow/test/verifier/docs delta adds no downloaded action or tool and
+keeps all existing pinned action SHAs and toolchain versions. The backup-
+collision repair uses Rust standard-library hard-link creation and adds no
+dependency or feature. Earlier strict locked regression and the nine-lockfile
+audit are superseded for final-source credit after that production repair;
+strict locked Clippy, both locked workspace tests, locked all-target/all-feature
+release, and a nine-lockfile zero-change review now pass on the repaired source.
+Hosted dependency gate, package SBOM, and hosted artifact evidence remain
+pending. Production
+signing/notarization, final license/notice provenance, enterprise deployment,
+and release approval remain separate.
+
+No live malware/EICAR, install, Defender change, service/driver start, release,
+publication, or protected-vault mutation is part of this dependency delta. The
+exact 16,072-file vault must remain at zero pending.
+
+The verifier-harness repair also adds no dependency or manifest change. Its
+dedicated integration target reuses the already-pinned `tempfile` dev
+dependency and the existing public `zentor_native_engine` library API. CI and
+local commands use `--locked`; this is test topology, not a shipped runtime
+component or new license obligation.
+
+Post-harness strict locked Clippy, both locked workspace tests, locked release,
+and the nine-lockfile zero-change review pass. No dependency delta was produced
+by the 1,806-test broad rerun.
+
+The exact-302 verifier and dual-host `34/34` adversarial validation pass without
+manifest or lockfile change. Hosted dependency/SBOM evidence remains pending.
+
+Final local audit independently confirms all nine tracked lockfiles unchanged.
+Hosted package dependency evidence and consolidated SBOM review remain pending.
