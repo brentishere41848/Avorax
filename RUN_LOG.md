@@ -15190,3 +15190,38 @@ pending.
 - No live malware, EICAR fixture, Defender change, installation, service/driver
   start, publication, release, or protected-vault mutation is part of this
   checkpoint. The exact 16,072-file vault remains at zero pending.
+
+## 2026-08-30 - Checkpoint 2274 Integration And Destination Closure
+
+- Evidence head `8fe3cec18181546e7bf6e7bd1ac4deaa193d32b8` passes all six CI
+  jobs in run `33308297789`; Ubuntu job `99248653943` proves both dedicated
+  Unix link fixtures execute exact non-empty `1/1`. Desktop Packages run
+  `33308297858` passes with publication skipped. Consolidated artifact
+  `9731350472` is 133,268,182 bytes with SHA-256
+  `e8397280378ec308a70610f64418ce12e75e1fe54e74fc7bb3bf0eb671d97dba`.
+- Normal PR `#157` merges as
+  `59fb56d732d949f347f334b2504a09570dd73fbe`. Merged-main CI run
+  `33308936338` passes all six jobs; Ubuntu job `99250355386` again proves
+  exact `1/1 + 1/1`. Desktop Packages `33308936319` passes with publication
+  skipped. Artifact `9731641198` is 132,667,431 bytes with SHA-256
+  `70b976f1d77ec7359c44d3e48a532c382432f1ac32f201173dd7bf3ae1bd354b`.
+- Both package runs prove six release files, seven checksums, and CycloneDX 1.6
+  with 569 components through bounded metadata/log review; no artifact was
+  downloaded, extracted, or executed.
+- Guarded synchronization applies exact 14 modified plus one added path, zero
+  deletes, and preserves 28 verified backups. Sync-report SHA-256 is
+  `ceb2c4d2680011b1a41b9630be536906198f03395e2d08877128d9818fa6b462`.
+- The destination passes Source `705/705`, format, strict locked Clippy, both
+  locked workspace variants, locked all-feature release, Flutter `852/852`,
+  and protocols `14/14 + 6/6`. Exact no-Defender/no-skip verification passes
+  `302/302` in 668 seconds; the 222,657-byte report SHA-256 is
+  `c4a95e939462465ce62fe2f6a0a68409906d520870c1c3a8f53ae531a591e0e1`.
+- PowerShell 5.1 and 7 accept both authentic cases and reject all `24/24`
+  adversarial host/mutation cases with zero unexpected path-only content
+  rejections. Adversarial SHA-256 is
+  `7328b2ee5762de84f1d3054e24554f10aae2f20bad2f8442abf466210b6b014f`.
+  Final audit SHA-256
+  `d15e592a1f11f361dcfd737bfeed8807552881dcaa4e6f5f955b2570416991db`
+  passes 15 blobs, nine locks, 28 backups, zero product process/residue, and the
+  exact protected vault. Checkpoint 2274 closes; all documented durability,
+  privilege, driver/pre-execution, Defender, and whole-goal limits remain open.

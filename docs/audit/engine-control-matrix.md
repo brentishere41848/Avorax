@@ -6301,3 +6301,19 @@ Checkpoint 2274 is not closed: evidence-head/merged-main, destination, and
 closure evidence remain pending. The protected vault remains exactly 16,072
 files with zero pending, and the complete antivirus-hardening goal remains
 active.
+
+## Checkpoint 2274 Closure Classification
+
+| Control / engine | Final checkpoint status | Evidence / remaining limit |
+| --- | --- | --- |
+| Shared update-tree cleanup | Verified on synchronized Windows destination and fixed hosted Ubuntu 24.04 route | Exact local/destination suites, both hosted heads, and `302/302` pass; this is bounded explicit removal, not an atomic delete transaction |
+| Cleanup resource bounds | Verified for the scripted limits and fixtures | Entry, depth, logical-byte, and aggregate encoded-path-payload failures occur before mutation; allocator, OS-call latency, and hostile storage remain outside the bound |
+| Nested path/type safety | Verified for harmless Windows and Unix fixtures | Both hosted heads prove exact `1/1 + 1/1`; checks remain point-in-time against same-identity and privileged races |
+| Authenticated recovery preservation | Verified for the modeled nested-link failure | Recovery journal and tombstone remain preserved; package-wide power-loss atomicity and truthful storage are not claimed |
+| Validator and destination regression | Verified | Source `705/705`, both workspaces, release, Flutter `852/852`, protocols, exact `302/302`, authentic acceptance, and `24/24` hostile rejection pass |
+| Dependency and package regression | Verified for this checkpoint | Nine lockfiles remain unchanged; bounded non-extracting 569-component SBOM review passes with publication skipped |
+| Detection and custom engines | Unchanged | No detector responsibility, threshold, verdict, quarantine, realtime, driver/pre-execution, or Defender authority changed |
+
+Checkpoint 2274 is closed through normal merge and exact zero-delete
+destination synchronization. The complete antivirus-hardening goal remains
+active.

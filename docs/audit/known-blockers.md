@@ -4467,3 +4467,19 @@ antivirus-goal closure also remain open. No live malware, Defender change,
 machine-wide install, service/driver start, release, publication, or protected-
 vault mutation is authorized; the exact 16,072-file vault remains at zero
 pending.
+
+Evidence-head and merged-main Ubuntu 24.04 jobs now prove both dedicated Unix
+link fixtures execute exact non-empty `1/1`; all six CI jobs pass at both heads.
+Normal PR `#157`, guarded 15-path zero-delete synchronization, complete
+destination regression, exact `302/302`, dual-host `24/24` adversarial
+rejection, and final blob/lock/backup/process/vault audit close checkpoint
+2274. The narrow hosted Unix execution and synchronized-destination evidence
+blockers are removed.
+
+The following blockers are deliberately not removed: point-in-time same-
+identity races; Windows deletion durability; storage hardware truthfulness;
+other filesystems, devices, OS versions, and installed identities; Android;
+root/admin/SYSTEM, hostile filesystems, storage rollback/reordering, and kernel
+compromise; package-wide power-loss transactionality; production signing and
+deployment; signed driver and proven pre-execution enforcement; Defender
+replacement; and complete antivirus-goal closure.

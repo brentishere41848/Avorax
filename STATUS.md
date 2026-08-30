@@ -8734,3 +8734,26 @@ Point-in-time same-identity races, privileged actors, hostile
 filesystems, Windows deletion durability, storage replay, package-wide
 atomicity, and complete antivirus-goal closure remain open or technically
 limited.
+
+That pending state is superseded. Evidence head `8fe3cec1` and normal PR `#157`
+merge `59fb56d7` pass exact-head and merged-main CI/packages. Fixed Ubuntu jobs
+prove both dedicated Unix fixtures execute exact non-empty `1/1` at each head.
+Publication is skipped; bounded package review proves six release files, seven
+checksums, and CycloneDX 1.6 with 569 components without artifact extraction or
+execution.
+
+Guarded synchronization applies exact 14 modified plus one added path and zero
+deletes with 28 verified backups. The destination passes Source `705/705`,
+strict Rust format/lint, both locked workspaces, locked all-feature release,
+Flutter `852/852`, protocols `14/14 + 6/6`, and no-skip/no-Defender verification
+`302/302` in 668 seconds. Both validator hosts accept the authentic report and
+reject all `24/24` adversarial host/mutation cases. Final audit passes all 15
+blobs, nine unchanged locks, zero product process/residue, and the exact
+protected vault.
+
+Checkpoint 2274 is closed through synchronized destination verification.
+Point-in-time filesystem races, Windows deletion durability, truthful storage,
+package-wide atomicity, privileged/hostile actors, installed identity, Android,
+production signing/deployment, driver/pre-execution enforcement, Defender
+replacement, and complete antivirus-goal closure remain open or technically
+limited.

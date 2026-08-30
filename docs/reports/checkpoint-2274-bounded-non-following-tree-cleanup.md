@@ -2,8 +2,7 @@
 
 Date: 2026-08-30
 
-Status: **Final-source local and implementation-head hosted verification passed;
-evidence-head, merge, destination, and closure pending**
+Status: **Closed through hosted integration and synchronized destination verification**
 
 ## Purpose
 
@@ -184,10 +183,54 @@ the four platform evidence artifacts are `9731098756`, `9731024272`,
 bounded workflow-log evidence; no artifact was downloaded, extracted, or
 executed, and no release was published.
 
-## Remaining Evidence
+## Evidence-Head, Merge, And Destination Closure
 
-Commit this hosted evidence and require exact evidence-head CI/package reruns.
-Then perform the normal PR merge, merged-main checks, guarded zero-delete
-destination synchronization, full destination regression, dual-host report
-validation, and closure audit. Checkpoint 2274 and the complete antivirus-
-hardening goal remain active.
+Evidence head `8fe3cec18181546e7bf6e7bd1ac4deaa193d32b8` passes all six
+Avorax CI jobs in run `33308297789`. Ubuntu 24.04 job `99248653943` executes
+both dedicated cleanup link fixtures by fully qualified name with `--exact`;
+each reports `running 1 test`, its exact name as `ok`, and `1 passed; 0 failed`.
+Desktop Packages run `33308297858` passes contracts, Windows x64 MSI/EXE,
+Linux x64 DEB/tar, both macOS DMGs, and consolidation with publication skipped.
+Consolidated artifact `9731350472` is 133,268,182 bytes with Actions archive
+SHA-256 `e8397280378ec308a70610f64418ce12e75e1fe54e74fc7bb3bf0eb671d97dba`.
+
+Normal PR `#157` merges as
+`59fb56d732d949f347f334b2504a09570dd73fbe`. Merged-main CI run
+`33308936338` passes all six jobs; Ubuntu job `99250355386` again proves exact
+non-empty `1/1 + 1/1` execution. Desktop Packages run `33308936319` passes all
+build and consolidation jobs with publication skipped. Consolidated artifact
+`9731641198` is 132,667,431 bytes with Actions archive SHA-256
+`70b976f1d77ec7359c44d3e48a532c382432f1ac32f201173dd7bf3ae1bd354b`.
+Both package runs prove six release files, seven checksums, and CycloneDX 1.6
+with 569 components. Review used metadata and bounded logs only; no artifact
+was downloaded, extracted, or executed.
+
+Guarded synchronization applies exact 14 modified and one added path with zero
+deletes and preserves 28 verified backups. Sync-report SHA-256 is
+`ceb2c4d2680011b1a41b9630be536906198f03395e2d08877128d9818fa6b462`.
+The synchronized `C:\Users\Brent\Documents\Avorax-main` destination passes
+Source `705/705`, Rust format, strict locked all-target/all-feature Clippy, both
+locked workspace test variants, locked all-target/all-feature release, Flutter
+analysis and `852/852`, and protocol analysis/tests `14/14 + 6/6`.
+
+The destination no-skip/no-Defender verifier passes exact `302/302` in 668
+seconds. Its 222,657-byte report SHA-256 is
+`c4a95e939462465ce62fe2f6a0a68409906d520870c1c3a8f53ae531a591e0e1`.
+PowerShell 5.1 and 7 accept both authentic host cases and reject all `24/24`
+host/mutation cases, covering twelve mutations on each host. The 20,094-byte
+adversarial result SHA-256 is
+`7328b2ee5762de84f1d3054e24554f10aae2f20bad2f8442abf466210b6b014f`;
+no content mutation is rejected only by an unexpected candidate-path boundary.
+Final audit SHA-256
+`d15e592a1f11f361dcfd737bfeed8807552881dcaa4e6f5f955b2570416991db`
+passes all 15 exact merge blobs, nine unchanged active lockfiles, 28 backups,
+zero product processes/pending files/temporary roots, and the unchanged
+protected-vault invariant.
+
+Checkpoint 2274 is closed. Bounded cleanup remains point-in-time user-mode
+evidence rather than atomic or durable deletion. Same-identity races, open
+handles, administrators/SYSTEM/root, hostile filesystems, storage replay,
+kernel compromise, Windows deletion persistence, installed identity, Android,
+production signing/deployment, signed-driver/pre-execution enforcement,
+Defender replacement, and the complete antivirus-hardening goal remain open,
+blocked, partial, or technically limited as documented.

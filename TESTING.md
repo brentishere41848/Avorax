@@ -2141,3 +2141,53 @@ skipped. GitHub metadata binds consolidated artifact `9731114476` and all four
 platform evidence bundles to the implementation head. No artifact was
 downloaded, extracted, or executed during review. Evidence-head hosted reruns,
 merge, destination, and closure testing remain pending.
+
+### Checkpoint 2274 closure evidence
+
+Evidence-head and merged-main fixed Ubuntu 24.04 jobs each execute both
+dedicated Unix cleanup fixtures by fully qualified name with `--exact`; each
+fixture passes exact non-empty `1/1`. Both CI matrices pass all six jobs. Both
+desktop package matrices pass with publication skipped and bounded review
+proves six release files, seven checksums, and CycloneDX 1.6 with 569
+components. From the synchronized destination root, the credited commands are:
+
+```powershell
+python -B tools\testing\run-python-source-contracts.py
+cargo fmt --all -- --check
+cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
+cargo test --workspace --locked --no-fail-fast -- --test-threads=1
+cargo test --workspace --all-targets --all-features --locked --no-fail-fast -- --test-threads=1
+cargo build --workspace --release --all-targets --all-features --locked
+Push-Location apps\zentor_client
+flutter analyze
+flutter test
+Pop-Location
+Push-Location packages\zentor_protocol
+dart analyze
+dart test
+Pop-Location
+Push-Location packages\avorax_protocol
+dart analyze
+dart test
+Pop-Location
+```
+
+Source passes `705/705`; both Rust workspace variants have zero failures and
+21 documented isolated child-fixture ignores; strict lint and release pass;
+Flutter passes `852/852`; protocol tests pass `14/14 + 6/6`.
+
+```powershell
+powershell.exe -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass `
+  -File tools\testing\verify-small-threat-mvp.ps1 `
+  -RepoRoot . `
+  -ReportPath .workflow\ultracode\avorax-hardening\results\checkpoint-2274-destination-bounded-non-following-tree-cleanup-report.json
+```
+
+The verifier passes exact `302/302` in 668 seconds with no failed/skipped
+steps, no non-null step errors, and Defender/EICAR opt-in false. The 222,657-
+byte report SHA-256 is
+`c4a95e939462465ce62fe2f6a0a68409906d520870c1c3a8f53ae531a591e0e1`.
+PowerShell 5.1 and 7 accept both authentic cases and reject twelve mutations per
+host, exact `24/24`, with no unexpected path-only content rejection. Final
+destination audit verifies 15 exact blobs, nine unchanged locks, 28 backups,
+zero product process/pending/temp residue, and the exact protected vault.
