@@ -2,7 +2,7 @@
 
 Date: 2026-08-30
 
-Status: **Collision-safe repair local closure evidence passed / hosted and integration evidence pending**
+Status: **Closed through hosted integration and synchronized destination verification**
 
 ## Purpose
 
@@ -283,6 +283,74 @@ Artifact bytes were not downloaded, extracted, installed, or executed during
 this review. Both `Publish desktop beta prerelease` jobs are explicitly
 `skipped`; no release or publication occurred.
 
-Evidence-head CI/packages, normal PR merge, merged-main evidence, guarded
-zero-delete destination synchronization, and definitive destination
-verification remain before this checkpoint closes.
+## Evidence-Head, Merge, And Destination Closure
+
+Evidence commit `60ba3d04a87ea6b638d6f1a3bf05be06321ba809` became
+PR `#159`'s exact head. Avorax CI `33320917016` passes all six jobs and
+Desktop Packages PR run `33320917038` passes every platform, package-contract,
+and consolidation job with publication skipped. The consolidated artifact
+`9735011272` is 133,148,045 bytes with hosted archive SHA-256
+`a27a9efcf79ffa68b69da368c5a77b11255ebef5103db017b2da8cace65920b8`.
+There is no evidence-head package push run because the documentation-only
+commit did not match that workflow's push path filters; PR evaluation still
+covered the complete branch diff. No artifact was downloaded, extracted,
+installed, or executed.
+
+PR `#159` was merged normally at `2026-08-30T16:07:27Z` as
+`2144624dd9c49ff0a7d89475945929e21b3cb01d`. Exact merged-main Avorax CI
+`33321564952` passes all six jobs. Desktop Packages run `33321564928` passes
+all platform builds and consolidation with publication skipped. Consolidated
+artifact `9735175714` is 132,691,644 bytes with hosted archive SHA-256
+`205215b816fa20ff9bcd6b46a494d0e91998be223f5c6e4ab101becdeb92830e`.
+No direct-main push, release, or publication occurred.
+
+The guarded synchronization from the exact merge to
+`C:\Users\Brent\Documents\Avorax-main` applies exactly 16 modified and two
+added files with zero deletions. It creates only the previously absent
+`core\zentor_native_engine\tests` parent after validating its complete existing
+ancestor chain. All 18 destination blobs and all nine lockfiles pass independent
+hash comparison. The sync report SHA-256 is
+`03f6b3aefaa72f88720fde83dcb3670ef9d6b87164fdb908c0206ccdfff9edeb`;
+32 rollback backups are retained under the repository-local `.verification`
+root. No pending or temporary product residue and no Avorax/Zentor product
+process were observed.
+
+Destination focused verification passes Source contracts `707/707`, formatting
+and parsers, replacement `3/3`, Windows reservation/recovery `7/7`, activation
+`6/6`, rejection `2/2`, strict platform/update/integration Clippy, the dedicated
+benign target `3/3`, and the complete false-positive gate. Broad verification
+passes strict locked all-target/all-feature Clippy, both locked workspace test
+variants, locked all-target/all-feature release, Flutter analysis and `852/852`,
+and protocol analysis/tests `14/14 + 6/6`. Rust executes exactly 1,806 tests,
+with 21 intentional Native child-fixture ignores and zero failures.
+
+The destination no-skip/no-Defender verifier passes exact `302/302` in
+`753.8s`, with zero non-passing or error-bearing steps. Its 223,980-byte report
+SHA-256 is
+`a54576c5019f3045bb7ef689a4b2295a469ab9aff238480d90686947ee6bc831`.
+Both PowerShell hosts accept the authentic report, and independent adversarial
+validation rejects all `34/34` hostile cases across 17 unique mutations while
+accepting both authentic controls. The 28,108-byte adversarial result SHA-256
+is `f2adf9e3c401747d3a6a4afe89615d67c91c275b27fe78cf5e93c89f6d666ba0`.
+The final destination audit binds these artifacts, the sync evidence, all 18
+destination blobs, nine locks, zero residue, and the protected-vault invariant;
+its SHA-256 is
+`fae6617716deee2be75242675999d0b6afb8f49060077ba099fc15895c70647f`.
+
+Two orchestration errors are retained rather than credited as product checks.
+The first broad destination command used a relative log path after changing
+directories; Rust and release had already passed, then Flutter was rerun with
+an absolute log path and passed. The first definitive invocation assumed a
+nonexistent system PowerShell 7 path and failed before verifier step 1 or report
+creation; rerunning the unchanged verifier with the bundled PowerShell 7 path
+produced the exact `302/302` evidence above. Separately, `unittest` discovered
+zero tests in the pytest-style source-contract module, system Python lacked
+pytest, and `uv` was absent; the repository's dependency-free source-contract
+runner subsequently passed all `707/707` contracts.
+
+Checkpoint 2275 is closed through hosted integration and independently audited
+synchronized-destination verification. It does not close the complete antivirus
+goal. The operation remains one loose-file replacement rather than authenticated
+crash journaling or package-wide transactionality; power loss, hostile storage,
+privileged actors, production signing/deployment, driver/pre-execution blocking,
+and Defender replacement remain open or technically limited.
