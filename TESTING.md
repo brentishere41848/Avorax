@@ -2446,8 +2446,11 @@ intentional ignores, locked release, Flutter analysis and `852/852`, and
 protocol analysis/tests `14/14 + 6/6`. The definitive verifier passes exact
 `303/303` in `680.4s`, with no skips/errors and Defender/EICAR opt-in false.
 PS5/PS7 accept the authentic report and reject all `62/62` adversarial cases
-across 31 mutations. Hosted and destination execution remain separate required
-evidence.
+across 31 mutations. Exact implementation head `2e106e0` passes Avorax CI
+`33337128172` and Desktop Packages push/PR `33337101095`/`33337128179`, with
+actual Ubuntu/macOS recovery, all six package files, seven checksums, a
+569-component lockfile SBOM, and publication skipped. Evidence-head and
+destination execution remain separate required evidence.
 
 Fixtures use harmless isolated ASCII only and are never executed. They must not
 touch the protected vault, install/start services or drivers, alter Defender,

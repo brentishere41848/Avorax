@@ -8993,10 +8993,11 @@ All 16 destination blobs and nine locks are exact, with zero process/residue and
 the unchanged protected vault. Checkpoint 2276 is closed; pair-wide
 transactionality and the complete antivirus goal remain open.
 
-## Checkpoint 2277: Metadata-Update Recovery Scripted
+## Checkpoint 2277: Metadata-Update Recovery Implementation-Head Verified
 
-Checkpoint 2277 is implementation-scripted and locally verified, but not yet
-hosted/integration/destination-closed.
+Checkpoint 2277 is implementation-scripted and locally verified, and its exact
+implementation head has passing hosted evidence. It is not yet evidence-head,
+integration, or destination closed.
 Local Core now writes one bounded strict HMAC-authenticated
 `{id}.update.pending` envelope before replacing an existing JSON/HMAC pair.
 The journal binds both exact previous/proposed versions. Its presence means the
@@ -9017,8 +9018,11 @@ Flutter `852/852`, and protocols `14/14 + 6/6` pass. The no-skip/no-Defender
 verifier passes exact `303/303` in `680.4s`; PS5/PS7 accept the authentic report
 and reject `62/62` adversarial cases across 31 mutations. The final local audit
 passes the exact 17-path diff, nine unchanged locks, zero residue, and exact
-protected vault. Hosted exact-head, normal PR integration, guarded destination
-sync, and final audits remain open.
+protected vault. Evidence-head checks, normal PR integration, guarded destination
+sync, and final audits remain open. Exact implementation head `2e106e0` passes
+CI `33337128172` and package push/PR runs `33337101095`/`33337128179`; all six
+CI jobs and both six-artifact package matrices pass, with both publication jobs
+skipped.
 
 This is bounded rollback recovery, not two-file atomicity. Payload movement for
 restore/delete remains a separate crash boundary. Driver/pre-execution,

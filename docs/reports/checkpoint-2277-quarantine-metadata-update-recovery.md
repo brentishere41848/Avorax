@@ -6,7 +6,8 @@ Implementation, harmless runtime fixtures, cross-platform workflow wiring,
 definitive verifier/validator contracts, source contracts, and documentation are
 scripted. No checkpoint-2277 test ran during the scripting phase. Focused and
 full local verification started only after this complete batch was frozen and
-now passes. Hosted, integration, and destination evidence remains required.
+now passes. Exact implementation-head hosted evidence also passes; integration,
+evidence-head, and destination evidence remains required.
 
 The complete antivirus-hardening goal remains active. This checkpoint does not
 claim production-complete malware prevention, Defender replacement, kernel or
@@ -126,9 +127,15 @@ lockfiles, zero process/pending/temp residue, and protected-vault invariant; its
 SHA-256 is
 `7c1cac6557848e5bd5fb9c80eeecf7b2e4c7378116e2fa4ec1274b35d38e5190`.
 
-Hosted evidence still must be tied to an exact pushed commit. Package workflows may
-build but publication must remain skipped. Artifacts are metadata-inspected
-only; they are not downloaded, executed, installed, released, or published.
+Exact implementation head `2e106e0ecafdc988b5eb2b0003462b7423a58a3e`
+passes Avorax CI `33337128172` and Desktop Packages push/PR runs
+`33337101095`/`33337128179`. CI passes all six jobs, including actual Ubuntu and
+macOS metadata-update recovery. Each package run passes Windows MSI/EXE, Linux
+DEB/tar, macOS arm64/x64 DMG, six-release-file consolidation, seven release
+checksums, and a 569-component CycloneDX lockfile SBOM. Both publication jobs
+are skipped. Artifacts were metadata-inspected from hosted logs only; they were
+not downloaded, executed, installed, released, or published. A separate
+evidence-head check remains required before integration.
 Integration uses a normal reviewed PR merge, followed by guarded destination
 synchronization with exact blob preconditions, backups, zero deletes, and
 read-only vault verification.
