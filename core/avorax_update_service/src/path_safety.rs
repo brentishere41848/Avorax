@@ -5,6 +5,39 @@ use std::path::{Component, Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 const MAX_STAGED_FILE_COPY_BYTES: u64 = 1024 * 1024 * 1024;
+const CHECKED_TREE_CLEANUP_LIMITS: CheckedTreeCleanupLimits = CheckedTreeCleanupLimits {
+    max_entries: 100_000,
+    max_depth: 128,
+    max_regular_file_bytes: 8 * 1024 * 1024 * 1024,
+    max_path_bytes: 16 * 1024 * 1024,
+};
+
+#[derive(Clone, Copy)]
+struct CheckedTreeCleanupLimits {
+    max_entries: usize,
+    max_depth: usize,
+    max_regular_file_bytes: u64,
+    max_path_bytes: usize,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum CheckedTreeCleanupEntryKind {
+    RegularFile(u64),
+    Directory,
+}
+
+struct CheckedTreeCleanupEntry {
+    path: PathBuf,
+    kind: CheckedTreeCleanupEntryKind,
+}
+
+#[derive(Default)]
+struct CheckedTreeCleanupInventory {
+    entries: Vec<CheckedTreeCleanupEntry>,
+    entry_count: usize,
+    regular_file_bytes: u64,
+    path_bytes: usize,
+}
 
 pub fn create_dir_all_checked(path: &Path, label: &str) -> Result<()> {
     ensure_existing_ancestors_not_link(path, label)?;
@@ -256,15 +289,197 @@ fn cleanup_staged_temp_file(path: &Path, label: &str) -> Result<()> {
 }
 
 pub fn remove_dir_all_checked(path: &Path, label: &str) -> Result<()> {
-    let metadata = std::fs::symlink_metadata(path)?;
+    remove_dir_all_checked_with_limits(path, label, CHECKED_TREE_CLEANUP_LIMITS)
+}
+
+fn remove_dir_all_checked_with_limits(
+    path: &Path,
+    label: &str,
+    limits: CheckedTreeCleanupLimits,
+) -> Result<()> {
     anyhow::ensure!(
-        metadata.is_dir(),
-        "{label} is not a directory: {}",
-        path.display()
+        limits.max_entries > 0,
+        "{label} cleanup entry limit is zero"
     );
     ensure_not_link_or_reparse(path, label)?;
-    std::fs::remove_dir_all(path)?;
+    let root_metadata = std::fs::symlink_metadata(path)
+        .with_context(|| format!("failed to inspect {label} cleanup root {}", path.display()))?;
+    anyhow::ensure!(
+        root_metadata.is_dir(),
+        "{label} cleanup root is not a directory: {}",
+        path.display()
+    );
+    let mut inventory = CheckedTreeCleanupInventory::default();
+    inventory_checked_tree_cleanup(path, path, label, 0, limits, &mut inventory)?;
+    remove_checked_tree_inventory(path, label, &inventory)
+}
+
+fn inventory_checked_tree_cleanup(
+    path: &Path,
+    boundary: &Path,
+    label: &str,
+    depth: usize,
+    limits: CheckedTreeCleanupLimits,
+    inventory: &mut CheckedTreeCleanupInventory,
+) -> Result<()> {
+    anyhow::ensure!(
+        depth <= limits.max_depth,
+        "{label} cleanup tree exceeds its depth limit at {}",
+        path.display()
+    );
+    inventory.entry_count = inventory
+        .entry_count
+        .checked_add(1)
+        .ok_or_else(|| anyhow::anyhow!("{label} cleanup entry count overflow"))?;
+    anyhow::ensure!(
+        inventory.entry_count <= limits.max_entries,
+        "{label} cleanup tree exceeds its entry limit at {}",
+        path.display()
+    );
+    let path_bytes = path.as_os_str().as_encoded_bytes().len();
+    inventory.path_bytes = inventory
+        .path_bytes
+        .checked_add(path_bytes)
+        .ok_or_else(|| anyhow::anyhow!("{label} cleanup encoded-path byte count overflow"))?;
+    anyhow::ensure!(
+        inventory.path_bytes <= limits.max_path_bytes,
+        "{label} cleanup tree exceeds its encoded-path payload limit at {}",
+        path.display()
+    );
+
+    ensure_existing_path_chain_not_link(path, boundary, label)?;
+    let metadata = std::fs::symlink_metadata(path)
+        .with_context(|| format!("failed to inspect {label} cleanup entry {}", path.display()))?;
+    ensure_not_link_or_reparse(path, label)?;
+    let kind = if metadata.is_file() {
+        inventory.regular_file_bytes = inventory
+            .regular_file_bytes
+            .checked_add(metadata.len())
+            .ok_or_else(|| anyhow::anyhow!("{label} cleanup regular-file byte count overflow"))?;
+        anyhow::ensure!(
+            inventory.regular_file_bytes <= limits.max_regular_file_bytes,
+            "{label} cleanup tree exceeds its regular-file byte limit at {}",
+            path.display()
+        );
+        CheckedTreeCleanupEntryKind::RegularFile(metadata.len())
+    } else if metadata.is_dir() {
+        for entry in std::fs::read_dir(path).with_context(|| {
+            format!(
+                "failed to enumerate {label} cleanup directory {}",
+                path.display()
+            )
+        })? {
+            let entry = entry.with_context(|| {
+                format!(
+                    "failed to enumerate an entry in {label} cleanup directory {}",
+                    path.display()
+                )
+            })?;
+            let child_depth = depth
+                .checked_add(1)
+                .ok_or_else(|| anyhow::anyhow!("{label} cleanup depth overflow"))?;
+            inventory_checked_tree_cleanup(
+                &entry.path(),
+                boundary,
+                label,
+                child_depth,
+                limits,
+                inventory,
+            )?;
+        }
+        ensure_existing_path_chain_not_link(path, boundary, label)?;
+        let after = std::fs::symlink_metadata(path).with_context(|| {
+            format!(
+                "failed to re-inspect {label} cleanup directory {} after enumeration",
+                path.display()
+            )
+        })?;
+        ensure_not_link_or_reparse(path, label)?;
+        anyhow::ensure!(
+            after.is_dir(),
+            "{label} cleanup directory changed type during inventory: {}",
+            path.display()
+        );
+        CheckedTreeCleanupEntryKind::Directory
+    } else {
+        anyhow::bail!(
+            "{label} cleanup entry is neither a regular file nor directory: {}",
+            path.display()
+        );
+    };
+    inventory.entries.push(CheckedTreeCleanupEntry {
+        path: path.to_path_buf(),
+        kind,
+    });
     Ok(())
+}
+
+fn remove_checked_tree_inventory(
+    boundary: &Path,
+    label: &str,
+    inventory: &CheckedTreeCleanupInventory,
+) -> Result<()> {
+    for entry in &inventory.entries {
+        ensure_existing_path_chain_not_link(&entry.path, boundary, label)?;
+        let metadata = std::fs::symlink_metadata(&entry.path).with_context(|| {
+            format!(
+                "failed to re-inspect {label} cleanup entry before removal {}",
+                entry.path.display()
+            )
+        })?;
+        ensure_not_link_or_reparse(&entry.path, label)?;
+        match entry.kind {
+            CheckedTreeCleanupEntryKind::RegularFile(expected_bytes) => {
+                anyhow::ensure!(
+                    metadata.is_file(),
+                    "{label} cleanup entry changed from a regular file before removal: {}",
+                    entry.path.display()
+                );
+                anyhow::ensure!(
+                    metadata.len() == expected_bytes,
+                    "{label} cleanup regular file changed size before removal: {}",
+                    entry.path.display()
+                );
+                std::fs::remove_file(&entry.path).with_context(|| {
+                    format!(
+                        "failed to remove {label} cleanup file {}",
+                        entry.path.display()
+                    )
+                })?;
+            }
+            CheckedTreeCleanupEntryKind::Directory => {
+                anyhow::ensure!(
+                    metadata.is_dir(),
+                    "{label} cleanup entry changed from a directory before removal: {}",
+                    entry.path.display()
+                );
+                std::fs::remove_dir(&entry.path).with_context(|| {
+                    format!(
+                        "failed to remove {label} empty cleanup directory {}",
+                        entry.path.display()
+                    )
+                })?;
+            }
+        }
+        ensure_checked_cleanup_path_absent(&entry.path, label)?;
+    }
+    ensure_checked_cleanup_path_absent(boundary, label)
+}
+
+fn ensure_checked_cleanup_path_absent(path: &Path, label: &str) -> Result<()> {
+    match std::fs::symlink_metadata(path) {
+        Err(error) if error.kind() == ErrorKind::NotFound => Ok(()),
+        Ok(_) => anyhow::bail!(
+            "{label} cleanup path reappeared after removal: {}",
+            path.display()
+        ),
+        Err(error) => Err(error).with_context(|| {
+            format!(
+                "failed to verify {label} cleanup path absence {}",
+                path.display()
+            )
+        }),
+    }
 }
 
 // Source-contract tests intentionally precede the lower-level path-chain helpers.
@@ -585,6 +800,232 @@ mod tests {
         assert!(helper_source.contains("failed to inspect {label}"));
         assert!(!helper_source.contains(&old_probe));
         assert!(!source.contains(&old_ancestor_probe));
+    }
+
+    fn checked_cleanup_limits(
+        max_entries: usize,
+        max_depth: usize,
+        max_regular_file_bytes: u64,
+        max_path_bytes: usize,
+    ) -> CheckedTreeCleanupLimits {
+        CheckedTreeCleanupLimits {
+            max_entries,
+            max_depth,
+            max_regular_file_bytes,
+            max_path_bytes,
+        }
+    }
+
+    #[test]
+    fn checked_tree_cleanup_removes_only_inventoried_regular_tree() {
+        let dir = tempdir().unwrap();
+        let tree = dir.path().join("cleanup-tree");
+        std::fs::create_dir_all(tree.join("nested/deeper")).unwrap();
+        std::fs::write(tree.join("root.txt"), b"benign root fixture").unwrap();
+        std::fs::write(
+            tree.join("nested/deeper/leaf.txt"),
+            b"benign nested fixture",
+        )
+        .unwrap();
+
+        remove_dir_all_checked(&tree, "benign test tree").unwrap();
+
+        assert_eq!(
+            std::fs::symlink_metadata(&tree).unwrap_err().kind(),
+            ErrorKind::NotFound
+        );
+        assert!(dir.path().exists());
+    }
+
+    #[test]
+    fn checked_tree_cleanup_entry_limit_fails_before_mutation() {
+        let dir = tempdir().unwrap();
+        let tree = dir.path().join("cleanup-tree");
+        std::fs::create_dir(&tree).unwrap();
+        std::fs::write(tree.join("one.txt"), b"one").unwrap();
+        std::fs::write(tree.join("two.txt"), b"two").unwrap();
+        let limits = checked_cleanup_limits(2, 8, 1024, 1024);
+
+        let error =
+            remove_dir_all_checked_with_limits(&tree, "bounded test tree", limits).unwrap_err();
+        let detail = format!("{error:#}");
+
+        assert!(detail.contains("exceeds its entry limit"), "{detail}");
+        assert_eq!(std::fs::read(tree.join("one.txt")).unwrap(), b"one");
+        assert_eq!(std::fs::read(tree.join("two.txt")).unwrap(), b"two");
+    }
+
+    #[test]
+    fn checked_tree_cleanup_depth_limit_fails_before_mutation() {
+        let dir = tempdir().unwrap();
+        let tree = dir.path().join("cleanup-tree");
+        let leaf = tree.join("nested/leaf.txt");
+        std::fs::create_dir_all(leaf.parent().unwrap()).unwrap();
+        std::fs::write(&leaf, b"benign depth fixture").unwrap();
+        let limits = checked_cleanup_limits(16, 1, 1024, 1024);
+
+        let error =
+            remove_dir_all_checked_with_limits(&tree, "bounded test tree", limits).unwrap_err();
+        let detail = format!("{error:#}");
+
+        assert!(detail.contains("exceeds its depth limit"), "{detail}");
+        assert_eq!(std::fs::read(&leaf).unwrap(), b"benign depth fixture");
+    }
+
+    #[test]
+    fn checked_tree_cleanup_byte_limit_fails_before_mutation() {
+        let dir = tempdir().unwrap();
+        let tree = dir.path().join("cleanup-tree");
+        let file = tree.join("fixture.txt");
+        std::fs::create_dir(&tree).unwrap();
+        std::fs::write(&file, b"four").unwrap();
+        let limits = checked_cleanup_limits(4, 4, 3, 1024);
+
+        let error =
+            remove_dir_all_checked_with_limits(&tree, "bounded test tree", limits).unwrap_err();
+        let detail = format!("{error:#}");
+
+        assert!(
+            detail.contains("exceeds its regular-file byte limit"),
+            "{detail}"
+        );
+        assert_eq!(std::fs::read(&file).unwrap(), b"four");
+    }
+
+    #[test]
+    fn checked_tree_cleanup_path_payload_limit_fails_before_mutation() {
+        let dir = tempdir().unwrap();
+        let tree = dir.path().join("cleanup-tree");
+        let file = tree.join("fixture.txt");
+        std::fs::create_dir(&tree).unwrap();
+        std::fs::write(&file, b"benign path payload fixture").unwrap();
+        let limits = checked_cleanup_limits(4, 4, 1024, tree.as_os_str().as_encoded_bytes().len());
+
+        let error =
+            remove_dir_all_checked_with_limits(&tree, "bounded test tree", limits).unwrap_err();
+        let detail = format!("{error:#}");
+
+        assert!(
+            detail.contains("exceeds its encoded-path payload limit"),
+            "{detail}"
+        );
+        assert_eq!(
+            std::fs::read(&file).unwrap(),
+            b"benign path payload fixture"
+        );
+    }
+
+    #[test]
+    fn checked_tree_cleanup_type_change_fails_visible_without_recursive_delete() {
+        let dir = tempdir().unwrap();
+        let tree = dir.path().join("cleanup-tree");
+        let target = tree.join("fixture.txt");
+        std::fs::create_dir(&tree).unwrap();
+        std::fs::write(&target, b"benign original fixture").unwrap();
+        let mut inventory = CheckedTreeCleanupInventory::default();
+        inventory_checked_tree_cleanup(
+            &tree,
+            &tree,
+            "bounded test tree",
+            0,
+            CHECKED_TREE_CLEANUP_LIMITS,
+            &mut inventory,
+        )
+        .unwrap();
+        std::fs::remove_file(&target).unwrap();
+        std::fs::create_dir(&target).unwrap();
+        std::fs::write(
+            target.join("replacement.txt"),
+            b"benign replacement fixture",
+        )
+        .unwrap();
+
+        let error =
+            remove_checked_tree_inventory(&tree, "bounded test tree", &inventory).unwrap_err();
+        let detail = format!("{error:#}");
+
+        assert!(
+            detail.contains("changed from a regular file before removal"),
+            "{detail}"
+        );
+        assert_eq!(
+            std::fs::read(target.join("replacement.txt")).unwrap(),
+            b"benign replacement fixture"
+        );
+        assert!(tree.exists());
+    }
+
+    #[test]
+    fn checked_tree_cleanup_size_change_fails_visible_without_removal() {
+        let dir = tempdir().unwrap();
+        let tree = dir.path().join("cleanup-tree");
+        let target = tree.join("fixture.txt");
+        std::fs::create_dir(&tree).unwrap();
+        std::fs::write(&target, b"one").unwrap();
+        let mut inventory = CheckedTreeCleanupInventory::default();
+        inventory_checked_tree_cleanup(
+            &tree,
+            &tree,
+            "bounded test tree",
+            0,
+            CHECKED_TREE_CLEANUP_LIMITS,
+            &mut inventory,
+        )
+        .unwrap();
+        std::fs::write(&target, b"benign expanded fixture").unwrap();
+
+        let error =
+            remove_checked_tree_inventory(&tree, "bounded test tree", &inventory).unwrap_err();
+        let detail = format!("{error:#}");
+
+        assert!(detail.contains("changed size before removal"), "{detail}");
+        assert_eq!(std::fs::read(&target).unwrap(), b"benign expanded fixture");
+        assert!(tree.exists());
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn checked_tree_cleanup_nested_link_fails_before_mutation() {
+        use std::os::unix::fs::symlink;
+
+        let dir = tempdir().unwrap();
+        let tree = dir.path().join("cleanup-tree");
+        let external = dir.path().join("external.txt");
+        let link = tree.join("external-link");
+        std::fs::create_dir(&tree).unwrap();
+        std::fs::write(&external, b"benign external fixture").unwrap();
+        symlink(&external, &link).unwrap();
+
+        let error = remove_dir_all_checked(&tree, "bounded test tree").unwrap_err();
+        let detail = format!("{error:#}");
+
+        assert!(detail.contains("must not be a symbolic link"), "{detail}");
+        assert_eq!(
+            std::fs::read(&external).unwrap(),
+            b"benign external fixture"
+        );
+        assert!(std::fs::symlink_metadata(&link)
+            .unwrap()
+            .file_type()
+            .is_symlink());
+    }
+
+    #[test]
+    fn checked_tree_cleanup_source_contract_uses_explicit_empty_removal() {
+        let source = include_str!("path_safety.rs");
+        let start = source.find("pub fn remove_dir_all_checked").unwrap();
+        let end = source[start..]
+            .find("// Source-contract tests intentionally")
+            .map(|offset| start + offset)
+            .unwrap();
+        let cleanup_source = &source[start..end];
+
+        assert!(cleanup_source.contains("inventory_checked_tree_cleanup"));
+        assert!(cleanup_source.contains("remove_checked_tree_inventory"));
+        assert!(cleanup_source.contains("ensure_existing_path_chain_not_link"));
+        assert!(cleanup_source.contains("std::fs::remove_file"));
+        assert!(cleanup_source.contains("std::fs::remove_dir"));
+        assert!(!cleanup_source.contains("std::fs::remove_dir_all"));
     }
 }
 

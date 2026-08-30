@@ -6284,3 +6284,19 @@ execution, Defender-replacement, and whole-goal limitation remain unchanged.
 Checkpoint 2272 is closed through normal merge and exact zero-delete
 destination synchronization. The complete antivirus-hardening goal remains
 active.
+
+## Checkpoint 2274 Control Delta
+
+| Control / engine | Responsibility | Classification before execution | Evidence / limitation |
+| --- | --- | --- | --- |
+| Shared update-tree cleanup | Inventory the complete tree before mutation and delete only exact regular files and empty directories | Definitive local verified; hosted pending | Production no longer calls `std::fs::remove_dir_all`; Source `705/705`, cleanup `8/8`, update service `4 + 248`, and exact verifier `302/302` pass after repair |
+| Cleanup resource bounds | Cap cleanup work at 100,000 entries, depth 128, 8 GiB logical regular-file bytes, and 16 MiB aggregate encoded path payload | Definitive local verified; hosted Unix pending | Harmless path-payload excess fails before mutation; full locked regression/release and exact report validation pass |
+| Nested path/type safety | Reject links, Windows reparse points, special objects, path-chain changes, type changes, reappearing names, and non-empty directories | Windows broad verified; cross-platform pending | Windows rerun passes; two `cfg(unix)` cleanup/recovery fixtures require hosted Ubuntu evidence |
+| Authenticated recovery preservation | Keep cleanup tombstone and cleanup journal when nested cleanup cannot be justified | Local `30/30`; Unix-only fixture pending | Fresh recovery passes; hosted nested-link runtime evidence remains pending |
+| Verifier and report validator | Require focused cleanup execution, exact 302-step report, and honest scopes/limits | Definitive local verified | Exact `302/302` passes in `669.6s`; both hosts accept the authentic report and reject all `24/24` adversarial cases |
+| Detection and custom engines | Preserve every existing responsibility and authority | Unchanged | No signature/hash/rule/YARA/static/PE/archive/heuristic/ML/process/aggregator/allowlist/exclusion/cache/quarantine/realtime change |
+| Privileged race and durable deletion | State what user-mode cleanup cannot prove | Technically limited | Same-identity hostile races, open handles, admin/SYSTEM/root, hostile filesystems, storage replay, kernel compromise, and Windows deletion persistence remain unproven |
+
+Checkpoint 2274 is not closed: hosted, merge, destination, and closure evidence
+remain pending. The protected vault remains exactly 16,072 files with zero
+pending, and the complete antivirus-hardening goal remains active.

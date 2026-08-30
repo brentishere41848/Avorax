@@ -8678,3 +8678,40 @@ package-wide atomicity, privileged actors, installed identity, Android,
 production signing/deployment, driver/pre-execution enforcement, Defender
 replacement, and complete antivirus-goal closure remain open or technically
 limited.
+
+## Checkpoint 2274 Status
+
+Checkpoint 2274 has passed definitive local verification after its final-review
+repair. The shared update,
+rollback, tree-replacement, and authenticated-recovery cleanup primitive now
+uses a bounded full-tree inventory before any mutation, rejects nested links,
+Windows reparse points, special entries, excess depth/count/logical bytes or
+aggregate encoded path payload, and removes only revalidated regular files and
+empty directories.
+
+Nine harmless primitive regressions, one harmless Unix recovery-evidence
+fixture, Source contract 705, verifier step 302, exact report validation, and
+all operational/audit documents were scripted before any checkpoint test ran.
+Post-repair Source `705/705`, Windows cleanup `8/8`, activation recovery
+`30/30`, update service `4 + 248`, strict locked Clippy, both locked workspace
+variants, locked release, Flutter analysis and `852/852`, and protocols
+`14/14 + 6/6` pass. The superseded pre-repair no-skip/no-Defender verifier passed exact
+`302/302` in 694 seconds; both PowerShell hosts accepted the authentic report
+and rejected all `24/24` adversarial cases.
+
+Final diff review found that the original 16 MiB resource counter counted only
+basenames while retaining full paths. The scripted repair now counts aggregate
+encoded path payload and adds a before-mutation limit fixture. Focused/full
+local regression now passes. Final-source definitive verification passes exact
+`302/302` in `669.6s`, with no failed/skipped/error steps and Defender/EICAR
+opt-in disabled. The 231,397-byte report SHA-256 is
+`7daf28a3904c16a356550afb44a0b7233699b371f3c4d119239ef44979c3bc63`.
+Both PowerShell hosts accept the authentic report and reject all `24/24`
+adversarial cases. Final read-only audit passes the exact path set, zero
+deletions, nine unchanged lockfiles, zero process/pending/temp residue, and the
+protected-vault invariant. Hosted Unix, CI/packages, normal merge, destination
+synchronization/regression, and closure evidence are pending.
+Point-in-time same-identity races, privileged actors, hostile
+filesystems, Windows deletion durability, storage replay, package-wide
+atomicity, and complete antivirus-goal closure remain open or technically
+limited.

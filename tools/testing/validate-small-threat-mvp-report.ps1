@@ -1951,8 +1951,8 @@ if ($RequireFullSuite) {
   if ($skipFlutter -or $skipRust) {
     throw "-RequireFullSuite requires skip_flutter=false and skip_rust=false."
   }
-  if ($steps.Count -ne 301) {
-    throw "-RequireFullSuite expected exactly 301 verifier steps for this source revision, found $($steps.Count)."
+  if ($steps.Count -ne 302) {
+    throw "-RequireFullSuite expected exactly 302 verifier steps for this source revision, found $($steps.Count)."
   }
   if ($steps[0].name -ne "local-core safe simulator scan reporting") {
     throw "-RequireFullSuite first step mismatch: $($steps[0].name)"
@@ -1981,6 +1981,7 @@ if ($RequireFullSuite) {
   Assert-ReportContainsStep $steps "update-service macOS activation recovery runtime contract"
   Assert-ReportContainsStep $steps "update-service activation recovery namespace durability regressions"
   Assert-ReportContainsStep $steps "update-service activation recovery cleanup tombstone regressions"
+  Assert-ReportContainsStep $steps "update-service bounded non-following tree cleanup regressions"
   Assert-ReportContainsStep $steps "native-engine file-type classifier regressions"
   Assert-ReportContainsStep $steps "native-engine detection-only mutation boundary regressions"
   Assert-ReportContainsStep $steps "native-engine archive content sampling regressions"
@@ -2199,6 +2200,13 @@ if ($RequireFullSuite) {
   Assert-ReportScopeContains $verifiedScopeText "malformed names, conflicting dispositions, tampered cleanup journals, active-name residue, and ambiguous states remain fail-visible and preserved" "verification_scope.verified"
   Assert-ReportScopeContains $technicalLimitText "Cleanup tombstones reduce stale active-name ambiguity but do not prove Windows same-volume rename or deletion persistence" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "A replay or reordering that restores an active staging or backup name after its authenticated journal became a cleanup journal still fails closed for manual review" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $verifiedScopeText "Update-service tree cleanup performs a bounded no-mutation inventory before removal" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "validates every nested entry and path chain against links or reparse points" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "removes only revalidated regular files and empty directories with visible errors" "verification_scope.verified"
+  Assert-ReportScopeContains $technicalLimitText "Bounded tree cleanup caps 100,000 entries, depth 128, eight GiB of logical regular-file bytes, and 16 MiB of aggregate encoded path payload" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "fails and preserves remaining state when a limit, unsupported kind, concurrent change, or removal error is observed" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "Inventory and per-entry revalidation are point-in-time user-mode checks" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "same-identity hostile filesystem races, open-handle mutation, storage replay, kernel compromise, or prove durable deletion" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "File allowlisting remains safe after its hash snapshot because later scan suppression also requires that exact hash" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "neither operation holds a kernel-enforced immutable file lease" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "This is confirmation and stale-verdict defense, not cross-identity authorization, malware execution prevention, driver enforcement, or protection against administrators, SYSTEM, or kernel compromise" "verification_scope.technically_limited"

@@ -4680,3 +4680,45 @@ rollback/reordering, and kernel compromise remain out of scope; multi-component
 activation is not one transaction; Android, production signing/deployment,
 signed-driver/pre-execution enforcement, Defender replacement, and whole-goal
 completion remain open.
+
+## Checkpoint 2274 Bounded Cleanup Threat Delta
+
+Threat: the shared update cleanup checked only the top-level directory and then
+delegated recursive traversal and deletion to `std::fs::remove_dir_all`. It did
+not explicitly inventory or cap nested entries, depth, logical bytes, or encoded
+name memory before mutation, and it did not make nested type/reparse validation
+part of the Avorax failure contract.
+
+Mitigation: cleanup first builds a post-order inventory with hard
+limits of 100,000 entries, depth 128, 8 GiB of logical regular-file bytes, and
+16 MiB of aggregate encoded path payload. Every item and existing path chain is checked for
+links/reparse points and must be a regular file or directory. Only after a
+complete successful inventory does deletion begin. Each item is re-inspected,
+must retain its inventoried type, and is removed with `remove_file` or
+`remove_dir`; each removed path must remain absent. Errors and races are
+returned with context, and no recursive deletion fallback exists.
+
+Harmless tests cover normal nested deletion, all principal resource limits,
+type replacement, Unix nested-link rejection, source structure, and
+authenticated recovery evidence preservation. Post-freeze local evidence passes
+Source `705/705`, Windows cleanup `7/7`, recovery `30/30`, full update service,
+strict locked regression/release, Flutter/protocol suites, and exact verifier
+`302/302` plus dual-host `24/24` adversarial rejection. Final review superseded
+that current-head credit after finding basename-only accounting for retained
+full paths. The scripted repair counts full aggregate encoded path payload and
+adds a before-mutation limit fixture. Focused `8/8`, update service `4 + 248`,
+strict locked regression/release, Flutter `852/852`, and protocols
+`14/14 + 6/6` pass. Final-source definitive verification passes exact
+`302/302` in `669.6s`; both validator hosts accept the authentic report and
+reject all `24/24` adversarial cases, and final read-only audit passes. Both
+`cfg(unix)` fixtures and hosted exact-head evidence remain pending.
+
+Residual threat: path and type checks remain point-in-time user-mode evidence.
+A same-identity attacker, administrator, SYSTEM/root, hostile filesystem,
+already-open handle, storage rollback/reordering, or kernel compromise can act
+outside those checks. Partial deletion can remain after a later per-entry
+failure; the error is visible and recovery evidence is retained where still
+present, but atomic or durable deletion is not claimed. This checkpoint does
+not change detector/custom-engine, installed-service, signed-driver,
+pre-execution, Defender-replacement, or complete-goal authority. The protected
+16,072-file vault remains untouched with zero pending.

@@ -2106,6 +2106,55 @@ mod tests {
         assert!(!tombstone.exists());
     }
 
+    #[cfg(unix)]
+    #[test]
+    fn activation_recovery_checked_tree_cleanup_nested_link_preserves_evidence() {
+        use std::os::unix::fs::symlink;
+
+        let (root, install, mut transaction) = setup_transaction();
+        transaction.record.had_destination = true;
+        write_authenticated_journal(
+            &transaction.recovery_root,
+            &transaction.journal_path,
+            &transaction.record,
+        )
+        .unwrap();
+        let tombstone = stage_recovery_directory_cleanup(
+            &transaction.paths.staging,
+            &transaction.recovery_root,
+            &transaction.record.operation_id,
+            RecoveryCleanupDisposition::AbortedExistingStaging,
+            "benign nested-link cleanup fixture",
+        )
+        .unwrap();
+        let cleanup_journal = stage_recovery_journal_cleanup(
+            &transaction.journal_path,
+            &transaction.recovery_root,
+            &transaction.record.operation_id,
+        )
+        .unwrap();
+        let external = root.path().join("external.txt");
+        let link = tombstone.join("external-link");
+        std::fs::write(&external, b"benign external recovery fixture").unwrap();
+        symlink(&external, &link).unwrap();
+        drop(transaction);
+
+        let error = recover_pending_directory_activations(&install).unwrap_err();
+        let detail = format!("{error:#}");
+
+        assert!(detail.contains("must not be a symbolic link"), "{detail}");
+        assert!(tombstone.exists());
+        assert!(cleanup_journal.exists());
+        assert_eq!(
+            std::fs::read(&external).unwrap(),
+            b"benign external recovery fixture"
+        );
+        assert!(std::fs::symlink_metadata(&link)
+            .unwrap()
+            .file_type()
+            .is_symlink());
+    }
+
     #[test]
     fn activation_recovery_cleanup_orphan_tombstone_is_bounded_and_removed() {
         let (_root, install, mut transaction) = setup_transaction();
