@@ -34296,6 +34296,12 @@ def test_checkpoint_2276_quarantine_metadata_atomic_replacement_contract():
         "QuarantineMetadataAuthScheme::HmacSha256V2",
     ]:
         assert marker in local_core
+    authenticated_pair_fixture = local_core[
+        local_core.index(
+            "fn quarantine_metadata_atomic_replace_updates_authenticated_record_pair()"
+        ) : local_core.index("fn quarantine_optional_metadata_presence_uses_non_following_helpers()")
+    ]
+    assert "tempdir_in(std::env::current_dir().unwrap())" in authenticated_pair_fixture
 
     ubuntu_job = workflow[
         workflow.index("  quarantine-unix:\n") : workflow.index(

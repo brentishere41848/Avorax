@@ -87,21 +87,37 @@ fixture ignores, and zero failures, the locked all-target/all-feature release
 build, Flutter analysis and `852/852`, Zentor protocol `14/14`, and Avorax
 protocol `6/6`. All nine dependency lockfiles remain unchanged.
 
-The definitive no-skip/no-Defender verifier passes exact `302/302` in `677.8s`.
+The definitive repaired-source no-skip/no-Defender verifier passes exact
+`302/302` in `667.1s`.
 Its 233,119-byte report SHA-256 is
-`62d917fadc40772e5db7dd14a6da17497db1e90d65224417fead7b74cfe0f32c`.
+`1736eddd87c9ee03a0d1a2860ea5760b3fdb8ecf6a90ba7960018660e3a8c024`.
 PowerShell 5.1 and 7 both accept the authentic report and reject all `52/52`
-hostile cases across 26 unique mutations. The 57,471-byte adversarial result
+hostile cases across 26 unique mutations. The 57,480-byte adversarial result
 SHA-256 is
-`273835ec3817f5bfa9c74612d67cbbe0a908f6a100bb00b92ad79d4fe99e43db`.
+`c6d91cdf381b8055b1a0d0204dd1dc430234b2b1aa55385bcd514bae826cb4c0`.
 
 The final local audit passes 15 modified plus one added path, zero deletions,
 nine unchanged lockfiles, zero staged `.verification` paths, zero product
 processes, pending files, or temporary roots, and the exact protected vault.
-Its 2,984-byte JSON SHA-256 is
-`9f979da7c84d784ebf83f23acbeb46652e43b992ae585289a0b9b168595881a1`.
+Its repaired-source 3,086-byte JSON SHA-256 is
+`a8c307c729835c02bdbbc2e8bfa3bacca560b01a546ce3db2f8184bcd67d0552`.
 Hosted exact-head CI/package evidence, normal PR integration, guarded
 destination synchronization, and destination verification remain required.
+
+The first exact-head hosted macOS run failed visibly in the authenticated-pair
+fixture because macOS temporary storage reached `/var` through the `/private/var`
+symlink while production quarantine correctly rejects every linked ancestor.
+The repair does not relax production validation: only that test now creates its
+owned temporary directory inside the non-linked CI checkout, and Source 708
+requires that route. Post-repair local and exact-head hosted evidence must be
+regenerated before integration credit.
+
+Post-repair focused checks pass `3/3`, Source `708/708`, strict Clippy,
+formatting, and diff checks. The complete locked all-target/all-feature Rust
+suite passes with 1,809 executed tests, 21 intentional child-fixture ignores,
+and zero failures. The regenerated definitive, adversarial, and final-audit
+evidence above is authoritative for the repaired source; exact-head hosted
+evidence is the next required phase.
 
 The protected vault baseline remains read-only: 16,072 files, zero directories,
 4,522,733 bytes, 5,357 each `.avoraxq`, `.json`, and `.auth`, one

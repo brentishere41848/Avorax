@@ -15519,3 +15519,32 @@ pending.
   `9f979da7c84d784ebf83f23acbeb46652e43b992ae585289a0b9b168595881a1`.
   Hosted exact-head, PR/merge, destination sync, and destination verification
   remain pending; the complete antivirus goal remains active.
+
+## 2026-08-30 - Checkpoint 2276 Hosted macOS Fixture Repair Scripting
+
+- Exact-head Avorax CI `33326866656` failed visibly only in the new macOS
+  authenticated-pair fixture: `tempdir()` resolved beneath the `/var` symlink,
+  and production correctly returned `refusing to use symbolic link quarantine
+  base directory`.
+- Scripted a test-only repair that creates this owned fixture beneath the
+  non-linked checkout and added a Source contract requiring that route. No
+  production path or symlink rejection was weakened. Repair documentation was
+  completed before rerunning tests.
+
+## 2026-08-30 - Checkpoint 2276 Post-Repair Local Verification
+
+- Repaired focus passes fixture `3/3`, Source `708/708`, strict Local Core
+  Clippy, formatting, and diff checks. The complete locked all-target/all-
+  feature Rust suite passes with 1,809 executed tests, 21 intentional ignores,
+  and zero failures.
+- The regenerated no-skip/no-Defender verifier passes `302/302` in `667.1s`.
+  Its 233,119-byte report SHA-256 is
+  `1736eddd87c9ee03a0d1a2860ea5760b3fdb8ecf6a90ba7960018660e3a8c024`.
+  Both PowerShell hosts accept it and reject `52/52` hostile cases across 26
+  mutations; the 57,480-byte adversarial result SHA-256 is
+  `c6d91cdf381b8055b1a0d0204dd1dc430234b2b1aa55385bcd514bae826cb4c0`.
+- The repaired-source final audit passes 15 modified plus one added path, zero
+  deletions, nine unchanged locks, no staged `.verification`, no process/
+  pending/temp residue, and the exact vault. Its 3,086-byte SHA-256 is
+  `a8c307c729835c02bdbbc2e8bfa3bacca560b01a546ce3db2f8184bcd67d0552`.
+  New exact-head hosted CI and package evidence remains required.

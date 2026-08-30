@@ -2643,7 +2643,7 @@ mod tests {
     use super::*;
     use crate::scanner::{ScanResult, ScanStatus};
     use chrono::Utc;
-    use tempfile::tempdir;
+    use tempfile::{tempdir, tempdir_in};
 
     fn env_lock() -> std::sync::MutexGuard<'static, ()> {
         crate::test_env_lock()
@@ -5089,7 +5089,7 @@ mod tests {
 
     #[test]
     fn quarantine_metadata_atomic_replace_updates_authenticated_record_pair() {
-        let dir = tempdir().unwrap();
+        let dir = tempdir_in(std::env::current_dir().unwrap()).unwrap();
         let base = dir.path().join("q");
         let payload = base.join("record.avoraxq");
         fs::create_dir_all(&base).unwrap();

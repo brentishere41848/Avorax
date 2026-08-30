@@ -8954,3 +8954,13 @@ modified plus one added path, zero deletions, nine unchanged locks, zero staged
 vault at 16,072 files and zero pending. Exact-head hosted evidence, normal PR
 integration, guarded destination synchronization, and destination verification
 remain. The complete antivirus-hardening goal remains active.
+
+The first exact-head hosted run exposed a test-only macOS path issue: the new
+authenticated-pair fixture inherited macOS `/var` symlink ancestry and was
+rejected by the intended production link guard. Production validation remains
+unchanged. The fixture is now scripted to use the non-linked checkout, with a
+Source contract preventing regression; post-repair local and exact-head hosted
+reruns are required before merge. Post-repair local focus, the complete locked
+all-target/all-feature Rust suite, regenerated `302/302` in `667.1s`, dual-host
+`52/52` hostile rejection, and final audit now pass. New exact-head hosted CI
+and package evidence remains required before merge.

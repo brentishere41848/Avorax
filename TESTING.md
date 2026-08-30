@@ -2394,3 +2394,18 @@ opt-in false and no skipped Rust or Flutter suite. Report SHA-256 is
 PowerShell 5.1 and 7 accept the authentic report and reject `52/52` hostile
 cases across 26 mutations. The final local path/lock/process/residue/vault audit
 passes. Hosted and destination execution remain separate required evidence.
+
+First exact-head macOS execution failed `2/3` only because the authenticated-
+pair fixture used the runner's `/var`-symlink temporary root; production link-
+ancestor rejection worked as designed. The scripted repair uses
+`tempdir_in(std::env::current_dir())` for that fixture only and leaves production
+path policy unchanged. Focused, broad affected, exact verifier/audit, and hosted
+evidence must be regenerated on the repaired head.
+
+The repaired rerun passes focus `3/3`, Source `708/708`, strict lint, formatting,
+and the complete locked all-target/all-feature Rust suite with 1,809 executed,
+21 intentional ignores, and zero failures. The regenerated exact verifier
+passes `302/302` in `667.1s`; report SHA-256 is
+`1736eddd87c9ee03a0d1a2860ea5760b3fdb8ecf6a90ba7960018660e3a8c024`.
+Dual-host validation again rejects `52/52` hostile cases and the repaired final
+audit passes. Exact-head hosted evidence remains required.
