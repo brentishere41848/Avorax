@@ -4570,8 +4570,11 @@ cleanup and preserves journal plus directory evidence; the next authenticated
 recovery pass re-evaluates actual state. Tests use only benign temporary text
 trees. No checkpoint-2272 test ran during scripting. Post-freeze Windows,
 injected-failure, source-contract, broad regression, and exact `300/300`
-verification pass; actual Unix/macOS filesystem semantics remain pending hosted
-execution.
+verification pass. Exact implementation-head Ubuntu 24.04 and macOS 15 jobs
+each execute the four selected fixtures (`4/4`, 247 filtered out), so the fixed-
+runner Unix/macOS namespace semantics are verified. Both package matrices and
+bounded non-extracting artifact reviews also pass with publication skipped.
+Merge, merged-main, synchronized-destination, and closure evidence remain open.
 
 Residual threat: user mode cannot prove storage-device cache truthfulness,
 filesystem crash semantics, remote replay, or Windows deletion persistence.

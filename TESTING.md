@@ -1856,3 +1856,25 @@ false; SHA-256 is
 Both validator hosts accept it and reject all `16/16` content mutations. Hosted
 Ubuntu/macOS, integration, guarded destination synchronization, destination
 full verification, and closure remain required.
+
+### Checkpoint 2272 implementation-head hosted evidence
+
+Avorax CI `33291974131` passes all six jobs at exact SHA
+`62d257c3d03bd093cc2159c3f0287bac93ec295c`. Its Ubuntu job `99205069601`
+and macOS 15 job `99205069619` each run:
+
+```bash
+cargo test --locked \
+  --manifest-path core/avorax_update_service/Cargo.toml \
+  activation_recovery_unix_ \
+  -- --test-threads=1
+```
+
+Each selects owner-only artifacts, private-mode repair, namespace durability,
+and workflow wiring: `4 passed; 0 failed; 247 filtered out`. Desktop Packages
+push/PR `33291944899`/`33291974128` pass every build and consolidation job with
+publication skipped. Consolidated artifacts `9726370706`/`9726376070` pass
+bounded in-stream exact inventory, internal SHA-256, and CycloneDX checks
+without extraction or execution. Merge, merged-main, guarded zero-delete
+destination synchronization, destination full verification, and final audit
+remain required before checkpoint closure.

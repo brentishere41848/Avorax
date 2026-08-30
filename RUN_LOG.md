@@ -14942,3 +14942,29 @@ pending.
 - All nine tracked lockfiles match `origin/main`; no product process remains;
   the protected vault is exact. Hosted exact-head, integration, guarded sync,
   destination proof, and closure remain pending. The complete goal is active.
+
+## 2026-08-30 - Checkpoint 2272 Implementation-Head Hosted Evidence
+
+- Exact implementation `62d257c3d03bd093cc2159c3f0287bac93ec295c`
+  passes all six Avorax CI jobs in run `33291974131`.
+- Ubuntu job `99205069601` and macOS 15 job `99205069619` each pass the same
+  four selected benign recovery tests, including the namespace-durability
+  fixture: `4 passed`, zero failed, 247 filtered out.
+- Desktop Packages push/PR runs `33291944899`/`33291974128` pass contracts,
+  Windows MSI/EXE, Linux DEB/tar, both macOS DMGs, consolidation, checksums,
+  and lockfile SBOM. Both prerelease-publication jobs skip.
+- Untouched consolidated artifacts `9726370706`/`9726376070` are
+  132,681,746/132,685,547 bytes with SHA-256
+  `7b0b4c3dd0b46c79203710ebd6ad1f44b22686eff461d32db4383e2362b01218`/
+  `a047776e9a96a17b36fd082a6863a7651e6bae9b26e2145dad8718a23c7877d2`.
+  Both pass bounded in-stream 8-entry/6-platform/7-checksum/CycloneDX-1.6/
+  569-component review without extraction or execution.
+- Final local audit SHA-256
+  `264be91a7311bc6f8794a31cbcf4add9284a23f2bc654b500cff7eb6148943e8`
+  passes exact paths, nine unchanged locks, reports, zero product processes,
+  and the exact protected vault.
+- Fixed-runner Unix/macOS namespace durability is verified. Normal merge,
+  merged-main evidence, guarded destination sync, destination verification,
+  and closure remain pending. All storage, transaction, installed-identity,
+  Android, privileged/hostile-filesystem, driver/pre-execution, Defender-
+  replacement, and whole-goal limits remain open.

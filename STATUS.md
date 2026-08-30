@@ -8559,3 +8559,25 @@ verification remain pending. Power-loss package atomicity, Windows removal
 durability, storage truthfulness, hostile/privileged filesystems, installed
 identity, Android, driver/pre-execution, Defender replacement, and whole-goal
 completion remain open or limited.
+
+## Checkpoint 2272 Implementation-Head Hosted State
+
+Exact implementation `62d257c3d03bd093cc2159c3f0287bac93ec295c`
+passes all six Avorax CI jobs in `33291974131`. Ubuntu job `99205069601` and
+macOS 15 job `99205069619` each execute the four selected benign recovery
+fixtures and report `4 passed; 0 failed; 247 filtered out`.
+
+Desktop Packages push/PR `33291944899`/`33291974128` pass every platform and
+consolidation job; both publication jobs are skipped. Consolidated artifacts
+`9726370706`/`9726376070` pass bounded non-extracting/non-executing exact
+8-entry/6-platform/7-checksum/CycloneDX-1.6/569-component review. Final local
+audit SHA-256 is
+`264be91a7311bc6f8794a31cbcf4add9284a23f2bc654b500cff7eb6148943e8`.
+
+The fixed hosted Ubuntu/macOS namespace-durability route is verified. Normal
+merge, merged-main CI/packages, guarded destination synchronization,
+destination regression, and checkpoint closure remain pending. Windows
+removal durability, storage truthfulness, package-wide transactionality,
+privileged/hostile filesystems, installed identity, Android, production
+signing/deployment, driver/pre-execution enforcement, Defender replacement,
+and the complete antivirus goal remain open or limited.

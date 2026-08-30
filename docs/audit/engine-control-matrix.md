@@ -6212,3 +6212,14 @@ Post-freeze local evidence passes Source `703/703`, platform `18/18`, update
 service `232/232`, Flutter `852/852`, protocols `14/14 + 6/6`, and definitive
 verification `300/300`. Hosted Ubuntu/macOS namespace durability, integration,
 destination verification, and closure remain pending.
+
+Implementation head `62d257c3` supersedes the hosted-pending classification
+for the Unix recovery namespace-durability row only. Fixed Ubuntu 24.04 and
+macOS 15 jobs each pass the exact four selected harmless tests (`4/4`, 247
+filtered out). All six CI jobs, both desktop package matrices, consolidation,
+checksums, SBOM, and bounded non-extracting artifact review pass with
+publication skipped. The row is therefore **Verified on the fixed hosted
+Ubuntu 24.04 and macOS 15 runners**. Integration/destination proof and every
+storage-truthfulness, Windows-removal, package-transaction, installed-identity,
+Android, privileged/hostile-filesystem, detector/custom-engine, driver/pre-
+execution, Defender-replacement, and whole-goal limitation remain unchanged.

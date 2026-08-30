@@ -4346,3 +4346,14 @@ No live malware, EICAR, Defender weakening, protected-vault mutation, machine-
 wide install, service/driver start, release, or publication is authorized. The
 vault remains exactly 16,072 files, zero directories, 4,522,733 bytes, 5,357
 each `.avoraxq`/`.json`/`.auth`, one `.metadata_auth_key`, and zero pending.
+
+Exact implementation-head evidence removes the narrow fixed-runner hosted
+namespace-durability blocker: Ubuntu job `99205069601` and macOS 15 job
+`99205069619` each pass all four selected harmless recovery fixtures (`4/4`,
+247 filtered out). CI and both package matrices pass with publication skipped,
+and both consolidated artifacts pass bounded non-extracting review. Normal
+merge, merged-main evidence, destination synchronization, and closure remain
+pending. Storage truthfulness, Windows removal persistence, broader filesystems,
+installed identities, Android, package-wide power-loss transactionality,
+privileged/hostile actors, signing/deployment, driver/pre-execution enforcement,
+Defender replacement, and whole-project blockers are not removed.

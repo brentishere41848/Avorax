@@ -128,10 +128,37 @@ The unchanged focused gate and both complete repeats pass with explicit
 
 All nine tracked dependency lockfiles match `origin/main`; no product process
 remains. The read-only vault audit matches the protected invariant exactly.
-Hosted Ubuntu/macOS runtime, exact-head CI/package evidence, normal PR/merge,
-guarded destination synchronization, and destination verification remain
-pending, so checkpoint 2272 and the complete antivirus-hardening goal remain
-active.
+
+## Implementation-Head Hosted Evidence
+
+Exact implementation `62d257c3d03bd093cc2159c3f0287bac93ec295c`
+passes all six Avorax CI jobs in run `33291974131`. Ubuntu job `99205069601`
+and macOS 15 job `99205069619` each pass the exact four harmless
+`activation_recovery_unix_` fixtures, including namespace durability:
+`4 passed; 0 failed; 247 filtered out`.
+
+Desktop Packages push/PR runs `33291944899`/`33291974128` pass contracts,
+Windows MSI/EXE, Linux DEB/tar, macOS arm64/x64 DMG, consolidation, checksums,
+and lockfile SBOM. Both prerelease-publication jobs are explicitly skipped.
+Untouched consolidated artifacts `9726370706` and `9726376070` were retained
+under untracked `.verification` and reviewed in-stream without extraction or
+execution. They are respectively 132,681,746 bytes with SHA-256
+`7b0b4c3dd0b46c79203710ebd6ad1f44b22686eff461d32db4383e2362b01218`
+and 132,685,547 bytes with SHA-256
+`a047776e9a96a17b36fd082a6863a7651e6bae9b26e2145dad8718a23c7877d2`.
+Both pass exact 8-entry/6-platform/7-checksum inventory and CycloneDX 1.6 with
+569 components.
+
+The final local audit is 2,550 bytes with SHA-256
+`264be91a7311bc6f8794a31cbcf4add9284a23f2bc654b500cff7eb6148943e8`.
+It passes the exact 13-modified/one-added/zero-delete scope, nine unchanged
+lockfiles, definitive/adversarial evidence, zero product processes, and the
+protected vault invariant.
+
+Hosted Ubuntu/macOS namespace durability is now verified on those fixed
+runners. Normal merge, merged-main evidence, guarded destination
+synchronization, destination verification, and checkpoint closure remain
+pending, so the complete antivirus-hardening goal remains active.
 
 ## Remaining Limits
 

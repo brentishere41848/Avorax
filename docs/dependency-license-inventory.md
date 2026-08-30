@@ -2482,11 +2482,15 @@ The additional platform/update fixtures, Source contract, exact 300-step
 verifier contract, report-validator scope, and audit documents are repository-
 local evidence only. No checkpoint-2272 test ran during scripting; locked
 build/test, the dependency gate inside exact `300/300`, and read-only comparison
-of all nine tracked lockfiles pass post-freeze. Hosted package/SBOM,
-integration, destination, and closure evidence remain pending. No live malware,
-EICAR, Defender change, installation, service/driver start, release,
-publication, or protected-vault mutation occurs. The exact 16,072-file vault
-has zero pending; complete antivirus hardening remains active.
+of all nine tracked lockfiles pass post-freeze. Implementation-head package
+push/PR runs `33291944899`/`33291974128` pass dependency/license evidence,
+six platform files, seven checksums, and CycloneDX 1.6 with the unchanged 569-
+component inventory; publication is skipped. Both consolidated artifacts pass
+bounded non-extracting review. Integration, destination, and closure evidence
+remain pending with a zero dependency/license delta. No live malware, EICAR,
+Defender change, installation, service/driver start, release, publication, or
+protected-vault mutation occurs. The exact 16,072-file vault has zero pending;
+complete antivirus hardening remains active.
 
 Checkpoint 2270 post-freeze strict locked Clippy, both locked workspace test
 variants, locked all-target/all-feature release, the dependency gate inside
