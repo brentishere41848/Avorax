@@ -4731,3 +4731,23 @@ present, but atomic or durable deletion is not claimed. This checkpoint does
 not change detector/custom-engine, installed-service, signed-driver,
 pre-execution, Defender-replacement, or complete-goal authority. The protected
 16,072-file vault remains untouched with zero pending.
+
+## Checkpoint 2274 Closure Threat Classification
+
+Evidence-head and merged-main fixed Ubuntu jobs each prove both exact Unix link
+fixtures execute non-empty and pass `1/1`. Guarded 15-path zero-delete
+synchronization and destination Source, locked workspace, lint, release,
+Flutter/protocol, exact `302/302`, dual-host authentic/adversarial, and final
+blob/lock/backup/process/vault audits all pass. No artifact is extracted or
+executed and publication remains skipped.
+
+This closes the checkpoint evidence chain without changing any detector,
+custom-engine, quarantine, realtime, process, driver, pre-execution, or
+Defender authority. Residual threats remain explicit: inventory and per-entry
+revalidation are point-in-time; deletion can become partial after mutation
+begins; same-identity and privileged actors, open handles, hostile filesystems,
+storage rollback/reordering, kernel compromise, and dishonest hardware remain
+outside the guarantee. Multi-component activation is not one transaction;
+Windows deletion persistence, installed identity, Android, production signing
+and deployment, signed-driver enforcement, Defender replacement, and complete-
+goal closure remain open.

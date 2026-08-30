@@ -2818,6 +2818,23 @@ install, Defender change,
 service/driver start, publication, release, or protected-vault mutation is part
 of this review; the exact 16,072-file vault remains at zero pending.
 
+## Checkpoint 2274 Dependency Closure
+
+Checkpoint 2274 adds no dependency, changes no manifest or lockfile, and adds
+no package source, feature, runtime fetch, license class, or notice obligation.
+It reuses standard-library filesystem operations and existing Avorax path and
+reparse helpers.
+
+Evidence-head package run `33308297858` and merged-main package run
+`33308936319` pass with publication skipped. Consolidated artifacts
+`9731350472` and `9731641198` prove six release files, seven checksums, and
+CycloneDX 1.6 with 569 components through bounded metadata/log review; neither
+is downloaded, extracted, or executed. Guarded synchronization, both
+destination locked workspaces, locked all-feature release, dependency gate,
+and final `9/9` active-lockfile audit pass. The checkpoint dependency/license
+delta is exactly zero. Production signing/notarization, final notice provenance,
+enterprise deployment, and release approval remain separate.
+
 Checkpoint 2270 post-freeze strict locked Clippy, both locked workspace test
 variants, locked all-target/all-feature release, the dependency gate inside
 exact `298/298`, and read-only lockfile-diff checks pass. No manifest or
