@@ -4444,8 +4444,12 @@ adds a ninth primitive fixture. Focused/full current-head regression now passes;
 final-source definitive verification passes exact `302/302` in `669.6s`, and
 both report-validator hosts accept the authentic report and reject all `24/24`
 adversarial cases. Final read-only audit passes the exact path, lock, process,
-residue, and protected-vault invariants. The two Unix-only fixtures, hosted
-exact-head checks, merge, destination, and closure evidence remain pending.
+residue, and protected-vault invariants. Initial exact-head CI `33306480962`
+passed but omitted the two Unix-only fixtures. Both exact Ubuntu commands and a
+Source contract are now wired. Final-source Source `705/705`, exact `302/302`
+in `665.5s`, dual-host `24/24` adversarial rejection, and final audit pass.
+Hosted exact-head reruns, merge, destination, and closure evidence remain
+pending.
 
 The bounds do not create an atomic delete transaction or a kernel-enforced
 immutable namespace. Inventory and per-entry revalidation remain point-in-time;

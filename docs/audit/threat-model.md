@@ -4711,7 +4711,12 @@ strict locked regression/release, Flutter `852/852`, and protocols
 `14/14 + 6/6` pass. Final-source definitive verification passes exact
 `302/302` in `669.6s`; both validator hosts accept the authentic report and
 reject all `24/24` adversarial cases, and final read-only audit passes. Both
-`cfg(unix)` fixtures and hosted exact-head evidence remain pending.
+`cfg(unix)` fixtures were absent from the initial passing CI log. Exact Ubuntu
+commands are now workflow- and Source-contract-wired; because that tracked
+repair followed the earlier local report, it was reverified. Final-source
+Source `705/705`, exact `302/302` in `665.5s`, dual-host `24/24` adversarial
+rejection, and final audit pass. Hosted exact-head rerun evidence remains
+pending.
 
 Residual threat: path and type checks remain point-in-time user-mode evidence.
 A same-identity attacker, administrator, SYSTEM/root, hostile filesystem,

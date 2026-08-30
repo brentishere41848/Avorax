@@ -2805,8 +2805,11 @@ payload accounting and added no dependency. Post-repair strict locked Clippy,
 both locked workspaces, locked release, and unchanged nine-lock review pass;
 final-source definitive verification passes exact `302/302` in `669.6s` and
 final read-only audit confirms all nine tracked lockfiles remain unchanged.
-Hosted package/SBOM comparison, merge, destination, and closure evidence remain
-pending. No live malware, install, Defender change,
+The later hosted-coverage repair changes only CI/test/docs and adds no
+dependency or lockfile change. Final-source Source `705/705`, exact `302/302`,
+dependency gate, and final nine-lock audit pass. Hosted package/SBOM comparison,
+merge, destination, and closure evidence remain pending. No live malware,
+install, Defender change,
 service/driver start, publication, release, or protected-vault mutation is part
 of this review; the exact 16,072-file vault remains at zero pending.
 

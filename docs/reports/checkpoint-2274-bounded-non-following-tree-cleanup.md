@@ -2,7 +2,7 @@
 
 Date: 2026-08-30
 
-Status: **Post-repair definitive local verification passed; hosted evidence pending**
+Status: **Final-source definitive local verification passed; hosted reruns pending**
 
 ## Purpose
 
@@ -114,7 +114,7 @@ full paths. The complete repair counts aggregate encoded path payload,
 updates source/report contracts, and adds a before-mutation path-payload limit
 fixture.
 
-## Post-Repair Definitive Local Evidence
+## Pre-Hosted-Coverage-Repair Definitive Local Evidence
 
 - format/diff and Source `705/705` pass;
 - Windows cleanup passes `8/8`, recovery `30/30`, and update service
@@ -132,12 +132,35 @@ fixture.
   zero deletions, nine unchanged lockfiles, zero product process/pending/temp
   residue, and the protected-vault invariant.
 
-The superseded report remains historical only; the evidence above is the
-current final-source local result.
+Initial exact-head CI `33306480962` passed, but raw logs showed that the Ubuntu
+job filtered only existing recovery-runtime tests and did not execute either
+new `cfg(unix)` link fixture. The workflow now invokes both tests by fully
+qualified name with `--exact`, and Source contract 705 pins that route. Because
+this is a tracked workflow/test-contract repair, the evidence above remains
+valid pre-repair history but is not current final-source credit.
+
+## Final-Source Hosted-Coverage-Repair Local Evidence
+
+- the first Source run failed visibly because the existing Ubuntu-job contract
+  expected 13 Cargo commands and four fail-fast shells;
+- the repaired contract requires exact 15 commands, five fail-fast shells, the
+  dedicated step, both fully qualified Unix test names, and `--exact`;
+- Source passes `705/705`; format/diff, cleanup `8/8`, recovery `30/30`, and
+  update service `4 + 248` pass;
+- definitive verification passes exact `302/302` in `665.5s`, with zero
+  failed/skipped/error steps and Defender/EICAR opt-in disabled;
+- the 231,401-byte report has SHA-256
+  `73f63eef30abbb2e1109ce112224128dc87717e9c6ba4363eb8d3842beb49552`;
+- both validator hosts accept the authentic report and reject all `24/24`
+  adversarial cases; and
+- final audit passes 14 modified plus one added path, zero deletions, nine
+  unchanged locks, zero product process/pending/temp residue, and the protected-
+  vault invariant.
 
 ## Remaining Evidence
 
-Windows does not execute the nested-link primitive and authenticated-recovery
+Push the repair and require exact-head hosted reruns. Windows does not execute
+the nested-link primitive and authenticated-recovery
 fixtures gated by `cfg(unix)`. Exact-head hosted Ubuntu must run both before
 cross-platform runtime credit. Exact-head CI/package review without extraction,
 execution, or publication; normal PR merge; merged-main checks; guarded zero-

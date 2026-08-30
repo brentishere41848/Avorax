@@ -29338,6 +29338,7 @@ def test_ci_runs_native_unix_quarantine_permission_runtime_contracts():
         "toolchain: 1.96.1",
         "Test shared Unix permission engine",
         "Test update recovery Unix runtime",
+        "Test bounded cleanup Unix link safety",
         "Test Local Core Unix permission routing",
         "Test Guard Unix permission routing",
         "set -euo pipefail",
@@ -29350,6 +29351,9 @@ def test_ci_runs_native_unix_quarantine_permission_runtime_contracts():
         "guard_quarantine_artifacts_are_owner_only_and_non_executable_on_unix",
         "guard_auth_reads_repair_existing_private_modes_on_unix",
         "activation_recovery_unix_",
+        "path_safety::tests::checked_tree_cleanup_nested_link_fails_before_mutation",
+        "activation_recovery::tests::activation_recovery_checked_tree_cleanup_nested_link_preserves_evidence",
+        "-- --exact --test-threads=1",
         "hard_link",
         "active_pending_finalization_lock_blocks_concurrent_recovery",
         "safe_eicar_simulator_is_detected_and_auto_quarantined_by_confirmed_mode",
@@ -29360,9 +29364,9 @@ def test_ci_runs_native_unix_quarantine_permission_runtime_contracts():
     ]:
         assert marker in job
 
-    assert job.count("cargo test --locked") == 13
+    assert job.count("cargo test --locked") == 15
     assert job.count("hard_link") == 2
-    assert job.count("set -euo pipefail") == 4
+    assert job.count("set -euo pipefail") == 5
     assert "continue-on-error" not in job
     assert "|| true" not in job
     assert "apt-get" not in job
@@ -33854,6 +33858,7 @@ def test_checkpoint_2273_update_recovery_cleanup_tombstone_contract():
 def test_checkpoint_2274_bounded_non_following_tree_cleanup_contract():
     path_safety = read(UPDATE_PATH_SAFETY)
     recovery = read(UPDATE_ACTIVATION_RECOVERY)
+    workflow = read(CI_WORKFLOW)
     replacer = read(UPDATE_FILE_REPLACER)
     rollback = read(UPDATE_ROLLBACK)
     applier = read(UPDATE_APPLIER)
@@ -33927,6 +33932,13 @@ def test_checkpoint_2274_bounded_non_following_tree_cleanup_contract():
         "activation_recovery_checked_tree_cleanup_nested_link_preserves_evidence"
         in recovery
     )
+    for marker in [
+        "Test bounded cleanup Unix link safety",
+        "path_safety::tests::checked_tree_cleanup_nested_link_fails_before_mutation",
+        "activation_recovery::tests::activation_recovery_checked_tree_cleanup_nested_link_preserves_evidence",
+        "-- --exact --test-threads=1",
+    ]:
+        assert marker in workflow
 
     step = "update-service bounded non-following tree cleanup regressions"
     assert step in verifier

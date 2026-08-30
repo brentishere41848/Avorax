@@ -2110,3 +2110,22 @@ exact 13 modified plus one added path set, zero deletions, nine unchanged
 lockfiles, zero product process/pending/temp residue, and the exact protected-
 vault invariant. Hosted Unix, CI/package, merge, destination, and closure
 evidence remain pending.
+
+Initial exact-head CI `33306480962` passed, but its raw Ubuntu log contained
+neither new `cfg(unix)` test name: the Unix job filtered only the existing
+recovery-runtime set. The scripted workflow repair adds a dedicated `Test
+bounded cleanup Unix link safety` step with two fully qualified `--exact`
+commands, and the existing checkpoint-2274 Source contract pins that route.
+The preceding definitive report is therefore pre-workflow-repair evidence.
+The first post-freeze Source run failed visibly because the older Unix-job
+contract still required 13 Cargo invocations. Updating it to exact 15 and the
+fail-fast shell count to five makes Source pass `705/705`; cleanup `8/8`,
+recovery `30/30`, update service `4 + 248`, format, and diff checks pass.
+Final-source definitive verification passes exact `302/302` in `665.5s` with
+zero failed/skipped/non-null-error steps and Defender/EICAR opt-in disabled.
+The 231,401-byte report SHA-256 is
+`73f63eef30abbb2e1109ce112224128dc87717e9c6ba4363eb8d3842beb49552`.
+Both hosts accept the authentic report and reject all `24/24` adversarial
+cases. Final audit passes 14 modified plus one added path, zero deletions, nine
+unchanged locks, zero product process/pending/temp residue, and the protected-
+vault invariant. Final-source hosted CI/package reruns remain pending.

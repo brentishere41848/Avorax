@@ -8709,8 +8709,21 @@ opt-in disabled. The 231,397-byte report SHA-256 is
 Both PowerShell hosts accept the authentic report and reject all `24/24`
 adversarial cases. Final read-only audit passes the exact path set, zero
 deletions, nine unchanged lockfiles, zero process/pending/temp residue, and the
-protected-vault invariant. Hosted Unix, CI/packages, normal merge, destination
-synchronization/regression, and closure evidence are pending.
+protected-vault invariant. Initial exact-head CI `33306480962` passed, but raw
+logs showed that its Ubuntu job omitted both new `cfg(unix)` link fixtures. The
+workflow now runs both by exact fully qualified name and Source contract 705
+pins that wiring. The first post-repair Source run failed visibly on the old
+13-command workflow count; the exact 15-command/five-shell contract repair now
+passes `705/705`. Cleanup `8/8`, recovery `30/30`, and update service `4 + 248`
+also pass. Final-source definitive verification passes `302/302` in `665.5s`,
+with zero failed/skipped/error steps and Defender/EICAR opt-in disabled; report
+SHA-256 is
+`73f63eef30abbb2e1109ce112224128dc87717e9c6ba4363eb8d3842beb49552`.
+Both hosts accept it and reject all `24/24` adversarial cases. Final audit
+passes 14 modified plus one added path, zero deletions, nine unchanged locks,
+zero residue, and the protected vault. Final-source hosted CI/packages, normal
+merge, destination synchronization/regression, and closure evidence are
+pending.
 Point-in-time same-identity races, privileged actors, hostile
 filesystems, Windows deletion durability, storage replay, package-wide
 atomicity, and complete antivirus-goal closure remain open or technically

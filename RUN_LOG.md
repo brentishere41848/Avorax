@@ -15153,6 +15153,26 @@ pending.
   zero deletions, nine unchanged lockfiles, zero product process/pending/temp
   residue, and the protected-vault invariant. Hosted Unix, CI/packages,
   integration, destination, and closure evidence remain pending.
+- Exact-head CI run `33306480962` passed, but raw logs proved that its Ubuntu
+  job filtered only the existing recovery-runtime tests; the two new
+  `cfg(unix)` link fixtures did not execute. The workflow now wires both tests
+  by exact fully qualified name and Source contract 705 pins that route. This
+  tracked workflow/test-contract repair supersedes the preceding report for
+  final-source credit.
+- After the complete repair batch froze, Source first failed visibly because
+  the older Ubuntu-job contract still required 13 Cargo invocations. Updating
+  that exact contract to 15 and five fail-fast shells restored `705/705`.
+  Cleanup `8/8`, recovery `30/30`, update service `4 + 248`, format, and diff
+  checks pass.
+- Final-source definitive verification passes exact `302/302` in `665.5s`,
+  with zero failed/skipped/error steps and Defender/EICAR opt-in disabled. The
+  231,401-byte report SHA-256 is
+  `73f63eef30abbb2e1109ce112224128dc87717e9c6ba4363eb8d3842beb49552`;
+  both hosts accept it and reject all `24/24` adversarial cases.
+- Final read-only audit passes 14 modified plus one added path, zero deletions,
+  nine unchanged locks, zero product process/pending/temp residue, and the
+  protected-vault invariant. Final-source hosted CI/package reruns,
+  integration, destination, and closure evidence remain pending.
 - No live malware, EICAR fixture, Defender change, installation, service/driver
   start, publication, release, or protected-vault mutation is part of this
   checkpoint. The exact 16,072-file vault remains at zero pending.
