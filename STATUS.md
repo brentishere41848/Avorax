@@ -8505,3 +8505,57 @@ macOS/installed identity, prior exposure/open handles, unencrypted Unix key,
 privileged or hostile filesystems, package transactionality, signing/deployment,
 driver/pre-execution, Defender replacement, and the complete antivirus goal
 remain open or technically limited.
+
+## Checkpoint 2272 Scripted State
+
+Checkpoint 2272 scripts update-recovery namespace durability before running any
+test. Windows no-replace moves request `MOVEFILE_WRITE_THROUGH`; Unix binds a
+stable ordinary directory by device/inode and synchronizes it after recovery
+key, lock, journal, rename, cleanup, and removal mutations. A barrier error
+after a rename fails visibly and preserves authenticated recovery evidence for
+the next pass.
+
+Harmless platform, Unix runtime, backup-move failure, and activation failure
+fixtures are scripted. Source contracts, verifier, validator, matrix, threat
+model, blocker register, testing guidance, dependency inventory, protection
+documentation, run log, and checkpoint report are updated. The full verifier
+contract is now exactly 300 steps. No dependency or lockfile changed.
+
+No checkpoint-2272 test ran during the scripting phase. All focused/full,
+adversarial, hosted, merge, synchronized-destination, and closure evidence is
+pending. This is best-effort filesystem evidence, not package-wide power-loss
+atomicity or proof against storage lies, hostile filesystems, privileged actors,
+Windows deletion persistence, installed-service failure, signed drivers,
+pre-execution blocking, or Defender replacement. The protected 16,072-file
+vault remains untouched with zero pending; the complete antivirus goal remains
+active.
+
+## Checkpoint 2272 Local Verification State
+
+Checkpoint 2272 is locally verified and awaits hosted exact-head and integration
+evidence. PowerShell 5.1/7 parsing, Source `703/703`, durability `2/2`, platform
+`18/18`, update service `232/232`, strict locked Clippy, both locked workspace
+variants, locked all-feature release, Flutter analysis/tests `852/852`, and both
+protocol packages `14/14 + 6/6` pass. The Rust all-feature groups are `18 + 4 +
+232 + 41 + 251 + 583 + 642 + 6`, with zero failures and 21 intentional isolated
+child-fixture ignores.
+
+The final no-skip/no-Defender verifier passes exact `300/300` in `575.4s`; its
+228,867-byte report SHA-256 is
+`9f6c54f97135044f2ae7e6b63f881b1084b0959316c24ceeea618f171cc1d531`.
+PowerShell 5.1 and 7 accept it and reject eight content mutations each, exact
+`16/16`; result SHA-256 is
+`e57c8d8520adfe071139b0132dd66a06ecbdb074c2b7f41db79c92a956997209`.
+The hostile audit found and drove repair of one missing validator scope binding;
+all final repeats include that stricter requirement.
+
+One earlier verifier attempt remains failed because Defender blocked a generated
+Native debug harness before execution with error 225. Defender was not weakened;
+test-only no-debug/non-incremental codegen allowed the unchanged gate and two
+complete repeats to pass. All nine tracked locks, zero product processes, and
+the exact protected vault pass read-only audit. Hosted Ubuntu/macOS durability,
+CI/packages, normal integration, guarded destination sync, and destination
+verification remain pending. Power-loss package atomicity, Windows removal
+durability, storage truthfulness, hostile/privileged filesystems, installed
+identity, Android, driver/pre-execution, Defender replacement, and whole-goal
+completion remain open or limited.

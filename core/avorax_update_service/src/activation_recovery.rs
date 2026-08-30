@@ -110,13 +110,39 @@ impl DirectoryActivationTransaction {
     }
 
     pub(crate) fn commit_with_hooks<BeforeBackupMove, BeforeActivation>(
-        mut self,
+        self,
         before_backup_move: BeforeBackupMove,
         before_activation: BeforeActivation,
     ) -> Result<()>
     where
         BeforeBackupMove: FnOnce() -> Result<()>,
         BeforeActivation: FnOnce() -> Result<()>,
+    {
+        self.commit_with_durability_hooks(
+            before_backup_move,
+            before_activation,
+            |path| synchronize_parent_namespace(path, "update activation destination backup move"),
+            |path| synchronize_parent_namespace(path, "update activation staged directory move"),
+        )
+    }
+
+    fn commit_with_durability_hooks<
+        BeforeBackupMove,
+        BeforeActivation,
+        AfterBackupDurability,
+        AfterActivationDurability,
+    >(
+        mut self,
+        before_backup_move: BeforeBackupMove,
+        before_activation: BeforeActivation,
+        after_backup_durability: AfterBackupDurability,
+        after_activation_durability: AfterActivationDurability,
+    ) -> Result<()>
+    where
+        BeforeBackupMove: FnOnce() -> Result<()>,
+        BeforeActivation: FnOnce() -> Result<()>,
+        AfterBackupDurability: FnOnce(&Path) -> Result<()>,
+        AfterActivationDurability: FnOnce(&Path) -> Result<()>,
     {
         ensure_directory_state(&self.paths.staging, "update activation staging")?;
         ensure_path_chain(
@@ -135,6 +161,7 @@ impl DirectoryActivationTransaction {
         self.record.had_destination = had_destination;
         write_authenticated_journal(&self.recovery_root, &self.journal_path, &self.record)?;
 
+        let mut durability_failure = false;
         let activation_result = (|| -> Result<()> {
             ensure_expected_pre_activation_state(&self.paths, had_destination)?;
             if had_destination {
@@ -151,6 +178,12 @@ impl DirectoryActivationTransaction {
                         self.paths.backup.display()
                     )
                 })?;
+                if let Err(error) = after_backup_durability(&self.paths.destination) {
+                    durability_failure = true;
+                    return Err(error).context(
+                        "failed to synchronize update activation backup namespace after its move",
+                    );
+                }
             }
 
             before_activation()?;
@@ -165,8 +198,22 @@ impl DirectoryActivationTransaction {
                     self.paths.staging.display(),
                     self.paths.destination.display()
                 )
-            })
+            })?;
+            if let Err(error) = after_activation_durability(&self.paths.destination) {
+                durability_failure = true;
+                return Err(error).context(
+                    "failed to synchronize activated update directory namespace after its move",
+                );
+            }
+            Ok(())
         })();
+
+        if durability_failure {
+            return Err(activation_result.expect_err("durability failure must return an error"))
+                .context(
+                    "update activation namespace durability failed; authenticated journal and directory evidence were preserved for recovery",
+                );
+        }
 
         let reconciliation = reconcile_record_locked(
             &self.boundary,
@@ -345,14 +392,26 @@ fn reconcile_record_locked(
                     paths.destination.display()
                 )
             })?;
+            synchronize_parent_namespace(
+                &paths.destination,
+                "authenticated update activation backup recovery",
+            )?;
             cleanup_recovery_directory(&paths.staging, "recovered update activation staging")?;
             summary.recovered_backups = 1;
         }
         (true, true, false, true) => {
+            synchronize_parent_namespace(
+                &paths.destination,
+                "completed update activation namespace",
+            )?;
             cleanup_recovery_directory(&paths.backup, "completed update activation backup")?;
             summary.completed_activations = 1;
         }
         (true, true, false, false) => {
+            synchronize_parent_namespace(
+                &paths.destination,
+                "completed update activation namespace",
+            )?;
             summary.completed_activations = 1;
         }
         (false, false, true, false) => {
@@ -360,6 +419,10 @@ fn reconcile_record_locked(
             summary.aborted_pre_activation = 1;
         }
         (false, true, false, false) => {
+            synchronize_parent_namespace(
+                &paths.destination,
+                "completed new update activation namespace",
+            )?;
             summary.completed_activations = 1;
         }
         state => {
@@ -619,6 +682,8 @@ fn ensure_recovery_root(boundary: &Path) -> Result<PathBuf> {
     create_dir_all_checked(&root, "update activation recovery directory")?;
     ensure_private_directory(&root)?;
     ensure_path_chain(&root, boundary, "update activation recovery directory")?;
+    synchronize_directory_metadata(&root, "update activation recovery directory")?;
+    synchronize_parent_namespace(&root, "update activation recovery directory")?;
     Ok(root)
 }
 
@@ -651,6 +716,13 @@ fn acquire_recovery_lock(boundary: &Path, recovery_root: &Path) -> Result<Activa
         &path,
         "update activation recovery lock",
     )?;
+    file.sync_all().with_context(|| {
+        format!(
+            "failed to synchronize update activation recovery lock {}",
+            path.display()
+        )
+    })?;
+    synchronize_parent_namespace(&path, "update activation recovery lock")?;
     file.try_lock()
         .map_err(std::io::Error::from)
         .context("another update activation or recovery operation is active")?;
@@ -677,6 +749,7 @@ fn write_new_private_file(path: &Path, bytes: &[u8], label: &str) -> Result<()> 
         .and_then(|_| file.sync_all())
         .with_context(|| format!("failed to synchronize {label} {}", path.display()))?;
     avorax_platform_security::ensure_path_matches_open_file(&file, path, label)?;
+    synchronize_parent_namespace(path, label)?;
     Ok(())
 }
 
@@ -727,7 +800,25 @@ fn remove_private_regular_file(path: &Path, label: &str) -> Result<()> {
     drop(file);
     ensure_not_link_or_reparse(path, label)?;
     std::fs::remove_file(path)
-        .with_context(|| format!("failed to remove {label} {}", path.display()))
+        .with_context(|| format!("failed to remove {label} {}", path.display()))?;
+    synchronize_parent_namespace(path, label)
+}
+
+fn synchronize_parent_namespace(path: &Path, label: &str) -> Result<()> {
+    let parent = path
+        .parent()
+        .ok_or_else(|| anyhow::anyhow!("{label} has no parent: {}", path.display()))?;
+    synchronize_directory_metadata(parent, &format!("{label} parent directory"))
+}
+
+fn synchronize_directory_metadata(path: &Path, label: &str) -> Result<()> {
+    #[cfg(unix)]
+    avorax_platform_security::sync_unix_directory_metadata(path, label)?;
+    #[cfg(not(unix))]
+    {
+        let _ = (path, label);
+    }
+    Ok(())
 }
 
 fn ensure_private_directory(path: &Path) -> Result<()> {
@@ -1022,7 +1113,8 @@ fn ensure_directory_state(path: &Path, label: &str) -> Result<()> {
 
 fn cleanup_recovery_directory(path: &Path, label: &str) -> Result<()> {
     ensure_directory_state(path, label)?;
-    remove_dir_all_checked(path, label)
+    remove_dir_all_checked(path, label)?;
+    synchronize_parent_namespace(path, label)
 }
 
 #[cfg(test)]
@@ -1108,6 +1200,88 @@ mod tests {
             recover_pending_directory_activations(&install).unwrap(),
             ActivationRecoverySummary::default()
         );
+    }
+
+    #[test]
+    fn activation_recovery_durability_failure_after_backup_move_preserves_recovery_state() {
+        let (_root, install, transaction) = setup_transaction();
+        let journal = transaction.journal_path.clone();
+        let destination = transaction.paths.destination.clone();
+        let staging = transaction.paths.staging.clone();
+        let backup = transaction.paths.backup.clone();
+
+        let error = transaction
+            .commit_with_durability_hooks(
+                || Ok(()),
+                || Ok(()),
+                |_| anyhow::bail!("benign simulated backup namespace sync failure"),
+                |_| Ok(()),
+            )
+            .unwrap_err();
+        let detail = format!("{error:#}");
+
+        assert!(detail.contains("namespace durability failed"), "{detail}");
+        assert!(detail.contains("evidence were preserved"), "{detail}");
+        assert!(journal.exists());
+        assert!(!destination.exists());
+        assert!(staging.exists());
+        assert_eq!(
+            std::fs::read(backup.join("current.asig")).unwrap(),
+            b"benign current fixture"
+        );
+
+        let summary = recover_pending_directory_activations(&install).unwrap();
+        assert_eq!(summary.recovered_backups, 1);
+        assert_eq!(summary.removed_journals, 1);
+        assert_eq!(
+            std::fs::read(destination.join("current.asig")).unwrap(),
+            b"benign current fixture"
+        );
+        assert!(!staging.exists());
+        assert!(!backup.exists());
+        assert!(!journal.exists());
+    }
+
+    #[test]
+    fn activation_recovery_durability_failure_after_activation_preserves_recovery_state() {
+        let (_root, install, transaction) = setup_transaction();
+        let journal = transaction.journal_path.clone();
+        let destination = transaction.paths.destination.clone();
+        let staging = transaction.paths.staging.clone();
+        let backup = transaction.paths.backup.clone();
+
+        let error = transaction
+            .commit_with_durability_hooks(
+                || Ok(()),
+                || Ok(()),
+                |_| Ok(()),
+                |_| anyhow::bail!("benign simulated activation namespace sync failure"),
+            )
+            .unwrap_err();
+        let detail = format!("{error:#}");
+
+        assert!(detail.contains("namespace durability failed"), "{detail}");
+        assert!(detail.contains("evidence were preserved"), "{detail}");
+        assert!(journal.exists());
+        assert_eq!(
+            std::fs::read(destination.join("next.asig")).unwrap(),
+            b"benign staged fixture"
+        );
+        assert!(!staging.exists());
+        assert_eq!(
+            std::fs::read(backup.join("current.asig")).unwrap(),
+            b"benign current fixture"
+        );
+
+        let summary = recover_pending_directory_activations(&install).unwrap();
+        assert_eq!(summary.completed_activations, 1);
+        assert_eq!(summary.removed_journals, 1);
+        assert_eq!(
+            std::fs::read(destination.join("next.asig")).unwrap(),
+            b"benign staged fixture"
+        );
+        assert!(!backup.exists());
+        assert!(!journal.exists());
     }
 
     #[test]
@@ -1502,6 +1676,28 @@ mod tests {
         assert!(!journal_path.exists());
     }
 
+    #[cfg(unix)]
+    #[test]
+    fn activation_recovery_unix_namespace_durability_barriers_execute() {
+        let (_root, install, transaction) = setup_transaction();
+        let journal_path = transaction.journal_path.clone();
+        let destination = transaction.paths.destination.clone();
+        let backup = transaction.paths.backup.clone();
+
+        transaction.commit().unwrap();
+
+        assert_eq!(
+            std::fs::read(destination.join("next.asig")).unwrap(),
+            b"benign staged fixture"
+        );
+        assert!(!backup.exists());
+        assert!(!journal_path.exists());
+        assert_eq!(
+            recover_pending_directory_activations(&install).unwrap(),
+            ActivationRecoverySummary::default()
+        );
+    }
+
     #[test]
     fn activation_recovery_unix_runtime_contract_is_wired() {
         let source = include_str!("activation_recovery.rs");
@@ -1510,6 +1706,9 @@ mod tests {
         for marker in [
             "activation_recovery_unix_artifacts_are_owner_only_and_non_executable",
             "activation_recovery_unix_repairs_private_modes_before_use",
+            "activation_recovery_unix_namespace_durability_barriers_execute",
+            "sync_unix_directory_metadata",
+            "synchronize_parent_namespace",
             "assert_unix_mode(&transaction.recovery_root, 0o700)",
             "assert_unix_mode(&key_path, 0o600)",
             "assert_unix_mode(&lock_path, 0o600)",

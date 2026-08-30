@@ -42,6 +42,45 @@ pub fn rename_directory_no_replace(source: &Path, destination: &Path, label: &st
     rename_no_replace_impl(source, destination, label)
 }
 
+/// Synchronizes a Unix directory inode and its namespace updates after a
+/// caller has created, removed, or renamed a security-critical entry.
+#[cfg(unix)]
+pub fn sync_unix_directory_metadata(directory: &Path, label: &str) -> Result<()> {
+    use std::os::unix::fs::MetadataExt;
+
+    let before = fs::symlink_metadata(directory)
+        .with_context(|| format!("failed to inspect {label} {}", directory.display()))?;
+    anyhow::ensure!(
+        before.is_dir() && !before.file_type().is_symlink(),
+        "{label} is not an ordinary directory: {}",
+        directory.display()
+    );
+    let handle = fs::File::open(directory)
+        .with_context(|| format!("failed to open {label} {}", directory.display()))?;
+    let opened = handle
+        .metadata()
+        .with_context(|| format!("failed to identify opened {label} {}", directory.display()))?;
+    anyhow::ensure!(
+        opened.is_dir() && before.dev() == opened.dev() && before.ino() == opened.ino(),
+        "{label} changed while opening it for synchronization: {}",
+        directory.display()
+    );
+    handle
+        .sync_all()
+        .with_context(|| format!("failed to synchronize {label} {}", directory.display()))?;
+    let after = fs::symlink_metadata(directory)
+        .with_context(|| format!("failed to re-inspect {label} {}", directory.display()))?;
+    anyhow::ensure!(
+        after.is_dir()
+            && !after.file_type().is_symlink()
+            && opened.dev() == after.dev()
+            && opened.ino() == after.ino(),
+        "{label} changed while synchronizing it: {}",
+        directory.display()
+    );
+    Ok(())
+}
+
 #[cfg(windows)]
 const WINDOWS_UNC_PREFIX: &[u16] = &[b'\\' as u16, b'\\' as u16];
 #[cfg(windows)]
@@ -150,11 +189,18 @@ fn bounded_windows_move_path(path: &Path, role: &str, label: &str) -> Result<Vec
 
 #[cfg(windows)]
 fn rename_no_replace_impl(source: &Path, destination: &Path, label: &str) -> Result<()> {
-    use windows_sys::Win32::Storage::FileSystem::MoveFileExW;
+    use windows_sys::Win32::Storage::FileSystem::{MoveFileExW, MOVEFILE_WRITE_THROUGH};
 
     let source_wide = bounded_windows_move_path(source, "source", label)?;
     let destination_wide = bounded_windows_move_path(destination, "destination", label)?;
-    if unsafe { MoveFileExW(source_wide.as_ptr(), destination_wide.as_ptr(), 0) } == 0 {
+    if unsafe {
+        MoveFileExW(
+            source_wide.as_ptr(),
+            destination_wide.as_ptr(),
+            MOVEFILE_WRITE_THROUGH,
+        )
+    } == 0
+    {
         return Err(std::io::Error::last_os_error()).with_context(|| {
             format!(
                 "failed to atomically activate {label} {} without replacing {}",
@@ -1579,6 +1625,21 @@ mod tests {
         assert!(error
             .to_string()
             .contains("changed before permission hardening"));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn unix_directory_metadata_sync_accepts_stable_directory_and_rejects_file() {
+        let root = tempfile::tempdir().unwrap();
+        let directory = root.path().join("recovery");
+        let file = root.path().join("not-a-directory");
+        fs::create_dir(&directory).unwrap();
+        fs::write(&file, b"benign metadata fixture").unwrap();
+
+        sync_unix_directory_metadata(&directory, "recovery fixture").unwrap();
+        let error = sync_unix_directory_metadata(&file, "recovery fixture").unwrap_err();
+
+        assert!(error.to_string().contains("is not an ordinary directory"));
     }
 
     #[cfg(windows)]

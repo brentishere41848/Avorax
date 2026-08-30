@@ -4316,3 +4316,33 @@ package-wide power-loss transactionality; production signing/notarization and
 deployment; privileged installed service evidence; signed driver and proven
 pre-execution enforcement; Defender replacement; and complete antivirus-goal
 closure.
+
+## Checkpoint 2272 Update Recovery Namespace Durability Limits
+
+Checkpoint 2272 scripts Windows write-through no-replace moves and Unix stable-
+directory synchronization after recovery key/lock/journal creation, activation
+and recovery renames, directory cleanup, and journal removal. A post-rename
+synchronization failure is fail-visible and preserves authenticated evidence
+for a later recovery pass.
+
+No checkpoint-2272 test ran during the scripting phase. Post-freeze local
+platform/update fixtures, Source `703/703`, full regression, exact `300/300`
+verification, and dual-host validation with `16/16` hostile rejections pass.
+Windows write-through and injected failure recovery are locally verified.
+Hosted Ubuntu/macOS namespace semantics, package evidence, integration,
+destination synchronization, and closure remain pending; Unix/macOS durability
+therefore remains partial until exact-head hosted runtime evidence passes.
+
+The barriers do not make service lifecycle, loose files, every engine tree,
+reports, and rollback one durable transaction. Windows removal durability,
+device/cache truthfulness, unsupported or network filesystems, storage rollback
+and reordering, administrators/SYSTEM/root, hostile filesystems, kernel
+compromise, key loss or prior disclosure, Android runtime, installed elevated-
+service identity, VM power-cut behavior, production signing/deployment, signed
+driver/pre-execution enforcement, Defender replacement, and complete antivirus-
+goal closure remain open, blocked, or technically limited.
+
+No live malware, EICAR, Defender weakening, protected-vault mutation, machine-
+wide install, service/driver start, release, or publication is authorized. The
+vault remains exactly 16,072 files, zero directories, 4,522,733 bytes, 5,357
+each `.avoraxq`/`.json`/`.auth`, one `.metadata_auth_key`, and zero pending.

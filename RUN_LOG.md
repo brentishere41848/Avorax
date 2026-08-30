@@ -14886,3 +14886,59 @@ pending.
   vault. Checkpoint 2271 closes; all stated Android, installed-identity,
   prior-exposure, privileged-filesystem, transaction, driver/pre-execution,
   Defender-replacement, and whole-goal limits remain open.
+
+## 2026-08-30 continuation checkpoint 2272
+
+- Froze a scripting-first update-recovery namespace-durability batch; no
+  checkpoint-2272 test ran during scripting.
+- Scripted Windows `MOVEFILE_WRITE_THROUGH` for atomic no-replace moves and a
+  Unix stable-directory identity plus `sync_all` helper.
+- Routed key/lock/journal creation, activation and recovery renames, directory
+  cleanup, and journal removal through the applicable namespace barriers.
+- Added two harmless injected durability-failure recovery fixtures, one Unix
+  runtime fixture, one platform helper fixture, Source/verifier/validator
+  contracts, exact 300-step report ownership, and full audit documentation.
+- Post-rename synchronization failure is fail-visible and preserves the
+  authenticated journal and directory evidence. No dependency, lockfile,
+  detector, custom-engine, UI, quarantine, driver, or service-install change is
+  included.
+- Post-freeze focused, broad, definitive, adversarial, hosted, integration,
+  destination, and closure evidence is pending. Windows deletion durability,
+  storage truthfulness, hostile filesystems, package-wide transactionality,
+  installed identity, Android, signing/deployment, driver/pre-execution,
+  Defender replacement, and complete-goal closure remain open or limited.
+- No live malware, EICAR, Defender weakening, protected-vault mutation,
+  machine-wide install, service/driver start, release, or publication occurs.
+  The protected vault remains 16,072 files with zero pending.
+
+## 2026-08-30 - Checkpoint 2272 Post-Freeze Local Verification
+
+- PowerShell 5.1/7 parsing passes `2/2` each. Source passes exact `703/703`;
+  durability failures pass `2/2`; Unix/macOS route contracts pass `1/1` each;
+  platform and update-service suites pass `18/18` and `232/232`.
+- Format, strict locked all-target/all-feature Clippy, both locked workspace
+  variants, and locked all-target/all-feature release pass. The all-feature
+  groups are `18 + 4 + 232 + 41 + 251 + 583 + 642 + 6`, zero failures, with 21
+  documented isolated child-fixture ignores.
+- Flutter analyzes cleanly and passes `852/852`; Zentor and Avorax protocols
+  pass analysis plus `14/14 + 6/6`.
+- The authoritative no-skip/no-Defender verifier passes exact `300/300` in
+  `575.4s`. Its 228,867-byte report SHA-256 is
+  `9f6c54f97135044f2ae7e6b63f881b1084b0959316c24ceeea618f171cc1d531`.
+  Both validator hosts accept it. Eight content mutations on each host reject,
+  exact `16/16`; the 18,173-byte result SHA-256 is
+  `e57c8d8520adfe071139b0132dd66a06ecbdb074c2b7f41db79c92a956997209`.
+- The adversarial audit first exposed a missing validator requirement for the
+  post-mutation directory-sync failure limitation. The validator and Source
+  contract were tightened; Source, both parsers, the full verifier, and all 16
+  hostile cases passed again. The superseded audit is uncredited.
+- An earlier verifier attempt is honestly failed: active Defender blocked the
+  generated Native debug test executable before false-positive tests executed
+  with Windows error 225. Defender was not weakened. Its retained 224,565-byte
+  report SHA-256 is
+  `3d59c71b583ae58aed954ea410c6e7b97741c8e94929efca1ef6924909e0675d`.
+  Focused and complete repeats pass with test-only
+  `CARGO_PROFILE_TEST_DEBUG=0` and `CARGO_INCREMENTAL=0`.
+- All nine tracked lockfiles match `origin/main`; no product process remains;
+  the protected vault is exact. Hosted exact-head, integration, guarded sync,
+  destination proof, and closure remain pending. The complete goal is active.

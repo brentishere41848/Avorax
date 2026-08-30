@@ -4553,3 +4553,32 @@ storage rollback/reordering, and kernel compromise remain out of scope;
 recovery is not a power-loss-proof package transaction; Android runtime,
 production signing/deployment, signed-driver/pre-execution enforcement,
 Defender replacement, and whole-project completion remain open.
+
+## Checkpoint 2272 Namespace Durability Threat Delta
+
+Threat: a crash or reboot can occur after a recovery file is synchronized but
+before its containing directory entry, or after an activation rename but before
+that namespace mutation is persistent. On restart, the authenticated journal,
+destination, staging, and backup names may not describe the ordering assumed by
+the updater.
+
+Implemented mitigation: Windows no-replace moves request
+`MOVEFILE_WRITE_THROUGH`. Unix opens an ordinary directory, binds pre-open,
+opened, and post-sync device/inode identity, and synchronizes it after critical
+recovery namespace mutations. A barrier error after a rename bypasses normal
+cleanup and preserves journal plus directory evidence; the next authenticated
+recovery pass re-evaluates actual state. Tests use only benign temporary text
+trees. No checkpoint-2272 test ran during scripting. Post-freeze Windows,
+injected-failure, source-contract, broad regression, and exact `300/300`
+verification pass; actual Unix/macOS filesystem semantics remain pending hosted
+execution.
+
+Residual threat: user mode cannot prove storage-device cache truthfulness,
+filesystem crash semantics, remote replay, or Windows deletion persistence.
+The barriers do not create one transaction across services, loose files,
+multiple engine components, reports, and rollback. Administrators, SYSTEM/root,
+hostile filesystems, storage rollback/reordering, kernel compromise, key loss/
+disclosure, installed identity, Android, production signing/deployment, signed-
+driver/pre-execution enforcement, Defender replacement, and whole-goal closure
+remain outside this checkpoint. The protected 16,072-file vault remains read-
+only with zero pending.

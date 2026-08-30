@@ -6191,3 +6191,24 @@ goal rows retain their documented status.
 Checkpoint 2271 is closed through normal merge and exact zero-delete
 destination synchronization. The complete antivirus-hardening goal remains
 active.
+
+## Checkpoint 2272 Control Delta
+
+| Control / engine | Responsibility | Classification before execution | Evidence / limitation |
+| --- | --- | --- | --- |
+| Windows update activation rename durability | Request write-through completion while retaining atomic no-replace behavior | Verified locally on Windows | `MoveFileExW` uses `MOVEFILE_WRITE_THROUGH` and no replacement flag; platform no-replace fixtures, full suites, and exact source contract pass |
+| Unix recovery namespace durability | Synchronize stable directory handles after recovery namespace mutations | Locally contract-tested; hosted runtime pending | Device/inode is bound before and after `sync_all`; Ubuntu 24.04 and macOS 15 fixed filters select the new harmless runtime fixture |
+| Durability failure recovery | Avoid cleanup or false success after a post-rename sync failure | Verified locally with injected failures | Two benign fixtures preserve journal/staging/backup/destination state and complete through a fresh authenticated recovery pass |
+| Verifier/report ownership | Make the new behavior required evidence | Verified locally | The focused step raises the exact full report contract to 300; both validators accept the authentic report and reject all 16 hostile cases |
+| Detection and custom engines | Preserve existing scanner responsibilities, thresholds, and authority | Unchanged | No hash/signature/rule/YARA/static/PE/archive/heuristic/ML/process/aggregator/allowlist/cache behavior changes |
+| Package-wide power-loss transaction | Atomically cover services, files, all engines, reports, and rollback | Technically limited | Per-tree barriers cannot make multiple components one transaction; Windows removal durability, storage truthfulness, hostile filesystems, and privileged actors remain outside the guarantee |
+
+No checkpoint-2272 test ran during scripting. No dependency or lockfile changed.
+No live malware, EICAR, Defender weakening, installation, service/driver start,
+release, publication, or protected-vault mutation occurs. The exact 16,072-file
+vault has zero pending and complete antivirus hardening remains active.
+
+Post-freeze local evidence passes Source `703/703`, platform `18/18`, update
+service `232/232`, Flutter `852/852`, protocols `14/14 + 6/6`, and definitive
+verification `300/300`. Hosted Ubuntu/macOS namespace durability, integration,
+destination verification, and closure remain pending.
