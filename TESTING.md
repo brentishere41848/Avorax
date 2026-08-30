@@ -2049,3 +2049,95 @@ exact `20/20`. An earlier off-root mutation run is uncredited because candidate
 path rejection preceded content validation. Final destination audit verifies
 13 blobs, nine unchanged locks, 24 backups, zero product process/pending/temp
 residue, and the exact protected vault.
+
+## Checkpoint 2274 Verification
+
+The complete checkpoint batch was written before execution. No checkpoint-2274
+test ran during the scripting phase. After freeze, run the focused harmless
+checks first:
+
+```powershell
+python -B tools\testing\run-python-source-contracts.py
+cargo fmt --all -- --check
+cargo test --locked --manifest-path core\avorax_update_service\Cargo.toml `
+  checked_tree_cleanup_ -- --test-threads=1
+cargo test --locked --manifest-path core\avorax_update_service\Cargo.toml `
+  activation_recovery -- --test-threads=1
+```
+
+The focused filter covers bounded normal cleanup, entry/depth/logical-byte/
+aggregate-encoded-path-payload
+limits, inventory-to-removal type changes, explicit non-recursive deletion,
+Unix nested-link rejection, and authenticated recovery evidence preservation.
+Then run the complete locked Rust, Flutter, protocol, packaging-source, and
+definitive verifier suites. A valid complete report must contain exactly
+`302/302` steps and the `update-service bounded non-following tree cleanup
+regressions` step.
+
+Recorded post-freeze local evidence on 2026-08-30:
+
+- Source contracts pass `705/705`; format and `git diff --check` pass.
+- Windows `checked_tree_cleanup_` passed `7/7`; the two `cfg(unix)` primitive
+  and recovery fixtures require hosted Ubuntu execution.
+- Activation recovery passes `30/30`; update service passes `4 + 247`.
+- Strict locked Clippy, both locked workspace suites, and locked all-target/
+  all-feature release build pass.
+- Flutter analysis and `852/852` tests pass; protocol suites pass
+  `14/14 + 6/6`.
+- Definitive verifier passes `302/302` with zero skips/errors and Defender/EICAR
+  integration disabled in 694 seconds. The 231,383-byte report SHA-256 is
+  `326f4755e9d86e972e64a02da317d9ac6daa82ca118a0b34c34a7ceee6073829`.
+- Windows PowerShell 5.1 and PowerShell 7 accept the authentic report and reject
+  all `24/24` checkpoint-2274 adversarial host/mutation cases.
+- Final read-only audit passes 13 modified plus one added path, zero deletions,
+  nine unchanged lockfiles, zero product process/pending/temp residue, and the
+  exact protected-vault invariant.
+
+Final review superseded that report for current-head credit: basename-only
+accounting did not bound the full stored path payload. The repair counts full
+aggregate encoded paths under the same 16 MiB cap and adds
+`checked_tree_cleanup_path_payload_limit_fails_before_mutation`. Post-repair
+format/diff, Source `705/705`, Windows cleanup `8/8`, recovery `30/30`, update
+service `4 + 248`, strict locked Clippy, both locked workspaces, locked release,
+Flutter `852/852`, and protocols `14/14 + 6/6` pass. Final-source definitive
+verification passes exact `302/302` in `669.6s`, with no failed, skipped, or
+non-null-error steps and Defender/EICAR opt-in disabled. The 231,397-byte report
+SHA-256 is
+`7daf28a3904c16a356550afb44a0b7233699b371f3c4d119239ef44979c3bc63`.
+Windows PowerShell 5.1 and PowerShell 7 accept the authentic report and reject
+all `24/24` adversarial host/mutation cases. Final read-only audit passes the
+exact 13 modified plus one added path set, zero deletions, nine unchanged
+lockfiles, zero product process/pending/temp residue, and the exact protected-
+vault invariant. Hosted Unix, CI/package, merge, destination, and closure
+evidence remain pending.
+
+Initial exact-head CI `33306480962` passed, but its raw Ubuntu log contained
+neither new `cfg(unix)` test name: the Unix job filtered only the existing
+recovery-runtime set. The scripted workflow repair adds a dedicated `Test
+bounded cleanup Unix link safety` step with two fully qualified `--exact`
+commands, and the existing checkpoint-2274 Source contract pins that route.
+The preceding definitive report is therefore pre-workflow-repair evidence.
+The first post-freeze Source run failed visibly because the older Unix-job
+contract still required 13 Cargo invocations. Updating it to exact 15 and the
+fail-fast shell count to five makes Source pass `705/705`; cleanup `8/8`,
+recovery `30/30`, update service `4 + 248`, format, and diff checks pass.
+Final-source definitive verification passes exact `302/302` in `665.5s` with
+zero failed/skipped/non-null-error steps and Defender/EICAR opt-in disabled.
+The 231,401-byte report SHA-256 is
+`73f63eef30abbb2e1109ce112224128dc87717e9c6ba4363eb8d3842beb49552`.
+Both hosts accept the authentic report and reject all `24/24` adversarial
+cases. Final audit passes 14 modified plus one added path, zero deletions, nine
+unchanged locks, zero product process/pending/temp residue, and the protected-
+vault invariant.
+
+Final implementation head `c91519af3e03e8254e6dc215d9528f70a80fc2f5`
+passes all six jobs in Avorax CI run `33307588267`. Raw Ubuntu job
+`99246758706` evidence shows each fully qualified Unix cleanup/recovery test as
+`running 1 test`, named `ok`, and `1 passed; 0 failed`. Desktop Packages run
+`33307588380` passes package contracts, all four platform jobs, and
+consolidation. Its job log requires six platform files, creates seven checksums,
+and creates a CycloneDX 1.6 lockfile SBOM with 569 components; publication is
+skipped. GitHub metadata binds consolidated artifact `9731114476` and all four
+platform evidence bundles to the implementation head. No artifact was
+downloaded, extracted, or executed during review. Evidence-head hosted reruns,
+merge, destination, and closure testing remain pending.

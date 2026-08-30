@@ -2509,22 +2509,6 @@ active-lockfile audit pass. The checkpoint dependency/license delta is exactly
 zero. Production signing/notarization, final notice provenance, enterprise
 deployment, and release approval remain separate.
 
-Checkpoint 2270 post-freeze strict locked Clippy, both locked workspace test
-variants, locked all-target/all-feature release, the dependency gate inside
-exact `298/298`, and read-only lockfile-diff checks pass. No manifest or
-lockfile changed and no package, version, registry source, feature, runtime
-fetch, dependency, notice obligation, or license class was added. Hosted
-package/SBOM comparison, integration, destination eight-lock audit, and
-closure remain pending.
-
-Implementation-head Desktop Packages push/PR runs `33279152023` and
-`33279187604` pass dependency/license evidence, six platform assets, seven
-checksums, and CycloneDX 1.6 with 569 components; publication skips. Untouched
-consolidated artifacts `9722589339`/`9722639285` pass bounded in-stream review
-without extraction or execution. No manifest, lockfile, dependency, version,
-source, feature, runtime fetch, notice obligation, or license class changed.
-Evidence-head, merged-main, destination eight-lock audit, and closure remain.
-
 ## Checkpoint 2270 Dependency Delta
 
 Checkpoint 2270 adds no dependency and requires no lockfile change. The Unix
@@ -2802,3 +2786,50 @@ locked workspaces, locked all-feature release, dependency gate, and final `9/9`
 active-lockfile audit pass. The checkpoint dependency/license delta is exactly
 zero. Production signing/notarization, final notice provenance, enterprise
 deployment, and release approval remain separate.
+
+## Checkpoint 2274 Dependency Delta
+
+Checkpoint 2274 adds no dependency and requires no manifest or lockfile change.
+It replaces a standard-library recursive deletion call with existing
+standard-library metadata, directory-enumeration, regular-file, and empty-
+directory operations plus existing Avorax path/reparse checks. No package
+source, feature flag, runtime download, registry dependency, license class, or
+notice obligation is added.
+
+Initial post-freeze local strict locked Clippy, both locked workspace variants, locked
+all-target/all-feature release, dependency evidence inside exact `302/302`, and
+read-only lockfile review pass. All nine tracked lockfiles are unchanged and no
+manifest, package, version, source, feature, runtime fetch, dependency, notice,
+or license class was added. Final review changed only standard-library path-
+payload accounting and added no dependency. Post-repair strict locked Clippy,
+both locked workspaces, locked release, and unchanged nine-lock review pass;
+final-source definitive verification passes exact `302/302` in `669.6s` and
+final read-only audit confirms all nine tracked lockfiles remain unchanged.
+The later hosted-coverage repair changes only CI/test/docs and adds no
+dependency or lockfile change. Final-source Source `705/705`, exact `302/302`,
+dependency gate, and final nine-lock audit pass. Implementation-head Desktop
+Packages run `33307588380` passes all platform jobs and consolidation. It
+requires six platform files, generates seven checksums, creates CycloneDX 1.6
+with 569 lockfile components, and skips publication. GitHub metadata binds all
+five artifact bundles to `c91519af`; no bundle was downloaded, extracted, or
+executed during review. Evidence-head and merged-main package/SBOM comparison,
+destination, and closure evidence remain pending. No live malware,
+install, Defender change,
+service/driver start, publication, release, or protected-vault mutation is part
+of this review; the exact 16,072-file vault remains at zero pending.
+
+Checkpoint 2270 post-freeze strict locked Clippy, both locked workspace test
+variants, locked all-target/all-feature release, the dependency gate inside
+exact `298/298`, and read-only lockfile-diff checks pass. No manifest or
+lockfile changed and no package, version, registry source, feature, runtime
+fetch, dependency, notice obligation, or license class was added. Hosted
+package/SBOM comparison, integration, destination eight-lock audit, and
+closure remain pending.
+
+Implementation-head Desktop Packages push/PR runs `33279152023` and
+`33279187604` pass dependency/license evidence, six platform assets, seven
+checksums, and CycloneDX 1.6 with 569 components; publication skips. Untouched
+consolidated artifacts `9722589339`/`9722639285` pass bounded in-stream review
+without extraction or execution. No manifest, lockfile, dependency, version,
+source, feature, runtime fetch, notice obligation, or license class changed.
+Evidence-head, merged-main, destination eight-lock audit, and closure remain.

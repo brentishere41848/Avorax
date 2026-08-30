@@ -15115,3 +15115,78 @@ pending.
   the protected vault invariant. Checkpoint 2273 closes; all documented
   durability, privilege, driver/pre-execution, Defender, and whole-goal limits
   remain open.
+
+## Checkpoint 2274 Bounded Non-Following Tree Cleanup (Implementation-Head Hosted Passed)
+
+- Replaces the shared update-service `std::fs::remove_dir_all` cleanup with a
+  two-phase no-mutation inventory followed by explicit regular-file and empty-
+  directory removal.
+- The inventory caps 100,000 entries, depth 128, 8 GiB of logical regular-file
+  bytes, and 16 MiB of aggregate encoded path payload. Every nested item and its existing path
+  chain is checked against links/reparse points; unsupported kinds fail visibly.
+- Removal revalidates every inventoried type and path chain, removes no
+  unlisted descendant, requires each removed name to stay absent, and reports
+  every inspection, race, or removal error.
+- Nine harmless path-safety tests and one Unix recovery integration fixture,
+  Source contract 705, verifier step 302, report-validator requirements, and
+  all checkpoint documents were scripted before execution.
+- Post-repair local checks pass Source `705/705`, Windows cleanup `8/8`,
+  activation recovery `30/30`, update service `4 + 248`, strict locked Clippy,
+  both locked workspace variants, locked release, Flutter analysis and
+  `852/852`, and protocols `14/14 + 6/6`.
+- The superseded pre-repair no-skip/no-Defender report passed `302/302` in 694 seconds;
+  SHA-256 is `326f4755e9d86e972e64a02da317d9ac6daa82ca118a0b34c34a7ceee6073829`.
+  Both PowerShell hosts accepted it and rejected all `24/24` adversarial
+  host/mutation cases.
+- Final review found that the original 16 MiB counter covered only basenames
+  while storing full paths. The scripted repair counts full encoded path
+  payload and adds a before-mutation path-payload limit fixture. That fixture,
+  full update service, strict Clippy, both locked workspaces, locked release,
+  Flutter `852/852`, and protocols `14/14 + 6/6` now pass.
+- Final-source definitive verification passes exact `302/302` in `669.6s`,
+  with zero failed/skipped/error steps and Defender/EICAR opt-in disabled. The
+  231,397-byte report SHA-256 is
+  `7daf28a3904c16a356550afb44a0b7233699b371f3c4d119239ef44979c3bc63`.
+  Both PowerShell hosts accept the authentic report and reject all `24/24`
+  adversarial host/mutation cases.
+- Final read-only audit passes the exact 13 modified plus one added path set,
+  zero deletions, nine unchanged lockfiles, zero product process/pending/temp
+  residue, and the protected-vault invariant. Hosted Unix, CI/packages,
+  integration, destination, and closure evidence remain pending.
+- Exact-head CI run `33306480962` passed, but raw logs proved that its Ubuntu
+  job filtered only the existing recovery-runtime tests; the two new
+  `cfg(unix)` link fixtures did not execute. The workflow now wires both tests
+  by exact fully qualified name and Source contract 705 pins that route. This
+  tracked workflow/test-contract repair supersedes the preceding report for
+  final-source credit.
+- After the complete repair batch froze, Source first failed visibly because
+  the older Ubuntu-job contract still required 13 Cargo invocations. Updating
+  that exact contract to 15 and five fail-fast shells restored `705/705`.
+  Cleanup `8/8`, recovery `30/30`, update service `4 + 248`, format, and diff
+  checks pass.
+- Final-source definitive verification passes exact `302/302` in `665.5s`,
+  with zero failed/skipped/error steps and Defender/EICAR opt-in disabled. The
+  231,401-byte report SHA-256 is
+  `73f63eef30abbb2e1109ce112224128dc87717e9c6ba4363eb8d3842beb49552`;
+  both hosts accept it and reject all `24/24` adversarial cases.
+- Final read-only audit passes 14 modified plus one added path, zero deletions,
+  nine unchanged locks, zero product process/pending/temp residue, and the
+  protected-vault invariant.
+- Final implementation head `c91519af3e03e8254e6dc215d9528f70a80fc2f5`
+  passes all six jobs in CI run `33307588267`. Ubuntu job `99246758706` runs
+  both new fully qualified `cfg(unix)` tests with `--exact`; each names the test
+  as `ok` and reports `1 passed; 0 failed`, proving the filters are non-empty.
+- Desktop Packages run `33307588380` passes package contracts, Windows x64,
+  Linux x64, both macOS architectures, and consolidation. It requires six
+  platform files, creates seven checksums and a CycloneDX 1.6 SBOM with 569
+  components; publication is skipped. Consolidated artifact `9731114476` is
+  132,719,373 bytes with Actions archive SHA-256
+  `a62b1e98c5dd161031216445c18f1666b42ef0517071e5257fffc7d28cb839a4`.
+  Review used GitHub metadata and bounded logs only; no artifact was downloaded,
+  extracted, or executed.
+- Evidence-head hosted runs, normal merge, merged-main checks, guarded
+  destination synchronization, destination regression, and closure remain
+  pending.
+- No live malware, EICAR fixture, Defender change, installation, service/driver
+  start, publication, release, or protected-vault mutation is part of this
+  checkpoint. The exact 16,072-file vault remains at zero pending.

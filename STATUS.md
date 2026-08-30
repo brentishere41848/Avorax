@@ -8678,3 +8678,59 @@ package-wide atomicity, privileged actors, installed identity, Android,
 production signing/deployment, driver/pre-execution enforcement, Defender
 replacement, and complete antivirus-goal closure remain open or technically
 limited.
+
+## Checkpoint 2274 Status
+
+Checkpoint 2274 has passed definitive local verification after its final-review
+repair. The shared update,
+rollback, tree-replacement, and authenticated-recovery cleanup primitive now
+uses a bounded full-tree inventory before any mutation, rejects nested links,
+Windows reparse points, special entries, excess depth/count/logical bytes or
+aggregate encoded path payload, and removes only revalidated regular files and
+empty directories.
+
+Nine harmless primitive regressions, one harmless Unix recovery-evidence
+fixture, Source contract 705, verifier step 302, exact report validation, and
+all operational/audit documents were scripted before any checkpoint test ran.
+Post-repair Source `705/705`, Windows cleanup `8/8`, activation recovery
+`30/30`, update service `4 + 248`, strict locked Clippy, both locked workspace
+variants, locked release, Flutter analysis and `852/852`, and protocols
+`14/14 + 6/6` pass. The superseded pre-repair no-skip/no-Defender verifier passed exact
+`302/302` in 694 seconds; both PowerShell hosts accepted the authentic report
+and rejected all `24/24` adversarial cases.
+
+Final diff review found that the original 16 MiB resource counter counted only
+basenames while retaining full paths. The scripted repair now counts aggregate
+encoded path payload and adds a before-mutation limit fixture. Focused/full
+local regression now passes. Final-source definitive verification passes exact
+`302/302` in `669.6s`, with no failed/skipped/error steps and Defender/EICAR
+opt-in disabled. The 231,397-byte report SHA-256 is
+`7daf28a3904c16a356550afb44a0b7233699b371f3c4d119239ef44979c3bc63`.
+Both PowerShell hosts accept the authentic report and reject all `24/24`
+adversarial cases. Final read-only audit passes the exact path set, zero
+deletions, nine unchanged lockfiles, zero process/pending/temp residue, and the
+protected-vault invariant. Initial exact-head CI `33306480962` passed, but raw
+logs showed that its Ubuntu job omitted both new `cfg(unix)` link fixtures. The
+workflow now runs both by exact fully qualified name and Source contract 705
+pins that wiring. The first post-repair Source run failed visibly on the old
+13-command workflow count; the exact 15-command/five-shell contract repair now
+passes `705/705`. Cleanup `8/8`, recovery `30/30`, and update service `4 + 248`
+also pass. Final-source definitive verification passes `302/302` in `665.5s`,
+with zero failed/skipped/error steps and Defender/EICAR opt-in disabled; report
+SHA-256 is
+`73f63eef30abbb2e1109ce112224128dc87717e9c6ba4363eb8d3842beb49552`.
+Both hosts accept it and reject all `24/24` adversarial cases. Final audit
+passes 14 modified plus one added path, zero deletions, nine unchanged locks,
+zero residue, and the protected vault. Final implementation head `c91519af`
+passes all six CI jobs in run `33307588267`; Ubuntu job `99246758706` proves
+both exact Unix nested-link fixtures ran as named non-empty `1/1` tests.
+Desktop Packages run `33307588380` passes all four platform jobs,
+consolidation, six platform files, seven checksums, and CycloneDX 1.6 with 569
+components; publication is skipped. No artifact was downloaded, extracted, or
+executed during the metadata/log review. Evidence-head hosted runs, normal
+merge, destination synchronization/regression, and closure evidence are
+pending.
+Point-in-time same-identity races, privileged actors, hostile
+filesystems, Windows deletion durability, storage replay, package-wide
+atomicity, and complete antivirus-goal closure remain open or technically
+limited.

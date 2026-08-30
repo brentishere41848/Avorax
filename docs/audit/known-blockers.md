@@ -1,4 +1,4 @@
-﻿# Known Avorax Blockers
+# Known Avorax Blockers
 
 Date: 2026-05-30
 
@@ -4424,3 +4424,46 @@ filesystems, storage rollback/reordering, and kernel compromise; package-wide
 power-loss transactionality; production signing/deployment; signed driver and
 proven pre-execution enforcement; Defender replacement; and complete
 antivirus-goal closure.
+
+## Checkpoint 2274 Bounded Tree Cleanup Limits
+
+Checkpoint 2274 replaces unbounded shared recursive update-tree cleanup with a
+two-phase bounded inventory and explicit post-order file/empty-directory
+removal. Nested links/reparse points, special entries, over-limit trees, type
+changes, reappearing names, non-empty directories, and I/O errors fail visibly.
+The shared path is used by update staging, atomic tree replacement, rollback,
+and authenticated activation-recovery tombstones.
+
+No checkpoint-2274 test ran during the scripting phase. Post-repair local
+evidence passes Source `705/705`, Windows cleanup `8/8`, recovery `30/30`,
+update service `4 + 248`, strict locked Rust/release, Flutter `852/852`,
+protocols `14/14 + 6/6`, and exact verifier `302/302`.
+Final review then found basename-only accounting for retained full paths. The
+scripted repair counts aggregate encoded path payload under the 16 MiB cap and
+adds a ninth primitive fixture. Focused/full current-head regression now passes;
+final-source definitive verification passes exact `302/302` in `669.6s`, and
+both report-validator hosts accept the authentic report and reject all `24/24`
+adversarial cases. Final read-only audit passes the exact path, lock, process,
+residue, and protected-vault invariants. Initial exact-head CI `33306480962`
+passed but omitted the two Unix-only fixtures. Both exact Ubuntu commands and a
+Source contract are now wired. Final-source Source `705/705`, exact `302/302`
+in `665.5s`, dual-host `24/24` adversarial rejection, and final audit pass.
+Final implementation-head CI `33307588267` passes all six jobs; raw Ubuntu job
+`99246758706` proves both exact Unix tests execute non-empty and pass `1/1`.
+Desktop Packages `33307588380` passes all platform and consolidation jobs with
+six files, seven checksums, a 569-component CycloneDX 1.6 SBOM, and publication
+skipped. The narrow hosted Unix execution blocker is removed on the fixed
+Ubuntu 24.04 runner. Evidence-head/merged-main, destination, and closure
+evidence remain pending.
+
+The bounds do not create an atomic delete transaction or a kernel-enforced
+immutable namespace. Inventory and per-entry revalidation remain point-in-time;
+same-identity hostile races, open handles, administrators/SYSTEM/root, hostile
+filesystems, storage replay/reordering, kernel compromise, Windows deletion
+durability, and truthful hardware remain blocked or technically limited.
+Android runtime, installed elevated identity, production signing/deployment,
+signed-driver/pre-execution enforcement, Defender replacement, and complete
+antivirus-goal closure also remain open. No live malware, Defender change,
+machine-wide install, service/driver start, release, publication, or protected-
+vault mutation is authorized; the exact 16,072-file vault remains at zero
+pending.

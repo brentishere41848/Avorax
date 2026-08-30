@@ -96,6 +96,19 @@ jobs:
             activation_recovery_unix_ \
             -- --test-threads=1
 
+      - name: Test bounded cleanup Unix link safety
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo test --locked \
+            --manifest-path core/avorax_update_service/Cargo.toml \
+            path_safety::tests::checked_tree_cleanup_nested_link_fails_before_mutation \
+            -- --exact --test-threads=1
+          cargo test --locked \
+            --manifest-path core/avorax_update_service/Cargo.toml \
+            activation_recovery::tests::activation_recovery_checked_tree_cleanup_nested_link_preserves_evidence \
+            -- --exact --test-threads=1
+
       - name: Test Local Core Unix permission routing
         shell: bash
         run: |
