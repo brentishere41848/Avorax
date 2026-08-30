@@ -2,7 +2,7 @@
 
 Date: 2026-08-30
 
-Status: Locally verified; hosted integration pending
+Status: Closed through hosted integration and synchronized destination verification
 
 ## Purpose
 
@@ -146,3 +146,60 @@ No machine-wide component was installed, no service or driver was started, no
 Defender setting was weakened, no artifact was downloaded or executed, no
 release was published, and no direct-main push occurred. The complete
 antivirus-hardening goal remains active after checkpoint 2276.
+
+## Final Integration And Destination Closure
+
+Evidence head `5068588facefc3b5eb71bd7fa3c790837bd4a59b` passes Avorax
+CI `33328967846` with all six jobs successful. Desktop Packages push
+`33328965686` and PR `33328967859` pass contracts, Windows MSI/setup EXE,
+Linux DEB/tar, macOS x64/arm64 DMGs, and consolidation; both publication jobs
+are skipped. Consolidated artifacts `9737226137` and `9737270398` are
+132,851,825 and 132,862,226 bytes with hosted SHA-256 digests
+`8f9b25349917c1c6ea0961faabdea3e74a8bd864fcc555bf4463a766197ce22b`
+and
+`d6d468ee989b60a8534baf959643953a9bc90a17cf33d60fc82b7ad6abf0a187`.
+Only metadata was inspected; no artifact was downloaded or executed.
+
+PR `#161` merged normally as
+`cec2db6fda0af87ec8aba295981aaa6c5c485519`. Merged-main Avorax CI
+`33329752917` passes all six jobs. Desktop Packages `33329752913` passes every
+platform and consolidation job with publication skipped. Consolidated artifact
+`9737529391` is 132,847,295 bytes with hosted SHA-256 digest
+`c1a25ed5fb09b6ba2362db839bbf50fc29a98cd18df497e07f3a94bc41ff33b2`.
+
+Guarded synchronization applies exactly 15 modified plus one added file and
+zero deletions. Sync report SHA-256 is
+`0d1f1e6a731c6a45d6f0cb5c09d646bae5571bb17d09e99566e13f811cb276db`;
+30 verified backup files are retained. The destination passes Source
+`708/708`, new fixture `3/3`, workspace metadata `21/21`, Local Core quarantine
+`143/143`, Guard quarantine `51/51`, platform `28/28`, strict workspace Clippy,
+formatting, both complete locked Rust variants, locked release, Flutter
+analysis and `852/852`, and protocol analysis/tests `14/14 + 6/6`.
+
+Destination no-skip/no-Defender verification passes exact `302/302` in
+`665.1s`, with zero failed, skipped, or error-bearing steps. Its 224,381-byte
+report SHA-256 is
+`6f632c2aaa91eae8289d5c4d64c06babf2ed7ab47508e244b4bd7193a838c978`.
+PowerShell 5.1 and 7 accept the authentic report and reject all `52/52` hostile
+cases across 26 mutations; the 40,793-byte adversarial evidence SHA-256 is
+`db404c5c4e05af43e1dff5cfd4455a1419193d655805ad99d8d439e817179c65`.
+Final destination audit SHA-256 is
+`53a751b8686c1508868d482e1c1f56dc8ce18c3fe3d33e8743536a2a38dd0c52`.
+It proves 16 exact merge blobs, nine unchanged lockfiles, zero product
+processes, pending files, or temporary roots, and the unchanged protected vault.
+
+Initial destination harness attempts failed visibly because neither available
+Python had pytest, an experimental child-PowerShell invocation used an invalid
+argument form, and the destination intentionally has no `.git` directory. The
+dependency-free source runner then passed `708/708`, direct PowerShell 5.1/7
+parsers passed, and the source-repository blob audit verified every destination
+file. A parallel Flutter analysis waited on its startup lock and finished before
+the waiting probe attached; a captured rerun passed with no issues. No product
+failure was hidden or credited as success.
+
+Checkpoint 2276 is closed. JSON/HMAC pair replacement remains two independent
+file operations, so interruption between them can still produce a mismatched
+pair that authenticated reads reject. Installed identity, production signing
+and accuracy, driver/pre-execution enforcement, Defender replacement, hostile
+or privileged actors, storage truthfulness, and complete antivirus-goal closure
+remain open, blocked, or technically limited.

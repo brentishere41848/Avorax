@@ -8924,7 +8924,7 @@ discipline and the protected-vault invariant.
 
 ## Checkpoint 2276 - Quarantine Metadata Atomic Replacement
 
-Status: locally verified; hosted integration pending.
+Status: closed through hosted integration and synchronized destination verification.
 
 Local Core no longer deliberately removes an existing quarantine JSON record
 or HMAC sidecar before activating staged replacement bytes. Existing files now
@@ -8967,3 +8967,28 @@ and package evidence now also pass at `0be467e`: CI `33328100995` is six-for-
 six, package runs `33328099560` and `33328101027` pass all platform builds and
 consolidation, and publication is skipped. Evidence-head checks, normal merge,
 guarded destination synchronization, and destination verification remain.
+
+Final evidence supersedes that pending state. Evidence head `5068588` passes CI
+`33328967846` and both package runs `33328965686`/`33328967859`; every platform
+and consolidation succeeds and publication is skipped. PR `#161` merged
+normally as `cec2db6fda0af87ec8aba295981aaa6c5c485519`. Merged-main CI
+`33329752917` and packages `33329752913` pass; merged-main consolidated artifact
+`9737529391` is 132,847,295 bytes with hosted digest
+`c1a25ed5fb09b6ba2362db839bbf50fc29a98cd18df497e07f3a94bc41ff33b2`.
+No package was downloaded, installed, or executed.
+
+Guarded synchronization applies 15 modified plus one added file and zero
+deletions, retaining 30 verified backups. Destination focus passes Source
+`708/708`, replacement `3/3`, metadata `21/21`, Local Core `143/143`, Guard
+`51/51`, platform `28/28`, strict lint/format, both complete locked Rust suites,
+release, Flutter `852/852`, and protocols `14/14 + 6/6`. Exact destination
+verification passes `302/302` in `665.1s`; report SHA-256 is
+`6f632c2aaa91eae8289d5c4d64c06babf2ed7ab47508e244b4bd7193a838c978`.
+Both validator hosts accept the authentic report and reject `52/52` hostile
+cases across 26 mutations; adversarial SHA-256 is
+`db404c5c4e05af43e1dff5cfd4455a1419193d655805ad99d8d439e817179c65`.
+Final audit SHA-256 is
+`53a751b8686c1508868d482e1c1f56dc8ce18c3fe3d33e8743536a2a38dd0c52`.
+All 16 destination blobs and nine locks are exact, with zero process/residue and
+the unchanged protected vault. Checkpoint 2276 is closed; pair-wide
+transactionality and the complete antivirus goal remain open.

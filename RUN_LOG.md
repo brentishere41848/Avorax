@@ -15565,3 +15565,38 @@ pending.
   Only artifact metadata was read; nothing was downloaded, extracted,
   installed, or executed. Evidence-head checks, merge, guarded sync, and
   destination verification remain.
+
+## 2026-08-30 - Checkpoint 2276 Integration And Destination Closure
+
+- Evidence head `5068588facefc3b5eb71bd7fa3c790837bd4a59b` passes CI
+  `33328967846` and Desktop Packages push/PR `33328965686`/`33328967859`.
+  All platform and consolidation jobs pass and publication is skipped.
+- PR `#161` merged normally as
+  `cec2db6fda0af87ec8aba295981aaa6c5c485519`. Merged-main CI
+  `33329752917` and packages `33329752913` pass; publication remains skipped.
+  Consolidated artifact `9737529391` is 132,847,295 bytes with hosted digest
+  `c1a25ed5fb09b6ba2362db839bbf50fc29a98cd18df497e07f3a94bc41ff33b2`.
+  No artifact was downloaded, extracted, installed, or executed.
+- Guarded sync passes 15 modified, one added, zero deleted, and 30 verified
+  backups. Destination Source `708/708`, focused `3/3`, metadata `21/21`, Local
+  Core quarantine `143/143`, Guard `51/51`, platform `28/28`, strict Clippy,
+  format, both complete Rust variants, release, Flutter `852/852`, and protocol
+  `14/14 + 6/6` all pass.
+- Destination exact verifier passes `302/302` in `665.1s`; report SHA-256 is
+  `6f632c2aaa91eae8289d5c4d64c06babf2ed7ab47508e244b4bd7193a838c978`.
+  Both PowerShell hosts accept it and reject all `52/52` hostile cases across 26
+  mutations; adversarial SHA-256 is
+  `db404c5c4e05af43e1dff5cfd4455a1419193d655805ad99d8d439e817179c65`.
+- Final destination audit passes all 16 blobs, nine unchanged locks, zero
+  product process/pending/temp residue, 30 backups, and the exact vault. Audit
+  SHA-256 is
+  `53a751b8686c1508868d482e1c1f56dc8ce18c3fe3d33e8743536a2a38dd0c52`.
+- Initial destination harness attempts exposed missing pytest, an invalid
+  experimental PowerShell argument form, and the destination's intentional
+  absence of `.git`; dependency-free Source `708/708`, direct dual-host parsers,
+  and authoritative exact-blob auditing replaced those invalid routes. A
+  Flutter startup-lock wait completed before its probe attached; a captured
+  rerun passed. No product failure was hidden.
+- Checkpoint 2276 is closed. Cross-file JSON/HMAC transactionality, installed
+  identity, production signing/accuracy, signed driver/pre-execution evidence,
+  Defender replacement, and whole-goal completion remain open or limited.
