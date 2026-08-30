@@ -15003,3 +15003,49 @@ pending.
   the protected vault invariant. Checkpoint 2272 closes; all documented
   durability, privilege, driver/pre-execution, Defender, and whole-goal limits
   remain open.
+
+## 2026-08-30 - Checkpoint 2273 Cleanup Tombstone Scripting
+
+- Scripted a typed update-recovery cleanup protocol before running any test.
+  Staging and backup trees move no-replace into one of four exact cleanup names;
+  the HMAC-authenticated active journal then moves to a distinct cleanup-journal
+  name before either tombstone is removed.
+- A later locked recovery pass inventories at most 128 recovery entries, resumes
+  authenticated cleanup journals, removes exact orphan cleanup tombstones, and
+  rejects malformed names, multiple dispositions, tampered journals, restored
+  active names, links/reparse points, and ambiguous state without deleting the
+  evidence it cannot justify.
+- Added eight benign temporary-directory regressions, verifier step 301, exact-301
+  report validation, Source contract 704, and the full checkpoint audit,
+  threat-model, blocker, dependency, testing, protection, status, and matrix
+  documentation batch.
+- No checkpoint-2273 test ran during the scripting phase. After freeze, the
+  focused cleanup filter passed `8/8`, complete activation recovery passed
+  `30/30`, update service passed `4 + 240`, Source passed `704/704` after one
+  honest stale-contract failure was repaired, and both locked workspace
+  variants, strict Clippy, release, Flutter `852/852`, and protocols
+  `14/14 + 6/6` passed.
+- Final diff review found that an orphan tombstone could be removed before a
+  replay-restored active sibling was reported. The guard was moved before every
+  orphan cleanup, an eighth preservation regression and source-order contract
+  were added, and all affected/broad/definitive evidence was rerun. The earlier
+  seven-test verifier report is superseded and is not credited.
+- The definitive verifier passed exact `301/301` with zero failed/skipped or
+  non-null step errors in `597.3s`; Defender/EICAR integration opt-in remained
+  false. Its 229,793-byte report SHA-256 is
+  `412da5f6f77c0f1567293ae1903dbd0595094f0e0f9fe696606efbdc328bd88a`.
+  PowerShell 5.1 and 7 accepted the authentic report and rejected all `20/20`
+  adversarial host/path/status/count/step/scope mutations.
+- Final local audit passed exact 12 tracked modifications, one new report, zero
+  deletions, nine unchanged lockfiles, zero product process/pending/temp
+  residue, and the exact protected-vault invariant. Hosted, integration,
+  synchronized-destination, merge, and closure evidence remains pending.
+- Cleanup tombstones reduce stale active-name ambiguity; they do not prove
+  Windows same-volume rename/delete persistence, storage ordering, hostile-
+  filesystem safety, or package-wide power-loss atomicity. No live malware,
+  Defender weakening, install, service/driver start, release, publication, or
+  protected-vault mutation occurs. The eight checkpoint fixtures contain no
+  EICAR; the inherited verifier used only its established safe EICAR text and
+  simulator fixtures without Defender integration. The protected vault remains
+  16,072 files with zero pending, and the complete antivirus-hardening goal
+  remains active.

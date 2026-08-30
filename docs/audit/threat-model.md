@@ -4606,3 +4606,41 @@ storage rollback/reordering, and kernel compromise remain out of scope;
 multi-component activation is not one transaction; Android, production
 signing/deployment, signed-driver/pre-execution enforcement, Defender
 replacement, and whole-goal completion remain open.
+
+## Checkpoint 2273 Cleanup Tombstone Threat Delta
+
+Threat: recursive removal and journal deletion are separate namespace changes.
+After a crash or storage replay, a staging/backup directory can reappear while
+its authenticated journal stays absent, causing an unexplained active-looking
+orphan; or a journal can reappear after the state that explained an aborted new
+activation has vanished.
+
+Scripted mitigation: cleanup first moves the exact staging/backup tree no-
+replace into the private recovery directory under one of four typed operation-
+bound names. Once active paths are final, the already HMAC-authenticated journal
+moves to a distinct cleanup name. Restart inventory is capped at 128 entries,
+accepts only exact lower-hex operation IDs and dispositions, verifies cleanup
+journal authentication, rejects links/reparse points and conflicts, and removes
+only recognized cleanup residue. A cleanup journal with restored active names
+fails closed instead of deleting ambiguous evidence.
+
+Eight benign tests model both interruption boundaries, orphan cleanup,
+disposition conflict, multiple orphan dispositions, journal tamper, and
+malformed naming. Source contract 704 and verifier step 301 require the behavior
+and limitations. No checkpoint-2273 test ran during the scripting phase. After
+freeze, focused cleanup passes `8/8`, activation recovery `30/30`, Source
+`704/704`, the definitive verifier `301/301`, and dual-host hostile report
+mutation rejection `20/20`. Hosted, installed-identity, destination, and closure
+evidence remains pending.
+
+Residual threat: Windows does not provide this checkpoint with proof that a
+same-volume rename or later deletion survived power loss, cache reordering, or
+filesystem replay. Cross-operation ordering may still produce a state requiring
+manual review. Administrators, SYSTEM/root, hostile filesystems, storage
+rollback, kernel compromise, multi-component transactionality, installed
+identity, Android, signing/deployment, driver/pre-execution enforcement,
+Defender replacement, and whole-goal closure remain out of scope. No live
+malware is used; checkpoint fixtures contain no EICAR and inherited safe EICAR
+text/simulator verifier fixtures run without Defender integration. The
+16,072-file protected vault remains read-only with zero pending, and the
+complete antivirus-hardening goal remains active.

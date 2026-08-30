@@ -6192,6 +6192,26 @@ Checkpoint 2271 is closed through normal merge and exact zero-delete
 destination synchronization. The complete antivirus-hardening goal remains
 active.
 
+## Checkpoint 2273 Local Control Classification
+
+| Control / engine | Scripted state | Evidence / remaining limit |
+| --- | --- | --- |
+| Typed recovery-directory cleanup | Verified locally | Staging/backup moves no-replace to one of four operation-bound cleanup tombstones before removal; focused cleanup passes `8/8` |
+| Authenticated journal retirement | Verified locally | Valid final state precedes active-journal move to an exact cleanup-journal name; cleanup journal HMAC is rechecked on restart; activation recovery passes `30/30` |
+| Bounded residue recovery | Verified locally | At most 128 exact entries are inventoried; recognized orphan tombstones can be removed, while malformed names, reparse points, conflicts, restored active names, and ambiguity fail visibly |
+| Benign/adversarial regressions | Verified locally | Source passes `704/704`, verifier exact `301/301`; two hosts accept authentic evidence and reject `20/20` mutations |
+| Windows deletion durability | Technically limited | Tombstones narrow stale-name ambiguity but do not prove same-volume rename/delete persistence, storage ordering, hostile-filesystem behavior, or power-loss atomicity |
+| UI controls and custom detection engines | Unchanged | No tab/button/setting, hash/signature/YARA/static/PE/archive/heuristic/ML/process/aggregator, allowlist/exclusion/cache, quarantine, realtime, or custom-engine responsibility changes |
+| Driver/pre-execution and Defender replacement | Blocked/unclaimed | No driver is installed or started and no pre-execution or Defender-replacement claim is made |
+
+No checkpoint-2273 test ran during the scripting phase. Nine lockfiles remain
+unchanged. Hosted CI/package, merge, destination, and closure evidence remains
+pending. No live malware, Defender weakening, installation, service/driver
+start, release, publication, or protected-vault mutation occurs. Checkpoint
+fixtures contain no EICAR; inherited full-suite EICAR text/simulator fixtures
+run without Defender integration. The exact 16,072-file vault has zero pending
+and the complete antivirus-hardening goal remains active.
+
 ## Checkpoint 2272 Control Delta
 
 | Control / engine | Responsibility | Classification before execution | Evidence / limitation |

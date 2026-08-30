@@ -8601,3 +8601,35 @@ package-wide atomicity, privileged actors, installed identity, Android,
 production signing/deployment, driver/pre-execution enforcement, Defender
 replacement, and complete antivirus-goal closure remain open or technically
 limited.
+
+## Checkpoint 2273 Local Verified State
+
+Checkpoint 2273 scripts recoverable cleanup tombstones for update activation.
+Before recursive removal, each staging or backup tree moves no-replace into the
+private recovery directory under one exact disposition name. After the active
+paths reach a valid final state, the HMAC-authenticated journal moves to an exact
+cleanup-journal name. Only then are the tree tombstone and cleanup journal
+removed. Restart recovery recognizes those bounded states and completes cleanup;
+malformed, conflicting, tampered, reparse, or ambiguous evidence fails visibly
+and remains available for review.
+
+Eight harmless temporary-directory tests, Source contract 704, verifier step
+301, exact-301 validation, and all audit/dependency/operational documents were
+scripted before execution. No checkpoint-2273 test ran during the scripting
+phase. Post-freeze local evidence passes cleanup `8/8`, activation recovery
+`30/30`, update service `4 + 240`, Source `704/704`, strict Clippy, both locked
+workspace variants, release, Flutter `852/852`, protocols `14/14 + 6/6`, and
+the definitive no-skip/no-Defender verifier `301/301`. Both validator hosts
+accept the authentic report and reject all `20/20` mutations. Hosted CI/package,
+merge, destination, and closure evidence remains pending.
+
+This narrows cleanup replay ambiguity but does not prove Windows same-volume
+rename or deletion persistence, storage write ordering, power-loss atomicity,
+or defense against administrators, SYSTEM/root, hostile filesystems, rollback,
+or kernel compromise. It changes no UI control, detector/custom-engine duty,
+threshold, quarantine authority, realtime authority, driver/pre-execution
+claim, or Defender relationship. No live malware is used; checkpoint-specific
+fixtures contain no EICAR, while the inherited full verifier uses only its safe
+EICAR text/simulator fixtures with Defender integration disabled. The protected
+vault remains exactly 16,072 files with zero pending, and the complete antivirus-
+hardening goal remains active.

@@ -1951,8 +1951,8 @@ if ($RequireFullSuite) {
   if ($skipFlutter -or $skipRust) {
     throw "-RequireFullSuite requires skip_flutter=false and skip_rust=false."
   }
-  if ($steps.Count -ne 300) {
-    throw "-RequireFullSuite expected exactly 300 verifier steps for this source revision, found $($steps.Count)."
+  if ($steps.Count -ne 301) {
+    throw "-RequireFullSuite expected exactly 301 verifier steps for this source revision, found $($steps.Count)."
   }
   if ($steps[0].name -ne "local-core safe simulator scan reporting") {
     throw "-RequireFullSuite first step mismatch: $($steps[0].name)"
@@ -1980,6 +1980,7 @@ if ($RequireFullSuite) {
   Assert-ReportContainsStep $steps "update-service Unix activation recovery runtime contract"
   Assert-ReportContainsStep $steps "update-service macOS activation recovery runtime contract"
   Assert-ReportContainsStep $steps "update-service activation recovery namespace durability regressions"
+  Assert-ReportContainsStep $steps "update-service activation recovery cleanup tombstone regressions"
   Assert-ReportContainsStep $steps "native-engine file-type classifier regressions"
   Assert-ReportContainsStep $steps "native-engine detection-only mutation boundary regressions"
   Assert-ReportContainsStep $steps "native-engine archive content sampling regressions"
@@ -2193,6 +2194,11 @@ if ($RequireFullSuite) {
   Assert-ReportScopeContains $technicalLimitText "Durability barriers are best-effort user-mode filesystem evidence, not a power-loss-proof package transaction" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "Windows removal durability, storage hardware truthfulness, hostile filesystems, and multi-component atomicity remain unverified" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "Directory synchronization may fail after a namespace mutation; Avorax then reports the failure and preserves authenticated recovery evidence instead of claiming a durable success" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $verifiedScopeText "Update recovery cleanup first moves staging or backup trees into exact typed no-replace cleanup tombstones" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "retires the HMAC-authenticated active journal through a distinct cleanup-journal name" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "malformed names, conflicting dispositions, tampered cleanup journals, active-name residue, and ambiguous states remain fail-visible and preserved" "verification_scope.verified"
+  Assert-ReportScopeContains $technicalLimitText "Cleanup tombstones reduce stale active-name ambiguity but do not prove Windows same-volume rename or deletion persistence" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "A replay or reordering that restores an active staging or backup name after its authenticated journal became a cleanup journal still fails closed for manual review" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "File allowlisting remains safe after its hash snapshot because later scan suppression also requires that exact hash" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "neither operation holds a kernel-enforced immutable file lease" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "This is confirmation and stale-verdict defense, not cross-identity authorization, malware execution prevention, driver enforcement, or protection against administrators, SYSTEM, or kernel compromise" "verification_scope.technically_limited"
