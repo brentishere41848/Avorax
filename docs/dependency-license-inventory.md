@@ -2891,3 +2891,24 @@ manifest or lockfile change. Hosted dependency/SBOM evidence remains pending.
 
 Final local audit independently confirms all nine tracked lockfiles unchanged.
 Hosted package dependency evidence and consolidated SBOM review remain pending.
+
+## Checkpoint 2276 Dependency Delta
+
+Checkpoint 2276 adds no dependency, changes no pinned version, package source,
+feature, runtime fetch, license class, or notice obligation, and requires no
+lockfile change. Local Core already has the workspace path dependency
+`avorax_platform_security = { path = "../avorax_platform_security" }`; existing-
+file metadata updates now reuse its checkpoint 2275 replacement primitive.
+
+The three new fixtures reuse existing standard-library, UUID, HMAC/auth, and
+`tempfile` test facilities and contain harmless temporary ASCII only. The CI
+delta adds no action or tool and keeps pinned actions and Rust 1.96.1. No live
+malware, EICAR, network package content, machine-wide install, Defender change,
+service/driver start, release, publication, or protected-vault mutation belongs
+to checkpoint 2276.
+
+Post-freeze local verification confirms all nine tracked dependency lockfiles
+unchanged while strict locked workspace lint/tests, release, exact `302/302`,
+and the final audit pass. Hosted package lockfile-SBOM evidence and complete
+final-artifact license/notice review remain required; no dependency or license
+claim is inferred from local source verification.

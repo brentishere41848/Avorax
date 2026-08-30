@@ -6362,3 +6362,23 @@ unique mutations. Hosted and destination evidence remains pending.
 Final local audit binds that evidence to 16 modified plus two added paths, zero
 deletions, nine unchanged locks, zero process/pending/temp residue, and the
 exact protected vault. Hosted control execution remains pending.
+
+### Checkpoint 2276 quarantine metadata atomic-replacement delta
+
+| Control | Responsibility | State | Evidence / limit |
+| --- | --- | --- | --- |
+| Local Core new metadata activation | Create journals, records, sidecars, and metadata key without replacing a competing name | Unchanged / previously verified | Shared atomic no-replace; checkpoint 2276 does not weaken it |
+| Local Core existing JSON activation | Persist status and authenticated-recovery record changes without a deliberate missing-name interval | Locally verified | Shared atomic existing-file replacement; harmless success and missing-destination tests pass |
+| Local Core existing HMAC activation | Persist the matching authentication tag without pre-delete | Locally verified | Same primitive, independently applied; final authenticated-pair fixture passes |
+| Authenticated JSON/HMAC pair | Reject incomplete or mismatched metadata | Partial / technically limited | Two non-transactional operations; mismatch is fail-visible and may need manual recovery |
+| Guard Service metadata | Preserve Guard mutation ownership and new-file no-replace rules | Unchanged | No authority transfer or active replacement change |
+| Native direct quarantine | Remain disabled compatibility behavior | Disabled / unchanged | No active mutation claim |
+| Detection and custom engines | Detect, analyze, observe, and aggregate within existing documented limits | Unchanged | Checkpoint 2276 makes no accuracy or coverage claim |
+| Driver/pre-execution and Defender relationship | Preserve honest authority boundaries | Technically limited / unchanged | No driver or service start and no Defender weakening/replacement |
+
+Checkpoint 2275 is closed through exact-head hosted integration, normal merge,
+guarded destination synchronization, destination `302/302`, dual-host hostile-
+report rejection, lock review, and protected-vault audit. Checkpoint 2276 starts
+from that closure. Its local `302/302`, dual-host `52/52` hostile rejection,
+lock/path/process/residue, and protected-vault evidence now pass; hosted,
+integration, and destination evidence remain pending.

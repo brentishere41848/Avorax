@@ -236,3 +236,24 @@ Users can also keep a file quarantined, restore/keep it, delete it permanently, 
 
 Permanent delete removes the isolated payload after integrity and path checks;
 it is not a secure-erase promise, especially on SSDs.
+
+## Checkpoint 2276 Metadata Replacement
+
+Existing Local Core quarantine status records and authentication sidecars now
+activate through shared existing-file atomic replacement. The previous
+validated-file removal before no-replace activation is gone, so an ordinary
+failure cannot expose a deliberate destination-name absence. New metadata still
+uses atomic no-replace activation and collision-preserving failure.
+
+Atomicity is per file. JSON plus HMAC is not a transaction: interruption between
+the two replacements can produce a mismatched pair, which authenticated reads
+reject and manual recovery may need to resolve. Windows ambiguous failure may
+preserve `.avorax-replace-backup`; same-volume hard links and truthful local
+filesystem behavior are required. Checkpoint 2276 does not prove secure erasure,
+kernel mediation, pre-execution blocking, or Defender replacement.
+
+Local verification passes all three new harmless replacement fixtures, all 21
+workspace metadata tests, Local Core quarantine `143/143`, and definitive
+`302/302`. Dual-host validation rejects all 52 hostile reports across 26
+mutations. Hosted Unix/macOS and synchronized-destination runtime evidence
+remain required.

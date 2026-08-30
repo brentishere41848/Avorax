@@ -2353,3 +2353,44 @@ Only harmless temporary ASCII fixtures are permitted and none is executed.
 Tests must not install/start services or drivers, change Defender, mutate the
 protected vault, download artifacts, publish a release, or claim package-wide
 transactionality.
+
+## Checkpoint 2276 Quarantine Metadata Atomic Replacement
+
+Checkpoint 2276 scripts the complete implementation, fixture, workflow,
+verifier, validator, source-contract, and documentation batch before testing.
+No checkpoint 2276 test ran during that scripting phase.
+
+Focused execution after freeze:
+
+```powershell
+cargo fmt --all -- --check
+& 'C:\Users\Brent\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe' -B tools\testing\run-python-source-contracts.py
+cargo test --locked --manifest-path core\zentor_local_core\Cargo.toml quarantine_metadata_atomic_replace_ -- --test-threads=1
+cargo test --locked --workspace quarantine_metadata_ -- --test-threads=1
+cargo clippy --locked --manifest-path core\zentor_local_core\Cargo.toml --all-targets --all-features -- -D warnings
+cargo clippy --locked --manifest-path core\avorax_platform_security\Cargo.toml --all-targets --all-features -- -D warnings
+```
+
+PowerShell 5.1 and PowerShell 7 must parse both verifier scripts. The complete
+post-focus sequence must rerun locked workspace Clippy/tests, all-target/all-
+feature tests and release, Flutter analysis/tests, both Dart protocol packages,
+security gates, the exact 302-step no-Defender verifier, dual-host authentic and
+adversarial report validation, lockfile/diff/process/residue review, and the
+read-only protected-vault audit.
+
+The focused fixtures contain harmless temporary ASCII, are never executed, and
+must touch only isolated temporary directories. No live malware or EICAR is
+permitted for checkpoint 2276.
+
+Post-freeze execution passes Source `708/708`, new replacement `3/3`, workspace
+metadata `21/21`, Local Core quarantine `143/143`, Guard quarantine `51/51`,
+platform `28/28`, strict lint, formatting, and both parser hosts. Both complete
+locked Rust variants pass with 1,809 executed tests, 21 intentional ignores,
+and zero failures; release, Flutter `852/852`, and protocols `14/14 + 6/6` pass.
+
+The definitive verifier passes exact `302/302` in `677.8s`, with Defender/EICAR
+opt-in false and no skipped Rust or Flutter suite. Report SHA-256 is
+`62d917fadc40772e5db7dd14a6da17497db1e90d65224417fead7b74cfe0f32c`.
+PowerShell 5.1 and 7 accept the authentic report and reject `52/52` hostile
+cases across 26 mutations. The final local path/lock/process/residue/vault audit
+passes. Hosted and destination execution remain separate required evidence.

@@ -15483,3 +15483,39 @@ pending.
   mutation occurred. Checkpoint 2275 is closed through hosted integration and
   synchronized destination verification; the complete antivirus goal remains
   active.
+
+## 2026-08-30 - Checkpoint 2276 Quarantine Metadata Atomic Replacement Scripting
+
+- Selected the Local Core metadata remove-before-activate interval as the next
+  highest-value unblocked quarantine availability risk.
+- Scripted shared existing-file atomic replacement for existing JSON records
+  and HMAC sidecars while retaining no-replace activation for new metadata.
+- Added three harmless temporary-file regressions, Linux/macOS workflow
+  coverage, exact-302 verifier/validator scope, Source contract 708, threat and
+  control documentation, and a no-dependency statement.
+- No checkpoint 2276 test ran during scripting. No live malware or EICAR was
+  used; no protected-vault, Defender, install, service, driver, release, or
+  publication action occurred. Execution evidence remains pending.
+
+## 2026-08-30 - Checkpoint 2276 Local Verification
+
+- Focused verification passes the three new replacement fixtures, 21 workspace
+  metadata tests, Local Core quarantine `143/143`, Guard quarantine `51/51`,
+  platform `28/28`, strict lint, formatting, parsers, and final Source
+  `708/708`. Initial formatting and source-contract failures exposed formatting,
+  stale historical/count/wording contracts, and one accidentally broadened
+  marker; all failed visibly and were repaired before credit.
+- Broad verification passes strict workspace Clippy, both locked Rust workspace
+  variants with 1,809 executed tests, 21 intentional child-fixture ignores, and
+  zero failures, locked release, Flutter `852/852`, and protocols `14/14 + 6/6`.
+- The exact no-skip/no-Defender verifier passes `302/302` in `677.8s`. Report
+  SHA-256 is `62d917fadc40772e5db7dd14a6da17497db1e90d65224417fead7b74cfe0f32c`.
+  Both PowerShell hosts accept it and reject `52/52` hostile reports across 26
+  mutations; adversarial SHA-256 is
+  `273835ec3817f5bfa9c74612d67cbbe0a908f6a100bb00b92ad79d4fe99e43db`.
+- Final audit passes 15 modified plus one added path, zero deletions, nine
+  unchanged locks, zero staged `.verification` paths, zero process/pending/temp
+  residue, and the exact protected vault. Audit SHA-256 is
+  `9f979da7c84d784ebf83f23acbeb46652e43b992ae585289a0b9b168595881a1`.
+  Hosted exact-head, PR/merge, destination sync, and destination verification
+  remain pending; the complete antivirus goal remains active.

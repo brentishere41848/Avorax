@@ -4564,3 +4564,24 @@ malware/EICAR, Defender weakening,
 protected-vault mutation, machine-wide install, service/driver start, release,
 or publication is authorized; the exact 16,072-file vault must remain at zero
 pending.
+
+## Checkpoint 2276 Remaining Metadata Transaction Limits
+
+Checkpoint 2276 removes the known Local Core remove-to-activate gap for each
+existing JSON record and HMAC sidecar. The remaining blocker is cross-file
+transactionality: ordinary filesystems do not atomically replace both names in
+one operation. A crash between replacements can leave a mismatched pair;
+authenticated reads fail closed and manual recovery may be required. A durable
+authenticated multi-file journal or another carefully bounded transactional
+design remains future work.
+
+Windows ambiguous failure can leave `.avorax-replace-backup`, same-volume hard-
+link support is required, and point-in-time user-mode checks cannot defeat
+administrators, SYSTEM/root, hostile filesystems/storage, or kernel compromise.
+Installed identity, production signing/deployment, driver/pre-execution
+enforcement, Defender replacement, production accuracy, and complete-goal
+closure remain blocked, partial, open, or technically limited. Checkpoint 2276
+local runtime evidence passes new `3/3`, metadata `21/21`, complete regression,
+exact `302/302`, dual-host `52/52` hostile rejection, and final audit. Hosted,
+integration, synchronized-destination, installed-identity, and production
+evidence remain pending.
