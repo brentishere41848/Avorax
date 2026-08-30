@@ -4301,3 +4301,18 @@ root/admin, hostile filesystem, storage ordering, power-loss transaction,
 production signing/deployment, driver/pre-execution, Defender-replacement, or
 whole-project blockers. Evidence-head, merge, destination, and closure proof
 remain pending.
+
+Evidence-head and merged-main jobs now pass the same exact `3/3` macOS tests;
+normal PR `#151`, guarded 14-path zero-delete synchronization, complete
+destination regressions, exact `299/299`, dual-host hostile-report rejection,
+and final blob/lock/backup/process/vault audit close checkpoint 2271. The narrow
+single-runner macOS runtime blocker is removed.
+
+The following blockers are deliberately not removed: Android runtime; other
+macOS versions, architectures, filesystems, and installed identities;
+unencrypted or previously disclosed keys and prior open handles; root/admin,
+hostile filesystems, storage rollback/reordering, and kernel compromise;
+package-wide power-loss transactionality; production signing/notarization and
+deployment; privileged installed service evidence; signed driver and proven
+pre-execution enforcement; Defender replacement; and complete antivirus-goal
+closure.

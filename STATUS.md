@@ -8486,3 +8486,22 @@ other macOS environments, installed identity, key encryption/prior exposure,
 privileged and hostile filesystems, power-loss package transactionality,
 signing/deployment, driver/pre-execution, Defender replacement, evidence-head,
 integration, destination, and whole-project completion remain open or limited.
+
+That pending state is superseded. Evidence head `e6e44608` and normal PR `#151`
+merge `120eeec4` pass exact-head and merged-main CI/packages. Both fixed macOS
+15 jobs pass the exact three recovery permission/repair/wiring tests. Guarded
+synchronization applies exact 13 modified plus one added path, zero deletes,
+and preserves 26 backups.
+
+The destination passes Source `702/702`, strict Rust format/lint, both locked
+workspace variants, locked all-feature release, Flutter `852/852`, protocols
+`14/14 + 6/6`, and no-skip/no-Defender verification `299/299` in `661.9s`.
+Both validator hosts accept the authentic report and reject all `14/14`
+destination-local hostile mutations. Final audit passes 14/14 blobs, 8/8
+unchanged lockfiles, zero product process/residue, and the exact protected
+vault. Checkpoint 2271 is closed through synchronized destination verification.
+Only the single hosted macOS 15 environment is verified; Android, broader
+macOS/installed identity, prior exposure/open handles, unencrypted Unix key,
+privileged or hostile filesystems, package transactionality, signing/deployment,
+driver/pre-execution, Defender replacement, and the complete antivirus goal
+remain open or technically limited.

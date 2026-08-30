@@ -2451,6 +2451,24 @@ runtime-download, network-content, or license-class delta for the checkpoint;
 production signing/notarization, final notice provenance, deployment approval,
 evidence-head, merge, destination, and closure remain separate.
 
+## Checkpoint 2271 Dependency Closure
+
+Checkpoint 2271 adds no dependency, changes no manifest or lockfile, and adds no
+registry, package source, feature, runtime fetch, license class, or notice
+obligation. It reuses existing Rust standard-library Unix permission APIs and
+the already pinned CI toolchain/actions.
+
+Evidence-head package run `33285885795` and merged-main package run
+`33286399375` pass with publication skipped. Consolidated artifacts
+`9724549078` and `9724693557` pass bounded in-stream exact
+8-root/6-platform/7-checksum inventory and CycloneDX 1.6 with 569 components;
+neither is extracted or executed. Guarded synchronization, both destination
+locked workspaces, locked all-feature release, the dependency gate, and final
+8/8 active-lockfile audit pass. The checkpoint dependency and license delta is
+exactly zero. Android runtime/build, production signing/notarization, final
+notice provenance, enterprise deployment, and release approval remain
+separate.
+
 Checkpoint 2270 post-freeze strict locked Clippy, both locked workspace test
 variants, locked all-target/all-feature release, the dependency gate inside
 exact `298/298`, and read-only lockfile-diff checks pass. No manifest or
