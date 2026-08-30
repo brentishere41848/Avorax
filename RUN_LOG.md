@@ -15225,3 +15225,211 @@ pending.
   passes 15 blobs, nine locks, 28 backups, zero product process/residue, and the
   exact protected vault. Checkpoint 2274 closes; all documented durability,
   privilege, driver/pre-execution, Defender, and whole-goal limits remain open.
+
+## 2026-08-30 - Checkpoint 2275 Atomic Existing-File Replacement Scripting
+
+- Final checkpoint-2274 review selected the documented update staged-file
+  remove-before-activate availability gap as the highest-value unblocked risk.
+- Existing staged targets now route to a shared adjacent atomic replacement
+  primitive instead of `std::fs::remove_file(target)` followed by no-replace.
+  Initially absent targets retain atomic no-replace behavior.
+- Windows scripting uses `ReplaceFileW` with an adjacent previous-file backup,
+  opened-source file-ID snapshot plus active-name rebinding, retained opened
+  destination/backup identity binding, rejection of same-file aliases and
+  spoofed backups, immediate no-replace restoration when an
+  identity-bound failed-call backup leaves the destination absent, checked
+  backup cleanup on success, proof that no-backup failures retained the old
+  destination, and preserved evidence for ambiguous states. Unsupported
+  `REPLACEFILE_WRITE_THROUGH` is not claimed or passed.
+- Unix scripting uses same-directory atomic rename, opened-source identity
+  binding, and stable parent-directory synchronization.
+- Harmless platform/update fixtures, hosted Windows full-suite plus exact
+  Ubuntu/macOS wiring, Source
+  contract 706, the revised staged-file verifier step within exact step count
+  302, strict validator scope, and all audit/operational docs are scripted.
+- No checkpoint-2275 test ran during scripting. After freeze, Source initially
+  found two stale historical scope strings in `706` contracts and Windows
+  replacement initially exposed the staged-source sharing violation at `2/3`.
+  After exact repairs, Source passes `706/706` twice, replacement `3/3`, Windows
+  recovery/adversarial `5/5`, update activation `6/6`, and rejection `2/2`.
+  Strict platform/update Clippy, format, parser, and diff checks pass.
+- Multi-file/package transactionality,
+  authenticated loose-file crash recovery, Windows power-loss durability,
+  privileged/hostile filesystem races, installed identity, driver/pre-execution
+  enforcement, Defender replacement, and complete-goal closure remain open.
+- No live malware, EICAR, Defender change, installation, service/driver start,
+  release, publication, or protected-vault mutation is part of this scripting
+  batch. The exact 16,072-file vault must remain at zero pending.
+
+## 2026-08-30 - Checkpoint 2275 Local Definitive Verification
+
+- Full local regression passes strict locked workspace Clippy, both locked
+  workspace test variants, locked all-target/all-feature release build, Flutter
+  analysis and `852/852`, Zentor protocol analysis and `14/14`, and Avorax
+  protocol analysis and `6/6`.
+- The exact all-target/all-feature Rust run executes 1,801 tests, intentionally
+  ignores 21 native-engine child fixtures, and has zero failures. The standard
+  locked workspace run also passes with no fail-fast behavior.
+- Final-source no-skip/no-Defender verification passes exact `302/302` in
+  `720.3s`, with zero failed/skipped/error-bearing steps and Defender/EICAR
+  opt-in disabled. The 232,230-byte report SHA-256 is
+  `8cdec8f3d30f279a0faad434cd3238235e9fa7000526dcafc0919b2e36148867`.
+- Windows PowerShell 5.1 and PowerShell 7 each accept the authentic report and
+  reject all `28/28` host/mutation cases across 14 unique adversarial changes.
+  The 26,716-byte adversarial result SHA-256 is
+  `a47ed3f1d7f2c0f75a1d69900748e03ccd2d9a2b82a56caa12300bc3e3428571`.
+- Final read-only audit passes exact 15 modified plus one added paths, zero
+  deletions, nine unchanged locks, zero product process/pending/temp residue,
+  and the exact protected vault. Its 1,892-byte JSON SHA-256 is
+  `5793f7a6fbbc4da9b18855f7905816f909e6b621e5f42bd46b789c431e0cc7e8`.
+- No fixture executed payload bytes, installed or started product components,
+  changed Defender, downloaded artifacts, published, or touched the protected
+  vault. Hosted exact-head evidence, PR/merge, guarded destination
+  synchronization, and destination verification remain pending.
+
+## 2026-08-30 - Checkpoint 2275 Backup-Collision Repair Scripting
+
+- Final diff review questioned whether `ReplaceFileW` preserves an already-
+  existing API backup path. A harmless isolated Win32 probe confirmed that a
+  successful call overwrites the competing backup bytes with the old
+  destination. The preceding local definitive report and audit are therefore
+  superseded for final-source credit.
+- Windows now reserves the previous destination under a unique adjacent hard
+  link through no-overwrite creation, preserves every colliding candidate, and
+  passes a null backup parameter to `ReplaceFileW`. The reserved link is bound
+  to the retained old-destination handle before replacement and again before
+  cleanup or recovery.
+- Harmless collision-preservation and bounded 16-candidate exhaustion
+  regressions, Source contract, verifier/
+  validator scope, threat model, control matrix, blocker, update-flow,
+  dependency, operational, and checkpoint documentation are scripted before
+  repaired-source testing.
+- Hard-link support is now an explicit same-volume filesystem prerequisite;
+  unsupported filesystems fail visibly. Power-loss durability, authenticated
+  crash journaling, package transactionality, point-in-time races, privileged
+  actors, and all prior driver/Defender/whole-goal limits remain.
+- After the repair batch freezes, repaired-source focused checks pass Source
+  `706/706`, replacement `3/3`, reservation/recovery `7/7`, update `6/6 + 2/2`,
+  strict platform/update Clippy, format, four PowerShell parsers, and diff.
+- Complete repaired-source regression passes strict locked workspace Clippy,
+  both locked workspace test variants, locked all-target/all-feature release,
+  Flutter analysis and `852/852`, and protocol analysis/tests `14/14 + 6/6`.
+  Exact Rust totals are 1,803 executed, 21 intentional ignores, zero failures;
+  nine tracked dependency lockfiles remain unchanged.
+- No live malware/EICAR, Defender change,
+  installation, service/driver start, release, publication, artifact download,
+  or protected-vault mutation is part of this repair batch.
+
+## 2026-08-30 - Checkpoint 2275 Defender-Safe Verifier Harness Repair Scripting
+
+- The first definitive run on collision-safe repaired source recorded 297
+  passing steps and then stopped at the `False-positive gate`. Defender removed
+  `target\debug\deps\zentor_native_engine-146e350eee84cc5c.exe` as inactive
+  `Trojan:Win32/Wacatac.C!ml`; Cargo returned OS error 225 before each requested
+  Native benign test started. Defender reports `DidThreatExecute=False`.
+- This is retained as a failed 298-step, 716.9-second verifier report, not
+  scanner or completion evidence. Its 228,184-byte SHA-256 is
+  `da9d426f915bf9d1010b335fff3587d5d2f9e98e9cec414ccd1b0407f4d12da0`.
+- Defender was not weakened. A dedicated `benign_false_positive_gate`
+  integration target now initializes the public production API from bundled
+  assets, writes only three harmless ASCII installer fixtures under a temporary
+  root, scans detect-only, rejects invented trust evidence, and proves no
+  quarantine state was created.
+- The PowerShell gate executes that small target once. The verifier's earlier
+  normal-EXE guard selects it explicitly, CI prebuilds it with `--locked`, the
+  report validator requires the honest scope, Source contract 707 pins the route,
+  and dual-host adversarial scripting adds a seventeenth scope mutation.
+- All implementation, test, verifier, validator, CI, adversarial-audit, and
+  documentation changes were scripted before running the new target. No live
+  malware, EICAR content, fixture execution, Defender change, installation,
+  service/driver start, publication, release, or protected-vault mutation was
+  used during this scripting batch.
+
+## 2026-08-30 - Checkpoint 2275 Defender-Safe Harness Focused Verification
+
+- Rust formatting, five PowerShell parsers, diff checks, and Source `707/707`
+  pass after the scripted batch.
+- Strict Clippy for the dedicated integration target passes. Its three benign
+  public-API detect-only scans pass `3/3`; no quarantine state is created and no
+  trusted-publisher evidence is invented.
+- The complete PowerShell false-positive gate and no-malware-binaries gate pass
+  with Defender active. Read-only Defender history contains zero detections for
+  `benign_false_positive_gate-32a5d3cc77271a00.exe`; the present 3,235,328-byte
+  binary SHA-256 is
+  `8dd534b6956aef8bd33c9f5e34459c492917b09eace530c9544e7b2f0da56906`.
+- This is focused host evidence only. Broad regression, regenerated exact-302
+  verification, dual-host adversarial validation, and final audit remain
+  pending.
+
+## 2026-08-30 - Checkpoint 2275 Defender-Safe Harness Broad Verification
+
+- Strict locked workspace Clippy, both locked workspace test variants, and the
+  locked all-target/all-feature release build pass after the harness repair.
+- The exact all-target/all-feature totals are Platform `28`, Keygen `4`, Update
+  `248`, API `41`, Guard `251`, Local Core `583`, Native `642` plus 21
+  intentional child-fixture ignores, compiler `6`, and benign integration `3`:
+  1,806 executed tests and zero failures.
+- Flutter analysis and `852/852`, Zentor protocol analysis and `14/14`, and
+  Avorax protocol analysis and `6/6` pass. All nine tracked dependency lockfiles
+  remain byte-unchanged against `origin/main`.
+- Regenerated exact-302 verification, dual-host adversarial validation, and
+  final audit remain pending.
+
+## 2026-08-30 - Checkpoint 2275 Final-Source Definitive Verification
+
+- The regenerated no-skip/no-Defender verifier passes exact `302/302` in
+  `708.4s`, with zero failed, skipped, or error-bearing steps and standard
+  Defender/EICAR integration disabled.
+- The 232,732-byte report SHA-256 is
+  `13998e76443539d9eac4d9c38940a82d26011cc490c801d16de23df4f8edd3f0`.
+  The checkpoint staged-file atomic replacement step passes in `2.9s`; the
+  repaired late false-positive gate passes in `5.1s`.
+- Integrated and independent Windows PowerShell 5.1 and PowerShell 7 validators
+  accept the authentic report. Both hosts reject all `34/34` adversarial cases
+  across 17 unique missing/stale/count/status/path/host/scope/limit mutations.
+  The 32,960-byte adversarial result SHA-256 is
+  `3ea4610cdb1e89df351a454efbee340ab7395ee3ce2faac802ab390bf9655c9a`.
+- The original Defender-blocked failed report remains archived by its distinct
+  SHA and is not counted as success. Final read-only local audit and hosted
+  exact-head evidence remain pending.
+
+## 2026-08-30 - Checkpoint 2275 Final Local Audit
+
+- The warning-free read-only audit passes the exact 16 modified plus two added
+  path inventory with zero deletions, nine unchanged dependency lockfiles, and
+  report/adversarial SHA binding.
+- It records zero product processes, repository pending files, or Avorax/Zentor
+  temporary roots. The protected vault remains exactly 16,072 files, zero
+  directories, 4,522,733 bytes, 5,357 each `.avoraxq`/`.json`/`.auth`, one
+  `.metadata_auth_key`, and zero pending.
+- The 2,114-byte audit JSON SHA-256 is
+  `98627e5c9dc3de32c885212e2770edb49eb28ec1734af6b55bfc4f37fd57f1c2`.
+  Local closure evidence is complete; hosted exact-head, PR integration,
+  guarded destination synchronization, and destination verification remain.
+
+## 2026-08-30 - Checkpoint 2275 Implementation-Head Hosting
+
+- Committed the exact 18-path implementation, regression, verifier, validator,
+  CI, audit, and documentation set as
+  `1240d2ef65a25554b473a6c41368ce6840976ce0`, pushed only the checkpoint
+  branch, and opened normal PR `#159`. There were zero staged deletions,
+  dependency-lock changes, or `.verification` paths.
+- Exact-head Avorax CI `33319924374` passed all six jobs. The security job
+  prebuilt and ran the dedicated benign false-positive target; the Windows
+  Rust/platform suite and exact macOS atomic replacement fixtures executed
+  successfully alongside Flutter/protocol, branding, and Unix permission
+  coverage.
+- Desktop Packages push `33319897807` and PR `33319924291` passed package
+  contracts, Windows MSI/setup EXE, Linux DEB/tar, macOS x64/arm64 DMGs, and
+  consolidation. Each consolidation required six native package files, seven
+  checksums, a 569-component lockfile CycloneDX file, and eight uploaded files.
+- Consolidated artifacts `9734796340` and `9734788878` are 132,391,259 and
+  132,670,122 bytes. Their hosted upload SHA-256 values are
+  `795a6ab3722f53abbf5584840d4e8f2f12ce7276cf2ab2655aa4b580f9fb24ad`
+  and
+  `581140a94cf0bc2573af22a4b59d2abe5edc24f3d29983a2b8f89e56cbf3fb68`.
+  No artifact was downloaded, extracted, installed, or executed.
+- Both publication jobs were explicitly skipped. Evidence-head checks, normal
+  merge, merged-main evidence, guarded zero-delete destination sync, and
+  destination verification remain; checkpoint 2275 and the complete antivirus
+  goal remain active.

@@ -160,6 +160,55 @@ Normal `.aup` service payload staging revalidates the payload root immediately b
 
 Normal `.aup` engine child policy enumeration revalidates the engine source tree immediately before checking known runtime components, pruned installer-only children, and unsupported engine children.
 
+## Checkpoint 2275 Existing-File Activation
+
+Shared staged copy/write activation no longer removes an existing destination
+before moving the staged file. Existing adjacent ordinary files use the shared
+atomic replacement boundary; initially absent files still use atomic
+no-replace.
+
+Windows replacement first reserves a unique adjacent old-file hard link through
+no-overwrite creation and preserves every colliding candidate. `ReplaceFileW`
+receives a null backup parameter and zero flags because
+`REPLACEFILE_WRITE_THROUGH` is unsupported. Opened source/destination identities
+are checked before the call; the source file ID is retained across the required
+handle close, and active destination plus reserved-backup identities are checked
+afterward. Failed-call backup plus missing destination is restored only after
+matching the already-opened old-file
+identity, then rebound after no-replace. Same-file aliases and spoofed backups
+are rejected; destination plus an identity-bound backup is preserved as
+ambiguous fail-visible evidence. Unix uses same-directory atomic rename,
+active-destination identity binding, and parent-directory sync.
+A Windows failure whose reserved backup disappeared is reconciled only after
+rebinding the destination to the opened old file; missing-both state is reported
+as recovery failure.
+Same-volume filesystem hard-link support is required for backup reservation;
+unavailable support fails visibly.
+
+No checkpoint-2275 test ran during scripting. This is still per-file behavior:
+app/service/docs/engine/report/rollback/service-lifecycle changes are not one
+authenticated package transaction, and abrupt Windows termination can require
+manual `.avorax-replace-backup` recovery.
+
+Earlier local Windows `3/3 + 5/5`, update `6/6 + 2/2`, Source `706/706`, full
+regression, verifier `302/302`, and dual-host `28/28` evidence is superseded. A
+harmless probe proved API backup-path overwrite; the scripted no-overwrite
+hard-link repair passes focused Source `706/706`, platform `3/3 + 7/7`, and
+update `6/6 + 2/2`. Full local, definitive, hosted Unix, exact-head integration,
+and destination proof remain pending.
+
 ## Remaining Limitations
 
 Update Service self-update still needs a short-lived helper process before production use. Driver updates are explicitly rejected by the update manifest verifier and must go through a separate driver workflow.
+
+The first repaired-source verifier stopped at its unrelated late false-positive
+gate because Defender removed the generated Native unit-test harness. Update
+replacement regressions had already passed in that failed run, but the report
+is not completion evidence. The dedicated benign integration-harness repair
+changes only verification topology; it does not alter update activation code,
+authenticated package verification, rollback, or the limitations above.
+
+The regenerated report now passes exact `302/302`, including the `2.9s`
+staged-file atomic-replacement step. Dual-host authentic/adversarial validation
+passes `2/2 + 34/34`; hosted Unix and installed update-service evidence remain
+pending.

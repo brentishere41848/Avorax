@@ -4468,6 +4468,29 @@ machine-wide install, service/driver start, release, publication, or protected-
 vault mutation is authorized; the exact 16,072-file vault remains at zero
 pending.
 
+### Checkpoint 2275 verifier-host blocker and repair
+
+- The first collision-safe definitive run is failed evidence: 297 steps passed,
+  then Defender removed the Native unit-test harness as inactive
+  `Trojan:Win32/Wacatac.C!ml`; three late benign tests never started. This is not
+  reported as a scanner assertion failure or a passing gate.
+- Defender exclusions and security weakening remain forbidden. A dedicated
+  benign integration-test target is scripted for the late Native false-positive
+  gate and CI prebuild, while the complete Native unit-test suite remains
+  required separately.
+- Focused runtime proof now passes the new target `3/3`, the complete
+  false-positive gate, no-malware gate, and Source `707/707`, with zero Defender
+  detections for the dedicated target. Broad regression also passes 1,806 Rust
+  tests plus Flutter/protocol suites. The regenerated exact-302 report remains
+  pending. Production false-positive-rate evidence remains unverified even
+  though the fixture gate passes.
+- That exact-302 pending state is superseded locally: the regenerated report
+  passes `302/302`, and two validator hosts reject `34/34` adversarial cases.
+  Hosted exact-head, destination, and production-rate evidence remain open.
+- Final local audit passes 16 modified plus two added paths, zero deletions,
+  nine unchanged locks, zero residue/processes, and the exact vault. Hosted,
+  merge, synchronization, destination, and production-rate blockers remain.
+
 Evidence-head and merged-main Ubuntu 24.04 jobs now prove both dedicated Unix
 link fixtures execute exact non-empty `1/1`; all six CI jobs pass at both heads.
 Normal PR `#157`, guarded 15-path zero-delete synchronization, complete
@@ -4483,3 +4506,61 @@ root/admin/SYSTEM, hostile filesystems, storage rollback/reordering, and kernel
 compromise; package-wide power-loss transactionality; production signing and
 deployment; signed driver and proven pre-execution enforcement; Defender
 replacement; and complete antivirus-goal closure.
+
+## Checkpoint 2275 Atomic Existing-File Replacement Limits
+
+Checkpoint 2275 scripts removal of the known update-service
+remove-before-activate availability gap for an existing loose file. Supported
+hosts use one adjacent OS replacement operation; initially absent destinations
+remain no-replace. Opened file identity checks bind the staged source and old
+destination immediately before replacement and the resulting names afterward.
+
+Windows reserves an adjacent previous-file hard link through no-overwrite
+creation and preserves every colliding candidate, then calls `ReplaceFileW`
+with a null API backup parameter. Microsoft documents
+`REPLACEFILE_WRITE_THROUGH` as unsupported, so the implementation passes zero
+flags and does not claim Windows power-loss durability. A failed call that
+leaves the destination absent triggers an immediate checked no-replace restore
+only after the reserved backup matches the already-opened old destination; the
+restored name is rebound to that identity.
+Same-file aliases and mismatched/spoofed backups are rejected. If destination
+and backup both exist, both are preserved and the operation fails visibly.
+Successful replacement requires exact backup identity and checked removal.
+A failed call whose reserved backup disappeared is reconciled only after the
+destination is rebound to the opened old file; a missing-both state fails visibly.
+Because `ReplaceFileW` opens the replacement file without sharing, the verified
+staged-source handle closes before the call. Its file ID is rebound to the
+active name afterward, leaving an explicitly point-in-time source race boundary.
+Hard-link backup reservation requires same-volume filesystem hard-link support
+and fails visibly where unavailable.
+
+Unix uses same-directory atomic rename and stable parent-directory
+synchronization. Exact Ubuntu 24.04 and macOS 15 test routes are scripted, but
+no checkpoint-2275 test ran during the scripting phase. Network, unusual, or
+hostile filesystem behavior and dishonest storage caches are not inferred from
+local hosted filesystems.
+
+The remaining blockers are explicit. Abrupt process termination can leave the
+old Windows file only at a `.avorax-replace-backup` name; there is no
+authenticated loose-file journal yet, so ambiguous residue requires manual
+review. App files, service files, docs, engine components, rollback, reports,
+and service lifecycle are not one package-wide transaction. Path and opened-
+handle identity checks remain point-in-time; same-identity final races,
+administrators, SYSTEM/root, hostile filesystems, storage replay/reordering,
+kernel compromise, installed service identity, Android, production signing/
+deployment, signed-driver/pre-execution enforcement, Defender replacement, and
+complete-goal closure remain blocked, partial, open, or technically limited.
+
+Source contract 706, the revised staged-file step within exact verifier count
+302, dual-host report requirements, harmless runtime fixtures, and all docs are
+scripted before execution. Earlier Source `706/706`, Windows `3/3 + 5/5`,
+update `6/6`, full regression, exact verifier `302/302`, and dual-host `28/28`
+evidence is superseded after a harmless probe proved that the API backup path
+could overwrite a competing file. The no-overwrite hard-link repair passes
+focused Source `706/706`, platform `3/3 + 7/7`, and update `6/6 + 2/2`; full
+local, definitive, Unix hosted, exact-head integration, and destination
+evidence remain pending. No live
+malware/EICAR, Defender weakening,
+protected-vault mutation, machine-wide install, service/driver start, release,
+or publication is authorized; the exact 16,072-file vault must remain at zero
+pending.

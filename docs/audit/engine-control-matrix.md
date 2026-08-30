@@ -6317,3 +6317,48 @@ active.
 Checkpoint 2274 is closed through normal merge and exact zero-delete
 destination synchronization. The complete antivirus-hardening goal remains
 active.
+
+## Checkpoint 2275 Atomic Existing-File Replacement Delta
+
+| Control / engine | Responsibility | Scripted state | Evidence target / remaining limit |
+| --- | --- | --- | --- |
+| Existing update staged-file activation | Replace an adjacent existing regular target without deleting its destination name first | Collision-safe repair full local verified; definitive/hosted pending | Repaired platform `3/3`, update `6/6`, rejection `2/2`, and complete regression pass; earlier definitive report is superseded |
+| Absent update staged-file activation | Preserve a competing object that appears before final activation | Existing no-replace route regression verified locally | Existing Windows/Linux/Apple no-replace primitive remains authoritative |
+| Windows atomic replacement | Reserve the old target through adjacent no-overwrite hard-link creation, then use `ReplaceFileW` with a null API backup parameter and zero unsupported flags | Full local runtime verified; hosted pending | Every colliding candidate is preserved; replacement `3/3`, reservation/recovery `7/7`, and full platform `28/28` pass |
+| Windows failed-call recovery | Prove a missing reserved backup still left the opened old target active, or restore only an identity-bound reserved backup through write-through no-replace when the destination is absent | Full local runtime verified; hosted pending | Missing-both states, same-file aliases, spoofed backups, candidate collision, and bounded exhaustion pass |
+| Unix atomic replacement | Use same-directory rename, verify active destination identity, and sync the stable parent directory | Scripted / unverified | Exact Ubuntu 24.04 and macOS 15 runtime commands are wired; hostile/network filesystems and dishonest storage remain outside proof |
+| Source/destination path binding | Require ordinary adjacent files and parent plus exact opened-handle identity before/after replacement | Repaired Source `706/706` and focused Windows runtime verified; Unix hosted pending | Point-in-time user-mode checks do not defeat a same-identity race after the final check |
+| Multi-file/package update transaction | Make app/service/docs/engine/report/rollback/service lifecycle one commit | Partial / technically limited | Checkpoint 2275 changes one loose-file operation only; authenticated loose-file recovery and package-wide transactionality remain open |
+| Verifier/report contract | Require no-overwrite backup reservation, the atomic replacement step, and exact verified/technical-limit text without changing total step count | Repaired Source `706/706`; definitive rerun pending | Earlier `302/302` and `28/28` evidence is superseded; hosted and destination reports must retain the repaired contract |
+| Detection and custom engines | Preserve every existing engine responsibility, status, threshold, and authority | Unchanged | No signature/hash/rule/YARA/static/PE/archive/heuristic/ML/process/aggregator/allowlist/exclusion/cache/quarantine/realtime change |
+| Driver/pre-execution/Defender authority | Avoid expanding user-mode update evidence into prevention claims | Disabled, blocked, or technically limited as before | Requires installed signed driver/service evidence and separate authority decisions; unchanged |
+
+No checkpoint-2275 test ran during the scripting phase. Local all-target Rust
+regression executes 1,801 tests with zero failures; Flutter/protocol regression
+passes `852/852 + 14/14 + 6/6`. The protected vault
+must remain exactly 16,072 files with zero pending. No malware/EICAR fixture,
+Defender change, machine-wide install, service/driver start, release, or
+publication is involved; the complete antivirus-hardening goal remains active.
+
+The local counts above are historical and superseded for final-source credit:
+a harmless isolated probe proved `ReplaceFileW` overwrites an existing API
+backup path. The no-overwrite hard-link repair now passes focused `3/3 + 7/7`
+platform and `6/6 + 2/2` update evidence. Same-volume hard-link support is required
+and failure remains visible where unavailable.
+
+### Checkpoint 2275 verifier-harness delta
+
+| Control | Responsibility | State | Evidence / limit |
+| --- | --- | --- | --- |
+| Native benign false-positive integration target | Exercise public production Native scan behavior for a normal executable plus Avorax EXE/MSI names without compiling the adversarial unit-fixture corpus | Focused runtime verified `3/3` | Three harmless ASCII fixtures, detect-only mode, no invented publisher trust, no quarantine state, and zero Defender target detections; does not measure production false-positive rate |
+| Late PowerShell false-positive gate | Run the dedicated Native integration target once while retaining Local Core and Guard benign-policy checks | Focused runtime verified | Complete gate and no-malware gate pass; Defender-blocked monolithic-harness attempt remains failed evidence and no exclusion is allowed |
+| Full Native unit suite | Preserve all detection, malformed-input, archive, Authenticode, cancellation, and adversarial engine regressions | Post-harness broad runtime verified | Native `642/642` plus 21 intentional child-fixture ignores within 1,806 executed Rust tests; not replaced or skipped by the small benign gate |
+
+Local definitive evidence now passes exact `302/302`, including the dedicated
+normal-EXE step and late complete false-positive gate. Dual-host validation
+accepts the authentic report and rejects `34/34` adversarial cases across 17
+unique mutations. Hosted and destination evidence remains pending.
+
+Final local audit binds that evidence to 16 modified plus two added paths, zero
+deletions, nine unchanged locks, zero process/pending/temp residue, and the
+exact protected vault. Hosted control execution remains pending.

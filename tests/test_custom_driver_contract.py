@@ -120,6 +120,9 @@ NATIVE_WINDOWS_AUTHENTICODE = (
 NATIVE_ENGINE_TESTS = (
     ROOT / "core" / "zentor_native_engine" / "src" / "tests" / "mod.rs"
 )
+NATIVE_FALSE_POSITIVE_GATE_TEST = (
+    ROOT / "core" / "zentor_native_engine" / "tests" / "benign_false_positive_gate.rs"
+)
 NATIVE_QUARANTINE_MOD = (
     ROOT / "core" / "zentor_native_engine" / "src" / "quarantine" / "mod.rs"
 )
@@ -17244,7 +17247,7 @@ def test_update_file_replacer_revalidates_canonicalized_roots():
     assert "copy_tree_revalidates_canonicalized_roots" in source
 
 
-def test_update_staged_file_activation_revalidates_temp_and_target_before_no_replace():
+def test_update_staged_file_activation_revalidates_temp_and_target_before_atomic_operation():
     source = read(UPDATE_PATH_SAFETY)
     activation_source = source[
         source.rindex("fn activate_staged_file"):
@@ -17263,20 +17266,26 @@ def test_update_staged_file_activation_revalidates_temp_and_target_before_no_rep
     assert "ensure_existing_path_chain_not_link(target, boundary, label)?" in activation_source
     assert "ensure_existing_path_chain_not_link(parent, boundary, label)?" in activation_source
     assert "staged_target_file_present(target, label)?" in activation_source
-    assert "target still exists after removal" in activation_source
+    assert "let target_present = staged_target_file_present" in activation_source
     assert activation_source.index(
         "ensure_staged_temp_file_ready(temp_target, label)?"
     ) < activation_source.index(
-        "activate_staged_file_no_replace(temp_target, target, label)"
+        "let target_present = staged_target_file_present"
     )
-    assert activation_source.index("target still exists after removal") < (
+    assert activation_source.index("let target_present = staged_target_file_present") < (
         activation_source.index("ensure_existing_path_chain_not_link(parent, boundary, label)?")
     )
     assert activation_source.index(
         "ensure_existing_path_chain_not_link(parent, boundary, label)?"
     ) < activation_source.index(
-        "activate_staged_file_no_replace(temp_target, target, label)"
+        "if target_present"
     )
+    assert (
+        "avorax_platform_security::replace_existing_file_atomically(temp_target, target, label)"
+        in activation_source
+    )
+    assert "activate_staged_file_no_replace(temp_target, target, label)" in activation_source
+    assert "std::fs::remove_file(target)" not in activation_source
     assert "std::fs::rename(temp_target, target)" not in activation_source
     assert (
         "avorax_platform_security::rename_file_no_replace(temp_target, target, label)"
@@ -17290,10 +17299,10 @@ def test_update_staged_file_activation_revalidates_temp_and_target_before_no_rep
     assert "std::fs::symlink_metadata(temp_target)" in temp_source
     assert "metadata.is_file()" in temp_source
     assert "staged_activation_rejects_non_regular_temp_file" in source
-    assert "staged_activation_no_replace_replaces_existing_regular_file" in source
-    assert "staged_activation_no_replace_moves_to_absent_target" in source
-    assert "staged_activation_no_replace_preserves_competing_file" in source
-    assert "staged_activation_no_replace_rechecks_parent_chain_after_target_removal" in source
+    assert "staged_activation_atomic_replace_replaces_existing_regular_file" in source
+    assert "staged_activation_atomic_replace_moves_to_absent_target_without_replacement" in source
+    assert "staged_activation_atomic_replace_preserves_competing_absent_target" in source
+    assert "staged_activation_atomic_replace_uses_distinct_existing_and_absent_primitives" in source
 
 
 def test_update_temp_cleanup_rejects_linked_or_non_regular_targets():
@@ -18349,7 +18358,7 @@ def test_false_positive_protection_and_performance_gates_use_bounded_command_run
         in false_positive
     )
     assert (
-        'Invoke-GateCommand $cargo @("test", "normal_exe_in_downloads_is_not_malware") "Native normal EXE false-positive suppression" $nativeEngineCrate'
+        'Invoke-GateCommand $cargo @("test", "--locked", "--test", "benign_false_positive_gate", "--", "--test-threads=1") "Native benign false-positive integration gate" $nativeEngineCrate'
         in false_positive
     )
     assert (
@@ -18375,6 +18384,49 @@ def test_false_positive_protection_and_performance_gates_use_bounded_command_run
     assert (
         'Invoke-GateCommand $python @($benchmarkScript, "--repo-root", $repo, "--cargo-path", $cargo, "--file-count", "64", "--file-size", "4096") "Safe performance benchmark harness" $repo'
         in performance
+    )
+
+
+def test_native_false_positive_gate_uses_dedicated_benign_integration_target():
+    integration_test = read(NATIVE_FALSE_POSITIVE_GATE_TEST)
+    false_positive = read(FALSE_POSITIVE_GATE)
+    verifier = read(SMALL_THREAT_MVP_VERIFIER)
+    validator = read(SMALL_THREAT_MVP_REPORT_VALIDATOR)
+
+    assert "EngineConfig::from_repo_root(repository_root())" in integration_test
+    assert "ZentorNativeEngine::initialize(config)" in integration_test
+    assert "ScanActionMode::DetectOnly" in integration_test
+    assert "verdict.quarantine_record.is_none()" in integration_test
+    assert "config_quarantine_exists(&temp)" in integration_test
+    assert "benign_normal_executable_remains_non_malicious" in integration_test
+    assert (
+        "benign_avorax_installer_remains_clean_without_trust_invention"
+        in integration_test
+    )
+    assert "benign_avorax_msi_remains_clean_without_trust_invention" in integration_test
+    assert "eicar_test_bytes" not in integration_test
+    assert "malware fixture" not in integration_test.lower()
+    assert (
+        '@("test", "--locked", "--test", "benign_false_positive_gate", "--", "--test-threads=1")'
+        in false_positive
+    )
+    assert "normal_exe_in_downloads_is_not_malware" not in false_positive
+    assert (
+        '@("test", "--manifest-path", "core\\zentor_native_engine\\Cargo.toml", '
+        '"--locked", "--test", "benign_false_positive_gate", '
+        '"benign_normal_executable_remains_non_malicious", "--", '
+        '"--test-threads=1")'
+        in verifier
+    )
+    assert (
+        "The late Native false-positive gate runs a dedicated benign "
+        "integration-test target against the public production API"
+        in verifier
+    )
+    assert (
+        "The late Native false-positive gate runs a dedicated benign "
+        "integration-test target against the public production API"
+        in validator
     )
 
 
@@ -19637,7 +19689,7 @@ def test_ci_workflow_enforces_strict_guard_service_clippy():
 
 def test_ci_workflow_prebuilds_timeout_bounded_false_positive_tests():
     source = read(CI_WORKFLOW)
-    prebuild_start = source.index("- name: Prebuild local core gate tests")
+    prebuild_start = source.index("- name: Prebuild false-positive gate tests")
     false_positive_start = source.index("- name: False-positive gate")
     prebuild_source = source[prebuild_start:false_positive_start]
 
@@ -19645,6 +19697,11 @@ def test_ci_workflow_prebuilds_timeout_bounded_false_positive_tests():
     assert "timeout-minutes: 20" in prebuild_source
     assert "$env:AVORAX_CI_CARGO test" in prebuild_source
     assert ".\\core\\zentor_local_core\\Cargo.toml --no-run --locked" in prebuild_source
+    assert (
+        ".\\core\\zentor_native_engine\\Cargo.toml --locked --no-run --test "
+        "benign_false_positive_gate"
+        in prebuild_source
+    )
     assert "if ($LASTEXITCODE -ne 0)" in prebuild_source
 
 
@@ -20068,7 +20125,7 @@ def test_small_threat_mvp_verifier_is_safe_and_reproducible():
     assert "native-engine downloader verdict fusion" in source
     assert "script_downloader_indicator_becomes_probable" in source
     assert "native-engine normal executable false-positive guard" in source
-    assert "normal_exe_in_downloads_is_not_malware" in source
+    assert "benign_normal_executable_remains_non_malicious" in source
     assert "native-engine risk fusion regressions" in source
     assert "risk_fusion" in source
     assert "guard-service guard-mode config regressions" in source
@@ -20970,7 +21027,7 @@ def test_small_threat_mvp_report_validator_is_strict_and_local():
     assert "synthetic harmless files only; no malware samples; no destructive update apply" in source
     assert "synthetic_update_copy_simulation" in source
     assert "not real Avorax Update Service apply" in source
-    assert "normal_exe_in_downloads_is_not_malware" in source
+    assert "dedicated benign integration-test target" in source
     assert "driver_request_known_good_allows_in_lockdown" in source
     assert "Get-AvoraxGateFile ([System.IO.Path]::GetFullPath($text)) $Description" in source
     assert "-RequireFullSuite requires skip_flutter=false and skip_rust=false" in source
@@ -29339,6 +29396,7 @@ def test_ci_runs_native_unix_quarantine_permission_runtime_contracts():
         "Test shared Unix permission engine",
         "Test update recovery Unix runtime",
         "Test bounded cleanup Unix link safety",
+        "Test atomic existing-file replacement",
         "Test Local Core Unix permission routing",
         "Test Guard Unix permission routing",
         "set -euo pipefail",
@@ -29353,6 +29411,8 @@ def test_ci_runs_native_unix_quarantine_permission_runtime_contracts():
         "activation_recovery_unix_",
         "path_safety::tests::checked_tree_cleanup_nested_link_fails_before_mutation",
         "activation_recovery::tests::activation_recovery_checked_tree_cleanup_nested_link_preserves_evidence",
+        "tests::atomic_existing_file_replacement_replaces_adjacent_regular_file",
+        "path_safety::tests::staged_activation_atomic_replace_replaces_existing_regular_file",
         "-- --exact --test-threads=1",
         "hard_link",
         "active_pending_finalization_lock_blocks_concurrent_recovery",
@@ -29364,9 +29424,9 @@ def test_ci_runs_native_unix_quarantine_permission_runtime_contracts():
     ]:
         assert marker in job
 
-    assert job.count("cargo test --locked") == 15
+    assert job.count("cargo test --locked") == 17
     assert job.count("hard_link") == 2
-    assert job.count("set -euo pipefail") == 5
+    assert job.count("set -euo pipefail") == 6
     assert "continue-on-error" not in job
     assert "|| true" not in job
     assert "apt-get" not in job
@@ -31396,11 +31456,11 @@ def test_checkpoint_2267_update_staged_file_no_replace_contract():
     assert "atomic no-replace activation is unsupported" in platform
 
     for marker in [
-        "staged_activation_no_replace_replaces_existing_regular_file",
-        "staged_activation_no_replace_moves_to_absent_target",
-        "staged_activation_no_replace_preserves_competing_file",
-        "staged_activation_no_replace_supports_long_absolute_windows_paths",
-        "staged_activation_no_replace_rechecks_parent_chain_after_target_removal",
+        "staged_activation_atomic_replace_replaces_existing_regular_file",
+        "staged_activation_atomic_replace_moves_to_absent_target_without_replacement",
+        "staged_activation_atomic_replace_preserves_competing_absent_target",
+        "staged_activation_atomic_replace_supports_long_absolute_windows_paths",
+        "staged_activation_atomic_replace_uses_distinct_existing_and_absent_primitives",
         "benign staged update bytes",
         "benign competing target bytes",
         "benign staged long-path bytes",
@@ -31408,20 +31468,21 @@ def test_checkpoint_2267_update_staged_file_no_replace_contract():
     ]:
         assert marker in path_safety
 
-    step = "update-service staged file activation atomic no-replace regressions"
+    step = "update-service staged file activation atomic replacement regressions"
     assert step in verifier
-    assert '"staged_activation_no_replace"' in verifier
+    assert '"staged_activation_atomic_replace_"' in verifier
     assert f'Assert-ReportContainsStep $steps "{step}"' in validator
     assert "if ($steps.Count -ne 302)" in validator
     assert "expected exactly 302 verifier steps" in validator
     for scope in [
-        "Update-service staged file copy/write replacement uses the shared operating-system atomic no-replace primitive",
-        "Harmless staged-file collision fixtures preserve both staged bytes and competing destination bytes",
-        "Bounded verbatim local-drive and UNC conversion preserves atomic no-replace behavior for long absolute Windows paths",
-        "Update staged-file no-replace closes only the final-name collision after deliberate target removal",
-        "The remove-to-activate availability gap remains",
-        "a crash or activation failure can leave the target absent",
-        "multi-file staging/install activation is not transactional",
+        "Update-service staged file copy/write activation keeps absent targets on the shared atomic no-replace primitive",
+        "replaces an existing adjacent regular file without first removing its destination name",
+        "Windows reserves an adjacent previous-file hard link through no-overwrite creation, preserves every colliding candidate, and calls ReplaceFileW with a null backup parameter",
+        "Unix uses same-directory atomic rename, exact opened-source identity binding, and stable parent-directory synchronization",
+        "Existing-file atomic replacement is one loose-file operation, not a transaction across app files, service files, docs, engine components, rollback, reports, or service lifecycle",
+        "ReplaceFileW has no supported write-through flag",
+        "Hard-link backup reservation requires same-volume filesystem hard-link support",
+        "can leave a preserved adjacent .avorax-replace-backup file or the previous destination only at that backup, requiring manual review",
         "relative inputs retain Win32 legacy path-length behavior",
         "device-namespace paths are rejected",
     ]:
@@ -31475,10 +31536,10 @@ def test_checkpoint_2267_windows_no_replace_long_path_contract():
     assert "quarantine_restore_no_replace_supports_long_absolute_windows_paths" in platform
     assert "windows_no_replace_path_builder_normalizes_local_unc_and_rejects_devices" in platform
     assert "harmless long-path restored bytes" in platform
-    assert "staged_activation_no_replace_supports_long_absolute_windows_paths" in path_safety
+    assert "staged_activation_atomic_replace_supports_long_absolute_windows_paths" in path_safety
     assert "benign staged long-path bytes" in path_safety
     for scope in [
-        "Bounded verbatim local-drive and UNC conversion preserves atomic no-replace behavior for long absolute Windows paths",
+        "Windows long-path support applies only to bounded absolute local-drive and UNC paths",
         "relative inputs retain Win32 legacy path-length behavior",
         "device-namespace paths are rejected",
     ]:
@@ -33971,3 +34032,189 @@ def test_checkpoint_2274_bounded_non_following_tree_cleanup_contract():
     assert "checkpoint 2274 dependency delta" in normalized_dependencies
     assert "adds no dependency" in normalized_dependencies
     assert "lockfile change" in normalized_dependencies
+
+
+def test_checkpoint_2275_atomic_existing_file_replacement_contract():
+    platform = read(PLATFORM_SECURITY)
+    path_safety = read(UPDATE_PATH_SAFETY)
+    workflow = read(CI_WORKFLOW)
+    verifier = read(SMALL_THREAT_MVP_VERIFIER)
+    validator = read(SMALL_THREAT_MVP_REPORT_VALIDATOR)
+    checkpoint = read(
+        ROOT
+        / "docs"
+        / "reports"
+        / "checkpoint-2275-atomic-existing-file-replacement.md"
+    )
+    documents = [
+        checkpoint,
+        read(RUN_LOG),
+        read(STATUS_DOC),
+        read(ROOT / "TESTING.md"),
+        read(ROOT / "docs" / "malware-protection.md"),
+        read(ROOT / "docs" / "audit" / "engine-control-matrix.md"),
+        read(ROOT / "docs" / "audit" / "threat-model.md"),
+        read(ROOT / "docs" / "audit" / "known-blockers.md"),
+        read(ROOT / "docs" / "reports" / "update-flow-audit.md"),
+        read(DEPENDENCY_LICENSE_INVENTORY),
+    ]
+
+    production = platform.split("#[cfg(test)]")[0]
+    replace_start = production.index("pub fn replace_existing_file_atomically")
+    replace_end = production.index("#[cfg(unix)]\nfn open_file_identity", replace_start)
+    replacement = production[replace_start:replace_end]
+    for marker in [
+        "source_parent == destination_parent",
+        "ensure_atomic_replacement_regular_file(source",
+        "ensure_atomic_replacement_regular_file(destination",
+        "ensure_atomic_replacement_directory(source_parent",
+        "ensure_path_matches_open_file(&opened_source, source",
+        "ensure_path_matches_open_file(&opened_destination, destination",
+        "let source_identity = open_file_identity(&opened_source",
+        "drop(opened_source)",
+        "replace_existing_file_impl(source, destination, &opened_destination, label)",
+        "replacement source and destination identify the same file",
+        "ensure_windows_path_matches_file_identity(source_identity, destination",
+        "ensure_path_matches_open_file(&opened_source, destination",
+        "ensure_path_matches_open_file(&opened_destination, backup_path",
+        "synchronize_atomic_replacement_parent",
+        "remove_atomic_replacement_backup",
+        "ReplaceFileW",
+        "reserve_windows_atomic_replacement_backup",
+        "reserve_windows_atomic_replacement_backup_with_unique",
+        "fs::hard_link(destination, &candidate)",
+        "failed to reserve no-overwrite",
+        "reconcile_windows_atomic_replacement_failure",
+        "BackupRestored",
+        "BackupPreservedAlongsideDestination",
+        "rename_no_replace_impl(backup, destination, label)",
+        "ensure_path_matches_open_file(opened_destination, backup, label)",
+        "restored replacement destination identity did not match the previous destination",
+        "fs::rename(source, destination)",
+        "sync_unix_directory_metadata",
+        ".avorax-replace-backup",
+    ]:
+        assert marker in replacement
+    assert "std::fs::remove_file(destination)" not in replacement
+    replace_call = replacement.index("ReplaceFileW(")
+    replace_args = replacement[replace_call : replacement.index("} == 0", replace_call)]
+    source_path_conversion = replacement.index(
+        'bounded_windows_move_path(source, "replacement source", label)'
+    )
+    backup_reservation = replacement.index(
+        "let backup = reserve_windows_atomic_replacement_backup("
+    )
+    assert source_path_conversion < backup_reservation < replace_call
+    assert "backup_wide" not in replacement
+    assert "source_wide.as_ptr(),\n            std::ptr::null(),\n            0," in replace_args
+    assert "\n            0," in replace_args
+
+    activation_start = path_safety.rindex("fn activate_staged_file(")
+    activation_end = path_safety.rindex("fn ensure_staged_temp_file_ready")
+    activation = path_safety[activation_start:activation_end]
+    assert "let target_present = staged_target_file_present" in activation
+    assert "if target_present" in activation
+    assert (
+        "avorax_platform_security::replace_existing_file_atomically(temp_target, target, label)"
+        in activation
+    )
+    assert "target appeared before no-replace activation" in activation
+    assert "activate_staged_file_no_replace(temp_target, target, label)" in activation
+    assert "std::fs::remove_file(target)" not in activation
+    for marker in [
+        "atomic_existing_file_replacement_replaces_adjacent_regular_file",
+        "atomic_existing_file_replacement_rejects_non_adjacent_source_before_mutation",
+        "atomic_existing_file_replacement_rejects_same_file_identity_before_mutation",
+        "atomic_existing_file_replacement_rejects_link_destination_before_mutation",
+        "windows_atomic_replacement_failure_backup_reservation_preserves_competing_candidate",
+        "windows_atomic_replacement_failure_backup_reservation_rejects_exhausted_candidates",
+        "windows_atomic_replacement_failure_restores_backup_to_missing_destination",
+        "windows_atomic_replacement_failure_accepts_missing_reserved_backup_with_original_destination",
+        "windows_atomic_replacement_failure_rejects_missing_reserved_backup_and_destination",
+        "windows_atomic_replacement_failure_preserves_ambiguous_backup_and_destination",
+        "windows_atomic_replacement_failure_rejects_spoofed_backup",
+    ]:
+        assert marker in platform
+    for marker in [
+        "staged_activation_atomic_replace_replaces_existing_regular_file",
+        "staged_activation_atomic_replace_moves_to_absent_target_without_replacement",
+        "staged_activation_atomic_replace_preserves_competing_absent_target",
+        "staged_activation_atomic_replace_supports_long_absolute_windows_paths",
+        "staged_activation_atomic_replace_uses_non_following_target_probe",
+        "staged_activation_atomic_replace_uses_distinct_existing_and_absent_primitives",
+    ]:
+        assert marker in path_safety
+
+    ubuntu_job = workflow[
+        workflow.index("  quarantine-unix:\n") : workflow.index(
+            "  update-recovery-macos:\n"
+        )
+    ]
+    macos_job = workflow[
+        workflow.index("  update-recovery-macos:\n") : workflow.index(
+            "  flutter:\n", workflow.index("  update-recovery-macos:\n")
+        )
+    ]
+    for job in [ubuntu_job, macos_job]:
+        for marker in [
+            "Test atomic existing-file replacement",
+            "tests::atomic_existing_file_replacement_replaces_adjacent_regular_file",
+            "path_safety::tests::staged_activation_atomic_replace_replaces_existing_regular_file",
+            "-- --exact --test-threads=1",
+            "set -euo pipefail",
+        ]:
+            assert marker in job
+        assert "continue-on-error" not in job
+        assert "|| true" not in job
+
+    windows_job = workflow[
+        workflow.index("  rust:\n") : workflow.index("  quarantine-unix:\n")
+    ]
+    assert "Test platform security" in windows_job
+    assert (
+        "cargo test --locked --manifest-path core/avorax_platform_security/Cargo.toml -- --test-threads=1"
+        in windows_job
+    )
+    assert "continue-on-error" not in windows_job
+
+    step = "update-service staged file activation atomic replacement regressions"
+    assert step in verifier
+    assert '"staged_activation_atomic_replace_"' in verifier
+    assert f'Assert-ReportContainsStep $steps "{step}"' in validator
+    assert "if ($steps.Count -ne 302)" in validator
+    assert "expected exactly 302 verifier steps" in validator
+    for scope in [
+        "Update-service staged file copy/write activation keeps absent targets on the shared atomic no-replace primitive",
+        "replaces an existing adjacent regular file without first removing its destination name",
+        "Windows reserves an adjacent previous-file hard link through no-overwrite creation, preserves every colliding candidate, and calls ReplaceFileW with a null backup parameter",
+        "an opened-source identity snapshot followed by active-name rebinding",
+        "retained opened destination/reserved-backup identity checks",
+        "proof that a missing reserved backup still left the opened old destination active",
+        "immediate reserved-backup restoration when a failed call leaves the destination absent",
+        "rejection of a mismatched backup",
+        "Unix uses same-directory atomic rename, exact opened-source identity binding, and stable parent-directory synchronization",
+        "Existing-file atomic replacement is one loose-file operation, not a transaction across app files, service files, docs, engine components, rollback, reports, or service lifecycle",
+        "ReplaceFileW has no supported write-through flag",
+        "Hard-link backup reservation requires same-volume filesystem hard-link support",
+        "can leave a preserved adjacent .avorax-replace-backup file or the previous destination only at that backup, requiring manual review",
+        "requires the verified staged-source handle to close before its unshared replacement-file open",
+        "Unix rename durability depends on successful parent-directory synchronization and truthful local filesystem/storage semantics",
+        "Target/source/parent and opened-handle identity checks remain point-in-time user-mode evidence",
+        "a same-identity privileged race after the final check",
+    ]:
+        assert scope in verifier
+        assert scope in validator
+
+    for document in documents:
+        normalized = re.sub(r"\s+", " ", document).lower()
+        assert "checkpoint 2275" in normalized
+    normalized_checkpoint = re.sub(r"\s+", " ", checkpoint)
+    assert "No checkpoint-2275 test ran during the scripting phase" in normalized_checkpoint
+    assert "16,072 files" in normalized_checkpoint
+    assert "zero pending" in normalized_checkpoint
+    assert "no live malware" in normalized_checkpoint.lower()
+    assert "complete antivirus-hardening goal remains active" in normalized_checkpoint.lower()
+    normalized_dependencies = re.sub(r"\s+", " ", documents[-1]).lower()
+    assert "checkpoint 2275 dependency delta" in normalized_dependencies
+    assert "adds no dependency" in normalized_dependencies
+    assert "lockfile" in normalized_dependencies

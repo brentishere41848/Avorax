@@ -581,7 +581,7 @@ mod tests {
     }
 
     #[test]
-    fn staged_activation_no_replace_replaces_existing_regular_file() {
+    fn staged_activation_atomic_replace_replaces_existing_regular_file() {
         let dir = tempdir().unwrap();
         let target = dir.path().join("Avorax.exe");
         let temp_target = dir.path().join(".Avorax.exe.test.0.avorax-part");
@@ -601,7 +601,7 @@ mod tests {
         all(unix, target_vendor = "apple")
     ))]
     #[test]
-    fn staged_activation_no_replace_moves_to_absent_target() {
+    fn staged_activation_atomic_replace_moves_to_absent_target_without_replacement() {
         let dir = tempdir().unwrap();
         let target = dir.path().join("Avorax.exe");
         let temp_target = dir.path().join(".Avorax.exe.absent.avorax-part");
@@ -623,7 +623,7 @@ mod tests {
         all(unix, target_vendor = "apple")
     ))]
     #[test]
-    fn staged_activation_no_replace_preserves_competing_file() {
+    fn staged_activation_atomic_replace_preserves_competing_absent_target() {
         let dir = tempdir().unwrap();
         let target = dir.path().join("Avorax.exe");
         let temp_target = dir.path().join(".Avorax.exe.collision.avorax-part");
@@ -647,7 +647,7 @@ mod tests {
 
     #[cfg(windows)]
     #[test]
-    fn staged_activation_no_replace_supports_long_absolute_windows_paths() {
+    fn staged_activation_atomic_replace_supports_long_absolute_windows_paths() {
         use std::os::windows::ffi::OsStrExt;
 
         let dir = tempdir().unwrap();
@@ -701,7 +701,7 @@ mod tests {
     }
 
     #[test]
-    fn staged_activation_uses_non_following_target_probe() {
+    fn staged_activation_atomic_replace_uses_non_following_target_probe() {
         let source = include_str!("path_safety.rs");
         let start = source.rfind("fn activate_staged_file").unwrap();
         let end = source[start..]
@@ -715,13 +715,13 @@ mod tests {
         assert!(source.contains("fn ensure_staged_temp_file_ready"));
         assert!(activation_source.contains("ensure_staged_temp_file_ready(temp_target, label)?"));
         assert!(activation_source.contains("staged_target_file_present(target, label)?"));
-        assert!(activation_source.contains("target still exists after removal"));
+        assert!(activation_source.contains("target appeared before no-replace activation"));
         assert!(source.contains("std::fs::symlink_metadata(target)"));
         assert!(!activation_source.contains(&old_probe));
     }
 
     #[test]
-    fn staged_activation_no_replace_rechecks_parent_chain_after_target_removal() {
+    fn staged_activation_atomic_replace_uses_distinct_existing_and_absent_primitives() {
         let source = include_str!("path_safety.rs");
         let start = source.rfind("fn activate_staged_file").unwrap();
         let end = source[start..]
@@ -730,27 +730,25 @@ mod tests {
             .unwrap();
         let activation_source = &source[start..end];
 
+        assert!(activation_source.contains("let target_present = staged_target_file_present"));
         assert!(activation_source.contains("if let Some(parent) = target.parent()"));
         assert!(activation_source
             .contains("ensure_existing_path_chain_not_link(parent, boundary, label)?"));
         assert!(
             activation_source
-                .find("target still exists after removal")
-                .unwrap()
-                < activation_source
-                    .find("ensure_existing_path_chain_not_link(parent, boundary, label)?")
-                    .unwrap()
-        );
-        assert!(
-            activation_source
                 .find("ensure_existing_path_chain_not_link(parent, boundary, label)?")
                 .unwrap()
-                < activation_source
-                    .find("activate_staged_file_no_replace(temp_target, target, label)")
-                    .unwrap()
+                < activation_source.find("if target_present").unwrap()
         );
+        assert!(activation_source.contains(
+            "avorax_platform_security::replace_existing_file_atomically(temp_target, target, label)"
+        ));
+        assert!(activation_source.contains("target appeared before no-replace activation"));
+        assert!(activation_source
+            .contains("activate_staged_file_no_replace(temp_target, target, label)"));
         assert!(source.contains("fn activate_staged_file_no_replace("));
         assert!(source.contains("avorax_platform_security::rename_file_no_replace("));
+        assert!(!activation_source.contains("std::fs::remove_file(target)"));
         assert!(!activation_source.contains("std::fs::rename(temp_target, target)"));
     }
 
@@ -1098,23 +1096,31 @@ fn activate_staged_file(
     ensure_staged_temp_file_ready(temp_target, label)?;
     ensure_existing_path_chain_not_link(target, boundary, label)?;
     ensure_not_link_or_reparse(target, label)?;
-    if staged_target_file_present(target, label)? {
-        std::fs::remove_file(target)?;
-    }
-    anyhow::ensure!(
-        !staged_target_file_present(target, label)?,
-        "{label} target still exists after removal: {}",
-        target.display()
-    );
+    let target_present = staged_target_file_present(target, label)?;
     if let Some(parent) = target.parent() {
         ensure_existing_path_chain_not_link(parent, boundary, label)?;
     }
-    activate_staged_file_no_replace(temp_target, target, label).with_context(|| {
-        format!(
-            "failed to activate {label} staged file without replacing {}",
+    if target_present {
+        avorax_platform_security::replace_existing_file_atomically(temp_target, target, label)
+            .with_context(|| {
+                format!(
+                    "failed to atomically replace existing {label} staged-file target {}",
+                    target.display()
+                )
+            })?;
+    } else {
+        anyhow::ensure!(
+            !staged_target_file_present(target, label)?,
+            "{label} target appeared before no-replace activation: {}",
             target.display()
-        )
-    })?;
+        );
+        activate_staged_file_no_replace(temp_target, target, label).with_context(|| {
+            format!(
+                "failed to activate absent {label} staged-file target without replacing {}",
+                target.display()
+            )
+        })?;
+    }
     Ok(())
 }
 

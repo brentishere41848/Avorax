@@ -42,6 +42,196 @@ pub fn rename_directory_no_replace(source: &Path, destination: &Path, label: &st
     rename_no_replace_impl(source, destination, label)
 }
 
+/// Atomically replaces an existing adjacent regular file while keeping the
+/// replacement handle available for post-operation identity verification.
+pub fn replace_existing_file_atomically(
+    source: &Path,
+    destination: &Path,
+    label: &str,
+) -> Result<()> {
+    anyhow::ensure!(
+        source != destination,
+        "{label} replacement source and destination must be distinct"
+    );
+    let source_parent = source
+        .parent()
+        .ok_or_else(|| anyhow!("{label} replacement source has no parent"))?;
+    let destination_parent = destination
+        .parent()
+        .ok_or_else(|| anyhow!("{label} replacement destination has no parent"))?;
+    anyhow::ensure!(
+        source_parent == destination_parent,
+        "{label} replacement source and destination must be adjacent"
+    );
+    ensure_atomic_replacement_regular_file(source, "source", label)?;
+    ensure_atomic_replacement_regular_file(destination, "destination", label)?;
+    ensure_atomic_replacement_directory(source_parent, label)?;
+
+    let opened_source = fs::File::open(source).with_context(|| {
+        format!(
+            "failed to open {label} replacement source {}",
+            source.display()
+        )
+    })?;
+    let opened_destination = fs::File::open(destination).with_context(|| {
+        format!(
+            "failed to open {label} replacement destination {}",
+            destination.display()
+        )
+    })?;
+    ensure_path_matches_open_file(&opened_source, source, label)
+        .context("replacement source changed before atomic activation")?;
+    ensure_path_matches_open_file(&opened_destination, destination, label)
+        .context("replacement destination changed before atomic activation")?;
+    let source_identity = open_file_identity(&opened_source, source, label)?;
+    let destination_identity = open_file_identity(&opened_destination, destination, label)?;
+    anyhow::ensure!(
+        source_identity != destination_identity,
+        "{label} replacement source and destination identify the same file"
+    );
+    #[cfg(windows)]
+    // ReplaceFileW opens the replacement file without sharing, so retain its
+    // verified file ID but close this source handle before the native call.
+    drop(opened_source);
+    let backup = replace_existing_file_impl(source, destination, &opened_destination, label)?;
+    #[cfg(windows)]
+    ensure_windows_path_matches_file_identity(source_identity, destination, label).with_context(
+        || {
+            format!(
+                "{label} replacement destination identity did not match the staged source; preserved recovery evidence: {}",
+                atomic_replacement_backup_detail(backup.as_deref())
+            )
+        },
+    )?;
+    #[cfg(not(windows))]
+    ensure_path_matches_open_file(&opened_source, destination, label).with_context(|| {
+        format!(
+            "{label} replacement destination identity did not match the staged source; preserved recovery evidence: {}",
+            atomic_replacement_backup_detail(backup.as_deref())
+        )
+    })?;
+    ensure_atomic_replacement_path_absent(source, "source", label)?;
+    if let Some(backup_path) = backup.as_deref() {
+        ensure_path_matches_open_file(&opened_destination, backup_path, label).with_context(|| {
+            format!(
+                "{label} replacement backup identity did not match the previous destination; preserved recovery evidence at {}",
+                backup_path.display()
+            )
+        })?;
+    }
+    synchronize_atomic_replacement_parent(source_parent, label).with_context(|| {
+        format!(
+            "{label} replacement namespace synchronization failed after activation; preserved recovery evidence: {}",
+            atomic_replacement_backup_detail(backup.as_deref())
+        )
+    })?;
+    if let Some(backup) = backup {
+        remove_atomic_replacement_backup(&backup, &opened_destination, label)?;
+    }
+    Ok(())
+}
+
+fn ensure_atomic_replacement_regular_file(path: &Path, role: &str, label: &str) -> Result<()> {
+    let metadata = fs::symlink_metadata(path).with_context(|| {
+        format!(
+            "failed to inspect {label} replacement {role} {}",
+            path.display()
+        )
+    })?;
+    anyhow::ensure!(
+        metadata.is_file() && !metadata.file_type().is_symlink(),
+        "{label} replacement {role} is not an ordinary file: {}",
+        path.display()
+    );
+    #[cfg(windows)]
+    anyhow::ensure!(
+        !windows_metadata_is_reparse_point(&metadata),
+        "{label} replacement {role} is a Windows reparse point: {}",
+        path.display()
+    );
+    Ok(())
+}
+
+fn ensure_atomic_replacement_directory(path: &Path, label: &str) -> Result<()> {
+    let metadata = fs::symlink_metadata(path).with_context(|| {
+        format!(
+            "failed to inspect {label} replacement parent {}",
+            path.display()
+        )
+    })?;
+    anyhow::ensure!(
+        metadata.is_dir() && !metadata.file_type().is_symlink(),
+        "{label} replacement parent is not an ordinary directory: {}",
+        path.display()
+    );
+    #[cfg(windows)]
+    anyhow::ensure!(
+        !windows_metadata_is_reparse_point(&metadata),
+        "{label} replacement parent is a Windows reparse point: {}",
+        path.display()
+    );
+    Ok(())
+}
+
+fn ensure_atomic_replacement_path_absent(path: &Path, role: &str, label: &str) -> Result<()> {
+    match fs::symlink_metadata(path) {
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
+        Ok(_) => Err(anyhow!(
+            "{label} replacement {role} still exists after activation: {}",
+            path.display()
+        )),
+        Err(error) => Err(error).with_context(|| {
+            format!(
+                "failed to verify {label} replacement {role} absence {}",
+                path.display()
+            )
+        }),
+    }
+}
+
+fn atomic_replacement_backup_detail(backup: Option<&Path>) -> String {
+    backup
+        .map(|path| path.display().to_string())
+        .unwrap_or_else(|| "no platform backup".to_string())
+}
+
+fn remove_atomic_replacement_backup(
+    path: &Path,
+    expected_file: &fs::File,
+    label: &str,
+) -> Result<()> {
+    ensure_atomic_replacement_regular_file(path, "backup", label)?;
+    ensure_path_matches_open_file(expected_file, path, label)
+        .context("replacement backup changed before checked cleanup")?;
+    fs::remove_file(path).with_context(|| {
+        format!(
+            "failed to remove {label} replacement backup {}; the new destination remains active and the backup is preserved when removal fails",
+            path.display()
+        )
+    })?;
+    ensure_atomic_replacement_path_absent(path, "backup", label)
+}
+
+#[cfg(unix)]
+fn synchronize_atomic_replacement_parent(parent: &Path, label: &str) -> Result<()> {
+    sync_unix_directory_metadata(parent, &format!("{label} replacement parent"))
+}
+
+#[cfg(windows)]
+fn synchronize_atomic_replacement_parent(_parent: &Path, _label: &str) -> Result<()> {
+    // ReplaceFileW has no supported write-through flag. The Windows operation
+    // is atomic for namespace availability, but power-loss durability remains
+    // a documented limitation.
+    Ok(())
+}
+
+#[cfg(not(any(unix, windows)))]
+fn synchronize_atomic_replacement_parent(_parent: &Path, label: &str) -> Result<()> {
+    Err(anyhow!(
+        "atomic existing-file replacement synchronization is unsupported for {label} on this platform"
+    ))
+}
+
 /// Synchronizes a Unix directory inode and its namespace updates after a
 /// caller has created, removed, or renamed a security-critical entry.
 #[cfg(unix)]
@@ -279,6 +469,250 @@ fn rename_no_replace_impl(source: &Path, destination: &Path, label: &str) -> Res
     ))
 }
 
+#[cfg(windows)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum WindowsAtomicReplacementFailureRecovery {
+    ReservedBackupMissingDestinationRetained,
+    BackupRestored,
+    BackupPreservedAlongsideDestination,
+}
+
+#[cfg(windows)]
+fn replace_existing_file_impl(
+    source: &Path,
+    destination: &Path,
+    opened_destination: &fs::File,
+    label: &str,
+) -> Result<Option<std::path::PathBuf>> {
+    use windows_sys::Win32::Storage::FileSystem::ReplaceFileW;
+
+    let source_wide = bounded_windows_move_path(source, "replacement source", label)?;
+    let destination_wide =
+        bounded_windows_move_path(destination, "replacement destination", label)?;
+    let backup = reserve_windows_atomic_replacement_backup(destination, opened_destination, label)?;
+    if unsafe {
+        ReplaceFileW(
+            destination_wide.as_ptr(),
+            source_wide.as_ptr(),
+            std::ptr::null(),
+            0,
+            std::ptr::null(),
+            std::ptr::null(),
+        )
+    } == 0
+    {
+        let operation_error = anyhow::Error::new(std::io::Error::last_os_error()).context(format!(
+            "failed to atomically replace {label} {} with {}",
+            destination.display(),
+            source.display()
+        ));
+        return match reconcile_windows_atomic_replacement_failure(
+            &backup,
+            destination,
+            opened_destination,
+            label,
+        ) {
+            Ok(WindowsAtomicReplacementFailureRecovery::ReservedBackupMissingDestinationRetained) => {
+                Err(operation_error.context(
+                    "the reserved no-overwrite replacement backup disappeared, but the opened previous destination remained active",
+                ))
+            }
+            Ok(WindowsAtomicReplacementFailureRecovery::BackupRestored) => Err(operation_error
+                .context(format!(
+                    "Windows left the destination absent, so Avorax restored its reserved no-overwrite backup to {}; the staged source remains for checked cleanup",
+                    destination.display()
+                ))),
+            Ok(WindowsAtomicReplacementFailureRecovery::BackupPreservedAlongsideDestination) => {
+                Err(operation_error.context(format!(
+                    "Windows left a destination alongside the reserved replacement backup; preserved backup evidence at {}",
+                    backup.display()
+                )))
+            }
+            Err(recovery_error) => Err(operation_error.context(format!(
+                "replacement failure recovery also failed; preserved available evidence at {} and {}: {recovery_error:#}",
+                destination.display(),
+                backup.display()
+            ))),
+        };
+    }
+    Ok(Some(backup))
+}
+
+#[cfg(unix)]
+fn replace_existing_file_impl(
+    source: &Path,
+    destination: &Path,
+    _opened_destination: &fs::File,
+    label: &str,
+) -> Result<Option<std::path::PathBuf>> {
+    fs::rename(source, destination).with_context(|| {
+        format!(
+            "failed to atomically replace {label} {} with {}",
+            destination.display(),
+            source.display()
+        )
+    })?;
+    Ok(None)
+}
+
+#[cfg(not(any(unix, windows)))]
+fn replace_existing_file_impl(
+    source: &Path,
+    destination: &Path,
+    _opened_destination: &fs::File,
+    label: &str,
+) -> Result<Option<std::path::PathBuf>> {
+    Err(anyhow!(
+        "atomic existing-file replacement is unsupported for {label} {} to {} on this platform",
+        source.display(),
+        destination.display()
+    ))
+}
+
+#[cfg(windows)]
+fn reserve_windows_atomic_replacement_backup(
+    destination: &Path,
+    opened_destination: &fs::File,
+    label: &str,
+) -> Result<std::path::PathBuf> {
+    let unique = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .context("failed to read system time for replacement backup")?
+        .as_nanos();
+    reserve_windows_atomic_replacement_backup_with_unique(
+        destination,
+        opened_destination,
+        label,
+        unique,
+    )
+}
+
+#[cfg(windows)]
+fn reserve_windows_atomic_replacement_backup_with_unique(
+    destination: &Path,
+    opened_destination: &fs::File,
+    label: &str,
+    unique: u128,
+) -> Result<std::path::PathBuf> {
+    let file_name = destination
+        .file_name()
+        .ok_or_else(|| anyhow!("{label} replacement destination has no filename"))?;
+    for attempt in 0..16_u32 {
+        let mut backup_name = std::ffi::OsString::from(".");
+        backup_name.push(file_name);
+        backup_name.push(format!(
+            ".{}.{}.{}.avorax-replace-backup",
+            std::process::id(),
+            unique,
+            attempt
+        ));
+        let candidate = destination.with_file_name(backup_name);
+        bounded_windows_move_path(&candidate, "replacement backup", label)?;
+        match fs::hard_link(destination, &candidate) {
+            Ok(()) => {
+                ensure_atomic_replacement_regular_file(&candidate, "backup", label)?;
+                ensure_path_matches_open_file(opened_destination, &candidate, label).with_context(
+                    || {
+                        format!(
+                            "reserved {label} replacement backup did not identify the opened previous destination {}",
+                            candidate.display()
+                        )
+                    },
+                )?;
+                return Ok(candidate);
+            }
+            Err(reservation_error) => match fs::symlink_metadata(&candidate) {
+                Ok(_) => continue,
+                Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                    return Err(reservation_error).with_context(|| {
+                        format!(
+                            "failed to reserve no-overwrite {label} replacement backup {}",
+                            candidate.display()
+                        )
+                    });
+                }
+                Err(error) => {
+                    return Err(error).with_context(|| {
+                        format!(
+                            "failed to inspect {label} replacement backup candidate after reservation failure {}",
+                            candidate.display()
+                        )
+                    });
+                }
+            },
+        }
+    }
+    Err(anyhow!(
+        "{label} could not reserve an adjacent no-overwrite replacement backup for {} after 16 collisions",
+        destination.display()
+    ))
+}
+
+#[cfg(windows)]
+fn reconcile_windows_atomic_replacement_failure(
+    backup: &Path,
+    destination: &Path,
+    opened_destination: &fs::File,
+    label: &str,
+) -> Result<WindowsAtomicReplacementFailureRecovery> {
+    match fs::symlink_metadata(backup) {
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+            ensure_atomic_replacement_regular_file(destination, "destination", label).context(
+                "Windows replacement failed after its reserved backup disappeared and did not retain an inspectable destination",
+            )?;
+            ensure_path_matches_open_file(opened_destination, destination, label).context(
+                "Windows replacement failed after its reserved backup disappeared and did not retain the opened previous destination",
+            )?;
+            return Ok(
+                WindowsAtomicReplacementFailureRecovery::ReservedBackupMissingDestinationRetained,
+            );
+        }
+        Ok(_) => ensure_atomic_replacement_regular_file(backup, "backup", label)?,
+        Err(error) => {
+            return Err(error).with_context(|| {
+                format!(
+                    "failed to inspect {label} replacement backup after operation failure {}",
+                    backup.display()
+                )
+            });
+        }
+    }
+    ensure_path_matches_open_file(opened_destination, backup, label).with_context(|| {
+        format!(
+            "refusing to recover {label} from a replacement backup that does not identify the opened previous destination {}",
+            backup.display()
+        )
+    })?;
+
+    match fs::symlink_metadata(destination) {
+        Ok(_) => {
+            ensure_atomic_replacement_regular_file(destination, "destination", label)?;
+            Ok(WindowsAtomicReplacementFailureRecovery::BackupPreservedAlongsideDestination)
+        }
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+            rename_no_replace_impl(backup, destination, label).with_context(|| {
+                format!(
+                    "failed to restore {label} replacement backup {} to missing destination {}",
+                    backup.display(),
+                    destination.display()
+                )
+            })?;
+            ensure_atomic_replacement_path_absent(backup, "backup", label)?;
+            ensure_atomic_replacement_regular_file(destination, "restored destination", label)?;
+            ensure_path_matches_open_file(opened_destination, destination, label).context(
+                "restored replacement destination identity did not match the previous destination",
+            )?;
+            Ok(WindowsAtomicReplacementFailureRecovery::BackupRestored)
+        }
+        Err(error) => Err(error).with_context(|| {
+            format!(
+                "failed to inspect {label} replacement destination after operation failure {}",
+                destination.display()
+            )
+        }),
+    }
+}
+
 #[cfg(unix)]
 fn open_file_identity(file: &fs::File, path: &Path, label: &str) -> Result<(u64, u64)> {
     use std::os::unix::fs::MetadataExt;
@@ -312,6 +746,23 @@ fn open_file_identity(file: &fs::File, path: &Path, label: &str) -> Result<(u32,
         info.dwVolumeSerialNumber,
         (u64::from(info.nFileIndexHigh) << 32) | u64::from(info.nFileIndexLow),
     ))
+}
+
+#[cfg(windows)]
+fn ensure_windows_path_matches_file_identity(
+    expected: (u32, u64),
+    path: &Path,
+    label: &str,
+) -> Result<()> {
+    let current = fs::File::open(path)
+        .with_context(|| format!("failed to reopen {label} {}", path.display()))?;
+    if open_file_identity(&current, path, label)? != expected {
+        return Err(anyhow!(
+            "refusing to use {label} {} because its path now identifies a different file",
+            path.display()
+        ));
+    }
+    Ok(())
 }
 
 #[cfg(not(any(unix, windows)))]
@@ -1315,6 +1766,350 @@ mod tests {
         assert!(detail.contains("without replacing"), "{detail}");
         assert_eq!(fs::read(&staged).unwrap(), b"harmless restored bytes");
         assert_eq!(fs::read(&destination).unwrap(), b"harmless competing bytes");
+    }
+
+    #[cfg(any(unix, windows))]
+    #[test]
+    fn atomic_existing_file_replacement_replaces_adjacent_regular_file() {
+        let root = tempfile::tempdir().unwrap();
+        let staged = root.path().join("staged.tmp");
+        let destination = root.path().join("Avorax.exe");
+        fs::write(&staged, b"harmless staged update bytes").unwrap();
+        fs::write(&destination, b"harmless previous update bytes").unwrap();
+
+        replace_existing_file_atomically(&staged, &destination, "update fixture").unwrap();
+
+        assert!(!staged.exists());
+        assert_eq!(
+            fs::read(&destination).unwrap(),
+            b"harmless staged update bytes"
+        );
+        let names = fs::read_dir(root.path())
+            .unwrap()
+            .map(|entry| entry.unwrap().file_name().to_string_lossy().into_owned())
+            .collect::<Vec<_>>();
+        assert_eq!(names, vec!["Avorax.exe"]);
+    }
+
+    #[cfg(any(unix, windows))]
+    #[test]
+    fn atomic_existing_file_replacement_rejects_non_adjacent_source_before_mutation() {
+        let root = tempfile::tempdir().unwrap();
+        let source_parent = root.path().join("source");
+        let destination_parent = root.path().join("destination");
+        fs::create_dir(&source_parent).unwrap();
+        fs::create_dir(&destination_parent).unwrap();
+        let staged = source_parent.join("staged.tmp");
+        let destination = destination_parent.join("Avorax.exe");
+        fs::write(&staged, b"harmless staged update bytes").unwrap();
+        fs::write(&destination, b"harmless previous update bytes").unwrap();
+
+        let error =
+            replace_existing_file_atomically(&staged, &destination, "update fixture").unwrap_err();
+        let detail = format!("{error:#}");
+
+        assert!(detail.contains("must be adjacent"), "{detail}");
+        assert_eq!(fs::read(&staged).unwrap(), b"harmless staged update bytes");
+        assert_eq!(
+            fs::read(&destination).unwrap(),
+            b"harmless previous update bytes"
+        );
+    }
+
+    #[cfg(any(unix, windows))]
+    #[test]
+    fn atomic_existing_file_replacement_rejects_same_file_identity_before_mutation() {
+        let root = tempfile::tempdir().unwrap();
+        let staged = root.path().join("staged.tmp");
+        let destination = root.path().join("Avorax.exe");
+        fs::write(&staged, b"harmless shared update bytes").unwrap();
+        fs::hard_link(&staged, &destination).unwrap();
+
+        let error =
+            replace_existing_file_atomically(&staged, &destination, "update fixture").unwrap_err();
+        let detail = format!("{error:#}");
+
+        assert!(detail.contains("identify the same file"), "{detail}");
+        assert_eq!(fs::read(&staged).unwrap(), b"harmless shared update bytes");
+        assert_eq!(
+            fs::read(&destination).unwrap(),
+            b"harmless shared update bytes"
+        );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn atomic_existing_file_replacement_rejects_link_destination_before_mutation() {
+        use std::os::unix::fs::symlink;
+
+        let root = tempfile::tempdir().unwrap();
+        let staged = root.path().join("staged.tmp");
+        let external = root.path().join("external.bin");
+        let destination = root.path().join("Avorax.exe");
+        fs::write(&staged, b"harmless staged update bytes").unwrap();
+        fs::write(&external, b"harmless external bytes").unwrap();
+        symlink(&external, &destination).unwrap();
+
+        let error =
+            replace_existing_file_atomically(&staged, &destination, "update fixture").unwrap_err();
+        let detail = format!("{error:#}");
+
+        assert!(detail.contains("is not an ordinary file"), "{detail}");
+        assert_eq!(fs::read(&staged).unwrap(), b"harmless staged update bytes");
+        assert_eq!(fs::read(&external).unwrap(), b"harmless external bytes");
+        assert!(fs::symlink_metadata(&destination)
+            .unwrap()
+            .file_type()
+            .is_symlink());
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn windows_atomic_replacement_failure_backup_reservation_preserves_competing_candidate() {
+        let root = tempfile::tempdir().unwrap();
+        let destination = root.path().join("Avorax.exe");
+        fs::write(&destination, b"harmless previous update bytes").unwrap();
+        let opened_destination = fs::File::open(&destination).unwrap();
+        let unique = 2275_u128;
+        let collision = root.path().join(format!(
+            ".Avorax.exe.{}.{}.0.avorax-replace-backup",
+            std::process::id(),
+            unique
+        ));
+        fs::write(&collision, b"harmless competing backup bytes").unwrap();
+
+        let backup = reserve_windows_atomic_replacement_backup_with_unique(
+            &destination,
+            &opened_destination,
+            "update fixture",
+            unique,
+        )
+        .unwrap();
+
+        assert_ne!(backup, collision);
+        assert_eq!(
+            fs::read(&collision).unwrap(),
+            b"harmless competing backup bytes"
+        );
+        assert_eq!(
+            fs::read(&backup).unwrap(),
+            b"harmless previous update bytes"
+        );
+        ensure_path_matches_open_file(&opened_destination, &backup, "update fixture").unwrap();
+        fs::remove_file(&backup).unwrap();
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn windows_atomic_replacement_failure_backup_reservation_rejects_exhausted_candidates() {
+        let root = tempfile::tempdir().unwrap();
+        let destination = root.path().join("Avorax.exe");
+        fs::write(&destination, b"harmless previous update bytes").unwrap();
+        let opened_destination = fs::File::open(&destination).unwrap();
+        let unique = 2275_u128;
+        let candidates = (0..16_u32)
+            .map(|attempt| {
+                root.path().join(format!(
+                    ".Avorax.exe.{}.{}.{}.avorax-replace-backup",
+                    std::process::id(),
+                    unique,
+                    attempt
+                ))
+            })
+            .collect::<Vec<_>>();
+        for candidate in &candidates {
+            fs::write(candidate, b"harmless competing backup bytes").unwrap();
+        }
+
+        let error = reserve_windows_atomic_replacement_backup_with_unique(
+            &destination,
+            &opened_destination,
+            "update fixture",
+            unique,
+        )
+        .unwrap_err();
+        let detail = format!("{error:#}");
+
+        assert!(detail.contains("after 16 collisions"), "{detail}");
+        assert_eq!(
+            fs::read(&destination).unwrap(),
+            b"harmless previous update bytes"
+        );
+        for candidate in candidates {
+            assert_eq!(
+                fs::read(candidate).unwrap(),
+                b"harmless competing backup bytes"
+            );
+        }
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn windows_atomic_replacement_failure_restores_backup_to_missing_destination() {
+        let root = tempfile::tempdir().unwrap();
+        let previous = root.path().join("previous.bin");
+        let backup = root
+            .path()
+            .join(".Avorax.exe.fixture.avorax-replace-backup");
+        let destination = root.path().join("Avorax.exe");
+        fs::write(&previous, b"harmless previous update bytes").unwrap();
+        let opened_previous = fs::File::open(&previous).unwrap();
+        fs::rename(&previous, &backup).unwrap();
+
+        let disposition = reconcile_windows_atomic_replacement_failure(
+            &backup,
+            &destination,
+            &opened_previous,
+            "update fixture",
+        )
+        .unwrap();
+
+        assert_eq!(
+            disposition,
+            WindowsAtomicReplacementFailureRecovery::BackupRestored
+        );
+        assert!(!backup.exists());
+        assert_eq!(
+            fs::read(&destination).unwrap(),
+            b"harmless previous update bytes"
+        );
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn windows_atomic_replacement_failure_accepts_missing_reserved_backup_with_original_destination(
+    ) {
+        let root = tempfile::tempdir().unwrap();
+        let backup = root
+            .path()
+            .join(".Avorax.exe.fixture.avorax-replace-backup");
+        let destination = root.path().join("Avorax.exe");
+        fs::write(&destination, b"harmless previous update bytes").unwrap();
+        let opened_destination = fs::File::open(&destination).unwrap();
+
+        let disposition = reconcile_windows_atomic_replacement_failure(
+            &backup,
+            &destination,
+            &opened_destination,
+            "update fixture",
+        )
+        .unwrap();
+
+        assert_eq!(
+            disposition,
+            WindowsAtomicReplacementFailureRecovery::ReservedBackupMissingDestinationRetained
+        );
+        assert!(!backup.exists());
+        assert_eq!(
+            fs::read(&destination).unwrap(),
+            b"harmless previous update bytes"
+        );
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn windows_atomic_replacement_failure_rejects_missing_reserved_backup_and_destination() {
+        let root = tempfile::tempdir().unwrap();
+        let previous = root.path().join("previous.bin");
+        let backup = root
+            .path()
+            .join(".Avorax.exe.fixture.avorax-replace-backup");
+        let destination = root.path().join("Avorax.exe");
+        fs::write(&previous, b"harmless previous update bytes").unwrap();
+        let opened_previous = fs::File::open(&previous).unwrap();
+
+        let error = reconcile_windows_atomic_replacement_failure(
+            &backup,
+            &destination,
+            &opened_previous,
+            "update fixture",
+        )
+        .unwrap_err();
+        let detail = format!("{error:#}");
+
+        assert!(
+            detail.contains("did not retain an inspectable destination"),
+            "{detail}"
+        );
+        assert!(!backup.exists());
+        assert!(!destination.exists());
+        assert_eq!(
+            fs::read(&previous).unwrap(),
+            b"harmless previous update bytes"
+        );
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn windows_atomic_replacement_failure_preserves_ambiguous_backup_and_destination() {
+        let root = tempfile::tempdir().unwrap();
+        let previous = root.path().join("previous.bin");
+        let backup = root
+            .path()
+            .join(".Avorax.exe.fixture.avorax-replace-backup");
+        let destination = root.path().join("Avorax.exe");
+        fs::write(&previous, b"harmless previous update bytes").unwrap();
+        let opened_previous = fs::File::open(&previous).unwrap();
+        fs::rename(&previous, &backup).unwrap();
+        fs::write(&destination, b"harmless active update bytes").unwrap();
+
+        let disposition = reconcile_windows_atomic_replacement_failure(
+            &backup,
+            &destination,
+            &opened_previous,
+            "update fixture",
+        )
+        .unwrap();
+
+        assert_eq!(
+            disposition,
+            WindowsAtomicReplacementFailureRecovery::BackupPreservedAlongsideDestination
+        );
+        assert_eq!(
+            fs::read(&backup).unwrap(),
+            b"harmless previous update bytes"
+        );
+        assert_eq!(
+            fs::read(&destination).unwrap(),
+            b"harmless active update bytes"
+        );
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn windows_atomic_replacement_failure_rejects_spoofed_backup() {
+        let root = tempfile::tempdir().unwrap();
+        let previous = root.path().join("previous.bin");
+        let backup = root
+            .path()
+            .join(".Avorax.exe.fixture.avorax-replace-backup");
+        let destination = root.path().join("Avorax.exe");
+        fs::write(&previous, b"harmless previous update bytes").unwrap();
+        let opened_previous = fs::File::open(&previous).unwrap();
+        fs::write(&backup, b"harmless competing backup bytes").unwrap();
+
+        let error = reconcile_windows_atomic_replacement_failure(
+            &backup,
+            &destination,
+            &opened_previous,
+            "update fixture",
+        )
+        .unwrap_err();
+        let detail = format!("{error:#}");
+
+        assert!(
+            detail.contains("does not identify the opened previous destination"),
+            "{detail}"
+        );
+        assert!(!destination.exists());
+        assert_eq!(
+            fs::read(&backup).unwrap(),
+            b"harmless competing backup bytes"
+        );
+        assert_eq!(
+            fs::read(&previous).unwrap(),
+            b"harmless previous update bytes"
+        );
     }
 
     #[cfg(any(
