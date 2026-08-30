@@ -15406,3 +15406,30 @@ pending.
   `98627e5c9dc3de32c885212e2770edb49eb28ec1734af6b55bfc4f37fd57f1c2`.
   Local closure evidence is complete; hosted exact-head, PR integration,
   guarded destination synchronization, and destination verification remain.
+
+## 2026-08-30 - Checkpoint 2275 Implementation-Head Hosting
+
+- Committed the exact 18-path implementation, regression, verifier, validator,
+  CI, audit, and documentation set as
+  `1240d2ef65a25554b473a6c41368ce6840976ce0`, pushed only the checkpoint
+  branch, and opened normal PR `#159`. There were zero staged deletions,
+  dependency-lock changes, or `.verification` paths.
+- Exact-head Avorax CI `33319924374` passed all six jobs. The security job
+  prebuilt and ran the dedicated benign false-positive target; the Windows
+  Rust/platform suite and exact macOS atomic replacement fixtures executed
+  successfully alongside Flutter/protocol, branding, and Unix permission
+  coverage.
+- Desktop Packages push `33319897807` and PR `33319924291` passed package
+  contracts, Windows MSI/setup EXE, Linux DEB/tar, macOS x64/arm64 DMGs, and
+  consolidation. Each consolidation required six native package files, seven
+  checksums, a 569-component lockfile CycloneDX file, and eight uploaded files.
+- Consolidated artifacts `9734796340` and `9734788878` are 132,391,259 and
+  132,670,122 bytes. Their hosted upload SHA-256 values are
+  `795a6ab3722f53abbf5584840d4e8f2f12ce7276cf2ab2655aa4b580f9fb24ad`
+  and
+  `581140a94cf0bc2573af22a4b59d2abe5edc24f3d29983a2b8f89e56cbf3fb68`.
+  No artifact was downloaded, extracted, installed, or executed.
+- Both publication jobs were explicitly skipped. Evidence-head checks, normal
+  merge, merged-main evidence, guarded zero-delete destination sync, and
+  destination verification remain; checkpoint 2275 and the complete antivirus
+  goal remain active.

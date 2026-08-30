@@ -257,5 +257,32 @@ two added paths, zero deletions, nine unchanged lockfiles, zero product
 process/pending/temp residue, and the exact protected-vault invariant. Its
 2,114-byte JSON SHA-256 is
 `98627e5c9dc3de32c885212e2770edb49eb28ec1734af6b55bfc4f37fd57f1c2`.
-Only hosted/integration and destination closure evidence remains for this
-checkpoint.
+Local closure evidence is complete.
+
+## Exact-Head Hosted Evidence
+
+Implementation commit
+`1240d2ef65a25554b473a6c41368ce6840976ce0` is the exact head of PR
+`#159`. Avorax CI run `33319924374` passes all six jobs. This includes the
+complete Windows Rust/platform path, the security/protection/performance gate,
+the dedicated benign false-positive integration target, Flutter/protocol
+coverage, branding, Unix quarantine permission runtime, and the exact macOS
+atomic replacement fixtures.
+
+Desktop Packages push run `33319897807` and PR run `33319924291` pass package
+contracts, Windows x64 MSI/setup EXE, Linux x64 DEB/tar, macOS x64/arm64 DMGs,
+and consolidation/checksum jobs on the same exact commit. Each consolidation
+requires all six native package files, creates seven checksums and the
+569-component lockfile CycloneDX evidence file, then uploads eight files.
+Consolidated artifacts `9734796340` and `9734788878` are respectively
+132,391,259 and 132,670,122 bytes with hosted archive SHA-256 values
+`795a6ab3722f53abbf5584840d4e8f2f12ce7276cf2ab2655aa4b580f9fb24ad`
+and
+`581140a94cf0bc2573af22a4b59d2abe5edc24f3d29983a2b8f89e56cbf3fb68`.
+Artifact bytes were not downloaded, extracted, installed, or executed during
+this review. Both `Publish desktop beta prerelease` jobs are explicitly
+`skipped`; no release or publication occurred.
+
+Evidence-head CI/packages, normal PR merge, merged-main evidence, guarded
+zero-delete destination synchronization, and definitive destination
+verification remain before this checkpoint closes.

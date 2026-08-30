@@ -8760,7 +8760,7 @@ limited.
 
 ## Checkpoint 2275 Status
 
-Checkpoint 2275 is **collision-safe repair local closure evidence passed / hosted and integration evidence pending**. Shared update staged-file
+Checkpoint 2275 is **implementation-head hosted evidence passed / evidence-head and integration closure pending**. Shared update staged-file
 activation no longer scripts deletion of an existing destination before
 activation. Existing adjacent regular files use one OS replacement operation;
 absent targets continue to use atomic no-replace activation.
@@ -8862,8 +8862,21 @@ roots, and the exact protected vault: 16,072 files, zero directories,
 4,522,733 bytes, 5,357 each payload/JSON/auth, one metadata key, and zero vault
 pending. Its 2,114-byte JSON SHA-256 is
 `98627e5c9dc3de32c885212e2770edb49eb28ec1734af6b55bfc4f37fd57f1c2`.
-Hosted exact-head, PR/merge, guarded synchronization, and destination evidence
-remain pending; the complete antivirus goal remains active.
+Implementation commit
+`1240d2ef65a25554b473a6c41368ce6840976ce0` is PR `#159`'s exact head.
+Avorax CI `33319924374` passes all six jobs. Desktop Packages push
+`33319897807` and PR `33319924291` pass contracts, Windows MSI/setup EXE,
+Linux DEB/tar, both macOS DMGs, and consolidation on that exact commit. Each
+consolidation required six platform files, seven checksums, a 569-component
+lockfile CycloneDX file, and eight uploaded files. Consolidated artifacts
+`9734796340`/`9734788878` are 132,391,259/132,670,122 bytes with hosted archive
+SHA-256 values
+`795a6ab3722f53abbf5584840d4e8f2f12ce7276cf2ab2655aa4b580f9fb24ad` and
+`581140a94cf0bc2573af22a4b59d2abe5edc24f3d29983a2b8f89e56cbf3fb68`.
+No artifact was downloaded, extracted, installed, or executed. Both
+publication jobs were skipped. Evidence-head CI/packages, normal PR merge,
+merged-main evidence, guarded synchronization, and destination evidence remain;
+the complete antivirus goal remains active.
 
 This remains one loose-file operation, not authenticated file-journal recovery
 or a package-wide transaction. Abrupt Windows termination can preserve the old
@@ -8876,7 +8889,7 @@ driver/pre-execution enforcement, Defender replacement, and the complete
 antivirus goal remain open or technically limited. The protected 16,072-file
 vault must remain unchanged with zero pending.
 
-Next exact task: compile and run the dedicated benign integration target,
-Source/contracts and the false-positive gate, then repeat full local and
-definitive verifier, dual-host adversarial, and final-audit evidence before any
-hosted integration.
+Next exact task: validate and commit this implementation-head evidence, pass
+exact evidence-head CI/packages with publication skipped, merge PR `#159`
+normally, collect merged-main evidence, then perform guarded zero-delete
+destination synchronization and definitive destination verification.
