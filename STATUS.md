@@ -8760,7 +8760,7 @@ limited.
 
 ## Checkpoint 2275 Status
 
-Checkpoint 2275 is **implementation-head hosted evidence passed / evidence-head and integration closure pending**. Shared update staged-file
+Checkpoint 2275 is **closed through hosted integration and synchronized destination verification**. Shared update staged-file
 activation no longer scripts deletion of an existing destination before
 activation. Existing adjacent regular files use one OS replacement operation;
 absent targets continue to use atomic no-replace activation.
@@ -8874,9 +8874,38 @@ SHA-256 values
 `795a6ab3722f53abbf5584840d4e8f2f12ce7276cf2ab2655aa4b580f9fb24ad` and
 `581140a94cf0bc2573af22a4b59d2abe5edc24f3d29983a2b8f89e56cbf3fb68`.
 No artifact was downloaded, extracted, installed, or executed. Both
-publication jobs were skipped. Evidence-head CI/packages, normal PR merge,
-merged-main evidence, guarded synchronization, and destination evidence remain;
-the complete antivirus goal remains active.
+publication jobs were skipped.
+
+Evidence commit `60ba3d04a87ea6b638d6f1a3bf05be06321ba809` then passed
+Avorax CI `33320917016` (six jobs) and Desktop Packages PR run `33320917038`
+with publication skipped. Its consolidated artifact `9735011272` is
+133,148,045 bytes with hosted archive SHA-256
+`a27a9efcf79ffa68b69da368c5a77b11255ebef5103db017b2da8cace65920b8`.
+No package push run was expected for that documentation-only commit because it
+did not match the workflow's push path filters. PR `#159` merged normally as
+`2144624dd9c49ff0a7d89475945929e21b3cb01d`. Merged-main CI `33321564952`
+passes all six jobs; Desktop Packages `33321564928` passes every platform and
+consolidation with publication skipped. Consolidated artifact `9735175714` is
+132,691,644 bytes with hosted archive SHA-256
+`205215b816fa20ff9bcd6b46a494d0e91998be223f5c6e4ab101becdeb92830e`.
+
+Guarded destination synchronization applies exactly 16 modified plus two added
+files and zero deletions, then independently matches all 18 destination blobs
+and nine locks. Destination focused checks pass Source `707/707`, replacement
+`3/3`, Windows reservation/recovery `7/7`, update `6/6 + 2/2`, strict Clippy,
+the dedicated benign target `3/3`, and the false-positive gate. Broad checks
+pass strict locked Clippy, both Rust workspace variants, all-feature release,
+Flutter `852/852`, and protocol `14/14 + 6/6`; exact Rust totals are 1,806
+executed, 21 intentional ignores, and zero failures. Destination definitive
+verification passes exact `302/302` in `753.8s`; report SHA-256 is
+`a54576c5019f3045bb7ef689a4b2295a469ab9aff238480d90686947ee6bc831`.
+Dual-host adversarial validation accepts both controls and rejects all 34 hostile
+cases across 17 mutations; result SHA-256 is
+`f2adf9e3c401747d3a6a4afe89615d67c91c275b27fe78cf5e93c89f6d666ba0`.
+Final destination audit SHA-256 is
+`fae6617716deee2be75242675999d0b6afb8f49060077ba099fc15895c70647f`.
+The exact protected vault remains unchanged. Checkpoint 2275 is closed; the
+complete antivirus goal remains active.
 
 This remains one loose-file operation, not authenticated file-journal recovery
 or a package-wide transaction. Abrupt Windows termination can preserve the old
@@ -8889,7 +8918,6 @@ driver/pre-execution enforcement, Defender replacement, and the complete
 antivirus goal remain open or technically limited. The protected 16,072-file
 vault must remain unchanged with zero pending.
 
-Next exact task: validate and commit this implementation-head evidence, pass
-exact evidence-head CI/packages with publication skipped, merge PR `#159`
-normally, collect merged-main evidence, then perform guarded zero-delete
-destination synchronization and definitive destination verification.
+Next exact task: select and script checkpoint 2276 against the highest-value
+remaining unblocked antivirus risk, preserving the scripting-before-testing
+discipline and the protected-vault invariant.
