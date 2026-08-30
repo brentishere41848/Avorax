@@ -2424,6 +2424,33 @@ blob comparisons pass. Checkpoint 2265 is closed with no dependency, license,
 or network-surface delta. Production signing/notarization, final notice
 provenance, enterprise deployment, and release approval remain separate.
 
+## Checkpoint 2271 Dependency Delta
+
+Checkpoint 2271 adds no dependency and requires no lockfile change. The new
+fixed `macos-15` workflow route reuses pinned `actions/checkout`, pinned
+`dtolnay/rust-toolchain`, Rust `1.96.1`, the existing workspace lock, update-
+service crate, shared platform-security crate, and standard-library Unix
+permission APIs. No manifest, third-party package, version, source, feature,
+runtime download, network content, registry, or license class changes.
+
+Source contract 702, verifier step 299, and the adversarial report harness add
+only repository test/evidence logic. Native hosted CI, complete locked tests/
+builds, package checksum/SBOM review, eight-lock audit, integration, destination
+sync, and closure remain pending until the post-freeze phase. No checkpoint-
+2271 test ran during scripting. No live malware, EICAR, Defender change,
+installation, service/driver start, release, publication, or protected-vault
+mutation occurs. The exact 16,072-file vault has zero pending; complete
+antivirus hardening remains active.
+
+Checkpoint 2271 implementation-head CI and package push/PR runs now pass with
+publication skipped. Both consolidated artifacts pass bounded in-stream exact
+8-root/6-platform/7-checksum/CycloneDX-1.6/569-component validation without
+extraction or execution. Eight active lockfiles remain unchanged, and the
+commit-bound local audit passes. This confirms zero dependency, lockfile,
+runtime-download, network-content, or license-class delta for the checkpoint;
+production signing/notarization, final notice provenance, deployment approval,
+evidence-head, merge, destination, and closure remain separate.
+
 Checkpoint 2270 post-freeze strict locked Clippy, both locked workspace test
 variants, locked all-target/all-feature release, the dependency gate inside
 exact `298/298`, and read-only lockfile-diff checks pass. No manifest or

@@ -1724,3 +1724,33 @@ Both PowerShell hosts validate the authentic report and reject all `14/14`
 destination-local mutations with zero boundary-only rejections. The final
 14-blob/8-lock/26-backup/process/residue/vault audit passes. Checkpoint 2270 is
 closed; target/runtime and authority limits outside its scope remain.
+
+## Checkpoint 2271 macOS Recovery Test Plan
+
+The scripting phase is complete before execution. The fixed `macos-15` job
+runs:
+
+```bash
+cargo test --locked \
+  --manifest-path core/avorax_update_service/Cargo.toml \
+  activation_recovery_unix_ \
+  -- --test-threads=1
+```
+
+The hosted filter must select exact owner-only artifact mode, broad-mode repair,
+and Unix wiring tests. Local post-freeze checks must cover PowerShell 5.1/7
+parsing, Source `702/702`, the separate macOS wiring test, recovery and update-
+service suites, format, strict locked lint, both locked workspace variants,
+locked all-feature release, Flutter/protocol analysis and tests, and exact no-
+skip/no-Defender `299/299`. Both validator hosts must accept the authentic
+report and reject seven mutations each, exact `14/14`.
+
+Exact-head hosted CI must show the macOS job selecting and passing all three
+`activation_recovery_unix_` tests. Package jobs remain regression evidence only
+and must be reviewed without extracting or executing artifacts. Normal PR/
+merge, exact zero-delete guarded destination synchronization, destination full
+verification, and final blob/lock/process/residue/vault audit are required for
+closure. No checkpoint-2271 test ran during scripting. Android, installed
+identity, broader macOS environments, root/admin, hostile filesystems, key
+confidentiality/prior exposure, package transactionality, signing, driver/pre-
+execution, and Defender-replacement limits remain explicit.

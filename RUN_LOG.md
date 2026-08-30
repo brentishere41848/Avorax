@@ -14790,3 +14790,68 @@ pending.
   `474ee7c3f0dd828bf7dcec770d32177b8d847f593c8ee0fa1dd47f8a527f918c`
   passes 14/14 blobs, 8/8 locks, 26 backups, zero product process/residue, and
   the exact vault. Checkpoint 2270 closes; the complete goal remains active.
+
+## 2026-08-30 - Checkpoint 2271 macOS Recovery Runtime Scripting
+
+- Branched `agent/checkpoint-2271-macos-update-recovery-runtime` from exact
+  merged `origin/main` after checkpoint 2270 closure; `.verification` remains
+  untracked and was not staged, moved, cleaned, or deleted.
+- Added a bounded fixed `macos-15` Avorax CI job using pinned actions and Rust
+  `1.96.1` to run the exact locked, serial `activation_recovery_unix_` filter.
+- Added an all-platform wiring regression, Source contract 702, verifier step
+  299, exact-299 validator scope requirements, and an untracked seven-mutation
+  PowerShell 5.1/7 adversarial harness.
+- Updated status, testing, engine matrix, threat model, blockers, dependency,
+  malware-protection, and checkpoint evidence documents before execution.
+- No checkpoint-2271 parser, format, build, test, verifier, network, or hosted
+  command ran during this scripting phase. No live malware, EICAR, fixture
+  execution, Defender weakening, install, service/driver start, release,
+  publication, or protected-vault write occurred. The exact 16,072-file vault
+  with zero pending remains the required invariant; the complete goal remains
+  active.
+
+## 2026-08-30 - Checkpoint 2271 Post-Freeze Local Verification
+
+- PowerShell 5.1/7 parsing, format, diff, macOS wiring `1/1`, recovery `20/20`,
+  platform security `18/18`, strict locked Clippy, both locked workspace
+  variants, and locked all-target/all-feature release pass.
+- The first Source run executed 702 tests and failed one existing Ubuntu job-
+  slice assertion because it included the newly adjacent macOS Cargo command.
+  The ownership boundary was repaired; the credited repeat passes `702/702`.
+- Rust workspace groups are `18 + 4 + 230 + 41 + 251 + 583 + 642 + 6`, zero
+  failures, with 21 documented isolated child fixtures ignored. Flutter
+  analysis/client `852/852` and both protocol analyses/tests `14/14 + 6/6`
+  pass.
+- Definitive no-skip/no-Defender verification passes `299/299` in `665.1s`.
+  The 227,630-byte report SHA-256 is
+  `1d9b40247407ccb9ac3f009cd614051d05472f076c3bd8f52571a2a6c22c3d30`;
+  both PowerShell hosts accept it.
+- Independent validation accepts both authentic host cases and rejects all
+  `14/14` hostile host/mutation cases. The 12,615-byte results SHA-256 is
+  `f19f29478bcf374b880c1788f1d71a4cb43300fa2cd0c214423c1d269bfba338`.
+- Read-only lockfile, process, pending/residue, and protected-vault checks pass.
+  Actual macOS semantics still require exact-head `macos-15`; hosted packages,
+  integration, guarded destination sync, destination regression, and closure
+  remain pending. The complete antivirus-hardening goal remains active.
+
+## 2026-08-30 - Checkpoint 2271 Implementation-Head Hosted Evidence
+
+- Exact implementation `d818a806d52f36e60afb58c3f38e2db004ddfe4e`
+  passes all six Avorax CI jobs in run `33285011167`.
+- macOS 15 job `99186567140` passes exact tests for owner-only artifacts,
+  broad-mode repair before use, and Unix workflow wiring: `3 passed`, zero
+  failed, 245 filtered out.
+- Desktop Packages push/PR `33284997136`/`33285011165` pass all platform and
+  consolidation jobs; both publication jobs skip.
+- Consolidated artifacts `9724283198`/`9724343130` are 132,650,305/
+  132,649,381 bytes with SHA-256 `226c085cd2876174d2d12eba657f81c91f7dec0717efec2752a5bfeeb5ac4702`/
+  `1785eea9b14517c6a8a7bb6f21588f75dafb54701dc45beaa6465a049e76eb7d`.
+  Both pass bounded in-stream 8-root/6-platform/7-checksum/CycloneDX-1.6/
+  569-component review without extraction or execution.
+- Commit-bound local audit SHA-256
+  `9eb9457f6d85de21fc51ab41220ffe7a1f0796656d262877a79fe90639cced03`
+  passes exact paths, locks, reports, process/residue, and vault checks.
+- One hosted macOS 15 route is verified. Android, broader macOS/installed
+  identity, prior disclosure/open handles, unencrypted key, privileged/hostile
+  filesystem, transaction, driver/pre-execution, Defender replacement,
+  integration, destination, and whole-goal limits remain open.

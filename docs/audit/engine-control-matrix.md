@@ -6150,3 +6150,28 @@ engine, UI control, threshold, real-time authority, macOS/Android runtime,
 prior-exposure, root/administrator, installed-service, transaction, driver/
 pre-execution, signing/deployment, and Defender-replacement row remains at its
 previous responsibility and status. The complete antivirus goal remains open.
+
+## Checkpoint 2271 Control Delta
+
+| Control / engine | Responsibility | Classification before execution | Evidence / limitation |
+| --- | --- | --- | --- |
+| macOS update recovery runtime route | Execute authenticated recovery permission fixtures on a real hosted macOS filesystem | Fully scripted; hosted runtime pending | Fixed `macos-15`, pinned actions/Rust, locked update-service manifest, exact `activation_recovery_unix_` filter, one test thread, and 30-minute job bound are source-contracted |
+| macOS recovery directory and private files | Enforce `0700` directory plus `0600` key/lock/journal and repair broad modes before use | Partial until exact-head job passes | Existing shared Unix implementation and harmless fixtures are unchanged; Source 702 and verifier 299 prove wiring only on Windows |
+| Platform breadth | Keep one hosted result from becoming an unsupported universal claim | Technically limited | Does not prove every macOS version, architecture, filesystem, installed service identity, Android runtime, root/admin resistance, hostile filesystem resistance, encrypted key storage, or prior-exposure recovery |
+| Detection/custom engines | Preserve all existing responsibilities and authority | Unchanged | No hash/signature/rule/YARA/static/PE/archive/heuristic/ML/process/allowlist/cache/aggregator behavior changes |
+| Checkpoint evidence gate | Reject stale or incomplete local reports | Scripted; execution pending | Source contract 702, exact 299-step report validation, and seven mutations on PowerShell 5.1 and 7 are required after freeze |
+
+No checkpoint-2271 test ran during scripting. No live malware, EICAR, Defender
+change, install, service/driver start, release, publication, fixture execution,
+or protected-vault mutation is involved. The exact 16,072-file vault has zero
+pending; complete antivirus hardening remains active.
+
+Implementation head `d818a806` supersedes the pre-execution classifications
+for the three macOS route/mode/repair rows only. Exact hosted macOS 15 job
+`99186567140` passes all three selected tests (`3/3`, 245 filtered out), so
+those rows are **Verified on one hosted macOS 15 runner**. CI, both package
+runs, exact package inventory/checksums/SBOM review, and the commit-bound local
+audit also pass with publication skipped. Platform breadth, installed identity,
+Android, key confidentiality/prior exposure, privileged/hostile filesystem,
+transaction, detector/custom-engine, driver/pre-execution, Defender, and whole-
+goal rows retain their documented status.
