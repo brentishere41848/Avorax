@@ -9051,3 +9051,32 @@ Final audit SHA-256 is
 all 17 destination blobs, nine locks, process/residue controls, and the exact
 protected vault pass. Checkpoint 2277 is closed; restore/delete action recovery
 and the complete antivirus goal remain active.
+
+## Checkpoint 2278: Quarantine Action Recovery Locally Verified
+
+Checkpoint 2278 is **locally verified / hosted integration pending**. Local Core now persists one
+strict, bounded, dedicated-domain HMAC-authenticated `{id}.action.pending`
+intent before restore staging or delete metadata mutation. The envelope binds
+the exact previous/terminal JSON and HMAC bytes, action and phase, controlled
+adjacent staging path, and the staged file's Windows volume/file ID or Unix
+device/inode. Delete resumes forward from all four exact metadata pair states.
+Prepared restore cleans only untouched intent; restore-staged resumes from
+exactly one identity/hash/size/single-link-matched staging file or destination.
+Unknown, missing, linked, active, conflicting, duplicate, oversized, malformed,
+tampered, or identity-mismatched state fails visibly and remains preserved.
+
+Implementation, harmless tests, Linux/macOS CI filters, definitive step 304,
+validator assertions, Source contract 710, and docs were scripted before test
+execution. No checkpoint-2278 test ran during the scripting phase. Focused,
+broad, and definitive local execution now passes: platform `31/31`, action
+recovery `15/15`, Local Core quarantine `157/157`, Local Core `614/614`, strict
+Clippy, both locked workspace variants, release, Source `710/710`, Flutter
+`852/852`, protocols `14/14 + 6/6`, and security/dependency gates. The verifier
+passes exact `304/304` in `705.3s`; both hosts accept it and reject `34/34`
+adversarial cases across 17 mutations. Hosted, merge, guarded synchronization,
+destination, and final closure evidence remain pending.
+The protected vault is not a fixture and must remain exactly 16,072 files, zero
+directories, 4,522,733 bytes, one key, and zero pending artifacts. The action
+journal is bounded confirmed-intent replay, not whole-filesystem atomicity,
+secure erase, driver/pre-execution proof, Defender replacement, installed
+identity, production accuracy, or completion of the antivirus-hardening goal.

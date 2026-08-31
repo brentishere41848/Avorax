@@ -4915,3 +4915,33 @@ verification pass exact 17 blobs, nine locks, focused recovery controls,
 unchanged protected vault. The residual restore/delete crash boundary and all
 privileged, filesystem/storage, installed-identity, signing, driver,
 pre-execution, Defender-replacement, accuracy, and complete-goal limits remain.
+
+## Checkpoint 2278 Restore/Delete Crash Recovery
+
+Threat: a crash after restore destination activation but before status/payload
+cleanup can duplicate executable-looking bytes while metadata remains
+`Quarantined`. A crash after delete status update can leave its payload behind.
+Blind retry can overwrite a competing restore destination or delete evidence.
+
+Mitigation: persist and exclusively lock one strict bounded dedicated-domain
+HMAC action journal before restore staging or delete mutation. Bind exact old/
+terminal metadata, intent/phase, controlled adjacent staging path, and staged
+platform file identity. Delete accepts only four exact pair combinations and
+replays forward. Prepared restore cleans only untouched intent. Restore-staged
+requires exactly one identity/single-link/size/hash-matched artifact, resumes
+atomic no-replace activation when needed, verifies terminal metadata and
+payload absence, reverifies destination identity/content, then cleans journal.
+All ambiguous, malformed, linked, active, conflicting, unknown, tampered,
+missing, duplicate, or mismatched states fail visibly and preserve evidence.
+
+Residual risk: phase replacement plus later filesystem operations are not a
+power-loss-proof transaction. A prepared-phase crash after staging exists but
+before identity authentication needs manual review. Namespace, identity, hash,
+ancestor, and link checks are point-in-time user-mode evidence and cannot
+defeat administrators, SYSTEM/root, hostile filesystems/storage, or kernel
+compromise. Journal unlink durability remains storage-dependent. No
+checkpoint-2278 test ran during the scripting phase. Focused, broad, exact
+`304/304`, and `34/34` dual-host hostile-report rejection pass locally; hosted,
+integration, destination, and final-audit evidence is pending. No
+detection-accuracy, secure-erasure, driver/pre-execution, Defender-replacement,
+installed-identity, or complete-goal claim follows.

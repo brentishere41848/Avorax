@@ -15685,3 +15685,41 @@ pending.
 - Checkpoint 2277 is closed through hosted integration and synchronized
   destination verification. Restore/delete payload-status crash recovery and
   the complete antivirus-hardening goal remain active.
+
+## Checkpoint 2278 Scripting Batch
+
+- Scripted a strict at-most-1-MiB `{id}.action.pending` journal with a dedicated
+  HMAC domain, exact previous/terminal metadata bytes, confirmed action/phase,
+  controlled restore staging path, and persistent platform file identity.
+- Scripted forward delete recovery, prepared-restore abandonment, identity-
+  bound staged restore continuation, exact terminal verification, conflict/
+  concurrency rejection, and fail-visible evidence preservation.
+- Scripted harmless temporary regressions for four pair states, staging and
+  destination crash points, absent payload, tamper, unknown bytes, oversize,
+  links, locks, conflicts, duplicate artifacts, and identity mismatch.
+- Scripted Ubuntu/macOS jobs, definitive verifier step 304, strict validator
+  assertions, Source contract 710, and checkpoint documentation.
+- No checkpoint-2278 test ran during the scripting phase. The batch is frozen
+  only after formatting/static review; all execution and integration evidence
+  remains pending. No live malware, Defender change, install/service/driver
+  start, artifact download/execution, release, publication, or protected-vault
+  mutation belongs to this work.
+
+## Checkpoint 2278 Local Verification
+
+- Focused platform checks pass `1/1` each; action recovery passes `15/15`,
+  platform `31/31`, Local Core quarantine `157/157`, and Local Core `614/614`.
+- Both locked Rust workspaces, strict workspace Clippy, all-feature release,
+  Source `710/710`, Flutter `852/852`, protocols `14/14 + 6/6`, UI inventory,
+  package-source, branding, product-copy, no-malware, and dependency gates pass.
+- The definitive no-skip/no-Defender verifier passes exact `304/304` in
+  `705.3s`; report SHA-256 is
+  `70b89132cc48e02666e3e620fa96d7c30e632f13038fe879091a9dfa16c4c5f0`.
+  Both validators accept it and reject `34/34` hostile cases across 17
+  mutations; adversarial SHA-256 is
+  `0f861402347669daa0d96094c392775231c6e0b69fbca8af3baca88ac09c9bf4`.
+- Compile, stale-contract, Guard compatibility, and local adversarial-harness
+  failures were repaired and rerun. Zero-test `unittest`, unavailable `pytest`,
+  and malformed no-malware invocations are not claimed; the exact repo runner
+  and absolute-path security gate pass. Hosted/integration/destination evidence
+  remains pending, and the complete antivirus-hardening goal remains active.

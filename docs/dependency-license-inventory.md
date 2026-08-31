@@ -2941,3 +2941,23 @@ the 569-component lockfile SBOM, exact nine-lock review, and destination full
 verification complete without a dependency or lockfile delta. Publication is
 skipped and no artifact was downloaded or executed. Complete final-binary
 license/notice review remains partial as documented for the product as a whole.
+
+## Checkpoint 2278 Dependency Delta
+
+Checkpoint 2278 adds no dependency, changes no version, source, feature,
+license, notice obligation, or package-manager configuration, and requires no
+lockfile change. Production reuses existing `serde`/`serde_json`, `hmac`,
+`sha2`, UUID, file-locking, filesystem, and shared platform-security APIs.
+Tests reuse existing `tempfile` and harmless standard-library filesystem
+fixtures. The new stable file identity API is dependency-free and wraps the
+already-used Windows volume/file ID or Unix device/inode primitives.
+
+CI adds no action or external tool; it adds only locked Rust test filters to the
+existing pinned Ubuntu/macOS jobs. No checkpoint-2278 test ran during the
+scripting phase. Post-freeze dependency evidence, unchanged-lock review,
+complete locked workspaces, release, Flutter/protocol resolution, Source
+`710/710`, and exact verifier `304/304` pass locally. Hosted SBOM/packages,
+destination, and final product-wide license/dependency review remain pending.
+No live malware, network sample, Defender change, machine-wide install,
+service/driver start, artifact download/execution, release, publication, or
+protected-vault mutation belongs to checkpoint 2278.

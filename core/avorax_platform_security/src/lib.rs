@@ -7,6 +7,40 @@ const MAX_QUARANTINE_DIRECTORY_ENTRIES: usize = 65_536;
 const MAX_QUARANTINE_ENTRY_NAME_CHARS: usize = 512;
 const MAX_QUARANTINE_ID_CHARS: usize = 128;
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct StableFileIdentity {
+    pub scope: u64,
+    pub file: u64,
+}
+
+pub fn capture_open_file_identity(
+    file: &fs::File,
+    path: &Path,
+    label: &str,
+) -> Result<StableFileIdentity> {
+    let (scope, file) = open_file_identity(file, path, label)?;
+    Ok(StableFileIdentity {
+        scope: u64::from(scope),
+        file,
+    })
+}
+
+pub fn ensure_path_matches_file_identity(
+    expected: StableFileIdentity,
+    path: &Path,
+    label: &str,
+) -> Result<()> {
+    let current = fs::File::open(path)
+        .with_context(|| format!("failed to reopen {label} {}", path.display()))?;
+    if capture_open_file_identity(&current, path, label)? != expected {
+        return Err(anyhow!(
+            "refusing to use {label} {} because its persistent file identity changed",
+            path.display()
+        ));
+    }
+    Ok(())
+}
+
 pub fn ensure_open_file_has_single_link(file: &fs::File, path: &Path, label: &str) -> Result<()> {
     let link_count = open_file_link_count(file, path, label)?;
     if link_count != 1 {
@@ -909,6 +943,7 @@ fn is_recognized_quarantine_artifact_name(name: &str) -> bool {
         return is_safe_quarantine_component(token, MAX_QUARANTINE_ID_CHARS);
     }
     for marker in [
+        ".action.pending.tmp-",
         ".update.pending.tmp-",
         ".pending.auth.tmp-",
         ".pending.tmp-",
@@ -921,6 +956,7 @@ fn is_recognized_quarantine_artifact_name(name: &str) -> bool {
         }
     }
     for suffix in [
+        ".action.pending",
         ".update.pending",
         ".pending.auth",
         ".pending",
@@ -2244,6 +2280,23 @@ mod tests {
     }
 
     #[test]
+    fn persistent_file_identity_accepts_same_file_and_rejects_replacement() {
+        let root = tempfile::tempdir().unwrap();
+        let path = root.path().join("identity-fixture.bin");
+        fs::write(&path, b"benign identity fixture").unwrap();
+        let opened = fs::File::open(&path).unwrap();
+        let identity = capture_open_file_identity(&opened, &path, "identity fixture").unwrap();
+
+        ensure_path_matches_file_identity(identity, &path, "identity fixture").unwrap();
+        fs::remove_file(&path).unwrap();
+        fs::write(&path, b"benign replacement fixture").unwrap();
+
+        let error =
+            ensure_path_matches_file_identity(identity, &path, "identity fixture").unwrap_err();
+        assert!(format!("{error:#}").contains("persistent file identity changed"));
+    }
+
+    #[test]
     fn scan_quarantine_binding_rejects_replaced_open_file_identity() {
         let root = tempfile::tempdir().unwrap();
         let path = root.path().join("candidate.bin");
@@ -2275,6 +2328,8 @@ mod tests {
             "record.pending.auth.tmp-fixture",
             "record.update.pending",
             "record.update.pending.tmp-fixture",
+            "record.action.pending",
+            "record.action.pending.tmp-fixture",
             "record.json",
             "record.json.auth",
             "record.json.tmp-fixture",
@@ -2301,6 +2356,26 @@ mod tests {
             "record.update.pending.tmp-",
             "record.with-dot.update.pending",
             "record/update.pending",
+        ] {
+            assert!(!is_recognized_quarantine_artifact_name(name), "{name}");
+        }
+    }
+
+    #[test]
+    fn quarantine_action_recovery_artifact_names_are_bounded_and_recognized() {
+        for name in [
+            "record.action.pending",
+            "record_2.action.pending",
+            "record.action.pending.tmp-fixture",
+        ] {
+            assert!(is_recognized_quarantine_artifact_name(name), "{name}");
+        }
+        for name in [
+            ".action.pending",
+            "record.action.pending.auth",
+            "record.action.pending.tmp-",
+            "record.with-dot.action.pending",
+            "record/action.pending",
         ] {
             assert!(!is_recognized_quarantine_artifact_name(name), "{name}");
         }

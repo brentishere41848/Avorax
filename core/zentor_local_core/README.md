@@ -162,3 +162,25 @@ Windows/Ubuntu/macOS CI, all desktop package targets, guarded exact 17-path
 zero-delete synchronization, destination focused checks and `303/303`, dual-
 host hostile-report rejection, and final blob/lock/process/residue/vault audit.
 The restore/delete payload-status crash boundary remains open.
+
+## Checkpoint 2278 Authenticated Action Recovery
+
+Restore and delete now reserve one bounded `{id}.action.pending` intent before
+their first lifecycle mutation. Its dedicated-domain HMAC binds exact old/new
+metadata, action/phase, controlled adjacent restore staging, and, once staged,
+the platform file identity. Delete drives any exact old/new JSON/HMAC pair
+forward and removes a verified remaining payload. Prepared restore abandons
+only an untouched intent; restore-staged accepts exactly one identity-, hash-,
+size-, and single-link-matched staging file or destination, then resumes
+no-replace activation, terminal metadata, payload cleanup, and final checks.
+
+Malformed, oversized, linked, active, conflicting, unknown, tampered,
+duplicate, missing, or identity-mismatched evidence fails visibly and remains
+for review. No checkpoint-2278 test ran during the scripting phase. Focused
+action recovery passes `15/15`, complete Local Core `614/614`, definitive
+verification `304/304`, and dual-host adversarial rejection `34/34` locally;
+hosted, integration, and destination evidence is pending.
+The phase journal is not a power-loss-proof multi-file transaction, and a crash
+after unbound staging but before identity authentication intentionally needs
+manual review. This adds no secure-erasure, driver/pre-execution, Defender-
+replacement, installed-identity, production-accuracy, or whole-product claim.

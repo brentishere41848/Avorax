@@ -6421,3 +6421,23 @@ unknown-state handling, update concurrency, and immutable-evidence controls are
 therefore verified locally, hosted on the fixed Windows/Ubuntu/macOS runners,
 and in the synchronized destination. Restore/delete payload coordination stays
 `Technically limited / open`; no stronger driver or Defender claim follows.
+
+### Checkpoint 2278 restore/delete action-recovery delta
+
+| Control | Responsibility | State | Evidence / limit |
+| --- | --- | --- | --- |
+| Action journal | Bind confirmed restore/delete intent and exact old/terminal metadata before mutation | Verified locally / hosted pending | Strict 1 MiB envelope, dedicated HMAC domain, no-replace create, exclusive lock |
+| Delete replay | Drive four exact metadata pair states to `Deleted` and remove verified payload | Verified locally / hosted pending | Unknown/missing/tampered state blocks and preserves evidence |
+| Prepared restore | Abandon only untouched intent | Verified locally / hosted pending | Requires exact old pair, intact payload, absent staging and destination |
+| Restore-staged replay | Resume no-replace activation/status/payload cleanup | Verified locally / hosted pending | Exactly one artifact; platform identity, single link, size, and hash required |
+| Action concurrency/conflict | Prevent cooperating lifecycle/update/finalization writers from mutating one item concurrently | Verified locally / hosted pending | Atomic action name plus pre/post conflict checks; conflicts remain visible |
+| Journal/schema bounds | Reject untrusted recovery content | Verified locally / hosted pending | Deny unknown fields, 1 MiB read cap, bounded IDs/paths, controlled UUID staging name |
+| Power-loss/privileged filesystem resistance | Provide whole-operation atomicity | Technically limited | Not a general transaction; unbound prepared-stage crash requires manual review; point-in-time user-mode checks |
+| Detection/custom engines | Preserve existing detection responsibilities | Unchanged | No coverage or accuracy delta |
+| Driver/pre-execution and Defender relationship | Preserve honest authority boundary | Technically limited / unchanged | No service/driver start or Defender weakening/replacement |
+
+No checkpoint-2278 test ran during the scripting phase. Focused/full,
+definitive `304/304`, Source `710/710`, and dual-host adversarial `34/34`
+evidence pass locally. Hosted, merge, synchronization, destination, and final
+vault/lock evidence remain pending. The real vault must remain exactly 16,072 files, zero directories,
+4,522,733 bytes, one key, and zero pending artifacts.
