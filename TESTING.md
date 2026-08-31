@@ -2559,3 +2559,14 @@ passes `304/304` in `673.5s`; both PowerShell hosts accept report SHA-256
 and reject `34/34` hostile results across 17 mutations. Hosted Ubuntu/macOS,
 exact-head packages, PR/merge, guarded synchronization, destination, and closure
 evidence remains required.
+
+Implementation-head hosted evidence now passes exact commit `c4c21e5` on PR
+`#167`: Avorax CI `33355915264` passes all six jobs, and Desktop Packages
+`33355915194` passes contracts, Windows MSI/setup EXE, Linux DEB/tar, both
+macOS DMGs, and consolidation with publication skipped. Hosted logs record six
+platform files, seven checksums, a 569-component CycloneDX lockfile SBOM, and
+eight uploaded evidence files. Consolidated artifact `9745412188` is
+133,166,414 bytes with digest
+`ea7c9393afa4d3db7cfb124e4226e7ae02bdb44d202c62d697e464bbf48d6a97`.
+Only logs and metadata were inspected; integration and destination execution
+remain separate required evidence.

@@ -6,8 +6,9 @@ Implementation, harmless tests, Source contract 711, existing Ubuntu/macOS CI
 filters, exact-304 verifier/validator scope, and audit/operational documentation
 were scripted before execution. No checkpoint-2279 test ran during the scripting
 phase. Focused, broad, release, Flutter/protocol, definitive, and adversarial
-local verification now passes. Hosted exact-head, integration, destination, and
-closure evidence remains pending.
+local verification now passes. Exact implementation-head CI and desktop package
+evidence also passes. Normal integration, merged-main, destination, and closure
+evidence remains pending.
 
 The complete antivirus-hardening goal remains active.
 
@@ -182,6 +183,43 @@ vault remains exact at 16,072 files, zero directories, 4,522,733 bytes, 5,357
 each `.avoraxq`/`.json`/`.auth`, one key, zero pending, and zero reparse points.
 The 2,977-byte audit SHA-256 is
 `feae0e51f9bcea9314394a9c0e3c98a075ef28e7defbf72654225f69b0609cd5`.
+
+## Hosted Implementation-Head Evidence
+
+Commit `c4c21e5fb243554fa2a426a2d6c7b37aa7fa6dab` is the exact head of
+PR `#167`, based on `a49e62ae048e8b8afff27b084080d4b08b22eb13`.
+The PR is mergeable and clean. Avorax CI run `33355915264` passes all six
+jobs, including the actual Ubuntu and macOS action-recovery filters. Desktop
+Packages PR run `33355915194` passes package contracts, Windows x64 MSI/setup
+EXE, Linux x64 DEB/tar, macOS arm64/x64 DMGs, and consolidation. The prerelease
+publication job is skipped as required.
+
+Hosted artifact metadata for that exact package run is:
+
+| Artifact | ID | Bytes | Hosted SHA-256 digest |
+|---|---:|---:|---|
+| consolidated desktop evidence | `9745412188` | 133,166,414 | `ea7c9393afa4d3db7cfb124e4226e7ae02bdb44d202c62d697e464bbf48d6a97` |
+| Windows package evidence | `9745282306` | 37,602,611 | `483bf5e6fda7836abd08ed25c28ac5729e75e5af21cf9ff7390920a09d1ccdb0` |
+| Linux package evidence | `9745199889` | 33,175,459 | `b76d8afa3e236f22ff43c03fe3f47e9de7260d67777323d0055f00e0f7b6830d` |
+| macOS arm64 package evidence | `9745210418` | 30,511,790 | `e66d66ab8ab3bb255aecd38cbf7680827eae69dac921f2b6f01dc60138edfa35` |
+| macOS x64 package evidence | `9745405529` | 31,903,955 | `51ead5e8709f07bfc2ef2405db945773e5e5415f4bd0213ec72f8d750e699277` |
+
+Consolidation logs prove exactly six platform release files, seven checksum
+targets, one CycloneDX lockfile SBOM with 569 components, and eight uploaded
+evidence files. The seven recorded target hashes are:
+
+- Linux DEB: `68d745656f98d6004d962ae1e2b8ec8cfa036eac54f06231c9ff85c07d1fd574`;
+- Linux tar: `5902d31a46a7c85377583563e5f4f1c0fe105da6e24901896f2f4da0acc2e713`;
+- lockfile SBOM: `3a669e82404811fdf43c495e39acc893ec513dad1505d681d4a2b5836216cc91`;
+- macOS arm64 DMG: `40cf5ec7ccbd66d6389ef582753ef2819b1e266be481e412e474da81db210003`;
+- macOS x64 DMG: `ab05244238be07bbfaa90ac1f6f38fefa73aefff6e32048583befe5aecd3dc76`;
+- Windows setup EXE: `42045bc1dd631b84b413708013d69f89178309c03bdf2db90ff94106cebe9239`;
+- Windows MSI: `2acf6c45c2ed75bac9cf2841dc23a75f1a73b3071b75bfd35457e8425d6597a9`.
+
+Only GitHub job logs and artifact metadata were inspected. No artifact was
+downloaded, extracted, installed, executed, released, or published. Normal PR
+merge, merged-main CI/packages, guarded destination synchronization, and
+destination verification remain required before checkpoint closure.
 
 ## Dependency And Vault Boundaries
 
