@@ -11554,13 +11554,14 @@ def test_local_quarantine_restore_status_write_precedes_payload_cleanup():
         source.index("pub fn delete(&self")
     ]
     staged_source = source[
-        source.index("fn restore_payload_staged"):
+        source.index("fn reserve_restore_staging_file"):
         source.index("fn write_record")
     ]
 
     assert "restored.status = QuarantineStatus::Restored;" in restore_source
     assert "self.write_action_journal(action_body.clone())?" in restore_source
-    assert "self.replace_action_journal(&prepared_raw" in restore_source
+    assert "self.replace_action_journal(" in restore_source
+    assert "QuarantineActionPhase::RestoreReserved" in restore_source
     assert "self.drive_action_metadata_pair_to_next" in restore_source
     assert (
         'remove_checked_quarantine_payload(&quarantine_path, "restored quarantine payload")'
@@ -11603,14 +11604,18 @@ def test_local_quarantine_restore_metadata_failure_preserves_authenticated_recov
     ]
 
     assert "self.write_action_journal(action_body.clone())?" in restore_source
-    assert "self.replace_action_journal(&prepared_raw" in restore_source
+    assert restore_source.count("self.replace_action_journal(") == 2
+    assert "self.reserve_restore_staging_file" in restore_source
+    assert "self.copy_payload_to_reserved_restore" in restore_source
     assert "self.ensure_action_restore_file_identity" in restore_source
     assert "self.cleanup_action_journal(id)" in restore_source
     assert "unrecorded quarantine restore" not in restore_source
     assert (
         restore_source.index("self.write_action_journal(action_body.clone())?")
-        < restore_source.index("self.restore_payload_staged")
-        < restore_source.index("self.replace_action_journal(&prepared_raw")
+        < restore_source.index("self.reserve_restore_staging_file")
+        < restore_source.index("self.replace_action_journal(")
+        < restore_source.index("self.copy_payload_to_reserved_restore")
+        < restore_source.rindex("self.replace_action_journal(")
         < restore_source.index("activate_quarantine_restore_no_replace")
         < restore_source.index("remove_checked_quarantine_payload(&quarantine_path")
         < restore_source.index("self.cleanup_action_journal(id)")
@@ -11625,7 +11630,7 @@ def test_local_quarantine_restore_revalidates_parent_before_staging_and_activati
         source.index("pub fn delete(&self")
     ]
     staged_source = source[
-        source.index("fn restore_payload_staged"):
+        source.index("fn reserve_restore_staging_file"):
         source.index("fn write_record")
     ]
 
@@ -11634,7 +11639,7 @@ def test_local_quarantine_restore_revalidates_parent_before_staging_and_activati
     assert (
         staged_source.index('reject_link_ancestors(parent, "quarantine restore staging parent")?;')
         < staged_source.index("ensure_restore_temp_destination_absent(temp_destination)?;")
-        < staged_source.index("if let Err(error) = copy_file_exclusive(")
+        < staged_source.index("let staged = fs::OpenOptions::new()")
     )
     assert (
         restore_source.rindex('reject_link_ancestors(parent, "quarantine restore parent")?;')
@@ -13061,7 +13066,7 @@ def test_quarantine_components_use_shared_permissions_without_acl_subprocesses()
         local_production.index("pub fn delete(&self")
     ]
     staged_restore_source = local_production[
-        local_production.index("fn restore_payload_staged"):
+        local_production.index("fn reserve_restore_staging_file"):
         local_production.index("fn write_record")
     ]
     assert "harden_open_quarantine_file_permissions" not in integrity_source
@@ -29613,6 +29618,12 @@ def test_checkpoint_2278_quarantine_action_recovery_contract():
         "prepare_action_journal_body",
         "write_action_journal",
         "replace_action_journal",
+        "reserve_restore_staging_file",
+        "copy_payload_to_reserved_restore",
+        "open_action_restore_file_identity",
+        "action_restore_file_matches_record",
+        "remove_action_restore_file_identity",
+        "cleanup_unbound_empty_restore_staging",
         "action_journal_path",
         "cleanup_action_journal",
         "hmac_action_journal_auth_tag",
@@ -29630,12 +29641,20 @@ def test_checkpoint_2278_quarantine_action_recovery_contract():
     restore = local_core[
         local_core.index("pub fn restore(&self") : local_core.index("pub fn delete(&self")
     ]
-    assert restore.index("self.write_action_journal(action_body.clone())?") < restore.index(
-        "self.restore_payload_staged"
+    first_phase_replace = restore.index("self.replace_action_journal(")
+    second_phase_replace = restore.index(
+        "self.replace_action_journal(", first_phase_replace + 1
     )
-    assert restore.index("self.replace_action_journal(&prepared_raw") < restore.index(
-        "activate_quarantine_restore_no_replace"
+    assert (
+        restore.index("self.write_action_journal(action_body.clone())?")
+        < restore.index("self.reserve_restore_staging_file")
+        < first_phase_replace
+        < restore.index("self.copy_payload_to_reserved_restore")
+        < second_phase_replace
+        < restore.index("activate_quarantine_restore_no_replace")
     )
+    assert "QuarantineActionPhase::RestoreReserved" in restore
+    assert "QuarantineActionPhase::RestoreStaged" in restore
     assert restore.index("self.drive_action_metadata_pair_to_next") < restore.index(
         "remove_checked_quarantine_payload(&quarantine_path"
     )
@@ -29665,6 +29684,7 @@ def test_checkpoint_2278_quarantine_action_recovery_contract():
     for marker in [
         "QuarantineLifecycleAction::Delete",
         "QuarantineActionPhase::Prepared",
+        "QuarantineActionPhase::RestoreReserved",
         "QuarantineActionPhase::RestoreStaged",
         "self.ensure_action_metadata_pair_known(&body)?",
         "self.drive_action_metadata_pair_to_next(&body, &next_record)?",
@@ -29696,6 +29716,16 @@ def test_checkpoint_2278_quarantine_action_recovery_contract():
         "quarantine_lifecycle_action_recovery_delete_accepts_already_absent_payload",
         "quarantine_lifecycle_action_recovery_prepared_restore_cleans_only_intent",
         "quarantine_lifecycle_action_recovery_prepared_restore_preserves_unbound_stage",
+        "quarantine_lifecycle_action_recovery_prepared_restore_cleans_empty_unbound_reservation",
+        "quarantine_lifecycle_action_recovery_prepared_restore_rejects_hard_linked_empty_stage",
+        "quarantine_lifecycle_action_recovery_restore_reserved_cleans_empty_stage",
+        "quarantine_lifecycle_action_recovery_restore_reserved_cleans_partial_stage",
+        "quarantine_lifecycle_action_recovery_restore_reserved_cleans_same_size_tampered_stage",
+        "quarantine_lifecycle_action_recovery_restore_reserved_resumes_completed_copy",
+        "quarantine_lifecycle_action_recovery_restore_reserved_rejects_identity_mismatch",
+        "quarantine_lifecycle_action_recovery_restore_reserved_rejects_early_destination",
+        "quarantine_lifecycle_action_recovery_rejects_non_adjacent_phase_transition",
+        "quarantine_lifecycle_action_recovery_rejects_delete_phase_transition",
         "quarantine_lifecycle_action_recovery_restore_staged_resumes_from_staging",
         "quarantine_lifecycle_action_recovery_restore_staged_resumes_from_destination",
         "quarantine_lifecycle_action_recovery_restore_staged_cleans_committed_journal",
@@ -29748,13 +29778,17 @@ def test_checkpoint_2278_quarantine_action_recovery_contract():
         "one bounded, strict, domain-separated HMAC-authenticated restore/delete action journal",
         "before restore staging or delete metadata mutation",
         "Confirmed delete recovery accepts only the four exact pair combinations",
-        "Prepared restore recovery cleans only untouched intent",
+        "Restore now advances only through Prepared, RestoreReserved, and RestoreStaged",
+        "authenticates its stable identity in RestoreReserved before copying any payload byte",
+        "Prepared recovery cleans absent intent or only an exact controlled empty single-link stage",
+        "Restore-reserved recovery requires the exact previous metadata pair, intact quarantine payload, and absent destination",
         "Restore-staged recovery requires exactly one staging file or destination",
         "matching platform identity, single-link count, size, and hash",
-        "Malformed, oversized, linked, conflicting, active, unknown, tampered, duplicate, missing, or identity-mismatched evidence fails visibly and remains preserved",
+        "Non-adjacent phase changes",
+        "early-destination, or identity-mismatched evidence fail visibly and remain preserved",
         "The action journal is one self-authenticated file",
         "not a power-loss-proof transaction across metadata, payload, destination, and journal directory entries",
-        "A prepared-phase crash after staging bytes exist but before their identity is authenticated is intentionally preserved for manual review",
+        "The narrow creation-to-identity-journal gap permits automatic cleanup only when the authenticated controlled staging path still names an empty ordinary single-link file",
         "Journal, persistent file identity, path, ancestor, hash, and single-link checks remain point-in-time user-mode evidence",
         "Action recovery is bounded confirmed-intent replay, not a general filesystem transaction, secure erase, signed-driver mediation, or pre-execution blocking",
     ]:
@@ -29772,6 +29806,235 @@ def test_checkpoint_2278_quarantine_action_recovery_contract():
     assert "complete antivirus-hardening goal remains active" in normalized_checkpoint.lower()
     normalized_dependencies = re.sub(r"\s+", " ", documents[-1]).lower()
     assert "checkpoint 2278 dependency delta" in normalized_dependencies
+    assert "adds no dependency" in normalized_dependencies
+    assert "lockfile change" in normalized_dependencies
+
+
+def test_checkpoint_2279_quarantine_restore_reservation_recovery_contract():
+    local_core = read(
+        ROOT / "core" / "zentor_local_core" / "src" / "quarantine" / "quarantine_store.rs"
+    )
+    workflow = read(CI_WORKFLOW)
+    verifier = read(SMALL_THREAT_MVP_VERIFIER)
+    validator = read(SMALL_THREAT_MVP_REPORT_VALIDATOR)
+    checkpoint = read(
+        ROOT
+        / "docs"
+        / "reports"
+        / "checkpoint-2279-quarantine-restore-reservation-recovery.md"
+    )
+    documents = [
+        checkpoint,
+        read(RUN_LOG),
+        read(STATUS_DOC),
+        read(ROOT / "TESTING.md"),
+        read(ROOT / "core" / "zentor_local_core" / "README.md"),
+        read(ROOT / "docs" / "quarantine.md"),
+        read(ROOT / "docs" / "malware-protection.md"),
+        read(ROOT / "docs" / "audit" / "engine-control-matrix.md"),
+        read(ROOT / "docs" / "audit" / "threat-model.md"),
+        read(ROOT / "docs" / "audit" / "known-blockers.md"),
+        read(DEPENDENCY_LICENSE_INVENTORY),
+    ]
+
+    phase_enum = local_core[
+        local_core.index("enum QuarantineActionPhase") : local_core.index(
+            "struct PersistedFileIdentity"
+        )
+    ]
+    assert phase_enum.index("Prepared") < phase_enum.index("RestoreReserved")
+    assert phase_enum.index("RestoreReserved") < phase_enum.index("RestoreStaged")
+
+    restore = local_core[
+        local_core.index("pub fn restore(&self") : local_core.index("pub fn delete(&self")
+    ]
+    first_phase_replace = restore.index("self.replace_action_journal(")
+    second_phase_replace = restore.index(
+        "self.replace_action_journal(", first_phase_replace + 1
+    )
+    assert (
+        restore.index("self.write_action_journal(action_body.clone())?")
+        < restore.index("self.reserve_restore_staging_file")
+        < restore.index("action_body.phase = QuarantineActionPhase::RestoreReserved")
+        < first_phase_replace
+        < restore.index("self.copy_payload_to_reserved_restore")
+        < restore.index("action_body.phase = QuarantineActionPhase::RestoreStaged")
+        < second_phase_replace
+        < restore.index("activate_quarantine_restore_no_replace")
+    )
+    assert "QuarantineActionPhase::Prepared" in restore[first_phase_replace:]
+    assert "QuarantineActionPhase::RestoreReserved" in restore[second_phase_replace:]
+    assert restore.index("drop(staging_file)") < restore.index(
+        "activate_quarantine_restore_no_replace"
+    )
+
+    reservation = local_core[
+        local_core.index("fn reserve_restore_staging_file(") : local_core.index(
+            "fn copy_payload_to_reserved_restore("
+        )
+    ]
+    for marker in [
+        ".read(true)",
+        ".write(true)",
+        ".create_new(true)",
+        "ExclusiveCopySecurity::Restore",
+        "metadata.len() != 0",
+        "capture_open_file_identity",
+        "ensure_path_matches_open_file",
+        "staged.sync_all()",
+        "unbound quarantine restore staging reservation",
+    ]:
+        assert marker in reservation
+
+    reserved_copy = local_core[
+        local_core.index("fn copy_payload_to_reserved_restore(") : local_core.index(
+            "fn read_current_metadata_pair("
+        )
+    ]
+    for marker in [
+        "ensure_open_file_has_single_link",
+        "capture_open_file_identity",
+        "metadata.len() != 0",
+        "copy_local_quarantine_payload_limited(",
+        "MAX_LOCAL_QUARANTINE_COPY_BYTES",
+        "staged.sync_all()",
+        "staged.seek(SeekFrom::Start(0))",
+        "sha256_for_open_file(staged, temp_destination)",
+        "final_identity != expected",
+        "recovery evidence was preserved",
+    ]:
+        assert marker in reserved_copy
+    assert "copy_file_exclusive(" not in reserved_copy
+
+    phase_replace = local_core[
+        local_core.index("fn replace_action_journal(") : local_core.index(
+            "fn serialized_action_journal("
+        )
+    ]
+    for marker in [
+        "expected_phase: QuarantineActionPhase",
+        "QuarantineActionPhase::Prepared",
+        "QuarantineActionPhase::RestoreReserved",
+        "QuarantineActionPhase::RestoreStaged",
+        "current == next",
+        "valid_phase_transition",
+        "not an exact adjacent transition",
+    ]:
+        assert marker in phase_replace
+
+    recovery = local_core[
+        local_core.index("fn recover_action_journal(") : local_core.index(
+            "fn validated_action_journal("
+        )
+    ]
+    reserved = recovery[
+        recovery.index("QuarantineActionPhase::RestoreReserved =>") : recovery.index(
+            "QuarantineActionPhase::RestoreStaged =>"
+        )
+    ]
+    for marker in [
+        '"restore-reserved metadata pair"',
+        "self.ensure_payload_integrity(&previous_record, &payload_path)?",
+        "restore-reserved action journal has no persistent file identity",
+        "destination before staged activation",
+        "self.action_restore_file_matches_record(",
+        "staged_body.phase = QuarantineActionPhase::RestoreStaged",
+        "QuarantineActionPhase::RestoreReserved",
+        "return self.recover_action_journal(id, path)",
+        "self.remove_action_restore_file_identity(",
+    ]:
+        assert marker in reserved
+    prepared = recovery[
+        recovery.index("QuarantineActionPhase::Prepared =>") : recovery.index(
+            "QuarantineActionPhase::RestoreReserved =>"
+        )
+    ]
+    assert "cleanup_unbound_empty_restore_staging(&staging_path)" in prepared
+    assert "unexpected destination" in prepared
+
+    cleanup = local_core[
+        local_core.index("fn cleanup_unbound_empty_restore_staging(") : local_core.index(
+            "fn cleanup_untracked_quarantine_metadata_artifacts("
+        )
+    ]
+    for marker in [
+        "reject_link_ancestors",
+        "open_single_link_quarantine_file",
+        "metadata.len() != 0",
+        "ensure_path_matches_open_file",
+        "fs::remove_file(path)",
+        "remained after checked cleanup",
+    ]:
+        assert marker in cleanup
+
+    for marker in [
+        "quarantine_lifecycle_action_recovery_prepared_restore_cleans_empty_unbound_reservation",
+        "quarantine_lifecycle_action_recovery_prepared_restore_rejects_hard_linked_empty_stage",
+        "quarantine_lifecycle_action_recovery_restore_reserved_cleans_empty_stage",
+        "quarantine_lifecycle_action_recovery_restore_reserved_cleans_partial_stage",
+        "quarantine_lifecycle_action_recovery_restore_reserved_cleans_same_size_tampered_stage",
+        "quarantine_lifecycle_action_recovery_restore_reserved_resumes_completed_copy",
+        "quarantine_lifecycle_action_recovery_restore_reserved_rejects_identity_mismatch",
+        "quarantine_lifecycle_action_recovery_restore_reserved_rejects_early_destination",
+        "quarantine_lifecycle_action_recovery_rejects_non_adjacent_phase_transition",
+        "quarantine_lifecycle_action_recovery_rejects_delete_phase_transition",
+        "benign partial restore stage",
+        "benign competing destination",
+    ]:
+        assert marker in local_core
+
+    ubuntu_job = workflow[
+        workflow.index("  quarantine-unix:\n") : workflow.index(
+            "  update-recovery-macos:\n"
+        )
+    ]
+    macos_job = workflow[
+        workflow.index("  update-recovery-macos:\n") : workflow.index(
+            "  flutter:\n", workflow.index("  update-recovery-macos:\n")
+        )
+    ]
+    for job in [ubuntu_job, macos_job]:
+        assert "Test Local Core quarantine action recovery" in job
+        assert "quarantine_lifecycle_action_recovery_" in job
+        assert "-- --test-threads=1" in job
+        assert "continue-on-error" not in job
+        assert "|| true" not in job
+
+    step = "quarantine restore/delete action recovery regressions"
+    assert step in verifier
+    assert '"--workspace", "quarantine_lifecycle_action_recovery_"' in verifier
+    assert f'Assert-ReportContainsStep $steps "{step}"' in validator
+    assert "if ($steps.Count -ne 304)" in validator
+    assert "expected exactly 304 verifier steps" in validator
+    for scope in [
+        "Restore now advances only through Prepared, RestoreReserved, and RestoreStaged",
+        "authenticates its stable identity in RestoreReserved before copying any payload byte",
+        "copies through that same open handle under the 1 GiB cap",
+        "Prepared recovery cleans absent intent or only an exact controlled empty single-link stage",
+        "a non-empty, linked, or unavailable unbound artifact remains preserved for manual review",
+        "Restore-reserved recovery requires the exact previous metadata pair, intact quarantine payload, and absent destination",
+        "a missing, empty, incomplete, or same-size hash-mismatched identity-bound stage is safely discarded",
+        "an exact completed copy is promoted through the adjacent phase and resumed",
+        "Non-adjacent phase changes",
+        "The narrow creation-to-identity-journal gap permits automatic cleanup only when the authenticated controlled staging path still names an empty ordinary single-link file",
+        "non-empty, linked, unavailable, or otherwise ambiguous unbound state remains preserved for manual review",
+    ]:
+        assert scope in verifier
+        assert scope in validator
+
+    for document in documents:
+        normalized = re.sub(r"\s+", " ", document).lower()
+        assert "checkpoint 2279" in normalized
+        assert "restorereserved" in normalized or "restore-reserved" in normalized
+    normalized_checkpoint = re.sub(r"\s+", " ", checkpoint)
+    assert "No checkpoint-2279 test ran during the scripting phase" in normalized_checkpoint
+    assert "source contract 711" in normalized_checkpoint.lower()
+    assert "16,072 files" in normalized_checkpoint
+    assert "zero pending" in normalized_checkpoint
+    assert "no live malware" in normalized_checkpoint.lower()
+    assert "complete antivirus-hardening goal remains active" in normalized_checkpoint.lower()
+    normalized_dependencies = re.sub(r"\s+", " ", documents[-1]).lower()
+    assert "checkpoint 2279 dependency delta" in normalized_dependencies
     assert "adds no dependency" in normalized_dependencies
     assert "lockfile change" in normalized_dependencies
 

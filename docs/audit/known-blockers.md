@@ -4645,3 +4645,31 @@ delete action recovery is no longer an unverified checkpoint blocker. Its
 documented storage-durability, unbound-stage manual-review, privileged-actor,
 driver/pre-execution, Defender-replacement, installed-identity, and production-
 accuracy limitations remain open; the complete antivirus goal remains active.
+
+## Checkpoint 2279 Remaining Restore Reservation Limits
+
+Checkpoint 2279 scripts identity-first restore reservation. `RestoreReserved`
+authenticates the exclusive empty stage identity before copying bytes. Exact
+identity-bound missing, incomplete, or hash-mismatched stages can be discarded
+while the previous metadata/payload remain intact; exact complete copies can be
+promoted and resumed. A prepared-stage pathname is cleaned only when it remains
+an empty ordinary single-link file, and phase skips or early destinations fail.
+
+The creation-to-journal gap is narrowed but not eliminated: same-principal code
+can race a user-writable restore parent, so non-empty, linked, unavailable, or
+otherwise ambiguous unbound state still requires manual review. Journal removal
+and directory-entry durability depend on truthful storage; JSON/HMAC, payload,
+destination, and journal are not one power-loss-proof transaction. Stable IDs,
+path/hash/link checks, and ACLs remain point-in-time user-mode evidence and do
+not resist administrators, SYSTEM/root, hostile filesystems/storage, or kernel
+compromise.
+
+No checkpoint-2279 test ran during the scripting phase. Post-freeze local
+verification now passes Source `711/711`, action recovery `25/25`, quarantine
+`167/167`, complete Local Core/workspace/release/Flutter/protocol gates, exact
+`304/304`, and dual-host `34/34` hostile-report rejection. Hosted cross-platform,
+integration, and destination evidence remains pending. Installed
+identity, signing/deployment, production detection accuracy, secure erase,
+signed-driver pre-execution enforcement, Defender replacement, and completion
+of the antivirus-hardening goal remain blocked, partial, open, or technically
+limited. The protected vault must remain exactly 16,072 files and zero pending.
