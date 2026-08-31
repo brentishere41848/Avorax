@@ -4637,3 +4637,11 @@ identity, production signing/deployment and detection accuracy, signed-driver
 pre-execution enforcement, Defender replacement, hostile privileged actors,
 and completion of the antivirus-hardening goal remain blocked, partial, open,
 or technically limited.
+
+Checkpoint 2278 integration is closed: exact-head and merged-main hosted
+matrices, guarded destination sync, destination `304/304`, `34/34` hostile
+validation, exact blobs/locks/backups, and read-only vault audit pass. Restore/
+delete action recovery is no longer an unverified checkpoint blocker. Its
+documented storage-durability, unbound-stage manual-review, privileged-actor,
+driver/pre-execution, Defender-replacement, installed-identity, and production-
+accuracy limitations remain open; the complete antivirus goal remains active.

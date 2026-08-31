@@ -2512,3 +2512,18 @@ is 133,133,600 bytes with hosted digest
 `f60e09788925a30cfd724176f42eaec088e5a5398b2cd3d4ed729e24bdc10662`.
 Only hosted metadata/logs were inspected. Merge, merged-main, guarded sync, and
 destination execution remain separate requirements.
+
+Checkpoint-2278 closure now passes evidence-head CI/packages, PR `#165`, merge
+`1683a13`, and merged-main CI `33348691591` / packages `33348691613` with
+publication skipped. Guarded destination synchronization applies exact 16
+modified plus one added path, zero deletions, and 32 backups.
+
+Destination Source `710/710`, rustfmt, platform `1/1 + 1/1`, action recovery
+`15/15`, and strict workspace Clippy pass. Exact no-skip/no-Defender verification
+passes `304/304` in `760.9s`; report SHA-256 is
+`e93040e010e60cd9c77f7750964e836e4aee42a93d76259737e98b30b3c01d3b`.
+PowerShell 5.1 and 7 accept it and reject all `34/34` hostile cases across 17
+mutations. Final audit SHA-256 is
+`86ad411e3709408a5e29837e3ad1ee69c97c59c5e829908090e3fe4fe5c9d06a`;
+17/17 blobs, 9/9 locks, 32 backups, process/residue controls, and the protected
+vault pass. Checkpoint 2278 is closed; the complete antivirus goal remains active.

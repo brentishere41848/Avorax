@@ -4945,3 +4945,12 @@ checkpoint-2278 test ran during the scripting phase. Focused, broad, exact
 integration, destination, and final-audit evidence is pending. No
 detection-accuracy, secure-erasure, driver/pre-execution, Defender-replacement,
 installed-identity, or complete-goal claim follows.
+
+Checkpoint 2278 closure verifies this boundary on local Windows plus hosted
+Windows/Linux/macOS and the synchronized destination: exact `304/304`, action
+recovery `15/15`, `34/34` hostile validator rejection, 17 exact blobs, nine
+unchanged locks, zero residue/processes, and the protected vault invariant pass.
+This evidence does not expand the trust boundary: administrators, SYSTEM/root,
+hostile storage/filesystems, kernel compromise, power-loss-proof multi-file
+atomicity, secure erase, driver enforcement, and Defender replacement remain out
+of scope or technically limited.

@@ -15739,3 +15739,32 @@ pending.
 - Normal merge, merged-main matrices, guarded destination synchronization, and
   destination reruns remain pending. The complete antivirus-hardening goal
   remains active.
+
+## Checkpoint 2278 Integration And Destination Closure
+
+- Evidence head `3fd90e767236e59b976a4111f02b63807be17aa4` passes CI
+  `33347492393` and Desktop Packages `33347492407`. PR `#165` merged normally
+  as `1683a13fb6c4a6f7af7ff553305f0d7da3a46554`.
+- Merged-main CI `33348691591` and Desktop Packages `33348691613` pass all
+  platform, recovery, package, and consolidation jobs; publication is skipped.
+  Consolidated artifact `9743072994` is 133,143,711 bytes with hosted digest
+  `2d9552eb2db2985ec23e333e50fa0908aa3acc2b9485e51e045c52e9daa25150`.
+- A stale report descriptor caused the first guarded-sync preflight to fail
+  before activation. After the exact template fix, preflight and synchronization
+  applied 16 modified plus one added path, zero deletions, and 32 verified
+  backups. Sync report SHA-256 is
+  `da7fc6e7359cb2877466f37ba900a0e19cfbb5ee67deac00a3dd42228c87c207`.
+- Destination Source `710/710`, rustfmt, platform checks `1/1 + 1/1`, action
+  recovery `15/15`, and strict Clippy pass. Definitive no-skip/no-Defender
+  verification passes `304/304` in `760.9s`; report SHA-256 is
+  `e93040e010e60cd9c77f7750964e836e4aee42a93d76259737e98b30b3c01d3b`.
+- Both validator hosts accept the report and reject `34/34` hostile cases over
+  17 mutations; adversarial SHA-256 is
+  `e2cbcd7a23441a8063a38be18e768a1f2527ce2cb9d9b0425af03f0634fc87ac`.
+- The first final-audit wrapper call rejected an incorrect template count before
+  audit execution. The corrected audit passes with SHA-256
+  `86ad411e3709408a5e29837e3ad1ee69c97c59c5e829908090e3fe4fe5c9d06a`,
+  proving 17 blobs, nine locks, 32 backups, zero residue/processes, and the exact
+  protected vault.
+- Checkpoint 2278 is closed. The complete antivirus-hardening goal remains
+  active; no artifact was downloaded/executed and no release was published.

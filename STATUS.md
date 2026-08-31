@@ -9084,3 +9084,18 @@ directories, 4,522,733 bytes, one key, and zero pending artifacts. The action
 journal is bounded confirmed-intent replay, not whole-filesystem atomicity,
 secure erase, driver/pre-execution proof, Defender replacement, installed
 identity, production accuracy, or completion of the antivirus-hardening goal.
+
+That pending state is superseded. Evidence head `3fd90e76`, normal PR `#165`,
+and merge `1683a13fb6c4a6f7af7ff553305f0d7da3a46554` pass exact-head and
+merged-main CI/packages. Merged-main runs are CI `33348691591` and Desktop
+Packages `33348691613`; all platform jobs pass and publication is skipped.
+
+Guarded synchronization applies exact 16 modified plus one added path, zero
+deletions, and 32 backups. Destination Source `710/710`, format, platform
+checks, action recovery `15/15`, strict Clippy, and definitive `304/304` pass.
+The destination report SHA-256 is
+`e93040e010e60cd9c77f7750964e836e4aee42a93d76259737e98b30b3c01d3b`;
+both hosts reject `34/34` hostile cases. Final audit SHA-256 is
+`86ad411e3709408a5e29837e3ad1ee69c97c59c5e829908090e3fe4fe5c9d06a`;
+all 17 blobs, nine locks, backups, residue controls, and the exact vault pass.
+Checkpoint 2278 is closed; the complete antivirus-hardening goal remains active.
