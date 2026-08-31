@@ -15850,3 +15850,35 @@ pending.
 - Normal merge, merged-main matrices, guarded destination synchronization, and
   destination verification remain pending. The complete antivirus-hardening
   goal remains active.
+
+## Checkpoint 2279 - Integration And Destination Closure
+
+- Evidence head `1108a449874d26a3398ff602596179fd47a65705` passes Avorax CI
+  `33357093064` and Desktop Packages `33357093067`. PR `#167` merged normally
+  as `ad16822595faa800809f0b98ba277520b2191367`; no direct-main push occurred.
+- Merged-main CI `33358161556` and packages `33358161554` pass every required
+  job. Publication is skipped. Consolidated artifact `9746075011` is
+  133,173,363 bytes with hosted digest
+  `798b306e256508a641ff9cd44920c2c5b6cce9de784237b416f293634f657352`.
+  No artifact was downloaded, extracted, installed, executed, or published.
+- Five guarded-sync wrapper/preflight attempts failed closed before writes:
+  stale nested token counts, an empty mandatory replacement, wrong nested path
+  targeting, one stale descriptive count, and incorrect nested root rewriting.
+  Corrected preflight/activation passes with 14 modified, one added, zero
+  deleted, 28 backups, and sync SHA-256
+  `e3bf521cd1e468463785e4ea4ac7950751b869f7326d896022caf167cf6eef01`.
+- Destination Source `711/711`, `rustfmt`, identity `1/1`, action recovery
+  `25/25`, and strict Clippy pass. Definitive no-skip/no-Defender verification
+  passes `304/304` in `655.2s`; its 228,814-byte report SHA-256 is
+  `08b7bc67121af02c85ead8fa1cad9bedac7ac816b8aabd4487c3b5338fe34dce`.
+- Both PowerShell hosts accept the authentic report and reject `34/34` hostile
+  results across 17 mutations. Destination-local adversarial SHA-256 is
+  `e9c388af7c006b01f69478346ec7c2a00a85ab4cd41b55f51a47311a6a093bcd`.
+- Two final-audit wrapper calls failed read-only on a broad inherited `62`
+  replacement and then the inherited branch name. The corrected final audit
+  passes with SHA-256
+  `d18946098975dbc22bcd4f9f0e94ee3ec3819a81ed96636ae5e4ac19298ff659`,
+  proving 15 blobs, nine locks, 28 backups, zero process/pending/temp residue,
+  zero vault reparse files, and the exact protected-vault invariant.
+- Checkpoint 2279 is closed through synchronized-destination verification. The
+  complete antivirus-hardening goal remains active.
