@@ -2,9 +2,10 @@
 
 ## Status
 
-Locally verified / hosted integration pending. The implementation, harmless
-tests, CI jobs, verifier step 304, validator assertions, source contract 710,
-and documentation were completed as one batch before test execution. No
+Implementation and hosted exact-head verified / integration pending. The
+implementation, harmless tests, CI jobs, verifier step 304, validator
+assertions, source contract 710, and documentation were completed as one batch
+before test execution. No
 checkpoint-2278 test ran during the scripting phase. The frozen batch now
 passes focused, broad, definitive, and adversarial local verification.
 
@@ -141,9 +142,20 @@ preserves the exact invariant: 16,072 files, zero directories, 4,522,733 bytes,
 5,357 each `.avoraxq`/`.json`/`.auth`, one `.metadata_auth_key`, and zero
 pending artifacts.
 
-Hosted Ubuntu/macOS runtime, exact-head CI/packages, normal PR integration,
-merged-main evidence, guarded destination synchronization, and destination
-reruns remain required before checkpoint closure.
+Exact implementation head `6abbffb3a68070663430d73fe690e622d009653e`
+passes PR `#165` Avorax CI `33346196118` and Desktop Packages PR/push runs
+`33346196123`/`33346170948`. CI passes all six jobs, including actual Ubuntu
+and macOS action recovery. Package jobs pass Windows MSI/EXE, Linux DEB/tar,
+macOS arm64/x64 DMG, six release files, seven checksum targets, and a
+569-component CycloneDX lockfile SBOM. Publication is skipped. Consolidated PR
+artifact `9742414827` is 133,133,600 bytes with hosted digest
+`f60e09788925a30cfd724176f42eaec088e5a5398b2cd3d4ed729e24bdc10662`.
+Only hosted metadata and logs were inspected; no artifact was downloaded,
+extracted, installed, or executed.
+
+Normal PR integration, merged-main evidence, guarded destination
+synchronization, and destination reruns remain required before checkpoint
+closure.
 
 ## Residual Limits
 

@@ -2504,4 +2504,11 @@ product-copy, no-malware-binaries, dependency, UI inventory, and package-source
 gates pass. The definitive verifier passes exact `304/304` in `705.3s`, with
 Rust and Flutter enabled and Defender/EICAR opt-in false. PowerShell 5.1 and 7
 accept the authentic report and reject all `34/34` hostile cases across 17
-mutations. Hosted and destination execution remain separate requirements.
+mutations. Exact implementation `6abbffb3` passes PR `#165` CI `33346196118`
+and Desktop Packages PR/push `33346196123`/`33346170948`. All six CI jobs and
+Windows MSI/EXE, Linux DEB/tar, macOS arm64/x64 DMG, package contracts, and
+consolidation pass; publication is skipped. Consolidated artifact `9742414827`
+is 133,133,600 bytes with hosted digest
+`f60e09788925a30cfd724176f42eaec088e5a5398b2cd3d4ed729e24bdc10662`.
+Only hosted metadata/logs were inspected. Merge, merged-main, guarded sync, and
+destination execution remain separate requirements.

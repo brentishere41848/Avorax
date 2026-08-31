@@ -15721,5 +15721,21 @@ pending.
 - Compile, stale-contract, Guard compatibility, and local adversarial-harness
   failures were repaired and rerun. Zero-test `unittest`, unavailable `pytest`,
   and malformed no-malware invocations are not claimed; the exact repo runner
-  and absolute-path security gate pass. Hosted/integration/destination evidence
-  remains pending, and the complete antivirus-hardening goal remains active.
+  and absolute-path security gate pass.
+
+## Checkpoint 2278 Hosted Implementation Evidence
+
+- Exact implementation head `6abbffb3a68070663430d73fe690e622d009653e`
+  passes PR `#165` CI `33346196118` and Desktop Packages PR/push runs
+  `33346196123`/`33346170948`.
+- CI passes all six jobs, including actual Ubuntu and macOS action recovery.
+  Windows MSI/EXE, Linux DEB/tar, macOS arm64/x64 DMG, consolidation, and
+  package contracts pass; both prerelease publication jobs are skipped.
+- PR consolidated artifact `9742414827` is 133,133,600 bytes with hosted
+  digest `f60e09788925a30cfd724176f42eaec088e5a5398b2cd3d4ed729e24bdc10662`.
+  Hosted logs prove six release files, seven checksums, and a 569-component
+  CycloneDX lockfile SBOM. Only metadata/logs were inspected; no artifact was
+  downloaded, extracted, installed, executed, released, or published.
+- Normal merge, merged-main matrices, guarded destination synchronization, and
+  destination reruns remain pending. The complete antivirus-hardening goal
+  remains active.

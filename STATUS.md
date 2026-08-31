@@ -9054,7 +9054,7 @@ and the complete antivirus goal remain active.
 
 ## Checkpoint 2278: Quarantine Action Recovery Locally Verified
 
-Checkpoint 2278 is **locally verified / hosted integration pending**. Local Core now persists one
+Checkpoint 2278 is **implementation and hosted exact-head verified / integration pending**. Local Core now persists one
 strict, bounded, dedicated-domain HMAC-authenticated `{id}.action.pending`
 intent before restore staging or delete metadata mutation. The envelope binds
 the exact previous/terminal JSON and HMAC bytes, action and phase, controlled
@@ -9073,8 +9073,12 @@ recovery `15/15`, Local Core quarantine `157/157`, Local Core `614/614`, strict
 Clippy, both locked workspace variants, release, Source `710/710`, Flutter
 `852/852`, protocols `14/14 + 6/6`, and security/dependency gates. The verifier
 passes exact `304/304` in `705.3s`; both hosts accept it and reject `34/34`
-adversarial cases across 17 mutations. Hosted, merge, guarded synchronization,
-destination, and final closure evidence remain pending.
+adversarial cases across 17 mutations. Exact implementation head `6abbffb3`
+passes PR `#165` CI `33346196118` and Desktop Packages PR/push
+`33346196123`/`33346170948`. All platform and consolidation jobs pass,
+publication is skipped, and only hosted metadata/logs were inspected. Merge,
+merged-main, guarded synchronization, destination, and final closure evidence
+remain pending.
 The protected vault is not a fixture and must remain exactly 16,072 files, zero
 directories, 4,522,733 bytes, one key, and zero pending artifacts. The action
 journal is bounded confirmed-intent replay, not whole-filesystem atomicity,
