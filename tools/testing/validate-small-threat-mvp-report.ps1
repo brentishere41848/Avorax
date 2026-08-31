@@ -1951,8 +1951,8 @@ if ($RequireFullSuite) {
   if ($skipFlutter -or $skipRust) {
     throw "-RequireFullSuite requires skip_flutter=false and skip_rust=false."
   }
-  if ($steps.Count -ne 303) {
-    throw "-RequireFullSuite expected exactly 303 verifier steps for this source revision, found $($steps.Count)."
+  if ($steps.Count -ne 304) {
+    throw "-RequireFullSuite expected exactly 304 verifier steps for this source revision, found $($steps.Count)."
   }
   if ($steps[0].name -ne "local-core safe simulator scan reporting") {
     throw "-RequireFullSuite first step mismatch: $($steps[0].name)"
@@ -1974,6 +1974,7 @@ if ($RequireFullSuite) {
   Assert-ReportContainsStep $steps "quarantine ingest atomic no-replace regressions"
   Assert-ReportContainsStep $steps "quarantine metadata atomic activation regressions"
   Assert-ReportContainsStep $steps "quarantine metadata update recovery regressions"
+  Assert-ReportContainsStep $steps "quarantine restore/delete action recovery regressions"
   Assert-ReportContainsStep $steps "update-service staged file activation atomic replacement regressions"
   Assert-ReportContainsStep $steps "update-service payload extraction atomic no-replace regressions"
   Assert-ReportContainsStep $steps "update-service directory activation atomic no-replace regressions"
@@ -2153,14 +2154,24 @@ if ($RequireFullSuite) {
   Assert-ReportScopeContains $verifiedScopeText "Recovery accepts only the four exact previous/proposed pair combinations" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "missing pair members plus malformed, oversized, linked, conflicting, unknown, or tampered evidence fail visibly and remain preserved" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "Successful updates verify the proposed authenticated pair before journal cleanup" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "one bounded, strict, domain-separated HMAC-authenticated restore/delete action journal" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "before restore staging or delete metadata mutation" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Confirmed delete recovery accepts only the four exact pair combinations" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Prepared restore recovery cleans only untouched intent" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Restore-staged recovery requires exactly one staging file or destination" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "matching platform identity, single-link count, size, and hash" "verification_scope.verified"
+  Assert-ReportScopeContains $verifiedScopeText "Malformed, oversized, linked, conflicting, active, unknown, tampered, duplicate, missing, or identity-mismatched evidence fails visibly and remains preserved" "verification_scope.verified"
   Assert-ReportScopeContains $technicalLimitText "Quarantine JSON and HMAC remain separate files" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "bounded rollback semantics, not a two-file atomic transaction" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "unknown or missing state requires manual review" "verification_scope.technically_limited"
-  Assert-ReportScopeContains $technicalLimitText "Restore/delete payload movement is a separate operation and is not made transactional" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "The action journal is one self-authenticated file" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "not a power-loss-proof transaction across metadata, payload, destination, and journal directory entries" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "A prepared-phase crash after staging bytes exist but before their identity is authenticated is intentionally preserved for manual review" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "A crash after journal removal but before its directory entry is durably persisted depends on truthful local filesystem and storage behavior" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "Windows may preserve an adjacent .avorax-replace-backup after an ambiguous replacement failure" "verification_scope.technically_limited"
   Assert-ReportScopeContains $technicalLimitText "backup reservation requires same-volume hard-link support" "verification_scope.technically_limited"
-  Assert-ReportScopeContains $technicalLimitText "Journal, path, ancestor, and opened-identity checks remain point-in-time user-mode evidence" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "Journal, persistent file identity, path, ancestor, hash, and single-link checks remain point-in-time user-mode evidence" "verification_scope.technically_limited"
+  Assert-ReportScopeContains $technicalLimitText "Action recovery is bounded confirmed-intent replay, not a general filesystem transaction, secure erase, signed-driver mediation, or pre-execution blocking" "verification_scope.technically_limited"
   Assert-ReportScopeContains $verifiedScopeText "Signed update-package payload extraction uses the shared operating-system atomic no-replace primitive" "verification_scope.verified"
   Assert-ReportScopeContains $verifiedScopeText "Harmless extraction collision fixtures preserve both staged payload bytes and competing destination bytes" "verification_scope.verified"
   Assert-ReportScopeContains $technicalLimitText "Signed update-package extraction no-replace protects only each final extracted filename" "verification_scope.technically_limited"

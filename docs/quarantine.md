@@ -286,3 +286,26 @@ destination focused checks, exact `303/303`, dual-host `62/62` hostile-report
 rejection, and final blob/lock/process/residue/vault audit pass. Checkpoint 2277
 is closed. Restore/delete payload-status crash coordination remains the next
 open quarantine recovery boundary.
+
+## Checkpoint 2278 Restore/Delete Action Recovery
+
+Local Core now persists a strict bounded HMAC-authenticated action intent before
+restore staging or delete metadata mutation. Exact old/terminal JSON and HMAC
+bytes prevent guessed recovery. Delete resumes forward from all four known pair
+states. Restore uses prepared and restore-staged phases; the latter binds a
+controlled adjacent staging path to Windows volume/file ID or Unix device/inode
+and requires matching single-link count, size, and hash before and after
+no-replace activation. Journal cleanup waits for terminal metadata, payload
+absence, and repeated restored-destination verification.
+
+Prepared restore with any unbound artifact, both/neither staged artifacts, or
+malformed, oversized, linked, active, conflicting, unknown, tampered, missing,
+or identity-mismatched evidence fails visibly and is retained. No
+checkpoint-2278 test ran during the scripting phase; verifier step 304, Source
+contract 710, focused/full/definitive/adversarial evidence now pass locally.
+Action recovery is `15/15`, Local Core quarantine is `157/157`, Source is
+`710/710`, and the no-skip verifier is `304/304`; hosted, integration,
+destination, and final protected-vault proof remain pending. This is
+confirmed-intent replay, not
+power-loss-proof transactionality, secure erase, driver mediation, or
+pre-execution blocking.

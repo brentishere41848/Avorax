@@ -4614,3 +4614,26 @@ blocker is narrower: restore/delete payload movement and action metadata still
 need bounded crash recovery. Two-file atomicity, hostile privileged/storage
 actors, installed identity, production signing/accuracy, driver/pre-execution,
 Defender replacement, and whole-goal completion remain open or limited.
+
+## Checkpoint 2278 Remaining Action-Recovery Limits
+
+Checkpoint 2278 scripts bounded authenticated confirmed-intent recovery for the
+restore/delete crash boundary left by checkpoint 2277. Exact known states can
+resume forward; unknown or ambiguous evidence is retained rather than guessed.
+
+The operation is still not one power-loss-proof transaction across journal,
+JSON/HMAC, quarantine payload, restore destination, and directory entries. A
+crash after staging but before the identity-bound phase intentionally requires
+manual review. Point-in-time path/file-ID/hash/link checks do not resist an
+administrator, SYSTEM/root, hostile storage/filesystem, or kernel compromise.
+No secure erasure is claimed. Windows replacement ambiguity can retain backup
+evidence and journal unlink durability depends on storage truthfulness.
+
+No checkpoint-2278 test ran during the scripting phase. Focused/full,
+definitive `304/304`, Source `710/710`, and adversarial `34/34` evidence now
+pass locally. Hosted/integration, guarded synchronization, destination, and
+final exact-vault evidence remain pending. Installed
+identity, production signing/deployment and detection accuracy, signed-driver
+pre-execution enforcement, Defender replacement, hostile privileged actors,
+and completion of the antivirus-hardening goal remain blocked, partial, open,
+or technically limited.

@@ -2476,3 +2476,39 @@ Fixtures use harmless isolated ASCII only and are never executed. They must not
 touch the protected vault, install/start services or drivers, alter Defender,
 download artifacts, or publish. Journal recovery proves bounded rollback of the
 metadata pair only; it does not make restore/delete payload movement atomic.
+
+## Checkpoint 2278 Restore/Delete Recovery
+
+Checkpoint 2278 scripts the missing action-level recovery boundary. The focused
+post-freeze commands are:
+
+```powershell
+cargo test --locked --manifest-path core/avorax_platform_security/Cargo.toml persistent_file_identity_accepts_same_file_and_rejects_replacement -- --test-threads=1
+cargo test --locked --manifest-path core/avorax_platform_security/Cargo.toml quarantine_action_recovery_artifact_names_are_bounded_and_recognized -- --test-threads=1
+cargo test --locked --manifest-path core/zentor_local_core/Cargo.toml quarantine_lifecycle_action_recovery_ -- --test-threads=1
+```
+
+Then run Local Core quarantine/full suites, both locked workspace variants,
+strict Clippy, release build, Flutter/protocol, Source `710`, exact definitive
+`304/304`, dual-host report validation/adversarial mutation, and the documented
+security/dependency/branding gates. No checkpoint-2278 test ran during the
+scripting phase; no result is claimed yet. Fixtures are harmless temporary
+ASCII and are never executed. The real protected vault, Defender, installed
+components, services/drivers, release, and publication remain out of scope.
+
+Post-freeze local execution passes platform `31/31`, action recovery `15/15`,
+Local Core quarantine `157/157`, Local Core `614/614`, strict workspace Clippy,
+both locked workspace variants, all-feature release, Source `710/710`, Flutter
+analysis and `852/852`, and protocol analysis/tests `14/14 + 6/6`. Branding,
+product-copy, no-malware-binaries, dependency, UI inventory, and package-source
+gates pass. The definitive verifier passes exact `304/304` in `705.3s`, with
+Rust and Flutter enabled and Defender/EICAR opt-in false. PowerShell 5.1 and 7
+accept the authentic report and reject all `34/34` hostile cases across 17
+mutations. Exact implementation `6abbffb3` passes PR `#165` CI `33346196118`
+and Desktop Packages PR/push `33346196123`/`33346170948`. All six CI jobs and
+Windows MSI/EXE, Linux DEB/tar, macOS arm64/x64 DMG, package contracts, and
+consolidation pass; publication is skipped. Consolidated artifact `9742414827`
+is 133,133,600 bytes with hosted digest
+`f60e09788925a30cfd724176f42eaec088e5a5398b2cd3d4ed729e24bdc10662`.
+Only hosted metadata/logs were inspected. Merge, merged-main, guarded sync, and
+destination execution remain separate requirements.
