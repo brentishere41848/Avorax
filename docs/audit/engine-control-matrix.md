@@ -6474,3 +6474,26 @@ Local Core `624/624`, both complete locked workspace variants, strict Clippy,
 release, Source `711/711`, Flutter/protocol and package/security/dependency gates,
 exact `304/304`, and dual-host `34/34` hostile-report rejection. Hosted runtime,
 integration, synchronized destination, and closure remain pending.
+
+## Checkpoint 2280 Control Delta
+
+| Control | Responsibility | Scripted verification | State / limit |
+|---|---|---|---|
+| Shared restore-stage protected create | Atomically create an absent stage and return the exact retained handle | Existing-path preservation plus Local Core wiring contract | Locally verified on Windows; hosted Unix/destination pending |
+| Windows restore share policy | Permit identity read probes while denying competing write/delete opens, rename, and removal during the live handle | Harmless Windows platform regression under the full CI crate | Locally verified; read opens and privileged/hard-link/ACL paths remain limited |
+| Unix restore creation policy | Request final-component `O_NOFOLLOW` and owner-only mode `0600` | Harmless Unix symlink/private-mode regression on Ubuntu/macOS | Source/compile contract verified locally; hosted runtime pending; not a mandatory namespace lock |
+| Definitive evidence boundary | Publish the handle-lock guarantee and residual post-close interval | Existing exact-304 platform step, validator scope assertions, Source contract 712 | Locally verified; hosted/integration/destination pending |
+
+Checkpoint 2280 changes no detection engine responsibility or verdict threshold.
+No test ran during scripting. The complete antivirus-hardening goal, installed
+identity, production detection accuracy, driver/pre-execution enforcement,
+Defender replacement, secure erasure, privileged races, and power-loss-proof
+transactionality remain blocked, partial, open, or technically limited.
+
+Post-freeze local evidence verifies the shared and Windows runtime rows plus the
+Unix source/compile contract: platform `33/33`, Local Core quarantine/full
+`182/182 + 625/625`, Source `712/712`, exact verifier `304/304`, and dual-host
+`34/34` hostile rejection all pass. The Unix runtime and definitive rows remain
+partial because hosted Unix/macOS, integration, synchronized-destination,
+installed identity, and closure evidence are pending. No custom detection engine
+responsibility or confidence threshold changed.

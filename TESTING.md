@@ -2600,3 +2600,40 @@ Final audit SHA-256
 proves 15 exact blobs, nine unchanged locks, 28 backups, no residue/processes,
 and the unchanged protected vault. Checkpoint 2279 is closed; whole-goal tests
 and documented technical limits remain active.
+
+## Checkpoint 2280 Restore Handle Tests
+
+Checkpoint 2280 adds only harmless temporary ASCII filesystem fixtures. The
+platform suite preserves an existing path, verifies Windows read sharing plus
+write/rename/delete denial for a live reservation, verifies mutation is possible
+again after fixture handles close, and checks Unix owner-only/no-follow creation.
+Local Core has a source-level regression requiring the shared helper before
+identity capture. Source contract 712 binds implementation, existing
+Windows/Ubuntu/macOS full-platform test coverage, exact-304 verifier scope,
+validator limitations, documentation, and zero dependency delta.
+
+No checkpoint-2280 test ran during the scripting phase. Run focused platform and
+Local Core checks first, then full platform/quarantine/workspace tests, strict
+Clippy, release, Flutter/protocol, exact no-skip/no-Defender verification, both
+validator hosts, all hostile mutations, hosted CI/packages, and guarded
+destination verification. Never use the protected 16,072-file, zero-pending
+vault as a fixture.
+
+Post-freeze results are Source `712/712`, platform restore-stage/full `2/2 +
+33/33`, exact Local Core wiring `1/1`, quarantine `182/182`, Local Core
+`625/625`, all locked workspace variants, strict Clippy, all-target/all-feature
+release, Flutter analysis plus `852/852`, and protocol `14/14 + 6/6`. The exact
+no-skip/no-Defender verifier passes `304/304` in `706.4s`; report SHA-256 is
+`49701948f989f942902fbffad5a1221ae34f26b3811c18427b2aab1dbe6a6bcb`.
+Both report hosts accept it and reject all `34/34` hostile cases; adversarial
+SHA-256 is
+`1235e51aa65ecf7718a37ab56dc5a8513aff6aa68efc7da6def6f7aeedc0952d`.
+Hosted and destination execution remain required.
+
+Implementation head `55a83978` passes hosted Avorax CI `33366450855` and
+Desktop Packages `33366450877`. Hosted Ubuntu/macOS runtime covers the Unix
+owner-only/no-follow branch. Package logs prove six platform files, seven
+checksums, 569 lockfile-SBOM components, and eight consolidated evidence files;
+publication is skipped. Artifact `9748740636` is 133,214,810 bytes with digest
+`92c295fc410ade363c556c9efb4110230aa33620a92fba4421db7be088861416`.
+No hosted artifact was downloaded, extracted, installed, or executed.

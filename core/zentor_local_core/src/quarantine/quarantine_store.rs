@@ -1805,17 +1805,16 @@ impl QuarantineStore {
             .ok_or_else(|| anyhow!("restore staging path has no parent directory"))?;
         reject_link_ancestors(parent, "quarantine restore staging parent")?;
         ensure_restore_temp_destination_absent(temp_destination)?;
-        let staged = fs::OpenOptions::new()
-            .read(true)
-            .write(true)
-            .create_new(true)
-            .open(temp_destination)
-            .with_context(|| {
-                format!(
-                    "failed to reserve quarantine restore staging file {}",
-                    temp_destination.display()
-                )
-            })?;
+        let staged = avorax_platform_security::open_new_restore_staging_file(
+            temp_destination,
+            "quarantine restore staging file",
+        )
+        .with_context(|| {
+            format!(
+                "failed to reserve quarantine restore staging file {}",
+                temp_destination.display()
+            )
+        })?;
         let reservation = (|| -> Result<PersistedFileIdentity> {
             harden_open_quarantine_file_permissions(
                 &staged,
@@ -4324,6 +4323,21 @@ mod tests {
     }
 
     #[test]
+    fn restore_reservation_uses_the_platform_handle_lock_before_identity_binding() {
+        let source = include_str!("quarantine_store.rs");
+        let start = source.find("fn reserve_restore_staging_file").unwrap();
+        let end = source.find("fn copy_payload_to_reserved_restore").unwrap();
+        let reservation = &source[start..end];
+
+        assert!(reservation.contains("avorax_platform_security::open_new_restore_staging_file("));
+        assert!(reservation.contains("harden_open_quarantine_file_permissions("));
+        assert!(reservation.contains("capture_open_file_identity("));
+        assert!(reservation.contains("ensure_path_matches_open_file("));
+        assert!(reservation.contains("staged.sync_all()"));
+        assert!(!reservation.contains("fs::OpenOptions::new()"));
+    }
+
+    #[test]
     fn local_quarantine_hash_prefix_branch_is_explicit() {
         let source = include_str!("quarantine_store.rs");
         let normalize_start = source.find("fn normalize_quarantine_sha256").unwrap();
@@ -5923,6 +5937,7 @@ mod tests {
     #[test]
     fn restore_staging_uses_exclusive_temp_destination() {
         let source = include_str!("quarantine_store.rs");
+        let platform_source = include_str!("../../../avorax_platform_security/src/lib.rs");
         let restore_start = source.find("fn reserve_restore_staging_file").unwrap();
         let restore_end = source.find("fn write_record").unwrap();
         let restore_source = &source[restore_start..restore_end];
@@ -5931,7 +5946,8 @@ mod tests {
 
         assert!(source.contains(&temp_absent_pattern));
         assert!(restore_source.contains("copy_local_quarantine_payload_limited("));
-        assert!(restore_source.contains(".create_new(true)"));
+        assert!(restore_source.contains("avorax_platform_security::open_new_restore_staging_file("));
+        assert!(platform_source.contains("options.read(true).write(true).create_new(true)"));
         assert!(restore_source.contains("ExclusiveCopySecurity::Restore"));
         assert!(source.contains("quarantine restore temp destination"));
         assert!(!source.contains(&old_copy_pattern));

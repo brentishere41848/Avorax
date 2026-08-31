@@ -348,3 +348,28 @@ Post-freeze local evidence passes action recovery `25/25`, all quarantine tests
 `304/304`, and all `34/34` adversarial host/mutation rejections. Hosted Unix/
 macOS runtime, installed identity, destination synchronization, and closure
 remain pending; the protected vault remains read-only.
+
+## Checkpoint 2280 Restore Stage Handle Lock
+
+Restore reservation now uses the shared platform-security protected-create
+handle. Windows permits only read sharing for path-identity probes and denies
+ordinary competing write/delete handles, rename, and removal while that handle
+remains live. Unix creates the absent final component mode `0600` with
+`O_NOFOLLOW`. Existing competing paths remain untouched, and Local Core keeps
+the same handle through identity authentication and bounded payload copy.
+
+No checkpoint-2280 test ran during the scripting phase. Source contract 712,
+harmless platform/Local Core regressions, existing cross-platform CI execution,
+and exact-304 verifier/validator scope are scripted; execution is pending. The
+handle closes before path-based no-replace activation, so post-close races still
+depend on repeated identity, single-link, ancestor, size, hash, and no-replace
+checks. Read opens, some hard-link/ACL races, privileged actors, hostile storage,
+kernel compromise, secure erasure, and power-loss-proof multi-file atomicity are
+not solved.
+
+That execution-pending state is now superseded locally: protected-create tests
+pass `2/2`, platform security `33/33`, quarantine `182/182`, complete Local Core
+`625/625`, Source `712/712`, and the exact verifier `304/304`. Both report hosts
+reject all `34/34` hostile mutations. Hosted cross-platform, integration,
+synchronized-destination, and installed-identity evidence remain pending; every
+residual limitation above remains unchanged.

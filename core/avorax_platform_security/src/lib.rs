@@ -64,6 +64,32 @@ pub fn ensure_path_matches_open_file(file: &fs::File, path: &Path, label: &str) 
     Ok(())
 }
 
+/// Creates a new restore staging file with platform-specific no-follow,
+/// private-mode, and live-handle sharing protections.
+pub fn open_new_restore_staging_file(path: &Path, label: &str) -> Result<fs::File> {
+    let mut options = fs::OpenOptions::new();
+    options.read(true).write(true).create_new(true);
+    #[cfg(windows)]
+    {
+        use std::os::windows::fs::OpenOptionsExt;
+        use windows_sys::Win32::Storage::FileSystem::FILE_SHARE_READ;
+
+        // Path identity checks reopen read-only. Denying write/delete sharing
+        // blocks other write handles and namespace replacement while this
+        // reservation remains live.
+        options.share_mode(FILE_SHARE_READ);
+    }
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+
+        options.mode(0o600).custom_flags(libc::O_NOFOLLOW);
+    }
+    options
+        .open(path)
+        .with_context(|| format!("failed to create protected {label} {}", path.display()))
+}
+
 /// Atomically moves a staged file into an absent destination without replacing
 /// a competing filesystem object that appears after caller preflight.
 pub fn rename_file_no_replace(source: &Path, destination: &Path, label: &str) -> Result<()> {
@@ -1763,6 +1789,73 @@ fn combine_result_and_cleanup<T>(result: Result<T>, cleanup: Result<()>, label: 
 mod tests {
     use super::*;
     use std::fs;
+    #[cfg(windows)]
+    use std::io::Write;
+
+    #[test]
+    fn restore_staging_creation_is_exclusive_and_preserves_existing_bytes() {
+        let root = tempfile::tempdir().unwrap();
+        let staged = root.path().join("restore-stage.tmp");
+        fs::write(&staged, b"harmless competing bytes").unwrap();
+
+        let error = open_new_restore_staging_file(&staged, "restore staging fixture").unwrap_err();
+        let detail = format!("{error:#}");
+
+        assert!(detail.contains("failed to create protected"), "{detail}");
+        assert_eq!(fs::read(&staged).unwrap(), b"harmless competing bytes");
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn windows_restore_staging_handle_denies_write_delete_and_rename_sharing() {
+        let root = tempfile::tempdir().unwrap();
+        let staged = root.path().join("restore-stage.tmp");
+        let renamed = root.path().join("renamed-stage.tmp");
+        let mut reservation =
+            open_new_restore_staging_file(&staged, "restore staging fixture").unwrap();
+        reservation.write_all(b"harmless restore bytes").unwrap();
+        reservation.sync_all().unwrap();
+
+        let reader = fs::File::open(&staged).unwrap();
+        assert!(fs::OpenOptions::new().write(true).open(&staged).is_err());
+        assert!(fs::rename(&staged, &renamed).is_err());
+        assert!(fs::remove_file(&staged).is_err());
+        assert_eq!(fs::read(&staged).unwrap(), b"harmless restore bytes");
+
+        drop(reader);
+        drop(reservation);
+        fs::rename(&staged, &renamed).unwrap();
+        assert_eq!(fs::read(&renamed).unwrap(), b"harmless restore bytes");
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn unix_restore_staging_creation_is_private_and_does_not_follow_links() {
+        use std::os::unix::fs::{symlink, PermissionsExt};
+
+        let root = tempfile::tempdir().unwrap();
+        let staged = root.path().join("restore-stage.tmp");
+        let reservation =
+            open_new_restore_staging_file(&staged, "restore staging fixture").unwrap();
+        assert_eq!(
+            reservation.metadata().unwrap().permissions().mode() & 0o777,
+            0o600
+        );
+        drop(reservation);
+
+        let target = root.path().join("target.bin");
+        let linked_stage = root.path().join("linked-stage.tmp");
+        fs::write(&target, b"harmless target bytes").unwrap();
+        symlink(&target, &linked_stage).unwrap();
+        assert!(
+            open_new_restore_staging_file(&linked_stage, "linked restore staging fixture").is_err()
+        );
+        assert_eq!(fs::read(&target).unwrap(), b"harmless target bytes");
+        assert!(fs::symlink_metadata(&linked_stage)
+            .unwrap()
+            .file_type()
+            .is_symlink());
+    }
 
     #[cfg(any(
         windows,
