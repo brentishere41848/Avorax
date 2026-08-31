@@ -2968,3 +2968,20 @@ platform files, seven checksums, and 569-component CycloneDX lockfile SBOM;
 publication is skipped. Only hosted metadata/logs were inspected. No dependency,
 license, lock, package-manager, or action-pin delta was introduced, and the
 existing partial production license-review blocker remains unchanged.
+
+## Checkpoint 2279 Dependency Delta
+
+Checkpoint 2279 adds no dependency, crate, package, feature, action, external
+tool, license, or lockfile change. It uses existing Rust standard-library file
+handles, `anyhow`, existing HMAC/SHA-256/UUID code, and the existing pinned CI
+toolchains. `RestoreReserved` adds no dependency-bearing primitive. Ubuntu/macOS
+continue to run the same locked action-recovery filter;
+the verifier remains exact 304 steps and Source adds only contract 711.
+
+No checkpoint-2279 test ran during the scripting phase. Post-freeze dependency
+evidence, all nine unchanged locks, both locked workspace variants, release,
+and 24 package-source contracts now pass locally. Hosted exact-head CycloneDX/
+checksum evidence, guarded destination sync, and final license review remain
+required. No live malware, network sample, Defender change,
+machine-wide install, service/driver start, artifact download/execution, release,
+publication, or protected-vault mutation is authorized.

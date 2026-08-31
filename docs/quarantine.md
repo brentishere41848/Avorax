@@ -317,3 +317,34 @@ hostile reports, and the final audit proves 17 exact blobs, nine unchanged locks
 32 backups, zero residue, and the exact protected vault. The remaining manual-
 review, storage-durability, privileged-actor, secure-erasure, and pre-execution
 limits above remain unchanged.
+
+## Checkpoint 2279 Restore Reservation Recovery
+
+Restore no longer copies bytes while its staging file is unauthenticated. After
+the `Prepared` journal, Local Core exclusively creates an empty adjacent stage,
+hardens it, captures its stable identity, and atomically advances the HMAC
+journal to `RestoreReserved`. Only then does it copy through the same open file
+handle under the existing 1 GiB limit, synchronize, rewind, hash, and revalidate
+path, identity, single-link count, size, and SHA-256 before `RestoreStaged`.
+
+Recovery removes an unbound prepared-stage name only when it remains an exact
+empty ordinary single-link file at the authenticated controlled path. For
+`RestoreReserved`, the previous JSON/HMAC pair and quarantine payload must be
+exact and the destination absent. Missing, empty, incomplete, or same-size
+hash-mismatched identity-bound stages are discarded and the original record is
+retained; exact completed stages are promoted and resumed. Identity replacement,
+hard links, non-adjacent phases, early destinations, unknown bytes, or unavailable
+objects fail visibly and preserve evidence.
+
+No checkpoint-2279 test ran during the scripting phase. Source contract 711,
+the action-recovery filter, hosted Unix/macOS coverage, and exact 304-step scope
+are scripted. This remains bounded user-mode recovery, not power-loss-proof
+multi-file atomicity, secure erase, hostile-admin resistance, driver mediation,
+or pre-execution blocking. The protected 16,072-file vault with zero pending is
+never a test fixture.
+
+Post-freeze local evidence passes action recovery `25/25`, all quarantine tests
+`167/167`, complete Local Core `624/624`, Source `711/711`, exact verifier
+`304/304`, and all `34/34` adversarial host/mutation rejections. Hosted Unix/
+macOS runtime, installed identity, destination synchronization, and closure
+remain pending; the protected vault remains read-only.

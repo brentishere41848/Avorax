@@ -1,5 +1,5 @@
 use std::fs;
-use std::io::{self, BufReader, Read, Write};
+use std::io::{self, BufReader, Read, Seek, SeekFrom, Write};
 use std::path::{Path, PathBuf};
 
 use anyhow::{anyhow, Context, Result};
@@ -92,6 +92,7 @@ enum QuarantineLifecycleAction {
 #[serde(rename_all = "camelCase")]
 enum QuarantineActionPhase {
     Prepared,
+    RestoreReserved,
     RestoreStaged,
 }
 
@@ -611,10 +612,78 @@ impl QuarantineStore {
                         &destination,
                         "prepared quarantine restore destination",
                     )?;
-                    if staging_present || destination_present {
+                    if destination_present {
                         return Err(anyhow!(
-                            "prepared restore recovery found an unbound staging file or destination for {id}; recovery evidence was preserved for manual review"
+                            "prepared restore recovery found an unexpected destination for {id}; recovery evidence was preserved for manual review"
                         ));
+                    }
+                    if staging_present {
+                        cleanup_unbound_empty_restore_staging(&staging_path).with_context(|| {
+                            format!(
+                                "prepared restore recovery found a non-empty, linked, or unavailable unbound staging file for {id}; recovery evidence was preserved for manual review"
+                            )
+                        })?;
+                    }
+                }
+                QuarantineActionPhase::RestoreReserved => {
+                    self.ensure_metadata_pair_exact(
+                        &previous_record,
+                        &body.previous_record_raw,
+                        &body.previous_record_auth,
+                        "restore-reserved metadata pair",
+                    )?;
+                    if !optional_quarantine_file_present(
+                        &payload_path,
+                        "quarantine payload during restore-reserved recovery",
+                    )? {
+                        return Err(anyhow!(
+                            "restore-reserved recovery requires its quarantine payload for {id}; recovery evidence was preserved"
+                        ));
+                    }
+                    self.ensure_quarantine_payload_path(&payload_path)?;
+                    harden_quarantine_payload_permissions(&payload_path)?;
+                    self.ensure_payload_integrity(&previous_record, &payload_path)?;
+                    let staging_path = action_restore_staging_path(&body)?;
+                    let destination =
+                        validate_original_restore_path_text(&previous_record.original_path)?;
+                    let identity = body.restore_identity.as_ref().ok_or_else(|| {
+                        anyhow!("restore-reserved action journal has no persistent file identity")
+                    })?;
+                    let staging_present = optional_quarantine_path_present(
+                        &staging_path,
+                        "reserved quarantine restore during recovery",
+                    )?;
+                    if optional_quarantine_path_present(
+                        &destination,
+                        "quarantine restore destination during reserved recovery",
+                    )? {
+                        return Err(anyhow!(
+                            "restore-reserved recovery found a destination before staged activation for {id}; recovery evidence was preserved"
+                        ));
+                    }
+                    if staging_present {
+                        if self.action_restore_file_matches_record(
+                            &previous_record,
+                            &staging_path,
+                            identity,
+                            "reserved quarantine restore staging file",
+                        )? {
+                            let mut staged_body = body.clone();
+                            staged_body.phase = QuarantineActionPhase::RestoreStaged;
+                            drop(journal_lock);
+                            let (staged_lock, _staged_raw) = self.replace_action_journal(
+                                &raw,
+                                QuarantineActionPhase::RestoreReserved,
+                                staged_body,
+                            )?;
+                            drop(staged_lock);
+                            return self.recover_action_journal(id, path);
+                        }
+                        self.remove_action_restore_file_identity(
+                            &staging_path,
+                            identity,
+                            "incomplete reserved quarantine restore staging file",
+                        )?;
                     }
                 }
                 QuarantineActionPhase::RestoreStaged => {
@@ -776,9 +845,12 @@ impl QuarantineStore {
                             ));
                         }
                     }
-                    QuarantineActionPhase::RestoreStaged => {
+                    QuarantineActionPhase::RestoreReserved
+                    | QuarantineActionPhase::RestoreStaged => {
                         let identity = journal.body.restore_identity.as_ref().ok_or_else(|| {
-                            anyhow!("restore-staged action journal requires a file identity")
+                            anyhow!(
+                                "restore-reserved or restore-staged action journal requires a file identity"
+                            )
                         })?;
                         validate_persisted_file_identity(identity)?;
                     }
@@ -906,17 +978,7 @@ impl QuarantineStore {
         expected: &PersistedFileIdentity,
         label: &str,
     ) -> Result<()> {
-        validate_persisted_file_identity(expected)?;
-        let file = open_single_link_quarantine_file(path, label)?;
-        let actual = persisted_file_identity(avorax_platform_security::capture_open_file_identity(
-            &file, path, label,
-        )?);
-        if &actual != expected {
-            return Err(anyhow!(
-                "{label} {} does not match the authenticated persistent file identity; recovery evidence was preserved",
-                path.display()
-            ));
-        }
+        let file = self.open_action_restore_file_identity(path, expected, label)?;
         let metadata = file
             .metadata()
             .with_context(|| format!("failed to inspect opened {label} {}", path.display()))?;
@@ -936,6 +998,75 @@ impl QuarantineStore {
             path,
             label,
         )
+    }
+
+    fn open_action_restore_file_identity(
+        &self,
+        path: &Path,
+        expected: &PersistedFileIdentity,
+        label: &str,
+    ) -> Result<fs::File> {
+        validate_persisted_file_identity(expected)?;
+        let file = open_single_link_quarantine_file(path, label)?;
+        let actual = persisted_file_identity(avorax_platform_security::capture_open_file_identity(
+            &file, path, label,
+        )?);
+        if &actual != expected {
+            return Err(anyhow!(
+                "{label} {} does not match the authenticated persistent file identity; recovery evidence was preserved",
+                path.display()
+            ));
+        }
+        avorax_platform_security::ensure_path_matches_open_file(&file, path, label)?;
+        avorax_platform_security::ensure_path_matches_file_identity(
+            avorax_platform_security::StableFileIdentity {
+                scope: expected.scope,
+                file: expected.file,
+            },
+            path,
+            label,
+        )?;
+        Ok(file)
+    }
+
+    fn action_restore_file_matches_record(
+        &self,
+        record: &QuarantineRecord,
+        path: &Path,
+        expected: &PersistedFileIdentity,
+        label: &str,
+    ) -> Result<bool> {
+        let file = self.open_action_restore_file_identity(path, expected, label)?;
+        let metadata = file
+            .metadata()
+            .with_context(|| format!("failed to inspect opened {label} {}", path.display()))?;
+        let matches = if metadata.len() == record.file_size {
+            record
+                .sha256
+                .eq_ignore_ascii_case(&sha256_for_open_file(&file, path)?)
+        } else {
+            false
+        };
+        avorax_platform_security::ensure_path_matches_open_file(&file, path, label)?;
+        Ok(matches)
+    }
+
+    fn remove_action_restore_file_identity(
+        &self,
+        path: &Path,
+        expected: &PersistedFileIdentity,
+        label: &str,
+    ) -> Result<()> {
+        let file = self.open_action_restore_file_identity(path, expected, label)?;
+        avorax_platform_security::ensure_path_matches_open_file(&file, path, label)?;
+        avorax_platform_security::ensure_open_file_has_single_link(&file, path, label)?;
+        fs::remove_file(path)
+            .with_context(|| format!("failed to remove {label} {}", path.display()))?;
+        drop(file);
+        if optional_quarantine_path_present(path, label)? {
+            return Err(anyhow!("{label} remained after checked cleanup"));
+        }
+        Ok(())
     }
 
     fn ensure_quarantine_payload_path_for_id(&self, id: &str, path: &Path) -> Result<()> {
@@ -1484,12 +1615,30 @@ impl QuarantineStore {
             Some(staging_path.display().to_string()),
         )?;
         let (prepared_lock, prepared_raw) = self.write_action_journal(action_body.clone())?;
-        let identity = self.restore_payload_staged(&record, &quarantine_path, &staging_path)?;
-        action_body.phase = QuarantineActionPhase::RestoreStaged;
+        let (mut staging_file, identity) = self.reserve_restore_staging_file(&staging_path)?;
+        action_body.phase = QuarantineActionPhase::RestoreReserved;
         action_body.restore_identity = Some(identity.clone());
         drop(prepared_lock);
-        let (action_lock, _staged_raw) =
-            self.replace_action_journal(&prepared_raw, action_body.clone())?;
+        let (reserved_lock, reserved_raw) = self.replace_action_journal(
+            &prepared_raw,
+            QuarantineActionPhase::Prepared,
+            action_body.clone(),
+        )?;
+        self.copy_payload_to_reserved_restore(
+            &record,
+            &quarantine_path,
+            &staging_path,
+            &mut staging_file,
+            &identity,
+        )?;
+        action_body.phase = QuarantineActionPhase::RestoreStaged;
+        drop(reserved_lock);
+        let (action_lock, _staged_raw) = self.replace_action_journal(
+            &reserved_raw,
+            QuarantineActionPhase::RestoreReserved,
+            action_body.clone(),
+        )?;
+        drop(staging_file);
         self.ensure_action_restore_file_identity(
             &record,
             &staging_path,
@@ -1647,51 +1796,197 @@ impl QuarantineStore {
         })
     }
 
-    fn restore_payload_staged(
+    fn reserve_restore_staging_file(
         &self,
-        record: &QuarantineRecord,
-        quarantine_path: &Path,
         temp_destination: &Path,
-    ) -> Result<PersistedFileIdentity> {
+    ) -> Result<(fs::File, PersistedFileIdentity)> {
         let parent = temp_destination
             .parent()
             .ok_or_else(|| anyhow!("restore staging path has no parent directory"))?;
         reject_link_ancestors(parent, "quarantine restore staging parent")?;
-        ensure_regular_quarantine_payload(quarantine_path, "quarantine payload")?;
         ensure_restore_temp_destination_absent(temp_destination)?;
-        if let Err(error) = copy_file_exclusive(
-            quarantine_path,
-            temp_destination,
-            ExclusiveCopySecurity::Restore,
-        ) {
-            return Err(error.context("unable to stage quarantine restore"));
-        }
-        if let Err(error) = self.ensure_payload_integrity(record, temp_destination) {
-            cleanup_quarantine_partial_file(temp_destination, "invalid staged quarantine restore")
-                .with_context(|| {
-                    format!(
-                        "failed to clean up invalid staged quarantine restore {} after verification failure: {error:#}",
-                        temp_destination.display()
-                    )
+        let staged = fs::OpenOptions::new()
+            .read(true)
+            .write(true)
+            .create_new(true)
+            .open(temp_destination)
+            .with_context(|| {
+                format!(
+                    "failed to reserve quarantine restore staging file {}",
+                    temp_destination.display()
+                )
             })?;
-            return Err(error.context("staged quarantine restore verification failed"));
-        }
-        let staged = open_single_link_quarantine_file(
-            temp_destination,
-            "staged quarantine restore identity",
-        )?;
-        let identity =
-            persisted_file_identity(avorax_platform_security::capture_open_file_identity(
+        let reservation = (|| -> Result<PersistedFileIdentity> {
+            harden_open_quarantine_file_permissions(
                 &staged,
                 temp_destination,
-                "staged quarantine restore identity",
-            )?);
-        avorax_platform_security::ensure_path_matches_open_file(
-            &staged,
+                "reserved quarantine restore staging file",
+                ExclusiveCopySecurity::Restore,
+            )?;
+            let metadata = staged.metadata().with_context(|| {
+                format!(
+                    "failed to inspect reserved quarantine restore staging file {}",
+                    temp_destination.display()
+                )
+            })?;
+            if !metadata.is_file() || metadata.len() != 0 {
+                return Err(anyhow!(
+                    "reserved quarantine restore staging file is not an empty regular file"
+                ));
+            }
+            let identity =
+                persisted_file_identity(avorax_platform_security::capture_open_file_identity(
+                    &staged,
+                    temp_destination,
+                    "reserved quarantine restore staging file",
+                )?);
+            avorax_platform_security::ensure_path_matches_open_file(
+                &staged,
+                temp_destination,
+                "reserved quarantine restore staging file",
+            )?;
+            staged.sync_all().with_context(|| {
+                format!(
+                    "failed to synchronize reserved quarantine restore staging file {}",
+                    temp_destination.display()
+                )
+            })?;
+            Ok(identity)
+        })();
+        match reservation {
+            Ok(identity) => Ok((staged, identity)),
+            Err(error) => {
+                drop(staged);
+                cleanup_quarantine_partial_file(
+                    temp_destination,
+                    "unbound quarantine restore staging reservation",
+                )
+                .with_context(|| {
+                    format!(
+                        "failed to clean up quarantine restore staging reservation {} after reservation failure: {error:#}",
+                        temp_destination.display()
+                    )
+                })?;
+                Err(error.context("unable to reserve quarantine restore staging file"))
+            }
+        }
+    }
+
+    fn copy_payload_to_reserved_restore(
+        &self,
+        record: &QuarantineRecord,
+        quarantine_path: &Path,
+        temp_destination: &Path,
+        staged: &mut fs::File,
+        expected: &PersistedFileIdentity,
+    ) -> Result<()> {
+        validate_persisted_file_identity(expected)?;
+        avorax_platform_security::ensure_open_file_has_single_link(
+            staged,
             temp_destination,
-            "staged quarantine restore identity",
+            "reserved quarantine restore staging file",
         )?;
-        Ok(identity)
+        let actual = persisted_file_identity(avorax_platform_security::capture_open_file_identity(
+            staged,
+            temp_destination,
+            "reserved quarantine restore staging file",
+        )?);
+        if &actual != expected {
+            return Err(anyhow!(
+                "reserved quarantine restore staging file identity changed before copy; recovery evidence was preserved"
+            ));
+        }
+        avorax_platform_security::ensure_path_matches_open_file(
+            staged,
+            temp_destination,
+            "reserved quarantine restore staging file",
+        )?;
+        let metadata = staged.metadata().with_context(|| {
+            format!(
+                "failed to inspect reserved quarantine restore staging file {}",
+                temp_destination.display()
+            )
+        })?;
+        if metadata.len() != 0 {
+            return Err(anyhow!(
+                "reserved quarantine restore staging file was not empty before copy; recovery evidence was preserved"
+            ));
+        }
+
+        let mut input = open_single_link_quarantine_file(
+            quarantine_path,
+            "quarantine payload for reserved restore",
+        )?;
+        avorax_platform_security::ensure_path_matches_open_file(
+            &input,
+            quarantine_path,
+            "quarantine payload for reserved restore",
+        )?;
+        copy_local_quarantine_payload_limited(
+            &mut input,
+            staged,
+            MAX_LOCAL_QUARANTINE_COPY_BYTES,
+            quarantine_path,
+        )
+        .context(
+            "unable to copy quarantine payload into identity-bound restore staging; recovery evidence was preserved",
+        )?;
+        staged.sync_all().with_context(|| {
+            format!(
+                "failed to synchronize identity-bound restore staging {}; recovery evidence was preserved",
+                temp_destination.display()
+            )
+        })?;
+        avorax_platform_security::ensure_path_matches_open_file(
+            &input,
+            quarantine_path,
+            "quarantine payload after reserved restore copy",
+        )?;
+        avorax_platform_security::ensure_path_matches_open_file(
+            staged,
+            temp_destination,
+            "identity-bound quarantine restore staging file",
+        )?;
+        staged.seek(SeekFrom::Start(0)).with_context(|| {
+            format!(
+                "failed to rewind identity-bound restore staging {}",
+                temp_destination.display()
+            )
+        })?;
+        let staged_metadata = staged.metadata().with_context(|| {
+            format!(
+                "failed to inspect identity-bound restore staging {}",
+                temp_destination.display()
+            )
+        })?;
+        if staged_metadata.len() != record.file_size {
+            return Err(anyhow!(
+                "identity-bound restore staging size does not match quarantine record; recovery evidence was preserved"
+            ));
+        }
+        let staged_sha256 = sha256_for_open_file(staged, temp_destination)?;
+        if !record.sha256.eq_ignore_ascii_case(&staged_sha256) {
+            return Err(anyhow!(
+                "identity-bound restore staging hash does not match quarantine record; recovery evidence was preserved"
+            ));
+        }
+        avorax_platform_security::ensure_path_matches_open_file(
+            staged,
+            temp_destination,
+            "identity-bound quarantine restore staging file after copy",
+        )?;
+        let final_identity =
+            persisted_file_identity(avorax_platform_security::capture_open_file_identity(
+                staged,
+                temp_destination,
+                "identity-bound quarantine restore staging file after copy",
+            )?);
+        if &final_identity != expected {
+            return Err(anyhow!(
+                "identity-bound restore staging file identity changed during copy; recovery evidence was preserved"
+            ));
+        }
+        Ok(())
     }
 
     fn write_record(&self, record: &QuarantineRecord) -> Result<()> {
@@ -1915,22 +2210,45 @@ impl QuarantineStore {
     fn replace_action_journal(
         &self,
         expected_raw: &str,
+        expected_phase: QuarantineActionPhase,
         body: QuarantineActionJournalBody,
     ) -> Result<(fs::File, String)> {
         let path = self.action_journal_path(&body.quarantine_id)?;
         let (current_lock, current_raw) = read_locked_bounded_quarantine_text(
             &path,
             MAX_QUARANTINE_ACTION_JOURNAL_BYTES,
-            "prepared quarantine action journal",
+            "current quarantine action journal",
         )?;
         if current_raw != expected_raw {
             return Err(anyhow!(
-                "prepared quarantine action journal changed before phase activation; recovery evidence was preserved"
+                "quarantine action journal changed before adjacent phase activation; recovery evidence was preserved"
             ));
         }
         let current_body = self.validated_action_journal(&path, &current_raw)?;
+        let valid_phase_transition = current_body.action == QuarantineLifecycleAction::Restore
+            && body.action == QuarantineLifecycleAction::Restore
+            && match (
+                expected_phase,
+                current_body.restore_identity.as_ref(),
+                body.phase,
+                body.restore_identity.as_ref(),
+            ) {
+                (
+                    QuarantineActionPhase::Prepared,
+                    None,
+                    QuarantineActionPhase::RestoreReserved,
+                    Some(_),
+                ) => true,
+                (
+                    QuarantineActionPhase::RestoreReserved,
+                    Some(current),
+                    QuarantineActionPhase::RestoreStaged,
+                    Some(next),
+                ) => current == next,
+                _ => false,
+            };
         if current_body.action != body.action
-            || current_body.phase != QuarantineActionPhase::Prepared
+            || current_body.phase != expected_phase
             || current_body.quarantine_id != body.quarantine_id
             || current_body.previous_record_raw != body.previous_record_raw
             || !constant_time_eq(
@@ -1943,12 +2261,10 @@ impl QuarantineStore {
                 body.next_record_auth.as_bytes(),
             )
             || current_body.restore_staging_path != body.restore_staging_path
-            || current_body.restore_identity.is_some()
-            || body.phase != QuarantineActionPhase::RestoreStaged
-            || body.restore_identity.is_none()
+            || !valid_phase_transition
         {
             return Err(anyhow!(
-                "quarantine action journal phase replacement changed authenticated intent"
+                "quarantine action journal phase replacement was not an exact adjacent transition"
             ));
         }
         self.ensure_action_journal_conflicts_absent(&body.quarantine_id)?;
@@ -1962,15 +2278,15 @@ impl QuarantineStore {
         let (next_lock, persisted) = read_locked_bounded_quarantine_text(
             &path,
             MAX_QUARANTINE_ACTION_JOURNAL_BYTES,
-            "restore-staged quarantine action journal",
+            "advanced quarantine action journal",
         )?;
         if persisted != next_raw {
             return Err(anyhow!(
-                "restore-staged quarantine action journal changed after phase activation; recovery evidence was preserved"
+                "advanced quarantine action journal changed after phase activation; recovery evidence was preserved"
             ));
         }
         self.validated_action_journal(&path, &persisted).context(
-            "restore-staged quarantine action journal failed post-write validation; recovery evidence was preserved",
+            "advanced quarantine action journal failed post-write validation; recovery evidence was preserved",
         )?;
         self.ensure_action_journal_conflicts_absent(&body.quarantine_id)?;
         Ok((next_lock, next_raw))
@@ -3544,6 +3860,59 @@ fn cleanup_quarantine_partial_file(path: &Path, label: &str) -> Result<()> {
     }
 }
 
+fn cleanup_unbound_empty_restore_staging(path: &Path) -> Result<()> {
+    let parent = path
+        .parent()
+        .ok_or_else(|| anyhow!("unbound restore staging path has no parent directory"))?;
+    reject_link_ancestors(parent, "unbound quarantine restore staging parent")?;
+    let file = open_single_link_quarantine_file(path, "unbound quarantine restore staging file")?;
+    let metadata = file.metadata().with_context(|| {
+        format!(
+            "failed to inspect unbound quarantine restore staging file {}",
+            path.display()
+        )
+    })?;
+    if metadata.len() != 0 {
+        return Err(anyhow!(
+            "unbound quarantine restore staging file is not empty"
+        ));
+    }
+    avorax_platform_security::ensure_path_matches_open_file(
+        &file,
+        path,
+        "unbound quarantine restore staging file",
+    )?;
+    avorax_platform_security::ensure_open_file_has_single_link(
+        &file,
+        path,
+        "unbound quarantine restore staging file",
+    )?;
+    let final_metadata = file.metadata().with_context(|| {
+        format!(
+            "failed to re-inspect unbound quarantine restore staging file {}",
+            path.display()
+        )
+    })?;
+    if final_metadata.len() != 0 {
+        return Err(anyhow!(
+            "unbound quarantine restore staging file changed before checked cleanup"
+        ));
+    }
+    fs::remove_file(path).with_context(|| {
+        format!(
+            "failed to remove unbound quarantine restore staging file {}",
+            path.display()
+        )
+    })?;
+    drop(file);
+    if optional_quarantine_path_present(path, "unbound quarantine restore staging file")? {
+        return Err(anyhow!(
+            "unbound quarantine restore staging file remained after checked cleanup"
+        ));
+    }
+    Ok(())
+}
+
 fn cleanup_untracked_quarantine_metadata_artifacts(base: &Path, id: &str) -> Result<()> {
     let metadata_path = base.join(format!("{id}.json"));
     let metadata_temp_path = base.join(format!("{id}.json.tmp"));
@@ -4990,13 +5359,14 @@ mod tests {
         let start = source.find("pub fn restore(&self").unwrap();
         let end = source.find("pub fn delete(&self").unwrap();
         let restore_source = &source[start..end];
-        let staged_start = source.find("fn restore_payload_staged").unwrap();
+        let staged_start = source.find("fn reserve_restore_staging_file").unwrap();
         let staged_end = source.find("fn write_record").unwrap();
         let staged_source = &source[staged_start..staged_end];
 
         assert!(restore_source.contains("restored.status = QuarantineStatus::Restored;"));
         assert!(restore_source.contains("self.write_action_journal(action_body.clone())?"));
-        assert!(restore_source.contains("self.replace_action_journal(&prepared_raw"));
+        assert!(restore_source.contains("self.replace_action_journal("));
+        assert!(restore_source.contains("QuarantineActionPhase::RestoreReserved"));
         assert!(restore_source.contains("self.drive_action_metadata_pair_to_next"));
         assert!(restore_source.contains(
             "remove_checked_quarantine_payload(&quarantine_path, \"restored quarantine payload\")"
@@ -5057,7 +5427,9 @@ mod tests {
         let restore_source = &source[start..end];
 
         assert!(restore_source.contains("self.write_action_journal(action_body.clone())?"));
-        assert!(restore_source.contains("self.replace_action_journal(&prepared_raw"));
+        assert!(restore_source.contains("self.replace_action_journal("));
+        assert!(restore_source.contains("self.reserve_restore_staging_file"));
+        assert!(restore_source.contains("self.copy_payload_to_reserved_restore"));
         assert!(restore_source.contains("self.ensure_action_restore_file_identity"));
         assert!(restore_source.contains("self.cleanup_action_journal(id)"));
         assert!(!restore_source.contains("unrecorded quarantine restore"));
@@ -5065,7 +5437,9 @@ mod tests {
             restore_source
                 .find("self.write_action_journal(action_body.clone())?")
                 .unwrap()
-                < restore_source.find("self.restore_payload_staged").unwrap()
+                < restore_source
+                    .find("self.reserve_restore_staging_file")
+                    .unwrap()
         );
         assert!(
             restore_source
@@ -5083,7 +5457,7 @@ mod tests {
         let start = source.find("pub fn restore(&self").unwrap();
         let end = source.find("pub fn delete(&self").unwrap();
         let restore_source = &source[start..end];
-        let staged_start = source.find("fn restore_payload_staged").unwrap();
+        let staged_start = source.find("fn reserve_restore_staging_file").unwrap();
         let staged_end = source.find("fn write_record").unwrap();
         let staged_source = &source[staged_start..staged_end];
 
@@ -5538,9 +5912,10 @@ mod tests {
         let source = include_str!("quarantine_store.rs");
         let direct_rename_pattern = ["fs::rename(&quarantine_", "path, &original_path)"].concat();
 
-        assert!(source.contains("fn restore_payload_staged"));
-        assert!(source.contains("unable to stage quarantine restore"));
-        assert!(source.contains("staged quarantine restore verification failed"));
+        assert!(source.contains("fn reserve_restore_staging_file"));
+        assert!(source.contains("fn copy_payload_to_reserved_restore"));
+        assert!(source.contains("unable to reserve quarantine restore staging file"));
+        assert!(source.contains("identity-bound restore staging hash does not match"));
         assert!(source.contains("unable to activate quarantine restore"));
         assert!(!source.contains(&direct_rename_pattern));
     }
@@ -5548,14 +5923,15 @@ mod tests {
     #[test]
     fn restore_staging_uses_exclusive_temp_destination() {
         let source = include_str!("quarantine_store.rs");
-        let restore_start = source.find("fn restore_payload_staged").unwrap();
+        let restore_start = source.find("fn reserve_restore_staging_file").unwrap();
         let restore_end = source.find("fn write_record").unwrap();
         let restore_source = &source[restore_start..restore_end];
         let temp_absent_pattern = ["fn ensure_restore_temp_", "destination_absent"].concat();
         let old_copy_pattern = ["fs::copy(quarantine_", "path, &temp_destination)"].concat();
 
         assert!(source.contains(&temp_absent_pattern));
-        assert!(restore_source.contains("copy_file_exclusive("));
+        assert!(restore_source.contains("copy_local_quarantine_payload_limited("));
+        assert!(restore_source.contains(".create_new(true)"));
         assert!(restore_source.contains("ExclusiveCopySecurity::Restore"));
         assert!(source.contains("quarantine restore temp destination"));
         assert!(!source.contains(&old_copy_pattern));
@@ -5564,7 +5940,7 @@ mod tests {
     #[test]
     fn restore_staging_verification_and_copy_cleanup_failures_are_reported() {
         let source = include_str!("quarantine_store.rs");
-        let restore_start = source.find("fn restore_payload_staged").unwrap();
+        let restore_start = source.find("fn reserve_restore_staging_file").unwrap();
         let restore_end = source.find("fn write_record").unwrap();
         let restore_source = &source[restore_start..restore_end];
         let copy_start = source.find("fn copy_file_exclusive").unwrap();
@@ -5572,9 +5948,10 @@ mod tests {
         let copy_source = &source[copy_start..copy_end];
 
         assert!(source.contains("fn cleanup_quarantine_partial_file"));
-        assert!(restore_source.contains("after verification failure"));
-        assert!(restore_source.contains("invalid staged quarantine restore"));
-        assert!(restore_source.contains("staged quarantine restore identity"));
+        assert!(restore_source.contains("after reservation failure"));
+        assert!(restore_source.contains("unbound quarantine restore staging reservation"));
+        assert!(restore_source.contains("recovery evidence was preserved"));
+        assert!(restore_source.contains("identity-bound quarantine restore staging file"));
         assert!(copy_source.contains("after copy failure"));
         assert!(copy_source.contains("after sync failure"));
         assert!(!restore_source.contains("let _ = fs::remove_file(temp_destination);"));
@@ -6519,13 +6896,272 @@ mod tests {
         let error = fixture.store.list().unwrap_err();
         let detail = format!("{error:#}");
 
-        assert!(
-            detail.contains("unbound staging file or destination"),
-            "{detail}"
-        );
+        assert!(detail.contains("unbound staging file"), "{detail}");
         assert!(staging.exists());
         assert!(fixture.payload_path.exists());
         assert!(fixture.journal_path.exists());
+    }
+
+    #[test]
+    fn quarantine_lifecycle_action_recovery_prepared_restore_cleans_empty_unbound_reservation() {
+        let dir = tempdir_in(std::env::current_dir().unwrap()).unwrap();
+        let base = dir.path().join("q");
+        let fixture = stage_action_fixture(
+            &base,
+            dir.path(),
+            "restore-empty-unbound",
+            QuarantineLifecycleAction::Restore,
+            QuarantineActionPhase::Prepared,
+        );
+        let staging = fixture.staging_path.clone().unwrap();
+        fs::File::create(&staging).unwrap();
+
+        let records = fixture.store.list().unwrap();
+
+        assert_eq!(records, vec![fixture.previous_record]);
+        assert!(fixture.payload_path.exists());
+        assert!(!fixture.destination_path.exists());
+        assert!(!staging.exists());
+        assert!(!fixture.journal_path.exists());
+    }
+
+    #[test]
+    fn quarantine_lifecycle_action_recovery_restore_reserved_cleans_empty_stage() {
+        let dir = tempdir_in(std::env::current_dir().unwrap()).unwrap();
+        let base = dir.path().join("q");
+        let fixture = stage_action_fixture(
+            &base,
+            dir.path(),
+            "restore-reserved-empty",
+            QuarantineLifecycleAction::Restore,
+            QuarantineActionPhase::RestoreReserved,
+        );
+        let staging = fixture.staging_path.clone().unwrap();
+
+        let records = fixture.store.list().unwrap();
+
+        assert_eq!(records, vec![fixture.previous_record]);
+        assert!(fixture.payload_path.exists());
+        assert!(!fixture.destination_path.exists());
+        assert!(!staging.exists());
+        assert!(!fixture.journal_path.exists());
+    }
+
+    #[test]
+    fn quarantine_lifecycle_action_recovery_restore_reserved_cleans_partial_stage() {
+        let dir = tempdir_in(std::env::current_dir().unwrap()).unwrap();
+        let base = dir.path().join("q");
+        let fixture = stage_action_fixture(
+            &base,
+            dir.path(),
+            "restore-reserved-partial",
+            QuarantineLifecycleAction::Restore,
+            QuarantineActionPhase::RestoreReserved,
+        );
+        let staging = fixture.staging_path.clone().unwrap();
+        fs::write(&staging, b"benign partial restore stage").unwrap();
+
+        let records = fixture.store.list().unwrap();
+
+        assert_eq!(records, vec![fixture.previous_record]);
+        assert!(fixture.payload_path.exists());
+        assert!(!fixture.destination_path.exists());
+        assert!(!staging.exists());
+        assert!(!fixture.journal_path.exists());
+    }
+
+    #[test]
+    fn quarantine_lifecycle_action_recovery_restore_reserved_cleans_same_size_tampered_stage() {
+        let dir = tempdir_in(std::env::current_dir().unwrap()).unwrap();
+        let base = dir.path().join("q");
+        let fixture = stage_action_fixture(
+            &base,
+            dir.path(),
+            "restore-reserved-tampered",
+            QuarantineLifecycleAction::Restore,
+            QuarantineActionPhase::RestoreReserved,
+        );
+        let staging = fixture.staging_path.clone().unwrap();
+        fs::write(&staging, vec![b'x'; ACTION_FIXTURE_BYTES.len()]).unwrap();
+
+        let records = fixture.store.list().unwrap();
+
+        assert_eq!(records, vec![fixture.previous_record]);
+        assert!(fixture.payload_path.exists());
+        assert!(!fixture.destination_path.exists());
+        assert!(!staging.exists());
+        assert!(!fixture.journal_path.exists());
+    }
+
+    #[test]
+    fn quarantine_lifecycle_action_recovery_prepared_restore_rejects_hard_linked_empty_stage() {
+        let dir = tempdir_in(std::env::current_dir().unwrap()).unwrap();
+        let base = dir.path().join("q");
+        let fixture = stage_action_fixture(
+            &base,
+            dir.path(),
+            "restore-unbound-hard-link",
+            QuarantineLifecycleAction::Restore,
+            QuarantineActionPhase::Prepared,
+        );
+        let external = dir.path().join("benign-empty-external-stage.bin");
+        fs::File::create(&external).unwrap();
+        let staging = fixture.staging_path.as_ref().unwrap();
+        fs::hard_link(&external, staging).unwrap();
+
+        let error = fixture.store.list().unwrap_err();
+        let detail = format!("{error:#}");
+
+        assert!(detail.contains("hard-link count"), "{detail}");
+        assert!(external.exists());
+        assert!(staging.exists());
+        assert!(fixture.payload_path.exists());
+        assert!(fixture.journal_path.exists());
+    }
+
+    #[test]
+    fn quarantine_lifecycle_action_recovery_restore_reserved_resumes_completed_copy() {
+        let dir = tempdir_in(std::env::current_dir().unwrap()).unwrap();
+        let base = dir.path().join("q");
+        let fixture = stage_action_fixture(
+            &base,
+            dir.path(),
+            "restore-reserved-complete",
+            QuarantineLifecycleAction::Restore,
+            QuarantineActionPhase::RestoreReserved,
+        );
+        let staging = fixture.staging_path.clone().unwrap();
+        fs::write(&staging, ACTION_FIXTURE_BYTES).unwrap();
+
+        let records = fixture.store.list().unwrap();
+
+        assert_eq!(records, vec![fixture.next_record]);
+        assert_eq!(
+            fs::read(&fixture.destination_path).unwrap(),
+            ACTION_FIXTURE_BYTES
+        );
+        assert!(!fixture.payload_path.exists());
+        assert!(!staging.exists());
+        assert!(!fixture.journal_path.exists());
+    }
+
+    #[test]
+    fn quarantine_lifecycle_action_recovery_restore_reserved_rejects_identity_mismatch() {
+        let dir = tempdir_in(std::env::current_dir().unwrap()).unwrap();
+        let base = dir.path().join("q");
+        let fixture = stage_action_fixture(
+            &base,
+            dir.path(),
+            "restore-reserved-identity",
+            QuarantineLifecycleAction::Restore,
+            QuarantineActionPhase::RestoreReserved,
+        );
+        let staging = fixture.staging_path.as_ref().unwrap();
+        fs::rename(staging, dir.path().join("preserved-reserved-stage.bin")).unwrap();
+        fs::File::create(staging).unwrap();
+
+        let error = fixture.store.list().unwrap_err();
+        let detail = format!("{error:#}");
+
+        assert!(detail.contains("persistent file identity"), "{detail}");
+        assert!(staging.exists());
+        assert!(fixture.payload_path.exists());
+        assert!(fixture.journal_path.exists());
+        assert!(!fixture.destination_path.exists());
+    }
+
+    #[test]
+    fn quarantine_lifecycle_action_recovery_restore_reserved_rejects_early_destination() {
+        let dir = tempdir_in(std::env::current_dir().unwrap()).unwrap();
+        let base = dir.path().join("q");
+        let fixture = stage_action_fixture(
+            &base,
+            dir.path(),
+            "restore-reserved-destination",
+            QuarantineLifecycleAction::Restore,
+            QuarantineActionPhase::RestoreReserved,
+        );
+        fs::write(&fixture.destination_path, b"benign competing destination").unwrap();
+
+        let error = fixture.store.list().unwrap_err();
+        let detail = format!("{error:#}");
+
+        assert!(
+            detail.contains("destination before staged activation"),
+            "{detail}"
+        );
+        assert!(fixture.staging_path.unwrap().exists());
+        assert!(fixture.payload_path.exists());
+        assert!(fixture.journal_path.exists());
+        assert!(fixture.destination_path.exists());
+    }
+
+    #[test]
+    fn quarantine_lifecycle_action_recovery_rejects_non_adjacent_phase_transition() {
+        let dir = tempdir_in(std::env::current_dir().unwrap()).unwrap();
+        let base = dir.path().join("q");
+        let fixture = stage_action_fixture(
+            &base,
+            dir.path(),
+            "restore-phase-skip",
+            QuarantineLifecycleAction::Restore,
+            QuarantineActionPhase::Prepared,
+        );
+        let staging = fixture.staging_path.as_ref().unwrap();
+        let (staged_file, identity) = fixture.store.reserve_restore_staging_file(staging).unwrap();
+        let mut skipped = fixture.body.clone();
+        skipped.phase = QuarantineActionPhase::RestoreStaged;
+        skipped.restore_identity = Some(identity);
+        let prepared_raw = fs::read_to_string(&fixture.journal_path).unwrap();
+        drop(staged_file);
+
+        let error = fixture
+            .store
+            .replace_action_journal(&prepared_raw, QuarantineActionPhase::Prepared, skipped)
+            .unwrap_err();
+        let detail = format!("{error:#}");
+
+        assert!(
+            detail.contains("not an exact adjacent transition"),
+            "{detail}"
+        );
+        assert!(fixture.journal_path.exists());
+        assert!(fixture.payload_path.exists());
+        assert!(staging.exists());
+    }
+
+    #[test]
+    fn quarantine_lifecycle_action_recovery_rejects_delete_phase_transition() {
+        let dir = tempdir_in(std::env::current_dir().unwrap()).unwrap();
+        let base = dir.path().join("q");
+        let fixture = stage_action_fixture(
+            &base,
+            dir.path(),
+            "delete-phase-transition",
+            QuarantineLifecycleAction::Delete,
+            QuarantineActionPhase::Prepared,
+        );
+        let prepared_raw = fs::read_to_string(&fixture.journal_path).unwrap();
+        let mut invalid = fixture.body.clone();
+        invalid.phase = QuarantineActionPhase::RestoreReserved;
+        invalid.restore_identity = Some(PersistedFileIdentity {
+            platform: current_file_identity_platform().to_string(),
+            scope: 1,
+            file: 1,
+        });
+
+        let error = fixture
+            .store
+            .replace_action_journal(&prepared_raw, QuarantineActionPhase::Prepared, invalid)
+            .unwrap_err();
+        let detail = format!("{error:#}");
+
+        assert!(
+            detail.contains("not an exact adjacent transition"),
+            "{detail}"
+        );
+        assert!(fixture.journal_path.exists());
+        assert!(fixture.payload_path.exists());
     }
 
     #[test]
@@ -8045,19 +8681,47 @@ mod tests {
         let (prepared_lock, prepared_raw) = store.write_action_journal(body.clone()).unwrap();
         let journal_lock = match phase {
             QuarantineActionPhase::Prepared => prepared_lock,
-            QuarantineActionPhase::RestoreStaged => {
+            QuarantineActionPhase::RestoreReserved | QuarantineActionPhase::RestoreStaged => {
                 assert_eq!(action, QuarantineLifecycleAction::Restore);
                 let staging = staging_path.as_ref().unwrap();
-                let identity = store
-                    .restore_payload_staged(&previous_record, &payload_path, staging)
-                    .unwrap();
-                body.phase = QuarantineActionPhase::RestoreStaged;
+                let (mut staged_file, identity) =
+                    store.reserve_restore_staging_file(staging).unwrap();
+                body.phase = QuarantineActionPhase::RestoreReserved;
                 body.restore_identity = Some(identity);
                 drop(prepared_lock);
-                store
-                    .replace_action_journal(&prepared_raw, body.clone())
-                    .unwrap()
-                    .0
+                let (reserved_lock, reserved_raw) = store
+                    .replace_action_journal(
+                        &prepared_raw,
+                        QuarantineActionPhase::Prepared,
+                        body.clone(),
+                    )
+                    .unwrap();
+                if phase == QuarantineActionPhase::RestoreReserved {
+                    drop(staged_file);
+                    reserved_lock
+                } else {
+                    store
+                        .copy_payload_to_reserved_restore(
+                            &previous_record,
+                            &payload_path,
+                            staging,
+                            &mut staged_file,
+                            body.restore_identity.as_ref().unwrap(),
+                        )
+                        .unwrap();
+                    body.phase = QuarantineActionPhase::RestoreStaged;
+                    drop(reserved_lock);
+                    let staged_lock = store
+                        .replace_action_journal(
+                            &reserved_raw,
+                            QuarantineActionPhase::RestoreReserved,
+                            body.clone(),
+                        )
+                        .unwrap()
+                        .0;
+                    drop(staged_file);
+                    staged_lock
+                }
             }
         };
         LockedActionFixture {

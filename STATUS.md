@@ -9099,3 +9099,47 @@ both hosts reject `34/34` hostile cases. Final audit SHA-256 is
 `86ad411e3709408a5e29837e3ad1ee69c97c59c5e829908090e3fe4fe5c9d06a`;
 all 17 blobs, nine locks, backups, residue controls, and the exact vault pass.
 Checkpoint 2278 is closed; the complete antivirus-hardening goal remains active.
+
+## Checkpoint 2279: Restore Reservation Recovery Locally Verified
+
+Status: implementation, harmless tests, Source contract 711, CI coverage,
+exact-304 verifier/validator scope, and documentation were scripted before the
+batch froze. Focused, broad, release, Flutter/protocol, definitive, and
+adversarial local verification passes; hosted and integration work is pending.
+
+Local Core now advances restore only through `Prepared`, `RestoreReserved`, and
+`RestoreStaged`. It reserves an exclusive empty adjacent stage, hardens it,
+captures stable operating-system identity, authenticates that identity before
+the first payload byte is copied, copies through the same open handle under the
+existing 1 GiB bound, synchronizes it, and revalidates identity/path/link/size/
+hash before staged activation. Recovery cleans only an exact empty ordinary
+single-link pre-bind reservation. An identity-bound missing, empty, incomplete,
+or same-size hash-mismatched reserved stage is safely discarded while the
+authenticated metadata and quarantine payload remain intact; an exact complete
+stage is promoted through the adjacent phase and resumed. Non-adjacent phases,
+identity substitution, hard links, early destinations, and ambiguous unbound
+bytes remain fail-visible and preserved.
+
+No checkpoint-2279 test ran during the scripting phase. No live malware,
+Defender change, machine-wide install, service/driver start, protected-vault
+mutation, release, or publication is authorized. The protected vault invariant
+remains 16,072 files, zero directories, 4,522,733 bytes, one key, and zero
+pending. Power-loss-proof multi-file atomicity, privileged hostile storage,
+installed identity, production signing/accuracy, driver/pre-execution authority,
+Defender replacement, and the complete antivirus-hardening goal remain open or
+technically limited.
+
+Post-freeze evidence passes Source `711/711`, action recovery `25/25`,
+quarantine `167/167`, Local Core `624/624`, strict workspace Clippy, both locked
+workspace variants with `1,850` executed and 21 intentional ignores, release,
+Flutter `852/852`, protocols `14/14 + 6/6`, UI/package/security/dependency gates,
+and exact verifier `304/304` in `673.5s`. Report SHA-256 is
+`e5792c4caf7b77c8462536a0407d74f956983e68b95ab2439d02dba83ea94552`;
+both validator hosts reject all `34/34` hostile results across 17 mutations.
+The initial Source documentation miss, Defender-blocked generated debug harness,
+two invalid Python-path no-malware calls, and two malformed PS7 parser wrappers
+remain recorded as failed attempts. No Defender setting or exclusion changed.
+Final local audit passes 14 modified plus one added path, zero deletions, nine
+unchanged locks, zero process/pending/temp residue, and the exact protected
+vault. Hosted exact-head CI/packages, PR/merge, synchronized destination, and
+closure remain required.

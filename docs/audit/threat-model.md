@@ -4954,3 +4954,44 @@ This evidence does not expand the trust boundary: administrators, SYSTEM/root,
 hostile storage/filesystems, kernel compromise, power-loss-proof multi-file
 atomicity, secure erase, driver enforcement, and Defender replacement remain out
 of scope or technically limited.
+
+## Checkpoint 2279 Threat Delta: Identity-First Restore Reservation
+
+**Threat:** a crash after an adjacent restore-stage file is created but before
+its stable identity reaches authenticated recovery state can leave a pathname
+whose ownership cannot safely be inferred. Copying before that binding also
+allows a partial payload to appear while the journal still says `Prepared`.
+
+**Control:** Local Core writes `Prepared`, creates/hardens an exclusive empty
+single-link stage, captures its OS identity, and atomically advances the
+domain-separated HMAC journal to `RestoreReserved` before the first payload
+byte. It copies through that same open handle under 1 GiB, synchronizes, rewinds,
+hashes, and revalidates path/identity/link/size before `RestoreStaged`. Recovery
+cleans a pre-bind stage only if it is exact, empty, ordinary, and single-link.
+Identity-bound missing/incomplete/tampered stages are discarded only while the
+previous authenticated pair and payload remain exact and the destination is
+absent; a complete stage is promoted through the adjacent phase. Phase skips,
+identity changes, linked objects, and early destinations preserve evidence.
+
+**Residual risk:** between stage creation and identity-journal activation, a
+same-principal racer can still replace or write the controlled name. Automatic
+cleanup is therefore restricted to an empty ordinary single-link file; non-empty
+or ambiguous state remains manual. Handle/path/identity checks are point-in-time
+user-mode evidence and cannot defeat administrators, SYSTEM/root, hostile
+filesystems/storage, or kernel compromise. Journal and directory durability are
+not a power-loss-proof multi-file transaction.
+
+No checkpoint-2279 test ran during the scripting phase. Benign fixtures, Source
+contract 711, Unix/macOS CI filters, and exact verifier step 304 are scripted.
+The real 16,072-file, zero-pending vault is excluded. No live malware, Defender
+change, installation, service/driver start, release, or publication is allowed;
+installed identity, secure erase, production accuracy, driver/pre-execution,
+Defender replacement, and the complete antivirus-hardening goal remain open or
+technically limited.
+
+Post-freeze local evidence passes the 25 harmless action-recovery cases, all 167
+quarantine cases, Local Core `624/624`, both workspace variants, Source
+`711/711`, exact verifier `304/304`, and dual-host rejection of all `34/34`
+hostile results. This validates the current Windows user-mode implementation and
+report boundary only; hosted Unix/macOS, installed identity, privileged races,
+storage truthfulness, and every residual threat above remain open.

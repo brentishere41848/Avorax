@@ -2527,3 +2527,35 @@ mutations. Final audit SHA-256 is
 `86ad411e3709408a5e29837e3ad1ee69c97c59c5e829908090e3fe4fe5c9d06a`;
 17/17 blobs, 9/9 locks, 32 backups, process/residue controls, and the protected
 vault pass. Checkpoint 2278 is closed; the complete antivirus goal remains active.
+
+## Checkpoint 2279 RestoreReserved Test Plan
+
+The complete checkpoint-2279 batch was scripted before execution. No
+checkpoint-2279 test ran during the scripting phase. Harmless Rust fixtures now
+cover empty unbound reservation cleanup, hard-link rejection, identity-bound
+empty/partial/same-size-hash-mismatched cleanup, completed-copy promotion,
+identity substitution, early destination rejection, and non-adjacent phase
+rejection. They create only temporary benign text files and never execute them.
+
+After freeze, run the focused action filter, Source contract 711, Local Core and
+platform suites, strict locked workspace lint/tests/release, Flutter `852`, both
+protocol suites, security/dependency/package gates, and the no-skip/no-Defender
+304-step verifier. Validate its authentic report and adversarial mutations on
+Windows PowerShell 5.1 and PowerShell 7. CI must rerun the existing action filter
+on Ubuntu and macOS. The vault must remain exactly 16,072 files, zero
+directories, 4,522,733 bytes, one key, and zero pending before and after.
+
+The expected scope is bounded `Prepared -> RestoreReserved -> RestoreStaged`
+replay, not a power-loss-proof transaction, secure erase, installed-service E2E,
+driver/pre-execution blocking, Defender replacement, or production accuracy.
+
+Post-freeze local execution passes Source `711/711`, identity `1/1`, action
+recovery `25/25`, quarantine `167/167`, Local Core `624/624`, strict Clippy,
+both locked workspace variants (`1,850` executed, 21 intentional ignores),
+all-target/all-feature release, Flutter `852/852`, protocols `14/14 + 6/6`, and
+the UI/package/security/dependency gates. Exact no-skip/no-Defender verification
+passes `304/304` in `673.5s`; both PowerShell hosts accept report SHA-256
+`e5792c4caf7b77c8462536a0407d74f956983e68b95ab2439d02dba83ea94552`
+and reject `34/34` hostile results across 17 mutations. Hosted Ubuntu/macOS,
+exact-head packages, PR/merge, guarded synchronization, destination, and closure
+evidence remains required.

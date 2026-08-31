@@ -192,3 +192,22 @@ validator rejection. The final audit confirms 17 exact merge blobs, nine
 unchanged locks, 32 backups, zero residue, and the unchanged vault. These results
 verify bounded action replay; the documented power-loss, privileged-actor,
 driver, Defender, installed-identity, and production-accuracy limits remain.
+
+Checkpoint 2279 inserts authenticated `RestoreReserved` between prepared intent
+and completed staging. Local Core creates and hardens an exclusive empty stage,
+captures its stable file identity, writes that identity to the HMAC action
+journal, and only then copies payload bytes through the same open handle under
+the 1 GiB cap. Recovery discards exact identity-bound incomplete or invalid
+copies while retaining the quarantine payload, promotes an exact completed copy,
+and rejects phase skips, identity changes, hard links, or early destinations.
+Prepared recovery may remove only an exact empty ordinary single-link controlled
+stage; ambiguous unbound bytes remain for manual review. No checkpoint-2279 test
+ran during the scripting phase. Source contract 711 and exact verifier step 304
+are scripted; installed identity, power-loss-proof transactionality, secure
+erase, driver/pre-execution, Defender replacement, and production accuracy
+remain outside this user-mode boundary.
+
+After freeze, action recovery passes `25/25`, quarantine passes `167/167`, the
+complete crate passes `624/624`, strict Clippy passes, and the exact verifier
+passes `304/304`. This is local user-mode crash-recovery evidence only; hosted
+cross-platform, installed identity, and the limits above remain unchanged.

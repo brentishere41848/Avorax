@@ -15768,3 +15768,67 @@ pending.
   protected vault.
 - Checkpoint 2278 is closed. The complete antivirus-hardening goal remains
   active; no artifact was downloaded/executed and no release was published.
+
+## Checkpoint 2279 - Restore Reservation Recovery Scripting
+
+- Selected the remaining restore creation-to-identity-journal crash boundary as
+  the highest-value unblocked quarantine risk.
+- Scripted `Prepared -> RestoreReserved -> RestoreStaged`. The restore path now
+  authenticates the exclusive empty stage's stable identity before copying any
+  payload byte, then copies through that same handle under the existing 1 GiB
+  cap and rechecks path, identity, link count, size, and SHA-256.
+- Scripted bounded recovery for empty unbound reservations, missing/empty/
+  incomplete/tampered identity-bound reserved stages, exact completed copies,
+  identity substitution, early destinations, hard links, and non-adjacent phase
+  transitions. Fixtures use harmless text only and are never executed.
+- Updated Source contract 711, the existing exact 304-step verifier/validator,
+  hosted Ubuntu/macOS filters, control matrix, threat model, blocker register,
+  dependency inventory, and operations documentation.
+- No checkpoint-2279 test ran during the scripting phase. The protected vault
+  remains out of scope and must stay exactly 16,072 files, zero directories,
+  4,522,733 bytes, one key, and zero pending. The complete antivirus-hardening
+  goal remains active.
+- The first post-freeze Source run executed all 711 contracts and failed exactly
+  one documentation assertion because the dependency inventory did not contain
+  the literal `RestoreReserved`/`restore-reserved` phase name. Fail-fast stopped
+  before Rust execution. The inventory now states the dependency-neutral phase
+  explicitly; this failed attempt remains uncredited and requires a clean rerun.
+
+## Checkpoint 2279 - Local Verification
+
+- Corrected frozen source passes Source `711/711`, parser/format/diff checks,
+  platform identity `1/1`, action recovery `25/25`, quarantine `167/167`, Local
+  Core `624/624`, crate/workspace strict Clippy, both locked workspace variants,
+  and locked all-target/all-feature release. Each complete workspace variant
+  executes `1,850` tests with 21 intentional isolated-child ignores and zero
+  failures.
+- The first broad workspace attempt is retained as failed: after Local Core
+  `624/624`, Defender blocked the generated Native harness before execution
+  with Windows error 225. Defender was not weakened or allowlisted. The
+  documented test-only debug/incremental/codegen-unit/strip profile produced a
+  distinct accepted harness and both from-start variants passed.
+- Flutter analysis and `852/852`, protocol analysis/tests `14/14 + 6/6`, UI
+  inventory `61`, package-source `24` with three optional Windows symlink skips,
+  branding, product-copy, no-malware-binaries, and dependency gates pass. Two
+  no-malware calls with a non-absolute then WindowsApps-reparse Python path were
+  rejected before scanning; the concrete bundled non-reparse Python path passed.
+- Exact no-skip/no-Defender verification passes `304/304` in `673.5s`, zero
+  failed/skipped/error steps. The 237,555-byte report SHA-256 is
+  `e5792c4caf7b77c8462536a0407d74f956983e68b95ab2439d02dba83ea94552`.
+  Both validator hosts accept it and reject `34/34` hostile cases across 17
+  mutations; the 35,813-byte adversarial SHA-256 is
+  `8cddc794cd1520a0d0172345fd0297c416ab70aec0d624f3b0e7db2289bf3aa7`.
+- Two malformed PowerShell 7 parser-wrapper command strings failed from caller
+  interpolation/quoting. The harness itself parsed under PowerShell 5.1, then a
+  corrected environment-bound PowerShell 7 parser command passed before the
+  successful dual-host audit. Hosted, PR/merge, destination, and closure work
+  remains pending; the complete antivirus-hardening goal remains active.
+- A post-documentation `cargo fmt --locked --all -- --check` invocation was
+  rejected before formatting because `cargo fmt` does not accept `--locked`;
+  the corrected `cargo fmt --all -- --check` passes.
+- Final read-only audit passes 14 tracked modifications plus one untracked
+  checkpoint report, zero deletions, 9/9 unchanged lockfiles, zero product
+  processes/pending/temp roots, and the exact protected vault: 16,072 files,
+  zero directories, 4,522,733 bytes, 5,357 each payload/JSON/auth, one key, zero
+  pending, and zero reparse points. The 2,977-byte audit SHA-256 is
+  `feae0e51f9bcea9314394a9c0e3c98a075ef28e7defbf72654225f69b0609cd5`.

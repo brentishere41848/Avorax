@@ -6449,3 +6449,28 @@ definitive `304/304`, dual-host `34/34` hostile rejection, 17/17 blob audit,
 verified for the documented user-mode boundary; power-loss-proof multi-file
 transactionality, privileged-hostile filesystems, secure erase, driver/
 pre-execution authority, and Defender replacement remain technically limited.
+
+## Checkpoint 2279 Restore Reservation Matrix
+
+| Control | Responsibility | Scripted state | Fail-visible boundary |
+|---|---|---|---|
+| `Prepared` restore | Authenticate confirmed intent and controlled adjacent stage path | Locally verified / hosted pending | Only absent state or an exact empty ordinary single-link stage may be cleaned |
+| `RestoreReserved` | Authenticate stable stage identity before any payload byte copy | Locally verified / hosted pending | Missing/empty/incomplete/hash-mismatched bound stage is discarded only with exact old metadata/payload and absent destination |
+| `RestoreStaged` | Resume exact completed stage or destination | Locally verified / hosted pending | Requires exact identity, one artifact, size/hash, metadata, and payload state |
+| Adjacent phase transition | Prevent `Prepared -> RestoreStaged` skip or identity change | Locally verified / hosted pending | Any non-adjacent or changed-intent transition fails and preserves journal |
+| Same-handle bounded copy | Copy at most 1 GiB after identity authentication | Locally verified / hosted pending | Copy/sync/hash/path/identity error preserves authenticated recovery evidence |
+| Custom detection engines | Hash/signature/rules/static/archive/heuristic/ML/process/verdict responsibilities | Unchanged | No detection or accuracy delta |
+
+No checkpoint-2279 test ran during the scripting phase. Source contract 711,
+existing Ubuntu/macOS action jobs, and exact 304-step verifier/validator scope
+are scripted. The vault must remain 16,072 files, zero directories, 4,522,733
+bytes, one key, and zero pending. Power-loss-proof transactionality, privileged
+hostile storage, secure erase, installed identity, driver/pre-execution authority,
+Defender replacement, production accuracy, and complete-goal closure remain
+partial, blocked, open, or technically limited.
+
+Post-freeze local evidence passes action recovery `25/25`, quarantine `167/167`,
+Local Core `624/624`, both complete locked workspace variants, strict Clippy,
+release, Source `711/711`, Flutter/protocol and package/security/dependency gates,
+exact `304/304`, and dual-host `34/34` hostile-report rejection. Hosted runtime,
+integration, synchronized destination, and closure remain pending.
