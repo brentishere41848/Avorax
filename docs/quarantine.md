@@ -309,3 +309,11 @@ destination, and final protected-vault proof remain pending. This is
 confirmed-intent replay, not
 power-loss-proof transactionality, secure erase, driver mediation, or
 pre-execution blocking.
+
+Checkpoint 2278 closure verifies this lifecycle on exact-head/merged-main hosted
+CI and the synchronized destination. Destination action recovery passes `15/15`,
+the no-skip/no-Defender verifier passes `304/304`, both hosts reject `34/34`
+hostile reports, and the final audit proves 17 exact blobs, nine unchanged locks,
+32 backups, zero residue, and the exact protected vault. The remaining manual-
+review, storage-durability, privileged-actor, secure-erasure, and pre-execution
+limits above remain unchanged.

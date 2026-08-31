@@ -184,3 +184,11 @@ The phase journal is not a power-loss-proof multi-file transaction, and a crash
 after unbound staging but before identity authentication intentionally needs
 manual review. This adds no secure-erasure, driver/pre-execution, Defender-
 replacement, installed-identity, production-accuracy, or whole-product claim.
+
+Checkpoint 2278 closure passes exact-head and merged-main Windows/Linux/macOS
+CI, guarded destination synchronization, destination action recovery `15/15`,
+Source `710/710`, strict Clippy, definitive `304/304`, and `34/34` hostile
+validator rejection. The final audit confirms 17 exact merge blobs, nine
+unchanged locks, 32 backups, zero residue, and the unchanged vault. These results
+verify bounded action replay; the documented power-loss, privileged-actor,
+driver, Defender, installed-identity, and production-accuracy limits remain.

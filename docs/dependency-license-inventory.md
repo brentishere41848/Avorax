@@ -2961,3 +2961,10 @@ destination, and final product-wide license/dependency review remain pending.
 No live malware, network sample, Defender change, machine-wide install,
 service/driver start, artifact download/execution, release, publication, or
 protected-vault mutation belongs to checkpoint 2278.
+
+Checkpoint 2278 closure confirms all nine tracked lockfiles are unchanged in the
+exact destination audit. Exact-head and merged-main package jobs produce the six
+platform files, seven checksums, and 569-component CycloneDX lockfile SBOM;
+publication is skipped. Only hosted metadata/logs were inspected. No dependency,
+license, lock, package-manager, or action-pin delta was introduced, and the
+existing partial production license-review blocker remains unchanged.

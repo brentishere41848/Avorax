@@ -6441,3 +6441,11 @@ definitive `304/304`, Source `710/710`, and dual-host adversarial `34/34`
 evidence pass locally. Hosted, merge, synchronization, destination, and final
 vault/lock evidence remain pending. The real vault must remain exactly 16,072 files, zero directories,
 4,522,733 bytes, one key, and zero pending artifacts.
+
+Checkpoint 2278 closure supersedes the pending labels above: exact-head and
+merged-main CI/packages, guarded sync, destination `15/15` action recovery,
+definitive `304/304`, dual-host `34/34` hostile rejection, 17/17 blob audit,
+9/9 unchanged locks, and the exact protected-vault invariant pass. Controls are
+verified for the documented user-mode boundary; power-loss-proof multi-file
+transactionality, privileged-hostile filesystems, secure erase, driver/
+pre-execution authority, and Defender replacement remain technically limited.

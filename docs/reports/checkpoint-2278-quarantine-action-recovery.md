@@ -2,7 +2,7 @@
 
 ## Status
 
-Implementation and hosted exact-head verified / integration pending. The
+Closed through hosted integration and synchronized-destination verification. The
 implementation, harmless tests, CI jobs, verifier step 304, validator
 assertions, source contract 710, and documentation were completed as one batch
 before test execution. No
@@ -153,9 +153,43 @@ artifact `9742414827` is 133,133,600 bytes with hosted digest
 Only hosted metadata and logs were inspected; no artifact was downloaded,
 extracted, installed, or executed.
 
-Normal PR integration, merged-main evidence, guarded destination
-synchronization, and destination reruns remain required before checkpoint
-closure.
+That pending state is superseded by the closure evidence below.
+
+## Hosted Integration And Destination Closure
+
+Evidence head `3fd90e767236e59b976a4111f02b63807be17aa4` passes CI
+`33347492393` and Desktop Packages `33347492407`. PR `#165` merged normally as
+`1683a13fb6c4a6f7af7ff553305f0d7da3a46554`. Merged-main CI
+`33348691591` and Desktop Packages `33348691613` pass; publication is skipped.
+The latter produces six release files, seven checksum targets, and a
+569-component CycloneDX lockfile SBOM. Consolidated artifact `9743072994` is
+133,143,711 bytes with hosted digest
+`2d9552eb2db2985ec23e333e50fa0908aa3acc2b9485e51e045c52e9daa25150`.
+Only hosted metadata/logs were inspected.
+
+The first guarded-sync preflight rejected the inherited checkpoint-2277 report
+description before activation. After the exact report path transformation was
+fixed, complete preflight and activation passed. Guarded synchronization
+applied 16 modified plus one added path, zero deletions, and 32 verified
+backups; sync report SHA-256 is
+`da7fc6e7359cb2877466f37ba900a0e19cfbb5ee67deac00a3dd42228c87c207`.
+
+Destination Source `710/710`, rustfmt, both platform identity/name checks,
+action recovery `15/15`, and strict workspace Clippy pass. Exact no-skip/no-
+Defender verification passes `304/304` in `760.9s`; the 227,917-byte report
+SHA-256 is
+`e93040e010e60cd9c77f7750964e836e4aee42a93d76259737e98b30b3c01d3b`.
+PowerShell 5.1 and 7 accept the authentic report and reject all `34/34` hostile
+cases across 17 mutations. The 33,280-byte adversarial result SHA-256 is
+`e2cbcd7a23441a8063a38be18e768a1f2527ce2cb9d9b0425af03f0634fc87ac`.
+
+Final destination audit SHA-256 is
+`86ad411e3709408a5e29837e3ad1ee69c97c59c5e829908090e3fe4fe5c9d06a`.
+It confirms all 17 merge blobs, nine unchanged lockfiles, 32 backups, zero
+product-process/pending/temp residue, and the unchanged protected vault. The
+first audit-wrapper invocation rejected an incorrect template token count
+before audit execution; the corrected full audit passed. No artifact was
+downloaded, extracted, installed, executed, released, or published.
 
 ## Residual Limits
 
