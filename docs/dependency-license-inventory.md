@@ -3010,3 +3010,10 @@ with three documented optional Windows symlink-privilege skips, and the
 definitive dependency gate pass. No package was installed to supply missing
 `pytest`; the repository source-contract runner was used. Hosted SBOM/checksum,
 destination, and final product-wide license evidence remain pending.
+
+Implementation-head package run `33366450877` now supplies hosted checksum and
+lockfile-SBOM evidence: six platform package files, seven checksums, and 569
+deduplicated lockfile components. Publication is skipped and only logs/artifact
+metadata were inspected. The SBOM remains lockfile-derived and license review
+remains partial; evidence-head, merged-main, destination, and final product-wide
+license evidence are still required.

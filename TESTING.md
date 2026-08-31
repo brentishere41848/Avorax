@@ -2629,3 +2629,11 @@ Both report hosts accept it and reject all `34/34` hostile cases; adversarial
 SHA-256 is
 `1235e51aa65ecf7718a37ab56dc5a8513aff6aa68efc7da6def6f7aeedc0952d`.
 Hosted and destination execution remain required.
+
+Implementation head `55a83978` passes hosted Avorax CI `33366450855` and
+Desktop Packages `33366450877`. Hosted Ubuntu/macOS runtime covers the Unix
+owner-only/no-follow branch. Package logs prove six platform files, seven
+checksums, 569 lockfile-SBOM components, and eight consolidated evidence files;
+publication is skipped. Artifact `9748740636` is 133,214,810 bytes with digest
+`92c295fc410ade363c556c9efb4110230aa33620a92fba4421db7be088861416`.
+No hosted artifact was downloaded, extracted, installed, or executed.

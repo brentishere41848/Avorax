@@ -125,6 +125,33 @@ Hosted Windows/Ubuntu/macOS execution, normal PR integration, merged-main
 evidence, guarded destination synchronization, and destination regression are
 still required. The complete antivirus-hardening goal remains active.
 
+The final pre-commit read-only audit passes with 15 modified plus one added path,
+zero deletions, nine unchanged lockfiles, zero product processes, repository
+pending files, or product temporary roots, and the exact protected-vault
+invariant. Its 3,046-byte SHA-256 is
+`d7eb6b7d86e63c06102e90c2c4bf7a082e524ed34ec92a14c031a86b78a56519`.
+
+## Hosted Implementation-Head Evidence
+
+Commit `55a83978a1f96d668946147206460708b82f2c5f` is the implementation head
+of PR `#169`, based on `6d6792b6ec975876bb54829d2349e6b7688f5ca0`.
+Avorax CI run `33366450855` passes all six jobs, including Windows platform/
+Local Core, Ubuntu quarantine permissions, macOS recovery, Flutter/protocol,
+security/protection/performance, and branding gates.
+
+Desktop Packages run `33366450877` passes package contracts, Linux x64, Windows
+x64 MSI/EXE, macOS arm64, macOS x64, and consolidation. Publication is skipped.
+Logs prove six native package files, seven checksums, a 569-component lockfile
+SBOM, and eight consolidated evidence files. Consolidated artifact `9748740636`
+is 133,214,810 bytes with hosted digest
+`92c295fc410ade363c556c9efb4110230aa33620a92fba4421db7be088861416`.
+Only hosted logs and metadata were inspected; no artifact was downloaded,
+extracted, installed, or executed.
+
+An evidence-head commit, its exact hosted matrices, normal merge, merged-main
+matrices, guarded destination synchronization, and destination verification
+remain required.
+
 ## Safety And Vault
 
 No live malware, malware repository, downloaded sample, Defender change,
