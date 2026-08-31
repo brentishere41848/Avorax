@@ -4673,3 +4673,27 @@ identity, signing/deployment, production detection accuracy, secure erase,
 signed-driver pre-execution enforcement, Defender replacement, and completion
 of the antivirus-hardening goal remain blocked, partial, open, or technically
 limited. The protected vault must remain exactly 16,072 files and zero pending.
+
+## Checkpoint 2280 Remaining Blockers
+
+Checkpoint 2280 narrows live restore-stage mutation with a Windows read-share-
+only handle and Unix owner-only/no-follow creation. No checkpoint-2280 test ran
+during scripting; Source contract 712 and all runtime/evidence checks remain
+pending until the script freeze ends.
+
+The stage handle must still close before current path-based no-replace
+activation, leaving a bounded post-close interval protected by point-in-time
+identity/link/path/hash checks rather than handle-based rename. Read sharing,
+hard-link insertion, ACL mutation, privileged handles, administrators,
+SYSTEM/root, hostile filesystem/storage, and kernel compromise remain outside
+the guarantee. Installed identity, production signing/deployment and accuracy,
+secure erasure, signed-driver pre-execution enforcement, Defender replacement,
+and completion of the antivirus-hardening goal remain blocked, partial, open,
+or technically limited.
+
+The local-verification portion is no longer pending: Source `712/712`, platform
+`33/33`, quarantine `182/182`, Local Core `625/625`, complete workspace/release/
+Flutter/protocol gates, exact verifier `304/304`, and dual-host `34/34` hostile
+rejection pass. Hosted cross-platform behavior, normal integration,
+synchronized-destination verification, installed identity, and the substantive
+technical blockers above remain pending or limited.

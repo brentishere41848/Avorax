@@ -211,3 +211,17 @@ After freeze, action recovery passes `25/25`, quarantine passes `167/167`, the
 complete crate passes `624/624`, strict Clippy passes, and the exact verifier
 passes `304/304`. This is local user-mode crash-recovery evidence only; hosted
 cross-platform, installed identity, and the limits above remain unchanged.
+
+## Checkpoint 2280 Restore Stage Handle Lock
+
+Local Core reserves restore staging through the shared platform-security
+`open_new_restore_staging_file` primitive. Windows keeps only read sharing so
+path identity can be checked while ordinary competing write/delete handles,
+rename, and removal are denied for the live handle. Unix uses exclusive mode
+`0600` creation with `O_NOFOLLOW`. The returned handle is the one hardened,
+identity-bound, journaled, synchronized, and used for bounded payload copy.
+
+This narrows same-principal mutation during reservation/copy. It does not make
+path-based activation handle-atomic: the handle closes before no-replace rename,
+and the remaining interval relies on repeated identity/link/hash/path checks.
+Checkpoint 2280 adds no privilege, service, driver, or pre-execution claim.

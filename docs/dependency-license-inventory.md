@@ -2985,3 +2985,28 @@ checksum evidence, guarded destination sync, and final license review remain
 required. No live malware, network sample, Defender change,
 machine-wide install, service/driver start, artifact download/execution, release,
 publication, or protected-vault mutation is authorized.
+
+## Checkpoint 2280 Dependency Delta
+
+Checkpoint 2280 adds no dependency, crate, package, version, source, feature,
+action, external tool, license, notice obligation, or lockfile change. The new
+helper reuses Rust `std::fs::OpenOptions`, existing `libc::O_NOFOLLOW`, and the
+already-enabled `windows-sys` file-sharing constant. Tests reuse existing
+`tempfile` and standard-library harmless filesystem fixtures.
+
+CI adds no action or command because the full locked platform-security crate
+already runs on Windows, Ubuntu 24.04, and macOS 15. The exact verifier remains
+304 steps and Source adds only contract 712. No checkpoint-2280 test ran during
+the scripting phase. No live malware, network sample, Defender change,
+machine-wide install, service/driver start, artifact download/execution,
+release, publication, or protected-vault mutation is authorized. Post-freeze
+dependency evidence, nine-lock review, hosted SBOM/checksum metadata, guarded
+destination sync, and final license review remain pending.
+
+Post-freeze local dependency evidence now passes. All nine tracked lockfiles are
+unchanged; both locked workspace variants, all-target/all-feature release,
+Flutter/protocol resolution, Source `712/712`, the 24 package-source contracts
+with three documented optional Windows symlink-privilege skips, and the
+definitive dependency gate pass. No package was installed to supply missing
+`pytest`; the repository source-contract runner was used. Hosted SBOM/checksum,
+destination, and final product-wide license evidence remain pending.

@@ -4995,3 +4995,39 @@ quarantine cases, Local Core `624/624`, both workspace variants, Source
 hostile results. This validates the current Windows user-mode implementation and
 report boundary only; hosted Unix/macOS, installed identity, privileged races,
 storage truthfulness, and every residual threat above remain open.
+
+## Checkpoint 2280 Threat Delta: Live Restore Handle Mutation
+
+**Threat:** default Windows file sharing allowed same-principal code to obtain a
+write/delete-capable handle or mutate the restore stage name while Avorax still
+held the identity-bound reservation/copy handle.
+
+**Control:** one shared protected-create primitive retains exclusive creation.
+Windows allows only `FILE_SHARE_READ`, preserving read-only path rebinding while
+ordinary competing write/delete open, rename, and removal fail for the live
+handle. Unix requests mode `0600` and `O_NOFOLLOW`. Local Core uses that exact
+handle before identity capture, authenticated `RestoreReserved`, and bounded
+copy. Pre-existing names remain unmodified.
+
+**Residual risk:** the Windows handle closes before current path-based atomic
+no-replace activation. That interval still relies on identity, single-link,
+ancestor, size, SHA-256, and no-replace checks. Read sharing is intentional;
+hard-link insertion, ACL changes, privileged handles, administrators,
+SYSTEM/root, hostile filesystems/storage, and kernel compromise are not defeated.
+Unix mode/no-follow creation is not a mandatory namespace lock. No power-loss-
+proof multi-file transaction, secure erase, driver mediation, pre-execution
+blocking, or Defender replacement follows.
+
+No checkpoint-2280 test ran during the scripting phase. Harmless fixtures,
+Source contract 712, existing Windows/Ubuntu/macOS full-platform execution, and
+exact-304 verifier/validator scopes are scripted. The 16,072-file, zero-pending
+protected vault is excluded, and the complete antivirus-hardening goal remains
+active.
+
+Post-freeze local evidence passes platform `33/33`, quarantine `182/182`, Local
+Core `625/625`, Source `712/712`, all workspace/release/client/protocol gates,
+exact verifier `304/304`, and both-host rejection of all `34/34` hostile report
+results. This validates the current local Windows user-mode boundary only.
+Hosted Unix/macOS semantics, installed identity, privileged races, storage
+truthfulness, destination integration, and every residual threat above remain
+open or technically limited.

@@ -11639,7 +11639,9 @@ def test_local_quarantine_restore_revalidates_parent_before_staging_and_activati
     assert (
         staged_source.index('reject_link_ancestors(parent, "quarantine restore staging parent")?;')
         < staged_source.index("ensure_restore_temp_destination_absent(temp_destination)?;")
-        < staged_source.index("let staged = fs::OpenOptions::new()")
+        < staged_source.index(
+            "let staged = avorax_platform_security::open_new_restore_staging_file("
+        )
     )
     assert (
         restore_source.rindex('reject_link_ancestors(parent, "quarantine restore parent")?;')
@@ -29874,9 +29876,7 @@ def test_checkpoint_2279_quarantine_restore_reservation_recovery_contract():
         )
     ]
     for marker in [
-        ".read(true)",
-        ".write(true)",
-        ".create_new(true)",
+        "avorax_platform_security::open_new_restore_staging_file(",
         "ExclusiveCopySecurity::Restore",
         "metadata.len() != 0",
         "capture_open_file_identity",
@@ -35021,5 +35021,124 @@ def test_checkpoint_2277_quarantine_metadata_update_recovery_contract():
     assert "complete antivirus-hardening goal remains active" in normalized_checkpoint.lower()
     normalized_dependencies = re.sub(r"\s+", " ", documents[-1]).lower()
     assert "checkpoint 2277 dependency delta" in normalized_dependencies
+    assert "adds no dependency" in normalized_dependencies
+    assert "lockfile change" in normalized_dependencies
+
+
+def test_checkpoint_2280_quarantine_restore_stage_handle_lock_contract():
+    platform = read(
+        ROOT / "core" / "avorax_platform_security" / "src" / "lib.rs"
+    )
+    local_core = read(
+        ROOT
+        / "core"
+        / "zentor_local_core"
+        / "src"
+        / "quarantine"
+        / "quarantine_store.rs"
+    )
+    workflow = read(CI_WORKFLOW)
+    verifier = read(SMALL_THREAT_MVP_VERIFIER)
+    validator = read(SMALL_THREAT_MVP_REPORT_VALIDATOR)
+    checkpoint = read(
+        ROOT
+        / "docs"
+        / "reports"
+        / "checkpoint-2280-quarantine-restore-stage-handle-lock.md"
+    )
+    documents = [
+        checkpoint,
+        read(RUN_LOG),
+        read(STATUS_DOC),
+        read(ROOT / "TESTING.md"),
+        read(ROOT / "core" / "zentor_local_core" / "README.md"),
+        read(ROOT / "docs" / "quarantine.md"),
+        read(ROOT / "docs" / "malware-protection.md"),
+        read(ROOT / "docs" / "audit" / "engine-control-matrix.md"),
+        read(ROOT / "docs" / "audit" / "threat-model.md"),
+        read(ROOT / "docs" / "audit" / "known-blockers.md"),
+        read(DEPENDENCY_LICENSE_INVENTORY),
+    ]
+
+    helper = platform[
+        platform.index("pub fn open_new_restore_staging_file(") : platform.index(
+            "/// Atomically moves a staged file", platform.index(
+                "pub fn open_new_restore_staging_file("
+            )
+        )
+    ]
+    for marker in [
+        "options.read(true).write(true).create_new(true)",
+        "options.share_mode(FILE_SHARE_READ)",
+        "options.mode(0o600).custom_flags(libc::O_NOFOLLOW)",
+        "failed to create protected {label}",
+    ]:
+        assert marker in helper
+    assert "FILE_SHARE_WRITE" not in helper
+    assert "FILE_SHARE_DELETE" not in helper
+
+    for marker in [
+        "restore_staging_creation_is_exclusive_and_preserves_existing_bytes",
+        "windows_restore_staging_handle_denies_write_delete_and_rename_sharing",
+        "unix_restore_staging_creation_is_private_and_does_not_follow_links",
+        "fs::OpenOptions::new().write(true).open(&staged).is_err()",
+        "fs::rename(&staged, &renamed).is_err()",
+        "fs::remove_file(&staged).is_err()",
+        "fs::File::open(&staged).unwrap()",
+    ]:
+        assert marker in platform
+
+    reserve = local_core[
+        local_core.index("fn reserve_restore_staging_file(") : local_core.index(
+            "fn copy_payload_to_reserved_restore("
+        )
+    ]
+    assert "avorax_platform_security::open_new_restore_staging_file(" in reserve
+    assert reserve.index("open_new_restore_staging_file(") < reserve.index(
+        "capture_open_file_identity("
+    )
+    assert "harden_open_quarantine_file_permissions(" in reserve
+    assert "ensure_path_matches_open_file(" in reserve
+    assert "staged.sync_all()" in reserve
+    assert "fs::OpenOptions::new()" not in reserve
+    assert (
+        "restore_reservation_uses_the_platform_handle_lock_before_identity_binding"
+        in local_core
+    )
+
+    assert workflow.count(
+        "--manifest-path core/avorax_platform_security/Cargo.toml"
+    ) >= 3
+    assert "continue-on-error" not in workflow
+    step = "platform quarantine permission regressions"
+    assert step in verifier
+    assert f'Assert-ReportContainsStep $steps "{step}"' in validator
+    assert "if ($steps.Count -ne 304)" in validator
+    assert "expected exactly 304 verifier steps" in validator
+    for scope in [
+        "Restore staging is created through one shared protected handle primitive before identity authentication",
+        "Windows permits read sharing needed for path binding while denying write/delete sharing for the handle lifetime",
+        "Unix atomically creates owner-only mode 0600 with O_NOFOLLOW",
+        "Local Core retains that exact handle through identity authentication and bounded payload copy",
+        "only until that handle closes before path-based no-replace activation",
+        "does not prevent every hard-link insertion, ACL change, privileged handle, or hostile-filesystem action",
+        "Unix O_NOFOLLOW and mode 0600 protect final-component creation and default access but are not a mandatory namespace lock",
+        "rather than an open-handle atomic rename",
+    ]:
+        assert scope in verifier
+        assert scope in validator
+
+    for document in documents:
+        normalized = re.sub(r"\s+", " ", document).lower()
+        assert "checkpoint 2280" in normalized
+    normalized_checkpoint = re.sub(r"\s+", " ", checkpoint)
+    assert "No checkpoint-2280 test ran during the scripting phase" in normalized_checkpoint
+    assert "Source contract 712" in normalized_checkpoint
+    assert "16,072 files" in normalized_checkpoint
+    assert "zero pending" in normalized_checkpoint
+    assert "no live malware" in normalized_checkpoint.lower()
+    assert "complete antivirus-hardening goal remains active" in normalized_checkpoint.lower()
+    normalized_dependencies = re.sub(r"\s+", " ", documents[-1]).lower()
+    assert "checkpoint 2280 dependency delta" in normalized_dependencies
     assert "adds no dependency" in normalized_dependencies
     assert "lockfile change" in normalized_dependencies

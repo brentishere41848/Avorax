@@ -9173,3 +9173,32 @@ Both validator hosts reject `34/34` hostile cases. Final audit SHA-256 is
 all 15 blobs, nine locks, 28 backups, residue controls, and the exact vault
 pass. Checkpoint 2279 is closed; the full antivirus-hardening goal remains
 active and technically limited as documented.
+
+## Checkpoint 2280 Script Freeze
+
+Checkpoint 2280 scripts a protected restore-stage handle before any test. On
+Windows the live handle permits read-only identity probes but denies competing
+write/delete sharing and therefore blocks ordinary same-principal write-open,
+rename, and removal during reservation/copy. Unix atomically creates owner-only
+mode `0600` with `O_NOFOLLOW`; all platforms keep exclusive no-overwrite
+creation. Local Core retains this exact handle through authenticated identity
+binding and bounded copy.
+
+Implementation, harmless tests, Source contract 712, unchanged exact-304
+verifier/validator schema, and documentation are scripted. No checkpoint-2280
+test ran during the scripting phase; all execution and hosted/integration/
+destination evidence is pending. The post-close activation interval, hard-link
+and ACL races, privileged actors, storage truthfulness, kernel compromise, and
+the complete antivirus-hardening goal remain open or technically limited.
+
+Post-freeze local execution now supersedes only the pending local state. Source
+passes `712/712`; platform restore-stage/full tests pass `2/2 + 33/33`; Local
+Core wiring/quarantine/full tests pass `1/1 + 182/182 + 625/625`; all locked
+workspace variants, strict Clippy, release, Flutter `852/852`, and protocols
+`14/14 + 6/6` pass. Exact no-skip/no-Defender verification passes `304/304` in
+`706.4s`, report SHA-256
+`49701948f989f942902fbffad5a1221ae34f26b3811c18427b2aab1dbe6a6bcb`.
+Both hosts reject `34/34` hostile results; adversarial SHA-256 is
+`1235e51aa65ecf7718a37ab56dc5a8513aff6aa68efc7da6def6f7aeedc0952d`.
+Hosted, integration, destination, and closure evidence remain pending, and all
+technical limits above remain unchanged.

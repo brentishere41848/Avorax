@@ -15882,3 +15882,40 @@ pending.
   zero vault reparse files, and the exact protected-vault invariant.
 - Checkpoint 2279 is closed through synchronized-destination verification. The
   complete antivirus-hardening goal remains active.
+
+## Checkpoint 2280 Restore Stage Handle Lock (Scripted)
+
+- Added one shared protected restore-stage creation primitive. Windows allows
+  read sharing needed by identity probes while denying write/delete sharing;
+  Unix requests owner-only mode `0600` and `O_NOFOLLOW`; every platform retains
+  atomic exclusive creation.
+- Local Core now obtains the exact handle through that primitive and retains it
+  through identity authentication and bounded restore copy.
+- Scripted harmless Windows write/rename/delete-denial, Unix private/no-follow,
+  competing-path preservation, Local Core wiring, Source contract 712, verifier/
+  validator scope, and complete checkpoint documentation.
+- No checkpoint-2280 test ran during the scripting phase. Post-freeze focused,
+  broad, definitive, hosted, integration, and guarded-destination evidence is
+  pending.
+- The lock does not cover the post-close preactivation interval or defeat every
+  hard-link/ACL mutation, privileged actor, hostile filesystem/storage, or
+  kernel compromise. The complete antivirus-hardening goal remains active.
+
+## Checkpoint 2280 - Local Verification
+
+- Focused restore-stage `2/2`, platform `33/33`, exact Local Core wiring `1/1`,
+  quarantine `182/182`, complete Local Core `625/625`, all locked workspace
+  variants, strict Clippy, and all-target/all-feature release pass.
+- Source passes `712/712`; Flutter analysis is clean and tests pass `852/852`;
+  protocol tests pass `14/14 + 6/6`. Nine tracked lockfiles remain unchanged.
+- Definitive no-skip/no-Defender verification passes `304/304` in `706.4s`.
+  The 238,710-byte report SHA-256 is
+  `49701948f989f942902fbffad5a1221ae34f26b3811c18427b2aab1dbe6a6bcb`.
+- Both validator hosts accept the authentic report and reject all `34/34`
+  hostile results across 17 mutations. Adversarial SHA-256 is
+  `1235e51aa65ecf7718a37ab56dc5a8513aff6aa68efc7da6def6f7aeedc0952d`.
+- Missing `pytest`, two stale Source markers, an incomplete exact-test filter,
+  one stale quarantine source marker, and one nonmandatory adversarial phrase
+  all failed visibly before corrected clean reruns; no dependency was installed.
+- Hosted, PR/merge, synchronized-destination, and closure evidence remain
+  pending. The complete antivirus-hardening goal remains active.
