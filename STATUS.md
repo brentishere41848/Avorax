@@ -9100,12 +9100,14 @@ both hosts reject `34/34` hostile cases. Final audit SHA-256 is
 all 17 blobs, nine locks, backups, residue controls, and the exact vault pass.
 Checkpoint 2278 is closed; the complete antivirus-hardening goal remains active.
 
-## Checkpoint 2279: Restore Reservation Recovery Locally Verified
+## Checkpoint 2279: Restore Reservation Recovery
 
-Status: implementation, harmless tests, Source contract 711, CI coverage,
-exact-304 verifier/validator scope, and documentation were scripted before the
-batch froze. Focused, broad, release, Flutter/protocol, definitive, and
-adversarial local verification passes; hosted and integration work is pending.
+Status: **closed through hosted integration and synchronized destination
+verification**. Implementation, harmless tests, Source contract 711, CI
+coverage, exact-304 verifier/validator scope, and documentation were scripted
+before the batch froze. Focused, broad, release, Flutter/protocol, definitive,
+adversarial, hosted, integration, synchronized-destination, and final-audit
+evidence passes.
 
 Local Core now advances restore only through `Prepared`, `RestoreReserved`, and
 `RestoreStaged`. It reserves an exclusive empty adjacent stage, hardens it,
@@ -9152,3 +9154,22 @@ is 133,166,414 bytes with hosted digest
 logs prove six release files, seven checksums, and 569 lockfile SBOM components.
 No artifact was downloaded or executed. Normal PR merge, merged-main evidence,
 guarded destination synchronization, and closure remain required.
+
+That pending state is superseded. Evidence head `1108a449` passes CI
+`33357093064` and packages `33357093067`; PR `#167` merged normally as
+`ad16822595faa800809f0b98ba277520b2191367`. Merged-main CI `33358161556`
+and packages `33358161554` pass, with publication skipped. Consolidated
+artifact `9746075011` is 133,173,363 bytes with hosted digest
+`798b306e256508a641ff9cd44920c2c5b6cce9de784237b416f293634f657352`;
+only metadata/logs were inspected.
+
+Guarded synchronization applies exact 14 modified plus one added path, zero
+deletions, and 28 verified backups. Destination Source `711/711`, format,
+identity `1/1`, action recovery `25/25`, and strict Clippy pass. Exact
+no-skip/no-Defender verification passes `304/304` in `655.2s`; report SHA-256
+is `08b7bc67121af02c85ead8fa1cad9bedac7ac816b8aabd4487c3b5338fe34dce`.
+Both validator hosts reject `34/34` hostile cases. Final audit SHA-256 is
+`d18946098975dbc22bcd4f9f0e94ee3ec3819a81ed96636ae5e4ac19298ff659`;
+all 15 blobs, nine locks, 28 backups, residue controls, and the exact vault
+pass. Checkpoint 2279 is closed; the full antivirus-hardening goal remains
+active and technically limited as documented.

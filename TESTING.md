@@ -2570,3 +2570,33 @@ eight uploaded evidence files. Consolidated artifact `9745412188` is
 `ea7c9393afa4d3db7cfb124e4226e7ae02bdb44d202c62d697e464bbf48d6a97`.
 Only logs and metadata were inspected; integration and destination execution
 remain separate required evidence.
+
+Checkpoint-2279 closure passes evidence-head CI/packages, PR `#167`, normal
+merge `ad168225`, and merged-main CI `33358161556` / packages `33358161554`.
+Publication is skipped and no hosted artifact was downloaded. Guarded sync
+applies exact 14 modified plus one added file, zero deletions, and 28 backups.
+
+The synchronized destination commands include:
+
+```powershell
+python -B tools/testing/run-python-source-contracts.py
+cargo fmt --all -- --check
+cargo test --locked --manifest-path core/avorax_platform_security/Cargo.toml persistent_file_identity_accepts_same_file_and_rejects_replacement -- --test-threads=1
+cargo test --locked --manifest-path core/zentor_local_core/Cargo.toml quarantine_lifecycle_action_recovery_ -- --test-threads=1
+cargo clippy --locked --workspace --all-targets --all-features -- -D warnings
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/testing/verify-small-threat-mvp.ps1 -ReportPath .workflow/ultracode/avorax-hardening/results/checkpoint-2279-destination-report.json
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/testing/validate-small-threat-mvp-report.ps1 -ReportPath .workflow/ultracode/avorax-hardening/results/checkpoint-2279-destination-report.json -RequireFullSuite
+```
+
+The concrete verifier invocation supplied absolute non-reparse Python, Cargo,
+Flutter, Dart, PowerShell 5.1, and PowerShell 7 paths and the compact documented
+test profile; Defender was not changed. Results are Source `711/711`, format,
+identity `1/1`, action recovery `25/25`, strict Clippy, and exact verifier
+`304/304` in `655.2s`, zero failed/skipped/error steps. Report SHA-256 is
+`08b7bc67121af02c85ead8fa1cad9bedac7ac816b8aabd4487c3b5338fe34dce`.
+Both hosts accept it and reject `34/34` hostile results across 17 mutations.
+Final audit SHA-256
+`d18946098975dbc22bcd4f9f0e94ee3ec3819a81ed96636ae5e4ac19298ff659`
+proves 15 exact blobs, nine unchanged locks, 28 backups, no residue/processes,
+and the unchanged protected vault. Checkpoint 2279 is closed; whole-goal tests
+and documented technical limits remain active.

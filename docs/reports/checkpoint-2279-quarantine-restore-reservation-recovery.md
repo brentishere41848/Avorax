@@ -6,9 +6,10 @@ Implementation, harmless tests, Source contract 711, existing Ubuntu/macOS CI
 filters, exact-304 verifier/validator scope, and audit/operational documentation
 were scripted before execution. No checkpoint-2279 test ran during the scripting
 phase. Focused, broad, release, Flutter/protocol, definitive, and adversarial
-local verification now passes. Exact implementation-head CI and desktop package
-evidence also passes. Normal integration, merged-main, destination, and closure
-evidence remains pending.
+local verification now passes. Exact implementation/evidence-head CI and
+desktop packages, normal PR integration, merged-main checks, guarded
+synchronization, destination regression, and final audit evidence also pass.
+Checkpoint 2279 is closed through synchronized-destination verification.
 
 The complete antivirus-hardening goal remains active.
 
@@ -237,6 +238,60 @@ not a fixture and must remain exactly:
 No service/driver start, machine-wide install, Defender weakening, artifact
 download/extraction/execution, release, publication, or direct-main push is
 authorized.
+
+## Hosted Integration And Destination Closure
+
+Evidence head `1108a449874d26a3398ff602596179fd47a65705` passes Avorax
+CI `33357093064` and Desktop Packages `33357093067`. PR `#167` merged
+normally as `ad16822595faa800809f0b98ba277520b2191367`; no direct-main push
+was used. Merged-main CI `33358161556` and Desktop Packages `33358161554`
+both pass on that exact merge. Windows MSI/setup EXE, Linux DEB/tar, macOS
+arm64/x64 DMGs, package contracts, consolidation, Ubuntu recovery, and macOS
+recovery pass. Prerelease publication is skipped.
+
+Merged-main package metadata is:
+
+| Artifact | ID | Bytes | Hosted SHA-256 digest |
+|---|---:|---:|---|
+| consolidated desktop evidence | `9746075011` | 133,173,363 | `798b306e256508a641ff9cd44920c2c5b6cce9de784237b416f293634f657352` |
+| Windows package evidence | `9745999227` | 37,601,619 | `6ae865ad3613a2ec788e90c01dcf617165c30ba99f3b7bca804358797094b699` |
+| Linux package evidence | `9745888942` | 33,179,215 | `fffc8104b6097bba174a22df7328499657ad6242f5cdc3798d5014fec5f46858` |
+| macOS arm64 package evidence | `9745908352` | 30,513,880 | `ae68a8577c7f5118de3975fd63e39e4523865301736fe2adb87092475fdd3a78` |
+| macOS x64 package evidence | `9746068114` | 31,906,049 | `38671cac0895f1981ad0a5c5afc106c7becd651f0ef56b40fe28f86bcaa85064` |
+
+Only GitHub logs and metadata were inspected. No artifact was downloaded,
+extracted, installed, executed, released, or published.
+
+The guarded-sync wrapper rejected five construction/preflight mistakes before
+writing: stale outer checkpoint-token counts, an empty mandatory replacement,
+an incorrectly targeted nested path replacement, a stale descriptive-token
+count, and an incorrectly rewritten nested `$PSScriptRoot`. The corrected
+preflight and transaction then applied exactly 14 modified plus one added path,
+zero deletions, zero new directories, and 28 verified backups. Sync report
+SHA-256 is
+`e3bf521cd1e468463785e4ea4ac7950751b869f7326d896022caf167cf6eef01`.
+
+The synchronized destination passes Source `711/711`, `rustfmt`, persistent
+identity `1/1`, action recovery `25/25`, and strict locked workspace Clippy.
+The no-skip/no-Defender verifier passes exact `304/304` in `655.2s`, with zero
+failed, skipped, or non-null-error steps. Its 228,814-byte report SHA-256 is
+`08b7bc67121af02c85ead8fa1cad9bedac7ac816b8aabd4487c3b5338fe34dce`.
+PowerShell 5.1 and 7 accept it and reject all `34/34` destination-local hostile
+results across 17 mutations. The 27,799-byte adversarial result SHA-256 is
+`e9c388af7c006b01f69478346ec7c2a00a85ab4cd41b55f51a47311a6a093bcd`.
+
+The first final-audit wrapper call rejected a broad inherited numeric
+replacement because basishash `a49e62...` also contained `62`; the next call
+rejected an inherited branch-name mismatch. Both stopped read-only. The
+corrected 7,074-byte final audit passes with SHA-256
+`d18946098975dbc22bcd4f9f0e94ee3ec3819a81ed96636ae5e4ac19298ff659`.
+It proves all 15 merge blobs, nine unchanged lockfiles, 28 backups, zero
+product processes, pending files, or matching temporary roots, and the exact
+protected vault. A separate final read-only check also confirms zero vault
+reparse files and an ordinary vault root.
+
+Checkpoint 2279 is closed. The complete antivirus-hardening goal remains
+active; the limitations below remain unchanged.
 
 ## Residual Limits
 
